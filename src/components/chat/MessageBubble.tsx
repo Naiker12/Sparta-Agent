@@ -2,7 +2,7 @@ import type { Message } from '@/types'
 import { ThinkingBlock } from './reasoning/ThinkingBlock'
 import { PipelineTrace } from './reasoning/PipelineTrace'
 import { MessageActionsMenu } from './MessageActionsMenu'
-import spartaIcon from '@/assets/sparta-icon.png'
+import { SpartaIcon } from './SpartaIcon'
 
 interface MessageBubbleProps {
   message: Message
@@ -37,15 +37,20 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         >
           {!isUser && (
             <>
-              <img
-                src={spartaIcon}
-                alt="Sparta Agent"
+              <div
                 style={{
-                  width: 18,
-                  height: 18,
-                  borderRadius: 'var(--radius-sm)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 30,
+                  height: 30,
+                  borderRadius: '50%',
+                  background: 'var(--accent-muted)',
+                  color: 'var(--accent)',
                 }}
-              />
+              >
+                <SpartaIcon size={16} />
+              </div>
               <span
                 style={{
                   fontSize: 11,
@@ -70,12 +75,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
               minute: '2-digit',
             })}
           </span>
-          <div
-            style={{
-              opacity: isUser ? 0 : undefined,
-            }}
-            className="message-actions-slot"
-          >
+          <div className="message-actions-slot">
             <MessageActionsMenu message={message} sessionId={message.sessionId} />
           </div>
         </div>
