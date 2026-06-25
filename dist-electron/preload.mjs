@@ -1,1 +1,33 @@
-"use strict";const e=require("electron");e.contextBridge.exposeInMainWorld("electronAPI",{minimize:()=>e.ipcRenderer.send("win:minimize"),maximize:()=>e.ipcRenderer.send("win:maximize"),close:()=>e.ipcRenderer.send("win:close"),isMaximized:()=>e.ipcRenderer.invoke("win:isMaximized"),onMaximizedChange:n=>{const i=()=>e.ipcRenderer.invoke("win:isMaximized").then(n);return e.ipcRenderer.on("win:maximized-changed",i),()=>e.ipcRenderer.removeListener("win:maximized-changed",i)}});e.contextBridge.exposeInMainWorld("electron",{on:(n,i)=>{const r=(d,...t)=>i(...t);return e.ipcRenderer.on(n,r),()=>e.ipcRenderer.removeListener(n,r)},send:(n,...i)=>e.ipcRenderer.send(n,...i),invoke:(n,...i)=>e.ipcRenderer.invoke(n,...i)});e.contextBridge.exposeInMainWorld("sparta",{onEvent:n=>{const i=(r,d)=>n(d);return e.ipcRenderer.on("sparta:event",i),()=>e.ipcRenderer.removeListener("sparta:event",i)},sendEvent:n=>{e.ipcRenderer.send("sparta:event",n)}});
+"use strict";
+const electron = require("electron");
+electron.contextBridge.exposeInMainWorld("electronAPI", {
+  minimize: () => electron.ipcRenderer.send("win:minimize"),
+  maximize: () => electron.ipcRenderer.send("win:maximize"),
+  close: () => electron.ipcRenderer.send("win:close"),
+  isMaximized: () => electron.ipcRenderer.invoke("win:isMaximized"),
+  onMaximizedChange: (callback) => {
+    const handler = () => electron.ipcRenderer.invoke("win:isMaximized").then(callback);
+    electron.ipcRenderer.on("win:maximized-changed", handler);
+    return () => electron.ipcRenderer.removeListener("win:maximized-changed", handler);
+  },
+  setTitleBarOverlay: (colors) => electron.ipcRenderer.send("titlebar:set-overlay", colors)
+});
+electron.contextBridge.exposeInMainWorld("electron", {
+  on: (channel, listener) => {
+    const subscription = (_event, ...args) => listener(...args);
+    electron.ipcRenderer.on(channel, subscription);
+    return () => electron.ipcRenderer.removeListener(channel, subscription);
+  },
+  send: (channel, ...args) => electron.ipcRenderer.send(channel, ...args),
+  invoke: (channel, ...args) => electron.ipcRenderer.invoke(channel, ...args)
+});
+electron.contextBridge.exposeInMainWorld("sparta", {
+  onEvent: (listener) => {
+    const subscription = (_event, data) => listener(data);
+    electron.ipcRenderer.on("sparta:event", subscription);
+    return () => electron.ipcRenderer.removeListener("sparta:event", subscription);
+  },
+  sendEvent: (event) => {
+    electron.ipcRenderer.send("sparta:event", event);
+  }
+});

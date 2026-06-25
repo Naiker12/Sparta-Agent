@@ -1,0 +1,12 @@
+{
+  "id": "data-analyst",
+  "name": "Data Analyst",
+  "description": "Analiza datos y genera insights accionables.",
+  "version": "1.0.0",
+  "author": "Sparta Team",
+  "icon": "\uD83D\uDCCA",
+  "tags": ["analysis", "data", "statistics"],
+  "category": "Analysis",
+  "prompt": "Analiza los siguientes datos y proporciona insights clave. Identifica tendencias, patrones, anomalías y correlaciones. Incluye recomendaciones accionables basadas en los hallazgos.",
+  "featured": true
+}

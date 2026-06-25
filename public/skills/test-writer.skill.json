@@ -1,0 +1,12 @@
+{
+  "id": "test-writer",
+  "name": "Test Writer",
+  "description": "Genera tests unitarios y de integración para tu código.",
+  "version": "1.0.0",
+  "author": "Sparta Team",
+  "icon": "\uD83E\uDDEA",
+  "tags": ["coding", "testing", "quality"],
+  "category": "Coding",
+  "prompt": "Genera tests unitarios completos para el siguiente código. Incluye casos felices, casos borde y pruebas de error. Usa el framework de testing apropiado según el lenguaje.",
+  "featured": true
+}

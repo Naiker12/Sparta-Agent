@@ -1,0 +1,17 @@
+{
+  "version": "1.0.0",
+  "skills": [
+    "code-review",
+    "code-explainer",
+    "bug-finder",
+    "refactor-guide",
+    "test-writer",
+    "doc-writer",
+    "summarizer",
+    "translator",
+    "research-assistant",
+    "data-analyst",
+    "prompt-optimizer",
+    "sql-helper"
+  ]
+}

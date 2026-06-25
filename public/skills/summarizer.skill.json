@@ -1,0 +1,12 @@
+{
+  "id": "summarizer",
+  "name": "Summarizer",
+  "description": "Resume documentos extensos en párrafos concisos.",
+  "version": "1.0.0",
+  "author": "Sparta Team",
+  "icon": "\uD83D\uDCD1",
+  "tags": ["research", "summary", "reading"],
+  "category": "Research",
+  "prompt": "Resume el siguiente texto de manera concisa pero completa. Extrae las ideas principales, argumentos clave y conclusiones. Organiza el resumen en secciones si el texto original es extenso.",
+  "featured": true
+}
