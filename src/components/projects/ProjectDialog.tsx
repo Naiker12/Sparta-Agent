@@ -45,7 +45,7 @@ export function ProjectDialog({ open, onClose, onSubmit }: ProjectDialogProps) {
         </DialogHeader>
 
         <form id="project-form" onSubmit={handleSubmit}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '0 24px 20px' }}>
             <div>
               <label
                 style={{

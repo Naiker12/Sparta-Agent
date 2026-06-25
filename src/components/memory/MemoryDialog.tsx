@@ -62,97 +62,98 @@ export function MemoryDialog({ open, onClose }: MemoryDialogProps) {
           </DialogTitle>
         </DialogHeader>
 
-        <div
-          style={{
-            background: 'var(--bg-input)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: 'var(--radius-md)',
-            padding: 10,
-            marginTop: 8,
-          }}
-        >
-          <Textarea
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            placeholder="Añade un recuerdo persistente…"
-            rows={2}
-            style={{ border: 'none', background: 'transparent', padding: 0 }}
-          />
+        <div style={{ padding: '0 24px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'flex-end',
-              gap: 6,
-              marginTop: 6,
+              background: 'var(--bg-input)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: 'var(--radius-md)',
+              padding: 10,
             }}
           >
-            {editingId && (
-              <Button
-                size="xs"
-                variant="ghost"
-                onClick={() => {
-                  setEditingId(null)
-                  setDraft('')
-                }}
-              >
-                Cancelar
-              </Button>
-            )}
-            <Button size="xs" onClick={handleSave} disabled={!draft.trim()}>
-              <Plus size={11} />
-              {editingId ? 'Guardar' : 'Añadir'}
-            </Button>
-          </div>
-        </div>
-
-        <div style={{ marginTop: 12 }}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: 6,
-            }}
-          >
-            <span
+            <Textarea
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              placeholder="Añade un recuerdo persistente…"
+              rows={2}
+              style={{ border: 'none', background: 'transparent', padding: 0 }}
+            />
+            <div
               style={{
-                fontSize: 10,
-                fontWeight: 600,
-                color: 'var(--text-muted)',
-                letterSpacing: '0.07em',
-                textTransform: 'uppercase',
-                fontFamily: 'var(--font-ui)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'flex-end',
+                gap: 6,
+                marginTop: 6,
               }}
             >
-              Recuerdos ({entries.length})
-            </span>
+              {editingId && (
+                <Button
+                  size="xs"
+                  variant="ghost"
+                  onClick={() => {
+                    setEditingId(null)
+                    setDraft('')
+                  }}
+                >
+                  Cancelar
+                </Button>
+              )}
+              <Button size="xs" onClick={handleSave} disabled={!draft.trim()}>
+                <Plus size={11} />
+                {editingId ? 'Guardar' : 'Añadir'}
+              </Button>
+            </div>
           </div>
-          <ScrollArea style={{ maxHeight: 260 }}>
-            {entries.length === 0 ? (
-              <p
+
+          <div>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: 6,
+              }}
+            >
+              <span
                 style={{
-                  fontSize: 12,
+                  fontSize: 10,
+                  fontWeight: 600,
                   color: 'var(--text-muted)',
-                  fontStyle: 'italic',
-                  padding: '12px 0',
+                  letterSpacing: '0.07em',
+                  textTransform: 'uppercase',
+                  fontFamily: 'var(--font-ui)',
                 }}
               >
-                Aún no hay recuerdos.
-              </p>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {entries.map((entry) => (
-                  <MemoryEntryItem
-                    key={entry.id}
-                    entry={entry}
-                    onEdit={() => handleEdit(entry)}
-                    onDelete={() => deleteEntry(entry.id)}
-                  />
-                ))}
-              </div>
-            )}
-          </ScrollArea>
+                Recuerdos ({entries.length})
+              </span>
+            </div>
+            <ScrollArea style={{ maxHeight: 260 }}>
+              {entries.length === 0 ? (
+                <p
+                  style={{
+                    fontSize: 12,
+                    color: 'var(--text-muted)',
+                    fontStyle: 'italic',
+                    padding: '12px 0',
+                  }}
+                >
+                  Aún no hay recuerdos.
+                </p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {entries.map((entry) => (
+                    <MemoryEntryItem
+                      key={entry.id}
+                      entry={entry}
+                      onEdit={() => handleEdit(entry)}
+                      onDelete={() => deleteEntry(entry.id)}
+                    />
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
+          </div>
         </div>
 
         <DialogFooter>
