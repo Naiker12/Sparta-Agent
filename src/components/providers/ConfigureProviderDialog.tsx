@@ -1,0 +1,371 @@
+import { useState, useEffect } from 'react'
+import { Loader2 } from 'lucide-react'
+import type { ProviderVendor, Provider } from '@/types'
+import { useProviderStore, getVendorLabel } from '@/stores/provider.store'
+import { useTranslation } from '@/i18n'
+import { fetchModelsByVendor } from '@/lib/fetch-models'
+
+interface ConfigureProviderDialogProps {
+  open: boolean
+  vendor: ProviderVendor | null
+  editProvider?: Provider | null
+  onSave: () => void
+  onBack: () => void
+  onClose: () => void
+}
+
+const VENDOR_DEFAULTS: Partial<Record<ProviderVendor, { serverUrl?: string; kind: 'cloud' | 'local' }>> = {
+  ollama: { serverUrl: 'http://localhost:11434', kind: 'local' },
+  lmstudio: { serverUrl: 'http://localhost:1234', kind: 'local' },
+  llamacpp: { serverUrl: 'http://localhost:8080', kind: 'local' },
+  custom: { serverUrl: '', kind: 'local' },
+  anthropic: { kind: 'cloud' },
+  openai: { kind: 'cloud' },
+  google: { kind: 'cloud' },
+  groq: { kind: 'cloud' },
+  mistral: { kind: 'cloud' },
+  azure: { kind: 'cloud' },
+  deepseek: { kind: 'cloud' },
+  together: { kind: 'cloud' },
+  fireworks: { kind: 'cloud' },
+  openrouter: { kind: 'cloud' },
+  cohere: { kind: 'cloud' },
+  perplexity: { kind: 'cloud' },
+  xai: { kind: 'cloud' },
+}
+
+export function ConfigureProviderDialog({
+  open, vendor, editProvider, onSave, onBack, onClose,
+}: ConfigureProviderDialogProps) {
+  const { addProvider, updateProvider } = useProviderStore()
+  const { t } = useTranslation()
+  const isLocal = vendor ? (VENDOR_DEFAULTS[vendor]?.kind === 'local') : false
+
+  const [label, setLabel] = useState('')
+  const [apiKey, setApiKey] = useState('')
+  const [serverUrl, setServerUrl] = useState('')
+  const [defaultModel, setDefaultModel] = useState('')
+
+  const [testing, setTesting] = useState(false)
+  const [testError, setTestError] = useState('')
+  const [fetchedModels, setFetchedModels] = useState<string[]>([])
+
+  useEffect(() => {
+    if (editProvider) {
+      setLabel(editProvider.label)
+      setApiKey(editProvider.apiKey || '')
+      setServerUrl(editProvider.serverUrl || '')
+      setDefaultModel(editProvider.defaultModel || '')
+    } else if (vendor) {
+      const defaults = VENDOR_DEFAULTS[vendor]
+      setLabel(getVendorLabel(vendor))
+      setApiKey('')
+      setServerUrl(defaults?.serverUrl || '')
+      setDefaultModel('')
+    }
+    setTesting(false)
+    setTestError('')
+    setFetchedModels([])
+  }, [vendor, editProvider])
+
+  async function handleTest() {
+    if (!vendor) return
+    setTesting(true)
+    setTestError('')
+    setFetchedModels([])
+
+    const result = await fetchModelsByVendor(vendor, apiKey, serverUrl)
+    setTesting(false)
+
+    if (result.error) {
+      setTestError(result.error)
+      return
+    }
+
+    if (result.models.length === 0) {
+      setTestError('No models returned')
+      return
+    }
+
+    setFetchedModels(result.models)
+    setDefaultModel(result.models[0])
+  }
+
+  function handleSave() {
+    if (editProvider) {
+      updateProvider(editProvider.id, {
+        label,
+        apiKey: apiKey || undefined,
+        serverUrl: serverUrl || undefined,
+        defaultModel: defaultModel || undefined,
+      })
+    } else {
+      addProvider({
+        vendor: currentVendor,
+        kind: isLocal ? 'local' : 'cloud',
+        label,
+        apiKey: apiKey || undefined,
+        serverUrl: serverUrl || undefined,
+        defaultModel: defaultModel || undefined,
+      })
+    }
+    onSave()
+  }
+
+  if (!open || !vendor) return null
+  const currentVendor: ProviderVendor = vendor
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 60,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'rgba(0,0,0,0.4)',
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          width: 500,
+          maxHeight: 460,
+          background: 'var(--bg-modal)',
+          border: '1px solid var(--border-strong)',
+          borderRadius: 'var(--radius-xl)',
+          boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div style={{ padding: '16px 20px 0', flexShrink: 0 }}>
+          <h3 style={{
+            fontSize: 13,
+            fontWeight: 500,
+            color: 'var(--text-primary)',
+            fontFamily: 'var(--font-ui)',
+            marginBottom: 14,
+          }}>
+            {editProvider ? t('models.edit') : t('models.configureTitle')} {vendor && getVendorLabel(vendor)}
+          </h3>
+        </div>
+
+        <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '0 20px', minHeight: 0 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingBottom: 4 }}>
+            <div>
+              <label style={{ fontSize: 11, color: 'var(--text-secondary)', fontFamily: 'var(--font-ui)', display: 'block', marginBottom: 4 }}>
+                {t('models.name')}
+              </label>
+              <input
+                value={label}
+                onChange={(e) => setLabel(e.target.value)}
+                placeholder={t('models.namePlaceholder')}
+                style={{
+                  width: '100%',
+                  background: 'var(--bg-input)',
+                  border: '1px solid var(--border-normal)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '7px 10px',
+                  fontSize: 12,
+                  color: 'var(--text-primary)',
+                  fontFamily: 'var(--font-ui)',
+                  outline: 'none',
+                }}
+              />
+            </div>
+
+            {!isLocal && (
+              <div>
+                <label style={{ fontSize: 11, color: 'var(--text-secondary)', fontFamily: 'var(--font-ui)', display: 'block', marginBottom: 4 }}>
+                  {t('models.apiKey')}
+                </label>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <input
+                    type="password"
+                    value={apiKey}
+                    onChange={(e) => setApiKey(e.target.value)}
+                    placeholder={t('models.apiKeyPlaceholder')}
+                    style={{
+                      flex: 1,
+                      background: 'var(--bg-input)',
+                      border: '1px solid var(--border-normal)',
+                      borderRadius: 'var(--radius-md)',
+                      padding: '7px 10px',
+                      fontSize: 12,
+                      color: 'var(--text-primary)',
+                      fontFamily: 'var(--font-mono)',
+                      outline: 'none',
+                    }}
+                  />
+                  <button
+                    onClick={handleTest}
+                    disabled={testing || !apiKey.trim()}
+                    style={{
+                      padding: '7px 12px',
+                      background: testing ? 'var(--bg-active)' : 'var(--accent)',
+                      border: 'none',
+                      borderRadius: 'var(--radius-md)',
+                      color: 'white',
+                      fontSize: 11,
+                      fontFamily: 'var(--font-ui)',
+                      fontWeight: 500,
+                      cursor: testing || !apiKey.trim() ? 'default' : 'pointer',
+                      opacity: testing || !apiKey.trim() ? 0.6 : 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 5,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {testing ? <Loader2 size={12} style={{ animation: 'spin 0.8s linear infinite' }} /> : null}
+                    {testing ? t('models.testing') : t('models.testConnection')}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {isLocal && (
+              <div>
+                <label style={{ fontSize: 11, color: 'var(--text-secondary)', fontFamily: 'var(--font-ui)', display: 'block', marginBottom: 4 }}>
+                  {t('models.serverUrl')}
+                </label>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <input
+                    value={serverUrl}
+                    onChange={(e) => setServerUrl(e.target.value)}
+                    placeholder={t('models.serverUrlPlaceholder')}
+                    style={{
+                      flex: 1,
+                      background: 'var(--bg-input)',
+                      border: '1px solid var(--border-normal)',
+                      borderRadius: 'var(--radius-md)',
+                      padding: '7px 10px',
+                      fontSize: 12,
+                      color: 'var(--text-primary)',
+                      fontFamily: 'var(--font-mono)',
+                      outline: 'none',
+                    }}
+                  />
+                  <button
+                    onClick={handleTest}
+                    disabled={testing || !serverUrl.trim()}
+                    style={{
+                      padding: '7px 12px',
+                      background: testing ? 'var(--bg-active)' : 'var(--accent)',
+                      border: 'none',
+                      borderRadius: 'var(--radius-md)',
+                      color: 'white',
+                      fontSize: 11,
+                      fontFamily: 'var(--font-ui)',
+                      fontWeight: 500,
+                      cursor: testing || !serverUrl.trim() ? 'default' : 'pointer',
+                      opacity: testing || !serverUrl.trim() ? 0.6 : 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 5,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {testing ? <Loader2 size={12} style={{ animation: 'spin 0.8s linear infinite' }} /> : null}
+                    {testing ? t('models.testing') : t('models.testConnection')}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {testError && (
+              <div style={{
+                fontSize: 11,
+                color: 'var(--destructive)',
+                fontFamily: 'var(--font-ui)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+              }}>
+                <span style={{ fontWeight: 600 }}>{t('models.testError')}</span>
+                {testError}
+              </div>
+            )}
+
+            {!testError && fetchedModels.length > 0 && (
+              <div style={{
+                fontSize: 11,
+                color: 'var(--status-ok)',
+                fontFamily: 'var(--font-ui)',
+              }}>
+                {t('models.testSuccess')} ({fetchedModels.length})
+              </div>
+            )}
+
+            <div>
+              <label style={{ fontSize: 11, color: 'var(--text-secondary)', fontFamily: 'var(--font-ui)', display: 'block', marginBottom: 4 }}>
+                {t('models.defaultModelLabel')}
+              </label>
+              <select
+                value={defaultModel}
+                onChange={(e) => setDefaultModel(e.target.value)}
+                style={{
+                  width: '100%',
+                  background: 'var(--bg-input)',
+                  border: '1px solid var(--border-normal)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '7px 10px',
+                  fontSize: 12,
+                  color: fetchedModels.length === 0 ? 'var(--text-muted)' : 'var(--text-primary)',
+                  fontFamily: 'var(--font-mono)',
+                  outline: 'none',
+                  cursor: fetchedModels.length === 0 ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {fetchedModels.length === 0 ? (
+                  <option value="">{t('models.testFirst')}</option>
+                ) : (
+                  fetchedModels.map((m) => (
+                    <option key={m} value={m}>{m}</option>
+                  ))
+                )}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, padding: '12px 20px', borderTop: '1px solid var(--border-subtle)', flexShrink: 0 }}>
+          <button
+            onClick={onBack}
+            style={{
+              padding: '6px 14px',
+              background: 'none',
+              border: '1px solid var(--border-normal)',
+              borderRadius: 'var(--radius-md)',
+              color: 'var(--text-secondary)',
+              fontSize: 12,
+              fontFamily: 'var(--font-ui)',
+              cursor: 'pointer',
+            }}
+          >
+            {t('models.cancel')}
+          </button>
+          <button
+            onClick={handleSave}
+            style={{
+              padding: '6px 14px',
+              background: 'var(--accent)',
+              border: 'none',
+              borderRadius: 'var(--radius-md)',
+              color: 'white',
+              fontSize: 12,
+              fontFamily: 'var(--font-ui)',
+              fontWeight: 500,
+              cursor: 'pointer',
+            }}
+          >
+            {t('models.save')}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}

@@ -1,0 +1,86 @@
+import { X, ExternalLink, Tag, Calendar } from 'lucide-react'
+import type { MemoryEntry, MemoryGraphNode } from '@/types'
+
+interface MemoryNodePanelProps {
+  entry: MemoryEntry
+  graphNode: MemoryGraphNode
+  onClose: () => void
+}
+
+export function MemoryNodePanel({ entry, graphNode, onClose }: MemoryNodePanelProps) {
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        bottom: 16,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        width: 380,
+        maxWidth: 'calc(100% - 32px)',
+        background: 'var(--bg-elevated)',
+        border: '1px solid var(--border-normal)',
+        borderRadius: 'var(--radius-lg)',
+        padding: 14,
+        boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+        zIndex: 10,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div
+            style={{
+              width: 8, height: 8, borderRadius: '50%',
+              background: graphNode.color,
+              flexShrink: 0,
+            }}
+          />
+          <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-ui)' }}>
+            {entry.source === 'auto' ? 'Aprendido' : 'Manual'}
+          </span>
+        </div>
+        <button
+          onClick={onClose}
+          style={{
+            width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'none', border: 'none', borderRadius: 'var(--radius-sm)',
+            color: 'var(--text-muted)', cursor: 'pointer',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; e.currentTarget.style.color = 'var(--text-primary)' }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)' }}
+        >
+          <X size={12} strokeWidth={2} />
+        </button>
+      </div>
+
+      <p style={{ fontSize: 12.5, color: 'var(--text-primary)', fontFamily: 'var(--font-ui)', lineHeight: 1.5, margin: '4px 0 8px', wordBreak: 'break-word' }}>
+        {entry.content}
+      </p>
+
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 6 }}>
+        {entry.category && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '2px 6px', background: 'var(--bg-input)', borderRadius: 'var(--radius-sm)' }}>
+            <Tag size={9} style={{ color: 'var(--text-muted)' }} strokeWidth={1.5} />
+            <span style={{ fontSize: 9.5, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+              {entry.category}
+            </span>
+          </div>
+        )}
+        {entry.projectId && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '2px 6px', background: 'var(--bg-input)', borderRadius: 'var(--radius-sm)' }}>
+            <ExternalLink size={9} style={{ color: 'var(--text-muted)' }} strokeWidth={1.5} />
+            <span style={{ fontSize: 9.5, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+              {entry.projectId}
+            </span>
+          </div>
+        )}
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+        <Calendar size={9} style={{ color: 'var(--text-muted)' }} strokeWidth={1.5} />
+        <span style={{ fontSize: 9.5, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+          {new Date(entry.createdAt).toLocaleString()}
+        </span>
+      </div>
+    </div>
+  )
+}
