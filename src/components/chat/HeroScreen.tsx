@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { Plus, Code2, Search, Settings } from 'lucide-react'
 import { useSettingsStore } from '@/stores/settings.store'
 import { useChatStore } from '@/stores/chat.store'
+import { SpartaIcon } from '@/components/chat/SpartaIcon'
 
 const QUICK_ACTIONS = [
   { icon: Plus,    label: 'New chat',   action: 'new' as const },
@@ -35,6 +36,24 @@ export function HeroScreen() {
       padding: '0 40px',
       userSelect: 'none',
     }}>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: 72,
+          height: 72,
+          borderRadius: '50%',
+          background: 'var(--accent-muted)',
+          color: 'var(--accent)',
+        }}
+      >
+        <SpartaIcon size={36} />
+      </motion.div>
+
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}

@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { Pencil, Trash2 } from 'lucide-react'
 import type { MemoryEntry } from '@/types'
+import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog'
 
 interface MemoryEntryItemProps {
   entry: MemoryEntry
@@ -8,6 +10,8 @@ interface MemoryEntryItemProps {
 }
 
 export function MemoryEntryItem({ entry, onEdit, onDelete }: MemoryEntryItemProps) {
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
+
   return (
     <div
       style={{
@@ -68,7 +72,7 @@ export function MemoryEntryItem({ entry, onEdit, onDelete }: MemoryEntryItemProp
           <Pencil size={11} strokeWidth={1.5} />
         </button>
         <button
-          onClick={onDelete}
+          onClick={() => setConfirmDeleteOpen(true)}
           title="Eliminar"
           style={btnStyle}
           onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--destructive)')}
@@ -77,6 +81,13 @@ export function MemoryEntryItem({ entry, onEdit, onDelete }: MemoryEntryItemProp
           <Trash2 size={11} strokeWidth={1.5} />
         </button>
       </div>
+
+      <ConfirmDeleteDialog
+        open={confirmDeleteOpen}
+        onOpenChange={setConfirmDeleteOpen}
+        itemLabel={entry.content.slice(0, 60) + (entry.content.length > 60 ? '…' : '')}
+        onConfirm={onDelete}
+      />
     </div>
   )
 }

@@ -1,8 +1,8 @@
 import { useUIStore, type MainView } from '@/stores/ui.store'
 import { useSettingsStore } from '@/stores/settings.store'
 import { AppMenu } from './AppMenu'
-import { Settings } from 'lucide-react'
-import spartaIcon from '@/assets/sparta-icon.png'
+import { Settings, PanelLeftOpen, PanelLeftClose } from 'lucide-react'
+import { SpartaIcon } from '@/components/chat/SpartaIcon'
 
 const TABS: { type: MainView['type']; label: string }[] = [
   { type: 'chat', label: 'Chat' },
@@ -12,7 +12,7 @@ const TABS: { type: MainView['type']; label: string }[] = [
 ]
 
 export function TitleBar() {
-  const { mainView, setMainView } = useUIStore()
+  const { mainView, setMainView, sidebarOpen, toggleSidebar } = useUIStore()
   const { openSettings } = useSettingsStore()
 
   return (
@@ -29,6 +29,36 @@ export function TitleBar() {
         userSelect: 'none',
       }}
     >
+      <button
+        className="no-drag"
+        onClick={toggleSidebar}
+        title={sidebarOpen ? 'Colapsar sidebar' : 'Expandir sidebar'}
+        style={{
+          width: 28,
+          height: 28,
+          background: 'none',
+          border: 'none',
+          borderRadius: 'var(--radius-md)',
+          color: 'var(--text-muted)',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transition: 'all 0.15s',
+          flexShrink: 0,
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = 'var(--bg-hover)'
+          e.currentTarget.style.color = 'var(--text-secondary)'
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = 'none'
+          e.currentTarget.style.color = 'var(--text-muted)'
+        }}
+      >
+        {sidebarOpen ? <PanelLeftOpen size={14} strokeWidth={1.5} /> : <PanelLeftClose size={14} strokeWidth={1.5} />}
+      </button>
+
       <AppMenu />
 
       <div
@@ -40,11 +70,7 @@ export function TitleBar() {
           padding: '0 6px',
         }}
       >
-        <img
-          src={spartaIcon}
-          alt="Sparta Agent"
-          style={{ width: 18, height: 18, borderRadius: 4 }}
-        />
+        <SpartaIcon size={18} />
         <span
           style={{
             fontSize: 12,
