@@ -1,64 +1,81 @@
-import { useRef, useCallback } from 'react'
+import { useCallback, useRef, useEffect } from 'react'
 import { useUIStore } from '@/stores/ui.store'
 
-const MIN_W = 200
-const MAX_W = 420
-const SNAP_THRESHOLD = 160
+export function SidebarResizeHandle() {
+  const { setSidebarWidth, sidebarOpen } = useUIStore()
+  const isDragging = useRef(false)
+  const handleRef = useRef<HTMLDivElement>(null)
 
-interface SidebarResizeHandleProps {
-  isCollapsed: boolean
-  onDragChange: (dragging: boolean) => void
-}
-
-export function SidebarResizeHandle({ isCollapsed, onDragChange }: SidebarResizeHandleProps) {
-  const dragging = useRef(false)
-  const { setSidebarWidth } = useUIStore()
-
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+  const onMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
-    dragging.current = true
-    onDragChange(true)
+    e.stopPropagation()
+    isDragging.current = true
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+    document.body.classList.add('is-dragging-sidebar')
+  }, [])
 
-    const handleMouseMove = (ev: MouseEvent) => {
-      if (!dragging.current) return
-      const newWidth = Math.round(ev.clientX)
-      if (newWidth < SNAP_THRESHOLD) {
-        return
-      }
-      setSidebarWidth(Math.min(MAX_W, Math.max(MIN_W, newWidth)))
+  useEffect(() => {
+    const onMouseMove = (e: MouseEvent) => {
+      if (!isDragging.current) return
+      // x position relative to the viewport is the new sidebar width
+      const newWidth = e.clientX
+      setSidebarWidth(newWidth)
     }
 
-    const handleMouseUp = () => {
-      dragging.current = false
-      onDragChange(false)
-      document.removeEventListener('mousemove', handleMouseMove)
-      document.removeEventListener('mouseup', handleMouseUp)
+    const onMouseUp = () => {
+      if (!isDragging.current) return
+      isDragging.current = false
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+      document.body.classList.remove('is-dragging-sidebar')
     }
 
-    document.addEventListener('mousemove', handleMouseMove)
-    document.addEventListener('mouseup', handleMouseUp)
-  }, [setSidebarWidth, onDragChange])
+    window.addEventListener('mousemove', onMouseMove)
+    window.addEventListener('mouseup', onMouseUp)
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove)
+      window.removeEventListener('mouseup', onMouseUp)
+    }
+  }, [setSidebarWidth])
+
+  if (!sidebarOpen) return null
 
   return (
     <div
-      onMouseDown={isCollapsed ? undefined : handleMouseDown}
+      ref={handleRef}
+      onMouseDown={onMouseDown}
       style={{
         position: 'absolute',
         top: 0,
-        right: 0,
-        bottom: 0,
+        right: -3,
         width: 6,
-        cursor: isCollapsed ? 'default' : 'col-resize',
-        zIndex: 10,
-        background: 'transparent',
-        transition: 'background 0.15s',
+        height: '100%',
+        cursor: 'col-resize',
+        zIndex: 50,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
       }}
-      onMouseEnter={(e) => {
-        if (!isCollapsed) e.currentTarget.style.background = 'var(--border-focus)'
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.background = 'transparent'
-      }}
-    />
+    >
+      {/* Visible drag indicator line */}
+      <div
+        style={{
+          width: 2,
+          height: '100%',
+          borderRadius: 1,
+          background: 'transparent',
+          transition: 'background 0.15s ease',
+        }}
+        onMouseEnter={(e) => {
+          ;(e.currentTarget as HTMLElement).style.background = 'var(--accent)'
+        }}
+        onMouseLeave={(e) => {
+          if (!isDragging.current) {
+            ;(e.currentTarget as HTMLElement).style.background = 'transparent'
+          }
+        }}
+      />
+    </div>
   )
 }

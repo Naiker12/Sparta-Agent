@@ -1,119 +1,126 @@
 import { useState } from 'react'
-import { MoreVertical, Pin, Share2, Trash2 } from 'lucide-react'
+import { MoreVertical, Pin, Pencil, Trash2, Share2, MessageSquare } from 'lucide-react'
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
-} from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { cn } from '@/lib/utils'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
 import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog'
 import { useChatStore } from '@/stores/chat.store'
-import { cn } from '@/lib/utils'
+import { useUIStore } from '@/stores/ui.store'
 import type { Session } from '@/types'
 
 interface SessionItemProps {
   session: Session
-  variant?: 'default' | 'compact'
 }
 
-function getSessionDefaultTitle(session: Session): string {
-  return session.title || `Sesión ${new Date(session.createdAt).toLocaleString('es', {
-    day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
-  })}`
-}
+export function SessionItem({ session }: SessionItemProps) {
+  const { activeSessionId, switchSession, pinSession, deleteSession, renameSession } = useChatStore()
+  const { setMainView } = useUIStore()
+  const [menuOpen, setMenuOpen]       = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [shareOpen, setShareOpen]     = useState(false)
 
-export function SessionItem({ session, variant = 'default' }: SessionItemProps) {
-  const { activeSessionId, pinSession, deleteSession, switchSession } = useChatStore()
-  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
-  const [shareOpen, setShareOpen] = useState(false)
+  const isActive = session.id === activeSessionId
+  const title    = session.title || 'Nueva conversación'
 
-  const active = session.id === activeSessionId
-  const title = getSessionDefaultTitle(session)
+  // Relative time helper
+  const date = new Date(session.updatedAt ?? session.createdAt)
+  const getRelativeTime = () => {
+    const now = Date.now()
+    const diff = now - date.getTime()
+    const mins = Math.floor(diff / 60000)
+    if (mins < 1) return 'ahora'
+    if (mins < 60) return `${mins}m`
+    const hrs = Math.floor(mins / 60)
+    if (hrs < 24) return `${hrs}h`
+    const days = Math.floor(hrs / 24)
+    if (days < 30) return `${days}d`
+    const months = Math.floor(days / 30)
+    return `${months}mes`
+  }
+  const relTime = getRelativeTime()
 
   return (
-    <div
-      className={cn(
-        'group flex items-center gap-1.5 rounded-md cursor-pointer select-none transition-all duration-100',
-        variant === 'compact' ? 'px-3 py-1 text-xs' : 'px-3 py-1.5 text-xs',
-      )}
-      style={{
-        background: active ? 'var(--bg-active)' : 'transparent',
-        borderLeft: active ? '2px solid var(--accent)' : '2px solid transparent',
-        color: active ? 'var(--text-primary)' : 'var(--text-secondary)',
-        fontFamily: 'var(--font-ui)',
-      }}
-      onMouseEnter={(e) => {
-        if (!active) e.currentTarget.style.background = 'var(--bg-hover)'
-      }}
-      onMouseLeave={(e) => {
-        if (!active) e.currentTarget.style.background = 'transparent'
-      }}
-    >
-      <span
-        style={{
-          color: session.pinned ? 'var(--accent)' : active ? 'var(--accent)' : 'var(--text-muted)',
-          fontSize: 11,
-        }}
+    <>
+      <div
+        className={cn('session-item-card', isActive && 'active')}
+        onClick={() => { switchSession(session.id); setMainView({ type: 'chat', sessionId: session.id }) }}
       >
-        {session.pinned ? '\uD83D\uDCCC' : active ? '\u203A' : '\u00B7'}
-      </span>
+        {/* Icon */}
+        <MessageSquare size={14} className="session-icon" />
 
-      <button
-        className="flex-1 text-left truncate"
-        style={{
-          color: 'inherit',
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          fontFamily: 'inherit',
-          fontSize: 'inherit',
-        }}
-        onClick={() => switchSession(session.id)}
-      >
-        {title}
-      </button>
+        {/* Title — single line */}
+        <span className="session-title">{title}</span>
 
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          aria-label="Acciones de sesión"
-          className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md hover:bg-[var(--bg-active)] shrink-0"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'none',
-            border: 'none',
-            color: 'var(--text-muted)',
-            cursor: 'pointer',
-          }}
-        >
-          <MoreVertical size={variant === 'compact' ? 11 : 12} strokeWidth={1.5} />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" sideOffset={4}>
-          <DropdownMenuItem onClick={() => pinSession(session.id)}>
-            <Pin size={13} />
-            {session.pinned ? 'Quitar de fijados' : 'Fijar'}
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setShareOpen(true)}>
-            <Share2 size={13} />
-            Compartir
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem variant="destructive" onClick={() => setConfirmDeleteOpen(true)}>
-            <Trash2 size={13} />
-            Eliminar
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+        {/* Hover actions: date badge + 3-dot menu */}
+        <div className={cn('session-hover-actions', menuOpen && 'force-visible')}>
+          <span className="session-date-badge">{relTime}</span>
+
+          {/* Context menu trigger - nested inside the card! */}
+          <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+            <DropdownMenuTrigger
+              onClick={e => {
+                e.stopPropagation() // Prevent switching session when clicking menu trigger
+              }}
+              className={cn('session-menu-trigger', menuOpen && 'open')}
+            >
+              <MoreVertical size={14} />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" sideOffset={4} className="w-44">
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation()
+                  pinSession(session.id)
+                  setMenuOpen(false)
+                }}
+              >
+                <Pin size={13} className="flex-shrink-0" />
+                {session.pinned ? 'Quitar fijado' : 'Fijar'}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setMenuOpen(false)
+                  const next = prompt('Renombrar:', title)
+                  if (next?.trim()) renameSession(session.id, next.trim())
+                }}
+              >
+                <Pencil size={13} className="flex-shrink-0" />
+                Renombrar
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setShareOpen(true)
+                  setMenuOpen(false)
+                }}
+              >
+                <Share2 size={13} className="flex-shrink-0" />
+                Compartir
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                variant="destructive"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setConfirmOpen(true)
+                  setMenuOpen(false)
+                }}
+              >
+                <Trash2 size={13} className="flex-shrink-0" />
+                Eliminar
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
 
       <ConfirmDeleteDialog
-        open={confirmDeleteOpen}
-        onOpenChange={setConfirmDeleteOpen}
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
         itemLabel={title}
         onConfirm={() => deleteSession(session.id)}
       />
@@ -122,49 +129,25 @@ export function SessionItem({ session, variant = 'default' }: SessionItemProps) 
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>Compartir sesión</DialogTitle>
-            <DialogDescription>
-              Copia este enlace para compartir la sesión.
-            </DialogDescription>
+            <DialogDescription>Copia este enlace para compartir la sesión.</DialogDescription>
           </DialogHeader>
-          <div
-            style={{
-              display: 'flex',
-              gap: 6,
-              alignItems: 'center',
-              background: 'var(--bg-input)',
-              border: '1px solid var(--border-subtle)',
-              borderRadius: 'var(--radius-md)',
-              padding: '6px 10px',
-            }}
-          >
-            <code
-              style={{
-                flex: 1,
-                fontSize: 11,
-                color: 'var(--text-primary)',
-                fontFamily: 'var(--font-mono)',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              sparta://session/{session.id}
-            </code>
-            <Button
-              size="xs"
-              variant="ghost"
-              onClick={() => navigator.clipboard.writeText(`sparta://session/${session.id}`)}
-            >
-              Copiar
-            </Button>
+          <div style={{ padding: '0 24px 20px' }}>
+            <div className="flex items-center gap-2 rounded-lg px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)]">
+              <code className="flex-1 text-[11px] font-mono text-[var(--text-primary)] truncate">
+                sparta://session/{session.id}
+              </code>
+              <Button size="sm" variant="ghost" onClick={() => navigator.clipboard.writeText(`sparta://session/${session.id}`)}>
+                Copiar
+              </Button>
+            </div>
           </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setShareOpen(false)}>
+            <Button variant="ghost" size="sm" onClick={() => setShareOpen(false)}>
               Cerrar
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   )
 }

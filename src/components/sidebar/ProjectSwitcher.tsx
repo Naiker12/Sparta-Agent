@@ -2,95 +2,52 @@ import { useState } from 'react'
 import { ChevronDown, FolderOpen, Plus } from 'lucide-react'
 import { useProjectStore } from '@/stores/project.store'
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { ProjectDialog } from '@/components/projects/ProjectDialog'
+import { cn } from '@/lib/utils'
 
 export function ProjectSwitcher() {
   const { projects, activeProjectId, switchProject, addProject } = useProjectStore()
-  const active = projects.find((p) => p.id === activeProjectId) || projects[0]
+  const active = projects.find(p => p.id === activeProjectId) ?? projects[0]
   const [dialogOpen, setDialogOpen] = useState(false)
-
-  function handleCreate() {
-    setDialogOpen(true)
-  }
-
-  function handleCreateSubmit(name: string, description?: string) {
-    addProject(name, description)
-    setDialogOpen(false)
-  }
 
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            padding: '8px 10px',
-            margin: '0 8px',
-            background: 'var(--bg-active)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: 'var(--radius-md)',
-            color: 'var(--text-primary)',
-            fontSize: 12,
-            fontFamily: 'var(--font-ui)',
-            cursor: 'pointer',
-            transition: 'all 0.15s',
-            width: 'calc(100% - 16px)',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--border-normal)')}
-          onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--border-subtle)')}
-        >
-          <span
-            style={{
-              fontSize: 14,
-              width: 18,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            {active?.icon || '📁'}
+        <DropdownMenuTrigger className={cn(
+          'flex items-center gap-2.5 w-full rounded-lg px-3 py-2.5',
+          'text-[13px] font-semibold text-[var(--text-primary)]',
+          'bg-[var(--bg-active)] border border-[var(--border-normal)]',
+          'cursor-pointer transition-colors hover:border-[var(--border-strong)]',
+          'focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]',
+        )}>
+          <span className="text-sm leading-none flex-shrink-0">{active?.icon ?? '📁'}</span>
+          <span className="flex-1 truncate text-left text-[13px] font-medium">
+            {active?.name ?? 'Sin proyecto'}
           </span>
-          <span
-            style={{
-              flex: 1,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              textAlign: 'left',
-              fontWeight: 500,
-            }}
-          >
-            {active?.name || 'Sin proyecto'}
-          </span>
-          <ChevronDown size={12} strokeWidth={1.5} style={{ color: 'var(--text-muted)' }} />
+          <ChevronDown size={14} strokeWidth={2} className="text-[var(--text-muted)] flex-shrink-0" />
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" sideOffset={4}>
-          <DropdownMenuLabel>Proyectos</DropdownMenuLabel>
-          {projects.map((p) => (
+
+        <DropdownMenuContent align="start" sideOffset={4} className="w-48">
+          <DropdownMenuLabel className="text-xs">Proyectos</DropdownMenuLabel>
+          {projects.map(p => (
             <DropdownMenuItem
               key={p.id}
               onClick={() => switchProject(p.id)}
-              data-active={p.id === activeProjectId}
+              className="text-xs gap-2"
             >
-              <FolderOpen size={13} strokeWidth={1.5} />
-              <span style={{ flex: 1 }}>{p.name}</span>
+              <FolderOpen size={13} strokeWidth={1.5} className="flex-shrink-0" />
+              <span className="flex-1 truncate">{p.name}</span>
               {p.id === activeProjectId && (
-                <span style={{ fontSize: 10, color: 'var(--accent)' }}>●</span>
+                <span className="text-[var(--accent)] text-[10px]">●</span>
               )}
             </DropdownMenuItem>
           ))}
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleCreate}>
-            <Plus size={13} strokeWidth={1.5} />
+          <DropdownMenuItem onClick={() => setDialogOpen(true)} className="text-xs gap-2">
+            <Plus size={13} strokeWidth={1.5} className="flex-shrink-0" />
             Nuevo proyecto
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -99,7 +56,7 @@ export function ProjectSwitcher() {
       <ProjectDialog
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
-        onSubmit={handleCreateSubmit}
+        onSubmit={(name, description) => { addProject(name, description); setDialogOpen(false) }}
       />
     </>
   )
