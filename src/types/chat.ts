@@ -36,4 +36,6 @@ export interface Session {
   model: string
   messageCount: number
   agentId?: string
+  pinned?: boolean
+  archived?: boolean
 }

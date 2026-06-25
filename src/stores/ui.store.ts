@@ -28,6 +28,7 @@ interface UIState {
   sidebarWidth: number
   contextPanelOpen: boolean
   mainView: MainView
+  previousMainView: MainView | null
   sidebarExpandedSections: Record<string, boolean>
   activeSettingsTab: SettingsTab
 
@@ -35,6 +36,7 @@ interface UIState {
   setSidebarWidth: (width: number) => void
   toggleContextPanel: () => void
   setMainView: (view: MainView) => void
+  goBack: () => void
   toggleSidebarSection: (key: string) => void
   setActiveSettingsTab: (tab: SettingsTab) => void
 }
@@ -46,13 +48,21 @@ export const useUIStore = create<UIState>()(
   sidebarWidth: 260,
   contextPanelOpen: true,
   mainView: { type: 'chat' },
+  previousMainView: null,
   sidebarExpandedSections: {},
   activeSettingsTab: 'general',
 
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
   setSidebarWidth: (width) => set({ sidebarWidth: width }),
   toggleContextPanel: () => set((s) => ({ contextPanelOpen: !s.contextPanelOpen })),
-  setMainView: (view) => set({ mainView: view }),
+  setMainView: (view) => set((state) => ({
+    previousMainView: state.mainView,
+    mainView: view,
+  })),
+  goBack: () => set((state) => ({
+    mainView: state.previousMainView ?? { type: 'chat' },
+    previousMainView: null,
+  })),
   toggleSidebarSection: (key) =>
     set((s) => ({
       sidebarExpandedSections: {

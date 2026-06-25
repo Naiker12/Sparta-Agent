@@ -11,6 +11,9 @@ interface ChatState {
   createSession: (title?: string) => string
   switchSession: (id: string) => void
   deleteSession: (id: string) => void
+  pinSession: (id: string) => void
+  archiveSession: (id: string) => void
+  renameSession: (id: string, newTitle: string) => void
   deleteMessage: (sessionId: string, messageId: string) => void
   addMessage: (message: Message) => void
   updateMessage: (id: string, partial: Partial<Message>) => void
@@ -48,13 +51,35 @@ export const useChatStore = create<ChatState>()(
 
   deleteSession: (id) =>
     set((s) => {
-      const { [id]: _, ...rest } = s.messagesBySession
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { [id]: _unused, ...rest } = s.messagesBySession
       return {
         sessions: s.sessions.filter((sess) => sess.id !== id),
         activeSessionId: s.activeSessionId === id ? null : s.activeSessionId,
         messagesBySession: rest,
       }
     }),
+
+  pinSession: (id) =>
+    set((s) => ({
+      sessions: s.sessions.map((sess) =>
+        sess.id === id ? { ...sess, pinned: !sess.pinned } : sess
+      ),
+    })),
+
+  archiveSession: (id) =>
+    set((s) => ({
+      sessions: s.sessions.map((sess) =>
+        sess.id === id ? { ...sess, archived: !sess.archived } : sess
+      ),
+    })),
+
+  renameSession: (id, newTitle) =>
+    set((s) => ({
+      sessions: s.sessions.map((sess) =>
+        sess.id === id ? { ...sess, title: newTitle } : sess
+      ),
+    })),
 
   addMessage: (message) =>
     set((s) => {

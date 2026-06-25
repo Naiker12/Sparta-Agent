@@ -7,7 +7,11 @@ interface SettingsStore {
   input: string
   activeModel: string
   memoryEnabled: boolean
+  webSearchEnabled: boolean
+  reasoningEnabled: boolean
+  sessionMode: 'chat' | 'agent'
   apiKeys: Record<string, string>
+  language: 'es' | 'en'
 
   openSettings: () => void
   closeSettings: () => void
@@ -16,6 +20,10 @@ interface SettingsStore {
   setDefaultModel: (model: string) => void
   setApiKey: (provider: string, key: string) => void
   toggleMemory: () => void
+  toggleWebSearch: () => void
+  toggleReasoning: () => void
+  setSessionMode: (mode: 'chat' | 'agent') => void
+  setLanguage: (lang: 'es' | 'en') => void
 }
 
 export const useSettingsStore = create<SettingsStore>()(
@@ -26,7 +34,11 @@ export const useSettingsStore = create<SettingsStore>()(
   input: '',
   activeModel: 'claude-sonnet-4-6',
   memoryEnabled: true,
+  webSearchEnabled: false,
+  reasoningEnabled: true,
+  sessionMode: 'chat',
   apiKeys: {},
+  language: 'es',
 
   openSettings: () => set({ settingsOpen: true }),
   closeSettings: () => set({ settingsOpen: false }),
@@ -41,6 +53,10 @@ export const useSettingsStore = create<SettingsStore>()(
   setApiKey: (provider, key) =>
     set((s) => ({ apiKeys: { ...s.apiKeys, [provider]: key } })),
   toggleMemory: () => set((s) => ({ memoryEnabled: !s.memoryEnabled })),
+  toggleWebSearch: () => set((s) => ({ webSearchEnabled: !s.webSearchEnabled })),
+  toggleReasoning: () => set((s) => ({ reasoningEnabled: !s.reasoningEnabled })),
+  setSessionMode: (mode) => set({ sessionMode: mode }),
+  setLanguage: (lang) => set({ language: lang }),
 }),
     {
       name: 'sparta-settings',
@@ -48,6 +64,10 @@ export const useSettingsStore = create<SettingsStore>()(
         defaultModel: state.defaultModel,
         activeModel: state.activeModel,
         memoryEnabled: state.memoryEnabled,
+        webSearchEnabled: state.webSearchEnabled,
+        reasoningEnabled: state.reasoningEnabled,
+        sessionMode: state.sessionMode,
+        language: state.language,
         apiKeys: state.apiKeys,
       }),
     }

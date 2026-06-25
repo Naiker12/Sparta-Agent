@@ -5,9 +5,12 @@ import { useEventBus } from './event-bus.store'
 
 interface SkillState {
   skills: Skill[]
+  activeSkillIds: string[]
   addSkill: (name: string, description: string, prompt: string, tags?: string[]) => string
   updateSkill: (id: string, partial: Partial<Skill>) => void
   deleteSkill: (id: string) => void
+  toggleActive: (id: string) => void
+  isActive: (id: string) => boolean
 }
 
 const defaultSkills: Skill[] = [
@@ -33,8 +36,9 @@ const defaultSkills: Skill[] = [
 
 export const useSkillStore = create<SkillState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
   skills: defaultSkills,
+  activeSkillIds: [],
 
   addSkill: (name, description, prompt, tags) => {
     const id = crypto.randomUUID()
@@ -52,9 +56,22 @@ export const useSkillStore = create<SkillState>()(
   },
 
   deleteSkill: (id) => {
-    set((s) => ({ skills: s.skills.filter((sk) => sk.id !== id) }))
+    set((s) => ({
+      skills: s.skills.filter((sk) => sk.id !== id),
+      activeSkillIds: s.activeSkillIds.filter((aid) => aid !== id),
+    }))
     useEventBus.getState().dispatch({ type: 'skill:deleted', skillId: id, timestamp: Date.now() })
   },
+
+  toggleActive: (id) => {
+    set((s) => ({
+      activeSkillIds: s.activeSkillIds.includes(id)
+        ? s.activeSkillIds.filter((aid) => aid !== id)
+        : [...s.activeSkillIds, id],
+    }))
+  },
+
+  isActive: (id) => get().activeSkillIds.includes(id),
 }),
     { name: 'sparta-skills' }
   )

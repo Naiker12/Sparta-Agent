@@ -1,3 +1,5 @@
+export type SkillCategory = 'Coding' | 'Research' | 'Writing' | 'Analysis' | 'Automation'
+
 export interface Skill {
   id: string
   name: string
@@ -6,4 +8,18 @@ export interface Skill {
   icon?: string
   tags?: string[]
   createdAt: number
+}
+
+export interface DownloadableSkill {
+  id: string
+  name: string
+  description: string
+  version: string
+  author: string
+  icon: string
+  tags: string[]
+  category: SkillCategory
+  prompt: string
+  featured: boolean
+  installed?: boolean
 }
