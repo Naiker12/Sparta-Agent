@@ -37,15 +37,15 @@ export function ProjectDialog({ open, onClose, onSubmit }: ProjectDialogProps) {
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="sm:max-w-md">
-        <form onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle>Nuevo proyecto</DialogTitle>
-            <DialogDescription>
-              Los proyectos agrupan sesiones, memoria y servidores MCP.
-            </DialogDescription>
-          </DialogHeader>
+        <DialogHeader>
+          <DialogTitle>Nuevo proyecto</DialogTitle>
+          <DialogDescription>
+            Los proyectos agrupan sesiones, memoria y servidores MCP.
+          </DialogDescription>
+        </DialogHeader>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 }}>
+        <form id="project-form" onSubmit={handleSubmit}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div>
               <label
                 style={{
@@ -85,16 +85,16 @@ export function ProjectDialog({ open, onClose, onSubmit }: ProjectDialogProps) {
               />
             </div>
           </div>
-
-          <DialogFooter style={{ marginTop: 16 }}>
-            <Button type="button" variant="ghost" onClick={onClose}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={!name.trim()}>
-              Crear proyecto
-            </Button>
-          </DialogFooter>
         </form>
+
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button form="project-form" type="submit" disabled={!name.trim()}>
+            Crear proyecto
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )

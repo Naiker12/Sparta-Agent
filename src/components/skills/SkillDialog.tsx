@@ -48,15 +48,15 @@ export function SkillDialog({ open, onClose, onSubmit, onDelete, initial }: Skil
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="sm:max-w-lg">
-        <form onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle>{initial ? 'Editar skill' : 'Nueva skill'}</DialogTitle>
-            <DialogDescription>
-              Una skill es un prompt reutilizable que un agente puede invocar.
-            </DialogDescription>
-          </DialogHeader>
+        <DialogHeader>
+          <DialogTitle>{initial ? 'Editar skill' : 'Nueva skill'}</DialogTitle>
+          <DialogDescription>
+            Una skill es un prompt reutilizable que un agente puede invocar.
+          </DialogDescription>
+        </DialogHeader>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 }}>
+        <form id="skill-form" onSubmit={handleSubmit}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <Field label="Nombre">
               <Input
                 autoFocus
@@ -88,26 +88,25 @@ export function SkillDialog({ open, onClose, onSubmit, onDelete, initial }: Skil
               />
             </Field>
           </div>
-
-          <DialogFooter style={{ marginTop: 16 }}>
-            {onDelete && (
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={onDelete}
-                style={{ marginRight: 'auto' }}
-              >
-                Eliminar
-              </Button>
-            )}
-            <Button type="button" variant="ghost" onClick={onClose}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={!name.trim() || !prompt.trim()}>
-              {initial ? 'Guardar' : 'Crear skill'}
-            </Button>
-          </DialogFooter>
         </form>
+
+        <DialogFooter>
+          {onDelete && (
+            <Button
+              variant="destructive"
+              onClick={onDelete}
+              style={{ marginRight: 'auto' }}
+            >
+              Eliminar
+            </Button>
+          )}
+          <Button variant="ghost" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button form="skill-form" type="submit" disabled={!name.trim() || !prompt.trim()}>
+            {initial ? 'Guardar' : 'Crear skill'}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )
