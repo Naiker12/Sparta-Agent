@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+@theme inline {
+  --animate-fadeUp: fadeUp 0.4s ease forwards;
+  --animate-bounce: bounce 1.2s ease infinite;
+  --animate-scaleIn: scaleIn 0.18s ease forwards;
+  --animate-slideIn: slideIn 0.2s ease forwards;
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); opacity: 0.4; }
+    50% { transform: translateY(-3px); opacity: 1; }
+  }
+
+  @keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.96); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-4px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+}
+
+.message-bubble-group {
+  position: relative;
+}
+.message-bubble-group .message-actions-btn {
+  opacity: 0;
+}
+.message-bubble-group:hover .message-actions-btn {
+  opacity: 1;
+}
+
+.message-row .message-actions-slot .message-actions-trigger {
+  opacity: 0;
+}
+.message-row:hover .message-actions-slot .message-actions-trigger {
+  opacity: 1;
+}
+.message-row .message-actions-slot .message-actions-trigger[data-state="open"] {
+  opacity: 1;
+}
