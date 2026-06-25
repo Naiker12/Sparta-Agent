@@ -1,6 +1,13 @@
 import { Bot, Clock } from 'lucide-react'
+import { useSettingsStore } from '@/stores/settings.store'
+import { useProviderStore } from '@/stores/provider.store'
+import { BrandIcon } from '@/components/ui/BrandIcon'
 
 export function StatusBar() {
+  const activeModel = useSettingsStore((s) => s.activeModel)
+  const providers = useProviderStore((s) => s.providers)
+  const activeProvider = providers.find((p) => p.defaultModel === activeModel)
+
   return (
     <div style={{
       height: 'var(--statusbar-h)',
@@ -25,7 +32,8 @@ export function StatusBar() {
       <div style={{ flex: 1 }} />
 
       <SBItem style={{ borderLeft: '1px solid var(--border-subtle)' }}>
-        claude-sonnet-4-6
+        {activeProvider ? <BrandIcon vendor={activeProvider.vendor} size={14} /> : null}
+        {activeModel}
       </SBItem>
       <SBItem>0 tok</SBItem>
       <SBItem style={{ color: 'var(--text-muted)' }}>v0.1.0</SBItem>
