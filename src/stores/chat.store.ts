@@ -33,7 +33,7 @@ export const useChatStore = create<ChatState>()(
     const id = crypto.randomUUID()
     const session: Session = {
       id,
-      title: title || `Sesión ${new Date().toLocaleDateString()}`,
+      title: title || 'Nueva conversación',
       createdAt: Date.now(),
       updatedAt: Date.now(),
       model: 'claude-sonnet-4-6',
@@ -84,6 +84,7 @@ export const useChatStore = create<ChatState>()(
   addMessage: (message) =>
     set((s) => {
       const sessionMessages = s.messagesBySession[message.sessionId] || []
+      const isFirstMessage = sessionMessages.length === 0
       return {
         messagesBySession: {
           ...s.messagesBySession,
@@ -91,7 +92,14 @@ export const useChatStore = create<ChatState>()(
         },
         sessions: s.sessions.map((sess) =>
           sess.id === message.sessionId
-            ? { ...sess, messageCount: sess.messageCount + 1, updatedAt: Date.now() }
+            ? {
+                ...sess,
+                title: isFirstMessage && message.role === 'user' && sess.title === 'Nueva conversación'
+                  ? message.content.slice(0, 45).trimEnd() + (message.content.length > 45 ? ' …' : '')
+                  : sess.title,
+                messageCount: sess.messageCount + 1,
+                updatedAt: Date.now(),
+              }
             : sess
         ),
       }

@@ -45,7 +45,8 @@ export const useUIStore = create<UIState>()(
   persist(
     (set) => ({
   sidebarOpen: true,
-  sidebarWidth: 260,
+  sidebarWidth: 280,
+  setSidebarWidth: (width) => set({ sidebarWidth: Math.min(480, Math.max(220, width)) }),
   contextPanelOpen: true,
   mainView: { type: 'chat' },
   previousMainView: null,
@@ -53,7 +54,6 @@ export const useUIStore = create<UIState>()(
   activeSettingsTab: 'general',
 
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
-  setSidebarWidth: (width) => set({ sidebarWidth: width }),
   toggleContextPanel: () => set((s) => ({ contextPanelOpen: !s.contextPanelOpen })),
   setMainView: (view) => set((state) => ({
     previousMainView: state.mainView,
