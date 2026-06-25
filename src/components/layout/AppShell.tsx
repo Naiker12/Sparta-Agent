@@ -1,6 +1,8 @@
 import { useEffect, useRef } from 'react'
 import { TitleBar } from './TitleBar'
-import { Sidebar } from '@/components/sidebar/Sidebar'
+import { SidebarProvider } from '@/components/ui/sidebar'
+import { AppSidebar } from '@/components/sidebar/AppSidebar'
+import { SidebarResizeHandle } from '@/components/sidebar/SidebarResizeHandle'
 import { StatusBar } from './StatusBar'
 import { ChatArea } from '../chat/ChatArea'
 import { SettingsDialog } from '../settings/SettingsDialog'
@@ -29,17 +31,10 @@ const PANELS: Record<string, React.ReactNode> = {
 export function AppShell() {
   useEffect(() => {
     initTheme()
-    function onKey(e: KeyboardEvent) {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
-        e.preventDefault()
-        useUIStore.getState().toggleSidebar()
-      }
-    }
-    document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
   }, [])
+
   const { settingsOpen } = useSettingsStore()
-  const { mainView } = useUIStore()
+  const { mainView, sidebarOpen, sidebarWidth } = useUIStore()
   const prevType = useRef(mainView.type)
   const direction = useRef(1)
 
@@ -50,26 +45,26 @@ export function AppShell() {
   }
 
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100vh',
-      background: 'var(--bg-base)',
-      overflow: 'hidden',
-    }}>
+    <div className="flex flex-col h-screen bg-[var(--bg-base)] overflow-hidden">
       <TitleBar />
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-        <Sidebar />
-        <div
-          key={mainView.type}
-          style={{
-            flex: 1,
-            display: 'flex',
-            animation: 'viewFadeIn 0.18s ease-out',
-          }}
+      <div className="relative flex flex-1 min-h-0 overflow-hidden">
+        <SidebarProvider
+          open={sidebarOpen}
+          onOpenChange={(open) => useUIStore.setState({ sidebarOpen: open })}
+          style={{ '--sidebar-width': `${sidebarWidth}px` } as React.CSSProperties}
         >
-          {PANELS[mainView.type]}
-        </div>
+          <div className="relative" style={{ flexShrink: 0 }}>
+            <AppSidebar />
+            <SidebarResizeHandle />
+          </div>
+          <div
+            key={mainView.type}
+            className="flex flex-1 min-h-0"
+            style={{ animation: 'viewFadeIn 0.18s ease-out' }}
+          >
+            {PANELS[mainView.type]}
+          </div>
+        </SidebarProvider>
       </div>
       <StatusBar />
       {settingsOpen && <SettingsDialog />}
