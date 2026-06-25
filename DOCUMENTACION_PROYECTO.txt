@@ -1,0 +1,607 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                     SPARTA AGENT — DOCUMENTACIÓN DEL PROYECTO              ║
+║                     Versión: 0.0.0                                        ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+================================================================================
+ 1. ¿QUÉ ES SPARTA AGENT?
+================================================================================
+
+Sparta Agent es una aplicación de escritorio para orquestar agentes de IA,
+construida con React + TypeScript + Vite + Electron. Proporciona una interfaz
+de chat para interactuar con múltiples agentes de IA (codificación,
+investigación, automatización, gestión de proyectos, orquestación MCP).
+
+Soporta el Protocolo de Contexto de Modelo (MCP) para conectar servidores de
+herramientas externas, tiene un sistema multi-tema con 9 temas visuales, y
+administra conversaciones en sesiones. Es como un "IDE de agentes de IA"
+local-first.
+
+Actualmente está en etapa temprana (v0.0.0) — muchas características son
+placeholders. No tiene backend ni integración real con modelos de IA.
+
+================================================================================
+ 2. STACK TECNOLÓGICO
+================================================================================
+
+  Capa              Tecnología
+  ─────────────────────────────────────────────────────────────
+  UI Framework      React 18 + TypeScript
+  Bundler           Vite 5
+  Desktop Shell     Electron 30
+  State Management  Zustand 5 (con persist middleware)
+  UI Library        shadcn/ui (@base-ui/react, class-variance-authority)
+  Estilos           Tailwind CSS v4
+  Fuentes           Inter (UI), Space Grotesk (Display), Geist Variable (Mono)
+  Iconos            Lucide React
+  Animaciones       Framer Motion 12
+  Editor Código     Monaco Editor (@monaco-editor/react)
+  Terminal          xterm.js (@xterm/xterm + @xterm/addon-fit)
+  Async/Datos       TanStack React Query 5
+  Package Manager   pnpm
+  Builder           electron-builder 24
+
+================================================================================
+ 3. ESTRUCTURA DEL PROYECTO (Árbol Completo)
+================================================================================
+
+D:\sparta-agent\
+│
+├── .eslintrc.cjs                  # Config ESLint
+├── .gitignore                     # Reglas git ignore
+├── components.json                # Registro shadcn/ui
+├── electron-builder.json5         # Config empaquetado Electron
+├── index.html                     # Entry point HTML de Vite
+├── package.json                   # Manifiesto del proyecto
+├── pnpm-lock.yaml                 # Lock file
+├── pnpm-workspace.yaml            # Config workspace pnpm
+├── tsconfig.json                  # TypeScript config (src + electron)
+├── tsconfig.node.json             # TypeScript config (vite.config.ts)
+├── vite.config.ts                 # Config bundler Vite
+├── README.md                      # Readme (template Vite default)
+│
+├── electron\                      # PROCESO PRINCIPAL DE ELECTRON
+│   ├── electron-env.d.ts          # Tipos para APIs de Electron
+│   ├── main.ts                    # Ventana principal, IPC handlers
+│   └── preload.ts                 # Preload, contextBridge API
+│
+├── public\                        # ASSETS ESTÁTICOS
+│   ├── electron-vite.animate.svg
+│   ├── favicon-96x96.png
+│   ├── favicon.ico
+│   ├── favicon.svg
+│   ├── site.webmanifest
+│   ├── sparta-escritorio.png
+│   ├── sparta-icon.png
+│   ├── web-app-manifest-192x192.png
+│   ├── web-app-manifest-512x512.png
+│   ├── blanco\                    # Iconos variante blanca
+│   └── negro\                     # Iconos variante negra
+│
+├── src\                           # CÓDIGO FUENTE DE LA APLICACIÓN
+│   │
+│   ├── main.tsx                   # Entry point React, renderiza <AppShell>
+│   ├── App.tsx                    # Paneles placeholder: Editor, Terminal, Agents
+│   ├── vite-env.d.ts              # Referencia Vite client types
+│   ├── index.css                  # Tailwind v4 import + animaciones custom
+│   │
+│   ├── assets\
+│   │   └── react.svg              # Logo React (default Vite)
+│   │
+│   ├── lib\
+│   │   └── utils.ts               # Utilidad cn() (clsx + tailwind-merge)
+│   │
+│   ├── types\                     # SISTEMA DE TIPOS
+│   │   ├── index.ts               # Re-exporta todos los tipos
+│   │   ├── agent.ts               # Agent, Task, TaskStep interfaces
+│   │   ├── chat.ts                # Message, ToolCall, PipelineStep, Session
+│   │   ├── events.ts              # SpartaEvent + 18 interfaces de eventos
+│   │   └── mcp.ts                 # MCPServerConfig, MCPServer, MCPTool
+│   │
+│   ├── stores\                    # ESTADO GLOBAL (Zustand)
+│   │   ├── agent.store.ts         # CRUD agentes + 5 agentes por defecto
+│   │   ├── chat.store.ts          # Sesiones + mensajes
+│   │   ├── event-bus.store.ts     # Bus de eventos en memoria
+│   │   ├── mcp.store.ts           # Registro servidores MCP + 3 por defecto
+│   │   ├── settings.store.ts      # UI settings (tab, modelo, input, API keys)
+│   │   ├── theme.store.ts         # Estado del tema (persistido localStorage)
+│   │   └── ui.store.ts            # Layout (sidebar, paneles)
+│   │
+│   ├── hooks\                     # REACT HOOKS
+│   │   ├── useAgent.ts            # Agente activo + helpers de estado
+│   │   ├── useChatSession.ts      # Sesiones, mensajes, streaming
+│   │   ├── useEventBus.ts         # Suscripción a eventos SpartaEvent
+│   │   ├── useMCP.ts              # Lista servidores MCP + gestión
+│   │   ├── useSettings.ts         # Pass-through al settings store
+│   │   └── useTheme.ts            # Tema actual + setter
+│   │
+│   ├── styles\                    # ESTILOS
+│   │   ├── globals.css            # CSS maestro: design tokens, fuentes, temas
+│   │   └── themes\                # Archivos CSS por tema
+│   │       ├── amber.css
+│   │       ├── catppuccin.css
+│   │       ├── dracula.css
+│   │       ├── emerald.css
+│   │       ├── light.css
+│   │       ├── midnight.css       # (default)
+│   │       ├── nord.css
+│   │       ├── obsidian.css
+│   │       └── rose.css
+│   │
+│   └── components\                # COMPONENTES REACT
+│       │
+│       ├── layout\                # LAYOUT
+│       │   ├── AppShell.tsx       # Shell raíz: TitleBar + Sidebar + Panel + StatusBar
+│       │   ├── TitleBar.tsx       # Barra superior con tabs (Chat/Editor/Terminal/Agents)
+│       │   ├── Sidebar.tsx        # Lista de sesiones, búsqueda, botón nueva sesión
+│       │   └── StatusBar.tsx      # Barra inferior: gateway, modelo, tokens, versión
+│       │
+│       ├── chat\                  # CHAT
+│       │   ├── ChatArea.tsx       # Panel de chat: HeroScreen o MessageList
+│       │   ├── HeroScreen.tsx     # Pantalla de inicio con branding + acciones rápidas
+│       │   ├── MessageBubble.tsx  # Burbuja de mensaje individual
+│       │   ├── MessageList.tsx    # Lista scrollable de MessageBubble
+│       │   └── reasoning\         # Componentes de razonamiento
+│       │       ├── index.ts       # Re-exporta componentes
+│       │       ├── ThinkingBlock.tsx    # Sección colapsable "Reasoning"
+│       │       ├── ThinkingPill.tsx     # Indicador animado "Thinking..."
+│       │       └── PipelineTrace.tsx    # Traza visual de ejecución de herramientas
+│       │
+│       ├── input\                 # INPUT
+│       │   ├── ChatInput.tsx      # Textarea principal con botones de acción
+│       │   ├── ModelPicker.tsx    # Selector de modelo (Claude, GPT, Gemini)
+│       │   └── AttachMenu.tsx     # Menú de adjuntos (File, Code, Image, URL)
+│       │
+│       ├── settings\              # CONFIGURACIÓN
+│       │   ├── SettingsDialog.tsx  # Modal de configuración (8 tabs)
+│       │   └── ThemePicker.tsx    # Grid selector de temas (9 temas)
+│       │
+│       └── ui\                    # COMPONENTES BASE shadcn/ui
+│           ├── button.tsx         # Botón con 7 variantes
+│           ├── card.tsx           # Card con Header, Title, Description, Content, Footer
+│           ├── dialog.tsx         # Modal dialog con overlay, portal, close
+│           ├── dropdown-menu.tsx  # Menú desplegable completo
+│           ├── input.tsx          # Input de texto
+│           ├── scroll-area.tsx    # Contenedor scrollable
+│           ├── separator.tsx      # Separador horizontal/vertical
+│           ├── textarea.tsx       # Textarea estilizado
+│           └── tooltip.tsx        # Tooltip con posicionamiento
+
+================================================================================
+ 4. ARQUITECTURA
+================================================================================
+
+ 4.1 Flujo de la Aplicación:
+
+  index.html
+    → src/main.tsx (React root)
+      → AppShell.tsx (shell raíz)
+        → TitleBar.tsx (navegación por tabs + botón settings)
+        → Sidebar.tsx (lista de sesiones)
+        → Panel Activo (según activeTab):
+            - ChatArea.tsx (chat)
+            - EditorPanel (placeholder)
+            - TerminalPanel (placeholder)
+            - AgentsPanel (placeholder)
+        → StatusBar.tsx (barra de estado)
+        → SettingsDialog.tsx (modal, renderizado condicional)
+
+ 4.2 Flujo de Estado:
+
+  Zustand Stores ←(subscribe)→ React Components
+       ↓
+  types/ (interfaces compartidas)
+
+ 4.3 Flujo de Datos:
+
+  - Zustand stores son la única fuente de verdad
+  - Los hooks son wrappers delgados alrededor de los stores
+  - Los componentes leen de stores directamente o mediante hooks
+  - Event bus (event-bus.store.ts) es un sistema pub/sub en memoria:
+      - Eventos de agente: agent:started, agent:completed, agent:error
+      - Eventos de thinking: thinking:started, thinking:token, thinking:completed
+      - Eventos de herramientas: tool:called, tool:result, tool:error
+      - Eventos MCP: mcp:connected, mcp:tool_discovered, mcp:disconnected
+      - Eventos streaming: stream:token, stream:completed, stream:error
+      - Otros: pipeline:step, chat:message, session:created, session:switched
+
+ 4.4 Integración Electron:
+
+  - vite-plugin-electron/simple compila:
+      electron/main.ts → dist-electron/main.js
+      electron/preload.ts → dist-electron/preload.mjs
+  - En dev: carga desde Vite dev server URL
+  - En prod: carga dist/index.html
+  - titleBarStyle: 'hiddenInset' (titlebar nativa macOS)
+  - contextIsolation: true, nodeIntegration: false
+  - Exposición via contextBridge: window.electronAPI (min/max/close),
+    window.electron (IPC genérico), window.sparta (eventos)
+
+ 4.5 Routing:
+
+  No hay router. La navegación es por estado de tab:
+    activeTab: 'chat' | 'editor' | 'terminal' | 'agents'
+
+================================================================================
+ 5. COMPONENTES — DESCRIPCIÓN DETALLADA
+================================================================================
+
+ 5.1 Layout
+
+  AppShell.tsx
+    └── Ubicación: src/components/layout/AppShell.tsx
+    └── Propósito: Shell raíz de la aplicación
+    └── Renderiza: TitleBar + (Sidebar + PanelActivo) + StatusBar
+    └── Lógica: Llama initTheme() al montar, renderiza panel según activeTab
+    └── Modal condicional: SettingsDialog
+
+  TitleBar.tsx
+    └── Ubicación: src/components/layout/TitleBar.tsx
+    └── Propósito: Titlebar estilo macOS con tabs de navegación
+    └── Tabs: Chat, Editor, Terminal, Agents
+    └── Botón de settings (engranaje)
+
+  Sidebar.tsx
+    └── Ubicación: src/components/layout/Sidebar.tsx
+    └── Propósito: Sidebar izquierdo con lista de sesiones
+    └── Subcomponentes: SidebarLabel, SessionItem, IconBtn
+    └── Funcional: Nueva sesión (Ctrl+N), lista de sesiones con scroll
+    └── Placeholder: Búsqueda, sección "Pinned"
+
+  StatusBar.tsx
+    └── Ubicación: src/components/layout/StatusBar.tsx
+    └── Propósito: Barra de estado inferior
+    └── Muestra: Gateway (verde), Agents count, Cron status, modelo, tokens, versión
+    └── Subcomponente: SBItem
+
+ 5.2 Chat
+
+  ChatArea.tsx
+    └── Ubicación: src/components/chat/ChatArea.tsx
+    └── Propósito: Orquesta la vista del panel de chat
+    └── Lógica: Si hay mensajes → MessageList + ChatInput; si no → HeroScreen + ChatInput
+
+  HeroScreen.tsx
+    └── Ubicación: src/components/chat/HeroScreen.tsx
+    └── Propósito: Pantalla de bienvenida cuando no hay conversación
+    └── Animaciones: Framer Motion
+    └── Acciones rápidas: New Chat, Coding, Research, Settings
+    └── Branding: "SPARTA AGENT" con gradiente
+
+  MessageBubble.tsx
+    └── Ubicación: src/components/chat/MessageBubble.tsx
+    └── Propósito: Renderiza un mensaje individual
+    └── User: alineado derecha, Assistant: alineado izquierda con avatar
+    └── Condicional: thinking → ThinkingBlock, toolCalls → PipelineTrace
+
+  MessageList.tsx
+    └── Ubicación: src/components/chat/MessageList.tsx
+    └── Propósito: Lista scrollable de mensajes
+    └── Auto-scroll al último mensaje
+    └── Muestra dots animados cuando isStreaming=true
+
+ 5.3 Reasoning
+
+  ThinkingBlock.tsx
+    └── Ubicación: src/components/chat/reasoning/ThinkingBlock.tsx
+    └── Propósito: Sección colapsable de razonamiento interno de la IA
+    └── Icono: sparks, Label: "Reasoning"
+    └── Estado local: expanded (useState)
+
+  ThinkingPill.tsx
+    └── Ubicación: src/components/chat/reasoning/ThinkingPill.tsx
+    └── Propósito: Indicador animado "Thinking..."
+    └── 3 dots con animación escalonada
+    └── Retorna null cuando isThinking=false
+
+  PipelineTrace.tsx
+    └── Ubicación: src/components/chat/reasoning/PipelineTrace.tsx
+    └── Propósito: Timeline visual de ejecución de herramientas
+    └── Iconos por estado: Check (done), X (error), Brain (thinking), Loader2 (running)
+    └── Animaciones: Framer Motion AnimatePresence
+    └── Formato duración: <1s en ms, >=1s en segundos
+
+ 5.4 Input
+
+  ChatInput.tsx
+    └── Ubicación: src/components/input/ChatInput.tsx
+    └── Propósito: Área de composición de mensajes
+    └── Textarea auto-redimensionable (max 120px)
+    └── Enter envía, Shift+Enter nueva línea
+    └── Botones: Attach (+), Model selector, Mic, Send
+    └── ModelPicker se renderiza condicionalmente
+
+  ModelPicker.tsx
+    └── Ubicación: src/components/input/ModelPicker.tsx
+    └── Propósito: Dropdown de selección de modelo
+    └── Modelos: claude-sonnet-4-6, claude-opus-4, claude-haiku,
+                  gpt-4o, gpt-4o-mini, gemini-2.5-pro
+    └── Animado con Framer Motion
+
+  AttachMenu.tsx
+    └── Ubicación: src/components/input/AttachMenu.tsx
+    └── Propósito: Menú de selección de tipo de adjunto
+    └── Opciones: File, Code snippet, Image, URL (placeholders)
+
+ 5.5 Settings
+
+  SettingsDialog.tsx
+    └── Ubicación: src/components/settings/SettingsDialog.tsx
+    └── Propósito: Modal de configuración completo con 8 tabs
+    └── Tabs: General, Appearance, Keybinds, Models, API Keys,
+              MCP Servers, Memory, Agents
+    └── Funcionales: General (modelo default, toggle memoria), Appearance (ThemePicker)
+    └── Placeholder: Todos los demás tabs ("coming soon")
+
+  ThemePicker.tsx
+    └── Ubicación: src/components/settings/ThemePicker.tsx
+    └── Propósito: Selector visual de temas en grid
+    └── 9 temas: Midnight, Obsidian, Emerald, Rose, Amber,
+                  Dracula, Catppuccin, Nord, Light
+    └── Grid 3 columnas con miniatura previa
+
+ 5.6 UI Primitives (shadcn/ui)
+
+  button.tsx       → Botón con 7 variantes (default, outline, secondary,
+                     ghost, destructive, link) y 8 tamaños
+  card.tsx         → Contenedor Card con Header, Title, Description,
+                     Content, Footer
+  dialog.tsx       → Modal con Overlay, Portal, Close, Header, Footer,
+                     Title, Description
+  dropdown-menu.tsx→ Menú completo con items, grupos, checkboxes,
+                     radio groups, submenús
+  input.tsx        → Input de texto estilizado
+  scroll-area.tsx  → Contenedor con scrollbar custom
+  separator.tsx    → Divisor horizontal/vertical
+  textarea.tsx     → Textarea estilizado con field-sizing
+  tooltip.tsx      → Tooltip con posicionamiento y flecha
+
+================================================================================
+ 6. SISTEMA DE ESTADOS (Zustand Stores)
+================================================================================
+
+  agent.store.ts
+    └── Estado: agents[], activeAgentId, tasks{}
+    └── Agentes default: Coding Agent, Research Agent, Automation Agent,
+                         Project Agent, MCP Agent
+    └── Acciones: registerAgent, setActiveAgent, updateAgentStatus,
+                  addTask, updateTask
+
+  chat.store.ts
+    └── Estado: sessions[], activeSessionId, messagesBySession{}, isStreaming
+    └── Acciones: createSession (retorna UUID), switchSession, deleteSession,
+                  addMessage, updateMessage, setStreaming, getActiveMessages
+
+  event-bus.store.ts
+    └── Estado: events[] (últimos 500), listeners (Set)
+    └── Acciones: dispatch (notifica listeners), subscribe (retorna unsubscribe), clear
+
+  mcp.store.ts
+    └── Estado: servers[] (3 servidores default)
+    └── Servidores default: Filesystem (conectado, 3 tools), Git (conectado, 3 tools),
+                            SQLite (desconectado)
+    └── Acciones: addServer, removeServer, setConnected, addTool,
+                  removeTool, toggleServer
+
+  settings.store.ts
+    └── Estado: activeTab, settingsOpen, defaultModel, input, activeModel,
+                memoryEnabled, apiKeys{}
+    └── Acciones: setActiveTab, openSettings, closeSettings, setInput,
+                  sendMessage, setDefaultModel, setApiKey, toggleMemory
+
+  theme.store.ts
+    └── Estado: theme (persistido en localStorage key 'sparta-theme')
+    └── Acciones: setTheme (actualiza DOM data-theme + store)
+    └── Helper: initTheme() — lee localStorage y aplica tema al boot
+
+  ui.store.ts
+    └── Estado: sidebarOpen, sidebarView, contextPanelOpen, mainPanel, activeTab
+    └── Acciones: toggleSidebar, setSidebarView, toggleContextPanel,
+                  setMainPanel, setActiveTab
+
+================================================================================
+ 7. SISTEMA DE TIPOS
+================================================================================
+
+  types/agent.ts
+    ── AgentType: 'coding' | 'research' | 'automation' | 'project' | 'mcp'
+    ── AgentStatus: 'idle' | 'running' | 'thinking' | 'error' | 'completed'
+    ── Agent: { id, name, type, status, model, createdAt, tools[], description }
+    ── Task: { id, agentId, description, status, steps[], createdAt, completedAt? }
+    ── TaskStep: { id, name, status, tool?, durationMs?, error? }
+
+  types/chat.ts
+    ── MessageRole: 'user' | 'assistant' | 'system'
+    ── Message: { id, role, content, timestamp, sessionId, agentId?,
+                  thinking?, toolCalls?, pipelineSteps? }
+    ── ToolCall: { id, toolName, input, output?, status, durationMs?, error? }
+    ── PipelineStep: { name, status, timestamp }
+    ── Session: { id, title, createdAt, updatedAt, model, messageCount, agentId? }
+
+  types/events.ts
+    ── 18 eventos tipo unión SpartaEvent:
+        agent:started / agent:completed / agent:error
+        thinking:started / thinking:token / thinking:completed
+        tool:called / tool:result / tool:error
+        mcp:connected / mcp:tool_discovered / mcp:disconnected
+        stream:token / stream:completed / stream:error
+        pipeline:step / chat:message / session:created / session:switched
+
+  types/mcp.ts
+    ── MCPServerType: 'stdio' | 'http'
+    ── MCPServerConfig: { id, name, type, command?, args?, url?, enabled }
+    ── MCPServer: { id, name, type, connected, tools[], config }
+    ── MCPTool: { name, description, inputSchema, serverId }
+
+================================================================================
+ 8. SISTEMA DE TEMAS (Design Tokens)
+================================================================================
+
+  9 Temas: midnight (default), obsidian, emerald, rose, amber, dracula,
+           catppuccin, nord, light
+
+  Aplicado via atributo data-theme en <html>. Cada tema sobreescribe las
+  variables CSS en :root.
+
+  Variables (definidas en globals.css):
+
+    Backgrounds:
+      --bg-base       # Fondo principal
+      --bg-sidebar    # Fondo sidebar
+      --bg-surface    # Superficie de componentes
+      --bg-elevated   # Elementos elevados (modals)
+      --bg-hover      # Hover state
+      --bg-active     # Active state
+      --bg-input      # Fondo inputs
+      --bg-modal      # Fondo modals
+
+    Texto:
+      --text-display  # Texto display/títulos grandes
+      --text-primary  # Texto principal
+      --text-secondary # Texto secundario
+      --text-muted    # Texto muted
+
+    Acento:
+      --accent        # Color acento principal
+      --accent-dim    # Acento atenuado
+      --accent-muted  # Acento muted
+      --accent-glow   # Glow del acento
+
+    Bordes:
+      --border-subtle # Borde sutil
+      --border-normal # Borde normal
+      --border-strong # Borde fuerte
+      --border-focus  # Borde de focus
+
+    Estados:
+      --status-ok     # Verde (ok/success)
+      --status-warn   # Ámbar (warning)
+      --status-err    # Rojo (error)
+      --status-think  # Púrpura (thinking)
+
+    Radios:
+      --radius-sm: 3px
+      --radius-md: 6px
+      --radius-lg: 10px
+      --radius-xl: 14px
+
+    Fuentes:
+      --font-ui: Inter
+      --font-display: Space Grotesk
+      --font-mono: Geist Variable
+
+    Tamaños:
+      --titlebar-h: 38px
+      --sidebar-w: 176px
+      --statusbar-h: 24px
+
+================================================================================
+ 9. DEPENDENCIAS PRINCIPALES
+================================================================================
+
+  Producción (34):
+    react ^18.2.0, react-dom ^18.2.0
+    @base-ui/react ^1.6.0
+    @monaco-editor/react ^4.7.0
+    @tanstack/react-query ^5.101.1
+    @tailwindcss/vite ^4.3.1
+    @xterm/xterm ^6.0.0, @xterm/addon-fit ^0.11.0
+    class-variance-authority ^0.7.1
+    clsx ^2.1.1
+    framer-motion ^12.41.0
+    lucide-react ^1.21.0
+    monaco-editor ^0.55.1
+    shadcn ^4.11.0
+    tailwind-merge ^3.6.0
+    tailwindcss ^4.3.1
+    tw-animate-css ^1.4.0
+    zustand ^5.0.14
+    @fontsource-variable/geist ^5.2.9
+    @fontsource/inter ^5.2.8
+    @fontsource/space-grotesk ^5.2.10
+
+  Desarrollo (14):
+    electron ^30.0.1
+    electron-builder ^24.13.3
+    vite ^5.1.6
+    vite-plugin-electron ^0.28.6
+    vite-plugin-electron-renderer ^0.14.5
+    @vitejs/plugin-react ^4.2.1
+    typescript ^5.2.2
+    eslint ^8.57.0
+    @typescript-eslint/eslint-plugin ^7.1.1
+    @typescript-eslint/parser ^7.1.1
+    eslint-plugin-react-hooks ^4.6.0
+    eslint-plugin-react-refresh ^0.4.5
+    @types/react ^18.2.64
+    @types/react-dom ^18.2.21
+
+================================================================================
+ 10. ELECTRON-BUILDER CONFIG
+================================================================================
+
+  appId: com.sparta.agent
+  productName: Sparta Agent
+  asar: true
+  output: release/${version}/
+  files: ["dist", "dist-electron"]
+  icon: public/sparta-icon.png
+
+  macOS: DMG
+    → Sparta-Agent-Mac-${version}-Installer.dmg
+
+  Windows: NSIS (x64, no oneClick, dir selection)
+    → Sparta-Agent-Windows-${version}-Setup.exe
+
+  Linux: AppImage
+    → Sparta-Agent-Linux-${version}.AppImage
+
+================================================================================
+ 11. COMANDOS DE DESARROLLO
+================================================================================
+
+  pnpm dev      → Inicia Vite + Electron
+  pnpm build    → tsc + vite build + electron-builder
+  pnpm lint     → ESLint (ts, tsx)
+  pnpm preview  → Vite preview
+
+================================================================================
+ 12. OBSERVACIONES IMPORTANTES
+================================================================================
+
+  ✔ Etapa temprana (v0.0.0) — muchas features son placeholders
+  ✔ Sin backend — todo es frontend, datos mock/default
+  ✔ Sin integración real con APIs de IA
+  ✔ Sin router — navegación por tabs
+  ✔ Sin git — no hay repositorio .git
+  ✔ Artefactos en español — el dev es hispanohablante
+  ✔ Mezcla de estilos — Tailwind v4 + inline styles con CSS vars
+  ✔ Seguridad — contextIsolation: true, nodeIntegration: false
+  ✔ Enfoque MCP — el proyecto está diseñado alrededor del Model Context Protocol
+  ✔ pnpm workspace — solo config para electron y esbuild
+
+================================================================================
+ 13. COSAS PENDIENTES / POR HACER
+================================================================================
+
+  [ ] Integrar Monaco Editor real en EditorPanel
+  [ ] Integrar xterm.js real en TerminalPanel
+  [ ] Implementar Agent Management UI en AgentsPanel
+  [ ] Conectar con APIs reales de Claude, GPT, Gemini
+  [ ] Implementar lógica real en settings (Keybinds, Models, API Keys, MCP, etc.)
+  [ ] Implementar búsqueda en Sidebar
+  [ ] Implementar pin de sesiones
+  [ ] Implementar attach de archivos (File, Code, Image, URL)
+  [ ] Implementar grabación de audio (mic)
+  [ ] Implementar modelo de selección real en ModelPicker
+  [ ] Implementar API keys persistentes
+  [ ] Migrar estilos inline a Tailwind completamente
+  [ ] Configurar GitHub repo
+  [ ] Escribir tests
+  [ ] Configurar CI/CD
+  [ ] Implementar sistema de plugins/extensiones
+  [ ] Conectar MCP servers reales
+
+================================================================================
+  FIN DEL DOCUMENTO
+================================================================================
