@@ -1,0 +1,39 @@
+{
+  "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
+  "appId": "com.sparta.agent",
+  "asar": true,
+  "productName": "Sparta Agent",
+  "directories": {
+    "output": "release/${version}"
+  },
+  "files": [
+    "dist",
+    "dist-electron"
+  ],
+  "icon": "public/sparta-icon.png",
+  "mac": {
+    "icon": "public/blanco/apple-touch-icon.png",
+    "target": ["dmg"],
+    "artifactName": "Sparta-Agent-Mac-${version}-Installer.${ext}"
+  },
+  "win": {
+    "icon": "public/favicon.ico",
+    "target": [
+      {
+        "target": "nsis",
+        "arch": ["x64"]
+      }
+    ],
+    "artifactName": "Sparta-Agent-Windows-${version}-Setup.${ext}"
+  },
+  "nsis": {
+    "oneClick": false,
+    "perMachine": false,
+    "allowToChangeInstallationDirectory": true,
+    "deleteAppDataOnUninstall": false
+  },
+  "linux": {
+    "target": ["AppImage"],
+    "artifactName": "Sparta-Agent-Linux-${version}.${ext}"
+  }
+}
