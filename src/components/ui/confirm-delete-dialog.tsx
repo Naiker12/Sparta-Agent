@@ -20,15 +20,20 @@ export function ConfirmDeleteDialog({
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
-            Vas a eliminar <strong>{itemLabel}</strong>. Esta acción no se puede deshacer.
+            Vas a eliminar{' '}
+            <span className="font-semibold text-[var(--text-primary)]">
+              {itemLabel}
+            </span>
+            . Esta acción no se puede deshacer.
           </DialogDescription>
         </DialogHeader>
-        <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <DialogFooter>
+          <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
           <Button
             variant="destructive"
+            size="sm"
             onClick={() => { onConfirm(); onOpenChange(false); }}
           >
             Eliminar
