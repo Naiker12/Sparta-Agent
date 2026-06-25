@@ -9,8 +9,8 @@ export function ChannelsSection() {
   const { channels, addChannel } = useChannelStore()
   const [dialogOpen, setDialogOpen] = useState(false)
 
-  function handleSubmit(name: string, topic?: string) {
-    addChannel(name, topic)
+  function handleSubmit(name: string, topic?: string, icon?: string) {
+    addChannel(name, topic, 'internal', icon)
     setDialogOpen(false)
   }
 

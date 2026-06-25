@@ -1,22 +1,24 @@
 import { useAgentStore } from '@/stores/agent.store'
+import { useTranslation } from '@/i18n'
 import { SettingGroup } from './primitives'
 
-const STATUS_MAP: Record<string, { color: string; label: string }> = {
-  idle: { color: 'var(--text-muted)', label: 'Inactivo' },
-  running: { color: 'var(--status-ok)', label: 'Ejecutando' },
-  thinking: { color: 'var(--status-think)', label: 'Pensando' },
-  error: { color: 'var(--destructive)', label: 'Error' },
-  completed: { color: 'var(--accent)', label: 'Completado' },
+const STATUS_MAP: Record<string, { color: string; labelKey: string }> = {
+  idle: { color: 'var(--text-muted)', labelKey: 'agents.idle' },
+  running: { color: 'var(--status-ok)', labelKey: 'agents.running' },
+  thinking: { color: 'var(--status-think)', labelKey: 'agents.thinking' },
+  error: { color: 'var(--destructive)', labelKey: 'agents.error' },
+  completed: { color: 'var(--accent)', labelKey: 'agents.completed' },
 }
 
 export function AgentsTab() {
   const { agents, setActiveAgent, activeAgentId } = useAgentStore()
+  const { t } = useTranslation()
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
       <SettingGroup
-        title="Agentes disponibles"
-        description="Agentes registrados en el sistema. Selecciona uno para establecerlo como activo."
+        title={t('agents.title')}
+        description={t('agents.desc')}
       >
         <div style={{ display: 'flex', flexDirection: 'column', paddingTop: 4 }}>
           {agents.map((agent) => {
@@ -66,7 +68,7 @@ export function AgentsTab() {
                       }}
                     />
                     <span style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>
-                      {status.label}
+                      {t(status.labelKey)}
                     </span>
                     <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>·</span>
                     <span style={{ fontSize: 10.5, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
@@ -74,13 +76,13 @@ export function AgentsTab() {
                     </span>
                     <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>·</span>
                     <span style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>
-                      {agent.tools.length} herramientas
+                      {agent.tools.length} {t('agents.tools')}
                     </span>
                   </div>
                 </div>
                 {isActive && (
                   <span style={{ fontSize: 10, color: 'var(--accent)', fontWeight: 600, flexShrink: 0 }}>
-                    Activo
+                    {t('agents.active')}
                   </span>
                 )}
               </button>

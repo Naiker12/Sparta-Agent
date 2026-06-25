@@ -1,10 +1,12 @@
 import { useMemoryStore } from '@/stores/memory.store'
 import { useSettingsStore } from '@/stores/settings.store'
+import { useTranslation } from '@/i18n'
 import { SettingGroup, SettingRow } from './primitives'
 
 export function MemoryTab() {
   const { entries } = useMemoryStore()
   const { memoryEnabled, toggleMemory } = useSettingsStore()
+  const { t } = useTranslation()
 
   const autoCount = entries.filter((e) => e.source === 'auto').length
   const manualCount = entries.filter((e) => e.source === 'manual').length
@@ -12,12 +14,12 @@ export function MemoryTab() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
       <SettingGroup
-        title="Estado"
-        description="Configuración general de la memoria persistente."
+        title={t('memory.title')}
+        description={t('memory.desc')}
       >
         <SettingRow
-          title="Memoria persistente"
-          description="Permite que el agente guarde contexto entre sesiones."
+          title={t('memory.persistentMemory')}
+          description={t('memory.persistentMemoryDesc')}
           control={
             <button
               onClick={toggleMemory}
@@ -50,18 +52,18 @@ export function MemoryTab() {
       </SettingGroup>
 
       <SettingGroup
-        title="Recuerdos"
-        description="Entradas almacenadas en la memoria del agente."
+        title={t('memory.memories')}
+        description={t('memory.memoriesDesc')}
       >
         <div style={{ display: 'flex', gap: 12, paddingTop: 8 }}>
-          <StatCard label="Total" value={entries.length} />
-          <StatCard label="Automáticos" value={autoCount} color="var(--accent)" />
-          <StatCard label="Manuales" value={manualCount} color="var(--text-muted)" />
+          <StatCard label={t('memory.total')} value={entries.length} />
+          <StatCard label={t('memory.auto')} value={autoCount} color="var(--accent)" />
+          <StatCard label={t('memory.manual')} value={manualCount} color="var(--text-muted)" />
         </div>
       </SettingGroup>
 
       {entries.length > 0 && (
-        <SettingGroup title="Vista previa" description="Últimos recuerdos registrados.">
+        <SettingGroup title={t('memory.preview')} description={t('memory.previewDesc')}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4, paddingTop: 4 }}>
             {entries.slice(-3).reverse().map((entry) => (
               <div

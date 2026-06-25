@@ -22,7 +22,7 @@ export function SessionsView() {
         </button>
       </div>
 
-      <div style={{ flex: 1, overflow: 'hidden auto', padding: 12 }}>
+      <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: 12 }}>
         {sessions.map((s) => (
           <div
             key={s.id}

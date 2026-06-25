@@ -2,7 +2,7 @@ import { useChatStore } from '@/stores/chat.store'
 import { SessionItem } from './SessionItem'
 
 export function SessionList() {
-  const { sessions, activeSessionId, switchSession } = useChatStore()
+  const { sessions } = useChatStore()
 
   if (sessions.length === 0) {
     return (
@@ -11,7 +11,6 @@ export function SessionList() {
           padding: '4px 14px 8px',
           fontSize: 11,
           color: 'var(--text-muted)',
-          fontStyle: 'italic',
           fontFamily: 'var(--font-ui)',
         }}
       >
@@ -23,12 +22,7 @@ export function SessionList() {
   return (
     <div>
       {sessions.map((session) => (
-        <SessionItem
-          key={session.id}
-          title={session.title}
-          active={session.id === activeSessionId}
-          onClick={() => switchSession(session.id)}
-        />
+        <SessionItem key={session.id} session={session} />
       ))}
     </div>
   )

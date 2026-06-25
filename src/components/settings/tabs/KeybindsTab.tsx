@@ -1,33 +1,36 @@
 import { SettingGroup } from './primitives'
+import { useTranslation } from '@/i18n'
 
 interface Keybind {
   id: string
-  label: string
-  description?: string
+  labelKey: string
+  descKey?: string
   combo: string
 }
 
 const KEYBINDS: Keybind[] = [
-  { id: 'new-session', label: 'Nueva sesión', description: 'Crear una conversación nueva.', combo: 'Ctrl + N' },
-  { id: 'open-settings', label: 'Abrir configuración', combo: 'Ctrl + ,' },
-  { id: 'toggle-sidebar', label: 'Mostrar / ocultar sidebar', combo: 'Ctrl + B' },
-  { id: 'toggle-terminal', label: 'Mostrar / ocultar terminal', combo: 'Ctrl + `' },
-  { id: 'switch-chat', label: 'Ir a chat', combo: 'Ctrl + 1' },
-  { id: 'switch-editor', label: 'Ir a editor', combo: 'Ctrl + 2' },
-  { id: 'switch-terminal', label: 'Ir a terminal', combo: 'Ctrl + 3' },
-  { id: 'switch-agents', label: 'Ir a agentes', combo: 'Ctrl + 4' },
-  { id: 'send-message', label: 'Enviar mensaje', combo: 'Enter' },
-  { id: 'newline', label: 'Salto de línea', combo: 'Shift + Enter' },
-  { id: 'search', label: 'Buscar en sidebar', combo: 'Ctrl + K' },
-  { id: 'close-modal', label: 'Cerrar modal', combo: 'Escape' },
+  { id: 'new-session', labelKey: 'keybinds.newSession', descKey: 'keybinds.newSessionDesc', combo: 'Ctrl + N' },
+  { id: 'open-settings', labelKey: 'keybinds.openSettings', combo: 'Ctrl + ,' },
+  { id: 'toggle-sidebar', labelKey: 'keybinds.toggleSidebar', combo: 'Ctrl + B' },
+  { id: 'toggle-terminal', labelKey: 'keybinds.toggleTerminal', combo: 'Ctrl + `' },
+  { id: 'switch-chat', labelKey: 'keybinds.switchChat', combo: 'Ctrl + 1' },
+  { id: 'switch-editor', labelKey: 'keybinds.switchEditor', combo: 'Ctrl + 2' },
+  { id: 'switch-terminal', labelKey: 'keybinds.switchTerminal', combo: 'Ctrl + 3' },
+  { id: 'switch-agents', labelKey: 'keybinds.switchAgents', combo: 'Ctrl + 4' },
+  { id: 'send-message', labelKey: 'keybinds.sendMessage', combo: 'Enter' },
+  { id: 'newline', labelKey: 'keybinds.newline', combo: 'Shift + Enter' },
+  { id: 'search', labelKey: 'keybinds.search', combo: 'Ctrl + K' },
+  { id: 'close-modal', labelKey: 'keybinds.closeModal', combo: 'Escape' },
 ]
 
 export function KeybindsTab() {
+  const { t } = useTranslation()
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
       <SettingGroup
-        title="Atajos de teclado"
-        description="Atajos globales de la aplicación. Personalización próximamente."
+        title={t('keybinds.title')}
+        description={t('keybinds.desc')}
       >
         <div style={{ display: 'flex', flexDirection: 'column', paddingTop: 4 }}>
           {KEYBINDS.map((kb) => (
@@ -51,9 +54,9 @@ export function KeybindsTab() {
                     fontWeight: 500,
                   }}
                 >
-                  {kb.label}
+                  {t(kb.labelKey)}
                 </div>
-                {kb.description && (
+                {kb.descKey && (
                   <div
                     style={{
                       fontSize: 11,
@@ -62,7 +65,7 @@ export function KeybindsTab() {
                       marginTop: 2,
                     }}
                   >
-                    {kb.description}
+                    {t(kb.descKey)}
                   </div>
                 )}
               </div>

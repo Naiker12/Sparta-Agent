@@ -1,41 +1,39 @@
 import { useState } from 'react'
 import { useSettingsStore } from '@/stores/settings.store'
-import { ScrollArea } from '@/components/ui/scroll-area'
+import { useTranslation } from '@/i18n'
 import { XIcon } from 'lucide-react'
 import { GeneralTab } from './tabs/GeneralTab'
 import { AppearanceTab } from './tabs/AppearanceTab'
 import { KeybindsTab } from './tabs/KeybindsTab'
 import { ModelsTab } from './tabs/ModelsTab'
-import { ApiKeysTab } from './tabs/ApiKeysTab'
 import { McpTab } from './tabs/McpTab'
 import { MemoryTab } from './tabs/MemoryTab'
 import { SkillsTab } from './tabs/SkillsTab'
 import { AgentsTab } from './tabs/AgentsTab'
 
-type SettingsTab = 'general' | 'appearance' | 'keybinds' | 'models' | 'keys' | 'mcp' | 'memory' | 'skills' | 'agents'
-
-const tabs: { id: SettingsTab; label: string }[] = [
-  { id: 'general', label: 'General' },
-  { id: 'appearance', label: 'Appearance' },
-  { id: 'keybinds', label: 'Keybinds' },
-  { id: 'models', label: 'Models' },
-  { id: 'keys', label: 'API Keys' },
-  { id: 'mcp', label: 'MCP Servers' },
-  { id: 'memory', label: 'Memory' },
-  { id: 'skills', label: 'Skills' },
-  { id: 'agents', label: 'Agents' },
-]
+type SettingsTab = 'general' | 'appearance' | 'keybinds' | 'models' | 'mcp' | 'memory' | 'skills' | 'agents'
 
 export function SettingsDialog() {
   const [activeTab, setActiveTab] = useState<SettingsTab>('general')
   const { closeSettings } = useSettingsStore()
+  const { t } = useTranslation()
+
+  const tabs: { id: SettingsTab; label: string }[] = [
+    { id: 'general', label: t('settings.general') },
+    { id: 'appearance', label: t('settings.appearance') },
+    { id: 'keybinds', label: t('settings.keybinds') },
+    { id: 'models', label: t('settings.models') },
+    { id: 'mcp', label: t('settings.mcp') },
+    { id: 'memory', label: t('settings.memory') },
+    { id: 'skills', label: t('settings.skills') },
+    { id: 'agents', label: t('settings.agents') },
+  ]
 
   const tabContent: Record<SettingsTab, React.ReactNode> = {
     general: <GeneralTab />,
     appearance: <AppearanceTab />,
     keybinds: <KeybindsTab />,
     models: <ModelsTab />,
-    keys: <ApiKeysTab />,
     mcp: <McpTab />,
     memory: <MemoryTab />,
     skills: <SkillsTab />,
@@ -59,8 +57,8 @@ export function SettingsDialog() {
     >
       <div
         style={{
-          width: 720,
-          height: 520,
+          width: 900,
+          height: 640,
           background: 'var(--bg-modal)',
           border: '1px solid var(--border-strong)',
           borderRadius: 'var(--radius-xl)',
@@ -76,7 +74,7 @@ export function SettingsDialog() {
           borderRight: '1px solid var(--border-subtle)',
           paddingTop: 12,
           flexShrink: 0,
-          overflow: 'hidden auto',
+          overflow: 'hidden',
         }}>
           {tabs.map(({ id, label }) => (
             <button
@@ -103,20 +101,21 @@ export function SettingsDialog() {
           ))}
         </aside>
 
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
           <div style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '12px 20px',
             borderBottom: '1px solid var(--border-subtle)',
+            flexShrink: 0,
           }}>
             <h2 style={{
               fontSize: 13,
               fontWeight: 500,
               color: 'var(--text-primary)',
               fontFamily: 'var(--font-ui)',
-            }}>Settings</h2>
+            }}>{t('settings.title')}</h2>
             <button onClick={closeSettings} style={{
               width: 24, height: 24,
               background: 'none', border: 'none',
@@ -129,11 +128,11 @@ export function SettingsDialog() {
             </button>
           </div>
 
-          <ScrollArea style={{ flex: 1 }}>
+          <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', minHeight: 0 }}>
             <div style={{ padding: '16px 20px' }}>
               {tabContent[activeTab]}
             </div>
-          </ScrollArea>
+          </div>
         </div>
       </div>
     </div>

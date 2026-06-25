@@ -1,82 +1,112 @@
-import { useState } from 'react'
-import { Brain, Plus } from 'lucide-react'
+import { useState, useRef } from 'react'
+import { Brain, ChevronLeft, Network, List } from 'lucide-react'
 import { useMemoryStore } from '@/stores/memory.store'
-import { MemoryEntryItem } from '@/components/memory/MemoryEntryItem'
+import { useUIStore } from '@/stores/ui.store'
 import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
+import { computeGraphLayout, computeRelations } from '@/lib/graph-layout'
+import { MemoryGraph, type MemoryGraphHandle } from '@/components/memory/MemoryGraph'
+import { MemoryGraphControls } from '@/components/memory/MemoryGraphControls'
+import { MemoryListView } from '@/components/memory/MemoryListView'
+import { MemoryNodePanel } from '@/components/memory/MemoryNodePanel'
+import type { MemoryEntry, MemoryGraphNode } from '@/types'
 
 export function MemoryView() {
-  const { entries, addEntry, deleteEntry, updateEntry } = useMemoryStore()
-  const [draft, setDraft] = useState('')
-  const [editingId, setEditingId] = useState<string | null>(null)
+  const { entries } = useMemoryStore()
+  const { goBack } = useUIStore()
+  const [graphView, setGraphView] = useState(true)
+  const [selectedEntry, setSelectedEntry] = useState<MemoryEntry | null>(null)
+  const [selectedGraphNode, setSelectedGraphNode] = useState<MemoryGraphNode | null>(null)
+  const graphRef = useRef<MemoryGraphHandle>(null)
 
-  function handleSave() {
-    if (!draft.trim()) return
-    if (editingId) {
-      updateEntry(editingId, { content: draft.trim() })
-      setEditingId(null)
+  const nodes = graphView ? computeGraphLayout(entries) : []
+  const relations = graphView ? computeRelations(entries) : []
+
+  function handleNodeSelect(entry: MemoryEntry | null, graphNode: MemoryGraphNode | null) {
+    if (entry && graphNode) {
+      setSelectedEntry(entry)
+      setSelectedGraphNode(graphNode)
     } else {
-      addEntry(draft.trim(), 'manual')
+      setSelectedEntry(null)
+      setSelectedGraphNode(null)
     }
-    setDraft('')
   }
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '12px 20px', borderBottom: '1px solid var(--border-subtle)',
-      }}>
-        <h2 style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-ui)', margin: 0 }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-            <Brain size={16} style={{ color: 'var(--accent)' }} />
-            Memoria
+      <div
+        style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '8px 16px', borderBottom: '1px solid var(--border-subtle)', flexShrink: 0,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={goBack}
+            style={{
+              gap: 4,
+              color: 'var(--text-secondary)',
+            }}
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Volver
+          </Button>
+          <h2 style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-ui)', margin: 0 }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+              <Brain size={16} style={{ color: 'var(--accent)' }} />
+              Memoria
+            </span>
+          </h2>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)' }}>
+            {entries.length} recuerdos
           </span>
-        </h2>
-        <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)' }}>
-          {entries.length} recuerdos
-        </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setGraphView((v) => !v)}
+            style={{ gap: 4 }}
+          >
+            {graphView ? <List className="w-4 h-4" /> : <Network className="w-4 h-4" />}
+            {graphView ? 'Vista lista' : 'Vista gráfico'}
+          </Button>
+        </div>
       </div>
 
-      <div style={{ padding: '12px 20px', borderBottom: '1px solid var(--border-subtle)' }}>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <Textarea
-            value={draft}
-            onChange={e => setDraft(e.target.value)}
-            placeholder="Añade un recuerdo persistente…"
-            rows={2}
-            style={{ flex: 1 }}
+      <MemoryGraphControls
+        onZoomIn={() => graphRef.current?.resetCamera()}
+        onZoomOut={() => graphRef.current?.resetCamera()}
+        onReset={() => graphRef.current?.resetCamera()}
+        onToggleView={() => setGraphView((v) => !v)}
+        isGraphView={graphView}
+        nodeCount={nodes.length}
+        edgeCount={relations.length}
+      />
+
+      <div style={{ flex: 1, position: 'relative', display: 'flex', overflow: 'hidden' }}>
+        {graphView ? (
+          <MemoryGraph
+            ref={graphRef}
+            onNodeSelect={handleNodeSelect}
+            selectedNodeId={selectedEntry?.id || null}
           />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <Button size="sm" onClick={handleSave} disabled={!draft.trim()}>
-              <Plus size={12} />
-              {editingId ? 'Guardar' : 'Añadir'}
-            </Button>
-            {editingId && (
-              <Button size="sm" variant="ghost" onClick={() => { setEditingId(null); setDraft('') }}>
-                Cancelar
-              </Button>
-            )}
-          </div>
-        </div>
-      </div>
+        ) : (
+          <MemoryListView />
+        )}
 
-      <div style={{ flex: 1, overflow: 'hidden auto', padding: 16 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {entries.map((entry) => (
-            <MemoryEntryItem
-              key={entry.id}
-              entry={entry}
-              onEdit={() => { setEditingId(entry.id); setDraft(entry.content) }}
-              onDelete={() => deleteEntry(entry.id)}
-            />
-          ))}
-          {entries.length === 0 && (
-            <p style={{ fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic', padding: 24, textAlign: 'center', fontFamily: 'var(--font-ui)' }}>
-              Aún no hay recuerdos. Añade uno arriba.
-            </p>
-          )}
-        </div>
+        {graphView && selectedEntry && selectedGraphNode && (
+          <MemoryNodePanel
+            entry={selectedEntry}
+            graphNode={selectedGraphNode}
+            onClose={() => {
+              setSelectedEntry(null)
+              setSelectedGraphNode(null)
+            }}
+          />
+        )}
       </div>
     </div>
   )

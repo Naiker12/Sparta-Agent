@@ -1,13 +1,16 @@
 import { useState } from 'react'
-import { Plus, Search, MessageSquare, Zap, Plug, Hash, Brain, Pin, Clock } from 'lucide-react'
+import { Plus, Search, MessageSquare, Zap, Plug, Hash, Brain, Pin, Clock, Settings } from 'lucide-react'
 import { useChatStore } from '@/stores/chat.store'
 import { useSkillStore } from '@/stores/skill.store'
 import { useMCPStore } from '@/stores/mcp.store'
 import { useChannelStore } from '@/stores/channel.store'
 import { useMemoryStore } from '@/stores/memory.store'
 import { useUIStore } from '@/stores/ui.store'
+import { useSettingsStore } from '@/stores/settings.store'
 import { ProjectSwitcher } from './ProjectSwitcher'
+import { SessionItem } from './SessionItem'
 import { SidebarResizeHandle } from './SidebarResizeHandle'
+import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 
 const NAV_ITEMS = [
@@ -21,7 +24,7 @@ const NAV_ITEMS = [
 const COLLAPSED_W = 48
 
 export function Sidebar() {
-  const { sessions, createSession, switchSession } = useChatStore()
+  const { sessions, createSession } = useChatStore()
   const { skills } = useSkillStore()
   const { servers } = useMCPStore()
   const { channels } = useChannelStore()
@@ -122,7 +125,7 @@ export function Sidebar() {
         </>
       ) : null}
 
-      <div style={{ flex: 1, overflow: 'hidden auto', paddingBottom: 8 }}>
+      <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', paddingBottom: 8 }}>
         {sidebarOpen && (
           <div style={{ paddingTop: 8 }}>
             <ProjectSwitcher />
@@ -189,7 +192,7 @@ export function Sidebar() {
                 <span style={{ flex: 1 }}>{label}</span>
                 <span
                   style={{
-                    fontSize: 10,
+                  fontSize: 11,
                     color: isActive ? 'var(--accent)' : 'var(--text-muted)',
                     background: isActive ? 'var(--accent-muted)' : 'var(--bg-active)',
                     padding: '1px 6px',
@@ -231,7 +234,6 @@ export function Sidebar() {
                   margin: 0,
                   fontSize: 11,
                   color: 'var(--text-muted)',
-                  fontStyle: 'italic',
                   fontFamily: 'var(--font-ui)',
                 }}
               >
@@ -264,7 +266,6 @@ export function Sidebar() {
                     margin: 0,
                     fontSize: 11,
                     color: 'var(--text-muted)',
-                    fontStyle: 'italic',
                     fontFamily: 'var(--font-ui)',
                   }}
                 >
@@ -272,36 +273,71 @@ export function Sidebar() {
                 </p>
               ) : (
                 recentSessions.map((session) => (
-                  <button
-                    key={session.id}
-                    onClick={() => { switchSession(session.id); setMainView({ type: 'chat' }) }}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 6,
-                      padding: '5px 12px',
-                      width: '100%',
-                      background: 'none',
-                      border: 'none',
-                      color: 'var(--text-secondary)',
-                      fontSize: 12,
-                      fontFamily: 'var(--font-ui)',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      transition: 'background 0.12s',
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-hover)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
-                  >
-                    <span style={{ color: 'var(--text-muted)', fontSize: 11 }}>·</span>
-                    <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {session.title}
-                    </span>
-                  </button>
+                  <SessionItem key={session.id} session={session} variant="compact" />
                 ))
               )}
             </div>
           </>
+        )}
+      </div>
+
+      <div style={{ flexShrink: 0 }}>
+        <Separator />
+        {sidebarOpen ? (
+          <button
+            onClick={() => useSettingsStore.getState().openSettings()}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '8px 12px',
+              width: '100%',
+              background: 'none',
+              border: 'none',
+              color: 'var(--text-secondary)',
+              fontSize: 12.5,
+              fontFamily: 'var(--font-ui)',
+              cursor: 'pointer',
+              textAlign: 'left',
+              transition: 'all 0.12s',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'var(--bg-hover)'
+              e.currentTarget.style.color = 'var(--text-primary)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'none'
+              e.currentTarget.style.color = 'var(--text-secondary)'
+            }}
+          >
+            <Settings size={14} strokeWidth={1.5} />
+            Configuración
+          </button>
+        ) : (
+          <Tooltip>
+            <TooltipTrigger
+              onClick={() => useSettingsStore.getState().openSettings()}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '100%',
+                padding: '8px 0',
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-muted)',
+                cursor: 'pointer',
+                transition: 'color 0.12s',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-secondary)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-muted)' }}
+            >
+              <Settings size={16} strokeWidth={1.5} />
+            </TooltipTrigger>
+            <TooltipContent side="right" sideOffset={6}>
+              Configuración
+            </TooltipContent>
+          </Tooltip>
         )}
       </div>
 

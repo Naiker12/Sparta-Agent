@@ -1,14 +1,20 @@
+import { useState, useEffect } from 'react'
 import { Plus } from 'lucide-react'
-import { useState } from 'react'
 import { useSkillStore } from '@/stores/skill.store'
 import { SidebarSection } from './SidebarSection'
-import { SkillDialog } from '@/components/skills/SkillDialog'
 import { SkillItem } from './SkillItem'
+import { SkillDialog } from '@/components/skills/SkillDialog'
+import { fetchAvailableSkills } from '@/components/skills/SkillInstaller'
 
 export function SkillsSection() {
   const { skills, addSkill, deleteSkill } = useSkillStore()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
+  const [availableCount, setAvailableCount] = useState(0)
+
+  useEffect(() => {
+    fetchAvailableSkills().then((s) => setAvailableCount(s.length))
+  }, [])
 
   function handleSubmit(name: string, description: string, prompt: string, tags: string[]) {
     addSkill(name, description, prompt, tags)
@@ -20,7 +26,7 @@ export function SkillsSection() {
     <>
       <SidebarSection
         title="Skills"
-        count={skills.length}
+        count={`${skills.length}/${skills.length + availableCount}`}
         action={
           <button
             onClick={() => {

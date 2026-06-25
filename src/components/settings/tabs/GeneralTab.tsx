@@ -1,4 +1,5 @@
 import { useSettingsStore } from '@/stores/settings.store'
+import { useTranslation } from '@/i18n'
 import { SettingRow, SettingGroup } from './primitives'
 
 function Toggle({ value, onChange }: { value: boolean; onChange: () => void }) {
@@ -33,11 +34,12 @@ function Toggle({ value, onChange }: { value: boolean; onChange: () => void }) {
 }
 
 export function GeneralTab() {
-  const { defaultModel, setDefaultModel, memoryEnabled, toggleMemory } = useSettingsStore()
+  const { defaultModel, setDefaultModel, memoryEnabled, toggleMemory, language, setLanguage } = useSettingsStore()
+  const { t } = useTranslation()
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-      <SettingGroup title="Defaults" description="Configuración base del agente.">
+      <SettingGroup title={t('general.defaults')} description={t('general.defaultsDesc')}>
         <div style={{ paddingTop: 4 }}>
           <label
             style={{
@@ -48,7 +50,7 @@ export function GeneralTab() {
               marginBottom: 6,
             }}
           >
-            Default Model
+            {t('general.defaultModel')}
           </label>
           <input
             value={defaultModel}
@@ -68,28 +70,37 @@ export function GeneralTab() {
         </div>
       </SettingGroup>
 
-      <SettingGroup title="Memory" description="Persistencia de recuerdos entre sesiones.">
+      <SettingGroup title={t('general.memory')} description={t('general.memoryDesc')}>
         <SettingRow
-          title="Memoria persistente"
-          description="Permite que el agente guarde y recuerde contexto entre sesiones."
+          title={t('general.persistentMemory')}
+          description={t('general.persistentMemoryDesc')}
           control={<Toggle value={memoryEnabled} onChange={toggleMemory} />}
         />
       </SettingGroup>
 
-      <SettingGroup title="Idioma" description="Idioma de la interfaz.">
+      <SettingGroup title={t('general.language')} description={t('general.languageDesc')}>
         <SettingRow
-          title="Idioma"
-          description="Español (es-MX)"
+          title={t('general.language')}
+          description=""
           control={
-            <span
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value as 'es' | 'en')}
               style={{
-                fontSize: 11,
-                color: 'var(--text-muted)',
+                background: 'var(--bg-input)',
+                border: '1px solid var(--border-normal)',
+                borderRadius: 'var(--radius-md)',
+                padding: '5px 8px',
+                fontSize: 12,
+                color: 'var(--text-primary)',
                 fontFamily: 'var(--font-ui)',
+                cursor: 'pointer',
+                outline: 'none',
               }}
             >
-              Próximamente
-            </span>
+              <option value="es">{t('general.spanish')}</option>
+              <option value="en">{t('general.english')}</option>
+            </select>
           }
         />
       </SettingGroup>

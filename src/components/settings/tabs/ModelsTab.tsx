@@ -1,161 +1,136 @@
+import { useState } from 'react'
+import { Plus } from 'lucide-react'
 import { useSettingsStore } from '@/stores/settings.store'
+import { useProviderStore } from '@/stores/provider.store'
+import { useTranslation } from '@/i18n'
 import { SettingGroup } from './primitives'
-
-interface ModelOption {
-  id: string
-  label: string
-  provider: string
-  description: string
-  badge?: string
-}
-
-const MODELS: ModelOption[] = [
-  {
-    id: 'claude-opus-4',
-    label: 'Claude Opus 4',
-    provider: 'Anthropic',
-    description: 'Modelo más capaz. Ideal para tareas complejas y razonamiento profundo.',
-    badge: 'Recomendado',
-  },
-  {
-    id: 'claude-sonnet-4-6',
-    label: 'Claude Sonnet 4.6',
-    provider: 'Anthropic',
-    description: 'Balance entre velocidad, costo y capacidad. Buen default general.',
-  },
-  {
-    id: 'claude-haiku',
-    label: 'Claude Haiku',
-    provider: 'Anthropic',
-    description: 'El más rápido y económico. Para tareas simples y baja latencia.',
-  },
-  {
-    id: 'gpt-4o',
-    label: 'GPT-4o',
-    provider: 'OpenAI',
-    description: 'Modelo multimodal de OpenAI. Requiere API key configurada.',
-  },
-  {
-    id: 'gpt-4o-mini',
-    label: 'GPT-4o mini',
-    provider: 'OpenAI',
-    description: 'Versión económica de GPT-4o.',
-  },
-  {
-    id: 'gemini-2.5-pro',
-    label: 'Gemini 2.5 Pro',
-    provider: 'Google',
-    description: 'Modelo de Google con ventana de contexto extendida.',
-  },
-]
+import { ProviderCard } from '@/components/providers/ProviderCard'
+import { ChooseProviderDialog } from '@/components/providers/ChooseProviderDialog'
+import { ConfigureProviderDialog } from '@/components/providers/ConfigureProviderDialog'
+import type { ProviderVendor, Provider } from '@/types'
 
 export function ModelsTab() {
   const { defaultModel, setDefaultModel } = useSettingsStore()
+  const { providers } = useProviderStore()
+  const { t } = useTranslation()
+
+  const [step, setStep] = useState<'closed' | 'choose' | 'configure'>('closed')
+  const [selectedVendor, setSelectedVendor] = useState<ProviderVendor | null>(null)
+  const [editingProvider, setEditingProvider] = useState<Provider | null>(null)
+
+  function handleChoose(vendor: ProviderVendor) {
+    setSelectedVendor(vendor)
+    setEditingProvider(null)
+    setStep('configure')
+  }
+
+  function handleEdit(provider: Provider) {
+    setSelectedVendor(provider.vendor)
+    setEditingProvider(provider)
+    setStep('configure')
+  }
+
+  function handleSave() {
+    setStep('closed')
+    setSelectedVendor(null)
+    setEditingProvider(null)
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-      <SettingGroup
-        title="Modelo por defecto"
-        description="Modelo que se usará al crear nuevas sesiones."
-      >
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 6,
-            paddingTop: 4,
-          }}
-        >
-          {MODELS.map((m) => {
-            const isActive = defaultModel === m.id
-            return (
-              <button
-                key={m.id}
-                onClick={() => setDefaultModel(m.id)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: 10,
-                  padding: '10px 12px',
-                  background: isActive ? 'var(--accent-muted)' : 'var(--bg-input)',
-                  border: `1px solid ${isActive ? 'var(--accent)' : 'var(--border-normal)'}`,
-                  borderRadius: 'var(--radius-md)',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  transition: 'all 0.12s',
-                  fontFamily: 'var(--font-ui)',
-                }}
-              >
-                <div
-                  style={{
-                    width: 14,
-                    height: 14,
-                    borderRadius: '50%',
-                    border: `2px solid ${isActive ? 'var(--accent)' : 'var(--border-strong)'}`,
-                    background: isActive ? 'var(--accent)' : 'transparent',
-                    flexShrink: 0,
-                    marginTop: 2,
-                  }}
-                />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 6,
-                      flexWrap: 'wrap',
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontSize: 12.5,
-                        fontWeight: 500,
-                        color: 'var(--text-primary)',
-                      }}
-                    >
-                      {m.label}
-                    </span>
-                    <span
-                      style={{
-                        fontSize: 10,
-                        color: 'var(--text-muted)',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
-                      }}
-                    >
-                      {m.provider}
-                    </span>
-                    {m.badge && (
-                      <span
-                        style={{
-                          fontSize: 9.5,
-                          padding: '1px 6px',
-                          borderRadius: 999,
-                          background: 'var(--accent)',
-                          color: 'white',
-                          fontWeight: 500,
-                        }}
-                      >
-                        {m.badge}
-                      </span>
-                    )}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: 11,
-                      color: 'var(--text-secondary)',
-                      marginTop: 2,
-                      lineHeight: 1.4,
-                    }}
-                  >
-                    {m.description}
-                  </div>
-                </div>
-              </button>
-            )
-          })}
+      <SettingGroup title={t('models.title')} description={t('models.titleDesc')}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 4 }}>
+          {providers.length === 0 ? (
+            <p style={{
+              fontSize: 11,
+              color: 'var(--text-muted)',
+              fontFamily: 'var(--font-ui)',
+              padding: '8px 0',
+            }}>
+              {t('models.noProviders')}
+            </p>
+          ) : (
+            providers.map((p) => (
+              <ProviderCard
+                key={p.id}
+                provider={p}
+                onEdit={() => handleEdit(p)}
+              />
+            ))
+          )}
+
+          <button
+            onClick={() => setStep('choose')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '8px 12px',
+              background: 'none',
+              border: '1px dashed var(--border-normal)',
+              borderRadius: 'var(--radius-md)',
+              color: 'var(--text-secondary)',
+              fontSize: 12,
+              fontFamily: 'var(--font-ui)',
+              cursor: 'pointer',
+              transition: 'all 0.12s',
+              width: '100%',
+              textAlign: 'left',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border-normal)'; e.currentTarget.style.color = 'var(--text-secondary)' }}
+          >
+            <Plus size={13} strokeWidth={2} />
+            {t('models.addProvider')}
+          </button>
         </div>
       </SettingGroup>
+
+      <SettingGroup title={t('models.defaultModel')} description={t('models.defaultModelDesc')}>
+        <div style={{ paddingTop: 4 }}>
+          <label
+            style={{
+              fontSize: 12,
+              color: 'var(--text-secondary)',
+              fontFamily: 'var(--font-ui)',
+              display: 'block',
+              marginBottom: 6,
+            }}
+          >
+            {t('general.defaultModel')}
+          </label>
+          <input
+            value={defaultModel}
+            onChange={(e) => setDefaultModel(e.target.value)}
+            style={{
+              width: '100%',
+              background: 'var(--bg-input)',
+              border: '1px solid var(--border-normal)',
+              borderRadius: 'var(--radius-md)',
+              padding: '6px 10px',
+              fontSize: 12,
+              color: 'var(--text-primary)',
+              fontFamily: 'var(--font-mono)',
+              outline: 'none',
+            }}
+          />
+        </div>
+      </SettingGroup>
+
+      <ChooseProviderDialog
+        open={step === 'choose'}
+        onSelect={handleChoose}
+        onClose={() => setStep('closed')}
+      />
+
+      <ConfigureProviderDialog
+        open={step === 'configure'}
+        vendor={selectedVendor}
+        editProvider={editingProvider}
+        onSave={handleSave}
+        onBack={() => setStep('choose')}
+        onClose={() => setStep('closed')}
+      />
     </div>
   )
 }

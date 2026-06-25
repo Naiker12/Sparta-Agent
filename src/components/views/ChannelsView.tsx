@@ -1,59 +1,63 @@
 import { useState } from 'react'
-import { Hash } from 'lucide-react'
-import { useChannelStore } from '@/stores/channel.store'
+import { ChannelSidebar } from '@/components/channels/ChannelSidebar'
+import { InternalChannelView } from '@/components/channels/InternalChannelView'
+import { TelegramIntegrationPanel } from '@/components/channels/TelegramIntegrationPanel'
+import { ComingSoonPanel } from '@/components/channels/ComingSoonPanel'
 import { ChannelDialog } from '@/components/channels/ChannelDialog'
+import { useChannelStore } from '@/stores/channel.store'
+import type { IntegrationProvider } from '@/types'
+
+const TELEGRAM: IntegrationProvider = 'telegram'
 
 export function ChannelsView() {
-  const { channels, addChannel } = useChannelStore()
+  const { channels, activeChannelId } = useChannelStore()
   const [dialogOpen, setDialogOpen] = useState(false)
 
-  return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '12px 20px', borderBottom: '1px solid var(--border-subtle)',
-      }}>
-        <h2 style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-ui)', margin: 0 }}>
-          Canales
-        </h2>
-        <button onClick={() => setDialogOpen(true)} style={{
-          padding: '5px 12px', background: 'var(--accent)', border: 'none',
-          borderRadius: 'var(--radius-md)', color: 'white', fontSize: 11,
-          fontFamily: 'var(--font-ui)', cursor: 'pointer',
-        }}>
-          + Nuevo canal
-        </button>
-      </div>
+  const activeChannel = channels.find((c) => c.id === activeChannelId)
 
-      <div style={{ flex: 1, overflow: 'hidden auto', padding: 12 }}>
-        {channels.map((channel) => (
-          <div key={channel.id} style={{
-            display: 'flex', alignItems: 'center', gap: 10,
-            padding: '10px 12px', cursor: 'pointer', borderRadius: 'var(--radius-md)',
-            marginBottom: 4, transition: 'background 0.12s',
+  function renderContent() {
+    if (!activeChannel) {
+      return (
+        <div
+          style={{
+            flex: 1, display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center', gap: 8,
+            color: 'var(--text-muted)', fontSize: 12, fontFamily: 'var(--font-ui)',
           }}
-            onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-          >
-            <Hash size={14} style={{ color: 'var(--text-muted)' }} />
-            <span style={{ flex: 1, fontSize: 12.5, color: 'var(--text-primary)', fontFamily: 'var(--font-ui)' }}>
-              {channel.name}
-            </span>
-            {channel.topic && (
-              <span style={{ fontSize: 10.5, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {channel.topic}
-              </span>
-            )}
-            {channel.unreadCount > 0 && (
-              <span style={{ fontSize: 10, color: 'white', background: 'var(--accent)', padding: '1px 6px', borderRadius: 8, fontWeight: 600 }}>
-                {channel.unreadCount}
-              </span>
-            )}
-          </div>
-        ))}
-      </div>
+        >
+          <div style={{ opacity: 0.3, fontSize: 48 }}>💬</div>
+          <div>Selecciona un canal</div>
+        </div>
+      )
+    }
 
-      <ChannelDialog open={dialogOpen} onClose={() => setDialogOpen(false)} onSubmit={(n, t) => { addChannel(n, t); setDialogOpen(false) }} />
+    if (activeChannel.kind === 'internal') {
+      return <InternalChannelView channel={activeChannel} />
+    }
+
+    if (activeChannel.kind === 'integration') {
+      const provider = activeChannel.integration?.provider || TELEGRAM
+      if (provider === TELEGRAM) {
+        return <TelegramIntegrationPanel channel={activeChannel} />
+      }
+      return <ComingSoonPanel provider={provider} />
+    }
+
+    return null
+  }
+
+  return (
+    <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+      <ChannelSidebar onNewChannel={() => setDialogOpen(true)} />
+      {renderContent()}
+      <ChannelDialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        onSubmit={(n, t, i) => {
+          useChannelStore.getState().addChannel(n, t, 'internal', i)
+          setDialogOpen(false)
+        }}
+      />
     </div>
   )
 }

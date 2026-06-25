@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { Plus, Pencil, Trash2, Zap } from 'lucide-react'
 import { useSkillStore } from '@/stores/skill.store'
+import { useTranslation } from '@/i18n'
 import { SettingGroup } from './primitives'
 import { SkillDialog } from '@/components/skills/SkillDialog'
 
 export function SkillsTab() {
   const { skills, addSkill, updateSkill, deleteSkill } = useSkillStore()
+  const { t } = useTranslation()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
 
@@ -22,8 +24,8 @@ export function SkillsTab() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
       <SettingGroup
-        title="Skills"
-        description="Capacidades reutilizables que los agentes pueden invocar."
+        title={t('skills.title')}
+        description={t('skills.desc')}
       >
         <div style={{ display: 'flex', flexDirection: 'column', paddingTop: 4 }}>
           {skills.map((skill) => (
@@ -73,7 +75,7 @@ export function SkillsTab() {
                   setEditId(skill.id)
                   setDialogOpen(true)
                 }}
-                title="Editar"
+                title={t('skills.edit')}
                 style={iconBtnStyle}
                 onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.background = 'var(--bg-hover)' }}
                 onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'none' }}
@@ -82,7 +84,7 @@ export function SkillsTab() {
               </button>
               <button
                 onClick={() => deleteSkill(skill.id)}
-                title="Eliminar"
+                title={t('skills.delete')}
                 style={iconBtnStyle}
                 onMouseEnter={e => { e.currentTarget.style.color = 'var(--destructive)'; e.currentTarget.style.background = 'var(--bg-hover)' }}
                 onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'none' }}
@@ -110,7 +112,7 @@ export function SkillsTab() {
           onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-normal)'; e.currentTarget.style.color = 'var(--text-muted)' }}
         >
           <Plus size={13} strokeWidth={1.5} />
-          Crear skill
+          {t('skills.create')}
         </button>
       </SettingGroup>
 
