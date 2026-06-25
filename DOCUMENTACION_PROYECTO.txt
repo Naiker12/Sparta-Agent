@@ -1,7 +1,11 @@
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║                     SPARTA AGENT — DOCUMENTACIÓN DEL PROYECTO              ║
-║                     Versión: 0.6.0                                         ║
+║                     Versión documentada: 0.7.0                             ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
+
+Nota de sincronización: package.json indica 0.0.0 y StatusBar renderiza v0.1.0.
+Se recomienda alinear estos valores con la versión documentada en la siguiente
+release.
 
 ================================================================================
  1. ¿QUÉ ES SPARTA AGENT?
@@ -9,18 +13,22 @@
 
 Sparta Agent es una aplicación de escritorio para orquestar agentes de IA,
 construida con React + TypeScript + Vite + Electron. Proporciona una interfaz
-de chat para interactuar con múltiples agentes de IA (codificación,
-investigación, automatización, gestión de proyectos, orquestación MCP).
+unificada de chat, gestión de sesiones, skills reutilizables, servidores MCP,
+canales de comunicación, memoria persistente con grafo 3D, proyectos y
+proveedores de modelos de lenguaje.
 
-Soporta el Protocolo de Contexto de Modelo (MCP) para conectar servidores de
-herramientas externas, tiene un sistema multi-tema con 13 temas visuales
-(7 oscuros + 6 claros), sistema de i18n español/inglés, administra
-conversaciones en sesiones, canales, skills reutilizables, memoria persistente,
-proyectos y proveedores de modelos. Es como un "IDE de agentes de IA" local-first.
+Soporta el Protocolo de Contexto de Modelo (MCP), 13 temas visuales
+(8 oscuros + 5 claros), internacionalización español/inglés, iconos de marca
+con detección de tema, y un bus de eventos tipado en memoria. Es un
+"IDE de agentes de IA" local-first en desarrollo activo.
 
-Actualmente está en etapa temprana (v0.5.0) — muchas características
-placeholder, pero con sistemas funcionales de configuración, temas, i18n,
-proveedores de modelo y gestión de datos.
+Estado actual (v0.7.0):
+  • UI/UX muy pulida y funcional (layout, sidebar, chat, settings, views)
+  • Gestión de sesiones, skills, MCP, canales, memoria y proyectos operativa
+  • Sistema de proveedores con test connection real y fetch de modelos
+  • Grafo 3D de memoria con Three.js interactivo
+  • Sin backend real de IA: sendMessage() solo registra en consola y limpia input
+  • Editor, Terminal y Agents Panel son placeholders visuales
 
 ================================================================================
  2. STACK TECNOLÓGICO
@@ -31,18 +39,19 @@ proveedores de modelo y gestión de datos.
   UI Framework      React 18 + TypeScript
   Bundler           Vite 5
   Desktop Shell     Electron 30
-  State Management  Zustand 5 (con persist middleware en 9 stores)
+  State Management  Zustand 5 (persist middleware en 9 stores)
   UI Library        shadcn/ui (@base-ui/react, class-variance-authority)
   Estilos           Tailwind CSS v4
   Fuentes           Inter (UI), Space Grotesk (Display), Geist Variable (Mono)
-   Iconos            Lucide React + SVGL (brand-icons) para logos de marca
+  Iconos            Lucide React + SVGs propios en public/icons/brands/
   Animaciones       Framer Motion 12
-  Editor Código     Monaco Editor (@monaco-editor/react)
-  Terminal          xterm.js (@xterm/xterm + @xterm/addon-fit)
-  Async/Datos       TanStack React Query 5
+  Editor Código     Monaco Editor (@monaco-editor/react) — instalado, no integrado
+  Terminal          xterm.js (@xterm/xterm + @xterm/addon-fit) — instalado, no integrado
+  Async/Datos       TanStack React Query 5 — instalado, uso mínimo
   Grafo 3D          three.js 0.184
   Package Manager   pnpm
   Builder           electron-builder 24
+  CLI UI            shadcn ^4.11.0
 
 ================================================================================
  3. ESTRUCTURA DEL PROYECTO (Árbol Completo)
@@ -55,7 +64,7 @@ D:\sparta-agent\
 ├── components.json                # Registro shadcn/ui
 ├── electron-builder.json5         # Config empaquetado Electron
 ├── index.html                     # Entry point HTML de Vite
-├── package.json                   # Manifiesto del proyecto
+├── package.json                   # Manifiesto del proyecto (version 0.0.0)
 ├── pnpm-lock.yaml                 # Lock file
 ├── pnpm-workspace.yaml            # Config workspace pnpm
 ├── tsconfig.json                  # TypeScript config (src + electron)
@@ -63,6 +72,9 @@ D:\sparta-agent\
 ├── vite.config.ts                 # Config bundler Vite
 ├── README.md                      # Readme (template Vite default)
 ├── DOCUMENTACION_PROYECTO.txt     # Este documento
+│
+├── docs\                          # Documentación técnica adicional
+│   └── barra-lateral-flujo.txt    # Especificación del sidebar
 │
 ├── electron\                      # PROCESO PRINCIPAL DE ELECTRON
 │   ├── electron-env.d.ts          # Tipos para APIs de Electron
@@ -81,226 +93,206 @@ D:\sparta-agent\
 │   ├── web-app-manifest-192x192.png
 │   ├── web-app-manifest-512x512.png
 │   ├── blanco\                    # Iconos variante blanca
-│   │   ├── apple-touch-icon.png
-│   │   ├── favicon-96x96.png
-│   │   ├── favicon.ico
-│   │   ├── favicon.svg
-│   │   ├── site.webmanifest
-│   │   ├── Sparta Agent.png
-│   │   ├── web-app-manifest-192x192.png
-│   │   └── web-app-manifest-512x512.png
-│   └── negro\                     # Iconos variante negra
-│       ├── apple-touch-icon.png
-│       ├── favicon-96x96.png
-│       ├── favicon.ico
-│       ├── favicon.svg
-│       ├── site.webmanifest
-│       ├── web-app-manifest-192x192.png
-│       └── web-app-manifest-512x512.png
+│   ├── negro\                     # Iconos variante negra
+│   ├── icons\brands\              # 26+ SVGs de marcas (AI, integrations, tools)
+│   └── skills\                    # 12 skills descargables .skill.json + manifest.json
 │
 ├── src\                           # CÓDIGO FUENTE DE LA APLICACIÓN
 │   │
 │   ├── main.tsx                   # Entry point React, renderiza <AppShell>
-│   ├── App.tsx                    # Placeholder panels: EditorPanel, TerminalPanel, AgentsPanel
+│   ├── App.tsx                    # Placeholders: EditorPanel, TerminalPanel, AgentsPanel
 │   ├── vite-env.d.ts              # Referencia Vite client types
-│   ├── index.css                  # Tailwind v4 import + animaciones custom
+│   ├── index.css                  # Tailwind v4 import + @theme inline + animaciones custom
 │   │
-│   ├── assets\
-│   │   ├── react.svg              # Logo React (default Vite)
-│   │   └── sparta-icon.png        # Icono Sparta para burbujas de chat
+│   ├── assets\                    # Assets empaquetados
+│   │   ├── react.svg              # Logo React por defecto
+│   │   └── sparta-icon.png        # Icono Sparta para chat
 │   │
 │   ├── i18n\                      # SISTEMA DE INTERNACIONALIZACIÓN
 │   │   ├── index.ts               # Hook useTranslation() + getNestedValue
 │   │   ├── es.ts                  # Diccionario español
 │   │   └── en.ts                  # Diccionario inglés
 │   │
-  │   ├── lib\
-│   │   ├── utils.ts               # Utilidad cn() (clsx + tailwind-merge)
-│   │   ├── brand-icons.ts         # Mapa vendor → rutas SVG (24 marcas) + MONO_BRANDS
-│   │   ├── fetch-models.ts        # fetchModelsByVendor() → obtiene modelos de APIs reales
-│   │   ├── graph-layout.ts        # Cálculo layout esférico Fibonacci para grafo 3D
-│   │   └── graph-colors.ts        # Extrae colores CSS vars como hex en runtime para Three.js
+│   ├── lib\                       # UTILIDADES
+│   │   ├── utils.ts               # cn() (clsx + tailwind-merge)
+│   │   ├── brand-icons.ts         # Mapa vendor → rutas SVG (24+ marcas) + MONO_BRANDS
+│   │   ├── fetch-models.ts        # fetchModelsByVendor() → APIs reales
+│   │   ├── graph-layout.ts        # Layout esférico Fibonacci + relaciones
+│   │   └── graph-colors.ts        # Extrae colores CSS vars a hex para Three.js
 │   │
-  │   ├── types\                     # SISTEMA DE TIPOS (9 módulos)
-  │   │   ├── index.ts               # Re-exporta todos los tipos
-  │   │   ├── agent.ts               # Agent, Task, TaskStep interfaces
-  │   │   ├── chat.ts                # Message, ToolCall, PipelineStep, Session
-  │   │   ├── events.ts              # SpartaEvent + 36 interfaces de eventos
-  │   │   ├── mcp.ts                 # MCPServerConfig, MCPServer, MCPTool
-  │   │   ├── project.ts             # Project interface
-  │   │   ├── skill.ts               # Skill interface
-  │   │   ├── channel.ts             # Channel, ChannelMessage, ChannelKind, IntegrationConfig, IntegrationProvider, IntegrationStatus
-  │   │   ├── memory.ts              # MemoryEntry, MemoryRelation, MemoryGraphNode, MemoryGraph
-  │   │   └── provider.ts            # ProviderVendor (17 valores), Provider interface
+│   ├── types\                     # SISTEMA DE TIPOS (9 módulos)
+│   │   ├── index.ts               # Re-exporta todos los tipos
+│   │   ├── agent.ts               # Agent, Task, TaskStep
+│   │   ├── chat.ts                # Message, ToolCall, PipelineStep, Session
+│   │   ├── events.ts              # SpartaEvent + 36 interfaces de eventos
+│   │   ├── mcp.ts                 # MCPServerConfig, MCPServer, MCPTool
+│   │   ├── project.ts             # Project interface
+│   │   ├── skill.ts               # Skill, DownloadableSkill, SkillCategory
+│   │   ├── channel.ts             # Channel, ChannelMessage, IntegrationConfig, etc.
+│   │   ├── memory.ts              # MemoryEntry, MemoryRelation, MemoryGraphNode, MemoryGraph
+│   │   └── provider.ts            # ProviderVendor (17 valores), Provider interface
 │   │
 │   ├── stores\                    # ESTADO GLOBAL — Zustand (12 stores)
-│   │   ├── agent.store.ts         # CRUD agentes + 5 agentes por defecto
-│   │   ├── chat.store.ts          # Sesiones + mensajes (persist)
-│   │   ├── channel.store.ts       # Canales de comunicación (persist)
-│   │   ├── event-bus.store.ts     # Bus de eventos en memoria (pub/sub)
-│   │   ├── mcp.store.ts           # Registro servidores MCP + 3 por defecto
-│   │   ├── memory.store.ts        # Entradas de memoria persistente (persist)
+│   │   ├── agent.store.ts         # Agentes por defecto (5) + tareas (en memoria)
+│   │   ├── chat.store.ts          # Sesiones + mensajes + pin/archive/rename (persist)
+│   │   ├── channel.store.ts       # Canales + integraciones (persist)
+│   │   ├── event-bus.store.ts     # Bus de eventos pub/sub (en memoria)
+│   │   ├── mcp.store.ts           # Servidores MCP (en memoria)
+│   │   ├── memory.store.ts        # Entradas de memoria (persist)
 │   │   ├── project.store.ts       # Proyectos (persist)
-│   │   ├── provider.store.ts      # CRUD proveedores de modelo (persist)
-│   │   ├── settings.store.ts      # UI settings (modelo, input, API keys, language) (persist)
-│   │   ├── skill.store.ts         # Skills reutilizables (persist)
-│   │   ├── theme.store.ts         # Estado del tema (persist)
-│   │   └── ui.store.ts            # Layout (sidebar, mainView, panels) (persist)
+│   │   ├── provider.store.ts      # Proveedores de modelo (persist)
+│   │   ├── settings.store.ts      # UI settings + toggles (persist)
+│   │   ├── skill.store.ts         # Skills + activación (persist)
+│   │   ├── theme.store.ts         # Tema actual + 13 temas (persist)
+│   │   └── ui.store.ts            # Layout, mainView, sidebar (persist parcial)
 │   │
-│   ├── hooks\                     # REACT HOOKS (10 hooks)
-│   │   ├── useAgent.ts            # Agente activo + helpers de estado
-│   │   ├── useChatSession.ts      # Sesiones, mensajes, streaming
-│   │   ├── useChannels.ts         # CRUD de canales
-│   │   ├── useEventBus.ts         # Suscripción a eventos SpartaEvent
-│   │   ├── useMCP.ts              # Lista servidores MCP + gestión
-│   │   ├── useMemory.ts           # Entradas de memoria
-│   │   ├── useProject.ts          # CRUD de proyectos + proyecto activo
-│   │   ├── useSettings.ts         # Pass-through al settings store
-│   │   ├── useSkills.ts           # CRUD de skills
-│   │   └── useTheme.ts            # Tema actual + setter + isDark (derivado de DARK_THEMES)
+│   ├── hooks\                     # REACT HOOKS (11 hooks)
+│   │   ├── useAgent.ts
+│   │   ├── useChatSession.ts
+│   │   ├── useChannels.ts
+│   │   ├── useEventBus.ts
+│   │   ├── useMCP.ts
+│   │   ├── useMemory.ts
+│   │   ├── use-mobile.ts          # Hook de shadcn/ui para responsive
+│   │   ├── useProject.ts
+│   │   ├── useSettings.ts
+│   │   ├── useSkills.ts
+│   │   └── useTheme.ts
 │   │
 │   ├── styles\                    # ESTILOS
-│   │   ├── globals.css            # CSS maestro: design tokens, fuentes, 13 temas, keyframes, .brand-icon-mono
+│   │   ├── globals.css            # Design tokens, fuentes, 13 temas, keyframes, sidebar
 │   │   └── themes\                # Archivos CSS por tema
 │   │       ├── amber.css
 │   │       ├── catppuccin.css
 │   │       ├── dracula.css
 │   │       ├── emerald.css
-│   │       ├── linen.css          # Tema claro: Lino (crema/cálido)
-│   │       ├── sage.css           # Tema claro: Salvia (verde suave)
-│   │       ├── mist.css           # Tema claro: Bruma (azul-gris)
-│   │       ├── sand.css           # Tema claro: Arena (beige)
 │   │       ├── light.css
-│   │       ├── midnight.css       # (default)
+│   │       ├── linen.css
+│   │       ├── midnight.css       # default
+│   │       ├── mist.css
 │   │       ├── nord.css
 │   │       ├── obsidian.css
-│   │       └── rose.css
+│   │       ├── rose.css
+│   │       └── sage.css
+│   │       └── sand.css
 │   │
-│   ├── electron\                  # Electron IPC
-│   │   └── ipc\                   # (vacío — reservado para handlers IPC)
+│   ├── electron\                  # Electron IPC (reservado)
+│   │   └── ipc\                   # (vacío)
 │   │
-│   └── components\                # COMPONENTES REACT
+│   └── components\                # COMPONENTES REACT (~79 archivos)
 │       │
 │       ├── layout\                # LAYOUT (4 componentes)
-│       │   ├── AppShell.tsx       # Shell raíz: TitleBar + Sidebar + Panel + StatusBar
-│       │   ├── TitleBar.tsx       # Barra superior con drag region, AppMenu, tabs, settings
-│       │   ├── AppMenu.tsx        # Menú de aplicación (File/Edit/View/Window/Help)
-│       │   └── StatusBar.tsx      # Barra inferior: gateway, modelo, tokens, versión
+│       │   ├── AppShell.tsx       # Shell raíz con SidebarProvider + panel activo
+│       │   ├── TitleBar.tsx       # Barra superior custom (drag, tabs, settings)
+│       │   ├── AppMenu.tsx        # Menú visual File/Edit/View/Window/Help
+│       │   └── StatusBar.tsx      # Barra inferior: gateway, agents, cron, modelo, tokens, versión
 │       │
-│       ├── sidebar\               # SIDEBAR (13 componentes)
-│       │   ├── Sidebar.tsx        # Sidebar principal: navegación, búsqueda, secciones
-│       │   ├── SidebarResizeHandle.tsx  # Manejador de redimensionamiento
-│       │   ├── SidebarSection.tsx # Sección colapsable con título + contador + acción
+│       ├── sidebar\               # SIDEBAR (8 componentes)
+│       │   ├── AppSidebar.tsx     # Sidebar principal completo
+│       │   ├── SidebarResizeHandle.tsx  # Redimensionamiento 220-480px
+│       │   ├── SessionList.tsx    # Lista simple de sesiones
+│       │   ├── SessionItem.tsx    # Item de sesión con menú (pin/rename/share/delete)
 │       │   ├── ProjectSwitcher.tsx# Selector de proyecto activo
-│       │   ├── SessionList.tsx    # Lista de sesiones
-│       │   ├── SessionItem.tsx    # Elemento de sesión individual
-│       │   ├── ChannelsSection.tsx# Sección de canales con botón crear
-│       │   ├── ChannelItem.tsx    # Elemento de canal individual
-│       │   ├── McpSection.tsx     # Sección de servidores MCP
-│       │   ├── McpServerItem.tsx  # Elemento de servidor MCP individual
-│       │   ├── SkillsSection.tsx  # Sección de skills con botón crear
-│       │   ├── SkillItem.tsx      # Elemento de skill individual
-│       │   └── MemorySection.tsx  # Resumen de memoria + abrir diálogo
+│       │   ├── ChannelItem.tsx    # Item de canal (visual legacy)
+│       │   ├── McpServerItem.tsx  # Item de MCP (visual legacy)
+│       │   └── SkillItem.tsx      # Item de skill (visual legacy)
 │       │
-│       ├── chat\                  # CHAT (7 componentes)
+│       ├── chat\                  # CHAT (8 componentes + reasoning)
 │       │   ├── ChatArea.tsx       # Panel de chat: HeroScreen o MessageList + ChatInput
 │       │   ├── HeroScreen.tsx     # Pantalla de inicio con branding + acciones rápidas
 │       │   ├── MessageBubble.tsx  # Burbuja de mensaje individual
-│       │   ├── MessageList.tsx    # Lista scrollable de MessageBubble
-│       │   ├── MessageActionsMenu.tsx   # Menú contextual (share/edit/regenerate/delete)
-│       │   ├── MessageActionsDialog.tsx # Diálogos de confirmación para acciones
-│       │   └── reasoning\         # Componentes de razonamiento
-│       │       ├── index.ts       # Re-exporta componentes
-│       │       ├── ThinkingBlock.tsx    # Sección colapsable "Reasoning"
-│       │       ├── ThinkingPill.tsx     # Indicador animado "Thinking..."
-│       │       └── PipelineTrace.tsx    # Traza visual de ejecución de herramientas
+│       │   ├── MessageList.tsx    # Lista scrollable de mensajes
+│       │   ├── MessageActionsMenu.tsx   # Menú contextual del mensaje
+│       │   ├── MessageActionsDialog.tsx # Diálogos de confirmación
+│       │   ├── SpartaIcon.tsx     # SVG del icono de Sparta
+│       │   └── reasoning\         # Razonamiento
+│       │       ├── index.ts
+│       │       ├── ThinkingBlock.tsx
+│       │       ├── ThinkingPill.tsx
+│       │       └── PipelineTrace.tsx
 │       │
-│       ├── input\                 # INPUT (3 componentes)
-│       │   ├── ChatInput.tsx      # Textarea principal con botones de acción
-│       │   ├── ModelPicker.tsx    # Selector de modelo (Claude, GPT, Gemini)
-│       │   └── AttachMenu.tsx     # Menú de adjuntos (File, Code, Image, URL)
+│       ├── input\                 # INPUT (5 componentes)
+│       │   ├── ChatInput.tsx      # Textarea principal con auto-resize
+│       │   ├── ModelPicker.tsx    # Selector de modelo desde proveedores configurados
+│       │   ├── AttachMenu.tsx     # Menú adjuntos (file, web search, reasoning, connectors, mode)
+│       │   ├── ConnectorsSubmenu.tsx # Submenú de servidores MCP
+│       │   └── ModeSwitch.tsx     # Toggle Chat/Agente
 │       │
 │       ├── providers\             # PROVEEDORES DE MODELO (3 componentes)
-│       │   ├── ProviderCard.tsx   # Card de proveedor con API key enmascarada, editar/eliminar
-│       │   ├── ChooseProviderDialog.tsx  # Diálogo selección: cloud (13) + local (4)
-│       │   └── ConfigureProviderDialog.tsx # Config: name, API key/URL, test connection, select modelo
+│       │   ├── ProviderCard.tsx
+│       │   ├── ChooseProviderDialog.tsx
+│       │   └── ConfigureProviderDialog.tsx
 │       │
 │       ├── settings\              # CONFIGURACIÓN (11 componentes)
-│       │   ├── SettingsDialog.tsx  # Modal 900×640, sidebar tabs fijo, content overflow-y auto
-│       │   ├── ThemePicker.tsx    # Grid selector de temas (13 temas, agrupados Oscuros/Claros)
-│       │   └── tabs\              # Contenido de cada tab de settings (8 tabs, i18n)
-│       │       ├── primitives.tsx # SettingRow, SettingGroup — base components
-│       │       ├── GeneralTab.tsx # Modelo default, toggle memoria, selector idioma ES/EN
-│       │       ├── AppearanceTab.tsx # ThemePicker, tipografía, opciones ventana
-│       │       ├── KeybindsTab.tsx   # Referencia de atajos de teclado (i18n)
-│       │       ├── ModelsTab.tsx     # Proveedores registrados + flujo 2-pasos (elegir→configurar)
-│       │       ├── McpTab.tsx        # Gestión de servidores MCP (i18n)
-│       │       ├── MemoryTab.tsx     # Estadísticas y toggle de memoria (i18n)
-│       │       ├── SkillsTab.tsx     # CRUD de skills (i18n)
-│       │       └── AgentsTab.tsx     # Lista y selección de agentes (i18n)
+│       │   ├── SettingsDialog.tsx # Modal 900×640, 8 tabs
+│       │   ├── ThemePicker.tsx    # Grid selector de 13 temas
+│       │   └── tabs\              # 8 tabs + primitives
+│       │       ├── primitives.tsx
+│       │       ├── GeneralTab.tsx
+│       │       ├── AppearanceTab.tsx
+│       │       ├── KeybindsTab.tsx
+│       │       ├── ModelsTab.tsx
+│       │       ├── McpTab.tsx
+│       │       ├── MemoryTab.tsx
+│       │       ├── SkillsTab.tsx
+│       │       └── AgentsTab.tsx
 │       │
 │       ├── views\                 # VISTAS COMPLETAS (5 componentes)
-│       │   ├── SessionsView.tsx   # Vista completa de gestión de sesiones
-│       │   ├── SkillsView.tsx     # Vista completa de skills
-│       │   ├── McpView.tsx        # Vista completa de servidores MCP
-│       │   ├── ChannelsView.tsx   # Vista completa de canales
-│       │   └── MemoryView.tsx     # Vista completa de memoria
+│       │   ├── SessionsView.tsx
+│       │   ├── SkillsView.tsx     # Tabs: Mis Skills / Explorar / Crear
+│       │   ├── McpView.tsx        # Tabs: Conectados / Marketplace
+│       │   ├── ChannelsView.tsx
+│       │   └── MemoryView.tsx
 │       │
-  │       ├── skills\                # SKILLS (5 componentes)
-  │       │   ├── SkillCard.tsx       # Card de skill con menú, toggle activar/instalar
-  │       │   ├── SkillCreator.tsx    # Formulario crear skill con preview + emoji picker
-  │       │   ├── SkillExplorer.tsx   # Explorador de skills descargables con filtros
-  │       │   ├── SkillInstaller.ts   # Utilidad fetch/install de skills desde manifest
-  │       │   └── SkillDialog.tsx     # Diálogo crear/editar skill (nombre, desc, prompt, tags)
+│       ├── skills\                # SKILLS (5 componentes)
+│       │   ├── SkillCard.tsx
+│       │   ├── SkillCreator.tsx
+│       │   ├── SkillDialog.tsx
+│       │   ├── SkillExplorer.tsx
+│       │   └── SkillInstaller.ts
 │       │
-  │       ├── channels\              # CHANNELS (6 componentes)
-  │       │   ├── ChannelSidebar.tsx  # Sidebar lateral con lista de canales + integraciones
-  │       │   ├── ChannelDialog.tsx   # Diálogo crear canal con selector icono SVG
-  │       │   ├── InternalChannelView.tsx  # Vista de canal interno (chat plano)
-  │       │   ├── IntegrationStatusBadge.tsx  # Dot de estado con animación pulse
-  │       │   ├── TelegramIntegrationPanel.tsx # Panel config Telegram (token, webhook, test)
-  │       │   └── ComingSoonPanel.tsx  # Panel placeholder para integraciones futuras
+│       ├── channels\              # CHANNELS (6 componentes)
+│       │   ├── ChannelSidebar.tsx
+│       │   ├── ChannelDialog.tsx
+│       │   ├── InternalChannelView.tsx
+│       │   ├── IntegrationStatusBadge.tsx
+│       │   ├── TelegramIntegrationPanel.tsx
+│       │   └── ComingSoonPanel.tsx
+│       │
+│       ├── memory\                # MEMORY (6 componentes)
+│       │   ├── MemoryDialog.tsx
+│       │   ├── MemoryEntryItem.tsx
+│       │   ├── MemoryGraph.tsx
+│       │   ├── MemoryGraphControls.tsx
+│       │   ├── MemoryNodePanel.tsx
+│       │   └── MemoryListView.tsx
 │       │
 │       ├── projects\              # PROJECTS
-│       │   └── ProjectDialog.tsx  # Diálogo crear proyecto
+│       │   └── ProjectDialog.tsx
 │       │
-  │       ├── memory\                # MEMORY (6 componentes)
-  │       │   ├── MemoryDialog.tsx   # Diálogo completo de gestión de memoria
-  │       │   ├── MemoryEntryItem.tsx # Visualización de entrada de memoria individual
-  │       │   ├── MemoryGraph.tsx    # Grafo 3D Three.js con OrbitControls manual + raycaster
-  │       │   ├── MemoryGraphControls.tsx  # Barra de controles zoom/reset/toggle vista
-  │       │   ├── MemoryNodePanel.tsx # Panel flotante con detalle del nodo seleccionado
-  │       │   └── MemoryListView.tsx  # Vista lista con input + CRUD de recuerdos
+│       ├── mcp\                   # MCP (3 componentes)
+│       │   ├── AddMcpServerDialog.tsx
+│       │   ├── McpServerCard.tsx
+│       │   └── McpToolItem.tsx
 │       │
-│       ├── ui\                    # COMPONENTES BASE shadcn/ui + BrandIcon (10)
-│   │   ├── BrandIcon.tsx     # Icono de marca con detección tema light/dark + mono inversion
-│   │   ├── button.tsx         # Botón con 7 variantes y 8 tamaños
-│   │   ├── card.tsx           # Card con Header, Title, Description, Content, Footer
-│   │   ├── dialog.tsx         # Modal dialog con overlay, portal, close (estilo SettingsDialog)
-│   │   ├── dropdown-menu.tsx  # Menú desplegable completo
-│   │   ├── input.tsx          # Input de texto
-│       │   ├── scroll-area.tsx    # Contenedor scrollable (ScrollBar w-2, thumb bg-border)
-│       │   ├── separator.tsx      # Separador horizontal/vertical
-│       │   ├── textarea.tsx       # Textarea estilizado
-│       │   └── tooltip.tsx        # Tooltip con posicionamiento
-│       │
-│       ├── agents\                # (vacío — placeholder UI de agentes)
-│       ├── editor\                # (vacío — placeholder Monaco Editor)
-  │       ├── mcp\                   # MCP (3 componentes)
-  │       │   ├── AddMcpServerDialog.tsx  # Diálogo agregar/editar servidor MCP
-  │       │   ├── McpServerCard.tsx       # Card de servidor con toggle, tools, editar/eliminar
-  │       │   └── McpToolItem.tsx         # Item individual de herramienta MCP
-│       └── terminal\              # (vacío — placeholder xterm.js)
+│       └── ui\                    # PRIMITIVOS shadcn/ui + BrandIcon (16 archivos)
+│           ├── BrandIcon.tsx
+│           ├── button.tsx
+│           ├── card.tsx
+│           ├── confirm-delete-dialog.tsx
+│           ├── dialog.tsx
+│           ├── dropdown-menu.tsx
+│           ├── input.tsx
+│           ├── scroll-area.tsx
+│           ├── separator.tsx
+│           ├── sheet.tsx
+│           ├── sidebar.tsx        # Componente sidebar completo de shadcn (733 líneas)
+│           ├── skeleton.tsx
+│           ├── textarea.tsx
+│           └── tooltip.tsx
 │
 ├── dist\                          # BUILD OUTPUT (Vite)
-│   ├── assets\                    # Compiled JS/CSS assets
-│   ├── index.html
-│   ├── favicon.ico, favicon.svg, etc.
-│   └── ...
-│
 └── dist-electron\                 # BUILD OUTPUT (Electron)
-    ├── main.js                    # Compiled main process
-    └── preload.mjs                # Compiled preload script
 
 ================================================================================
  4. ARQUITECTURA
@@ -308,74 +300,87 @@ D:\sparta-agent\
 
  4.1 Flujo de la Aplicación:
 
-  index.html
-    → src/main.tsx (React root)
-      → AppShell.tsx (shell raíz)
-        → TitleBar.tsx (AppMenu + tabs navegación + botón settings)
-        → Sidebar.tsx (navegación por vistas + búsqueda + secciones)
-        → Panel Activo (según mainView.type):
-            - chat     → ChatArea.tsx
-            - editor   → EditorPanel (placeholder)
-            - terminal → TerminalPanel (placeholder)
-            - agents   → AgentsPanel (placeholder)
-            - sessions → SessionsView.tsx
-            - skills   → SkillsView.tsx
-            - mcp      → McpView.tsx
-            - channels → ChannelsView.tsx
-            - memory   → MemoryView.tsx
-        → StatusBar.tsx (barra de estado inferior)
-        → SettingsDialog.tsx (modal, renderizado condicional)
+   index.html
+     → src/main.tsx (React root)
+       → AppShell.tsx (shell raíz)
+         → TitleBar.tsx (drag region, AppMenu, tabs, settings)
+         → SidebarProvider → AppSidebar.tsx + Panel Activo
+         → StatusBar.tsx
+         → SettingsDialog.tsx (renderizado condicional)
+
+   Panel Activo según mainView.type:
+     - chat     → ChatArea.tsx
+     - editor   → EditorPanel (placeholder)
+     - terminal → TerminalPanel (placeholder)
+     - agents   → AgentsPanel (placeholder)
+     - sessions → SessionsView.tsx
+     - skills   → SkillsView.tsx
+     - mcp      → McpView.tsx
+     - channels → ChannelsView.tsx
+     - memory   → MemoryView.tsx
 
  4.2 Flujo de Estado:
 
-  Zustand Stores ←(subscribe)→ React Components
-       ↓
-  types/ (interfaces compartidas)
-       ↓
-  persist middleware → localStorage (9 stores)
+   Zustand Stores ←(subscribe)→ React Components
+        ↓
+   types/ (interfaces compartidas)
+        ↓
+   persist middleware → localStorage (9 stores)
 
  4.3 Flujo de Datos:
 
-  - Zustand stores son la única fuente de verdad
-  - 9 stores usan persist middleware (chat, channel, memory, project,
-    provider, settings, skill, theme, ui) — guardan en localStorage
-  - 3 stores son en memoria (agent, event-bus, mcp)
-  - Los hooks son wrappers delgados alrededor de los stores
-  - Los componentes leen de stores directamente o mediante hooks
-  - Event bus (event-bus.store.ts) es un sistema pub/sub en memoria:
-      - Eventos de agente: agent:started, agent:completed, agent:error
-      - Eventos de thinking: thinking:started, thinking:token, thinking:completed
-      - Eventos de herramientas: tool:called, tool:result, tool:error
-      - Eventos MCP: mcp:connected, mcp:tool_discovered, mcp:disconnected
-      - Eventos streaming: stream:token, stream:completed, stream:error
-      - Eventos pipeline: pipeline:step
-      - Eventos chat: chat:message, message:deleted, message:edited, message:shared
-      - Eventos sesión: session:created, session:switched
-      - Eventos proyecto: project:created, project:switched, project:deleted
-      - Eventos skill: skill:created, skill:updated, skill:deleted, skill:invoked
-      - Eventos canal: channel:created, channel:message, channel:deleted
-      - Eventos memoria: memory:added, memory:updated, memory:deleted
+   • Zustand stores son la única fuente de verdad.
+   • 9 stores usan persist middleware → localStorage:
+       sparta-chat, sparta-channels, sparta-memory, sparta-projects,
+       sparta-providers, sparta-settings, sparta-skills, sparta-theme, sparta-ui.
+   • 3 stores son en memoria: agent, event-bus, mcp.
+   • Los hooks son wrappers delgados alrededor de los stores.
+   • Event bus pub/sub con 36 tipos de eventos SpartaEvent:
+       agent:started, agent:completed, agent:error
+       thinking:started, thinking:token, thinking:completed
+       tool:called, tool:result, tool:error
+       mcp:connected, mcp:tool_discovered, mcp:disconnected
+       stream:token, stream:completed, stream:error
+       pipeline:step
+       chat:message, message:deleted, message:edited, message:shared
+       session:created, session:switched
+       project:created, project:switched, project:deleted
+       skill:created, skill:updated, skill:deleted, skill:invoked
+       channel:created, channel:message, channel:deleted
+       memory:added, memory:updated, memory:deleted
 
  4.4 Integración Electron:
 
-  - vite-plugin-electron/simple compila:
-      electron/main.ts → dist-electron/main.js
-      electron/preload.ts → dist-electron/preload.mjs
-  - En dev: carga desde Vite dev server URL
-  - En prod: carga dist/index.html
-  - titleBarStyle: 'hidden' + titleBarOverlay (color #0C0C10, symbolColor #9CA3AF, height 38)
-  - contextIsolation: true, nodeIntegration: false
-  - IPC handlers: win:minimize, win:maximize, win:close, win:isMaximized
-  - Exposición via contextBridge:
-      window.electronAPI → min/max/close/isMaximized/onMaximizedChange
-      window.electron → IPC genérico (on/send/invoke)
-      window.sparta → eventos (onEvent/sendEvent)
+   • vite-plugin-electron/simple compila:
+       electron/main.ts → dist-electron/main.js
+       electron/preload.ts → dist-electron/preload.mjs
+   • En dev: carga desde Vite dev server URL
+   • En prod: carga dist/index.html
+   • Ventana: 1280×800 (min 900×600), titleBarStyle: 'hidden'
+   • titleBarOverlay dinámico por tema (colores en theme.store.ts)
+   • contextIsolation: true, nodeIntegration: false
+   • IPC handlers: win:minimize, win:maximize, win:close, win:isMaximized,
+                   titlebar:set-overlay
+   • Exposición via contextBridge:
+       window.electronAPI → min/max/close/isMaximized/onMaximizedChange/setTitleBarOverlay
+       window.electron → IPC genérico (on/send/invoke)
+       window.sparta → eventos (onEvent/sendEvent)
 
  4.5 Routing:
 
-  No hay router. La navegación es por estado de MainView (ui.store.ts):
-    MainView = { type: 'chat' | 'editor' | 'terminal' | 'agents'
-                 | 'sessions' | 'skills' | 'mcp' | 'channels' | 'memory' }
+   No hay router. La navegación es por estado de MainView (ui.store.ts):
+     MainView =
+       | { type: 'chat'; sessionId?: string }
+       | { type: 'editor' }
+       | { type: 'terminal' }
+       | { type: 'agents' }
+       | { type: 'sessions' }
+       | { type: 'skills' }
+       | { type: 'mcp' }
+       | { type: 'channels'; channelId?: string }
+       | { type: 'memory' }
+
+   ui.store.ts también guarda previousMainView y provee goBack().
 
 ================================================================================
  5. COMPONENTES — DESCRIPCIÓN DETALLADA
@@ -383,675 +388,586 @@ D:\sparta-agent\
 
  5.1 Layout
 
-  AppShell.tsx
-    └── Ubicación: src/components/layout/AppShell.tsx
-    └── Propósito: Shell raíz de la aplicación
-    └── Renderiza: TitleBar + (Sidebar + PanelActivo según mainView) + StatusBar
-    └── Lógica: initTheme() al montar, panel según mainView.type
-    └── Modal condicional: SettingsDialog
+   AppShell.tsx
+     └── Ubicación: src/components/layout/AppShell.tsx
+     └── Propósito: Shell raíz de la aplicación
+     └── Renderiza: TitleBar + SidebarProvider(AppSidebar + resize handle + panel) + StatusBar
+     └── Lógica: initTheme() al montar, panel según mainView.type, animación viewFadeIn
 
-  TitleBar.tsx
-    └── Ubicación: src/components/layout/TitleBar.tsx
-    └── Propósito: Titlebar macOS personalizado con drag region
-    └── Subcomponentes: AppMenu, tabs (Chat/Editor/Terminal/Agents), botón settings
-    └── Renderiza condicionalmente views/sessions/skills/mcp/channels/memory según mainView
+   TitleBar.tsx
+     └── Ubicación: src/components/layout/TitleBar.tsx
+     └── Propósito: Titlebar personalizado con drag region
+     └── Subcomponentes: botón toggle sidebar, AppMenu, logo+SpartaIcon, tabs (Chat/Editor/Terminal/Agents), settings
+     └── Tabs principales: Chat, Editor, Terminal, Agents
 
-  AppMenu.tsx
-    └── Ubicación: src/components/layout/AppMenu.tsx
-    └── Propósito: Menú dropdown tipo aplicación (File/Edit/View/Window/Help)
-    └── Usa DropdownMenu de shadcn/ui con separadores y atajos
+   AppMenu.tsx
+     └── Ubicación: src/components/layout/AppMenu.tsx
+     └── Propósito: Menú dropdown tipo aplicación (File/Edit/View/Window/Help)
+     └── Visual/placeholder: items renderizados sin handlers reales
 
-  StatusBar.tsx
-    └── Ubicación: src/components/layout/StatusBar.tsx
-    └── Propósito: Barra de estado inferior
-    └── Muestra: Gateway (verde), Agents count, Cron status, modelo (con BrandIcon), tokens, versión
-    └── Subcomponente: SBItem
+   StatusBar.tsx
+     └── Ubicación: src/components/layout/StatusBar.tsx
+     └── Propósito: Barra de estado inferior
+     └── Muestra: Gateway ready (verde), Agents, Cron, modelo activo (con BrandIcon), tokens, versión
 
  5.2 Sidebar
 
-  Sidebar.tsx
-    └── Ubicación: src/components/sidebar/Sidebar.tsx
-    └── Propósito: Sidebar izquierdo colapsable y redimensionable
-    └── Estados: expandido (default 260px) o colapsado (48px, solo iconos con tooltips)
-    └── Navegación: 5 items con contadores (Sesiones, Skills, MCP, Canales, Memoria)
-    └── Botón "Nueva sesión" con atajo Ctrl+N
-    └── Input de búsqueda
-    └── Secciones: ProjectSwitcher, Fijados, Recientes
-    └── Animación: transición width 200ms ease
+   AppSidebar.tsx
+     └── Ubicación: src/components/sidebar/AppSidebar.tsx
+     └── Propósito: Sidebar principal completo basado en shadcn/ui/sidebar
+     └── Header: logo SPARTA AGENT + botón "Nueva sesión" (⌘N)
+     └── Navegación: 5 items con contadores (Sesiones, Skills, MCP, Canales, Memoria)
+     └── Secciones: Fijados, búsqueda funcional de sesiones, Recientes
+     └── Footer: botón Configuración
+     └── Integrado en SidebarProvider; ancho controlado por ui.store.ts
 
-  SidebarResizeHandle.tsx
-    └── Ubicación: src/components/sidebar/SidebarResizeHandle.tsx
-    └── Propósito: Permite redimensionar el sidebar arrastrando el borde derecho
-    └── Límites: ancho mínimo 48px, máximo 400px
+   SidebarResizeHandle.tsx
+     └── Ubicación: src/components/sidebar/SidebarResizeHandle.tsx
+     └── Propósito: Redimensionar sidebar arrastrando el borde derecho
+     └── Límites: 220px mínimo, 480px máximo
 
-  SidebarSection.tsx
-    └── Ubicación: src/components/sidebar/SidebarSection.tsx
-    └── Propósito: Sección colapsable con título, contador y botón de acción
-    └── Props: title, count, icon, children, onAction, defaultExpanded
+   SessionItem.tsx
+     └── Ubicación: src/components/sidebar/SessionItem.tsx
+     └── Propósito: Item de sesión con click para activar, hover actions
+     └── Menú contextual: Fijar/Quitar fijado, Renombrar, Compartir, Eliminar
+     └── Muestra tiempo relativo (ahora, Xm, Xh, Xd, Xmes)
+     └── Diálogos: ConfirmDeleteDialog, share con sparta://session/{id}
 
-  ProjectSwitcher.tsx
-    └── Ubicación: src/components/sidebar/ProjectSwitcher.tsx
-    └── Propósito: Dropdown selector de proyecto activo
-    └── Botón "+" que abre ProjectDialog para crear proyectos
-
-  SessionList.tsx / SessionItem.tsx
-    └── Lista de sesiones con título, fecha y menú contextual
-    └── SessionItem: onClick cambia sesión, muestra título truncado
-
-  ChannelsSection.tsx / ChannelItem.tsx
-    └── Sección colapsable con lista de canales
-    └── ChannelItem: icono hash, nombre, contador no leídos
-    └── Botón "+" abre ChannelDialog
-
-  SkillsSection.tsx / SkillItem.tsx
-    └── Sección colapsable con lista de skills
-    └── SkillItem: icono, nombre, descripción
-    └── Botón "+" abre SkillDialog
-
-  MemorySection.tsx
-    └── Resumen de entradas de memoria
-    └── Botón "View All" abre MemoryDialog
-
-  McpSection.tsx / McpServerItem.tsx
-    └── Sección colapsable con servidores MCP
-    └── McpServerItem: nombre, estado (conectado/desconectado), tools count
+   SessionList.tsx / ProjectSwitcher.tsx / ChannelItem.tsx / McpServerItem.tsx / SkillItem.tsx
+     └── Componentes visuales legacy o simples; AppSidebar usa SessionItem directamente.
 
  5.3 Chat
 
-  ChatArea.tsx
-    └── Ubicación: src/components/chat/ChatArea.tsx
-    └── Propósito: Orquesta la vista del panel de chat
-    └── Lógica: Si hay mensajes → MessageList + ChatInput; si no → HeroScreen + ChatInput
+   ChatArea.tsx
+     └── Ubicación: src/components/chat/ChatArea.tsx
+     └── Propósito: Orquesta la vista del panel de chat
+     └── Si hay mensajes → MessageList + ChatInput; si no → HeroScreen + ChatInput
 
-  HeroScreen.tsx
-    └── Ubicación: src/components/chat/HeroScreen.tsx
-    └── Propósito: Pantalla de bienvenida cuando no hay conversación
-    └── Animaciones: Framer Motion
-    └── Acciones rápidas: New Chat, Coding, Research, Settings
-    └── Branding: "SPARTA AGENT" con gradiente
+   HeroScreen.tsx
+     └── Ubicación: src/components/chat/HeroScreen.tsx
+     └── Propósito: Pantalla de bienvenida cuando no hay mensajes
+     └── Animaciones Framer Motion (flotación, escala)
+     └── Acciones rápidas: New chat, Coding, Research, Settings
+     └── Texto descriptivo: "Elegiré las herramientas, explicaré el plan..."
 
-  MessageBubble.tsx
-    └── Ubicación: src/components/chat/MessageBubble.tsx
-    └── Propósito: Renderiza un mensaje individual
-    └── User: alineado derecha, Assistant: alineado izquierda con avatar
-    └── Condicional: thinking → ThinkingBlock, toolCalls → PipelineTrace
-    └── Menú contextual: MessageActionsMenu
+   MessageBubble.tsx
+     └── Ubicación: src/components/chat/MessageBubble.tsx
+     └── Propósito: Renderiza un mensaje individual
+     └── User: alineado derecha; Assistant: alineado izquierda con avatar SpartaIcon
+     └── Soporta thinking → ThinkingBlock, toolCalls → PipelineTrace
+     └── Menú contextual MessageActionsMenu integrado
 
-  MessageList.tsx
-    └── Ubicación: src/components/chat/MessageList.tsx
-    └── Propósito: Lista scrollable de mensajes
-    └── Auto-scroll al último mensaje
-    └── Muestra ThinkingPill animado cuando isStreaming=true
+   MessageList.tsx
+     └── Ubicación: src/components/chat/MessageList.tsx
+     └── Propósito: Lista scrollable de mensajes
+     └── Auto-scroll al último mensaje
+     └── Muestra ThinkingPill cuando isStreaming=true
 
-  MessageActionsMenu.tsx
-    └── Ubicación: src/components/chat/MessageActionsMenu.tsx
-    └── Propósito: Menú dropdown con acciones sobre un mensaje
-    └── Acciones: Share, Edit, Regenerate, Delete
-    └── Delete abre MessageActionsDialog para confirmación
-
-  MessageActionsDialog.tsx
-    └── Ubicación: src/components/chat/MessageActionsDialog.tsx
-    └── Propósito: Diálogo de confirmación para eliminar mensaje
-    └── También maneja share de mensajes
+   MessageActionsMenu.tsx / MessageActionsDialog.tsx
+     └── Menú contextual con Share, Edit, Regenerate, Delete
+     └── Delete usa ConfirmDeleteDialog
+     └── Share genera sparta://session/{id}
 
  5.4 Reasoning
 
-  ThinkingBlock.tsx
-    └── Ubicación: src/components/chat/reasoning/ThinkingBlock.tsx
-    └── Propósito: Sección colapsable de razonamiento interno de la IA
-    └── Icono: sparks, Label: "Reasoning"
-    └── Estado local: expanded (useState)
-
-  ThinkingPill.tsx
-    └── Ubicación: src/components/chat/reasoning/ThinkingPill.tsx
-    └── Propósito: Indicador animado "Thinking..."
-    └── 3 dots con animación escalonada
-    └── Retorna null cuando isThinking=false
-
-  PipelineTrace.tsx
-    └── Ubicación: src/components/chat/reasoning/PipelineTrace.tsx
-    └── Propósito: Timeline visual de ejecución de herramientas
-    └── Iconos por estado: Check (done), X (error), Brain (thinking), Loader2 (running)
-    └── Animaciones: Framer Motion AnimatePresence
-    └── Formato duración: <1s en ms, >=1s en segundos
+   ThinkingBlock.tsx
+     └── Sección colapsable de razonamiento interno
+   ThinkingPill.tsx
+     └── Indicador animado "Thinking..." con 3 dots
+   PipelineTrace.tsx
+     └── Timeline visual de ejecución de herramientas
+     └── Estados: done, error, running
 
  5.5 Input
 
-  ChatInput.tsx
-    └── Ubicación: src/components/input/ChatInput.tsx
-    └── Propósito: Área de composición de mensajes
-    └── border-radius: var(--radius-xl) (chat-input-wrapper) y var(--radius-lg) (botón enviar)
-    └── Textarea auto-redimensionable (max 120px)
-    └── Enter envía, Shift+Enter nueva línea
-    └── Botones: Attach (+), Model selector, Mic, Send
-    └── ModelPicker se renderiza condicionalmente
+   ChatInput.tsx
+     └── Ubicación: src/components/input/ChatInput.tsx
+     └── Propósito: Área de composición de mensajes
+     └── Textarea auto-redimensionable (max 120px)
+     └── Enter envía, Shift+Enter nueva línea
+     └── Botones: Attach (+), ModelPicker, Mic, Send
+     └── Wrapper con sombra y borde de foco animado
 
-  ModelPicker.tsx
-    └── Ubicación: src/components/input/ModelPicker.tsx
-    └── Propósito: Dropdown de selección de modelo con DropdownMenu de shadcn/ui
-    └── Muestra BrandIcon del proveedor activo en el trigger y en cada ítem
-    └── border-radius: 999px (pill) para el trigger y botón "Configura un modelo"
-    └── Animado con Framer Motion
+   ModelPicker.tsx
+     └── Ubicación: src/components/input/ModelPicker.tsx
+     └── Propósito: Selector de modelo desde proveedores configurados
+     └── Si no hay proveedores: botón "Configura un modelo" que abre settings
+     └── Muestra BrandIcon del proveedor activo y lista modelos defaultModel
 
-  AttachMenu.tsx
-    └── Ubicación: src/components/input/AttachMenu.tsx
-    └── Propósito: Menú de selección de tipo de adjunto
-    └── Opciones: File, Code snippet, Image, URL (placeholders)
-    └── Click-outside handler para cerrar
+   AttachMenu.tsx
+     └── Ubicación: src/components/input/AttachMenu.tsx
+     └── Opciones: Agregar archivo (file input placeholder), Búsqueda web (toggle),
+                    Razonamiento (toggle), Conectores (submenú MCP), ModeSwitch
+     └── Click-outside para cerrar
+
+   ConnectorsSubmenu.tsx
+     └── Lista servidores MCP con checkbox para activar/desactivar
+
+   ModeSwitch.tsx
+     └── Toggle Chat / Agente en el modo de sesión
 
  5.6 Providers
 
-  ProviderCard.tsx
-    └── Ubicación: src/components/providers/ProviderCard.tsx
-    └── Propósito: Card individual de proveedor registrado
-    └── Muestra: BrandIcon del vendor, label, API key enmascarada con toggle 👁,
-                 modelo por defecto, fecha, consumo
-    └── Acciones: editar (lápiz), eliminar (confirmación)
+   ProviderCard.tsx
+     └── Card de proveedor registrado con BrandIcon, label, API key enmascarada,
+         modelo default, fecha, acciones editar/eliminar
 
-  ChooseProviderDialog.tsx
-    └── Ubicación: src/components/providers/ChooseProviderDialog.tsx
-    └── Propósito: Diálogo de selección de proveedor (2-pasos)
-    └── 13 cloud: Anthropic, OpenAI, Google, Groq, Mistral, Azure, DeepSeek,
-                  Together, Fireworks, OpenRouter, Cohere, Perplexity, xAI
-    └── 4 local: Ollama, LM Studio, llama.cpp, Custom
-    └── Cada vendor muestra BrandIcon + label
-    └── ScrollArea interno con overflow-y auto
+   ChooseProviderDialog.tsx
+     └── Diálogo de selección de proveedor
+     └── 13 cloud + 4 local = 17 vendors con BrandIcon
 
-  ConfigureProviderDialog.tsx
-    └── Ubicación: src/components/providers/ConfigureProviderDialog.tsx
-    └── Propósito: Configurar proveedor (nombre, credenciales, test, modelo)
-    └── Campo nombre + API key (cloud) o Server URL (local)
-    └── Botón "Test" que llama fetchModelsByVendor() a la API real
-    └── Select de modelos poblado después de test exitoso
-    └── 500px de ancho con scroll interno
+   ConfigureProviderDialog.tsx
+     └── Configuración: nombre, API key (cloud) o Server URL (local)
+     └── Botón "Test" llama fetchModelsByVendor() a la API real
+     └── Select de modelos poblado tras test exitoso
 
  5.7 Settings
 
-  SettingsDialog.tsx
-    └── Ubicación: src/components/settings/SettingsDialog.tsx
-    └── Propósito: Modal de configuración completo con sidebar de tabs
-    └── 900×640, sidebar de tabs fijo sin scroll, content con overflow-y auto
-    └── 8 tabs: General, Appearance, Keybinds, Models, MCP, Memory, Skills, Agents
-    └── ApiKeysTab eliminado (reemplazado por sistema de proveedores)
-    └── Todos los tabs tienen i18n (español/inglés)
-    └── Animaciones: modalBackdropIn + modalScaleIn 0.15s
+   SettingsDialog.tsx
+     └── Modal 900×640 con sidebar de 8 tabs fijo
+     └── Tabs: General, Appearance, Keybinds, Models, MCP, Memory, Skills, Agents
+     └── Nota: ui.store.ts define SettingsTab con 9 valores incluyendo 'keys',
+         pero SettingsDialog.tsx usa un type local de 8 tabs (sin 'keys').
 
-  ThemePicker.tsx
-    └── Ubicación: src/components/settings/ThemePicker.tsx
-    └── Propósito: Selector visual de temas en grid
-    └── 13 temas agrupados: Oscuros (7) + Claros (6)
-    └── Oscuros: Midnight, Obsidian, Emerald, Rose, Amber, Dracula, Catppuccin, Nord
-    └── Claros: Lino, Salvia, Bruma, Arena, Nord Light, Light
-    └── Grid con preview visual y check de selección
+   ThemePicker.tsx
+     └── Selector visual de 13 temas agrupados: Oscuros (8) + Claros (5)
+     └── Oscuros: Midnight, Obsidian, Emerald, Rose, Amber, Dracula, Catppuccin, Nord
+     └── Claros: Light, Lino, Salvia, Bruma, Arena
 
-  Settings Tabs (src/components/settings/tabs/):
-    └── GeneralTab.tsx     → Modelo default (input), toggle memoria,
-                              selector idioma ES/EN con persistencia
-    └── AppearanceTab.tsx  → ThemePicker (13 temas), tipografía (slider 12-16),
-                              blur, opacity de sidebar, i18n
-    └── KeybindsTab.tsx    → Lista de atajos de teclado (12 atajos), i18n
-    └── ModelsTab.tsx      → Proveedores registrados + flujo 2-pasos
-                              (ChooseProviderDialog → ConfigureProviderDialog)
-    └── McpTab.tsx         → Lista de servidores MCP con toggle, tools count,
-                              formulario agregar, i18n
-    └── MemoryTab.tsx      → Toggle memoria, stat cards (total/auto/manual),
-                              preview últimos 3, i18n
-    └── SkillsTab.tsx      → Lista de skills con CRUD, SkillDialog, i18n
-    └── AgentsTab.tsx      → Lista de agentes con descripción, estado, i18n
+   Settings Tabs:
+     └── GeneralTab     → Modelo default, memoria, idioma ES/EN, web search, reasoning
+     └── AppearanceTab  → ThemePicker, tipografía, opciones ventana
+     └── KeybindsTab    → Referencia de atajos
+     └── ModelsTab      → Proveedores registrados + flujo 2-pasos
+     └── McpTab         → Gestión MCP
+     └── MemoryTab      → Estadísticas y toggle memoria
+     └── SkillsTab      → CRUD de skills
+     └── AgentsTab      → Lista y selección de agentes
 
  5.8 Views
 
-  SessionsView.tsx
-    └── Ubicación: src/components/views/SessionsView.tsx
-    └── Propósito: Vista completa de gestión de sesiones
-    └── Lista de sesiones con búsqueda y acciones
+   SessionsView.tsx
+     └── Vista completa de gestión de sesiones (placeholder funcional simple)
 
-  SkillsView.tsx
-    └── Ubicación: src/components/views/SkillsView.tsx
-    └── Propósito: Vista completa de skills reutilizables
-    └── CRUD completo con SkillDialog
+   SkillsView.tsx
+     └── Vista completa con 3 tabs: Mis Skills / Explorar / Crear
+     └── Mis Skills: búsqueda, filtros por tags, grid de SkillCard, exportar a .skill.json
+     └── Explorar: SkillExplorer carga skills desde /skills/manifest.json
+     └── Crear: SkillCreator con preview y emoji picker
 
-  McpView.tsx
-    └── Ubicación: src/components/views/McpView.tsx
-    └── Propósito: Vista completa de servidores MCP
-    └── Lista con estado, tools y acciones
+   McpView.tsx
+     └── Vista completa con 2 tabs: Conectados / Marketplace
+     └── Marketplace: 6 servidores preconfigurados (Filesystem, Git, SQLite, PostgreSQL, Puppeteer, Brave Search)
+     └── Botón "Instalar" abre AddMcpServerDialog con config precargada
 
-  ChannelsView.tsx
-    └── Ubicación: src/components/views/ChannelsView.tsx
-    └── Propósito: Vista completa de canales de comunicación
-    └── Sidebar interno de 220px (ChannelSidebar) con secciones de canales internos e integraciones
-    └── Panel de contenido según canal activo:
-        - internos → InternalChannelView (chat plano con empty state + input)
-        - telegram → TelegramIntegrationPanel (formulario token + webhook + probar conexión)
-        - discord/slack/whatsapp/email → ComingSoonPanel
-    └── ChannelDialog con selector de icono SVG
+   ChannelsView.tsx
+     └── Vista completa con sidebar interna (ChannelSidebar) + panel de contenido
+     └── Canales internos → InternalChannelView (chat plano placeholder)
+     └── Telegram → TelegramIntegrationPanel (test real de token)
+     └── Discord/Slack/WhatsApp/Email → ComingSoonPanel
 
-  MemoryView.tsx
-    └── Ubicación: src/components/views/MemoryView.tsx
-    └── Propósito: Vista completa de entradas de memoria
-    └── Toggle entre Vista gráfico (MemoriaGraph 3D) y Vista lista (MemoryListView)
-    └── Grafo 3D con Three.js: nodos distribuidos esféricamente (Fibonacci), aristas por categoría/proyecto
-    └── OrbitControls manual (drag rotar, wheel zoom), raycaster para selección de nodos
-    └── Panel flotante (MemoryNodePanel) con detalle del nodo seleccionado
-    └── MemoryListView con input para añadir/editar/eliminar recuerdos
+   MemoryView.tsx
+     └── Vista completa con toggle Vista gráfico / Vista lista
+     └── Grafo 3D Three.js: nodos esféricos (Fibonacci), aristas por categoría/proyecto
+     └── OrbitControls manual, raycaster, panel flotante de nodo
+     └── MemoryListView: CRUD de recuerdos
 
- 5.9 Dialogs
+ 5.9 Skills
 
-  SkillDialog.tsx
-    └── Ubicación: src/components/skills/SkillDialog.tsx
-    └── Propósito: Crear/editar skill (nombre, descripción, prompt, tags)
+   SkillCard.tsx       → Card con menú, toggle activar, exportar
+   SkillCreator.tsx    → Formulario crear con preview y emoji picker
+   SkillExplorer.tsx   → Explorador de skills descargables con filtros
+   SkillInstaller.ts   → fetch manifest + install de skills
+   SkillDialog.tsx     → Diálogo crear/editar skill (nombre, desc, prompt, tags)
 
-  ChannelDialog.tsx
-    └── Ubicación: src/components/channels/ChannelDialog.tsx
-    └── Propósito: Crear canal (nombre, topic)
+ 5.10 Channels
 
-  ProjectDialog.tsx
-    └── Ubicación: src/components/projects/ProjectDialog.tsx
-    └── Propósito: Crear proyecto (nombre, descripción)
+   ChannelSidebar.tsx          → Lista canales internos + integraciones
+   ChannelDialog.tsx           → Crear canal con selector de icono SVG
+   InternalChannelView.tsx     → Chat plano placeholder
+   TelegramIntegrationPanel.tsx→ Config token/webhook + test real a api.telegram.org
+   IntegrationStatusBadge.tsx  → Badge de estado con pulse
+   ComingSoonPanel.tsx         → Placeholder para integraciones futuras
 
-  MemoryDialog.tsx / MemoryEntryItem.tsx
-    └── Ubicación: src/components/memory/
-    └── Propósito: Gestión completa de entradas de memoria
-    └── CRUD, categorías, filtros
+ 5.11 Memory
 
- 5.10 UI Primitives (shadcn/ui)
+   MemoryDialog.tsx        → Diálogo completo de gestión de memoria
+   MemoryEntryItem.tsx     → Visualización de entrada individual
+   MemoryGraph.tsx         → Grafo 3D Three.js
+   MemoryGraphControls.tsx → Zoom/reset/toggle vista
+   MemoryNodePanel.tsx     → Panel flotante con detalle del nodo
+   MemoryListView.tsx      → Vista lista con CRUD
 
-  button.tsx       → Botón con 7 variantes (default, outline, secondary,
-                     ghost, destructive, link) y 8 tamaños
-  card.tsx         → Contenedor Card con Header, Title, Description,
-                     Content, Footer
-  dialog.tsx       → Modal con Overlay, Portal, Close, Header, Footer,
-                     Title, Description
-  dropdown-menu.tsx→ Menú completo con items, grupos, checkboxes,
-                     radio groups, submenús
-  input.tsx        → Input de texto estilizado
-  scroll-area.tsx  → Contenedor con scrollbar custom (ScrollBar w-2)
-  separator.tsx    → Divisor horizontal/vertical
-  textarea.tsx     → Textarea estilizado con field-sizing
-  tooltip.tsx      → Tooltip con posicionamiento y flecha
+ 5.12 MCP
+
+   AddMcpServerDialog.tsx  → Agregar/editar servidor MCP (stdio/http)
+   McpServerCard.tsx       → Card con toggle, tools, editar/eliminar
+   McpToolItem.tsx         → Item individual de herramienta MCP
+
+ 5.13 Projects
+
+   ProjectDialog.tsx       → Diálogo crear proyecto (nombre, descripción)
+
+ 5.14 UI Primitives (shadcn/ui)
+
+   BrandIcon.tsx              → Icono de marca con detección light/dark + mono inversion
+   button.tsx                 → 6 variantes, múltiples tamaños
+   card.tsx                   → Card con Header/Title/Description/Content/Footer
+   confirm-delete-dialog.tsx  → Diálogo reutilizable de confirmación
+   dialog.tsx                 → Modal con overlay/portal/animations
+   dropdown-menu.tsx          → Menú completo con items/grupos/checkboxes/submenús
+   input.tsx                  → Input estilizado
+   scroll-area.tsx            → Scrollbar custom
+   separator.tsx              → Divisor horizontal/vertical
+   sheet.tsx                  → Sheet/side panel
+   sidebar.tsx                → Sidebar completo de shadcn/ui (733 líneas)
+   skeleton.tsx               → Skeleton loader
+   textarea.tsx               → Textarea estilizado
+   tooltip.tsx                → Tooltip con posicionamiento
 
 ================================================================================
  6. SISTEMA DE ESTADOS (Zustand Stores)
 ================================================================================
 
-  agent.store.ts
-    └── Persist: No (en memoria)
-    └── Estado: agents[], activeAgentId, tasks{}
-    └── Agentes default: Coding Agent, Research Agent, Automation Agent,
-                         Project Agent, MCP Agent
-    └── Acciones: registerAgent, setActiveAgent, updateAgentStatus,
-                  addTask, updateTask
+   agent.store.ts
+     └── Persist: No (en memoria)
+     └── Estado: agents[], activeAgentId, tasks{}
+     └── Agentes default: Coding Agent, Research Agent, Automation Agent,
+                          Project Agent, MCP Agent
+     └── Acciones: registerAgent, setActiveAgent, updateAgentStatus,
+                   addTask, updateTask
 
-  chat.store.ts
-    └── Persist: Sí (sparta-chat)
-    └── Estado: sessions[], activeSessionId, messagesBySession{}, isStreaming
-    └── Acciones: createSession (retorna UUID), switchSession, deleteSession,
-                  deleteMessage, addMessage, updateMessage, setStreaming,
-                  getActiveMessages
+   chat.store.ts
+     └── Persist: Sí (sparta-chat)
+     └── Estado: sessions[], activeSessionId, messagesBySession{}, isStreaming
+     └── Acciones: createSession, switchSession, deleteSession,
+                   pinSession, archiveSession, renameSession,
+                   addMessage, updateMessage, deleteMessage,
+                   setStreaming, getActiveMessages
+     └── La primera pregunta del usuario renombra automáticamente la sesión
 
-  channel.store.ts
-    └── Persist: Sí (sparta-channels)
-    └── Estado: channels[] (7 default: general, agentes + 5 integraciones: telegram, discord, slack, whatsapp, email)
-    └── Acciones: addChannel (con kind e icon), deleteChannel, markRead, setActiveChannel, updateIntegration
-    └── Eventos: channel:created, channel:deleted
+   channel.store.ts
+     └── Persist: Sí (sparta-channels)
+     └── Estado: channels[] (7 default: general, agentes + 5 integraciones)
+     └── Acciones: addChannel, deleteChannel, markRead, setActiveChannel,
+                   updateIntegration
 
-  event-bus.store.ts
-    └── Persist: No (en memoria)
-    └── Estado: events[] (últimos 500), listeners (Set)
-    └── Acciones: dispatch (notifica listeners), subscribe (retorna unsubscribe), clear
+   event-bus.store.ts
+     └── Persist: No (en memoria)
+     └── Estado: events[] (últimos 500), listeners (Set)
+     └── Acciones: dispatch, subscribe, clear
 
-  mcp.store.ts
-    └── Persist: No (en memoria)
-    └── Estado: servers[] (3 servidores default)
-    └── Servidores default: Filesystem (conectado, 3 tools), Git (conectado, 3 tools),
-                            SQLite (desconectado)
-    └── Acciones: addServer, removeServer, setConnected, addTool,
-                  removeTool, toggleServer
+   mcp.store.ts
+     └── Persist: No (en memoria)
+     └── Estado: servers[] (3 default: Filesystem, Git, SQLite)
+     └── Acciones: addServer, removeServer, setConnected, addTool,
+                   removeTool, toggleServer
 
-  memory.store.ts
-    └── Persist: Sí (sparta-memory)
-    └── Estado: entries[] (2 entradas default)
-    └── Acciones: addEntry, updateEntry, deleteEntry, getActiveCount
-    └── Eventos: memory:added, memory:updated, memory:deleted
+   memory.store.ts
+     └── Persist: Sí (sparta-memory)
+     └── Estado: entries[] (2 default)
+     └── Acciones: addEntry, updateEntry, deleteEntry, getActiveCount
 
-  project.store.ts
-    └── Persist: Sí (sparta-projects)
-    └── Estado: projects[] (1 default: sparta-agent), activeProjectId
-    └── Acciones: addProject, switchProject, deleteProject, getActiveProject
-    └── Eventos: project:created, project:switched, project:deleted
+   project.store.ts
+     └── Persist: Sí (sparta-projects)
+     └── Estado: projects[] (1 default: sparta-agent), activeProjectId
+     └── Acciones: addProject, switchProject, deleteProject, getActiveProject
 
-  provider.store.ts
-    └── Persist: Sí (sparta-providers)
-    └── Estado: providers[] (Provider[])
-    └── Acciones: addProvider (retorna UUID), updateProvider, removeProvider,
-                  getByVendor
-    └── Helper: getVendorLabel(vendor) → string
+   provider.store.ts
+     └── Persist: Sí (sparta-providers)
+     └── Estado: providers[]
+     └── Acciones: addProvider, updateProvider, removeProvider, getByVendor
+     └── Helper: getVendorLabel(vendor) → string
 
-  settings.store.ts
-    └── Persist: Sí (sparta-settings)
-    └── Estado: settingsOpen, defaultModel, input, activeModel,
-                memoryEnabled, apiKeys{}, language ('es'|'en'),
-                sessionMode ('chat'|'agent')
-    └── Acciones: openSettings, closeSettings, setInput, sendMessage,
-                  setDefaultModel, setApiKey, toggleMemory,
-                  setLanguage, setSessionMode
+   settings.store.ts
+     └── Persist: Sí (sparta-settings)
+     └── Estado: settingsOpen, defaultModel, input, activeModel,
+                 memoryEnabled, webSearchEnabled, reasoningEnabled,
+                 sessionMode ('chat'|'agent'), apiKeys{}, language ('es'|'en')
+     └── Acciones: openSettings, closeSettings, setInput, sendMessage,
+                   setDefaultModel, setApiKey, toggleMemory, toggleWebSearch,
+                   toggleReasoning, setSessionMode, setLanguage
+     └── sendMessage() actualmente solo hace console.log y limpia input
 
-  skill.store.ts
-    └── Persist: Sí (sparta-skills)
-    └── Estado: skills[] (2 default: Code Review, Resumen de docs)
-    └── Acciones: addSkill, updateSkill, deleteSkill
-    └── Eventos: skill:created, skill:updated, skill:deleted, skill:invoked
+   skill.store.ts
+     └── Persist: Sí (sparta-skills)
+     └── Estado: skills[] (2 default), activeSkillIds[]
+     └── Acciones: addSkill, updateSkill, deleteSkill, toggleActive, isActive
 
-  theme.store.ts
-    └── Persist: Sí (sparta-theme)
-    └── Estado: theme (persistido en localStorage key 'sparta-theme')
-    └── Acciones: setTheme (actualiza DOM data-theme + store + localStorage)
-    └── Helper: initTheme() — lee localStorage y aplica tema al boot
-    └── Temas disponibles: midnight (default), obsidian, emerald, rose, amber,
-                           dracula, catppuccin, nord, linen, sage, mist, sand, light
+   theme.store.ts
+     └── Persist: Sí (sparta-theme)
+     └── Estado: theme
+     └── Acciones: setTheme (aplica DOM data-theme + data-theme-mode + overlay)
+     └── Helper: initTheme() — lee localStorage y aplica tema al boot
+     └── Temas: midnight (default), obsidian, emerald, rose, amber,
+                 dracula, catppuccin, nord, light, linen, sage, mist, sand
 
-  ui.store.ts
-    └── Persist: Sí (sparta-ui, parcial: sidebarOpen, sidebarWidth,
-                      sidebarExpandedSections, activeSettingsTab)
-    └── Estado: sidebarOpen, sidebarWidth, contextPanelOpen, mainView,
-                sidebarExpandedSections{}, activeSettingsTab
-    └── Tipos: MainView (9 variantes), SettingsTab (8 variantes)
-    └── Acciones: toggleSidebar, setSidebarWidth, toggleContextPanel,
-                  setMainView, toggleSidebarSection, setActiveSettingsTab
+   ui.store.ts
+     └── Persist: Sí parcial (sparta-ui)
+     └── Estado: sidebarOpen, sidebarWidth (280 default), contextPanelOpen,
+                 mainView, previousMainView, sidebarExpandedSections{},
+                 activeSettingsTab (9 valores incluyendo 'keys')
+     └── Acciones: toggleSidebar, setSidebarWidth (220-480), toggleContextPanel,
+                   setMainView, goBack, toggleSidebarSection, setActiveSettingsTab
 
 ================================================================================
  7. SISTEMA DE TIPOS
 ================================================================================
 
-  9 módulos en src/types/, re-exportados via index.ts:
+   9 módulos en src/types/, re-exportados via index.ts:
 
-  types/agent.ts
-    ── AgentType: 'coding' | 'research' | 'automation' | 'project' | 'mcp'
-    ── AgentStatus: 'idle' | 'running' | 'thinking' | 'error' | 'completed'
-    ── Agent: { id, name, type, status, model, createdAt, tools[], description }
-    ── Task: { id, agentId, description, status, steps[], createdAt, completedAt? }
-    ── TaskStep: { id, name, status, tool?, durationMs?, error? }
+   types/agent.ts
+     ── AgentType: 'coding' | 'research' | 'automation' | 'project' | 'mcp'
+     ── AgentStatus: 'idle' | 'running' | 'thinking' | 'error' | 'completed'
+     ── Agent: { id, name, type, status, model, createdAt, tools[], description }
+     ── Task: { id, agentId, description, status, steps[], createdAt, completedAt? }
+     ── TaskStep: { id, name, status, tool?, durationMs?, error? }
 
-  types/chat.ts
-    ── MessageRole: 'user' | 'assistant' | 'system'
-    ── Message: { id, role, content, timestamp, sessionId, agentId?,
-                  thinking?, toolCalls?, pipelineSteps? }
-    ── ToolCall: { id, toolName, input, output?, status, durationMs?, error? }
-    ── PipelineStep: { name, status, timestamp }
-    ── Session: { id, title, createdAt, updatedAt, model, messageCount, agentId? }
+   types/chat.ts
+     ── MessageRole: 'user' | 'assistant' | 'system'
+     ── Message: { id, role, content, timestamp, sessionId, agentId?,
+                   thinking?, toolCalls?, pipelineSteps? }
+     ── ToolCall: { id, toolName, input, output?, status, durationMs?, error? }
+     ── PipelineStep: { name, status, timestamp }
+     ── Session: { id, title, createdAt, updatedAt, model, messageCount,
+                   agentId?, pinned?, archived? }
 
-  types/events.ts
-    ── 36 eventos tipo unión SpartaEvent (36 interfaces específicas):
-        agent:started / agent:completed / agent:error
-        thinking:started / thinking:token / thinking:completed
-        tool:called / tool:result / tool:error
-        mcp:connected / mcp:tool_discovered / mcp:disconnected
-        stream:token / stream:completed / stream:error
-        pipeline:step
-        chat:message / message:deleted / message:edited / message:shared
-        session:created / session:switched
-        project:created / project:switched / project:deleted
-        skill:created / skill:updated / skill:deleted / skill:invoked
-        channel:created / channel:message / channel:deleted
-        memory:added / memory:updated / memory:deleted
+   types/events.ts
+     ── 36 eventos tipo unión SpartaEvent:
+         agent:started / agent:completed / agent:error
+         thinking:started / thinking:token / thinking:completed
+         tool:called / tool:result / tool:error
+         mcp:connected / mcp:tool_discovered / mcp:disconnected
+         stream:token / stream:completed / stream:error
+         pipeline:step
+         chat:message / message:deleted / message:edited / message:shared
+         session:created / session:switched
+         project:created / project:switched / project:deleted
+         skill:created / skill:updated / skill:deleted / skill:invoked
+         channel:created / channel:message / channel:deleted
+         memory:added / memory:updated / memory:deleted
 
-  types/mcp.ts
-    ── MCPServerType: 'stdio' | 'http'
-    ── MCPServerConfig: { id, name, type, command?, args?, url?, enabled }
-    ── MCPServer: { id, name, type, connected, tools[], config }
-    ── MCPTool: { name, description, inputSchema, serverId }
+   types/mcp.ts
+     ── MCPServerType: 'stdio' | 'http'
+     ── MCPServerConfig: { id, name, type, command?, args?, url?, enabled }
+     ── MCPServer: { id, name, type, connected, tools[], config }
+     ── MCPTool: { name, description, inputSchema, serverId }
 
-  types/project.ts
-    ── Project: { id, name, icon?, color?, createdAt, description? }
+   types/project.ts
+     ── Project: { id, name, icon?, color?, createdAt, description? }
 
-  types/skill.ts
-    ── Skill: { id, name, description, prompt, icon?, tags[], createdAt }
+   types/skill.ts
+     ── SkillCategory: 'Coding' | 'Research' | 'Writing' | 'Analysis' | 'Automation'
+     ── Skill: { id, name, description, prompt, icon?, tags[], createdAt }
+     ── DownloadableSkill: { id, name, description, version, author, icon,
+                              tags, category, prompt, featured, installed? }
 
-  types/channel.ts
-    ── ChannelKind: 'internal' | 'integration'
-    ── IntegrationProvider: 'telegram' | 'discord' | 'slack' | 'whatsapp' | 'email'
-    ── IntegrationStatus: 'not_configured' | 'connecting' | 'connected' | 'error'
-    ── IntegrationConfig: { provider, status, botToken?, webhookUrl?, botInfo? }
-    ── Channel: { id, name, topic?, members[], createdAt, unreadCount, kind, integration?, icon? }
-    ── ChannelMessage: { id, channelId, authorId, content, timestamp }
+   types/channel.ts
+     ── ChannelKind: 'internal' | 'integration'
+     ── IntegrationProvider: 'telegram' | 'discord' | 'slack' | 'whatsapp' | 'email'
+     ── IntegrationStatus: 'not_configured' | 'connecting' | 'connected' | 'error'
+     ── IntegrationConfig: { provider, status, botToken?, webhookUrl?,
+                              workspaceToken?, errorMessage?, botInfo? }
+     ── Channel: { id, name, topic?, members?, createdAt, unreadCount, kind,
+                   integration?, icon? }
+     ── ChannelMessage: { id, channelId, authorId, content, timestamp }
 
-  types/memory.ts
-    ── MemoryEntry: { id, content, source: 'manual' | 'auto', category?, createdAt, projectId? }
-    ── MemoryRelation: { fromId, toId, type: 'same_category' | 'same_project' | 'same_session' | 'manual', weight }
-    ── MemoryGraphNode: { memoryId, position: {x,y,z}, radius, color }
-    ── MemoryGraph: { nodes: MemoryGraphNode[], relations: MemoryRelation[] }
+   types/memory.ts
+     ── MemoryEntry: { id, content, source: 'manual'|'auto', category?, createdAt, projectId? }
+     ── MemoryRelation: { fromId, toId, type, weight }
+     ── MemoryGraphNode: { memoryId, position: {x,y,z}, radius, color }
+     ── MemoryGraph: { nodes: MemoryGraphNode[], relations: MemoryRelation[] }
 
-  types/provider.ts
-    ── ProviderVendor: 17 valores (13 cloud + 4 local)
-        cloud: anthropic | openai | google | groq | mistral | azure |
-               deepseek | together | fireworks | openrouter | cohere |
-               perplexity | xai
-        local: ollama | lmstudio | llamacpp | custom
-    ── Provider: { id, vendor, kind, label, apiKey?, serverUrl?,
-                   defaultModel?, createdAt, usage? }
+   types/provider.ts
+     ── ProviderVendor: 17 valores
+         cloud: anthropic | openai | google | groq | mistral | azure |
+                deepseek | together | fireworks | openrouter | cohere |
+                perplexity | xai
+         local: ollama | lmstudio | llamacpp | custom
+     ── Provider: { id, vendor, kind, label, apiKey?, serverUrl?,
+                    defaultModel?, createdAt, usage? }
 
 ================================================================================
  8. SISTEMA DE TEMAS (Design Tokens)
 ================================================================================
 
-  13 Temas: midnight (default), obsidian, emerald, rose, amber, dracula,
-            catppuccin, nord (oscuros)
-            linen, sage, mist, sand, light (claros)
+   13 Temas: 8 oscuros + 5 claros
+     Oscuros: midnight (default), obsidian, emerald, rose, amber,
+              dracula, catppuccin, nord
+     Claros:  light, linen, sage, mist, sand
 
-  Aplicado via atributo data-theme en <html>. Cada tema sobreescribe las
-  variables CSS en :root (definidas en globals.css, con archivos individuales
-  en src/styles/themes/ como respaldo).
+   Aplicado via atributo data-theme en <html>. Cada tema sobreescribe variables
+   CSS en :root (definidas en globals.css + archivos en src/styles/themes/).
 
-  Además, el atributo data-theme-mode se setea automáticamente al cambiar
-  de tema: "dark" para los 8 temas oscuros (midnight, obsidian, emerald,
-  rose, amber, dracula, catppuccin, nord) y "light" para los 5 claros.
-  Esto se usa para la clase .brand-icon-mono que invierte logos
-  monocromáticos (Anthropic, OpenAI) en modos oscuros via filter: invert(1).
+   Atributo data-theme-mode: "dark" para temas oscuros, "light" para claros.
+   Usado por .brand-icon-mono para invertir logos monocromáticos
+   (Anthropic, OpenAI) en modos oscuros via filter: invert(1).
 
-  DARK_THEMES se exporta desde theme.store.ts y se usa en el hook useTheme()
-  para exponer isDark: boolean a los componentes.
+   DARK_THEMES exportado desde theme.store.ts; useTheme() expone isDark.
 
-  Variables CSS:
+   Variables CSS principales:
 
-    Backgrounds:
-      --bg-base       # Fondo principal
-      --bg-sidebar    # Fondo sidebar
-      --bg-surface    # Superficie de componentes
-      --bg-elevated   # Elementos elevados (modals)
-      --bg-hover      # Hover state
-      --bg-active     # Active state
-      --bg-input      # Fondo inputs
-      --bg-modal      # Fondo modals
+     Backgrounds:
+       --bg-base, --bg-sidebar, --bg-surface, --bg-elevated, --bg-hover,
+       --bg-active, --bg-input, --bg-modal
 
-    Texto:
-      --text-display  # Texto display/títulos grandes
-      --text-primary  # Texto principal
-      --text-secondary # Texto secundario
-      --text-muted    # Texto muted
+     Texto:
+       --text-display, --text-primary, --text-secondary, --text-muted
 
-    Acento:
-      --accent        # Color acento principal
-      --accent-dim    # Acento atenuado
-      --accent-muted  # Acento muted
-      --accent-glow   # Glow del acento
+     Acento:
+       --accent, --accent-dim, --accent-muted, --accent-glow
 
-    Bordes:
-      --border-subtle # Borde sutil
-      --border-normal # Borde normal
-      --border-strong # Borde fuerte
-      --border-focus  # Borde de focus
+     Bordes:
+       --border-subtle, --border-normal, --border-strong, --border-focus
 
-    Estados:
-      --status-ok     # Verde (ok/success)
-      --status-warn   # Ámbar (warning)
-      --status-err    # Rojo (error)
-      --status-think  # Púrpura (thinking)
+     Estados:
+       --status-ok, --status-warn, --status-err, --status-think
 
-    Radios:
-      --radius-sm: 3px
-      --radius-md: 6px
-      --radius-lg: 10px
-      --radius-xl: 14px
+     Radios:
+       --radius-sm: 3px, --radius-md: 6px, --radius-lg: 10px, --radius-xl: 14px
 
-    Fuentes:
-      --font-ui: Inter
-      --font-display: Space Grotesk
-      --font-mono: Geist Variable
+     Fuentes:
+       --font-ui: Inter
+       --font-display: Space Grotesk
+       --font-mono: Geist Variable
 
-    Tamaños:
-      --titlebar-h: 38px
-      --sidebar-w: 260px (default, redimensionable)
-      --statusbar-h: 24px
+     Dimensiones:
+       --titlebar-h: 38px
+       --sidebar-w: variable (220-480px)
+       --statusbar-h: 24px
 
 ================================================================================
  9. DEPENDENCIAS PRINCIPALES
 ================================================================================
 
-  Producción (22):
-    react ^18.2.0, react-dom ^18.2.0
-    @base-ui/react ^1.6.0
-    @monaco-editor/react ^4.7.0
-    @tanstack/react-query ^5.101.1
-    @tailwindcss/vite ^4.3.1
-    @xterm/xterm ^6.0.0, @xterm/addon-fit ^0.11.0
-    class-variance-authority ^0.7.1
-    clsx ^2.1.1
-    framer-motion ^12.41.0
-    lucide-react ^1.21.0
-    monaco-editor ^0.55.1
-    shadcn ^4.11.0
-    tailwind-merge ^3.6.0
-    tailwindcss ^4.3.1
-    three 0.184.0
-    tw-animate-css ^1.4.0
-    zustand ^5.0.14
-    @fontsource-variable/geist ^5.2.9
-    @fontsource/inter ^5.2.8
-    @fontsource/space-grotesk ^5.2.10
+   Producción (23):
+     react ^18.2.0, react-dom ^18.2.0
+     @base-ui/react ^1.6.0
+     @fontsource-variable/geist ^5.2.9
+     @fontsource/inter ^5.2.8
+     @fontsource/space-grotesk ^5.2.10
+     @monaco-editor/react ^4.7.0
+     @tailwindcss/vite ^4.3.1
+     @tanstack/react-query ^5.101.1
+     @xterm/xterm ^6.0.0, @xterm/addon-fit ^0.11.0
+     class-variance-authority ^0.7.1
+     clsx ^2.1.1
+     framer-motion ^12.41.0
+     lucide-react ^1.21.0
+     monaco-editor ^0.55.1
+     shadcn ^4.11.0
+     tailwind-merge ^3.6.0
+     tailwindcss ^4.3.1
+     three 0.184.0
+     tw-animate-css ^1.4.0
+     zustand ^5.0.14
 
-  Desarrollo (15):
-    electron ^30.0.1
-    electron-builder ^24.13.3
-    vite ^5.1.6
-    vite-plugin-electron ^0.28.6
-    vite-plugin-electron-renderer ^0.14.5
-    @vitejs/plugin-react ^4.2.1
-    typescript ^5.2.2
-    eslint ^8.57.0
-    @typescript-eslint/eslint-plugin ^7.1.1
-    @typescript-eslint/parser ^7.1.1
-    eslint-plugin-react-hooks ^4.6.0
-    eslint-plugin-react-refresh ^0.4.5
-    @types/react ^18.2.64
-    @types/react-dom ^18.2.21
-    @types/three 0.184.1
+   Desarrollo (15):
+     electron ^30.0.1
+     electron-builder ^24.13.3
+     vite ^5.1.6
+     vite-plugin-electron ^0.28.6
+     vite-plugin-electron-renderer ^0.14.5
+     @vitejs/plugin-react ^4.2.1
+     typescript ^5.2.2
+     eslint ^8.57.0
+     @typescript-eslint/eslint-plugin ^7.1.1
+     @typescript-eslint/parser ^7.1.1
+     eslint-plugin-react-hooks ^4.6.0
+     eslint-plugin-react-refresh ^0.4.5
+     @types/react ^18.2.64
+     @types/react-dom ^18.2.21
+     @types/three ^0.184.1
 
 ================================================================================
  10. ELECTRON-BUILDER CONFIG
 ================================================================================
 
-  appId: com.sparta.agent
-  productName: Sparta Agent
-  directories.output: release
-  files: ["dist", "dist-electron"]
-  icon: public/sparta-escritorio.png (recortado 664x664, sin padding excesivo)
-  main: dist-electron/main.js
+   Configuración principal en package.json (también reflejada parcialmente en
+   electron-builder.json5 si aplica):
 
-  macOS: DMG (icono único desde sparta-escritorio.png)
-    → Sparta-Agent-Mac-${version}-Installer.dmg
+   appId: com.sparta.agent
+   productName: Sparta Agent
+   directories.output: release
+   files: ["dist", "dist-electron"]
+   main: dist-electron/main.js
+   icon: public/sparta-escritorio.png
 
-  Windows: NSIS (x64, no oneClick, allowToChangeInstallationDirectory, icono único desde sparta-escritorio.png)
-    → Sparta-Agent-Windows-${version}-Setup.exe
+   macOS: DMG
+     → Sparta-Agent-${version}.dmg
 
-  Linux: AppImage
-    → Sparta-Agent-Linux-${version}.AppImage
+   Windows: NSIS x64
+     → Sparta-Agent-${version}-Setup.exe
+     → oneClick: false, allowToChangeInstallationDirectory: true
+
+   Linux: AppImage
+     → Sparta-Agent-${version}.AppImage
 
 ================================================================================
  11. COMANDOS DE DESARROLLO
 ================================================================================
 
-  pnpm dev      → Inicia Vite + Electron (dev server + electron)
-  pnpm build    → tsc + vite build + electron-builder (package installer)
-  pnpm lint     → ESLint (.ts, .tsx) con --max-warnings 0
-  pnpm preview  → Vite preview del build
+   pnpm dev      → Inicia Vite + Electron (dev server + electron)
+   pnpm build    → tsc + vite build + electron-builder (package installer)
+   pnpm lint     → ESLint (.ts, .tsx) con --max-warnings 0
+   pnpm preview  → Vite preview del build
 
 ================================================================================
  12. OBSERVACIONES IMPORTANTES
 ================================================================================
 
-  ✔ Etapa temprana (v0.6.0) — muchas features son placeholders
-  ✔ Sin backend — todo es frontend, datos mock/default
-  ✔ Sin integración real con APIs de IA
-  ✔ Sin router — navegación por estado MainView (9 vistas)
-  ✔ 9 stores con persist middleware → localStorage
-  ✔ Sistema i18n español/inglés con hook useTranslation()
-  ✔ 13 temas visuales (7 oscuros + 6 claros) con ThemePicker agrupado
-  ✔ Sistema de proveedores de modelo (17 vendors) con test connection real
-  ✔ fetchModelsByVendor() — llama APIs reales para listar modelos
-  ✔ SettingsDialog 900×640 con sidebar fijo y scroll en contenido
-  ✔ ApiKeysTab eliminado — reemplazado por sistema de proveedores
-  ✔ Artefactos en español — el dev es hispanohablante
-  ✔ Mezcla de estilos — Tailwind v4 + inline styles con CSS vars
-  ✔ Seguridad — contextIsolation: true, nodeIntegration: false
-  ✔ titleBarStyle: 'hidden' + titleBarOverlay (no hiddenInset)
-  ✔ Sidebar colapsable (48px) y redimensionable (48-400px)
-  ✔ 36 eventos en el bus de eventos
-  ✔ 4 nuevos dominios de datos: Projects, Skills, Channels, Memory
-  ✔ Enfoque MCP — diseñado alrededor del Model Context Protocol
-  ✔ Channels v0.6.0: ChannelSidebar con canales internos + 5 integraciones (telegram/discord/slack/whatsapp/email), TelegramIntegrationPanel con test de token real, ComingSoonPanel para integraciones futuras
-  ✔ Memory v0.6.0: Grafo 3D con Three.js (layout esférico Fibonacci, OrbitControls manual, raycaster), toggle Vista gráfico/Vista lista, MemoryNodePanel con detalle
-  ✔ SVGL brand icons: 26 SVGs descargados de svgl.app a public/icons/brands/
-                       Mapa brand-icons.ts con 24 marcas, rutas light/dark según tema
-                       Componente BrandIcon con detección automática de tema claro/oscuro
-                       MONO_BRANDS (anthropic, openai) con inversión vía CSS filter
-                       Integrado en 11 componentes: ChooseProviderDialog, ProviderCard,
-                       ChannelSidebar, McpServerCard, ModelPicker, StatusBar,
-                       TelegramIntegrationPanel, ComingSoonPanel, McpView, SkillCard
-  ✔ data-theme-mode: Atributo en <html> que refleja "dark"/"light" derivado de los 13 temas
-                      DARK_THEMES exportado, isDarkTheme() en theme.store.ts
-                      useTheme() hook expone isDark
-                      .brand-icon-mono usa [data-theme-mode="dark"] (una regla, no 8)
-  ✔ Dialog system: dialog.tsx alineado con SettingsDialog (overlay rgba(0,0,0,0.4) + blur,
-                    border var(--border-strong), box-shadow 0 24px 80px, animaciones,
-                    padding p-5, gap-5)
-                    Formularios corregidos: <form> ya no envuelve DialogHeader/DialogFooter,
-                    usan form="id" para submit. Afecta AddMcpServerDialog, ChannelDialog,
-                    SkillDialog, ProjectDialog
-  ✔ Tailwind theme colors: 17 variables --color-* agregadas al @theme inline en index.css
-                            (popover, foreground, accent, destructive, border, ring, card, input...)
-                            Resuelve diálogos/menús invisibles por falta de bg-popover
-  ✔ Icono app: sparta-escritorio.png recortado de 1024→664px eliminando ~200px de padding para mejor escalado en taskbar
-  ✔ pnpm workspace — solo config para electron y esbuild
-  ✔ Bug conocido: overflow: 'hidden auto' inválido en React inline styles
-      → Usar overflowY: 'auto', overflowX: 'hidden' en su lugar
+   ✔ Etapa funcional de UI/UX (v0.7.0) — muchos sistemas de datos operativos
+   ✔ Sin backend de IA — sendMessage() solo hace console.log
+   ✔ Sin integración real con APIs de IA para generar respuestas
+   ✔ Sin router — navegación por estado MainView (9 vistas)
+   ✔ 9 stores con persist middleware → localStorage
+   ✔ Sistema i18n español/inglés con hook useTranslation()
+   ✔ 13 temas visuales (8 oscuros + 5 claros) con ThemePicker agrupado
+   ✔ Sistema de proveedores de modelo (17 vendors) con test connection real
+   ✔ fetchModelsByVendor() — llama APIs reales para listar modelos
+   ✔ Sidebar redimensionable (220-480px) con manejador propio
+   ✔ Pin/archive/rename de sesiones funcional
+   ✔ Búsqueda funcional de sesiones en sidebar
+   ✔ Grafo 3D de memoria con Three.js interactivo
+   ✔ Test real de token de Telegram contra api.telegram.org
+   ✔ 12 skills descargables precargadas en public/skills/
+   ✔ Marketplace MCP con 6 servidores preconfigurados
+   ✔ Iconos de marca con detección automática light/dark
+   ✔ titleBarStyle: 'hidden' + titleBarOverlay dinámico por tema
+   ✔ contextIsolation: true, nodeIntegration: false
+   ✔ Mix de Tailwind v4 + inline styles con CSS vars
+   ✔ Discrepancia de versión: package.json 0.0.0, StatusBar v0.1.0,
+     DOCUMENTACION 0.7.0 — sincronizar en próxima release
+   ✔ SettingsDialog define su propio type local de 8 tabs; ui.store.ts define
+     SettingsTab con 9 valores (incluye 'keys' no usado actualmente)
 
 ================================================================================
  13. COSAS PENDIENTES / POR HACER
 ================================================================================
 
-  [ ] Integrar Monaco Editor real en EditorPanel
-  [ ] Integrar xterm.js real en TerminalPanel
-  [ ] Implementar Agent Management UI en AgentsPanel
-  [ ] Conectar con APIs reales de Claude, GPT, Gemini para chat
-  [ ] Implementar lógica real en settings (Keybinds funcionales)
-  [ ] Implementar búsqueda funcional en Sidebar
-  [ ] Implementar pin de sesiones funcional
-  [ ] Implementar attach de archivos (File, Code, Image, URL)
-  [ ] Implementar grabación de audio (mic)
-  [ ] Implementar selección real de modelo en ModelPicker (desde providers)
-  [ ] Migrar estilos inline a Tailwind completamente
-  [ ] Configurar GitHub repo
-  [ ] Escribir tests
-  [ ] Configurar CI/CD
-  [ ] Implementar sistema de plugins/extensiones
-  [ ] Conectar MCP servers reales
-  [ ] Implementar MessageActions reales (share, edit, regenerate)
-  [ ] Implementar Channels messaging real (conexión real a APIs Telegram/Discord/Slack)
-  [ ] Implementar integraciones Discord/Slack/WhatsApp/Email reales
-  [ ] Implementar Skills invocation real
-  [ ] Implementar Memory auto-learning real
-  [ ] Implementar Projects multi-proyecto real
+   [ ] Integrar Monaco Editor real en EditorPanel
+   [ ] Integrar xterm.js real en TerminalPanel
+   [ ] Implementar Agent Management UI real en AgentsPanel
+   [ ] Conectar chat con APIs reales de Claude, GPT, Gemini, etc.
+   [ ] Implementar lógica real de envío de mensajes (reemplazar console.log)
+   [ ] Implementar atajos de teclado funcionales (KeybindsTab)
+   [ ] Implementar adjuntos reales (File, Code, Image, URL)
+   [ ] Implementar grabación de audio (Mic)
+   [ ] Migrar estilos inline a Tailwind completamente
+   [ ] Configurar GitHub repo
+   [ ] Escribir tests
+   [ ] Configurar CI/CD
+   [ ] Implementar sistema de plugins/extensiones
+   [ ] Conectar MCP servers reales (stdio/http) en lugar de mocks
+   [ ] Implementar MessageActions reales (share, edit, regenerate)
+   [ ] Implementar Channels messaging real (recibir/enviar Telegram/Discord/Slack)
+   [ ] Implementar integraciones Discord/Slack/WhatsApp/Email reales
+   [ ] Implementar Skills invocation real durante el chat
+   [ ] Implementar Memory auto-learning real
+   [ ] Implementar Projects multi-proyecto real con contexto
+   [ ] Sincronizar versión en package.json y StatusBar
+   [ ] Revisar tab 'keys' en ui.store.ts vs SettingsDialog (8 tabs)
 
 ================================================================================
-  FIN DEL DOCUMENTO
+   FIN DEL DOCUMENTO
 ================================================================================
