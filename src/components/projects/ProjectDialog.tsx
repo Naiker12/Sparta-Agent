@@ -1,0 +1,101 @@
+import { useState, useEffect } from 'react'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Button } from '@/components/ui/button'
+
+interface ProjectDialogProps {
+  open: boolean
+  onClose: () => void
+  onSubmit: (name: string, description?: string) => void
+}
+
+export function ProjectDialog({ open, onClose, onSubmit }: ProjectDialogProps) {
+  const [name, setName] = useState('')
+  const [description, setDescription] = useState('')
+
+  useEffect(() => {
+    if (open) {
+      setName('')
+      setDescription('')
+    }
+  }, [open])
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!name.trim()) return
+    onSubmit(name.trim(), description.trim() || undefined)
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="sm:max-w-md">
+        <form onSubmit={handleSubmit}>
+          <DialogHeader>
+            <DialogTitle>Nuevo proyecto</DialogTitle>
+            <DialogDescription>
+              Los proyectos agrupan sesiones, memoria y servidores MCP.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 }}>
+            <div>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: 11,
+                  color: 'var(--text-secondary)',
+                  fontFamily: 'var(--font-ui)',
+                  marginBottom: 4,
+                }}
+              >
+                Nombre
+              </label>
+              <Input
+                autoFocus
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="mi-proyecto"
+              />
+            </div>
+            <div>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: 11,
+                  color: 'var(--text-secondary)',
+                  fontFamily: 'var(--font-ui)',
+                  marginBottom: 4,
+                }}
+              >
+                Descripción (opcional)
+              </label>
+              <Textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="¿De qué trata este proyecto?"
+                rows={3}
+              />
+            </div>
+          </div>
+
+          <DialogFooter style={{ marginTop: 16 }}>
+            <Button type="button" variant="ghost" onClick={onClose}>
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={!name.trim()}>
+              Crear proyecto
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+}
