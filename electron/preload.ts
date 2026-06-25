@@ -10,6 +10,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('win:maximized-changed', handler)
     return () => ipcRenderer.removeListener('win:maximized-changed', handler)
   },
+  setTitleBarOverlay: (colors: { color: string; symbolColor: string }) =>
+    ipcRenderer.send('titlebar:set-overlay', colors),
 })
 
 contextBridge.exposeInMainWorld('electron', {

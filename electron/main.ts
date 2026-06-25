@@ -30,7 +30,7 @@ function createWindow() {
     },
     backgroundColor: '#0C0C10',
     show: false,
-    icon: path.join(process.env.VITE_PUBLIC, 'sparta-icon.png'),
+    icon: path.join(process.env.VITE_PUBLIC, 'sparta-escritorio.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
       contextIsolation: true,
@@ -72,4 +72,16 @@ app.on('activate', () => {
   }
 })
 
-app.whenReady().then(createWindow)
+app.whenReady().then(() => {
+  createWindow()
+
+  ipcMain.on('titlebar:set-overlay', (_event, colors: { color: string; symbolColor: string }) => {
+    if (win) {
+      win.setTitleBarOverlay({
+        color: colors.color,
+        symbolColor: colors.symbolColor,
+        height: 38,
+      })
+    }
+  })
+})

@@ -10,14 +10,12 @@
     "dist",
     "dist-electron"
   ],
-  "icon": "public/sparta-icon.png",
+  "icon": "public/sparta-escritorio.png",
   "mac": {
-    "icon": "public/blanco/apple-touch-icon.png",
     "target": ["dmg"],
     "artifactName": "Sparta-Agent-Mac-${version}-Installer.${ext}"
   },
   "win": {
-    "icon": "public/favicon.ico",
     "target": [
       {
         "target": "nsis",

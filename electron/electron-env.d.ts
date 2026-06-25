@@ -13,6 +13,7 @@ interface ElectronAPI {
   close: () => void
   isMaximized: () => Promise<boolean>
   onMaximizedChange: (callback: (maximized: boolean) => void) => () => void
+  setTitleBarOverlay: (colors: { color: string; symbolColor: string }) => void
 }
 
 interface SpartaAPI {
