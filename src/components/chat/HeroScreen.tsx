@@ -2,7 +2,6 @@ import { motion } from 'framer-motion'
 import { Plus, Code2, Search, Settings } from 'lucide-react'
 import { useSettingsStore } from '@/stores/settings.store'
 import { useChatStore } from '@/stores/chat.store'
-import { SpartaIcon } from '@/components/chat/SpartaIcon'
 
 const QUICK_ACTIONS = [
   { icon: Plus,    label: 'New chat',   action: 'new' as const },
@@ -28,52 +27,87 @@ export function HeroScreen() {
   return (
     <div style={{
       flex: 1,
+      minHeight: 0,
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      gap: 20,
+      gap: 16,
       padding: '0 40px',
       userSelect: 'none',
     }}>
       <motion.div
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+        initial={{ opacity: 0, scale: 0.7, y: 10 }}
+        animate={{ 
+          opacity: 1, 
+          scale: 1,
+          y: [0, -8, 0]
+        }}
+        transition={{ 
+          opacity: { duration: 0.5 },
+          scale: { duration: 0.5 },
+          y: {
+            repeat: Infinity,
+            duration: 4,
+            ease: "easeInOut",
+            delay: 0.5
+          }
+        }}
         style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          width: 72,
-          height: 72,
-          borderRadius: '50%',
-          background: 'var(--accent-muted)',
-          color: 'var(--accent)',
+          width: 220,
+          height: 135,
+          overflow: 'hidden',
+          position: 'relative',
         }}
       >
-        <SpartaIcon size={36} />
+        <img
+          src="/sparta-icon.png"
+          alt="Sparta"
+          style={{
+            position: 'absolute',
+            top: -28,
+            width: 220,
+            height: 220,
+            objectFit: 'contain',
+            filter: 'var(--invert-logo)',
+          }}
+        />
       </motion.div>
 
       <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ 
+          opacity: 1, 
+          y: 0,
+          scale: [1, 1.02, 1]
+        }}
+        transition={{ 
+          opacity: { duration: 0.5, delay: 0.15 },
+          y: { duration: 0.5, delay: 0.15 },
+          scale: {
+            repeat: Infinity,
+            duration: 4,
+            ease: "easeInOut",
+            delay: 0.5
+          }
+        }}
         style={{ textAlign: 'center' }}
       >
-        <h1 style={{
-          fontFamily: 'var(--font-display)',
-          fontSize: 'clamp(56px, 8vw, 88px)',
-          fontWeight: 700,
-          color: 'var(--text-display)',
-          letterSpacing: '-0.03em',
-          lineHeight: 0.92,
-          textTransform: 'uppercase',
-          background: 'linear-gradient(135deg, var(--text-display) 60%, var(--accent) 100%)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
-        }}>
-          SPARTA<br />AGENT
+        <h1 
+          className="hero-gradient-title"
+          style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: 'clamp(44px, 7vw, 56px)',
+            fontWeight: 900,
+            letterSpacing: '-0.03em',
+            lineHeight: 1.1,
+            textTransform: 'uppercase',
+          }}
+        >
+          SPARTA AGENT
         </h1>
       </motion.div>
 

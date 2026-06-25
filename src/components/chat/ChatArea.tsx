@@ -1,26 +1,20 @@
 import { useChatStore } from '@/stores/chat.store'
-import { HeroScreen } from './HeroScreen'
 import { MessageList } from './MessageList'
 import { ChatInput } from '@/components/input/ChatInput'
+import { HeroScreen } from './HeroScreen'
 
 export function ChatArea() {
   const { getActiveMessages, isStreaming } = useChatStore()
   const messages = getActiveMessages()
-  const hasMessages = messages.length > 0
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-      {hasMessages ? (
-        <>
-          <MessageList messages={messages} isStreaming={isStreaming} />
-          <ChatInput />
-        </>
+    <div className="flex flex-col flex-1 min-h-0">
+      {messages.length > 0 ? (
+        <MessageList messages={messages} isStreaming={isStreaming} />
       ) : (
-        <>
-          <HeroScreen />
-          <ChatInput />
-        </>
+        <HeroScreen />
       )}
+      <ChatInput />
     </div>
   )
 }

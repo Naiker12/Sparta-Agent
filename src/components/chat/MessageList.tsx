@@ -17,7 +17,7 @@ export function MessageList({ messages, isStreaming }: MessageListProps) {
   }, [messages])
 
   return (
-    <div ref={scrollRef} style={{
+    <div ref={scrollRef} className="min-h-0" style={{
       flex: 1,
       overflowY: 'auto',
       padding: '12px max(20px, calc(50% - 320px))',

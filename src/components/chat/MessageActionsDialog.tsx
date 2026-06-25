@@ -93,37 +93,29 @@ export function MessageActionsDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="max-w-sm">
         {state.kind === 'delete' && (
           <>
             <DialogHeader>
               <DialogTitle>Eliminar mensaje</DialogTitle>
-              <DialogDescription>
-                Esta acción no se puede deshacer. El mensaje se eliminará permanentemente de la
-                sesión.
+              <DialogDescription className="text-sm leading-relaxed">
+                Vas a eliminar{' '}
+                <span
+                  className="font-medium"
+                  style={{ color: 'var(--text-primary)' }}
+                >
+                  {message.content.length > 60
+                    ? message.content.slice(0, 60) + '...'
+                    : message.content}
+                </span>
+                . Esta acción no se puede deshacer.
               </DialogDescription>
             </DialogHeader>
-            <div
-              style={{
-                marginTop: 8,
-                padding: 10,
-                background: 'var(--bg-input)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: 'var(--radius-md)',
-                fontSize: 12,
-                color: 'var(--text-secondary)',
-                fontFamily: 'var(--font-ui)',
-                maxHeight: 120,
-                overflow: 'auto',
-              }}
-            >
-              {message.content}
-            </div>
             <DialogFooter>
-              <Button variant="ghost" onClick={onClose}>
+              <Button variant="ghost" size="sm" onClick={onClose}>
                 Cancelar
               </Button>
-              <Button variant="destructive" onClick={handleDelete}>
+              <Button variant="destructive" size="sm" onClick={handleDelete}>
                 Eliminar
               </Button>
             </DialogFooter>
@@ -138,38 +130,39 @@ export function MessageActionsDialog({
                 Copia este enlace para compartir el mensaje con otros.
               </DialogDescription>
             </DialogHeader>
-            <div
-              style={{
-                marginTop: 8,
-                display: 'flex',
-                gap: 6,
-                alignItems: 'center',
-                background: 'var(--bg-input)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: 'var(--radius-md)',
-                padding: '6px 10px',
-              }}
-            >
-              <code
+            <div style={{ padding: '0 24px 20px' }}>
+              <div
                 style={{
-                  flex: 1,
-                  fontSize: 11,
-                  color: 'var(--text-primary)',
-                  fontFamily: 'var(--font-mono)',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
+                  display: 'flex',
+                  gap: 6,
+                  alignItems: 'center',
+                  background: 'var(--bg-input)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '6px 10px',
                 }}
               >
-                {shareLink}
-              </code>
-              <Button size="xs" variant="ghost" onClick={handleShareCopy}>
-                {copied ? <Check size={12} /> : <Copy size={12} />}
-                {copied ? 'Copiado' : 'Copiar'}
-              </Button>
+                <code
+                  style={{
+                    flex: 1,
+                    fontSize: 11,
+                    color: 'var(--text-primary)',
+                    fontFamily: 'var(--font-mono)',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {shareLink}
+                </code>
+                <Button size="xs" variant="ghost" onClick={handleShareCopy}>
+                  {copied ? <Check size={12} /> : <Copy size={12} />}
+                  {copied ? 'Copiado' : 'Copiar'}
+                </Button>
+              </div>
             </div>
             <DialogFooter>
-              <Button variant="ghost" onClick={onClose}>
+              <Button variant="ghost" size="sm" onClick={onClose}>
                 Cerrar
               </Button>
             </DialogFooter>
@@ -184,7 +177,7 @@ export function MessageActionsDialog({
                 Cambia el contenido. Se reenviará al agente al guardar.
               </DialogDescription>
             </DialogHeader>
-            <div style={{ marginTop: 8 }}>
+            <div style={{ padding: '0 24px 20px' }}>
               <Textarea
                 value={editValue}
                 onChange={(e) => setEditValue(e.target.value)}
@@ -193,13 +186,13 @@ export function MessageActionsDialog({
               />
             </div>
             <DialogFooter>
-              <Button variant="ghost" onClick={onClose}>
+              <Button variant="ghost" size="sm" onClick={onClose}>
                 Cancelar
               </Button>
-              <Button onClick={handleCopy} variant="outline">
+              <Button size="sm" onClick={handleCopy} variant="outline">
                 <Copy size={12} /> Copiar
               </Button>
-              <Button onClick={handleEdit} disabled={!editValue.trim()}>
+              <Button size="sm" onClick={handleEdit} disabled={!editValue.trim()}>
                 Guardar y reenviar
               </Button>
             </DialogFooter>
@@ -215,10 +208,10 @@ export function MessageActionsDialog({
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
-              <Button variant="ghost" onClick={onClose}>
+              <Button variant="ghost" size="sm" onClick={onClose}>
                 Cancelar
               </Button>
-              <Button onClick={handleRegenerate}>Regenerar</Button>
+              <Button size="sm" onClick={handleRegenerate}>Regenerar</Button>
             </DialogFooter>
           </>
         )}
