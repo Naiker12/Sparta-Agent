@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Build output (large files exceeding GitHub 100MB limit)
+release/
