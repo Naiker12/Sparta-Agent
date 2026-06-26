@@ -25,3 +25,9 @@ dist-ssr
 
 # Build output (large files exceeding GitHub 100MB limit)
 release/
+
+# Electron build output
+dist-electron/
+
+# Vault: encrypted API keys (DO NOT COMMIT)
+sparta-vault.json
