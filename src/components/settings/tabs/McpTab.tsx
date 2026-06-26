@@ -4,11 +4,15 @@ import { SettingGroup } from './primitives'
 import { Plus, Power, Trash2 } from 'lucide-react'
 import { useTranslation } from '@/i18n'
 import { AddMcpServerDialog } from '@/components/mcp/AddMcpServerDialog'
+import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog'
 
 export function McpTab() {
   const { servers, removeServer, toggleServer } = useMCPStore()
   const { t } = useTranslation()
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [serverToDelete, setServerToDelete] = useState<string | null>(null)
+
+  const serverToDeleteName = servers.find((s) => s.id === serverToDelete)?.name ?? ''
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -65,7 +69,7 @@ export function McpTab() {
                 <Power size={12} strokeWidth={1.5} />
               </button>
               <button
-                onClick={() => removeServer(server.id)}
+                onClick={() => setServerToDelete(server.id)}
                 title={t('mcp.delete')}
                 style={{
                   width: 26, height: 26,
@@ -105,6 +109,17 @@ export function McpTab() {
       <AddMcpServerDialog
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
+      />
+
+      <ConfirmDeleteDialog
+        open={serverToDelete !== null}
+        onOpenChange={(open) => !open && setServerToDelete(null)}
+        title={t('mcp.delete')}
+        itemLabel={serverToDeleteName}
+        onConfirm={() => {
+          if (serverToDelete) removeServer(serverToDelete)
+          setServerToDelete(null)
+        }}
       />
     </div>
   )

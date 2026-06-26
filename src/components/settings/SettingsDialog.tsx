@@ -10,8 +10,7 @@ import { McpTab } from './tabs/McpTab'
 import { MemoryTab } from './tabs/MemoryTab'
 import { SkillsTab } from './tabs/SkillsTab'
 import { AgentsTab } from './tabs/AgentsTab'
-
-type SettingsTab = 'general' | 'appearance' | 'keybinds' | 'models' | 'mcp' | 'memory' | 'skills' | 'agents'
+import type { SettingsTab } from '@/interfaces/settings.interface'
 
 export function SettingsDialog() {
   const [activeTab, setActiveTab] = useState<SettingsTab>('general')
@@ -49,8 +48,7 @@ export function SettingsDialog() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'rgba(0,0,0,0.4)',
-        backdropFilter: 'blur(4px)',
+        background: 'rgba(0,0,0,0.15)',
         animation: 'modalBackdropIn 0.15s ease-out',
       }}
       onClick={closeSettings}

@@ -64,9 +64,10 @@ export const MemoryGraph = forwardRef<MemoryGraphHandle, MemoryGraphProps>(
     }, [])
 
     const buildGraph = useCallback(() => {
-      const entries = useMemoryStore.getState().entries
+      const state = useMemoryStore.getState()
+      const entries = state.entries
       const nodes = computeGraphLayout(entries)
-      const relations = computeRelations(entries)
+      const relations = computeRelations(entries, state.relations)
       const scene = sceneRef.current
       if (!scene) return
 
@@ -265,7 +266,9 @@ export const MemoryGraph = forwardRef<MemoryGraphHandle, MemoryGraphProps>(
         if (dx < 4 && dy < 4) {
           const entry = getNodeAtScreen(e.clientX, e.clientY)
           const entries = useMemoryStore.getState().entries
-          const nodes = computeGraphLayout(entries)
+          const nodes = useMemoryStore.getState().graphNodes.length > 0
+            ? useMemoryStore.getState().graphNodes
+            : computeGraphLayout(entries)
           if (entry) {
             const gn = nodes.find((n) => n.memoryId === entry.id)
             if (gn) onNodeSelect(entry, gn)

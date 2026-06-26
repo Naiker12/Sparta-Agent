@@ -4,7 +4,6 @@ import { useChannelStore } from '@/stores/channel.store'
 import { BrandIcon } from '@/components/ui/BrandIcon'
 import { IntegrationStatusBadge } from './IntegrationStatusBadge'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const ICON_MAP: Record<string, React.ComponentType<LucideProps & { style?: React.CSSProperties }>> = {
   Hash, Bot, Globe, BookOpen, Code, Terminal, Users, Bell, Star, Camera,
 }

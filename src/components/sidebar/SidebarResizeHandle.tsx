@@ -68,11 +68,11 @@ export function SidebarResizeHandle() {
           transition: 'background 0.15s ease',
         }}
         onMouseEnter={(e) => {
-          ;(e.currentTarget as HTMLElement).style.background = 'var(--accent)'
+          (e.currentTarget as HTMLElement).style.background = 'var(--accent)'
         }}
         onMouseLeave={(e) => {
           if (!isDragging.current) {
-            ;(e.currentTarget as HTMLElement).style.background = 'transparent'
+            (e.currentTarget as HTMLElement).style.background = 'transparent'
           }
         }}
       />

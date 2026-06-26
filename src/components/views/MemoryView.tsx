@@ -18,8 +18,10 @@ export function MemoryView() {
   const [selectedGraphNode, setSelectedGraphNode] = useState<MemoryGraphNode | null>(null)
   const graphRef = useRef<MemoryGraphHandle>(null)
 
-  const nodes = graphView ? computeGraphLayout(entries) : []
-  const relations = graphView ? computeRelations(entries) : []
+  const nodes = graphView
+    ? (entries.length > 0 ? computeGraphLayout(entries) : [])
+    : []
+  const relations = graphView ? computeRelations(entries, []) : []
 
   function handleNodeSelect(entry: MemoryEntry | null, graphNode: MemoryGraphNode | null) {
     if (entry && graphNode) {
@@ -87,7 +89,25 @@ export function MemoryView() {
       />
 
       <div style={{ flex: 1, position: 'relative', display: 'flex', overflow: 'hidden' }}>
-        {graphView ? (
+        {entries.length === 0 ? (
+          <div style={{
+            flex: 1, display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center',
+            gap: 12, padding: 40,
+          }}>
+            <Brain size={32} style={{ color: 'var(--text-muted)', opacity: 0.3 }} />
+            <p style={{
+              fontSize: 13, color: 'var(--text-muted)',
+              fontFamily: 'var(--font-ui)', textAlign: 'center', lineHeight: 1.6,
+            }}>
+              Aún no hay recuerdos.
+              <br />
+              Empieza a chatear con los proveedores de IA
+              y el sistema extraerá automáticamente entidades,
+              hechos y relaciones en este grafo.
+            </p>
+          </div>
+        ) : graphView ? (
           <MemoryGraph
             ref={graphRef}
             onNodeSelect={handleNodeSelect}

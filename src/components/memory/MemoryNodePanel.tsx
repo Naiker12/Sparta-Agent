@@ -1,4 +1,4 @@
-import { X, ExternalLink, Tag, Calendar } from 'lucide-react'
+import { X, ExternalLink, Tag, Calendar, MessageSquare } from 'lucide-react'
 import type { MemoryEntry, MemoryGraphNode } from '@/types'
 
 interface MemoryNodePanelProps {
@@ -81,6 +81,15 @@ export function MemoryNodePanel({ entry, graphNode, onClose }: MemoryNodePanelPr
           {new Date(entry.createdAt).toLocaleString()}
         </span>
       </div>
+
+      {entry.sourceSessionId && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 3, marginTop: 4 }}>
+          <MessageSquare size={9} style={{ color: 'var(--text-muted)' }} strokeWidth={1.5} />
+          <span style={{ fontSize: 9.5, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+            Sesión: {entry.sourceSessionId.slice(0, 8)}…
+          </span>
+        </div>
+      )}
     </div>
   )
 }

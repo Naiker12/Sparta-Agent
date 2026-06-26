@@ -64,14 +64,14 @@ export function AppSidebar() {
         </div>
 
         {/* New Session Button */}
-        <div style={{ padding: '0 12px 12px' }}>
+        <div className="sidebar-new-session-wrapper" style={{ padding: '0 12px 12px' }}>
           <button
             type="button"
             className="sidebar-new-session-btn"
             onClick={() => { createSession(); setMainView({ type: 'chat' }) }}
           >
             <Plus size={16} strokeWidth={2.5} className="btn-icon" />
-            <span style={{ flex: 1, textAlign: 'left' }}>Nueva sesión</span>
+            <span className="btn-label" style={{ flex: 1, textAlign: 'left' }}>Nueva sesión</span>
             <span className="btn-kbd">⌘N</span>
           </button>
         </div>
@@ -159,7 +159,7 @@ export function AppSidebar() {
       </SidebarContent>
 
       {/* ── Footer ── */}
-      <SidebarFooter style={{ padding: '8px 12px 12px', gap: 0 }}>
+      <SidebarFooter className="sidebar-footer-wrapper" style={{ padding: '8px 12px 12px', gap: 0 }}>
         <div className="sidebar-separator" style={{ margin: '0 4px 8px' }} />
         <button
           type="button"
@@ -167,7 +167,7 @@ export function AppSidebar() {
           onClick={() => useSettingsStore.getState().openSettings()}
         >
           <Settings size={18} strokeWidth={1.75} className="footer-icon" />
-          <span>Configuración</span>
+          <span className="footer-label">Configuración</span>
         </button>
       </SidebarFooter>
 

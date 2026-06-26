@@ -4,12 +4,16 @@ import { useSkillStore } from '@/stores/skill.store'
 import { useTranslation } from '@/i18n'
 import { SettingGroup } from './primitives'
 import { SkillDialog } from '@/components/skills/SkillDialog'
+import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog'
 
 export function SkillsTab() {
   const { skills, addSkill, updateSkill, deleteSkill } = useSkillStore()
   const { t } = useTranslation()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
+  const [skillToDelete, setSkillToDelete] = useState<string | null>(null)
+
+  const skillToDeleteName = skills.find((s) => s.id === skillToDelete)?.name ?? ''
 
   function handleSubmit(name: string, description: string, prompt: string, tags: string[]) {
     if (editId) {
@@ -83,7 +87,7 @@ export function SkillsTab() {
                 <Pencil size={11} strokeWidth={1.5} />
               </button>
               <button
-                onClick={() => deleteSkill(skill.id)}
+                onClick={() => setSkillToDelete(skill.id)}
                 title={t('skills.delete')}
                 style={iconBtnStyle}
                 onMouseEnter={e => { e.currentTarget.style.color = 'var(--destructive)'; e.currentTarget.style.background = 'var(--bg-hover)' }}
@@ -122,6 +126,17 @@ export function SkillsTab() {
         onSubmit={handleSubmit}
         onDelete={editId ? () => { deleteSkill(editId); setDialogOpen(false); setEditId(null) } : undefined}
         initial={editId ? skills.find((s) => s.id === editId) ?? null : null}
+      />
+
+      <ConfirmDeleteDialog
+        open={skillToDelete !== null}
+        onOpenChange={(open) => !open && setSkillToDelete(null)}
+        title={t('skills.delete')}
+        itemLabel={skillToDeleteName}
+        onConfirm={() => {
+          if (skillToDelete) deleteSkill(skillToDelete)
+          setSkillToDelete(null)
+        }}
       />
     </div>
   )
