@@ -29,8 +29,19 @@ interface SpartaAPI {
     apiUrl?: string
     isLocal?: boolean
     system?: string
+    vendor?: string
+    providerId?: string
   }) => Promise<{ ok: boolean; error?: string; aborted?: boolean }>
   abortMessage: (sessionId: string) => Promise<void>
+}
+
+interface VaultAPI {
+  isAvailable: () => Promise<boolean>
+  storeKey: (keyId: string, value: string, vendor?: string) => Promise<boolean>
+  getKey: (keyId: string) => Promise<string | null>
+  deleteKey: (keyId: string) => Promise<boolean>
+  listKeys: () => Promise<{ keyId: string; vendor?: string }[]>
+  hasKey: (keyId: string) => Promise<boolean>
 }
 
 interface Window {
@@ -41,4 +52,5 @@ interface Window {
     invoke: (channel: string, ...args: unknown[]) => Promise<unknown>
   }
   sparta: SpartaAPI
+  vault: VaultAPI
 }

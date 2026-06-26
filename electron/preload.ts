@@ -43,6 +43,17 @@ contextBridge.exposeInMainWorld('sparta', {
     apiUrl?: string
     isLocal?: boolean
     system?: string
+    vendor?: string
+    providerId?: string
   }) => ipcRenderer.invoke('chat:send', req),
   abortMessage: (sessionId: string) => ipcRenderer.invoke('chat:abort', sessionId),
+})
+
+contextBridge.exposeInMainWorld('vault', {
+  isAvailable: () => ipcRenderer.invoke('vault:isAvailable'),
+  storeKey: (keyId: string, value: string, vendor?: string) => ipcRenderer.invoke('vault:storeKey', keyId, value, vendor),
+  getKey: (keyId: string) => ipcRenderer.invoke('vault:getKey', keyId),
+  deleteKey: (keyId: string) => ipcRenderer.invoke('vault:deleteKey', keyId),
+  listKeys: () => ipcRenderer.invoke('vault:listKeys'),
+  hasKey: (keyId: string) => ipcRenderer.invoke('vault:hasKey', keyId),
 })
