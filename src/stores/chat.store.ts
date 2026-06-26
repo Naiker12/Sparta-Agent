@@ -2,12 +2,21 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Message, Session, ToolCall } from '@/types'
 
+export interface StreamState {
+  isStreaming: boolean
+  abortController: AbortController
+  tokensUsed: number
+  startedAt: number
+}
+
 interface ChatState {
   sessions: Session[]
   activeSessionId: string | null
   messagesBySession: Record<string, Message[]>
   isStreaming: boolean
   abortController: AbortController | null
+  streamingBySession: Record<string, StreamState>
+  pendingInjections: string[]
 
   createSession: (title?: string, model?: string, providerId?: string) => string
   switchSession: (id: string) => void
@@ -18,15 +27,18 @@ interface ChatState {
   deleteMessage: (sessionId: string, messageId: string) => void
   addMessage: (message: Message) => void
   updateMessage: (id: string, partial: Partial<Message>) => void
-  appendContent: (sessionId: string, messageId: string, delta: string) => void
-  appendThinking: (sessionId: string, messageId: string, delta: string) => void
+  appendContent: (sessionId: string, messageId: string, delta: string, chunkSeq?: number) => void
+  appendThinking: (sessionId: string, messageId: string, delta: string, chunkSeq?: number) => void
   addToolCall: (sessionId: string, messageId: string, toolCall: ToolCall) => void
   updateToolCallStatus: (sessionId: string, messageId: string, toolCallId: string, status: ToolCall['status']) => void
   setStreaming: (value: boolean) => void
-  startStreaming: () => AbortController
-  stopStreaming: () => void
+  startStreaming: (sessionId: string) => AbortController
+  stopStreaming: (sessionId?: string) => void
+  injectWhileStreaming: (text: string) => void
+  consumePendingInjections: () => string[]
   getActiveMessages: () => Message[]
   cleanupStaleSessions: () => void
+  getStreamState: (sessionId: string) => StreamState | undefined
 }
 
 export const useChatStore = create<ChatState>()(
@@ -37,6 +49,8 @@ export const useChatStore = create<ChatState>()(
   messagesBySession: {},
   isStreaming: false,
   abortController: null,
+  streamingBySession: {},
+  pendingInjections: [],
 
   createSession: (title, model, providerId) => {
     const id = crypto.randomUUID()
@@ -145,34 +159,41 @@ export const useChatStore = create<ChatState>()(
       return { messagesBySession: updated }
     }),
 
-  appendContent: (sessionId, messageId, delta) =>
+  appendContent: (sessionId, messageId, delta, chunkSeq) =>
     set((s) => {
       const sessionMessages = s.messagesBySession[sessionId]
       if (!sessionMessages) return s
+      if (!delta) return s
       return {
         messagesBySession: {
           ...s.messagesBySession,
-          [sessionId]: sessionMessages.map((msg) =>
-            msg.id === messageId
-              ? { ...msg, content: msg.content + delta, isStreaming: true }
-              : msg
-          ),
+          [sessionId]: sessionMessages.map((msg) => {
+            if (msg.id !== messageId) return msg
+            if (chunkSeq !== undefined && msg.lastChunkSeq !== undefined && chunkSeq <= msg.lastChunkSeq) {
+              console.warn(`[chat.store] Duplicate content chunk #${chunkSeq} <= lastChunkSeq #${msg.lastChunkSeq} for message ${messageId.slice(0,8)}`)
+              return msg
+            }
+            return { ...msg, content: msg.content + delta, isStreaming: true, lastChunkSeq: chunkSeq ?? msg.lastChunkSeq }
+          }),
         },
       }
     }),
 
-  appendThinking: (sessionId, messageId, delta) =>
+  appendThinking: (sessionId, messageId, delta, chunkSeq) =>
     set((s) => {
       const sessionMessages = s.messagesBySession[sessionId]
       if (!sessionMessages) return s
       return {
         messagesBySession: {
           ...s.messagesBySession,
-          [sessionId]: sessionMessages.map((msg) =>
-            msg.id === messageId
-              ? { ...msg, reasoningText: (msg.reasoningText ?? '') + delta, isStreaming: true }
-              : msg
-          ),
+          [sessionId]: sessionMessages.map((msg) => {
+            if (msg.id !== messageId) return msg
+            if (chunkSeq !== undefined && msg.lastThinkChunkSeq !== undefined && chunkSeq <= msg.lastThinkChunkSeq) {
+              console.warn(`[chat.store] Duplicate thinking chunk #${chunkSeq} <= lastThinkChunkSeq #${msg.lastThinkChunkSeq} for message ${messageId.slice(0,8)}`)
+              return msg
+            }
+            return { ...msg, reasoningText: (msg.reasoningText ?? '') + delta, isStreaming: true, lastThinkChunkSeq: chunkSeq ?? msg.lastThinkChunkSeq }
+          }),
         },
       }
     }),
@@ -216,16 +237,54 @@ export const useChatStore = create<ChatState>()(
 
   setStreaming: (value) => set({ isStreaming: value }),
 
-  startStreaming: () => {
+  startStreaming: (sessionId: string) => {
     const controller = new AbortController()
-    set({ isStreaming: true, abortController: controller })
+    const streamState: StreamState = { isStreaming: true, abortController: controller, tokensUsed: 0, startedAt: Date.now() }
+    set((s) => ({
+      isStreaming: true,
+      abortController: controller,
+      pendingInjections: [],
+      streamingBySession: { ...s.streamingBySession, [sessionId]: streamState },
+    }))
     return controller
   },
 
-  stopStreaming: () => {
-    const { abortController } = get()
-    abortController?.abort()
-    set({ isStreaming: false, abortController: null })
+  stopStreaming: (sessionId?: string) => {
+    const { abortController, streamingBySession } = get()
+    if (sessionId) {
+      const entry = streamingBySession[sessionId]
+      if (entry) {
+        entry.abortController.abort()
+        const { [sessionId]: _, ...rest } = streamingBySession
+        void _
+        const hasAnyStreaming = Object.values(rest).some((s) => s.isStreaming)
+        set({
+          streamingBySession: rest,
+          isStreaming: hasAnyStreaming,
+          abortController: hasAnyStreaming ? Object.values(rest)[0]?.abortController ?? null : null,
+        })
+      }
+    } else {
+      abortController?.abort()
+      set({ isStreaming: false, abortController: null, streamingBySession: {} })
+    }
+  },
+
+  getStreamState: (sessionId: string) => {
+    return get().streamingBySession[sessionId]
+  },
+
+  injectWhileStreaming: (text: string) => {
+    set((s) => ({
+      pendingInjections: [...s.pendingInjections, text],
+    }))
+  },
+
+  consumePendingInjections: () => {
+    const { pendingInjections } = get()
+    if (pendingInjections.length === 0) return []
+    set({ pendingInjections: [] })
+    return pendingInjections
   },
 
   getActiveMessages: () => {
@@ -238,6 +297,7 @@ export const useChatStore = create<ChatState>()(
     set((s) => ({
       isStreaming: false,
       abortController: null,
+      streamingBySession: {},
       messagesBySession: Object.fromEntries(
         Object.entries(s.messagesBySession).map(([sessionId, msgs]) => [
           sessionId,
@@ -249,6 +309,30 @@ export const useChatStore = create<ChatState>()(
 }),
     {
       name: 'sparta-chat',
+      version: 1,
+      migrate: (persisted, version) => {
+        const state = persisted as Record<string, unknown>
+        if (version < 1) {
+          return {
+            sessions: Array.isArray(state.sessions) ? state.sessions : [],
+            activeSessionId: typeof state.activeSessionId === 'string' ? state.activeSessionId : null,
+            messagesBySession: state.messagesBySession && typeof state.messagesBySession === 'object'
+              ? Object.fromEntries(
+                  Object.entries(state.messagesBySession as Record<string, unknown>).map(([sid, msgs]) => [
+                    sid,
+                    Array.isArray(msgs) ? msgs.map((m: Record<string, unknown>) => ({
+                      ...m,
+                      isStreaming: false,
+                      lastChunkSeq: (m as { lastChunkSeq?: number }).lastChunkSeq,
+                      lastThinkChunkSeq: (m as { lastThinkChunkSeq?: number }).lastThinkChunkSeq,
+                    })) : [],
+                  ])
+                )
+              : {},
+          }
+        }
+        return persisted
+      },
       partialize: (state) => ({
         sessions: state.sessions,
         activeSessionId: state.activeSessionId,

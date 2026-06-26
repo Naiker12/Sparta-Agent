@@ -31,6 +31,9 @@ export type EventType =
   | 'memory:added'
   | 'memory:updated'
   | 'memory:deleted'
+  | 'memory:semantic_search'
+  | 'memory:indexed'
+  | 'memory:extraction_empty'
   | 'message:deleted'
   | 'message:edited'
   | 'message:shared'
@@ -109,15 +112,22 @@ export interface MCPDisconnectedEvent extends BaseEvent {
 export interface StreamTokenEvent extends BaseEvent {
   type: 'stream:token'
   token: string
+  sessionId: string
+  messageId: string
+  chunkSeq?: number
 }
 
 export interface StreamCompletedEvent extends BaseEvent {
   type: 'stream:completed'
+  sessionId: string
+  messageId: string
   usage?: { inputTokens: number; outputTokens: number }
 }
 
 export interface StreamErrorEvent extends BaseEvent {
   type: 'stream:error'
+  sessionId: string
+  messageId: string
   error: string
 }
 
@@ -209,6 +219,25 @@ export interface MemoryDeletedEvent extends BaseEvent {
   memoryId: string
 }
 
+export interface MemorySemanticSearchEvent extends BaseEvent {
+  type: 'memory:semantic_search'
+  query: string
+  resultsCount: number
+  injectedContext: string
+}
+
+export interface MemoryIndexedEvent extends BaseEvent {
+  type: 'memory:indexed'
+  memoryId: string
+  indexedCount: number
+}
+
+export interface MemoryExtractionEmptyEvent extends BaseEvent {
+  type: 'memory:extraction_empty'
+  sessionId: string
+  messageId: string
+}
+
 export interface MessageDeletedEvent extends BaseEvent {
   type: 'message:deleted'
   sessionId: string
@@ -260,6 +289,9 @@ export type SpartaEvent =
   | MemoryAddedEvent
   | MemoryUpdatedEvent
   | MemoryDeletedEvent
+  | MemorySemanticSearchEvent
+  | MemoryIndexedEvent
+  | MemoryExtractionEmptyEvent
   | MessageDeletedEvent
   | MessageEditedEvent
   | MessageSharedEvent

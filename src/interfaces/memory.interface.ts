@@ -9,7 +9,7 @@ export interface MemoryEntry {
   sourceMessageId?: string
 }
 
-export type RelationType = 'same_category' | 'same_project' | 'same_session' | 'manual' | 'entity_relation'
+export type RelationType = 'same_category' | 'same_project' | 'same_session' | 'manual' | 'entity_relation' | 'semantic_relation'
 
 export interface MemoryRelation {
   fromId: string

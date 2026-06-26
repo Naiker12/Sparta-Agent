@@ -35,6 +35,7 @@ export const useMemoryStore = create<MemoryState>()(
       createdAt: Date.now(),
     }
     set((s) => ({ entries: [...s.entries, entry] }))
+    console.debug(`[memory:store] Added entry id=${id.slice(0,8)} category=${category ?? 'none'} content="${content.slice(0,60)}"`)
     useEventBus.getState().dispatch({ type: 'memory:added', memoryId: id, timestamp: Date.now() })
     return id
   },
@@ -110,6 +111,18 @@ export const useMemoryStore = create<MemoryState>()(
 }),
     {
       name: 'sparta-memory',
+      version: 1,
+      migrate: (persisted, version) => {
+        const state = persisted as Record<string, unknown>
+        if (version < 1) {
+          return {
+            entries: Array.isArray(state.entries) ? state.entries : [],
+            relations: Array.isArray(state.relations) ? state.relations : [],
+            graphNodes: [],
+          }
+        }
+        return persisted as MemoryState
+      },
       partialize: (state) => ({
         entries: state.entries,
         relations: state.relations,

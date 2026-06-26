@@ -26,6 +26,10 @@ export interface Message {
   thinking?: string
   reasoningText?: string
   isStreaming?: boolean
+  lastChunkSeq?: number
+  lastThinkChunkSeq?: number
+  reasoningStartedAt?: number
+  reasoningCompletedAt?: number
   toolCalls?: ToolCall[]
   pipelineSteps?: PipelineStep[]
 }

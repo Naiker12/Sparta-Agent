@@ -78,6 +78,23 @@ export const useProviderStore = create<ProviderState>()(
       getByVendor: (vendor) =>
         get().providers.find((p) => p.vendor === vendor),
     }),
-    { name: 'sparta-providers' }
+    {
+      name: 'sparta-providers',
+      version: 1,
+      migrate: (persisted, version) => {
+        const state = persisted as Record<string, unknown>
+        if (version < 1) {
+          const providers = Array.isArray(state.providers) ? state.providers : []
+          return {
+            providers: providers.map((p: Record<string, unknown>) => ({
+              ...p,
+              hasVaultKey: (p as { hasVaultKey?: boolean }).hasVaultKey ?? false,
+              usage: (p as { usage?: unknown }).usage ?? null,
+            })),
+          }
+        }
+        return persisted
+      },
+    }
   )
 )

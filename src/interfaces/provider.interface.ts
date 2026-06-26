@@ -13,6 +13,7 @@ export interface Provider {
   kind: ProviderKind
   label: string
   apiKey?: string
+  hasVaultKey?: boolean
   serverUrl?: string
   defaultModel?: string
   createdAt: string

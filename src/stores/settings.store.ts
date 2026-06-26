@@ -9,6 +9,7 @@ interface SettingsStore {
   input: string
   activeModel: string
   memoryEnabled: boolean
+  semanticMemoryEnabled: boolean
   webSearchEnabled: boolean
   reasoningEnabled: boolean
   sessionMode: SessionMode
@@ -21,6 +22,7 @@ interface SettingsStore {
   setDefaultModel: (model: string) => void
   setApiKey: (provider: string, key: string) => void
   toggleMemory: () => void
+  toggleSemanticMemory: () => void
   toggleWebSearch: () => void
   toggleReasoning: () => void
   setSessionMode: (mode: SessionMode) => void
@@ -35,6 +37,7 @@ export const useSettingsStore = create<SettingsStore>()(
   input: '',
   activeModel: 'claude-sonnet-4-6',
   memoryEnabled: true,
+  semanticMemoryEnabled: false,
   webSearchEnabled: false,
   reasoningEnabled: true,
   sessionMode: 'chat',
@@ -48,6 +51,7 @@ export const useSettingsStore = create<SettingsStore>()(
   setApiKey: (provider, key) =>
     set((s) => ({ apiKeys: { ...s.apiKeys, [provider]: key } })),
   toggleMemory: () => set((s) => ({ memoryEnabled: !s.memoryEnabled })),
+  toggleSemanticMemory: () => set((s) => ({ semanticMemoryEnabled: !s.semanticMemoryEnabled })),
   toggleWebSearch: () => set((s) => ({ webSearchEnabled: !s.webSearchEnabled })),
   toggleReasoning: () => set((s) => ({ reasoningEnabled: !s.reasoningEnabled })),
   setSessionMode: (mode) => set({ sessionMode: mode }),
@@ -55,10 +59,13 @@ export const useSettingsStore = create<SettingsStore>()(
 }),
     {
       name: 'sparta-settings',
+      version: 1,
+      migrate: (persisted) => persisted,
       partialize: (state) => ({
         defaultModel: state.defaultModel,
         activeModel: state.activeModel,
         memoryEnabled: state.memoryEnabled,
+        semanticMemoryEnabled: state.semanticMemoryEnabled,
         webSearchEnabled: state.webSearchEnabled,
         reasoningEnabled: state.reasoningEnabled,
         sessionMode: state.sessionMode,
