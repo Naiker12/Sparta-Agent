@@ -1,5 +1,5 @@
-import { useRef, useEffect, type ReactNode } from 'react'
-import { FileIcon, Globe, Brain } from 'lucide-react'
+import { useRef, useEffect, useState, type ReactNode } from 'react'
+import { FileIcon, Globe, Brain, AlertTriangle } from 'lucide-react'
 import { useSettingsStore } from '@/stores/settings.store'
 import { ConnectorsSubmenu } from './ConnectorsSubmenu'
 import { ModeSwitch } from './ModeSwitch'
@@ -82,22 +82,26 @@ function AttachMenuToggle({
   icon,
   label,
   enabled,
+  warning,
   onToggle,
 }: {
   icon: ReactNode
   label: string
   enabled: boolean
+  warning?: boolean
   onToggle: () => void
 }) {
   return (
     <button
       onClick={onToggle}
       style={btnStyle}
+      title={warning ? 'API key de búsqueda no configurada. Ve a Configuración > Búsqueda.' : undefined}
       onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)' }}
       onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
     >
       {icon}
       <span style={{ flex: 1, color: enabled ? 'var(--accent)' : undefined }}>{label}</span>
+      {warning && <AlertTriangle size={13} strokeWidth={1.5} style={{ color: 'var(--status-warn)' }} />}
       <ToggleSwitch enabled={enabled} />
     </button>
   )
@@ -107,6 +111,15 @@ export function AttachMenu({ onClose }: AttachMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { webSearchEnabled, reasoningEnabled, toggleWebSearch, toggleReasoning } = useSettingsStore()
+  const [webSearchConfigured, setWebSearchConfigured] = useState(true)
+
+  useEffect(() => {
+    if (webSearchEnabled && window.vault) {
+      window.vault.hasKey('brave-search').then(setWebSearchConfigured)
+    } else {
+      setWebSearchConfigured(true)
+    }
+  }, [webSearchEnabled])
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -156,6 +169,7 @@ export function AttachMenu({ onClose }: AttachMenuProps) {
         icon={<Globe size={14} strokeWidth={1.5} />}
         label="Búsqueda web"
         enabled={webSearchEnabled}
+        warning={webSearchEnabled && !webSearchConfigured}
         onToggle={() => { toggleWebSearch(); onClose() }}
       />
 

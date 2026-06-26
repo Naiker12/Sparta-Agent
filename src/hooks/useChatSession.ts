@@ -52,6 +52,7 @@ export function useChatSession() {
   const appendThinking = useChatStore((s) => s.appendThinking)
   const appendContent = useChatStore((s) => s.appendContent)
   const addToolCall = useChatStore((s) => s.addToolCall)
+  const updateToolCallStatus = useChatStore((s) => s.updateToolCallStatus)
   const startStreaming = useChatStore((s) => s.startStreaming)
   const stopStreamingFn = useChatStore((s) => s.stopStreaming)
 
@@ -145,44 +146,59 @@ export function useChatSession() {
 
       let webSearchContext: string | undefined
       if (webSearchEnabled) {
+        const searchToolCallId = crypto.randomUUID()
+        const searchStartedAt = Date.now()
+
+        addToolCall(sid, assistantId, {
+          id: searchToolCallId,
+          toolName: 'web_search',
+          input: { query: text },
+          status: 'running',
+        })
+
+        useEventBus.getState().dispatch({
+          type: 'tool:called',
+          toolName: 'web_search',
+          input: { query: text },
+          timestamp: searchStartedAt,
+        })
+
         try {
-          useEventBus.getState().dispatch({
-            type: 'tool:called',
-            toolName: 'web_search',
-            input: { query: text },
-            timestamp: Date.now(),
-          })
           const results = await webSearch(text, 5)
+          const durationMs = Date.now() - searchStartedAt
+
           if (results.length > 0) {
             webSearchContext =
               'Información obtenida de búsqueda web:\n' +
               results.map((r, i) =>
                 `${i + 1}. ${r.title}\n   URL: ${r.url}\n   ${r.snippet}`
               ).join('\n\n')
-            useEventBus.getState().dispatch({
-              type: 'tool:result',
-              toolName: 'web_search',
-              output: webSearchContext,
-              durationMs: 0,
-              timestamp: Date.now(),
-            })
           } else {
-            useEventBus.getState().dispatch({
-              type: 'tool:result',
-              toolName: 'web_search',
-              output: 'No se encontraron resultados.',
-              durationMs: 0,
-              timestamp: Date.now(),
-            })
+            webSearchContext = 'No se encontraron resultados en la búsqueda web.'
           }
+
+          updateToolCallStatus(sid, assistantId, searchToolCallId, 'completed')
+
+          useEventBus.getState().dispatch({
+            type: 'tool:result',
+            toolName: 'web_search',
+            output: webSearchContext,
+            durationMs,
+            timestamp: Date.now(),
+          })
         } catch (err) {
+          const error = err instanceof Error ? err.message : String(err)
+
+          updateToolCallStatus(sid, assistantId, searchToolCallId, 'error')
+
           useEventBus.getState().dispatch({
             type: 'tool:error',
             toolName: 'web_search',
-            error: err instanceof Error ? err.message : String(err),
+            error,
             timestamp: Date.now(),
           })
         }
+
         if (webSearchContext) {
           system = system
             ? `${system}\n\n${webSearchContext}`
