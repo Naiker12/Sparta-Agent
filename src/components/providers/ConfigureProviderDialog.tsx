@@ -1,9 +1,17 @@
 import { useState, useEffect } from 'react'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Check } from 'lucide-react'
 import type { ProviderVendor, Provider } from '@/types'
 import { useProviderStore, getVendorLabel } from '@/stores/provider.store'
 import { useTranslation } from '@/i18n'
 import { fetchModelsByVendor } from '@/lib/fetch-models'
+import {
+  Combobox,
+  ComboboxInput,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxList,
+  ComboboxItem,
+} from '@/components/ui/combobox'
 
 interface ConfigureProviderDialogProps {
   open: boolean
@@ -304,30 +312,49 @@ export function ConfigureProviderDialog({
               <label style={{ fontSize: 11, color: 'var(--text-secondary)', fontFamily: 'var(--font-ui)', display: 'block', marginBottom: 4 }}>
                 {t('models.defaultModelLabel')}
               </label>
-              <select
-                value={defaultModel}
-                onChange={(e) => setDefaultModel(e.target.value)}
-                style={{
-                  width: '100%',
+              {fetchedModels.length === 0 ? (
+                <div style={{
+                  padding: '7px 10px',
+                  fontSize: 12,
+                  color: 'var(--text-muted)',
+                  fontFamily: 'var(--font-mono)',
                   background: 'var(--bg-input)',
                   border: '1px solid var(--border-normal)',
                   borderRadius: 'var(--radius-md)',
-                  padding: '7px 10px',
-                  fontSize: 12,
-                  color: fetchedModels.length === 0 ? 'var(--text-muted)' : 'var(--text-primary)',
-                  fontFamily: 'var(--font-mono)',
-                  outline: 'none',
-                  cursor: fetchedModels.length === 0 ? 'not-allowed' : 'pointer',
-                }}
-              >
-                {fetchedModels.length === 0 ? (
-                  <option value="">{t('models.testFirst')}</option>
-                ) : (
-                  fetchedModels.map((m) => (
-                    <option key={m} value={m}>{m}</option>
-                  ))
-                )}
-              </select>
+                }}>
+                  {t('models.testFirst')}
+                </div>
+              ) : (
+                <Combobox
+                  items={fetchedModels}
+                  value={defaultModel}
+                  onValueChange={setDefaultModel}
+                >
+                  <ComboboxInput
+                    placeholder="Buscar modelo..."
+                    style={{
+                      width: '100%',
+                      fontSize: 12,
+                      fontFamily: 'var(--font-mono)',
+                    }}
+                  />
+                  <ComboboxContent>
+                    <ComboboxEmpty>No se encontraron modelos</ComboboxEmpty>
+                    <ComboboxList>
+                      {(item) => (
+                        <ComboboxItem key={item} value={item}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'space-between', width: '100%' }}>
+                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>{item}</span>
+                            {item === defaultModel && (
+                              <Check size={12} style={{ color: 'var(--accent)', flexShrink: 0 }} />
+                            )}
+                          </div>
+                        </ComboboxItem>
+                      )}
+                    </ComboboxList>
+                  </ComboboxContent>
+                </Combobox>
+              )}
             </div>
           </div>
         </div>

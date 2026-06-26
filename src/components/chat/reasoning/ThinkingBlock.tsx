@@ -1,14 +1,22 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { ChevronRightIcon, SparklesIcon } from 'lucide-react'
 
 interface ThinkingBlockProps {
   content: string
+  collapsed?: boolean
   className?: string
 }
 
-export function ThinkingBlock({ content, className }: ThinkingBlockProps) {
-  const [expanded, setExpanded] = useState(false)
+export function ThinkingBlock({ content, collapsed = false, className }: ThinkingBlockProps) {
+  const [expanded, setExpanded] = useState(!collapsed)
+
+  useEffect(() => {
+    if (!collapsed) {
+      const timer = setTimeout(() => setExpanded(false), 400)
+      return () => clearTimeout(timer)
+    }
+  }, [collapsed])
 
   return (
     <div className={cn('rounded-sm border border-[#2A2A35] bg-bg-surface overflow-hidden', className)}>

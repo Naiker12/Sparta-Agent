@@ -15,6 +15,7 @@ import { MemoryView } from '@/components/views/MemoryView'
 import { initTheme } from '@/stores/theme.store'
 import { useSettingsStore } from '@/stores/settings.store'
 import { useUIStore } from '@/stores/ui.store'
+import { useChatStore } from '@/stores/chat.store'
 
 const PANELS: Record<string, React.ReactNode> = {
   chat: <ChatArea />,
@@ -31,6 +32,7 @@ const PANELS: Record<string, React.ReactNode> = {
 export function AppShell() {
   useEffect(() => {
     initTheme()
+    useChatStore.getState().cleanupStaleSessions()
   }, [])
 
   const { settingsOpen } = useSettingsStore()

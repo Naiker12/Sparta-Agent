@@ -1,12 +1,27 @@
+import { useEffect, useState } from 'react'
 import { Bot, Clock } from 'lucide-react'
 import { useSettingsStore } from '@/stores/settings.store'
 import { useProviderStore } from '@/stores/provider.store'
 import { BrandIcon } from '@/components/ui/BrandIcon'
 
 export function StatusBar() {
+  const [appVersion, setAppVersion] = useState('')
   const activeModel = useSettingsStore((s) => s.activeModel)
   const providers = useProviderStore((s) => s.providers)
   const activeProvider = providers.find((p) => p.defaultModel === activeModel)
+
+  useEffect(() => {
+    try {
+      const p = window.electronAPI?.getVersion()
+      if (p?.then) {
+        p.then(setAppVersion).catch(() => setAppVersion('0.0.0'))
+      } else {
+        setAppVersion('0.0.0')
+      }
+    } catch {
+      setAppVersion('0.0.0')
+    }
+  }, [])
 
   return (
     <div style={{
@@ -36,7 +51,7 @@ export function StatusBar() {
         {activeModel}
       </SBItem>
       <SBItem>0 tok</SBItem>
-      <SBItem style={{ color: 'var(--text-muted)' }}>v0.1.0</SBItem>
+      <SBItem style={{ color: 'var(--text-muted)' }}>v{appVersion || '0.0.0'}</SBItem>
     </div>
   )
 }

@@ -7,7 +7,7 @@ interface MessageListProps {
   isStreaming?: boolean
 }
 
-export function MessageList({ messages, isStreaming }: MessageListProps) {
+export function MessageList({ messages }: MessageListProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -15,6 +15,13 @@ export function MessageList({ messages, isStreaming }: MessageListProps) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
   }, [messages])
+
+  const lastUserMsgId = (() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === 'user') return messages[i].id
+    }
+    return null
+  })()
 
   return (
     <div ref={scrollRef} className="min-h-0" style={{
@@ -24,32 +31,8 @@ export function MessageList({ messages, isStreaming }: MessageListProps) {
     }}>
       <div style={{ padding: '12px 0', display: 'flex', flexDirection: 'column', gap: 20 }}>
         {messages.map((msg) => (
-          <MessageBubble key={msg.id} message={msg} />
+          <MessageBubble key={msg.id} message={msg} isLastUser={msg.role === 'user' && msg.id === lastUserMsgId} />
         ))}
-        {isStreaming && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, paddingLeft: 4 }}>
-            <span style={{
-              width: 6, height: 6,
-              background: 'var(--status-think)',
-              borderRadius: '50%',
-              animation: 'pulse 1.2s ease infinite',
-            }} />
-            <span style={{
-              width: 6, height: 6,
-              background: 'var(--status-think)',
-              borderRadius: '50%',
-              animation: 'pulse 1.2s ease infinite',
-              animationDelay: '0.15s',
-            }} />
-            <span style={{
-              width: 6, height: 6,
-              background: 'var(--status-think)',
-              borderRadius: '50%',
-              animation: 'pulse 1.2s ease infinite',
-              animationDelay: '0.30s',
-            }} />
-          </div>
-        )}
       </div>
     </div>
   )

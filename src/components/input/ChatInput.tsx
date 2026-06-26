@@ -1,7 +1,9 @@
 import { useRef, useState } from 'react'
-import { Plus, Mic, ArrowUp } from 'lucide-react'
+import { Plus, Mic, ArrowUp, Square, AlertCircle } from 'lucide-react'
 import { useSettingsStore } from '@/stores/settings.store'
 import { useChatStore } from '@/stores/chat.store'
+import { useProviderStore } from '@/stores/provider.store'
+import { useChatSession } from '@/hooks/useChatSession'
 import { cn } from '@/lib/utils'
 import { ModelPicker } from './ModelPicker'
 import { AttachMenu } from './AttachMenu'
@@ -12,6 +14,10 @@ export function ChatInput() {
   const [showAttach, setShowAttach] = useState(false)
   const { input, setInput } = useSettingsStore()
   const isStreaming = useChatStore((s) => s.isStreaming)
+  const providers = useProviderStore((s) => s.providers)
+  const hasProvider = providers.some((p) => p.kind === 'local' || p.apiKey)
+  const stopStreaming = useChatStore((s) => s.stopStreaming)
+  const { sendMessage } = useChatSession()
 
   function autoResize() {
     const el = textareaRef.current
@@ -20,20 +26,71 @@ export function ChatInput() {
     el.style.height = Math.min(el.scrollHeight, 120) + 'px'
   }
 
+  function handleSend() {
+    const text = input.trim()
+    if (!text || isStreaming) return
+    if (!hasProvider) return
+    sendMessage(text)
+    setInput('')
+  }
+
+  function handleStop() {
+    stopStreaming()
+  }
+
   function handleKey(e: React.KeyboardEvent) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
-      if (input.trim()) {
-        useSettingsStore.getState().sendMessage()
+      if (isStreaming) {
+        handleStop()
+      } else if (hasProvider) {
+        handleSend()
       }
     }
   }
 
-  const canSend = input.trim().length > 0
+  const canSend = input.trim().length > 0 && hasProvider
 
   return (
     <div style={{ padding: '12px 20px 18px', position: 'relative' }}>
       <div style={{ maxWidth: 680, margin: '0 auto' }}>
+        {!hasProvider && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '8px 14px',
+            marginBottom: 8,
+            borderRadius: 'var(--radius-lg)',
+            border: '1px solid var(--status-warn)',
+            background: 'color-mix(in srgb, var(--status-warn) 8%, transparent)',
+            fontSize: 12,
+            color: 'var(--status-warn)',
+            fontFamily: 'var(--font-ui)',
+          }}>
+            <AlertCircle size={14} strokeWidth={1.5} />
+            <span>
+              No hay proveedores con API key configurados.{' '}
+              <button
+                onClick={() => useSettingsStore.getState().openSettings()}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--accent)',
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                  fontSize: 12,
+                  padding: 0,
+                  fontFamily: 'var(--font-ui)',
+                }}
+              >
+                Configura un proveedor
+              </button>
+              {' '}(Ajustes &gt; Modelos) para empezar a chatear.
+            </span>
+          </div>
+        )}
+
         <div className={cn('chat-input-wrapper', isStreaming && 'is-streaming')}>
           <div
             style={{
@@ -82,7 +139,7 @@ export function ChatInput() {
                 onKeyDown={handleKey}
                 onFocus={() => setFocused(true)}
                 onBlur={() => setFocused(false)}
-                placeholder="Ask anything..."
+                placeholder={hasProvider ? "Ask anything..." : "Configura un proveedor para chatear..."}
                 rows={1}
                 style={{
                   flex: 1,
@@ -96,7 +153,7 @@ export function ChatInput() {
                   resize: 'none',
                   minHeight: 22,
                   maxHeight: 120,
-                  caretColor: 'var(--accent)',
+                  caretColor: hasProvider ? 'var(--accent)' : 'var(--text-muted)',
                 }}
               />
             </div>
@@ -124,22 +181,40 @@ export function ChatInput() {
                 <Mic size={13} strokeWidth={1.5} />
               </button>
 
-              <button
-                onClick={() => canSend && useSettingsStore.getState().sendMessage()}
-                style={{
-                  width: 28, height: 28,
-                  background: canSend ? 'var(--accent)' : 'var(--bg-active)',
-                  border: 'none',
-                  borderRadius: 'var(--radius-lg)',
-                  color: canSend ? 'white' : 'var(--text-muted)',
-                  cursor: canSend ? 'pointer' : 'not-allowed',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  transition: 'all 0.15s',
-                  transform: canSend ? 'scale(1)' : 'scale(0.95)',
-                }}
-              >
-                <ArrowUp size={13} strokeWidth={2.5} />
-              </button>
+              {isStreaming ? (
+                <button
+                  onClick={handleStop}
+                  style={{
+                    width: 28, height: 28,
+                    background: 'var(--accent)',
+                    border: 'none',
+                    borderRadius: 'var(--radius-lg)',
+                    color: 'white',
+                    cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  <Square size={11} strokeWidth={2.5} />
+                </button>
+              ) : (
+                <button
+                  onClick={() => canSend && handleSend()}
+                  style={{
+                    width: 28, height: 28,
+                    background: canSend ? 'var(--accent)' : 'var(--bg-active)',
+                    border: 'none',
+                    borderRadius: 'var(--radius-lg)',
+                    color: canSend ? 'white' : 'var(--text-muted)',
+                    cursor: canSend ? 'pointer' : 'not-allowed',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    transition: 'all 0.15s',
+                    transform: canSend ? 'scale(1)' : 'scale(0.95)',
+                  }}
+                >
+                  <ArrowUp size={13} strokeWidth={2.5} />
+                </button>
+              )}
             </div>
           </div>
         </div>
