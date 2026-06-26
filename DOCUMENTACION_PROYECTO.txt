@@ -1,6 +1,6 @@
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║                     SPARTA AGENT — DOCUMENTACIÓN DEL PROYECTO              ║
-║                     Versión documentada: 0.8.0                             ║
+║                     Versión documentada: 0.9.0                             ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
 Nota: la versión se lee desde package.json vía IPC (app:getVersion) y se muestra
@@ -13,29 +13,37 @@ cada release.
 
 Sparta Agent es una aplicación de escritorio para orquestar agentes de IA,
 construida con React + TypeScript + Vite + Electron. Proporciona una interfaz
-unificada de chat, gestión de sesiones, skills reutilizables, servidores MCP,
-canales de comunicación, memoria persistente con grafo 3D, proyectos y
-proveedores de modelos de lenguaje.
+unificada de chat, sistema de agentes real con subagentes, gestión de sesiones,
+skills reutilizables, servidores MCP, canales de comunicación, memoria persistente
+con grafo 3D + búsqueda semántica vectorial (ChromaDB), proyectos y proveedores
+de modelos de lenguaje.
 
 Soporta el Protocolo de Contexto de Modelo (MCP), 13 temas visuales
 (8 oscuros + 5 claros), internacionalización español/inglés, iconos de marca
 con detección de tema, y un bus de eventos tipado en memoria. Es un
 "IDE de agentes de IA" local-first en desarrollo activo.
 
-Estado actual (v0.8.0):
+Estado actual (v0.9.0):
   • UI/UX muy pulida y funcional (layout, sidebar, chat, settings, views)
   • Gestión de sesiones, skills, MCP, canales, memoria y proyectos operativa
   • Sistema de proveedores con test connection real y fetch de modelos
   • Grafo 3D de memoria con Three.js interactivo + extracción automática
+  • MEMORIA SEMÁNTICA VECTORIAL: ChromaDB con embeddings vía OpenAI/Ollama
+  • SISTEMA DE AGENTES REAL: loop LLM→tools→subagentes con ejecución paralela
+  • Vault cifrado para API keys con safeStorage de Electron
   • Capa de IA funcional: transports (Anthropic, OpenAI, Ollama), factory, gateway
+    con buildHeaders()/buildBody() separados, retry exponencial, errores mapeados
   • Chat real con streaming token-a-token vía IPC (main process)
   • ThinkingBlock / ThinkingPill / PipelineTrace con datos reales del proveedor
+  • ToolCallSummary con expand/collapse, DiffView para edición de archivos
+  • Slash commands (/clear, /model, /memory, /reasoning, /help)
+  • Interrupt-and-redirect: mensajes de corrección mientras el agente genera
   • Abortar generación (AbortSignal + botón Stop)
   • Memoria como grafo de conocimiento: extracción de entidades/hechos/relaciones
+  • 32 tests unitarios con vitest cubriendo transports, embeddings y agentes
   • Interfaces separadas en src/interfaces/ para mejor práctica
   • Capa de servicios (src/services/) con arquitectura limpia
-  • 3 stores que iniciaban con datos demo ahora inician vacíos
-  • Editor, Terminal y Agents Panel son placeholders visuales
+  • Editor y Terminal panels son placeholders visuales
 
 ================================================================================
  2. STACK TECNOLÓGICO
@@ -56,6 +64,9 @@ Estado actual (v0.8.0):
   Terminal          xterm.js (@xterm/xterm + @xterm/addon-fit) — instalado, no integrado
   Async/Datos       TanStack React Query 5 — instalado, uso mínimo
   Grafo 3D          three.js 0.184
+  Tests             vitest 2
+  Vector DB         ChromaDB (HTTP client directo, sin npm package)
+  Vault             Electron safeStorage (AES-256-GCM)
   Package Manager   pnpm
   Builder           electron-builder 24
   CLI UI            shadcn ^4.11.0
@@ -71,12 +82,13 @@ D:\sparta-agent\
 ├── components.json                # Registro shadcn/ui
 ├── electron-builder.json5         # Config empaquetado Electron
 ├── index.html                     # Entry point HTML de Vite
-├── package.json                   # Manifiesto del proyecto (version 0.0.0)
+├── package.json                   # Manifiesto del proyecto
 ├── pnpm-lock.yaml                 # Lock file
 ├── pnpm-workspace.yaml            # Config workspace pnpm
 ├── tsconfig.json                  # TypeScript config (src + electron)
 ├── tsconfig.node.json             # TypeScript config (vite.config.ts)
 ├── vite.config.ts                 # Config bundler Vite
+├── vitest.config.ts               # Config vitest
 ├── README.md                      # Readme (template Vite default)
 ├── DOCUMENTACION_PROYECTO.txt     # Este documento
 │
@@ -84,12 +96,14 @@ D:\sparta-agent\
 │   └── barra-lateral-flujo.txt    # Especificación del sidebar
 │
 ├── electron\                      # PROCESO PRINCIPAL DE ELECTRON
-│   ├── electron-env.d.ts          # Tipos para APIs de Electron
-│   ├── main.ts                    # Ventana principal, titleBarOverlay, IPC handlers
-│   ├── preload.ts                 # Preload: contextBridge (electronAPI, electron, sparta)
+│   ├── electron-env.d.ts          # Tipos para APIs de Electron + VaultAPI
+│   ├── main.ts                    # Ventana principal, registra todos los IPC
+│   ├── preload.ts                 # Preload: contextBridge (electronAPI, electron, sparta, vault)
+│   ├── vault.ts                   # safeStorage encrypt/decrypt para API keys (sparta-vault.json)
 │   └── ipc\                       # IPC handlers por dominio
-│       ├── chat.ipc.ts            # chat:send (streaming SSE multi-proveedor), chat:abort (AbortSignal)
-│       └── memory.ipc.ts          # memory:list/add/update/delete + relations
+│       ├── chat.ipc.ts            # chat:send (streaming SSE multi-proveedor con vendor), chat:abort
+│       ├── memory.ipc.ts          # memory:list/add/update/delete + relations
+│       └── vault.ipc.ts           # vault:isAvailable/storeKey/getKey/deleteKey/listKeys/hasKey
 │
 ├── public\                        # ASSETS ESTÁTICOS
 │   ├── electron-vite.animate.svg
@@ -110,7 +124,7 @@ D:\sparta-agent\
 ├── src\                           # CÓDIGO FUENTE DE LA APLICACIÓN
 │   │
 │   ├── main.tsx                   # Entry point React, renderiza <AppShell>
-│   ├── App.tsx                    # Placeholders: EditorPanel, TerminalPanel, AgentsPanel
+│   ├── App.tsx                    # Placeholders: EditorPanel, TerminalPanel. AgentsPanel real.
 │   ├── vite-env.d.ts              # Referencia Vite client types
 │   ├── index.css                  # Tailwind v4 import + @theme inline + animaciones custom
 │   │
@@ -126,9 +140,9 @@ D:\sparta-agent\
 │   ├── interfaces\                # INTERFACES PURAS (contratos)
 │   │   ├── index.ts               # Barrel export
 │   │   ├── chat.interface.ts      # Message, Session, ToolCall, ChatStreamChunk, ChatRequest
-│   │   ├── provider.interface.ts  # Provider, AIProvider, ModelInfo, ProviderVendor
+│   │   ├── provider.interface.ts  # Provider (hasVaultKey), AIProvider, ModelInfo, ProviderVendor
 │   │   ├── mcp.interface.ts       # MCPServer, MCPTool, MCPServerConfig
-│   │   ├── memory.interface.ts    # MemoryEntry, MemoryRelation, MemoryGraph, ExtractedMemory
+│   │   ├── memory.interface.ts    # MemoryEntry, MemoryRelation (semantic_relation), MemoryGraph, ExtractedMemory
 │   │   ├── agent.interface.ts     # Agent, Task, TaskStep
 │   │   ├── skill.interface.ts     # Skill, DownloadableSkill
 │   │   ├── channel.interface.ts   # Channel, ChannelMessage, IntegrationConfig
@@ -136,38 +150,55 @@ D:\sparta-agent\
 │   │   └── settings.interface.ts  # SettingsTab (unificada), SessionMode, Language
 │   │
 │   ├── services\                  # CAPA DE SERVICIOS (casos de uso, sin React)
-│   │   ├── index.ts               # Barrel export
+│   │   ├── index.ts               # Barrel export (incluye agent runtime + semantic search)
 │   │   ├── ai\                    # Capa de IA
 │   │   │   ├── index.ts           # createProvider()
 │   │   │   ├── types.ts           # AIProvider interface
 │   │   │   ├── gateway.ts         # AIGateway (punto único para main process)
 │   │   │   └── transports\        # Transportes por proveedor
 │   │   │       ├── index.ts
-│   │   │       ├── base.ts
+│   │   │       ├── base.ts        # buildHeaders() + buildBody() abstractos
+│   │   │       ├── http-utils.ts  # HTTP_STATUS_MESSAGES, isRetryable, fetchWithRetry
 │   │   │       ├── anthropic.transport.ts
 │   │   │       ├── openai.transport.ts  # OpenAI/Groq/Mistral/DeepSeek/etc
-│   │   │       └── ollama.transport.ts
+│   │   │       ├── ollama.transport.ts
+│   │   │       └── __tests__/transports.test.ts  # 16 tests de headers/body
+│   │   ├── agents\                # SISTEMA DE AGENTES
+│   │   │   ├── index.ts
+│   │   │   ├── agent-runtime.ts   # Loop LLM→tools→repeat, parse tool_use/delegar
+│   │   │   ├── tool-executor.ts   # Ejecución paralela de tools MCP
+│   │   │   ├── subagent-spawner.ts# Sesiones hijas con límites (depth≤2, timeout 120s)
+│   │   │   ├── task-planner.ts    # Descomposición Task→TaskStep[]
+│   │   │   └── __tests__/agent-runtime.test.ts  # 9 tests
 │   │   ├── chat\                  # ChatService
 │   │   │   └── index.ts
-│   │   ├── mcp\                   # MCPClient
+│   │   ├── mcp\                   # MCPClient (stub para implementación real)
 │   │   │   └── index.ts
-│   │   └── memory\                # Memoria como grafo
+│   │   └── memory\                # MEMORIA (grafo + vectorial)
+│   │       ├── index.ts           # MemoryService unificado (configureVector, ensureVectorReady, indexInChroma)
 │   │       ├── extractor.ts       # Extracción LLM de entidades/hechos/relaciones
 │   │       ├── graph-writer.ts    # Dedup + trust scoring + escritura
-│   │       └── graph-layout.ts    # Layout Fibonacci incremental
+│   │       ├── graph-layout.ts    # Layout Fibonacci incremental
+│   │       └── vector\            # MEMORIA SEMÁNTICA VECTORIAL (ChromaDB)
+│   │           ├── index.ts
+│   │           ├── chroma-client.ts  # HTTP client directo a ChromaDB REST API
+│   │           ├── embeddings.ts     # Embeddings vía OpenAI text-embedding-3-small u Ollama
+│   │           ├── semantic-search.ts# query(text, k) → MemoryEntry[] por similitud
+│   │           └── __tests__/embeddings.test.ts  # 7 tests
 │   │
 │   ├── lib\                       # UTILIDADES
 │   │   ├── utils.ts               # cn() (clsx + tailwind-merge)
 │   │   ├── brand-icons.ts         # Mapa vendor → rutas SVG (24+ marcas) + MONO_BRANDS
-│   │   ├── fetch-models.ts        # fetchModelsByVendor() → APIs reales (próximo a migrar a services/ai)
+│   │   ├── fetch-models.ts        # fetchModelsByVendor() → APIs reales
 │   │   ├── graph-layout.ts        # Re-exporta desde services/memory/graph-layout
-│   │   └── graph-colors.ts        # Extrae colores CSS vars a hex para Three.js
+│   │   ├── graph-colors.ts        # Extrae colores CSS vars a hex para Three.js
+│   │   └── vault-helper.ts        # getProviderKey(), storeInVault(), removeFromVault()
 │   │
 │   ├── types\                     # SISTEMA DE TIPOS (re-exporta desde interfaces)
 │   │   ├── index.ts               # Re-exporta todos los tipos + interfaces
 │   │   ├── agent.ts               # Re-export desde interfaces
 │   │   ├── chat.ts                # Re-export desde interfaces
-│   │   ├── events.ts              # SpartaEvent + 36 interfaces de eventos
+│   │   ├── events.ts              # SpartaEvent + 40 interfaces (memory:semantic_search, memory:indexed)
 │   │   ├── mcp.ts                 # Re-export desde interfaces
 │   │   ├── project.ts             # Re-export desde interfaces
 │   │   ├── skill.ts               # Re-export desde interfaces
@@ -176,22 +207,22 @@ D:\sparta-agent\
 │   │   └── provider.ts            # Re-export desde interfaces
 │   │
 │   ├── stores\                    # ESTADO GLOBAL — Zustand (12 stores)
-│   │   ├── agent.store.ts         # Agentes (vacío por defecto) + tareas (en memoria)
-│   │   ├── chat.store.ts          # Sesiones + mensajes + pin/archive/rename (persist)
+│   │   ├── agent.store.ts         # Agentes + tareas (en memoria)
+│   │   ├── chat.store.ts          # Sesiones + mensajes + pendingInjections (interrupt-and-redirect)
 │   │   ├── channel.store.ts       # Canales + integraciones (persist)
 │   │   ├── event-bus.store.ts     # Bus de eventos pub/sub (en memoria)
 │   │   ├── mcp.store.ts           # Servidores MCP (en memoria)
 │   │   ├── memory.store.ts        # Entradas de memoria (persist)
 │   │   ├── project.store.ts       # Proyectos (persist)
-│   │   ├── provider.store.ts      # Proveedores de modelo (persist)
-│   │   ├── settings.store.ts      # UI settings + toggles (persist)
+│   │   ├── provider.store.ts      # Proveedores de modelo (persist, apiKey via vault)
+│   │   ├── settings.store.ts      # UI settings + semanticMemoryEnabled (persist)
 │   │   ├── skill.store.ts         # Skills + activación (persist)
 │   │   ├── theme.store.ts         # Tema actual + 13 temas (persist)
 │   │   └── ui.store.ts            # Layout, mainView, sidebar (persist parcial)
 │   │
 │   ├── hooks\                     # REACT HOOKS (11 hooks)
-│   │   ├── useAgent.ts
-│   │   ├── useChatSession.ts
+│   │   ├── useAgent.ts            # executeTask(), createAgent(), activeTasks
+│   │   ├── useChatSession.ts      # sendMessage async, semantic context injection, vault key resolution
 │   │   ├── useChannels.ts
 │   │   ├── useEventBus.ts
 │   │   ├── useMCP.ts
@@ -225,7 +256,7 @@ D:\sparta-agent\
 │   ├── scripts\                   # SCRIPTS DE DESARROLLO
 │   │   └── seed-dev-data.ts       # Seed data para desarrollo (npm run seed)
 │   │
-│   └── components\                # COMPONENTES REACT (~84 archivos)
+│   └── components\                # COMPONENTES REACT (~90 archivos)
 │       │
 │       ├── layout\                # LAYOUT (4 componentes)
 │       │   ├── AppShell.tsx       # Shell raíz con SidebarProvider + panel activo
@@ -246,28 +277,36 @@ D:\sparta-agent\
 │       ├── chat\                  # CHAT (8 componentes + reasoning)
 │       │   ├── ChatArea.tsx       # Panel de chat: HeroScreen o MessageList + ChatInput
 │       │   ├── HeroScreen.tsx     # Pantalla de inicio con branding + acciones rápidas
-│       │   ├── MessageBubble.tsx  # Burbuja de mensaje individual
+│       │   ├── MessageBubble.tsx  # Burbuja con ToolCallSummary, ToolCallDiffView, StreamCursor
 │       │   ├── MessageList.tsx    # Lista scrollable de mensajes
 │       │   ├── MessageActionsMenu.tsx   # Menú contextual del mensaje
 │       │   ├── MessageActionsDialog.tsx # Diálogos de confirmación
 │       │   ├── SpartaIcon.tsx     # SVG del icono de Sparta
-│       │   └── reasoning\         # Razonamiento
+│       │   └── reasoning\         # RAZONAMIENTO Y TOOL USE
 │       │       ├── index.ts
-│       │       ├── ThinkingBlock.tsx
-│       │       ├── ThinkingPill.tsx
-│       │       └── PipelineTrace.tsx
+│       │       ├── ThinkingBlock.tsx    # Colapso animado con framer-motion layout
+│       │       ├── ThinkingPill.tsx     # Indicador con contador de tokens
+│       │       ├── PipelineTrace.tsx    # Timeline de herramientas
+│       │       ├── ToolCallSummary.tsx  # Tool call expandible con input/output
+│       │       ├── ToolCallDiffView.tsx # Diff visual (+/-) para edición de archivos
+│       │       └── StreamCursor.tsx     # Cursor parpadeante durante streaming
 │       │
-│       ├── input\                 # INPUT (5 componentes)
-│       │   ├── ChatInput.tsx      # Textarea principal con auto-resize
+│       ├── agents\                # AGENTES (2 componentes)
+│       │   ├── AgentsPanel.tsx    # Panel real con cards, ejecución de tareas, steps en vivo
+│       │   └── SubagentWatchPane.tsx   # Panel lateral con eventos de subagentes en tiempo real
+│       │
+│       ├── input\                 # INPUT (6 componentes)
+│       │   ├── ChatInput.tsx      # Textarea con slash commands + interrupt-and-redirect
 │       │   ├── ModelPicker.tsx    # Selector de modelo desde proveedores configurados
 │       │   ├── AttachMenu.tsx     # Menú adjuntos (file, web search, reasoning, connectors, mode)
 │       │   ├── ConnectorsSubmenu.tsx # Submenú de servidores MCP
-│       │   └── ModeSwitch.tsx     # Toggle Chat/Agente
+│       │   ├── ModeSwitch.tsx     # Toggle Chat/Agente
+│       │   └── SlashCommandMenu.tsx   # Autocomplete /clear, /model, /memory, /reasoning, /help
 │       │
 │       ├── providers\             # PROVEEDORES DE MODELO (3 componentes)
-│       │   ├── ProviderCard.tsx
+│       │   ├── ProviderCard.tsx   # Muestra "Key cifrada" con Shield si hasVaultKey
 │       │   ├── ChooseProviderDialog.tsx
-│       │   └── ConfigureProviderDialog.tsx
+│       │   └── ConfigureProviderDialog.tsx  # Guarda keys en vault, no en localStorage
 │       │
 │       ├── settings\              # CONFIGURACIÓN (11 componentes)
 │       │   ├── SettingsDialog.tsx # Modal 900×640, 8 tabs
@@ -279,7 +318,7 @@ D:\sparta-agent\
 │       │       ├── KeybindsTab.tsx
 │       │       ├── ModelsTab.tsx
 │       │       ├── McpTab.tsx
-│       │       ├── MemoryTab.tsx
+│       │       ├── MemoryTab.tsx  # Toggle semántica ChromaDB + contador indexados
 │       │       ├── SkillsTab.tsx
 │       │       └── AgentsTab.tsx
 │       │
@@ -336,7 +375,7 @@ D:\sparta-agent\
 │           ├── skeleton.tsx
 │           ├── textarea.tsx
 │           ├── tooltip.tsx
-│           └── combobox.tsx           # Combobox con búsqueda (Combobox, Input, Content, List, Item, Empty)
+│           └── combobox.tsx
 │
 ├── scripts\                       # SCRIPTS DE DESARROLLO
 │   └── seed-dev-data.ts           # Seed data para desarrollo (npm run seed)
@@ -362,7 +401,7 @@ D:\sparta-agent\
      - chat     → ChatArea.tsx
      - editor   → EditorPanel (placeholder)
      - terminal → TerminalPanel (placeholder)
-     - agents   → AgentsPanel (placeholder)
+     - agents   → AgentsPanel.tsx (real: cards + ejecución de tareas)
      - sessions → SessionsView.tsx
      - skills   → SkillsView.tsx
      - mcp      → McpView.tsx
@@ -376,16 +415,17 @@ D:\sparta-agent\
    types/ (interfaces compartidas)
         ↓
    persist middleware → localStorage (9 stores)
+   Vault (electron safeStorage) → sparta-vault.json (API keys cifradas)
 
  4.3 Flujo de Datos:
 
    • Zustand stores son la única fuente de verdad.
-   • 9 stores usan persist middleware → localStorage:
-       sparta-chat, sparta-channels, sparta-memory, sparta-projects,
-       sparta-providers, sparta-settings, sparta-skills, sparta-theme, sparta-ui.
+   • 9 stores usan persist middleware → localStorage.
    • 3 stores son en memoria: agent, event-bus, mcp.
+   • API keys: el renderer almacena solo hasVaultKey: boolean; la key real
+     vive cifrada en sparta-vault.json (main process via safeStorage).
    • Los hooks son wrappers delgados alrededor de los stores.
-   • Event bus pub/sub con 36 tipos de eventos SpartaEvent:
+   • Event bus pub/sub con 40 tipos de eventos SpartaEvent:
        agent:started, agent:completed, agent:error
        thinking:started, thinking:token, thinking:completed
        tool:called, tool:result, tool:error
@@ -398,8 +438,42 @@ D:\sparta-agent\
        skill:created, skill:updated, skill:deleted, skill:invoked
        channel:created, channel:message, channel:deleted
        memory:added, memory:updated, memory:deleted
+       memory:semantic_search, memory:indexed
 
- 4.4 Integración Electron:
+ 4.4 Flujo de Chat con Memoria Semántica y Vault:
+
+   Usuario escribe mensaje
+     → ChatInput.handleSend()
+       → useChatSession.sendMessage(text)
+         → (si semanticMemoryEnabled) buildMemoryContext(text, k=5) inyecta
+           <memoria_relevante> en system prompt
+         → getProviderKey(provider) resuelve key desde vault o localStorage
+         → window.sparta.sendMessage({ providerKey, vendor, ... })
+           → chat.ipc.ts construye endpoint/headers/body según vendor
+           → fetch(api) con retry 429/529, error mapping 401/403/etc
+           → stream de vuelta vía sparta:event
+       → Al completar: extractMemory → writeExtractedMemory → rebuildGraph
+         → (si semanticMemoryEnabled) indexInChroma(entry) en ChromaDB
+
+ 4.5 Flujo del Sistema de Agentes:
+
+   Usuario escribe tarea en AgentsPanel
+     → useAgent.executeTask(agentId, descripción)
+       → registerAgent + addTask + updateAgentStatus('running')
+       → dispatch agent:started
+       → runAgentTask(taskId, agentId, ...)
+         LOOP (max 10 turnos):
+           buildPrompt(system + tools definitions + historial)
+           llmCall(prompt) → respuesta
+           parseToolUseBlocks() → [tool_use, ...]
+           detectSubagentRequest() → delegar? spawnSubagent()
+           executeToolsParallel() si ≥ 2 tools independientes
+           feed results al LLM
+           updateTask steps en vivo
+       → updateAgentStatus('completed')
+       → dispatch agent:completed
+
+ 4.6 Integración Electron:
 
    • vite-plugin-electron/simple compila:
        electron/main.ts → dist-electron/main.js
@@ -408,22 +482,26 @@ D:\sparta-agent\
    • En prod: carga dist/index.html
    • Ventana: 1280×800 (min 900×600), titleBarStyle: 'hidden'
    • titleBarOverlay dinámico por tema (colores en theme.store.ts)
-    • contextIsolation: true, nodeIntegration: false
-    • IPC handlers: win:minimize, win:maximize, win:close, win:isMaximized,
-                    titlebar:set-overlay, app:getVersion,
-                    chat:send (streaming multi-proveedor: OpenAI/Anthropic/Ollama/local),
-                    chat:abort,
-                    memory:list, memory:addEntry, memory:updateEntry,
-                    memory:deleteEntry, memory:addRelation, memory:updateRelation,
-                    memory:removeRelation
-    • Exposición via contextBridge:
-        window.electronAPI → min/max/close/isMaximized/onMaximizedChange/
-                              setTitleBarOverlay/getVersion
-        window.electron → IPC genérico (on/send/invoke)
-        window.sparta → eventos (onEvent/sendEvent) + sendMessage/abortMessage
-                        sendMessage incluye apiUrl + isLocal para soporte multi-proveedor
+   • contextIsolation: true, nodeIntegration: false
+   • IPC handlers:
+       win:minimize, win:maximize, win:close, win:isMaximized
+       titlebar:set-overlay, app:getVersion
+       chat:send (streaming multi-proveedor con vendor, retry, error mapping)
+       chat:abort
+       memory:list, memory:addEntry, memory:updateEntry,
+         memory:deleteEntry, memory:addRelation, memory:updateRelation,
+         memory:removeRelation
+       vault:isAvailable, vault:storeKey, vault:getKey,
+         vault:deleteKey, vault:listKeys, vault:hasKey
+   • Exposición via contextBridge:
+       window.electronAPI → min/max/close/isMaximized/onMaximizedChange/
+                            setTitleBarOverlay/getVersion
+       window.electron → IPC genérico (on/send/invoke)
+       window.sparta → eventos (onEvent/sendEvent) + sendMessage/abortMessage
+                       sendMessage incluye vendor + providerId
+       window.vault → isAvailable/storeKey/getKey/deleteKey/listKeys/hasKey
 
- 4.5 Routing:
+ 4.7 Routing:
 
    No hay router. La navegación es por estado de MainView (ui.store.ts):
      MainView =
@@ -448,254 +526,86 @@ D:\sparta-agent\
    AppShell.tsx
      └── Ubicación: src/components/layout/AppShell.tsx
      └── Propósito: Shell raíz de la aplicación
-     └── Renderiza: TitleBar + SidebarProvider(AppSidebar + resize handle + panel) + StatusBar
-     └── Lógica: initTheme() al montar, panel según mainView.type, animación viewFadeIn
+     └── Renderiza: TitleBar + SidebarProvider + StatusBar
+     └── PANELS: agents apunta a AgentsPanel.tsx (real)
 
    TitleBar.tsx
-     └── Ubicación: src/components/layout/TitleBar.tsx
-     └── Propósito: Titlebar personalizado con drag region
-     └── Subcomponentes: botón toggle sidebar, AppMenu, logo+SpartaIcon, tabs (Chat/Editor/Terminal/Agents), settings
-     └── Tabs principales: Chat, Editor, Terminal, Agents
-
-   AppMenu.tsx
-     └── Ubicación: src/components/layout/AppMenu.tsx
-     └── Propósito: Menú dropdown tipo aplicación (File/Edit/View/Window/Help)
-     └── Visual/placeholder: items renderizados sin handlers reales
+     └── Tabs: Chat, Editor, Terminal, Agents (Agents ahora es funcional)
 
    StatusBar.tsx
-      └── Ubicación: src/components/layout/StatusBar.tsx
-      └── Propósito: Barra de estado inferior
-      └── Muestra: Gateway ready (verde), Agents, Cron, modelo activo (con BrandIcon), tokens,
-                    versión desde package.json vía IPC (app:getVersion)
+     └── Muestra: Gateway, Agents, Cron, modelo activo, tokens, versión vía IPC
 
- 5.2 Sidebar
+ 5.2 Chat — Reasoning (NUEVO)
 
-   AppSidebar.tsx
-     └── Ubicación: src/components/sidebar/AppSidebar.tsx
-     └── Propósito: Sidebar principal completo basado en shadcn/ui/sidebar
-     └── Header: logo SPARTA AGENT + botón "Nueva sesión" (⌘N)
-     └── Navegación: 5 items con contadores (Sesiones, Skills, MCP, Canales, Memoria)
-     └── Secciones: Fijados, búsqueda funcional de sesiones, Recientes
-     └── Footer: botón Configuración
-     └── Integrado en SidebarProvider; ancho controlado por ui.store.ts
+   ToolCallSummary.tsx
+     └── Línea resumida de tool call: icono estado + nombre + input preview
+         + duración + expand/collapse con detalle completo de input/output
+     └── Outputs >200 chars tienen botón "ver más/ver menos"
 
-   SidebarResizeHandle.tsx
-     └── Ubicación: src/components/sidebar/SidebarResizeHandle.tsx
-     └── Propósito: Redimensionar sidebar arrastrando el borde derecho
-     └── Límites: 220px mínimo, 480px máximo
+   ToolCallDiffView.tsx
+     └── Diff visual (+ verde, - rojo) para tools de edición de archivos
+         (write_file, edit_file, create_file, patch_file, fs_write, fs_edit)
+     └── Muestra file path, contador +N -M, líneas coloreadas
 
-   SessionItem.tsx
-     └── Ubicación: src/components/sidebar/SessionItem.tsx
-     └── Propósito: Item de sesión con click para activar, hover actions
-     └── Menú contextual: Fijar/Quitar fijado, Renombrar, Compartir, Eliminar
-     └── Muestra tiempo relativo (ahora, Xm, Xh, Xd, Xmes)
-     └── Diálogos: ConfirmDeleteDialog, share con sparta://session/{id}
+   StreamCursor.tsx
+     └── Cursor parpadeante aislado (530ms blink)
+     └── Inline al final del contenido mientras isStreaming === true
+     └── Desaparece exactamente cuando stream:completed apaga el flag
 
-   SessionList.tsx / ProjectSwitcher.tsx / ChannelItem.tsx / McpServerItem.tsx / SkillItem.tsx
-     └── Componentes visuales legacy o simples; AppSidebar usa SessionItem directamente.
+   ThinkingBlock.tsx (mejorado)
+     └── Colapso ahora usa AnimatePresence + motion.div con height/opacity
+         animados en 250ms con ease [0.4, 0, 0.2, 1] — desaparición suave
 
- 5.3 Chat
+   ThinkingPill.tsx (mejorado)
+     └── Nueva prop tokensUsed?: number que muestra contador "123 tok"
 
-   ChatArea.tsx
-     └── Ubicación: src/components/chat/ChatArea.tsx
-     └── Propósito: Orquesta la vista del panel de chat
-     └── Si hay mensajes → MessageList + ChatInput; si no → HeroScreen + ChatInput
+ 5.3 Input — Slash Commands (NUEVO)
 
-   HeroScreen.tsx
-     └── Ubicación: src/components/chat/HeroScreen.tsx
-     └── Propósito: Pantalla de bienvenida cuando no hay mensajes
-     └── Animaciones Framer Motion (flotación, escala)
-     └── Acciones rápidas: New chat, Coding, Research, Settings
-     └── Texto descriptivo: "Elegiré las herramientas, explicaré el plan..."
+   SlashCommandMenu.tsx
+     └── Autocomplete de comandos / al escribir en el textarea
+     └── Navegación con flechas + Enter/Tab para seleccionar
+     └── Comandos:
+         /clear         → Limpiar conversación
+         /model <name>  → Cambiar modelo activo
+         /memory on|off → Activar/desactivar memoria
+         /reasoning on|off → Activar/desactivar razonamiento
+         /help          → Mostrar comandos disponibles
 
-   MessageBubble.tsx
-      └── Ubicación: src/components/chat/MessageBubble.tsx
-      └── Propósito: Renderiza un mensaje individual
-      └── User: alineado derecha; Assistant: alineado izquierda con avatar SpartaIcon
-      └── Soporta reasoningText → ThinkingBlock (AnimatePresence + auto-colapso),
-          toolCalls → PipelineTrace
-      └── ThinkingPill mientras isStreaming && !content && !reasoningText
-      └── Barra de acciones inline SOLO ICONOS (sin texto) al hover vía CSS
-      └── Actions por tipo:
-          - Assistant: solo Copiar
-          - User último mensaje: Copiar, Editar (inline), Reenviar (↻), Eliminar
-          - User antiguos: solo Copiar
-      └── Edición inline: textarea con botones Guardar/Cancelar (sin dialog)
-      └── Eliminación directa: sin confirmación (borra al instante)
-      └── Reenviar: reenvía el mismo texto al LLM vía sendMessage()
+   ChatInput.tsx (mejorado)
+     └── Interrupt-and-redirect: durante streaming, Enter ejecuta
+         injectWhileStreaming() en vez de stopStreaming()
+     └── Placeholder cambia a "Corrige o redirige al agente..."
+     └── Muestra "Escribe para redirigir" durante streaming
 
-   MessageList.tsx
-      └── Ubicación: src/components/chat/MessageList.tsx
-      └── Propósito: Lista scrollable de mensajes
-      └── Auto-scroll al último mensaje
-
-   MessageActionsMenu.tsx / MessageActionsDialog.tsx
-     └── Menú contextual con Share, Edit, Regenerate, Delete
-     └── Delete usa ConfirmDeleteDialog
-     └── Share genera sparta://session/{id}
-
- 5.4 Reasoning
-
-   ThinkingBlock.tsx
-     └── Sección colapsable de razonamiento interno
-   ThinkingPill.tsx
-     └── Indicador animado "Thinking..." con 3 dots
-   PipelineTrace.tsx
-     └── Timeline visual de ejecución de herramientas
-     └── Estados: done, error, running
-
- 5.5 Input
-
-   ChatInput.tsx
-      └── Ubicación: src/components/input/ChatInput.tsx
-      └── Propósito: Área de composición de mensajes
-      └── Textarea auto-redimensionable (max 120px)
-      └── Enter envía, Shift+Enter nueva línea
-      └── Botones: Attach (+), ModelPicker (Combobox con búsqueda), Mic, Send (o Stop si isStreaming)
-      └── Banner "No hay proveedores con API key" si ningún proveedor tiene key configurada
-      └── ModelPicker usa Combobox con búsqueda: muestra modelo activo, al abrir permite buscar/filtrar
-      └── Botón Stop (Square) reemplaza al de enviar durante streaming
-      └── Envía mensaje vía useChatSession().sendMessage() que llama al provider por IPC
-      └── Wrapper con sombra y borde de foco animado
-
-   ModelPicker.tsx
-     └── Ubicación: src/components/input/ModelPicker.tsx
-     └── Propósito: Selector de modelo desde proveedores configurados
-     └── Si no hay proveedores: botón "Configura un modelo" que abre settings
-     └── Muestra BrandIcon del proveedor activo y lista modelos defaultModel
-
-   AttachMenu.tsx
-     └── Ubicación: src/components/input/AttachMenu.tsx
-     └── Opciones: Agregar archivo (file input placeholder), Búsqueda web (toggle),
-                    Razonamiento (toggle), Conectores (submenú MCP), ModeSwitch
-     └── Click-outside para cerrar
-
-   ConnectorsSubmenu.tsx
-     └── Lista servidores MCP con checkbox para activar/desactivar
-
-   ModeSwitch.tsx
-     └── Toggle Chat / Agente en el modo de sesión
-
- 5.6 Providers
-
-   ProviderCard.tsx
-     └── Card de proveedor registrado con BrandIcon, label, API key enmascarada,
-         modelo default, fecha, acciones editar/eliminar
-
-   ChooseProviderDialog.tsx
-     └── Diálogo de selección de proveedor
-     └── 13 cloud + 4 local = 17 vendors con BrandIcon
+ 5.4 Providers — Vault (MEJORADO)
 
    ConfigureProviderDialog.tsx
-     └── Configuración: nombre, API key (cloud) o Server URL (local)
-     └── Botón "Test" llama fetchModelsByVendor() a la API real
-     └── Select de modelos poblado tras test exitoso
+     └── handleSave guarda apiKey en vault (Electron safeStorage) en vez
+         de en localStorage cuando vault está disponible
+     └── Si vault no disponible, almacena en localStorage (fallback legacy)
 
- 5.7 Settings
+   ProviderCard.tsx
+     └── Muestra icono Shield + "Key cifrada" si hasVaultKey: true
+     └── Al eliminar proveedor, también elimina key del vault
 
-   SettingsDialog.tsx
-     └── Modal 900×640 con sidebar de 8 tabs fijo
-     └── Tabs: General, Appearance, Keybinds, Models, MCP, Memory, Skills, Agents
-      └── Nota: SettingsTab unificado via interfaces/settings.interface (8 tabs).
-          ui.store.ts y SettingsDialog.tsx importan el mismo type.
+ 5.5 Agents Panel (NUEVO — reemplaza placeholder)
 
-   ThemePicker.tsx
-     └── Selector visual de 13 temas agrupados: Oscuros (8) + Claros (5)
-     └── Oscuros: Midnight, Obsidian, Emerald, Rose, Amber, Dracula, Catppuccin, Nord
-     └── Claros: Light, Lino, Salvia, Bruma, Arena
+   AgentsPanel.tsx
+     └── Cards de agente con estado en vivo (idle/running/thinking/error/completed)
+     └── Input de tarea y botón Ejecutar
+     └── Steps timeline durante ejecución
+     └── Botón "Ver" que abre SubagentWatchPane
 
-   Settings Tabs:
-     └── GeneralTab     → Modelo default, memoria, idioma ES/EN, web search, reasoning
-     └── AppearanceTab  → ThemePicker, tipografía, opciones ventana
-     └── KeybindsTab    → Referencia de atajos
-     └── ModelsTab      → Proveedores registrados + flujo 2-pasos
-     └── McpTab         → Gestión MCP
-     └── MemoryTab      → Estadísticas y toggle memoria
-     └── SkillsTab      → CRUD de skills
-     └── AgentsTab      → Lista y selección de agentes
+   SubagentWatchPane.tsx
+     └── Panel lateral 340px con eventos en tiempo real (agent:*, tool:*)
+     └── Muestra steps del agente y log de eventos
 
- 5.8 Views
+ 5.6 Memory Tab (MEJORADO)
 
-   SessionsView.tsx
-     └── Vista completa de gestión de sesiones (placeholder funcional simple)
-
-   SkillsView.tsx
-     └── Vista completa con 3 tabs: Mis Skills / Explorar / Crear
-     └── Mis Skills: búsqueda, filtros por tags, grid de SkillCard, exportar a .skill.json
-     └── Explorar: SkillExplorer carga skills desde /skills/manifest.json
-     └── Crear: SkillCreator con preview y emoji picker
-
-   McpView.tsx
-     └── Vista completa con 2 tabs: Conectados / Marketplace
-     └── Marketplace: 6 servidores preconfigurados (Filesystem, Git, SQLite, PostgreSQL, Puppeteer, Brave Search)
-     └── Botón "Instalar" abre AddMcpServerDialog con config precargada
-
-   ChannelsView.tsx
-     └── Vista completa con sidebar interna (ChannelSidebar) + panel de contenido
-     └── Canales internos → InternalChannelView (chat plano placeholder)
-     └── Telegram → TelegramIntegrationPanel (test real de token)
-     └── Discord/Slack/WhatsApp/Email → ComingSoonPanel
-
-   MemoryView.tsx
-      └── Vista completa con toggle Vista gráfico / Vista lista
-      └── Grafo 3D Three.js: nodos esféricos (Fibonacci), aristas por categoría/proyecto
-      └── OrbitControls manual, raycaster, panel flotante de nodo con info de sesión
-      └── Empty state: "Aún no hay recuerdos" cuando entries.length === 0
-      └── MemoryListView: CRUD de recuerdos
-      └── Extracción automática al finalizar cada turno de chat (entidades/hechos/relaciones)
-
- 5.9 Skills
-
-   SkillCard.tsx       → Card con menú, toggle activar, exportar
-   SkillCreator.tsx    → Formulario crear con preview y emoji picker
-   SkillExplorer.tsx   → Explorador de skills descargables con filtros
-   SkillInstaller.ts   → fetch manifest + install de skills
-   SkillDialog.tsx     → Diálogo crear/editar skill (nombre, desc, prompt, tags)
-
- 5.10 Channels
-
-   ChannelSidebar.tsx          → Lista canales internos + integraciones
-   ChannelDialog.tsx           → Crear canal con selector de icono SVG
-   InternalChannelView.tsx     → Chat plano placeholder
-   TelegramIntegrationPanel.tsx→ Config token/webhook + test real a api.telegram.org
-   IntegrationStatusBadge.tsx  → Badge de estado con pulse
-   ComingSoonPanel.tsx         → Placeholder para integraciones futuras
-
- 5.11 Memory
-
-   MemoryDialog.tsx        → Diálogo completo de gestión de memoria
-   MemoryEntryItem.tsx     → Visualización de entrada individual
-   MemoryGraph.tsx         → Grafo 3D Three.js
-   MemoryGraphControls.tsx → Zoom/reset/toggle vista
-   MemoryNodePanel.tsx     → Panel flotante con detalle del nodo
-   MemoryListView.tsx      → Vista lista con CRUD
-
- 5.12 MCP
-
-   AddMcpServerDialog.tsx  → Agregar/editar servidor MCP (stdio/http)
-   McpServerCard.tsx       → Card con toggle, tools, editar/eliminar
-   McpToolItem.tsx         → Item individual de herramienta MCP
-
- 5.13 Projects
-
-   ProjectDialog.tsx       → Diálogo crear proyecto (nombre, descripción)
-
- 5.14 UI Primitives (shadcn/ui)
-
-   BrandIcon.tsx              → Icono de marca con detección light/dark + mono inversion
-   button.tsx                 → 6 variantes, múltiples tamaños
-   card.tsx                   → Card con Header/Title/Description/Content/Footer
-   confirm-delete-dialog.tsx  → Diálogo reutilizable de confirmación
-   dialog.tsx                 → Modal con overlay/portal/animations
-   dropdown-menu.tsx          → Menú completo con items/grupos/checkboxes/submenús
-   input.tsx                  → Input estilizado
-   scroll-area.tsx            → Scrollbar custom
-   separator.tsx              → Divisor horizontal/vertical
-   sheet.tsx                  → Sheet/side panel
-   sidebar.tsx                → Sidebar completo de shadcn/ui (733 líneas)
-   skeleton.tsx               → Skeleton loader
-   textarea.tsx               → Textarea estilizado
-   tooltip.tsx                → Tooltip con posicionamiento
+   MemoryTab.tsx
+     └── Nuevo toggle: "Memoria semántica (ChromaDB)"
+     └── Muestra modelo de embeddings activo
+     └── Contador de entradas indexadas en ChromaDB
 
 ================================================================================
  6. SISTEMA DE ESTADOS (Zustand Stores)
@@ -703,358 +613,276 @@ D:\sparta-agent\
 
    agent.store.ts
       └── Persist: No (en memoria)
-      └── Estado: agents[] (vacío), activeAgentId, tasks{}
+      └── Estado: agents[] (se puebla al abrir AgentsPanel), activeAgentId, tasks{}
       └── Acciones: registerAgent, setActiveAgent, updateAgentStatus,
                     addTask, updateTask
 
    chat.store.ts
       └── Persist: Sí (sparta-chat)
       └── Estado: sessions[], activeSessionId, messagesBySession{}, isStreaming,
-                  abortController
-      └── Acciones: createSession (acepta model + providerId), switchSession,
-                    deleteSession, pinSession, archiveSession, renameSession,
-                    addMessage, updateMessage, deleteMessage,
-                    appendContent, appendThinking, addToolCall, updateToolCallStatus,
-                    setStreaming, startStreaming, stopStreaming (aborta con AbortSignal),
-                    cleanupStaleSessions, getActiveMessages
-      └── La primera pregunta del usuario renombra automáticamente la sesión
-      └── cleanupStaleSessions() se llama al boot en AppShell
-
-   channel.store.ts
-      └── Persist: Sí (sparta-channels)
-      └── Estado: channels[] (7 default: general, agentes + 5 integraciones como catálogo)
-     └── Acciones: addChannel, deleteChannel, markRead, setActiveChannel,
-                   updateIntegration
-
-   event-bus.store.ts
-     └── Persist: No (en memoria)
-     └── Estado: events[] (últimos 500), listeners (Set)
-     └── Acciones: dispatch, subscribe, clear
-
-   mcp.store.ts
-      └── Persist: No (en memoria)
-      └── Estado: servers[] (vacío — antes tenía 3 default: Filesystem, Git, SQLite)
-      └── Acciones: addServer, removeServer, setConnected, addTool,
-                    removeTool, toggleServer
-
-   memory.store.ts
-      └── Persist: Sí (sparta-memory)
-      └── Estado: entries[] (vacío), relations[], graphNodes[]
-      └── Acciones: addEntry, updateEntry, deleteEntry,
-                    addRelation, updateRelation, removeRelation,
-                    rebuildGraph, addEntriesFromExtraction, getActiveCount
-
-   project.store.ts
-      └── Persist: Sí (sparta-projects)
-      └── Estado: projects[] (1 default: sparta-agent con isTemplate: true), activeProjectId
-      └── Acciones: addProject, switchProject, deleteProject, getActiveProject
-
-   provider.store.ts
-     └── Persist: Sí (sparta-providers)
-     └── Estado: providers[]
-     └── Acciones: addProvider, updateProvider, removeProvider, getByVendor
-     └── Helper: getVendorLabel(vendor) → string
+                  abortController, pendingInjections[] (interrupt-and-redirect)
+      └── Acciones: createSession, switchSession, deleteSession, pinSession,
+                    archiveSession, renameSession, addMessage, updateMessage,
+                    deleteMessage, appendContent, appendThinking,
+                    addToolCall, updateToolCallStatus, setStreaming,
+                    startStreaming, stopStreaming, injectWhileStreaming,
+                    consumePendingInjections, cleanupStaleSessions,
+                    getActiveMessages
+      └── injectWhileStreaming(text): encola mensaje para inyectar cuando
+          el turno actual de tool-calling termine
 
    settings.store.ts
-      └── Persist: Sí (sparta-settings)
-      └── Estado: settingsOpen, defaultModel, input, activeModel,
-                  memoryEnabled, webSearchEnabled, reasoningEnabled,
-                  sessionMode ('chat'|'agent'), apiKeys{}, language ('es'|'en')
-      └── Acciones: openSettings, closeSettings, setInput, setDefaultModel,
-                    setApiKey, toggleMemory, toggleWebSearch,
-                    toggleReasoning, setSessionMode, setLanguage
-      └── sendMessage() eliminado — vive en useChatSession hook + chat IPC
+      └── Nuevo: semanticMemoryEnabled: boolean + toggleSemanticMemory()
 
-   skill.store.ts
-      └── Persist: Sí (sparta-skills)
-      └── Estado: skills[] (2 default con isTemplate: true), activeSkillIds[]
-     └── Acciones: addSkill, updateSkill, deleteSkill, toggleActive, isActive
+   provider.store.ts
+      └── apiKey ahora puede ser undefined cuando hasVaultKey: true
+      └── La key real vive en sparta-vault.json (main process)
 
-   theme.store.ts
-     └── Persist: Sí (sparta-theme)
-     └── Estado: theme
-     └── Acciones: setTheme (aplica DOM data-theme + data-theme-mode + overlay)
-     └── Helper: initTheme() — lee localStorage y aplica tema al boot
-     └── Temas: midnight (default), obsidian, emerald, rose, amber,
-                 dracula, catppuccin, nord, light, linen, sage, mist, sand
-
-   ui.store.ts
-      └── Persist: Sí parcial (sparta-ui)
-      └── Estado: sidebarOpen, sidebarWidth (280 default), contextPanelOpen,
-                  mainView, previousMainView, sidebarExpandedSections{},
-                  activeSettingsTab (8 valores, importa SettingsTab de interfaces)
-      └── Acciones: toggleSidebar, setSidebarWidth (220-480), toggleContextPanel,
-                    setMainView, goBack, toggleSidebarSection, setActiveSettingsTab
+   (Ver sección 4.3 para el resto de stores — sin cambios significativos)
 
 ================================================================================
  7. SISTEMA DE TIPOS
 ================================================================================
 
-    9 módulos en src/types/ re-exportan desde src/interfaces/ (backward compat).
-    Las interfaces verdaderas viven en src/interfaces/:
-
-    Agent (agent.interface.ts)
-      ── AgentType: 'coding' | 'research' | 'automation' | 'project' | 'mcp'
-      ── AgentStatus: 'idle' | 'running' | 'thinking' | 'error' | 'completed'
-      ── Agent: { id, name, type, status, model, createdAt, tools[], description }
-      ── Task: { id, agentId, description, status, steps[], createdAt, completedAt? }
-      ── TaskStep: { id, name, status, tool?, durationMs?, error? }
-
-    Chat (chat.interface.ts)
-      ── MessageRole: 'user' | 'assistant' | 'system'
-      ── Message: { id, role, content, timestamp, sessionId, agentId?,
-                    thinking?, reasoningText?, isStreaming?, toolCalls?, pipelineSteps? }
-      ── ToolCall: { id, toolName, input, output?, status, durationMs?, error? }
-      ── PipelineStep: { name, status, timestamp }
-      ── Session: { id, title, createdAt, updatedAt, model, providerId?,
-                    messageCount, agentId?, pinned?, archived? }
-      ── ChatRequest: { model, messages, system?, stream?, maxTokens?, temperature? }
-      ── ChatStreamChunk: { type, delta?, toolCall?, error? }
-
-   types/events.ts
-     ── 36 eventos tipo unión SpartaEvent:
-         agent:started / agent:completed / agent:error
-         thinking:started / thinking:token / thinking:completed
-         tool:called / tool:result / tool:error
-         mcp:connected / mcp:tool_discovered / mcp:disconnected
-         stream:token / stream:completed / stream:error
-         pipeline:step
-         chat:message / message:deleted / message:edited / message:shared
-         session:created / session:switched
-         project:created / project:switched / project:deleted
-         skill:created / skill:updated / skill:deleted / skill:invoked
-         channel:created / channel:message / channel:deleted
-         memory:added / memory:updated / memory:deleted
-
-   types/mcp.ts
-     ── MCPServerType: 'stdio' | 'http'
-     ── MCPServerConfig: { id, name, type, command?, args?, url?, enabled }
-     ── MCPServer: { id, name, type, connected, tools[], config }
-     ── MCPTool: { name, description, inputSchema, serverId }
-
-   types/project.ts
-     ── Project: { id, name, icon?, color?, createdAt, description? }
-
-   types/skill.ts
-     ── SkillCategory: 'Coding' | 'Research' | 'Writing' | 'Analysis' | 'Automation'
-     ── Skill: { id, name, description, prompt, icon?, tags[], createdAt }
-     ── DownloadableSkill: { id, name, description, version, author, icon,
-                              tags, category, prompt, featured, installed? }
-
-   types/channel.ts
-     ── ChannelKind: 'internal' | 'integration'
-     ── IntegrationProvider: 'telegram' | 'discord' | 'slack' | 'whatsapp' | 'email'
-     ── IntegrationStatus: 'not_configured' | 'connecting' | 'connected' | 'error'
-     ── IntegrationConfig: { provider, status, botToken?, webhookUrl?,
-                              workspaceToken?, errorMessage?, botInfo? }
-     ── Channel: { id, name, topic?, members?, createdAt, unreadCount, kind,
-                   integration?, icon? }
-     ── ChannelMessage: { id, channelId, authorId, content, timestamp }
-
    Memory (memory.interface.ts)
-      ── MemoryEntry: { id, content, source: 'manual'|'auto', category?,
-                         createdAt, projectId?, sourceSessionId?, sourceMessageId? }
-      ── MemoryRelation: { fromId, toId, type, weight, entityType? }
-      ── RelationType: 'same_category' | 'same_project' | 'same_session' |
-                        'manual' | 'entity_relation'
-      ── MemoryGraphNode: { memoryId, position: {x,y,z}, radius, color }
-      ── MemoryGraph: { nodes: MemoryGraphNode[], relations: MemoryRelation[] }
-      ── ExtractedMemory: { entities: [], facts: [], relations: [] }
+      └── RelationType ahora incluye 'semantic_relation'
 
    Provider (provider.interface.ts)
-      ── ProviderVendor: 17 valores
-          cloud: anthropic | openai | google | groq | mistral | azure |
-                 deepseek | together | fireworks | openrouter | cohere |
-                 perplexity | xai
-          local: ollama | lmstudio | llamacpp | custom
-      ── ProviderKind: 'cloud' | 'local'
-      ── Provider: { id, vendor, kind, label, apiKey?, serverUrl?,
-                     defaultModel?, createdAt, usage? }
-      ── ModelInfo: { id, name, vendor, providerId }
-      ── AIProvider: { vendor, kind, listModels, testConnection, streamChat }
-      ── ConnectionTestResult: { ok, error? }
+      └── Provider: nuevo campo hasVaultKey?: boolean
+
+   types/events.ts
+      └── 40 eventos tipo unión SpartaEvent (antes 36):
+          Nuevos: memory:semantic_search / MemorySemanticSearchEvent
+                  memory:indexed / MemoryIndexedEvent
 
 ================================================================================
- 8. SISTEMA DE TEMAS (Design Tokens)
+ 8. CAPA DE TRANSPORTES (doc 01)
 ================================================================================
 
-   13 Temas: 8 oscuros + 5 claros
-     Oscuros: midnight (default), obsidian, emerald, rose, amber,
-              dracula, catppuccin, nord
-     Claros:  light, linen, sage, mist, sand
+   Cada transport (Anthropic, OpenAI, Ollama) implementa:
 
-   Aplicado via atributo data-theme en <html>. Cada tema sobreescribe variables
-   CSS en :root (definidas en globals.css + archivos en src/styles/themes/).
+     buildHeaders(): Record<string, string>
+       → Anthropic: x-api-key, anthropic-version, content-type
+       → OpenAI: Authorization Bearer, content-type
+       → Ollama: content-type (sin auth)
 
-   Atributo data-theme-mode: "dark" para temas oscuros, "light" para claros.
-   Usado por .brand-icon-mono para invertir logos monocromáticos
-   (Anthropic, OpenAI) en modos oscuros via filter: invert(1).
+     buildBody(req): Record<string, unknown>
+       → Cada proveedor construye su body específico
 
-   DARK_THEMES exportado desde theme.store.ts; useTheme() expone isDark.
+   http-utils.ts (compartido):
+     HTTP_STATUS_MESSAGES: mapeo 400→"Solicitud inválida", 401→"API key
+       inválida o expirada", 429→"Rate limit del proveedor", 529→
+       "Proveedor sobrecargado"
+     isRetryable(status): true para 429 y 529
+     fetchWithRetry(url, options, retries=1): reintento con backoff
+       exponencial (1s, 2s) para códigos retryable
 
-   Variables CSS principales:
-
-     Backgrounds:
-       --bg-base, --bg-sidebar, --bg-surface, --bg-elevated, --bg-hover,
-       --bg-active, --bg-input, --bg-modal
-
-     Texto:
-       --text-display, --text-primary, --text-secondary, --text-muted
-
-     Acento:
-       --accent, --accent-dim, --accent-muted, --accent-glow
-
-     Bordes:
-       --border-subtle, --border-normal, --border-strong, --border-focus
-
-     Estados:
-       --status-ok, --status-warn, --status-err, --status-think
-
-     Radios:
-       --radius-sm: 3px, --radius-md: 6px, --radius-lg: 10px, --radius-xl: 14px
-
-     Fuentes:
-       --font-ui: Inter
-       --font-display: Space Grotesk
-       --font-mono: Geist Variable
-
-     Dimensiones:
-       --titlebar-h: 38px
-       --sidebar-w: variable (220-480px)
-       --statusbar-h: 24px
+   chat.ipc.ts:
+     Recibe vendor explícito en lugar de adivinar por subcadena en URL
+     Endpoint correcto para Anthropic: /v1/messages (no /v1/chat/completions)
+     Error mapping con HTTP_STATUS_MESSAGES
+     Retry 429/529 con backoff exponencial
 
 ================================================================================
- 9. DEPENDENCIAS PRINCIPALES
+ 9. MEMORIA SEMÁNTICA VECTORIAL (doc 02)
+================================================================================
+
+   chroma-client.ts:
+     HTTP directo contra ChromaDB REST API en localhost:8000
+     Sin dependencias npm nativas (evita crash en renderer)
+     Colección: sparta_memory
+     CRUD: addEntry, updateEntry, deleteEntry, search, count
+
+   embeddings.ts:
+     setActiveProvider(provider): configura OpenAI u Ollama para embeddings
+     embed(text): genera embedding vectorial de un texto
+     embedBatch(texts): genera embeddings de múltiples textos
+     Fallback: OpenAI text-embedding-3-small → Ollama nomic-embed-text
+
+   semantic-search.ts:
+     semanticSearch(query, k=5, minScore=0.5): busca por similitud de coseno
+     buildMemoryContext(query, k=5): formatea resultados como
+       <memoria_relevante> para inyectar en system prompt
+
+   Integración en useChatSession:
+     Antes de enviar mensaje, si semanticMemoryEnabled:
+       → tryAutoConfigure(providers) detecta OpenAI u Ollama
+       → ensureVectorReady() conecta ChromaDB
+       → buildMemoryContext(text, 5) inyecta contexto semántico
+     Después de extraer memoria:
+       → indexInChroma(entry) para cada nueva entrada
+
+================================================================================
+ 10. SISTEMA DE AGENTES (doc 03)
+================================================================================
+
+   agent-runtime.ts:
+     runAgentTask(taskId, agentId, description, systemPrompt, model,
+       allowedTools, toolDefinitions, toolRunner, llmCall, depth, tokenBudget)
+     LOOP (max 10 turnos):
+       buildPrompt() → arma system + tools definitions + historial
+       llmCall(prompt) → respuesta del LLM
+       parseToolUseBlocks() → extrae <tool_use> del texto
+       detectSubagentRequest() → extrae <delegar><tarea> del texto
+       Si hay subagent task → spawnSubagent()
+       Si hay tool_use → executeTool o executeToolsParallel
+       Feed resultados al LLM
+     Emite eventos agent:started, agent:completed, tool:called, tool:result, tool:error
+
+   tool-executor.ts:
+     executeTool(toolCall, runner): ejecuta tool, mide timing, emite eventos
+     executeToolsParallel(toolCalls, runner): Promise.all para calls independientes
+     areToolCallsIndependent(calls): true si hay ≥ 2 calls
+     buildToolDefinitions(mcpTools): convierte MCPTool[] a formato LLM tool definitions
+
+   subagent-spawner.ts:
+     spawnSubagent(description, options, model, llmCall, toolDefs, toolRunner)
+     Límites: MAX_DEPTH=2, TASK_TIMEOUT_MS=120s, MAX_TOKENS_PER_TASK=32000
+     Crea agente hijo en store, emite eventos, corre con Promise.race(timeout)
+
+   task-planner.ts:
+     planTask(description, availableTools): genera 4 pasos típicos
+
+   useAgent.ts (hook):
+     executeTask(agentId, taskDescription, systemPrompt?): orquesta runtime
+     createAgent(data): registra nuevo agente
+     Expone agents, tasks, activeTasks
+
+================================================================================
+ 11. VAULT DE SEGURIDAD (doc 05 — 5.1)
+================================================================================
+
+   electron/vault.ts:
+     safeStorage.encryptString() / decryptString() para cifrar API keys
+     Persistencia en sparta-vault.json (en APP_ROOT)
+     storeKey(keyId, value, vendor): cifra y guarda
+     getKey(keyId): descifra y devuelve
+     deleteKey(keyId): elimina del vault
+     listKeys(): lista keyIds sin valores
+     hasKey(keyId): boolean
+
+   electron/ipc/vault.ipc.ts:
+     6 handlers IPC: vault:isAvailable, vault:storeKey, vault:getKey,
+       vault:deleteKey, vault:listKeys, vault:hasKey
+
+   src/lib/vault-helper.ts:
+     getProviderKey(provider): resuelve key desde vault o apiKey legacy
+     storeInVault(providerId, apiKey, vendor): store via IPC
+     removeFromVault(providerId): delete via IPC
+     isVaultAvailable(): chequea disponibilidad de safeStorage
+
+   Flujo de seguridad:
+     1. Usuario ingresa key en ConfigureProviderDialog
+     2. handleSave → storeInVault(id, key) → IPC → main process
+     3. main: safeStorage.encryptString(key) → sparta-vault.json
+     4. provider.store: apiKey=undefined, hasVaultKey=true
+     5. Renderer NUNCA ve la key (excepto momento de input)
+     6. Al enviar: getProviderKey(provider) → vault IPC → descifra → fetch
+
+================================================================================
+ 12. UI DE RAZONAMIENTO Y TOOL USE (doc 04)
+================================================================================
+
+   ToolCallSummary:
+     Tool call en línea: icono estado + nombre + input preview + duración
+     Expand/collapse con detalle completo de input y output
+     Output truncado a 200 chars con botón "ver más/ver menos"
+
+   ToolCallDiffView:
+     Detecta tools de edición (write_file, edit_file, etc.)
+     Renderiza diff con líneas + (verde) y - (rojo)
+     Muestra file path y contador de cambios
+
+   StreamCursor:
+     Cursor tipo terminal parpadeante al final del texto streaming
+     Blink 530ms, color accent, desaparece con isStreaming=false
+
+   Interrupt-and-redirect:
+     chat.store: pendingInjections[] + injectWhileStreaming() + consumePendingInjections()
+     ChatInput: durante streaming, Enter encola mensaje en vez de detener
+     Placeholder y label indican que se puede redirigir
+
+   SlashCommands:
+     /clear, /model, /memory on|off, /reasoning on|off, /help
+     Autocomplete con navegación teclado
+     Ejecutan acciones sin pasar por el LLM
+
+================================================================================
+ 13. TESTS
+================================================================================
+
+   3 suites, 32 tests total:
+
+   transports.test.ts (16 tests):
+     - buildHeaders/body para Anthropic (x-api-key, anthropic-version)
+     - buildHeaders/body para OpenAI (Authorization Bearer)
+     - buildHeaders/body para Ollama (solo content-type)
+     - HTTP_STATUS_MESSAGES para 401, 429, 529
+     - isRetryable para 429, 529, 401, 200
+
+   embeddings.test.ts (7 tests):
+     - setActiveProvider / getActiveProvider
+     - getEmbeddingModelLabel para OpenAI, Ollama, unknown, null
+     - buildMemoryContext con resultados vacíos
+
+   agent-runtime.test.ts (9 tests):
+     - buildToolDefinitions formato correcto
+     - areToolCallsIndependent true para 2+ calls, false para 1
+     - executeTool con resultado y timing
+     - executeTool con error
+     - executeToolsParallel múltiples tools
+     - canSpawnSubagent límites de profundidad
+     - planTask estructura de pasos
+
+================================================================================
+ 14. DEPENDENCIAS PRINCIPALES
 ================================================================================
 
    Producción (23):
-     react ^18.2.0, react-dom ^18.2.0
-     @base-ui/react ^1.6.0
-     @fontsource-variable/geist ^5.2.9
-     @fontsource/inter ^5.2.8
-     @fontsource/space-grotesk ^5.2.10
-     @monaco-editor/react ^4.7.0
-     @tailwindcss/vite ^4.3.1
-     @tanstack/react-query ^5.101.1
-     @xterm/xterm ^6.0.0, @xterm/addon-fit ^0.11.0
-     class-variance-authority ^0.7.1
-     clsx ^2.1.1
-     framer-motion ^12.41.0
-     lucide-react ^1.21.0
-     monaco-editor ^0.55.1
-     shadcn ^4.11.0
-     tailwind-merge ^3.6.0
-     tailwindcss ^4.3.1
-     three 0.184.0
-     tw-animate-css ^1.4.0
-     zustand ^5.0.14
+     igual que v0.8.0 + chromadb eliminado (HTTP directo)
 
-   Desarrollo (15):
-     electron ^30.0.1
-     electron-builder ^24.13.3
-     vite ^5.1.6
-     vite-plugin-electron ^0.28.6
-     vite-plugin-electron-renderer ^0.14.5
-     @vitejs/plugin-react ^4.2.1
-     typescript ^5.2.2
-     eslint ^8.57.0
-     @typescript-eslint/eslint-plugin ^7.1.1
-     @typescript-eslint/parser ^7.1.1
-     eslint-plugin-react-hooks ^4.6.0
-     eslint-plugin-react-refresh ^0.4.5
-     @types/react ^18.2.64
-     @types/react-dom ^18.2.21
-     @types/three ^0.184.1
+   Desarrollo (16):
+     igual que v0.8.0 + vitest ^2.1.9
 
 ================================================================================
- 10. ELECTRON-BUILDER CONFIG
+ 15. ELECTRON-BUILDER CONFIG
 ================================================================================
 
-   Configuración principal en package.json (también reflejada parcialmente en
-   electron-builder.json5 si aplica):
-
-   appId: com.sparta.agent
-   productName: Sparta Agent
-   directories.output: release
-   files: ["dist", "dist-electron"]
-   main: dist-electron/main.js
-   icon: public/sparta-escritorio.png
-
-   macOS: DMG
-     → Sparta-Agent-${version}.dmg
-
-   Windows: NSIS x64
-     → Sparta-Agent-${version}-Setup.exe
-     → oneClick: false, allowToChangeInstallationDirectory: true
-
-   Linux: AppImage
-     → Sparta-Agent-${version}.AppImage
+   Sin cambios respecto a v0.8.0.
+   sparta-vault.json se genera automáticamente en APP_ROOT al usar vault.
 
 ================================================================================
- 11. COMANDOS DE DESARROLLO
+ 16. COMANDOS DE DESARROLLO
 ================================================================================
 
    pnpm dev      → Inicia Vite + Electron (dev server + electron)
    pnpm build    → tsc + vite build + electron-builder (package installer)
+   pnpm test     → vitest run (32 tests)
+   pnpm test:watch → vitest (watch mode)
    pnpm lint     → ESLint (.ts, .tsx) con --max-warnings 0
    pnpm preview  → Vite preview del build
 
 ================================================================================
- 12. OBSERVACIONES IMPORTANTES
+ 17. OBSERVACIONES IMPORTANTES
 ================================================================================
 
-   ✔ Etapa funcional de UI/UX (v0.8.0) — todos los sistemas de datos operativos
-   ✔ Capa de IA funcional: transports Anthropic/OpenAI/Ollama + factory + gateway
-   ✔ Chat real con streaming token-a-token vía IPC (main process, multi-proveedor)
-   ✔ ThinkingBlock/ThinkingPill/PipelineTrace con datos reales del proveedor
-   ✔ Abortar generación con AbortSignal + botón Stop en ChatInput
-   ✔ Extracción automática de memoria como grafo de conocimiento
-   ✔ Combobox con búsqueda en ModelPicker y ConfigureProviderDialog
-   ✔ Acciones inline solo iconos (CSS hover) con patrón Claude Code
-   ✔ Edición inline sin dialog en mensajes
-   ✔ Chat IPC multi-proveedor (OpenAI, Anthropic, Ollama, local)
+   ✔ Etapa funcional de UI/UX (v0.9.0)
+   ✔ Capa de IA con transports normalizados (buildHeaders/buildBody)
+   ✔ Error mapping para 401/429/529 con retry exponencial
+   ✔ Chat IPC multi-proveedor con vendor explícito
+   ✔ MEMORIA SEMÁNTICA VECTORIAL via ChromaDB REST API
+   ✔ Embeddings vía OpenAI text-embedding-3-small u Ollama nomic-embed-text
+   ✔ SISTEMA DE AGENTES REAL con subagentes, ejecución paralela, límites
+   ✔ VAULT CIFRADO para API keys via Electron safeStorage
+   ✔ ToolCallSummary con expand/collapse y DiffView para edición
+   ✔ Slash commands (/clear, /model, /memory, /reasoning, /help)
+   ✔ Interrupt-and-redirect durante streaming
+   ✔ 32 tests unitarios con vitest
    ✔ Sin router — navegación por estado MainView (9 vistas)
    ✔ 9 stores con persist middleware → localStorage
+   ✔ 3 stores en memoria (agent, event-bus, mcp)
+   ✔ 40 tipos de eventos SpartaEvent
    ✔ Sistema i18n español/inglés con hook useTranslation()
-   ✔ 13 temas visuales (8 oscuros + 5 claros) con ThemePicker agrupado
-   ✔ Sistema de proveedores de modelo (17 vendors) con test connection real
-   ✔ fetchModelsByVendor() — llama APIs reales para listar modelos
-   ✔ Sidebar redimensionable (220-480px) con manejador propio
-   ✔ Pin/archive/rename de sesiones funcional
-   ✔ Búsqueda funcional de sesiones en sidebar
-   ✔ Grafo 3D de memoria con Three.js interactivo + extracción automática
-   ✔ Test real de token de Telegram contra api.telegram.org
-   ✔ 12 skills descargables precargadas en public/skills/
-   ✔ Marketplace MCP con 6 servidores preconfigurados
-   ✔ Iconos de marca con detección automática light/dark
-   ✔ titleBarStyle: 'hidden' + titleBarOverlay dinámico por tema
-   ✔ contextIsolation: true, nodeIntegration: false
-   ✔ Versión única desde package.json vía IPC (app:getVersion)
-   ✔ SettingsTab unificada (8 tabs) desde interfaces, sin duplicación local
-
-================================================================================
- 13. COSAS PENDIENTES / POR HACER
-================================================================================
-
-   [ ] Integrar Monaco Editor real en EditorPanel
-   [ ] Integrar xterm.js real en TerminalPanel
-   [ ] Implementar Agent Management UI real en AgentsPanel
-   [ ] Implementar atajos de teclado funcionales (KeybindsTab)
-   [ ] Implementar adjuntos reales (File, Code, Image, URL)
-   [ ] Implementar grabación de audio (Mic)
-   [ ] Migrar estilos inline a Tailwind completamente
-   [ ] Configurar GitHub repo
-   [ ] Escribir tests (prioridad: transports + extractor de memoria)
-   [ ] Configurar CI/CD
-   [ ] Implementar sistema de plugins/extensiones
-   [ ] Conectar MCP servers reales (stdio/http) en lugar de mock actual
-   [ ] Implementar integraciones Discord/Slack/WhatsApp/Email reales
-   [ ] Implementar Skills invocation real durante el chat
-   [ ] Implementar Projects multi-proyecto real con contexto
-   [ ] Crear sparta-core/ (Rust) — vault de API keys + sandbox MCP
-   [ ] Migrar persistencia de memoria de localStorage a SQLite vía IPC
-   [ ] Mejorar el Combobox cuando el proveedor retorna muchos modelos (virtualización)
-
-================================================================================
-   FIN DEL DOCUMENTO
-================================================================================
+   ✔ Editor y Terminal panels siguen siendo placeholders visuales
+   ✔ MCPClient es stub — implementación real pendiente (roadmap 5.2)
+   ✔ ChromaDB usa HTTP directo (sin npm package nativo → no crashea renderer)
