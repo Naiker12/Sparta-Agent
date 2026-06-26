@@ -775,4 +775,71 @@ body.is-dragging-sidebar [data-slot="sidebar-wrapper"] {
   color: #ffffff !important;
 }
 
+/* ══════════════════════════════════════════════════════ */
+/*  COLLAPSED STATE                                      */
+/* ══════════════════════════════════════════════════════ */
+
+/* Ocultar todo lo que no son iconos */
+[data-state="collapsed"] .sidebar-logo-text,
+[data-state="collapsed"] .btn-label,
+[data-state="collapsed"] .btn-kbd,
+[data-state="collapsed"] .nav-label,
+[data-state="collapsed"] .sidebar-nav-badge,
+[data-state="collapsed"] .sidebar-separator,
+[data-state="collapsed"] .sidebar-section-label,
+[data-state="collapsed"] .sidebar-search-container,
+[data-state="collapsed"] .sidebar-sessions-list,
+[data-state="collapsed"] .sidebar-empty-state,
+[data-state="collapsed"] .footer-label,
+[data-state="collapsed"] .nav-indicator {
+  display: none !important;
+}
+
+/* Reducir padding horizontal de los wrappers para que no se desborde */
+[data-state="collapsed"] .sidebar-new-session-wrapper,
+[data-state="collapsed"] .sidebar-footer-wrapper {
+  padding-left: 4px !important;
+  padding-right: 4px !important;
+}
+
+/* Logo solo icono */
+[data-state="collapsed"] .sidebar-logo {
+  justify-content: center;
+  padding: 16px 4px 10px;
+  gap: 0;
+}
+[data-state="collapsed"] .sidebar-logo img {
+  width: 28px;
+  height: 28px;
+}
+
+/* Centrar botón nueva sesión */
+[data-state="collapsed"] .sidebar-new-session-btn {
+  justify-content: center;
+  width: 100%;
+  padding: 8px 4px;
+  gap: 0;
+}
+
+/* Centrar navegación */
+[data-state="collapsed"] .sidebar-nav {
+  padding: 0 4px;
+  align-items: center;
+}
+
+[data-state="collapsed"] .sidebar-nav-btn {
+  justify-content: center;
+  width: 100%;
+  padding: 8px 4px;
+  gap: 0;
+}
+
+/* Centrar footer */
+[data-state="collapsed"] .sidebar-footer-btn {
+  justify-content: center;
+  width: 100%;
+  padding: 10px 4px;
+  gap: 0;
+}
+
 

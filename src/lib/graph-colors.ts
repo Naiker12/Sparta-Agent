@@ -12,7 +12,7 @@ export function getCSSVarAsHex(name: string): string {
   document.body.removeChild(temp)
   const match = computed.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/)
   if (!match) return '#6366f1'
-  const [_, r, g, b] = match
+  const [, r, g, b] = match
   return '#' + [r, g, b].map((v) => parseInt(v).toString(16).padStart(2, '0')).join('')
 }
 

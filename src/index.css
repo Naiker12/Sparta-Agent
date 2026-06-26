@@ -120,12 +120,10 @@
   opacity: 1;
 }
 
-.message-row .message-actions-slot .message-actions-trigger {
+.message-actions-bar {
   opacity: 0;
+  transition: opacity 0.15s ease;
 }
-.message-row:hover .message-actions-slot .message-actions-trigger {
-  opacity: 1;
-}
-.message-row .message-actions-slot .message-actions-trigger[data-state="open"] {
+.message-row:hover .message-actions-bar {
   opacity: 1;
 }
