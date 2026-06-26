@@ -23,6 +23,7 @@ export const useProjectStore = create<ProjectState>()(
       color: '#8b5cf6',
       createdAt: Date.now(),
       description: 'Proyecto principal',
+      isTemplate: true,
     },
   ],
   activeProjectId: 'default',

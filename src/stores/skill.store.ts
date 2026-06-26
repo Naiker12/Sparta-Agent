@@ -22,6 +22,7 @@ const defaultSkills: Skill[] = [
     icon: '\u26A1',
     tags: ['code', 'review'],
     createdAt: Date.now(),
+    isTemplate: true,
   },
   {
     id: 'doc-summary',
@@ -31,6 +32,7 @@ const defaultSkills: Skill[] = [
     icon: '\u26A1',
     tags: ['docs', 'summary'],
     createdAt: Date.now(),
+    isTemplate: true,
   },
 ]
 

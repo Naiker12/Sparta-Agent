@@ -1,14 +1,15 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { Message, Session } from '@/types'
+import type { Message, Session, ToolCall } from '@/types'
 
 interface ChatState {
   sessions: Session[]
   activeSessionId: string | null
   messagesBySession: Record<string, Message[]>
   isStreaming: boolean
+  abortController: AbortController | null
 
-  createSession: (title?: string) => string
+  createSession: (title?: string, model?: string, providerId?: string) => string
   switchSession: (id: string) => void
   deleteSession: (id: string) => void
   pinSession: (id: string) => void
@@ -17,8 +18,15 @@ interface ChatState {
   deleteMessage: (sessionId: string, messageId: string) => void
   addMessage: (message: Message) => void
   updateMessage: (id: string, partial: Partial<Message>) => void
+  appendContent: (sessionId: string, messageId: string, delta: string) => void
+  appendThinking: (sessionId: string, messageId: string, delta: string) => void
+  addToolCall: (sessionId: string, messageId: string, toolCall: ToolCall) => void
+  updateToolCallStatus: (sessionId: string, messageId: string, toolCallId: string, status: ToolCall['status']) => void
   setStreaming: (value: boolean) => void
+  startStreaming: () => AbortController
+  stopStreaming: () => void
   getActiveMessages: () => Message[]
+  cleanupStaleSessions: () => void
 }
 
 export const useChatStore = create<ChatState>()(
@@ -28,15 +36,17 @@ export const useChatStore = create<ChatState>()(
   activeSessionId: null,
   messagesBySession: {},
   isStreaming: false,
+  abortController: null,
 
-  createSession: (title) => {
+  createSession: (title, model, providerId) => {
     const id = crypto.randomUUID()
     const session: Session = {
       id,
       title: title || 'Nueva conversación',
       createdAt: Date.now(),
       updatedAt: Date.now(),
-      model: 'claude-sonnet-4-6',
+      model: model || '',
+      providerId,
       messageCount: 0,
     }
     set((s) => ({
@@ -51,8 +61,8 @@ export const useChatStore = create<ChatState>()(
 
   deleteSession: (id) =>
     set((s) => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { [id]: _unused, ...rest } = s.messagesBySession
+      const { [id]: _p, ...rest } = s.messagesBySession
+      void _p
       return {
         sessions: s.sessions.filter((sess) => sess.id !== id),
         activeSessionId: s.activeSessionId === id ? null : s.activeSessionId,
@@ -80,6 +90,25 @@ export const useChatStore = create<ChatState>()(
         sess.id === id ? { ...sess, title: newTitle } : sess
       ),
     })),
+
+  deleteMessage: (sessionId, messageId) =>
+    set((s) => {
+      const sessionMessages = s.messagesBySession[sessionId]
+      if (!sessionMessages) return s
+      const filtered = sessionMessages.filter((m) => m.id !== messageId)
+      if (filtered.length === sessionMessages.length) return s
+      return {
+        messagesBySession: {
+          ...s.messagesBySession,
+          [sessionId]: filtered,
+        },
+        sessions: s.sessions.map((sess) =>
+          sess.id === sessionId
+            ? { ...sess, messageCount: Math.max(0, sess.messageCount - 1), updatedAt: Date.now() }
+            : sess
+        ),
+      }
+    }),
 
   addMessage: (message) =>
     set((s) => {
@@ -116,30 +145,106 @@ export const useChatStore = create<ChatState>()(
       return { messagesBySession: updated }
     }),
 
-  deleteMessage: (sessionId, messageId) =>
+  appendContent: (sessionId, messageId, delta) =>
     set((s) => {
-      const sessionMessages = s.messagesBySession[sessionId] || []
-      const filtered = sessionMessages.filter((m) => m.id !== messageId)
-      if (filtered.length === sessionMessages.length) return s
+      const sessionMessages = s.messagesBySession[sessionId]
+      if (!sessionMessages) return s
       return {
         messagesBySession: {
           ...s.messagesBySession,
-          [sessionId]: filtered,
+          [sessionId]: sessionMessages.map((msg) =>
+            msg.id === messageId
+              ? { ...msg, content: msg.content + delta, isStreaming: true }
+              : msg
+          ),
         },
-        sessions: s.sessions.map((sess) =>
-          sess.id === sessionId
-            ? { ...sess, messageCount: Math.max(0, sess.messageCount - 1), updatedAt: Date.now() }
-            : sess
-        ),
+      }
+    }),
+
+  appendThinking: (sessionId, messageId, delta) =>
+    set((s) => {
+      const sessionMessages = s.messagesBySession[sessionId]
+      if (!sessionMessages) return s
+      return {
+        messagesBySession: {
+          ...s.messagesBySession,
+          [sessionId]: sessionMessages.map((msg) =>
+            msg.id === messageId
+              ? { ...msg, reasoningText: (msg.reasoningText ?? '') + delta, isStreaming: true }
+              : msg
+          ),
+        },
+      }
+    }),
+
+  addToolCall: (sessionId, messageId, toolCall) =>
+    set((s) => {
+      const sessionMessages = s.messagesBySession[sessionId]
+      if (!sessionMessages) return s
+      return {
+        messagesBySession: {
+          ...s.messagesBySession,
+          [sessionId]: sessionMessages.map((msg) =>
+            msg.id === messageId
+              ? { ...msg, toolCalls: [...(msg.toolCalls ?? []), toolCall] }
+              : msg
+          ),
+        },
+      }
+    }),
+
+  updateToolCallStatus: (sessionId, messageId, toolCallId, status) =>
+    set((s) => {
+      const sessionMessages = s.messagesBySession[sessionId]
+      if (!sessionMessages) return s
+      return {
+        messagesBySession: {
+          ...s.messagesBySession,
+          [sessionId]: sessionMessages.map((msg) =>
+            msg.id === messageId
+              ? {
+                  ...msg,
+                  toolCalls: (msg.toolCalls ?? []).map((tc) =>
+                    tc.id === toolCallId ? { ...tc, status } : tc
+                  ),
+                }
+              : msg
+          ),
+        },
       }
     }),
 
   setStreaming: (value) => set({ isStreaming: value }),
 
+  startStreaming: () => {
+    const controller = new AbortController()
+    set({ isStreaming: true, abortController: controller })
+    return controller
+  },
+
+  stopStreaming: () => {
+    const { abortController } = get()
+    abortController?.abort()
+    set({ isStreaming: false, abortController: null })
+  },
+
   getActiveMessages: () => {
     const { activeSessionId, messagesBySession } = get()
     if (!activeSessionId) return []
     return messagesBySession[activeSessionId] || []
+  },
+
+  cleanupStaleSessions: () => {
+    set((s) => ({
+      isStreaming: false,
+      abortController: null,
+      messagesBySession: Object.fromEntries(
+        Object.entries(s.messagesBySession).map(([sessionId, msgs]) => [
+          sessionId,
+          msgs.map((msg) => ({ ...msg, isStreaming: false })),
+        ])
+      ),
+    }))
   },
 }),
     {

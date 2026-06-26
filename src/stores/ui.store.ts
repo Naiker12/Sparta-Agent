@@ -1,16 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-
-export type SettingsTab =
-  | 'general'
-  | 'appearance'
-  | 'keybinds'
-  | 'models'
-  | 'keys'
-  | 'mcp'
-  | 'memory'
-  | 'skills'
-  | 'agents'
+import type { SettingsTab } from '@/interfaces/settings.interface'
 
 export type MainView =
   | { type: 'chat'; sessionId?: string }

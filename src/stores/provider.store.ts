@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { Provider, ProviderVendor } from '@/types'
+import type { Provider, ProviderVendor, ProviderKind } from '@/types'
 
 const VENDOR_LABELS: Record<ProviderVendor, string> = {
   anthropic: 'Anthropic',
@@ -30,7 +30,7 @@ interface ProviderState {
   providers: Provider[]
   addProvider: (data: {
     vendor: ProviderVendor
-    kind: 'cloud' | 'local'
+    kind: ProviderKind
     label?: string
     apiKey?: string
     serverUrl?: string

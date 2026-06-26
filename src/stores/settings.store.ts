@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
+import type { SessionMode, Language } from '@/interfaces/settings.interface'
+
 interface SettingsStore {
   settingsOpen: boolean
   defaultModel: string
@@ -9,26 +11,25 @@ interface SettingsStore {
   memoryEnabled: boolean
   webSearchEnabled: boolean
   reasoningEnabled: boolean
-  sessionMode: 'chat' | 'agent'
+  sessionMode: SessionMode
   apiKeys: Record<string, string>
-  language: 'es' | 'en'
+  language: Language
 
   openSettings: () => void
   closeSettings: () => void
   setInput: (val: string) => void
-  sendMessage: () => void
   setDefaultModel: (model: string) => void
   setApiKey: (provider: string, key: string) => void
   toggleMemory: () => void
   toggleWebSearch: () => void
   toggleReasoning: () => void
-  setSessionMode: (mode: 'chat' | 'agent') => void
-  setLanguage: (lang: 'es' | 'en') => void
+  setSessionMode: (mode: SessionMode) => void
+  setLanguage: (lang: Language) => void
 }
 
 export const useSettingsStore = create<SettingsStore>()(
   persist(
-    (set, get) => ({
+    (set) => ({
   settingsOpen: false,
   defaultModel: 'claude-sonnet-4-6',
   input: '',
@@ -43,12 +44,6 @@ export const useSettingsStore = create<SettingsStore>()(
   openSettings: () => set({ settingsOpen: true }),
   closeSettings: () => set({ settingsOpen: false }),
   setInput: (val) => set({ input: val }),
-  sendMessage: () => {
-    const { input } = get()
-    if (!input.trim()) return
-    console.log('send:', input)
-    set({ input: '' })
-  },
   setDefaultModel: (model) => set({ defaultModel: model, activeModel: model }),
   setApiKey: (provider, key) =>
     set((s) => ({ apiKeys: { ...s.apiKeys, [provider]: key } })),

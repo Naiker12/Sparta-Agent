@@ -11,43 +11,8 @@ interface MCPState {
   toggleServer: (id: string) => void
 }
 
-const defaultServers: MCPServer[] = [
-  {
-    id: 'filesystem',
-    name: 'Filesystem',
-    type: 'stdio',
-    connected: true,
-    tools: [
-      { name: 'read_file', description: 'Read file contents', inputSchema: {}, serverId: 'filesystem' },
-      { name: 'write_file', description: 'Write file contents', inputSchema: {}, serverId: 'filesystem' },
-      { name: 'list_directory', description: 'List directory contents', inputSchema: {}, serverId: 'filesystem' },
-    ],
-    config: { id: 'filesystem', name: 'Filesystem', type: 'stdio', enabled: true },
-  },
-  {
-    id: 'git',
-    name: 'Git',
-    type: 'stdio',
-    connected: true,
-    tools: [
-      { name: 'git_status', description: 'Check git status', inputSchema: {}, serverId: 'git' },
-      { name: 'git_diff', description: 'Show git diff', inputSchema: {}, serverId: 'git' },
-      { name: 'git_commit', description: 'Create git commit', inputSchema: {}, serverId: 'git' },
-    ],
-    config: { id: 'git', name: 'Git', type: 'stdio', enabled: true },
-  },
-  {
-    id: 'sqlite',
-    name: 'SQLite',
-    type: 'stdio',
-    connected: false,
-    tools: [],
-    config: { id: 'sqlite', name: 'SQLite', type: 'stdio', enabled: false },
-  },
-]
-
 export const useMCPStore = create<MCPState>((set) => ({
-  servers: defaultServers,
+  servers: [],
 
   addServer: (config) =>
     set((s) => ({
