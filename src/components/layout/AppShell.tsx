@@ -13,6 +13,7 @@ import { McpView } from '@/components/views/McpView'
 import { ChannelsView } from '@/components/views/ChannelsView'
 import { MemoryView } from '@/components/views/MemoryView'
 import { initTheme } from '@/stores/theme.store'
+import { useCronEngine } from '@/hooks/useCronEngine'
 import { useSettingsStore } from '@/stores/settings.store'
 import { useUIStore } from '@/stores/ui.store'
 import { useChatStore } from '@/stores/chat.store'
@@ -30,6 +31,8 @@ const PANELS: Record<string, React.ReactNode> = {
 }
 
 export function AppShell() {
+  useCronEngine()
+
   useEffect(() => {
     initTheme()
     useChatStore.getState().cleanupStaleSessions()

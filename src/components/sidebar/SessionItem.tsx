@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { MoreVertical, Pin, Pencil, Trash2, Share2, MessageSquare } from 'lucide-react'
+import { motion } from 'framer-motion'
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
@@ -17,13 +18,14 @@ interface SessionItemProps {
 }
 
 export function SessionItem({ session }: SessionItemProps) {
-  const { activeSessionId, switchSession, pinSession, deleteSession, renameSession } = useChatStore()
+  const { activeSessionId, switchSession, pinSession, deleteSession, renameSession, streamingBySession } = useChatStore()
   const { setMainView } = useUIStore()
   const [menuOpen, setMenuOpen]       = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [shareOpen, setShareOpen]     = useState(false)
 
   const isActive = session.id === activeSessionId
+  const isStreamingThis = streamingBySession[session.id]?.isStreaming ?? false
   const title    = session.title || 'Nueva conversación'
 
   // Relative time helper
@@ -46,11 +48,27 @@ export function SessionItem({ session }: SessionItemProps) {
   return (
     <>
       <div
-        className={cn('session-item-card', isActive && 'active')}
+        className={cn('session-item-card', isActive && 'active', isStreamingThis && 'streaming')}
         onClick={() => { switchSession(session.id); setMainView({ type: 'chat', sessionId: session.id }) }}
       >
-        {/* Icon */}
-        <MessageSquare size={14} className="session-icon" />
+        {/* Icon + streaming indicator */}
+        <div style={{ position: 'relative', display: 'flex' }}>
+          <MessageSquare size={14} className="session-icon" />
+          {isStreamingThis && (
+            <motion.span
+              className="size-1.5 rounded-full"
+              style={{
+                position: 'absolute',
+                top: -2,
+                right: -4,
+                background: 'var(--status-think)',
+                boxShadow: '0 0 4px var(--status-think)',
+              }}
+              animate={{ opacity: [0.4, 1, 0.4], scale: [0.8, 1.2, 0.8] }}
+              transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
+            />
+          )}
+        </div>
 
         {/* Title — single line */}
         <span className="session-title">{title}</span>

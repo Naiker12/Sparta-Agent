@@ -573,6 +573,10 @@ body.is-dragging-sidebar [data-slot="sidebar-wrapper"] {
   background: var(--bg-elevated);
   border-color: var(--border-normal);
 }
+.session-item-card.streaming {
+  border-color: var(--status-think);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--status-think) 15%, transparent);
+}
 .session-item-card .session-icon {
   flex-shrink: 0;
   color: var(--text-muted);
@@ -758,6 +762,36 @@ body.is-dragging-sidebar [data-slot="sidebar-wrapper"] {
   background-color: var(--border-normal) !important;
   margin: 4px 0 !important;
 }
+
+/* ══════════════════════════════════════════════════════ */
+/*  MARKDOWN RENDERER (chat responses)                   */
+/* ══════════════════════════════════════════════════════ */
+.markdown-body {
+  font-size: inherit;
+  line-height: 1.55;
+  color: var(--text-primary);
+}
+.markdown-body > *:first-child { margin-top: 0; }
+.markdown-body > *:last-child { margin-bottom: 0; }
+.markdown-body h1, .markdown-body h2, .markdown-body h3 { font-family: var(--font-display); color: var(--text-display); font-weight: 600; margin: 0.35em 0 0.15em; }
+.markdown-body h1 { font-size: 1.1em; }
+.markdown-body h2 { font-size: 1.05em; }
+.markdown-body h3 { font-size: 1em; }
+.markdown-body h4, .markdown-body h5, .markdown-body h6 { font-size: 1em; color: var(--text-primary); font-weight: 600; margin: 0.3em 0 0.1em; }
+.markdown-body strong { color: var(--text-primary); font-weight: 600; }
+.markdown-body em { color: var(--text-secondary); }
+.markdown-body p { margin: 0.25em 0; }
+.markdown-body ul, .markdown-body ol { padding-left: 1.3em; margin: 0.2em 0; }
+.markdown-body li { margin: 0.08em 0; }
+.markdown-body code { font-family: var(--font-mono); background: var(--bg-elevated); padding: 0.08em 0.3em; border-radius: var(--radius-sm); font-size: 0.92em; }
+.markdown-body pre { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 0.6em; overflow-x: auto; margin: 0.3em 0; }
+.markdown-body pre code { background: none; padding: 0; border-radius: 0; }
+.markdown-body blockquote { border-left: 2px solid var(--accent); padding-left: 0.6em; margin: 0.3em 0; color: var(--text-secondary); }
+.markdown-body a { color: var(--accent); text-decoration: underline; }
+.markdown-body table { border-collapse: collapse; width: 100%; font-size: 0.92em; margin: 0.3em 0; }
+.markdown-body th, .markdown-body td { border: 1px solid var(--border-subtle); padding: 0.3em 0.5em; }
+.markdown-body th { background: var(--bg-elevated); font-weight: 600; text-align: left; }
+.markdown-body hr { border: none; border-top: 1px solid var(--border-subtle); margin: 0.5em 0; }
 
 /* ══════════════════════════════════════════════════════ */
 /*  HERO WELCOME TITLE GRADIENT                         */

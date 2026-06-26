@@ -4,7 +4,6 @@ import { MessageBubble } from './MessageBubble'
 
 interface MessageListProps {
   messages: Message[]
-  isStreaming?: boolean
 }
 
 export function MessageList({ messages }: MessageListProps) {

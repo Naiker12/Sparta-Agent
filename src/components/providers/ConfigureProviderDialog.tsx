@@ -4,6 +4,7 @@ import type { ProviderVendor, Provider } from '@/types'
 import { useProviderStore, getVendorLabel } from '@/stores/provider.store'
 import { useTranslation } from '@/i18n'
 import { fetchModelsByVendor } from '@/lib/fetch-models'
+import { storeInVault, isVaultAvailable } from '@/lib/vault-helper'
 import {
   Combobox,
   ComboboxInput,
@@ -82,7 +83,7 @@ export function ConfigureProviderDialog({
     setTestError('')
     setFetchedModels([])
 
-    const result = await fetchModelsByVendor(vendor, apiKey, serverUrl)
+    const result = await fetchModelsByVendor(vendor, apiKey.trim(), serverUrl)
     setTesting(false)
 
     if (result.error) {
@@ -99,23 +100,46 @@ export function ConfigureProviderDialog({
     setDefaultModel(result.models[0])
   }
 
-  function handleSave() {
+  async function handleSave() {
+    const cleanKey = apiKey.trim() || undefined
+    const cleanUrl = serverUrl.trim() || undefined
+    const cleanLabel = label.trim()
+
+    const vaultOk = cleanKey ? await isVaultAvailable() : false
+
     if (editProvider) {
-      updateProvider(editProvider.id, {
-        label,
-        apiKey: apiKey || undefined,
-        serverUrl: serverUrl || undefined,
-        defaultModel: defaultModel || undefined,
-      })
+      if (cleanKey && vaultOk) {
+        await storeInVault(editProvider.id, cleanKey, editProvider.vendor)
+        updateProvider(editProvider.id, {
+          label: cleanLabel,
+          apiKey: undefined,
+          hasVaultKey: true,
+          serverUrl: cleanUrl,
+          defaultModel: defaultModel || undefined,
+        })
+      } else {
+        updateProvider(editProvider.id, {
+          label: cleanLabel,
+          apiKey: cleanKey,
+          hasVaultKey: false,
+          serverUrl: cleanUrl,
+          defaultModel: defaultModel || undefined,
+        })
+      }
     } else {
-      addProvider({
+      const id = addProvider({
         vendor: currentVendor,
         kind: isLocal ? 'local' : 'cloud',
-        label,
-        apiKey: apiKey || undefined,
-        serverUrl: serverUrl || undefined,
+        label: cleanLabel,
+        apiKey: vaultOk ? undefined : cleanKey,
+        serverUrl: cleanUrl,
         defaultModel: defaultModel || undefined,
       })
+
+      if (cleanKey && vaultOk) {
+        await storeInVault(id, cleanKey, currentVendor)
+        updateProvider(id, { hasVaultKey: true })
+      }
     }
     onSave()
   }

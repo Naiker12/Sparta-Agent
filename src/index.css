@@ -37,6 +37,7 @@
   --animate-bounce: bounce 1.2s ease infinite;
   --animate-scaleIn: scaleIn 0.18s ease forwards;
   --animate-slideIn: slideIn 0.2s ease forwards;
+  --animate-pulse-dot: pulse-dot 1.2s ease infinite;
 
   @keyframes fadeUp {
     from { opacity: 0; transform: translateY(8px); }

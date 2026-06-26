@@ -1,0 +1,178 @@
+import { useEffect, useRef, useState, useCallback } from 'react'
+
+export interface SlashCommand {
+  name: string
+  description: string
+  usage: string
+  action: (args: string) => void
+}
+
+const COMMANDS: SlashCommand[] = [
+  {
+    name: 'clear',
+    description: 'Limpiar la conversación actual',
+    usage: '/clear',
+    action: () => {
+      const { useChatStore } = require('@/stores/chat.store')
+      const sid = useChatStore.getState().activeSessionId
+      if (sid) useChatStore.getState().deleteSession(sid)
+    },
+  },
+  {
+    name: 'model',
+    description: 'Cambiar el modelo activo',
+    usage: '/model <nombre>',
+    action: (args) => {
+      if (!args) return
+      const { useSettingsStore } = require('@/stores/settings.store')
+      useSettingsStore.getState().setDefaultModel(args.trim())
+    },
+  },
+  {
+    name: 'memory',
+    description: 'Activar o desactivar memoria persistente',
+    usage: '/memory on|off',
+    action: (args) => {
+      const { useSettingsStore } = require('@/stores/settings.store')
+      const state = useSettingsStore.getState()
+      if (args.trim() === 'on' && !state.memoryEnabled) state.toggleMemory()
+      else if (args.trim() === 'off' && state.memoryEnabled) state.toggleMemory()
+    },
+  },
+  {
+    name: 'reasoning',
+    description: 'Activar o desactivar razonamiento visible',
+    usage: '/reasoning on|off',
+    action: (args) => {
+      const { useSettingsStore } = require('@/stores/settings.store')
+      const state = useSettingsStore.getState()
+      if (args.trim() === 'on' && !state.reasoningEnabled) state.toggleReasoning()
+      else if (args.trim() === 'off' && state.reasoningEnabled) state.toggleReasoning()
+    },
+  },
+  {
+    name: 'help',
+    description: 'Mostrar comandos disponibles',
+    usage: '/help',
+    action: () => {
+      const names = COMMANDS.map((c) => `  ${c.usage.padEnd(20)} ${c.description}`).join('\n')
+      alert(`Comandos disponibles:\n\n${names}`)
+    },
+  },
+]
+
+export function parseSlashCommand(text: string): { command: SlashCommand; args: string } | null {
+  if (!text.startsWith('/')) return null
+  const parts = text.slice(1).split(/\s+/)
+  const name = parts[0].toLowerCase()
+  const args = parts.slice(1).join(' ')
+  const cmd = COMMANDS.find((c) => c.name === name)
+  return cmd ? { command: cmd, args } : null
+}
+
+export function getSlashSuggestions(text: string): SlashCommand[] {
+  if (!text.startsWith('/')) return []
+  const parts = text.slice(1).split(/\s+/)
+  const partial = parts[0].toLowerCase()
+  if (parts.length > 1) return []
+  return COMMANDS.filter((c) => c.name.startsWith(partial))
+}
+
+interface SlashCommandMenuProps {
+  text: string
+  onSelect: (command: SlashCommand) => void
+  onClose: () => void
+  inputRef: React.RefObject<HTMLTextAreaElement | null>
+}
+
+export function SlashCommandMenu({ text, onSelect, onClose, inputRef }: SlashCommandMenuProps) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [selectedIndex, setSelectedIndex] = useState(0)
+  const suggestions = getSlashSuggestions(text)
+
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setSelectedIndex((i) => Math.min(i + 1, suggestions.length - 1))
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setSelectedIndex((i) => Math.max(i - 1, 0))
+    } else if (e.key === 'Enter' || e.key === 'Tab') {
+      e.preventDefault()
+      if (suggestions[selectedIndex]) {
+        onSelect(suggestions[selectedIndex])
+      }
+    } else if (e.key === 'Escape') {
+      e.preventDefault()
+      onClose()
+    }
+  }, [suggestions, selectedIndex, onSelect, onClose])
+
+  useEffect(() => {
+    const el = inputRef.current
+    if (!el) return
+    el.addEventListener('keydown', handleKeyDown)
+    return () => el.removeEventListener('keydown', handleKeyDown)
+  }, [handleKeyDown, inputRef])
+
+  useEffect(() => {
+    setSelectedIndex(0)
+  }, [suggestions.length])
+
+  if (suggestions.length === 0) return null
+
+  return (
+    <div
+      ref={ref}
+      style={{
+        position: 'absolute',
+        bottom: 'calc(100% + 4px)',
+        left: 0,
+        width: 260,
+        background: 'var(--bg-modal)',
+        border: '1px solid var(--border-normal)',
+        borderRadius: 'var(--radius-lg)',
+        boxShadow: '0 12px 40px rgba(0,0,0,0.5)',
+        overflow: 'hidden',
+        padding: 4,
+      }}
+    >
+      {suggestions.map((cmd, i) => (
+        <button
+          key={cmd.name}
+          onClick={() => onSelect(cmd)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            width: '100%',
+            padding: '6px 10px',
+            background: i === selectedIndex ? 'var(--bg-hover)' : 'none',
+            border: 'none',
+            borderRadius: 'var(--radius-md)',
+            color: 'var(--text-secondary)',
+            fontSize: 12,
+            fontFamily: 'var(--font-ui)',
+            cursor: 'pointer',
+            textAlign: 'left',
+            transition: 'background 0.08s',
+          }}
+        >
+          <span style={{ color: 'var(--accent)', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+            {cmd.usage.split(' ')[0]}
+          </span>
+          <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {cmd.description}
+          </span>
+        </button>
+      ))}
+    </div>
+  )
+}
+
+export function executeSlashCommand(text: string): boolean {
+  const parsed = parseSlashCommand(text)
+  if (!parsed) return false
+  parsed.command.action(parsed.args)
+  return true
+}

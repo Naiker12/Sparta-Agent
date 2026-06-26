@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { Eye, EyeOff, Pencil, Trash2 } from 'lucide-react'
+import { Eye, EyeOff, Pencil, Trash2, Shield } from 'lucide-react'
 import type { Provider } from '@/types'
 import { useProviderStore, getVendorLabel } from '@/stores/provider.store'
 import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog'
 import { BrandIcon } from '@/components/ui/BrandIcon'
 import { useTranslation } from '@/i18n'
+import { removeFromVault } from '@/lib/vault-helper'
 
 interface ProviderCardProps {
   provider: Provider
@@ -66,11 +67,16 @@ export function ProviderCard({ provider, onEdit }: ProviderCardProps) {
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
         }}>
-          {provider.apiKey ? (
+          {provider.hasVaultKey ? (
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--status-ok)', fontSize: 11, fontFamily: 'var(--font-ui)', marginLeft: 4 }}>
+              <Shield size={11} strokeWidth={1.5} />
+              Key cifrada
+            </span>
+          ) : provider.apiKey ? (
             revealed ? provider.apiKey : maskKey(provider.apiKey)
-          ) : (
-            <span style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-ui)' }}>
-              {provider.serverUrl || '—'}
+          ) : provider.kind === 'cloud' && (
+            <span style={{ color: 'var(--status-err)', fontSize: 11, fontFamily: 'var(--font-ui)', marginLeft: 4 }}>
+              Sin API key
             </span>
           )}
         </span>
@@ -122,7 +128,12 @@ export function ProviderCard({ provider, onEdit }: ProviderCardProps) {
         open={confirmDeleteOpen}
         onOpenChange={setConfirmDeleteOpen}
         itemLabel={getVendorLabel(provider.vendor)}
-        onConfirm={() => removeProvider(provider.id)}
+        onConfirm={async () => {
+          removeProvider(provider.id)
+          if (provider.hasVaultKey) {
+            await removeFromVault(provider.id)
+          }
+        }}
       />
 
       <div style={{

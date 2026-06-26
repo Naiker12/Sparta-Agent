@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { Plus, Mic, ArrowUp, Square, AlertCircle } from 'lucide-react'
 import { useSettingsStore } from '@/stores/settings.store'
 import { useChatStore } from '@/stores/chat.store'
@@ -7,17 +7,25 @@ import { useChatSession } from '@/hooks/useChatSession'
 import { cn } from '@/lib/utils'
 import { ModelPicker } from './ModelPicker'
 import { AttachMenu } from './AttachMenu'
+import { SlashCommandMenu, executeSlashCommand, type SlashCommand } from './SlashCommandMenu'
 
 export function ChatInput() {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [focused, setFocused] = useState(false)
   const [showAttach, setShowAttach] = useState(false)
+  const [showSlash, setShowSlash] = useState(false)
   const { input, setInput } = useSettingsStore()
   const isStreaming = useChatStore((s) => s.isStreaming)
+  const activeSessionId = useChatStore((s) => s.activeSessionId)
   const providers = useProviderStore((s) => s.providers)
   const hasProvider = providers.some((p) => p.kind === 'local' || p.apiKey)
   const stopStreaming = useChatStore((s) => s.stopStreaming)
+  const injectWhileStreaming = useChatStore((s) => s.injectWhileStreaming)
   const { sendMessage } = useChatSession()
+
+  useEffect(() => {
+    setShowSlash(input.startsWith('/') && input.length > 0)
+  }, [input])
 
   function autoResize() {
     const el = textareaRef.current
@@ -28,25 +36,47 @@ export function ChatInput() {
 
   function handleSend() {
     const text = input.trim()
-    if (!text || isStreaming) return
+    if (!text) return
     if (!hasProvider) return
+
+    if (executeSlashCommand(text)) {
+      setInput('')
+      return
+    }
+
+    if (isStreaming) {
+      injectWhileStreaming(text)
+      setInput('')
+      return
+    }
+
     sendMessage(text)
     setInput('')
   }
 
   function handleStop() {
-    stopStreaming()
+    const sid = activeSessionId
+    if (sid) {
+      stopStreaming(sid)
+      window.sparta?.abortMessage?.(sid)
+    } else {
+      stopStreaming()
+    }
   }
 
   function handleKey(e: React.KeyboardEvent) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
-      if (isStreaming) {
-        handleStop()
-      } else if (hasProvider) {
+      if (hasProvider) {
         handleSend()
       }
     }
+  }
+
+  function handleSlashSelect(cmd: SlashCommand) {
+    setInput(cmd.usage)
+    setShowSlash(false)
+    textareaRef.current?.focus()
   }
 
   const canSend = input.trim().length > 0 && hasProvider
@@ -132,30 +162,41 @@ export function ChatInput() {
                 {showAttach && <AttachMenu onClose={() => setShowAttach(false)} />}
               </div>
 
-              <textarea
-                ref={textareaRef}
-                value={input}
-                onChange={e => { setInput(e.target.value); autoResize() }}
-                onKeyDown={handleKey}
-                onFocus={() => setFocused(true)}
-                onBlur={() => setFocused(false)}
-                placeholder={hasProvider ? "Ask anything..." : "Configura un proveedor para chatear..."}
-                rows={1}
-                style={{
-                  flex: 1,
-                  background: 'none',
-                  border: 'none',
-                  outline: 'none',
-                  color: 'var(--text-primary)',
-                  fontSize: 13.5,
-                  fontFamily: 'var(--font-ui)',
-                  lineHeight: 1.55,
-                  resize: 'none',
-                  minHeight: 22,
-                  maxHeight: 120,
-                  caretColor: hasProvider ? 'var(--accent)' : 'var(--text-muted)',
-                }}
-              />
+              <div style={{ flex: 1, position: 'relative' }}>
+                {showSlash && (
+                  <SlashCommandMenu
+                    text={input}
+                    onSelect={handleSlashSelect}
+                    onClose={() => setShowSlash(false)}
+                    inputRef={textareaRef}
+                  />
+                )}
+                <textarea
+                  ref={textareaRef}
+                  value={input}
+                  onChange={e => { setInput(e.target.value); autoResize() }}
+                  onKeyDown={handleKey}
+                  onFocus={() => setFocused(true)}
+                  onBlur={() => setFocused(false)}
+                  placeholder={hasProvider ? (isStreaming ? "Corrige o redirige al agente..." : "Ask anything...") : "Configura un proveedor para chatear..."}
+                  rows={1}
+                  style={{
+                    flex: 1,
+                    width: '100%',
+                    background: 'none',
+                    border: 'none',
+                    outline: 'none',
+                    color: 'var(--text-primary)',
+                    fontSize: 13.5,
+                    fontFamily: 'var(--font-ui)',
+                    lineHeight: 1.55,
+                    resize: 'none',
+                    minHeight: 22,
+                    maxHeight: 120,
+                    caretColor: hasProvider ? 'var(--accent)' : 'var(--text-muted)',
+                  }}
+                />
+              </div>
             </div>
 
             <div style={{
@@ -168,6 +209,11 @@ export function ChatInput() {
 
               <div style={{ flex: 1 }} />
 
+              {isStreaming && (
+                <div style={{ fontSize: 10, color: 'var(--status-warn)', fontFamily: 'var(--font-ui)', paddingRight: 4 }}>
+                  Escribe para redirigir
+                </div>
+              )}
               <button style={{
                 width: 28, height: 28,
                 background: 'none',
