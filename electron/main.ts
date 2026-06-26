@@ -1,9 +1,11 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import fs from 'node:fs'
 import { registerChatIPC } from './ipc/chat.ipc'
 import { registerMemoryIPC } from './ipc/memory.ipc'
+import { registerVaultIPC } from './ipc/vault.ipc'
+import { registerSearchIPC } from './ipc/search.ipc'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -80,10 +82,18 @@ app.whenReady().then(() => {
 
   registerChatIPC()
   registerMemoryIPC()
+  registerVaultIPC()
+  registerSearchIPC()
 
   ipcMain.handle('app:getVersion', () => {
     const pkg = JSON.parse(fs.readFileSync(path.join(process.env.APP_ROOT, 'package.json'), 'utf-8'))
     return pkg.version || '0.0.0'
+  })
+
+  ipcMain.on('shell:open-external', (_event, url: string) => {
+    if (typeof url === 'string' && /^https?:\/\//.test(url)) {
+      shell.openExternal(url)
+    }
   })
 
   ipcMain.on('titlebar:set-overlay', (_event, colors: { color: string; symbolColor: string }) => {
