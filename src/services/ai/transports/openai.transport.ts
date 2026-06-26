@@ -1,5 +1,6 @@
 import { BaseTransport } from './base'
 import type { ProviderVendor, ModelInfo, ChatRequest, ChatStreamChunk } from '@/interfaces'
+import { HTTP_STATUS_MESSAGES, isRetryable, fetchWithRetry } from './http-utils'
 
 const API_BASE: Record<string, string> = {
   openai: 'https://api.openai.com',
@@ -25,11 +26,31 @@ export class ChatCompletionsTransport extends BaseTransport {
     this.baseUrl = serverUrl || API_BASE[vendor] || 'https://api.openai.com'
   }
 
+  buildHeaders(): Record<string, string> {
+    return {
+      Authorization: `Bearer ${this.apiKey}`,
+      'content-type': 'application/json',
+    }
+  }
+
+  buildBody(req: ChatRequest): Record<string, unknown> {
+    return {
+      model: req.model,
+      messages: [
+        ...(req.system ? [{ role: 'system' as const, content: req.system }] : []),
+        ...req.messages,
+      ],
+      stream: true,
+      max_tokens: req.maxTokens ?? 4096,
+      temperature: req.temperature ?? 0.7,
+    }
+  }
+
   async listModels(): Promise<ModelInfo[]> {
     const res = await fetch(`${this.baseUrl}/v1/models`, {
       headers: { Authorization: `Bearer ${this.apiKey}` },
     })
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    if (!res.ok) throw new Error(HTTP_STATUS_MESSAGES[res.status] ?? `HTTP ${res.status}`)
     const data = await res.json()
     return (data.data || []).map((m: { id: string }) => ({
       id: m.id,
@@ -49,32 +70,35 @@ export class ChatCompletionsTransport extends BaseTransport {
   }
 
   async *streamChat(req: ChatRequest): AsyncIterable<ChatStreamChunk> {
-    const res = await fetch(`${this.baseUrl}/v1/chat/completions`, {
+    const url = `${this.baseUrl}/v1/chat/completions`
+    const headers = this.buildHeaders()
+    const body = JSON.stringify(this.buildBody(req))
+
+    const res = await fetchWithRetry(url, {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${this.apiKey}`,
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: req.model,
-        messages: [
-          ...(req.system ? [{ role: 'system' as const, content: req.system }] : []),
-          ...req.messages,
-        ],
-        stream: true,
-        max_tokens: req.maxTokens ?? 4096,
-        temperature: req.temperature ?? 0.7,
-      }),
+      headers,
+      body,
     })
+
     if (!res.ok) {
-      yield { type: 'error', error: `HTTP ${res.status}` }
+      const msg = HTTP_STATUS_MESSAGES[res.status] ?? `HTTP ${res.status}`
+      yield { type: 'error', error: msg }
+      if (isRetryable(res.status)) {
+        yield { type: 'error', error: `${msg} — se agotaron los reintentos.` }
+      }
       return
     }
+
     const reader = res.body?.getReader()
     if (!reader) {
       yield { type: 'error', error: 'No response body' }
       return
     }
+
+    if (this.apiKey) {
+      console.debug(`[${this.vendor}] request ${url} key=${this.apiKey.slice(0, 6)}...${this.apiKey.length}`)
+    }
+
     const decoder = new TextDecoder()
     let buffer = ''
     while (true) {

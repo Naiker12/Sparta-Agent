@@ -72,6 +72,7 @@ export function writeExtractedMemory(
 ): void {
   const existing = deps.getEntries()
   const entityNameToId = new Map<string, string>()
+  let addedCount = 0
 
   for (const entity of extracted.entities) {
     const dup = findDuplicateEntry(entity.name, entity.category, existing)
@@ -91,6 +92,7 @@ export function writeExtractedMemory(
     }
     entityNameToId.set(entity.name, entry.id)
     deps.addEntry(entry)
+    addedCount++
   }
 
   for (const fact of extracted.facts) {
@@ -121,6 +123,7 @@ export function writeExtractedMemory(
       sourceMessageId: messageId,
     }
     deps.addEntry(entry)
+    addedCount++
 
     const entityName = fact.aboutEntity
     if (entityName && entityNameToId.has(entityName)) {
@@ -154,4 +157,6 @@ export function writeExtractedMemory(
       })
     }
   }
+
+  console.debug(`[memory:writer] Added ${addedCount} new entries from extraction`)
 }

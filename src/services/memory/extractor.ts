@@ -36,23 +36,29 @@ Usuario: ${userMessage}
 Asistente: ${assistantResponse}`
 }
 
+function extractJSON(raw: string): string {
+  const cleaned = raw
+    .replace(/```json\s*/gi, '')
+    .replace(/```\s*/g, '')
+    .trim()
+  const start = cleaned.indexOf('{')
+  const end = cleaned.lastIndexOf('}')
+  if (start === -1 || end === -1) throw new Error('No JSON found in LLM response')
+  return cleaned.slice(start, end + 1)
+}
+
 export function parseExtractionResponse(raw: string): ExtractedMemory {
   try {
-    const cleaned = raw
-      .replace(/```json\s*/gi, '')
-      .replace(/```\s*/g, '')
-      .trim()
-    const start = cleaned.indexOf('{')
-    const end = cleaned.lastIndexOf('}')
-    if (start === -1 || end === -1) throw new Error('No JSON found')
-    const json = cleaned.slice(start, end + 1)
+    const json = extractJSON(raw)
     const parsed = JSON.parse(json)
     return {
       entities: Array.isArray(parsed.entities) ? parsed.entities : [],
       facts: Array.isArray(parsed.facts) ? parsed.facts : [],
       relations: Array.isArray(parsed.relations) ? parsed.relations : [],
     }
-  } catch {
+  } catch (err) {
+    console.warn('[memory:extractor] Failed to parse LLM response:', (err as Error).message)
+    console.warn('[memory:extractor] Raw response (first 300 chars):', raw.slice(0, 300))
     return { entities: [], facts: [], relations: [] }
   }
 }
@@ -63,13 +69,19 @@ export async function extractMemory(
   llmCall: (prompt: string) => Promise<string>
 ): Promise<ExtractedMemory> {
   if (isTrivialTurn(userMessage)) {
+    console.debug('[memory:extractor] Skipping trivial turn:', userMessage.trim().slice(0, 50))
     return { entities: [], facts: [], relations: [] }
   }
   const prompt = buildExtractionPrompt(userMessage, assistantResponse)
+  console.debug('[memory:extractor] Calling LLM for extraction...')
   try {
     const raw = await llmCall(prompt)
-    return parseExtractionResponse(raw)
-  } catch {
+    console.debug('[memory:extractor] LLM responded, parsing...')
+    const result = parseExtractionResponse(raw)
+    console.debug(`[memory:extractor] Parsed: ${result.entities.length} entities, ${result.facts.length} facts, ${result.relations.length} relations`)
+    return result
+  } catch (err) {
+    console.error('[memory:extractor] LLM call failed:', (err as Error).message)
     return { entities: [], facts: [], relations: [] }
   }
 }

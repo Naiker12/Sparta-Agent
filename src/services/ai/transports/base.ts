@@ -1,8 +1,12 @@
 import type { AIProvider } from '../types'
+import type { ChatRequest } from '@/interfaces'
 
 export abstract class BaseTransport implements AIProvider {
   abstract readonly vendor: AIProvider['vendor']
   abstract readonly kind: AIProvider['kind']
+
+  abstract buildHeaders(): Record<string, string>
+  abstract buildBody(req: ChatRequest): Record<string, unknown>
 
   abstract listModels(): ReturnType<AIProvider['listModels']>
   abstract testConnection(): ReturnType<AIProvider['testConnection']>

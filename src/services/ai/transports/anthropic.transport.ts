@@ -1,19 +1,39 @@
 import { BaseTransport } from './base'
 import type { ProviderVendor, ModelInfo, ChatRequest, ChatStreamChunk } from '@/interfaces'
+import { HTTP_STATUS_MESSAGES, isRetryable, fetchWithRetry } from './http-utils'
 
 export class AnthropicTransport extends BaseTransport {
   readonly vendor: ProviderVendor = 'anthropic'
   readonly kind = 'cloud' as const
+  private readonly baseUrl = 'https://api.anthropic.com'
 
   constructor(private apiKey: string) {
     super()
   }
 
+  buildHeaders(): Record<string, string> {
+    return {
+      'x-api-key': this.apiKey,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
+    }
+  }
+
+  buildBody(req: ChatRequest): Record<string, unknown> {
+    return {
+      model: req.model,
+      messages: req.messages,
+      system: req.system,
+      max_tokens: req.maxTokens ?? 4096,
+      stream: true,
+    }
+  }
+
   async listModels(): Promise<ModelInfo[]> {
-    const res = await fetch('https://api.anthropic.com/v1/models', {
-      headers: { 'x-api-key': this.apiKey, 'anthropic-version': '2023-06-01' },
+    const res = await fetch(`${this.baseUrl}/v1/models`, {
+      headers: this.buildHeaders(),
     })
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    if (!res.ok) throw new Error(HTTP_STATUS_MESSAGES[res.status] ?? `HTTP ${res.status}`)
     const data = await res.json()
     return (data.data || []).map((m: { id?: string; name?: string }) => ({
       id: m.id || m.name || '',
@@ -33,30 +53,35 @@ export class AnthropicTransport extends BaseTransport {
   }
 
   async *streamChat(req: ChatRequest): AsyncIterable<ChatStreamChunk> {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const url = `${this.baseUrl}/v1/messages`
+    const headers = this.buildHeaders()
+    const body = JSON.stringify(this.buildBody(req))
+
+    const res = await fetchWithRetry(url, {
       method: 'POST',
-      headers: {
-        'x-api-key': this.apiKey,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: req.model,
-        messages: req.messages,
-        system: req.system,
-        max_tokens: req.maxTokens ?? 4096,
-        stream: true,
-      }),
+      headers,
+      body,
     })
+
     if (!res.ok) {
-      yield { type: 'error', error: `HTTP ${res.status}` }
+      const msg = HTTP_STATUS_MESSAGES[res.status] ?? `HTTP ${res.status}`
+      yield { type: 'error', error: msg }
+      if (isRetryable(res.status)) {
+        yield { type: 'error', error: `${msg} — se agotaron los reintentos.` }
+      }
       return
     }
+
     const reader = res.body?.getReader()
     if (!reader) {
       yield { type: 'error', error: 'No response body' }
       return
     }
+
+    if (this.apiKey) {
+      console.debug(`[anthropic] request ${url} key=${this.apiKey.slice(0, 6)}...${this.apiKey.length}`)
+    }
+
     const decoder = new TextDecoder()
     let buffer = ''
     while (true) {

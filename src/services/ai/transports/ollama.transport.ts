@@ -1,5 +1,6 @@
 import { BaseTransport } from './base'
 import type { ProviderVendor, ModelInfo, ChatRequest, ChatStreamChunk } from '@/interfaces'
+import { HTTP_STATUS_MESSAGES } from './http-utils'
 
 export class OllamaTransport extends BaseTransport {
   readonly vendor: ProviderVendor = 'ollama'
@@ -9,9 +10,23 @@ export class OllamaTransport extends BaseTransport {
     super()
   }
 
+  buildHeaders(): Record<string, string> {
+    return { 'content-type': 'application/json' }
+  }
+
+  buildBody(req: ChatRequest): Record<string, unknown> {
+    return {
+      model: req.model,
+      messages: req.messages,
+      stream: true,
+    }
+  }
+
   async listModels(): Promise<ModelInfo[]> {
-    const res = await fetch(`${this.serverUrl}/api/tags`)
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const res = await fetch(`${this.serverUrl}/api/tags`, {
+      headers: this.buildHeaders(),
+    })
+    if (!res.ok) throw new Error(HTTP_STATUS_MESSAGES[res.status] ?? `HTTP ${res.status}`)
     const data = await res.json()
     return (data.models || []).map((m: { name: string }) => ({
       id: m.name,
@@ -31,24 +46,28 @@ export class OllamaTransport extends BaseTransport {
   }
 
   async *streamChat(req: ChatRequest): AsyncIterable<ChatStreamChunk> {
-    const res = await fetch(`${this.serverUrl}/api/chat`, {
+    const url = `${this.serverUrl}/api/chat`
+    const headers = this.buildHeaders()
+    const body = JSON.stringify(this.buildBody(req))
+
+    const res = await fetch(url, {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        model: req.model,
-        messages: req.messages,
-        stream: true,
-      }),
+      headers,
+      body,
     })
+
     if (!res.ok) {
-      yield { type: 'error', error: `HTTP ${res.status}` }
+      const msg = HTTP_STATUS_MESSAGES[res.status] ?? `HTTP ${res.status}`
+      yield { type: 'error', error: msg }
       return
     }
+
     const reader = res.body?.getReader()
     if (!reader) {
       yield { type: 'error', error: 'No response body' }
       return
     }
+
     const decoder = new TextDecoder()
     let buffer = ''
     while (true) {
