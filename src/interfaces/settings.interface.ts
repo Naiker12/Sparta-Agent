@@ -7,6 +7,7 @@ export type SettingsTab =
   | 'memory'
   | 'skills'
   | 'agents'
+  | 'search'
 
 export type SessionMode = 'chat' | 'agent'
 

@@ -1,13 +1,168 @@
+import { useCallback } from 'react'
 import { useAgentStore } from '@/stores/agent.store'
-import type { AgentStatus } from '@/types'
+import { useProviderStore } from '@/stores/provider.store'
+import { useMCPStore } from '@/stores/mcp.store'
+import { useSettingsStore } from '@/stores/settings.store'
+import { useEventBus } from '@/stores/event-bus.store'
+import { runAgentTask, buildToolDefinitions } from '@/services/agents'
+import { buildWebSearchTool, executeWebSearch } from '@/services/tools/web-search'
+import type { AgentStatus, Agent, Task } from '@/types'
 
 export function useAgent() {
   const store = useAgentStore()
 
+  const executeTask = useCallback(async (
+    agentId: string,
+    taskDescription: string,
+    systemPrompt?: string,
+  ): Promise<string> => {
+    const agent = store.agents.find((a) => a.id === agentId)
+    if (!agent) throw new Error(`Agent ${agentId} not found`)
+
+    const provider = useProviderStore.getState().getByVendor(
+      agent.type === 'coding' ? 'anthropic' : 'openai',
+    )
+
+    const mcpServers = useMCPStore.getState().servers.filter((s) => s.connected)
+    const allMcpTools = mcpServers.flatMap((s) => s.tools)
+    const webSearchEnabled = useSettingsStore.getState().webSearchEnabled
+
+    let allowedTools = agent.tools.length > 0
+      ? agent.tools
+      : allMcpTools.map((t) => t.name)
+    let toolDefs = buildToolDefinitions(
+      allMcpTools.filter((t) => allowedTools.includes(t.name)),
+    )
+
+    if (webSearchEnabled) {
+      allowedTools = [...allowedTools, 'web_search']
+      toolDefs = [...toolDefs, buildWebSearchTool() as any]
+    }
+
+    const task: Task = {
+      id: crypto.randomUUID(),
+      agentId,
+      description: taskDescription,
+      status: 'running',
+      steps: [],
+      createdAt: Date.now(),
+    }
+
+    store.addTask(agentId, task)
+    store.updateAgentStatus(agentId, 'running')
+
+    useEventBus.getState().dispatch({
+      type: 'agent:started',
+      agentId,
+      agentType: agent.type,
+      timestamp: Date.now(),
+    })
+
+    const model = provider?.defaultModel ?? agent.model ?? 'gpt-4'
+    const defaultSystem = systemPrompt ?? (
+      `Eres el agente "${agent.name}" (${agent.type}).\n` +
+      `Completas tareas usando herramientas MCP.\n` +
+      `Cuando necesites información, usa las herramientas disponibles.\n` +
+      `Si la tarea requiere investigación paralela, delega subagentes.\n` +
+      `IMPORTANTE: Responde SIEMPRE en español.`
+    )
+
+    const toolRunner = async (name: string, args: unknown): Promise<unknown> => {
+      if (name === 'web_search') {
+        const query = typeof args === 'object' && args !== null && 'query' in args
+          ? (args as any).query
+          : String(args)
+        const count = typeof args === 'object' && args !== null && 'count' in args
+          ? (args as any).count
+          : 5
+        return await executeWebSearch(query, count)
+      }
+      const server = mcpServers.find((s) =>
+        s.tools.some((t) => t.name === name),
+      )
+      if (!server) throw new Error(`Tool ${name} no encontrada en ningún servidor MCP`)
+      return null
+    }
+
+    const llmCall = async (prompt: string): Promise<string> => {
+      if (!provider?.apiKey) return 'Error: No hay API key configurada para el proveedor.'
+      try {
+        const res = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${provider.apiKey}`,
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({
+            model,
+            messages: [{ role: 'user', content: prompt }],
+            max_tokens: 4096,
+          }),
+        })
+        if (!res.ok) return `Error HTTP ${res.status}`
+        const data = await res.json()
+        return data.choices?.[0]?.message?.content ?? 'Sin respuesta'
+      } catch {
+        return 'Error de conexión con el proveedor LLM.'
+      }
+    }
+
+    try {
+      const result = await runAgentTask(
+        task.id,
+        agentId,
+        taskDescription,
+        defaultSystem,
+        model,
+        allowedTools,
+        toolDefs,
+        toolRunner,
+        llmCall,
+      )
+      return result
+    } catch (err) {
+      store.updateAgentStatus(agentId, 'error')
+      store.updateTask(agentId, task.id, { status: 'error' })
+      throw err
+    }
+  }, [store])
+
+  const createAgent = useCallback((data: {
+    name: string
+    type: Agent['type']
+    model: string
+    description: string
+    tools?: string[]
+  }) => {
+    const agent: Agent = {
+      id: crypto.randomUUID(),
+      name: data.name,
+      type: data.type,
+      status: 'idle',
+      model: data.model,
+      createdAt: Date.now(),
+      tools: data.tools ?? [],
+      description: data.description,
+    }
+    store.registerAgent(agent)
+    return agent.id
+  }, [store])
+
+  const activeTasks = store.activeAgentId
+    ? (store.tasks[store.activeAgentId] ?? [])
+    : Object.values(store.tasks).flat()
+
   return {
     agents: store.agents,
     activeAgent: store.agents.find((a) => a.id === store.activeAgentId) || null,
+    tasks: store.tasks,
+    activeTasks,
     setActiveAgent: store.setActiveAgent,
     updateStatus: (id: string, status: AgentStatus) => store.updateAgentStatus(id, status),
+    executeTask,
+    createAgent,
+    registerAgent: store.registerAgent,
+    addTask: store.addTask,
+    updateTask: store.updateTask,
   }
 }

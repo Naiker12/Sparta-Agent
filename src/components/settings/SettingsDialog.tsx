@@ -10,6 +10,7 @@ import { McpTab } from './tabs/McpTab'
 import { MemoryTab } from './tabs/MemoryTab'
 import { SkillsTab } from './tabs/SkillsTab'
 import { AgentsTab } from './tabs/AgentsTab'
+import { SearchTab } from './tabs/SearchTab'
 import type { SettingsTab } from '@/interfaces/settings.interface'
 
 export function SettingsDialog() {
@@ -26,6 +27,7 @@ export function SettingsDialog() {
     { id: 'memory', label: t('settings.memory') },
     { id: 'skills', label: t('settings.skills') },
     { id: 'agents', label: t('settings.agents') },
+    { id: 'search', label: 'Búsqueda' },
   ]
 
   const tabContent: Record<SettingsTab, React.ReactNode> = {
@@ -37,6 +39,7 @@ export function SettingsDialog() {
     memory: <MemoryTab />,
     skills: <SkillsTab />,
     agents: <AgentsTab />,
+    search: <SearchTab />,
   }
 
   return (
