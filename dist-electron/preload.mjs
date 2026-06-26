@@ -10,7 +10,8 @@ electron.contextBridge.exposeInMainWorld("electronAPI", {
     electron.ipcRenderer.on("win:maximized-changed", handler);
     return () => electron.ipcRenderer.removeListener("win:maximized-changed", handler);
   },
-  setTitleBarOverlay: (colors) => electron.ipcRenderer.send("titlebar:set-overlay", colors)
+  setTitleBarOverlay: (colors) => electron.ipcRenderer.send("titlebar:set-overlay", colors),
+  getVersion: () => electron.ipcRenderer.invoke("app:getVersion")
 });
 electron.contextBridge.exposeInMainWorld("electron", {
   on: (channel, listener) => {
@@ -29,5 +30,7 @@ electron.contextBridge.exposeInMainWorld("sparta", {
   },
   sendEvent: (event) => {
     electron.ipcRenderer.send("sparta:event", event);
-  }
+  },
+  sendMessage: (req) => electron.ipcRenderer.invoke("chat:send", req),
+  abortMessage: (sessionId) => electron.ipcRenderer.invoke("chat:abort", sessionId)
 });

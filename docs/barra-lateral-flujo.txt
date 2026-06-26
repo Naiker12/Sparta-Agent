@@ -1,22 +1,44 @@
 ╔══════════════════════════════════════════════════════════════╗
 ║        SPARTA AGENT — BARRA LATERAL (Sidebar)               ║
 ║        Arquitectura, flujo y dependencias                   ║
+║        Última actualización: 2026-06-26                     ║
 ╚══════════════════════════════════════════════════════════════╝
 
 ═══════════════════════════════════════════════════════════════
-1.  LIBRERÍAS Y VERSIONES
+1.  RESUMEN / ARQUITECTURA GENERAL
 ═══════════════════════════════════════════════════════════════
 
-   @base-ui/react           ^1.6.0    ← Base UI (base de todos los
-                                        componentes shadcn adaptados)
+La barra lateral fue reconstruida desde cero. No es el sidebar
+estándar de shadcn/ui tal cual; usamos un componente base propio
+(src/components/ui/sidebar.tsx) que conserva la API de shadcn pero
+está implementado con primitivas de @base-ui/react (merge-props,
+use-render, dialog, etc.).
+
+Sobre ese componente base, AppSidebar.tsx dibuja una UI propia:
+  • Logo SPARTA AGENT
+  • Botón “Nueva sesión”
+  • 5 ítems de navegación principales
+  • Buscador de sesiones
+  • Secciones “Fijados” y “Recientes”
+  • Footer con Configuración
+
+La navegación de vistas Chat/Editor/Terminal/Agents ya NO vive en
+el sidebar; ahora está en la TitleBar.
+
+
+═══════════════════════════════════════════════════════════════
+2.  LIBRERÍAS Y VERSIONES
+═══════════════════════════════════════════════════════════════
+
+   @base-ui/react           ^1.6.0    ← Primitivas subyacentes
    lucide-react             ^1.21.0   ← Íconos
-   class-variance-authority ^0.7.1    ← Variantes de componentes (cva)
+   class-variance-authority ^0.7.1    ← CVA (en sidebar.tsx base)
    tailwind-merge           ^3.6.0    ← Fusión de clases Tailwind
    clsx                     ^2.1.1    ← Condicional de clases
    zustand                  ^5.0.14   ← Estado global
    tailwindcss              ^4.3.1    ← CSS utility-first
    tw-animate-css           ^1.4.0    ← Animaciones Tailwind
-   framer-motion            ^12.41.0  ← Animaciones (no usado en sidebar)
+   framer-motion            ^12.41.0  ← Animaciones (no usado aquí)
    react                    ^18.2.0
    typescript               ^5.2.2
    vite                     ^5.1.6
@@ -24,75 +46,60 @@
 
 
 ═══════════════════════════════════════════════════════════════
-2.  ARCHIVOS DEL SIDEBAR
+3.  ARCHIVOS DEL SIDEBAR
 ═══════════════════════════════════════════════════════════════
 
    src/components/sidebar/
-   ├── AppSidebar.tsx       ← Componente principal del sidebar
-   ├── ProjectSwitcher.tsx  ← Selector de proyectos (dropdown)
-   ├── SessionItem.tsx      ← Item de sesión individual
-   ├── SessionList.tsx      ← Lista de sesiones (standalone)
-   ├── ChannelItem.tsx      ← Item de canal (inline styles)
-   ├── McpServerItem.tsx    ← Item de servidor MCP (inline styles)
-   └── SkillItem.tsx        ← Item de skill (inline styles)
+   ├── AppSidebar.tsx          ← Componente principal (UI custom)
+   ├── SessionItem.tsx         ← Ítem de sesión con menú y acciones
+   ├── SidebarResizeHandle.tsx ← Drag handle para redimensionar
+   ├── ProjectSwitcher.tsx     ← NO SE USA (dead code)
+   ├── SessionList.tsx         ← NO SE USA (dead code)
+   ├── ChannelItem.tsx         ← NO SE USA (dead code)
+   ├── McpServerItem.tsx       ← NO SE USA (dead code)
+   └── SkillItem.tsx           ← NO SE USA (dead code)
 
    src/components/layout/
-   ├── AppShell.tsx         ← Punto de entrada que envuelve todo
-   ├── TitleBar.tsx         ← Barra superior
-   ├── StatusBar.tsx        ← Barra inferior
-   └── AppMenu.tsx          ← Menú de aplicación
+   ├── AppShell.tsx            ← Punto de entrada / layout raíz
+   ├── TitleBar.tsx            ← Barra superior + toggle + tabs
+   ├── StatusBar.tsx           ← Barra inferior
+   └── AppMenu.tsx             ← Menú de aplicación
+
+   src/components/ui/sidebar.tsx  ← Componente base propio (fork)
+   src/styles/globals.css         ← Estilos custom del sidebar
 
 
 ═══════════════════════════════════════════════════════════════
-3.  COMPONENTES UI IMPORTADOS
+4.  COMPONENTES UI IMPORTADOS / USADOS
 ═══════════════════════════════════════════════════════════════
 
-   De @/components/ui/sidebar (723 líneas, 22 exports):
+   De @/components/ui/sidebar (base propio):
    ─────────────────────────────────────────────────────────
-   SidebarProvider      ← Contexto: estado open/close, atajo Ctrl+B
    Sidebar              ← Contenedor principal (collapsible="icon")
-   SidebarHeader        ← <div> cabecera (flex-col gap-2 p-2)
-   SidebarContent       ← Área scrolleable (flex-1 overflow-auto)
-   SidebarFooter        ← <div> pie (flex-col gap-2 p-2)
-   SidebarGroup         ← Sección con padding
-   SidebarGroupLabel    ← <span> label (se oculta en collapsed)
-   SidebarGroupAction   ← Botón acción en grupo
-   SidebarGroupContent  ← Contenedor de contenido del grupo
-   SidebarMenu          ← <ul> menú
-   SidebarMenuItem      ← <li> item de menú
-   SidebarMenuButton    ← Botón polimórfico (isActive, tooltip, CVA)
-   SidebarMenuAction    ← Botón acción (showOnHover, posicionado absoluto)
-   SidebarMenuBadge     ← Badge contador (oculto en collapsed)
-   SidebarMenuSkeleton  ← Skeleton de carga
-   SidebarMenuSub       ← <ul> sub-menú (indentado)
-   SidebarMenuSubItem   ← <li> sub-item
-   SidebarMenuSubButton ← Botón polimórfico de sub-menú
-   SidebarTrigger       ← Botón toggle sidebar (PanelLeftIcon)
+   SidebarContent       ← Área scrolleable
+   SidebarHeader        ← Cabecera
+   SidebarFooter        ← Pie
    SidebarRail          ← Tira colapsable en borde externo
-   SidebarInset         ← <main> wrapper (para variant=inset)
-   SidebarInput         ← <Input> estilizado para sidebar
-   useSidebar (hook)    ← { state, open, setOpen, toggleSidebar, ... }
+   useSidebar           ← hook interno del provider
 
    De @/components/ui/dropdown-menu (Base UI):
    ─────────────────────────────────────────────────────────
    DropdownMenu
-   DropdownMenuTrigger   ← renderiza <button type="button">
-   DropdownMenuContent   ← popup con sombra/borde
-   DropdownMenuItem      ← cursor-pointer, gap-2, px-2.5 py-1.5
-   DropdownMenuSeparator ← línea divisoria
-   DropdownMenuLabel     ← label del grupo
+   DropdownMenuTrigger
+   DropdownMenuContent
+   DropdownMenuItem
+   DropdownMenuSeparator
+   DropdownMenuLabel
 
    Otros:
    ─────────────────────────────────────────────────────────
-   @/components/ui/dialog        ← share dialog
-   @/components/ui/button        ← botón "Copiar" / "Cerrar"
-   @/components/ui/separator     ← separador visual
-   @/components/ui/confirm-delete-dialog  ← confirmación eliminar
-   @/components/projects/ProjectDialog    ← crear proyecto
+   @/components/ui/dialog                  ← share dialog
+   @/components/ui/button                  ← botón Copiar / Cerrar
+   @/components/ui/confirm-delete-dialog   ← confirmación eliminar
 
 
 ═══════════════════════════════════════════════════════════════
-4.  STORES (ZUSTAND) USADOS
+5.  STORES (ZUSTAND) USADOS
 ═══════════════════════════════════════════════════════════════
 
    Store               Slice consumido                  Persistencia
@@ -111,102 +118,111 @@
    memory.store        entries                          localStorage
 
    ui.store            mainView, setMainView,           localStorage
-                        sidebarOpen, sidebarWidth
+                        sidebarOpen, sidebarWidth,
+                        toggleSidebar, setSidebarWidth
 
    settings.store      openSettings                     localStorage
 
    project.store       projects, activeProjectId,       localStorage
                         switchProject, addProject
 
-
-═══════════════════════════════════════════════════════════════
-5.  VARIABLES CSS DEL SIDEBAR
-═══════════════════════════════════════════════════════════════
-
-   Definidas en :root (globals.css) — mapeadas a tokens Sparta:
-
-   --sidebar-background:         var(--bg-sidebar)     #0F0F13
-   --sidebar-foreground:         var(--text-primary)   #C8C8DC
-   --sidebar-primary:            var(--accent)         #6366F1
-   --sidebar-primary-foreground: #fff
-   --sidebar-accent:             var(--bg-hover)       #1E1E28
-   --sidebar-accent-foreground:  var(--text-primary)   #C8C8DC
-   --sidebar-border:             var(--border-subtle)  rgba(255,255,255,0.03)
-   --sidebar-ring:               var(--accent)         #6366F1
-
-   Heredan de cada tema (light, linen, sage, mist, sand, etc.)
-   mediante var(--bg-sidebar) etc. — un solo mapeo en :root
-   funciona para todos los temas.
+   Nota: project.store sigue existiendo pero el ProjectSwitcher
+   ya no se renderiza en AppSidebar.
 
 
 ═══════════════════════════════════════════════════════════════
-6.  FLUJO DE RENDER (AppShell → Sidebar)
+6.  VARIABLES CSS / TOKENS USADOS
+═══════════════════════════════════════════════════════════════
+
+   Variables del tema usadas en el sidebar (definidas en :root y
+   sobreescritas por cada tema en src/styles/themes/*.css):
+
+   --bg-sidebar            → fondo del sidebar
+   --bg-elevated           → fondo elevado (new session button)
+   --bg-hover              → hover de ítems
+   --bg-active             → fondo de badges/acciones
+   --bg-input              → fondo del search focused
+   --text-display          → logo / títulos
+   --text-primary          → texto principal
+   --text-secondary        → texto secundario
+   --text-muted            → placeholders / labels
+   --accent                → indicadores activos / iconos
+   --accent-muted          → fondo de ítem activo
+   --accent-dim            → bordes focused
+   --border-normal         → separadores / bordes
+   --border-subtle         → bordes sutiles
+   --border-strong         → bordes de dropdowns/dialogs
+   --status-ok             → MCP conectado / Gateway
+   --status-err            → eliminar destructivo
+   --radius-lg / --radius-xl  → redondeo
+   --font-ui / --font-mono / --font-display  → tipografías
+
+   Variables internas del sidebar base:
+   --sidebar-width         → ancho actual (seteado desde ui.store)
+   --sidebar-width-icon    → 3rem (48px) modo collapsed
+
+
+═══════════════════════════════════════════════════════════════
+7.  FLUJO DE RENDER (AppShell → Sidebar)
 ═══════════════════════════════════════════════════════════════
 
    AppShell.tsx
    │
-   ├── <div> contenedor (flex-col h-screen)
+   ├── <div> contenedor principal (flex-col h-screen)
    │   │
    │   ├── <TitleBar>
-   │   │   ├── Sidebar toggle (PanelLeftOpen/Close)
+   │   │   ├── Toggle sidebar (PanelLeftOpen / PanelLeftClose)
    │   │   ├── AppMenu (File/Edit/View/Window/Help)
    │   │   ├── Sparta branding
-   │   │   ├── View tabs (Chat/Editor/Terminal/Agents)
-   │   │   └── Settings button
+   │   │   └── Tabs Chat / Editor / Terminal / Agents
    │   │
    │   ├── <div> flex-row flex-1 overflow-hidden
    │   │   │
    │   │   ├── <SidebarProvider>
-   │   │   │   │   open={sidebarOpen}             ← ui.store
-   │   │   │   │   onOpenChange={setState}         ← ui.store
-   │   │   │   │   style={{ '--sidebar-width' }}   ← ui.store.sidebarWidth
+   │   │   │   │   open={sidebarOpen}                  ← ui.store
+   │   │   │   │   onOpenChange → uiStore.setState({ sidebarOpen })
+   │   │   │   │   style={{ '--sidebar-width': `${sidebarWidth}px` }}
    │   │   │   │
-   │   │   │   ├── <AppSidebar>
-   │   │   │   │   │
-   │   │   │   │   ├── <SidebarHeader>
-   │   │   │   │   │   ├── "Nueva sesión" button
-   │   │   │   │   │   │   onClick → createSession() + setMainView('chat')
-   │   │   │   │   │   ├── <ProjectSwitcher>
-   │   │   │   │   │   │   DropdownMenu → project.store
-   │   │   │   │   │   └── Search input
-   │   │   │   │   │       onChange → filtra sessions por título
-   │   │   │   │   │
-   │   │   │   │   ├── <SidebarContent>
-   │   │   │   │   │   ├── <SidebarGroup> (Nav)
-   │   │   │   │   │   │   └── <SidebarMenu>
-   │   │   │   │   │   │       5× <SidebarMenuButton>
-   │   │   │   │   │   │           onClick → setMainView(type)
-   │   │   │   │   │   │           + <SidebarMenuBadge> count
+   │   │   │   ├── <div> wrapper relativo
+   │   │   │   │   ├── <AppSidebar>
    │   │   │   │   │   │
-   │   │   │   │   │   ├── <SidebarSeparator>
+   │   │   │   │   │   ├── <SidebarHeader>
+   │   │   │   │   │   │   ├── Logo SPARTA AGENT
+   │   │   │   │   │   │   └── Botón “Nueva sesión”
+   │   │   │   │   │   │       onClick → createSession() + setMainView('chat')
    │   │   │   │   │   │
-   │   │   │   │   │   ├── <SidebarGroup> "Fijados" (si pinned.length > 0)
-   │   │   │   │   │   │   └── <SidebarMenu>
-   │   │   │   │   │   │       <SessionItem>[]
+   │   │   │   │   │   ├── <SidebarContent>
+   │   │   │   │   │   │   ├── Nav: Sesiones / Skills / MCP / Canales / Memoria
+   │   │   │   │   │   │   │   onClick → setMainView(type)
+   │   │   │   │   │   │   │   badge con count
+   │   │   │   │   │   │   ├── Separador
+   │   │   │   │   │   │   ├── Sección “Fijados” (si hay pinned)
+   │   │   │   │   │   │   │   └── <SessionItem>[]
+   │   │   │   │   │   │   ├── Buscador de sesiones
+   │   │   │   │   │   │   └── Sección “Recientes”
+   │   │   │   │   │   │       └── <SessionItem>[]
    │   │   │   │   │   │
-   │   │   │   │   │   └── <SidebarGroup> "Recientes"
-   │   │   │   │   │       └── <SidebarMenu>
-   │   │   │   │   │           <SessionItem>[]
+   │   │   │   │   │   ├── <SidebarFooter>
+   │   │   │   │   │   │   └── Botón “Configuración”
+   │   │   │   │   │   │       onClick → openSettings()
+   │   │   │   │   │   │
+   │   │   │   │   │   └── <SidebarRail />
    │   │   │   │   │
-   │   │   │   │   ├── <SidebarFooter>
-   │   │   │   │   │   └── Settings button
-   │   │   │   │   │       onClick → settingsStore.openSettings()
-   │   │   │   │   │
-   │   │   │   │   └── <SidebarRail>
+   │   │   │   │   └── <SidebarResizeHandle />
    │   │   │   │
-   │   │   │   └── <div> content area (animado)
+   │   │   │   └── <div> content area
    │   │   │       └── PANELS[mainView.type]
    │   │   │           chat     → <ChatArea>
-   │   │   │           editor   → <EditorPanel>   (from @/App)
-   │   │   │           terminal → <TerminalPanel>  (from @/App)
-   │   │   │           agents   → <AgentsPanel>    (from @/App)
+   │   │   │           editor   → <EditorPanel>
+   │   │   │           terminal → <TerminalPanel>
+   │   │   │           agents   → <AgentsPanel>
    │   │   │           sessions → <SessionsView>
    │   │   │           skills   → <SkillsView>
    │   │   │           mcp      → <McpView>
    │   │   │           channels → <ChannelsView>
    │   │   │           memory   → <MemoryView>
    │   │   │
-   │   │   <StatusBar>
+   │   ├── <StatusBar>
    │   │   ├── Gateway indicator
    │   │   ├── Agents
    │   │   ├── Cron
@@ -218,149 +234,136 @@
 
 
 ═══════════════════════════════════════════════════════════════
-7.  CICLO DE VIDA DEL SIDEBAR
+8.  CICLO DE VIDA E INTERACCIONES
 ═══════════════════════════════════════════════════════════════
 
    Montaje inicial:
    ──────────────
    1. AppShell llama a initTheme() → aplica data-theme en <html>
-   2. TitleBar se renderiza con botón toggle
+   2. TitleBar se renderiza con botón toggle del sidebar
    3. SidebarProvider se monta con open=ui.store.sidebarOpen
-   4. SidebarProvider registra listener Ctrl+B (shadcn interno)
-   5. AppSidebar lee todas las stores y renderiza
+   4. SidebarProvider registra atajo Ctrl+B internamente
+   5. AppSidebar lee stores y renderiza
 
    Interacción usuario:
    ────────────────────
-   Click "Nueva sesión"
-     → chatStore.createSession() → nueva Session en store
-     → uiStore.setMainView({ type: 'chat' }) → cambia panel
-     → AppSidebar se re-renderiza (nueva sesión aparece en Recientes)
+   Click “Nueva sesión"
+     → chatStore.createSession()
+     → uiStore.setMainView({ type: 'chat' })
+     → AppSidebar se re-renderiza
 
    Click nav item (ej. Skills)
      → uiStore.setMainView({ type: 'skills' })
      → Panel cambia a <SkillsView>
 
-   Click Ctrl+B
-     → SidebarProvider.onKeyDown → toggleSidebar()
-     → Llama onOpenChange → uiStore.setState({ sidebarOpen })
-     → Sidebar se colapsa/expande usando CSS transitions
+   Click toggle en TitleBar (o Ctrl+B)
+     → uiStore.toggleSidebar()
+     → SidebarProvider recibe nuevo open
+     → Sidebar se colapsa/expande con transición CSS
+
+   Redimensionar sidebar
+     → SidebarResizeHandle.onMouseMove → setSidebarWidth(clientX)
+     → ui.store guarda entre 220px y 480px
+     → SidebarProvider recibe nuevo --sidebar-width
 
    Click SessionItem
      → chatStore.switchSession(id)
-     → SidebarMenuButton.isActive = true
-     → UIStore.setMainView({ type: 'chat', sessionId: id })
+     → uiStore.setMainView({ type: 'chat', sessionId: id })
 
-   Click ⋮ → Fijar
+   Menú ⋮ → Fijar / Quitar fijado
      → chatStore.pinSession(id)
-     → SessionItem se mueve de Recientes → Fijados
+     → Sesión se mueve entre Fijados y Recientes
 
-   Click ⋮ → Eliminar
-     → ConfirmDeleteDialog → chatStore.deleteSession(id)
-     → Sesión desaparece
-
-   Click ⋮ → Renombrar
+   Menú ⋮ → Renombrar
      → prompt() → chatStore.renameSession(id, newTitle)
 
+   Menú ⋮ → Compartir
+     → Dialog con enlace sparta://session/{id} + Copiar
+
+   Menú ⋮ → Eliminar
+     → ConfirmDeleteDialog → chatStore.deleteSession(id)
+
    Búsqueda:
-     → query state cambia
-     → filtered = sessions.filter(title.includes(query))
+     → query state local
+     → sessions.filter(title.toLowerCase().includes(query))
      → pinned/unpinned se recalculan
-     → Solo sesiones que matchean aparecen
 
 
 ═══════════════════════════════════════════════════════════════
-8.  BASE UI — SUB-PAQUETES INSTALADOS
+9.  ESTADO COLLAPSED Y RESIZE
 ═══════════════════════════════════════════════════════════════
 
-   @base-ui/react ^1.6.0 contiene internamente:
-   ─────────────────────────────────────────────────────────
-   merge-props         ← usado por sidebar.tsx
-   use-render          ← usado por sidebar.tsx
-   menu                ← usado por dropdown-menu.tsx
-   tooltip             ← usado por tooltip.tsx
-   dialog              ← usado por dialog.tsx
-   separator           ← usado por separator.tsx
-   button              ← posible (no se importa directo)
-   (y ~40 más: accordion, popover, select, tabs, etc.)
+   Colapsado (collapsible="icon"):
+   ──────────────────────────────
+   • Ancho base: 280px  (--sidebar-width desde ui.store)
+   • Ancho collapsed: 48px (--sidebar-width-icon = 3rem)
+   • Toggle controlado por uiStore.toggleSidebar()
+   • Atajo Ctrl+B registrado en SidebarProvider
+   • data-state="collapsed" se setea en el wrapper
+     <div data-slot="sidebar"> (ancestro de sidebar-inner)
+   • Estilos en globals.css ocultan texto/badges/separadores y
+     centran los iconos en modo collapsed usando selectores
+     descendientes [data-state="collapsed"] .clase.
+   • Clases añadidas en AppSidebar para soportar el bloque:
+     .btn-label (texto "Nueva sesión"), .footer-label ("Configuración"),
+     .sidebar-new-session-wrapper y .sidebar-footer-wrapper.
+   • En collapsed se reduce el padding de wrappers y logo, se achica
+     la imagen del logo a 28px y los botones usan width: 100% con
+     padding horizontal reducido para no desbordarse del ancho de 48px.
 
-   Solo merge-props y use-render se importan en sidebar.tsx.
-   El resto se consume a través de los wrappers en @/components/ui/.
-
-
-═══════════════════════════════════════════════════════════════
-9.  SIDEBAR EN ESTADO COLLAPSED (icon)
-═══════════════════════════════════════════════════════════════
-
-   Cuando collapsible="icon" y el sidebar está cerrado:
-   ─────────────────────────────────────────────────────────
-   • Ancho: 3rem (48px) — definido por --sidebar-width-icon
-   • Solo iconos visibles en los SidebarMenuButton
-   • Texto oculto con clase: group-data-[collapsible=icon]:hidden
-   • Tooltips aparecen en cada SidebarMenuButton (prop tooltip)
-   • SidebarHeader se oculta (group-data-[collapsible=icon]:hidden)
-   • SidebarFooter igual
-   • SidebarRail visible para expandir
-   • SidebarMenuBadge oculto
-   • SidebarGroupLabel oculto
-   • SidebarMenuAction.showOnHover → opacity-0 (no hay hover real)
+   Resize:
+   ───────
+   • Componente: SidebarResizeHandle.tsx
+   • Límites: 220px mínimo, 480px máximo
+   • Persistencia: ui.store.sidebarWidth se guarda en localStorage
+   • Cursor: col-resize mientras se arrastra
+   • Visual: línea de 2px derecha del sidebar que resalta en --accent
 
 
 ═══════════════════════════════════════════════════════════════
-10. CSS TOKENS — MAPA COMPLETO
+10. ESTILOS CSS CUSTOM PRINCIPALES
 ═══════════════════════════════════════════════════════════════
 
-   Variable Sparta         →  Valor default       →  Controla
-   ─────────────────────────────────────────────────────────────
-   --bg-sidebar            →  #0F0F13             →  bg-sidebar
-   --text-primary          →  #C8C8DC             →  text-sidebar-foreground
-   --text-secondary        →  #6868A0             →  (usado manual)
-   --text-muted            →  #38384E             →  (usado manual)
-   --accent                →  #6366F1             →  sidebar-primary / ring
-   --bg-hover              →  #1E1E28             →  sidebar-accent
-   --border-subtle         →  rgba(255,255,255,..)→  sidebar-border
+   Ubicados en src/styles/globals.css (líneas ~300–703):
 
-   Temas disponibles (cada uno sobreescribe --bg-sidebar etc):
-   ─────────────────────────────────────────────────────────
-   midnight (default), obsidian, emerald, rose, amber,
-   dracula, catppuccin, nord, light, linen, sage, mist, sand
+   Bloque                          Clases principales
+   ────────────────────────────────────────────────────────────
+   Sidebar inner                   [data-slot="sidebar-inner"]
+   Logo                            .sidebar-logo, .sidebar-logo-text
+   New session button              .sidebar-new-session-btn
+   Navigation                      .sidebar-nav, .sidebar-nav-btn
+   Active indicator                .nav-indicator
+   Count badges                    .sidebar-nav-badge
+   Separador                       .sidebar-separator
+   Section labels                  .sidebar-section-label
+   Search bar                      .sidebar-search-container
+   Session item card               .session-item-card
+   Session hover actions           .session-hover-actions
+   Relative date badge             .session-date-badge
+   3-dot menu trigger              .session-menu-trigger
+   Footer                          .sidebar-footer-btn
+   Sessions list / empty state     .sidebar-sessions-list, .sidebar-empty-state
+   Dropdown overrides              [data-slot="dropdown-menu-*"]
+   Collapsed state                 [data-state="collapsed"] .*
+
+   Las clases usan variables del tema y transiciones suaves;
+   la mayoría no dependen de Tailwind utility classes.
 
 
 ═══════════════════════════════════════════════════════════════
-11. ARCHIVOS ELIMINADOS (migración shadcn)
+11. ARCHIVOS HUÉRFANOS / DEAD CODE
 ═══════════════════════════════════════════════════════════════
 
-   Los siguientes archivos fueron eliminados por ser
-   reemplazados por primitivos shadcn o por dead code:
+   Los siguientes archivos en src/components/sidebar/ NO se
+   importan actualmente en ningún lugar del código:
 
-   Eliminados:
-   ─────────────────────────────────────────────────────────
-   src/components/sidebar/Sidebar.tsx
-       ← reemplazado por AppSidebar.tsx
+   • ProjectSwitcher.tsx   ← selector de proyectos (reemplazado por logo)
+   • SessionList.tsx       ← lista simple (reemplazada por Fijados/Recientes)
+   • ChannelItem.tsx       ← ítem de canal inline
+   • McpServerItem.tsx     ← ítem de servidor MCP inline
+   • SkillItem.tsx         ← ítem de skill inline
 
-   src/components/sidebar/SidebarResizeHandle.tsx
-       ← reemplazado por <SidebarRail />
-
-   src/components/sidebar/SidebarSection.tsx
-       ← reemplazado por <SidebarGroup> + <SidebarGroupLabel>
-
-   src/components/sidebar/ChannelsSection.tsx
-       ← dead code (no importado)
-
-   src/components/sidebar/SkillsSection.tsx
-       ← dead code (no importado)
-
-   src/components/sidebar/MemorySection.tsx
-       ← dead code (no importado)
-
-   src/components/sidebar/McpSection.tsx
-       ← dead code (no importado)
-
-   Conservados (aún usados):
-   ─────────────────────────────────────────────────────────
-   src/components/sidebar/SessionList.tsx
-   src/components/sidebar/ChannelItem.tsx
-   src/components/sidebar/McpServerItem.tsx
-   src/components/sidebar/SkillItem.tsx
+   Podrían usarse en vistas futuras o eliminarse en una limpieza.
 
 
 ═══════════════════════════════════════════════════════════════
@@ -369,61 +372,67 @@
 
    AppShell.tsx
    ├── TitleBar.tsx
-   ├── SidebarProvider  (@/components/ui/sidebar)
+   │   └── useUIStore (toggleSidebar, mainView, setMainView)
+   │   └── useSettingsStore (openSettings)
+   │
+   ├── SidebarProvider (@/components/ui/sidebar)
    │   ├── use-mobile.ts
-   │   ├── @/components/ui/button
-   │   ├── @/components/ui/input
-   │   ├── @/components/ui/separator
-   │   ├── @/components/ui/sheet
-   │   ├── @/components/ui/skeleton
-   │   ├── @/components/ui/tooltip
-   │   └── AppSidebar.tsx
-   │       ├── @/components/ui/sidebar  (13 componentes)
-   │       ├── stores: chat, skill, mcp, channel, memory, ui, settings
-   │       ├── ProjectSwitcher.tsx
-   │       │   ├── @/components/ui/dropdown-menu
-   │       │   ├── @/components/projects/ProjectDialog
-   │       │   └── @/stores/project.store
-   │       └── SessionItem.tsx
-   │           ├── @/components/ui/sidebar (SidebarMenuButton)
-   │           ├── @/components/ui/dropdown-menu
-   │           ├── @/components/ui/dialog
-   │           ├── @/components/ui/button
-   │           ├── @/components/ui/confirm-delete-dialog
-   │           ├── @/stores/chat.store
-   │           └── @/types
+   │   ├── @/components/ui/button, input, separator, sheet, skeleton, tooltip
+   │   ├── div wrapper relativo
+   │   │   ├── AppSidebar.tsx
+   │   │   │   ├── @/components/ui/sidebar (Sidebar, Content, Header, Footer, Rail)
+   │   │   │   ├── stores: chat, skill, mcp, channel, memory, ui, settings
+   │   │   │   └── SessionItem.tsx
+   │   │   │       ├── @/components/ui/dropdown-menu
+   │   │   │       ├── @/components/ui/dialog
+   │   │   │       ├── @/components/ui/button
+   │   │   │       ├── @/components/ui/confirm-delete-dialog
+   │   │   │       ├── @/stores/chat.store
+   │   │   │       └── @/types
+   │   │   │
+   │   │   └── SidebarResizeHandle.tsx
+   │   │       └── @/stores/ui.store
+   │   │
+   │   └── <div> content area → PANELS[mainView.type]
+   │
    ├── StatusBar.tsx
-   └── SettingsDialog.tsx
+   │   ├── @/stores/settings.store
+   │   └── @/stores/provider.store
+   │
+   └── SettingsDialog.tsx (condicional)
 
 
 ═══════════════════════════════════════════════════════════════
-13. NOTAS TÉCNICAS
+13. NOTAS TÉCNICAS / GOTTCHAS
 ═══════════════════════════════════════════════════════════════
 
-   • asChild no disponible: Base UI no tiene el patrón asChild
-     de Radix. Todo componente trigger (DropdownMenuTrigger,
-     TooltipTrigger) renderiza su propio <button> y no acepta
-     que se le pase un child como reemplazo. En su lugar se
-     pasan className y onClick directamente al trigger.
+   • Sidebar base propio: src/components/ui/sidebar.tsx es un
+     fork/custom que reemplaza las primitivas Radix por Base UI.
+     Aunque exporta la API clásica de shadcn, AppSidebar no usa
+     la mayoría de esos exports (no usa SidebarMenuButton, etc.).
 
-   • CVA en SidebarMenuButton: usa class-variance-authority
-     con variantes: variant (default/outline), size (default/sm/lg).
+   • asChild no disponible: Base UI no tiene el patrón asChild de
+     Radix. Los triggers de dropdown/tooltip renderizan su propio
+     <button>; se pasan className y onClick directamente.
 
-   • group-data-[collapsible=icon]: El sidebar usa el data-
-     attribute data-collapsible="icon" para ocultar/mostrar
-     elementos según el estado colapsado. Los grupos CSS
-     (group/sidebar-wrapper, group/menu-item) permiten
-     selectores descendientes.
+   • Toggle del sidebar: TitleBar ya no usa SidebarTrigger de
+     shadcn; llama directamente a uiStore.toggleSidebar().
 
-   • Ctrl+B: manejado internamente por SidebarProvider.
-     No necesita código adicional en AppShell.
+   • Navegación principal: los tabs Chat/Editor/Terminal/Agents
+     están en TitleBar, no en el sidebar.
 
-   • Persistencia: El estado de sidebar open/close se guarda
-     en cookie (sidebar_state) por shadcn, y en localStorage
-     por Zustand (sparta-ui). Ambos se sincronizan vía el
-     onOpenChange del SidebarProvider.
+   • Ancho del sidebar: se controla vía CSS custom property
+     --sidebar-width inyectada por AppShell, actualizada por
+     SidebarResizeHandle y persistida en ui.store.
 
-   • Tailwind v4: No hay tailwind.config.js. La configuración
-     es CSS-first con @import "tailwindcss" y @theme inline.
-     Los valores arbitrarios como text-[13px] o transition-[width]
-     son totalmente soportados.
+   • Modo collapsed: la lógica de colapso funciona (ancho 48px) y
+     los estilos custom ya ocultan textos, centran iconos y ocultan
+     el indicador activo vía [data-state="collapsed"] en globals.css.
+
+   • Persistencia: el estado open/close y el ancho se guardan en
+     localStorage bajo la key "sparta-ui". El provider base también
+     escribe una cookie "sidebar_state", pero el source of truth
+     para la app es Zustand.
+
+   • Tailwind v4: no hay tailwind.config.js; todo es CSS-first con
+     @import "tailwindcss" y @theme inline.
