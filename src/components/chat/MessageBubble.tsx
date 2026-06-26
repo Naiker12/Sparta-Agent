@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
 import { Copy, Check, Pencil, Trash2, CheckCheck, X, RotateCw } from 'lucide-react'
 import type { Message } from '@/types'
 import { useChatStore } from '@/stores/chat.store'
@@ -7,9 +6,13 @@ import { useEventBus } from '@/stores/event-bus.store'
 import { useChatSession } from '@/hooks/useChatSession'
 import { ThinkingBlock } from './reasoning/ThinkingBlock'
 import { ThinkingPill } from './reasoning/ThinkingPill'
-import { PipelineTrace } from './reasoning/PipelineTrace'
+import { ToolCallSummary } from './reasoning/ToolCallSummary'
+import { ToolCallDiffView } from './reasoning/ToolCallDiffView'
+import { StreamCursor } from './reasoning/StreamCursor'
 import { MessageActionsDialog } from './MessageActionsDialog'
 import { SpartaIcon } from './SpartaIcon'
+import { getMessageRenderState } from '@/lib/message-render-state'
+import { MarkdownRenderer } from './MarkdownRenderer'
 
 interface MessageBubbleProps {
   message: Message
@@ -25,7 +28,10 @@ type DialogState =
 
 export function MessageBubble({ message, isLastUser = false }: MessageBubbleProps) {
   const isUser = message.role === 'user'
-  const showThinkingPill = message.isStreaming && !message.content && !message.reasoningText
+  const sessionStreaming = useChatStore((s) => s.streamingBySession[message.sessionId])
+  const isStreaming = sessionStreaming?.isStreaming ?? false
+  const renderState = getMessageRenderState(message.content, message.reasoningText, isStreaming)
+  const reasoningDuration = message.reasoningStartedAt && (message.reasoningCompletedAt ?? Date.now()) - message.reasoningStartedAt
   const [dialog, setDialog] = useState<DialogState>({ kind: 'none' })
   const [copied, setCopied] = useState(false)
   const [editing, setEditing] = useState(false)
@@ -125,7 +131,7 @@ export function MessageBubble({ message, isLastUser = false }: MessageBubbleProp
             </span>
           </div>
 
-          {showThinkingPill && (
+          {renderState.kind === 'thinking_pending' && (
             <div style={{ marginBottom: 8 }}>
               <ThinkingPill isThinking label="Thinking" />
             </div>
@@ -184,7 +190,7 @@ export function MessageBubble({ message, isLastUser = false }: MessageBubbleProp
                 </button>
               </div>
             </div>
-          ) : message.content && (
+          ) : renderState.kind === 'generating' || renderState.kind === 'responding' || renderState.kind === 'done' ? (
             <div
               style={{
                 fontSize: 13.5,
@@ -195,42 +201,45 @@ export function MessageBubble({ message, isLastUser = false }: MessageBubbleProp
                 wordBreak: 'break-word',
               }}
             >
-              {message.content}
+              {isUser ? (
+                renderState.content
+              ) : (
+                <MarkdownRenderer content={renderState.content} />
+              )}
+              {renderState.kind === 'responding' && <StreamCursor visible />}
             </div>
-          )}
+          ) : null}
 
-          <AnimatePresence>
-            {message.reasoningText && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.25, ease: 'easeOut' }}
-                style={{ marginTop: 8 }}
-              >
-                <ThinkingBlock content={message.reasoningText} collapsed={!message.isStreaming} />
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {message.toolCalls && message.toolCalls.length > 0 && (
+          {renderState.reasoningText && (
             <div style={{ marginTop: 8 }}>
-              <PipelineTrace
-                steps={message.toolCalls.map((tc) => ({
-                  id: tc.id,
-                  name: tc.toolName,
-                  meta: typeof tc.input === 'string' ? tc.input : undefined,
-                  status:
-                    tc.status === 'completed'
-                      ? 'done' as const
-                      : tc.status === 'running'
-                      ? 'running' as const
-                      : 'error' as const,
-                  durationMs: tc.durationMs,
-                }))}
+              <ThinkingBlock
+                content={renderState.reasoningText}
+                isStreaming={renderState.kind !== 'done'}
+                durationMs={reasoningDuration ?? undefined}
+                liveToolCalls={message.toolCalls}
               />
             </div>
           )}
+
+          {message.toolCalls && message.toolCalls.length > 0 && (
+            <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Tool Calls ({message.toolCalls.length})
+              </div>
+              {message.toolCalls.map((tc) => (
+                <div key={tc.id} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <ToolCallSummary toolCall={tc} />
+                  <ToolCallDiffView
+                    toolName={tc.toolName}
+                    input={tc.input}
+                    output={tc.output}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+
+
 
           {!message.isStreaming && message.content && !editing && (
             <div
