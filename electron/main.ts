@@ -1,6 +1,9 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
+import fs from 'node:fs'
+import { registerChatIPC } from './ipc/chat.ipc'
+import { registerMemoryIPC } from './ipc/memory.ipc'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -74,6 +77,14 @@ app.on('activate', () => {
 
 app.whenReady().then(() => {
   createWindow()
+
+  registerChatIPC()
+  registerMemoryIPC()
+
+  ipcMain.handle('app:getVersion', () => {
+    const pkg = JSON.parse(fs.readFileSync(path.join(process.env.APP_ROOT, 'package.json'), 'utf-8'))
+    return pkg.version || '0.0.0'
+  })
 
   ipcMain.on('titlebar:set-overlay', (_event, colors: { color: string; symbolColor: string }) => {
     if (win) {

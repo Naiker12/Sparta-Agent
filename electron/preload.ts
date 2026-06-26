@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   setTitleBarOverlay: (colors: { color: string; symbolColor: string }) =>
     ipcRenderer.send('titlebar:set-overlay', colors),
+  getVersion: () => ipcRenderer.invoke('app:getVersion'),
 })
 
 contextBridge.exposeInMainWorld('electron', {
@@ -33,4 +34,15 @@ contextBridge.exposeInMainWorld('sparta', {
   sendEvent: (event: unknown) => {
     ipcRenderer.send('sparta:event', event)
   },
+  sendMessage: (req: {
+    sessionId: string
+    messageId: string
+    model: string
+    messages: { role: string; content: string }[]
+    providerKey?: string
+    apiUrl?: string
+    isLocal?: boolean
+    system?: string
+  }) => ipcRenderer.invoke('chat:send', req),
+  abortMessage: (sessionId: string) => ipcRenderer.invoke('chat:abort', sessionId),
 })
