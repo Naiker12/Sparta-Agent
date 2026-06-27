@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Bot, Clock, Sparkles } from 'lucide-react'
+import { Bot, Clock, Sparkles, Circle } from 'lucide-react'
 import { useSettingsStore } from '@/stores/settings.store'
 import { useProviderStore } from '@/stores/provider.store'
 import { useChatStore } from '@/stores/chat.store'
@@ -11,7 +11,8 @@ import { GatewayStatusDialog } from './GatewayStatusDialog'
 import { TokenUsageDialog } from './TokenUsageDialog'
 import { AgentsStatusDialog } from './AgentsStatusDialog'
 import { CronStatusDialog } from './CronStatusDialog'
-
+import { IS_WEB } from '@/lib/env-adapter'
+import { useWebSocketStatus } from '@/hooks/useWebSocketStatus'
 export function StatusBar() {
   const [appVersion, setAppVersion] = useState('')
   const activeModel = useSettingsStore((s) => s.activeModel)
@@ -29,6 +30,8 @@ export function StatusBar() {
   const [agentsOpen, setAgentsOpen] = useState(false)
   const [cronOpen, setCronOpen] = useState(false)
 
+  const wsStatus = useWebSocketStatus()
+
   const bgStreamingCount = Object.entries(streamingBySession)
     .filter(([sid, state]) => state.isStreaming && sid !== activeSessionId)
     .length
@@ -37,17 +40,26 @@ export function StatusBar() {
   const totalTokens = totalInput + totalOutput
 
   useEffect(() => {
-    try {
-      const p = window.electronAPI?.getVersion()
-      if (p?.then) {
-        p.then(setAppVersion).catch(() => setAppVersion('0.0.0'))
-      } else {
-        setAppVersion('0.0.0')
-      }
-    } catch {
+    if (!window.electronAPI?.getVersion) {
       setAppVersion('0.0.0')
+      return
     }
+    window.electronAPI.getVersion()
+      .then(setAppVersion)
+      .catch(() => setAppVersion('0.0.0'))
   }, [])
+
+  const wsColors: Record<string, string> = {
+    connected: 'var(--status-ok)',
+    connecting: 'var(--status-warn)',
+    disconnected: 'var(--destructive)',
+  }
+
+  const wsLabels: Record<string, string> = {
+    connected: 'Sidecar conectado',
+    connecting: 'Conectando...',
+    disconnected: 'Sidecar desconectado',
+  }
 
   return (
     <>
@@ -60,14 +72,26 @@ export function StatusBar() {
         padding: '0 12px',
         flexShrink: 0,
       }}>
-        <SBItem onClick={() => setGatewayOpen(true)}>
-          <span style={{
-            width: 6, height: 6, borderRadius: '50%',
-            background: 'var(--status-ok)',
-            boxShadow: '0 0 0 2px rgba(34,197,94,0.2)',
-          }} />
-          Gateway ready
-        </SBItem>
+        {IS_WEB ? (
+          <SBItem>
+            <Circle
+              size={6}
+              strokeWidth={3}
+              fill={wsColors[wsStatus]}
+              style={{ color: wsColors[wsStatus] }}
+            />
+            {wsLabels[wsStatus]}
+          </SBItem>
+        ) : (
+          <SBItem onClick={() => setGatewayOpen(true)}>
+            <span style={{
+              width: 6, height: 6, borderRadius: '50%',
+              background: 'var(--status-ok)',
+              boxShadow: '0 0 0 2px rgba(34,197,94,0.2)',
+            }} />
+            Gateway ready
+          </SBItem>
+        )}
         <SBItem onClick={() => setAgentsOpen(true)} style={{ color: runningAgentCount > 0 ? 'var(--status-warn)' : undefined }}>
           <Bot size={11} strokeWidth={1.5} />
           Agents{runningAgentCount > 0 ? ` (${runningAgentCount})` : ''}

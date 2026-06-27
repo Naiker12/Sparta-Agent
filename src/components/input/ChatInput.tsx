@@ -5,11 +5,16 @@ import { useChatStore } from '@/stores/chat.store'
 import { useProviderStore } from '@/stores/provider.store'
 import { useChatSession } from '@/hooks/useChatSession'
 import { cn } from '@/lib/utils'
+import { messagingAdapter } from '@/lib/messaging-adapter'
 import { ModelPicker } from './ModelPicker'
 import { AttachMenu } from './AttachMenu'
 import { SlashCommandMenu, executeSlashCommand, type SlashCommand } from './SlashCommandMenu'
 
-export function ChatInput() {
+interface ChatInputProps {
+  className?: string
+}
+
+export function ChatInput({ className }: ChatInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [focused, setFocused] = useState(false)
   const [showAttach, setShowAttach] = useState(false)
@@ -58,7 +63,7 @@ export function ChatInput() {
     const sid = activeSessionId
     if (sid) {
       stopStreaming(sid)
-      window.sparta?.abortMessage?.(sid)
+      messagingAdapter.abortMessage(sid)
     } else {
       stopStreaming()
     }
@@ -82,7 +87,7 @@ export function ChatInput() {
   const canSend = input.trim().length > 0 && hasProvider
 
   return (
-    <div style={{ padding: '12px 20px 18px', position: 'relative' }}>
+    <div className={className} style={{ position: 'relative' }}>
       <div style={{ maxWidth: 680, margin: '0 auto' }}>
         {!hasProvider && (
           <div style={{

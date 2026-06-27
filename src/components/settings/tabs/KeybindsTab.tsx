@@ -11,7 +11,8 @@ interface Keybind {
 const KEYBINDS: Keybind[] = [
   { id: 'new-session', labelKey: 'keybinds.newSession', descKey: 'keybinds.newSessionDesc', combo: 'Ctrl + N' },
   { id: 'open-settings', labelKey: 'keybinds.openSettings', combo: 'Ctrl + ,' },
-  { id: 'toggle-sidebar', labelKey: 'keybinds.toggleSidebar', combo: 'Ctrl + B' },
+  { id: 'toggle-sidebar', labelKey: 'keybinds.toggleSidebar', combo: 'Ctrl + \\' },
+  { id: 'toggle-explorer', labelKey: 'keybinds.toggleExplorer', combo: 'Ctrl + B' },
   { id: 'toggle-terminal', labelKey: 'keybinds.toggleTerminal', combo: 'Ctrl + `' },
   { id: 'switch-chat', labelKey: 'keybinds.switchChat', combo: 'Ctrl + 1' },
   { id: 'switch-editor', labelKey: 'keybinds.switchEditor', combo: 'Ctrl + 2' },

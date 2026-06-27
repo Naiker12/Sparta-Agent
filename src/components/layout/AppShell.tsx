@@ -1,14 +1,19 @@
-import { lazy, Suspense, useEffect, useRef } from 'react'
+import { lazy, Suspense, useEffect, useCallback, useRef } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { TitleBar } from './TitleBar'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import { AppSidebar } from '@/components/sidebar/AppSidebar'
 import { SidebarResizeHandle } from '@/components/sidebar/SidebarResizeHandle'
 import { StatusBar } from './StatusBar'
+import { Toaster } from '@/components/ui/sonner'
 import { ChatArea } from '../chat/ChatArea'
 import { SettingsDialog } from '../settings/SettingsDialog'
-import { EditorPanel, TerminalPanel, AgentsPanel } from '@/App'
+import { EditorPanel } from '@/components/editor/EditorPanel'
+import { TerminalPanel } from '@/components/terminal/TerminalPanel'
+import { AgentsPanel } from '@/components/agents/AgentsPanel'
 import { initTheme } from '@/stores/theme.store'
 import { useCronEngine } from '@/hooks/useCronEngine'
+import { useSidecarToasts } from '@/hooks/useSidecarToasts'
 import { useSettingsStore } from '@/stores/settings.store'
 import { useUIStore } from '@/stores/ui.store'
 import { useChatStore } from '@/stores/chat.store'
@@ -30,10 +35,7 @@ function ViewSkeleton() {
   )
 }
 
-const PANELS: Record<string, React.ReactNode> = {
-  chat: <ChatArea />,
-  editor: <EditorPanel />,
-  terminal: <TerminalPanel />,
+const FULL_VIEWS: Record<string, React.ReactNode> = {
   agents: <AgentsPanel />,
   sessions: <Suspense fallback={<ViewSkeleton />}><SessionsView /></Suspense>,
   skills: <Suspense fallback={<ViewSkeleton />}><SkillsView /></Suspense>,
@@ -42,8 +44,19 @@ const PANELS: Record<string, React.ReactNode> = {
   memory: <Suspense fallback={<ViewSkeleton />}><MemoryView /></Suspense>,
 }
 
+function PanelDragHandle({ onMouseDown, className }: { onMouseDown: (e: React.MouseEvent) => void; className?: string }) {
+  return (
+    <div
+      className={className}
+      onMouseDown={onMouseDown}
+      style={{ position: 'absolute', zIndex: 20 }}
+    />
+  )
+}
+
 export function AppShell() {
   useCronEngine()
+  useSidecarToasts()
 
   useEffect(() => {
     initTheme()
@@ -51,20 +64,61 @@ export function AppShell() {
   }, [])
 
   const { settingsOpen } = useSettingsStore()
-  const { mainView, sidebarOpen, sidebarWidth } = useUIStore()
-  const prevType = useRef(mainView.type)
-  const direction = useRef(1)
+  const { mainView, sidebarOpen, sidebarWidth, editorOpen, terminalOpen, editorWidth, terminalHeight } = useUIStore()
 
-  if (mainView.type !== prevType.current) {
-    const order = Object.keys(PANELS)
-    direction.current = order.indexOf(mainView.type) > order.indexOf(prevType.current) ? 1 : -1
-    prevType.current = mainView.type
-  }
+  const effectiveView = (mainView.type === 'editor' || mainView.type === 'terminal') ? 'chat' : mainView.type
+  const isFullView = effectiveView !== 'chat'
+
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  const handleEditorResize = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+
+    const onMove = (ev: MouseEvent) => {
+      const container = containerRef.current
+      if (!container) return
+      const rect = container.getBoundingClientRect()
+      const newWidth = Math.min(800, Math.max(300, rect.right - ev.clientX))
+      useUIStore.setState({ editorWidth: newWidth })
+    }
+
+    const onUp = () => {
+      document.removeEventListener('mousemove', onMove)
+      document.removeEventListener('mouseup', onUp)
+      document.body.style.cursor = ''
+    }
+
+    document.body.style.cursor = 'col-resize'
+    document.addEventListener('mousemove', onMove)
+    document.addEventListener('mouseup', onUp)
+  }, [])
+
+  const handleTerminalResize = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+
+    const onMove = (ev: MouseEvent) => {
+      const container = containerRef.current
+      if (!container) return
+      const rect = container.getBoundingClientRect()
+      const newHeight = Math.min(500, Math.max(100, rect.bottom - ev.clientY))
+      useUIStore.setState({ terminalHeight: newHeight })
+    }
+
+    const onUp = () => {
+      document.removeEventListener('mousemove', onMove)
+      document.removeEventListener('mouseup', onUp)
+      document.body.style.cursor = ''
+    }
+
+    document.body.style.cursor = 'row-resize'
+    document.addEventListener('mousemove', onMove)
+    document.addEventListener('mouseup', onUp)
+  }, [])
 
   return (
     <div className="flex flex-col h-screen bg-[var(--bg-base)] overflow-hidden">
       <TitleBar />
-      <div className="relative flex flex-1 min-h-0 overflow-hidden">
+      <div ref={containerRef} className="relative flex flex-1 min-h-0 overflow-hidden">
         <SidebarProvider
           open={sidebarOpen}
           onOpenChange={(open) => useUIStore.setState({ sidebarOpen: open })}
@@ -74,17 +128,78 @@ export function AppShell() {
             <AppSidebar />
             <SidebarResizeHandle />
           </div>
-          <div
-            key={mainView.type}
-            className="flex flex-1 min-h-0"
-            style={{ animation: 'viewFadeIn 0.18s ease-out' }}
-          >
-            {PANELS[mainView.type]}
+          <div className="relative flex flex-1 min-h-0 overflow-hidden">
+            {isFullView ? (
+              <div
+                key={effectiveView}
+                className="flex flex-1 min-h-0"
+                style={{ animation: 'viewFadeIn 0.18s ease-out' }}
+              >
+                {FULL_VIEWS[effectiveView]}
+              </div>
+            ) : (
+              <>
+                <div className="flex flex-1 min-h-0 flex-col">
+                  <div className="flex-1 min-h-0 overflow-hidden">
+                    <ChatArea />
+                  </div>
+                  <AnimatePresence>
+                    {terminalOpen && (
+                      <motion.div
+                        key="terminal-panel"
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: terminalHeight, opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2, ease: 'easeInOut' }}
+                        className="panel-terminal"
+                        style={{
+                          flexShrink: 0,
+                          borderTop: '1px solid var(--border-normal)',
+                          overflow: 'hidden',
+                          position: 'relative',
+                        }}
+                      >
+                        <TerminalPanel />
+                        <PanelDragHandle
+                          className="terminal-resize-handle"
+                          onMouseDown={handleTerminalResize}
+                        />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+                <AnimatePresence>
+                  {editorOpen && (
+                    <motion.div
+                      key="editor-panel"
+                      initial={{ width: 0, opacity: 0 }}
+                      animate={{ width: editorWidth, opacity: 1 }}
+                      exit={{ width: 0, opacity: 0 }}
+                      transition={{ duration: 0.2, ease: 'easeInOut' }}
+                      className="panel-editor"
+                      style={{
+                        flexShrink: 0,
+                        borderLeft: '1px solid var(--border-normal)',
+                        overflow: 'hidden',
+                        position: 'relative',
+                      }}
+                    >
+                      <EditorPanel />
+                      <PanelDragHandle
+                        className="editor-resize-handle"
+                        onMouseDown={handleEditorResize}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </>
+            )}
           </div>
         </SidebarProvider>
       </div>
       <StatusBar />
       {settingsOpen && <SettingsDialog />}
+      <Toaster position="bottom-right" richColors closeButton />
     </div>
   )
 }

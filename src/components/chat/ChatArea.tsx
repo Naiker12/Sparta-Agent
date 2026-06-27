@@ -9,13 +9,13 @@ export function ChatArea() {
   const messages = activeSessionId ? (messagesBySession[activeSessionId] ?? []) : []
 
   return (
-    <div className="flex flex-col flex-1 min-h-0">
+    <div className="flex h-full flex-col overflow-hidden">
       {messages.length > 0 ? (
-        <MessageList messages={messages} />
+        <MessageList className="flex-1 min-h-0 overflow-y-auto" messages={messages} />
       ) : (
         <HeroScreen />
       )}
-      <ChatInput />
+      <ChatInput className="shrink-0 px-4 py-3 mb-4" />
     </div>
   )
 }

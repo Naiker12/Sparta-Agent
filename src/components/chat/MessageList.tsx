@@ -2,11 +2,14 @@ import { useEffect, useRef } from 'react'
 import type { Message } from '@/types'
 import { MessageBubble } from './MessageBubble'
 
+import { cn } from '@/lib/utils'
+
 interface MessageListProps {
   messages: Message[]
+  className?: string
 }
 
-export function MessageList({ messages }: MessageListProps) {
+export function MessageList({ messages, className }: MessageListProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -23,9 +26,7 @@ export function MessageList({ messages }: MessageListProps) {
   })()
 
   return (
-    <div ref={scrollRef} className="min-h-0" style={{
-      flex: 1,
-      overflowY: 'auto',
+    <div ref={scrollRef} className={cn('min-h-0', className)} style={{
       padding: '12px max(20px, calc(50% - 320px))',
     }}>
       <div style={{ padding: '12px 0', display: 'flex', flexDirection: 'column', gap: 20 }}>

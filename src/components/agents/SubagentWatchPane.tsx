@@ -16,12 +16,24 @@ export function SubagentWatchPane({ agentId, onClose }: SubagentWatchPaneProps) 
 
   useEffect(() => {
     const unsub = useEventBus.getState().subscribe((event) => {
-      if (event.type.startsWith('agent:') || event.type.startsWith('tool:') || event.type.startsWith('pipeline:')) {
-        setEvents((prev) => [...prev.slice(-99), event])
-      }
+      const isRelevantType = event.type.startsWith('agent:') || event.type.startsWith('tool:') || event.type.startsWith('pipeline:')
+      if (!isRelevantType) return
+
+      // Filter by namespace so parallel subagents don't mix their logs.
+      const eventNs = typeof event.ns === 'string' ? event.ns : ''
+      const belongsToThisAgent =
+        event.agentId === agentId ||
+        (agent?.namespace && eventNs.includes(agent.namespace)) ||
+        (agent?.type && eventNs.includes(agent.type))
+
+      // If the event has no namespace/agentId metadata, show it for backward compatibility.
+      const hasRouting = Boolean(event.agentId || eventNs)
+      if (hasRouting && !belongsToThisAgent) return
+
+      setEvents((prev) => [...prev.slice(-99), event])
     })
     return unsub
-  }, [])
+  }, [agentId, agent?.namespace, agent?.type])
 
   const latestTask = tasks[tasks.length - 1]
 
@@ -149,22 +161,31 @@ function EventRow({ event }: { event: SpartaEvent }) {
 }
 
 function getEventLabel(event: SpartaEvent): string {
+  const ns = typeof (event as { ns?: string }).ns === 'string' ? ` [${(event as { ns?: string }).ns}]` : ''
+  let label: string
   switch (event.type) {
     case 'agent:started':
-      return 'Agente iniciado'
+      label = 'Agente iniciado'
+      break
     case 'agent:completed':
-      return 'Agente completado'
+      label = 'Agente completado'
+      break
     case 'agent:error':
-      return `Error: ${(event as { error: string }).error}`
+      label = `Error: ${(event as { error: string }).error}`
+      break
     case 'tool:called':
-      return `Tool: ${(event as { toolName: string }).toolName}`
+      label = `Tool: ${(event as { toolName: string }).toolName}`
+      break
     case 'tool:result':
-      return `Tool OK: ${(event as { toolName: string }).toolName}`
+      label = `Tool OK: ${(event as { toolName: string }).toolName}`
+      break
     case 'tool:error':
-      return `Tool ERROR: ${(event as { toolName: string }).toolName}`
+      label = `Tool ERROR: ${(event as { toolName: string }).toolName}`
+      break
     default:
-      return event.type
+      label = event.type
   }
+  return `${label}${ns}`
 }
 
 function getEventColor(type: string): string {

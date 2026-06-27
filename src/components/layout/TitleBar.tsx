@@ -3,17 +3,45 @@ import { useSettingsStore } from '@/stores/settings.store'
 import { AppMenu } from './AppMenu'
 import { Settings, PanelLeftOpen, PanelLeftClose } from 'lucide-react'
 import { SpartaIcon } from '@/components/chat/SpartaIcon'
+import { FEATURES } from '@/lib/env-adapter'
 
 const TABS: { type: MainView['type']; label: string }[] = [
   { type: 'chat', label: 'Chat' },
   { type: 'editor', label: 'Editor' },
-  { type: 'terminal', label: 'Terminal' },
+  ...(FEATURES.terminal ? [{ type: 'terminal' as const, label: 'Terminal' }] : []),
   { type: 'agents', label: 'Agents' },
 ]
 
 export function TitleBar() {
-  const { mainView, setMainView, sidebarOpen, toggleSidebar } = useUIStore()
+  const { mainView, setMainView, sidebarOpen, toggleSidebar, editorOpen, terminalOpen, toggleEditor, toggleTerminal } = useUIStore()
   const { openSettings } = useSettingsStore()
+
+  const isChat = mainView.type === 'chat' || mainView.type === 'editor' || mainView.type === 'terminal'
+
+  function handleTabClick(type: MainView['type']) {
+    if (type === 'editor') {
+      toggleEditor()
+      if (mainView.type === 'agents' || mainView.type === 'sessions' || mainView.type === 'skills' || mainView.type === 'mcp' || mainView.type === 'channels' || mainView.type === 'memory') {
+        setMainView({ type: 'chat' })
+      }
+      return
+    }
+    if (type === 'terminal') {
+      toggleTerminal()
+      if (mainView.type === 'agents' || mainView.type === 'sessions' || mainView.type === 'skills' || mainView.type === 'mcp' || mainView.type === 'channels' || mainView.type === 'memory') {
+        setMainView({ type: 'chat' })
+      }
+      return
+    }
+    setMainView({ type } as MainView)
+  }
+
+  function isActive(type: MainView['type']): boolean {
+    if (type === 'chat') return isChat
+    if (type === 'editor') return editorOpen
+    if (type === 'terminal') return terminalOpen
+    return mainView.type === type
+  }
 
   return (
     <div
@@ -93,27 +121,27 @@ export function TitleBar() {
         }}
       >
         {TABS.map((tab) => {
-          const isActive = mainView.type === tab.type
+          const active = isActive(tab.type)
           return (
             <button
               key={tab.type}
-              onClick={() => setMainView({ type: tab.type } as MainView)}
+              onClick={() => handleTabClick(tab.type)}
               style={{
                 padding: '4px 12px',
                 background: 'none',
                 border: 'none',
                 borderRadius: 'var(--radius-md)',
-                color: isActive ? 'var(--text-display)' : 'var(--text-muted)',
+                color: active ? 'var(--text-display)' : 'var(--text-muted)',
                 fontSize: 12,
                 fontFamily: 'var(--font-ui)',
-                fontWeight: isActive ? 500 : 400,
+                fontWeight: active ? 500 : 400,
                 cursor: 'pointer',
                 transition: 'color 0.15s',
                 position: 'relative',
               }}
             >
               {tab.label}
-              {isActive && (
+              {active && (
                 <span
                   style={{
                     position: 'absolute',

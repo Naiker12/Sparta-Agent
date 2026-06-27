@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Copy, Check, Pencil, Trash2, CheckCheck, X, RotateCw } from 'lucide-react'
+import { Copy, Check, Pencil, CheckCheck, X, RotateCw } from 'lucide-react'
 import type { Message } from '@/types'
 import { useChatStore } from '@/stores/chat.store'
 import { useEventBus } from '@/stores/event-bus.store'
@@ -9,7 +9,7 @@ import { ToolCallSummary } from './reasoning/ToolCallSummary'
 import { ToolCallDiffView } from './reasoning/ToolCallDiffView'
 import { StreamCursor } from './reasoning/StreamCursor'
 import { PipelineTrace } from './reasoning/PipelineTrace'
-import { MessageActionsDialog } from './MessageActionsDialog'
+import { MessageActionsMenu } from './MessageActionsMenu'
 import { SpartaIcon } from './SpartaIcon'
 import { getMessageRenderState } from '@/lib/message-render-state'
 import { MarkdownRenderer } from './MarkdownRenderer'
@@ -19,23 +19,15 @@ interface MessageBubbleProps {
   isLastUser?: boolean
 }
 
-type DialogState =
-  | { kind: 'none' }
-  | { kind: 'delete' }
-  | { kind: 'share' }
-  | { kind: 'edit' }
-  | { kind: 'regenerate' }
-
 export function MessageBubble({ message, isLastUser = false }: MessageBubbleProps) {
   const isUser = message.role === 'user'
   const sessionStreaming = useChatStore((s) => s.streamingBySession[message.sessionId])
   const isStreaming = sessionStreaming?.isStreaming ?? false
   const renderState = getMessageRenderState(message.content, message.reasoningText, isStreaming)
-  const [dialog, setDialog] = useState<DialogState>({ kind: 'none' })
   const [copied, setCopied] = useState(false)
   const [editing, setEditing] = useState(false)
   const [editValue, setEditValue] = useState(message.content)
-  const { updateMessage, deleteMessage } = useChatStore()
+  const { updateMessage } = useChatStore()
   const { sendMessage } = useChatSession()
   const dispatch = useEventBus((s) => s.dispatch)
 
@@ -59,11 +51,6 @@ export function MessageBubble({ message, isLastUser = false }: MessageBubbleProp
   function handleEditCancel() {
     setEditValue(message.content)
     setEditing(false)
-  }
-
-  function handleDelete() {
-    deleteMessage(message.sessionId, message.id)
-    dispatch({ type: 'message:deleted', sessionId: message.sessionId, messageId: message.id, timestamp: Date.now() })
   }
 
   return (
@@ -256,18 +243,13 @@ export function MessageBubble({ message, isLastUser = false }: MessageBubbleProp
               <IconButton icon={copied ? <Check size={11} /> : <Copy size={11} />} onClick={handleCopy} title="Copiar" />
               {isUser && isLastUser && <IconButton icon={<Pencil size={11} />} onClick={() => { setEditValue(message.content); setEditing(true) }} title="Editar" />}
               {isUser && isLastUser && <IconButton icon={<RotateCw size={11} />} onClick={() => sendMessage(message.content)} title="Reenviar" />}
-              {isUser && isLastUser && <IconButton icon={<Trash2 size={11} />} onClick={handleDelete} title="Eliminar" />}
+              <div style={{ marginLeft: 2 }}>
+                <MessageActionsMenu message={message} sessionId={message.sessionId} />
+              </div>
             </div>
           )}
         </div>
       </div>
-
-      <MessageActionsDialog
-        message={message}
-        sessionId={message.sessionId}
-        state={dialog}
-        onClose={() => setDialog({ kind: 'none' })}
-      />
     </>
   )
 }
