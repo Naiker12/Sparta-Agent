@@ -6,7 +6,7 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/modal'
 import { Button } from '@/components/ui/button'
 import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog'
 import { useChatStore } from '@/stores/chat.store'
@@ -140,32 +140,46 @@ export function SessionItem({ session }: SessionItemProps) {
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
         itemLabel={title}
-        onConfirm={() => deleteSession(session.id)}
+        onConfirm={() => {
+          deleteSession(session.id)
+          if (isActive) setMainView({ type: 'chat' })
+        }}
       />
 
-      <Dialog open={shareOpen} onOpenChange={setShareOpen}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Compartir sesión</DialogTitle>
-            <DialogDescription>Copia este enlace para compartir la sesión.</DialogDescription>
-          </DialogHeader>
-          <div style={{ padding: '0 24px 20px' }}>
-            <div className="flex items-center gap-2 rounded-lg px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)]">
-              <code className="flex-1 text-[11px] font-mono text-[var(--text-primary)] truncate">
-                sparta://session/{session.id}
-              </code>
-              <Button size="sm" variant="ghost" onClick={() => navigator.clipboard.writeText(`sparta://session/${session.id}`)}>
-                Copiar
-              </Button>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="ghost" size="sm" onClick={() => setShareOpen(false)}>
-              Cerrar
+      <Modal open={shareOpen} onClose={() => setShareOpen(false)} width={360} maxHeight={200}>
+        <ModalHeader title="Compartir sesión" onClose={() => setShareOpen(false)} />
+        <ModalBody style={{ padding: '0 20px 16px' }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '8px 12px',
+            borderRadius: 'var(--radius-lg)',
+            background: 'var(--bg-input)',
+            border: '1px solid var(--border-subtle)',
+          }}>
+            <code style={{
+              flex: 1,
+              fontSize: 11,
+              color: 'var(--text-primary)',
+              fontFamily: 'var(--font-mono)',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}>
+              sparta://session/{session.id}
+            </code>
+            <Button size="sm" variant="ghost" onClick={() => navigator.clipboard.writeText(`sparta://session/${session.id}`)}>
+              Copiar
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="ghost" size="sm" onClick={() => setShareOpen(false)}>
+            Cerrar
+          </Button>
+        </ModalFooter>
+      </Modal>
     </>
   )
 }

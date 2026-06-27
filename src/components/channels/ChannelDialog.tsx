@@ -1,13 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Hash, Bot, Globe, BookOpen, Code, Terminal, Users, Bell, Star, Camera, MessageCircle } from 'lucide-react'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/modal'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
@@ -53,62 +46,77 @@ export function ChannelDialog({ open, onClose, onSubmit }: ChannelDialogProps) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Nuevo canal</DialogTitle>
-          <DialogDescription>
-            Los canales son espacios de conversación por tema.
-          </DialogDescription>
-        </DialogHeader>
+    <Modal open={open} onClose={onClose} width={460} maxHeight={420}>
+      <ModalHeader
+        title="Nuevo canal"
+        description="Los canales son espacios de conversación por tema."
+        onClose={onClose}
+      />
 
-        <form id="channel-form" onSubmit={handleSubmit}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div>
-              <label style={{ display: 'block', fontSize: 11, color: 'var(--text-secondary)', fontFamily: 'var(--font-ui)', marginBottom: 4 }}>
-                Nombre
-              </label>
-              <Input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="general" />
-            </div>
+      <form id="channel-form" onSubmit={handleSubmit}>
+        <ModalBody style={{ padding: '0 20px 16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div>
+            <label style={{
+              display: 'block',
+              fontSize: 11,
+              color: 'var(--text-secondary)',
+              fontFamily: 'var(--font-ui)',
+              marginBottom: 4,
+            }}>
+              Nombre
+            </label>
+            <Input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="general" />
+          </div>
 
-            <div>
-              <label style={{ display: 'block', fontSize: 11, color: 'var(--text-secondary)', fontFamily: 'var(--font-ui)', marginBottom: 4 }}>
-                Icono SVG
-              </label>
-              <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                {ICON_OPTIONS.map(({ name: n, component: Icon }) => (
-                  <button
-                    key={n}
-                    type="button"
-                    onClick={() => setIcon(n)}
-                    style={{
-                      width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      background: icon === n ? 'var(--bg-active)' : 'var(--bg-input)',
-                      border: icon === n ? '1px solid var(--accent)' : '1px solid var(--border-subtle)',
-                      borderRadius: 'var(--radius-sm)', cursor: 'pointer',
-                      color: icon === n ? 'var(--accent)' : 'var(--text-muted)',
-                    }}
-                  >
-                    <Icon size={14} strokeWidth={1.5} />
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label style={{ display: 'block', fontSize: 11, color: 'var(--text-secondary)', fontFamily: 'var(--font-ui)', marginBottom: 4 }}>
-                Tópico (opcional)
-              </label>
-              <Textarea value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="De qué habla este canal" rows={2} />
+          <div>
+            <label style={{
+              display: 'block',
+              fontSize: 11,
+              color: 'var(--text-secondary)',
+              fontFamily: 'var(--font-ui)',
+              marginBottom: 4,
+            }}>
+              Icono
+            </label>
+            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+              {ICON_OPTIONS.map(({ name: n, component: Icon }) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setIcon(n)}
+                  style={{
+                    width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: icon === n ? 'var(--bg-active)' : 'var(--bg-input)',
+                    border: icon === n ? '1px solid var(--accent)' : '1px solid var(--border-subtle)',
+                    borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+                    color: icon === n ? 'var(--accent)' : 'var(--text-muted)',
+                  }}
+                >
+                  <Icon size={14} strokeWidth={1.5} />
+                </button>
+              ))}
             </div>
           </div>
-        </form>
 
-        <DialogFooter>
-          <Button variant="ghost" onClick={onClose}>Cancelar</Button>
-          <Button form="channel-form" type="submit" disabled={!name.trim()}>Crear canal</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          <div>
+            <label style={{
+              display: 'block',
+              fontSize: 11,
+              color: 'var(--text-secondary)',
+              fontFamily: 'var(--font-ui)',
+              marginBottom: 4,
+            }}>
+              Tópico (opcional)
+            </label>
+            <Textarea value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="De qué habla este canal" rows={2} />
+          </div>
+        </ModalBody>
+      </form>
+
+      <ModalFooter>
+        <Button variant="ghost" onClick={onClose}>Cancelar</Button>
+        <Button form="channel-form" type="submit" disabled={!name.trim()}>Crear canal</Button>
+      </ModalFooter>
+    </Modal>
   )
 }

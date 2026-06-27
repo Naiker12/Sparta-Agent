@@ -1,13 +1,6 @@
 import { useState } from 'react'
 import { Copy, Check } from 'lucide-react'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/modal'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import type { Message } from '@/types'
@@ -92,130 +85,121 @@ export function MessageActionsDialog({
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-sm">
-        {state.kind === 'delete' && (
-          <>
-            <DialogHeader>
-              <DialogTitle>Eliminar mensaje</DialogTitle>
-              <DialogDescription className="text-sm leading-relaxed">
-                Vas a eliminar{' '}
-                <span
-                  className="font-medium"
-                  style={{ color: 'var(--text-primary)' }}
-                >
-                  {message.content.length > 60
-                    ? message.content.slice(0, 60) + '...'
-                    : message.content}
-                </span>
-                . Esta acción no se puede deshacer.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button variant="ghost" size="sm" onClick={onClose}>
-                Cancelar
-              </Button>
-              <Button variant="destructive" size="sm" onClick={handleDelete}>
-                Eliminar
-              </Button>
-            </DialogFooter>
-          </>
-        )}
+    <Modal open={isOpen} onClose={onClose} width={420} maxHeight={400}>
+      {state.kind === 'delete' && (
+        <>
+          <ModalHeader title="Eliminar mensaje" onClose={onClose} />
+          <ModalBody style={{ padding: '0 24px 20px' }}>
+            <p style={{
+              fontSize: 13,
+              color: 'var(--text-secondary)',
+              fontFamily: 'var(--font-ui)',
+              lineHeight: 1.6,
+            }}>
+              Vas a eliminar{' '}
+              <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
+                {message.content.length > 60
+                  ? message.content.slice(0, 60) + '...'
+                  : message.content}
+              </span>
+              . Esta acción no se puede deshacer.
+            </p>
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="ghost" size="sm" onClick={onClose}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" size="sm" onClick={handleDelete}>
+              Eliminar
+            </Button>
+          </ModalFooter>
+        </>
+      )}
 
-        {state.kind === 'share' && (
-          <>
-            <DialogHeader>
-              <DialogTitle>Compartir mensaje</DialogTitle>
-              <DialogDescription>
-                Copia este enlace para compartir el mensaje con otros.
-              </DialogDescription>
-            </DialogHeader>
-            <div style={{ padding: '0 24px 20px' }}>
-              <div
-                style={{
-                  display: 'flex',
-                  gap: 6,
-                  alignItems: 'center',
-                  background: 'var(--bg-input)',
-                  border: '1px solid var(--border-subtle)',
-                  borderRadius: 'var(--radius-md)',
-                  padding: '6px 10px',
-                }}
-              >
-                <code
-                  style={{
-                    flex: 1,
-                    fontSize: 11,
-                    color: 'var(--text-primary)',
-                    fontFamily: 'var(--font-mono)',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {shareLink}
-                </code>
-                <Button size="xs" variant="ghost" onClick={handleShareCopy}>
-                  {copied ? <Check size={12} /> : <Copy size={12} />}
-                  {copied ? 'Copiado' : 'Copiar'}
-                </Button>
-              </div>
+      {state.kind === 'share' && (
+        <>
+          <ModalHeader title="Compartir mensaje" onClose={onClose} />
+          <ModalBody style={{ padding: '0 24px 20px' }}>
+            <div style={{
+              display: 'flex',
+              gap: 6,
+              alignItems: 'center',
+              background: 'var(--bg-input)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: 'var(--radius-md)',
+              padding: '6px 10px',
+            }}>
+              <code style={{
+                flex: 1,
+                fontSize: 11,
+                color: 'var(--text-primary)',
+                fontFamily: 'var(--font-mono)',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}>
+                {shareLink}
+              </code>
+              <Button size="xs" variant="ghost" onClick={handleShareCopy}>
+                {copied ? <Check size={12} /> : <Copy size={12} />}
+                {copied ? 'Copiado' : 'Copiar'}
+              </Button>
             </div>
-            <DialogFooter>
-              <Button variant="ghost" size="sm" onClick={onClose}>
-                Cerrar
-              </Button>
-            </DialogFooter>
-          </>
-        )}
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="ghost" size="sm" onClick={onClose}>
+              Cerrar
+            </Button>
+          </ModalFooter>
+        </>
+      )}
 
-        {state.kind === 'edit' && (
-          <>
-            <DialogHeader>
-              <DialogTitle>Editar mensaje</DialogTitle>
-              <DialogDescription>
-                Cambia el contenido. Se reenviará al agente al guardar.
-              </DialogDescription>
-            </DialogHeader>
-            <div style={{ padding: '0 24px 20px' }}>
-              <Textarea
-                value={editValue}
-                onChange={(e) => setEditValue(e.target.value)}
-                rows={5}
-                autoFocus
-              />
-            </div>
-            <DialogFooter>
-              <Button variant="ghost" size="sm" onClick={onClose}>
-                Cancelar
-              </Button>
-              <Button size="sm" onClick={handleCopy} variant="outline">
-                <Copy size={12} /> Copiar
-              </Button>
-              <Button size="sm" onClick={handleEdit} disabled={!editValue.trim()}>
-                Guardar y reenviar
-              </Button>
-            </DialogFooter>
-          </>
-        )}
+      {state.kind === 'edit' && (
+        <>
+          <ModalHeader title="Editar mensaje" onClose={onClose} />
+          <ModalBody style={{ padding: '0 24px 20px' }}>
+            <Textarea
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              rows={5}
+              autoFocus
+            />
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="ghost" size="sm" onClick={onClose}>
+              Cancelar
+            </Button>
+            <Button size="sm" onClick={handleCopy} variant="outline">
+              <Copy size={12} /> Copiar
+            </Button>
+            <Button size="sm" onClick={handleEdit} disabled={!editValue.trim()}>
+              Guardar y reenviar
+            </Button>
+          </ModalFooter>
+        </>
+      )}
 
-        {state.kind === 'regenerate' && (
-          <>
-            <DialogHeader>
-              <DialogTitle>Regenerar respuesta</DialogTitle>
-              <DialogDescription>
-                Se volverá a pedir al agente una respuesta. ¿Continuar?
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button variant="ghost" size="sm" onClick={onClose}>
-                Cancelar
-              </Button>
-              <Button size="sm" onClick={handleRegenerate}>Regenerar</Button>
-            </DialogFooter>
-          </>
-        )}
-      </DialogContent>
-    </Dialog>
+      {state.kind === 'regenerate' && (
+        <>
+          <ModalHeader title="Regenerar respuesta" onClose={onClose} />
+          <ModalBody style={{ padding: '0 24px 20px' }}>
+            <p style={{
+              fontSize: 13,
+              color: 'var(--text-secondary)',
+              fontFamily: 'var(--font-ui)',
+              lineHeight: 1.6,
+            }}>
+              Se volverá a pedir al agente una respuesta. ¿Continuar?
+            </p>
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="ghost" size="sm" onClick={onClose}>
+              Cancelar
+            </Button>
+            <Button size="sm" onClick={handleRegenerate}>Regenerar</Button>
+          </ModalFooter>
+        </>
+      )}
+    </Modal>
   )
 }
