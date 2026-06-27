@@ -11,8 +11,19 @@ export function createProvider(provider: Provider): AIProvider {
     case 'llamacpp':
     case 'custom':
       return new ChatCompletionsTransport(provider.vendor, provider.apiKey ?? '', provider.serverUrl)
-    default:
+    case 'openai':
+    case 'openrouter':
+    case 'groq':
+    case 'mistral':
+    case 'deepseek':
+    case 'together':
+    case 'fireworks':
+    case 'cohere':
+    case 'perplexity':
+    case 'xai':
       return new ChatCompletionsTransport(provider.vendor, provider.apiKey ?? '')
+    default:
+      throw new Error(`Unknown vendor/provider: ${provider.vendor}`)
   }
 }
 
