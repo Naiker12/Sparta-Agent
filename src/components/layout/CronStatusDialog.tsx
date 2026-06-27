@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useCronStore, type CronJob, type CronFrequency } from '@/stores/cron.store'
 import { Clock, Plus, Trash2, ToggleLeft, ToggleRight } from 'lucide-react'
+import { Modal, ModalHeader, ModalBody } from '@/components/ui/modal'
 
 interface CronStatusDialogProps {
   open: boolean
@@ -67,137 +67,277 @@ export function CronStatusDialog({ open, onClose }: CronStatusDialogProps) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) { onClose(); setShowForm(false) } }}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <DialogTitle>Automatizaciones (Cron)</DialogTitle>
-            <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)' }}>
+    <Modal open={open} onClose={() => { onClose(); setShowForm(false) }} width={460} maxHeight={540}>
+      <ModalHeader
+        title={(
+          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            Automatizaciones (Cron)
+            <span style={{
+              fontSize: 11,
+              color: 'var(--text-muted)',
+              fontFamily: 'var(--font-ui)',
+              fontWeight: 400,
+            }}>
               {activeCount} activos
             </span>
+          </span>
+        )}
+        onClose={() => { onClose(); setShowForm(false) }}
+      />
+      <ModalBody style={{ padding: '0 20px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {jobs.length === 0 && !showForm ? (
+          <div style={{
+            padding: '24px 0',
+            textAlign: 'center',
+            fontSize: 12,
+            color: 'var(--text-secondary)',
+            fontFamily: 'var(--font-ui)',
+          }}>
+            <Clock size={24} style={{ color: 'var(--text-muted)', opacity: 0.3, marginBottom: 8 }} />
+            <div>No hay automatizaciones programadas.</div>
           </div>
-        </DialogHeader>
-        <div style={{ padding: '0 24px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {jobs.length === 0 && !showForm ? (
-            <div style={{ padding: '24px 0', textAlign: 'center', fontSize: 12, color: 'var(--text-secondary)', fontFamily: 'var(--font-ui)' }}>
-              <Clock size={24} style={{ color: 'var(--text-muted)', opacity: 0.3, marginBottom: 8 }} />
-              <div>No hay automatizaciones programadas.</div>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 300, overflowY: 'auto' }}>
-              {jobs.map((job) => (
-                <div key={job.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 'var(--radius-md)', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', opacity: job.enabled ? 1 : 0.5 }}>
-                  <button
-                    onClick={() => toggleJob(job.id)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: job.enabled ? 'var(--status-ok)' : 'var(--text-muted)', flexShrink: 0 }}
-                  >
-                    {job.enabled ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
-                  </button>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-primary)', fontFamily: 'var(--font-ui)' }}>{job.name}</div>
-                    <div style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)' }}>
-                      {formatSchedule(job)}
-                    </div>
-                    {job.lastRun && (
-                      <div style={{ fontSize: 9, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)' }}>
-                        Última ejecución: {new Date(job.lastRun).toLocaleString()}
-                      </div>
-                    )}
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: 10, color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>{formatNextRun(job.nextRun)}</div>
-                  </div>
-                  <button
-                    onClick={() => removeJob(job.id)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'var(--text-muted)', flexShrink: 0 }}
-                  >
-                    <Trash2 size={12} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {showForm ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 12, borderRadius: 'var(--radius-md)', background: 'var(--bg-input)', border: '1px solid var(--border-normal)' }}>
-              <input
-                placeholder="Nombre de la automatización"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                style={{ padding: '6px 10px', fontSize: 12, background: 'var(--bg-surface)', border: '1px solid var(--border-normal)', borderRadius: 'var(--radius-sm)', color: 'var(--text-primary)', fontFamily: 'var(--font-ui)', outline: 'none' }}
-              />
-              <select
-                value={form.frequency}
-                onChange={(e) => setForm({ ...form, frequency: e.target.value as CronFrequency })}
-                style={{ padding: '6px 10px', fontSize: 12, background: 'var(--bg-surface)', border: '1px solid var(--border-normal)', borderRadius: 'var(--radius-sm)', color: 'var(--text-primary)', fontFamily: 'var(--font-ui)', outline: 'none' }}
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 300, overflowY: 'auto' }}>
+            {jobs.map((job) => (
+              <div
+                key={job.id}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '8px 10px',
+                  borderRadius: 'var(--radius-md)',
+                  background: 'var(--bg-surface)',
+                  border: '1px solid var(--border-subtle)',
+                  opacity: job.enabled ? 1 : 0.5,
+                }}
               >
-                <option value="daily">Diario</option>
-                <option value="weekly">Semanal</option>
-                <option value="hourly">Cada hora</option>
-                <option value="every_n_hours">Cada N horas</option>
-              </select>
-              <div style={{ display: 'flex', gap: 8 }}>
-                {(form.frequency === 'daily' || form.frequency === 'weekly') && (
-                  <input
-                    type="number" min={0} max={23}
-                    value={form.hour}
-                    onChange={(e) => setForm({ ...form, hour: parseInt(e.target.value) || 8 })}
-                    style={{ width: 60, padding: '6px 10px', fontSize: 12, background: 'var(--bg-surface)', border: '1px solid var(--border-normal)', borderRadius: 'var(--radius-sm)', color: 'var(--text-primary)', fontFamily: 'var(--font-ui)', outline: 'none' }}
-                    placeholder="Hora"
-                  />
-                )}
-                {form.frequency === 'weekly' && (
-                  <select
-                    value={form.dayOfWeek}
-                    onChange={(e) => setForm({ ...form, dayOfWeek: parseInt(e.target.value) })}
-                    style={{ padding: '6px 10px', fontSize: 12, background: 'var(--bg-surface)', border: '1px solid var(--border-normal)', borderRadius: 'var(--radius-sm)', color: 'var(--text-primary)', fontFamily: 'var(--font-ui)', outline: 'none' }}
-                  >
-                    {DAY_LABELS.map((label, i) => <option key={i} value={i}>{label}</option>)}
-                  </select>
-                )}
-                {form.frequency === 'every_n_hours' && (
-                  <input
-                    type="number" min={1} max={24}
-                    value={form.intervalHours}
-                    onChange={(e) => setForm({ ...form, intervalHours: parseInt(e.target.value) || 2 })}
-                    style={{ width: 60, padding: '6px 10px', fontSize: 12, background: 'var(--bg-surface)', border: '1px solid var(--border-normal)', borderRadius: 'var(--radius-sm)', color: 'var(--text-primary)', fontFamily: 'var(--font-ui)', outline: 'none' }}
-                    placeholder="Cada N h"
-                  />
-                )}
-              </div>
-              <textarea
-                placeholder="¿Qué tarea debe ejecutar el agente?"
-                value={form.agentTaskTemplate}
-                onChange={(e) => setForm({ ...form, agentTaskTemplate: e.target.value })}
-                rows={2}
-                style={{ padding: '6px 10px', fontSize: 12, background: 'var(--bg-surface)', border: '1px solid var(--border-normal)', borderRadius: 'var(--radius-sm)', color: 'var(--text-primary)', fontFamily: 'var(--font-ui)', outline: 'none', resize: 'vertical' }}
-              />
-              <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
                 <button
-                  onClick={() => setShowForm(false)}
-                  style={{ padding: '5px 12px', fontSize: 11, background: 'var(--bg-hover)', border: '1px solid var(--border-normal)', borderRadius: 'var(--radius-sm)', color: 'var(--text-secondary)', cursor: 'pointer', fontFamily: 'var(--font-ui)' }}
+                  onClick={() => toggleJob(job.id)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: 0,
+                    color: job.enabled ? 'var(--status-ok)' : 'var(--text-muted)',
+                    flexShrink: 0,
+                  }}
                 >
-                  Cancelar
+                  {job.enabled ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
                 </button>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{
+                    fontSize: 12,
+                    fontWeight: 500,
+                    color: 'var(--text-primary)',
+                    fontFamily: 'var(--font-ui)',
+                  }}>{job.name}</div>
+                  <div style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)' }}>
+                    {formatSchedule(job)}
+                  </div>
+                  {job.lastRun && (
+                    <div style={{ fontSize: 9, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)' }}>
+                      Última ejecución: {new Date(job.lastRun).toLocaleString()}
+                    </div>
+                  )}
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: 10, color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>{formatNextRun(job.nextRun)}</div>
+                </div>
                 <button
-                  onClick={handleSubmit}
-                  style={{ padding: '5px 12px', fontSize: 11, background: 'var(--accent)', border: 'none', borderRadius: 'var(--radius-sm)', color: 'white', cursor: 'pointer', fontFamily: 'var(--font-ui)' }}
+                  onClick={() => removeJob(job.id)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: 4,
+                    color: 'var(--text-muted)',
+                    flexShrink: 0,
+                  }}
                 >
-                  Crear
+                  <Trash2 size={12} />
                 </button>
               </div>
-            </div>
-          ) : (
-            <button
-              onClick={() => setShowForm(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', fontSize: 12, background: 'var(--bg-hover)', border: '1px dashed var(--border-normal)', borderRadius: 'var(--radius-md)', color: 'var(--text-secondary)', cursor: 'pointer', fontFamily: 'var(--font-ui)', justifyContent: 'center', width: '100%' }}
+            ))}
+          </div>
+        )}
+
+        {showForm ? (
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 10,
+            padding: 12,
+            borderRadius: 'var(--radius-md)',
+            background: 'var(--bg-input)',
+            border: '1px solid var(--border-normal)',
+          }}>
+            <input
+              placeholder="Nombre de la automatización"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              style={{
+                padding: '6px 10px',
+                fontSize: 12,
+                background: 'var(--bg-surface)',
+                border: '1px solid var(--border-normal)',
+                borderRadius: 'var(--radius-sm)',
+                color: 'var(--text-primary)',
+                fontFamily: 'var(--font-ui)',
+                outline: 'none',
+              }}
+            />
+            <select
+              value={form.frequency}
+              onChange={(e) => setForm({ ...form, frequency: e.target.value as CronFrequency })}
+              style={{
+                padding: '6px 10px',
+                fontSize: 12,
+                background: 'var(--bg-surface)',
+                border: '1px solid var(--border-normal)',
+                borderRadius: 'var(--radius-sm)',
+                color: 'var(--text-primary)',
+                fontFamily: 'var(--font-ui)',
+                outline: 'none',
+              }}
             >
-              <Plus size={14} />
-              Nueva automatización
-            </button>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
+              <option value="daily">Diario</option>
+              <option value="weekly">Semanal</option>
+              <option value="hourly">Cada hora</option>
+              <option value="every_n_hours">Cada N horas</option>
+            </select>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {(form.frequency === 'daily' || form.frequency === 'weekly') && (
+                <input
+                  type="number" min={0} max={23}
+                  value={form.hour}
+                  onChange={(e) => setForm({ ...form, hour: parseInt(e.target.value) || 8 })}
+                  style={{
+                    width: 60,
+                    padding: '6px 10px',
+                    fontSize: 12,
+                    background: 'var(--bg-surface)',
+                    border: '1px solid var(--border-normal)',
+                    borderRadius: 'var(--radius-sm)',
+                    color: 'var(--text-primary)',
+                    fontFamily: 'var(--font-ui)',
+                    outline: 'none',
+                  }}
+                  placeholder="Hora"
+                />
+              )}
+              {form.frequency === 'weekly' && (
+                <select
+                  value={form.dayOfWeek}
+                  onChange={(e) => setForm({ ...form, dayOfWeek: parseInt(e.target.value) })}
+                  style={{
+                    padding: '6px 10px',
+                    fontSize: 12,
+                    background: 'var(--bg-surface)',
+                    border: '1px solid var(--border-normal)',
+                    borderRadius: 'var(--radius-sm)',
+                    color: 'var(--text-primary)',
+                    fontFamily: 'var(--font-ui)',
+                    outline: 'none',
+                  }}
+                >
+                  {DAY_LABELS.map((label, i) => <option key={i} value={i}>{label}</option>)}
+                </select>
+              )}
+              {form.frequency === 'every_n_hours' && (
+                <input
+                  type="number" min={1} max={24}
+                  value={form.intervalHours}
+                  onChange={(e) => setForm({ ...form, intervalHours: parseInt(e.target.value) || 2 })}
+                  style={{
+                    width: 60,
+                    padding: '6px 10px',
+                    fontSize: 12,
+                    background: 'var(--bg-surface)',
+                    border: '1px solid var(--border-normal)',
+                    borderRadius: 'var(--radius-sm)',
+                    color: 'var(--text-primary)',
+                    fontFamily: 'var(--font-ui)',
+                    outline: 'none',
+                  }}
+                  placeholder="Cada N h"
+                />
+              )}
+            </div>
+            <textarea
+              placeholder="¿Qué tarea debe ejecutar el agente?"
+              value={form.agentTaskTemplate}
+              onChange={(e) => setForm({ ...form, agentTaskTemplate: e.target.value })}
+              rows={2}
+              style={{
+                padding: '6px 10px',
+                fontSize: 12,
+                background: 'var(--bg-surface)',
+                border: '1px solid var(--border-normal)',
+                borderRadius: 'var(--radius-sm)',
+                color: 'var(--text-primary)',
+                fontFamily: 'var(--font-ui)',
+                outline: 'none',
+                resize: 'vertical',
+              }}
+            />
+            <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setShowForm(false)}
+                style={{
+                  padding: '5px 12px',
+                  fontSize: 11,
+                  background: 'var(--bg-hover)',
+                  border: '1px solid var(--border-normal)',
+                  borderRadius: 'var(--radius-sm)',
+                  color: 'var(--text-secondary)',
+                  cursor: 'pointer',
+                  fontFamily: 'var(--font-ui)',
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSubmit}
+                style={{
+                  padding: '5px 12px',
+                  fontSize: 11,
+                  background: 'var(--accent)',
+                  border: 'none',
+                  borderRadius: 'var(--radius-sm)',
+                  color: 'white',
+                  cursor: 'pointer',
+                  fontFamily: 'var(--font-ui)',
+                }}
+              >
+                Crear
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => setShowForm(true)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '8px 14px',
+              fontSize: 12,
+              background: 'var(--bg-hover)',
+              border: '1px dashed var(--border-normal)',
+              borderRadius: 'var(--radius-md)',
+              color: 'var(--text-secondary)',
+              cursor: 'pointer',
+              fontFamily: 'var(--font-ui)',
+              justifyContent: 'center',
+              width: '100%',
+            }}
+          >
+            <Plus size={14} />
+            Nueva automatización
+          </button>
+        )}
+      </ModalBody>
+    </Modal>
   )
 }
