@@ -16,7 +16,14 @@
       "from": "python",
       "to": "python",
       "filter": ["**/*"]
-    }
+    },
+    // Opcional: Python embebido para distribución (sin depender del Python del sistema)
+    // Descargar de https://www.python.org/downloads/ y extraer en vendor/python-3.12
+    // {
+    //   "from": "vendor/python-3.12",
+    //   "to": "python-runtime",
+    //   "filter": ["**/*"]
+    // }
   ],
   "icon": "public/sparta-escritorio.png",
   "mac": {

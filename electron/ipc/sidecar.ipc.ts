@@ -18,19 +18,28 @@ export const SidecarEvent = {
   ERROR: 'sidecar:error',
 } as const
 
-function getPythonPath(): string {
-  return app.isPackaged
+function getPythonCommand(): { command: string; args: string[] } {
+  // Prefer bundled Python runtime if available
+  const bundledPython = app.isPackaged
+    ? path.join(process.resourcesPath, 'python-runtime', 'python.exe')
+    : ''
+  const scriptPath = app.isPackaged
     ? path.join(process.resourcesPath, 'python', 'sparta_ai', 'main.py')
     : path.join(__dirname, '..', '..', 'python', 'sparta_ai', 'main.py')
+
+  if (bundledPython && require('fs').existsSync(bundledPython)) {
+    return { command: bundledPython, args: [scriptPath] }
+  }
+  return { command: 'python', args: [scriptPath] }
 }
 
 export function startSidecar(): void {
   if (pythonProcess) return
 
-  const scriptPath = getPythonPath()
+  const { command, args } = getPythonCommand()
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const proc: any = spawn('python', [scriptPath], {
+  const proc: any = spawn(command, args, {
     stdio: ['pipe', 'pipe', 'pipe'],
     env: { ...process.env, SPARTA_ENV: 'electron', PYTHONUNBUFFERED: '1' },
   })
