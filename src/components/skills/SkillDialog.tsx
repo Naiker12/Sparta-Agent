@@ -1,15 +1,9 @@
 import { useState, useEffect } from 'react'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+import { Zap, Trash2 } from 'lucide-react'
+import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/modal'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
-import { Zap, Trash2 } from 'lucide-react'
 import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog'
 import type { Skill } from '@/types'
 
@@ -22,10 +16,10 @@ interface SkillDialogProps {
 }
 
 export function SkillDialog({ open, onClose, onSubmit, onDelete, initial }: SkillDialogProps) {
-  const [name, setName]               = useState('')
+  const [name, setName] = useState('')
   const [description, setDescription] = useState('')
-  const [prompt, setPrompt]           = useState('')
-  const [tagsInput, setTagsInput]     = useState('')
+  const [prompt, setPrompt] = useState('')
+  const [tagsInput, setTagsInput] = useState('')
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
 
   useEffect(() => {
@@ -47,74 +41,28 @@ export function SkillDialog({ open, onClose, onSubmit, onDelete, initial }: Skil
   const isEditing = !!initial
 
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent style={{
-        width: '560px',
-        maxWidth: '92vw',
-        maxHeight: '88vh',
-        display: 'flex',
-        flexDirection: 'column',
-        padding: 0,
-        gap: 0,
-        overflow: 'hidden',
-        background: 'var(--bg-modal)',
-        border: '1px solid var(--border-strong)',
-        borderRadius: 'var(--radius-xl)',
-        boxShadow: '0 24px 64px rgba(0,0,0,0.45)',
-      }}>
-
-        {/* ── Header ── */}
-        <div style={{ padding: '24px 28px 20px', flexShrink: 0 }}>
-          <DialogHeader>
-            <DialogTitle style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              fontSize: 16,
-              fontWeight: 700,
-              color: 'var(--text-display)',
-              fontFamily: 'var(--font-ui)',
-              marginBottom: 4,
-            }}>
-              <span style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 30,
-                height: 30,
-                borderRadius: 'var(--radius-md)',
-                background: 'var(--accent-muted)',
-                color: 'var(--accent)',
-                flexShrink: 0,
-              }}>
-                <Zap size={15} strokeWidth={2.25} />
-              </span>
-              {isEditing ? 'Editar skill' : 'Nueva skill'}
-            </DialogTitle>
-            <DialogDescription style={{
-              fontSize: 13,
-              color: 'var(--text-secondary)',
-              fontFamily: 'var(--font-ui)',
-              marginLeft: 40,
-            }}>
-              Una skill es un prompt reutilizable que un agente puede invocar.
-            </DialogDescription>
-          </DialogHeader>
-        </div>
-
-        {/* ── Scrollable Body ── */}
-        <form
-          id="skill-form"
-          onSubmit={handleSubmit}
-          style={{
-            flex: 1,
-            overflowY: 'auto',
-            padding: '0 28px 4px',
+    <Modal open={open} onClose={onClose} width={560} maxHeight={560}>
+      <ModalHeader title={(
+        <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{
             display: 'flex',
-            flexDirection: 'column',
-            gap: 18,
-          }}
-        >
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 30,
+            height: 30,
+            borderRadius: 'var(--radius-md)',
+            background: 'var(--accent-muted)',
+            color: 'var(--accent)',
+            flexShrink: 0,
+          }}>
+            <Zap size={15} strokeWidth={2.25} />
+          </span>
+          {isEditing ? 'Editar skill' : 'Nueva skill'}
+        </span>
+      )} onClose={onClose} />
+
+      <form id="skill-form" onSubmit={handleSubmit}>
+        <ModalBody style={{ padding: '0 28px 4px', display: 'flex', flexDirection: 'column', gap: 16 }}>
           <Field label="Nombre">
             <Input
               autoFocus
@@ -163,47 +111,36 @@ export function SkillDialog({ open, onClose, onSubmit, onDelete, initial }: Skil
               Separados por coma
             </span>
           </Field>
-        </form>
+        </ModalBody>
+      </form>
 
-        {/* ── Footer ── */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'flex-end',
-          gap: 8,
-          padding: '16px 28px',
-          borderTop: '1px solid var(--border-subtle)',
-          background: 'var(--bg-surface)',
-          flexShrink: 0,
-        }}>
-          {onDelete && (
-            <Button
-              variant="ghost"
-              onClick={() => setConfirmDeleteOpen(true)}
-              style={{
-                marginRight: 'auto',
-                color: 'var(--status-err)',
-                gap: 6,
-              }}
-            >
-              <Trash2 size={13} />
-              Eliminar
-            </Button>
-          )}
-          <Button variant="ghost" onClick={onClose} style={{ minWidth: 90 }}>
-            Cancelar
-          </Button>
+      <ModalFooter>
+        {onDelete && (
           <Button
-            form="skill-form"
-            type="submit"
-            disabled={!name.trim() || !prompt.trim()}
-            style={{ minWidth: 120 }}
+            variant="ghost"
+            onClick={() => setConfirmDeleteOpen(true)}
+            style={{
+              marginRight: 'auto',
+              color: 'var(--status-err)',
+              gap: 6,
+            }}
           >
-            {isEditing ? 'Guardar cambios' : 'Crear skill'}
+            <Trash2 size={13} />
+            Eliminar
           </Button>
-        </div>
-
-      </DialogContent>
+        )}
+        <Button variant="ghost" onClick={onClose} style={{ minWidth: 90 }}>
+          Cancelar
+        </Button>
+        <Button
+          form="skill-form"
+          type="submit"
+          disabled={!name.trim() || !prompt.trim()}
+          style={{ minWidth: 120 }}
+        >
+          {isEditing ? 'Guardar cambios' : 'Crear skill'}
+        </Button>
+      </ModalFooter>
 
       {onDelete && (
         <ConfirmDeleteDialog
@@ -214,7 +151,7 @@ export function SkillDialog({ open, onClose, onSubmit, onDelete, initial }: Skil
           onConfirm={() => { onDelete(); setConfirmDeleteOpen(false) }}
         />
       )}
-    </Dialog>
+    </Modal>
   )
 }
 

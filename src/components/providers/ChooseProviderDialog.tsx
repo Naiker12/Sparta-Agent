@@ -2,6 +2,7 @@ import type { ProviderVendor } from '@/types'
 import { getVendorLabel } from '@/stores/provider.store'
 import { useTranslation } from '@/i18n'
 import { BrandIcon } from '@/components/ui/BrandIcon'
+import { Modal, ModalHeader, ModalBody } from '@/components/ui/modal'
 
 interface ChooseProviderDialogProps {
   open: boolean
@@ -15,12 +16,11 @@ const LOCAL_VENDORS: ProviderVendor[] = ['ollama', 'lmstudio', 'llamacpp', 'cust
 export function ChooseProviderDialog({ open, onSelect, onClose }: ChooseProviderDialogProps) {
   const { t } = useTranslation()
 
-  if (!open) return null
-
   function renderVendor(vendor: ProviderVendor) {
     return (
       <button
         key={vendor}
+        type="button"
         onClick={() => onSelect(vendor)}
         style={{
           display: 'flex',
@@ -48,44 +48,10 @@ export function ChooseProviderDialog({ open, onSelect, onClose }: ChooseProvider
   }
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 60,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'rgba(0,0,0,0.4)',
-      }}
-      onClick={onClose}
-    >
-      <div
-        style={{
-          width: 340,
-          maxHeight: 420,
-          background: 'var(--bg-modal)',
-          border: '1px solid var(--border-strong)',
-          borderRadius: 'var(--radius-xl)',
-          boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div style={{ padding: '14px 16px 0', flexShrink: 0 }}>
-          <h3 style={{
-            fontSize: 13,
-            fontWeight: 500,
-            color: 'var(--text-primary)',
-            fontFamily: 'var(--font-ui)',
-            marginBottom: 10,
-          }}>
-            {t('models.chooseTitle')}
-          </h3>
-        </div>
-
-        <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '0 16px', minHeight: 0 }}>
+    <Modal open={open} onClose={onClose} width={340} maxHeight={420}>
+      <ModalHeader title={t('models.chooseTitle')} onClose={onClose} />
+      <ModalBody style={{ padding: '0 16px' }}>
+        <div style={{ paddingBottom: 12 }}>
           <div style={{ marginBottom: 6 }}>
             <div style={{
               fontSize: 10,
@@ -118,7 +84,7 @@ export function ChooseProviderDialog({ open, onSelect, onClose }: ChooseProvider
             {LOCAL_VENDORS.map(renderVendor)}
           </div>
         </div>
-      </div>
-    </div>
+      </ModalBody>
+    </Modal>
   )
 }

@@ -1,11 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/modal'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import {
@@ -26,18 +20,18 @@ type InputMode = 'manual' | 'config'
 export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDialogProps) {
   const { addServer } = useMCPStore()
 
-  const [name, setName]               = useState('')
-  const [type, setType]               = useState<MCPServerType>('stdio')
-  const [command, setCommand]         = useState('')
-  const [args, setArgs]               = useState('')
-  const [url, setUrl]                 = useState('')
-  const [envVars, setEnvVars]         = useState('')
-  const [configJson, setConfigJson]   = useState('')
-  const [inputMode, setInputMode]     = useState<InputMode>('manual')
-  const [testing, setTesting]         = useState(false)
-  const [testResult, setTestResult]   = useState<string | null>(null)
-  const [copied, setCopied]           = useState(false)
-  const fileInputRef                  = useRef<HTMLInputElement>(null)
+  const [name, setName] = useState('')
+  const [type, setType] = useState<MCPServerType>('stdio')
+  const [command, setCommand] = useState('')
+  const [args, setArgs] = useState('')
+  const [url, setUrl] = useState('')
+  const [envVars, setEnvVars] = useState('')
+  const [configJson, setConfigJson] = useState('')
+  const [inputMode, setInputMode] = useState<InputMode>('manual')
+  const [testing, setTesting] = useState(false)
+  const [testResult, setTestResult] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (open) {
@@ -51,11 +45,11 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
       setInputMode('manual')
       setTestResult(null)
     }
-  }, [open])
+  }, [open, editServer?.args, editServer?.command, editServer?.name, editServer?.type, editServer?.url])
 
   const isEditing = !!editServer
-  const isEmpty   = type === 'stdio' ? !command.trim() : !url.trim()
-  const preview   = type === 'stdio'
+  const isEmpty = type === 'stdio' ? !command.trim() : !url.trim()
+  const preview = type === 'stdio'
     ? `${command || '[comando]'} ${args || ''}`.trim()
     : url || '[url]'
 
@@ -63,11 +57,11 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
     e.preventDefault()
     if (inputMode === 'config') {
       try {
-        const parsed  = JSON.parse(configJson)
+        const parsed = JSON.parse(configJson)
         const servers = parsed.mcpServers ?? parsed
         for (const [serverName, serverConfig] of Object.entries(servers)) {
           const cfg = serverConfig as Record<string, unknown>
-          const id  = serverName.toLowerCase().replace(/\s+/g, '-')
+          const id = serverName.toLowerCase().replace(/\s+/g, '-')
           addServer({
             id, name: serverName, type: cfg.command ? 'stdio' : 'http', enabled: true,
             ...(cfg.command
@@ -125,69 +119,33 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
   const canSubmitConfig = configJson.trim().length > 2
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) { reset(); onClose() } }}>
-      <DialogContent style={{
-        width: '600px',
-        maxWidth: '92vw',
-        maxHeight: '88vh',
-        display: 'flex',
-        flexDirection: 'column',
-        padding: 0,
-        gap: 0,
-        overflow: 'hidden',
-        background: 'var(--bg-modal)',
-        border: '1px solid var(--border-strong)',
-        borderRadius: 'var(--radius-xl)',
-        boxShadow: '0 24px 64px rgba(0,0,0,0.45)',
-      }}>
+    <Modal open={open} onClose={() => { reset(); onClose() }} width={600} maxHeight={560}>
+      <ModalHeader title={(
+        <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 30,
+            height: 30,
+            borderRadius: 'var(--radius-md)',
+            background: 'var(--accent-muted)',
+            color: 'var(--accent)',
+            flexShrink: 0,
+          }}>
+            <Plug size={15} strokeWidth={2} />
+          </span>
+          {isEditing ? 'Editar servidor MCP' : 'Agregar servidor MCP'}
+        </span>
+      )} onClose={() => { reset(); onClose() }} />
 
-        {/* ── Header ── */}
-        <div style={{
-          padding: '24px 28px 0',
-          flexShrink: 0,
-        }}>
-          <DialogHeader>
-            <DialogTitle style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              fontSize: 16,
-              fontWeight: 700,
-              color: 'var(--text-display)',
-              fontFamily: 'var(--font-ui)',
-              marginBottom: 4,
-            }}>
-              <span style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 30,
-                height: 30,
-                borderRadius: 'var(--radius-md)',
-                background: 'var(--accent-muted)',
-                color: 'var(--accent)',
-                flexShrink: 0,
-              }}>
-                <Plug size={15} strokeWidth={2} />
-              </span>
-              {isEditing ? 'Editar servidor MCP' : 'Agregar servidor MCP'}
-            </DialogTitle>
-            <DialogDescription style={{
-              fontSize: 13,
-              color: 'var(--text-secondary)',
-              fontFamily: 'var(--font-ui)',
-              marginLeft: 40,
-            }}>
-              Configura un servidor MCP para exponer herramientas a los agentes.
-            </DialogDescription>
-          </DialogHeader>
-
-          {/* ── Mode Tabs ── */}
+      <form id="mcp-form" onSubmit={handleSubmit}>
+        <ModalBody style={{ padding: '0 28px', display: 'flex', flexDirection: 'column', gap: 0 }}>
           <div style={{
             display: 'flex',
             gap: 4,
-            marginTop: 20,
-            padding: '4px',
+            marginBottom: 16,
+            padding: 4,
             background: 'var(--bg-surface)',
             borderRadius: 'var(--radius-lg)',
             border: '1px solid var(--border-subtle)',
@@ -205,25 +163,9 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
               onClick={() => setInputMode('config')}
             />
           </div>
-        </div>
 
-        {/* ── Scrollable Body ── */}
-        <form
-          id="mcp-form"
-          onSubmit={handleSubmit}
-          style={{
-            flex: 1,
-            overflowY: 'auto',
-            padding: '20px 28px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 0,
-          }}
-        >
           {inputMode === 'manual' ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-
-              {/* Name */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
               <Field label="Nombre del servidor">
                 <Input
                   value={name}
@@ -233,7 +175,6 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
                 />
               </Field>
 
-              {/* Type selector */}
               <Field label="Tipo de conexión">
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                   <TypeCard
@@ -253,7 +194,6 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
                 </div>
               </Field>
 
-              {/* Dynamic fields */}
               {type === 'stdio' ? (
                 <div style={{ display: 'grid', gridTemplateColumns: '160px 1fr', gap: 12 }}>
                   <Field label="Comando">
@@ -281,7 +221,6 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
                 </Field>
               )}
 
-              {/* Env vars */}
               <Field label="Variables de entorno">
                 <Input
                   value={envVars}
@@ -302,7 +241,6 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
                 </span>
               </Field>
 
-              {/* Preview */}
               <Field label="Vista previa del comando">
                 <div style={{
                   display: 'flex',
@@ -346,7 +284,6 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
                 </div>
               </Field>
 
-              {/* Test connection */}
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -383,13 +320,9 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
                   </span>
                 )}
               </div>
-
             </div>
           ) : (
-            /* ── Config JSON Mode ── */
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-
-              {/* Info banner */}
               <div style={{
                 display: 'flex',
                 gap: 10,
@@ -433,11 +366,11 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
                   }}
                   onFocus={e => {
                     e.currentTarget.style.borderColor = 'var(--accent)'
-                    e.currentTarget.style.boxShadow  = '0 0 0 3px var(--accent-muted)'
+                    e.currentTarget.style.boxShadow = '0 0 0 3px var(--accent-muted)'
                   }}
                   onBlur={e => {
                     e.currentTarget.style.borderColor = 'var(--border-normal)'
-                    e.currentTarget.style.boxShadow  = 'none'
+                    e.currentTarget.style.boxShadow = 'none'
                   }}
                 />
               </Field>
@@ -460,44 +393,31 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
               </Button>
             </div>
           )}
-        </form>
+        </ModalBody>
+      </form>
 
-        {/* ── Footer ── */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'flex-end',
-          gap: 8,
-          padding: '16px 28px',
-          borderTop: '1px solid var(--border-subtle)',
-          background: 'var(--bg-surface)',
-          flexShrink: 0,
-        }}>
-          <Button
-            variant="ghost"
-            onClick={() => { reset(); onClose() }}
-            style={{ minWidth: 90 }}
-          >
-            Cancelar
-          </Button>
-          <Button
-            form="mcp-form"
-            type="submit"
-            disabled={inputMode === 'manual' ? !canSubmitManual : !canSubmitConfig}
-            style={{ minWidth: 160 }}
-          >
-            {inputMode === 'config'
-              ? 'Importar servidores'
-              : isEditing ? 'Guardar cambios' : 'Agregar servidor'}
-          </Button>
-        </div>
-
-      </DialogContent>
-    </Dialog>
+      <ModalFooter>
+        <Button
+          variant="ghost"
+          onClick={() => { reset(); onClose() }}
+          style={{ minWidth: 90 }}
+        >
+          Cancelar
+        </Button>
+        <Button
+          form="mcp-form"
+          type="submit"
+          disabled={inputMode === 'manual' ? !canSubmitManual : !canSubmitConfig}
+          style={{ minWidth: 160 }}
+        >
+          {inputMode === 'config'
+            ? 'Importar servidores'
+            : isEditing ? 'Guardar cambios' : 'Agregar servidor'}
+        </Button>
+      </ModalFooter>
+    </Modal>
   )
 }
-
-/* ── Sub-components ── */
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
