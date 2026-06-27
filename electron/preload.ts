@@ -1,4 +1,5 @@
 import { ipcRenderer, contextBridge } from 'electron'
+import type { FileTreeNode } from './ipc/filesystem.ipc'
 
 contextBridge.exposeInMainWorld('electronAPI', {
   minimize: () => ipcRenderer.send('win:minimize'),
@@ -52,7 +53,7 @@ contextBridge.exposeInMainWorld('sparta', {
     reasoning?: { enabled: boolean; budget: number }
   }) => ipcRenderer.invoke('chat:send', req),
   abortMessage: (sessionId: string) => ipcRenderer.invoke('chat:abort', sessionId),
-  isSidecarReady: () => ipcRenderer.invoke('sidecar:status'),
+  isSidecarReady: () => ipcRenderer.invoke('sidecar:status') as Promise<{ running: boolean; ready: boolean }>,
 })
 
 contextBridge.exposeInMainWorld('vault', {
@@ -62,4 +63,42 @@ contextBridge.exposeInMainWorld('vault', {
   deleteKey: (keyId: string) => ipcRenderer.invoke('vault:deleteKey', keyId),
   listKeys: () => ipcRenderer.invoke('vault:listKeys'),
   hasKey: (keyId: string) => ipcRenderer.invoke('vault:hasKey', keyId),
+})
+
+contextBridge.exposeInMainWorld('terminal', {
+  create: (opts: { terminalId: string; cols: number; rows: number }) =>
+    ipcRenderer.invoke('terminal:create', opts),
+
+  write: (terminalId: string, data: string) =>
+    ipcRenderer.send('terminal:write', { terminalId, data }),
+
+  resize: (terminalId: string, cols: number, rows: number) =>
+    ipcRenderer.send('terminal:resize', { terminalId, cols, rows }),
+
+  destroy: (terminalId: string) =>
+    ipcRenderer.invoke('terminal:destroy', { terminalId }),
+
+  onData: (terminalId: string, callback: (data: string) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, data: string) => callback(data)
+    ipcRenderer.on(`terminal:data:${terminalId}`, handler)
+    return () => ipcRenderer.removeListener(`terminal:data:${terminalId}`, handler)
+  },
+
+  onExit: (terminalId: string, callback: (code: number) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, { exitCode }: { exitCode: number }) => callback(exitCode)
+    ipcRenderer.on(`terminal:exit:${terminalId}`, handler)
+    return () => ipcRenderer.removeListener(`terminal:exit:${terminalId}`, handler)
+  },
+
+  agentWrite: (terminalId: string, command: string) =>
+    ipcRenderer.invoke('terminal:agent-write', { terminalId, command }),
+})
+
+contextBridge.exposeInMainWorld('fs', {
+  openFolderDialog: () => ipcRenderer.invoke('fs:openFolderDialog') as Promise<string | null>,
+  readDir: (dirPath: string) => ipcRenderer.invoke('fs:readDir', dirPath) as Promise<FileTreeNode[]>,
+  readFile: (filePath: string) => ipcRenderer.invoke('fs:readFile', filePath) as Promise<{ success: boolean; content?: string; error?: string }>,
+  writeFile: (filePath: string, content: string) => ipcRenderer.invoke('fs:writeFile', filePath, content) as Promise<{ success: boolean; error?: string }>,
+  deleteFile: (filePath: string) => ipcRenderer.invoke('fs:deleteFile', filePath) as Promise<{ success: boolean; error?: string }>,
+  deleteFolder: (folderPath: string) => ipcRenderer.invoke('fs:deleteFolder', folderPath) as Promise<{ success: boolean; error?: string }>,
 })

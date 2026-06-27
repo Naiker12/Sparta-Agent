@@ -6,9 +6,11 @@ import { registerChatIPC } from './ipc/chat.ipc'
 import { registerMemoryIPC } from './ipc/memory.ipc'
 import { registerVaultIPC } from './ipc/vault.ipc'
 import { registerSearchIPC } from './ipc/search.ipc'
-import { registerKeyManagerIPC } from './ipc/keymanager.ipc'
+import { registerKeyManagerIPC, pushAllKeys } from './ipc/keymanager.ipc'
 import { registerSecurityIPC, wireSecurityIntoPipeline } from './ipc/security.ipc'
-import { startSidecar, stopSidecar } from './ipc/sidecar.ipc'
+import { startSidecar, stopSidecar, waitForSidecarReady } from './ipc/sidecar.ipc'
+import { registerTerminalIPC } from './ipc/terminal.ipc'
+import { registerFilesystemIPC } from './ipc/filesystem.ipc'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -80,7 +82,7 @@ app.on('activate', () => {
   }
 })
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   // Start Python AI sidecar before creating window
   startSidecar()
 
@@ -92,14 +94,32 @@ app.whenReady().then(() => {
   registerSearchIPC()
   registerKeyManagerIPC()
   registerSecurityIPC()
+  registerTerminalIPC()
+  registerFilesystemIPC()
 
   // Wire Rust security layer into the IPC pipeline
   wireSecurityIntoPipeline()
 
-  // Seed vault keys into Python sidecar cache
-  const { pushAll } = require('./ipc/keymanager.ipc')
+  // Seed vault keys into Python sidecar cache once it is ready.
+  // Wrapped in an IIFE so we can await the sidecar handshake without blocking app startup.
   setTimeout(() => {
-    pushAll().catch((err: Error) => console.warn('[main] Failed to seed keys:', err.message))
+    void (async () => {
+      try {
+        const ready = await waitForSidecarReady(30_000)
+        if (!ready) {
+          console.warn('[main] Sidecar did not become ready; skipping key seed')
+          return
+        }
+        const result = await pushAllKeys()
+        if (result.ok) {
+          console.log('[main] Seeded', result.count, 'vault keys into sidecar')
+        } else {
+          console.warn('[main] Failed to seed keys:', result.error)
+        }
+      } catch (err) {
+        console.warn('[main] Failed to seed keys:', (err as Error).message)
+      }
+    })()
   }, 1000)
 
   ipcMain.handle('app:getVersion', () => {

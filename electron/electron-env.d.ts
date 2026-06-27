@@ -38,7 +38,7 @@ interface SpartaAPI {
     reasoning?: { enabled: boolean; budget: number }
   }) => Promise<{ ok: boolean; error?: string; aborted?: boolean }>
   abortMessage: (sessionId: string) => Promise<void>
-  isSidecarReady: () => Promise<{ running: boolean }>
+  isSidecarReady: () => Promise<{ running: boolean; ready: boolean }>
 }
 
 interface VaultAPI {
@@ -50,6 +50,25 @@ interface VaultAPI {
   hasKey: (keyId: string) => Promise<boolean>
 }
 
+interface FsAPI {
+  openFolderDialog: () => Promise<string | null>
+  readDir: (dirPath: string) => Promise<import('./ipc/filesystem.ipc').FileTreeNode[]>
+  readFile: (filePath: string) => Promise<{ success: boolean; content?: string; error?: string }>
+  writeFile: (filePath: string, content: string) => Promise<{ success: boolean; error?: string }>
+  deleteFile: (filePath: string) => Promise<{ success: boolean; error?: string }>
+  deleteFolder: (folderPath: string) => Promise<{ success: boolean; error?: string }>
+}
+
+interface TerminalAPI {
+  create: (opts: { terminalId: string; cols: number; rows: number }) => Promise<{ success: boolean; shell: string }>
+  write: (terminalId: string, data: string) => void
+  resize: (terminalId: string, cols: number, rows: number) => void
+  destroy: (terminalId: string) => Promise<{ success: boolean }>
+  onData: (terminalId: string, callback: (data: string) => void) => () => void
+  onExit: (terminalId: string, callback: (code: number) => void) => () => void
+  agentWrite: (terminalId: string, command: string) => Promise<{ success: boolean }>
+}
+
 interface Window {
   electronAPI: ElectronAPI
   electron: {
@@ -59,4 +78,6 @@ interface Window {
   }
   sparta: SpartaAPI
   vault: VaultAPI
+  terminal: TerminalAPI
+  fs: FsAPI
 }

@@ -1,5 +1,5 @@
 import { ipcMain, BrowserWindow } from 'electron'
-import { sendToPython, isSidecarRunning, sidecarEvents, SidecarEvent } from './sidecar.ipc'
+import { sendToPython, isSidecarRunning, isSidecarReady, waitForSidecarReady, sidecarEvents, SidecarEvent } from './sidecar.ipc'
 
 interface ChatRequest {
   sessionId: string
@@ -20,6 +20,19 @@ interface ChatRequest {
 }
 
 const activeStreams = new Map<string, boolean>()
+const chunkSeqCounters = new Map<string, { streamSeq: number; thinkSeq: number }>()
+
+function getNextSeq(requestId: string, kind: 'stream' | 'think'): number {
+  const entry = chunkSeqCounters.get(requestId) ?? { streamSeq: 0, thinkSeq: 0 }
+  if (kind === 'stream') entry.streamSeq++
+  else entry.thinkSeq++
+  chunkSeqCounters.set(requestId, entry)
+  return kind === 'stream' ? entry.streamSeq : entry.thinkSeq
+}
+
+function clearSeqCounters(requestId: string): void {
+  chunkSeqCounters.delete(requestId)
+}
 
 function sendToRenderer(event: Record<string, unknown>): void {
   const win = BrowserWindow.getFocusedWindow()
@@ -27,6 +40,11 @@ function sendToRenderer(event: Record<string, unknown>): void {
 }
 
 export function registerChatIPC(): void {
+  // Forward Python stderr lines to the renderer as sidecar logs for visibility.
+  sidecarEvents.on(SidecarEvent.STDERR, (text: string) => {
+    sendToRenderer({ type: 'sidecar:log', level: 'stderr', text })
+  })
+
   // Listen for all sidecar messages and route them to active streams
   const onMessage = (msg: Record<string, unknown>) => {
     const requestId = (msg.id as string) ?? ''
@@ -41,25 +59,22 @@ export function registerChatIPC(): void {
         sendToRenderer({ sessionId, messageId, type: 'thinking:started' })
         break
       case 'thinking:token':
-        sendToRenderer({ sessionId, messageId, type: 'thinking:token', token: data?.token })
+        sendToRenderer({ sessionId, messageId, type: 'thinking:token', token: data?.token, chunkSeq: getNextSeq(requestId, 'think') })
         break
       case 'thinking:completed':
         sendToRenderer({ sessionId, messageId, type: 'thinking:completed', tokensUsed: data?.tokens_used ?? data?.tokensUsed ?? 0 })
         break
       case 'stream:token':
-        sendToRenderer({ sessionId, messageId, type: 'stream:token', token: data?.token })
+        sendToRenderer({ sessionId, messageId, type: 'stream:token', token: data?.token, chunkSeq: getNextSeq(requestId, 'stream') })
         break
       case 'stream:completed': {
         sendToRenderer({ sessionId, messageId, type: 'stream:completed', usage: data?.usage })
-    const resolve = streamResolvers.get(requestId)
-    if (resolve) {
-      resolve()
-      streamResolvers.delete(requestId)
-    }
+        clearSeqCounters(requestId)
         break
       }
       case 'stream:aborted':
         sendToRenderer({ sessionId, messageId, type: 'stream:aborted' })
+        clearSeqCounters(requestId)
         break
       case 'tool:called':
         sendToRenderer({ sessionId, messageId, type: 'tool:called', toolCall: { id: crypto.randomUUID(), toolName: data?.name, input: data?.input, status: 'running' } })
@@ -75,6 +90,7 @@ export function registerChatIPC(): void {
         break
       case 'error':
         sendToRenderer({ sessionId, messageId, type: 'stream:error', error: data?.message ?? 'Unknown error' })
+        clearSeqCounters(requestId)
         break
     }
   }
@@ -91,6 +107,17 @@ export function registerChatIPC(): void {
         error: 'Python sidecar no está iniciado. Reinicia la aplicación.',
       })
       return { ok: false, error: 'Sidecar not running' }
+    }
+
+    // Wait for the sidecar to finish its cold start (imports + model init).
+    const ready = await waitForSidecarReady(30_000)
+    if (!ready) {
+      sendToRenderer({
+        sessionId, messageId,
+        type: 'error',
+        error: 'Python sidecar no respondió a tiempo. Reinicia la aplicación.',
+      })
+      return { ok: false, error: 'Sidecar not ready' }
     }
 
     activeStreams.set(sessionId, true)
@@ -143,16 +170,17 @@ export function registerChatIPC(): void {
   })
 
   ipcMain.handle('sidecar:status', () => {
-    return { running: isSidecarRunning() }
+    return { running: isSidecarRunning(), ready: isSidecarReady() }
   })
 }
 
 // Stream completion signals: event-driven via sidecarEvents
-// stream_end event resolves the wait promise for each active request
+// stream:completed / stream_end events resolve the wait promise for each active request
 const streamResolvers = new Map<string, () => void>()
 
 sidecarEvents.on(SidecarEvent.MESSAGE, (msg: Record<string, unknown>) => {
-  if (msg.event === 'stream_end') {
+  const event = msg.event as string
+  if (event === 'stream:completed' || event === 'stream_end' || event === 'error') {
     const requestId = (msg.id as string) ?? ''
     const resolve = streamResolvers.get(requestId)
     resolve?.()

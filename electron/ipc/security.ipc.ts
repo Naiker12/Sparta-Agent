@@ -1,11 +1,10 @@
 import { ipcMain } from 'electron'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { createRequire } from 'node:module'
 import { app } from 'electron'
 import { sidecarEvents, SidecarEvent } from './sidecar.ipc'
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
+const require = createRequire(import.meta.url)
 
 type SecurityModule = {
   validateMessage: (line: string) => string
@@ -21,6 +20,12 @@ type SecurityModule = {
 
 let security: SecurityModule | null = null
 
+function getSecurityModuleRoot(): string {
+  return app.isPackaged
+    ? path.join(process.resourcesPath, 'rust', 'sparta-security')
+    : path.join(process.cwd(), 'rust', 'sparta-security')
+}
+
 function loadSecurityModule(): SecurityModule | null {
   if (security) return security
 
@@ -28,11 +33,9 @@ function loadSecurityModule(): SecurityModule | null {
     const platform = process.platform
     const ext = platform === 'win32' ? 'win32-x64-msvc' : 'darwin-x64'
     const modulePath = path.join(
-      app.isPackaged ? process.resourcesPath : __dirname,
-      '..', '..', 'rust', 'sparta-security',
+      getSecurityModuleRoot(),
       `sparta-security.${ext}.node`
     )
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     security = require(modulePath) as SecurityModule
     console.log('[security] Rust native module loaded')
     return security
