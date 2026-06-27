@@ -77,7 +77,7 @@ export function startSidecar(): void {
   })
 
   pythonProcess = proc
-  console.log(`[sidecar] Started: ${scriptPath}`)
+  console.log(`[sidecar] Started: ${args[0]}`)
 }
 
 export function sendToPython(msg: object): void {
