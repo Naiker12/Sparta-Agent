@@ -49,3 +49,5 @@ python/*.egg-info/
 python/.mypy_cache/
 python/dist/
 
+
+dist-web/
