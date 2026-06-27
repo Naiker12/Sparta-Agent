@@ -1,11 +1,11 @@
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║                     SPARTA AGENT — DOCUMENTACIÓN DEL PROYECTO              ║
-║                     Versión documentada: 0.0.0                             ║
+║                     Versión documentada: 0.2.0                             ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
 Nota: la versión se lee desde package.json vía IPC (app:getVersion) y se muestra
-en StatusBar dinámicamente. package.json debe actualizarse manualmente antes de
-cada release. Versión actual en desarrollo: 0.0.0.
+   en StatusBar dinámicamente. package.json debe actualizarse manualmente antes de
+   cada release. Versión actual en desarrollo: 0.2.0.
 
 ================================================================================
  1. ¿QUÉ ES SPARTA AGENT?
@@ -23,7 +23,7 @@ Soporta el Protocolo de Contexto de Modelo (MCP), 13 temas visuales
 con detección de tema, y un bus de eventos tipado en memoria. Es un
 "IDE de agentes de IA" local-first en desarrollo activo.
 
-Estado actual (v0.0.0):
+Estado actual (v0.2.0):
   • UI/UX muy pulida y funcional (layout, sidebar, chat, settings, views)
   • Gestión de sesiones, skills, MCP, canales, memoria y proyectos operativa
   • Sistema de proveedores con test connection real y fetch de modelos
@@ -42,11 +42,25 @@ Estado actual (v0.0.0):
   • RUST SECURITY LAYER: napi-rs native addon (validator/sanitizer/guard/audit)
   • CHAT IPC DELEGADO AL SIDECAR: chat.ipc.ts envía vía stdio JSON-RPC
   • FIX THINKING FROZEN: thinkingStatus como estado explícito, auto-collapse
-  • Terminal funcional con xterm.js + FitAddon + ResizeObserver
+  • TERMINAL CON PTY REAL: node-pty + PowerShell/bash con resize sincronizado
+  • Integración agente ↔ terminal: el agente de IA puede ejecutar comandos
+  • Tema dinámico: colores de xterm siguen el tema activo de Sparta
   • Lazy loading de vistas pesadas (Suspense + React.lazy)
   • Stores con persist: mcp.store.ts (antes en memoria), settings migrate v3
   • Cron jobs, gateway monitor, usage tracker operativos
   • sidecar-bridge.ts: puente simplificado desde el frontend al sidecar Python
+  • EDITOR FUNCIONAL: Monaco Editor con 9 lenguajes, toolbar, selector sintaxis
+  • TYPES CONSOLIDADOS: src/interfaces/ eliminado — todo en src/types/
+  • LAZY LOADING DE THREE.JS: MemoryGraphScene con importación dinámica (~200KB ahorrados)
+  • SEARCH IPC DEPRECADO: search.ipc.ts reemplazado por web_search tool del sidecar Python
+  • PYTHON EMBEDDED: electron-builder configurado para empaquetar runtime Python
+  • SIDECAR CON PYTHON PORTABLE: getPythonCommand() detecta bundled o system Python
+  • TERMINAL FIX: fondo oscuro forzado (siempre #0C0C10, sin importar el tema UI)
+  • TERMINAL BANNER: ASCII art Sparta al crear sesión + buffer de datos tempranos para evitar prompt perdido
+  • TERMINAL AGENT PREFIX: comandos del agente con prefijo [agente] visible en terminal
+  • EDITOR DELETE: eliminar archivos/carpetas vía shell.trashItem() (papelera del SO)
+  • EDITOR EXPLORER TOGGLE: Ctrl+B ocuestra/muestra el panel de explorador de archivos
+  • CONFIRM DELETE DIALOG: reutilizado para todas las operaciones de borrado
 
 ================================================================================
  2. STACK TECNOLÓGICO
@@ -64,20 +78,23 @@ Estado actual (v0.0.0):
   Iconos            Lucide React + SVGs propios en public/icons/brands/
   Animaciones       Framer Motion 12
   Editor Código     Monaco Editor (@monaco-editor/react) — instalado
-  Terminal          xterm.js (@xterm/xterm + @xterm/addon-fit) — FUNCIONAL
+  Terminal          xterm.js + node-pty — PTY REAL (PowerShell/bash)
   Markdown          react-markdown 10 + remark-gfm 4
   Async/Datos       TanStack React Query 5 — instalado, uso mínimo
-  Grafo 3D          three.js 0.184
-  Tests JS          vitest 2 (59 tests)
-  Tests Python      pytest (32 tests)
+  Grafo 3D          three.js 0.184 (lazy-loaded via dynamic import)
+  Tests JS          vitest 2 (59 tests, 6 suites)
+  Tests Python      pytest (32 tests, 4 suites)
   Tests Rust        cargo test (9 tests)
+  Componentes       ~101 archivos .tsx en src/components/
+  Hooks             13 hooks en src/hooks/
+  Stores            15 stores (14 .store.ts) en src/stores/
   Animación CSS     tw-animate-css 1.4
   Vector DB         ChromaDB (HTTP client directo + LangChain VectorStore)
   Vault             Electron safeStorage (AES-256-GCM)
   AI Sidecar        Python 3.11+ / LangGraph / LangChain
   Security Layer    Rust / napi-rs / napi-6
   Package Manager   pnpm
-  Builder           electron-builder 24
+  Builder           electron-builder 24 (con soporte Python embedded)
   CLI UI            shadcn ^4.11.0
 
 ================================================================================
@@ -114,9 +131,10 @@ D:\sparta-agent\
 │       ├── sidecar.ipc.ts         # Gestión del proceso Python (start/stop/send/EventEmitter)
 │       ├── keymanager.ipc.ts      # Push de keys del vault al sidecar Python
 │       ├── security.ipc.ts        # Wrapper del Rust native addon + pipeline hook
-│       ├── memory.ipc.ts          # memory:list/add/update/delete + relations
-│       ├── vault.ipc.ts           # vault:isAvailable/storeKey/getKey/deleteKey/listKeys/hasKey
-│       └── search.ipc.ts          # search:web — Brave Search API (deprecado, migra a Python)
+  │       ├── memory.ipc.ts          # memory:list/add/update/delete + relations
+  │       ├── vault.ipc.ts           # vault:isAvailable/storeKey/getKey/deleteKey/listKeys/hasKey
+  │       ├── search.ipc.ts          # search:web — Brave Search API (deprecado, migra a Python)
+  │       └── terminal.ipc.ts        # PTY real: create/write/resize/destroy/agent-write
 │
 ├── public\                        # ASSETS ESTÁTICOS
 │   ├── electron-vite.animate.svg
@@ -150,17 +168,18 @@ D:\sparta-agent\
 │   │   ├── es.ts                  # Diccionario español
 │   │   └── en.ts                  # Diccionario inglés
 │   │
-│   ├── interfaces\                # INTERFACES PURAS (contratos)
-│   │   ├── index.ts               # Barrel export
-│   │   ├── chat.interface.ts      # Message, Session, ToolCall, ChatStreamChunk, ChatRequest
-│   │   ├── provider.interface.ts  # Provider (hasVaultKey), AIProvider, ModelInfo, ProviderVendor
-│   │   ├── mcp.interface.ts       # MCPServer, MCPTool, MCPServerConfig
-│   │   ├── memory.interface.ts    # MemoryEntry, MemoryRelation (semantic_relation), MemoryGraph, ExtractedMemory
-│   │   ├── agent.interface.ts     # Agent, Task, TaskStep
-│   │   ├── skill.interface.ts     # Skill, DownloadableSkill
-│   │   ├── channel.interface.ts   # Channel, ChannelMessage, IntegrationConfig
-│   │   ├── project.interface.ts   # Project
-│   │   └── settings.interface.ts  # SettingsTab (unificada), SessionMode, Language
+│   ├── types\                     # TIPOS (consolidado desde src/interfaces/)
+│   │   ├── index.ts               # Barrel con re-export explícito
+│   │   ├── chat.ts                # Message, Session, ToolCall, ChatStreamChunk, ChatRequest
+│   │   ├── provider.ts            # Provider (hasVaultKey), AIProvider, ModelInfo, ProviderVendor
+│   │   ├── mcp.ts                 # MCPServer, MCPTool, MCPServerConfig
+│   │   ├── memory.ts              # MemoryEntry, MemoryRelation, MemoryGraph, ExtractedMemory
+│   │   ├── agent.ts               # Agent, Task, TaskStep
+│   │   ├── skill.ts               # Skill, DownloadableSkill
+│   │   ├── channel.ts             # Channel, ChannelMessage, IntegrationConfig
+│   │   ├── project.ts             # Project
+│   │   ├── settings.ts            # SettingsTab, SessionMode, Language
+│   │   └── events.ts              # SpartaEvent + 40 interfaces de eventos
 │   │
 │   ├── services\                  # CAPA DE SERVICIOS (casos de uso, sin React)
 │   │   ├── index.ts               # Barrel export (incluye agent runtime + semantic search)
@@ -215,17 +234,18 @@ D:\sparta-agent\
 │   │   └── __tests__\
 │   │       └── message-render-state.test.ts  # 7 tests
 │   │
-│   ├── types\                     # SISTEMA DE TIPOS (re-exporta desde interfaces)
-│   │   ├── index.ts               # Re-exporta todos los tipos + interfaces
-│   │   ├── agent.ts               # Re-export desde interfaces
-│   │   ├── chat.ts                # Re-export desde interfaces
-│   │   ├── events.ts              # SpartaEvent + 40 interfaces (memory:semantic_search, memory:indexed)
-│   │   ├── mcp.ts                 # Re-export desde interfaces
-│   │   ├── project.ts             # Re-export desde interfaces
-│   │   ├── skill.ts               # Re-export desde interfaces
-│   │   ├── channel.ts             # Re-export desde interfaces
-│   │   ├── memory.ts              # Re-export desde interfaces
-│   │   └── provider.ts            # Re-export desde interfaces
+│   ├── types\                     # SISTEMA DE TIPOS (definiciones inline, sin interfaces/)
+│   │   ├── index.ts               # Barrel con re-export explícito de todos los tipos
+│   │   ├── agent.ts               # Agent, Task, TaskStep — definiciones inline
+│   │   ├── chat.ts                # Message, Session, ToolCall, etc. — definiciones inline
+│   │   ├── events.ts              # SpartaEvent + 40 interfaces tipadas
+│   │   ├── mcp.ts                 # MCPServer, MCPTool, etc. — definiciones inline
+│   │   ├── project.ts             # Project — definiciones inline
+│   │   ├── skill.ts               # Skill, DownloadableSkill — definiciones inline
+│   │   ├── channel.ts             # Channel, ChannelMessage — definiciones inline
+│   │   ├── memory.ts              # MemoryEntry, MemoryRelation — definiciones inline
+│   │   ├── provider.ts            # Provider, AIProvider, ModelInfo — definiciones inline
+│   │   └── settings.ts            # SettingsTab, SessionMode, Language — definiciones inline
 │   │
 │   ├── stores\                    # ESTADO GLOBAL — Zustand (15 stores + tests)
 │   │   ├── agent.store.ts         # Agentes + tareas (en memoria)
@@ -277,13 +297,13 @@ D:\sparta-agent\
 │   │       └── sage.css
 │   │       └── sand.css
 │   │
-│   ├── electron\                  # Electron IPC (reservado)
-│   │   └── ipc\                   # (vacío — handlers viven en electron/ipc/)
+│   ├── electron\                  # Electron IPC (reservado — handlers viven en electron/ipc/)
+│   │   └── ipc\
 │   │
 │   ├── scripts\                   # SCRIPTS DE DESARROLLO
 │   │   └── seed-dev-data.ts       # Seed data para desarrollo (npm run seed)
 │   │
-│   └── components\                # COMPONENTES REACT (~90 archivos)
+│   └── components\                # COMPONENTES REACT (~101 archivos)
 │       │
 │       ├── layout\                # LAYOUT (8 componentes)
 │       │   ├── AppShell.tsx       # Shell raíz con SidebarProvider + panel activo
@@ -304,6 +324,9 @@ D:\sparta-agent\
 │       │   ├── ChannelItem.tsx    # Item de canal (visual legacy)
 │       │   ├── McpServerItem.tsx  # Item de MCP (visual legacy)
 │       │   └── SkillItem.tsx      # Item de skill (visual legacy)
+│       │
+│       ├── editor\                # EDITOR (1 componente funcional)
+│       │   └── EditorPanel.tsx    # Monaco Editor con 9 lenguajes + file tree + toolbar
 │       │
 │       ├── chat\                  # CHAT (9 componentes + reasoning)
 │       │   ├── ChatArea.tsx       # Panel de chat: HeroScreen o MessageList + ChatInput
@@ -377,10 +400,11 @@ D:\sparta-agent\
 │       │   ├── TelegramIntegrationPanel.tsx
 │       │   └── ComingSoonPanel.tsx
 │       │
-│       ├── memory\                # MEMORY (6 componentes)
+│       ├── memory\                # MEMORY (7 componentes)
 │       │   ├── MemoryDialog.tsx
 │       │   ├── MemoryEntryItem.tsx
-│       │   ├── MemoryGraph.tsx
+│       │   ├── MemoryGraph.tsx       # Thin Suspense wrapper (lazy carga MemoryGraphScene)
+│       │   ├── MemoryGraphScene.tsx  # Three.js real con sprites, raycasting, drag-rotate
 │       │   ├── MemoryGraphControls.tsx
 │       │   ├── MemoryNodePanel.tsx
 │       │   └── MemoryListView.tsx
@@ -445,8 +469,9 @@ D:\sparta-agent\
 │       ├── tools\
 │       │   ├── web_search.py      # Brave Search API
 │       │   ├── memory_tools.py    # read/write memory
-│       │   ├── file_tools.py      # read/write file
-│       │   └── mcp_bridge.py      # Bridge MCP servers
+  │       │   ├── file_tools.py      # read/write file
+  │       │   ├── mcp_bridge.py      # Bridge MCP servers
+  │       │   └── terminal_tools.py  # terminal_execute tool para el agente
 │       ├── memory\
 │       │   ├── chroma_store.py    # ChromaDB VectorStore
 │       │   ├── graph_memory.py    # Grafo de conocimiento
@@ -471,7 +496,7 @@ D:\sparta-agent\
  4. ARQUITECTURA
 ================================================================================
 
- 4.1 Flujo de la Aplicación:
+  4.1 Flujo de la Aplicación:
 
    index.html
      → src/main.tsx (React root)
@@ -483,8 +508,8 @@ D:\sparta-agent\
 
    Panel Activo según mainView.type:
       - chat     → ChatArea.tsx
-      - editor   → EditorPanel (placeholder)
-      - terminal → TerminalPanel.tsx (FUNCIONAL: xterm.js con FitAddon + tema dark)
+      - editor   → EditorPanel.tsx (Monaco Editor funcional con 9 lenguajes)
+       - terminal → TerminalPanel.tsx (PTY REAL: xterm.js + node-pty + PowerShell/bash)
       - agents   → AgentsPanel.tsx (real: cards + ejecución de tareas)
       - sessions → SessionsView.tsx (lazy loaded)
       - skills   → SkillsView.tsx (lazy loaded)
@@ -492,13 +517,13 @@ D:\sparta-agent\
       - channels → ChannelsView.tsx (lazy loaded)
       - memory   → MemoryView.tsx (lazy loaded)
 
- 4.2 Flujo de Estado:
+  4.2 Flujo de Estado:
 
    Zustand Stores ←(subscribe)→ React Components
         ↓
-   types/ (interfaces compartidas)
+   types/ (definiciones inline, sin src/interfaces/)
         ↓
-   persist middleware → localStorage (9 stores)
+   persist middleware → localStorage (11 stores)
    Vault (electron safeStorage) → sparta-vault.json (API keys cifradas)
 
  4.3 Flujo de Datos:
@@ -509,7 +534,7 @@ D:\sparta-agent\
    • API keys: el renderer almacena solo hasVaultKey: boolean; la key real
      vive cifrada en sparta-vault.json (main process via safeStorage).
    • Los hooks son wrappers delgados alrededor de los stores.
-    • Event bus pub/sub con 38 tipos de eventos SpartaEvent:
+    • Event bus pub/sub con 40 tipos de eventos SpartaEvent:
         agent:started, agent:completed, agent:error
         thinking:started, thinking:token, thinking:completed
         tool:called, tool:result, tool:error
@@ -531,10 +556,10 @@ D:\sparta-agent\
        → useChatSession.sendMessage(text)
          → getProviderKey(provider) resuelve key desde vault o localStorage
          → window.sparta.sendMessage({ providerKey, vendor, mode, skills, ... })
-           → Electron main process recibe chat:send IPC
-           → Rust Security Layer: valida esquema del mensaje (validator.rs)
-           → keymanager.ipc.ts: asegura que el sidecar tenga las keys en caché
-           → sidecar.ipc.ts: envía JSON-RPC a Python via stdin/stdout
+            → Electron main process recibe chat:send IPC
+            → Rust Security Layer: valida esquema del mensaje (validator.rs)
+            → keymanager.ipc.ts: asegura que el sidecar tenga las keys en caché
+            → sidecar.ipc.ts: getPythonCommand() detecta bundled (python-runtime) o system Python; envía JSON-RPC a Python via stdin/stdout
              → Python sparta_ai/server.py: dispatch a chat.stream
                → sparta_agent.py: LangGraph StateGraph con router de intención
                → streaming vía astream_events → event_bridge.py → stdout
@@ -574,9 +599,10 @@ D:\sparta-agent\
        electron/main.ts → dist-electron/main.js
        electron/preload.ts → dist-electron/preload.mjs
    • En dev: carga desde Vite dev server URL
-   • En prod: carga dist/index.html
-   • Ventana: 1280×800 (min 900×600), titleBarStyle: 'hidden'
-   • titleBarOverlay dinámico por tema (colores en theme.store.ts)
+      • En prod: carga dist/index.html
+      • Ventana: 1280×800 (min 900×600), titleBarStyle: 'hidden'
+      • titleBarOverlay dinámico por tema (colores en theme.store.ts)
+      • electron-builder.json5 con extraResources comentado para empaquetar vendor/python-3.12 → python-runtime
    • contextIsolation: true, nodeIntegration: false
     • IPC handlers:
         win:minimize, win:maximize, win:close, win:isMaximized
@@ -592,15 +618,18 @@ D:\sparta-agent\
           memory:removeRelation
         vault:isAvailable, vault:storeKey, vault:getKey,
           vault:deleteKey, vault:listKeys, vault:hasKey
-        search:web (Brave Search — deprecado, migra a tool Python)
-    • Exposición via contextBridge:
+         search:web (Brave Search — DEPRECADO @deprecated, migrar a web_search tool del sidecar Python)
+         terminal:create, terminal:write, terminal:resize, terminal:destroy,
+           terminal:agent-write (PTY real node-pty)
+     • Exposición via contextBridge:
         window.electronAPI → min/max/close/isMaximized/onMaximizedChange/
                              setTitleBarOverlay/getVersion
         window.electron → IPC genérico (on/send/invoke)
         window.sparta → onEvent/sendEvent + sendMessage(vendor,providerId,mode,
                          skills,mcpServers,semanticMemory,reasoning)
                         + abortMessage + isSidecarReady
-        window.vault → isAvailable/storeKey/getKey/deleteKey/listKeys/hasKey
+         window.vault → isAvailable/storeKey/getKey/deleteKey/listKeys/hasKey
+         window.terminal → create/write/resize/destroy/onData/onExit/agentWrite
 
  4.7 Routing:
 
@@ -630,13 +659,98 @@ D:\sparta-agent\
      └── Renderiza: TitleBar + SidebarProvider + StatusBar
      └── PANELS: agents apunta a AgentsPanel.tsx (real)
 
-   TitleBar.tsx
-     └── Tabs: Chat, Editor, Terminal, Agents (Agents ahora es funcional)
+    TitleBar.tsx
+      └── Tabs: Chat, Editor, Terminal, Agents (todos funcionales)
 
-   StatusBar.tsx
-     └── Muestra: Gateway, Agents, Cron, modelo activo, tokens, versión vía IPC
+    StatusBar.tsx
+      └── Muestra: Gateway, Agents, Cron, modelo activo, tokens, versión vía IPC
 
- 5.2 Chat — Reasoning (NUEVO)
+  5.2 Editor
+
+    EditorPanel.tsx
+      └── Ubicación: src/components/editor/EditorPanel.tsx
+      └── Propósito: Editor de código funcional con Monaco Editor
+      └── Monaco Editor (via @monaco-editor/react) con tema vs-dark + Geist Mono
+      └── Toolbar superior con selector de 9 lenguajes: JS, TS, Python, Rust, Go, HTML, CSS, JSON, Markdown
+      └── FileTreeSidebar lateral + EditorTabs para múltiples archivos abiertos
+      └── Integración con window.fs (Electron IPC) para leer/guardar archivos
+      └── Ctrl+S / Cmd+S guarda archivo activo, minimap deshabilitado
+      └── EmptyEditorState cuando no hay archivo abierto
+      └── Lazy-loaded via @monaco-editor/react (no bloquea bundle principal)
+      └── EditorToolbar con botón toggle explorador (Ctrl+B), cerrar proyecto, cerrar editor
+      └── Explorador colapsable: editorExplorerVisible en ui.store.ts (persistido)
+      └── Resize handle entre explorador y editor (180-420px)
+
+    FileTreeItem.tsx
+      └── Ubicación: src/components/editor/FileTreeItem.tsx
+      └── Props: node, depth, activePath, onSelectFile, onDelete
+      └── Botón trash en hover para eliminar archivo/carpeta
+      └── Usa ConfirmDeleteDialog (src/components/ui/confirm-delete-dialog.tsx)
+
+    FileTreeSidebar.tsx
+      └── Ubicación: src/components/editor/FileTreeSidebar.tsx
+      └── Header "Explorador" con botones refresh + abrir carpeta
+      └── ProjectFolderPicker para seleccionar carpeta raíz del proyecto
+      └── Construye árbol vía window.fs.readDir() con exclusión de node_modules/.git/etc
+
+    ProjectFolderPicker.tsx
+      └── Ubicación: src/components/editor/ProjectFolderPicker.tsx
+      └── Botón "Abrir carpeta" que invoca fs:openFolderDialog y asigna rootPath al proyecto
+
+    EditorTabs.tsx
+      └── Ubicación: src/components/editor/EditorTabs.tsx
+      └── Tabs de archivos abiertos con indicador de modified y botón cerrar
+
+    MonacoEditor.tsx
+      └── Ubicación: src/components/editor/MonacoEditor.tsx
+      └── Wrapper sobre @monaco-editor/react con configuración vs-dark + Geist Mono
+
+    Eliminar archivos / carpetas:
+      └── IPC: fs:deleteFile / fs:deleteFolder en electron/ipc/filesystem.ipc.ts
+      └── Usa shell.trashItem() → papelera del SO (no borrado permanente)
+      └── Expuesto via window.fs.deleteFile / window.fs.deleteFolder
+      └── ConfirmDeleteDialog con itemLabel y onConfirm
+      └── Al eliminar, cierra el tab si el archivo estaba abierto en Monaco
+
+    Cerrar proyecto:
+      └── project.store.ts: closeProject(id) limpia rootPath sin tocar disco
+      └── Botón "Cerrar proyecto" en EditorToolbar con icono FolderX
+
+  5.3 Terminal
+
+    TerminalPanel.tsx
+      └── Ubicación: src/components/terminal/TerminalPanel.tsx
+      └── PTY real via node-pty + PowerShell (Windows) / bash (Linux/macOS)
+      └── xterm.js con FitAddon, scrollback 5000 líneas
+      └── requestAnimationFrame loop: espera tamaño contenedor >0 antes de open + fit
+      └── ResizeObserver persistente (no se desconecta tras primer fit)
+      └── Fondo oscuro forzado: SIEMPRE #0C0C10 (getXtermTheme + CSS !important)
+      └── Banner ASCII Sparta enviado como terminal:data al crear sesión
+      └── Buffer de datos tempranos: SessionState.buffer[] captura datos del PTY
+          hasta que el renderer envía terminal:ready (flushea al recibirlo)
+      └── onData listener registrado ANTES de window.terminal.create() para no
+          perder el banner ni datos tempranos
+      └── Tema dinámico: getXtermTheme() se reevalúa al cambiar theme de Sparta
+      └── TerminalHeader con status dot, nombre del shell, botón nueva sesión
+
+    terminal.ipc.ts
+      └── Ubicación: electron/ipc/terminal.ipc.ts
+      └── SessionState: { pty, buffer[], ready, win } por terminalId
+      └── terminal:create → spawn PTY, envía BANNER, buffer onData hasta ready
+      └── terminal:ready → flushea buffer de datos tempranos al renderer
+      └── terminal:write → reenvía teclas del usuario al PTY
+      └── terminal:resize → sincroniza cols/rows con el PTY
+      └── terminal:destroy → kill PTY y limpia sesión
+      └── terminal:agent-write → envía prefijo [agente] + comando al renderer,
+          luego escribe comando al PTY
+
+    xterm-theme.ts
+      └── Ubicación: src/lib/xterm-theme.ts
+      └── getXtermTheme(): ITheme con background fijo #0C0C10
+      └── Lee colores ANSI de CSS variables del tema activo
+      └── Fallbacks hardcodeados para todos los 16 colores + cursor + selección
+
+  5.4 Chat — Reasoning
 
    ToolCallSummary.tsx
      └── Línea resumida de tool call: icono estado + nombre + input preview
@@ -660,7 +774,7 @@ D:\sparta-agent\
    ThinkingPill.tsx (mejorado)
      └── Nueva prop tokensUsed?: number que muestra contador "123 tok"
 
- 5.3 Input — Slash Commands (NUEVO)
+  5.5 Input — Slash Commands
 
    SlashCommandMenu.tsx
      └── Autocomplete de comandos / al escribir en el textarea
@@ -678,7 +792,7 @@ D:\sparta-agent\
      └── Placeholder cambia a "Corrige o redirige al agente..."
      └── Muestra "Escribe para redirigir" durante streaming
 
- 5.4 Providers — Vault (MEJORADO)
+  5.6 Providers — Vault
 
    ConfigureProviderDialog.tsx
      └── handleSave guarda apiKey en vault (Electron safeStorage) en vez
@@ -689,7 +803,7 @@ D:\sparta-agent\
      └── Muestra icono Shield + "Key cifrada" si hasVaultKey: true
      └── Al eliminar proveedor, también elimina key del vault
 
- 5.5 Agents Panel (NUEVO — reemplaza placeholder)
+  5.7 Agents Panel
 
    AgentsPanel.tsx
      └── Cards de agente con estado en vivo (idle/running/thinking/error/completed)
@@ -701,12 +815,22 @@ D:\sparta-agent\
      └── Panel lateral 340px con eventos en tiempo real (agent:*, tool:*)
      └── Muestra steps del agente y log de eventos
 
- 5.6 Memory Tab (MEJORADO)
+  5.8 Memory Tab
 
-   MemoryTab.tsx
-     └── Nuevo toggle: "Memoria semántica (ChromaDB)"
-     └── Muestra modelo de embeddings activo
-     └── Contador de entradas indexadas en ChromaDB
+    MemoryTab.tsx
+      └── Toggle: "Memoria semántica (ChromaDB)"
+      └── Muestra modelo de embeddings activo
+      └── Contador de entradas indexadas en ChromaDB
+
+    MemoryGraph.tsx (refactorizado)
+      └── Ahora es un thin wrapper que usa React.lazy → MemoryGraphScene
+      └── Suspense boundary con skeleton loader "Cargando grafo 3D..."
+      └── Three.js se importa dinámicamente (~200KB ahorrados del bundle principal)
+      └── forwardRef + MemoryGraphHandle para control externo
+
+    MemoryGraphScene.tsx (NUEVO)
+      └── Contiene toda la lógica Three.js: sprites, raycasting, drag-rotate, zoom
+      └── Renderizado solo cuando el usuario abre MemoryView
 
 ================================================================================
  6. SISTEMA DE ESTADOS (Zustand Stores)
@@ -738,22 +862,30 @@ D:\sparta-agent\
       └── apiKey puede ser undefined cuando hasVaultKey: true
       └── La key real vive en sparta-vault.json (main process)
 
-   (Ver sección 4.3 para el resto de stores — sin cambios significativos)
+   (Ver sección 4.3 para el resto de stores — 15 stores total, 11 con persist + 4 en memoria)
 
 ================================================================================
- 7. SISTEMA DE TIPOS
-================================================================================
+  7. SISTEMA DE TIPOS
+===============================================================================
 
-   Memory (memory.interface.ts)
-      └── RelationType ahora incluye 'semantic_relation'
+   Refactor (v0.1.0):
+      └── src/interfaces/ eliminado — todas las definiciones migradas a src/types/
+      └── Los archivos .interface.ts ahora son .ts con definiciones inline
+      └── src/types/index.ts usa export { type Foo } en vez de re-export desde interfaces/
+      └── 26 imports actualizados de @/interfaces a @/types en todo el código base
 
-   Provider (provider.interface.ts)
-      └── Provider: nuevo campo hasVaultKey?: boolean
+   Memory (types/memory.ts)
+      └── RelationType incluye 'semantic_relation'
+      └── MemoryEntry, MemoryRelation, MemoryGraph, ExtractedMemory
+
+   Provider (types/provider.ts)
+      └── Provider: campo hasVaultKey?: boolean
+      └── AIProvider, ModelInfo, ProviderVendor
 
    types/events.ts
-      └── 40 eventos tipo unión SpartaEvent (antes 36):
-          Nuevos: memory:semantic_search / MemorySemanticSearchEvent
-                  memory:indexed / MemoryIndexedEvent
+      └── 40 eventos tipo unión SpartaEvent:
+          memory:semantic_search / MemorySemanticSearchEvent
+          memory:indexed / MemoryIndexedEvent
 
 ================================================================================
  8. CAPA DE TRANSPORTES (doc 01)
@@ -958,10 +1090,12 @@ D:\sparta-agent\
 
 ================================================================================
  15. ELECTRON-BUILDER CONFIG
-================================================================================
+==============================================================================
 
-   Sin cambios respecto a v0.8.0.
    sparta-vault.json se genera automáticamente en APP_ROOT al usar vault.
+   extraResources comentado: vendor/python-3.12 → python-runtime (bundled Python)
+     - Activarlo empaqueta un Python portátil dentro del instalador
+     - getPythonCommand() en sidecar.ipc.ts detecta bundled o system Python
 
 ================================================================================
  16. COMANDOS DE DESARROLLO
@@ -982,9 +1116,9 @@ D:\sparta-agent\
 
 ================================================================================
  17. OBSERVACIONES IMPORTANTES
-================================================================================
+==============================================================================
 
-   ✔ Etapa funcional de UI/UX (v0.0.0)
+   ✔ Etapa funcional de UI/UX (v0.2.0)
    ✔ Capa de IA con transports normalizados (buildHeaders/buildBody)
    ✔ Error mapping para 401/429/529 con retry exponencial
    ✔ Chat IPC multi-proveedor con vendor explícito
@@ -995,29 +1129,41 @@ D:\sparta-agent\
    ✔ ToolCallSummary con expand/collapse y DiffView para edición
    ✔ Slash commands (/clear, /model, /memory, /reasoning, /help)
    ✔ Interrupt-and-redirect durante streaming
-   ✔ 59 tests JS (vitest, 6 suites) + 32 tests Python (pytest) + 9 tests Rust (cargo)
+   ✔ 59 tests JS (vitest, 6 suites) + 32 tests Python (pytest, 4 suites) + 9 tests Rust (cargo)
    ✔ Sin router — navegación por estado MainView (9 vistas)
    ✔ 11 stores con persist middleware → localStorage
    ✔ 4 stores en memoria (agent, event-bus, mcp, gateway)
-   ✔ 38 tipos de eventos SpartaEvent
+   ✔ 40 tipos de eventos SpartaEvent
    ✔ Sistema i18n español/inglés con hook useTranslation()
-   ✔ Terminal funcional con xterm.js (FitAddon, ResizeObserver, tema dark)
-   ✔ Editor panel sigue siendo placeholder visual
-   ✔ MCPClient es stub — implementación real pendiente (roadmap 5.2)
-   ✔ ChromaDB usa HTTP directo (sin npm package nativo → no crashea renderer)
-   ✔ Cron jobs programables con frecuencias hourly/daily/weekly/every_n_hours
-   ✔ Gateway de monitoreo de salud de proveedores (últimos 20 requests)
-   ✔ Uso de tokens contabilizado por sesión y por proveedor (usage.store.ts)
-   ✔ Búsqueda web vía Brave Search API como herramienta de agente
-   ✔ SearchTab en configuración para gestionar API key de Brave Search
-   ✔ MarkdownRenderer con soporte GFM (tablas, listas, links, etc.)
-   ✔ MessageRenderState para manejo tipado de 5 estados de mensaje
-   ✔ PYTHON SIDECAR: sparta_ai/ con LangGraph, subagentes, ChromaDB VectorStore
+   ✔ TERMINAL CON PTY REAL: node-pty + PowerShell/bash, resize sincronizado
+   ✔ xterm.js: FitAddon + ResizeObserver persistente, scrollback 5000 líneas
+   ✔ TERMINAL FIX: fondo oscuro forzado #0C0C10 (independiente del tema UI)
+   ✔ TERMINAL BANNER: ASCII art Sparta al crear sesión
+   ✔ TERMINAL DATA BUFFER: datos del PTY bufferizados hasta terminal:ready
+   ✔ TERMINAL AGENT PREFIX: comandos del agente con [agente]
+   ✔ EDITOR FUNCIONAL: Monaco Editor con 9 lenguajes, file tree, toolbar
+   ✔ EDITOR DELETE: eliminar archivos/carpetas vía shell.trashItem() (papelera SO)
+   ✔ EDITOR EXPLORER TOGGLE: Ctrl+B ocuestra/muestra explorador (persistido)
+   ✔ TYPES CONSOLIDADOS: src/interfaces/ eliminado — todo en src/types/
+   ✔ THREE.JS LAZY-LOADED: MemoryGraphScene con importación dinámica (~200KB)
+   ✔ SEARCH IPC DEPRECADO: search.ipc.ts → web_search del sidecar Python
+   ✔ PYTHON EMBEDDED: electron-builder con soporte para empaquetar runtime
+   ✔ SIDECAR CON PYTHON PORTABLE: getPythonCommand() detecta bundled o system Python
+   ✔ MCPClient es stub — implementación real pendiente
+   ✔ ChromaDB usa HTTP directo (sin npm package nativo)
+   ✔ Cron jobs programables hourly/daily/weekly/every_n_hours
+   ✔ Gateway de monitoreo de salud de proveedores
+   ✔ Uso de tokens contabilizado por sesión y proveedor (usage.store.ts)
+   ✔ Búsqueda web vía Brave Search como herramienta (vía sidecar)
+   ✔ SearchTab en configuración para API key de Brave Search
+   ✔ MarkdownRenderer con soporte GFM
+   ✔ MessageRenderState para 5 estados de mensaje
+   ✔ PYTHON SIDECAR: sparta_ai/ con LangGraph, subagentes, ChromaDB
    ✔ Electron spawns sidecar al iniciar + push de keys del vault
    ✔ chat.ipc.ts delega al sidecar vía stdio JSON-RPC
    ✔ StateGraph con routing condicional (tools/subagent/end)
    ✔ Subagentes: research, code, memory como tools del agente principal
-   ✔ Tools: web_search, file_tools, memory_tools, mcp_bridge
+   ✔ Tools: web_search, file_tools, memory_tools, mcp_bridge, terminal_execute
    ✔ Memory VectorStore + grafo de conocimiento + extractor LLM
    ✔ Skills: skill_loader.py con caché LRU
    ✔ sidecar-bridge.ts: puente simplificado frontend → sidecar
@@ -1027,18 +1173,11 @@ D:\sparta-agent\
    ✔ Eventos tipados: thinking:started/token/completed, stream:aborted
    ✔ RUST SECURITY LAYER: napi-rs native addon
    ✔ validator.rs: validación de esquema JSON-RPC
-   ✔ sanitizer.rs: bloqueo de path traversal, .env, vault.json, shell commands
+   ✔ sanitizer.rs: path traversal, .env, vault.json, shell commands
    ✔ guard.rs: rate limiting + tool call count + provider key validation
    ✔ audit.rs: log de auditoría persistente con timestamps
    ✔ Pipeline hook: wireSecurityIntoPipeline()
-   ✔ Lazy loading con Suspense de vistas pesadas (MemoryView, SkillsView, etc.)
+   ✔ Lazy loading con Suspense de vistas pesadas (MemoryView, SkillsView, MemoryGraphScene)
    ✔ mcp.store.ts con persist (antes se perdía al recargar)
    ✔ settings.store.ts con migrate v3
    ✔ cleanupStaleSessions() al iniciar la app
-   ✔ Cron jobs programables con frecuencias hourly/daily/weekly/every_n_hours
-   ✔ Gateway de monitoreo de salud de proveedores (últimos 20 requests)
-   ✔ Uso de tokens contabilizado por sesión y por proveedor (usage.store.ts)
-   ✔ Búsqueda web vía Brave Search API como herramienta de agente
-   ✔ SearchTab en configuración para gestionar API key de Brave Search
-   ✔ MarkdownRenderer con soporte GFM (tablas, listas, links, etc.)
-   ✔ MessageRenderState para manejo tipado de 5 estados de mensaje
