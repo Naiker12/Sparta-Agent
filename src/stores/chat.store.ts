@@ -83,10 +83,17 @@ export const useChatStore = create<ChatState>()(
     set((s) => {
       const { [id]: _p, ...rest } = s.messagesBySession
       void _p
+      const { [id]: _stream, ...restStreaming } = s.streamingBySession
+      void _stream
+      const wasActive = s.activeSessionId === id
+      const hasAnyStreaming = Object.values(restStreaming).some((st) => st.isStreaming)
       return {
         sessions: s.sessions.filter((sess) => sess.id !== id),
-        activeSessionId: s.activeSessionId === id ? null : s.activeSessionId,
+        activeSessionId: wasActive ? null : s.activeSessionId,
         messagesBySession: rest,
+        streamingBySession: restStreaming,
+        isStreaming: hasAnyStreaming,
+        abortController: hasAnyStreaming ? Object.values(restStreaming)[0]?.abortController ?? null : null,
       }
     }),
 
@@ -198,7 +205,13 @@ export const useChatStore = create<ChatState>()(
               console.warn(`[chat.store] Duplicate thinking chunk #${chunkSeq} <= lastThinkChunkSeq #${msg.lastThinkChunkSeq} for message ${messageId.slice(0,8)}`)
               return msg
             }
-            return { ...msg, reasoningText: (msg.reasoningText ?? '') + delta, isStreaming: true, lastThinkChunkSeq: chunkSeq ?? msg.lastThinkChunkSeq }
+            return {
+              ...msg,
+              reasoningText: (msg.reasoningText ?? '') + delta,
+              thinkingStatus: (msg.thinkingStatus === 'idle' || msg.thinkingStatus === undefined) ? 'streaming' : msg.thinkingStatus,
+              isStreaming: true,
+              lastThinkChunkSeq: chunkSeq ?? msg.lastThinkChunkSeq,
+            }
           }),
         },
       }

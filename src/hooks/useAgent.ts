@@ -6,7 +6,12 @@ import { useSettingsStore } from '@/stores/settings.store'
 import { useEventBus } from '@/stores/event-bus.store'
 import { runAgentTask, buildToolDefinitions } from '@/services/agents'
 import { buildWebSearchTool, executeWebSearch } from '@/services/tools/web-search'
-import type { AgentStatus, Agent, Task } from '@/types'
+import type { AgentStatus, Agent, Task, AgentType } from '@/types'
+
+const AGENT_NAMESPACE_MAP: Partial<Record<AgentType, string>> = {
+  research: 'delegate_research',
+  coding: 'delegate_code',
+}
 
 export function useAgent() {
   const store = useAgentStore()
@@ -36,7 +41,7 @@ export function useAgent() {
 
     if (webSearchEnabled) {
       allowedTools = [...allowedTools, 'web_search']
-      toolDefs = [...toolDefs, buildWebSearchTool() as any]
+      toolDefs = [...toolDefs, buildWebSearchTool() as unknown as Record<string, unknown>]
     }
 
     const task: Task = {
@@ -70,11 +75,12 @@ export function useAgent() {
     const toolRunner = async (name: string, args: unknown): Promise<unknown> => {
       if (name === 'web_search') {
         const query = typeof args === 'object' && args !== null && 'query' in args
-          ? (args as any).query
+          ? String((args as Record<string, unknown>).query)
           : String(args)
-        const count = typeof args === 'object' && args !== null && 'count' in args
-          ? (args as any).count
+        const rawCount = typeof args === 'object' && args !== null && 'count' in args
+          ? (args as Record<string, unknown>).count
           : 5
+        const count = typeof rawCount === 'number' ? rawCount : 5
         return await executeWebSearch(query, count)
       }
       const server = mcpServers.find((s) =>
@@ -134,6 +140,7 @@ export function useAgent() {
     description: string
     tools?: string[]
   }) => {
+    const namespace = AGENT_NAMESPACE_MAP[data.type]
     const agent: Agent = {
       id: crypto.randomUUID(),
       name: data.name,
@@ -143,6 +150,7 @@ export function useAgent() {
       createdAt: Date.now(),
       tools: data.tools ?? [],
       description: data.description,
+      namespace,
     }
     store.registerAgent(agent)
     return agent.id

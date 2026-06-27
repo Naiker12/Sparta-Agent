@@ -13,7 +13,9 @@ import { getProviderKey } from '@/lib/vault-helper'
 import { aiGateway } from '@/services/ai/gateway'
 import { webSearch } from '@/services/tools/web-search/search-provider'
 import { useUsageStore } from '@/stores/usage.store'
-import type { ToolCall, Provider } from '@/types'
+import { messagingAdapter } from '@/lib/messaging-adapter'
+import { IS_WEB } from '@/lib/env-adapter'
+import type { ToolCall, Provider, SpartaEvent } from '@/types'
 
 function getActiveProvider(providers: Provider[], activeModel: string): Provider | null {
   return providers.find((p) => p.defaultModel === activeModel) ?? providers[0] ?? null
@@ -43,6 +45,7 @@ export function useChatSession() {
   const stopStreamingFn = useChatStore((s) => s.stopStreaming)
 
   const lastUserMessageRef = useRef<Map<string, { text: string; userMessageId: string }>>(new Map())
+  const subscribedRef = useRef(false)
 
   const sendMessage = useCallback(async (text: string) => {
     const sid = activeIdRef.current ?? createSession()
@@ -81,15 +84,17 @@ export function useChatSession() {
         })
         return
       }
-      if (!window.sparta?.sendMessage) {
+      if (!messagingAdapter.isReady()) {
         stopStreamingFn(sid)
         updateMessage(assistantId, {
           isStreaming: false,
-          content: 'Error de conexión: esta función requiere la aplicación de escritorio.',
+          content: IS_WEB
+            ? 'Error de conexión: el sidecar web no está disponible. Asegúrate de que el servidor Python esté corriendo.'
+            : 'Error de conexión: esta función requiere la aplicación de escritorio.',
         })
         return
       }
-      if (provider.kind === 'cloud' && !provider.apiKey) {
+      if (provider.kind === 'cloud' && !provider.apiKey && !provider.hasVaultKey) {
         stopStreamingFn(sid)
         updateMessage(assistantId, {
           isStreaming: false,
@@ -202,7 +207,7 @@ export function useChatSession() {
       const reasoningEnabled = useSettingsStore.getState().reasoningEnabled ?? false
       const reasoningBudget = useSettingsStore.getState().reasoningBudget ?? 8000
 
-      await window.sparta.sendMessage({
+      const sendResult = messagingAdapter.sendMessage({
         sessionId: sid,
         messageId: assistantId,
         model: provider.defaultModel ?? '',
@@ -218,13 +223,15 @@ export function useChatSession() {
         mcpServers,
         semanticMemory: semanticMemoryEnabled,
         reasoning: { enabled: reasoningEnabled, budget: reasoningBudget },
-      }).catch(() => {
+      })
+      const resolved = sendResult instanceof Promise ? await sendResult : null
+      if (resolved && !resolved.ok) {
         stopStreamingFn(sid)
         updateMessage(assistantId, {
           isStreaming: false,
-          content: 'Error: no se pudo conectar con el proveedor.',
+          content: `Error: ${resolved.error || 'no se pudo enviar el mensaje al sidecar.'}`,
         })
-      })
+      }
     } catch {
       stopStreamingFn(sid)
       updateMessage(assistantId, {
@@ -237,9 +244,11 @@ export function useChatSession() {
   }, [createSession, addMessage, startStreaming, stopStreamingFn, updateMessage, providers])
 
   useEffect(() => {
-    if (!window.sparta) return
-    const unsub = window.sparta.onEvent((rawEvent: unknown) => {
-      const event = rawEvent as Record<string, unknown>
+    if (subscribedRef.current) return
+    if (!messagingAdapter.isReady()) return
+    subscribedRef.current = true
+    const unsub = messagingAdapter.onEvent((rawEvent: SpartaEvent) => {
+      const event = rawEvent as unknown as Record<string, unknown>
       const { type, sessionId, messageId } = event as { type: string; sessionId: string; messageId: string }
       const sid = sessionId ?? ''
       const mid = messageId ?? ''
@@ -247,22 +256,26 @@ export function useChatSession() {
 
       switch (type) {
         case 'thinking:started': {
+          console.debug('[useChatSession] thinking:started', sid, mid)
           store.onThinkingStart(sid, mid)
           store.updateMessage(mid, { reasoningStartedAt: Date.now() })
           break
         }
         case 'thinking:token': {
-          store.onThinkingToken(sid, mid, (event as { token: string }).token ?? '')
+          const thinkToken = (event as { token: string }).token ?? ''
+          console.debug('[useChatSession] thinking:token', thinkToken.slice(0, 40))
+          store.appendThinking(sid, mid, thinkToken, (event as { chunkSeq?: number }).chunkSeq)
           break
         }
         case 'thinking:completed': {
+          console.debug('[useChatSession] thinking:completed', sid, mid)
           const tokensUsed = (event as { tokensUsed: number }).tokensUsed ?? 0
           store.onThinkingEnd(sid, mid, tokensUsed)
           store.updateMessage(mid, { reasoningCompletedAt: Date.now() })
           break
         }
         case 'stream:token': {
-          appendContent(sid, mid, (event as { token: string }).token ?? '')
+          appendContent(sid, mid, (event as { token: string }).token ?? '', (event as { chunkSeq?: number }).chunkSeq)
           break
         }
         case 'stream:completed': {
@@ -362,6 +375,13 @@ export function useChatSession() {
           stopStreamingFn(sid)
           const errorMsg = (event as { error?: string }).error ?? 'Error durante la generación'
           store.updateMessage(mid, { content: `Error: ${errorMsg}`, isStreaming: false })
+          useEventBus.getState().dispatch({
+            type: 'stream:error',
+            sessionId: sid,
+            messageId: mid,
+            error: errorMsg,
+            timestamp: Date.now(),
+          })
           break
         }
         case 'tool:called': {
@@ -377,11 +397,34 @@ export function useChatSession() {
         case 'tool:error': {
           const tcIdErr = (event as { toolCallId?: string }).toolCallId ?? ''
           updateToolCallStatus(sid, mid, tcIdErr, 'error')
+          useEventBus.getState().dispatch({
+            type: 'tool:error',
+            toolName: (event as { toolName?: string }).toolName ?? '',
+            error: (event as { error?: string }).error ?? 'Error al ejecutar una herramienta',
+            timestamp: Date.now(),
+          })
+          break
+        }
+        case 'sidecar:log': {
+          const { level, text } = event as { level?: string; text?: string }
+          if (level === 'stderr' && text) {
+            console.warn('[sidecar stderr]', text)
+          }
+          break
+        }
+        case 'terminal:agent_command': {
+          const { command } = event as { command: string }
+          if (window.terminal) {
+            window.terminal.agentWrite('default', command)
+          }
           break
         }
       }
     })
-    return unsub
+    return () => {
+      subscribedRef.current = false
+      unsub()
+    }
   }, [appendContent, addToolCall, updateMessage, updateToolCallStatus, stopStreamingFn])
 
   return {
