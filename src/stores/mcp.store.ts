@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 import type { MCPServer, MCPServerConfig, MCPTool } from '@/types'
 
 interface MCPState {
@@ -11,7 +12,9 @@ interface MCPState {
   toggleServer: (id: string) => void
 }
 
-export const useMCPStore = create<MCPState>((set) => ({
+export const useMCPStore = create<MCPState>()(
+  persist(
+    (set) => ({
   servers: [],
 
   addServer: (config) =>
@@ -52,4 +55,10 @@ export const useMCPStore = create<MCPState>((set) => ({
         sv.id === id ? { ...sv, config: { ...sv.config, enabled: !sv.config.enabled } } : sv
       ),
     })),
-}))
+    }),
+    {
+      name: 'sparta-mcp',
+      version: 1,
+    }
+  )
+)

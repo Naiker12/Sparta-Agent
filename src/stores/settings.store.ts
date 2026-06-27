@@ -12,6 +12,7 @@ interface SettingsStore {
   semanticMemoryEnabled: boolean
   webSearchEnabled: boolean
   reasoningEnabled: boolean
+  reasoningBudget: number
   sessionMode: SessionMode
   apiKeys: Record<string, string>
   language: Language
@@ -40,6 +41,7 @@ export const useSettingsStore = create<SettingsStore>()(
   semanticMemoryEnabled: false,
   webSearchEnabled: false,
   reasoningEnabled: true,
+  reasoningBudget: 8000,
   sessionMode: 'chat',
   apiKeys: {},
   language: 'es',
@@ -59,8 +61,17 @@ export const useSettingsStore = create<SettingsStore>()(
 }),
     {
       name: 'sparta-settings',
-      version: 1,
-      migrate: (persisted) => persisted,
+      version: 3,
+      migrate: (persisted: unknown, version: number) => {
+        const state = persisted as Record<string, unknown>
+        if (version < 2) {
+          state.semanticMemoryEnabled = false
+        }
+        if (version < 3) {
+          state.reasoningBudget = 8000
+        }
+        return state
+      },
       partialize: (state) => ({
         defaultModel: state.defaultModel,
         activeModel: state.activeModel,
