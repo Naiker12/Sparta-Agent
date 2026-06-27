@@ -6,6 +6,9 @@ import { registerChatIPC } from './ipc/chat.ipc'
 import { registerMemoryIPC } from './ipc/memory.ipc'
 import { registerVaultIPC } from './ipc/vault.ipc'
 import { registerSearchIPC } from './ipc/search.ipc'
+import { registerKeyManagerIPC } from './ipc/keymanager.ipc'
+import { registerSecurityIPC, wireSecurityIntoPipeline } from './ipc/security.ipc'
+import { startSidecar, stopSidecar } from './ipc/sidecar.ipc'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -78,12 +81,26 @@ app.on('activate', () => {
 })
 
 app.whenReady().then(() => {
+  // Start Python AI sidecar before creating window
+  startSidecar()
+
   createWindow()
 
   registerChatIPC()
   registerMemoryIPC()
   registerVaultIPC()
   registerSearchIPC()
+  registerKeyManagerIPC()
+  registerSecurityIPC()
+
+  // Wire Rust security layer into the IPC pipeline
+  wireSecurityIntoPipeline()
+
+  // Seed vault keys into Python sidecar cache
+  const { pushAll } = require('./ipc/keymanager.ipc')
+  setTimeout(() => {
+    pushAll().catch((err: Error) => console.warn('[main] Failed to seed keys:', err.message))
+  }, 1000)
 
   ipcMain.handle('app:getVersion', () => {
     const pkg = JSON.parse(fs.readFileSync(path.join(process.env.APP_ROOT, 'package.json'), 'utf-8'))
@@ -105,4 +122,9 @@ app.whenReady().then(() => {
       })
     }
   })
+})
+
+// Graceful shutdown: stop sidecar when app quits
+app.on('before-quit', () => {
+  stopSidecar()
 })

@@ -2,6 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
   "appId": "com.sparta.agent",
   "asar": true,
+  "asarUnpack": ["python/**"],
   "productName": "Sparta Agent",
   "directories": {
     "output": "release/${version}"
@@ -9,6 +10,13 @@
   "files": [
     "dist",
     "dist-electron"
+  ],
+  "extraResources": [
+    {
+      "from": "python",
+      "to": "python",
+      "filter": ["**/*"]
+    }
   ],
   "icon": "public/sparta-escritorio.png",
   "mac": {

@@ -45,8 +45,14 @@ contextBridge.exposeInMainWorld('sparta', {
     system?: string
     vendor?: string
     providerId?: string
+    mode?: string
+    skills?: string[]
+    mcpServers?: unknown[]
+    semanticMemory?: boolean
+    reasoning?: { enabled: boolean; budget: number }
   }) => ipcRenderer.invoke('chat:send', req),
   abortMessage: (sessionId: string) => ipcRenderer.invoke('chat:abort', sessionId),
+  isSidecarReady: () => ipcRenderer.invoke('sidecar:status'),
 })
 
 contextBridge.exposeInMainWorld('vault', {

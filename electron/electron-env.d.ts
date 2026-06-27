@@ -31,8 +31,14 @@ interface SpartaAPI {
     system?: string
     vendor?: string
     providerId?: string
+    mode?: string
+    skills?: string[]
+    mcpServers?: unknown[]
+    semanticMemory?: boolean
+    reasoning?: { enabled: boolean; budget: number }
   }) => Promise<{ ok: boolean; error?: string; aborted?: boolean }>
   abortMessage: (sessionId: string) => Promise<void>
+  isSidecarReady: () => Promise<{ running: boolean }>
 }
 
 interface VaultAPI {
