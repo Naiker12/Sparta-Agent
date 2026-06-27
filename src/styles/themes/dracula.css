@@ -18,4 +18,26 @@
   --border-subtle: rgba(255, 255, 255, 0.04);
   --border-normal: rgba(255, 255, 255, 0.08);
   --border-strong: rgba(255, 255, 255, 0.12);
+
+  /* xterm.js ANSI palette (Dracula-ish) */
+  --color-terminal-background: var(--bg-base);
+  --color-terminal-foreground: var(--text-primary);
+  --color-terminal-accent: var(--accent);
+  --color-terminal-selection: #BD93F940;
+  --color-terminal-black: #191a24;
+  --color-terminal-red: var(--status-err);
+  --color-terminal-green: var(--status-ok);
+  --color-terminal-yellow: var(--status-warn);
+  --color-terminal-blue: #8be9fd;
+  --color-terminal-magenta: var(--accent);
+  --color-terminal-cyan: #8be9fd;
+  --color-terminal-white: #d0d0e0;
+  --color-terminal-bright-black: #6272a4;
+  --color-terminal-bright-red: #ff6e6e;
+  --color-terminal-bright-green: #69ff94;
+  --color-terminal-bright-yellow: #ffffa5;
+  --color-terminal-bright-blue: #a3b9ff;
+  --color-terminal-bright-magenta: #d7baff;
+  --color-terminal-bright-cyan: #a3f9ff;
+  --color-terminal-bright-white: #f8f8f2;
 }

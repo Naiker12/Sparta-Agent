@@ -18,4 +18,26 @@
   --border-subtle: rgba(0, 0, 0, 0.06);
   --border-normal: rgba(0, 0, 0, 0.10);
   --border-strong: rgba(0, 0, 0, 0.16);
+
+  /* xterm.js ANSI palette (light) */
+  --color-terminal-background: var(--bg-base);
+  --color-terminal-foreground: var(--text-primary);
+  --color-terminal-accent: var(--accent);
+  --color-terminal-selection: #6366F128;
+  --color-terminal-black: #2a2a36;
+  --color-terminal-red: #dc2626;
+  --color-terminal-green: #16a34a;
+  --color-terminal-yellow: #d97706;
+  --color-terminal-blue: var(--accent);
+  --color-terminal-magenta: #7c3aed;
+  --color-terminal-cyan: #0891b2;
+  --color-terminal-white: #f8fafc;
+  --color-terminal-bright-black: #6b7280;
+  --color-terminal-bright-red: #ef4444;
+  --color-terminal-bright-green: #22c55e;
+  --color-terminal-bright-yellow: #f59e0b;
+  --color-terminal-bright-blue: #4f46e5;
+  --color-terminal-bright-magenta: #a855f7;
+  --color-terminal-bright-cyan: #06b6d4;
+  --color-terminal-bright-white: #ffffff;
 }

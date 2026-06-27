@@ -22,6 +22,7 @@ export type EventType =
   | 'project:created'
   | 'project:switched'
   | 'project:deleted'
+  | 'project:rootPathSet'
   | 'skill:created'
   | 'skill:updated'
   | 'skill:deleted'
@@ -44,6 +45,7 @@ export interface BaseEvent {
   timestamp: number
   requestId?: string
   agentId?: string
+  ns?: string
 }
 
 export interface AgentStartedEvent extends BaseEvent {
@@ -181,6 +183,12 @@ export interface ProjectDeletedEvent extends BaseEvent {
   projectId: string
 }
 
+export interface ProjectRootPathSetEvent extends BaseEvent {
+  type: 'project:rootPathSet'
+  projectId: string
+  rootPath: string
+}
+
 export interface SkillCreatedEvent extends BaseEvent {
   type: 'skill:created'
   skillId: string
@@ -293,6 +301,7 @@ export type SpartaEvent =
   | ProjectCreatedEvent
   | ProjectSwitchedEvent
   | ProjectDeletedEvent
+  | ProjectRootPathSetEvent
   | SkillCreatedEvent
   | SkillUpdatedEvent
   | SkillDeletedEvent

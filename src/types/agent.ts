@@ -16,6 +16,7 @@ export interface Agent {
   createdAt: number
   tools: string[]
   description: string
+  namespace?: string
 }
 
 export interface Task {

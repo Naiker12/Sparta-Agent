@@ -48,6 +48,7 @@ export const en = {
     newSessionDesc: 'Create a new conversation.',
     openSettings: 'Open Settings',
     toggleSidebar: 'Toggle Sidebar',
+    toggleExplorer: 'Toggle Editor Explorer',
     toggleTerminal: 'Toggle Terminal',
     switchChat: 'Go to Chat',
     switchEditor: 'Go to Editor',

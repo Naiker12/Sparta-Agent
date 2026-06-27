@@ -33,6 +33,10 @@
   --color-border-strong: var(--border-strong);
   --color-border-subtle: var(--border-subtle);
 
+  --color-bg-surface: var(--bg-surface);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-status-thinking: var(--status-think);
+
   --animate-fadeUp: fadeUp 0.4s ease forwards;
   --animate-bounce: bounce 1.2s ease infinite;
   --animate-scaleIn: scaleIn 0.18s ease forwards;

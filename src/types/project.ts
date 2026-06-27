@@ -6,4 +6,5 @@ export interface Project {
   createdAt: number
   description?: string
   isTemplate?: boolean
+  rootPath?: string
 }

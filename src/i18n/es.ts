@@ -48,6 +48,7 @@ export const es = {
     newSessionDesc: 'Crear una conversación nueva.',
     openSettings: 'Abrir configuración',
     toggleSidebar: 'Mostrar / ocultar sidebar',
+    toggleExplorer: 'Mostrar / ocultar explorador',
     toggleTerminal: 'Mostrar / ocultar terminal',
     switchChat: 'Ir a chat',
     switchEditor: 'Ir a editor',

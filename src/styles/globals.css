@@ -810,6 +810,202 @@ body.is-dragging-sidebar [data-slot="sidebar-wrapper"] {
 }
 
 /* ══════════════════════════════════════════════════════ */
+/*  TERMINAL PANEL                                       */
+/* ══════════════════════════════════════════════════════ */
+.terminal-panel {
+  background-color: var(--bg-base);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.terminal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--border-normal);
+  height: 36px;
+  flex-shrink: 0;
+}
+
+.terminal-header-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.terminal-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.terminal-shell-label {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.terminal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.terminal-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 5px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.terminal-action-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.terminal-container {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: #0C0C10;
+}
+
+.terminal-container .xterm {
+  height: 100%;
+  padding: 8px;
+  background: #0C0C10 !important;
+}
+
+.terminal-container .xterm-viewport {
+  background: #0C0C10 !important;
+}
+
+.terminal-container .xterm-screen {
+  background: #0C0C10 !important;
+}
+
+.terminal-container canvas {
+  background: #0C0C10 !important;
+}
+
+.terminal-agent-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  font-size: 11px;
+  color: var(--accent);
+  animation: pulse 2s infinite;
+}
+
+/* ══════════════════════════════════════════════════════ */
+/*  PANEL SLIDE (Editor derecha, Terminal abajo)         */
+/* ══════════════════════════════════════════════════════ */
+
+.panel-editor {
+  background: var(--bg-base);
+  overflow: hidden;
+  animation: panelSlideInRight 0.2s ease-out;
+  z-index: 10;
+}
+
+.panel-terminal {
+  background: var(--bg-base);
+  overflow: hidden;
+  animation: panelSlideInBottom 0.2s ease-out;
+  z-index: 10;
+}
+
+@keyframes panelSlideInRight {
+  from {
+    width: 0;
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes panelSlideInBottom {
+  from {
+    height: 0;
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Resize handles */
+.editor-resize-handle {
+  position: absolute;
+  left: -3px;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+  background: transparent;
+  transition: background 0.15s;
+}
+
+.editor-resize-handle:hover,
+.editor-resize-handle:active {
+  background: var(--accent);
+  opacity: 0.4;
+}
+
+.terminal-resize-handle {
+  position: absolute;
+  top: -3px;
+  left: 0;
+  right: 0;
+  height: 6px;
+  cursor: row-resize;
+  background: transparent;
+  transition: background 0.15s;
+}
+
+.terminal-resize-handle:hover,
+.terminal-resize-handle:active {
+  background: var(--accent);
+  opacity: 0.4;
+}
+
+/* Panel close button */
+.panel-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.panel-close-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+/* ══════════════════════════════════════════════════════ */
 /*  COLLAPSED STATE                                      */
 /* ══════════════════════════════════════════════════════ */
 
