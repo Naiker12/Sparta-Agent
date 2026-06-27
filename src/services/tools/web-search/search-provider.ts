@@ -4,6 +4,22 @@ export interface SearchResult {
   snippet: string
 }
 
+async function getBraveSearchKeyWeb(): Promise<string | null> {
+  const key = localStorage.getItem('sparta-key-brave-search')
+  if (key) return key
+  return null
+}
+
+async function getBraveSearchKeyElectron(): Promise<string | null> {
+  if (window.vault) {
+    try {
+      const key = await window.vault.getKey('brave-search')
+      if (key) return key
+    } catch {}
+  }
+  return null
+}
+
 export async function webSearch(query: string, count = 5): Promise<SearchResult[]> {
   if (window.electron?.invoke) {
     return await window.electron.invoke('search:web', query, count) as SearchResult[]
@@ -38,10 +54,7 @@ export async function webSearch(query: string, count = 5): Promise<SearchResult[
 
 async function getBraveSearchKey(): Promise<string | null> {
   if (window.vault) {
-    try {
-      const key = await window.vault.getKey('brave-search')
-      if (key) return key
-    } catch {}
+    return getBraveSearchKeyElectron()
   }
-  return null
+  return getBraveSearchKeyWeb()
 }

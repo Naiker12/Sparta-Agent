@@ -25,7 +25,7 @@ export class SidecarBridge {
   async isReady(): Promise<boolean> {
     if (!window.sparta?.isSidecarReady) return false
     const status = await window.sparta.isSidecarReady()
-    return status.running
+    return status.running && status.ready
   }
 }
 
