@@ -1,4 +1,4 @@
-import type { Agent, Task, TaskStep } from '@/interfaces'
+import type { Agent, Task, TaskStep } from '@/types'
 import { useAgentStore } from '@/stores/agent.store'
 import { useEventBus } from '@/stores/event-bus.store'
 import { runAgentTask } from './agent-runtime'

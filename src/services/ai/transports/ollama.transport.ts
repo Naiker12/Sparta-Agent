@@ -1,5 +1,5 @@
 import { BaseTransport } from './base'
-import type { ProviderVendor, ModelInfo, ChatRequest, ChatStreamChunk } from '@/interfaces'
+import type { ProviderVendor, ModelInfo, ChatRequest, ChatStreamChunk } from '@/types'
 import { HTTP_STATUS_MESSAGES } from './http-utils'
 
 export class OllamaTransport extends BaseTransport {

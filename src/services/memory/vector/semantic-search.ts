@@ -1,4 +1,4 @@
-import type { MemoryEntry } from '@/interfaces'
+import type { MemoryEntry } from '@/types'
 import { embed } from './embeddings'
 import { search as chromaSearch } from './chroma-client'
 

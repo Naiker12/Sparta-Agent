@@ -1,4 +1,4 @@
-import type { Message, Session } from '@/interfaces'
+import type { Message, Session } from '@/types'
 
 export interface ChatService {
   createSession(title?: string): Session

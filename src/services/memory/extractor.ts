@@ -1,4 +1,4 @@
-import type { ExtractedMemory } from '@/interfaces/memory.interface'
+import type { ExtractedMemory } from '@/types'
 
 const EXTRACTION_PROMPT = `Analiza el siguiente turno de conversación (usuario + asistente) y extrae:
 1. ENTIDADES: nombres propios, tecnologías, conceptos clave mencionados

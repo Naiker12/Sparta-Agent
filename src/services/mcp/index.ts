@@ -1,4 +1,4 @@
-import type { MCPServerConfig, MCPTool } from '@/interfaces'
+import type { MCPServerConfig, MCPTool } from '@/types'
 
 interface MCPClient {
   connect(config: MCPServerConfig): Promise<void>

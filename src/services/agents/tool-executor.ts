@@ -1,4 +1,4 @@
-import type { ToolCall, MCPTool } from '@/interfaces'
+import type { ToolCall, MCPTool } from '@/types'
 import { useEventBus } from '@/stores/event-bus.store'
 
 export interface ToolResult {

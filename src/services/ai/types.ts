@@ -1,4 +1,4 @@
-import type { ProviderVendor, ProviderKind, ModelInfo, ChatRequest, ChatStreamChunk } from '@/interfaces'
+import type { ProviderVendor, ProviderKind, ModelInfo, ChatRequest, ChatStreamChunk } from '@/types'
 
 export interface AIProvider {
   readonly vendor: ProviderVendor

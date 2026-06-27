@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-import type { SessionMode, Language } from '@/interfaces/settings.interface'
+import type { SessionMode, Language } from '@/types'
 
 interface SettingsStore {
   settingsOpen: boolean

@@ -1,5 +1,5 @@
 import type { AIProvider } from '../types'
-import type { ChatRequest } from '@/interfaces'
+import type { ChatRequest } from '@/types'
 
 export abstract class BaseTransport implements AIProvider {
   abstract readonly vendor: AIProvider['vendor']

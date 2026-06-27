@@ -11,7 +11,7 @@ import { MemoryTab } from './tabs/MemoryTab'
 import { SkillsTab } from './tabs/SkillsTab'
 import { AgentsTab } from './tabs/AgentsTab'
 import { SearchTab } from './tabs/SearchTab'
-import type { SettingsTab } from '@/interfaces/settings.interface'
+import type { SettingsTab } from '@/types'
 
 export function SettingsDialog() {
   const [activeTab, setActiveTab] = useState<SettingsTab>('general')

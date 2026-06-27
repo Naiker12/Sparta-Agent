@@ -1,4 +1,4 @@
-import type { TaskStep } from '@/interfaces'
+import type { TaskStep } from '@/types'
 
 export interface PlannedTask {
   steps: TaskStep[]

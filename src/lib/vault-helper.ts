@@ -1,4 +1,4 @@
-import type { Provider } from '@/interfaces'
+import type { Provider } from '@/types'
 
 export async function getProviderKey(provider: Provider): Promise<string | undefined> {
   if (provider.hasVaultKey && window.vault) {

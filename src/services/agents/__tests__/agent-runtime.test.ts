@@ -4,7 +4,7 @@ import { describe, it, expect } from 'vitest'
 import { executeTool, executeToolsParallel, areToolCallsIndependent, buildToolDefinitions } from '../tool-executor'
 import { canSpawnSubagent } from '../subagent-spawner'
 import { planTask } from '../task-planner'
-import type { ToolCall } from '@/interfaces'
+import type { ToolCall } from '@/types'
 
 describe('tool-executor', () => {
   it('buildToolDefinitions converts MCPTool[] to OpenAI tool format', () => {

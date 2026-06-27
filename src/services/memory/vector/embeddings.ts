@@ -1,4 +1,4 @@
-import type { ProviderVendor } from '@/interfaces'
+import type { ProviderVendor } from '@/types'
 
 interface EmbeddingProvider {
   vendor: ProviderVendor

@@ -1,5 +1,5 @@
 import { createProvider } from './index'
-import type { Provider, ChatRequest, ChatStreamChunk, Message } from '@/interfaces'
+import type { Provider, ChatRequest, ChatStreamChunk, Message } from '@/types'
 
 export class AIGateway {
   async sendMessage(

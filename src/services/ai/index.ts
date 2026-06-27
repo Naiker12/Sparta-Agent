@@ -1,4 +1,4 @@
-import type { Provider, AIProvider } from '@/interfaces'
+import type { Provider, AIProvider } from '@/types'
 import { AnthropicTransport, ChatCompletionsTransport, OllamaTransport } from './transports'
 
 export function createProvider(provider: Provider): AIProvider {

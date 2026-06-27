@@ -1,4 +1,4 @@
-import type { MemoryEntry, MemoryRelation, ExtractedMemory } from '@/interfaces/memory.interface'
+import type { MemoryEntry, MemoryRelation, ExtractedMemory } from '@/types'
 
 interface WriterDeps {
   getEntries: () => MemoryEntry[]

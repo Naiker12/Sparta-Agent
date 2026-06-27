@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { SettingsTab } from '@/interfaces/settings.interface'
+import type { SettingsTab } from '@/types'
 
 export type MainView =
   | { type: 'chat'; sessionId?: string }

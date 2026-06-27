@@ -1,4 +1,4 @@
-import type { MemoryEntry, ProviderVendor } from '@/interfaces'
+import type { MemoryEntry, ProviderVendor } from '@/types'
 import { connect as chromaConnect, addEntry as chromaAdd, getIndexedCount as chromaCount, isConnected } from './vector'
 import { setActiveProvider, embed } from './vector/embeddings'
 

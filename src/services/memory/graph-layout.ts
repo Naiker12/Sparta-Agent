@@ -1,4 +1,4 @@
-import type { MemoryEntry, MemoryGraphNode, MemoryRelation } from '@/interfaces'
+import type { MemoryEntry, MemoryGraphNode, MemoryRelation } from '@/types'
 
 function fibonacciSphere(count: number, total: number, sphereRadius: number): { x: number; y: number; z: number } {
   const goldenRatio = (1 + Math.sqrt(5)) / 2

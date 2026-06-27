@@ -1,4 +1,4 @@
-import type { ToolCall, TaskStep } from '@/interfaces'
+import type { ToolCall, TaskStep } from '@/types'
 import { useAgentStore } from '@/stores/agent.store'
 import { useEventBus } from '@/stores/event-bus.store'
 import { executeTool, executeToolsParallel, areToolCallsIndependent } from './tool-executor'
