@@ -1,6 +1,12 @@
 import { ipcMain } from 'electron'
 import { getKey } from '../vault'
 
+/**
+ * @deprecated La búsqueda web se delega al sidecar Python via tool web_search.
+ * Mantenido temporalmente para compatibilidad con flujos que aún usan search:web.
+ * Eliminar cuando se migre completamente al Python sidecar.
+ */
+
 interface SearchResult {
   title: string
   url: string
@@ -9,6 +15,7 @@ interface SearchResult {
 
 export function registerSearchIPC() {
   ipcMain.handle('search:web', async (_event, query: string, count = 5): Promise<SearchResult[]> => {
+    console.warn('[search:web] DEPRECATED - use Python sidecar web_search tool instead')
     const apiKey = getKey('brave-search')
     if (!apiKey) {
       throw new Error('No hay API key de Brave Search configurada. Ve a Configuración > Búsqueda para agregar una.')
