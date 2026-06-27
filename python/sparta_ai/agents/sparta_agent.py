@@ -1,9 +1,15 @@
+import json
 import operator
 import logging
 from typing import Annotated, Any, Literal
 
+from langchain_core.messages import HumanMessage
 from langgraph.graph import StateGraph, START, END, MessagesState
 from langgraph.types import Command
+
+from sparta_ai.agents.subagents.research_agent import research_topic, build_research_graph
+from sparta_ai.agents.subagents.code_agent import execute_code_task, build_code_graph
+from sparta_ai.agents.subagents.memory_agent import recall_memories, build_memory_graph
 
 logger = logging.getLogger("sparta_ai.agents.sparta")
 
@@ -26,9 +32,11 @@ def build_sparta_graph(
     skill_context: str = "",
     memory_context: str = "",
 ) -> StateGraph:
-    llm_with_tools = llm.bind_tools(tools)
+    # Include delegate tools so the LLM can decide to hand off to sub-graphs.
+    delegate_tools = [research_topic, execute_code_task, recall_memories]
+    llm_with_tools = llm.bind_tools(tools + delegate_tools)
 
-    def agent_node(state: SpartaState) -> dict:
+    async def agent_node(state: SpartaState) -> dict:
         from sparta_ai.agents.router import classify_intent
 
         mode = state.get("mode", "chat")
@@ -83,13 +91,15 @@ def build_sparta_graph(
 
         system = "\n\n".join(system_parts)
 
-        response = llm_with_tools.invoke([
+        # Use the async interface so the parent graph's astream_events can see
+        # tokens as they are produced instead of waiting for a sync .invoke().
+        response = await llm_with_tools.ainvoke([
             {"role": "system", "content": system},
             *state["messages"],
         ])
         return {"messages": [response]}
 
-    def tool_node(state: SpartaState) -> dict:
+    async def tool_node(state: SpartaState) -> dict:
         last_message = state["messages"][-1]
         tool_calls = getattr(last_message, "tool_calls", [])
         if not tool_calls:
@@ -97,38 +107,62 @@ def build_sparta_graph(
 
         from langgraph.prebuilt import ToolNode
         tool_node_exec = ToolNode(tools)
-        result = tool_node_exec.invoke(state)
+        result = await tool_node_exec.ainvoke(state)
         return {
             "messages": result.get("messages", []),
             "tool_calls_this_turn": state.get("tool_calls_this_turn", 0) + len(tool_calls),
         }
 
-    def subagent_node(state: SpartaState) -> dict:
+    async def subagent_node(state: SpartaState) -> dict:
+        from langchain_core.messages import ToolMessage
+
         last_message = state["messages"][-1]
         tool_calls = getattr(last_message, "tool_calls", [])
         delegate_calls = [tc for tc in tool_calls if tc.get("name", "").startswith("delegate_")]
 
+        if not delegate_calls:
+            return {"subagent_results": [], "tool_calls_this_turn": state.get("tool_calls_this_turn", 0)}
+
+        subagent_map = {
+            "delegate_research": build_research_graph,
+            "delegate_code": build_code_graph,
+            "delegate_memory": build_memory_graph,
+        }
+
         results = []
+        tool_messages = []
         for tc in delegate_calls:
-            from sparta_ai.agents.subagents.research_agent import research_topic
-            from sparta_ai.agents.subagents.code_agent import execute_code_task
-            from sparta_ai.agents.subagents.memory_agent import recall_memories
+            builder = subagent_map.get(tc["name"])
+            if not builder:
+                continue
+            try:
+                graph = builder()
+                args = tc.get("args", {})
+                # Compiled sub-graphs stream their internal events automatically
+                # through the parent graph's astream_events thanks to their namespace.
+                result = await graph.ainvoke({"messages": [HumanMessage(content=json.dumps(args))]})
+                output = result.get("output") if isinstance(result, dict) else str(result)
+                results.append({"subagent": tc["name"], "output": output})
+                tool_messages.append(ToolMessage(
+                    content=str(output),
+                    tool_call_id=tc.get("id", ""),
+                    name=tc["name"],
+                ))
+            except Exception as e:
+                logger.error("Subagent %s failed: %s", tc["name"], e)
+                error_msg = str(e)
+                results.append({"subagent": tc["name"], "error": error_msg})
+                tool_messages.append(ToolMessage(
+                    content=f"Error: {error_msg}",
+                    tool_call_id=tc.get("id", ""),
+                    name=tc["name"],
+                ))
 
-            subagent_map = {
-                "delegate_research": research_topic,
-                "delegate_code": execute_code_task,
-                "delegate_memory": recall_memories,
-            }
-            fn = subagent_map.get(tc["name"])
-            if fn:
-                try:
-                    result = fn.invoke(tc.get("args", {}))
-                    results.append(result)
-                except Exception as e:
-                    logger.error("Subagent %s failed: %s", tc["name"], e)
-                    results.append({"error": str(e)})
-
-        return {"subagent_results": results, "tool_calls_this_turn": state.get("tool_calls_this_turn", 0)}
+        return {
+            "messages": tool_messages,
+            "subagent_results": results,
+            "tool_calls_this_turn": state.get("tool_calls_this_turn", 0),
+        }
 
     def should_continue(state: SpartaState) -> Literal["tools", "subagent", "__end__"]:
         if state.get("abort_requested"):

@@ -1,51 +1,45 @@
+import json
 import logging
-from typing import Literal
+from typing import TypedDict
 
+from langchain_core.messages import BaseMessage, SystemMessage
 from langchain_core.tools import tool
+from langchain_openai import ChatOpenAI
+from langgraph.graph import StateGraph, START, END, MessagesState
+from langgraph.prebuilt import ToolNode
+
+from sparta_ai.tools.web_search import web_search_tool
 
 logger = logging.getLogger("sparta_ai.subagents.research")
 
 
-@tool
-def research_topic(
-    topic: str,
-    depth: Literal["quick", "deep"] = "quick",
-) -> str:
-    """
-    Investiga un tema usando búsqueda web y síntesis de información.
-    Úsalo cuando el usuario necesita información actualizada, investigación
-    detallada, o datos que no están en tu conocimiento de base.
-
-    Args:
-        topic: El tema a investigar.
-        depth: 'quick' para resumen rápido, 'deep' para investigación exhaustiva.
-
-    Returns:
-        Resultado de la investigación con citas y referencias.
-    """
-    from sparta_ai.tools.web_search import web_search_tool
-
-    try:
-        raw = web_search_tool.invoke({"query": topic, "count": 10 if depth == "deep" else 5})
-        return _synthesize(raw, topic, depth)
-    except Exception as e:
-        logger.error("Research failed for topic '%s': %s", topic, e)
-        return f"Error investigando '{topic}': {e}"
+class ResearchState(MessagesState):
+    topic: str
+    depth: str
+    output: str
 
 
-def _build_research_agent():
-    from langchain.agents import create_react_agent
-    from langchain_openai import ChatOpenAI
+RESEARCH_PROMPT = (
+    "Eres un agente de investigación. Tu tarea es buscar información "
+    "completa y precisa sobre el tema solicitado. Usa web_search para "
+    "obtener datos actualizados. Sintetiza los resultados en un resumen "
+    "coherente con citas de las fuentes."
+)
 
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.3)
-    tools = [web_search_tool]
-    prompt = (
-        "Eres un agente de investigación. Tu tarea es buscar información "
-        "completa y precisa sobre el tema solicitado. Usa web_search para "
-        "obtener datos actualizados. Sintetiza los resultados en un resumen "
-        "coherente con citas de las fuentes."
-    )
-    return create_react_agent(llm, tools, prompt=prompt)
+
+def _extract_topic_and_depth(messages: list[BaseMessage]) -> tuple[str, str]:
+    """Extract research parameters from the last user/system message."""
+    for msg in reversed(messages):
+        content = getattr(msg, "content", "")
+        if isinstance(content, str):
+            try:
+                parsed = json.loads(content)
+                if isinstance(parsed, dict):
+                    return parsed.get("topic", content), parsed.get("depth", "quick")
+            except json.JSONDecodeError:
+                pass
+            return content, "quick"
+    return "", "quick"
 
 
 def _synthesize(raw_results: list[dict], topic: str, depth: str) -> str:
@@ -76,3 +70,74 @@ def _synthesize(raw_results: list[dict], topic: str, depth: str) -> str:
             lines.append("los temas principales cubiertos son: " + ", ".join(f"'{t}'" for t in topics if t.strip()) + ".")
 
     return "\n".join(lines)
+
+
+@tool
+def research_topic(
+    topic: str,
+    depth: str = "quick",
+) -> str:
+    """
+    Investiga un tema usando búsqueda web y síntesis de información.
+    Úsalo cuando el usuario necesita información actualizada, investigación
+    detallada, o datos que no están en tu conocimiento de base.
+
+    Args:
+        topic: El tema a investigar.
+        depth: 'quick' para resumen rápido, 'deep' para investigación exhaustiva.
+
+    Returns:
+        Resultado de la investigación con citas y referencias.
+    """
+    try:
+        raw = web_search_tool.invoke({"query": topic, "count": 10 if depth == "deep" else 5})
+        return _synthesize(raw, topic, depth)
+    except Exception as e:
+        logger.error("Research failed for topic '%s': %s", topic, e)
+        return f"Error investigando '{topic}': {e}"
+
+
+def build_research_graph():
+    """Return a compiled LangGraph sub-graph that streams through the parent."""
+    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.3)
+    tools = [web_search_tool]
+    llm_with_tools = llm.bind_tools(tools)
+
+    async def agent_node(state: ResearchState) -> dict:
+        topic, depth = _extract_topic_and_depth(state["messages"])
+        system = SystemMessage(content=RESEARCH_PROMPT)
+        user = f"Investiga el tema: {topic}\nProfundidad: {depth}"
+        response = await llm_with_tools.ainvoke([system, *state["messages"], user])
+        return {"messages": [response], "topic": topic, "depth": depth}
+
+    async def tool_node(state: ResearchState) -> dict:
+        exec_node = ToolNode(tools)
+        result = await exec_node.ainvoke(state)
+        return result
+
+    def should_continue(state: ResearchState) -> str:
+        last = state["messages"][-1]
+        tool_calls = getattr(last, "tool_calls", [])
+        if tool_calls:
+            return "tools"
+        return "output"
+
+    def output_node(state: ResearchState) -> dict:
+        last = state["messages"][-1]
+        return {"output": getattr(last, "content", str(last))}
+
+    graph = StateGraph(ResearchState)
+    graph.add_node("agent", agent_node)
+    graph.add_node("tools", tool_node)
+    graph.add_node("output", output_node)
+
+    graph.add_edge(START, "agent")
+    graph.add_conditional_edges(
+        "agent",
+        should_continue,
+        {"tools": "tools", "output": "output"},
+    )
+    graph.add_edge("tools", "agent")
+    graph.add_edge("output", END)
+
+    return graph.compile()

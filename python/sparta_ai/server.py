@@ -198,8 +198,12 @@ def _emit(request_id: str, event: str, data: dict | None = None):
     msg: dict[str, Any] = {"id": request_id, "event": event}
     if data is not None:
         msg["data"] = data
-    sys.stdout.write(json.dumps(msg, ensure_ascii=False) + "\n")
-    sys.stdout.flush()
+    try:
+        sys.stdout.write(json.dumps(msg, ensure_ascii=False) + "\n")
+        sys.stdout.flush()
+    except (BrokenPipeError, OSError):
+        # Parent process closed the pipe; exit cleanly instead of crashing.
+        sys.exit(0)
 
 
 def _emit_error(request_id: str | None, code: str, message: str):

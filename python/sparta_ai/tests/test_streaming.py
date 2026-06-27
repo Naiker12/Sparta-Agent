@@ -38,6 +38,24 @@ class TestEventBridge:
             assert len(thinking_calls) > 0
 
     @pytest.mark.asyncio
+    async def test_stream_reasoning_content_from_metadata(self):
+        """OpenAI-compatible providers (DeepSeek/OpenRouter) expose reasoning in metadata."""
+        mock_graph = MagicMock()
+        chunk = _mock_chunk("Answer part")
+        chunk.additional_kwargs = {"reasoning_content": "Step one..."}
+        mock_graph.astream_events.return_value = _mock_event_stream([
+            {"event": "on_chat_model_stream", "data": {"chunk": chunk}, "name": ""},
+            {"event": "on_chain_end", "data": {}, "name": "agent"},
+        ])
+
+        with patch("sparta_ai.streaming.event_bridge._emit") as mock_emit:
+            await stream_agent_to_electron(mock_graph, {}, "req_001")
+            events = [c[0][1] for c in mock_emit.call_args_list]
+            assert "thinking:started" in events
+            assert "thinking:token" in events
+            assert "stream:token" in events
+
+    @pytest.mark.asyncio
     async def test_stream_tool_events(self):
         mock_graph = MagicMock()
         mock_graph.astream_events.return_value = _mock_event_stream([

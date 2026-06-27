@@ -1,8 +1,41 @@
+import os
 import sys
+import json
 import signal
 import logging
+import io
+
+# Red de seguridad: asegura que la carpeta padre (python/) esté en sys.path
+# para que el paquete sparta_ai se resuelva correctamente sin depender del cwd.
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from sparta_ai.server import StdioServer
+
+# Forzar UTF-8 en stdin/stdout/stderr para evitar caracteres de reemplazo (�)
+# cuando el locale por defecto de Windows no es UTF-8.
+try:
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", newline="", line_buffering=True)
+except Exception:
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", line_buffering=True)
+    except Exception:
+        sys.stdout = os.fdopen(sys.stdout.fileno(), "w", encoding="utf-8", buffering=1)
+
+try:
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", newline="", line_buffering=True)
+except Exception:
+    try:
+        sys.stderr.reconfigure(encoding="utf-8", line_buffering=True)
+    except Exception:
+        sys.stderr = os.fdopen(sys.stderr.fileno(), "w", encoding="utf-8", buffering=1)
+
+try:
+    sys.stdin = io.TextIOWrapper(sys.stdin.buffer, encoding="utf-8", newline="")
+except Exception:
+    try:
+        sys.stdin.reconfigure(encoding="utf-8")
+    except Exception:
+        sys.stdin = os.fdopen(sys.stdin.fileno(), "r", encoding="utf-8", buffering=1)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -10,6 +43,12 @@ logging.basicConfig(
     stream=sys.stderr,
 )
 logger = logging.getLogger("sparta_ai")
+
+
+def _emit_ready():
+    """Emit the ready handshake message so Electron knows imports finished."""
+    sys.stdout.write(json.dumps({"id": None, "event": "ready", "data": {"pid": os.getpid()}}, ensure_ascii=False) + "\n")
+    sys.stdout.flush()
 
 
 def main():
@@ -24,6 +63,9 @@ def main():
 
     signal.signal(signal.SIGINT, shutdown)
     signal.signal(signal.SIGTERM, shutdown)
+
+    # Signal Electron that imports are done and stdin/stdout are ready.
+    _emit_ready()
 
     try:
         server.run()
