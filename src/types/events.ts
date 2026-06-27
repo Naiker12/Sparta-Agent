@@ -13,6 +13,7 @@ export type EventType =
   | 'mcp:disconnected'
   | 'stream:token'
   | 'stream:completed'
+  | 'stream:aborted'
   | 'stream:error'
   | 'pipeline:step'
   | 'chat:message'
@@ -62,16 +63,22 @@ export interface AgentErrorEvent extends BaseEvent {
 
 export interface ThinkingStartedEvent extends BaseEvent {
   type: 'thinking:started'
+  sessionId: string
+  messageId: string
 }
 
 export interface ThinkingTokenEvent extends BaseEvent {
   type: 'thinking:token'
+  sessionId: string
+  messageId: string
   token: string
 }
 
 export interface ThinkingCompletedEvent extends BaseEvent {
   type: 'thinking:completed'
-  summary: string
+  sessionId: string
+  messageId: string
+  tokensUsed: number
 }
 
 export interface ToolCalledEvent extends BaseEvent {
@@ -122,6 +129,12 @@ export interface StreamCompletedEvent extends BaseEvent {
   sessionId: string
   messageId: string
   usage?: { inputTokens: number; outputTokens: number }
+}
+
+export interface StreamAbortedEvent extends BaseEvent {
+  type: 'stream:aborted'
+  sessionId: string
+  messageId: string
 }
 
 export interface StreamErrorEvent extends BaseEvent {
@@ -264,6 +277,7 @@ export type SpartaEvent =
   | ThinkingTokenEvent
   | ThinkingCompletedEvent
   | ToolCalledEvent
+  | StreamAbortedEvent
   | ToolResultEvent
   | ToolErrorEvent
   | MCPConnectedEvent

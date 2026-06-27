@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { Message, Session, ToolCall } from '@/types'
+import type { Message, Session, ToolCall, ThinkingStatus } from '@/types'
 
 export interface StreamState {
   isStreaming: boolean
@@ -39,6 +39,12 @@ interface ChatState {
   getActiveMessages: () => Message[]
   cleanupStaleSessions: () => void
   getStreamState: (sessionId: string) => StreamState | undefined
+
+  // Thinking lifecycle (Fix: Thinking Live Frozen)
+  onThinkingStart: (sessionId: string, messageId: string) => void
+  onThinkingToken: (sessionId: string, messageId: string, token: string) => void
+  onThinkingEnd: (sessionId: string, messageId: string, tokensUsed: number) => void
+  onStreamEnd: (sessionId: string, messageId: string) => void
 }
 
 export const useChatStore = create<ChatState>()(
@@ -292,6 +298,62 @@ export const useChatStore = create<ChatState>()(
     if (!activeSessionId) return []
     return messagesBySession[activeSessionId] || []
   },
+
+  onThinkingStart: (sessionId, messageId) =>
+    set((s) => {
+      const sessionMessages = s.messagesBySession[sessionId]
+      if (!sessionMessages) return s
+      return {
+        messagesBySession: {
+          ...s.messagesBySession,
+          [sessionId]: sessionMessages.map((msg) =>
+            msg.id === messageId ? { ...msg, thinkingStatus: 'streaming' as ThinkingStatus } : msg
+          ),
+        },
+      }
+    }),
+
+  onThinkingToken: (sessionId, messageId, token) =>
+    set((s) => {
+      const sessionMessages = s.messagesBySession[sessionId]
+      if (!sessionMessages) return s
+      return {
+        messagesBySession: {
+          ...s.messagesBySession,
+          [sessionId]: sessionMessages.map((msg) =>
+            msg.id === messageId ? { ...msg, reasoningText: (msg.reasoningText ?? '') + token, thinkingStatus: 'streaming' as ThinkingStatus } : msg
+          ),
+        },
+      }
+    }),
+
+  onThinkingEnd: (sessionId, messageId, tokensUsed) =>
+    set((s) => {
+      const sessionMessages = s.messagesBySession[sessionId]
+      if (!sessionMessages) return s
+      return {
+        messagesBySession: {
+          ...s.messagesBySession,
+          [sessionId]: sessionMessages.map((msg) =>
+            msg.id === messageId ? { ...msg, thinkingStatus: 'completed' as ThinkingStatus, thinkingTokensUsed: tokensUsed } : msg
+          ),
+        },
+      }
+    }),
+
+  onStreamEnd: (sessionId, messageId) =>
+    set((s) => {
+      const sessionMessages = s.messagesBySession[sessionId]
+      if (!sessionMessages) return s
+      return {
+        messagesBySession: {
+          ...s.messagesBySession,
+          [sessionId]: sessionMessages.map((msg) =>
+            msg.id === messageId ? { ...msg, isStreaming: false } : msg
+          ),
+        },
+      }
+    }),
 
   cleanupStaleSessions: () => {
     set((s) => ({

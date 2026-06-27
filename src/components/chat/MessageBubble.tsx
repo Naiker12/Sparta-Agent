@@ -5,10 +5,10 @@ import { useChatStore } from '@/stores/chat.store'
 import { useEventBus } from '@/stores/event-bus.store'
 import { useChatSession } from '@/hooks/useChatSession'
 import { ThinkingBlock } from './reasoning/ThinkingBlock'
-import { ThinkingPill } from './reasoning/ThinkingPill'
 import { ToolCallSummary } from './reasoning/ToolCallSummary'
 import { ToolCallDiffView } from './reasoning/ToolCallDiffView'
 import { StreamCursor } from './reasoning/StreamCursor'
+import { PipelineTrace } from './reasoning/PipelineTrace'
 import { MessageActionsDialog } from './MessageActionsDialog'
 import { SpartaIcon } from './SpartaIcon'
 import { getMessageRenderState } from '@/lib/message-render-state'
@@ -31,7 +31,6 @@ export function MessageBubble({ message, isLastUser = false }: MessageBubbleProp
   const sessionStreaming = useChatStore((s) => s.streamingBySession[message.sessionId])
   const isStreaming = sessionStreaming?.isStreaming ?? false
   const renderState = getMessageRenderState(message.content, message.reasoningText, isStreaming)
-  const reasoningDuration = message.reasoningStartedAt && (message.reasoningCompletedAt ?? Date.now()) - message.reasoningStartedAt
   const [dialog, setDialog] = useState<DialogState>({ kind: 'none' })
   const [copied, setCopied] = useState(false)
   const [editing, setEditing] = useState(false)
@@ -39,6 +38,9 @@ export function MessageBubble({ message, isLastUser = false }: MessageBubbleProp
   const { updateMessage, deleteMessage } = useChatStore()
   const { sendMessage } = useChatSession()
   const dispatch = useEventBus((s) => s.dispatch)
+
+  const hasThinking = (message.thinkingStatus && message.thinkingStatus !== 'idle')
+    || (message.reasoningText?.length ?? 0) > 0
 
   function handleCopy() {
     navigator.clipboard.writeText(message.content).then(() => {
@@ -131,12 +133,6 @@ export function MessageBubble({ message, isLastUser = false }: MessageBubbleProp
             </span>
           </div>
 
-          {renderState.kind === 'thinking_pending' && (
-            <div style={{ marginBottom: 8 }}>
-              <ThinkingPill isThinking label="Thinking" />
-            </div>
-          )}
-
           {editing ? (
             <div>
               <textarea
@@ -210,17 +206,25 @@ export function MessageBubble({ message, isLastUser = false }: MessageBubbleProp
             </div>
           ) : null}
 
-          {renderState.reasoningText && (
+          {/* Thinking block — Fix: estado local, no depende de isStreaming global */}
+          {hasThinking && (
             <div style={{ marginTop: 8 }}>
               <ThinkingBlock
-                content={renderState.reasoningText}
-                isStreaming={renderState.kind !== 'done'}
-                durationMs={reasoningDuration ?? undefined}
-                liveToolCalls={message.toolCalls}
+                content={message.reasoningText ?? message.thinking ?? ''}
+                status={message.thinkingStatus ?? 'completed'}
+                tokensUsed={message.thinkingTokensUsed ?? 0}
               />
             </div>
           )}
 
+          {/* Pipeline trace como timeline */}
+          {message.pipelineSteps && message.pipelineSteps.length > 0 && (
+            <div style={{ marginTop: 8 }}>
+              <PipelineTrace steps={message.pipelineSteps} message={message} />
+            </div>
+          )}
+
+          {/* Tool calls */}
           {message.toolCalls && message.toolCalls.length > 0 && (
             <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
               <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
@@ -239,9 +243,7 @@ export function MessageBubble({ message, isLastUser = false }: MessageBubbleProp
             </div>
           )}
 
-
-
-          {!message.isStreaming && message.content && !editing && (
+          {!message.isStreaming && message.content && !editing && message.thinkingStatus !== 'streaming' && (
             <div
               className="message-actions-bar"
               style={{

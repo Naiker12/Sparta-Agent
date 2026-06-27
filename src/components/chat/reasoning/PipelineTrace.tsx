@@ -1,15 +1,28 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { Check, Loader2, Brain } from 'lucide-react'
+import type { Message } from '@/types'
+import type { PipelineStep as IPipelineStep } from '@/types'
 
-export type PipelineStep = {
-  id: string
-  name: string
-  meta?: string
-  status: 'running' | 'done' | 'error' | 'thinking'
-  durationMs?: number
-}
+export function PipelineTrace({ steps, message }: { steps: IPipelineStep[]; message: Message }) {
+  const allSteps: IPipelineStep[] = []
 
-export function PipelineTrace({ steps }: { steps: PipelineStep[] }) {
+  if (message.thinkingStatus && message.thinkingStatus !== 'idle') {
+    allSteps.push({
+      id: 'thinking',
+      name: 'Razonamiento interno',
+      meta: message.thinkingTokensUsed ? `${message.thinkingTokensUsed} tok` : undefined,
+      status: message.thinkingStatus === 'completed' ? 'completed' : 'running',
+      timestamp: message.reasoningStartedAt ?? Date.now(),
+      durationMs: message.reasoningStartedAt && message.reasoningCompletedAt
+        ? message.reasoningCompletedAt - message.reasoningStartedAt
+        : undefined,
+    })
+  }
+
+  allSteps.push(...steps)
+
+  if (allSteps.length === 0) return null
+
   return (
     <div style={{
       background: 'var(--bg-elevated)',
@@ -21,9 +34,9 @@ export function PipelineTrace({ steps }: { steps: PipelineStep[] }) {
       gap: 3,
     }}>
       <AnimatePresence initial={false}>
-        {steps.map((step) => (
+        {allSteps.map((step) => (
           <motion.div
-            key={step.id}
+            key={step.id ?? step.name}
             initial={{ opacity: 0, x: -4 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.18 }}
@@ -38,7 +51,7 @@ export function PipelineTrace({ steps }: { steps: PipelineStep[] }) {
             <StepIcon status={step.status} />
 
             <span style={{
-              color: step.status === 'thinking' ? 'var(--status-think)' : 'var(--text-secondary)',
+              color: step.status === 'running' ? 'var(--status-think)' : 'var(--text-secondary)',
               minWidth: 80,
               fontSize: 11.5,
               fontFamily: 'var(--font-mono)',
@@ -80,13 +93,13 @@ export function PipelineTrace({ steps }: { steps: PipelineStep[] }) {
   )
 }
 
-function StepIcon({ status }: { status: PipelineStep['status'] }) {
+function StepIcon({ status }: { status: IPipelineStep['status'] }) {
   const base: React.CSSProperties = { flexShrink: 0 }
-  if (status === 'done')
+  if (status === 'completed')
     return <Check size={12} strokeWidth={2.5} style={{ ...base, color: 'var(--status-ok)' }} />
   if (status === 'error')
     return <span style={{ ...base, color: 'var(--status-err)', fontSize: 12 }}>✕</span>
-  if (status === 'thinking')
+  if (status === 'running')
     return <Brain size={12} strokeWidth={1.5} style={{ ...base, color: 'var(--status-think)', animation: 'pulse 1.5s ease infinite' }} />
   return (
     <Loader2

@@ -11,10 +11,15 @@ export interface ToolCall {
 }
 
 export interface PipelineStep {
+  id?: string
   name: string
   status: 'pending' | 'running' | 'completed' | 'error'
   timestamp: number
+  meta?: string
+  durationMs?: number
 }
+
+export type ThinkingStatus = 'idle' | 'streaming' | 'completed' | 'collapsed'
 
 export interface Message {
   id: string
@@ -25,6 +30,8 @@ export interface Message {
   agentId?: string
   thinking?: string
   reasoningText?: string
+  thinkingStatus?: ThinkingStatus
+  thinkingTokensUsed?: number
   isStreaming?: boolean
   lastChunkSeq?: number
   lastThinkChunkSeq?: number

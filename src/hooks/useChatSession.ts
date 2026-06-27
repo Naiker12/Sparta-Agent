@@ -4,29 +4,16 @@ import { useProviderStore } from '@/stores/provider.store'
 import { useMemoryStore } from '@/stores/memory.store'
 import { useSettingsStore } from '@/stores/settings.store'
 import { useEventBus } from '@/stores/event-bus.store'
+import { useMCPStore } from '@/stores/mcp.store'
+import { useSkillStore } from '@/stores/skill.store'
 import { extractMemory } from '@/services/memory/extractor'
 import { writeExtractedMemory } from '@/services/memory/graph-writer'
 import { buildMemoryContext, indexInChroma, ensureVectorReady, tryAutoConfigure } from '@/services/memory'
 import { getProviderKey } from '@/lib/vault-helper'
 import { aiGateway } from '@/services/ai/gateway'
 import { webSearch } from '@/services/tools/web-search/search-provider'
-import { useGatewayStore } from '@/stores/gateway.store'
 import { useUsageStore } from '@/stores/usage.store'
-import type { ToolCall, Provider, ProviderVendor } from '@/types'
-
-interface StreamChunk {
-  sessionId: string
-  messageId: string
-  chunkSeq?: number
-  type: 'thinking_token' | 'content_token' | 'tool_call' | 'done' | 'error'
-  delta?: string
-  toolCall?: ToolCall
-  error?: string
-  vendor?: ProviderVendor
-  httpStatus?: number
-  latency?: number
-  providerId?: string
-}
+import type { ToolCall, Provider } from '@/types'
 
 function getActiveProvider(providers: Provider[], activeModel: string): Provider | null {
   return providers.find((p) => p.defaultModel === activeModel) ?? providers[0] ?? null
@@ -49,7 +36,6 @@ export function useChatSession() {
   const addMessage = useChatStore((s) => s.addMessage)
   const updateMessage = useChatStore((s) => s.updateMessage)
   const setStreaming = useChatStore((s) => s.setStreaming)
-  const appendThinking = useChatStore((s) => s.appendThinking)
   const appendContent = useChatStore((s) => s.appendContent)
   const addToolCall = useChatStore((s) => s.addToolCall)
   const updateToolCallStatus = useChatStore((s) => s.updateToolCallStatus)
@@ -206,6 +192,16 @@ export function useChatSession() {
         }
       }
 
+      const skills = useSkillStore.getState().activeSkillIds ?? []
+      const mcpServers = useMCPStore.getState().servers.map((s: { id: string; name: string; tools?: unknown[] }) => ({
+        id: s.id,
+        name: s.name,
+        tools: s.tools ?? [],
+      }))
+      const mode = useSettingsStore.getState().sessionMode ?? 'chat'
+      const reasoningEnabled = useSettingsStore.getState().reasoningEnabled ?? false
+      const reasoningBudget = useSettingsStore.getState().reasoningBudget ?? 8000
+
       await window.sparta.sendMessage({
         sessionId: sid,
         messageId: assistantId,
@@ -217,6 +213,11 @@ export function useChatSession() {
         system,
         vendor: provider.vendor,
         providerId: provider.id,
+        mode,
+        skills,
+        mcpServers,
+        semanticMemory: semanticMemoryEnabled,
+        reasoning: { enabled: reasoningEnabled, budget: reasoningBudget },
       }).catch(() => {
         stopStreamingFn(sid)
         updateMessage(assistantId, {
@@ -237,64 +238,53 @@ export function useChatSession() {
 
   useEffect(() => {
     if (!window.sparta) return
-    const unsub = window.sparta.onEvent((event) => {
-      const chunk = event as StreamChunk
-      switch (chunk.type) {
-        case 'thinking_token': {
-          appendThinking(chunk.sessionId, chunk.messageId, chunk.delta ?? '', chunk.chunkSeq)
-          const store = useChatStore.getState()
-          const msg = store.messagesBySession[chunk.sessionId]?.find((m) => m.id === chunk.messageId)
-          if (msg && !msg.reasoningStartedAt) {
-            store.updateMessage(chunk.messageId, { reasoningStartedAt: Date.now() })
-          }
+    const unsub = window.sparta.onEvent((rawEvent: unknown) => {
+      const event = rawEvent as Record<string, unknown>
+      const { type, sessionId, messageId } = event as { type: string; sessionId: string; messageId: string }
+      const sid = sessionId ?? ''
+      const mid = messageId ?? ''
+      const store = useChatStore.getState()
+
+      switch (type) {
+        case 'thinking:started': {
+          store.onThinkingStart(sid, mid)
+          store.updateMessage(mid, { reasoningStartedAt: Date.now() })
           break
         }
-        case 'content_token': {
-          appendContent(chunk.sessionId, chunk.messageId, chunk.delta ?? '', chunk.chunkSeq)
-          const store = useChatStore.getState()
-          const msg = store.messagesBySession[chunk.sessionId]?.find((m) => m.id === chunk.messageId)
-          if (msg && msg.reasoningText && !msg.reasoningCompletedAt) {
-            store.updateMessage(chunk.messageId, { reasoningCompletedAt: Date.now() })
-          }
+        case 'thinking:token': {
+          store.onThinkingToken(sid, mid, (event as { token: string }).token ?? '')
           break
         }
-        case 'tool_call':
-          if (chunk.toolCall) {
-            addToolCall(chunk.sessionId, chunk.messageId, chunk.toolCall)
-          }
+        case 'thinking:completed': {
+          const tokensUsed = (event as { tokensUsed: number }).tokensUsed ?? 0
+          store.onThinkingEnd(sid, mid, tokensUsed)
+          store.updateMessage(mid, { reasoningCompletedAt: Date.now() })
           break
-        case 'done': {
-          updateMessage(chunk.messageId, { isStreaming: false })
-          stopStreamingFn(chunk.sessionId)
-
-          if (chunk.vendor && chunk.httpStatus && chunk.providerId) {
-            useGatewayStore.getState().addEntry({
-              vendor: chunk.vendor,
-              providerId: chunk.providerId,
-              status: chunk.httpStatus,
-              ok: chunk.httpStatus >= 200 && chunk.httpStatus < 300,
-              latency: chunk.latency ?? 0,
-              timestamp: Date.now(),
-            })
+        }
+        case 'stream:token': {
+          appendContent(sid, mid, (event as { token: string }).token ?? '')
+          break
+        }
+        case 'stream:completed': {
+          store.onStreamEnd(sid, mid)
+          stopStreamingFn(sid)
+          const providerId = (event as { providerId?: string }).providerId
+          if (providerId) {
+            const outputLen = store.messagesBySession[sid]?.find((m) => m.id === mid)?.content?.length ?? 0
+            const inputLen = lastUserMessageRef.current.get(sid)?.text?.length ?? 0
+            if (outputLen > 0) {
+              useUsageStore.getState().recordTurn(sid, providerId, Math.ceil(inputLen / 4), Math.ceil(outputLen / 4))
+            }
           }
 
-          const msg = useChatStore.getState().messagesBySession[chunk.sessionId]
-            ?.find((m) => m.id === chunk.messageId)
-          const outputLen = msg?.content?.length ?? 0
-          const inputLen = lastUserMessageRef.current.get(chunk.sessionId)?.text?.length ?? 0
-          if (chunk.providerId && outputLen > 0) {
-            useUsageStore.getState().recordTurn(chunk.sessionId, chunk.providerId, Math.ceil(inputLen / 4), Math.ceil(outputLen / 4))
-          }
-
-          const pair = lastUserMessageRef.current.get(chunk.sessionId)
+          const pair = lastUserMessageRef.current.get(sid)
           if (pair) {
             const userText = pair.text
-            const assistantText = useChatStore.getState().messagesBySession[chunk.sessionId]
-              ?.find((m) => m.id === chunk.messageId)?.content ?? ''
+            const assistantText = store.messagesBySession[sid]?.find((m) => m.id === mid)?.content ?? ''
             if (userText && assistantText) {
-              console.debug('[memory] Starting extraction chain for message:', chunk.messageId.slice(0, 8))
+              console.debug('[memory] Starting extraction chain for message:', mid.slice(0, 8))
               const providers = useProviderStore.getState().providers
-              const session = useChatStore.getState().sessions.find((s) => s.id === chunk.sessionId)
+              const session = useChatStore.getState().sessions.find((s) => s.id === sid)
               const extractionProvider = session?.model
                 ? providers.find((p) => p.defaultModel === session.model) ?? providers[0] ?? null
                 : providers[0] ?? null
@@ -321,38 +311,37 @@ export function useChatSession() {
                 if (extracted.entities.length === 0 && extracted.facts.length === 0) {
                   useEventBus.getState().dispatch({
                     type: 'memory:extraction_empty',
-                    sessionId: chunk.sessionId,
-                    messageId: chunk.messageId,
+                    sessionId: sid,
+                    messageId: mid,
                     timestamp: Date.now(),
                   })
                   return
                 }
-                const store = useMemoryStore.getState()
-                const beforeCount = store.entries.length
+                const mStore = useMemoryStore.getState()
+                const beforeCount = mStore.entries.length
                 console.debug('[memory] Calling writeExtractedMemory...')
-                writeExtractedMemory(extracted, chunk.sessionId, chunk.messageId, {
-                  getEntries: () => store.entries,
-                  getRelations: () => store.relations,
+                writeExtractedMemory(extracted, sid, mid, {
+                  getEntries: () => mStore.entries,
+                  getRelations: () => mStore.relations,
                   addEntry: (entry) => {
-                    store.addEntry(
+                    mStore.addEntry(
                       entry.content, entry.source, entry.category,
                       entry.projectId, entry.sourceSessionId, entry.sourceMessageId
                     )
                   },
-                  updateEntry: (id, partial) => store.updateEntry(id, partial),
-                  deleteEntry: (id) => store.deleteEntry(id),
-                  addRelation: (rel) => store.addRelation(rel),
-                  updateRelation: (fromId, toId, partial) => store.updateRelation(fromId, toId, partial),
+                  updateEntry: (id, partial) => mStore.updateEntry(id, partial),
+                  deleteEntry: (id) => mStore.deleteEntry(id),
+                  addRelation: (rel) => mStore.addRelation(rel),
+                  updateRelation: (fromId, toId, partial) => mStore.updateRelation(fromId, toId, partial),
                 })
                 console.debug('[memory] Calling rebuildGraph...')
-                store.rebuildGraph()
-                const afterCount = store.entries.length
+                mStore.rebuildGraph()
+                const afterCount = mStore.entries.length
                 console.debug(`[memory] Done: ${afterCount - beforeCount} new entries, total: ${afterCount}`)
-
                 const enabled = useSettingsStore.getState().semanticMemoryEnabled
                 if (enabled) {
                   console.debug('[memory] Indexing in ChromaDB...')
-                  const newEntries = store.entries.slice(beforeCount)
+                  const newEntries = mStore.entries.slice(beforeCount)
                   for (const entry of newEntries) {
                     await indexInChroma(entry)
                   }
@@ -363,30 +352,37 @@ export function useChatSession() {
           }
           break
         }
-        case 'error':
-          updateMessage(chunk.messageId, {
-            isStreaming: false,
-            content: chunk.error ? `Error: ${chunk.error}` : 'Error durante la generación',
-          })
-          stopStreamingFn(chunk.sessionId)
-
-          if (chunk.vendor && chunk.providerId) {
-            useGatewayStore.getState().addEntry({
-              vendor: chunk.vendor,
-              providerId: chunk.providerId,
-              status: chunk.httpStatus ?? 0,
-              ok: false,
-              latency: chunk.latency ?? 0,
-              timestamp: Date.now(),
-              error: chunk.error ?? 'Error desconocido',
-            })
-          }
-
+        case 'stream:aborted': {
+          store.onStreamEnd(sid, mid)
+          stopStreamingFn(sid)
           break
+        }
+        case 'stream:error': {
+          store.onStreamEnd(sid, mid)
+          stopStreamingFn(sid)
+          const errorMsg = (event as { error?: string }).error ?? 'Error durante la generación'
+          store.updateMessage(mid, { content: `Error: ${errorMsg}`, isStreaming: false })
+          break
+        }
+        case 'tool:called': {
+          const toolCall = (event as { toolCall?: ToolCall }).toolCall
+          if (toolCall) addToolCall(sid, mid, toolCall)
+          break
+        }
+        case 'tool:result': {
+          const tcId = (event as { toolCallId?: string }).toolCallId ?? ''
+          updateToolCallStatus(sid, mid, tcId, 'completed')
+          break
+        }
+        case 'tool:error': {
+          const tcIdErr = (event as { toolCallId?: string }).toolCallId ?? ''
+          updateToolCallStatus(sid, mid, tcIdErr, 'error')
+          break
+        }
       }
     })
     return unsub
-  }, [appendThinking, appendContent, addToolCall, updateMessage, stopStreamingFn])
+  }, [appendContent, addToolCall, updateMessage, updateToolCallStatus, stopStreamingFn])
 
   return {
     sessions,
