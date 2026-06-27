@@ -31,3 +31,21 @@ dist-electron/
 
 # Vault: encrypted API keys (DO NOT COMMIT)
 sparta-vault.json
+
+# Rust Security Layer
+rust/sparta-security/target/
+rust/sparta-security/*.node
+rust/sparta-security/index.js
+rust/sparta-security/index.d.ts
+rust/**/*.rs.bk
+
+# Python AI Sidecar
+python/.venv/
+python/**/__pycache__/
+python/**/*.pyc
+python/.pytest_cache/
+python/.ruff_cache/
+python/*.egg-info/
+python/.mypy_cache/
+python/dist/
+

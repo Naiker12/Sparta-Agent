@@ -1,1 +1,1 @@
-export type { MessageRole, ToolCall, PipelineStep, Message, Session } from '@/interfaces/chat.interface'
+export type { MessageRole, ToolCall, PipelineStep, Message, Session, ThinkingStatus, ChatRequest } from '@/interfaces/chat.interface'
