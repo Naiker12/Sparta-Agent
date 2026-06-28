@@ -23,6 +23,8 @@ export function SessionItem({ session }: SessionItemProps) {
   const [menuOpen, setMenuOpen]       = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [shareOpen, setShareOpen]     = useState(false)
+  const [renaming, setRenaming]       = useState(false)
+  const [renameValue, setRenameValue] = useState(session.title || 'Nueva conversación')
 
   const isActive = session.id === activeSessionId
   const isStreamingThis = streamingBySession[session.id]?.isStreaming ?? false
@@ -71,7 +73,40 @@ export function SessionItem({ session }: SessionItemProps) {
         </div>
 
         {/* Title — single line */}
-        <span className="session-title">{title}</span>
+        {renaming ? (
+          <input
+            autoFocus
+            value={renameValue}
+            onChange={(e) => setRenameValue(e.target.value)}
+            onBlur={() => {
+              if (renameValue.trim()) renameSession(session.id, renameValue.trim())
+              setRenaming(false)
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                if (renameValue.trim()) renameSession(session.id, renameValue.trim())
+                setRenaming(false)
+              }
+              if (e.key === 'Escape') setRenaming(false)
+            }}
+            onClick={(e) => e.stopPropagation()}
+            className="session-title"
+            style={{
+              flex: 1,
+              background: 'var(--bg-input)',
+              border: '1px solid var(--accent)',
+              borderRadius: 4,
+              padding: '2px 6px',
+              fontSize: 12,
+              color: 'var(--text-primary)',
+              fontFamily: 'var(--font-ui)',
+              outline: 'none',
+              minWidth: 0,
+            }}
+          />
+        ) : (
+          <span className="session-title">{title}</span>
+        )}
 
         {/* Hover actions: date badge + 3-dot menu */}
         <div className={cn('session-hover-actions', menuOpen && 'force-visible')}>
@@ -102,8 +137,8 @@ export function SessionItem({ session }: SessionItemProps) {
                 onClick={(e) => {
                   e.stopPropagation()
                   setMenuOpen(false)
-                  const next = prompt('Renombrar:', title)
-                  if (next?.trim()) renameSession(session.id, next.trim())
+                  setRenameValue(title)
+                  setRenaming(true)
                 }}
               >
                 <Pencil size={13} className="flex-shrink-0" />

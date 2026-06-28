@@ -112,6 +112,7 @@ export function MemoryView() {
             ref={graphRef}
             onNodeSelect={handleNodeSelect}
             selectedNodeId={selectedEntry?.id || null}
+            relations={relations}
           />
         ) : (
           <MemoryListView />

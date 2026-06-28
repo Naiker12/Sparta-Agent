@@ -1,29 +1,44 @@
 import { useEffect, useRef, forwardRef, useImperativeHandle } from 'react'
-import type { MemoryEntry, MemoryGraphNode } from '@/types'
+import type * as THREE from 'three'
+import type { MemoryEntry, MemoryGraphNode, MemoryRelation } from '@/types'
 import type { MemoryGraphHandle } from './MemoryGraph'
+import { useMemoryStore } from '@/stores/memory.store'
+import { computeGraphLayout } from '@/services/memory/graph-layout'
+import { getGraphNodeColor, getEdgeColor } from '@/lib/graph-colors'
 
 interface MemoryGraphSceneProps {
   onNodeSelect: (entry: MemoryEntry | null, graphNode: MemoryGraphNode | null) => void
   selectedNodeId: string | null
+  relations: MemoryRelation[]
 }
 
 export const MemoryGraphScene = forwardRef<MemoryGraphHandle, MemoryGraphSceneProps>(
-  function MemoryGraphScene({ onNodeSelect }, ref) {
+  function MemoryGraphScene({ onNodeSelect, relations }, ref) {
     const containerRef = useRef<HTMLDivElement>(null)
+    const handlersRef = useRef({ onNodeSelect })
+    handlersRef.current = { onNodeSelect }
+    const thetaRef = useRef(0)
+    const phiRef = useRef(Math.PI / 3)
+    const radiusRef = useRef(20)
+
+    useImperativeHandle(ref, () => ({
+      resetCamera: () => {
+        thetaRef.current = 0
+        phiRef.current = Math.PI / 3
+        radiusRef.current = 20
+      },
+    }), [])
 
     useEffect(() => {
       const container = containerRef.current
       if (!container) return
 
       let animId = 0
-      let renderer: any = null
-      let scene: any = null
-      let camera: any = null
-      let spriteMap = new Map<string, any>()
-      let nodeGroup: any = null
-      let theta = 0
-      let phi = Math.PI / 3
-      let radius = 20
+      let renderer: THREE.WebGLRenderer | null = null
+      let scene: THREE.Scene | null = null
+      let camera: THREE.PerspectiveCamera | null = null
+      let spriteMap = new Map<string, THREE.Sprite>()
+      let nodeGroup: THREE.Group | null = null
 
       import('three').then((THREE) => {
         if (!containerRef.current) return
@@ -48,22 +63,21 @@ export const MemoryGraphScene = forwardRef<MemoryGraphHandle, MemoryGraphScenePr
         dirLight.position.set(10, 20, 10)
         scene.add(dirLight)
 
-        const { useMemoryStore } = require('@/stores/memory.store')
-        const { computeGraphLayout } = require('@/services/memory/graph-layout')
-        const { getGraphNodeColor } = require('@/lib/graph-colors')
-
         const entries = useMemoryStore.getState().entries
-        const nodes: any[] = computeGraphLayout(entries, container)
+        const nodes: MemoryGraphNode[] = computeGraphLayout(entries)
         spriteMap = new Map()
         nodeGroup = new THREE.Group()
-        const canvas = document.createElement('canvas')
-        canvas.width = 64
-        canvas.height = 64
 
         for (const node of nodes) {
+          const entry = entries.find((e) => e.id === node.memoryId)
+          const source = entry?.source ?? 'auto'
+          const color = getGraphNodeColor(source)
+
+          const canvas = document.createElement('canvas')
+          canvas.width = 64
+          canvas.height = 64
           const ctx = canvas.getContext('2d')!
           ctx.clearRect(0, 0, 64, 64)
-          const color = getGraphNodeColor(node)
           ctx.beginPath()
           ctx.arc(32, 32, 26, 0, Math.PI * 2)
           ctx.fillStyle = color
@@ -72,15 +86,61 @@ export const MemoryGraphScene = forwardRef<MemoryGraphHandle, MemoryGraphScenePr
           ctx.lineWidth = 2
           ctx.stroke()
           const texture = new THREE.CanvasTexture(canvas)
+          texture.needsUpdate = true
           const material = new THREE.SpriteMaterial({ map: texture, transparent: true })
           const sprite = new THREE.Sprite(material)
           const pos = node.position ?? node
           sprite.position.set(pos.x ?? 0, pos.y ?? 0, pos.z ?? 0)
-          sprite.scale.set(1.2, 1.2, 1)
-          sprite.userData = { entryId: node.id ?? node.memoryId }
+          const nodeRadius = node.radius ?? 0.5
+          const spriteScale = 0.8 + nodeRadius * 2.5
+          sprite.scale.set(spriteScale, spriteScale, 1)
+          sprite.userData = { entryId: node.memoryId }
           nodeGroup.add(sprite)
-          spriteMap.set(node.id ?? node.memoryId, sprite)
+          spriteMap.set(node.memoryId, sprite)
+
+          const labelCanvas = document.createElement('canvas')
+          labelCanvas.width = 256
+          labelCanvas.height = 48
+          const lctx = labelCanvas.getContext('2d')!
+          lctx.clearRect(0, 0, 256, 48)
+          lctx.font = 'bold 18px sans-serif'
+          lctx.fillStyle = 'rgba(255,255,255,0.85)'
+          const rawLabel = entry?.content ?? ''
+          const label = rawLabel.slice(0, 28) + (rawLabel.length > 28 ? '…' : '')
+          lctx.fillText(label, 4, 32)
+          const labelTexture = new THREE.CanvasTexture(labelCanvas)
+          labelTexture.needsUpdate = true
+          const labelMaterial = new THREE.SpriteMaterial({ map: labelTexture, transparent: true })
+          const labelSprite = new THREE.Sprite(labelMaterial)
+          labelSprite.position.set(pos.x ?? 0, (pos.y ?? 0) + spriteScale * 0.7, pos.z ?? 0)
+          labelSprite.scale.set(3.2, 0.6, 1)
+          labelSprite.userData = { isLabel: true }
+          nodeGroup.add(labelSprite)
         }
+
+        if (relations.length > 0) {
+          const edgeGeometry = new THREE.BufferGeometry()
+          const positions: number[] = []
+          for (const rel of relations) {
+            const fromSprite = spriteMap.get(rel.fromId)
+            const toSprite = spriteMap.get(rel.toId)
+            if (!fromSprite || !toSprite) continue
+            const fp = fromSprite.position
+            const tp = toSprite.position
+            positions.push(fp.x, fp.y, fp.z, tp.x, tp.y, tp.z)
+          }
+          if (positions.length > 0) {
+            edgeGeometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
+            const edgeMaterial = new THREE.LineBasicMaterial({
+              color: getEdgeColor(),
+              transparent: true,
+              opacity: 0.25,
+            })
+            const edges = new THREE.LineSegments(edgeGeometry, edgeMaterial)
+            scene.add(edges)
+          }
+        }
+
         scene.add(nodeGroup)
 
         const raycaster = new THREE.Raycaster()
@@ -97,12 +157,12 @@ export const MemoryGraphScene = forwardRef<MemoryGraphHandle, MemoryGraphScenePr
           if (!isDragging || !camera) return
           const dx = e.clientX - prevMouse.x
           const dy = e.clientY - prevMouse.y
-          theta -= dx * 0.005
-          phi = Math.max(0.1, Math.min(Math.PI - 0.1, phi - dy * 0.005))
+          thetaRef.current = thetaRef.current - dx * 0.005
+          phiRef.current = Math.max(0.1, Math.min(Math.PI - 0.1, phiRef.current - dy * 0.005))
           prevMouse = { x: e.clientX, y: e.clientY }
-          camera.position.x = radius * Math.sin(phi) * Math.sin(theta)
-          camera.position.y = radius * Math.cos(phi)
-          camera.position.z = radius * Math.sin(phi) * Math.cos(theta)
+          camera.position.x = radiusRef.current * Math.sin(phiRef.current) * Math.sin(thetaRef.current)
+          camera.position.y = radiusRef.current * Math.cos(phiRef.current)
+          camera.position.z = radiusRef.current * Math.sin(phiRef.current) * Math.cos(thetaRef.current)
           camera.lookAt(0, 0, 0)
         }
 
@@ -111,21 +171,22 @@ export const MemoryGraphScene = forwardRef<MemoryGraphHandle, MemoryGraphScenePr
             isDragging = false
             return
           }
+          if (!nodeGroup || !camera) return
           mouse.x = (e.clientX / width) * 2 - 1
           mouse.y = -(e.clientY / height) * 2 + 1
           raycaster.setFromCamera(mouse, camera)
-          const intersects = raycaster.intersectObjects(nodeGroup.children)
+          const intersects = raycaster.intersectObjects(nodeGroup.children.filter((c: { userData: { isLabel?: boolean } }) => !c.userData.isLabel))
           if (intersects.length > 0) {
             const hit = intersects[0].object
             const entryId = hit.userData.entryId
-            const entry = entries.find((en: any) => en.id === entryId)
-            const node = nodes.find((n: any) => (n.id ?? n.memoryId) === entryId)
-            onNodeSelect(entry ?? null, node ?? null)
+            const entry = entries.find((en) => en.id === entryId) ?? null
+            const node = nodes.find((n) => n.memoryId === entryId) ?? null
+            handlersRef.current.onNodeSelect(entry, node)
           }
         }
 
         function onWheel(e: WheelEvent) {
-          radius = Math.max(5, Math.min(50, radius + e.deltaY * 0.02))
+          radiusRef.current = Math.max(5, Math.min(50, radiusRef.current + e.deltaY * 0.02))
         }
 
         container.addEventListener('mousedown', onMouseDown)
@@ -141,14 +202,6 @@ export const MemoryGraphScene = forwardRef<MemoryGraphHandle, MemoryGraphScenePr
         animate()
       })
 
-      useImperativeHandle(ref, () => ({
-        resetCamera: () => {
-          theta = 0
-          phi = Math.PI / 3
-          radius = 20
-        },
-      }))
-
       return () => {
         cancelAnimationFrame(animId)
         if (renderer?.domElement && container.contains(renderer.domElement)) {
@@ -156,6 +209,7 @@ export const MemoryGraphScene = forwardRef<MemoryGraphHandle, MemoryGraphScenePr
         }
         renderer?.dispose()
       }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     return (

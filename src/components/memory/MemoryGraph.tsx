@@ -1,5 +1,5 @@
 import { lazy, Suspense, forwardRef } from 'react'
-import type { MemoryEntry, MemoryGraphNode } from '@/types'
+import type { MemoryEntry, MemoryGraphNode, MemoryRelation } from '@/types'
 
 export interface MemoryGraphHandle {
   resetCamera: () => void
@@ -8,6 +8,7 @@ export interface MemoryGraphHandle {
 interface MemoryGraphProps {
   onNodeSelect: (entry: MemoryEntry | null, graphNode: MemoryGraphNode | null) => void
   selectedNodeId: string | null
+  relations: MemoryRelation[]
 }
 
 const MemoryGraphScene = lazy(() =>
