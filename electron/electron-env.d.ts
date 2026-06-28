@@ -59,7 +59,7 @@ interface FsAPI {
   deleteFolder: (folderPath: string) => Promise<{ success: boolean; error?: string }>
 }
 
-interface TerminalAPI {
+interface TerminalIPC {
   create: (opts: { terminalId: string; cols: number; rows: number }) => Promise<{ success: boolean; shell: string }>
   write: (terminalId: string, data: string) => void
   resize: (terminalId: string, cols: number, rows: number) => void
@@ -67,6 +67,14 @@ interface TerminalAPI {
   onData: (terminalId: string, callback: (data: string) => void) => () => void
   onExit: (terminalId: string, callback: (code: number) => void) => () => void
   agentWrite: (terminalId: string, command: string) => Promise<{ success: boolean }>
+}
+
+interface SkillsIPC {
+  list: () => Promise<unknown[]>
+  view: (skillId: string) => Promise<{ metadata: Record<string, unknown>; body: string; source_path: string }>
+  installFromUrl: (url: string) => Promise<{ success: boolean; skillId?: string; error?: string; scan?: unknown }>
+  installFromRepo: (repoUrl: string) => Promise<{ success: boolean; error?: string; info?: string }>
+  uninstall: (skillId: string) => Promise<{ success: boolean; error?: string }>
 }
 
 interface Window {
@@ -78,6 +86,7 @@ interface Window {
   }
   sparta: SpartaAPI
   vault: VaultAPI
-  terminal: TerminalAPI
+  terminal: TerminalIPC
   fs: FsAPI
+  skills: SkillsIPC
 }

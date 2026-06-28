@@ -102,3 +102,11 @@ contextBridge.exposeInMainWorld('fs', {
   deleteFile: (filePath: string) => ipcRenderer.invoke('fs:deleteFile', filePath) as Promise<{ success: boolean; error?: string }>,
   deleteFolder: (folderPath: string) => ipcRenderer.invoke('fs:deleteFolder', folderPath) as Promise<{ success: boolean; error?: string }>,
 })
+
+contextBridge.exposeInMainWorld('skills', {
+  list: () => ipcRenderer.invoke('skills:list') as Promise<unknown[]>,
+  view: (skillId: string) => ipcRenderer.invoke('skills:view', skillId) as Promise<{ metadata: Record<string, unknown>; body: string; source_path: string }>,
+  installFromUrl: (url: string) => ipcRenderer.invoke('skills:installFromUrl', url) as Promise<{ success: boolean; skillId?: string; error?: string; scan?: unknown }>,
+  installFromRepo: (repoUrl: string) => ipcRenderer.invoke('skills:installFromRepo', repoUrl) as Promise<{ success: boolean; error?: string; info?: string }>,
+  uninstall: (skillId: string) => ipcRenderer.invoke('skills:uninstall', skillId) as Promise<{ success: boolean; error?: string }>,
+})
