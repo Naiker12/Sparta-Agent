@@ -155,8 +155,24 @@ export function AttachMenu({ onClose }: AttachMenuProps) {
       <input
         ref={fileInputRef}
         type="file"
+        accept=".txt,.md,.py,.ts,.js,.json,.csv,.pdf"
         style={{ display: 'none' }}
-        onChange={() => {}}
+        onChange={(e) => {
+          const file = e.target.files?.[0]
+          if (!file) return
+          const reader = new FileReader()
+          reader.onload = (ev) => {
+            const content = ev.target?.result as string
+            const preview = content.slice(0, 3000)
+            const truncated = content.length > 3000 ? '\n_(contenido truncado)_' : ''
+            const fileBlock = `[Archivo: ${file.name}]\n\`\`\`\n${preview}\n\`\`\`${truncated}`
+            const current = useSettingsStore.getState().input
+            useSettingsStore.getState().setInput(current ? `${current}\n\n${fileBlock}` : fileBlock)
+          }
+          reader.readAsText(file)
+          onClose()
+          e.target.value = ''
+        }}
       />
 
       <AttachMenuBtn
@@ -168,9 +184,13 @@ export function AttachMenu({ onClose }: AttachMenuProps) {
       <AttachMenuToggle
         icon={<Globe size={14} strokeWidth={1.5} />}
         label="Búsqueda web"
-        enabled={webSearchEnabled}
+        enabled={webSearchEnabled && webSearchConfigured}
         warning={webSearchEnabled && !webSearchConfigured}
-        onToggle={() => { toggleWebSearch(); onClose() }}
+        onToggle={() => {
+          if (!webSearchConfigured && !webSearchEnabled) return
+          toggleWebSearch()
+          onClose()
+        }}
       />
 
       <AttachMenuToggle

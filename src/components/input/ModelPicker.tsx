@@ -1,6 +1,7 @@
 import { AlertCircle } from 'lucide-react'
 import { useSettingsStore } from '@/stores/settings.store'
 import { useProviderStore } from '@/stores/provider.store'
+import { useChatStore } from '@/stores/chat.store'
 import { BrandIcon } from '@/components/ui/BrandIcon'
 import {
   Combobox,
@@ -14,6 +15,8 @@ import {
 export function ModelPicker() {
   const providers = useProviderStore((s) => s.providers)
   const { activeModel, setDefaultModel } = useSettingsStore()
+  const activeSessionId = useChatStore((s) => s.activeSessionId)
+  const updateSessionModel = useChatStore((s) => s.updateSessionModel)
 
   const availableModels = providers
     .filter((p) => p.defaultModel)
@@ -56,7 +59,10 @@ export function ModelPicker() {
     <Combobox
       items={modelIds}
       value={activeModel}
-      onValueChange={(v) => setDefaultModel(v)}
+      onValueChange={(v) => {
+        setDefaultModel(v)
+        if (activeSessionId) updateSessionModel(activeSessionId, v)
+      }}
     >
       <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
         {activeProvider && (

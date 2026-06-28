@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect } from 'react'
 import { Plus, Mic, ArrowUp, Square, AlertCircle } from 'lucide-react'
+import { toast } from 'sonner'
 import { useSettingsStore } from '@/stores/settings.store'
 import { useChatStore } from '@/stores/chat.store'
 import { useProviderStore } from '@/stores/provider.store'
@@ -52,6 +53,7 @@ export function ChatInput({ className }: ChatInputProps) {
     if (isStreaming) {
       injectWhileStreaming(text)
       setInput('')
+      toast.info('Mensaje encolado para cuando termine la respuesta actual')
       return
     }
 
@@ -83,6 +85,24 @@ export function ChatInput({ className }: ChatInputProps) {
     setShowSlash(false)
     textareaRef.current?.focus()
   }
+
+  const [isRedirectMode, setIsRedirectMode] = useState(false)
+
+  useEffect(() => {
+    if (isStreaming) {
+      setIsRedirectMode(true)
+    } else {
+      setIsRedirectMode(false)
+    }
+  }, [isStreaming])
+
+  const placeholder = !hasProvider
+    ? 'Configura un proveedor para chatear...'
+    : isStreaming && isRedirectMode
+    ? 'Escribe para redirigir al agente...'
+    : isStreaming
+    ? 'Generando respuesta...'
+    : 'Ask anything...'
 
   const canSend = input.trim().length > 0 && hasProvider
 
@@ -183,7 +203,7 @@ export function ChatInput({ className }: ChatInputProps) {
                   onKeyDown={handleKey}
                   onFocus={() => setFocused(true)}
                   onBlur={() => setFocused(false)}
-                  placeholder={hasProvider ? (isStreaming ? "Corrige o redirige al agente..." : "Ask anything...") : "Configura un proveedor para chatear..."}
+                  placeholder={placeholder}
                   rows={1}
                   style={{
                     flex: 1,

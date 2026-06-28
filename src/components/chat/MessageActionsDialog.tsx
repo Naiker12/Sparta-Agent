@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea'
 import type { Message } from '@/types'
 import { useChatStore } from '@/stores/chat.store'
 import { useEventBus } from '@/stores/event-bus.store'
+import { useChatSession } from '@/hooks/useChatSession'
 
 type DialogState =
   | { kind: 'none' }
@@ -29,11 +30,9 @@ export function MessageActionsDialog({
 }: MessageActionsDialogProps) {
   const { deleteMessage, updateMessage } = useChatStore()
   const dispatch = useEventBus((s) => s.dispatch)
+  const { regenerateMessage } = useChatSession()
   const [editValue, setEditValue] = useState(message.content)
   const [copied, setCopied] = useState(false)
-  const [shareLink] = useState(
-    `sparta://share/${sessionId}/${message.id}`
-  )
 
   const isOpen = state.kind !== 'none'
 
@@ -68,17 +67,12 @@ export function MessageActionsDialog({
   }
 
   function handleRegenerate() {
-    dispatch({
-      type: 'message:deleted',
-      sessionId,
-      messageId: message.id,
-      timestamp: Date.now(),
-    })
+    regenerateMessage(sessionId, message.id)
     onClose()
   }
 
   function handleShareCopy() {
-    navigator.clipboard.writeText(shareLink).then(() => {
+    navigator.clipboard.writeText(message.content).then(() => {
       setCopied(true)
       setTimeout(() => setCopied(false), 1500)
     })
@@ -118,37 +112,24 @@ export function MessageActionsDialog({
 
       {state.kind === 'share' && (
         <>
-          <ModalHeader title="Compartir mensaje" onClose={onClose} />
+          <ModalHeader title="Copiar mensaje" onClose={onClose} />
           <ModalBody style={{ padding: '0 24px 20px' }}>
-            <div style={{
-              display: 'flex',
-              gap: 6,
-              alignItems: 'center',
-              background: 'var(--bg-input)',
-              border: '1px solid var(--border-subtle)',
-              borderRadius: 'var(--radius-md)',
-              padding: '6px 10px',
+            <p style={{
+              fontSize: 13,
+              color: 'var(--text-secondary)',
+              fontFamily: 'var(--font-ui)',
+              lineHeight: 1.6,
             }}>
-              <code style={{
-                flex: 1,
-                fontSize: 11,
-                color: 'var(--text-primary)',
-                fontFamily: 'var(--font-mono)',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}>
-                {shareLink}
-              </code>
-              <Button size="xs" variant="ghost" onClick={handleShareCopy}>
-                {copied ? <Check size={12} /> : <Copy size={12} />}
-                {copied ? 'Copiado' : 'Copiar'}
-              </Button>
-            </div>
+              Copia el contenido de este mensaje al portapapeles.
+            </p>
           </ModalBody>
           <ModalFooter>
             <Button variant="ghost" size="sm" onClick={onClose}>
               Cerrar
+            </Button>
+            <Button size="sm" onClick={handleShareCopy}>
+              {copied ? <Check size={12} /> : <Copy size={12} />}
+              {copied ? 'Copiado' : 'Copiar texto'}
             </Button>
           </ModalFooter>
         </>

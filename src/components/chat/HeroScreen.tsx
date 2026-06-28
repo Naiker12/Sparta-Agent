@@ -4,10 +4,19 @@ import { useSettingsStore } from '@/stores/settings.store'
 import { useChatStore } from '@/stores/chat.store'
 
 const QUICK_ACTIONS = [
-  { icon: Plus,    label: 'New chat',   action: 'new' as const },
-  { icon: Code2,   label: 'Coding',     action: 'coding' as const },
-  { icon: Search,  label: 'Research',   action: 'research' as const },
-  { icon: Settings,label: 'Settings',   action: 'settings' as const },
+  { icon: Plus,    label: 'Nueva sesión', action: 'new' as const },
+  { icon: Code2,   label: 'Código',       action: 'coding' as const },
+  { icon: Search,  label: 'Investigar',   action: 'research' as const },
+  { icon: Settings,label: 'Ajustes',      action: 'settings' as const },
+]
+
+const EXAMPLE_PROMPTS = [
+  '¿Cómo implemento autenticación JWT en Node.js?',
+  'Explícame las diferencias entre REST y GraphQL',
+  'Refactoriza este código para hacerlo más legible:',
+  'Busca las últimas noticias sobre IA generativa',
+  'Escribe tests unitarios para esta función:',
+  '¿Cuál es la complejidad temporal de quicksort?',
 ]
 
 export function HeroScreen() {
@@ -166,6 +175,60 @@ export function HeroScreen() {
           >
             <Icon size={12} strokeWidth={1.8} />
             {label}
+          </button>
+        ))}
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.3 }}
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 6,
+          width: '100%',
+          maxWidth: 440,
+          marginTop: 8,
+        }}
+      >
+        <span style={{
+          fontSize: 11,
+          color: 'var(--text-muted)',
+          fontFamily: 'var(--font-ui)',
+          marginBottom: 2,
+        }}>
+          Prueba con:
+        </span>
+        {EXAMPLE_PROMPTS.slice(0, 4).map((prompt) => (
+          <button
+            key={prompt}
+            onClick={() => setInput(prompt)}
+            style={{
+              textAlign: 'left',
+              padding: '6px 12px',
+              background: 'var(--bg-surface)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: 'var(--radius-md)',
+              color: 'var(--text-secondary)',
+              fontSize: 12,
+              fontFamily: 'var(--font-ui)',
+              cursor: 'pointer',
+              transition: 'all 0.12s',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.borderColor = 'var(--accent)'
+              e.currentTarget.style.color = 'var(--accent)'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.borderColor = 'var(--border-subtle)'
+              e.currentTarget.style.color = 'var(--text-secondary)'
+            }}
+          >
+            {prompt}
           </button>
         ))}
       </motion.div>

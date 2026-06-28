@@ -55,8 +55,17 @@ const COMMANDS: SlashCommand[] = [
     description: 'Mostrar comandos disponibles',
     usage: '/help',
     action: () => {
-      const names = COMMANDS.map((c) => `  ${c.usage.padEnd(20)} ${c.description}`).join('\n')
-      alert(`Comandos disponibles:\n\n${names}`)
+      const { useChatStore } = require('@/stores/chat.store')
+      const sid = useChatStore.getState().activeSessionId
+      if (!sid) return
+      const content = COMMANDS.map((c) => `- \`${c.usage}\` — ${c.description}`).join('\n')
+      useChatStore.getState().addMessage({
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content: `**Comandos disponibles:**\n\n${content}`,
+        timestamp: Date.now(),
+        sessionId: sid,
+      })
     },
   },
 ]
