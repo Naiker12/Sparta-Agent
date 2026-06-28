@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Bot, Clock, Sparkles, Circle } from 'lucide-react'
+import { Bot, Clock, Sparkles, Circle, Zap } from 'lucide-react'
 import { useSettingsStore } from '@/stores/settings.store'
 import { useProviderStore } from '@/stores/provider.store'
 import { useChatStore } from '@/stores/chat.store'
@@ -13,6 +13,7 @@ import { AgentsStatusDialog } from './AgentsStatusDialog'
 import { CronStatusDialog } from './CronStatusDialog'
 import { IS_WEB } from '@/lib/env-adapter'
 import { useWebSocketStatus } from '@/hooks/useWebSocketStatus'
+import { messagingAdapter } from '@/lib/messaging-adapter'
 export function StatusBar() {
   const [appVersion, setAppVersion] = useState('')
   const activeModel = useSettingsStore((s) => s.activeModel)
@@ -31,6 +32,22 @@ export function StatusBar() {
   const [cronOpen, setCronOpen] = useState(false)
 
   const wsStatus = useWebSocketStatus()
+  const [sidecarReady, setSidecarReady] = useState(false)
+
+  useEffect(() => {
+    if (IS_WEB) return
+    const check = async () => {
+      try {
+        const ready = messagingAdapter.isReady()
+        setSidecarReady(ready)
+      } catch {
+        setSidecarReady(false)
+      }
+    }
+    check()
+    const interval = setInterval(check, 3000)
+    return () => clearInterval(interval)
+  }, [])
 
   const bgStreamingCount = Object.entries(streamingBySession)
     .filter(([sid, state]) => state.isStreaming && sid !== activeSessionId)
@@ -83,13 +100,9 @@ export function StatusBar() {
             {wsLabels[wsStatus]}
           </SBItem>
         ) : (
-          <SBItem onClick={() => setGatewayOpen(true)}>
-            <span style={{
-              width: 6, height: 6, borderRadius: '50%',
-              background: 'var(--status-ok)',
-              boxShadow: '0 0 0 2px rgba(34,197,94,0.2)',
-            }} />
-            Gateway ready
+          <SBItem onClick={() => setGatewayOpen(true)} style={{ color: sidecarReady ? 'var(--status-ok)' : 'var(--destructive)' }}>
+            <Zap size={11} strokeWidth={1.5} />
+            {sidecarReady ? 'AI listo' : 'AI offline'}
           </SBItem>
         )}
         <SBItem onClick={() => setAgentsOpen(true)} style={{ color: runningAgentCount > 0 ? 'var(--status-warn)' : undefined }}>
