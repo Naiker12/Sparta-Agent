@@ -31,8 +31,11 @@ export function MessageBubble({ message, isLastUser = false }: MessageBubbleProp
   const { sendMessage } = useChatSession()
   const dispatch = useEventBus((s) => s.dispatch)
 
-  const hasThinking = (message.thinkingStatus && message.thinkingStatus !== 'idle')
-    || (message.reasoningText?.length ?? 0) > 0
+  const hasThinking =
+    message.thinkingStatus === 'streaming' ||
+    message.thinkingStatus === 'completed' ||
+    message.thinkingStatus === 'collapsed' ||
+    (message.reasoningText?.length ?? 0) > 0
 
   function handleCopy() {
     navigator.clipboard.writeText(message.content).then(() => {
@@ -173,62 +176,79 @@ export function MessageBubble({ message, isLastUser = false }: MessageBubbleProp
                 </button>
               </div>
             </div>
-          ) : renderState.kind === 'generating' || renderState.kind === 'responding' || renderState.kind === 'done' ? (
-            <div
-              style={{
-                fontSize: 13.5,
-                lineHeight: 1.6,
-                color: 'var(--text-primary)',
-                fontFamily: 'var(--font-ui)',
-                whiteSpace: 'pre-wrap',
-                wordBreak: 'break-word',
-              }}
-            >
-              {isUser ? (
-                renderState.content
-              ) : (
-                <MarkdownRenderer content={renderState.content} />
-              )}
-              {renderState.kind === 'responding' && <StreamCursor visible />}
-            </div>
           ) : null}
 
-          {/* Thinking block — Fix: estado local, no depende de isStreaming global */}
+          {/* Thinking block — PRIMERO */}
           {hasThinking && (
             <div style={{ marginTop: 8 }}>
               <ThinkingBlock
                 content={message.reasoningText ?? message.thinking ?? ''}
-                status={message.thinkingStatus ?? 'completed'}
+                status={message.thinkingStatus ?? (message.isStreaming ? 'streaming' : 'completed')}
                 tokensUsed={message.thinkingTokensUsed ?? 0}
               />
             </div>
           )}
 
-          {/* Pipeline trace como timeline */}
+          {/* Tool calls — SEGUNDO (antes del texto) */}
+          {message.toolCalls && message.toolCalls.filter((tc) => tc.toolName !== 'web_search').length > 0 && (
+            <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Tool Calls ({message.toolCalls.filter((tc) => tc.toolName !== 'web_search').length})
+              </div>
+              {message.toolCalls
+                .filter((tc) => tc.toolName !== 'web_search')
+                .map((tc) => (
+                  <div key={tc.id} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <ToolCallSummary toolCall={tc} />
+                    <ToolCallDiffView
+                      toolName={tc.toolName}
+                      input={tc.input}
+                      output={tc.output}
+                    />
+                  </div>
+                ))}
+            </div>
+          )}
+
+          {/* Pipeline trace */}
           {message.pipelineSteps && message.pipelineSteps.length > 0 && (
             <div style={{ marginTop: 8 }}>
               <PipelineTrace steps={message.pipelineSteps} message={message} />
             </div>
           )}
 
-          {/* Tool calls */}
-          {message.toolCalls && message.toolCalls.length > 0 && (
-            <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                Tool Calls ({message.toolCalls.length})
-              </div>
-              {message.toolCalls.map((tc) => (
-                <div key={tc.id} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <ToolCallSummary toolCall={tc} />
-                  <ToolCallDiffView
-                    toolName={tc.toolName}
-                    input={tc.input}
-                    output={tc.output}
-                  />
+          {/* Contenido de texto — TERCERO */}
+          {renderState.kind === 'generating' || renderState.kind === 'responding' || renderState.kind === 'done' ? (
+            <>
+              {isUser ? (
+                <div
+                  style={{
+                    fontSize: 13.5,
+                    lineHeight: 1.6,
+                    color: 'var(--text-primary)',
+                    fontFamily: 'var(--font-ui)',
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-word',
+                  }}
+                >
+                  {renderState.content}
                 </div>
-              ))}
-            </div>
-          )}
+              ) : (
+                <div
+                  style={{
+                    fontSize: 13.5,
+                    lineHeight: 1.6,
+                    color: 'var(--text-primary)',
+                    fontFamily: 'var(--font-ui)',
+                    wordBreak: 'break-word',
+                  }}
+                >
+                  <MarkdownRenderer content={renderState.content} />
+                </div>
+              )}
+              {renderState.kind === 'responding' && <StreamCursor visible />}
+            </>
+          ) : null}
 
           {!message.isStreaming && message.content && !editing && message.thinkingStatus !== 'streaming' && (
             <div

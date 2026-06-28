@@ -18,22 +18,22 @@ export function ThinkingBlock({ content, status, tokensUsed, className }: Thinki
   const contentEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (prevStatus.current === 'streaming' && status === 'completed' && content) {
+    if (status === 'streaming') {
+      setIsExpanded(true)
+    } else if (prevStatus.current === 'streaming' && status === 'completed' && content) {
       const timer = setTimeout(() => setIsExpanded(false), 1200)
       prevStatus.current = status
       return () => clearTimeout(timer)
     }
-    if (status === 'streaming') {
-      setIsExpanded(true)
-    }
     prevStatus.current = status
-  }, [status, content])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status])
 
   useEffect(() => {
-    if (contentEndRef.current && status === 'streaming') {
+    if (contentEndRef.current && status === 'streaming' && isExpanded) {
       contentEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' })
     }
-  }, [content, status])
+  }, [content, status, isExpanded])
 
   const canToggle = status !== 'streaming'
 
@@ -62,6 +62,13 @@ export function ThinkingBlock({ content, status, tokensUsed, className }: Thinki
             style={{ overflow: 'hidden' }}
           >
             <div className="border-t border-[#2A2A35] px-3 py-2" style={{ maxHeight: 240, overflowY: 'auto' }}>
+              {status === 'streaming' && !content && (
+                <span className="thinking-placeholder-dots" style={{ display: 'flex', gap: 3, padding: '4px 0' }}>
+                  <motion.span animate={{ opacity: [0.2, 1, 0.2] }} transition={{ duration: 1.2, repeat: Infinity, delay: 0 }} className="size-1.5 rounded-full" style={{ background: 'var(--accent)' }} />
+                  <motion.span animate={{ opacity: [0.2, 1, 0.2] }} transition={{ duration: 1.2, repeat: Infinity, delay: 0.2 }} className="size-1.5 rounded-full" style={{ background: 'var(--accent)' }} />
+                  <motion.span animate={{ opacity: [0.2, 1, 0.2] }} transition={{ duration: 1.2, repeat: Infinity, delay: 0.4 }} className="size-1.5 rounded-full" style={{ background: 'var(--accent)' }} />
+                </span>
+              )}
               {content && (
                 <pre
                   className="text-xs leading-relaxed whitespace-pre-wrap"

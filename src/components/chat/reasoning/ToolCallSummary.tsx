@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown, Check, Loader2, X } from 'lucide-react'
+import { MarkdownRenderer } from '@/components/chat/MarkdownRenderer'
 import type { ToolCall } from '@/types'
 
 interface ToolCallSummaryProps {
@@ -10,13 +11,27 @@ interface ToolCallSummaryProps {
 export function ToolCallSummary({ toolCall }: ToolCallSummaryProps) {
   const [expanded, setExpanded] = useState(false)
 
+  function extractInputPreview(input: unknown): string {
+    if (!input) return ''
+    if (typeof input === 'string') return input.slice(0, 60) + (input.length > 60 ? '…' : '')
+    if (typeof input === 'object') {
+      const obj = input as Record<string, unknown>
+      for (const key of ['query', 'url', 'path', 'command', 'text', 'content', 'topic']) {
+        const val = obj[key]
+        if (typeof val === 'string' && val) return val.slice(0, 60) + (val.length > 60 ? '…' : '')
+      }
+      const firstStr = Object.values(obj).find((v) => typeof v === 'string')
+      if (firstStr) return String(firstStr).slice(0, 60) + (String(firstStr).length > 60 ? '…' : '')
+    }
+    const str = JSON.stringify(input)
+    return str.length > 60 ? str.slice(0, 60) + '…' : str
+  }
+
   const inputStr = typeof toolCall.input === 'string'
     ? toolCall.input
     : JSON.stringify(toolCall.input, null, 2)
 
-  const inputPreview = inputStr.length > 60
-    ? inputStr.slice(0, 60) + '…'
-    : inputStr
+  const inputPreview = extractInputPreview(toolCall.input)
 
   return (
     <div style={{
@@ -100,11 +115,38 @@ export function ToolCallSummary({ toolCall }: ToolCallSummaryProps) {
               gap: 6,
             }}>
               <DetailSection label="Input" content={inputStr} />
-              {toolCall.output && <DetailSection label="Output" content={toolCall.output} />}
-              {toolCall.error && (
-                <div style={{ fontSize: 11, color: 'var(--status-err)', fontFamily: 'var(--font-mono)', whiteSpace: 'pre-wrap' }}>
-                  Error: {toolCall.error}
+              {toolCall.status === 'error' && toolCall.error && (
+                <div style={{
+                  fontSize: 11,
+                  color: 'var(--status-err)',
+                  fontFamily: 'var(--font-mono)',
+                  whiteSpace: 'pre-wrap',
+                  background: 'color-mix(in srgb, var(--status-err) 8%, transparent)',
+                  border: '1px solid color-mix(in srgb, var(--status-err) 20%, transparent)',
+                  borderRadius: 'var(--radius-sm)',
+                  padding: '4px 8px',
+                }}>
+                  ✕ Error: {toolCall.error}
                 </div>
+              )}
+              {toolCall.output && toolCall.status !== 'error' && (
+                toolCall.toolName === 'web_search' || toolCall.toolName === 'web_search_tool'
+                  ? (
+                    <div>
+                      <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        Resultados
+                      </div>
+                      <div style={{
+                        fontSize: 13,
+                        lineHeight: 1.5,
+                        color: 'var(--text-primary)',
+                        fontFamily: 'var(--font-ui)',
+                      }}>
+                        <MarkdownRenderer content={toolCall.output} />
+                      </div>
+                    </div>
+                  )
+                  : <DetailSection label="Output" content={toolCall.output} />
               )}
             </div>
           </motion.div>
