@@ -1178,6 +1178,372 @@ D:\sparta-agent\
    ✔ audit.rs: log de auditoría persistente con timestamps
    ✔ Pipeline hook: wireSecurityIntoPipeline()
    ✔ Lazy loading con Suspense de vistas pesadas (MemoryView, SkillsView, MemoryGraphScene)
-   ✔ mcp.store.ts con persist (antes se perdía al recargar)
-   ✔ settings.store.ts con migrate v3
-   ✔ cleanupStaleSessions() al iniciar la app
+    ✔ mcp.store.ts con persist (antes se perdía al recargar)
+    ✔ settings.store.ts con migrate v3
+    ✔ cleanupStaleSessions() al iniciar la app
+
+================================================================================
+ 18. FLUJO DE EVENTOS THINKING (doc flujo-thinking-events.txt)
+================================================================================
+
+ 18.1 Visión general
+
+   El flujo de "thinking" representa el razonamiento interno del modelo de IA
+   antes de generar su respuesta visible. Cuando un modelo soporta "thinking"
+   (Claude extended thinking, DeepSeek-R1, QwQ, etc.), emite tokens de
+   razonamiento antes de los tokens de contenido.
+
+   Eventos clave:
+     • thinking:started   → El modelo comenzó a razonar
+     • thinking:token     → Un token de razonamiento (stream)
+     • thinking:completed → El razonamiento terminó
+
+   Estos eventos viajan Python → Transporte → Frontend de forma independiente
+   a los eventos stream:token (contenido visible).
+
+ 18.2 Backend (Python / LangGraph)
+
+   Archivo: python/sparta_ai/streaming/event_bridge.py
+
+   LangGraph ejecuta graph.astream_events() y cada evento LangGraph se
+   despacha mediante _dispatch_event() o _dispatch_event_ws().
+
+   Fuentes de thinking tokens:
+     A) reasoning_content en metadata (OpenAI-compatible)
+        ──────────────────────────────────────────────────
+        Proveedores como DeepSeek / OpenRouter / Qwen ponen el razonamiento
+        en additional_kwargs.reasoning_content o response_metadata.reasoning.
+        _extract_reasoning_content(chunk) extrae ese string y emite
+        thinking:started + thinking:token.
+
+     B) Content blocks tipo "thinking"/"reasoning" (Anthropic)
+        ──────────────────────────────────────────────────
+        Claude devuelve content blocks con type="thinking".
+        _is_reasoning_block() lo detecta; _block_text() extrae el texto.
+
+     C) additional_kwargs.thinking en on_chat_model_start
+        ──────────────────────────────────────────────────
+        Algunos proveedores indican que van a pensar mediante
+        additional_kwargs.thinking al inicio del modelo.
+        Se emite thinking:started inmediatamente.
+
+   Secuencia de eventos:
+     on_chat_model_stream:
+       ├── reasoning_content? → thinking:started (1ra vez) + thinking:token
+       ├── content blocks?
+       │   ├── type=thinking/reasoning → thinking:started + token
+       │   └── type=text              → stream:token
+       └── content string             → stream:token
+
+     on_chat_model_start:
+       └── additional_kwargs.thinking → thinking:started
+
+     on_chat_model_end:
+       ├── usage → evento "usage"
+       └── thinking_active? → thinking:completed (con tokens_used)
+
+     on_chain_end (name="agent"):
+       ├── thinking_active? → thinking:completed (fallback)
+       └── stream:completed
+
+   Estado mutable (stream_state):
+     stream_state = {"thinking_active": False}
+     - Se pone True la primera vez que se emite thinking:started.
+     - Evita emitir múltiples thinking:started.
+     - Se vuelve False en thinking:completed.
+     - Es independiente para cada request_id.
+
+   Dos transportes:
+     • Electron (stdio): stream_agent_to_electron()
+       → _emit(request_id, "thinking:token", {...})
+       → Escribe JSON a stdout: {"id":"...","event":"...","data":{...}}
+
+     • Web (WebSocket): stream_agent_to_websocket()
+       → _emit_ws_renderer(ws, "thinking:token", {...})
+       → Envía JSON por WS: {"type":"thinking:token", "sessionId":..., ...}
+
+ 18.3 Capa de transporte
+
+   Electron: sidecar.ipc.ts + chat.ipc.ts
+     Python stdout
+       {"id":"sid:mid","event":"thinking:token",
+        "data":{"token":"Let me think..."}}
+       ↓
+     sidecar.ipc.ts
+       Lee línea del stdout del subproceso Python
+       Emite sidecarEvents.emit('sidecar:message', msg)
+       ↓
+     chat.ipc.ts (handler onMessage)
+       switch (event):
+         'thinking:started'  → sendToRenderer({sessionId, messageId,
+                                                type:'thinking:started'})
+         'thinking:token'    → sendToRenderer({..., type:'thinking:token',
+                                                token, chunkSeq})
+         'thinking:completed'→ sendToRenderer({..., type:'thinking:completed',
+                                                tokensUsed})
+       ↓
+     win.webContents.send('sparta:event', event)
+       ↓
+     preload.ts → window.sparta.onEvent(callback)
+
+     Nota: chunkSeq es un contador secuencial (getNextSeq) para detectar
+     chunks duplicados del lado del renderer.
+
+   Web: WebSocket directo
+     Python FastAPI (server_web.py) → WebSocket /ws
+       _emit_ws_renderer() manda msg:
+       {"type":"thinking:token","token":"...",
+        "sessionId":"...","messageId":"..."}
+       ↓
+     Browser WebSocket onmessage
+       JSON.parse → SpartaEvent
+       ↓
+     WebAdapter.onEvent handlers
+
+ 18.4 Frontend (Renderer / React)
+
+   messaging-adapter.ts:
+     Unifica ambos transportes bajo la misma interfaz:
+       • ElectronAdapter: usa window.sparta.onEvent/onMessage/sendMessage
+       • WebAdapter: usa WebSocket
+
+     export const messagingAdapter = IS_ELECTRON
+       ? new ElectronAdapter()
+       : new WebAdapter()
+
+     onEvent(handler: (event: SpartaEvent) => void): () => void
+       → Registra handler para eventos entrantes
+
+   useChatSession.ts:
+     useEffect:
+       messagingAdapter.onEvent((event: SpartaEvent) => {
+         switch (event.type) {
+           case 'thinking:started':
+             store.onThinkingStart(sid, mid)
+             store.updateMessage(mid, { reasoningStartedAt: Date.now() })
+             break
+           case 'thinking:token':
+             store.appendThinking(sid, mid, token, chunkSeq)
+             break
+           case 'thinking:completed':
+             store.onThinkingEnd(sid, mid, tokensUsed)
+             store.updateMessage(mid, { reasoningCompletedAt: Date.now() })
+             break
+           case 'stream:token':
+             store.appendContent(sid, mid, token, chunkSeq)
+             break
+           case 'stream:completed':
+             store.onStreamEnd(sid, mid)
+             stopStreamingFn(sid)
+             // → post-procesamiento: extracción de memoria
+             break
+         }
+       })
+
+   chat.store.ts (Zustand):
+     Estado del mensaje (Message type):
+       {
+         reasoningText?: string           // texto de razonamiento acumulado
+         thinkingStatus?: ThinkingStatus  // 'idle'|'streaming'|'completed'|'collapsed'
+         thinkingTokensUsed?: number      // tokens usados en razonamiento
+         reasoningStartedAt?: number      // timestamp inicio
+         reasoningCompletedAt?: number    // timestamp fin
+         lastThinkChunkSeq?: number       // para dedup de chunks
+       }
+
+     onThinkingStart(sessionId, messageId):
+       → message.thinkingStatus = 'streaming'
+
+     appendThinking(sessionId, messageId, delta, chunkSeq):
+       → Si chunkSeq <= lastThinkChunkSeq → descarta (dedup)
+       → message.reasoningText += delta
+       → message.thinkingStatus = 'streaming'
+       → message.isStreaming = true
+       → message.lastThinkChunkSeq = chunkSeq
+
+     onThinkingEnd(sessionId, messageId, tokensUsed):
+       → message.thinkingStatus = 'completed'
+       → message.thinkingTokensUsed = tokensUsed
+
+     onStreamEnd(sessionId, messageId):
+       → message.isStreaming = false
+
+   Renderizado en UI (MessageBubble.tsx):
+     hasThinking = message.thinkingStatus !== 'idle'
+       ↓
+     <ThinkingBlock>
+       ├── reasoningText mostrado colapsable
+       ├── thinkingStatus controla animación (streaming = pulse)
+       └── thinkingTokensUsed mostrado al final
+
+ 18.5 Diagrama de flujo completo
+
+   Usuario escribe mensaje
+     │
+     v
+   useChatSession.sendMessage(text)
+     │ Crea user-message + assistant-message vacío
+     │ Llama messagingAdapter.sendMessage(request)
+     │
+     v
+   ┌─ ¿Electron? ────────────────────┬─ ¿Web? ──────────┐
+   │                                  │                  │
+   │ window.sparta.sendMessage()      │ WebSocket.send() │
+   │ ipcRenderer.invoke('chat:send')  │ ws://host:8765/ws│
+   │                                  │                  │
+   │ chat.ipc.ts handler              │ server_web.py    │
+   │ → sendToPython(sidecarReq)       │ → handle stream  │
+   │ → Python stdin                   │                  │
+   └──────────────┬───────────────────┴────────┬─────────┘
+                  │                            │
+                  v                            v
+         LangGraph graph.astream_events()
+                  │
+                  ├── on_chat_model_stream
+                  │     │
+                  │     ├── reasoning_content? → thinking:started + token
+                  │     ├── content blocks?
+                  │     │   ├── type=thinking → thinking:started + token
+                  │     │   └── type=text     → stream:token
+                  │     └── content string    → stream:token
+                  │
+                  ├── on_chat_model_end
+                  │     ├── usage → evento "usage"
+                  │     └── thinking_active? → thinking:completed
+                  │
+                  └── on_chain_end (agent)
+                        ├── thinking_active? → thinking:completed
+                        └── stream:completed
+                  │
+                  v
+   ┌─ Stdout ────────────────┬─ WebSocket ────────────────┐
+   │                         │                            │
+   │ JSON por stdout         │ JSON por WS                │
+   │ {"id":"sid:mid",        │ {"type":"thinking:token",  │
+   │  "event":"thinking:     │  "token":"...",            │
+   │  token",                │  "sessionId":"...",        │
+   │  "data":{"token":"..."}}│  "messageId":"..."}        │
+   │                         │                            │
+   │ sidecar.ipc.ts          │ WebAdapter.onmessage       │
+   │ → chat.ipc.ts           │                            │
+   │ → webContents.send()    │                            │
+   │ → preload → renderer    │                            │
+   └──────────┬──────────────┴──────────────┬─────────────┘
+              │                             │
+              v                             v
+         messagingAdapter.onEvent(handler)
+              │
+              v
+         useChatSession.ts (switch type)
+              │
+              ├── thinking:started  → store.onThinkingStart()
+              ├── thinking:token    → store.appendThinking()
+              ├── thinking:completed→ store.onThinkingEnd()
+              └── stream:completed  → store.onStreamEnd()
+                                    → stopStreaming()
+              │
+              v
+         Zustand store (chat.store.ts)
+              │ Actualiza message.reasoningText,
+              │ message.thinkingStatus,
+              │ message.thinkingTokensUsed
+              v
+         React re-render
+              │
+              v
+         MessageBubble.tsx
+           └── <ThinkingBlock>
+                 ├── reasoningText (contenido pensado)
+                 ├── thinkingStatus (animación)
+                 └── tokensUsed (contador final)
+
+ 18.6 Manejo de duplicados (dedup)
+
+   Tanto content como thinking tokens llevan un chunkSeq numerado
+   secuencialmente desde el lado Electron (chat.ipc.ts → getNextSeq()).
+
+   En el store:
+     • content:  lastChunkSeq
+     • thinking: lastThinkChunkSeq
+
+   Si llega un chunk con chunkSeq <= lastChunkSeq, se descarta con un
+   console.warn. Esto protege contra eventos duplicados por race condition.
+
+   En WebSocket no hay chunkSeq (el WS es ordenado y confiable por
+   naturaleza), pero el store maneja el campo si estuviera presente.
+
+ 18.7 Errores detectados y fixes aplicados (2026-06-28)
+
+   Bug #1 — thinkingStatus fallback incorrecto
+     Archivo: src/components/chat/MessageBubble.tsx:185
+     Síntoma: El status del ThinkingBlock usaba waitingForThinking en vez de
+              message.isStreaming
+     Fix: Cambiado a message.thinkingStatus ?? (message.isStreaming
+          ? 'streaming' : 'completed')
+
+   Bug #2 — subscribedRef bloquea re-suscripción en React Strict Mode
+     Archivo: src/hooks/useChatSession.ts:230
+     Síntoma: El guard if (subscribedRef.current) return antes de
+              messagingAdapter.isReady() podía causar que la suscripción no se
+              recuperara tras un re-mount
+     Fix: Eliminado el guard early-return; ahora se verifica isReady() primero
+
+   Bug #3 — hasThinking no considera status 'collapsed'
+     Archivo: src/components/chat/MessageBubble.tsx:35-37
+     Síntoma: Si el thinking estaba collapsed, no se mostraba el bloque
+     Fix: Agregado || message.thinkingStatus === 'completed' ||
+          message.thinkingStatus === 'collapsed'
+
+   Bug #4 — Error de web search pasa silenciosamente
+     Archivo: src/hooks/useChatSession.ts:172-174
+     Síntoma: Error de Brave API key se ignoraba con console.debug
+     Fix: Ahora muestra error claro al usuario cuando API key no está
+          configurada
+
+   Bug #5 — Reasoning duplicado como stream:token
+     Archivo: python/sparta_ai/streaming/event_bridge.py:96-102 y 228-240
+     Síntoma: Cuando proveedores como DeepSeek emiten reasoning_content,
+              también emitían el mismo texto como stream:token
+     Fix: Agregado return después de emitir thinking:token para evitar
+          procesamiento adicional del content
+
+   Bug #6 — Effects de ThinkingBlock acoplados
+     Archivo: src/components/chat/reasoning/ThinkingBlock.tsx:20-41
+     Síntoma: Un solo useEffect hacía expand Y scroll
+     Fix: Separado el effect de scroll con guard if (!contentEndRef.current) return
+
+   Bug #7 — tool:result no incluye toolName
+     Archivo: electron/ipc/chat.ipc.ts:82-83
+     Síntoma: El evento tool:result no incluía toolName, haciendo imposible
+              buscar por nombre si toolCallId fallaba
+     Fix: Agregado toolName: data?.name al enviar tool:result y tool:error
+
+   Bug #8 — updateToolCallStatus no busca por nombre
+     Archivo: src/stores/chat.store.ts:241
+     Síntoma: Si toolCallId estaba vacío, no había forma de actualizar el
+              tool call
+     Fix: Agregado parámetro opcional toolName; si no hay match por ID,
+          busca por nombre
+
+ 18.8 Archivos clave del flujo thinking
+
+   Backend (Python):
+     python/sparta_ai/streaming/event_bridge.py   → Lógica de detección/emisión
+     python/sparta_ai/server.py                   → StdioServer (Electron)
+     python/sparta_ai/server_web.py               → FastAPI WebSocket (Web)
+     python/sparta_ai/main.py                     → Entry point Python
+
+   Transporte:
+     electron/ipc/chat.ipc.ts                     → IPC handlers + routing
+     electron/ipc/sidecar.ipc.ts                  → Manejo subproceso Python
+     electron/preload.ts                          → Context bridge
+
+   Frontend:
+     src/lib/messaging-adapter.ts                 → Abstracción Electron/Web
+     src/hooks/useChatSession.ts                  → Hook principal
+     src/stores/chat.store.ts                     → Estado Zustand + acciones
+     src/types/events.ts                          → Tipos SpartaEvent
+     src/types/chat.ts                            → Tipo Message con thinking fields
+     src/components/chat/MessageBubble.tsx        → UI del thinking block
+     src/lib/message-render-state.ts              → Estados de renderizado
+
