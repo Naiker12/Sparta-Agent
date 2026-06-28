@@ -77,13 +77,13 @@ export function registerChatIPC(): void {
         clearSeqCounters(requestId)
         break
       case 'tool:called':
-        sendToRenderer({ sessionId, messageId, type: 'tool:called', toolCall: { id: crypto.randomUUID(), toolName: data?.name, input: data?.input, status: 'running' } })
+        sendToRenderer({ sessionId, messageId, type: 'tool:called', toolCall: { id: data?.tool_call_id, toolName: data?.name, input: data?.input, status: 'running' } })
         break
       case 'tool:result':
-        sendToRenderer({ sessionId, messageId, type: 'tool:result', toolCallId: '', output: data?.output, durationMs: data?.duration_ms })
+        sendToRenderer({ sessionId, messageId, type: 'tool:result', toolCallId: data?.tool_call_id, toolName: data?.name, output: data?.output, durationMs: data?.duration_ms })
         break
       case 'tool:error':
-        sendToRenderer({ sessionId, messageId, type: 'tool:error', toolCallId: '' })
+        sendToRenderer({ sessionId, messageId, type: 'tool:error', toolCallId: data?.tool_call_id, toolName: data?.name, error: data?.error })
         break
       case 'usage':
         sendToRenderer({ sessionId, messageId, type: 'usage', inputTokens: data?.input_tokens, outputTokens: data?.output_tokens })
