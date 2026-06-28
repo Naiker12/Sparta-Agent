@@ -69,6 +69,14 @@ interface TerminalAPI {
   agentWrite: (terminalId: string, command: string) => Promise<{ success: boolean; error?: string }>
 }
 
+interface SkillsAPI {
+  list: () => Promise<unknown[]>
+  view: (skillId: string) => Promise<{ metadata: Record<string, unknown>; body: string; source_path: string }>
+  installFromUrl: (url: string) => Promise<{ success: boolean; skillId?: string; error?: string; scan?: unknown }>
+  installFromRepo: (repoUrl: string) => Promise<{ success: boolean; error?: string; info?: string }>
+  uninstall: (skillId: string) => Promise<{ success: boolean; error?: string }>
+}
+
 declare global {
   interface Window {
     sparta?: SpartaAPI
@@ -77,5 +85,6 @@ declare global {
     electron?: ElectronIPC
     fs?: FilesystemAPI
     terminal?: TerminalAPI
+    skills?: SkillsAPI
   }
 }
