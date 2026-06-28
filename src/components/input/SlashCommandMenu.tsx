@@ -68,6 +68,23 @@ const COMMANDS: SlashCommand[] = [
       })
     },
   },
+  {
+    name: 'skill',
+    description: 'Activar o desactivar una skill por ID',
+    usage: '/skill <id> [on|off]',
+    action: (args) => {
+      const [skillId, action] = args.trim().split(/\s+/)
+      if (!skillId) return
+      const { useSkillStore } = require('@/stores/skill.store')
+      const store = useSkillStore.getState()
+      const isCurrentlyActive = store.activeSkillIds.includes(skillId)
+      if (action === 'on' || (action === undefined && !isCurrentlyActive)) {
+        if (!isCurrentlyActive) store.toggleActive(skillId)
+      } else if (action === 'off' || (action === undefined && isCurrentlyActive)) {
+        if (isCurrentlyActive) store.toggleActive(skillId)
+      }
+    },
+  },
 ]
 
 export function parseSlashCommand(text: string): { command: SlashCommand; args: string } | null {

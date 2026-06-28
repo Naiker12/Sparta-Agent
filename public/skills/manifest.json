@@ -1,17 +1,198 @@
 {
   "version": "1.0.0",
   "skills": [
-    "code-review",
-    "code-explainer",
-    "bug-finder",
-    "refactor-guide",
-    "test-writer",
-    "doc-writer",
-    "summarizer",
-    "translator",
-    "research-assistant",
-    "data-analyst",
-    "prompt-optimizer",
-    "sql-helper"
+    {
+      "id": "bug-finder",
+      "name": "Bug Hunter",
+      "description": "Identifica bugs, vulnerabilidades y problemas de seguridad en código.",
+      "category": "Coding",
+      "tags": [
+        "coding",
+        "bugs",
+        "security",
+        "debugging"
+      ],
+      "icon": "🐞",
+      "version": "1.0.0",
+      "author": "Sparta Team",
+      "source": "builtin",
+      "featured": true
+    },
+    {
+      "id": "code-explainer",
+      "name": "Code Explainer",
+      "description": "Explica fragmentos de código en lenguaje simple y claro.",
+      "category": "Coding",
+      "tags": [
+        "coding",
+        "learning",
+        "documentation"
+      ],
+      "icon": "📖",
+      "version": "1.0.0",
+      "author": "Sparta Team",
+      "source": "builtin",
+      "featured": true
+    },
+    {
+      "id": "code-review",
+      "name": "Code Review",
+      "description": "Analiza código y proporciona feedback detallado sobre calidad, bugs y mejoras.",
+      "category": "Coding",
+      "tags": [
+        "coding",
+        "review",
+        "quality"
+      ],
+      "icon": "🔍",
+      "version": "1.0.0",
+      "author": "Sparta Team",
+      "source": "builtin",
+      "featured": true
+    },
+    {
+      "id": "data-analyst",
+      "name": "Data Analyst",
+      "description": "Analiza datos y genera insights accionables.",
+      "category": "Analysis",
+      "tags": [
+        "analysis",
+        "data",
+        "statistics"
+      ],
+      "icon": "📊",
+      "version": "1.0.0",
+      "author": "Sparta Team",
+      "source": "builtin",
+      "featured": true
+    },
+    {
+      "id": "doc-writer",
+      "name": "Doc Writer",
+      "description": "Genera documentación técnica clara y estructurada.",
+      "category": "Writing",
+      "tags": [
+        "writing",
+        "documentation",
+        "technical"
+      ],
+      "icon": "📝",
+      "version": "1.0.0",
+      "author": "Sparta Team",
+      "source": "builtin",
+      "featured": true
+    },
+    {
+      "id": "prompt-optimizer",
+      "name": "Prompt Optimizer",
+      "description": "Mejora y optimiza prompts para obtener mejores respuestas de IA.",
+      "category": "Automation",
+      "tags": [
+        "automation",
+        "prompts",
+        "optimization"
+      ],
+      "icon": "⚡",
+      "version": "1.0.0",
+      "author": "Sparta Team",
+      "source": "builtin",
+      "featured": false
+    },
+    {
+      "id": "refactor-guide",
+      "name": "Refactor Guide",
+      "description": "Sugiere refactorizaciones para mejorar la calidad del código.",
+      "category": "Coding",
+      "tags": [
+        "coding",
+        "refactor",
+        "clean-code"
+      ],
+      "icon": "🔨",
+      "version": "1.0.0",
+      "author": "Sparta Team",
+      "source": "builtin",
+      "featured": false
+    },
+    {
+      "id": "research-assistant",
+      "name": "Research Assistant",
+      "description": "Investiga temas y estructura información de forma clara.",
+      "category": "Research",
+      "tags": [
+        "research",
+        "analysis",
+        "learning"
+      ],
+      "icon": "🔍",
+      "version": "1.0.0",
+      "author": "Sparta Team",
+      "source": "builtin",
+      "featured": true
+    },
+    {
+      "id": "sql-helper",
+      "name": "SQL Helper",
+      "description": "Escribe y optimiza consultas SQL para cualquier base de datos.",
+      "category": "Coding",
+      "tags": [
+        "coding",
+        "sql",
+        "databases"
+      ],
+      "icon": "🛠️",
+      "version": "1.0.0",
+      "author": "Sparta Team",
+      "source": "builtin",
+      "featured": true
+    },
+    {
+      "id": "summarizer",
+      "name": "Summarizer",
+      "description": "Resume documentos extensos en párrafos concisos.",
+      "category": "Research",
+      "tags": [
+        "research",
+        "summary",
+        "reading"
+      ],
+      "icon": "📑",
+      "version": "1.0.0",
+      "author": "Sparta Team",
+      "source": "builtin",
+      "featured": true
+    },
+    {
+      "id": "test-writer",
+      "name": "Test Writer",
+      "description": "Genera tests unitarios y de integración para tu código.",
+      "category": "Coding",
+      "tags": [
+        "coding",
+        "testing",
+        "quality"
+      ],
+      "icon": "🧪",
+      "version": "1.0.0",
+      "author": "Sparta Team",
+      "source": "builtin",
+      "featured": true
+    },
+    {
+      "id": "translator",
+      "name": "Translator",
+      "description": "Traduce texto manteniendo el contexto técnico y profesional.",
+      "category": "Writing",
+      "tags": [
+        "writing",
+        "translation",
+        "languages"
+      ],
+      "icon": "🌐",
+      "version": "1.0.0",
+      "author": "Sparta Team",
+      "source": "builtin",
+      "featured": false
+    }
   ]
 }
