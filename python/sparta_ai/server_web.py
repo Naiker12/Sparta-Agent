@@ -137,7 +137,7 @@ async def _execute_agent_ws(
     semantic_memory: bool,
     reasoning: dict,
 ) -> None:
-    from sparta_ai.skills.skill_loader import build_skills_context
+    from sparta_ai.skills.skill_loader import build_skills_context, skills_index
     from sparta_ai.memory.chroma_store import build_memory_context
     from sparta_ai.config.providers import build_llm
 
@@ -150,7 +150,27 @@ async def _execute_agent_ws(
         reasoning_budget=reasoning.get("budget", 8000),
     )
 
+    # Level 1: lightweight index in system prompt
+    all_skills = skills_index()
+    if all_skills:
+        index_lines = ["<available_skills>"]
+        for s in all_skills:
+            index_lines.append(
+                f'  <skill id="{s["id"]}" category="{s.get("category","")}" featured={str(s.get("featured",False)).lower()}>'
+            )
+            index_lines.append(f'    {s["name"]}: {s["description"]}')
+            index_lines.append("  </skill>")
+        index_lines.append("</available_skills>")
+        index_lines.append(
+            'Use skill_view_tool(skill_id) to load the full content of any skill above.'
+        )
+        skills_index_block = "\n".join(index_lines)
+    else:
+        skills_index_block = ""
+
     skill_context = build_skills_context(skills) if skills else ""
+    if skills_index_block:
+        skill_context = skills_index_block + "\n\n" + skill_context if skill_context else skills_index_block
     memory_context = ""
     if semantic_memory and session_id:
         memory_context = await build_memory_context(messages[-1].get("content", "") if messages else "")
@@ -161,8 +181,9 @@ async def _execute_agent_ws(
     from sparta_ai.tools.web_search import web_search_tool
     from sparta_ai.tools.memory_tools import read_memory_tool, write_memory_tool
     from sparta_ai.tools.file_tools import read_file_tool, write_file_tool
+    from sparta_ai.tools.skill_tools import skill_view_tool
 
-    agent_tools = [web_search_tool, read_memory_tool, write_memory_tool, read_file_tool, write_file_tool] + mcp_tools
+    agent_tools = [web_search_tool, read_memory_tool, write_memory_tool, read_file_tool, write_file_tool, skill_view_tool] + mcp_tools
 
     graph = build_sparta_graph(
         llm=llm,
