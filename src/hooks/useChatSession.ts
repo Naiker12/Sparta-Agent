@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useRef } from 'react'
+import { useEffect, useCallback, useRef, useState } from 'react'
 import { useChatStore } from '@/stores/chat.store'
 import { useProviderStore } from '@/stores/provider.store'
 import { useMemoryStore } from '@/stores/memory.store'
@@ -12,6 +12,7 @@ import { buildMemoryContext, indexInChroma, ensureVectorReady, tryAutoConfigure 
 import { getProviderKey } from '@/lib/vault-helper'
 import { aiGateway } from '@/services/ai/gateway'
 import { webSearch } from '@/services/tools/web-search/search-provider'
+import { shouldSearch } from '@/services/tools/web-search/search-heuristic'
 import { useUsageStore } from '@/stores/usage.store'
 import { messagingAdapter } from '@/lib/messaging-adapter'
 import { IS_WEB } from '@/lib/env-adapter'
@@ -21,6 +22,185 @@ function getActiveProvider(providers: Provider[], activeModel: string): Provider
   return providers.find((p) => p.defaultModel === activeModel) ?? providers[0] ?? null
 }
 
+async function runAssistantTurn(
+  sid: string,
+  assistantId: string,
+  text: string,
+  msgs: Array<{ role: string; content: string }>
+) {
+  const store = useChatStore.getState()
+  store.startStreaming(sid)
+
+  try {
+    const freshProviders = useProviderStore.getState().providers
+    const session = store.sessions.find((s) => s.id === sid)
+    const settingsModel = useSettingsStore.getState().activeModel
+    const activeModel = session?.model || settingsModel
+    if (session && !session.model && activeModel) {
+      store.updateSessionModel(sid, activeModel)
+    }
+    const provider = getActiveProvider(freshProviders, activeModel)
+    if (!provider) {
+      store.stopStreaming(sid)
+      store.updateMessage(assistantId, {
+        isStreaming: false,
+        content:
+          freshProviders.length === 0
+            ? 'No hay proveedores configurados. Ve a Configuración > Modelos para agregar uno.'
+            : `No se encontró un proveedor activo. Revisa la configuración en Ajustes.`,
+      })
+      return
+    }
+    if (!messagingAdapter.isReady()) {
+      store.stopStreaming(sid)
+      store.updateMessage(assistantId, {
+        isStreaming: false,
+        content: IS_WEB
+          ? 'Error de conexión: el sidecar web no está disponible. Asegúrate de que el servidor Python esté corriendo.'
+          : 'Error de conexión: esta función requiere la aplicación de escritorio.',
+      })
+      return
+    }
+    if (provider.kind === 'cloud' && !provider.apiKey && !provider.hasVaultKey) {
+      store.stopStreaming(sid)
+      store.updateMessage(assistantId, {
+        isStreaming: false,
+        content: `El proveedor "${provider.label}" no tiene API key configurada. Edítalo en Ajustes.`,
+      })
+      return
+    }
+
+    const apiUrl = provider.serverUrl || undefined
+    const providerKey = await getProviderKey(provider)
+    const { semanticMemoryEnabled, webSearchEnabled } = useSettingsStore.getState()
+
+    let system: string | undefined
+    if (semanticMemoryEnabled) {
+      if (!tryAutoConfigure(freshProviders)) {
+        useEventBus.getState().dispatch({
+          type: 'memory:semantic_search',
+          query: text,
+          resultsCount: 0,
+          injectedContext: '',
+          timestamp: Date.now(),
+        })
+      }
+      const ready = await ensureVectorReady()
+      if (ready) {
+        const context = await buildMemoryContext(text, 5)
+        if (context) {
+          system = context
+          useEventBus.getState().dispatch({
+            type: 'memory:semantic_search',
+            query: text,
+            resultsCount: context.split('\n\n').length,
+            injectedContext: context,
+            timestamp: Date.now(),
+          })
+        }
+      }
+    }
+
+    let webSearchContext: string | undefined
+    if (webSearchEnabled && shouldSearch(text)) {
+      const searchToolCallId = crypto.randomUUID()
+      const searchStartedAt = Date.now()
+
+      store.addToolCall(sid, assistantId, {
+        id: searchToolCallId,
+        toolName: 'web_search',
+        input: { query: text },
+        status: 'running',
+      })
+
+      try {
+        const results = await webSearch(text, 5)
+        const durationMs = Date.now() - searchStartedAt
+
+        if (results.length > 0) {
+          webSearchContext =
+            'Información obtenida de búsqueda web:\n' +
+            results.map((r, i) => `${i + 1}. ${r.title}\n   URL: ${r.url}\n   ${r.snippet}`).join('\n\n')
+        } else {
+          webSearchContext = 'No se encontraron resultados en la búsqueda web.'
+        }
+
+        store.updateToolCallStatus(sid, assistantId, searchToolCallId, 'completed', webSearchContext)
+
+        useEventBus.getState().dispatch({
+          type: 'tool:result',
+          toolName: 'web_search',
+          output: webSearchContext,
+          durationMs,
+          timestamp: Date.now(),
+        })
+      } catch (err) {
+        const error = err instanceof Error ? err.message : String(err)
+        store.updateToolCallStatus(sid, assistantId, searchToolCallId, 'error', error)
+
+        if (error.includes('API key') || error.includes('configurada') || error.includes('No hay')) {
+          store.stopStreaming(sid)
+          store.updateMessage(assistantId, {
+            isStreaming: false,
+            content:
+              '⚠️ La búsqueda web está activada pero no hay API key configurada.\n\nVe a **Ajustes → Búsqueda** y agrega tu Brave Search API key, o desactiva la búsqueda web.',
+          })
+          return
+        }
+
+        webSearchContext = undefined
+      }
+
+      if (webSearchContext) {
+        system = system ? `${system}\n\n${webSearchContext}` : webSearchContext
+      }
+    }
+
+    const skills = useSkillStore.getState().activeSkillIds ?? []
+    const mcpServers = useMCPStore.getState().servers.map((s: { id: string; name: string; tools?: unknown[] }) => ({
+      id: s.id,
+      name: s.name,
+      tools: s.tools ?? [],
+    }))
+    const mode = useSettingsStore.getState().sessionMode ?? 'chat'
+    const reasoningEnabled = useSettingsStore.getState().reasoningEnabled ?? false
+    const reasoningBudget = useSettingsStore.getState().reasoningBudget ?? 8000
+
+    const sendResult = messagingAdapter.sendMessage({
+      sessionId: sid,
+      messageId: assistantId,
+      model: provider.defaultModel ?? '',
+      messages: msgs,
+      providerKey,
+      apiUrl,
+      isLocal: provider.kind === 'local',
+      system,
+      vendor: provider.vendor,
+      providerId: provider.id,
+      mode,
+      skills,
+      mcpServers,
+      semanticMemory: semanticMemoryEnabled,
+      reasoning: { enabled: reasoningEnabled, budget: reasoningBudget },
+    })
+    const resolved = sendResult instanceof Promise ? await sendResult : null
+    if (resolved && !resolved.ok) {
+      store.stopStreaming(sid)
+      store.updateMessage(assistantId, {
+        isStreaming: false,
+        content: `Error: ${resolved.error || 'no se pudo enviar el mensaje al sidecar.'}`,
+      })
+    }
+  } catch {
+    const store = useChatStore.getState()
+    store.stopStreaming(sid)
+    store.updateMessage(assistantId, {
+      isStreaming: false,
+      content: 'Error inesperado al enviar el mensaje.',
+    })
+  }
+}
+
 export function useChatSession() {
   const sessions = useChatStore((s) => s.sessions)
   const activeSessionId = useChatStore((s) => s.activeSessionId)
@@ -28,7 +208,6 @@ export function useChatSession() {
   const messages = activeSessionId ? (messagesBySession[activeSessionId] ?? []) : []
   const isStreaming = useChatStore((s) => s.isStreaming)
   const streamingBySession = useChatStore((s) => s.streamingBySession)
-  const providers = useProviderStore((s) => s.providers)
   const activeIdRef = useRef(activeSessionId)
   activeIdRef.current = activeSessionId
 
@@ -41,217 +220,92 @@ export function useChatSession() {
   const appendContent = useChatStore((s) => s.appendContent)
   const addToolCall = useChatStore((s) => s.addToolCall)
   const updateToolCallStatus = useChatStore((s) => s.updateToolCallStatus)
-  const startStreaming = useChatStore((s) => s.startStreaming)
   const stopStreamingFn = useChatStore((s) => s.stopStreaming)
 
   const lastUserMessageRef = useRef<Map<string, { text: string; userMessageId: string }>>(new Map())
-  const subscribedRef = useRef(false)
+  const [adapterReady, setAdapterReady] = useState(messagingAdapter.isReady())
 
-  const sendMessage = useCallback(async (text: string) => {
-    const sid = activeIdRef.current ?? createSession()
-    const userMessageId = crypto.randomUUID()
-    addMessage({
-      id: userMessageId,
-      role: 'user',
-      content: text,
-      timestamp: Date.now(),
-      sessionId: sid,
-    })
-    const assistantId = crypto.randomUUID()
-    addMessage({
-      id: assistantId,
-      role: 'assistant',
-      content: '',
-      timestamp: Date.now(),
-      sessionId: sid,
-      isStreaming: true,
-    })
-    lastUserMessageRef.current.set(sid, { text, userMessageId })
-    startStreaming(sid)
+  const sendMessage = useCallback(
+    async (text: string) => {
+      const sid = activeIdRef.current ?? createSession()
+      const userMessageId = crypto.randomUUID()
+      addMessage({
+        id: userMessageId,
+        role: 'user',
+        content: text,
+        timestamp: Date.now(),
+        sessionId: sid,
+      })
+      const assistantId = crypto.randomUUID()
+      addMessage({
+        id: assistantId,
+        role: 'assistant',
+        content: '',
+        timestamp: Date.now(),
+        sessionId: sid,
+        isStreaming: true,
+      })
+      lastUserMessageRef.current.set(sid, { text, userMessageId })
 
-    try {
-      const freshProviders = useProviderStore.getState().providers
-      const session = useChatStore.getState().sessions.find((s) => s.id === sid)
-      const activeModel = session?.model || ''
-      const provider = getActiveProvider(freshProviders, activeModel)
-      if (!provider) {
-        stopStreamingFn(sid)
-        updateMessage(assistantId, {
-          isStreaming: false,
-          content: freshProviders.length === 0
-            ? 'No hay proveedores configurados. Ve a Configuración > Modelos para agregar uno.'
-            : `No se encontró un proveedor activo. Revisa la configuración en Ajustes.`,
-        })
-        return
-      }
-      if (!messagingAdapter.isReady()) {
-        stopStreamingFn(sid)
-        updateMessage(assistantId, {
-          isStreaming: false,
-          content: IS_WEB
-            ? 'Error de conexión: el sidecar web no está disponible. Asegúrate de que el servidor Python esté corriendo.'
-            : 'Error de conexión: esta función requiere la aplicación de escritorio.',
-        })
-        return
-      }
-      if (provider.kind === 'cloud' && !provider.apiKey && !provider.hasVaultKey) {
-        stopStreamingFn(sid)
-        updateMessage(assistantId, {
-          isStreaming: false,
-          content: `El proveedor "${provider.label}" no tiene API key configurada. Edítalo en Ajustes.`,
-        })
-        return
-      }
       const allMessages = useChatStore.getState().messagesBySession[sid] ?? []
       const msgs = allMessages.map((m) => ({ role: m.role, content: m.content }))
-      const apiUrl = provider.serverUrl || undefined
-      const providerKey = await getProviderKey(provider)
-      const { semanticMemoryEnabled, webSearchEnabled } = useSettingsStore.getState()
+      await runAssistantTurn(sid, assistantId, text, msgs)
 
-      let system: string | undefined
-      if (semanticMemoryEnabled) {
-        if (!tryAutoConfigure(freshProviders)) {
-          useEventBus.getState().dispatch({
-            type: 'memory:semantic_search',
-            query: text,
-            resultsCount: 0,
-            injectedContext: '',
-            timestamp: Date.now(),
-          })
-        }
-        const ready = await ensureVectorReady()
-        if (ready) {
-          const context = await buildMemoryContext(text, 5)
-          if (context) {
-            system = context
-            useEventBus.getState().dispatch({
-              type: 'memory:semantic_search',
-              query: text,
-              resultsCount: context.split('\n\n').length,
-              injectedContext: context,
-              timestamp: Date.now(),
-            })
-          }
-        }
-      }
+      return { sessionId: sid, assistantId, userMessageId }
+    },
+    [createSession, addMessage]
+  )
 
-      let webSearchContext: string | undefined
-      if (webSearchEnabled) {
-        const searchToolCallId = crypto.randomUUID()
-        const searchStartedAt = Date.now()
+  const regenerateMessage = useCallback(
+    async (sid: string, assistantMessageId: string) => {
+      const store = useChatStore.getState()
+      const sessionMessages = store.messagesBySession[sid] ?? []
+      const idx = sessionMessages.findIndex((m) => m.id === assistantMessageId)
+      const prevUser = sessionMessages.slice(0, idx).reverse().find((m) => m.role === 'user')
+      if (!prevUser) return
 
-        addToolCall(sid, assistantId, {
-          id: searchToolCallId,
-          toolName: 'web_search',
-          input: { query: text },
-          status: 'running',
-        })
-
-        useEventBus.getState().dispatch({
-          type: 'tool:called',
-          toolName: 'web_search',
-          input: { query: text },
-          timestamp: searchStartedAt,
-        })
-
-        try {
-          const results = await webSearch(text, 5)
-          const durationMs = Date.now() - searchStartedAt
-
-          if (results.length > 0) {
-            webSearchContext =
-              'Información obtenida de búsqueda web:\n' +
-              results.map((r, i) =>
-                `${i + 1}. ${r.title}\n   URL: ${r.url}\n   ${r.snippet}`
-              ).join('\n\n')
-          } else {
-            webSearchContext = 'No se encontraron resultados en la búsqueda web.'
-          }
-
-          updateToolCallStatus(sid, assistantId, searchToolCallId, 'completed')
-
-          useEventBus.getState().dispatch({
-            type: 'tool:result',
-            toolName: 'web_search',
-            output: webSearchContext,
-            durationMs,
-            timestamp: Date.now(),
-          })
-        } catch (err) {
-          const error = err instanceof Error ? err.message : String(err)
-
-          updateToolCallStatus(sid, assistantId, searchToolCallId, 'error')
-
-          useEventBus.getState().dispatch({
-            type: 'tool:error',
-            toolName: 'web_search',
-            error,
-            timestamp: Date.now(),
-          })
-        }
-
-        if (webSearchContext) {
-          system = system
-            ? `${system}\n\n${webSearchContext}`
-            : webSearchContext
-        }
-      }
-
-      const skills = useSkillStore.getState().activeSkillIds ?? []
-      const mcpServers = useMCPStore.getState().servers.map((s: { id: string; name: string; tools?: unknown[] }) => ({
-        id: s.id,
-        name: s.name,
-        tools: s.tools ?? [],
-      }))
-      const mode = useSettingsStore.getState().sessionMode ?? 'chat'
-      const reasoningEnabled = useSettingsStore.getState().reasoningEnabled ?? false
-      const reasoningBudget = useSettingsStore.getState().reasoningBudget ?? 8000
-
-      const sendResult = messagingAdapter.sendMessage({
+      store.deleteMessage(sid, assistantMessageId)
+      const assistantId = crypto.randomUUID()
+      store.addMessage({
+        id: assistantId,
+        role: 'assistant',
+        content: '',
+        timestamp: Date.now(),
         sessionId: sid,
-        messageId: assistantId,
-        model: provider.defaultModel ?? '',
-        messages: msgs,
-        providerKey,
-        apiUrl,
-        isLocal: provider.kind === 'local',
-        system,
-        vendor: provider.vendor,
-        providerId: provider.id,
-        mode,
-        skills,
-        mcpServers,
-        semanticMemory: semanticMemoryEnabled,
-        reasoning: { enabled: reasoningEnabled, budget: reasoningBudget },
+        isStreaming: true,
       })
-      const resolved = sendResult instanceof Promise ? await sendResult : null
-      if (resolved && !resolved.ok) {
-        stopStreamingFn(sid)
-        updateMessage(assistantId, {
-          isStreaming: false,
-          content: `Error: ${resolved.error || 'no se pudo enviar el mensaje al sidecar.'}`,
-        })
-      }
-    } catch {
-      stopStreamingFn(sid)
-      updateMessage(assistantId, {
-        isStreaming: false,
-        content: 'Error inesperado al enviar el mensaje.',
-      })
-    }
+      lastUserMessageRef.current.set(sid, { text: prevUser.content, userMessageId: prevUser.id })
 
-    return { sessionId: sid, assistantId, userMessageId }
-  }, [createSession, addMessage, startStreaming, stopStreamingFn, updateMessage, providers])
+      const msgs = sessionMessages
+        .slice(0, idx)
+        .map((m) => ({ role: m.role, content: m.content }))
+      await runAssistantTurn(sid, assistantId, prevUser.content, msgs)
+
+      return { sessionId: sid, assistantId }
+    },
+    []
+  )
 
   useEffect(() => {
-    if (subscribedRef.current) return
-    if (!messagingAdapter.isReady()) return
-    subscribedRef.current = true
+    if (adapterReady) return
+    return messagingAdapter.onReady?.(() => setAdapterReady(true)) ?? (() => {})
+  }, [adapterReady])
+
+  useEffect(() => {
+    if (!adapterReady) return
     const unsub = messagingAdapter.onEvent((rawEvent: SpartaEvent) => {
       const event = rawEvent as unknown as Record<string, unknown>
       const { type, sessionId, messageId } = event as { type: string; sessionId: string; messageId: string }
       const sid = sessionId ?? ''
       const mid = messageId ?? ''
+
+      if (!sid || !mid) {
+        if (type && !type.startsWith('sidecar') && !type.startsWith('terminal')) {
+          console.debug('[useChatSession] Event sin sessionId/messageId, ignorando:', type)
+        }
+        return
+      }
+
       const store = useChatStore.getState()
 
       switch (type) {
@@ -279,6 +333,11 @@ export function useChatSession() {
           break
         }
         case 'stream:completed': {
+          const currentMsg = store.messagesBySession[sid]?.find((m) => m.id === mid)
+          if (currentMsg?.thinkingStatus === 'streaming' || (currentMsg?.reasoningText && currentMsg?.thinkingStatus !== 'completed')) {
+            console.debug('[safety-net] cerrando thinking en stream:completed')
+            store.onThinkingEnd(sid, mid, currentMsg?.thinkingTokensUsed ?? 0)
+          }
           store.onStreamEnd(sid, mid)
           stopStreamingFn(sid)
           const providerId = (event as { providerId?: string }).providerId
@@ -366,6 +425,11 @@ export function useChatSession() {
           break
         }
         case 'stream:aborted': {
+          const abortedMsg = store.messagesBySession[sid]?.find((m) => m.id === mid)
+          if (abortedMsg?.thinkingStatus === 'streaming' || (abortedMsg?.reasoningText && abortedMsg?.thinkingStatus !== 'completed')) {
+            console.debug('[safety-net] cerrando thinking en stream:aborted')
+            store.onThinkingEnd(sid, mid, abortedMsg?.thinkingTokensUsed ?? 0)
+          }
           store.onStreamEnd(sid, mid)
           stopStreamingFn(sid)
           break
@@ -391,16 +455,20 @@ export function useChatSession() {
         }
         case 'tool:result': {
           const tcId = (event as { toolCallId?: string }).toolCallId ?? ''
-          updateToolCallStatus(sid, mid, tcId, 'completed')
+          const resultOutput = (event as { output?: string }).output ?? ''
+          const tcName = (event as { toolName?: string }).toolName
+          updateToolCallStatus(sid, mid, tcId, 'completed', resultOutput, tcName)
           break
         }
         case 'tool:error': {
           const tcIdErr = (event as { toolCallId?: string }).toolCallId ?? ''
-          updateToolCallStatus(sid, mid, tcIdErr, 'error')
+          const errorMsg = (event as { error?: string }).error ?? 'Error al ejecutar una herramienta'
+          const tcNameErr = (event as { toolName?: string }).toolName
+          updateToolCallStatus(sid, mid, tcIdErr, 'error', errorMsg, tcNameErr)
           useEventBus.getState().dispatch({
             type: 'tool:error',
-            toolName: (event as { toolName?: string }).toolName ?? '',
-            error: (event as { error?: string }).error ?? 'Error al ejecutar una herramienta',
+            toolName: tcNameErr ?? '',
+            error: errorMsg,
             timestamp: Date.now(),
           })
           break
@@ -422,10 +490,9 @@ export function useChatSession() {
       }
     })
     return () => {
-      subscribedRef.current = false
       unsub()
     }
-  }, [appendContent, addToolCall, updateMessage, updateToolCallStatus, stopStreamingFn])
+  }, [adapterReady, appendContent, addToolCall, updateMessage, updateToolCallStatus, stopStreamingFn])
 
   return {
     sessions,
@@ -440,6 +507,7 @@ export function useChatSession() {
     updateMessage,
     setStreaming,
     sendMessage,
+    regenerateMessage,
     stopStreaming: (sessionId?: string) => stopStreamingFn(sessionId),
   }
 }

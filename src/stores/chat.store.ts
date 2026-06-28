@@ -24,13 +24,14 @@ interface ChatState {
   pinSession: (id: string) => void
   archiveSession: (id: string) => void
   renameSession: (id: string, newTitle: string) => void
+  updateSessionModel: (id: string, model: string) => void
   deleteMessage: (sessionId: string, messageId: string) => void
   addMessage: (message: Message) => void
   updateMessage: (id: string, partial: Partial<Message>) => void
   appendContent: (sessionId: string, messageId: string, delta: string, chunkSeq?: number) => void
   appendThinking: (sessionId: string, messageId: string, delta: string, chunkSeq?: number) => void
   addToolCall: (sessionId: string, messageId: string, toolCall: ToolCall) => void
-  updateToolCallStatus: (sessionId: string, messageId: string, toolCallId: string, status: ToolCall['status']) => void
+  updateToolCallStatus: (sessionId: string, messageId: string, toolCallId: string, status: ToolCall['status'], result?: string, toolName?: string) => void
   setStreaming: (value: boolean) => void
   startStreaming: (sessionId: string) => AbortController
   stopStreaming: (sessionId?: string) => void
@@ -115,6 +116,13 @@ export const useChatStore = create<ChatState>()(
     set((s) => ({
       sessions: s.sessions.map((sess) =>
         sess.id === id ? { ...sess, title: newTitle } : sess
+      ),
+    })),
+
+  updateSessionModel: (id, model) =>
+    set((s) => ({
+      sessions: s.sessions.map((sess) =>
+        sess.id === id ? { ...sess, model } : sess
       ),
     })),
 
@@ -226,14 +234,19 @@ export const useChatStore = create<ChatState>()(
           ...s.messagesBySession,
           [sessionId]: sessionMessages.map((msg) =>
             msg.id === messageId
-              ? { ...msg, toolCalls: [...(msg.toolCalls ?? []), toolCall] }
+              ? {
+                  ...msg,
+                  toolCalls: (msg.toolCalls ?? []).some((tc) => tc.id === toolCall.id)
+                    ? msg.toolCalls
+                    : [...(msg.toolCalls ?? []), toolCall],
+                }
               : msg
           ),
         },
       }
     }),
 
-  updateToolCallStatus: (sessionId, messageId, toolCallId, status) =>
+  updateToolCallStatus: (sessionId: string, messageId: string, toolCallId: string, status: ToolCall['status'], result?: string, toolName?: string) =>
     set((s) => {
       const sessionMessages = s.messagesBySession[sessionId]
       if (!sessionMessages) return s
@@ -244,9 +257,14 @@ export const useChatStore = create<ChatState>()(
             msg.id === messageId
               ? {
                   ...msg,
-                  toolCalls: (msg.toolCalls ?? []).map((tc) =>
-                    tc.id === toolCallId ? { ...tc, status } : tc
-                  ),
+                  toolCalls: (msg.toolCalls ?? []).map((tc) => {
+                    const matchById = tc.id === toolCallId
+                    const matchByName = toolName && tc.toolName === toolName
+                    if (matchById || matchByName) {
+                      return { ...tc, status, output: result ?? tc.output, completedAt: Date.now() }
+                    }
+                    return tc
+                  }),
                 }
               : msg
           ),
@@ -315,7 +333,15 @@ export const useChatStore = create<ChatState>()(
   onThinkingStart: (sessionId, messageId) =>
     set((s) => {
       const sessionMessages = s.messagesBySession[sessionId]
-      if (!sessionMessages) return s
+      if (!sessionMessages) {
+        console.warn('[ThinkingFix] Sesión no encontrada para thinking:started', sessionId)
+        return s
+      }
+      const target = sessionMessages.find((m) => m.id === messageId)
+      if (!target) {
+        console.warn('[ThinkingFix] Mensaje no encontrado para thinking:started', messageId, 'IDs disponibles:', sessionMessages.map((m) => m.id))
+        return s
+      }
       return {
         messagesBySession: {
           ...s.messagesBySession,

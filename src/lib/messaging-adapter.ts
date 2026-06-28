@@ -29,6 +29,7 @@ interface MessagingAdapter {
   abortMessage(sessionId: string): void
   onEvent(handler: (event: SpartaEvent) => void): () => void
   isReady(): boolean
+  onReady?(callback: () => void): () => void
 }
 
 class ElectronAdapter implements MessagingAdapter {
@@ -47,11 +48,26 @@ class ElectronAdapter implements MessagingAdapter {
   isReady(): boolean {
     return !!window.sparta?.sendMessage
   }
+
+  onReady(callback: () => void): () => void {
+    if (this.isReady()) {
+      callback()
+      return () => {}
+    }
+    const timer = setInterval(() => {
+      if (this.isReady()) {
+        clearInterval(timer)
+        callback()
+      }
+    }, 300)
+    return () => clearInterval(timer)
+  }
 }
 
 class WebAdapter implements MessagingAdapter {
   private ws: WebSocket | null = null
   private handlers: Set<(event: SpartaEvent) => void> = new Set()
+  private readyCallbacks: Set<() => void> = new Set()
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null
   private destroyed = false
 
@@ -63,6 +79,11 @@ class WebAdapter implements MessagingAdapter {
     if (this.destroyed) return
     const wsUrl = this.getWebSocketUrl()
     this.ws = new WebSocket(wsUrl)
+
+    this.ws.onopen = () => {
+      this.readyCallbacks.forEach((cb) => cb())
+      this.readyCallbacks.clear()
+    }
 
     this.ws.onmessage = (msg) => {
       try {
@@ -79,6 +100,15 @@ class WebAdapter implements MessagingAdapter {
     this.ws.onerror = () => {
       this.ws?.close()
     }
+  }
+
+  onReady(callback: () => void): () => void {
+    if (this.isReady()) {
+      callback()
+      return () => {}
+    }
+    this.readyCallbacks.add(callback)
+    return () => this.readyCallbacks.delete(callback)
   }
 
   private getWebSocketUrl(): string {
