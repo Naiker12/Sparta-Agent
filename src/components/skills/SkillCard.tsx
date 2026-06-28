@@ -201,6 +201,41 @@ export function SkillCard({
             ))}
           </div>
         )}
+
+        {(downloadable?.category || skill.source) && (
+          <div style={{ display: 'flex', gap: 4, marginTop: 6, flexWrap: 'wrap' }}>
+            {downloadable?.category && (
+              <span
+                style={{
+                  fontSize: 8.5,
+                  padding: '1px 5px',
+                  borderRadius: 3,
+                  background: 'var(--accent-muted)',
+                  color: 'var(--accent)',
+                  fontFamily: 'var(--font-ui)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                }}
+              >
+                {downloadable.category}
+              </span>
+            )}
+            {skill.source && skill.source !== 'builtin' && (
+              <span
+                style={{
+                  fontSize: 8.5,
+                  padding: '1px 5px',
+                  borderRadius: 3,
+                  background: 'var(--bg-active)',
+                  color: 'var(--text-muted)',
+                  fontFamily: 'var(--font-ui)',
+                }}
+              >
+                {skill.source}
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       <div style={{ padding: '8px 14px', borderTop: '1px solid var(--border-subtle)', display: 'flex', gap: 6, alignItems: 'center' }}>

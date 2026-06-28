@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react'
 import { Search, Grid3X3, AlertCircle } from 'lucide-react'
 import type { DownloadableSkill, SkillCategory } from '@/types'
 import { fetchAvailableSkills, isSkillInstalled, installSkill } from './SkillInstaller'
+import { useSkillStore } from '@/stores/skill.store'
 import { SkillCard } from './SkillCard'
 
-const CATEGORIES: { label: string; value: SkillCategory | 'all' }[] = [
+const DEFAULT_CATEGORIES: { label: string; value: SkillCategory | 'all' }[] = [
   { label: 'Todas', value: 'all' },
   { label: 'Coding', value: 'Coding' },
   { label: 'Research', value: 'Research' },
@@ -19,13 +20,20 @@ export function SkillExplorer() {
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState<SkillCategory | 'all'>('all')
   const [, setRefresh] = useState(0)
+  const installedSkills = useSkillStore((s) => s.installedSkills)
+  const loadInstalledSkills = useSkillStore((s) => s.loadInstalledSkills)
 
   useEffect(() => {
+    loadInstalledSkills()
     fetchAvailableSkills().then((loaded) => {
       setSkills(loaded.map((s) => ({ ...s, installed: isSkillInstalled(s.id) })))
       setLoading(false)
     })
-  }, [])
+  }, [loadInstalledSkills])
+
+  useEffect(() => {
+    setSkills((prev) => prev.map((s) => ({ ...s, installed: isSkillInstalled(s.id) })))
+  }, [installedSkills])
 
   function handleInstall(skill: DownloadableSkill) {
     const id = installSkill(skill)
@@ -34,6 +42,8 @@ export function SkillExplorer() {
       setRefresh((r) => r + 1)
     }
   }
+
+  const categories = DEFAULT_CATEGORIES
 
   const filtered = skills.filter((s) => {
     if (category !== 'all' && s.category !== category) return false
@@ -77,7 +87,7 @@ export function SkillExplorer() {
       </div>
 
       <div style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap' }}>
-        {CATEGORIES.map((cat) => (
+        {categories.map((cat) => (
           <button
             key={cat.value}
             onClick={() => setCategory(cat.value)}

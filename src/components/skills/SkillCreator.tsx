@@ -28,7 +28,7 @@ export function SkillCreator() {
     e.preventDefault()
     if (!name.trim() || !prompt.trim()) return
     const tags = tagsInput.split(',').map((t) => t.trim()).filter(Boolean)
-    addSkill(name.trim(), description.trim(), prompt.trim(), tags)
+    addSkill(name.trim(), description.trim(), prompt.trim(), tags, category)
     setName('')
     setDescription('')
     setPrompt('')
