@@ -91,7 +91,7 @@ def research_topic(
     """
     try:
         raw = web_search_tool.invoke({"query": topic, "count": 10 if depth == "deep" else 5})
-        return _synthesize(raw, topic, depth)
+        return raw
     except Exception as e:
         logger.error("Research failed for topic '%s': %s", topic, e)
         return f"Error investigando '{topic}': {e}"

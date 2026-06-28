@@ -53,6 +53,42 @@ def build_sparta_graph(
             "Eres Sparta Agent, un orquestador de agentes de IA.",
             "Tienes acceso a herramientas para buscar en web, leer/escribir archivos,",
             "consultar memoria, y conectar con servidores MCP externos.",
+            "",
+            "REGLAS CRÍTICAS PARA FECHA/HORA ACTUAL:",
+            "- NUNCA respondas preguntas sobre la fecha, hora o día actual usando tu conocimiento de entrenamiento.",
+            "- Tu conocimiento tiene una fecha de corte y NO sabes la fecha actual real.",
+            "- Para preguntas sobre 'qué día es', 'qué fecha es hoy', usa web_search.",
+            "- Si web_search no está disponible o falla, di: 'No tengo acceso a la fecha actual. Revisa la fecha en tu dispositivo o activa la búsqueda web.'",
+            "- NUNCA digas 'según mi conocimiento, hoy es...' porque es información incorrecta.",
+            "",
+            "REGLAS PARA HERRAMIENTAS:",
+            "- Usa web_search MÁXIMO UNA VEZ por query. Si la búsqueda ya devolvió resultados, no la repitas.",
+            "- Si una herramienta falla, informa al usuario del error específico.",
+            "- No invoques la misma herramienta con los mismos argumentos más de una vez.",
+            "- Si una tool devuelve un ERROR, NO inventes la respuesta — reporta el error al usuario.",
+            "",
+            "FORMATO DE RESPUESTA:",
+            "- Usa Markdown solo cuando sea necesario (código, tablas, listas de pasos).",
+            "- En respuestas conversacionales cortas, responde en texto plano.",
+            "- Evita ## headings para respuestas normales de chat.",
+            "- Las listas deben usar '-' sin líneas en blanco entre items.",
+            "",
+            "EJEMPLOS DE FORMATO:",
+            "BIEN (lista compacta):",
+            "- Primer item",
+            "- Segundo item",
+            "- Tercer item",
+            "",
+            "MAL (no hagas esto):",
+            "- Primer item",
+            "",
+            "- Segundo item",
+            "",
+            "- Tercer item",
+            "",
+            "MAL (no uses headings para respuestas simples):",
+            "## Respuesta",
+            "Esto es una respuesta simple.",
         ]
 
         if effective_mode == "agent":
@@ -164,8 +200,31 @@ def build_sparta_graph(
             "tool_calls_this_turn": state.get("tool_calls_this_turn", 0),
         }
 
+    MAX_TOOL_CALLS_PER_TURN = 8
+
+    def _detect_loop(state: SpartaState) -> bool:
+        messages = state.get("messages", [])
+        seen_queries: set[str] = set()
+        for msg in messages[-6:]:
+            tool_calls = getattr(msg, "tool_calls", [])
+            for tc in tool_calls:
+                query = str(tc.get("args", {}).get("query", ""))
+                if query in seen_queries:
+                    return True
+                if query:
+                    seen_queries.add(query)
+        return False
+
     def should_continue(state: SpartaState) -> Literal["tools", "subagent", "__end__"]:
         if state.get("abort_requested"):
+            return "__end__"
+
+        if state.get("tool_calls_this_turn", 0) >= MAX_TOOL_CALLS_PER_TURN:
+            logger.warning("Tool call limit reached (%s), ending turn", MAX_TOOL_CALLS_PER_TURN)
+            return "__end__"
+
+        if _detect_loop(state):
+            logger.warning("Loop detected: same query repeated in recent tool calls, ending turn")
             return "__end__"
 
         last_message = state["messages"][-1]

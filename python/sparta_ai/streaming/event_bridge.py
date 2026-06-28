@@ -100,6 +100,7 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> N
                 stream_state["thinking_active"] = True
             logger.debug("Emitting thinking:token (reasoning_content) for request %s", request_id)
             _emit(request_id, "thinking:token", {**base_payload, "token": reasoning_content})
+            return
 
         content = getattr(chunk, "content", "")
         if isinstance(content, list):
@@ -149,18 +150,31 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> N
             stream_state["thinking_active"] = False
 
     elif kind == "on_tool_start":
+        tool_call_id = event.get("run_id", str(id(event)))
         _emit(request_id, "tool:called", {
             **base_payload,
             "name": name,
             "input": data.get("input", {}),
+            "tool_call_id": tool_call_id,
         })
 
     elif kind == "on_tool_end":
+        tool_call_id = event.get("run_id", "unknown")
         _emit(request_id, "tool:result", {
             **base_payload,
             "name": name,
             "output": str(data.get("output", "")),
             "duration_ms": data.get("run_time_ms", 0),
+            "tool_call_id": tool_call_id,
+        })
+
+    elif kind == "on_tool_error":
+        tool_call_id = event.get("run_id", "unknown")
+        _emit(request_id, "tool:error", {
+            **base_payload,
+            "name": name,
+            "error": str(data.get("error", "Tool execution failed")),
+            "tool_call_id": tool_call_id,
         })
 
     elif kind == "on_chain_end" and name == "agent":
@@ -225,6 +239,7 @@ async def _dispatch_event_ws(
             await _emit_ws_renderer(websocket, "thinking:token", {
                 **base_payload, "token": reasoning_content,
             })
+            return
 
         content = getattr(chunk, "content", "")
         if isinstance(content, list):
@@ -276,10 +291,11 @@ async def _dispatch_event_ws(
             stream_state["thinking_active"] = False
 
     elif kind == "on_tool_start":
+        tool_call_id = event.get("run_id", str(id(event)))
         await _emit_ws_renderer(websocket, "tool:called", {
             **base_payload,
             "toolCall": {
-                "id": "",
+                "id": tool_call_id,
                 "toolName": name,
                 "input": data.get("input", {}),
                 "status": "running",
@@ -287,11 +303,20 @@ async def _dispatch_event_ws(
         })
 
     elif kind == "on_tool_end":
+        tool_call_id = event.get("run_id", "unknown")
         await _emit_ws_renderer(websocket, "tool:result", {
             **base_payload,
-            "toolCallId": "",
+            "toolCallId": tool_call_id,
             "output": str(data.get("output", "")),
             "durationMs": data.get("run_time_ms", 0),
+        })
+
+    elif kind == "on_tool_error":
+        tool_call_id = event.get("run_id", "unknown")
+        await _emit_ws_renderer(websocket, "tool:error", {
+            **base_payload,
+            "toolCallId": tool_call_id,
+            "error": str(data.get("error", "Tool execution failed")),
         })
 
     elif kind == "on_chain_end" and name == "agent":
