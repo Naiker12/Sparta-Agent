@@ -261,7 +261,13 @@ export const useChatStore = create<ChatState>()(
                     const matchById = tc.id === toolCallId
                     const matchByName = toolName && tc.toolName === toolName
                     if (matchById || matchByName) {
-                      return { ...tc, status, output: result ?? tc.output, completedAt: Date.now() }
+                      return {
+                        ...tc,
+                        status,
+                        output: result ?? tc.output,
+                        error: status === 'error' ? (result ?? tc.error) : tc.error,
+                        completedAt: Date.now(),
+                      }
                     }
                     return tc
                   }),

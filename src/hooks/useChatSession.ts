@@ -98,6 +98,12 @@ async function runAssistantTurn(
             timestamp: Date.now(),
           })
         }
+      } else {
+        useEventBus.getState().dispatch({
+          type: 'memory:unavailable',
+          query: text,
+          timestamp: Date.now(),
+        })
       }
     }
 
@@ -249,6 +255,12 @@ export function useChatSession() {
 
       const allMessages = useChatStore.getState().messagesBySession[sid] ?? []
       const msgs = allMessages.map((m) => ({ role: m.role, content: m.content }))
+
+      // Signal main process that renderer is ready to receive events for this session (Electron only)
+      if (typeof window !== 'undefined' && window.electron?.send) {
+        window.electron.send('chat:ready', { sessionId: sid })
+      }
+
       await runAssistantTurn(sid, assistantId, text, msgs)
 
       return { sessionId: sid, assistantId, userMessageId }
@@ -293,6 +305,7 @@ export function useChatSession() {
 
   useEffect(() => {
     if (!adapterReady) return
+
     const unsub = messagingAdapter.onEvent((rawEvent: SpartaEvent) => {
       const event = rawEvent as unknown as Record<string, unknown>
       const { type, sessionId, messageId } = event as { type: string; sessionId: string; messageId: string }
@@ -483,7 +496,13 @@ export function useChatSession() {
         case 'terminal:agent_command': {
           const { command } = event as { command: string }
           if (window.terminal) {
-            window.terminal.agentWrite('default', command)
+            window.terminal.agentWrite('default', command).then((res: { needsConfirmation?: boolean }) => {
+              if (res.needsConfirmation) {
+                if (window.confirm(`El agente quiere ejecutar:\n\n${command}\n\n¿Permitir?`)) {
+                  window.terminal.agentWriteForce('default', command)
+                }
+              }
+            })
           }
           break
         }

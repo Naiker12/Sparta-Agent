@@ -33,7 +33,10 @@ export const useSkillStore = create<SkillState>()(
       addSkill: (name, description, prompt, tags, category) => {
         const id = crypto.randomUUID()
         const skill: Skill = { id, name, description, prompt, tags, category: category as any, createdAt: Date.now() }
-        set((s) => ({ skills: [...s.skills, skill] }))
+        set((s) => ({
+          skills: [...s.skills, skill],
+          activeSkillIds: [...s.activeSkillIds, id],
+        }))
         useEventBus.getState().dispatch({ type: 'skill:created', skillId: id, timestamp: Date.now() })
         return id
       },
@@ -101,6 +104,14 @@ export const useSkillStore = create<SkillState>()(
         skills: state.skills,
         activeSkillIds: state.activeSkillIds,
       }),
+      onRehydrateStorage: () => (_state, error) => {
+        if (error) return
+        const { skills, activeSkillIds } = useSkillStore.getState()
+        const missing = skills.filter((s) => !activeSkillIds.includes(s.id)).map((s) => s.id)
+        if (missing.length > 0) {
+          useSkillStore.setState({ activeSkillIds: [...activeSkillIds, ...missing] })
+        }
+      },
     }
   )
 )

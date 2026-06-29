@@ -6,7 +6,9 @@ import { useSettingsStore } from '@/stores/settings.store'
 import { useEventBus } from '@/stores/event-bus.store'
 import { runAgentTask, buildToolDefinitions } from '@/services/agents'
 import { buildWebSearchTool, executeWebSearch } from '@/services/tools/web-search'
-import type { AgentStatus, Agent, Task, AgentType } from '@/types'
+import { getProviderKey } from '@/lib/vault-helper'
+import { aiGateway } from '@/services/ai/gateway'
+import type { AgentStatus, Agent, Task, AgentType, Provider } from '@/types'
 
 const AGENT_NAMESPACE_MAP: Partial<Record<AgentType, string>> = {
   research: 'delegate_research',
@@ -91,25 +93,26 @@ export function useAgent() {
     }
 
     const llmCall = async (prompt: string): Promise<string> => {
-      if (!provider?.apiKey) return 'Error: No hay API key configurada para el proveedor.'
+      if (!provider) return 'Error: No hay proveedor configurado.'
+
+      const resolvedKey = await getProviderKey(provider)
+      if (!resolvedKey) return 'Error: No hay API key configurada para el proveedor.'
+
+      const providerWithKey: Provider = { ...provider, apiKey: resolvedKey, hasVaultKey: false }
+
       try {
-        const res = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${provider.apiKey}`,
-            'content-type': 'application/json',
-          },
-          body: JSON.stringify({
-            model,
-            messages: [{ role: 'user', content: prompt }],
-            max_tokens: 4096,
-          }),
-        })
-        if (!res.ok) return `Error HTTP ${res.status}`
-        const data = await res.json()
-        return data.choices?.[0]?.message?.content ?? 'Sin respuesta'
-      } catch {
-        return 'Error de conexión con el proveedor LLM.'
+        const stream = await aiGateway.sendMessage(
+          providerWithKey,
+          [{ role: 'user', content: prompt }],
+          { stream: true },
+        )
+        const parts: string[] = []
+        for await (const chunk of stream) {
+          if (chunk.type === 'content_token' && chunk.delta) parts.push(chunk.delta)
+        }
+        return parts.join('') || 'Sin respuesta'
+      } catch (err) {
+        return `Error: ${err instanceof Error ? err.message : String(err)}`
       }
     }
 

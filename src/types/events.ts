@@ -36,6 +36,7 @@ export type EventType =
   | 'memory:semantic_search'
   | 'memory:indexed'
   | 'memory:extraction_empty'
+  | 'memory:unavailable'
   | 'message:deleted'
   | 'message:edited'
   | 'message:shared'
@@ -253,6 +254,11 @@ export interface MemoryIndexedEvent extends BaseEvent {
   indexedCount: number
 }
 
+export interface MemoryUnavailableEvent extends BaseEvent {
+  type: 'memory:unavailable'
+  query: string
+}
+
 export interface MemoryExtractionEmptyEvent extends BaseEvent {
   type: 'memory:extraction_empty'
   sessionId: string
@@ -315,6 +321,7 @@ export type SpartaEvent =
   | MemorySemanticSearchEvent
   | MemoryIndexedEvent
   | MemoryExtractionEmptyEvent
+  | MemoryUnavailableEvent
   | MessageDeletedEvent
   | MessageEditedEvent
   | MessageSharedEvent
