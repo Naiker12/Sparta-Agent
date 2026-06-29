@@ -1,4 +1,6 @@
 ---
+id: ascii-art
+category: Creative
 name: ascii-art
 description: "ASCII art: pyfiglet, cowsay, boxes, image-to-ascii."
 version: 4.0.0
@@ -11,13 +13,17 @@ metadata:
     tags: [ASCII, Art, Banners, Creative, Unicode, Text-Art, pyfiglet, figlet, cowsay, boxes]
     related_skills: [excalidraw]
 
+tags: [Creative]
+source: external
+featured: false
+icon: 🎨
 ---
 
 # ASCII Art Skill
 
-Multiple tools for different ASCII art needs. All tools are local CLI programs or free REST APIs — no API keys required.
+Multiple tools for different ASCII art needs. All tools are local CLI programs or free REST APIs â€” no API keys required.
 
-## Tool 1: Text Banners (pyfiglet — local)
+## Tool 1: Text Banners (pyfiglet â€” local)
 
 Render text as large ASCII art banners. 571 built-in fonts.
 
@@ -54,9 +60,9 @@ python3 -m pyfiglet --list_fonts             # List all 571 fonts
 - Short text (1-8 chars) works best with detailed fonts like `doom` or `block`
 - Long text works better with compact fonts like `small` or `mini`
 
-## Tool 2: Text Banners (asciified API — remote, no install)
+## Tool 2: Text Banners (asciified API â€” remote, no install)
 
-Free REST API that converts text to ASCII art. 250+ FIGlet fonts. Returns plain text directly — no parsing needed. Use this when pyfiglet is not installed or as a quick alternative.
+Free REST API that converts text to ASCII art. 250+ FIGlet fonts. Returns plain text directly â€” no parsing needed. Use this when pyfiglet is not installed or as a quick alternative.
 
 ### Usage (via terminal curl)
 
@@ -78,9 +84,9 @@ curl -s "https://asciified.thelicato.io/api/v2/fonts"
 ### Tips
 
 - URL-encode spaces as `+` in the text parameter
-- The response is plain text ASCII art — no JSON wrapping, ready to display
+- The response is plain text ASCII art â€” no JSON wrapping, ready to display
 - Font names are case-sensitive; use the fonts endpoint to get exact names
-- Works from any terminal with curl — no Python or pip needed
+- Works from any terminal with curl â€” no Python or pip needed
 
 ## Tool 3: Cowsay (Message Art)
 
@@ -189,7 +195,7 @@ toilet -F list                          # List available filters
 
 `crop`, `gay` (rainbow), `metal`, `flip`, `flop`, `180`, `left`, `right`, `border`
 
-**Note**: toilet outputs ANSI escape codes for colors — works in terminals but may not render in all contexts (e.g., plain text files, some chat platforms).
+**Note**: toilet outputs ANSI escape codes for colors â€” works in terminals but may not render in all contexts (e.g., plain text files, some chat platforms).
 
 ## Tool 6: Image to ASCII Art
 
@@ -231,13 +237,13 @@ Large collection of classic ASCII art organized by subject. Art is inside HTML `
 
 **URL pattern:** `https://ascii.co.uk/art/{subject}`
 
-**Step 1 — Fetch the page:**
+**Step 1 â€” Fetch the page:**
 
 ```bash
 curl -s 'https://ascii.co.uk/art/cat' -o /tmp/ascii_art.html
 ```
 
-**Step 2 — Extract art from pre tags:**
+**Step 2 â€” Extract art from pre tags:**
 
 ```python
 import re, html
@@ -260,8 +266,8 @@ for art in arts:
 - Holidays: `christmas`, `halloween`, `valentine`
 
 **Tips:**
-- Preserve artist signatures/initials — important etiquette
-- Multiple art pieces per page — pick the best one for the user
+- Preserve artist signatures/initials â€” important etiquette
+- Multiple art pieces per page â€” pick the best one for the user
 - Works reliably via curl, no JavaScript needed
 
 ### Source B: GitHub Octocat API (fun easter egg)
@@ -274,7 +280,7 @@ curl -s https://api.github.com/octocat
 
 ## Tool 8: Fun ASCII Utilities (via curl)
 
-These free services return ASCII art directly — great for fun extras.
+These free services return ASCII art directly â€” great for fun extras.
 
 ### QR Codes as ASCII Art
 
@@ -297,11 +303,11 @@ When tools above don't have what's needed, generate ASCII art directly using the
 
 ### Character Palette
 
-**Box Drawing:** `╔ ╗ ╚ ╝ ║ ═ ╠ ╣ ╦ ╩ ╬ ┌ ┐ └ ┘ │ ─ ├ ┤ ┬ ┴ ┼ ╭ ╮ ╰ ╯`
+**Box Drawing:** `â•” â•— â•š â• â•‘ â• â•  â•£ â•¦ â•© â•¬ â”Œ â” â”” â”˜ â”‚ â”€ â”œ â”¤ â”¬ â”´ â”¼ â•­ â•® â•° â•¯`
 
-**Block Elements:** `░ ▒ ▓ █ ▄ ▀ ▌ ▐ ▖ ▗ ▘ ▝ ▚ ▞`
+**Block Elements:** `â–‘ â–’ â–“ â–ˆ â–„ â–€ â–Œ â– â–– â–— â–˜ â– â–š â–ž`
 
-**Geometric & Symbols:** `◆ ◇ ◈ ● ○ ◉ ■ □ ▲ △ ▼ ▽ ★ ☆ ✦ ✧ ◀ ▶ ◁ ▷ ⬡ ⬢ ⌂`
+**Geometric & Symbols:** `â—† â—‡ â—ˆ â— â—‹ â—‰ â–  â–¡ â–² â–³ â–¼ â–½ â˜… â˜† âœ¦ âœ§ â—€ â–¶ â— â–· â¬¡ â¬¢ âŒ‚`
 
 ### Rules
 
@@ -311,12 +317,12 @@ When tools above don't have what's needed, generate ASCII art directly using the
 
 ## Decision Flow
 
-1. **Text as a banner** → pyfiglet if installed, otherwise asciified API via curl
-2. **Wrap a message in fun character art** → cowsay
-3. **Add decorative border/frame** → boxes (can combine with pyfiglet/asciified)
-4. **Art of a specific thing** (cat, rocket, dragon) → ascii.co.uk via curl + parsing
-5. **Convert an image to ASCII** → ascii-image-converter or jp2a
-6. **QR code** → qrenco.de via curl
-7. **Weather/moon art** → wttr.in via curl
-8. **Something custom/creative** → LLM generation with Unicode palette
-9. **Any tool not installed** → install it, or fall back to next option
+1. **Text as a banner** â†’ pyfiglet if installed, otherwise asciified API via curl
+2. **Wrap a message in fun character art** â†’ cowsay
+3. **Add decorative border/frame** â†’ boxes (can combine with pyfiglet/asciified)
+4. **Art of a specific thing** (cat, rocket, dragon) â†’ ascii.co.uk via curl + parsing
+5. **Convert an image to ASCII** â†’ ascii-image-converter or jp2a
+6. **QR code** â†’ qrenco.de via curl
+7. **Weather/moon art** â†’ wttr.in via curl
+8. **Something custom/creative** â†’ LLM generation with Unicode palette
+9. **Any tool not installed** â†’ install it, or fall back to next option

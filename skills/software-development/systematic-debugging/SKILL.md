@@ -1,4 +1,6 @@
 ---
+id: systematic-debugging
+category: Software Development
 name: systematic-debugging
 description: "4-phase root cause debugging: understand bugs before fixing."
 version: 1.1.0
@@ -9,6 +11,10 @@ metadata:
   hermes:
     tags: [debugging, troubleshooting, problem-solving, root-cause, investigation]
     related_skills: [test-driven-development, plan, subagent-driven-development]
+tags: [SoftwareDevelopment]
+source: external
+featured: false
+icon: 🛠️
 ---
 
 # Systematic Debugging
@@ -31,7 +37,7 @@ If you haven't completed Phase 1, you cannot propose fixes.
 
 ## The Feedback Loop Rule
 
-The feedback loop is the debugging work. Before reading code to build a theory, create or identify a **tight** command that can go red on the user's exact symptom and green when the bug is fixed. A tight loop is fast, deterministic, agent-runnable, and specific enough to catch this bug — not merely "doesn't crash".
+The feedback loop is the debugging work. Before reading code to build a theory, create or identify a **tight** command that can go red on the user's exact symptom and green when the bug is fixed. A tight loop is fast, deterministic, agent-runnable, and specific enough to catch this bug â€” not merely "doesn't crash".
 
 When a clean repro is hard, spend disproportionate effort building the loop. Guessing without a red-capable loop is the failure mode this skill exists to prevent.
 
@@ -82,9 +88,9 @@ You MUST complete each phase before proceeding to the next.
 - Does the command fail for this bug and only pass once the bug is fixed?
 - Is it fast enough to run repeatedly?
 - Is it deterministic? For flaky bugs, can you raise the reproduction rate high enough to debug?
-- If not reproducible → gather more data, don't guess.
+- If not reproducible â†’ gather more data, don't guess.
 
-**Ways to construct a loop — try in roughly this order:**
+**Ways to construct a loop â€” try in roughly this order:**
 
 1. **Failing test** at the seam that reaches the bug: unit, integration, or end-to-end.
 2. **HTTP script / curl** against a running dev server.
@@ -139,7 +145,7 @@ git log -p --follow src/problematic_file.py | head -100
 
 ### 4. Gather Evidence in Multi-Component Systems
 
-**WHEN system has multiple components (API → service → database, CI → build → deploy):**
+**WHEN system has multiple components (API â†’ service â†’ database, CI â†’ build â†’ deploy):**
 
 **BEFORE proposing fixes, add diagnostic instrumentation:**
 
@@ -211,7 +217,7 @@ search_files("similar_pattern", path="src/", file_glob="*.py")
 ### 2. Compare Against References
 
 - If implementing a pattern, read the reference implementation COMPLETELY
-- Don't skim — read every line
+- Don't skim â€” read every line
 - Understand the pattern fully before applying
 
 ### 3. Identify Differences
@@ -234,7 +240,7 @@ search_files("similar_pattern", path="src/", file_glob="*.py")
 
 ### 1. Form Ranked Falsifiable Hypotheses
 
-- Generate 3–5 plausible hypotheses before testing any single one.
+- Generate 3â€“5 plausible hypotheses before testing any single one.
 - Rank them by likelihood and cheapness to falsify.
 - State the prediction each hypothesis makes: "If X is the cause, then changing or observing Y should make Z happen."
 - Discard or sharpen any hypothesis that does not make a testable prediction.
@@ -251,8 +257,8 @@ If the user is present, show the ranked list before testing. They may have domai
 
 ### 3. Verify Before Continuing
 
-- Did it work? → Phase 4
-- Didn't work? → Form NEW hypothesis
+- Did it work? â†’ Phase 4
+- Didn't work? â†’ Form NEW hypothesis
 - DON'T add more fixes on top
 
 ### 4. When You Don't Know
@@ -288,16 +294,16 @@ If the user is present, show the ranked list before testing. They may have domai
 # Run the specific regression test
 pytest tests/test_module.py::test_regression -v
 
-# Run full suite — no regressions
+# Run full suite â€” no regressions
 pytest tests/ -q
 ```
 
-### 4. If Fix Doesn't Work — The Rule of Three
+### 4. If Fix Doesn't Work â€” The Rule of Three
 
 - **STOP.**
 - Count: How many fixes have you tried?
 - If < 3: Return to Phase 1, re-analyze with new information
-- **If ≥ 3: STOP and question the architecture (step 5 below)**
+- **If â‰¥ 3: STOP and question the architecture (step 5 below)**
 - DON'T attempt Fix #4 without architectural discussion
 
 ### 5. If 3+ Fixes Failed: Question Architecture
@@ -314,11 +320,11 @@ pytest tests/ -q
 
 **Discuss with the user before attempting more fixes.**
 
-This is NOT a failed hypothesis — this is a wrong architecture.
+This is NOT a failed hypothesis â€” this is a wrong architecture.
 
 ---
 
-## Red Flags — STOP and Follow Process
+## Red Flags â€” STOP and Follow Process
 
 If you catch yourself thinking:
 - "Quick fix for now, investigate later"
@@ -347,7 +353,7 @@ If you catch yourself thinking:
 | "I'll write test after confirming fix works" | Untested fixes don't stick. Test first proves it. |
 | "Multiple fixes at once saves time" | Can't isolate what worked. Causes new bugs. |
 | "Reference too long, I'll adapt the pattern" | Partial understanding guarantees bugs. Read it completely. |
-| "I see the problem, let me fix it" | Seeing symptoms ≠ understanding root cause. |
+| "I see the problem, let me fix it" | Seeing symptoms â‰  understanding root cause. |
 | "One more fix attempt" (after 2+ failures) | 3+ failures = architectural problem. Question the pattern, don't fix again. |
 
 ## Quick Reference
@@ -365,10 +371,10 @@ If you catch yourself thinking:
 
 Use these Hermes tools during Phase 1:
 
-- **`search_files`** — Find error strings, trace function calls, locate patterns
-- **`read_file`** — Read source code with line numbers for precise analysis
-- **`terminal`** — Run tests, check git history, reproduce bugs
-- **`web_search`/`web_extract`** — Research error messages, library docs
+- **`search_files`** â€” Find error strings, trace function calls, locate patterns
+- **`read_file`** â€” Read source code with line numbers for precise analysis
+- **`terminal`** â€” Run tests, check git history, reproduce bugs
+- **`web_search`/`web_extract`** â€” Research error messages, library docs
 
 ### With delegate_task
 
@@ -382,7 +388,7 @@ delegate_task(
     1. Read the error message carefully
     2. Reproduce the issue
     3. Trace the data flow to find root cause
-    4. Report findings — do NOT fix yet
+    4. Report findings â€” do NOT fix yet
 
     Error: [paste full error]
     File: [path to failing code]

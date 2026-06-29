@@ -1,4 +1,6 @@
 ---
+id: claude-design
+category: Creative
 name: claude-design
 description: Design one-off HTML artifacts (landing, deck, prototype).
 version: 1.0.0
@@ -9,6 +11,10 @@ metadata:
   hermes:
     tags: [design, html, prototype, ux, ui, creative, artifact, deck, motion, design-system]
     related_skills: [design-md, popular-web-designs, excalidraw, architecture-diagram]
+tags: [Creative]
+source: external
+featured: false
+icon: 🎨
 ---
 
 # Claude Design for CLI/API Agents
@@ -21,19 +27,19 @@ The goal is to preserve Claude Design's useful design behavior and taste while r
 
 ## When To Use This Skill vs `popular-web-designs` vs `design-md`
 
-Hermes has three design-related skills under `skills/creative/`. They do different jobs — load the right one (or combine them):
+Hermes has three design-related skills under `skills/creative/`. They do different jobs â€” load the right one (or combine them):
 
 | Skill | What it gives you | Use when the user wants... |
 |---|---|---|
-| **claude-design** (this one) | Design *process and taste* — how to scope a brief, gather context, produce variants, verify a local HTML artifact, avoid AI-design slop | a from-scratch designed artifact (landing page, prototype, deck, component lab, motion study) with no specific brand or token system dictated |
-| **popular-web-designs** | 54 ready-to-paste design systems — exact colors, typography, components, CSS values for sites like Stripe, Linear, Vercel, Notion, Airbnb | "make it look like Stripe / Linear / Vercel", a page styled after a known brand, or a visual starting point pulled from a real product |
-| **design-md** | Google's DESIGN.md spec format — author/validate/diff/export design-token files, WCAG contrast checking, Tailwind/DTCG export | a formal, persistent, machine-readable design-system *spec file* (tokens + rationale) that lives in a repo and gets consumed by agents over time |
+| **claude-design** (this one) | Design *process and taste* â€” how to scope a brief, gather context, produce variants, verify a local HTML artifact, avoid AI-design slop | a from-scratch designed artifact (landing page, prototype, deck, component lab, motion study) with no specific brand or token system dictated |
+| **popular-web-designs** | 54 ready-to-paste design systems â€” exact colors, typography, components, CSS values for sites like Stripe, Linear, Vercel, Notion, Airbnb | "make it look like Stripe / Linear / Vercel", a page styled after a known brand, or a visual starting point pulled from a real product |
+| **design-md** | Google's DESIGN.md spec format â€” author/validate/diff/export design-token files, WCAG contrast checking, Tailwind/DTCG export | a formal, persistent, machine-readable design-system *spec file* (tokens + rationale) that lives in a repo and gets consumed by agents over time |
 
 Rule of thumb:
 
-- **Process + taste, one-off artifact** → claude-design
-- **Match a known brand's look** → popular-web-designs (and let claude-design drive the process)
-- **Author the tokens spec itself** → design-md
+- **Process + taste, one-off artifact** â†’ claude-design
+- **Match a known brand's look** â†’ popular-web-designs (and let claude-design drive the process)
+- **Author the tokens spec itself** â†’ design-md
 
 These compose: use `popular-web-designs` for the visual vocabulary, `claude-design` for how to turn a brief into a thoughtful local HTML file, and `design-md` when the output is the token file rather than a rendered artifact.
 
@@ -262,7 +268,7 @@ Mobile hit targets should be at least 44px.
 
 For print documents, text should be at least 12pt.
 
-For 1920×1080 slide decks, text should generally be 24px or larger.
+For 1920Ã—1080 slide decks, text should generally be 24px or larger.
 
 ## React Guidance for Standalone HTML
 
@@ -290,7 +296,7 @@ If building inside a real repo, use the repo's package manager and component arc
 
 For slide decks, use a fixed-size canvas and scale it to fit the viewport.
 
-Default slide size: 1920×1080, 16:9.
+Default slide size: 1920Ã—1080, 16:9.
 
 Requirements:
 
@@ -303,7 +309,7 @@ Requirements:
 
 Do not hand-wave a deck as markdown bullets. Create a designed artifact if asked for a deck.
 
-Use 1–2 background colors max unless the brand system requires more.
+Use 1â€“2 background colors max unless the brand system requires more.
 
 Keep slides sparse. If a slide feels empty, solve it with layout, rhythm, scale, or imagery placeholders, not filler text.
 
@@ -323,9 +329,9 @@ If the prototype is meant to model a product flow, design the flow, not just the
 
 When exploring, default to at least three options:
 
-1. **Conservative** — closest to existing patterns / lowest risk
-2. **Strong-fit** — best interpretation of the brief
-3. **Divergent** — more novel, useful for discovering taste boundaries
+1. **Conservative** â€” closest to existing patterns / lowest risk
+2. **Strong-fit** â€” best interpretation of the brief
+3. **Divergent** â€” more novel, useful for discovering taste boundaries
 
 Variations can explore:
 
@@ -398,7 +404,7 @@ Avoid common AI design sludge:
 - stock-photo hero sections
 - oversized rounded rectangles as a substitute for hierarchy
 - rainbow palettes
-- vague labels like “Insights,” “Growth,” “Scale,” “Optimize” without content
+- vague labels like â€œInsights,â€ â€œGrowth,â€ â€œScale,â€ â€œOptimizeâ€ without content
 - decorative SVG illustrations pretending to be product imagery
 
 Minimal is not automatically good. Dense is not automatically cluttered. Choose intentionally.
@@ -453,7 +459,7 @@ For product UIs, prioritize speed of comprehension over decoration.
 
 For marketing surfaces, make one idea land per section.
 
-For dashboards, avoid “data slop.” Only show data that helps the user decide or act.
+For dashboards, avoid â€œdata slop.â€ Only show data that helps the user decide or act.
 
 ## Motion
 
@@ -550,7 +556,7 @@ Better:
 
 If verification is limited by environment, say exactly what was and was not verified.
 
-Never say “done” if the file was not actually written.
+Never say â€œdoneâ€ if the file was not actually written.
 
 ## Final Response Format
 
@@ -569,7 +575,7 @@ Example:
 Created: /path/to/Prototype.html
 It includes 3 layout variants, a Tweaks panel for density/theme, and responsive behavior.
 Verified: file exists and opened cleanly in browser, no console errors.
-Next: pick the strongest direction and I’ll tighten copy + motion.
+Next: pick the strongest direction and Iâ€™ll tighten copy + motion.
 ```
 
 ## Portable Opening Prompt Pattern

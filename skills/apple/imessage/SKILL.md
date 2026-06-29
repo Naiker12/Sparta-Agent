@@ -1,4 +1,6 @@
 ---
+id: imessage
+category: Apple
 name: imessage
 description: Send and receive iMessages/SMS via the imsg CLI on macOS.
 version: 1.0.0
@@ -10,6 +12,10 @@ metadata:
     tags: [iMessage, SMS, messaging, macOS, Apple]
 prerequisites:
   commands: [imsg]
+tags: [Apple]
+source: external
+featured: false
+icon: 🍎
 ---
 
 # iMessage
@@ -20,7 +26,7 @@ Use `imsg` to read and send iMessage/SMS via macOS Messages.app.
 
 - **macOS** with Messages.app signed in
 - Install: `brew install steipete/tap/imsg`
-- Grant Full Disk Access for terminal (System Settings → Privacy → Full Disk Access)
+- Grant Full Disk Access for terminal (System Settings â†’ Privacy â†’ Full Disk Access)
 - Grant Automation permission for Messages.app when prompted
 
 ## When to Use
@@ -32,9 +38,9 @@ Use `imsg` to read and send iMessage/SMS via macOS Messages.app.
 
 ## When NOT to Use
 
-- Telegram/Discord/Slack/WhatsApp messages → use the appropriate gateway channel
-- Group chat management (adding/removing members) → not supported
-- Bulk/mass messaging → always confirm with user first
+- Telegram/Discord/Slack/WhatsApp messages â†’ use the appropriate gateway channel
+- Group chat management (adding/removing members) â†’ not supported
+- Bulk/mass messaging â†’ always confirm with user first
 
 ## Quick Reference
 
@@ -76,16 +82,16 @@ imsg watch --chat-id 1 --attachments
 
 ## Service Options
 
-- `--service imessage` — Force iMessage (requires recipient has iMessage)
-- `--service sms` — Force SMS (green bubble)
-- `--service auto` — Let Messages.app decide (default)
+- `--service imessage` â€” Force iMessage (requires recipient has iMessage)
+- `--service sms` â€” Force SMS (green bubble)
+- `--service auto` â€” Let Messages.app decide (default)
 
 ## Rules
 
 1. **Always confirm recipient and message content** before sending
 2. **Never send to unknown numbers** without explicit user approval
 3. **Verify file paths** exist before attaching
-4. **Don't spam** — rate-limit yourself
+4. **Don't spam** â€” rate-limit yourself
 
 ## Example Workflow
 

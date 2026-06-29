@@ -1,4 +1,6 @@
 ---
+id: jupyter-live-kernel
+category: Data Science
 name: jupyter-live-kernel
 description: "Iterative Python via live Jupyter kernel (hamelnb)."
 version: 1.0.0
@@ -9,6 +11,10 @@ metadata:
   hermes:
     tags: [jupyter, notebook, repl, data-science, exploration, iterative]
     category: data-science
+tags: [DataScience]
+source: external
+featured: false
+icon: 🔬
 ---
 
 # Jupyter Live Kernel (hamelnb)
@@ -135,29 +141,29 @@ uv run "$SCRIPT" restart-run-all --path <notebook.ipynb> --save-outputs --compac
 
 ## Practical Tips from Experience
 
-1. **First execution after server start may timeout** — the kernel needs a moment
+1. **First execution after server start may timeout** â€” the kernel needs a moment
    to initialize. If you get a timeout, just retry.
 
-2. **The kernel Python is JupyterLab's Python** — packages must be installed in
+2. **The kernel Python is JupyterLab's Python** â€” packages must be installed in
    that environment. If you need additional packages, install them into the
    JupyterLab tool environment first.
 
-3. **--compact flag saves significant tokens** — always use it. JSON output can
+3. **--compact flag saves significant tokens** â€” always use it. JSON output can
    be very verbose without it.
 
 4. **For pure REPL use**, create a scratch.ipynb and don't bother with cell editing.
    Just use `execute` repeatedly.
 
-5. **Argument order matters** — subcommand flags like `--path` go BEFORE the
+5. **Argument order matters** â€” subcommand flags like `--path` go BEFORE the
    sub-subcommand. E.g.: `variables --path nb.ipynb list` not `variables list --path nb.ipynb`.
 
 6. **If a session doesn't exist yet**, you need to start one via the REST API
    (see Setup section). The tool can't execute without a live kernel session.
 
-7. **Errors are returned as JSON** with traceback — read the `ename` and `evalue`
+7. **Errors are returned as JSON** with traceback â€” read the `ename` and `evalue`
    fields to understand what went wrong.
 
-8. **Occasional websocket timeouts** — some operations may timeout on first try,
+8. **Occasional websocket timeouts** â€” some operations may timeout on first try,
    especially after a kernel restart. Retry once before escalating.
 
 ## Timeout Defaults

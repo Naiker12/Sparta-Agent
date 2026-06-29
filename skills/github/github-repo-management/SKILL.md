@@ -1,4 +1,6 @@
 ---
+id: github-repo-management
+category: GitHub
 name: github-repo-management
 description: "Clone/create/fork repos; manage remotes, releases."
 version: 1.1.0
@@ -9,6 +11,10 @@ metadata:
   hermes:
     tags: [GitHub, Repositories, Git, Releases, Secrets, Configuration]
     related_skills: [github-auth, github-pr-workflow, github-issues]
+tags: [GitHub]
+source: external
+featured: false
+icon: 🐙
 ---
 
 # GitHub Repository Management
@@ -56,7 +62,7 @@ REPO=$(echo "$OWNER_REPO" | cut -d/ -f2)
 
 ## 1. Cloning Repositories
 
-Cloning is pure `git` — works identically either way:
+Cloning is pure `git` â€” works identically either way:
 
 ```bash
 # Clone via HTTPS (works with credential helper or token-embedded URL)
@@ -183,7 +189,7 @@ git remote add upstream https://github.com/owner/repo-name.git
 ### Keeping a Fork in Sync
 
 ```bash
-# Pure git — works everywhere
+# Pure git â€” works everywhere
 git fetch upstream
 git checkout main
 git merge upstream/main
@@ -230,7 +236,7 @@ curl -s \
 import sys, json
 for r in json.load(sys.stdin):
     vis = 'private' if r['private'] else 'public'
-    print(f\"  {r['full_name']:40}  {vis:8}  {r.get('language', ''):10}  ★{r['stargazers_count']}\")"
+    print(f\"  {r['full_name']:40}  {vis:8}  {r.get('language', ''):10}  â˜…{r['stargazers_count']}\")"
 
 # Search repos
 curl -s \
@@ -238,7 +244,7 @@ curl -s \
   | python3 -c "
 import sys, json
 for r in json.load(sys.stdin)['items']:
-    print(f\"  {r['full_name']:40}  ★{r['stargazers_count']:6}  {r['description'][:60] if r['description'] else ''}\")"
+    print(f\"  {r['full_name']:40}  â˜…{r['stargazers_count']:6}  {r['description'][:60] if r['description'] else ''}\")"
 ```
 
 ## 5. Repository Settings
@@ -312,7 +318,7 @@ gh secret delete API_KEY
 
 **With curl:**
 
-Secrets require encryption with the repo's public key — more involved via API:
+Secrets require encryption with the repo's public key â€” more involved via API:
 
 ```bash
 # Get the repo's public key for encrypting secrets

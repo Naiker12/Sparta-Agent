@@ -1,4 +1,6 @@
 ---
+id: design-md
+category: Creative
 name: design-md
 description: Author/validate/export Google's DESIGN.md token spec files.
 version: 1.0.0
@@ -9,6 +11,10 @@ metadata:
   hermes:
     tags: [design, design-system, tokens, ui, accessibility, wcag, tailwind, dtcg, google]
     related_skills: [popular-web-designs, claude-design, excalidraw, architecture-diagram]
+tags: [Creative]
+source: external
+featured: false
+icon: 🎨
 ---
 
 # DESIGN.md Skill
@@ -16,8 +22,8 @@ metadata:
 DESIGN.md is Google's open spec (Apache-2.0, `google-labs-code/design.md`) for
 describing a visual identity to coding agents. One file combines:
 
-- **YAML front matter** — machine-readable design tokens (normative values)
-- **Markdown body** — human-readable rationale, organized into canonical sections
+- **YAML front matter** â€” machine-readable design tokens (normative values)
+- **Markdown body** â€” human-readable rationale, organized into canonical sections
 
 Tokens give exact values. Prose tells agents *why* those values exist and how to
 apply them. The CLI (`npx @google/design.md`) lints structure + WCAG contrast,
@@ -83,7 +89,7 @@ Architectural Minimalism meets Journalistic Gravitas...
 ## Colors
 
 - **Primary (#1A1C1E):** Deep ink for headlines and core text.
-- **Tertiary (#B8422E):** "Boston Clay" — the sole driver for interaction.
+- **Tertiary (#B8422E):** "Boston Clay" â€” the sole driver for interaction.
 
 ## Typography
 
@@ -141,7 +147,7 @@ if the value type is valid. Unknown component properties produce a warning.
 
 ## Workflow: lint / diff / export
 
-The CLI is `@google/design.md` (Node). Use `npx` — no global install needed.
+The CLI is `@google/design.md` (Node). Use `npx` â€” no global install needed.
 
 ```bash
 # Validate structure + token references + WCAG contrast
@@ -156,7 +162,7 @@ npx -y @google/design.md export --format tailwind DESIGN.md > tailwind.theme.jso
 # Export to W3C DTCG (Design Tokens Format Module) JSON
 npx -y @google/design.md export --format dtcg DESIGN.md > tokens.json
 
-# Print the spec itself — useful when injecting into an agent prompt
+# Print the spec itself â€” useful when injecting into an agent prompt
 npx -y @google/design.md spec --rules-only --format json
 ```
 
@@ -166,15 +172,15 @@ structurally.
 
 ### Lint rule reference (what the 7 rules catch)
 
-- `broken-ref` (error) — `{colors.missing}` points at a non-existent token
-- `duplicate-section` (error) — same `## Heading` appears twice
+- `broken-ref` (error) â€” `{colors.missing}` points at a non-existent token
+- `duplicate-section` (error) â€” same `## Heading` appears twice
 - `invalid-color`, `invalid-dimension`, `invalid-typography` (error)
-- `wcag-contrast` (warning/info) — component `textColor` vs `backgroundColor`
+- `wcag-contrast` (warning/info) â€” component `textColor` vs `backgroundColor`
   ratio against WCAG AA (4.5:1) and AAA (7:1)
-- `unknown-component-property` (warning) — outside the whitelist above
+- `unknown-component-property` (warning) â€” outside the whitelist above
 
 When the user cares about accessibility, call this out explicitly in your
-summary — WCAG findings are the most load-bearing reason to use the CLI.
+summary â€” WCAG findings are the most load-bearing reason to use the CLI.
 
 ## Pitfalls
 
@@ -183,11 +189,11 @@ summary — WCAG findings are the most load-bearing reason to use the CLI.
 - **Hex colors must be quoted strings.** YAML will otherwise choke on `#` or
   truncate values like `#1A1C1E` oddly.
 - **Negative dimensions need quotes too.** `letterSpacing: -0.02em` parses as
-  a YAML flow — write `letterSpacing: "-0.02em"`.
+  a YAML flow â€” write `letterSpacing: "-0.02em"`.
 - **Section order is enforced.** If the user gives you prose in a random order,
   reorder it to match the canonical list before saving.
 - **`version: alpha` is the current spec version** (as of Apr 2026). The spec
-  is marked alpha — watch for breaking changes.
+  is marked alpha â€” watch for breaking changes.
 - **Token references resolve by dotted path.** `{colors.primary}` works;
   `{primary}` does not.
 

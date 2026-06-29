@@ -1,7 +1,13 @@
 ---
+id: obsidian
+category: Note Taking
 name: obsidian
 description: Read, search, create, and edit notes in the Obsidian vault.
 platforms: [linux, macos, windows]
+tags: [NoteTaking]
+source: external
+featured: false
+icon: 📝
 ---
 
 # Obsidian Vault

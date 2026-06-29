@@ -1,4 +1,6 @@
 ---
+id: opencode
+category: Autonomous AI Agents
 name: opencode
 description: "Delegate coding to OpenCode CLI (features, PR review)."
 version: 1.2.0
@@ -9,6 +11,10 @@ metadata:
   hermes:
     tags: [Coding-Agent, OpenCode, Autonomous, Refactoring, Code-Review]
     related_skills: [claude-code, codex, hermes-agent]
+tags: [AutonomousAIAgents]
+source: external
+featured: false
+icon: 🤖
 ---
 
 # OpenCode CLI
@@ -89,13 +95,13 @@ process(action="log", session_id="<id>")
 # Send follow-up input
 process(action="submit", session_id="<id>", data="Now add error handling for token expiry")
 
-# Exit cleanly — Ctrl+C
+# Exit cleanly â€” Ctrl+C
 process(action="write", session_id="<id>", data="\x03")
 # Or just kill the process
 process(action="kill", session_id="<id>")
 ```
 
-**Important:** Do NOT use `/exit` — it is not a valid OpenCode command and will open an agent selector dialog instead. Use Ctrl+C (`\x03`) or `process(action="kill")` to exit.
+**Important:** Do NOT use `/exit` â€” it is not a valid OpenCode command and will open an agent selector dialog instead. Use Ctrl+C (`\x03`) or `process(action="kill")` to exit.
 
 ### TUI Keybindings
 
@@ -189,7 +195,7 @@ terminal(command="opencode stats --days 7 --models anthropic/claude-sonnet-4")
 ## Pitfalls
 
 - Interactive `opencode` (TUI) sessions require `pty=true`. The `opencode run` command does NOT need pty.
-- `/exit` is NOT a valid command — it opens an agent selector. Use Ctrl+C to exit the TUI.
+- `/exit` is NOT a valid command â€” it opens an agent selector. Use Ctrl+C to exit the TUI.
 - PATH mismatch can select the wrong OpenCode binary/model config.
 - If OpenCode appears stuck, inspect logs before killing:
   - `process(action="log", session_id="<id>")`
@@ -211,7 +217,7 @@ Success criteria:
 
 ## Rules
 
-1. Prefer `opencode run` for one-shot automation — it's simpler and doesn't need pty.
+1. Prefer `opencode run` for one-shot automation â€” it's simpler and doesn't need pty.
 2. Use interactive background mode only when iteration is needed.
 3. Always scope OpenCode sessions to a single repo/workdir.
 4. For long tasks, provide progress updates from `process` logs.

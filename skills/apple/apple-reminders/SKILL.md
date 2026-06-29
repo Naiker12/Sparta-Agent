@@ -1,4 +1,6 @@
 ---
+id: apple-reminders
+category: Apple
 name: apple-reminders
 description: "Apple Reminders via remindctl: add, list, complete."
 version: 1.0.0
@@ -10,6 +12,10 @@ metadata:
     tags: [Reminders, tasks, todo, macOS, Apple]
 prerequisites:
   commands: [remindctl]
+tags: [Apple]
+source: external
+featured: false
+icon: 🍎
 ---
 
 # Apple Reminders
@@ -32,10 +38,10 @@ Use `remindctl` to manage Apple Reminders directly from the terminal. Tasks sync
 
 ## When NOT to Use
 
-- Scheduling agent alerts → use the cronjob tool instead
-- Calendar events → use Apple Calendar or Google Calendar
-- Project task management → use GitHub Issues, Notion, etc.
-- If user says "remind me" but means an agent alert → clarify first
+- Scheduling agent alerts â†’ use the cronjob tool instead
+- Calendar events â†’ use Apple Calendar or Google Calendar
+- Project task management â†’ use GitHub Issues, Notion, etc.
+- If user says "remind me" but means an agent alert â†’ clarify first
 
 ## Quick Reference
 

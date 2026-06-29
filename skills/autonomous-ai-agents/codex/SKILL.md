@@ -1,4 +1,6 @@
 ---
+id: codex
+category: Autonomous AI Agents
 name: codex
 description: "Delegate coding to OpenAI Codex CLI (features, PRs)."
 version: 1.0.0
@@ -9,6 +11,10 @@ metadata:
   hermes:
     tags: [Coding-Agent, Codex, OpenAI, Code-Review, Refactoring]
     related_skills: [claude-code, hermes-agent]
+tags: [AutonomousAIAgents]
+source: external
+featured: false
+icon: 🤖
 ---
 
 # Codex CLI
@@ -29,8 +35,8 @@ Requires the codex CLI and a git repository.
 - Codex installed: `npm install -g @openai/codex`
 - OpenAI auth configured: either `OPENAI_API_KEY` or Codex OAuth credentials
   from the Codex CLI login flow
-- **Must run inside a git repository** — Codex refuses to run outside one
-- Use `pty=true` in terminal calls — Codex is an interactive terminal app
+- **Must run inside a git repository** â€” Codex refuses to run outside one
+- Use `pty=true` in terminal calls â€” Codex is an interactive terminal app
 
 For Hermes itself, `model.provider: openai-codex` uses Hermes-managed Codex
 OAuth from `~/.hermes/auth.json` after `hermes auth add openai-codex`. For the
@@ -140,10 +146,10 @@ terminal(command="gh pr comment 86 --body '<review>'", workdir="~/project")
 
 ## Rules
 
-1. **Always use `pty=true`** — Codex is an interactive terminal app and hangs without a PTY
-2. **Git repo required** — Codex won't run outside a git directory. Use `mktemp -d && git init` for scratch
-3. **Use `exec` for one-shots** — `codex exec "prompt"` runs and exits cleanly
-4. **`--full-auto` for building** — auto-approves changes within the sandbox
-5. **Background for long tasks** — use `background=true` and monitor with `process` tool
-6. **Don't interfere** — monitor with `poll`/`log`, be patient with long-running tasks
-7. **Parallel is fine** — run multiple Codex processes at once for batch work
+1. **Always use `pty=true`** â€” Codex is an interactive terminal app and hangs without a PTY
+2. **Git repo required** â€” Codex won't run outside a git directory. Use `mktemp -d && git init` for scratch
+3. **Use `exec` for one-shots** â€” `codex exec "prompt"` runs and exits cleanly
+4. **`--full-auto` for building** â€” auto-approves changes within the sandbox
+5. **Background for long tasks** â€” use `background=true` and monitor with `process` tool
+6. **Don't interfere** â€” monitor with `poll`/`log`, be patient with long-running tasks
+7. **Parallel is fine** â€” run multiple Codex processes at once for batch work

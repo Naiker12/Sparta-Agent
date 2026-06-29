@@ -1,4 +1,6 @@
 ---
+id: weights-and-biases
+category: Evaluation
 name: weights-and-biases
 description: "W&B: log ML experiments, sweeps, model registry, dashboards."
 version: 1.0.0
@@ -8,8 +10,12 @@ dependencies: [wandb]
 platforms: [linux, macos, windows]
 metadata:
   hermes:
-    tags: [MLOps, Weights And Biases, WandB, Experiment Tracking, Hyperparameter Tuning, Model Registry, Collaboration, Real-Time Visualization, PyTorch, TensorFlow, HuggingFace]
+    tags: [MLOps]
 
+tags: [MLOps]
+source: external
+featured: false
+icon: ðŸ“¦
 ---
 
 # Weights & Biases: ML Experiment Tracking & MLOps
@@ -512,13 +518,13 @@ wandb.log({
 ### 3. Use Descriptive Names
 
 ```python
-# ✅ Good: Descriptive run names
+# Ã¢Å“â€¦ Good: Descriptive run names
 wandb.init(
     project="nlp-classification",
     name="bert-base-lr0.001-bs32-epoch10"
 )
 
-# ❌ Bad: Generic names
+# Ã¢ÂÅ’ Bad: Generic names
 wandb.init(project="nlp", name="run1")
 ```
 
@@ -590,5 +596,4 @@ print(f"Share this URL: {run.url}")
 - `references/sweeps.md` - Comprehensive hyperparameter optimization guide
 - `references/artifacts.md` - Data and model versioning patterns
 - `references/integrations.md` - Framework-specific examples
-
 

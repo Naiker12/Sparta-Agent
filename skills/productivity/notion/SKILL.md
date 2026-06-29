@@ -1,4 +1,6 @@
 ---
+id: notion
+category: Productivity
 name: notion
 description: "Notion API + ntn CLI: pages, databases, markdown, Workers."
 version: 2.0.0
@@ -11,14 +13,18 @@ metadata:
   hermes:
     tags: [Notion, Productivity, Notes, Database, API, CLI, Workers]
     homepage: https://developers.notion.com
+tags: [Productivity]
+source: external
+featured: false
+icon: 🗂️
 ---
 
 # Notion
 
-Talk to Notion two ways. Same integration token works for both — pick by what's available.
+Talk to Notion two ways. Same integration token works for both â€” pick by what's available.
 
-◆ **`ntn` CLI** — Notion's official CLI. Shorter syntax, one-line file uploads, required for Workers. macOS + Linux only as of May 2026 (Windows support "coming soon"). **Default when installed.**
-◆ **HTTP + curl** — works everywhere including Windows. **Default fallback** when `ntn` isn't installed.
+â—† **`ntn` CLI** â€” Notion's official CLI. Shorter syntax, one-line file uploads, required for Workers. macOS + Linux only as of May 2026 (Windows support "coming soon"). **Default when installed.**
+â—† **HTTP + curl** â€” works everywhere including Windows. **Default fallback** when `ntn` isn't installed.
 
 ## Setup
 
@@ -30,7 +36,7 @@ Talk to Notion two ways. Same integration token works for both — pick by what'
    ```
    NOTION_API_KEY=ntn_your_key_here
    ```
-4. **Share target pages/databases with the integration** in Notion: page menu `...` → `Connect to` → your integration name. Without this, the API returns 404 for that page even though it exists.
+4. **Share target pages/databases with the integration** in Notion: page menu `...` â†’ `Connect to` â†’ your integration name. Without this, the API returns 404 for that page even though it exists.
 
 ### 2. Install `ntn` (preferred path on macOS / Linux)
 
@@ -44,7 +50,7 @@ npm install --global ntn
 ntn --version    # verify
 ```
 
-**Skip `ntn login` — use the integration token instead.** This works headlessly, no browser needed:
+**Skip `ntn login` â€” use the integration token instead.** This works headlessly, no browser needed:
 ```bash
 export NOTION_API_TOKEN=$NOTION_API_KEY      # ntn reads NOTION_API_TOKEN
 export NOTION_KEYRING=0                       # don't try to use the OS keychain
@@ -62,13 +68,13 @@ else
 fi
 ```
 
-Windows users: skip step 2 entirely until native `ntn` ships — Path B works fine. If you want CLI ergonomics now, install `ntn` inside WSL2.
+Windows users: skip step 2 entirely until native `ntn` ships â€” Path B works fine. If you want CLI ergonomics now, install `ntn` inside WSL2.
 
 ## API Basics
 
 `Notion-Version: 2025-09-03` is required on all HTTP requests. `ntn` handles this for you. In this version, what users call "databases" are called **data sources** in the API.
 
-## Path A — `ntn` CLI (preferred, macOS / Linux)
+## Path A â€” `ntn` CLI (preferred, macOS / Linux)
 
 ### Raw API calls (shorthand for curl)
 ```bash
@@ -79,9 +85,9 @@ ntn api v1/pages/abc123 -X PATCH archived:=true   # PATCH; := is non-string (boo
 ```
 
 Syntax notes:
-- `key=value` — string fields
-- `key[nested]=value` — nested object fields
-- `key:=value` — typed assignment (booleans, numbers, null, arrays)
+- `key=value` â€” string fields
+- `key[nested]=value` â€” nested object fields
+- `key:=value` â€” typed assignment (booleans, numbers, null, arrays)
 
 ### Search
 ```bash
@@ -134,23 +140,23 @@ echo '{"filter": {"property": "Status", "select": {"equals": "Active"}}, "sorts"
   ntn api v1/data_sources/{data_source_id}/query -X POST --json -
 ```
 
-### File uploads (one-liner — biggest CLI win)
+### File uploads (one-liner â€” biggest CLI win)
 ```bash
 ntn files create < photo.png
 ntn files create --external-url https://example.com/photo.png
 ntn files list
 ```
 
-Compare to the 3-step HTTP flow (create upload → PUT bytes → reference).
+Compare to the 3-step HTTP flow (create upload â†’ PUT bytes â†’ reference).
 
 ### Useful env vars
 | Var | Effect |
 |---|---|
-| `NOTION_API_TOKEN` | Auth token (overrides keychain) — set this to your integration token |
+| `NOTION_API_TOKEN` | Auth token (overrides keychain) â€” set this to your integration token |
 | `NOTION_KEYRING=0` | File-based creds at `~/.config/notion/auth.json` instead of OS keychain |
 | `NOTION_WORKSPACE_ID` | Skip the workspace picker prompt |
 
-## Path B — HTTP + curl (cross-platform, default on Windows)
+## Path B â€” HTTP + curl (cross-platform, default on Windows)
 
 All requests share this pattern:
 
@@ -317,7 +323,7 @@ Common property formats for database items:
 - **Email:** `{"email": "user@example.com"}`
 - **Relation:** `{"relation": [{"id": "page_id"}]}`
 
-## API Version 2025-09-03 — Databases vs Data Sources
+## API Version 2025-09-03 â€” Databases vs Data Sources
 
 - **Databases became data sources.** Use `/data_sources/` endpoints for queries and retrieval.
 - **Two IDs per database:** `database_id` and `data_source_id`.
@@ -328,9 +334,9 @@ Common property formats for database items:
 ## Notion Workers (advanced, requires `ntn`)
 
 Workers are TypeScript programs Notion hosts for you. One worker can expose any combination of:
-- **Syncs** — pull data from external APIs into a Notion database on a schedule (default 30 min).
-- **Tools** — appear as callable tools inside Notion's Custom Agents.
-- **Webhooks** — receive HTTP events from external services (GitHub, Stripe, etc.) and act in Notion.
+- **Syncs** â€” pull data from external APIs into a Notion database on a schedule (default 30 min).
+- **Tools** â€” appear as callable tools inside Notion's Custom Agents.
+- **Webhooks** â€” receive HTTP events from external services (GitHub, Stripe, etc.) and act in Notion.
 
 **Plan / platform gating:**
 - CLI works on all plans. **Deploying Workers requires Business or Enterprise.**
@@ -375,7 +381,7 @@ worker.webhook("onGithubPush", {
 });
 ```
 
-After deploy: `ntn workers webhooks list` shows the URL Notion generates. Treat that URL as a secret — anyone with it can POST events unless you add signature verification.
+After deploy: `ntn workers webhooks list` shows the URL Notion generates. Treat that URL as a secret â€” anyone with it can POST events unless you add signature verification.
 
 ### Worker lifecycle commands
 
@@ -399,7 +405,7 @@ Standard CommonMark plus XML-like tags for Notion-specific blocks. Use **tabs** 
 
 **Blocks beyond CommonMark:**
 ```
-<callout icon="🎯" color="blue_bg">
+<callout icon="ðŸŽ¯" color="blue_bg">
 	Ship the MVP by **Friday**.
 </callout>
 
@@ -425,7 +431,7 @@ Standard CommonMark plus XML-like tags for Notion-specific blocks. Use **tabs** 
 
 **Colors:** `gray brown orange yellow green blue purple pink red`, plus `*_bg` variants for backgrounds.
 
-Headings 5/6 collapse to H4. Multiple `>` lines render as separate quote blocks — use `<br>` inside a single `>` for multi-line quotes.
+Headings 5/6 collapse to H4. Multiple `>` lines render as separate quote blocks â€” use `<br>` inside a single `>` for multi-line quotes.
 
 ## Choosing the Right Path
 
@@ -439,10 +445,10 @@ Headings 5/6 collapse to H4. Multiple `>` lines render as separate quote blocks 
 
 ## Notes
 
-- Page/database IDs are UUIDs (with or without dashes — both accepted).
+- Page/database IDs are UUIDs (with or without dashes â€” both accepted).
 - Rate limit: ~3 requests/second average. The CLI doesn't bypass this.
-- The API cannot set database **view** filters — that's UI-only.
+- The API cannot set database **view** filters â€” that's UI-only.
 - Use `"is_inline": true` when creating data sources to embed them in a page.
 - Always pass `-s` to curl to suppress progress bars (cleaner agent output).
 - Pipe JSON through `jq` when reading: `... | jq '.results[0].properties'`.
-- Notion also ships an MCP server now (`Notion MCP`, ~91% more token-efficient on DB ops than the previous version) — wire it via Hermes' MCP support if you want streaming Notion access from inside a session, but the paths above are enough for most one-shot tasks.
+- Notion also ships an MCP server now (`Notion MCP`, ~91% more token-efficient on DB ops than the previous version) â€” wire it via Hermes' MCP support if you want streaming Notion access from inside a session, but the paths above are enough for most one-shot tasks.

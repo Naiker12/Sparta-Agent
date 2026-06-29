@@ -1,4 +1,6 @@
 ---
+id: huggingface-hub
+category: MLOps
 name: huggingface-hub
 description: "HuggingFace hf CLI: search/download/upload models, datasets."
 version: 1.0.0
@@ -6,6 +8,9 @@ author: Hugging Face
 license: MIT
 tags: [huggingface, hf, models, datasets, hub, mlops]
 platforms: [linux, macos, windows]
+source: external
+featured: false
+icon: 🧠
 ---
 
 # Hugging Face CLI (`hf`) Reference Guide
@@ -48,9 +53,9 @@ The `hf` command is the modern command-line interface for interacting with the H
 
 ### Datasets & Models
 *   **Datasets:** `hf datasets list`, `info`, and `parquet` (list parquet URLs).
-*   **SQL Queries:** `hf datasets sql SQL` — Execute raw SQL via DuckDB against dataset parquet URLs.
+*   **SQL Queries:** `hf datasets sql SQL` â€” Execute raw SQL via DuckDB against dataset parquet URLs.
 *   **Models:** `hf models list` and `info`.
-*   **Papers:** `hf papers list` — View daily papers.
+*   **Papers:** `hf papers list` â€” View daily papers.
 
 ### Discussions & Pull Requests (`hf discussions`)
 *   Manage the lifecycle of Hub contributions: `list`, `create`, `info`, `comment`, `close`, `reopen`, and `rename`.

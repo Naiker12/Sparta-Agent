@@ -1,4 +1,6 @@
 ---
+id: nano-pdf
+category: Productivity
 name: nano-pdf
 description: "Edit PDF text/typos/titles via nano-pdf CLI (NL prompts)."
 version: 1.0.0
@@ -9,6 +11,10 @@ metadata:
   hermes:
     tags: [PDF, Documents, Editing, NLP, Productivity]
     homepage: https://pypi.org/project/nano-pdf/
+tags: [Productivity]
+source: external
+featured: false
+icon: 🗂️
 ---
 
 # nano-pdf
@@ -18,7 +24,7 @@ Edit PDFs using natural-language instructions. Point it at a page and describe w
 ## Prerequisites
 
 ```bash
-# Install with uv (recommended — already available in Hermes)
+# Install with uv (recommended â€” already available in Hermes)
 uv pip install nano-pdf
 
 # Or with pip
@@ -46,7 +52,7 @@ nano-pdf edit contract.pdf 2 "Change the client name from 'Acme Corp' to 'Acme I
 
 ## Notes
 
-- Page numbers may be 0-based or 1-based depending on version — if the edit hits the wrong page, retry with ±1
+- Page numbers may be 0-based or 1-based depending on version â€” if the edit hits the wrong page, retry with Â±1
 - Always verify the output PDF after editing (use `read_file` to check file size, or open it)
-- The tool uses an LLM under the hood — requires an API key (check `nano-pdf --help` for config)
+- The tool uses an LLM under the hood â€” requires an API key (check `nano-pdf --help` for config)
 - Works well for text changes; complex layout modifications may need a different approach

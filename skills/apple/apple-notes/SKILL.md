@@ -1,4 +1,6 @@
 ---
+id: apple-notes
+category: Apple
 name: apple-notes
 description: "Manage Apple Notes via memo CLI: create, search, edit."
 version: 1.0.0
@@ -11,6 +13,10 @@ metadata:
     related_skills: [obsidian]
 prerequisites:
   commands: [memo]
+tags: [Apple]
+source: external
+featured: false
+icon: 🍎
 ---
 
 # Apple Notes
@@ -21,7 +27,7 @@ Use `memo` to manage Apple Notes directly from the terminal. Notes sync across a
 
 - **macOS** with Notes.app
 - Install: `brew tap antoniorodr/memo && brew install antoniorodr/memo/memo`
-- Grant Automation access to Notes.app when prompted (System Settings → Privacy → Automation)
+- Grant Automation access to Notes.app when prompted (System Settings â†’ Privacy â†’ Automation)
 
 ## When to Use
 
@@ -32,9 +38,9 @@ Use `memo` to manage Apple Notes directly from the terminal. Notes sync across a
 
 ## When NOT to Use
 
-- Obsidian vault management → use the `obsidian` skill
-- Bear Notes → separate app (not supported here)
-- Quick agent-only notes → use the `memory` tool instead
+- Obsidian vault management â†’ use the `obsidian` skill
+- Bear Notes â†’ separate app (not supported here)
+- Quick agent-only notes â†’ use the `memory` tool instead
 
 ## Quick Reference
 
@@ -81,7 +87,7 @@ memo notes -ex                    # Export to HTML/Markdown
 
 - Cannot edit notes containing images or attachments
 - Interactive prompts require terminal access (use pty=true if needed)
-- macOS only — requires Apple Notes.app
+- macOS only â€” requires Apple Notes.app
 
 ## Rules
 

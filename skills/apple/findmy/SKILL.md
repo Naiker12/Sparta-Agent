@@ -1,4 +1,6 @@
 ---
+id: findmy
+category: Apple
 name: findmy
 description: "Track Apple devices/AirTags via FindMy.app on macOS."
 version: 1.0.0
@@ -8,6 +10,10 @@ platforms: [macos]
 metadata:
   hermes:
     tags: [FindMy, AirTag, location, tracking, macOS, Apple]
+tags: [Apple]
+source: external
+featured: false
+icon: 🍎
 ---
 
 # Find My (Apple)
@@ -20,7 +26,7 @@ screen capture to read device locations.
 
 - **macOS** with Find My app and iCloud signed in
 - Devices/AirTags already registered in Find My
-- Screen Recording permission for terminal (System Settings → Privacy → Screen Recording)
+- Screen Recording permission for terminal (System Settings â†’ Privacy â†’ Screen Recording)
 - **Optional but recommended**: Install `peekaboo` for better UI automation:
   `brew install steipete/tap/peekaboo`
 
@@ -104,7 +110,7 @@ For monitoring an AirTag (e.g., tracking a cat's patrol route):
 osascript -e 'tell application "FindMy" to activate'
 sleep 3
 
-# 2. Click on the AirTag item (stay on page — AirTag only updates when page is open)
+# 2. Click on the AirTag item (stay on page â€” AirTag only updates when page is open)
 
 # 3. Periodically capture location
 while true; do
@@ -117,7 +123,7 @@ Analyze each screenshot with vision to extract coordinates, then compile a route
 
 ## Limitations
 
-- FindMy has **no CLI or API** — must use UI automation
+- FindMy has **no CLI or API** â€” must use UI automation
 - AirTags only update location while the FindMy page is actively displayed
 - Location accuracy depends on nearby Apple devices in the FindMy network
 - Screen Recording permission required for screenshots
@@ -126,6 +132,6 @@ Analyze each screenshot with vision to extract coordinates, then compile a route
 ## Rules
 
 1. Keep FindMy app in the foreground when tracking AirTags (updates stop when minimized)
-2. Use `vision_analyze` to read screenshot content — don't try to parse pixels
+2. Use `vision_analyze` to read screenshot content â€” don't try to parse pixels
 3. For ongoing tracking, use a cronjob to periodically capture and log locations
-4. Respect privacy — only track devices/items the user owns
+4. Respect privacy â€” only track devices/items the user owns

@@ -1,4 +1,6 @@
 ---
+id: excalidraw
+category: Creative
 name: excalidraw
 description: "Hand-drawn Excalidraw JSON diagrams (arch, flow, seq)."
 version: 1.0.0
@@ -11,6 +13,10 @@ metadata:
     tags: [Excalidraw, Diagrams, Flowcharts, Architecture, Visualization, JSON]
     related_skills: []
 
+tags: [Creative]
+source: external
+featured: false
+icon: 🎨
 ---
 
 # Excalidraw Diagram Skill
@@ -157,9 +163,9 @@ The shape needs `boundElements` listing the text, and the text needs `containerI
 
 ### Drawing Order (z-order)
 - Array order = z-order (first = back, last = front)
-- Emit progressively: background zones → shape → its bound text → its arrows → next shape
+- Emit progressively: background zones â†’ shape â†’ its bound text â†’ its arrows â†’ next shape
 - BAD: all rectangles, then all texts, then all arrows
-- GOOD: bg_zone → shape1 → text_for_shape1 → arrow1 → arrow_label_text → shape2 → text_for_shape2 → ...
+- GOOD: bg_zone â†’ shape1 â†’ text_for_shape1 â†’ arrow1 â†’ arrow_label_text â†’ shape2 â†’ text_for_shape2 â†’ ...
 - Always place the bound text element immediately after its container shape
 
 ### Sizing Guidelines
@@ -195,5 +201,4 @@ See `references/colors.md` for full color tables. Quick reference:
 - Do NOT use emoji in text -- they don't render in Excalidraw's font
 - For dark mode diagrams, see `references/dark-mode.md`
 - For larger examples, see `references/examples.md`
-
 

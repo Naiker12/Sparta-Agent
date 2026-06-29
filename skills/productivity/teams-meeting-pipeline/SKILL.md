@@ -1,6 +1,8 @@
 ---
+id: teams-meeting-pipeline
+category: Productivity
 name: teams-meeting-pipeline
-description: "Operate the Teams meeting summary pipeline via Hermes CLI — summarize meetings, inspect pipeline status, replay jobs, manage Microsoft Graph subscriptions."
+description: "Operate the Teams meeting summary pipeline via Hermes CLI â€” summarize meetings, inspect pipeline status, replay jobs, manage Microsoft Graph subscriptions."
 version: 1.1.0
 author: Hermes Agent + Teknium
 license: MIT
@@ -14,13 +16,17 @@ metadata:
       - /docs/guides/microsoft-graph-app-registration
       - /docs/user-guide/messaging/teams-meetings
       - /docs/guides/operate-teams-meeting-pipeline
+tags: [Productivity]
+source: external
+featured: false
+icon: 🗂️
 ---
 
 # Teams Meeting Pipeline
 
-Use this skill whenever the user asks about Microsoft Teams meeting summaries, transcripts, recordings, action items, Graph subscriptions, or any operational question about the Teams meeting pipeline. Works in any language — the triggers below are examples, not an exhaustive list.
+Use this skill whenever the user asks about Microsoft Teams meeting summaries, transcripts, recordings, action items, Graph subscriptions, or any operational question about the Teams meeting pipeline. Works in any language â€” the triggers below are examples, not an exhaustive list.
 
-Everything operator-facing is a `hermes teams-pipeline` subcommand run via the terminal tool. There are no new model tools for this pipeline — the CLI is the surface.
+Everything operator-facing is a `hermes teams-pipeline` subcommand run via the terminal tool. There are no new model tools for this pipeline â€” the CLI is the surface.
 
 ## When to use this skill
 
@@ -35,7 +41,7 @@ The user is asking to:
 
 Multilingual trigger examples (not exhaustive):
 - English: "summarize the Teams meeting", "pipeline status", "replay job X"
-- Turkish: "Teams meeting özetle", "action item çıkar", "toplantı notu", "pipeline durumu", "replay job"
+- Turkish: "Teams meeting Ã¶zetle", "action item Ã§Ä±kar", "toplantÄ± notu", "pipeline durumu", "replay job"
 
 ## Prerequisites
 
@@ -47,14 +53,14 @@ MSGRAPH_CLIENT_ID=...
 MSGRAPH_CLIENT_SECRET=...
 ```
 
-If any are missing, direct the user to the Azure app registration guide at `/docs/guides/microsoft-graph-app-registration` — they need an Azure AD app registration with admin-consented Graph application permissions before the pipeline will work.
+If any are missing, direct the user to the Azure app registration guide at `/docs/guides/microsoft-graph-app-registration` â€” they need an Azure AD app registration with admin-consented Graph application permissions before the pipeline will work.
 
 ## Command reference
 
 ### Status and inspection (start here)
 
 ```bash
-hermes teams-pipeline validate              # config snapshot — run first after any change
+hermes teams-pipeline validate              # config snapshot â€” run first after any change
 hermes teams-pipeline token-health          # Graph token status
 hermes teams-pipeline token-health --force-refresh   # force a fresh token acquisition
 hermes teams-pipeline list                  # recent meeting jobs
@@ -87,17 +93,17 @@ hermes teams-pipeline maintain-subscriptions --dry-run  # show what would be ren
 
 ## Decision tree for common asks
 
-- User asks "why didn't I get a summary for today's meeting?" → start with `list --status failed`, then `show <job-id>` on the relevant row. If the job doesn't exist at all, check `subscriptions` — the webhook may have expired (see pitfall below).
-- User asks "is setup working?" → `validate`, then `token-health`, then `subscriptions`. If all three pass, request a test meeting and check `list` for a fresh row.
-- User asks "re-run summary for meeting X" → `list` to find the job ID, `run <job-id>` to replay. If it fails again, `show <job-id>` to inspect the error and `fetch --meeting-id` to dry-run the artifact resolution.
-- User asks "add meeting X to the pipeline" → usually you don't — the pipeline is subscription-driven, not per-meeting. If they want a specific past meeting summarized, use `fetch` to pull transcript + `run` after a job is created.
+- User asks "why didn't I get a summary for today's meeting?" â†’ start with `list --status failed`, then `show <job-id>` on the relevant row. If the job doesn't exist at all, check `subscriptions` â€” the webhook may have expired (see pitfall below).
+- User asks "is setup working?" â†’ `validate`, then `token-health`, then `subscriptions`. If all three pass, request a test meeting and check `list` for a fresh row.
+- User asks "re-run summary for meeting X" â†’ `list` to find the job ID, `run <job-id>` to replay. If it fails again, `show <job-id>` to inspect the error and `fetch --meeting-id` to dry-run the artifact resolution.
+- User asks "add meeting X to the pipeline" â†’ usually you don't â€” the pipeline is subscription-driven, not per-meeting. If they want a specific past meeting summarized, use `fetch` to pull transcript + `run` after a job is created.
 
 ## Critical pitfall: Graph subscriptions expire in 72 hours
 
 Microsoft Graph caps webhook subscriptions at 72 hours and **will not auto-renew them**. If `maintain-subscriptions` is not scheduled, meeting notifications silently stop arriving 3 days after any manual subscription creation.
 
 When the user reports "the pipeline worked yesterday but nothing is arriving today":
-1. Run `hermes teams-pipeline subscriptions` — if it's empty or all entries show `expirationDateTime` in the past, that's the cause.
+1. Run `hermes teams-pipeline subscriptions` â€” if it's empty or all entries show `expirationDateTime` in the past, that's the cause.
 2. Recreate with `subscribe` as shown above.
 3. **Set up automated renewal immediately** via `hermes cron add`, a systemd timer, or plain crontab. The operator runbook at `/docs/guides/operate-teams-meeting-pipeline#automating-subscription-renewal-required-for-production` has all three options. 12-hour interval is safe (6x headroom against the 72h limit).
 

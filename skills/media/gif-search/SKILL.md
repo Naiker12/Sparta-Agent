@@ -1,4 +1,6 @@
 ---
+id: gif-search
+category: Media
 name: gif-search
 description: "Search/download GIFs from Tenor via curl + jq."
 version: 1.1.0
@@ -11,6 +13,10 @@ prerequisites:
 metadata:
   hermes:
     tags: [GIF, Media, Search, Tenor, API]
+tags: [Media]
+source: external
+featured: false
+icon: 🎬
 ---
 
 # GIF Search (Tenor API)
@@ -29,7 +35,7 @@ Set your Tenor API key in your environment (add to `${HERMES_HOME:-~/.hermes}/.e
 TENOR_API_KEY=your_key_here
 ```
 
-Get a free API key at https://developers.google.com/tenor/guides/quickstart — the Google Cloud Console Tenor API key is free and has generous rate limits.
+Get a free API key at https://developers.google.com/tenor/guides/quickstart â€” the Google Cloud Console Tenor API key is free and has generous rate limits.
 
 ## Prerequisites
 

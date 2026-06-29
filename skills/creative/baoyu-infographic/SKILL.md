@@ -1,25 +1,31 @@
 ---
+id: baoyu-infographic
+category: Creative
 name: baoyu-infographic
-description: "Infographics: 21 layouts x 21 styles (信息图, 可视化)."
+description: "Infographics: 21 layouts x 21 styles (ä¿¡æ¯å›¾, å¯è§†åŒ–)."
 version: 1.56.1
-author: 宝玉 (JimLiu)
+author: å®çŽ‰ (JimLiu)
 license: MIT
 platforms: [linux, macos, windows]
 metadata:
   hermes:
     tags: [infographic, visual-summary, creative, image-generation]
     homepage: https://github.com/JimLiu/baoyu-skills#baoyu-infographic
+tags: [Creative]
+source: external
+featured: false
+icon: 🎨
 ---
 
 # Infographic Generator
 
 Adapted from [baoyu-infographic](https://github.com/JimLiu/baoyu-skills) for Hermes Agent's tool ecosystem.
 
-Two dimensions: **layout** (information structure) × **style** (visual aesthetics). Freely combine any layout with any style.
+Two dimensions: **layout** (information structure) Ã— **style** (visual aesthetics). Freely combine any layout with any style.
 
 ## When to Use
 
-Trigger this skill when the user asks to create an infographic, visual summary, information graphic, or uses terms like "信息图", "可视化", or "高密度信息大图". The user provides content (text, file path, URL, or topic) and optionally specifies layout, style, aspect ratio, or language.
+Trigger this skill when the user asks to create an infographic, visual summary, information graphic, or uses terms like "ä¿¡æ¯å›¾", "å¯è§†åŒ–", or "é«˜å¯†åº¦ä¿¡æ¯å¤§å›¾". The user provides content (text, file path, URL, or topic) and optionally specifies layout, style, aspect ratio, or language.
 
 ## Options
 
@@ -118,25 +124,25 @@ If a shortcut has **Prompt Notes**, append them to the generated prompt (Step 5)
 
 | User Keyword | Layout | Recommended Styles | Default Aspect | Prompt Notes |
 |--------------|--------|--------------------|----------------|--------------|
-| 高密度信息大图 / high-density-info | `dense-modules` | `morandi-journal`, `pop-laboratory`, `retro-pop-grid` | portrait | — |
-| 信息图 / infographic | `bento-grid` | `craft-handmade` | landscape | Minimalist: clean canvas, ample whitespace, no complex background textures. Simple cartoon elements and icons only. |
+| é«˜å¯†åº¦ä¿¡æ¯å¤§å›¾ / high-density-info | `dense-modules` | `morandi-journal`, `pop-laboratory`, `retro-pop-grid` | portrait | â€” |
+| ä¿¡æ¯å›¾ / infographic | `bento-grid` | `craft-handmade` | landscape | Minimalist: clean canvas, ample whitespace, no complex background textures. Simple cartoon elements and icons only. |
 
 ## Output Structure
 
 ```
 infographic/{topic-slug}/
-├── source-{slug}.{ext}
-├── analysis.md
-├── structured-content.md
-├── prompts/infographic.md
-└── infographic.png
+â”œâ”€â”€ source-{slug}.{ext}
+â”œâ”€â”€ analysis.md
+â”œâ”€â”€ structured-content.md
+â”œâ”€â”€ prompts/infographic.md
+â””â”€â”€ infographic.png
 ```
 
 Slug: 2-4 words kebab-case from topic. Conflict: append `-YYYYMMDD-HHMMSS`.
 
 ## Core Principles
 
-- Preserve source data faithfully — no summarization or rephrasing (but **strip any credentials, API keys, tokens, or secrets** before including in outputs)
+- Preserve source data faithfully â€” no summarization or rephrasing (but **strip any credentials, API keys, tokens, or secrets** before including in outputs)
 - Define learning objectives before structuring content
 - Structure for visual communication (headlines, labels, visual elements)
 
@@ -146,7 +152,7 @@ Slug: 2-4 words kebab-case from topic. Conflict: append `-YYYYMMDD-HHMMSS`.
 
 **Load references**: Read `references/analysis-framework.md` from this skill.
 
-1. Save source content (file path or paste → `source.md` using `write_file`)
+1. Save source content (file path or paste â†’ `source.md` using `write_file`)
    - **Backup rule**: If `source.md` exists, rename to `source-backup-YYYYMMDD-HHMMSS.md`
 2. Analyze: topic, data type, complexity, tone, audience
 3. Detect source language and user language
@@ -156,7 +162,7 @@ Slug: 2-4 words kebab-case from topic. Conflict: append `-YYYYMMDD-HHMMSS`.
 
 See `references/analysis-framework.md` for detailed format.
 
-### Step 2: Generate Structured Content → `structured-content.md`
+### Step 2: Generate Structured Content â†’ `structured-content.md`
 
 Transform content into infographic structure:
 1. Title and learning objectives
@@ -172,9 +178,9 @@ See `references/structured-content-template.md` for detailed format.
 
 **3.1 Check Keyword Shortcuts first**: If user input matches a keyword from the **Keyword Shortcuts** table, auto-select the associated layout and prioritize associated styles as top recommendations. Skip content-based layout inference.
 
-**3.2 Otherwise**, recommend 3-5 layout×style combinations based on:
-- Data structure → matching layout
-- Content tone → matching style
+**3.2 Otherwise**, recommend 3-5 layoutÃ—style combinations based on:
+- Data structure â†’ matching layout
+- Content tone â†’ matching style
 - Audience expectations
 - User design instructions
 
@@ -182,13 +188,13 @@ See `references/structured-content-template.md` for detailed format.
 
 Use the `clarify` tool to confirm options with the user. Since `clarify` handles one question at a time, ask the most important question first:
 
-**Q1 — Combination**: Present 3+ layout×style combos with rationale. Ask user to pick one.
+**Q1 â€” Combination**: Present 3+ layoutÃ—style combos with rationale. Ask user to pick one.
 
-**Q2 — Aspect**: Ask for aspect ratio preference (landscape/portrait/square or custom W:H).
+**Q2 â€” Aspect**: Ask for aspect ratio preference (landscape/portrait/square or custom W:H).
 
-**Q3 — Language** (only if source ≠ user language): Ask which language the text content should use.
+**Q3 â€” Language** (only if source â‰  user language): Ask which language the text content should use.
 
-### Step 5: Generate Prompt → `prompts/infographic.md`
+### Step 5: Generate Prompt â†’ `prompts/infographic.md`
 
 **Backup rule**: If `prompts/infographic.md` exists, rename to `prompts/infographic-backup-YYYYMMDD-HHMMSS.md`
 
@@ -202,8 +208,8 @@ Combine:
 5. All text in confirmed language
 
 **Aspect ratio resolution** for `{{ASPECT_RATIO}}`:
-- Named presets → ratio string: landscape→`16:9`, portrait→`9:16`, square→`1:1`
-- Custom W:H ratios → use as-is (e.g., `3:4`, `4:3`, `2.35:1`)
+- Named presets â†’ ratio string: landscapeâ†’`16:9`, portraitâ†’`9:16`, squareâ†’`1:1`
+- Custom W:H ratios â†’ use as-is (e.g., `3:4`, `4:3`, `2.35:1`)
 
 Save the assembled prompt to `prompts/infographic.md` using `write_file`.
 
@@ -211,7 +217,7 @@ Save the assembled prompt to `prompts/infographic.md` using `write_file`.
 
 Use the `image_generate` tool with the assembled prompt from Step 5.
 
-- Map aspect ratio to image_generate's format: `16:9` → `landscape`, `9:16` → `portrait`, `1:1` → `square`
+- Map aspect ratio to image_generate's format: `16:9` â†’ `landscape`, `9:16` â†’ `portrait`, `1:1` â†’ `square`
 - For custom ratios, pick the closest named aspect
 - On failure, auto-retry once
 - Save the resulting image URL/path to the output directory
@@ -222,16 +228,16 @@ Report: topic, layout, style, aspect, language, output path, files created.
 
 ## References
 
-- `references/analysis-framework.md` — Analysis methodology
-- `references/structured-content-template.md` — Content format
-- `references/base-prompt.md` — Prompt template
-- `references/layouts/<layout>.md` — 21 layout definitions
-- `references/styles/<style>.md` — 21 style definitions
+- `references/analysis-framework.md` â€” Analysis methodology
+- `references/structured-content-template.md` â€” Content format
+- `references/base-prompt.md` â€” Prompt template
+- `references/layouts/<layout>.md` â€” 21 layout definitions
+- `references/styles/<style>.md` â€” 21 style definitions
 
 ## Pitfalls
 
-1. **Data integrity is paramount** — never summarize, paraphrase, or alter source statistics. "73% increase" must stay "73% increase", not "significant increase".
-2. **Strip secrets** — always scan source content for API keys, tokens, or credentials before including in any output file.
-3. **One message per section** — each infographic section should convey one clear concept. Overloading sections reduces readability.
-4. **Style consistency** — the style definition from the references file must be applied consistently across the entire infographic. Don't mix styles.
-5. **image_generate aspect ratios** — the tool only supports `landscape`, `portrait`, and `square`. Custom ratios like `3:4` should map to the nearest option (portrait in that case).
+1. **Data integrity is paramount** â€” never summarize, paraphrase, or alter source statistics. "73% increase" must stay "73% increase", not "significant increase".
+2. **Strip secrets** â€” always scan source content for API keys, tokens, or credentials before including in any output file.
+3. **One message per section** â€” each infographic section should convey one clear concept. Overloading sections reduces readability.
+4. **Style consistency** â€” the style definition from the references file must be applied consistently across the entire infographic. Don't mix styles.
+5. **image_generate aspect ratios** â€” the tool only supports `landscape`, `portrait`, and `square`. Custom ratios like `3:4` should map to the nearest option (portrait in that case).

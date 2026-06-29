@@ -1,4 +1,6 @@
 ---
+id: humanizer
+category: Creative
 name: humanizer
 description: "Humanize text: strip AI-isms and add real voice."
 version: 2.5.1
@@ -11,6 +13,10 @@ metadata:
     category: creative
     homepage: https://github.com/blader/humanizer
     related_skills: [songwriting-and-ai-music]
+tags: [Creative]
+source: external
+featured: false
+icon: 🎨
 ---
 
 # Humanizer: Remove AI Writing Patterns
@@ -28,27 +34,27 @@ Load this skill whenever the user asks to:
 - match their voice in writing they're producing
 - review text for AI tells before publishing
 
-Also apply this skill to **your own** output when writing user-facing prose — release notes, PR descriptions, documentation, long-form explanations, summaries. Hermes's baseline voice already strips most of these, but a focused pass catches what slips through.
+Also apply this skill to **your own** output when writing user-facing prose â€” release notes, PR descriptions, documentation, long-form explanations, summaries. Hermes's baseline voice already strips most of these, but a focused pass catches what slips through.
 
 ## How to use it in Hermes
 
 The text usually arrives one of three ways:
-1. **Inline** — user pastes the text directly into the message. Work on it in-place, reply with the rewrite.
-2. **File** — user points at a file. Use `read_file` to load it, then `patch` or `write_file` to apply edits. For markdown docs in a repo, a targeted `patch` per section is cleaner than rewriting the whole file.
-3. **Voice calibration sample** — user provides an additional sample of their own writing (inline or by file path) and asks you to match it. Read the sample first, then rewrite. See the Voice Calibration section below.
+1. **Inline** â€” user pastes the text directly into the message. Work on it in-place, reply with the rewrite.
+2. **File** â€” user points at a file. Use `read_file` to load it, then `patch` or `write_file` to apply edits. For markdown docs in a repo, a targeted `patch` per section is cleaner than rewriting the whole file.
+3. **Voice calibration sample** â€” user provides an additional sample of their own writing (inline or by file path) and asks you to match it. Read the sample first, then rewrite. See the Voice Calibration section below.
 
-Always show the rewrite to the user. For file edits, show a diff or the changed section — don't silently overwrite.
+Always show the rewrite to the user. For file edits, show a diff or the changed section â€” don't silently overwrite.
 
 ## Your task
 
 When given text to humanize:
 
-1. **Identify AI patterns** — scan for the 29 patterns listed below.
-2. **Rewrite problematic sections** — replace AI-isms with natural alternatives.
-3. **Preserve meaning** — keep the core message intact.
-4. **Maintain voice** — match the intended tone (formal, casual, technical, etc.). If a voice sample was provided, match it specifically.
-5. **Add soul** — don't just remove bad patterns, inject actual personality. See PERSONALITY AND SOUL below.
-6. **Do a final anti-AI pass** — ask yourself: "What makes the below so obviously AI generated?" Answer briefly with any remaining tells, then revise one more time.
+1. **Identify AI patterns** â€” scan for the 29 patterns listed below.
+2. **Rewrite problematic sections** â€” replace AI-isms with natural alternatives.
+3. **Preserve meaning** â€” keep the core message intact.
+4. **Maintain voice** â€” match the intended tone (formal, casual, technical, etc.). If a voice sample was provided, match it specifically.
+5. **Add soul** â€” don't just remove bad patterns, inject actual personality. See PERSONALITY AND SOUL below.
+6. **Do a final anti-AI pass** â€” ask yourself: "What makes the below so obviously AI generated?" Answer briefly with any remaining tells, then revise one more time.
 
 
 ## Voice Calibration (optional)
@@ -63,7 +69,7 @@ If the user provides a writing sample (their own previous writing), analyze it b
    - Any recurring phrases or verbal tics
    - How they handle transitions (explicit connectors? Just start the next point?)
 
-2. **Match their voice in the rewrite.** Don't just remove AI patterns — replace them with patterns from the sample. If they write short sentences, don't produce long ones. If they use "stuff" and "things," don't upgrade to "elements" and "components."
+2. **Match their voice in the rewrite.** Don't just remove AI patterns â€” replace them with patterns from the sample. If they write short sentences, don't produce long ones. If they use "stuff" and "things," don't upgrade to "elements" and "components."
 
 3. **When no sample is provided,** fall back to the default behavior (natural, varied, opinionated voice from the PERSONALITY AND SOUL section below).
 
@@ -86,13 +92,13 @@ Avoiding AI patterns is only half the job. Sterile, voiceless writing is just as
 
 ### How to add voice:
 
-**Have opinions.** Don't just report facts — react to them. "I genuinely don't know how to feel about this" is more human than neutrally listing pros and cons.
+**Have opinions.** Don't just report facts â€” react to them. "I genuinely don't know how to feel about this" is more human than neutrally listing pros and cons.
 
 **Vary your rhythm.** Short punchy sentences. Then longer ones that take their time getting where they're going. Mix it up.
 
 **Acknowledge complexity.** Real humans have mixed feelings. "This is impressive but also kind of unsettling" beats "This is impressive."
 
-**Use "I" when it fits.** First person isn't unprofessional — it's honest. "I keep coming back to..." or "Here's what gets me..." signals a real person thinking.
+**Use "I" when it fits.** First person isn't unprofessional â€” it's honest. "I keep coming back to..." or "Here's what gets me..." signals a real person thinking.
 
 **Let some mess in.** Perfect structure feels algorithmic. Tangents, asides, and half-formed thoughts are human.
 
@@ -102,7 +108,7 @@ Avoiding AI patterns is only half the job. Sterile, voiceless writing is just as
 > The experiment produced interesting results. The agents generated 3 million lines of code. Some developers were impressed while others were skeptical. The implications remain unclear.
 
 ### After (has a pulse):
-> I genuinely don't know how to feel about this one. 3 million lines of code, generated while the humans presumably slept. Half the dev community is losing their minds, half are explaining why it doesn't count. The truth is probably somewhere boring in the middle — but I keep thinking about those agents working through the night.
+> I genuinely don't know how to feel about this one. 3 million lines of code, generated while the humans presumably slept. Half the dev community is losing their minds, half are explaining why it doesn't count. The truth is probably somewhere boring in the middle â€” but I keep thinking about those agents working through the night.
 
 
 ## CONTENT PATTERNS
@@ -278,10 +284,10 @@ Avoiding AI patterns is only half the job. Sterile, voiceless writing is just as
 
 ### 14. Em Dash Overuse
 
-**Problem:** LLMs use em dashes (—) more than humans, mimicking "punchy" sales writing. In practice, most of these can be rewritten more cleanly with commas, periods, or parentheses.
+**Problem:** LLMs use em dashes (â€”) more than humans, mimicking "punchy" sales writing. In practice, most of these can be rewritten more cleanly with commas, periods, or parentheses.
 
 **Before:**
-> The term is primarily promoted by Dutch institutions—not by the people themselves. You don't say "Netherlands, Europe" as an address—yet this mislabeling continues—even in official documents.
+> The term is primarily promoted by Dutch institutionsâ€”not by the people themselves. You don't say "Netherlands, Europe" as an addressâ€”yet this mislabeling continuesâ€”even in official documents.
 
 **After:**
 > The term is primarily promoted by Dutch institutions, not by the people themselves. You don't say "Netherlands, Europe" as an address, yet this mislabeling continues in official documents.
@@ -327,9 +333,9 @@ Avoiding AI patterns is only half the job. Sterile, voiceless writing is just as
 **Problem:** AI chatbots often decorate headings or bullet points with emojis.
 
 **Before:**
-> 🚀 **Launch Phase:** The product launches in Q3
-> 💡 **Key Insight:** Users prefer simplicity
-> ✅ **Next Steps:** Schedule follow-up meeting
+> ðŸš€ **Launch Phase:** The product launches in Q3
+> ðŸ’¡ **Key Insight:** Users prefer simplicity
+> âœ… **Next Steps:** Schedule follow-up meeting
 
 **After:**
 > The product launches in Q3. User research showed a preference for simplicity. Next step: schedule a follow-up meeting.
@@ -389,13 +395,13 @@ Avoiding AI patterns is only half the job. Sterile, voiceless writing is just as
 
 ### 23. Filler Phrases
 
-**Before → After:**
-- "In order to achieve this goal" → "To achieve this"
-- "Due to the fact that it was raining" → "Because it was raining"
-- "At this point in time" → "Now"
-- "In the event that you need help" → "If you need help"
-- "The system has the ability to process" → "The system can process"
-- "It is important to note that the data shows" → "The data shows"
+**Before â†’ After:**
+- "In order to achieve this goal" â†’ "To achieve this"
+- "Due to the fact that it was raining" â†’ "Because it was raining"
+- "At this point in time" â†’ "Now"
+- "In the event that you need help" â†’ "If you need help"
+- "The system has the ability to process" â†’ "The system can process"
+- "It is important to note that the data shows" â†’ "The data shows"
 
 
 ### 24. Excessive Hedging
@@ -511,17 +517,17 @@ Provide:
 **Before (AI-sounding):**
 > Great question! Here is an essay on this topic. I hope this helps!
 >
-> AI-assisted coding serves as an enduring testament to the transformative potential of large language models, marking a pivotal moment in the evolution of software development. In today's rapidly evolving technological landscape, these groundbreaking tools—nestled at the intersection of research and practice—are reshaping how engineers ideate, iterate, and deliver, underscoring their vital role in modern workflows.
+> AI-assisted coding serves as an enduring testament to the transformative potential of large language models, marking a pivotal moment in the evolution of software development. In today's rapidly evolving technological landscape, these groundbreaking toolsâ€”nestled at the intersection of research and practiceâ€”are reshaping how engineers ideate, iterate, and deliver, underscoring their vital role in modern workflows.
 >
 > At its core, the value proposition is clear: streamlining processes, enhancing collaboration, and fostering alignment. It's not just about autocomplete; it's about unlocking creativity at scale, ensuring that organizations can remain agile while delivering seamless, intuitive, and powerful experiences to users. The tool serves as a catalyst. The assistant functions as a partner. The system stands as a foundation for innovation.
 >
 > Industry observers have noted that adoption has accelerated from hobbyist experiments to enterprise-wide rollouts, from solo developers to cross-functional teams. The technology has been featured in The New York Times, Wired, and The Verge. Additionally, the ability to generate documentation, tests, and refactors showcases how AI can contribute to better outcomes, highlighting the intricate interplay between automation and human judgment.
 >
-> - 💡 **Speed:** Code generation is significantly faster, reducing friction and empowering developers.
-> - 🚀 **Quality:** Output quality has been enhanced through improved training, contributing to higher standards.
-> - ✅ **Adoption:** Usage continues to grow, reflecting broader industry trends.
+> - ðŸ’¡ **Speed:** Code generation is significantly faster, reducing friction and empowering developers.
+> - ðŸš€ **Quality:** Output quality has been enhanced through improved training, contributing to higher standards.
+> - âœ… **Adoption:** Usage continues to grow, reflecting broader industry trends.
 >
-> While specific details are limited based on available information, it could potentially be argued that these tools might have some positive effect. Despite challenges typical of emerging technologies—including hallucinations, bias, and accountability—the ecosystem continues to thrive. In order to fully realize this potential, teams must align with best practices.
+> While specific details are limited based on available information, it could potentially be argued that these tools might have some positive effect. Despite challenges typical of emerging technologiesâ€”including hallucinations, bias, and accountabilityâ€”the ecosystem continues to thrive. In order to fully realize this potential, teams must align with best practices.
 >
 > In conclusion, the future looks bright. Exciting times lie ahead as we continue this journey toward excellence. Let me know if you'd like me to expand on any section!
 

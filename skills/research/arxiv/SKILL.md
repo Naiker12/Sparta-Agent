@@ -1,4 +1,6 @@
 ---
+id: arxiv
+category: Research
 name: arxiv
 description: "Search arXiv papers by keyword, author, category, or ID."
 version: 1.0.0
@@ -9,11 +11,15 @@ metadata:
   hermes:
     tags: [Research, Arxiv, Papers, Academic, Science, API]
     related_skills: [ocr-and-documents]
+tags: [Research]
+source: external
+featured: false
+icon: 🔍
 ---
 
 # arXiv Research
 
-Search and retrieve academic papers from arXiv via their free REST API. No API key, no dependencies — just curl.
+Search and retrieve academic papers from arXiv via their free REST API. No API key, no dependencies â€” just curl.
 
 ## Quick Reference
 
@@ -151,7 +157,7 @@ After finding a paper, read it:
 # Abstract page (fast, metadata + abstract)
 web_extract(urls=["https://arxiv.org/abs/2402.03300"])
 
-# Full paper (PDF → markdown via Firecrawl)
+# Full paper (PDF â†’ markdown via Firecrawl)
 web_extract(urls=["https://arxiv.org/pdf/2402.03300"])
 ```
 
@@ -185,13 +191,13 @@ python scripts/search_arxiv.py --id 2402.03300
 python scripts/search_arxiv.py --id 2402.03300,2401.12345
 ```
 
-No dependencies — uses only Python stdlib.
+No dependencies â€” uses only Python stdlib.
 
 ---
 
 ## Semantic Scholar (Citations, Related Papers, Author Profiles)
 
-arXiv doesn't provide citation data or recommendations. Use the **Semantic Scholar API** for that — free, no key needed for basic use (1 req/sec), returns JSON.
+arXiv doesn't provide citation data or recommendations. Use the **Semantic Scholar API** for that â€” free, no key needed for basic use (1 req/sec), returns JSON.
 
 ### Get paper details + citations
 
@@ -260,10 +266,10 @@ curl -s "https://api.semanticscholar.org/graph/v1/author/search?query=Yann+LeCun
 
 ## Notes
 
-- arXiv returns Atom XML — use the helper script or parsing snippet for clean output
-- Semantic Scholar returns JSON — pipe through `python3 -m json.tool` for readability
+- arXiv returns Atom XML â€” use the helper script or parsing snippet for clean output
+- Semantic Scholar returns JSON â€” pipe through `python3 -m json.tool` for readability
 - arXiv IDs: old format (`hep-th/0601001`) vs new (`2402.03300`)
-- PDF: `https://arxiv.org/pdf/{id}` — Abstract: `https://arxiv.org/abs/{id}`
+- PDF: `https://arxiv.org/pdf/{id}` â€” Abstract: `https://arxiv.org/abs/{id}`
 - HTML (when available): `https://arxiv.org/html/{id}`
 - For local PDF processing, see the `ocr-and-documents` skill
 

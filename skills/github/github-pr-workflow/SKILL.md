@@ -1,4 +1,6 @@
 ---
+id: github-pr-workflow
+category: GitHub
 name: github-pr-workflow
 description: "GitHub PR lifecycle: branch, commit, open, CI, merge."
 version: 1.1.0
@@ -9,6 +11,10 @@ metadata:
   hermes:
     tags: [GitHub, Pull-Requests, CI/CD, Git, Automation, Merge]
     related_skills: [github-auth, github-code-review]
+tags: [GitHub]
+source: external
+featured: false
+icon: 🐙
 ---
 
 # GitHub Pull Request Workflow
@@ -57,7 +63,7 @@ echo "Owner: $OWNER, Repo: $REPO"
 
 ## 1. Branch Creation
 
-This part is pure `git` — identical either way:
+This part is pure `git` â€” identical either way:
 
 ```bash
 # Make sure you're up to date
@@ -69,11 +75,11 @@ git checkout -b feat/add-user-authentication
 ```
 
 Branch naming conventions:
-- `feat/description` — new features
-- `fix/description` — bug fixes
-- `refactor/description` — code restructuring
-- `docs/description` — documentation
-- `ci/description` — CI/CD changes
+- `feat/description` â€” new features
+- `fix/description` â€” bug fixes
+- `refactor/description` â€” code restructuring
+- `docs/description` â€” documentation
+- `ci/description` â€” CI/CD changes
 
 ## 2. Making Commits
 
@@ -145,7 +151,7 @@ curl -s -X POST \
   }"
 ```
 
-The response JSON includes the PR `number` — save it for later commands.
+The response JSON includes the PR `number` â€” save it for later commands.
 
 To create as a draft, add `"draft": true` to the JSON body.
 
@@ -194,7 +200,7 @@ for cr in data.get('check_runs', []):
 ### Poll Until Complete (git + curl)
 
 ```bash
-# Simple polling loop — check every 30 seconds, up to 10 minutes
+# Simple polling loop â€” check every 30 seconds, up to 10 minutes
 SHA=$(git rev-parse HEAD)
 for i in $(seq 1 20); do
   STATUS=$(curl -s \
@@ -267,11 +273,11 @@ Re-check CI status using the commands from Section 4 above.
 
 When asked to auto-fix CI, follow this loop:
 
-1. Check CI status → identify failures
-2. Read failure logs → understand the error
-3. Use `read_file` + `patch`/`write_file` → fix the code
+1. Check CI status â†’ identify failures
+2. Read failure logs â†’ understand the error
+3. Use `read_file` + `patch`/`write_file` â†’ fix the code
 4. `git add . && git commit -m "fix: ..." && git push`
-5. Wait for CI → re-check status
+5. Wait for CI â†’ re-check status
 6. Repeat if still failing (up to 3 attempts, then ask the user)
 
 ## 6. Merging

@@ -1,4 +1,6 @@
 ---
+id: segment-anything
+category: Models
 name: segment-anything-model
 description: "SAM: zero-shot image segmentation via points, boxes, masks."
 version: 1.0.0
@@ -8,8 +10,12 @@ dependencies: [segment-anything, transformers>=4.30.0, torch>=1.7.0]
 platforms: [linux, macos, windows]
 metadata:
   hermes:
-    tags: [Multimodal, Image Segmentation, Computer Vision, SAM, Zero-Shot]
+    tags: [MLOps]
 
+tags: [MLOps]
+source: external
+featured: false
+icon: ðŸ“¦
 ---
 
 # Segment Anything Model (SAM)
@@ -138,11 +144,11 @@ masks = processor.image_processor.post_process_masks(
 <!-- ascii-guard-ignore -->
 ```
 SAM Architecture:
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│  Image Encoder  │────▶│ Prompt Encoder  │────▶│  Mask Decoder   │
-│     (ViT)       │     │ (Points/Boxes)  │     │ (Transformer)   │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
-        │                       │                       │
+Ã¢â€Å’Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€Â     Ã¢â€Å’Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€Â     Ã¢â€Å’Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€Â
+Ã¢â€â€š  Image Encoder  Ã¢â€â€šÃ¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€“Â¶Ã¢â€â€š Prompt Encoder  Ã¢â€â€šÃ¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€“Â¶Ã¢â€â€š  Mask Decoder   Ã¢â€â€š
+Ã¢â€â€š     (ViT)       Ã¢â€â€š     Ã¢â€â€š (Points/Boxes)  Ã¢â€â€š     Ã¢â€â€š (Transformer)   Ã¢â€â€š
+Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€Ëœ     Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€Ëœ     Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€Ëœ
+        Ã¢â€â€š                       Ã¢â€â€š                       Ã¢â€â€š
    Image Embeddings      Prompt Embeddings         Masks + IoU
    (computed once)       (per prompt)             predictions
 ```
@@ -430,7 +436,7 @@ masks, scores, _ = predictor.predict(
 ```python
 # SamAutomaticMaskGenerator output
 {
-    "segmentation": np.ndarray,  # H×W binary mask
+    "segmentation": np.ndarray,  # HÃƒâ€”W binary mask
     "bbox": [x, y, w, h],        # Bounding box
     "area": int,                 # Pixel count
     "predicted_iou": float,      # 0-1 quality score

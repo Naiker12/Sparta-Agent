@@ -1,4 +1,6 @@
 ---
+id: songsee
+category: Media
 name: songsee
 description: "Audio spectrograms/features (mel, chroma, MFCC) via CLI."
 version: 1.0.0
@@ -11,6 +13,10 @@ metadata:
     homepage: https://github.com/steipete/songsee
 prerequisites:
   commands: [songsee]
+tags: [Media]
+source: external
+featured: false
+icon: 🎬
 ---
 
 # songsee

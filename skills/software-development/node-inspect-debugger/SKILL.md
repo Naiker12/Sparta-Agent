@@ -1,4 +1,6 @@
 ---
+id: node-inspect-debugger
+category: Software Development
 name: node-inspect-debugger
 description: "Debug Node.js via --inspect + Chrome DevTools Protocol CLI."
 version: 1.0.0
@@ -9,6 +11,10 @@ metadata:
   hermes:
     tags: [debugging, nodejs, node-inspect, cdp, breakpoints, ui-tui]
     related_skills: [systematic-debugging, python-debugpy, debugging-hermes-tui-commands]
+tags: [SoftwareDevelopment]
+source: external
+featured: false
+icon: 🛠️
 ---
 
 # Node.js Inspect Debugger
@@ -19,8 +25,8 @@ When `console.log` isn't enough, drive Node's built-in V8 inspector programmatic
 
 Two tools, pick one:
 
-- **`node inspect`** — built-in, zero install, CLI REPL. Best for quick poking.
-- **`ndb` / CDP via `chrome-remote-interface`** — scriptable from Node/Python; best when you want to automate many breakpoints, collect state across runs, or debug non-interactively from an agent loop.
+- **`node inspect`** â€” built-in, zero install, CLI REPL. Best for quick poking.
+- **`ndb` / CDP via `chrome-remote-interface`** â€” scriptable from Node/Python; best when you want to automate many breakpoints, collect state across runs, or debug non-interactively from an agent loop.
 
 **Prefer `node inspect` first.** It's always available and the REPL is fast.
 
@@ -103,7 +109,7 @@ node --inspect-brk -r tsx/cjs script.ts
 
 ## Programmatic CDP (scripting from terminal)
 
-When you want to automate — set many breakpoints, capture scope state, script a repro — use `chrome-remote-interface`:
+When you want to automate â€” set many breakpoints, capture scope state, script a repro â€” use `chrome-remote-interface`:
 
 ```bash
 npm i -g chrome-remote-interface        # or project-local
@@ -197,7 +203,7 @@ sb('dist/app.js', 220)     # or wherever the suspect render is
 cont
 ```
 
-When it pauses, `repl` → inspect `props`, state refs, `useInput` handler values, etc.
+When it pauses, `repl` â†’ inspect `props`, state refs, `useInput` handler values, etc.
 
 ### Debugging a running `hermes --tui`
 
@@ -222,7 +228,7 @@ Interacting with the TUI (typing in its window) continues to advance execution; 
 
 ### Debugging `_SlashWorker` / PTY child processes
 
-Those are Python, not Node — use the `python-debugpy` skill for them. Only Node portions (Ink UI, tui_gateway client, tsx-run tests under `ui-tui/`) use this skill.
+Those are Python, not Node â€” use the `python-debugpy` skill for them. Only Node portions (Ink UI, tui_gateway client, tsx-run tests under `ui-tui/`) use this skill.
 
 ## Running Vitest Tests Under the Debugger
 
@@ -234,7 +240,7 @@ node --inspect-brk ./node_modules/vitest/vitest.mjs run --no-file-parallelism sr
 
 In another terminal: `node inspect -p <pid>`, then `sb('src/app/foo.tsx', 42)`, `cont`.
 
-Use `--no-file-parallelism` (vitest) or `--runInBand` (jest) so only one worker exists — debugging a pool is painful.
+Use `--no-file-parallelism` (vitest) or `--runInBand` (jest) so only one worker exists â€” debugging a pool is painful.
 
 ## Heap Snapshots & CPU Profiles (Non-interactive)
 
@@ -247,7 +253,7 @@ await client.Profiler.start();
 await new Promise(r => setTimeout(r, 5000));
 const { profile } = await client.Profiler.stop();
 require('fs').writeFileSync('/tmp/cpu.cpuprofile', JSON.stringify(profile));
-// Open /tmp/cpu.cpuprofile in Chrome DevTools → Performance tab
+// Open /tmp/cpu.cpuprofile in Chrome DevTools â†’ Performance tab
 ```
 
 ```javascript
@@ -261,7 +267,7 @@ require('fs').writeFileSync('/tmp/heap.heapsnapshot', chunks.join(''));
 
 ## Common Pitfalls
 
-1. **Wrong line numbers in TS source.** Breakpoints hit the emitted JS, not the `.ts`. Either (a) break in the built `dist/*.js`, or (b) enable sourcemaps (`node --enable-source-maps`) and use `sb('src/app.tsx', N)` — but only with CDP clients that follow sourcemaps. `node inspect` CLI does not.
+1. **Wrong line numbers in TS source.** Breakpoints hit the emitted JS, not the `.ts`. Either (a) break in the built `dist/*.js`, or (b) enable sourcemaps (`node --enable-source-maps`) and use `sb('src/app.tsx', N)` â€” but only with CDP clients that follow sourcemaps. `node inspect` CLI does not.
 
 2. **`--inspect` vs `--inspect-brk`.** `--inspect` starts the inspector but doesn't pause; your script races past your first breakpoint if you attach too late. Use `--inspect-brk` when you need to set breakpoints before any code runs.
 
@@ -310,7 +316,7 @@ debug> cont
 debug> bt
 ```
 
-**"This async chain hangs — where?"**
+**"This async chain hangs â€” where?"**
 ```
 # Start with --inspect (no -brk), let it run to the hang, then:
 debug> pause

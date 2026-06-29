@@ -1,4 +1,6 @@
 ---
+id: test-driven-development
+category: Software Development
 name: test-driven-development
 description: "TDD: enforce RED-GREEN-REFACTOR, tests before code."
 version: 1.1.0
@@ -9,6 +11,10 @@ metadata:
   hermes:
     tags: [testing, tdd, development, quality, red-green-refactor]
     related_skills: [systematic-debugging, plan, subagent-driven-development]
+tags: [SoftwareDevelopment]
+source: external
+featured: false
+icon: 🛠️
 ---
 
 # Test-Driven Development (TDD)
@@ -54,7 +60,7 @@ Implement fresh from tests. Period.
 
 ## Red-Green-Refactor Cycle
 
-### RED — Write Failing Test
+### RED â€” Write Failing Test
 
 Write one minimal test showing what should happen.
 
@@ -92,7 +98,7 @@ Vague name, tests mock not real code.
 - Real code, not mocks (unless truly unavoidable)
 - Name describes behavior, not implementation
 
-### Verify RED — Watch It Fail
+### Verify RED â€” Watch It Fail
 
 **MANDATORY. Never skip.**
 
@@ -110,7 +116,7 @@ Confirm:
 
 **Test errors?** Fix the error, re-run until it fails correctly.
 
-### GREEN — Minimal Code
+### GREEN â€” Minimal Code
 
 Write the simplest code to pass the test. Nothing more.
 
@@ -138,7 +144,7 @@ Don't add features, refactor other code, or "improve" beyond the test.
 
 We'll fix it in REFACTOR.
 
-### Verify GREEN — Watch It Pass
+### Verify GREEN â€” Watch It Pass
 
 **MANDATORY.**
 
@@ -159,7 +165,7 @@ Confirm:
 
 **Other tests fail?** Fix regressions now.
 
-### REFACTOR — Clean Up
+### REFACTOR â€” Clean Up
 
 After green only:
 - Remove duplication
@@ -187,9 +193,9 @@ WRONG:
   GREEN: impl1, impl2, impl3, impl4
 
 RIGHT:
-  RED→GREEN: test1→impl1
-  RED→GREEN: test2→impl2
-  RED→GREEN: test3→impl3
+  REDâ†’GREEN: test1â†’impl1
+  REDâ†’GREEN: test2â†’impl2
+  REDâ†’GREEN: test3â†’impl3
 ```
 
 A tracer bullet is one end-to-end behavior slice. It proves the path works, teaches you about the interface, and keeps each next test grounded in what you just learned.
@@ -212,7 +218,7 @@ Manual testing is ad-hoc. You think you tested everything but:
 - No record of what you tested
 - Can't re-run when code changes
 - Easy to forget cases under pressure
-- "It worked when I tried it" ≠ comprehensive
+- "It worked when I tried it" â‰  comprehensive
 
 Automated tests are systematic. They run the same way every time.
 
@@ -234,7 +240,7 @@ TDD IS pragmatic:
 
 "Pragmatic" shortcuts = debugging in production = slower.
 
-**"Tests after achieve the same goals — it's spirit not ritual"**
+**"Tests after achieve the same goals â€” it's spirit not ritual"**
 
 No. Tests-after answer "What does this do?" Tests-first answer "What should this do?"
 
@@ -247,7 +253,7 @@ Tests-after are biased by your implementation. You test what you built, not what
 | "Too simple to test" | Simple code breaks. Test takes 30 seconds. |
 | "I'll test after" | Tests passing immediately prove nothing. |
 | "Tests after achieve same goals" | Tests-after = "what does this do?" Tests-first = "what should this do?" |
-| "Already manually tested" | Ad-hoc ≠ systematic. No record, can't re-run. |
+| "Already manually tested" | Ad-hoc â‰  systematic. No record, can't re-run. |
 | "Deleting X hours is wasteful" | Sunk cost fallacy. Keeping unverified code is technical debt. |
 | "Keep as reference, write tests first" | You'll adapt it. That's testing after. Delete means delete. |
 | "Need to explore first" | Fine. Throw away exploration, start with TDD. |
@@ -256,7 +262,7 @@ Tests-after are biased by your implementation. You test what you built, not what
 | "Manual test faster" | Manual doesn't prove edge cases. You'll re-test every change. |
 | "Existing code has no tests" | You're improving it. Add tests for the code you touch. |
 
-## Red Flags — STOP and Start Over
+## Red Flags â€” STOP and Start Over
 
 If you catch yourself doing any of these, delete the code and restart with TDD:
 
@@ -306,13 +312,13 @@ Can't check all boxes? You skipped TDD. Start over.
 Use the `terminal` tool to run tests at each step:
 
 ```python
-# RED — verify failure
+# RED â€” verify failure
 terminal("pytest tests/test_feature.py::test_name -v")
 
-# GREEN — verify pass
+# GREEN â€” verify pass
 terminal("pytest tests/test_feature.py::test_name -v")
 
-# Full suite — verify no regressions
+# Full suite â€” verify no regressions
 terminal("pytest tests/ -q")
 ```
 
@@ -347,16 +353,16 @@ Never fix bugs without a test.
 
 ## Testing Anti-Patterns
 
-- **Testing mock behavior instead of real behavior** — mocks should verify interactions, not replace the system under test
-- **Testing implementation details** — test behavior/results, not internal method calls
-- **Happy path only** — always test edge cases, errors, and boundaries
-- **Brittle tests** — tests should verify behavior, not structure; refactoring shouldn't break them
+- **Testing mock behavior instead of real behavior** â€” mocks should verify interactions, not replace the system under test
+- **Testing implementation details** â€” test behavior/results, not internal method calls
+- **Happy path only** â€” always test edge cases, errors, and boundaries
+- **Brittle tests** â€” tests should verify behavior, not structure; refactoring shouldn't break them
 
 ## Final Rule
 
 ```
-Production code → test exists and failed first
-Otherwise → not TDD
+Production code â†’ test exists and failed first
+Otherwise â†’ not TDD
 ```
 
 No exceptions without the user's explicit permission.

@@ -1,4 +1,6 @@
 ---
+id: plan
+category: Software Development
 name: plan
 description: "Plan mode: write an actionable markdown plan to .hermes/plans/, no execution. Bite-sized tasks, exact paths, complete code."
 version: 2.0.0
@@ -9,6 +11,10 @@ metadata:
   hermes:
     tags: [planning, plan-mode, implementation, workflow, design, documentation]
     related_skills: [subagent-driven-development, test-driven-development, requesting-code-review]
+tags: [SoftwareDevelopment]
+source: external
+featured: false
+icon: 🛠️
 ---
 
 # Plan Mode
@@ -61,7 +67,7 @@ If not, create a sensible timestamped filename yourself under `.hermes/plans/`.
 
 # Writing the Plan Well
 
-The rest of this skill is the craft of authoring a *good* implementation plan — the content that goes inside the markdown file above.
+The rest of this skill is the craft of authoring a *good* implementation plan â€” the content that goes inside the markdown file above.
 
 ## Overview
 
@@ -88,11 +94,11 @@ Assume the implementer is a skilled developer but knows almost nothing about the
 **Each task = 2-5 minutes of focused work.**
 
 Every step is one action:
-- "Write the failing test" — step
-- "Run it to make sure it fails" — step
-- "Implement the minimal code to make the test pass" — step
-- "Run the tests and make sure they pass" — step
-- "Commit" — step
+- "Write the failing test" â€” step
+- "Run it to make sure it fails" â€” step
+- "Implement the minimal code to make the test pass" â€” step
+- "Run the tests and make sure they pass" â€” step
+- "Commit" â€” step
 
 **Too big:**
 ```markdown
@@ -157,7 +163,7 @@ def test_specific_behavior():
 **Step 2: Run test to verify failure**
 
 Run: `pytest tests/path/test.py::test_specific_behavior -v`
-Expected: FAIL — "function not defined"
+Expected: FAIL â€” "function not defined"
 
 **Step 3: Write minimal implementation**
 
@@ -256,7 +262,7 @@ Check:
 **Good:** Implement only what's needed now
 
 ```python
-# Bad — YAGNI violation
+# Bad â€” YAGNI violation
 class User:
     def __init__(self, name, email):
         self.name = name
@@ -264,7 +270,7 @@ class User:
         self.preferences = {}  # Not needed yet!
         self.metadata = {}     # Not needed yet!
 
-# Good — YAGNI
+# Good â€” YAGNI
 class User:
     def __init__(self, name, email):
         self.name = name
@@ -315,7 +321,7 @@ git commit -m "type: description"
 
 After saving the plan, offer the execution approach:
 
-**"Plan complete and saved. Ready to execute using subagent-driven-development — I'll dispatch a fresh subagent per task with two-stage review (spec compliance then code quality). Shall I proceed?"**
+**"Plan complete and saved. Ready to execute using subagent-driven-development â€” I'll dispatch a fresh subagent per task with two-stage review (spec compliance then code quality). Shall I proceed?"**
 
 When executing, use the `subagent-driven-development` skill:
 - Fresh `delegate_task` per task with full context

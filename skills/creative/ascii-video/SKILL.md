@@ -1,7 +1,13 @@
 ---
+id: ascii-video
+category: Creative
 name: ascii-video
 description: "ASCII video: convert video/audio to colored ASCII MP4/GIF."
 platforms: [linux, macos, windows]
+tags: [Creative]
+source: external
+featured: false
+icon: 🎨
 ---
 
 # ASCII Video Production Pipeline
@@ -12,21 +18,21 @@ Use when users request: ASCII video, text art video, terminal-style video, chara
 
 ## What's inside
 
-Production pipeline for ASCII art video — any format. Converts video/audio/images/generative input into colored ASCII character video output (MP4, GIF, image sequence). Covers: video-to-ASCII conversion, audio-reactive music visualizers, generative ASCII art animations, hybrid video+audio reactive, text/lyrics overlays, real-time terminal rendering.
+Production pipeline for ASCII art video â€” any format. Converts video/audio/images/generative input into colored ASCII character video output (MP4, GIF, image sequence). Covers: video-to-ASCII conversion, audio-reactive music visualizers, generative ASCII art animations, hybrid video+audio reactive, text/lyrics overlays, real-time terminal rendering.
 
 ## Creative Standard
 
 This is visual art. ASCII characters are the medium; cinema is the standard.
 
-**Before writing a single line of code**, articulate the creative concept. What is the mood? What visual story does this tell? What makes THIS project different from every other ASCII video? The user's prompt is a starting point — interpret it with creative ambition, not literal transcription.
+**Before writing a single line of code**, articulate the creative concept. What is the mood? What visual story does this tell? What makes THIS project different from every other ASCII video? The user's prompt is a starting point â€” interpret it with creative ambition, not literal transcription.
 
-**First-render excellence is non-negotiable.** The output must be visually striking without requiring revision rounds. If something looks generic, flat, or like "AI-generated ASCII art," it is wrong — rethink the creative concept before shipping.
+**First-render excellence is non-negotiable.** The output must be visually striking without requiring revision rounds. If something looks generic, flat, or like "AI-generated ASCII art," it is wrong â€” rethink the creative concept before shipping.
 
-**Go beyond the reference vocabulary.** The effect catalogs, shader presets, and palette libraries in the references are a starting vocabulary. For every project, combine, modify, and invent new patterns. The catalog is a palette of paints — you write the painting.
+**Go beyond the reference vocabulary.** The effect catalogs, shader presets, and palette libraries in the references are a starting vocabulary. For every project, combine, modify, and invent new patterns. The catalog is a palette of paints â€” you write the painting.
 
-**Be proactively creative.** Extend the skill's vocabulary when the project calls for it. If the references don't have what the vision demands, build it. Include at least one visual moment the user didn't ask for but will appreciate — a transition, an effect, a color choice that elevates the whole piece.
+**Be proactively creative.** Extend the skill's vocabulary when the project calls for it. If the references don't have what the vision demands, build it. Include at least one visual moment the user didn't ask for but will appreciate â€” a transition, an effect, a color choice that elevates the whole piece.
 
-**Cohesive aesthetic over technical correctness.** All scenes in a video must feel connected by a unifying visual language — shared color temperature, related character palettes, consistent motion vocabulary. A technically correct video where every scene uses a random different effect is an aesthetic failure.
+**Cohesive aesthetic over technical correctness.** All scenes in a video must feel connected by a unifying visual language â€” shared color temperature, related character palettes, consistent motion vocabulary. A technically correct video where every scene uses a random different effect is an aesthetic failure.
 
 **Dense, layered, considered.** Every frame should reward viewing. Never flat black backgrounds. Always multi-grid composition. Always per-scene variation. Always intentional color.
 
@@ -34,12 +40,12 @@ This is visual art. ASCII characters are the medium; cinema is the standard.
 
 | Mode | Input | Output | Reference |
 |------|-------|--------|-----------|
-| **Video-to-ASCII** | Video file | ASCII recreation of source footage | `references/inputs.md` § Video Sampling |
-| **Audio-reactive** | Audio file | Generative visuals driven by audio features | `references/inputs.md` § Audio Analysis |
+| **Video-to-ASCII** | Video file | ASCII recreation of source footage | `references/inputs.md` Â§ Video Sampling |
+| **Audio-reactive** | Audio file | Generative visuals driven by audio features | `references/inputs.md` Â§ Audio Analysis |
 | **Generative** | None (or seed params) | Procedural ASCII animation | `references/effects.md` |
 | **Hybrid** | Video + audio | ASCII video with audio-reactive overlays | Both input refs |
-| **Lyrics/text** | Audio + text/SRT | Timed text with visual effects | `references/inputs.md` § Text/Lyrics |
-| **TTS narration** | Text quotes + TTS API | Narrated testimonial/quote video with typed text | `references/inputs.md` § TTS Integration |
+| **Lyrics/text** | Audio + text/SRT | Timed text with visual effects | `references/inputs.md` Â§ Text/Lyrics |
+| **TTS narration** | Text quotes + TTS API | Narrated testimonial/quote video with typed text | `references/inputs.md` Â§ TTS Integration |
 
 ## Stack
 
@@ -60,15 +66,15 @@ Single self-contained Python script per project. No GPU required.
 Every mode follows the same 6-stage pipeline:
 
 ```
-INPUT → ANALYZE → SCENE_FN → TONEMAP → SHADE → ENCODE
+INPUT â†’ ANALYZE â†’ SCENE_FN â†’ TONEMAP â†’ SHADE â†’ ENCODE
 ```
 
-1. **INPUT** — Load/decode source material (video frames, audio samples, images, or nothing)
-2. **ANALYZE** — Extract per-frame features (audio bands, video luminance/edges, motion vectors)
-3. **SCENE_FN** — Scene function renders to pixel canvas (`uint8 H,W,3`). Composes multiple character grids via `_render_vf()` + pixel blend modes. See `references/composition.md`
-4. **TONEMAP** — Percentile-based adaptive brightness normalization. See `references/composition.md` § Adaptive Tonemap
-5. **SHADE** — Post-processing via `ShaderChain` + `FeedbackBuffer`. See `references/shaders.md`
-6. **ENCODE** — Pipe raw RGB frames to ffmpeg for H.264/GIF encoding
+1. **INPUT** â€” Load/decode source material (video frames, audio samples, images, or nothing)
+2. **ANALYZE** â€” Extract per-frame features (audio bands, video luminance/edges, motion vectors)
+3. **SCENE_FN** â€” Scene function renders to pixel canvas (`uint8 H,W,3`). Composes multiple character grids via `_render_vf()` + pixel blend modes. See `references/composition.md`
+4. **TONEMAP** â€” Percentile-based adaptive brightness normalization. See `references/composition.md` Â§ Adaptive Tonemap
+5. **SHADE** â€” Post-processing via `ShaderChain` + `FeedbackBuffer`. See `references/shaders.md`
+6. **ENCODE** â€” Pipe raw RGB frames to ffmpeg for H.264/GIF encoding
 
 ## Creative Direction
 
@@ -76,17 +82,17 @@ INPUT → ANALYZE → SCENE_FN → TONEMAP → SHADE → ENCODE
 
 | Dimension | Options | Reference |
 |-----------|---------|-----------|
-| **Character palette** | Density ramps, block elements, symbols, scripts (katakana, Greek, runes, braille), project-specific | `architecture.md` § Palettes |
-| **Color strategy** | HSV, OKLAB/OKLCH, discrete RGB palettes, auto-generated harmony, monochrome, temperature | `architecture.md` § Color System |
+| **Character palette** | Density ramps, block elements, symbols, scripts (katakana, Greek, runes, braille), project-specific | `architecture.md` Â§ Palettes |
+| **Color strategy** | HSV, OKLAB/OKLCH, discrete RGB palettes, auto-generated harmony, monochrome, temperature | `architecture.md` Â§ Color System |
 | **Background texture** | Sine fields, fBM noise, domain warp, voronoi, reaction-diffusion, cellular automata, video | `effects.md` |
 | **Primary effects** | Rings, spirals, tunnel, vortex, waves, interference, aurora, fire, SDFs, strange attractors | `effects.md` |
-| **Particles** | Sparks, snow, rain, bubbles, runes, orbits, flocking boids, flow-field followers, trails | `effects.md` § Particles |
+| **Particles** | Sparks, snow, rain, bubbles, runes, orbits, flocking boids, flow-field followers, trails | `effects.md` Â§ Particles |
 | **Shader mood** | Retro CRT, clean modern, glitch art, cinematic, dreamy, industrial, psychedelic | `shaders.md` |
-| **Grid density** | xs(8px) through xxl(40px), mixed per layer | `architecture.md` § Grid System |
-| **Coordinate space** | Cartesian, polar, tiled, rotated, fisheye, Möbius, domain-warped | `effects.md` § Transforms |
-| **Feedback** | Zoom tunnel, rainbow trails, ghostly echo, rotating mandala, color evolution | `composition.md` § Feedback |
-| **Masking** | Circle, ring, gradient, text stencil, animated iris/wipe/dissolve | `composition.md` § Masking |
-| **Transitions** | Crossfade, wipe, dissolve, glitch cut, iris, mask-based reveal | `shaders.md` § Transitions |
+| **Grid density** | xs(8px) through xxl(40px), mixed per layer | `architecture.md` Â§ Grid System |
+| **Coordinate space** | Cartesian, polar, tiled, rotated, fisheye, MÃ¶bius, domain-warped | `effects.md` Â§ Transforms |
+| **Feedback** | Zoom tunnel, rainbow trails, ghostly echo, rotating mandala, color evolution | `composition.md` Â§ Feedback |
+| **Masking** | Circle, ring, gradient, text stencil, animated iris/wipe/dissolve | `composition.md` Â§ Masking |
+| **Transitions** | Crossfade, wipe, dissolve, glitch cut, iris, mask-based reveal | `shaders.md` Â§ Transitions |
 
 ### Per-Section Variation
 
@@ -106,7 +112,7 @@ For every project, invent at least one of:
 - A custom particle character set
 - A novel scene transition or visual moment
 
-Don't just pick from the catalog. The catalog is vocabulary — you write the poem.
+Don't just pick from the catalog. The catalog is vocabulary â€” you write the poem.
 
 ## Workflow
 
@@ -125,28 +131,28 @@ Map the user's prompt to aesthetic choices. A "chill lo-fi visualizer" demands d
 
 ### Step 2: Technical Design
 
-- **Mode** — which of the 6 modes above
-- **Resolution** — landscape 1920x1080 (default), portrait 1080x1920, square 1080x1080 @ 24fps
-- **Hardware detection** — auto-detect cores/RAM, set quality profile. See `references/optimization.md`
-- **Sections** — map timestamps to scene functions, each with its own effect/palette/color/shader config
-- **Output format** — MP4 (default), GIF (640x360 @ 15fps), PNG sequence
+- **Mode** â€” which of the 6 modes above
+- **Resolution** â€” landscape 1920x1080 (default), portrait 1080x1920, square 1080x1080 @ 24fps
+- **Hardware detection** â€” auto-detect cores/RAM, set quality profile. See `references/optimization.md`
+- **Sections** â€” map timestamps to scene functions, each with its own effect/palette/color/shader config
+- **Output format** â€” MP4 (default), GIF (640x360 @ 15fps), PNG sequence
 
 ### Step 3: Build the Script
 
 Single Python file. Components (with references):
 
-1. **Hardware detection + quality profile** — `references/optimization.md`
-2. **Input loader** — mode-dependent; `references/inputs.md`
-3. **Feature analyzer** — audio FFT, video luminance, or synthetic
-4. **Grid + renderer** — multi-density grids with bitmap cache; `references/architecture.md`
-5. **Character palettes** — multiple per project; `references/architecture.md` § Palettes
-6. **Color system** — HSV + discrete RGB + harmony generation; `references/architecture.md` § Color
-7. **Scene functions** — each returns `canvas (uint8 H,W,3)`; `references/scenes.md`
-8. **Tonemap** — adaptive brightness normalization; `references/composition.md`
-9. **Shader pipeline** — `ShaderChain` + `FeedbackBuffer`; `references/shaders.md`
-10. **Scene table + dispatcher** — time → scene function + config; `references/scenes.md`
-11. **Parallel encoder** — N-worker clip rendering with ffmpeg pipes
-12. **Main** — orchestrate full pipeline
+1. **Hardware detection + quality profile** â€” `references/optimization.md`
+2. **Input loader** â€” mode-dependent; `references/inputs.md`
+3. **Feature analyzer** â€” audio FFT, video luminance, or synthetic
+4. **Grid + renderer** â€” multi-density grids with bitmap cache; `references/architecture.md`
+5. **Character palettes** â€” multiple per project; `references/architecture.md` Â§ Palettes
+6. **Color system** â€” HSV + discrete RGB + harmony generation; `references/architecture.md` Â§ Color
+7. **Scene functions** â€” each returns `canvas (uint8 H,W,3)`; `references/scenes.md`
+8. **Tonemap** â€” adaptive brightness normalization; `references/composition.md`
+9. **Shader pipeline** â€” `ShaderChain` + `FeedbackBuffer`; `references/shaders.md`
+10. **Scene table + dispatcher** â€” time â†’ scene function + config; `references/scenes.md`
+11. **Parallel encoder** â€” N-worker clip rendering with ffmpeg pipes
+12. **Main** â€” orchestrate full pipeline
 
 ### Step 4: Quality Verification
 
@@ -157,9 +163,9 @@ Single Python file. Components (with references):
 
 ## Critical Implementation Notes
 
-### Brightness — Use `tonemap()`, Not Linear Multipliers
+### Brightness â€” Use `tonemap()`, Not Linear Multipliers
 
-This is the #1 visual issue. ASCII on black is inherently dark. **Never use `canvas * N` multipliers** — they clip highlights. Use adaptive tonemap:
+This is the #1 visual issue. ASCII on black is inherently dark. **Never use `canvas * N` multipliers** â€” they clip highlights. Use adaptive tonemap:
 
 ```python
 def tonemap(canvas, gamma=0.75):
@@ -170,7 +176,7 @@ def tonemap(canvas, gamma=0.75):
     return (f * 255).astype(np.uint8)
 ```
 
-Pipeline: `scene_fn() → tonemap() → FeedbackBuffer → ShaderChain → ffmpeg`
+Pipeline: `scene_fn() â†’ tonemap() â†’ FeedbackBuffer â†’ ShaderChain â†’ ffmpeg`
 
 Per-scene gamma: default 0.75, solarize 0.55, posterize 0.50, bright scenes 0.85. Use `screen` blend (not `overlay`) for dark layers.
 
@@ -180,11 +186,11 @@ macOS Pillow: `textbbox()` returns wrong height. Use `font.getmetrics()`: `cell_
 
 ### ffmpeg Pipe Deadlock
 
-Never `stderr=subprocess.PIPE` with long-running ffmpeg — buffer fills at 64KB and deadlocks. Redirect to file. See `references/troubleshooting.md`.
+Never `stderr=subprocess.PIPE` with long-running ffmpeg â€” buffer fills at 64KB and deadlocks. Redirect to file. See `references/troubleshooting.md`.
 
 ### Font Compatibility
 
-Not all Unicode chars render in all fonts. Validate palettes at init — render each char, check for blank output. See `references/troubleshooting.md`.
+Not all Unicode chars render in all fonts. Validate palettes at init â€” render each char, check for blank output. See `references/troubleshooting.md`.
 
 ### Per-Clip Architecture
 
@@ -219,20 +225,20 @@ For segmented videos (quotes, scenes, chapters), render each as a separate clip 
 
 If the user asks for creative, experimental, surprising, or unconventional output, select the strategy that best fits and reason through its steps BEFORE generating code.
 
-- **Forced Connections** — when the user wants cross-domain inspiration ("make it look organic," "industrial aesthetic")
-- **Conceptual Blending** — when the user names two things to combine ("ocean meets music," "space + calligraphy")
-- **Oblique Strategies** — when the user is maximally open ("surprise me," "something I've never seen")
+- **Forced Connections** â€” when the user wants cross-domain inspiration ("make it look organic," "industrial aesthetic")
+- **Conceptual Blending** â€” when the user names two things to combine ("ocean meets music," "space + calligraphy")
+- **Oblique Strategies** â€” when the user is maximally open ("surprise me," "something I've never seen")
 
 ### Forced Connections
 1. Pick a domain unrelated to the visual goal (weather systems, microbiology, architecture, fluid dynamics, textile weaving)
-2. List its core visual/structural elements (erosion → gradual reveal; mitosis → splitting duplication; weaving → interlocking patterns)
+2. List its core visual/structural elements (erosion â†’ gradual reveal; mitosis â†’ splitting duplication; weaving â†’ interlocking patterns)
 3. Map those elements onto ASCII characters and animation patterns
-4. Synthesize — what does "erosion" or "crystallization" look like in a character grid?
+4. Synthesize â€” what does "erosion" or "crystallization" look like in a character grid?
 
 ### Conceptual Blending
 1. Name two distinct visual/conceptual spaces (e.g., ocean waves + sheet music)
 2. Map correspondences (crests = high notes, troughs = rests, foam = staccato)
-3. Blend selectively — keep the most interesting mappings, discard forced ones
+3. Blend selectively â€” keep the most interesting mappings, discard forced ones
 4. Develop emergent properties that exist only in the blend
 
 ### Oblique Strategies

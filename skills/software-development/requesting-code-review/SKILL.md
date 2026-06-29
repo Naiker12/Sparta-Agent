@@ -1,4 +1,6 @@
 ---
+id: requesting-code-review
+category: Software Development
 name: requesting-code-review
 description: "Pre-commit review: security scan, quality gates, auto-fix."
 version: 2.0.0
@@ -9,6 +11,10 @@ metadata:
   hermes:
     tags: [code-review, security, verification, quality, pre-commit, auto-fix]
     related_skills: [subagent-driven-development, plan, test-driven-development, github-code-review]
+tags: [SoftwareDevelopment]
+source: external
+featured: false
+icon: 🛠️
 ---
 
 # Pre-Commit Code Verification
@@ -30,7 +36,7 @@ quality gates, an independent reviewer subagent, and an auto-fix loop.
 **This skill vs github-code-review:** This skill verifies YOUR changes before committing.
 `github-code-review` reviews OTHER people's PRs on GitHub with inline comments.
 
-## Step 1 — Get the diff
+## Step 1 â€” Get the diff
 
 ```bash
 git diff --cached
@@ -39,7 +45,7 @@ git diff --cached
 If empty, try `git diff` then `git diff HEAD~1 HEAD`.
 
 If `git diff --cached` is empty but `git diff` shows changes, tell the user to
-`git add <files>` first. If still empty, run `git status` — nothing to verify.
+`git add <files>` first. If still empty, run `git status` â€” nothing to verify.
 
 If the diff exceeds 15,000 characters, split by file:
 ```bash
@@ -47,7 +53,7 @@ git diff --name-only
 git diff HEAD -- specific_file.py
 ```
 
-## Step 2 — Static security scan
+## Step 2 â€” Static security scan
 
 Scan added lines only. Any match is a security concern fed into Step 5.
 
@@ -68,7 +74,7 @@ git diff --cached | grep "^+" | grep -E "pickle\.loads?\("
 git diff --cached | grep "^+" | grep -E "execute\(f\"|\.format\(.*SELECT|\.format\(.*INSERT"
 ```
 
-## Step 3 — Baseline tests and linting
+## Step 3 â€” Baseline tests and linting
 
 Detect the project language and run the appropriate tools. Capture the failure
 count BEFORE your changes as **baseline_failures** (stash changes, run, pop).
@@ -109,7 +115,7 @@ which go && go vet ./... 2>&1 | tail -10
 **Baseline comparison:** If baseline was clean and your changes introduce failures,
 that's a regression. If baseline already had failures, only count NEW ones.
 
-## Step 4 — Self-review checklist
+## Step 4 â€” Self-review checklist
 
 Quick scan before dispatching the reviewer:
 
@@ -122,9 +128,9 @@ Quick scan before dispatching the reviewer:
 - [ ] No commented-out code
 - [ ] New code has tests (if test suite exists)
 
-## Step 5 — Independent reviewer subagent
+## Step 5 â€” Independent reviewer subagent
 
-Call `delegate_task` directly — it is NOT available inside execute_code or scripts.
+Call `delegate_task` directly â€” it is NOT available inside execute_code or scripts.
 
 The reviewer gets ONLY the diff and static scan results. No shared context with
 the implementer. Fail-closed: unparseable response = fail.
@@ -173,7 +179,7 @@ Return ONLY this JSON:
 )
 ```
 
-## Step 6 — Evaluate results
+## Step 6 â€” Evaluate results
 
 Combine results from Steps 2, 3, and 5.
 
@@ -191,11 +197,11 @@ New lint errors: [details]
 Suggestions (non-blocking): [list]
 ```
 
-## Step 7 — Auto-fix loop
+## Step 7 â€” Auto-fix loop
 
 **Maximum 2 fix-and-reverify cycles.**
 
-Spawn a THIRD agent context — not you (the implementer), not the reviewer.
+Spawn a THIRD agent context â€” not you (the implementer), not the reviewer.
 It fixes ONLY the reported issues:
 
 ```python
@@ -225,7 +231,7 @@ After the fix agent completes, re-run Steps 1-6 (full verification cycle).
 - Failed after 2 attempts: escalate to user with the remaining issues and
   suggest `git stash` or `git reset` to undo
 
-## Step 8 — Commit
+## Step 8 â€” Commit
 
 If verification passed:
 
@@ -263,18 +269,18 @@ element.textContent = userInput;
 **subagent-driven-development:** Run this after EACH task as the quality gate.
 The two-stage review (spec compliance + code quality) uses this pipeline.
 
-**test-driven-development:** This pipeline verifies TDD discipline was followed —
+**test-driven-development:** This pipeline verifies TDD discipline was followed â€”
 tests exist, tests pass, no regressions.
 
 **plan:** Validates implementation matches the plan requirements.
 
 ## Pitfalls
 
-- **Empty diff** — check `git status`, tell user nothing to verify
-- **Not a git repo** — skip and tell user
-- **Large diff (>15k chars)** — split by file, review each separately
-- **delegate_task returns non-JSON** — retry once with stricter prompt, then treat as FAIL
-- **False positives** — if reviewer flags something intentional, note it in fix prompt
-- **No test framework found** — skip regression check, reviewer verdict still runs
-- **Lint tools not installed** — skip that check silently, don't fail
-- **Auto-fix introduces new issues** — counts as a new failure, cycle continues
+- **Empty diff** â€” check `git status`, tell user nothing to verify
+- **Not a git repo** â€” skip and tell user
+- **Large diff (>15k chars)** â€” split by file, review each separately
+- **delegate_task returns non-JSON** â€” retry once with stricter prompt, then treat as FAIL
+- **False positives** â€” if reviewer flags something intentional, note it in fix prompt
+- **No test framework found** â€” skip regression check, reviewer verdict still runs
+- **Lint tools not installed** â€” skip that check silently, don't fail
+- **Auto-fix introduces new issues** â€” counts as a new failure, cycle continues

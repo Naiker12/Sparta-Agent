@@ -1,4 +1,6 @@
 ---
+id: llama-cpp
+category: Inference
 name: llama-cpp
 description: llama.cpp local GGUF inference + HF Hub model discovery.
 version: 2.1.2
@@ -8,7 +10,11 @@ dependencies: [llama-cpp-python>=0.2.0]
 platforms: [linux, macos, windows]
 metadata:
   hermes:
-    tags: [llama.cpp, GGUF, Quantization, Hugging Face Hub, CPU Inference, Apple Silicon, Edge Deployment, AMD GPUs, Intel GPUs, NVIDIA, URL-first]
+    tags: [MLOps]
+tags: [MLOps]
+source: external
+featured: false
+icon: ðŸ“¦
 ---
 
 # llama.cpp + GGUF
@@ -231,11 +237,11 @@ Source URLs:
 ## References
 
 - **[hub-discovery.md](references/hub-discovery.md)** - URL-only Hugging Face workflows, search patterns, GGUF extraction, and command reconstruction
-- **[advanced-usage.md](references/advanced-usage.md)** — speculative decoding, batched inference, grammar-constrained generation, LoRA, multi-GPU, custom builds, benchmark scripts
-- **[quantization.md](references/quantization.md)** — quant quality tradeoffs, when to use Q4/Q5/Q6/IQ, model size scaling, imatrix
-- **[server.md](references/server.md)** — direct-from-Hub server launch, OpenAI API endpoints, Docker deployment, NGINX load balancing, monitoring
-- **[optimization.md](references/optimization.md)** — CPU threading, BLAS, GPU offload heuristics, batch tuning, benchmarks
-- **[troubleshooting.md](references/troubleshooting.md)** — install/convert/quantize/inference/server issues, Apple Silicon, debugging
+- **[advanced-usage.md](references/advanced-usage.md)** Ã¢â‚¬â€ speculative decoding, batched inference, grammar-constrained generation, LoRA, multi-GPU, custom builds, benchmark scripts
+- **[quantization.md](references/quantization.md)** Ã¢â‚¬â€ quant quality tradeoffs, when to use Q4/Q5/Q6/IQ, model size scaling, imatrix
+- **[server.md](references/server.md)** Ã¢â‚¬â€ direct-from-Hub server launch, OpenAI API endpoints, Docker deployment, NGINX load balancing, monitoring
+- **[optimization.md](references/optimization.md)** Ã¢â‚¬â€ CPU threading, BLAS, GPU offload heuristics, batch tuning, benchmarks
+- **[troubleshooting.md](references/troubleshooting.md)** Ã¢â‚¬â€ install/convert/quantize/inference/server issues, Apple Silicon, debugging
 
 ## Resources
 

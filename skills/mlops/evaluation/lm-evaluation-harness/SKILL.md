@@ -1,4 +1,6 @@
 ---
+id: lm-evaluation-harness
+category: Evaluation
 name: evaluating-llms-harness
 description: "lm-eval-harness: benchmark LLMs (MMLU, GSM8K, etc.)."
 version: 1.0.0
@@ -8,8 +10,12 @@ dependencies: [lm-eval, transformers, vllm]
 platforms: [linux, macos]
 metadata:
   hermes:
-    tags: [Evaluation, LM Evaluation Harness, Benchmarking, MMLU, HumanEval, GSM8K, EleutherAI, Model Quality, Academic Benchmarks, Industry Standard]
+    tags: [MLOps]
 
+tags: [MLOps]
+source: external
+featured: false
+icon: ðŸ“¦
 ---
 
 # lm-evaluation-harness - LLM Benchmarking
@@ -364,7 +370,7 @@ lm_eval --model vllm \
 
 **Step 3: Run evaluation**
 
-vLLM is 5-10× faster than standard HuggingFace:
+vLLM is 5-10Ãƒâ€” faster than standard HuggingFace:
 
 ```bash
 # Standard HF: ~2 hours for MMLU on 7B model
@@ -493,6 +499,5 @@ lm_eval --model hf \
 - Docs: https://github.com/EleutherAI/lm-evaluation-harness/tree/main/docs
 - Task library: 60+ tasks including MMLU, GSM8K, HumanEval, TruthfulQA, HellaSwag, ARC, WinoGrande, etc.
 - Leaderboard: https://huggingface.co/spaces/HuggingFaceH4/open_llm_leaderboard (uses this harness)
-
 
 

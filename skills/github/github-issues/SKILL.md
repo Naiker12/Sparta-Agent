@@ -1,4 +1,6 @@
 ---
+id: github-issues
+category: GitHub
 name: github-issues
 description: "Create, triage, label, assign GitHub issues via gh or REST."
 version: 1.1.0
@@ -9,6 +11,10 @@ metadata:
   hermes:
     tags: [GitHub, Issues, Project-Management, Bug-Tracking, Triage]
     related_skills: [github-auth, github-pr-workflow]
+tags: [GitHub]
+source: external
+featured: false
+icon: 🐙
 ---
 
 # GitHub Issues Management
@@ -235,7 +241,7 @@ curl -s -X POST \
 **With gh:**
 
 ```bash
-gh issue comment 42 --body "Investigated — root cause is in auth middleware. Working on a fix."
+gh issue comment 42 --body "Investigated â€” root cause is in auth middleware. Working on a fix."
 ```
 
 **With curl:**
@@ -244,7 +250,7 @@ gh issue comment 42 --body "Investigated — root cause is in auth middleware. W
 curl -s -X POST \
   -H "Authorization: token $GITHUB_TOKEN" \
   https://api.github.com/repos/$OWNER/$REPO/issues/42/comments \
-  -d '{"body": "Investigated — root cause is in auth middleware. Working on a fix."}'
+  -d '{"body": "Investigated â€” root cause is in auth middleware. Working on a fix."}'
 ```
 
 ### Closing and Reopening

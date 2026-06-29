@@ -1,6 +1,8 @@
 ---
+id: comfyui
+category: Creative
 name: comfyui
-description: "Generate images, video, and audio with ComfyUI — install, launch, manage nodes/models, run workflows with parameter injection. Uses the official comfy-cli for lifecycle and direct REST/WebSocket API for execution."
+description: "Generate images, video, and audio with ComfyUI â€” install, launch, manage nodes/models, run workflows with parameter injection. Uses the official comfy-cli for lifecycle and direct REST/WebSocket API for execution."
 version: 5.1.0
 author: [kshitijk4poor, alt-glitch, purzbeats]
 license: MIT
@@ -25,6 +27,10 @@ metadata:
       - video-generation
     related_skills: [stable-diffusion-image-generation, image_gen]
     category: creative
+tags: [Creative]
+source: external
+featured: false
+icon: 🎨
 ---
 
 # ComfyUI
@@ -37,10 +43,10 @@ for workflow execution.
 
 **Reference docs (`references/`):**
 
-- `official-cli.md` — every `comfy ...` command, with flags
-- `rest-api.md` — REST + WebSocket endpoints (local + cloud), payload schemas
-- `workflow-format.md` — API-format JSON, common node types, param mapping
-- `template-integrity.md` — converting `comfyui-workflow-templates` from
+- `official-cli.md` â€” every `comfy ...` command, with flags
+- `rest-api.md` â€” REST + WebSocket endpoints (local + cloud), payload schemas
+- `workflow-format.md` â€” API-format JSON, common node types, param mapping
+- `template-integrity.md` â€” converting `comfyui-workflow-templates` from
   editor format to API format: Reroute bypass, dotted dynamic-input keys
   (`values.a`, `resize_type.width`), Cloud quirks (302 redirect, 1 concurrent
   free-tier job, 1080p VRAM ceiling), Discord-compatible ffmpeg stitch.
@@ -52,15 +58,15 @@ for workflow execution.
 | Script | Purpose |
 |--------|---------|
 | `_common.py` | Shared HTTP, cloud routing, node catalogs (don't run directly) |
-| `hardware_check.py` | Probe GPU/VRAM/disk → recommend local vs Comfy Cloud |
+| `hardware_check.py` | Probe GPU/VRAM/disk â†’ recommend local vs Comfy Cloud |
 | `comfyui_setup.sh` | Hardware check + comfy-cli + ComfyUI install + launch + verify |
-| `extract_schema.py` | Read a workflow → list controllable params + model deps |
-| `check_deps.py` | Check workflow against running server → list missing nodes/models |
+| `extract_schema.py` | Read a workflow â†’ list controllable params + model deps |
+| `check_deps.py` | Check workflow against running server â†’ list missing nodes/models |
 | `auto_fix_deps.py` | Run check_deps then `comfy node install` / `comfy model download` |
 | `run_workflow.py` | Inject params, submit, monitor, download outputs (HTTP or WS) |
 | `run_batch.py` | Submit a workflow N times with sweeps, parallel up to your tier |
 | `ws_monitor.py` | Real-time WebSocket viewer for executing jobs (live progress) |
-| `health_check.py` | Verification checklist runner — comfy-cli + server + models + smoke test |
+| `health_check.py` | Verification checklist runner â€” comfy-cli + server + models + smoke test |
 | `fetch_logs.py` | Pull traceback / status messages for a given prompt_id |
 
 **Example workflows (`workflows/`):** SD 1.5, SDXL, Flux Dev, SDXL img2img,
@@ -71,7 +77,7 @@ SDXL inpaint, ESRGAN upscale, AnimateDiff video, Wan T2V. See
 
 - User asks to generate images with Stable Diffusion, SDXL, Flux, SD3, etc.
 - User wants to run a specific ComfyUI workflow file
-- User wants to chain generative steps (txt2img → upscale → face restore)
+- User wants to chain generative steps (txt2img â†’ upscale â†’ face restore)
 - User needs ControlNet, inpainting, img2img, or other advanced pipelines
 - User asks to manage ComfyUI queue, check models, or install custom nodes
 - User wants video/audio/3D generation via AnimateDiff, Hunyuan, Wan, AudioCraft, etc.
@@ -79,23 +85,23 @@ SDXL inpaint, ESRGAN upscale, AnimateDiff video, Wan T2V. See
 ## Architecture: Two Layers
 
 ```
-┌─────────────────────────────────────────────────────┐
-│ Layer 1: comfy-cli (official lifecycle tool)        │
-│   Setup, server lifecycle, custom nodes, models     │
-│   → comfy install / launch / stop / node / model    │
-└─────────────────────────┬───────────────────────────┘
-                          │
-┌─────────────────────────▼───────────────────────────┐
-│ Layer 2: REST/WebSocket API + skill scripts         │
-│   Workflow execution, param injection, monitoring   │
-│   POST /api/prompt, GET /api/view, WS /ws           │
-│   → run_workflow.py, run_batch.py, ws_monitor.py    │
-└─────────────────────────────────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ Layer 1: comfy-cli (official lifecycle tool)        â”‚
+â”‚   Setup, server lifecycle, custom nodes, models     â”‚
+â”‚   â†’ comfy install / launch / stop / node / model    â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                          â”‚
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ Layer 2: REST/WebSocket API + skill scripts         â”‚
+â”‚   Workflow execution, param injection, monitoring   â”‚
+â”‚   POST /api/prompt, GET /api/view, WS /ws           â”‚
+â”‚   â†’ run_workflow.py, run_batch.py, ws_monitor.py    â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 **Why two layers?** The official CLI is excellent for installation and server
 management but has minimal workflow execution support. The REST/WS API fills
-that gap — the scripts handle param injection, execution monitoring, and
+that gap â€” the scripts handle param injection, execution monitoring, and
 output download that the CLI doesn't do.
 
 ## Quick Start
@@ -111,14 +117,14 @@ curl -s http://127.0.0.1:8188/system_stats 2>/dev/null && echo "server: running"
 python3 scripts/hardware_check.py
 ```
 
-If nothing is installed, see **Setup & Onboarding** below — but always run the
+If nothing is installed, see **Setup & Onboarding** below â€” but always run the
 hardware check first.
 
 ### One-line health check
 
 ```bash
 python3 scripts/health_check.py
-# → JSON: comfy_cli on PATH? server reachable? at least one checkpoint? smoke-test passes?
+# â†’ JSON: comfy_cli on PATH? server reachable? at least one checkpoint? smoke-test passes?
 ```
 
 ## Core Workflow
@@ -127,10 +133,10 @@ python3 scripts/health_check.py
 
 Workflows must be in API format (each node has `class_type`). They come from:
 
-- ComfyUI web UI → **Workflow → Export (API)** (newer UI) or
+- ComfyUI web UI â†’ **Workflow â†’ Export (API)** (newer UI) or
   the legacy "Save (API Format)" button (older UI)
 - This skill's `workflows/` directory (ready-to-run examples)
-- Community downloads (civitai, Reddit, Discord) — usually editor format,
+- Community downloads (civitai, Reddit, Discord) â€” usually editor format,
   must be loaded into ComfyUI then re-exported
 
 Editor format (top-level `nodes` and `links` arrays) is **not directly
@@ -140,10 +146,10 @@ executable**. The scripts detect this and tell you to re-export.
 
 ```bash
 python3 scripts/extract_schema.py workflow_api.json --summary-only
-# → {"parameter_count": 12, "has_negative_prompt": true, "has_seed": true, ...}
+# â†’ {"parameter_count": 12, "has_negative_prompt": true, "has_seed": true, ...}
 
 python3 scripts/extract_schema.py workflow_api.json
-# → full schema with parameters, model deps, embedding refs
+# â†’ full schema with parameters, model deps, embedding refs
 ```
 
 ### Step 3: Run with parameters
@@ -246,22 +252,22 @@ Suggested script:
 
 > "Do you want to run ComfyUI locally on your machine, or use Comfy Cloud?
 >
-> - **Comfy Cloud** — hosted on RTX 6000 Pro GPUs, all common models pre-installed,
+> - **Comfy Cloud** â€” hosted on RTX 6000 Pro GPUs, all common models pre-installed,
 >   zero setup. Requires an API key (paid subscription required to actually run
 >   workflows; free tier is read-only). Best if you don't have a capable GPU.
-> - **Local** — free, but your machine MUST meet the hardware requirements:
->   - NVIDIA GPU with **≥6 GB VRAM** (≥8 GB for SDXL, ≥12 GB for Flux/video), OR
+> - **Local** â€” free, but your machine MUST meet the hardware requirements:
+>   - NVIDIA GPU with **â‰¥6 GB VRAM** (â‰¥8 GB for SDXL, â‰¥12 GB for Flux/video), OR
 >   - AMD GPU with ROCm support (Linux), OR
->   - Apple Silicon Mac (M1+) with **≥16 GB unified memory** (≥32 GB recommended).
->   - Intel Macs and machines with no GPU will NOT work — use Cloud instead.
+>   - Apple Silicon Mac (M1+) with **â‰¥16 GB unified memory** (â‰¥32 GB recommended).
+>   - Intel Macs and machines with no GPU will NOT work â€” use Cloud instead.
 >
 > Which would you like?"
 
 Routing:
 
-- **Cloud** → skip to **Path A**.
-- **Local** → run hardware check first, then pick a path from Paths B–E based on the verdict.
-- **Unsure** → run the hardware check and let the verdict decide.
+- **Cloud** â†’ skip to **Path A**.
+- **Local** â†’ run hardware check first, then pick a path from Paths Bâ€“E based on the verdict.
+- **Unsure** â†’ run the hardware check and let the verdict decide.
 
 ### Step 1: Verify Hardware (ONLY if user chose local)
 
@@ -273,12 +279,12 @@ python3 scripts/hardware_check.py --json --check-pytorch
 
 | Verdict    | Meaning                                                       | Action |
 |------------|---------------------------------------------------------------|--------|
-| `ok`       | ≥8 GB VRAM (discrete) OR ≥32 GB unified (Apple Silicon)       | Local install — use `comfy_cli_flag` from report |
+| `ok`       | â‰¥8 GB VRAM (discrete) OR â‰¥32 GB unified (Apple Silicon)       | Local install â€” use `comfy_cli_flag` from report |
 | `marginal` | SD1.5 works; SDXL tight; Flux/video unlikely                  | Local OK for light workflows, else **Path A (Cloud)** |
 | `cloud`    | No usable GPU, <6 GB VRAM, <16 GB Apple unified, Intel Mac, Rosetta Python | **Switch to Cloud** unless user explicitly forces local |
 
 The script also surfaces `wsl: true` (WSL2 with NVIDIA passthrough) and
-`rosetta: true` (x86_64 Python on Apple Silicon — must reinstall as ARM64).
+`rosetta: true` (x86_64 Python on Apple Silicon â€” must reinstall as ARM64).
 
 If verdict is `cloud` but the user wants local, do not proceed silently.
 Show the `notes` array verbatim and ask whether they want to (a) switch to
@@ -299,7 +305,7 @@ user has already told you their hardware:
 | macOS + Apple Silicon | **Path B: Desktop** or **Path D: comfy-cli** |
 | Headless / server / CI / agents | **Path D: comfy-cli** |
 
-For the fully automated path (hardware check → install → launch → verify):
+For the fully automated path (hardware check â†’ install â†’ launch â†’ verify):
 
 ```bash
 bash scripts/comfyui_setup.sh
@@ -337,7 +343,7 @@ For users without a capable GPU or who want zero setup. Hosted on RTX 6000 Pro.
 
 **Pricing:** https://www.comfy.org/cloud/pricing
 **Concurrent jobs:** Free/Standard 1, Creator 3, Pro 5. Free tier
-**cannot run workflows via API** — only browse models. Paid subscription
+**cannot run workflows via API** â€” only browse models. Paid subscription
 required for `/api/prompt`, `/api/upload/*`, `/api/view`, etc.
 
 ---
@@ -350,7 +356,7 @@ One-click installer for non-technical users. Currently Beta.
 - **Windows (NVIDIA):** https://download.comfy.org/windows/nsis/x64
 - **macOS (Apple Silicon):** https://comfy.org
 
-Linux is **not supported** for Desktop — use Path D.
+Linux is **not supported** for Desktop â€” use Path D.
 
 ---
 
@@ -363,7 +369,7 @@ run `run_nvidia_gpu.bat`. Update via `update/update_comfyui_stable.bat`.
 
 ---
 
-### Path D: comfy-cli (All Platforms — Recommended for Agents)
+### Path D: comfy-cli (All Platforms â€” Recommended for Agents)
 
 The official CLI is the best path for headless/automated setups.
 
@@ -466,10 +472,10 @@ comfy node install-deps --workflow=workflow.json   # install everything a workfl
 
 ```bash
 python3 scripts/health_check.py
-# → comfy_cli on PATH? server reachable? checkpoints? smoke test?
+# â†’ comfy_cli on PATH? server reachable? checkpoints? smoke test?
 
 python3 scripts/check_deps.py my_workflow.json
-# → are this workflow's nodes/models/embeddings installed?
+# â†’ are this workflow's nodes/models/embeddings installed?
 
 python3 scripts/run_workflow.py \
   --workflow workflows/sd15_txt2img.json \
@@ -520,15 +526,15 @@ curl -X POST "https://cloud.comfy.org/api/upload/image" \
   follow it and strip `X-API-Key` before fetching from the storage backend
   (don't leak the API key to S3/CloudFront).
 - **Endpoint differences from local ComfyUI:**
-  - `/api/object_info`, `/api/queue`, `/api/userdata` — **403 on free tier**;
+  - `/api/object_info`, `/api/queue`, `/api/userdata` â€” **403 on free tier**;
     paid only.
   - `/history` is renamed to `/history_v2` on cloud (the scripts route
     automatically).
   - `/models/<folder>` is renamed to `/experiment/models/<folder>` on cloud
     (the scripts route automatically).
-  - `clientId` in WebSocket is currently ignored — all connections for a
+  - `clientId` in WebSocket is currently ignored â€” all connections for a
     user receive the same broadcast. Filter by `prompt_id` client-side.
-  - `subfolder` is accepted on uploads but ignored — cloud has a flat namespace.
+  - `subfolder` is accepted on uploads but ignored â€” cloud has a flat namespace.
 - **Concurrent jobs:** Free/Standard: 1, Creator: 3, Pro: 5. Extras queue
   automatically. Use `run_batch.py --parallel N` to saturate your tier.
 
@@ -543,57 +549,57 @@ curl -X POST http://127.0.0.1:8188/free \
   -H "Content-Type: application/json" \
   -d '{"unload_models": true, "free_memory": true}'
 
-# Cloud — same paths under /api/, plus:
+# Cloud â€” same paths under /api/, plus:
 python3 scripts/fetch_logs.py --tail-queue --host https://cloud.comfy.org
 ```
 
 ## Pitfalls
 
-1. **API format required** — every script and the `/api/prompt` endpoint expect
+1. **API format required** â€” every script and the `/api/prompt` endpoint expect
    API-format workflow JSON. The scripts detect editor format (top-level
    `nodes` and `links` arrays) and tell you to re-export via
-   "Workflow → Export (API)" (newer UI) or "Save (API Format)" (older UI).
+   "Workflow â†’ Export (API)" (newer UI) or "Save (API Format)" (older UI).
 
-2. **Server must be running** — all execution requires a live server.
+2. **Server must be running** â€” all execution requires a live server.
    `comfy launch --background` starts one. Verify with
    `curl http://127.0.0.1:8188/system_stats`.
 
-3. **Model names are exact** — case-sensitive, includes file extension.
+3. **Model names are exact** â€” case-sensitive, includes file extension.
    `check_deps.py` does fuzzy matching (with/without extension and folder
    prefix), but the workflow itself must use the canonical name. Use
    `comfy model list` to discover what's installed.
 
-4. **Missing custom nodes** — "class_type not found" means a required node
+4. **Missing custom nodes** â€” "class_type not found" means a required node
    isn't installed. `check_deps.py` reports which package to install;
    `auto_fix_deps.py` runs the install for you.
 
-5. **Working directory** — `comfy-cli` auto-detects the ComfyUI workspace.
+5. **Working directory** â€” `comfy-cli` auto-detects the ComfyUI workspace.
    If commands fail with "no workspace found", use
    `comfy --workspace /path/to/ComfyUI <command>` or
    `comfy set-default /path/to/ComfyUI`.
 
-6. **Cloud free-tier API limits** — `/api/prompt`, `/api/view`, `/api/upload/*`,
+6. **Cloud free-tier API limits** â€” `/api/prompt`, `/api/view`, `/api/upload/*`,
    `/api/object_info` all return 403 on free accounts. `health_check.py` and
    `check_deps.py` handle this gracefully and surface a clear message.
 
-7. **Timeout for video/audio workflows** — auto-detected when an output node
+7. **Timeout for video/audio workflows** â€” auto-detected when an output node
    is `VHS_VideoCombine`, `SaveVideo`, etc.; the default jumps from 300 s to
    900 s. Override explicitly with `--timeout 1800`.
 
-8. **Path traversal in output filenames** — server-supplied filenames are
+8. **Path traversal in output filenames** â€” server-supplied filenames are
    passed through `safe_path_join` to refuse anything escaping `--output-dir`.
-   Keep this protection on — workflows with custom save nodes can produce
+   Keep this protection on â€” workflows with custom save nodes can produce
    arbitrary paths.
 
-9. **Workflow JSON is arbitrary code** — custom nodes run Python, so
+9. **Workflow JSON is arbitrary code** â€” custom nodes run Python, so
    submitting an unknown workflow has the same trust profile as `eval`.
    Inspect workflows from untrusted sources before running.
 
-10. **Auto-randomized seed** — pass `seed: -1` in `--args` (or use
+10. **Auto-randomized seed** â€” pass `seed: -1` in `--args` (or use
     `--randomize-seed` and omit the seed) to get a fresh seed per run.
     The actual seed is logged to stderr.
 
-11. **`tracking` prompt** — first run of `comfy` may prompt for analytics.
+11. **`tracking` prompt** â€” first run of `comfy` may prompt for analytics.
     Use `comfy --skip-prompt tracking disable` to skip non-interactively.
     `comfyui_setup.sh` does this for you.
 

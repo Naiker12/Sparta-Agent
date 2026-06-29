@@ -1,4 +1,6 @@
 ---
+id: hermes-agent-skill-authoring
+category: Software Development
 name: hermes-agent-skill-authoring
 description: "Author in-repo SKILL.md: frontmatter, validator, structure, and writing-quality principles."
 version: 1.1.0
@@ -9,6 +11,10 @@ metadata:
   hermes:
     tags: [skills, authoring, hermes-agent, conventions, skill-md]
     related_skills: [plan, requesting-code-review]
+tags: [SoftwareDevelopment]
+source: external
+featured: false
+icon: 🛠️
 ---
 
 # Authoring Hermes-Agent Skills (in-repo)
@@ -17,8 +23,8 @@ metadata:
 
 There are two places a SKILL.md can live:
 
-1. **User-local:** `~/.hermes/skills/<maybe-category>/<name>/SKILL.md` — personal, not shared. Created via `skill_manage(action='create')`.
-2. **In-repo (this skill is about this case):** `/home/bb/hermes-agent/skills/<category>/<name>/SKILL.md` — committed, shipped with the package. Use `write_file` + `git add`. `skill_manage(action='create')` does NOT target this tree.
+1. **User-local:** `~/.hermes/skills/<maybe-category>/<name>/SKILL.md` â€” personal, not shared. Created via `skill_manage(action='create')`.
+2. **In-repo (this skill is about this case):** `/home/bb/hermes-agent/skills/<category>/<name>/SKILL.md` â€” committed, shipped with the package. Use `write_file` + `git add`. `skill_manage(action='create')` does NOT target this tree.
 
 ## When to Use
 
@@ -34,14 +40,14 @@ Source of truth: `tools/skill_manager_tool.py::_validate_frontmatter`. Hard requ
 - Closes with `\n---\n` before the body.
 - Parses as a YAML mapping.
 - `name` field present.
-- `description` field present, ≤ **1024 chars** (`MAX_DESCRIPTION_LENGTH`).
+- `description` field present, â‰¤ **1024 chars** (`MAX_DESCRIPTION_LENGTH`).
 - Non-empty body after the closing `---`.
 
 Peer-matched shape used by every skill under `skills/software-development/`:
 
 ```yaml
 ---
-name: my-skill-name               # lowercase, hyphens, ≤64 chars (MAX_NAME_LENGTH)
+name: my-skill-name               # lowercase, hyphens, â‰¤64 chars (MAX_NAME_LENGTH)
 description: Use when <trigger>. <one-line behavior>.
 version: 1.1.0
 author: Hermes Agent
@@ -53,12 +59,12 @@ metadata:
 ---
 ```
 
-`version` / `author` / `license` / `metadata` are NOT enforced by the validator, but every peer has them — omit and your skill sticks out.
+`version` / `author` / `license` / `metadata` are NOT enforced by the validator, but every peer has them â€” omit and your skill sticks out.
 
 ## Size Limits
 
-- Description: ≤ 1024 chars (enforced).
-- Full SKILL.md: ≤ 100,000 chars (enforced as `MAX_SKILL_CONTENT_CHARS`, ~36k tokens).
+- Description: â‰¤ 1024 chars (enforced).
+- Full SKILL.md: â‰¤ 100,000 chars (enforced as `MAX_SKILL_CONTENT_CHARS`, ~36k tokens).
 - Peer skills in `software-development/` sit at **8-14k chars**. Aim for that range. If you're pushing past 20k, split into `references/*.md` and reference them from SKILL.md.
 
 ## Writing Quality Principles
@@ -72,17 +78,17 @@ Use these quality checks when writing or editing any skill:
 3. **Use an information hierarchy.** Put always-needed steps in `SKILL.md`; put branch-specific or bulky reference material in `references/`, `templates/`, or `scripts/` and point to it only when needed.
 4. **End steps with completion criteria.** Each ordered step should say how the agent knows it is done. Good criteria are checkable and, when it matters, exhaustive: "every modified file accounted for" beats "summarize changes."
 5. **Co-locate rules with the concept they govern.** Avoid scattering one idea across the file. Keep definition, caveats, examples, and verification near each other.
-6. **Use strong leading words.** Prefer compact concepts the model already knows — e.g. "tight loop," "tracer bullet," "root cause," "regression test" — over long repeated explanations. A good leading word saves tokens and anchors behavior.
+6. **Use strong leading words.** Prefer compact concepts the model already knows â€” e.g. "tight loop," "tracer bullet," "root cause," "regression test" â€” over long repeated explanations. A good leading word saves tokens and anchors behavior.
 7. **Prune duplication and no-ops.** Keep each meaning in one source of truth. Sentence by sentence, ask whether the sentence changes agent behavior versus the default. If not, delete it rather than polishing it.
 8. **Watch for premature completion.** If agents tend to rush a step, first sharpen that step's completion criterion. Split the sequence only when later steps distract from doing the current step well.
 
 Common quality failures:
 
-- **Premature completion** — the skill lets the agent move on before the work is genuinely done.
-- **Duplication** — the same rule appears in multiple places and drifts.
-- **Sediment** — stale lines remain because adding felt safer than deleting.
-- **Sprawl** — too much always-visible material; push branch-specific reference behind pointers.
-- **No-op prose** — generic advice the agent would already follow without the skill.
+- **Premature completion** â€” the skill lets the agent move on before the work is genuinely done.
+- **Duplication** â€” the same rule appears in multiple places and drifts.
+- **Sediment** â€” stale lines remain because adding felt safer than deleting.
+- **Sprawl** â€” too much always-visible material; push branch-specific reference behind pointers.
+- **No-op prose** â€” generic advice the agent would already follow without the skill.
 
 ## Peer-Matched Structure
 
@@ -110,7 +116,7 @@ Numbered list of mistakes and their fixes.
 - [ ] Checkbox list of post-action verifications
 
 ## One-Shot Recipes (optional)
-Named scenarios → concrete command sequences.
+Named scenarios â†’ concrete command sequences.
 ```
 
 Not every section is mandatory, but `Overview` + `When to Use` + actionable body + pitfalls are the minimum for the skill to feel like a peer.
@@ -146,7 +152,7 @@ Pick the closest existing category. Don't invent new top-level categories casual
    assert len(content) <= 100_000
    ```
 5. **Git add + commit** on the active branch.
-6. **Note:** the CURRENT session's skill loader is cached — `skill_view` / `skills_list` will not see the new skill until a new session. This is expected, not a bug.
+6. **Note:** the CURRENT session's skill loader is cached â€” `skill_view` / `skills_list` will not see the new skill until a new session. This is expected, not a bug.
 
 ## Cross-Referencing Other Skills
 
@@ -157,7 +163,7 @@ Pick the closest existing category. Don't invent new top-level categories casual
 - **Small fix (typo, added pitfall, tightened trigger):** `skill_manage(action='patch', name=..., old_string=..., new_string=...)` works fine on in-repo skills.
 - **Major rewrite:** `write_file` the whole SKILL.md. `skill_manage(action='edit')` also works but requires supplying the full new content.
 - **Adding supporting files:** `write_file` to `skills/<category>/<name>/references/<file>.md`, `templates/<file>`, or `scripts/<file>`. `skill_manage(action='write_file')` also works and enforces the references/templates/scripts/assets subdir allowlist.
-- **Always commit** the edit — in-repo skills are source, not runtime state.
+- **Always commit** the edit â€” in-repo skills are source, not runtime state.
 
 ## Common Pitfalls
 
@@ -184,10 +190,10 @@ Pick the closest existing category. Don't invent new top-level categories casual
 - [ ] File is at `skills/<category>/<name>/SKILL.md` (not in `~/.hermes/skills/`)
 - [ ] Frontmatter starts at byte 0 with `---`, closes with `\n---\n`
 - [ ] `name`, `description`, `version`, `author`, `license`, `metadata.hermes.{tags, related_skills}` all present
-- [ ] Name ≤ 64 chars, lowercase + hyphens
-- [ ] Description ≤ 1024 chars and starts with "Use when ..."
-- [ ] Total file ≤ 100,000 chars (aim for 8-15k)
-- [ ] Structure: `# Title` → `## Overview` → `## When to Use` → body → `## Common Pitfalls` → `## Verification Checklist`
+- [ ] Name â‰¤ 64 chars, lowercase + hyphens
+- [ ] Description â‰¤ 1024 chars and starts with "Use when ..."
+- [ ] Total file â‰¤ 100,000 chars (aim for 8-15k)
+- [ ] Structure: `# Title` â†’ `## Overview` â†’ `## When to Use` â†’ body â†’ `## Common Pitfalls` â†’ `## Verification Checklist`
 - [ ] Each ordered step has a checkable completion criterion
 - [ ] Description is trigger-focused and avoids duplicated body content
 - [ ] Bulky or branch-specific reference is progressively disclosed in linked files

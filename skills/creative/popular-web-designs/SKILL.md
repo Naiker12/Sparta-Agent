@@ -1,4 +1,6 @@
 ---
+id: popular-web-designs
+category: Creative
 name: popular-web-designs
 description: 54 real design systems (Stripe, Linear, Vercel) as HTML/CSS.
 version: 1.0.0
@@ -16,6 +18,9 @@ triggers:
   - landing page
   - dashboard design
   - website styled like
+source: external
+featured: false
+icon: 🎨
 ---
 
 # Popular Web Designs
@@ -26,12 +31,12 @@ system, shadows, responsive behavior, and practical agent prompts with exact CSS
 
 ## Related design skills
 
-- **`claude-design`** — use for the design *process and taste* (scoping a brief,
+- **`claude-design`** â€” use for the design *process and taste* (scoping a brief,
   producing variants, verifying a local HTML artifact, avoiding AI-design slop).
   Pair it with this skill when the user wants a thoughtfully-designed page styled
   after a known brand: `claude-design` drives the workflow, this skill supplies
   the visual vocabulary.
-- **`design-md`** — use when the deliverable is a formal DESIGN.md token spec
+- **`design-md`** â€” use when the deliverable is a formal DESIGN.md token spec
   file, not a rendered artifact.
 
 ## How to Use
@@ -110,7 +115,7 @@ substitute that preserves the design's character. Common mappings:
 
 When a template's CDN font matches the original (Inter, IBM Plex, Rubik, Geist), no
 substitution loss occurs. When a substitute is used (DM Sans for Circular, Source Sans 3
-for sohne-var), follow the template's weight, size, and letter-spacing values closely —
+for sohne-var), follow the template's weight, size, and letter-spacing values closely â€”
 those carry more visual identity than the specific font face.
 
 ## Design Catalog
