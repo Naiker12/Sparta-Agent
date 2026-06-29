@@ -1,15 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Zap, Trash2 } from 'lucide-react'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
+import { Zap, Trash2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog'
 import type { Skill, SkillCategory } from '@/types'
@@ -50,48 +40,107 @@ export function SkillDialog({ open, onClose, onSubmit, onDelete, initial }: Skil
 
   const isEditing = !!initial
 
-  return (
-    <Dialog open={open} onOpenChange={(open) => { if (!open) onClose() }}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2.5">
-            <span className="flex items-center justify-center size-7 rounded-lg bg-accent/15 text-accent shrink-0">
-              <Zap size={15} strokeWidth={2.25} />
-            </span>
-            {isEditing ? 'Editar skill' : 'Nueva skill'}
-          </DialogTitle>
-          <DialogDescription>
-            {isEditing
-              ? 'Modifica los campos de la skill existente.'
-              : 'Define una nueva skill para personalizar el comportamiento del agente.'}
-          </DialogDescription>
-        </DialogHeader>
+  if (!open) return null
 
-        <form id="skill-form" onSubmit={handleSubmit} className="px-6 pb-2 flex flex-col gap-4">
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 100,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'rgba(0,0,0,0.3)',
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          width: 520,
+          maxWidth: '92vw',
+          maxHeight: '85vh',
+          background: 'var(--bg-modal)',
+          border: '1px solid var(--border-strong)',
+          borderRadius: 'var(--radius-xl)',
+          boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div style={{
+          display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12,
+          padding: '20px 24px 0', flexShrink: 0,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 28, height: 28, borderRadius: 'var(--radius-md)',
+              background: 'var(--accent-muted)', color: 'var(--accent)', flexShrink: 0,
+            }}>
+              <Zap size={14} strokeWidth={2.25} />
+            </span>
+            <div>
+              <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-ui)', margin: 0 }}>
+                {isEditing ? 'Editar skill' : 'Nueva skill'}
+              </h3>
+              <p style={{ fontSize: 11.5, color: 'var(--text-secondary)', fontFamily: 'var(--font-ui)', margin: '2px 0 0' }}>
+                {isEditing
+                  ? 'Modifica los campos de la skill existente.'
+                  : 'Define una nueva skill para personalizar el comportamiento del agente.'}
+              </p>
+            </div>
+          </div>
+          <button onClick={onClose} style={{
+            width: 24, height: 24, background: 'none', border: 'none',
+            borderRadius: 'var(--radius-sm)', color: 'var(--text-muted)',
+            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexShrink: 0, marginTop: -2,
+          }}>
+            <X size={14} />
+          </button>
+        </div>
+
+        {/* Form */}
+        <form id="skill-form" onSubmit={handleSubmit} style={{
+          flex: 1, overflowY: 'auto', overflowX: 'hidden',
+          padding: '16px 24px', display: 'flex', flexDirection: 'column', gap: 16,
+        }}>
           <Field label="Nombre">
-            <Input
+            <input
               autoFocus
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Code Review"
+              style={inputStyle}
             />
           </Field>
 
           <Field label="Descripción">
-            <Input
+            <input
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Revisa código y sugiere mejoras"
+              style={inputStyle}
             />
           </Field>
 
           <Field label="Prompt">
-            <Textarea
+            <textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="Revisa el siguiente código y sugiere..."
-              rows={6}
-              className="resize-y font-mono text-xs leading-relaxed"
+              rows={5}
+              style={{
+                ...inputStyle,
+                minHeight: 80,
+                resize: 'vertical',
+                fontFamily: 'var(--font-mono)',
+                lineHeight: 1.6,
+              }}
             />
           </Field>
 
@@ -99,50 +148,56 @@ export function SkillDialog({ open, onClose, onSubmit, onDelete, initial }: Skil
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value as SkillCategory)}
-              className="w-full px-2.5 py-1.5 text-[11.5px] bg-input border border-border-normal rounded-md text-primary font-ui outline-none"
+              style={inputStyle}
             >
               {SKILL_CATEGORIES.map((c) => (
-                <option key={c.value} value={c.value}>{c.label}</option>
+                <option key={c.value} value={c.value}>{c.icon} {c.label}</option>
               ))}
             </select>
           </Field>
 
           <Field label="Tags">
-            <Input
+            <input
               value={tagsInput}
               onChange={(e) => setTagsInput(e.target.value)}
               placeholder="code, review, análisis"
+              style={inputStyle}
             />
-            <span className="block mt-1 text-[11px] text-muted-foreground font-ui">
+            <span style={{ fontSize: 10.5, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)', marginTop: 4 }}>
               Separados por coma
             </span>
           </Field>
         </form>
 
-        <DialogFooter className="flex-row items-center gap-2.5 px-6 py-4 border-t border-border-subtle bg-card">
+        {/* Footer */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8,
+          padding: '12px 24px', borderTop: '1px solid var(--border-subtle)',
+          background: 'var(--bg-surface)', flexShrink: 0,
+        }}>
           {onDelete && (
             <Button
               variant="ghost"
               onClick={() => setConfirmDeleteOpen(true)}
-              className="mr-auto text-destructive gap-1.5"
+              style={{ marginRight: 'auto', color: 'var(--destructive)', gap: 6 }}
             >
               <Trash2 size={13} />
               Eliminar
             </Button>
           )}
-          <Button variant="ghost" onClick={onClose} className="min-w-[90px]">
+          <Button variant="ghost" onClick={onClose} style={{ minWidth: 90 }}>
             Cancelar
           </Button>
           <Button
             form="skill-form"
             type="submit"
             disabled={!name.trim() || !prompt.trim()}
-            className="min-w-[120px]"
+            style={{ minWidth: 120 }}
           >
             {isEditing ? 'Guardar cambios' : 'Crear skill'}
           </Button>
-        </DialogFooter>
-      </DialogContent>
+        </div>
+      </div>
 
       {onDelete && (
         <ConfirmDeleteDialog
@@ -153,17 +208,32 @@ export function SkillDialog({ open, onClose, onSubmit, onDelete, initial }: Skil
           onConfirm={() => { onDelete(); setConfirmDeleteOpen(false) }}
         />
       )}
-    </Dialog>
+    </div>
   )
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-1">
-      <label className="text-[10px] font-bold uppercase tracking-wide text-secondary font-ui">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <label style={{
+        fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
+        letterSpacing: '0.07em', color: 'var(--text-secondary)', fontFamily: 'var(--font-ui)',
+      }}>
         {label}
       </label>
       {children}
     </div>
   )
+}
+
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '7px 10px',
+  fontSize: 12,
+  background: 'var(--bg-input)',
+  border: '1px solid var(--border-normal)',
+  borderRadius: 'var(--radius-md)',
+  color: 'var(--text-primary)',
+  fontFamily: 'var(--font-ui)',
+  outline: 'none',
 }

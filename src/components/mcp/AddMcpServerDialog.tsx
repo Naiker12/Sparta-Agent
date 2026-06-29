@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
-import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/modal'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import {
   Plug, Check, Loader2, FileJson, Upload,
-  Terminal, Globe, Copy, Info,
+  Terminal, Globe, Copy, Info, X,
 } from 'lucide-react'
 import { useMCPStore } from '@/stores/mcp.store'
 import type { MCPServerConfig, MCPServerType } from '@/types'
@@ -118,36 +117,67 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
   const canSubmitManual = name.trim() && (type === 'stdio' ? command.trim() : url.trim())
   const canSubmitConfig = configJson.trim().length > 2
 
-  return (
-    <Modal open={open} onClose={() => { reset(); onClose() }} width={600} maxHeight={560}>
-      <ModalHeader title={(
-        <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 30,
-            height: 30,
-            borderRadius: 'var(--radius-md)',
-            background: 'var(--accent-muted)',
-            color: 'var(--accent)',
-            flexShrink: 0,
-          }}>
-            <Plug size={15} strokeWidth={2} />
-          </span>
-          {isEditing ? 'Editar servidor MCP' : 'Agregar servidor MCP'}
-        </span>
-      )} onClose={() => { reset(); onClose() }} />
+  if (!open) return null
 
-      <form id="mcp-form" onSubmit={handleSubmit}>
-        <ModalBody style={{ padding: '0 28px', display: 'flex', flexDirection: 'column', gap: 0 }}>
+  return (
+    <div
+      style={{
+        position: 'fixed', inset: 0, zIndex: 100,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: 'rgba(0,0,0,0.3)',
+      }}
+      onClick={() => { reset(); onClose() }}
+    >
+      <div
+        style={{
+          width: 600, maxWidth: '92vw', maxHeight: '85vh',
+          background: 'var(--bg-modal)', border: '1px solid var(--border-strong)',
+          borderRadius: 'var(--radius-xl)', boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
+          display: 'flex', flexDirection: 'column', overflow: 'hidden',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div style={{
+          display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12,
+          padding: '20px 24px 0', flexShrink: 0,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 28, height: 28, borderRadius: 'var(--radius-md)',
+              background: 'var(--accent-muted)', color: 'var(--accent)', flexShrink: 0,
+            }}>
+              <Plug size={14} strokeWidth={2} />
+            </span>
+            <div>
+              <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-ui)', margin: 0 }}>
+                {isEditing ? 'Editar servidor MCP' : 'Agregar servidor MCP'}
+              </h3>
+              <p style={{ fontSize: 11.5, color: 'var(--text-secondary)', fontFamily: 'var(--font-ui)', margin: '2px 0 0' }}>
+                Conecta un servidor MCP para exponer herramientas al agente.
+              </p>
+            </div>
+          </div>
+          <button onClick={() => { reset(); onClose() }} style={{
+            width: 24, height: 24, background: 'none', border: 'none',
+            borderRadius: 'var(--radius-sm)', color: 'var(--text-muted)',
+            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexShrink: 0, marginTop: -2,
+          }}>
+            <X size={14} />
+          </button>
+        </div>
+
+        {/* Body */}
+        <form id="mcp-form" onSubmit={handleSubmit} style={{
+          flex: 1, overflowY: 'auto', overflowX: 'hidden',
+          padding: '16px 24px', display: 'flex', flexDirection: 'column', gap: 0,
+        }}>
+          {/* Mode tabs */}
           <div style={{
-            display: 'flex',
-            gap: 4,
-            marginBottom: 16,
-            padding: 4,
-            background: 'var(--bg-surface)',
-            borderRadius: 'var(--radius-lg)',
+            display: 'flex', gap: 4, marginBottom: 16, padding: 4,
+            background: 'var(--bg-surface)', borderRadius: 'var(--radius-lg)',
             border: '1px solid var(--border-subtle)',
           }}>
             <ModeTab
@@ -228,13 +258,8 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
                   placeholder="KEY=value KEY2=value2"
                 />
                 <span style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 5,
-                  marginTop: 5,
-                  fontSize: 11,
-                  color: 'var(--text-muted)',
-                  fontFamily: 'var(--font-ui)',
+                  display: 'flex', alignItems: 'center', gap: 5, marginTop: 5,
+                  fontSize: 11, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)',
                 }}>
                   <Info size={10} />
                   Opcional · separar con espacios: API_KEY=sk-xxx PORT=3001
@@ -243,22 +268,14 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
 
               <Field label="Vista previa del comando">
                 <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  padding: '9px 12px',
-                  borderRadius: 'var(--radius-lg)',
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '9px 12px', borderRadius: 'var(--radius-lg)',
                   border: '1px solid var(--border-subtle)',
                   background: 'var(--bg-surface)',
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 12,
-                  minHeight: 38,
+                  fontFamily: 'var(--font-mono)', fontSize: 12, minHeight: 38,
                 }}>
                   <span style={{
-                    flex: 1,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
+                    flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                     userSelect: 'all',
                     color: !isEmpty ? 'var(--text-primary)' : 'var(--text-muted)',
                     fontStyle: isEmpty ? 'italic' : 'normal',
@@ -285,18 +302,12 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
               </Field>
 
               <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
-                padding: '12px 16px',
-                borderRadius: 'var(--radius-lg)',
-                border: '1px solid var(--border-subtle)',
-                background: 'var(--bg-surface)',
+                display: 'flex', alignItems: 'center', gap: 12,
+                padding: '12px 16px', borderRadius: 'var(--radius-lg)',
+                border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)',
               }}>
                 <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
+                  type="button" variant="outline" size="sm"
                   onClick={handleTest}
                   disabled={testing || (type === 'stdio' ? !command.trim() : !url.trim())}
                   style={{ fontSize: 12, gap: 6, flexShrink: 0 }}
@@ -324,20 +335,12 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div style={{
-                display: 'flex',
-                gap: 10,
-                padding: '12px 16px',
+                display: 'flex', gap: 10, padding: '12px 16px',
                 borderRadius: 'var(--radius-lg)',
-                background: 'var(--accent-muted)',
-                border: '1px solid var(--accent-dim)',
+                background: 'var(--accent-muted)', border: '1px solid var(--accent-dim)',
               }}>
                 <Info size={14} style={{ color: 'var(--accent)', flexShrink: 0, marginTop: 1 }} />
-                <span style={{
-                  fontSize: 12,
-                  color: 'var(--text-secondary)',
-                  fontFamily: 'var(--font-ui)',
-                  lineHeight: 1.6,
-                }}>
+                <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontFamily: 'var(--font-ui)', lineHeight: 1.6 }}>
                   Pega tu configuración en formato{' '}
                   <strong style={{ color: 'var(--text-primary)' }}>claude_desktop_config.json</strong>{' '}
                   o carga el archivo directamente. Se importarán todos los servidores definidos.
@@ -350,19 +353,12 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
                   onChange={(e) => setConfigJson(e.target.value)}
                   placeholder={`{\n  "mcpServers": {\n    "filesystem": {\n      "command": "npx",\n      "args": ["-y", "@modelcontextprotocol/server-filesystem", "./"]\n    }\n  }\n}`}
                   style={{
-                    width: '100%',
-                    minHeight: 180,
-                    resize: 'vertical',
-                    padding: '12px 14px',
-                    borderRadius: 'var(--radius-lg)',
+                    width: '100%', minHeight: 180, resize: 'vertical',
+                    padding: '12px 14px', borderRadius: 'var(--radius-lg)',
                     border: '1px solid var(--border-normal)',
-                    background: 'var(--bg-input)',
-                    color: 'var(--text-primary)',
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: 12,
-                    lineHeight: 1.7,
-                    outline: 'none',
-                    transition: 'border-color 0.15s, box-shadow 0.15s',
+                    background: 'var(--bg-input)', color: 'var(--text-primary)',
+                    fontFamily: 'var(--font-mono)', fontSize: 12, lineHeight: 1.7,
+                    outline: 'none', transition: 'border-color 0.15s, box-shadow 0.15s',
                   }}
                   onFocus={e => {
                     e.currentTarget.style.borderColor = 'var(--accent)'
@@ -383,8 +379,7 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
                 style={{ display: 'none' }}
               />
               <Button
-                type="button"
-                variant="outline"
+                type="button" variant="outline"
                 onClick={() => fileInputRef.current?.click()}
                 style={{ gap: 8, alignSelf: 'flex-start' }}
               >
@@ -393,44 +388,40 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
               </Button>
             </div>
           )}
-        </ModalBody>
-      </form>
+        </form>
 
-      <ModalFooter>
-        <Button
-          variant="ghost"
-          onClick={() => { reset(); onClose() }}
-          style={{ minWidth: 90 }}
-        >
-          Cancelar
-        </Button>
-        <Button
-          form="mcp-form"
-          type="submit"
-          disabled={inputMode === 'manual' ? !canSubmitManual : !canSubmitConfig}
-          style={{ minWidth: 160 }}
-        >
-          {inputMode === 'config'
-            ? 'Importar servidores'
-            : isEditing ? 'Guardar cambios' : 'Agregar servidor'}
-        </Button>
-      </ModalFooter>
-    </Modal>
+        {/* Footer */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8,
+          padding: '12px 24px', borderTop: '1px solid var(--border-subtle)',
+          background: 'var(--bg-surface)', flexShrink: 0,
+        }}>
+          <Button variant="ghost" onClick={() => { reset(); onClose() }} style={{ minWidth: 90 }}>
+            Cancelar
+          </Button>
+          <Button
+            form="mcp-form"
+            type="submit"
+            disabled={inputMode === 'manual' ? !canSubmitManual : !canSubmitConfig}
+            style={{ minWidth: 160 }}
+          >
+            {inputMode === 'config'
+              ? 'Importar servidores'
+              : isEditing ? 'Guardar cambios' : 'Agregar servidor'}
+          </Button>
+        </div>
+      </div>
+    </div>
   )
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
       <label style={{
-        display: 'block',
-        fontSize: 10,
-        fontWeight: 700,
-        textTransform: 'uppercase',
-        letterSpacing: '0.07em',
-        color: 'var(--text-secondary)',
-        fontFamily: 'var(--font-ui)',
-        marginBottom: 7,
+        display: 'block', fontSize: 10, fontWeight: 700,
+        textTransform: 'uppercase', letterSpacing: '0.07em',
+        color: 'var(--text-secondary)', fontFamily: 'var(--font-ui)',
       }}>
         {label}
       </label>
@@ -447,21 +438,12 @@ function ModeTab({ active, icon, label, onClick }: {
       type="button"
       onClick={onClick}
       style={{
-        flex: 1,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 6,
-        padding: '7px 14px',
-        borderRadius: 'var(--radius-md)',
-        border: 'none',
+        flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+        padding: '7px 14px', borderRadius: 'var(--radius-md)', border: 'none',
         background: active ? 'var(--bg-elevated)' : 'transparent',
         color: active ? 'var(--text-primary)' : 'var(--text-muted)',
-        fontSize: 12,
-        fontWeight: active ? 600 : 500,
-        fontFamily: 'var(--font-ui)',
-        cursor: 'pointer',
-        transition: 'all 0.15s',
+        fontSize: 12, fontWeight: active ? 600 : 500,
+        fontFamily: 'var(--font-ui)', cursor: 'pointer', transition: 'all 0.15s',
         boxShadow: active ? '0 1px 4px rgba(0,0,0,0.15)' : 'none',
       }}
     >
@@ -479,33 +461,21 @@ function TypeCard({ active, icon, title, subtitle, onClick }: {
       type="button"
       onClick={onClick}
       style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 12,
-        padding: '14px 16px',
-        borderRadius: 'var(--radius-lg)',
-        border: '1.5px solid',
+        display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px',
+        borderRadius: 'var(--radius-lg)', border: '1.5px solid',
         borderColor: active ? 'var(--accent)' : 'var(--border-normal)',
         background: active ? 'var(--accent-muted)' : 'var(--bg-surface)',
         color: active ? 'var(--accent)' : 'var(--text-primary)',
-        textAlign: 'left',
-        cursor: 'pointer',
-        transition: 'all 0.12s',
-        fontFamily: 'var(--font-ui)',
-        width: '100%',
+        textAlign: 'left', cursor: 'pointer', transition: 'all 0.12s',
+        fontFamily: 'var(--font-ui)', width: '100%',
       }}
     >
       <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: 34,
-        height: 34,
-        borderRadius: 'var(--radius-md)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        width: 34, height: 34, borderRadius: 'var(--radius-md)',
         background: active ? 'var(--accent)' : 'var(--bg-active)',
         color: active ? '#fff' : 'var(--text-secondary)',
-        flexShrink: 0,
-        transition: 'all 0.12s',
+        flexShrink: 0, transition: 'all 0.12s',
       }}>
         {icon}
       </div>
