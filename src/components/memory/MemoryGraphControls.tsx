@@ -8,11 +8,24 @@ interface MemoryGraphControlsProps {
   isGraphView: boolean
   nodeCount: number
   edgeCount: number
+  zoomLevel?: number
+}
+
+const LEGEND_ITEMS = [
+  { label: 'Entidad', color: '#7c9ef8' },
+  { label: 'Hecho', color: '#6bd49a' },
+  { label: 'Pref.', color: '#f87c9e' },
+  { label: 'Proyecto', color: '#c47cf8' },
+  { label: 'Código', color: '#7cf8f0' },
+]
+
+function zoomPercent(radius: number): number {
+  return Math.round(((60 - radius) / (60 - 3)) * 100)
 }
 
 export function MemoryGraphControls({
   onZoomIn, onZoomOut, onReset, onToggleView,
-  isGraphView, nodeCount, edgeCount,
+  isGraphView, nodeCount, edgeCount, zoomLevel,
 }: MemoryGraphControlsProps) {
   return (
     <div
@@ -28,6 +41,17 @@ export function MemoryGraphControls({
             <span style={{ fontSize: 10.5, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
               {nodeCount} nodos · {edgeCount} aristas
             </span>
+            <div style={{ width: 1, height: 16, background: 'var(--border-subtle)', margin: '0 4px' }} />
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+              {LEGEND_ITEMS.map(({ label, color }) => (
+                <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <div style={{ width: 7, height: 7, borderRadius: '50%', background: color, flexShrink: 0 }} />
+                  <span style={{ fontSize: 9.5, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)' }}>
+                    {label}
+                  </span>
+                </div>
+              ))}
+            </div>
           </>
         )}
       </div>
@@ -38,6 +62,14 @@ export function MemoryGraphControls({
             <ControlButton onClick={onZoomIn} title="Acercar">
               <ZoomIn size={13} strokeWidth={1.5} />
             </ControlButton>
+            {zoomLevel != null && (
+              <span style={{
+                fontSize: 9, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)',
+                minWidth: 28, textAlign: 'center',
+              }}>
+                {zoomPercent(zoomLevel)}%
+              </span>
+            )}
             <ControlButton onClick={onZoomOut} title="Alejar">
               <ZoomOut size={13} strokeWidth={1.5} />
             </ControlButton>

@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react'
-import { Brain, ChevronLeft, Network, List } from 'lucide-react'
+import { useState, useRef, useCallback, useMemo } from 'react'
+import { Brain, ChevronLeft } from 'lucide-react'
 import { useMemoryStore } from '@/stores/memory.store'
 import { useUIStore } from '@/stores/ui.store'
 import { Button } from '@/components/ui/button'
@@ -16,12 +16,19 @@ export function MemoryView() {
   const [graphView, setGraphView] = useState(true)
   const [selectedEntry, setSelectedEntry] = useState<MemoryEntry | null>(null)
   const [selectedGraphNode, setSelectedGraphNode] = useState<MemoryGraphNode | null>(null)
+  const [hoveredEntry, setHoveredEntry] = useState<MemoryEntry | null>(null)
+  const [hoveredPos, setHoveredPos] = useState({ x: 0, y: 0 })
+  const [zoomLevel, setZoomLevel] = useState(20)
   const graphRef = useRef<MemoryGraphHandle>(null)
 
-  const nodes = graphView
-    ? (entries.length > 0 ? computeGraphLayout(entries) : [])
-    : []
-  const relations = graphView ? computeRelations(entries, []) : []
+  const nodes = useMemo(
+    () => (graphView && entries.length > 0 ? computeGraphLayout(entries) : []),
+    [graphView, entries]
+  )
+  const relations = useMemo(
+    () => (graphView ? computeRelations(entries, []) : []),
+    [graphView, entries]
+  )
 
   function handleNodeSelect(entry: MemoryEntry | null, graphNode: MemoryGraphNode | null) {
     if (entry && graphNode) {
@@ -31,6 +38,24 @@ export function MemoryView() {
       setSelectedEntry(null)
       setSelectedGraphNode(null)
     }
+  }
+
+  const handleNodeHover = useCallback((entry: MemoryEntry | null, x: number, y: number) => {
+    setHoveredEntry(entry)
+    if (entry) setHoveredPos({ x, y })
+  }, [])
+
+  const handleZoomChange = useCallback((level: number) => {
+    setZoomLevel(level)
+  }, [])
+
+  function handleListEntryClick(entry: MemoryEntry) {
+    setSelectedEntry(entry)
+    setSelectedGraphNode(null)
+    setGraphView(true)
+    setTimeout(() => {
+      graphRef.current?.focusNode(entry.id)
+    }, 100)
   }
 
   return (
@@ -62,30 +87,20 @@ export function MemoryView() {
           </h2>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)' }}>
-            {entries.length} recuerdos
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setGraphView((v) => !v)}
-            style={{ gap: 4 }}
-          >
-            {graphView ? <List className="w-4 h-4" /> : <Network className="w-4 h-4" />}
-            {graphView ? 'Vista lista' : 'Vista gráfico'}
-          </Button>
-        </div>
+        <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)' }}>
+          {entries.length} recuerdos
+        </span>
       </div>
 
       <MemoryGraphControls
-        onZoomIn={() => graphRef.current?.resetCamera()}
-        onZoomOut={() => graphRef.current?.resetCamera()}
+        onZoomIn={() => graphRef.current?.zoomIn()}
+        onZoomOut={() => graphRef.current?.zoomOut()}
         onReset={() => graphRef.current?.resetCamera()}
         onToggleView={() => setGraphView((v) => !v)}
         isGraphView={graphView}
         nodeCount={nodes.length}
         edgeCount={relations.length}
+        zoomLevel={zoomLevel}
       />
 
       <div style={{ flex: 1, position: 'relative', display: 'flex', overflow: 'hidden' }}>
@@ -111,11 +126,13 @@ export function MemoryView() {
           <MemoryGraph
             ref={graphRef}
             onNodeSelect={handleNodeSelect}
+            onNodeHover={handleNodeHover}
+            onZoomChange={handleZoomChange}
             selectedNodeId={selectedEntry?.id || null}
             relations={relations}
           />
         ) : (
-          <MemoryListView />
+          <MemoryListView onEntryClick={handleListEntryClick} />
         )}
 
         {graphView && selectedEntry && selectedGraphNode && (
@@ -127,6 +144,33 @@ export function MemoryView() {
               setSelectedGraphNode(null)
             }}
           />
+        )}
+
+        {graphView && hoveredEntry && (
+          <div style={{
+            position: 'absolute',
+            left: hoveredPos.x + 12,
+            top: hoveredPos.y - 8,
+            background: 'var(--bg-elevated)',
+            border: '1px solid var(--border-normal)',
+            borderRadius: 'var(--radius-md)',
+            padding: '5px 10px',
+            fontSize: 11.5,
+            fontFamily: 'var(--font-ui)',
+            color: 'var(--text-primary)',
+            maxWidth: 220,
+            pointerEvents: 'none',
+            zIndex: 20,
+            boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
+            lineHeight: 1.5,
+          }}>
+            <div style={{ fontWeight: 600, marginBottom: 2, color: 'var(--text-primary)' }}>
+              {hoveredEntry.content.split(' ').slice(0, 5).join(' ')}...
+            </div>
+            <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>
+              {hoveredEntry.category ?? 'general'} · {hoveredEntry.source === 'auto' ? 'Aprendido' : 'Manual'}
+            </div>
+          </div>
         )}
       </div>
     </div>

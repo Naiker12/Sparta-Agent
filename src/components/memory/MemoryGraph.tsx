@@ -3,10 +3,16 @@ import type { MemoryEntry, MemoryGraphNode, MemoryRelation } from '@/types'
 
 export interface MemoryGraphHandle {
   resetCamera: () => void
+  zoomIn: () => void
+  zoomOut: () => void
+  focusNode: (id: string) => void
+  getZoomLevel: () => number
 }
 
 interface MemoryGraphProps {
   onNodeSelect: (entry: MemoryEntry | null, graphNode: MemoryGraphNode | null) => void
+  onNodeHover?: (entry: MemoryEntry | null, x: number, y: number) => void
+  onZoomChange?: (level: number) => void
   selectedNodeId: string | null
   relations: MemoryRelation[]
 }

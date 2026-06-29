@@ -1,13 +1,17 @@
 import { X, ExternalLink, Tag, Calendar, MessageSquare } from 'lucide-react'
 import type { MemoryEntry, MemoryGraphNode } from '@/types'
+import { getGraphNodeColor } from '@/lib/graph-colors'
+import { useChatStore } from '@/stores/chat.store'
 
 interface MemoryNodePanelProps {
   entry: MemoryEntry
-  graphNode: MemoryGraphNode
+  graphNode?: MemoryGraphNode
   onClose: () => void
 }
 
-export function MemoryNodePanel({ entry, graphNode, onClose }: MemoryNodePanelProps) {
+export function MemoryNodePanel({ entry, onClose }: MemoryNodePanelProps) {
+  const nodeColor = getGraphNodeColor(entry.source, entry.category)
+
   return (
     <div
       style={{
@@ -30,7 +34,7 @@ export function MemoryNodePanel({ entry, graphNode, onClose }: MemoryNodePanelPr
           <div
             style={{
               width: 8, height: 8, borderRadius: '50%',
-              background: graphNode.color,
+              background: nodeColor,
               flexShrink: 0,
             }}
           />
@@ -83,11 +87,35 @@ export function MemoryNodePanel({ entry, graphNode, onClose }: MemoryNodePanelPr
       </div>
 
       {entry.sourceSessionId && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 3, marginTop: 4 }}>
-          <MessageSquare size={9} style={{ color: 'var(--text-muted)' }} strokeWidth={1.5} />
-          <span style={{ fontSize: 9.5, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
-            Sesión: {entry.sourceSessionId.slice(0, 8)}…
-          </span>
+        <div style={{
+          marginTop: 8,
+          padding: '6px 8px',
+          background: 'var(--bg-input)',
+          borderRadius: 'var(--radius-sm)',
+          border: '1px solid var(--border-subtle)',
+        }}>
+          <div style={{ fontSize: 9.5, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', marginBottom: 2 }}>
+            ORIGEN
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+            <MessageSquare size={9} style={{ color: 'var(--text-muted)' }} strokeWidth={1.5} />
+            <span style={{ fontSize: 11, color: 'var(--text-secondary)', fontFamily: 'var(--font-ui)' }}>
+              Conversación · {entry.sourceSessionId.slice(0, 8)}...
+            </span>
+          </div>
+          {entry.sourceMessageId && (
+            <button
+              onClick={() => {
+                useChatStore.getState().switchSession(entry.sourceSessionId!)
+              }}
+              style={{
+                fontSize: 10, color: 'var(--accent)', background: 'none', border: 'none',
+                padding: 0, cursor: 'pointer', fontFamily: 'var(--font-ui)', marginTop: 2,
+              }}
+            >
+              → Ver conversación
+            </button>
+          )}
         </div>
       )}
     </div>

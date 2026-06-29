@@ -2,8 +2,13 @@ import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import { useMemoryStore } from '@/stores/memory.store'
 import { MemoryEntryItem } from '@/components/memory/MemoryEntryItem'
+import type { MemoryEntry } from '@/types'
 
-export function MemoryListView() {
+interface MemoryListViewProps {
+  onEntryClick?: (entry: MemoryEntry) => void
+}
+
+export function MemoryListView({ onEntryClick }: MemoryListViewProps) {
   const { entries, addEntry, deleteEntry, updateEntry } = useMemoryStore()
   const [draft, setDraft] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -26,7 +31,7 @@ export function MemoryListView() {
           <textarea
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            placeholder="Añade un recuerdo persistente…"
+            placeholder="Añade un recuerdo persistente..."
             rows={2}
             style={{
               flex: 1, padding: '7px 10px', fontSize: 12,
@@ -69,12 +74,17 @@ export function MemoryListView() {
       <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '12px 20px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {entries.map((entry) => (
-            <MemoryEntryItem
+            <div
               key={entry.id}
-              entry={entry}
-              onEdit={() => { setEditingId(entry.id); setDraft(entry.content) }}
-              onDelete={() => deleteEntry(entry.id)}
-            />
+              onClick={() => onEntryClick?.(entry)}
+              style={{ cursor: onEntryClick ? 'pointer' : undefined }}
+            >
+              <MemoryEntryItem
+                entry={entry}
+                onEdit={() => { setEditingId(entry.id); setDraft(entry.content) }}
+                onDelete={() => deleteEntry(entry.id)}
+              />
+            </div>
           ))}
           {entries.length === 0 && (
             <p style={{ fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic', padding: 24, textAlign: 'center', fontFamily: 'var(--font-ui)' }}>
