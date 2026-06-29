@@ -115,7 +115,7 @@ export function ToolCallSummary({ toolCall }: ToolCallSummaryProps) {
               gap: 6,
             }}>
               <DetailSection label="Input" content={inputStr} />
-              {toolCall.status === 'error' && toolCall.error && (
+              {toolCall.status === 'error' && (toolCall.error || toolCall.output) && (
                 <div style={{
                   fontSize: 11,
                   color: 'var(--status-err)',
@@ -126,7 +126,7 @@ export function ToolCallSummary({ toolCall }: ToolCallSummaryProps) {
                   borderRadius: 'var(--radius-sm)',
                   padding: '4px 8px',
                 }}>
-                  ✕ Error: {toolCall.error}
+                  ✕ Error: {toolCall.error ?? toolCall.output}
                 </div>
               )}
               {toolCall.output && toolCall.status !== 'error' && (
