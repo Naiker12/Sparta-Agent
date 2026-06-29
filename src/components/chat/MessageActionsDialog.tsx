@@ -1,6 +1,12 @@
 import { useState } from 'react'
 import { Copy, Check } from 'lucide-react'
-import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/modal'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import type { Message } from '@/types'
@@ -78,17 +84,24 @@ export function MessageActionsDialog({
     })
   }
 
+  const title =
+    state.kind === 'delete' ? 'Eliminar mensaje' :
+    state.kind === 'share' ? 'Copiar mensaje' :
+    state.kind === 'edit' ? 'Editar mensaje' :
+    state.kind === 'regenerate' ? 'Regenerar respuesta' : ''
+
   return (
-    <Modal open={isOpen} onClose={onClose} width={420} maxHeight={400}>
-      {state.kind === 'delete' && (
-        <>
-          <ModalHeader title="Eliminar mensaje" onClose={onClose} />
-          <ModalBody style={{ padding: '0 24px 20px' }}>
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+        </DialogHeader>
+
+        <div className="px-6 pb-2">
+          {state.kind === 'delete' && (
             <p style={{
-              fontSize: 13,
-              color: 'var(--text-secondary)',
-              fontFamily: 'var(--font-ui)',
-              lineHeight: 1.6,
+              fontSize: 13, color: 'var(--text-secondary)',
+              fontFamily: 'var(--font-ui)', lineHeight: 1.6,
             }}>
               Vas a eliminar{' '}
               <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
@@ -98,89 +111,67 @@ export function MessageActionsDialog({
               </span>
               . Esta acción no se puede deshacer.
             </p>
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              Cancelar
-            </Button>
-            <Button variant="destructive" size="sm" onClick={handleDelete}>
-              Eliminar
-            </Button>
-          </ModalFooter>
-        </>
-      )}
+          )}
 
-      {state.kind === 'share' && (
-        <>
-          <ModalHeader title="Copiar mensaje" onClose={onClose} />
-          <ModalBody style={{ padding: '0 24px 20px' }}>
+          {state.kind === 'share' && (
             <p style={{
-              fontSize: 13,
-              color: 'var(--text-secondary)',
-              fontFamily: 'var(--font-ui)',
-              lineHeight: 1.6,
+              fontSize: 13, color: 'var(--text-secondary)',
+              fontFamily: 'var(--font-ui)', lineHeight: 1.6,
             }}>
               Copia el contenido de este mensaje al portapapeles.
             </p>
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              Cerrar
-            </Button>
-            <Button size="sm" onClick={handleShareCopy}>
-              {copied ? <Check size={12} /> : <Copy size={12} />}
-              {copied ? 'Copiado' : 'Copiar texto'}
-            </Button>
-          </ModalFooter>
-        </>
-      )}
+          )}
 
-      {state.kind === 'edit' && (
-        <>
-          <ModalHeader title="Editar mensaje" onClose={onClose} />
-          <ModalBody style={{ padding: '0 24px 20px' }}>
+          {state.kind === 'edit' && (
             <Textarea
               value={editValue}
               onChange={(e) => setEditValue(e.target.value)}
               rows={5}
               autoFocus
             />
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              Cancelar
-            </Button>
-            <Button size="sm" onClick={handleCopy} variant="outline">
-              <Copy size={12} /> Copiar
-            </Button>
-            <Button size="sm" onClick={handleEdit} disabled={!editValue.trim()}>
-              Guardar y reenviar
-            </Button>
-          </ModalFooter>
-        </>
-      )}
+          )}
 
-      {state.kind === 'regenerate' && (
-        <>
-          <ModalHeader title="Regenerar respuesta" onClose={onClose} />
-          <ModalBody style={{ padding: '0 24px 20px' }}>
+          {state.kind === 'regenerate' && (
             <p style={{
-              fontSize: 13,
-              color: 'var(--text-secondary)',
-              fontFamily: 'var(--font-ui)',
-              lineHeight: 1.6,
+              fontSize: 13, color: 'var(--text-secondary)',
+              fontFamily: 'var(--font-ui)', lineHeight: 1.6,
             }}>
               Se volverá a pedir al agente una respuesta. ¿Continuar?
             </p>
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              Cancelar
-            </Button>
-            <Button size="sm" onClick={handleRegenerate}>Regenerar</Button>
-          </ModalFooter>
-        </>
-      )}
-    </Modal>
+          )}
+        </div>
+
+        <DialogFooter>
+          {state.kind === 'delete' && (
+            <>
+              <Button variant="ghost" size="sm" onClick={onClose}>Cancelar</Button>
+              <Button variant="destructive" size="sm" onClick={handleDelete}>Eliminar</Button>
+            </>
+          )}
+          {state.kind === 'share' && (
+            <>
+              <Button variant="ghost" size="sm" onClick={onClose}>Cerrar</Button>
+              <Button size="sm" onClick={handleShareCopy}>
+                {copied ? <Check size={12} /> : <Copy size={12} />}
+                {copied ? 'Copiado' : 'Copiar texto'}
+              </Button>
+            </>
+          )}
+          {state.kind === 'edit' && (
+            <>
+              <Button variant="ghost" size="sm" onClick={onClose}>Cancelar</Button>
+              <Button size="sm" onClick={handleCopy} variant="outline"><Copy size={12} /> Copiar</Button>
+              <Button size="sm" onClick={handleEdit} disabled={!editValue.trim()}>Guardar y reenviar</Button>
+            </>
+          )}
+          {state.kind === 'regenerate' && (
+            <>
+              <Button variant="ghost" size="sm" onClick={onClose}>Cancelar</Button>
+              <Button size="sm" onClick={handleRegenerate}>Regenerar</Button>
+            </>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

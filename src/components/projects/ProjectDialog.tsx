@@ -1,5 +1,12 @@
 import { useState, useEffect } from 'react'
-import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/modal'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
@@ -28,60 +35,41 @@ export function ProjectDialog({ open, onClose, onSubmit }: ProjectDialogProps) {
   }
 
   return (
-    <Modal open={open} onClose={onClose} width={460} maxHeight={360}>
-      <ModalHeader
-        title="Nuevo proyecto"
-        description="Los proyectos agrupan sesiones, memoria y servidores MCP."
-        onClose={onClose}
-      />
+    <Dialog open={open} onOpenChange={(open) => { if (!open) onClose() }}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Nuevo proyecto</DialogTitle>
+          <DialogDescription>
+            Los proyectos agrupan sesiones, memoria y servidores MCP.
+          </DialogDescription>
+        </DialogHeader>
 
-      <form id="project-form" onSubmit={handleSubmit}>
-        <ModalBody style={{ padding: '0 20px 16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <form id="project-form" onSubmit={handleSubmit} className="px-6 pb-2 flex flex-col gap-4">
           <div>
             <label style={{
-              display: 'block',
-              fontSize: 11,
-              color: 'var(--text-secondary)',
-              fontFamily: 'var(--font-ui)',
-              marginBottom: 4,
+              display: 'block', fontSize: 11, color: 'var(--text-secondary)',
+              fontFamily: 'var(--font-ui)', marginBottom: 4,
             }}>
               Nombre
             </label>
-            <Input
-              autoFocus
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="mi-proyecto"
-            />
+            <Input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="mi-proyecto" />
           </div>
           <div>
             <label style={{
-              display: 'block',
-              fontSize: 11,
-              color: 'var(--text-secondary)',
-              fontFamily: 'var(--font-ui)',
-              marginBottom: 4,
+              display: 'block', fontSize: 11, color: 'var(--text-secondary)',
+              fontFamily: 'var(--font-ui)', marginBottom: 4,
             }}>
               Descripción (opcional)
             </label>
-            <Textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="¿De qué trata este proyecto?"
-              rows={3}
-            />
+            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="¿De qué trata este proyecto?" rows={3} />
           </div>
-        </ModalBody>
-      </form>
+        </form>
 
-      <ModalFooter>
-        <Button variant="ghost" onClick={onClose}>
-          Cancelar
-        </Button>
-        <Button form="project-form" type="submit" disabled={!name.trim()}>
-          Crear proyecto
-        </Button>
-      </ModalFooter>
-    </Modal>
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose}>Cancelar</Button>
+          <Button form="project-form" type="submit" disabled={!name.trim()}>Crear proyecto</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

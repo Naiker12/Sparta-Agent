@@ -1,6 +1,11 @@
 import { useState } from 'react'
 import { FileText, Code2, Copy, Check } from 'lucide-react'
-import { Modal, ModalHeader, ModalBody } from '@/components/ui/modal'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { MarkdownRenderer } from '@/components/chat/MarkdownRenderer'
 import type { Skill } from '@/types'
 
@@ -37,11 +42,10 @@ export function SkillMarkdownDialog({ open, onClose, skill }: SkillMarkdownDialo
   }
 
   return (
-    <Modal open={open} onClose={onClose} width={680} maxHeight={620}>
-      <ModalHeader
-        onClose={onClose}
-        title={
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+    <Dialog open={open} onOpenChange={(open) => { if (!open) onClose() }}>
+      <DialogContent className="sm:max-w-2xl max-h-[80vh] flex flex-col">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 min-w-0">
             <FileText size={14} style={{ color: 'var(--accent)', flexShrink: 0 }} strokeWidth={1.5} />
             <div style={{ minWidth: 0 }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}>
@@ -51,36 +55,36 @@ export function SkillMarkdownDialog({ open, onClose, skill }: SkillMarkdownDialo
                 {subtitle}
               </div>
             </div>
-          </div>
-        }
-      />
+          </DialogTitle>
+        </DialogHeader>
 
-      <div style={{
-        display: 'flex', gap: 6, padding: '8px 16px',
-        borderBottom: '1px solid var(--border-subtle)', flexShrink: 0,
-      }}>
-        <ViewToggleButton active={!raw} onClick={() => setRaw(false)} icon={<FileText size={11} strokeWidth={1.5} />} label="Renderizado" />
-        <ViewToggleButton active={raw} onClick={() => setRaw(true)} icon={<Code2 size={11} strokeWidth={1.5} />} label="Markdown crudo" />
+        <div style={{
+          display: 'flex', gap: 6, padding: '0 24px 8px',
+          borderBottom: '1px solid var(--border-subtle)', flexShrink: 0,
+        }}>
+          <ViewToggleButton active={!raw} onClick={() => setRaw(false)} icon={<FileText size={11} strokeWidth={1.5} />} label="Renderizado" />
+          <ViewToggleButton active={raw} onClick={() => setRaw(true)} icon={<Code2 size={11} strokeWidth={1.5} />} label="Markdown crudo" />
+          <div style={{ flex: 1 }} />
+          <ToolbarButton onClick={handleCopy} icon={copied ? <Check size={11} strokeWidth={1.5} /> : <Copy size={11} strokeWidth={1.5} />} label={copied ? 'Copiado' : 'Copiar'} />
+        </div>
 
-        <div style={{ flex: 1 }} />
-
-        <ToolbarButton onClick={handleCopy} icon={copied ? <Check size={11} strokeWidth={1.5} /> : <Copy size={11} strokeWidth={1.5} />} label={copied ? 'Copiado' : 'Copiar'} />
-      </div>
-
-      <ModalBody style={{ padding: raw ? 0 : '16px 20px' }}>
-        {raw ? (
-          <pre style={{
-            margin: 0, padding: 16, fontSize: 11.5, lineHeight: 1.6,
-            fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)',
-            whiteSpace: 'pre-wrap', wordBreak: 'break-word',
-          }}>
-            {body}
-          </pre>
-        ) : (
-          <MarkdownRenderer content={body} />
-        )}
-      </ModalBody>
-    </Modal>
+        <div className="flex-1 overflow-y-auto px-6 pb-4" style={raw ? { padding: 0 } : {}}>
+          {raw ? (
+            <pre style={{
+              margin: 0, padding: 16, fontSize: 11.5, lineHeight: 1.6,
+              fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)',
+              whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+            }}>
+              {body}
+            </pre>
+          ) : (
+            <div style={{ padding: '16px 0' }}>
+              <MarkdownRenderer content={body} />
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }
 

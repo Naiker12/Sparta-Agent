@@ -1,6 +1,13 @@
 import { useState, useEffect } from 'react'
 import { Hash, Bot, Globe, BookOpen, Code, Terminal, Users, Bell, Star, Camera, MessageCircle } from 'lucide-react'
-import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/modal'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
@@ -46,22 +53,20 @@ export function ChannelDialog({ open, onClose, onSubmit }: ChannelDialogProps) {
   }
 
   return (
-    <Modal open={open} onClose={onClose} width={460} maxHeight={420}>
-      <ModalHeader
-        title="Nuevo canal"
-        description="Los canales son espacios de conversación por tema."
-        onClose={onClose}
-      />
+    <Dialog open={open} onOpenChange={(open) => { if (!open) onClose() }}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Nuevo canal</DialogTitle>
+          <DialogDescription>
+            Los canales son espacios de conversación por tema.
+          </DialogDescription>
+        </DialogHeader>
 
-      <form id="channel-form" onSubmit={handleSubmit}>
-        <ModalBody style={{ padding: '0 20px 16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <form id="channel-form" onSubmit={handleSubmit} className="px-6 pb-2 flex flex-col gap-4">
           <div>
             <label style={{
-              display: 'block',
-              fontSize: 11,
-              color: 'var(--text-secondary)',
-              fontFamily: 'var(--font-ui)',
-              marginBottom: 4,
+              display: 'block', fontSize: 11, color: 'var(--text-secondary)',
+              fontFamily: 'var(--font-ui)', marginBottom: 4,
             }}>
               Nombre
             </label>
@@ -70,11 +75,8 @@ export function ChannelDialog({ open, onClose, onSubmit }: ChannelDialogProps) {
 
           <div>
             <label style={{
-              display: 'block',
-              fontSize: 11,
-              color: 'var(--text-secondary)',
-              fontFamily: 'var(--font-ui)',
-              marginBottom: 4,
+              display: 'block', fontSize: 11, color: 'var(--text-secondary)',
+              fontFamily: 'var(--font-ui)', marginBottom: 4,
             }}>
               Icono
             </label>
@@ -100,23 +102,20 @@ export function ChannelDialog({ open, onClose, onSubmit }: ChannelDialogProps) {
 
           <div>
             <label style={{
-              display: 'block',
-              fontSize: 11,
-              color: 'var(--text-secondary)',
-              fontFamily: 'var(--font-ui)',
-              marginBottom: 4,
+              display: 'block', fontSize: 11, color: 'var(--text-secondary)',
+              fontFamily: 'var(--font-ui)', marginBottom: 4,
             }}>
               Tópico (opcional)
             </label>
             <Textarea value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="De qué habla este canal" rows={2} />
           </div>
-        </ModalBody>
-      </form>
+        </form>
 
-      <ModalFooter>
-        <Button variant="ghost" onClick={onClose}>Cancelar</Button>
-        <Button form="channel-form" type="submit" disabled={!name.trim()}>Crear canal</Button>
-      </ModalFooter>
-    </Modal>
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose}>Cancelar</Button>
+          <Button form="channel-form" type="submit" disabled={!name.trim()}>Crear canal</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
