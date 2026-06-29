@@ -51,7 +51,7 @@ export function PipelineTrace({ steps, message }: { steps: IPipelineStep[]; mess
             <StepIcon status={step.status} />
 
             <span style={{
-              color: step.status === 'running' ? 'var(--status-think)' : 'var(--text-secondary)',
+              color: step.status === 'running' ? 'var(--status-thinking)' : 'var(--text-secondary)',
               minWidth: 80,
               fontSize: 11.5,
               fontFamily: 'var(--font-mono)',
@@ -100,7 +100,7 @@ function StepIcon({ status }: { status: IPipelineStep['status'] }) {
   if (status === 'error')
     return <span style={{ ...base, color: 'var(--status-err)', fontSize: 12 }}>✕</span>
   if (status === 'running')
-    return <Brain size={12} strokeWidth={1.5} style={{ ...base, color: 'var(--status-think)', animation: 'pulse 1.5s ease infinite' }} />
+    return <Brain size={12} strokeWidth={1.5} style={{ ...base, color: 'var(--status-thinking)', animation: 'pulse 1.5s ease infinite' }} />
   return (
     <Loader2
       size={12}
