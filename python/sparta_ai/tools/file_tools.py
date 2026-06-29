@@ -7,9 +7,18 @@ from langchain_core.tools import tool
 
 logger = logging.getLogger("sparta_ai.tools.file")
 
+WORKSPACE_ROOT = Path(os.environ.get("SPARTA_WORKSPACE_ROOT", Path.cwd())).resolve()
+DENYLIST_FILES = {".env", "sparta-vault.json", "id_rsa", "id_ed25519", "id_ecdsa", "id_ecdsa_sk", "id_ed25519_sk"}
+
 
 def _get_safe_path(path: str) -> Path:
     resolved = Path(path).resolve()
+    if not str(resolved).startswith(str(WORKSPACE_ROOT)):
+        raise PermissionError(f"Ruta fuera del workspace permitido: {resolved}")
+    if resolved.name in DENYLIST_FILES:
+        raise PermissionError(f"Acceso bloqueado a archivo sensible: {resolved}")
+    if ".ssh" in resolved.parts:
+        raise PermissionError(f"Acceso bloqueado a archivo sensible: {resolved}")
     return resolved
 
 
@@ -52,6 +61,9 @@ def read_file_tool(path: str, offset: int | None = None, limit: int | None = Non
 
     except FileNotFoundError as e:
         return f"Error: {e}"
+    except PermissionError as e:
+        logger.warning("read_file_tool blocked: %s", e)
+        return f"Error de seguridad: {e}"
     except Exception as e:
         logger.error("read_file_tool failed for '%s': %s", path, e)
         return f"Error al leer archivo: {e}"
@@ -88,6 +100,9 @@ def write_file_tool(path: str, content: str, append: bool = False) -> str:
         logger.info("File %s: %s (%d lines, %d chars)", mode, filepath, line_count, char_count)
         return f"Archivo {mode}: {filepath} ({line_count} líneas, {char_count} caracteres)."
 
+    except PermissionError as e:
+        logger.warning("write_file_tool blocked: %s", e)
+        return f"Error de seguridad: {e}"
     except Exception as e:
         logger.error("write_file_tool failed for '%s': %s", path, e)
         return f"Error al escribir archivo: {e}"

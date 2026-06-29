@@ -151,12 +151,17 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> N
 
     elif kind == "on_tool_start":
         tool_call_id = event.get("run_id", str(id(event)))
+        tool_input = data.get("input", {})
         _emit(request_id, "tool:called", {
             **base_payload,
             "name": name,
-            "input": data.get("input", {}),
+            "input": tool_input,
             "tool_call_id": tool_call_id,
         })
+        # Emit terminal command immediately so it reaches the PTY without waiting for tool completion
+        if name == "terminal_execute_tool":
+            cmd = tool_input.get("command", "") if isinstance(tool_input, dict) else str(tool_input)
+            _emit(request_id, "terminal:agent_command", {"command": cmd})
 
     elif kind == "on_tool_end":
         tool_call_id = event.get("run_id", "unknown")
@@ -292,15 +297,19 @@ async def _dispatch_event_ws(
 
     elif kind == "on_tool_start":
         tool_call_id = event.get("run_id", str(id(event)))
+        tool_input = data.get("input", {})
         await _emit_ws_renderer(websocket, "tool:called", {
             **base_payload,
             "toolCall": {
                 "id": tool_call_id,
                 "toolName": name,
-                "input": data.get("input", {}),
+                "input": tool_input,
                 "status": "running",
             },
         })
+        if name == "terminal_execute_tool":
+            cmd = tool_input.get("command", "") if isinstance(tool_input, dict) else str(tool_input)
+            await _emit_ws_renderer(websocket, "terminal:agent_command", {"command": cmd})
 
     elif kind == "on_tool_end":
         tool_call_id = event.get("run_id", "unknown")

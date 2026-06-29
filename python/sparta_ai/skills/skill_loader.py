@@ -5,10 +5,8 @@ Level 2 — skill_view(): full SKILL.md body loaded on demand as a tool.
 
 Sources (searched in order):
   1. $SPARTA_USER_SKILLS_DIR  — user-installed (runtime, persistent)
-  2. skills_library/          — builtins shipped with sidecar
-  3. public/skills/           — legacy .skill.json (backward compat)
+  2. <project-root>/skills/   — builtins shipped with repo + npx skills installs
 """
-import json
 import logging
 import os
 import re
@@ -16,11 +14,18 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
+try:
+    import yaml
+    HAS_YAML = True
+except ImportError:
+    HAS_YAML = False
+
 logger = logging.getLogger("sparta_ai.skills")
 
 # ── Path resolution ────────────────────────────────────────────
-_LIB_DIR = Path(__file__).resolve().parent.parent / "skills_library"
-_LEGACY_DIR = Path(__file__).resolve().parent.parent.parent.parent / "public" / "skills"
+# <project-root>/skills/  (same level as package.json)
+_LIB_DIR = Path(__file__).resolve().parent.parent.parent.parent / "skills"
+
 
 def _user_skills_dir() -> Path | None:
     env = os.environ.get("SPARTA_USER_SKILLS_DIR")
@@ -31,8 +36,9 @@ def _user_skills_dir() -> Path | None:
     return None
 
 
-# ── Frontmatter parser (no deps) ───────────────────────────────
+# ── Frontmatter parser (YAML preferred, regex fallback) ────────
 _FM_RE = re.compile(r"^---\s*\n(.*?)\n---", re.DOTALL)
+
 
 def _parse_frontmatter(text: str) -> tuple[dict[str, Any], str]:
     """Return (metadata_dict, body) from a SKILL.md string."""
@@ -42,6 +48,15 @@ def _parse_frontmatter(text: str) -> tuple[dict[str, Any], str]:
     raw = m.group(1)
     body = text[m.end():].strip()
     meta: dict[str, Any] = {}
+
+    if HAS_YAML:
+        try:
+            meta = yaml.safe_load(raw) or {}
+            return meta, body
+        except yaml.YAMLError:
+            logger.debug("YAML parse failed, falling back to regex parser")
+
+    # Fallback regex parser (no dependencies)
     for line in raw.splitlines():
         line = line.strip()
         if ":" in line:
@@ -60,44 +75,34 @@ def _parse_frontmatter(text: str) -> tuple[dict[str, Any], str]:
     return meta, body
 
 
-# ── Manifest (lightweight index) ───────────────────────────────
-def _load_manifest(skills_dir: Path) -> list[dict[str, Any]]:
-    manifest_path = skills_dir / ".manifest.json"
-    if manifest_path.exists():
-        try:
-            data = json.loads(manifest_path.read_text(encoding="utf-8"))
-            return data.get("skills", [])
-        except (json.JSONDecodeError, OSError) as e:
-            logger.warning("Invalid manifest in %s: %s", skills_dir, e)
-    return []
-
-
+# ── Scan /skills/<category>/<name>/SKILL.md ────────────────────
 def _scan_skills_dir(skills_dir: Path) -> list[dict[str, Any]]:
-    """Fallback: walk category/*/SKILL.md and build index on the fly."""
+    """Walk category/*/SKILL.md and build index on the fly."""
     skills: list[dict[str, Any]] = []
     if not skills_dir.exists():
         return skills
-    for cat_dir in skills_dir.iterdir():
+    for cat_dir in sorted(skills_dir.iterdir()):
         if not cat_dir.is_dir() or cat_dir.name.startswith("."):
             continue
+        category = cat_dir.name
         for skill_dir in sorted(cat_dir.iterdir()):
             skill_md = skill_dir / "SKILL.md"
             if not skill_md.exists():
                 continue
             meta, body = _parse_frontmatter(skill_md.read_text(encoding="utf-8"))
-            if meta.get("id"):
-                skills.append({
-                    "id": meta["id"],
-                    "name": meta.get("name", meta["id"]),
-                    "description": meta.get("description", ""),
-                    "category": meta.get("category", cat_dir.name.title()),
-                    "tags": meta.get("tags", []),
-                    "icon": meta.get("icon", "📦"),
-                    "version": meta.get("version", "1.0.0"),
-                    "author": meta.get("author", "Sparta Team"),
-                    "source": meta.get("source", "builtin"),
-                    "featured": meta.get("featured", False),
-                })
+            sid = meta.get("id") or skill_dir.name
+            skills.append({
+                "id": sid,
+                "name": meta.get("name", sid),
+                "description": meta.get("description", ""),
+                "category": meta.get("category", category.title()),
+                "tags": meta.get("tags", []),
+                "icon": meta.get("icon", "\U0001f4e6"),
+                "version": meta.get("version", "1.0.0"),
+                "author": meta.get("author", "Sparta Team"),
+                "source": meta.get("source", "builtin"),
+                "featured": meta.get("featured", False),
+            })
     return skills
 
 
@@ -106,52 +111,25 @@ def _build_full_index() -> list[dict[str, Any]]:
     seen: set[str] = set()
     result: list[dict[str, Any]] = []
 
-    sources = []
+    # User-installed skills (override builtins with same id)
     usr = _user_skills_dir()
     if usr:
-        sources.append(("user", usr))
-    sources.append(("builtin", _LIB_DIR))
-    # Legacy: scan public/skills/*.skill.json
-    if _LEGACY_DIR.exists():
-        sources.append(("legacy", _LEGACY_DIR))
-
-    for source_label, src_dir in sources:
-        if source_label == "legacy":
-            items = _scan_legacy_skills()
-        else:
-            items = _load_manifest(src_dir) or _scan_skills_dir(src_dir)
-        for item in items:
+        for item in _scan_skills_dir(usr):
             sid = item.get("id")
             if sid and sid not in seen:
-                item["_source"] = source_label
+                item["_source"] = "user"
                 seen.add(sid)
                 result.append(item)
+
+    # Builtin + npx-installed skills (project root /skills/)
+    for item in _scan_skills_dir(_LIB_DIR):
+        sid = item.get("id")
+        if sid and sid not in seen:
+            item["_source"] = "builtin"
+            seen.add(sid)
+            result.append(item)
+
     return result
-
-
-def _scan_legacy_skills() -> list[dict[str, Any]]:
-    """Scan public/skills/*.skill.json for backward compatibility."""
-    skills: list[dict[str, Any]] = []
-    if not _LEGACY_DIR.exists():
-        return skills
-    for path in sorted(_LEGACY_DIR.glob("*.skill.json")):
-        try:
-            data = json.loads(path.read_text(encoding="utf-8"))
-            skills.append({
-                "id": data.get("id", path.stem.replace(".skill", "")),
-                "name": data.get("name", path.stem),
-                "description": data.get("description", ""),
-                "category": data.get("category", "Coding"),
-                "tags": data.get("tags", []),
-                "icon": data.get("icon", "📦"),
-                "version": data.get("version", "1.0.0"),
-                "author": data.get("author", "Sparta Team"),
-                "source": "legacy",
-                "featured": data.get("featured", False),
-            })
-        except (json.JSONDecodeError, OSError) as e:
-            logger.warning("Invalid legacy skill %s: %s", path.name, e)
-    return skills
 
 
 # ── Public API ──────────────────────────────────────────────────
@@ -159,7 +137,6 @@ def _scan_legacy_skills() -> list[dict[str, Any]]:
 @lru_cache(maxsize=1)
 def skills_index() -> list[dict[str, Any]]:
     """Return lightweight manifest of all available skills.
-
     Intended to be included verbatim in the system prompt so the LLM
     knows what skills exist without loading their full content.
     """
@@ -168,56 +145,32 @@ def skills_index() -> list[dict[str, Any]]:
 
 def skill_view(skill_id: str) -> dict[str, Any]:
     """Return full SKILL.md content for a given skill.
-
     Level 2 of progressive disclosure — called on demand via agent tool.
     """
-    # Determine which SKILL.md to load
     candidates: list[Path] = []
 
+    # User dir first (overrides builtins)
     usr = _user_skills_dir()
     if usr:
-        candidates.append(usr / skill_id / "SKILL.md")
-        # Also search in category subdirs
         for cat_dir in usr.iterdir():
             if cat_dir.is_dir() and not cat_dir.name.startswith("."):
                 candidates.append(cat_dir / skill_id / "SKILL.md")
 
-    candidates.append(_LIB_DIR / skill_id / "SKILL.md")
-    # Search in category subdirs in lib
-    if _LIB_DIR.exists():
-        for cat_dir in _LIB_DIR.iterdir():
-            if cat_dir.is_dir() and not cat_dir.name.startswith("."):
-                candidates.append(cat_dir / skill_id / "SKILL.md")
-
-    # Legacy fallback
-    candidates.append(_LEGACY_DIR / f"{skill_id}.skill.json")
-    candidates.append(_LEGACY_DIR / f"{skill_id}.json")
+    # Then project root /skills/
+    for cat_dir in _LIB_DIR.iterdir():
+        if cat_dir.is_dir() and not cat_dir.name.startswith("."):
+            candidates.append(cat_dir / skill_id / "SKILL.md")
 
     for path in candidates:
         if path.exists():
             try:
                 text = path.read_text(encoding="utf-8")
-                if path.suffix == ".json":
-                    data = json.loads(text)
-                    body = data.get("prompt", data.get("instruction", ""))
-                    meta = {
-                        "id": data.get("id", skill_id),
-                        "name": data.get("name", skill_id),
-                        "description": data.get("description", ""),
-                        "category": data.get("category", "Coding"),
-                        "tags": data.get("tags", []),
-                        "icon": data.get("icon", "📦"),
-                        "version": data.get("version", "1.0.0"),
-                        "author": data.get("author", "Sparta Team"),
-                        "source": "legacy",
-                    }
-                    return {"metadata": meta, "body": body, "source_path": str(path)}
                 meta, body = _parse_frontmatter(text)
                 meta.setdefault("id", skill_id)
                 meta.setdefault("name", skill_id)
                 meta.setdefault("source", "builtin")
                 return {"metadata": meta, "body": body, "source_path": str(path)}
-            except (json.JSONDecodeError, OSError) as e:
+            except OSError as e:
                 logger.warning("Failed to load skill view '%s': %s", path, e)
 
     logger.warning("Skill view not found: %s", skill_id)
@@ -226,7 +179,6 @@ def skill_view(skill_id: str) -> dict[str, Any]:
 
 def build_skills_context(active_skill_ids: list[str]) -> str:
     """Build XML context block for the system prompt.
-
     Uses only the lightweight meta from skills_index() — NOT full body.
     Full body is loaded on demand via skill_view() agent tool.
     """

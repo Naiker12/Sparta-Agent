@@ -189,8 +189,9 @@ class StdioServer:
         from sparta_ai.tools.memory_tools import read_memory_tool, write_memory_tool
         from sparta_ai.tools.file_tools import read_file_tool, write_file_tool
         from sparta_ai.tools.skill_tools import skill_view_tool
+        from sparta_ai.tools.terminal_tools import terminal_execute_tool
 
-        agent_tools = [web_search_tool, read_memory_tool, write_memory_tool, read_file_tool, write_file_tool, skill_view_tool] + mcp_tools
+        agent_tools = [web_search_tool, read_memory_tool, write_memory_tool, read_file_tool, write_file_tool, skill_view_tool, terminal_execute_tool] + mcp_tools
 
         graph = build_sparta_graph(
             llm=llm,
