@@ -26,7 +26,7 @@ const NAV_ITEMS = [
 
 export function AppSidebar() {
   const { sessions, createSession }   = useChatStore()
-  const { skills }                    = useSkillStore()
+  const { activeSkillIds }            = useSkillStore()
   const { servers }                   = useMCPStore()
   const { channels }                  = useChannelStore()
   const { entries }                   = useMemoryStore()
@@ -36,7 +36,7 @@ export function AppSidebar() {
 
   const counts: Record<string, string | number> = {
     sessions: sessions.length,
-    skills:   skills.length,
+    skills:   activeSkillIds.length > 0 ? `${activeSkillIds.length}` : '0',
     mcp:      `${servers.filter(s => s.connected).length}/${servers.length}`,
     channels: channels.length,
     memory:   entries.length,

@@ -26,7 +26,7 @@ export function SkillCard({
   onExport,
   isDownloadable,
 }: SkillCardProps) {
-  const { activeSkillIds, toggleActive } = useSkillStore()
+  const { activeSkillIds } = useSkillStore()
   const [menuOpen, setMenuOpen] = useState(false)
   const [expanded, setExpanded] = useState(false)
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
@@ -40,9 +40,6 @@ export function SkillCard({
   const downloadable = isDownloadableType ? (skill as DownloadableSkill) : null
 
   function handleActivate() {
-    if (!isDownloadableSkill) {
-      toggleActive(skill.id)
-    }
     onActivate?.()
   }
 
