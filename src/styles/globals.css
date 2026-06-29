@@ -39,6 +39,7 @@
   --status-warn:   #F59E0B;
   --status-err:    #EF4444;
   --status-think:  #A78BFA;
+  --status-thinking: var(--status-think);
 
   --radius-sm:     3px;
   --radius-md:     6px;
@@ -1234,6 +1235,80 @@ body.is-dragging-sidebar [data-slot="sidebar-wrapper"] {
   width: 100%;
   padding: 10px 4px;
   gap: 0;
+}
+
+/* ══════════════════════════════════════════════════════ */
+/*  THINKING SYSTEM                                       */
+/* ══════════════════════════════════════════════════════ */
+.thinking-lines {
+  border-top: 1px solid var(--border-subtle);
+  padding: 6px 10px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.thinking-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.thinking-line-icon {
+  font-size: 13px;
+  flex-shrink: 0;
+  width: 18px;
+  text-align: center;
+}
+
+.thinking-line-text {
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  word-break: break-word;
+}
+
+.thinking-skeleton {
+  padding: 8px 10px;
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.thinking-skeleton-row {
+  height: 10px;
+  border-radius: 4px;
+  background: var(--bg-active);
+}
+
+.generating-dots {
+  display: flex;
+  gap: 4px;
+  padding: 8px 0 4px;
+}
+
+.generating-dots span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  display: inline-block;
+}
+
+.text-status-thinking {
+  color: var(--status-thinking);
+}
+
+.text-status-think {
+  color: var(--status-think);
+}
+
+.bg-status-think\/10 {
+  background: color-mix(in srgb, var(--status-think) 10%, transparent);
 }
 
 
