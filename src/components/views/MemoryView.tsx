@@ -3,7 +3,7 @@ import { Brain, ChevronLeft } from 'lucide-react'
 import { useMemoryStore } from '@/stores/memory.store'
 import { useUIStore } from '@/stores/ui.store'
 import { Button } from '@/components/ui/button'
-import { computeGraphLayout, computeRelations } from '@/lib/graph-layout'
+import { computeRelations } from '@/lib/graph-layout'
 import { MemoryGraph, type MemoryGraphHandle } from '@/components/memory/MemoryGraph'
 import { MemoryGraphControls } from '@/components/memory/MemoryGraphControls'
 import { MemoryListView } from '@/components/memory/MemoryListView'
@@ -21,10 +21,6 @@ export function MemoryView() {
   const [zoomLevel, setZoomLevel] = useState(20)
   const graphRef = useRef<MemoryGraphHandle>(null)
 
-  const nodes = useMemo(
-    () => (graphView && entries.length > 0 ? computeGraphLayout(entries) : []),
-    [graphView, entries]
-  )
   const relations = useMemo(
     () => (graphView ? computeRelations(entries, []) : []),
     [graphView, entries]
@@ -98,7 +94,7 @@ export function MemoryView() {
         onReset={() => graphRef.current?.resetCamera()}
         onToggleView={() => setGraphView((v) => !v)}
         isGraphView={graphView}
-        nodeCount={nodes.length}
+        nodeCount={entries.length}
         edgeCount={relations.length}
         zoomLevel={zoomLevel}
       />

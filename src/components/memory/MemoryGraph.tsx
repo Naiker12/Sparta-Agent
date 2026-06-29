@@ -17,8 +17,8 @@ interface MemoryGraphProps {
   relations: MemoryRelation[]
 }
 
-const MemoryGraphScene = lazy(() =>
-  import('./MemoryGraphScene').then((m) => ({ default: m.MemoryGraphScene }))
+const MemoryGraphD3 = lazy(() =>
+  import('./MemoryGraphD3').then((m) => ({ default: m.MemoryGraphD3 }))
 )
 
 function Skeleton() {
@@ -33,7 +33,7 @@ function Skeleton() {
         fontFamily: 'var(--font-ui)',
       }}
     >
-      Cargando grafo 3D...
+      Cargando grafo...
     </div>
   )
 }
@@ -42,7 +42,7 @@ export const MemoryGraph = forwardRef<MemoryGraphHandle, MemoryGraphProps>(
   function MemoryGraph(props, ref) {
     return (
       <Suspense fallback={<Skeleton />}>
-        <MemoryGraphScene {...props} ref={ref} />
+        <MemoryGraphD3 {...props} ref={ref} />
       </Suspense>
     )
   }

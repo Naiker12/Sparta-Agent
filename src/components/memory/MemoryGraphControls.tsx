@@ -19,10 +19,6 @@ const LEGEND_ITEMS = [
   { label: 'Código', color: '#7cf8f0' },
 ]
 
-function zoomPercent(radius: number): number {
-  return Math.round(((60 - radius) / (60 - 3)) * 100)
-}
-
 export function MemoryGraphControls({
   onZoomIn, onZoomOut, onReset, onToggleView,
   isGraphView, nodeCount, edgeCount, zoomLevel,
@@ -67,7 +63,7 @@ export function MemoryGraphControls({
                 fontSize: 9, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)',
                 minWidth: 28, textAlign: 'center',
               }}>
-                {zoomPercent(zoomLevel)}%
+                {zoomLevel}%
               </span>
             )}
             <ControlButton onClick={onZoomOut} title="Alejar">
