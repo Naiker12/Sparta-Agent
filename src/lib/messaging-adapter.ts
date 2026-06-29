@@ -122,7 +122,22 @@ class WebAdapter implements MessagingAdapter {
     if (this.ws?.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify({
         method: 'chat.stream',
-        params: request
+        params: {
+          session_id: request.sessionId,
+          message_id: request.messageId,
+          model: request.model,
+          messages: request.messages,
+          provider_key: request.providerKey,
+          api_url: request.apiUrl,
+          is_local: request.isLocal,
+          vendor: request.vendor,
+          provider_id: request.providerId,
+          mode: request.mode,
+          skills: request.skills,
+          mcp_servers: request.mcpServers,
+          semantic_memory: request.semanticMemory,
+          reasoning: request.reasoning,
+        },
       }))
       return Promise.resolve({ ok: true })
     }

@@ -9,13 +9,12 @@ import { Plus, X } from 'lucide-react'
 import { useUIStore } from '@/stores/ui.store'
 import '@xterm/xterm/css/xterm.css'
 
-if (!FEATURES.terminal) {
-  throw new Error('TerminalPanel no debe usarse en versión web')
-}
-
 const TERMINAL_ID = generateId()
 
 export function TerminalPanel() {
+  if (!FEATURES.terminal) {
+    return null
+  }
   const containerRef = useRef<HTMLDivElement>(null)
   const terminalRef = useRef<Terminal | null>(null)
   const fitAddonRef = useRef<FitAddon | null>(null)

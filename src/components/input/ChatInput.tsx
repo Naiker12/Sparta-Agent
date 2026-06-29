@@ -24,7 +24,7 @@ export function ChatInput({ className }: ChatInputProps) {
   const isStreaming = useChatStore((s) => s.isStreaming)
   const activeSessionId = useChatStore((s) => s.activeSessionId)
   const providers = useProviderStore((s) => s.providers)
-  const hasProvider = providers.some((p) => p.kind === 'local' || p.apiKey)
+  const hasProvider = providers.some((p) => p.kind === 'local' || p.apiKey || p.hasVaultKey)
   const stopStreaming = useChatStore((s) => s.stopStreaming)
   const injectWhileStreaming = useChatStore((s) => s.injectWhileStreaming)
   const { sendMessage } = useChatSession()
