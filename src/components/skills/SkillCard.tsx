@@ -3,6 +3,7 @@ import { useState } from 'react'
 import type { Skill, DownloadableSkill } from '@/types'
 import { useSkillStore } from '@/stores/skill.store'
 import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog'
+import { SkillToggle } from './SkillToggle'
 
 interface SkillCardProps {
   skill: Skill | DownloadableSkill
@@ -202,9 +203,9 @@ export function SkillCard({
           </div>
         )}
 
-        {(downloadable?.category || skill.source) && (
+        {(skill.category || skill.source) && (
           <div style={{ display: 'flex', gap: 4, marginTop: 6, flexWrap: 'wrap' }}>
-            {downloadable?.category && (
+            {skill.category && (
               <span
                 style={{
                   fontSize: 8.5,
@@ -217,7 +218,7 @@ export function SkillCard({
                   letterSpacing: '0.05em',
                 }}
               >
-                {downloadable.category}
+                {skill.category}
               </span>
             )}
             {skill.source && skill.source !== 'builtin' && (
@@ -260,20 +261,12 @@ export function SkillCard({
             </button>
           )
         ) : (
-          <button
-            onClick={handleActivate}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 4,
-              padding: '4px 10px', background: isActive ? 'var(--accent-muted)' : 'var(--bg-active)',
-              border: isActive ? '1px solid var(--accent)' : '1px solid var(--border-normal)',
-              borderRadius: 'var(--radius-sm)',
-              color: isActive ? 'var(--accent)' : 'var(--text-secondary)',
-              fontSize: 10.5, fontFamily: 'var(--font-ui)', cursor: 'pointer',
-              transition: 'all 0.1s',
-            }}
-          >
-            {isActive ? 'Desactivar' : 'Activar en chat'}
-          </button>
+          <SkillToggle
+            active={isActive}
+            onChange={() => handleActivate()}
+            size={28}
+            ariaLabel={`${isActive ? 'Desactivar' : 'Activar'} skill ${skill.name}`}
+          />
         )}
       </div>
 

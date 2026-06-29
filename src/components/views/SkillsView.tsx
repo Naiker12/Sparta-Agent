@@ -187,24 +187,53 @@ export function SkillsView() {
                 )}
               </div>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 10 }}>
-                {filtered.map((skill) => (
-                  <SkillCard
-                    key={skill.id}
-                    skill={skill}
-                    onActivate={() => {}}
-                    onEdit={() => handleEdit(skill)}
-                    onDelete={() => handleDelete(skill.id)}
-                    onExport={() => {
-                      const blob = new Blob([JSON.stringify(skill, null, 2)], { type: 'application/json' })
-                      const url = URL.createObjectURL(blob)
-                      const a = document.createElement('a')
-                      a.href = url; a.download = `${skill.id}.skill.json`; a.click()
-                      URL.revokeObjectURL(url)
-                    }}
-                  />
-                ))}
-              </div>
+              (() => {
+                const grouped: Record<string, DisplaySkill[]> = {}
+                for (const s of filtered) {
+                  const cat = s.category ?? 'General'
+                  if (!grouped[cat]) grouped[cat] = []
+                  grouped[cat].push(s)
+                }
+                return Object.entries(grouped).map(([cat, items]) => (
+                  <div key={cat} style={{ marginBottom: 20 }}>
+                    <div style={{
+                      display: 'flex', alignItems: 'center', gap: 8,
+                      marginBottom: 10, paddingLeft: 2,
+                    }}>
+                      <span style={{
+                        fontSize: 11, fontWeight: 600, color: 'var(--text-primary)',
+                        fontFamily: 'var(--font-display)', textTransform: 'uppercase',
+                        letterSpacing: '0.04em',
+                      }}>
+                        {cat}
+                      </span>
+                      <span style={{
+                        fontSize: 10, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)',
+                      }}>
+                        {items.length}
+                      </span>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 10 }}>
+                      {items.map((skill) => (
+                        <SkillCard
+                          key={skill.id}
+                          skill={skill}
+                          onActivate={() => {}}
+                          onEdit={() => handleEdit(skill)}
+                          onDelete={() => handleDelete(skill.id)}
+                          onExport={() => {
+                            const blob = new Blob([JSON.stringify(skill, null, 2)], { type: 'application/json' })
+                            const url = URL.createObjectURL(blob)
+                            const a = document.createElement('a')
+                            a.href = url; a.download = `${skill.id}.skill.md`; a.click()
+                            URL.revokeObjectURL(url)
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))
+              })()
             )}
           </div>
         )}
@@ -217,11 +246,11 @@ export function SkillsView() {
       <SkillDialog
         open={dialogOpen}
         onClose={() => { setDialogOpen(false); setEditId(null) }}
-        onSubmit={(n, d, p, t) => {
+        onSubmit={(n, d, p, t, c) => {
           if (editId) {
-            updateSkill(editId, { name: n, description: d, prompt: p, tags: t })
+            updateSkill(editId, { name: n, description: d, prompt: p, tags: t, category: c })
           } else {
-            addSkill(n, d, p, t)
+            addSkill(n, d, p, t, c)
           }
           setDialogOpen(false)
           setEditId(null)

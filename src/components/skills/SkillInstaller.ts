@@ -1,4 +1,4 @@
-import type { DownloadableSkill } from '@/types'
+import type { DownloadableSkill, SkillCategory } from '@/types'
 import { useSkillStore } from '@/stores/skill.store'
 
 interface SkillManifestEntry {
@@ -9,7 +9,7 @@ interface SkillManifestEntry {
   author?: string
   icon?: string
   tags?: string[]
-  category?: string
+  category?: SkillCategory
   featured?: boolean
   source?: string
 }

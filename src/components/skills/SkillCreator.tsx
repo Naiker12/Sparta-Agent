@@ -2,16 +2,9 @@ import { useState } from 'react'
 import { Zap, Eye, Sparkles } from 'lucide-react'
 import { useSkillStore } from '@/stores/skill.store'
 import type { SkillCategory } from '@/types'
+import { SKILL_CATEGORIES } from '@/types'
 
 const EMOJIS = ['\u26A1', '\uD83D\uDD0D', '\uD83D\uDCD6', '\uD83D\uDC1E', '\uD83D\uDD28', '\uD83E\uDDEA', '\uD83D\uDCDD', '\uD83D\uDCD1', '\uD83C\uDF10', '\uD83D\uDD0D', '\uD83D\uDCCA', '\uD83D\uDEE0\uFE0F', '\uD83C\uDFA8', '\uD83D\uDCE6', '\uD83D\uDD2C', '\uD83D\uDCD8']
-
-const CATEGORIES: { label: string; value: SkillCategory }[] = [
-  { label: 'Coding', value: 'Coding' },
-  { label: 'Research', value: 'Research' },
-  { label: 'Writing', value: 'Writing' },
-  { label: 'Analysis', value: 'Analysis' },
-  { label: 'Automation', value: 'Automation' },
-]
 
 export function SkillCreator() {
   const { addSkill } = useSkillStore()
@@ -115,7 +108,7 @@ export function SkillCreator() {
             onChange={(e) => setCategory(e.target.value as SkillCategory)}
             style={{ ...inputStyle, fontFamily: 'var(--font-ui)' }}
           >
-            {CATEGORIES.map((c) => (
+            {SKILL_CATEGORIES.map((c) => (
               <option key={c.value} value={c.value}>{c.label}</option>
             ))}
           </select>
