@@ -16,6 +16,7 @@ export interface Provider {
   hasVaultKey?: boolean
   serverUrl?: string
   defaultModel?: string
+  models?: string[]
   createdAt: string
   usage?: { tokens: number; cost?: number } | null
 }
