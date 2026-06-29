@@ -11,7 +11,6 @@ interface ThinkingBlockProps {
   content: string
   status: ThinkingStatus
   tokensUsed: number
-  hasResponseContent?: boolean
   pipelineSteps?: PipelineStep[]
   className?: string
 }
@@ -33,11 +32,10 @@ function parseThinkingLine(text: string): ThinkingLine {
   return { id: crypto.randomUUID(), icon, text }
 }
 
-export function ThinkingBlock({ content, status, tokensUsed, hasResponseContent = false, pipelineSteps, className }: ThinkingBlockProps) {
+export function ThinkingBlock({ content, status, tokensUsed, pipelineSteps, className }: ThinkingBlockProps) {
   const [isExpanded, setIsExpanded] = useState(status === 'streaming' || status === 'starting')
   const [elapsed, setElapsed] = useState(0)
   const startedAt = useRef(Date.now())
-  const collapseTimer = useRef<ReturnType<typeof setTimeout>>()
   const badgesEndRef = useRef<HTMLDivElement>(null)
   const prevBadgeCount = useRef(0)
 
@@ -51,7 +49,6 @@ export function ThinkingBlock({ content, status, tokensUsed, hasResponseContent 
       startedAt.current = Date.now()
       setIsExpanded(true)
       setElapsed(0)
-      if (collapseTimer.current) clearTimeout(collapseTimer.current)
     }
   }, [status])
 
@@ -62,13 +59,6 @@ export function ThinkingBlock({ content, status, tokensUsed, hasResponseContent 
     }, 100)
     return () => clearInterval(interval)
   }, [status])
-
-  useEffect(() => {
-    if (status === 'completed' && hasResponseContent) {
-      collapseTimer.current = setTimeout(() => setIsExpanded(false), 1200)
-      return () => { if (collapseTimer.current) clearTimeout(collapseTimer.current) }
-    }
-  }, [status, hasResponseContent])
 
   const skillBadges = useMemo(
     () => pipelineSteps?.filter((s) => s.id?.startsWith('skill-')) ?? [],

@@ -41,9 +41,8 @@ interface ChatState {
   cleanupStaleSessions: () => void
   getStreamState: (sessionId: string) => StreamState | undefined
 
-  // Thinking lifecycle (Fix: Thinking Live Frozen)
+  // Thinking lifecycle
   onThinkingStart: (sessionId: string, messageId: string) => void
-  onThinkingToken: (sessionId: string, messageId: string, token: string) => void
   onThinkingEnd: (sessionId: string, messageId: string, tokensUsed: number) => void
   onStreamEnd: (sessionId: string, messageId: string) => void
 }
@@ -218,7 +217,7 @@ export const useChatStore = create<ChatState>()(
             return {
               ...msg,
               reasoningText: (msg.reasoningText ?? '') + delta,
-              thinkingStatus: (msg.thinkingStatus === 'idle' || msg.thinkingStatus === undefined) ? 'streaming' : msg.thinkingStatus,
+              thinkingStatus: (msg.thinkingStatus === 'idle' || msg.thinkingStatus === 'starting' || msg.thinkingStatus === undefined) ? 'streaming' : msg.thinkingStatus,
               isStreaming: true,
               lastThinkChunkSeq: chunkSeq ?? msg.lastThinkChunkSeq,
             }
@@ -355,28 +354,6 @@ export const useChatStore = create<ChatState>()(
           ...s.messagesBySession,
           [sessionId]: sessionMessages.map((msg) =>
             msg.id === messageId ? { ...msg, thinkingStatus: 'starting' as ThinkingStatus } : msg
-          ),
-        },
-      }
-    }),
-
-  onThinkingToken: (sessionId, messageId, token) =>
-    set((s) => {
-      const sessionMessages = s.messagesBySession[sessionId]
-      if (!sessionMessages) return s
-      return {
-        messagesBySession: {
-          ...s.messagesBySession,
-          [sessionId]: sessionMessages.map((msg) =>
-            msg.id === messageId
-              ? {
-                  ...msg,
-                  reasoningText: (msg.reasoningText ?? '') + token,
-                  thinkingStatus: (msg.thinkingStatus === 'idle' || msg.thinkingStatus === 'starting' || msg.thinkingStatus === undefined)
-                    ? 'streaming' as ThinkingStatus
-                    : msg.thinkingStatus,
-                }
-              : msg
           ),
         },
       }

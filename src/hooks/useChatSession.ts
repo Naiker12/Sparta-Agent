@@ -254,7 +254,9 @@ export function useChatSession() {
       lastUserMessageRef.current.set(sid, { text, userMessageId })
 
       const allMessages = useChatStore.getState().messagesBySession[sid] ?? []
-      const msgs = allMessages.map((m) => ({ role: m.role, content: m.content }))
+      const msgs = allMessages
+        .filter((m) => m.id !== assistantId)
+        .map((m) => ({ role: m.role, content: m.content }))
 
       // Signal main process that renderer is ready to receive events for this session (Electron only)
       if (typeof window !== 'undefined' && window.electron?.send) {

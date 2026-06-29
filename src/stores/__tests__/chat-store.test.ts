@@ -33,6 +33,32 @@ describe('chat store deletion', () => {
     expect(state.isStreaming).toBe(false)
   })
 
+  it('transiciona thinkingStatus: starting → streaming → completed sin quedarse pegado', () => {
+    const sid = useChatStore.getState().createSession('Test')
+    const msg = createMessage(sid, 'assistant', '')
+    useChatStore.getState().addMessage(msg)
+    const mid = msg.id
+
+    useChatStore.getState().onThinkingStart(sid, mid)
+    const afterStart = useChatStore.getState().messagesBySession[sid].find((m) => m.id === mid)
+    expect(afterStart?.thinkingStatus).toBe('starting')
+
+    useChatStore.getState().appendThinking(sid, mid, 'pensando', 1)
+    const afterToken = useChatStore.getState().messagesBySession[sid].find((m) => m.id === mid)
+    expect(afterToken?.thinkingStatus).toBe('streaming')
+    expect(afterToken?.reasoningText).toBe('pensando')
+
+    useChatStore.getState().appendThinking(sid, mid, ' más', 2)
+    const afterToken2 = useChatStore.getState().messagesBySession[sid].find((m) => m.id === mid)
+    expect(afterToken2?.thinkingStatus).toBe('streaming')
+    expect(afterToken2?.reasoningText).toBe('pensando más')
+
+    useChatStore.getState().onThinkingEnd(sid, mid, 42)
+    const afterEnd = useChatStore.getState().messagesBySession[sid].find((m) => m.id === mid)
+    expect(afterEnd?.thinkingStatus).toBe('completed')
+    expect(afterEnd?.thinkingTokensUsed).toBe(42)
+  })
+
   it('deleteMessage removes a single message and decrements count', () => {
     const sid = useChatStore.getState().createSession('Test')
     const msg = createMessage(sid)
