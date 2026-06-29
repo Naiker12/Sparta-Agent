@@ -66,7 +66,8 @@ interface TerminalIPC {
   destroy: (terminalId: string) => Promise<{ success: boolean }>
   onData: (terminalId: string, callback: (data: string) => void) => () => void
   onExit: (terminalId: string, callback: (code: number) => void) => () => void
-  agentWrite: (terminalId: string, command: string) => Promise<{ success: boolean }>
+  agentWrite: (terminalId: string, command: string) => Promise<{ success: boolean; error?: string; needsConfirmation?: boolean }>
+  agentWriteForce: (terminalId: string, command: string) => Promise<{ success: boolean; error?: string }>
 }
 
 interface SkillsIPC {

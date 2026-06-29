@@ -92,6 +92,8 @@ contextBridge.exposeInMainWorld('terminal', {
 
   agentWrite: (terminalId: string, command: string) =>
     ipcRenderer.invoke('terminal:agent-write', { terminalId, command }),
+  agentWriteForce: (terminalId: string, command: string) =>
+    ipcRenderer.invoke('terminal:agent-write-force', { terminalId, command }),
 })
 
 contextBridge.exposeInMainWorld('fs', {
@@ -106,7 +108,9 @@ contextBridge.exposeInMainWorld('fs', {
 contextBridge.exposeInMainWorld('skills', {
   list: () => ipcRenderer.invoke('skills:list') as Promise<unknown[]>,
   view: (skillId: string) => ipcRenderer.invoke('skills:view', skillId) as Promise<{ metadata: Record<string, unknown>; body: string; source_path: string }>,
-  installFromUrl: (url: string) => ipcRenderer.invoke('skills:installFromUrl', url) as Promise<{ success: boolean; skillId?: string; error?: string; scan?: unknown }>,
-  installFromRepo: (repoUrl: string) => ipcRenderer.invoke('skills:installFromRepo', repoUrl) as Promise<{ success: boolean; error?: string; info?: string }>,
+  install: (repo: string, skill?: string) => ipcRenderer.invoke('skills:install', { repo, skill }) as Promise<{ ok: boolean; output: string }>,
+  repoList: (repo: string) => ipcRenderer.invoke('skills:repo-list', repo) as Promise<{ ok: boolean; output: string }>,
+  find: (query: string) => ipcRenderer.invoke('skills:find', query) as Promise<{ ok: boolean; output: string }>,
+  update: () => ipcRenderer.invoke('skills:update') as Promise<{ ok: boolean; output: string }>,
   uninstall: (skillId: string) => ipcRenderer.invoke('skills:uninstall', skillId) as Promise<{ success: boolean; error?: string }>,
 })

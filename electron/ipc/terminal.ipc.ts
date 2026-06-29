@@ -2,6 +2,19 @@ import { ipcMain, BrowserWindow, type IpcMainInvokeEvent, type IpcMainEvent } fr
 import * as pty from 'node-pty'
 import os from 'os'
 
+const DESTRUCTIVE_PATTERNS = [
+  /^rm\s+(-rf?\s+)?(\/|[~]\/|\.\.)/,
+  /^rmdir\s+\//,
+  /^dd\s+if=/,
+  /^mkfs\./,
+  /^fdisk\s+/,
+  /^format\s+/,
+  /^del\s+\/f\s+\/s/i,
+  /^rd\s+\/s\s+\/q/i,
+  /^cipher\s+\/w:/i,
+  /^>.*(sparta-vault\.json|\.env)$/,
+]
+
 interface SessionState {
   pty: pty.IPty
   buffer: string[]
@@ -108,8 +121,31 @@ export function registerTerminalIPC() {
     const state = sessions.get(terminalId)
     if (!state) return { success: false, error: 'No terminal activa' }
 
+    // Block destructive commands unless explicitly approved
+    const trimmed = command.trim()
+    const isDangerous = DESTRUCTIVE_PATTERNS.some((p) => p.test(trimmed))
+    if (isDangerous) {
+      return {
+        success: false,
+        error: 'Comando potencialmente destructivo. Envía a terminal:agent-write-force para confirmar.',
+        needsConfirmation: true,
+        command,
+      }
+    }
+
     // Show visual prefix so user can distinguish agent-vs-manual commands
     const prefixed = `\x1b[36m[agente]\x1b[0m ${command}\r\n`
+    state.win.webContents.send(`terminal:data:${terminalId}`, prefixed)
+
+    state.pty.write(command + '\r')
+    return { success: true }
+  })
+
+  ipcMain.handle('terminal:agent-write-force', (_event: IpcMainInvokeEvent, { terminalId, command }: { terminalId: string; command: string }) => {
+    const state = sessions.get(terminalId)
+    if (!state) return { success: false, error: 'No terminal activa' }
+
+    const prefixed = `\x1b[36m[agente]\x1b[0m ${command}\r\n\x1b[33m⚠  Confirmado por el usuario\x1b[0m\r\n`
     state.win.webContents.send(`terminal:data:${terminalId}`, prefixed)
 
     state.pty.write(command + '\r')

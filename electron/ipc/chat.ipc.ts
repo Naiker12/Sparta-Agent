@@ -1,4 +1,4 @@
-import { ipcMain, BrowserWindow } from 'electron'
+import { ipcMain, BrowserWindow, type IpcMainEvent } from 'electron'
 import { sendToPython, isSidecarRunning, isSidecarReady, waitForSidecarReady, sidecarEvents, SidecarEvent } from './sidecar.ipc'
 
 interface ChatRequest {
@@ -19,8 +19,11 @@ interface ChatRequest {
   reasoning?: { enabled: boolean; budget: number }
 }
 
-const activeStreams = new Map<string, boolean>()
+const activeStreams = new Map<string, { active: boolean; messageId: string }>()
 const chunkSeqCounters = new Map<string, { streamSeq: number; thinkSeq: number }>()
+const windowBySession = new Map<string, BrowserWindow>()
+const sessionReady = new Map<string, boolean>()
+const eventBuffer = new Map<string, Record<string, unknown>[]>()
 
 function getNextSeq(requestId: string, kind: 'stream' | 'think'): number {
   const entry = chunkSeqCounters.get(requestId) ?? { streamSeq: 0, thinkSeq: 0 }
@@ -35,14 +38,60 @@ function clearSeqCounters(requestId: string): void {
 }
 
 function sendToRenderer(event: Record<string, unknown>): void {
-  const win = BrowserWindow.getFocusedWindow()
-  win?.webContents.send('sparta:event', event)
+  const sessionId = event.sessionId as string | undefined
+
+  // Buffer events for sessions that haven't signaled chat:ready yet
+  if (sessionId && !sessionReady.get(sessionId)) {
+    const buf = eventBuffer.get(sessionId) ?? []
+    buf.push(event)
+    eventBuffer.set(sessionId, buf)
+    return
+  }
+
+  let win: BrowserWindow | undefined
+
+  if (sessionId) {
+    win = windowBySession.get(sessionId)
+  }
+
+  if (!win || win.isDestroyed()) {
+    win = BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0]
+  }
+
+  if (!win || win.isDestroyed()) {
+    console.warn('[chat.ipc] No available window to send event:', event.type)
+    return
+  }
+
+  win.webContents.send('sparta:event', event)
 }
 
 export function registerChatIPC(): void {
   // Forward Python stderr lines to the renderer as sidecar logs for visibility.
   sidecarEvents.on(SidecarEvent.STDERR, (text: string) => {
     sendToRenderer({ type: 'sidecar:log', level: 'stderr', text })
+  })
+
+  // Handle sidecar crashes: abort all active streams and resolve pending promises
+  sidecarEvents.on(SidecarEvent.CRASHED, ({ code, signal, attempt }) => {
+    for (const [sessionId, { active, messageId }] of activeStreams.entries()) {
+      if (active) {
+        sendToRenderer({
+          sessionId,
+          messageId,
+          type: 'stream:error',
+          error: `El sidecar de Python se ha detenido (código ${code}, señal ${signal}). Intento ${attempt}.`,
+        })
+        activeStreams.set(sessionId, { active: false, messageId })
+      }
+    }
+    // Resolve any pending stream promises so the chat:send polling loop exits immediately
+    for (const [requestId] of streamResolvers.entries()) {
+      const resolve = streamResolvers.get(requestId)
+      resolve?.()
+      streamResolvers.delete(requestId)
+    }
+    chunkSeqCounters.clear()
   })
 
   // Listen for all sidecar messages and route them to active streams
@@ -76,6 +125,9 @@ export function registerChatIPC(): void {
         sendToRenderer({ sessionId, messageId, type: 'stream:aborted' })
         clearSeqCounters(requestId)
         break
+      case 'terminal:agent_command':
+        sendToRenderer({ sessionId, messageId, type: 'terminal:agent_command', command: data?.command })
+        break
       case 'tool:called':
         sendToRenderer({ sessionId, messageId, type: 'tool:called', toolCall: { id: data?.tool_call_id, toolName: data?.name, input: data?.input, status: 'running' } })
         break
@@ -100,6 +152,12 @@ export function registerChatIPC(): void {
   ipcMain.handle('chat:send', async (_event, req: ChatRequest) => {
     const { sessionId, messageId } = req
 
+    // Store the window that initiated this session so events always reach it
+    const win = BrowserWindow.fromWebContents(_event.sender)
+    if (win) {
+      windowBySession.set(sessionId, win)
+    }
+
     if (!isSidecarRunning()) {
       sendToRenderer({
         sessionId, messageId,
@@ -120,7 +178,7 @@ export function registerChatIPC(): void {
       return { ok: false, error: 'Sidecar not ready' }
     }
 
-    activeStreams.set(sessionId, true)
+    activeStreams.set(sessionId, { active: true, messageId })
     const requestId = `${sessionId}:${messageId}`
 
     // Build request according to the Python sidecar protocol
@@ -149,7 +207,8 @@ export function registerChatIPC(): void {
     const startTime = Date.now()
 
     while (Date.now() - startTime < timeout) {
-      if (!activeStreams.get(sessionId)) {
+      const streamState = activeStreams.get(sessionId)
+      if (!streamState?.active) {
         // Abort requested
         sendToPython({ id: requestId, method: 'chat.abort', params: { request_id: requestId } })
         sendToRenderer({ sessionId, messageId, type: 'done' })
@@ -166,11 +225,29 @@ export function registerChatIPC(): void {
   })
 
   ipcMain.handle('chat:abort', (_event, sessionId: string) => {
-    activeStreams.set(sessionId, false)
+    const state = activeStreams.get(sessionId)
+    if (state) {
+      activeStreams.set(sessionId, { ...state, active: false })
+    }
   })
 
   ipcMain.handle('sidecar:status', () => {
     return { running: isSidecarRunning(), ready: isSidecarReady() }
+  })
+
+  // Renderer signals that its event listener is registered; flush buffered events
+  ipcMain.on('chat:ready', (_event: IpcMainEvent, { sessionId }: { sessionId: string }) => {
+    sessionReady.set(sessionId, true)
+    const buf = eventBuffer.get(sessionId)
+    if (buf && buf.length > 0) {
+      const win = windowBySession.get(sessionId) ?? BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0]
+      if (win && !win.isDestroyed()) {
+        for (const evt of buf) {
+          win.webContents.send('sparta:event', evt)
+        }
+      }
+      eventBuffer.delete(sessionId)
+    }
   })
 }
 

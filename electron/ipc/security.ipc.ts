@@ -31,7 +31,13 @@ function loadSecurityModule(): SecurityModule | null {
 
   try {
     const platform = process.platform
-    const ext = platform === 'win32' ? 'win32-x64-msvc' : 'darwin-x64'
+    const arch = process.arch
+    const ext =
+      platform === 'win32' ? 'win32-x64-msvc' :
+      platform === 'darwin' && arch === 'arm64' ? 'darwin-arm64' :
+      platform === 'darwin' ? 'darwin-x64' :
+      platform === 'linux' ? 'linux-x64-gnu' :
+      'darwin-x64'
     const modulePath = path.join(
       getSecurityModuleRoot(),
       `sparta-security.${ext}.node`
