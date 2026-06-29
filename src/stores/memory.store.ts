@@ -1,13 +1,12 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { MemoryEntry, MemoryRelation, MemoryGraphNode } from '@/types'
+import type { MemoryEntry, MemoryRelation } from '@/types'
 import { useEventBus } from './event-bus.store'
-import { computeGraphLayout, computeRelations, getNewNodePositions } from '@/services/memory/graph-layout'
+import { computeRelations } from '@/services/memory/graph-layout'
 
 interface MemoryState {
   entries: MemoryEntry[]
   relations: MemoryRelation[]
-  graphNodes: MemoryGraphNode[]
 
   addEntry: (content: string, source: 'manual' | 'auto', category?: string, projectId?: string, sourceSessionId?: string, sourceMessageId?: string) => string
   updateEntry: (id: string, partial: Partial<MemoryEntry>) => void
@@ -15,7 +14,6 @@ interface MemoryState {
   addRelation: (rel: MemoryRelation) => void
   updateRelation: (fromId: string, toId: string, partial: Partial<MemoryRelation>) => void
   removeRelation: (fromId: string, toId: string) => void
-  rebuildGraph: () => void
   addEntriesFromExtraction: (entries: MemoryEntry[], relations: MemoryRelation[]) => void
   getActiveCount: () => number
 }
@@ -25,7 +23,6 @@ export const useMemoryStore = create<MemoryState>()(
     (set, get) => ({
   entries: [],
   relations: [],
-  graphNodes: [],
 
   addEntry: (content, source, category, projectId, sourceSessionId, sourceMessageId) => {
     const id = crypto.randomUUID()
@@ -79,14 +76,6 @@ export const useMemoryStore = create<MemoryState>()(
     }))
   },
 
-  rebuildGraph: () => {
-    const { entries, relations } = get()
-    const existingNodes = new Map(get().graphNodes.map((n) => [n.memoryId, n]))
-    const nodes = computeGraphLayout(entries, existingNodes)
-    const computedRels = computeRelations(entries, relations)
-    set({ graphNodes: nodes, relations: computedRels })
-  },
-
   addEntriesFromExtraction: (newEntries, newRelations) => {
     set((s) => {
       const existingIds = new Set(s.entries.map((e) => e.id))
@@ -94,15 +83,9 @@ export const useMemoryStore = create<MemoryState>()(
       const uniqueRels = newRelations.filter(
         (r) => !s.relations.some((er) => er.fromId === r.fromId && er.toId === r.toId && er.type === r.type)
       )
-      const allEntries = [...s.entries, ...uniqueEntries]
-      const allRels = [...s.relations, ...uniqueRels]
-      const existingNodes = new Map(s.graphNodes.map((n) => [n.memoryId, n]))
-      const newIds = uniqueEntries.map((e) => e.id)
-      const newNodes = getNewNodePositions(newIds, allEntries, existingNodes)
       return {
-        entries: allEntries,
-        relations: allRels,
-        graphNodes: [...s.graphNodes, ...newNodes],
+        entries: [...s.entries, ...uniqueEntries],
+        relations: [...s.relations, ...uniqueRels],
       }
     })
   },
@@ -118,7 +101,6 @@ export const useMemoryStore = create<MemoryState>()(
           return {
             entries: Array.isArray(state.entries) ? state.entries : [],
             relations: Array.isArray(state.relations) ? state.relations : [],
-            graphNodes: [],
           }
         }
         return persisted as MemoryState

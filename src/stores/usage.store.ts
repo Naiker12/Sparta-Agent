@@ -17,6 +17,8 @@ interface UsageState {
   totalOutput: number
   bySession: Record<string, SessionUsage>
   byProvider: Record<string, ProviderUsage>
+  currentTurnInput: number
+  currentTurnOutput: number
 
   recordTurn: (sessionId: string, providerId: string, input: number, output: number) => void
   getSessionUsage: (sessionId: string) => SessionUsage
@@ -33,6 +35,8 @@ export const useUsageStore = create<UsageState>()(
       totalOutput: 0,
       bySession: {},
       byProvider: {},
+      currentTurnInput: 0,
+      currentTurnOutput: 0,
 
       recordTurn: (sessionId, providerId, input, output) => {
         set((s) => {
@@ -42,6 +46,8 @@ export const useUsageStore = create<UsageState>()(
           return {
             totalInput: s.totalInput + input,
             totalOutput: s.totalOutput + output,
+            currentTurnInput: 0,
+            currentTurnOutput: 0,
             bySession: {
               ...s.bySession,
               [sessionId]: {
@@ -78,14 +84,32 @@ export const useUsageStore = create<UsageState>()(
 
       getByProvider: () => get().byProvider,
 
-      getCurrentTurnTokens: () => ({ input: 0, output: 0 }),
+      getCurrentTurnTokens: () => ({
+        input: get().currentTurnInput,
+        output: get().currentTurnOutput,
+      }),
 
-      setCurrentTurnTokens: () => {},
+      setCurrentTurnTokens: (input, output) => {
+        set({ currentTurnInput: input, currentTurnOutput: output })
+      },
     }),
     {
       name: 'sparta-usage',
-      version: 1,
-      migrate: (persisted) => persisted,
+      version: 2,
+      migrate: (persisted: unknown, version: number) => {
+        if (version < 2) {
+          const old = persisted as Record<string, unknown>
+          return {
+            totalInput: old.totalInput ?? 0,
+            totalOutput: old.totalOutput ?? 0,
+            bySession: old.bySession ?? {},
+            byProvider: old.byProvider ?? {},
+            currentTurnInput: 0,
+            currentTurnOutput: 0,
+          }
+        }
+        return persisted as UsageState
+      },
       partialize: (state) => ({
         totalInput: state.totalInput,
         totalOutput: state.totalOutput,
