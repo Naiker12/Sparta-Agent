@@ -74,6 +74,9 @@ class StdioServer:
             from sparta_ai.config.security import clear_keys
             clear_keys()
             _emit(request_id, "keymanager.clear", {"ok": True})
+        elif method == "skills:list_all":
+            from sparta_ai.skills.skill_loader import skills_index
+            _emit(request_id, "skills:list_all:response", {"skills": skills_index()})
         elif method == "shutdown":
             _emit(request_id, "shutdown", {"ok": True})
             self._running = False

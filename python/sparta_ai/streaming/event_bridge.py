@@ -69,7 +69,11 @@ async def stream_agent_to_electron(
     request_id: str,
 ) -> None:
     # Mutable state so thinking flag persists across separate astream_events events.
-    stream_state = {"thinking_active": False}
+    stream_state = {
+        "thinking_active": False,
+        "last_detected_skill": None,
+        "active_skill_ids": initial_state.get("active_skills", []),
+    }
     try:
         async for event in graph.astream_events(initial_state, version="v2"):
             await _dispatch_event(request_id, event, stream_state)
@@ -100,6 +104,10 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> N
                 stream_state["thinking_active"] = True
             logger.debug("Emitting thinking:token (reasoning_content) for request %s", request_id)
             _emit(request_id, "thinking:token", {**base_payload, "token": reasoning_content})
+
+            # Detect skill activation in thinking text
+            _detect_and_emit_skill(request_id, reasoning_content, stream_state, base_payload)
+
             return
 
         content = getattr(chunk, "content", "")
@@ -114,6 +122,9 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> N
                     if token:
                         logger.debug("Emitting thinking:token (reasoning block) for request %s", request_id)
                         _emit(request_id, "thinking:token", {**base_payload, "token": token})
+
+                        # Detect skill activation in thinking text
+                        _detect_and_emit_skill(request_id, token, stream_state, base_payload)
                 elif _is_text_block(block):
                     text = _block_text(block)
                     if text:
@@ -189,6 +200,35 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> N
         _emit(request_id, "stream:completed", base_payload)
 
 
+def _detect_and_emit_skill(
+    request_id: str,
+    thinking_text: str,
+    stream_state: dict,
+    base_payload: dict,
+) -> None:
+    """Detect if the LLM is activating a skill and emit skill:activated."""
+    active_skills = stream_state.get("active_skill_ids", [])
+    if not active_skills or not thinking_text.strip():
+        return
+    try:
+        from sparta_ai.skills.skill_loader import skills_index
+        from sparta_ai.skills.skills_guard import detect_skill_in_thought
+
+        detected = detect_skill_in_thought(thinking_text, active_skills, skills_index())
+        if detected and detected["id"] != stream_state.get("last_detected_skill"):
+            stream_state["last_detected_skill"] = detected["id"]
+            logger.info("Skill activated: %s", detected.get("name", detected["id"]))
+            _emit(request_id, "skill:activated", {
+                **base_payload,
+                "skillId": detected["id"],
+                "skillName": detected.get("name", detected["id"]),
+                "skillIcon": detected.get("icon", "\U0001f4e6"),
+                "skillCategory": detected.get("category", ""),
+            })
+    except ImportError:
+        pass
+
+
 async def stream_agent_to_websocket(
     graph: Any,
     initial_state: dict,
@@ -202,7 +242,11 @@ async def stream_agent_to_websocket(
     Events are sent in the format the renderer expects:
     {"type": "stream:token", "token": "...", "sessionId": "...", "messageId": "..."}
     """
-    stream_state = {"thinking_active": False}
+    stream_state = {
+        "thinking_active": False,
+        "last_detected_skill": None,
+        "active_skill_ids": initial_state.get("active_skills", []),
+    }
     try:
         async for event in graph.astream_events(initial_state, version="v2"):
             await _dispatch_event_ws(websocket, request_id, event, session_id, message_id, stream_state)
@@ -244,6 +288,9 @@ async def _dispatch_event_ws(
             await _emit_ws_renderer(websocket, "thinking:token", {
                 **base_payload, "token": reasoning_content,
             })
+
+            # Detect skill activation
+            await _detect_and_emit_skill_ws(websocket, reasoning_content, stream_state, base_payload)
             return
 
         content = getattr(chunk, "content", "")
@@ -258,6 +305,9 @@ async def _dispatch_event_ws(
                         await _emit_ws_renderer(websocket, "thinking:token", {
                             **base_payload, "token": token,
                         })
+
+                        # Detect skill activation
+                        await _detect_and_emit_skill_ws(websocket, token, stream_state, base_payload)
                 elif _is_text_block(block):
                     text = _block_text(block)
                     if text:
@@ -335,6 +385,32 @@ async def _dispatch_event_ws(
             })
             stream_state["thinking_active"] = False
         await _emit_ws_renderer(websocket, "stream:completed", base_payload)
+
+
+async def _detect_and_emit_skill_ws(
+    websocket: Any, thinking_text: str, stream_state: dict, base_payload: dict,
+) -> None:
+    """Detect skill activation during WS streaming and emit skill:activated."""
+    active_skills = stream_state.get("active_skill_ids", [])
+    if not active_skills or not thinking_text.strip():
+        return
+    try:
+        from sparta_ai.skills.skill_loader import skills_index
+        from sparta_ai.skills.skills_guard import detect_skill_in_thought
+
+        detected = detect_skill_in_thought(thinking_text, active_skills, skills_index())
+        if detected and detected["id"] != stream_state.get("last_detected_skill"):
+            stream_state["last_detected_skill"] = detected["id"]
+            logger.info("Skill activated (WS): %s", detected.get("name", detected["id"]))
+            await _emit_ws_renderer(websocket, "skill:activated", {
+                **base_payload,
+                "skillId": detected["id"],
+                "skillName": detected.get("name", detected["id"]),
+                "skillIcon": detected.get("icon", "\U0001f4e6"),
+                "skillCategory": detected.get("category", ""),
+            })
+    except ImportError:
+        pass
 
 
 async def _emit_ws_renderer(websocket: Any, event_type: str, data: dict | None = None) -> None:

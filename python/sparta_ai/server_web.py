@@ -41,6 +41,12 @@ async def websocket_endpoint(websocket: WebSocket):
                 await handle_chat_stream(websocket, params)
             elif method == "chat.abort":
                 await handle_abort(params)
+            elif method == "skills:list_all":
+                from sparta_ai.skills.skill_loader import skills_index
+                await websocket.send_text(json.dumps({
+                    "type": "skills:list_all:response",
+                    "skills": skills_index(),
+                }))
             elif method == "ping":
                 await websocket.send_text(json.dumps({"event": "pong"}))
 
@@ -207,6 +213,12 @@ async def _execute_agent_ws(
     }
 
     await stream_agent_to_websocket(graph, initial_state, ws, request_id, session_id, message_id)
+
+
+@app.get("/api/skills/index")
+async def get_skills_index():
+    from sparta_ai.skills.skill_loader import skills_index
+    return {"skills": skills_index()}
 
 
 @app.get("/health")

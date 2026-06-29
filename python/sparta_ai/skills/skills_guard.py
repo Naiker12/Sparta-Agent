@@ -3,6 +3,8 @@
 Scans incoming SKILL.md / skill files for dangerous patterns before
 they are written to disk. Prevents prompt injection, code execution,
 and filesystem abuse via skill content.
+
+Also provides runtime detection of skill activation during LLM thinking.
 """
 import logging
 import re
@@ -71,3 +73,51 @@ def is_source_trusted(source: str) -> bool:
         if trusted in source_lower:
             return True
     return False
+
+
+def detect_skill_in_thought(
+    thought_text: str,
+    active_skill_ids: list[str],
+    skills_index_data: list[dict],
+) -> dict | None:
+    """Detect if the LLM is thinking about using a specific skill.
+
+    Returns the skill dict if a match is found, or None.
+
+    Detection patterns:
+    - skill ID in text (kebab-case)
+    - skill name in text
+    - "skill:" / "skill_id:" prefix patterns
+    - "using <skill_name>", "aplying <skill_name>", etc.
+    """
+    if not active_skill_ids or not skills_index_data:
+        return None
+
+    thought_lower = thought_text.lower()
+    skill_map = {s["id"]: s for s in skills_index_data}
+
+    for skill_id in active_skill_ids:
+        skill = skill_map.get(skill_id)
+        if not skill:
+            continue
+
+        name_lower = skill.get("name", "").lower()
+        if not name_lower:
+            continue
+
+        patterns = [
+            skill_id,
+            name_lower,
+            f"skill: {skill_id}",
+            f"skill_id: {skill_id}",
+            f"using {name_lower}",
+            f"usando {name_lower}",
+            f"aplicando {name_lower}",
+            f"applying {name_lower}",
+        ]
+
+        for pattern in patterns:
+            if pattern and pattern in thought_lower:
+                return skill
+
+    return None
