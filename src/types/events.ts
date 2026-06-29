@@ -27,6 +27,8 @@ export type EventType =
   | 'skill:updated'
   | 'skill:deleted'
   | 'skill:invoked'
+  | 'skill:activated'
+  | 'skill:completed'
   | 'channel:created'
   | 'channel:message'
   | 'channel:deleted'
@@ -210,6 +212,23 @@ export interface SkillInvokedEvent extends BaseEvent {
   skillId: string
 }
 
+export interface SkillActivatedEvent extends BaseEvent {
+  type: 'skill:activated'
+  skillId: string
+  skillName: string
+  skillIcon: string
+  skillCategory: string
+  sessionId: string
+  messageId: string
+}
+
+export interface SkillCompletedEvent extends BaseEvent {
+  type: 'skill:completed'
+  skillId: string
+  sessionId: string
+  messageId: string
+}
+
 export interface ChannelCreatedEvent extends BaseEvent {
   type: 'channel:created'
   channelId: string
@@ -312,6 +331,8 @@ export type SpartaEvent =
   | SkillUpdatedEvent
   | SkillDeletedEvent
   | SkillInvokedEvent
+  | SkillActivatedEvent
+  | SkillCompletedEvent
   | ChannelCreatedEvent
   | ChannelMessageEvent
   | ChannelDeletedEvent

@@ -1,4 +1,5 @@
 export * from './events'
+export type { ThinkingPhase, ThinkingLine } from './thinking'
 export { type MessageRole, type ToolCall, type PipelineStep, type Message, type Session, type ChatRequest, type ChatStreamChunk, type ThinkingStatus } from './chat'
 export { type ProviderVendor, type ProviderKind, type Provider, type ModelInfo, type AIProvider, type ConnectionTestResult } from './provider'
 export { type MCPServerType, type MCPServerConfig, type MCPTool, type MCPServer } from './mcp'

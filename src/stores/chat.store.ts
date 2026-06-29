@@ -27,7 +27,7 @@ interface ChatState {
   updateSessionModel: (id: string, model: string) => void
   deleteMessage: (sessionId: string, messageId: string) => void
   addMessage: (message: Message) => void
-  updateMessage: (id: string, partial: Partial<Message>) => void
+  updateMessage: (id: string, updater: Partial<Message> | ((msg: Message) => Partial<Message>)) => void
   appendContent: (sessionId: string, messageId: string, delta: string, chunkSeq?: number) => void
   appendThinking: (sessionId: string, messageId: string, delta: string, chunkSeq?: number) => void
   addToolCall: (sessionId: string, messageId: string, toolCall: ToolCall) => void
@@ -169,12 +169,14 @@ export const useChatStore = create<ChatState>()(
       }
     }),
 
-  updateMessage: (id, partial) =>
+  updateMessage: (id, updater) =>
     set((s) => {
       const updated = { ...s.messagesBySession }
       for (const sessionId in updated) {
         updated[sessionId] = updated[sessionId].map((msg) =>
-          msg.id === id ? { ...msg, ...partial } : msg
+          msg.id === id
+            ? { ...msg, ...(typeof updater === 'function' ? updater(msg) : updater) }
+            : msg
         )
       }
       return { messagesBySession: updated }
@@ -352,7 +354,7 @@ export const useChatStore = create<ChatState>()(
         messagesBySession: {
           ...s.messagesBySession,
           [sessionId]: sessionMessages.map((msg) =>
-            msg.id === messageId ? { ...msg, thinkingStatus: 'streaming' as ThinkingStatus } : msg
+            msg.id === messageId ? { ...msg, thinkingStatus: 'starting' as ThinkingStatus } : msg
           ),
         },
       }
@@ -366,7 +368,15 @@ export const useChatStore = create<ChatState>()(
         messagesBySession: {
           ...s.messagesBySession,
           [sessionId]: sessionMessages.map((msg) =>
-            msg.id === messageId ? { ...msg, reasoningText: (msg.reasoningText ?? '') + token, thinkingStatus: 'streaming' as ThinkingStatus } : msg
+            msg.id === messageId
+              ? {
+                  ...msg,
+                  reasoningText: (msg.reasoningText ?? '') + token,
+                  thinkingStatus: (msg.thinkingStatus === 'idle' || msg.thinkingStatus === 'starting' || msg.thinkingStatus === undefined)
+                    ? 'streaming' as ThinkingStatus
+                    : msg.thinkingStatus,
+                }
+              : msg
           ),
         },
       }

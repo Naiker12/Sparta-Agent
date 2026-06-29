@@ -330,6 +330,11 @@ export function useChatSession() {
         }
         case 'thinking:token': {
           const thinkToken = (event as { token: string }).token ?? ''
+          const currentMsg = store.messagesBySession[sid]?.find((m) => m.id === mid)
+          if (currentMsg?.thinkingStatus === 'completed') {
+            console.warn('[useChatSession] thinking:token ignorado, thinking ya completó')
+            break
+          }
           console.debug('[useChatSession] thinking:token', thinkToken.slice(0, 40))
           store.appendThinking(sid, mid, thinkToken, (event as { chunkSeq?: number }).chunkSeq)
           break
@@ -467,16 +472,18 @@ export function useChatSession() {
           break
         }
         case 'tool:result': {
-          const tcId = (event as { toolCallId?: string }).toolCallId ?? ''
-          const resultOutput = (event as { output?: string }).output ?? ''
-          const tcName = (event as { toolName?: string }).toolName
+          const evt = event as Record<string, unknown>
+          const tcId = (evt.toolCallId ?? evt.tool_call_id ?? evt.id ?? '') as string
+          const resultOutput = (evt.output ?? '') as string
+          const tcName = evt.toolName as string | undefined
           updateToolCallStatus(sid, mid, tcId, 'completed', resultOutput, tcName)
           break
         }
         case 'tool:error': {
-          const tcIdErr = (event as { toolCallId?: string }).toolCallId ?? ''
-          const errorMsg = (event as { error?: string }).error ?? 'Error al ejecutar una herramienta'
-          const tcNameErr = (event as { toolName?: string }).toolName
+          const evtErr = event as Record<string, unknown>
+          const tcIdErr = (evtErr.toolCallId ?? evtErr.tool_call_id ?? evtErr.id ?? '') as string
+          const errorMsg = (evtErr.error ?? 'Error al ejecutar una herramienta') as string
+          const tcNameErr = evtErr.toolName as string | undefined
           updateToolCallStatus(sid, mid, tcIdErr, 'error', errorMsg, tcNameErr)
           useEventBus.getState().dispatch({
             type: 'tool:error',
@@ -484,6 +491,49 @@ export function useChatSession() {
             error: errorMsg,
             timestamp: Date.now(),
           })
+          break
+        }
+        case 'skill:activated': {
+          const skillEvt = event as Record<string, string>
+          const skillId = skillEvt.skillId ?? ''
+          const skillName = skillEvt.skillName ?? ''
+          const skillIcon = skillEvt.skillIcon ?? '\ud83d\udce6'
+          const skillCategory = skillEvt.skillCategory ?? ''
+          console.debug('[skill:activated]', skillId, skillName)
+          store.updateMessage(mid, (msg) => ({
+            pipelineSteps: [
+              ...(msg.pipelineSteps ?? []),
+              {
+                id: `skill-${skillId}-${Date.now()}`,
+                name: `${skillIcon} ${skillName}`,
+                status: 'running' as const,
+                timestamp: Date.now(),
+                meta: skillCategory,
+              },
+            ],
+          }))
+          useEventBus.getState().dispatch({
+            type: 'skill:activated' as const,
+            skillId,
+            skillName,
+            skillIcon,
+            skillCategory,
+            sessionId: sid,
+            messageId: mid,
+            timestamp: Date.now(),
+          })
+          break
+        }
+        case 'skill:completed': {
+          const compEvt = event as Record<string, string>
+          const compId = compEvt.skillId ?? ''
+          store.updateMessage(mid, (msg) => ({
+            pipelineSteps: (msg.pipelineSteps ?? []).map((step) =>
+              step.id?.startsWith(`skill-${compId}`)
+                ? { ...step, status: 'completed' as const, durationMs: Date.now() - step.timestamp }
+                : step
+            ),
+          }))
           break
         }
         case 'sidecar:log': {

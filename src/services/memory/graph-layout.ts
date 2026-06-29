@@ -17,7 +17,7 @@ export function computeGraphLayout(
 ): MemoryGraphNode[] {
   const n = entries.length
   if (n === 0) return []
-  const sphereRadius = 8
+  const sphereRadius = Math.max(6, Math.min(16, n * 1.2))
   const result: MemoryGraphNode[] = []
 
   for (let i = 0; i < n; i++) {
@@ -102,7 +102,8 @@ export function getNewNodePositions(
         z: relatedNode.position.z + (Math.random() - 0.5) * dist,
       }
     } else {
-      position = fibonacciSphere(existingNodes.size, Math.max(existingNodes.size + 1, allEntries.length), 8)
+      const fallbackRadius = Math.max(6, Math.min(16, allEntries.length * 1.2))
+      position = fibonacciSphere(existingNodes.size, Math.max(existingNodes.size + 1, allEntries.length), fallbackRadius)
     }
     return {
       memoryId: id,

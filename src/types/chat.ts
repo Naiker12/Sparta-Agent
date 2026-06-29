@@ -19,7 +19,7 @@ export interface PipelineStep {
   durationMs?: number
 }
 
-export type ThinkingStatus = 'idle' | 'streaming' | 'completed' | 'collapsed'
+export type ThinkingStatus = 'idle' | 'starting' | 'streaming' | 'completed' | 'collapsed'
 
 export interface Message {
   id: string
