@@ -5,7 +5,6 @@ import fs from 'node:fs'
 import { registerChatIPC } from './ipc/chat.ipc'
 import { registerMemoryIPC } from './ipc/memory.ipc'
 import { registerVaultIPC } from './ipc/vault.ipc'
-import { registerSearchIPC } from './ipc/search.ipc'
 import { registerKeyManagerIPC, pushAllKeys } from './ipc/keymanager.ipc'
 import { registerSecurityIPC, wireSecurityIntoPipeline } from './ipc/security.ipc'
 import { startSidecar, stopSidecar, waitForSidecarReady } from './ipc/sidecar.ipc'
@@ -92,7 +91,6 @@ app.whenReady().then(async () => {
   registerChatIPC()
   registerMemoryIPC()
   registerVaultIPC()
-  registerSearchIPC()
   registerKeyManagerIPC()
   registerSecurityIPC()
   registerTerminalIPC()

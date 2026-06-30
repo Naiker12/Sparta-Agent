@@ -17,6 +17,7 @@ interface ChatSendRequest {
   mcpServers?: unknown[]
   semanticMemory?: boolean
   reasoning?: { enabled: boolean; budget: number }
+  webSearchEnabled?: boolean
 }
 
 interface MessagingAdapterSendResult {
@@ -137,6 +138,7 @@ class WebAdapter implements MessagingAdapter {
           mcp_servers: request.mcpServers,
           semantic_memory: request.semanticMemory,
           reasoning: request.reasoning,
+          web_search_enabled: request.webSearchEnabled ?? true,
         },
       }))
       return Promise.resolve({ ok: true })

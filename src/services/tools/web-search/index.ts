@@ -1,9 +1,13 @@
-import { webSearch, type SearchResult } from './search-provider'
-
 export interface ToolDefinition {
   name: string
   description: string
   inputSchema: Record<string, unknown>
+}
+
+export interface SearchResult {
+  title: string
+  url: string
+  snippet: string
 }
 
 export function buildWebSearchTool(): ToolDefinition {
@@ -21,11 +25,47 @@ export function buildWebSearchTool(): ToolDefinition {
   }
 }
 
-export async function executeWebSearch(query: string, count = 5): Promise<string> {
-  const results = await webSearch(query, count)
-  if (results.length === 0) return 'No se encontraron resultados.'
+async function duckduckgoSearch(query: string): Promise<string> {
+  const resp = await fetch('https://html.duckduckgo.com/html/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'User-Agent': 'Mozilla/5.0 (compatible; SpartaAgent/1.0)',
+    },
+    body: `q=${encodeURIComponent(query)}`,
+  })
+  if (!resp.ok) throw new Error(`DuckDuckGo error HTTP ${resp.status}`)
+  const html = await resp.text()
+
+  const results: SearchResult[] = []
+  const linkPattern = /<a[^>]+class="result__a"[^>]*href="([^"]+)"[^>]*>(.*?)<\/a>/g
+  const snippetPattern = /<a[^>]+class="result__snippet"[^>]*>(.*?)<\/a>/g
+
+  const urls: string[] = []
+  const titles: string[] = []
+  let m: RegExpExecArray | null
+  while ((m = linkPattern.exec(html)) !== null) {
+    urls.push(m[1])
+    titles.push(m[2].replace(/<[^>]+>/g, '').trim())
+  }
+  while ((m = snippetPattern.exec(html)) !== null) {
+    const snip = m[1].replace(/<[^>]+>/g, '').trim()
+    if (results.length < titles.length) {
+      results.push({
+        title: titles[results.length],
+        url: urls[results.length],
+        snippet: snip,
+      })
+    }
+  }
 
   return results
-    .map((r: SearchResult, i: number) => `${i + 1}. ${r.title}\n   URL: ${r.url}\n   ${r.snippet}`)
+    .map((r, i) => `${i + 1}. ${r.title}\n   URL: ${r.url}\n   ${r.snippet}`)
     .join('\n\n')
+}
+
+export async function executeWebSearch(query: string, _count = 5): Promise<string> {
+  const results = await duckduckgoSearch(query)
+  if (!results) return 'No se encontraron resultados en la búsqueda web.'
+  return ['Información obtenida de búsqueda web:', results].join('\n')
 }

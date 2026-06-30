@@ -146,8 +146,13 @@ def build_llm(
     vendor = (vendor or provider).lower()
 
     kwargs.setdefault("streaming", True)
-    kwargs.setdefault("temperature", 0.7)
-    kwargs.setdefault("max_tokens", 4096)
+
+    if reasoning_enabled and vendor == "anthropic":
+        kwargs["temperature"] = 1
+        kwargs.setdefault("max_tokens", reasoning_budget + 4096)
+    else:
+        kwargs.setdefault("temperature", 0.7)
+        kwargs.setdefault("max_tokens", 4096)
 
     transport = _get_transport(vendor)
     return transport.build_llm(

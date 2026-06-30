@@ -183,7 +183,7 @@ export function MessageBubble({ message, isLastUser = false }: MessageBubbleProp
           {hasThinking && (
             <div style={{ marginTop: 8 }}>
               <ThinkingBlock
-                content={message.reasoningText ?? message.thinking ?? ''}
+                content={message.reasoningText ?? ''}
                 status={message.thinkingStatus ?? (message.isStreaming ? 'streaming' : 'completed')}
                 tokensUsed={message.thinkingTokensUsed ?? 0}
                 pipelineSteps={message.pipelineSteps}

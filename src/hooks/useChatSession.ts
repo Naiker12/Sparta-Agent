@@ -11,8 +11,6 @@ import { writeExtractedMemory } from '@/services/memory/graph-writer'
 import { buildMemoryContext, indexInChroma, ensureVectorReady, tryAutoConfigure } from '@/services/memory'
 import { getProviderKey } from '@/lib/vault-helper'
 import { aiGateway } from '@/services/ai/gateway'
-import { webSearch } from '@/services/tools/web-search/search-provider'
-import { shouldSearch } from '@/services/tools/web-search/search-heuristic'
 import { useUsageStore } from '@/stores/usage.store'
 import { messagingAdapter } from '@/lib/messaging-adapter'
 import { IS_WEB } from '@/lib/env-adapter'
@@ -107,61 +105,6 @@ async function runAssistantTurn(
       }
     }
 
-    let webSearchContext: string | undefined
-    if (webSearchEnabled && shouldSearch(text)) {
-      const searchToolCallId = crypto.randomUUID()
-      const searchStartedAt = Date.now()
-
-      store.addToolCall(sid, assistantId, {
-        id: searchToolCallId,
-        toolName: 'web_search',
-        input: { query: text },
-        status: 'running',
-      })
-
-      try {
-        const results = await webSearch(text, 5)
-        const durationMs = Date.now() - searchStartedAt
-
-        if (results.length > 0) {
-          webSearchContext =
-            'Información obtenida de búsqueda web:\n' +
-            results.map((r, i) => `${i + 1}. ${r.title}\n   URL: ${r.url}\n   ${r.snippet}`).join('\n\n')
-        } else {
-          webSearchContext = 'No se encontraron resultados en la búsqueda web.'
-        }
-
-        store.updateToolCallStatus(sid, assistantId, searchToolCallId, 'completed', webSearchContext)
-
-        useEventBus.getState().dispatch({
-          type: 'tool:result',
-          toolName: 'web_search',
-          output: webSearchContext,
-          durationMs,
-          timestamp: Date.now(),
-        })
-      } catch (err) {
-        const error = err instanceof Error ? err.message : String(err)
-        store.updateToolCallStatus(sid, assistantId, searchToolCallId, 'error', error)
-
-        if (error.includes('API key') || error.includes('configurada') || error.includes('No hay')) {
-          store.stopStreaming(sid)
-          store.updateMessage(assistantId, {
-            isStreaming: false,
-            content:
-              '⚠️ La búsqueda web está activada pero no hay API key configurada.\n\nVe a **Ajustes → Búsqueda** y agrega tu Brave Search API key, o desactiva la búsqueda web.',
-          })
-          return
-        }
-
-        webSearchContext = undefined
-      }
-
-      if (webSearchContext) {
-        system = system ? `${system}\n\n${webSearchContext}` : webSearchContext
-      }
-    }
-
     const skills = useSkillStore.getState().activeSkillIds ?? []
     const mcpServers = useMCPStore.getState().servers.map((s: { id: string; name: string; tools?: unknown[] }) => ({
       id: s.id,
@@ -188,6 +131,7 @@ async function runAssistantTurn(
       mcpServers,
       semanticMemory: semanticMemoryEnabled,
       reasoning: { enabled: reasoningEnabled, budget: reasoningBudget },
+      webSearchEnabled,
     })
     const resolved = sendResult instanceof Promise ? await sendResult : null
     if (resolved && !resolved.ok) {

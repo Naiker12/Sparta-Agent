@@ -28,7 +28,6 @@ export interface Message {
   timestamp: number
   sessionId: string
   agentId?: string
-  thinking?: string
   reasoningText?: string
   thinkingStatus?: ThinkingStatus
   thinkingTokensUsed?: number
@@ -61,6 +60,8 @@ export interface ChatRequest {
   stream?: boolean
   maxTokens?: number
   temperature?: number
+  thinkingEnabled?: boolean
+  thinkingBudget?: number
 }
 
 export interface ChatStreamChunk {

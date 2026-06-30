@@ -17,6 +17,7 @@ interface ChatRequest {
   mcpServers?: unknown[]
   semanticMemory?: boolean
   reasoning?: { enabled: boolean; budget: number }
+  webSearchEnabled?: boolean
 }
 
 const activeStreams = new Map<string, { active: boolean; messageId: string }>()
@@ -197,6 +198,7 @@ export function registerChatIPC(): void {
         mcp_servers: req.mcpServers ?? [],
         semantic_memory: req.semanticMemory ?? false,
         reasoning: req.reasoning ?? { enabled: false, budget: 8000 },
+        web_search_enabled: req.webSearchEnabled ?? true,
       },
     }
 

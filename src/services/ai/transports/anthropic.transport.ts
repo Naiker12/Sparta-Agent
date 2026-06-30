@@ -20,13 +20,20 @@ export class AnthropicTransport extends BaseTransport {
   }
 
   buildBody(req: ChatRequest): Record<string, unknown> {
-    return {
+    const body: Record<string, unknown> = {
       model: req.model,
       messages: req.messages,
       system: req.system,
       max_tokens: req.maxTokens ?? 4096,
       stream: true,
     }
+    if (req.thinkingEnabled) {
+      body.thinking = {
+        type: 'enabled',
+        budget_tokens: req.thinkingBudget ?? 8000,
+      }
+    }
+    return body
   }
 
   async listModels(): Promise<ModelInfo[]> {
@@ -84,6 +91,7 @@ export class AnthropicTransport extends BaseTransport {
 
     const decoder = new TextDecoder()
     let buffer = ''
+    let doneEmitted = false
     while (true) {
       const { done, value } = await reader.read()
       if (done) break
@@ -94,15 +102,29 @@ export class AnthropicTransport extends BaseTransport {
         const trimmed = line.trim()
         if (!trimmed || !trimmed.startsWith('data:')) continue
         const json = trimmed.slice(5).trim()
-        if (json === '[DONE]') { yield { type: 'done' }; continue }
+        if (json === '[DONE]') { if (!doneEmitted) { doneEmitted = true; yield { type: 'done' } }; continue }
         try {
           const parsed = JSON.parse(json)
-          if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
-            yield { type: 'content_token', delta: parsed.delta.text }
+          switch (parsed.type) {
+            case 'content_block_start':
+              if (parsed.content_block?.type === 'thinking' && parsed.content_block.thinking) {
+                yield { type: 'thinking_token', delta: parsed.content_block.thinking }
+              }
+              break
+            case 'content_block_delta':
+              if (parsed.delta?.type === 'thinking_delta' && parsed.delta.thinking) {
+                yield { type: 'thinking_token', delta: parsed.delta.thinking }
+              } else if (parsed.delta?.type === 'text_delta' && parsed.delta.text) {
+                yield { type: 'content_token', delta: parsed.delta.text }
+              }
+              break
+            case 'message_stop':
+              if (!doneEmitted) { doneEmitted = true; yield { type: 'done' } }
+              break
           }
         } catch { /* skip parse errors */ }
       }
     }
-    yield { type: 'done' }
+    if (!doneEmitted) { yield { type: 'done' } }
   }
 }

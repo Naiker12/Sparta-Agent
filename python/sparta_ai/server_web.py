@@ -65,6 +65,7 @@ async def handle_chat_stream(ws: WebSocket, params: dict):
     mcp_servers = params.get("mcp_servers", [])
     semantic_memory = params.get("semantic_memory", False)
     reasoning = params.get("reasoning", {"enabled": False, "budget": 8000})
+    web_search_enabled = params.get("web_search_enabled", True)
     session_id = params.get("sessionId") or params.get("session_id", "")
     message_id = params.get("messageId") or params.get("message_id", "")
 
@@ -95,6 +96,7 @@ async def handle_chat_stream(ws: WebSocket, params: dict):
             mcp_servers=mcp_servers,
             semantic_memory=semantic_memory,
             reasoning=reasoning,
+            web_search_enabled=web_search_enabled,
         )
     )
     _active_streams[request_id] = task
@@ -142,6 +144,7 @@ async def _execute_agent_ws(
     mcp_servers: list,
     semantic_memory: bool,
     reasoning: dict,
+    web_search_enabled: bool = True,
 ) -> None:
     from sparta_ai.skills.skill_loader import build_skills_context, skills_index
     from sparta_ai.memory.chroma_store import build_memory_context
@@ -184,13 +187,15 @@ async def _execute_agent_ws(
     from sparta_ai.tools.mcp_bridge import build_mcp_tools
     mcp_tools = build_mcp_tools(mcp_servers)
 
-    from sparta_ai.tools.web_search import web_search_tool
     from sparta_ai.tools.memory_tools import read_memory_tool, write_memory_tool
     from sparta_ai.tools.file_tools import read_file_tool, write_file_tool
     from sparta_ai.tools.skill_tools import skill_view_tool
     from sparta_ai.tools.terminal_tools import terminal_execute_tool
 
-    agent_tools = [web_search_tool, read_memory_tool, write_memory_tool, read_file_tool, write_file_tool, skill_view_tool, terminal_execute_tool] + mcp_tools
+    agent_tools = [read_memory_tool, write_memory_tool, read_file_tool, write_file_tool, skill_view_tool, terminal_execute_tool] + mcp_tools
+    if web_search_enabled:
+        from sparta_ai.tools.web_search import web_search_tool
+        agent_tools.insert(0, web_search_tool)
 
     graph = build_sparta_graph(
         llm=llm,
