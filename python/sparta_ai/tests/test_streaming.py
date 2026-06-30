@@ -1,20 +1,31 @@
 import json
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
-from sparta_ai.streaming.event_bridge import stream_agent_to_electron, _emit
+import pytest
+
+from sparta_ai.streaming.event_bridge import _emit, stream_agent_to_electron
 
 
 class TestEventBridge:
     @pytest.mark.asyncio
     async def test_stream_basic_events(self):
         mock_graph = MagicMock()
-        mock_graph.astream_events.return_value = _mock_event_stream([
-            {"event": "on_chat_model_start", "data": {}, "name": ""},
-            {"event": "on_chat_model_stream", "data": {"chunk": _mock_chunk("Hello")}, "name": ""},
-            {"event": "on_chat_model_end", "data": {"output": _mock_output(10, 20)}, "name": ""},
-            {"event": "on_chain_end", "data": {}, "name": "agent"},
-        ])
+        mock_graph.astream_events.return_value = _mock_event_stream(
+            [
+                {"event": "on_chat_model_start", "data": {}, "name": ""},
+                {
+                    "event": "on_chat_model_stream",
+                    "data": {"chunk": _mock_chunk("Hello")},
+                    "name": "",
+                },
+                {
+                    "event": "on_chat_model_end",
+                    "data": {"output": _mock_output(10, 20)},
+                    "name": "",
+                },
+                {"event": "on_chain_end", "data": {}, "name": "agent"},
+            ]
+        )
 
         with patch("sparta_ai.streaming.event_bridge._emit") as mock_emit:
             await stream_agent_to_electron(mock_graph, {}, "req_001")
@@ -24,17 +35,20 @@ class TestEventBridge:
     async def test_stream_thinking_tokens(self):
         mock_graph = MagicMock()
         thinking_block = [{"type": "thinking", "thinking": "Let me think..."}]
-        mock_graph.astream_events.return_value = _mock_event_stream([
-            {"event": "on_chat_model_stream", "data": {"chunk": _mock_chunk(thinking_block)}, "name": ""},
-            {"event": "on_chain_end", "data": {}, "name": "agent"},
-        ])
+        mock_graph.astream_events.return_value = _mock_event_stream(
+            [
+                {
+                    "event": "on_chat_model_stream",
+                    "data": {"chunk": _mock_chunk(thinking_block)},
+                    "name": "",
+                },
+                {"event": "on_chain_end", "data": {}, "name": "agent"},
+            ]
+        )
 
         with patch("sparta_ai.streaming.event_bridge._emit") as mock_emit:
             await stream_agent_to_electron(mock_graph, {}, "req_001")
-            thinking_calls = [
-                c for c in mock_emit.call_args_list
-                if c[0][1] == "thinking:token"
-            ]
+            thinking_calls = [c for c in mock_emit.call_args_list if c[0][1] == "thinking:token"]
             assert len(thinking_calls) > 0
 
     @pytest.mark.asyncio
@@ -43,10 +57,12 @@ class TestEventBridge:
         mock_graph = MagicMock()
         chunk = _mock_chunk("Answer part")
         chunk.additional_kwargs = {"reasoning_content": "Step one..."}
-        mock_graph.astream_events.return_value = _mock_event_stream([
-            {"event": "on_chat_model_stream", "data": {"chunk": chunk}, "name": ""},
-            {"event": "on_chain_end", "data": {}, "name": "agent"},
-        ])
+        mock_graph.astream_events.return_value = _mock_event_stream(
+            [
+                {"event": "on_chat_model_stream", "data": {"chunk": chunk}, "name": ""},
+                {"event": "on_chain_end", "data": {}, "name": "agent"},
+            ]
+        )
 
         with patch("sparta_ai.streaming.event_bridge._emit") as mock_emit:
             await stream_agent_to_electron(mock_graph, {}, "req_001")
@@ -58,17 +74,70 @@ class TestEventBridge:
     @pytest.mark.asyncio
     async def test_stream_tool_events(self):
         mock_graph = MagicMock()
-        mock_graph.astream_events.return_value = _mock_event_stream([
-            {"event": "on_tool_start", "data": {"input": {"query": "test"}}, "name": "web_search"},
-            {"event": "on_tool_end", "data": {"output": "result", "run_time_ms": 150}, "name": "web_search"},
-            {"event": "on_chain_end", "data": {}, "name": "agent"},
-        ])
+        mock_graph.astream_events.return_value = _mock_event_stream(
+            [
+                {
+                    "event": "on_tool_start",
+                    "data": {"input": {"query": "test"}},
+                    "name": "web_search",
+                },
+                {
+                    "event": "on_tool_end",
+                    "data": {"output": "result", "run_time_ms": 150},
+                    "name": "web_search",
+                },
+                {"event": "on_chain_end", "data": {}, "name": "agent"},
+            ]
+        )
 
         with patch("sparta_ai.streaming.event_bridge._emit") as mock_emit:
             await stream_agent_to_electron(mock_graph, {}, "req_001")
             events = [c[0][1] for c in mock_emit.call_args_list]
             assert "tool:called" in events
             assert "tool:result" in events
+
+    @pytest.mark.asyncio
+    async def test_stream_inline_think_tags(self):
+        """Models without structured reasoning emit <think> tags inside content."""
+        mock_graph = MagicMock()
+        mock_graph.astream_events.return_value = _mock_event_stream(
+            [
+                {
+                    "event": "on_chat_model_stream",
+                    "data": {"chunk": _mock_chunk("<think>Let me reason")},
+                    "name": "",
+                },
+                {
+                    "event": "on_chat_model_stream",
+                    "data": {"chunk": _mock_chunk("ing...</think>Answer")},
+                    "name": "",
+                },
+                {
+                    "event": "on_chat_model_end",
+                    "data": {"output": _mock_output(10, 20)},
+                    "name": "",
+                },
+                {"event": "on_chain_end", "data": {}, "name": "agent"},
+            ]
+        )
+
+        with patch("sparta_ai.streaming.event_bridge._emit") as mock_emit:
+            await stream_agent_to_electron(mock_graph, {}, "req_001")
+            events = [c[0][1] for c in mock_emit.call_args_list]
+            assert events.count("thinking:started") == 1
+            thinking_tokens = [
+                c[0][2].get("token", "")
+                for c in mock_emit.call_args_list
+                if c[0][1] == "thinking:token"
+            ]
+            assert "".join(thinking_tokens) == "Let me reasoning..."
+            content_tokens = [
+                c[0][2].get("token", "")
+                for c in mock_emit.call_args_list
+                if c[0][1] == "stream:token"
+            ]
+            assert "".join(content_tokens) == "Answer"
+            assert "thinking:completed" in events
 
     @pytest.mark.asyncio
     async def test_stream_error_handling(self):
@@ -94,6 +163,7 @@ def _mock_event_stream(events: list):
     async def gen():
         for e in events:
             yield e
+
     return gen()
 
 

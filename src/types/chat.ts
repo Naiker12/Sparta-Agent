@@ -19,6 +19,13 @@ export interface PipelineStep {
   durationMs?: number
 }
 
+export interface SearchProgressItem {
+  id: string
+  url: string
+  title: string
+  status: 'pending' | 'visited'
+}
+
 export type ThinkingStatus = 'idle' | 'starting' | 'streaming' | 'completed' | 'collapsed'
 
 export interface Message {
@@ -38,6 +45,7 @@ export interface Message {
   reasoningCompletedAt?: number
   toolCalls?: ToolCall[]
   pipelineSteps?: PipelineStep[]
+  searchProgress?: SearchProgressItem[]
 }
 
 export interface Session {

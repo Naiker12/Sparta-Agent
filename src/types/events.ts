@@ -5,6 +5,7 @@ export type EventType =
   | 'thinking:started'
   | 'thinking:token'
   | 'thinking:completed'
+  | 'search:progress'
   | 'tool:called'
   | 'tool:result'
   | 'tool:error'
@@ -84,6 +85,18 @@ export interface ThinkingCompletedEvent extends BaseEvent {
   sessionId: string
   messageId: string
   tokensUsed: number
+}
+
+export interface SearchProgressEvent extends BaseEvent {
+  type: 'search:progress'
+  sessionId: string
+  messageId: string
+  stage: 'searching' | 'visiting' | 'done'
+  query?: string
+  url?: string
+  title?: string
+  index?: number
+  total?: number
 }
 
 export interface ToolCalledEvent extends BaseEvent {
@@ -309,6 +322,7 @@ export type SpartaEvent =
   | ThinkingStartedEvent
   | ThinkingTokenEvent
   | ThinkingCompletedEvent
+  | SearchProgressEvent
   | ToolCalledEvent
   | StreamAbortedEvent
   | ToolResultEvent

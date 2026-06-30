@@ -1,11 +1,10 @@
 import json
 import logging
-from typing import TypedDict
 
 from langchain_core.messages import BaseMessage, SystemMessage
 from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
-from langgraph.graph import StateGraph, START, END, MessagesState
+from langgraph.graph import END, START, MessagesState, StateGraph
 from langgraph.prebuilt import ToolNode
 
 from sparta_ai.tools.web_search import web_search_tool
@@ -67,13 +66,17 @@ def _synthesize(raw_results: list[dict], topic: str, depth: str) -> str:
             words = title.split()[:3]
             topics.add(" ".join(words))
         if topics:
-            lines.append("los temas principales cubiertos son: " + ", ".join(f"'{t}'" for t in topics if t.strip()) + ".")
+            lines.append(
+                "los temas principales cubiertos son: "
+                + ", ".join(f"'{t}'" for t in topics if t.strip())
+                + "."
+            )
 
     return "\n".join(lines)
 
 
 @tool
-def research_topic(
+async def research_topic(
     topic: str,
     depth: str = "quick",
 ) -> str:
@@ -90,7 +93,7 @@ def research_topic(
         Resultado de la investigación con citas y referencias.
     """
     try:
-        raw = web_search_tool.invoke({"query": topic, "count": 10 if depth == "deep" else 5})
+        raw = await web_search_tool.ainvoke({"query": topic, "count": 10 if depth == "deep" else 5})
         return raw
     except Exception as e:
         logger.error("Research failed for topic '%s': %s", topic, e)

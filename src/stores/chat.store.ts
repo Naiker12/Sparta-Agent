@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { Message, Session, ToolCall, ThinkingStatus } from '@/types'
+import type { Message, Session, ToolCall, ThinkingStatus, SearchProgressItem } from '@/types'
 
 export interface StreamState {
   isStreaming: boolean
@@ -32,6 +32,7 @@ interface ChatState {
   appendThinking: (sessionId: string, messageId: string, delta: string, chunkSeq?: number) => void
   addToolCall: (sessionId: string, messageId: string, toolCall: ToolCall) => void
   updateToolCallStatus: (sessionId: string, messageId: string, toolCallId: string, status: ToolCall['status'], result?: string, toolName?: string) => void
+  updateSearchProgress: (sessionId: string, messageId: string, updater: (items: SearchProgressItem[]) => SearchProgressItem[]) => void
   setStreaming: (value: boolean) => void
   startStreaming: (sessionId: string) => AbortController
   stopStreaming: (sessionId?: string) => void
@@ -273,6 +274,22 @@ export const useChatStore = create<ChatState>()(
                     return tc
                   }),
                 }
+              : msg
+          ),
+        },
+      }
+    }),
+
+  updateSearchProgress: (sessionId: string, messageId: string, updater: (items: SearchProgressItem[]) => SearchProgressItem[]) =>
+    set((s) => {
+      const sessionMessages = s.messagesBySession[sessionId]
+      if (!sessionMessages) return s
+      return {
+        messagesBySession: {
+          ...s.messagesBySession,
+          [sessionId]: sessionMessages.map((msg) =>
+            msg.id === messageId
+              ? { ...msg, searchProgress: updater(msg.searchProgress ?? []) }
               : msg
           ),
         },

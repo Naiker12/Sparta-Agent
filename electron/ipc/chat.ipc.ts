@@ -129,6 +129,19 @@ export function registerChatIPC(): void {
       case 'terminal:agent_command':
         sendToRenderer({ sessionId, messageId, type: 'terminal:agent_command', command: data?.command })
         break
+      case 'search:progress':
+        sendToRenderer({
+          sessionId,
+          messageId,
+          type: 'search:progress',
+          stage: data?.stage,
+          query: data?.query,
+          url: data?.url,
+          title: data?.title,
+          index: data?.index,
+          total: data?.total,
+        })
+        break
       case 'tool:called':
         sendToRenderer({ sessionId, messageId, type: 'tool:called', toolCall: { id: data?.tool_call_id, toolName: data?.name, input: data?.input, status: 'running' } })
         break

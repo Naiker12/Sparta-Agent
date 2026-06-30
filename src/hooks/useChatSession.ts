@@ -292,6 +292,38 @@ export function useChatSession() {
           store.updateMessage(mid, { reasoningCompletedAt: Date.now() })
           break
         }
+        case 'search:progress': {
+          const progressEvent = event as {
+            stage: 'searching' | 'visiting' | 'done'
+            url?: string
+            title?: string
+            index?: number
+            total?: number
+          }
+          store.updateSearchProgress(sid, mid, (items) => {
+            if (progressEvent.stage === 'searching') {
+              return []
+            }
+            if (progressEvent.stage === 'visiting' && progressEvent.url) {
+              const existing = items.find((i) => i.url === progressEvent.url)
+              if (existing) return items
+              return [
+                ...items,
+                {
+                  id: crypto.randomUUID(),
+                  url: progressEvent.url,
+                  title: progressEvent.title || progressEvent.url,
+                  status: 'pending' as const,
+                },
+              ]
+            }
+            if (progressEvent.stage === 'done') {
+              return items.map((i) => ({ ...i, status: 'visited' as const }))
+            }
+            return items
+          })
+          break
+        }
         case 'stream:token': {
           appendContent(sid, mid, (event as { token: string }).token ?? '', (event as { chunkSeq?: number }).chunkSeq)
           break
@@ -423,6 +455,11 @@ export function useChatSession() {
           const resultOutput = (evt.output ?? '') as string
           const tcName = evt.toolName as string | undefined
           updateToolCallStatus(sid, mid, tcId, 'completed', resultOutput, tcName)
+          if (tcName === 'web_search') {
+            store.updateSearchProgress(sid, mid, (items) =>
+              items.map((i) => ({ ...i, status: 'visited' as const }))
+            )
+          }
           break
         }
         case 'tool:error': {

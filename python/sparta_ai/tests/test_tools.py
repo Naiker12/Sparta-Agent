@@ -1,10 +1,11 @@
-import pytest
 import tempfile
 from pathlib import Path
 
+import pytest
+
 from sparta_ai.tools.file_tools import read_file_tool, write_file_tool
+from sparta_ai.tools.mcp_bridge import MCPToolWrapper, build_mcp_tools
 from sparta_ai.tools.web_search import web_search_tool
-from sparta_ai.tools.mcp_bridge import build_mcp_tools, MCPToolWrapper
 
 
 class TestFileTools:
@@ -33,12 +34,33 @@ class TestFileTools:
 
 
 class TestWebSearchTool:
+    @pytest.fixture(autouse=True)
+    def _disable_brave(self, monkeypatch):
+        monkeypatch.setattr("sparta_ai.config.security.get_key", lambda key: "")
+
     @pytest.mark.asyncio
-    async def test_search_no_key(self):
-        result = web_search_tool.invoke({"query": "test", "count": 1})
-        assert isinstance(result, list)
-        assert len(result) > 0
-        assert "no configurada" in result[0]["snippet"].lower()
+    async def test_search_no_key(self, monkeypatch):
+        def _fake_duckduckgo_search(query: str, count: int) -> list[dict]:
+            return [
+                {
+                    "title": f"Result for {query}",
+                    "url": "https://example.com",
+                    "snippet": "A fake snippet",
+                }
+            ]
+
+        monkeypatch.setattr("sparta_ai.tools.web_search.duckduckgo_search", _fake_duckduckgo_search)
+        result = await web_search_tool.ainvoke({"query": "test", "count": 1})
+        assert isinstance(result, str)
+        assert "Resultados de búsqueda" in result
+        assert "A fake snippet" in result
+
+    @pytest.mark.asyncio
+    async def test_search_no_results(self, monkeypatch):
+        monkeypatch.setattr("sparta_ai.tools.web_search.duckduckgo_search", lambda q, c: [])
+        result = await web_search_tool.ainvoke({"query": "xyzxyzxyz", "count": 1})
+        assert isinstance(result, str)
+        assert "No se encontraron resultados" in result
 
 
 class TestMCPBridge:

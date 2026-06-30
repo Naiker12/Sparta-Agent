@@ -5,6 +5,7 @@ import { useChatStore } from '@/stores/chat.store'
 import { useEventBus } from '@/stores/event-bus.store'
 import { useChatSession } from '@/hooks/useChatSession'
 import { ThinkingBlock } from './reasoning/ThinkingBlock'
+import { SearchProgressBlock } from './reasoning/SearchProgressBlock'
 import { ToolCallSummary } from './reasoning/ToolCallSummary'
 import { ToolCallDiffView } from './reasoning/ToolCallDiffView'
 import { StreamCursor } from './reasoning/StreamCursor'
@@ -191,6 +192,20 @@ export function MessageBubble({ message, isLastUser = false }: MessageBubbleProp
             </div>
           )}
 
+          {/* Search progress — VIVO durante búsqueda web */}
+          {(message.searchProgress && message.searchProgress.length > 0) ||
+            (message.toolCalls?.some((tc) => tc.toolName === 'web_search' && tc.status === 'running')) ? (
+            <div style={{ marginTop: 8 }}>
+              <SearchProgressBlock
+                items={message.searchProgress ?? []}
+                isActive={
+                  message.toolCalls?.some((tc) => tc.toolName === 'web_search' && tc.status === 'running') ??
+                  false
+                }
+              />
+            </div>
+          ) : null}
+
           {/* Tool calls — SEGUNDO (antes del texto) */}
           {message.toolCalls && message.toolCalls.filter((tc) => tc.toolName !== 'web_search').length > 0 && (
             <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -245,10 +260,13 @@ export function MessageBubble({ message, isLastUser = false }: MessageBubbleProp
                     wordBreak: 'break-word',
                   }}
                 >
-                  <MarkdownRenderer content={renderState.content} />
+                  <MarkdownRenderer
+                    content={renderState.content}
+                    isStreaming={renderState.kind === 'responding' || renderState.kind === 'generating'}
+                  />
                 </div>
               )}
-              {renderState.kind === 'responding' && <StreamCursor visible />}
+              {(renderState.kind === 'responding' || renderState.kind === 'generating') && <StreamCursor visible />}
             </>
           ) : null}
 
