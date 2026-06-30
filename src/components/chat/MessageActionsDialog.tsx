@@ -1,5 +1,8 @@
-import { useState } from 'react'
-import { Copy, Check } from 'lucide-react'
+import type { Message } from '@/types'
+import { useChatStore } from '@/stores/chat.store'
+import { useMemoryStore } from '@/stores/memory.store'
+import { useEventBus } from '@/stores/event-bus.store'
+import { deleteEntry as chromaDeleteEntry } from '@/services/memory/vector/chroma-client'
 import {
   Dialog,
   DialogContent,
@@ -8,17 +11,10 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
-import type { Message } from '@/types'
-import { useChatStore } from '@/stores/chat.store'
-import { useEventBus } from '@/stores/event-bus.store'
-import { useChatSession } from '@/hooks/useChatSession'
 
 type DialogState =
   | { kind: 'none' }
   | { kind: 'delete' }
-  | { kind: 'share' }
-  | { kind: 'edit' }
   | { kind: 'regenerate' }
 
 interface MessageActionsDialogProps {
@@ -34,23 +30,17 @@ export function MessageActionsDialog({
   state,
   onClose,
 }: MessageActionsDialogProps) {
-  const { deleteMessage, updateMessage } = useChatStore()
+  const { deleteMessage } = useChatStore()
   const dispatch = useEventBus((s) => s.dispatch)
-  const { regenerateMessage } = useChatSession()
-  const [editValue, setEditValue] = useState(message.content)
-  const [copied, setCopied] = useState(false)
 
   const isOpen = state.kind !== 'none'
 
-  function handleCopy() {
-    navigator.clipboard.writeText(message.content).then(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    })
-  }
-
   function handleDelete() {
     deleteMessage(sessionId, message.id)
+    const entryIds = useMemoryStore.getState().deleteEntriesBySourceMessageId(message.id)
+    if (entryIds.length > 0) {
+      Promise.all(entryIds.map((id) => chromaDeleteEntry(id))).catch(() => {})
+    }
     dispatch({
       type: 'message:deleted',
       sessionId,
@@ -60,34 +50,8 @@ export function MessageActionsDialog({
     onClose()
   }
 
-  function handleEdit() {
-    if (state.kind !== 'edit') return
-    updateMessage(message.id, { content: editValue })
-    dispatch({
-      type: 'message:edited',
-      sessionId,
-      messageId: message.id,
-      timestamp: Date.now(),
-    })
-    onClose()
-  }
-
-  function handleRegenerate() {
-    regenerateMessage(sessionId, message.id)
-    onClose()
-  }
-
-  function handleShareCopy() {
-    navigator.clipboard.writeText(message.content).then(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    })
-  }
-
   const title =
     state.kind === 'delete' ? 'Eliminar mensaje' :
-    state.kind === 'share' ? 'Copiar mensaje' :
-    state.kind === 'edit' ? 'Editar mensaje' :
     state.kind === 'regenerate' ? 'Regenerar respuesta' : ''
 
   return (
@@ -113,24 +77,6 @@ export function MessageActionsDialog({
             </p>
           )}
 
-          {state.kind === 'share' && (
-            <p style={{
-              fontSize: 13, color: 'var(--text-secondary)',
-              fontFamily: 'var(--font-ui)', lineHeight: 1.6,
-            }}>
-              Copia el contenido de este mensaje al portapapeles.
-            </p>
-          )}
-
-          {state.kind === 'edit' && (
-            <Textarea
-              value={editValue}
-              onChange={(e) => setEditValue(e.target.value)}
-              rows={5}
-              autoFocus
-            />
-          )}
-
           {state.kind === 'regenerate' && (
             <p style={{
               fontSize: 13, color: 'var(--text-secondary)',
@@ -148,26 +94,10 @@ export function MessageActionsDialog({
               <Button variant="destructive" size="sm" onClick={handleDelete}>Eliminar</Button>
             </>
           )}
-          {state.kind === 'share' && (
-            <>
-              <Button variant="ghost" size="sm" onClick={onClose}>Cerrar</Button>
-              <Button size="sm" onClick={handleShareCopy}>
-                {copied ? <Check size={12} /> : <Copy size={12} />}
-                {copied ? 'Copiado' : 'Copiar texto'}
-              </Button>
-            </>
-          )}
-          {state.kind === 'edit' && (
-            <>
-              <Button variant="ghost" size="sm" onClick={onClose}>Cancelar</Button>
-              <Button size="sm" onClick={handleCopy} variant="outline"><Copy size={12} /> Copiar</Button>
-              <Button size="sm" onClick={handleEdit} disabled={!editValue.trim()}>Guardar y reenviar</Button>
-            </>
-          )}
           {state.kind === 'regenerate' && (
             <>
               <Button variant="ghost" size="sm" onClick={onClose}>Cancelar</Button>
-              <Button size="sm" onClick={handleRegenerate}>Regenerar</Button>
+              <Button size="sm" onClick={onClose}>Regenerar</Button>
             </>
           )}
         </DialogFooter>

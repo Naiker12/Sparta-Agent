@@ -11,7 +11,7 @@ import { MemoryNodePanel } from '@/components/memory/MemoryNodePanel'
 import type { MemoryEntry, MemoryGraphNode } from '@/types'
 
 export function MemoryView() {
-  const { entries } = useMemoryStore()
+  const { entries, relations: storedRelations } = useMemoryStore()
   const { goBack } = useUIStore()
   const [graphView, setGraphView] = useState(true)
   const [selectedEntry, setSelectedEntry] = useState<MemoryEntry | null>(null)
@@ -22,8 +22,8 @@ export function MemoryView() {
   const graphRef = useRef<MemoryGraphHandle>(null)
 
   const relations = useMemo(
-    () => (graphView ? computeRelations(entries, []) : []),
-    [graphView, entries]
+    () => (graphView ? computeRelations(entries, storedRelations) : []),
+    [graphView, entries, storedRelations]
   )
 
   function handleNodeSelect(entry: MemoryEntry | null, graphNode: MemoryGraphNode | null) {

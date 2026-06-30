@@ -16,6 +16,8 @@ import { messagingAdapter } from '@/lib/messaging-adapter'
 import { IS_WEB } from '@/lib/env-adapter'
 import type { ToolCall, Provider, SpartaEvent } from '@/types'
 
+const _providerBySession = new Map<string, string>()
+
 function getActiveProvider(providers: Provider[], activeModel: string): Provider | null {
   return providers.find((p) => p.defaultModel === activeModel) ?? providers[0] ?? null
 }
@@ -70,6 +72,7 @@ async function runAssistantTurn(
 
     const apiUrl = provider.serverUrl || undefined
     const providerKey = await getProviderKey(provider)
+    _providerBySession.set(sid, provider.id)
     const { semanticMemoryEnabled, webSearchEnabled } = useSettingsStore.getState()
 
     let system: string | undefined
@@ -166,13 +169,12 @@ export function useChatSession() {
   const deleteSession = useChatStore((s) => s.deleteSession)
   const addMessage = useChatStore((s) => s.addMessage)
   const updateMessage = useChatStore((s) => s.updateMessage)
-  const setStreaming = useChatStore((s) => s.setStreaming)
   const appendContent = useChatStore((s) => s.appendContent)
   const addToolCall = useChatStore((s) => s.addToolCall)
   const updateToolCallStatus = useChatStore((s) => s.updateToolCallStatus)
   const stopStreamingFn = useChatStore((s) => s.stopStreaming)
 
-  const lastUserMessageRef = useRef<Map<string, { text: string; userMessageId: string }>>(new Map())
+    const lastUserMessageRef = useRef<Map<string, { text: string; userMessageId: string }>>(new Map())
   const [adapterReady, setAdapterReady] = useState(messagingAdapter.isReady())
 
   const sendMessage = useCallback(
@@ -217,6 +219,11 @@ export function useChatSession() {
   const regenerateMessage = useCallback(
     async (sid: string, assistantMessageId: string) => {
       const store = useChatStore.getState()
+      const streamState = store.getStreamState(sid)
+      if (streamState?.isStreaming) {
+        console.warn('[useChatSession] regenerateMessage ignorado: sesión ya está stremeando', sid)
+        return
+      }
       const sessionMessages = store.messagesBySession[sid] ?? []
       const idx = sessionMessages.findIndex((m) => m.id === assistantMessageId)
       const prevUser = sessionMessages.slice(0, idx).reverse().find((m) => m.role === 'user')
@@ -336,16 +343,15 @@ export function useChatSession() {
           }
           store.onStreamEnd(sid, mid)
           stopStreamingFn(sid)
-          const providerId = (event as { providerId?: string }).providerId
-          if (providerId) {
+          const pid = _providerBySession.get(sid)
+          const pair = lastUserMessageRef.current.get(sid)
+          if (pid && pair?.text) {
             const outputLen = store.messagesBySession[sid]?.find((m) => m.id === mid)?.content?.length ?? 0
-            const inputLen = lastUserMessageRef.current.get(sid)?.text?.length ?? 0
             if (outputLen > 0) {
-              useUsageStore.getState().recordTurn(sid, providerId, Math.ceil(inputLen / 4), Math.ceil(outputLen / 4))
+              useUsageStore.getState().recordTurn(sid, pid, Math.ceil(pair.text.length / 4), Math.ceil(outputLen / 4))
             }
           }
-
-          const pair = lastUserMessageRef.current.get(sid)
+          _providerBySession.delete(sid)
           if (pair) {
             const userText = pair.text
             const assistantText = store.messagesBySession[sid]?.find((m) => m.id === mid)?.content ?? ''
@@ -417,6 +423,12 @@ export function useChatSession() {
                 }
               })
             }
+          }
+          const pending = store.consumePendingInjections()
+          if (pending.length > 0) {
+            const text = pending.join('\n')
+            console.debug('[useChatSession] Enviando mensaje encolado:', text.slice(0, 40))
+            sendMessage(text)
           }
           break
         }
@@ -557,7 +569,6 @@ export function useChatSession() {
     deleteSession,
     addMessage,
     updateMessage,
-    setStreaming,
     sendMessage,
     regenerateMessage,
     stopStreaming: (sessionId?: string) => stopStreamingFn(sessionId),

@@ -126,17 +126,22 @@ function ComboboxContent({ children, className }: { children: React.ReactNode; c
   React.useLayoutEffect(() => {
     if (!ctx.open) { setVisible(false); return }
     const trigger = ctx.triggerRef.current
-    if (!trigger) return
+    const content = contentRef.current
+    if (!trigger || !content) return
+
     const rect = trigger.getBoundingClientRect()
+    const contentHeight = content.offsetHeight || 240
     const spaceBelow = window.innerHeight - rect.bottom
-    const flip = spaceBelow < 200 && rect.top > 220
+    const spaceAbove = rect.top
+    const flip = spaceBelow < contentHeight + 12 && spaceAbove > contentHeight + 12
+
     setPosition({
-      top: flip ? Math.max(4, rect.top - 4) : rect.bottom + 4,
+      top: flip ? Math.max(4, rect.top - contentHeight - 4) : rect.bottom + 4,
       left: rect.left,
       width: rect.width,
     })
     setVisible(true)
-  }, [ctx.open, ctx.triggerRef])
+  }, [ctx.open, ctx.triggerRef, ctx.search])
 
   if (!ctx.open) return null
 

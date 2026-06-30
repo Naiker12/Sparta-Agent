@@ -52,6 +52,10 @@ async def websocket_endpoint(websocket: WebSocket):
 
     except WebSocketDisconnect:
         connections.pop(connection_id, None)
+        for rid, task in list(_active_streams.items()):
+            if str(id(websocket)) in rid:
+                task.cancel()
+                logger.info("Cancelled stream %s on disconnect", rid)
 
 
 async def handle_chat_stream(ws: WebSocket, params: dict):
@@ -122,7 +126,7 @@ async def handle_chat_stream(ws: WebSocket, params: dict):
 
 
 async def handle_abort(params: dict):
-    session_id = params.get("session_id", "")
+    session_id = params.get("session_id") or params.get("sessionId", "")
     for request_id, task in list(_active_streams.items()):
         if session_id and session_id in request_id:
             task.cancel()

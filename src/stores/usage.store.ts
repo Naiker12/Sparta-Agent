@@ -115,6 +115,8 @@ export const useUsageStore = create<UsageState>()(
         totalOutput: state.totalOutput,
         bySession: state.bySession,
         byProvider: state.byProvider,
+        currentTurnInput: state.currentTurnInput,
+        currentTurnOutput: state.currentTurnOutput,
       }),
     }
   )

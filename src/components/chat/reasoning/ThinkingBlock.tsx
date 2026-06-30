@@ -38,6 +38,7 @@ export function ThinkingBlock({ content, status, tokensUsed, pipelineSteps, clas
   const startedAt = useRef(Date.now())
   const badgesEndRef = useRef<HTMLDivElement>(null)
   const prevBadgeCount = useRef(0)
+  const userToggled = useRef(false)
 
   const lines = useMemo(() => {
     if (!content) return []
@@ -49,6 +50,11 @@ export function ThinkingBlock({ content, status, tokensUsed, pipelineSteps, clas
       startedAt.current = Date.now()
       setIsExpanded(true)
       setElapsed(0)
+      userToggled.current = false
+    }
+    if (status === 'completed' && !userToggled.current) {
+      const timer = setTimeout(() => setIsExpanded(false), 600)
+      return () => clearTimeout(timer)
     }
   }, [status])
 
@@ -86,7 +92,7 @@ export function ThinkingBlock({ content, status, tokensUsed, pipelineSteps, clas
       className={cn('rounded-sm border border-[#2A2A35] bg-bg-surface overflow-hidden', className)}
     >
       <button
-        onClick={() => canToggle && setIsExpanded((v) => !v)}
+        onClick={() => { if (!canToggle) return; userToggled.current = true; setIsExpanded((v) => !v) }}
         disabled={!canToggle}
         className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-status-thinking hover:bg-bg-elevated transition-colors"
         style={{ cursor: canToggle ? 'pointer' : 'default' }}

@@ -33,12 +33,10 @@ interface ChatState {
   addToolCall: (sessionId: string, messageId: string, toolCall: ToolCall) => void
   updateToolCallStatus: (sessionId: string, messageId: string, toolCallId: string, status: ToolCall['status'], result?: string, toolName?: string) => void
   updateSearchProgress: (sessionId: string, messageId: string, updater: (items: SearchProgressItem[]) => SearchProgressItem[]) => void
-  setStreaming: (value: boolean) => void
   startStreaming: (sessionId: string) => AbortController
   stopStreaming: (sessionId?: string) => void
   injectWhileStreaming: (text: string) => void
   consumePendingInjections: () => string[]
-  getActiveMessages: () => Message[]
   cleanupStaleSessions: () => void
   getStreamState: (sessionId: string) => StreamState | undefined
 
@@ -296,7 +294,7 @@ export const useChatStore = create<ChatState>()(
       }
     }),
 
-  setStreaming: (value) => set({ isStreaming: value }),
+
 
   startStreaming: (sessionId: string) => {
     const controller = new AbortController()
@@ -346,12 +344,6 @@ export const useChatStore = create<ChatState>()(
     if (pendingInjections.length === 0) return []
     set({ pendingInjections: [] })
     return pendingInjections
-  },
-
-  getActiveMessages: () => {
-    const { activeSessionId, messagesBySession } = get()
-    if (!activeSessionId) return []
-    return messagesBySession[activeSessionId] || []
   },
 
   onThinkingStart: (sessionId, messageId) =>

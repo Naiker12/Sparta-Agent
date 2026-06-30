@@ -258,30 +258,3 @@ def build_sparta_graph(
 
     return graph.compile()
 
-
-def _build_system_prompt(state: SpartaState, skill_context: str = "", memory_context: str = "") -> str:
-    parts = [
-        "Eres Sparta Agent, un orquestador de agentes de IA.",
-        "Tienes acceso a herramientas para buscar en web, leer/escribir archivos,",
-        "consultar memoria, y conectar con servidores MCP externos.",
-        "",
-        "Cuando recibas una tarea compleja:",
-        "  1. Descompón el problema en pasos.",
-        "  2. Usa las herramientas apropiadas para cada paso.",
-        "  3. Si necesitas investigación profunda, delega a un subagente.",
-        "  4. Si necesitas manipular archivos, usa las herramientas de archivo.",
-        "  5. Sintetiza los resultados en una respuesta clara.",
-    ]
-
-    if state.get("mode") == "chat":
-        parts.append("\nModo: CHAT — Responde de forma conversacional.")
-    elif state.get("mode") == "agent":
-        parts.append("\nModo: AGENTE — Puedes usar todas las herramientas disponibles.")
-
-    if memory_context:
-        parts.append(f"\n<memoria_relevante>\n{memory_context}\n</memoria_relevante>")
-
-    if skill_context:
-        parts.append(f"\n{skill_context}")
-
-    return "\n\n".join(parts)

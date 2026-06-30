@@ -104,6 +104,7 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> N
                 logger.debug("Emitting thinking:started for request %s", request_id)
                 _emit(request_id, "thinking:started", {**base_payload})
                 stream_state["thinking_active"] = True
+            stream_state["reasoning_tokens"] = stream_state.get("reasoning_tokens", 0) + len(reasoning_content.split())
             logger.debug("Emitting thinking:token (reasoning_content) for request %s", request_id)
             _emit(request_id, "thinking:token", {**base_payload, "token": reasoning_content})
 
@@ -120,6 +121,7 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> N
                         stream_state["thinking_active"] = True
                     token = _block_text(block)
                     if token:
+                        stream_state["reasoning_tokens"] = stream_state.get("reasoning_tokens", 0) + len(token.split())
                         logger.debug(
                             "Emitting thinking:token (reasoning block) for request %s", request_id
                         )
@@ -144,6 +146,7 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> N
                     logger.debug("Emitting thinking:started for request %s", request_id)
                     _emit(request_id, "thinking:started", {**base_payload})
                     stream_state["thinking_active"] = True
+                stream_state["reasoning_tokens"] = stream_state.get("reasoning_tokens", 0) + len(reasoning.split())
                 logger.debug(
                     "Emitting thinking:token (inline think tag) for request %s", request_id
                 )
@@ -353,6 +356,7 @@ async def _dispatch_event_ws(
             if not stream_state["thinking_active"]:
                 await _emit_ws_renderer(websocket, "thinking:started", base_payload)
                 stream_state["thinking_active"] = True
+            stream_state["reasoning_tokens"] = stream_state.get("reasoning_tokens", 0) + len(reasoning_content.split())
             await _emit_ws_renderer(
                 websocket,
                 "thinking:token",
@@ -376,6 +380,7 @@ async def _dispatch_event_ws(
                         stream_state["thinking_active"] = True
                     token = _block_text(block)
                     if token:
+                        stream_state["reasoning_tokens"] = stream_state.get("reasoning_tokens", 0) + len(token.split())
                         await _emit_ws_renderer(
                             websocket,
                             "thinking:token",
@@ -408,6 +413,7 @@ async def _dispatch_event_ws(
                 if not stream_state["thinking_active"]:
                     await _emit_ws_renderer(websocket, "thinking:started", base_payload)
                     stream_state["thinking_active"] = True
+                stream_state["reasoning_tokens"] = stream_state.get("reasoning_tokens", 0) + len(reasoning.split())
                 await _emit_ws_renderer(
                     websocket,
                     "thinking:token",

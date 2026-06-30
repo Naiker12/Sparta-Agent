@@ -125,10 +125,4 @@
   opacity: 1;
 }
 
-.message-actions-bar {
-  opacity: 0;
-  transition: opacity 0.15s ease;
-}
-.message-row:hover .message-actions-bar {
-  opacity: 1;
-}
+

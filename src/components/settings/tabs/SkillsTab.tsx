@@ -17,15 +17,7 @@ interface SkillDisplay {
   editable: boolean
 }
 
-const ICON_MAP: Record<string, string> = {
-  analysis: '\ud83d\udcca', apple: '\ud83c\udf4e', automation: '\u26a1',
-  'autonomous-ai-agents': '\ud83e\udd16', coding: '\ud83d\udcbb',
-  creative: '\ud83c\udfa8', 'data-science': '\ud83d\udd2c', dogfood: '\ud83d\udc3e',
-  email: '\ud83d\udce7', github: '\ud83d\udc19', media: '\ud83c\udfac',
-  mlops: '\ud83e\udde0', 'note-taking': '\ud83d\udcdd', productivity: '\ud83d\udcc2',
-  research: '\ud83d\udd0d', 'smart-home': '\ud83c\udfe0', 'social-media': '\ud83d\udcf1',
-  'software-development': '\ud83d\udee0\ufe0f', writing: '\u270d\ufe0f',
-}
+
 
 function getSkillIcon(skill: SkillDisplay): string {
   if (skill.icon && skill.icon !== '\U0001f4e6' && skill.icon.length <= 5) return skill.icon

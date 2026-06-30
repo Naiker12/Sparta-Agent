@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Copy, Check, Pencil, CheckCheck, X, RotateCw } from 'lucide-react'
+import { Copy, Check, Pencil, CheckCheck, X, RotateCw, Trash2, RefreshCw } from 'lucide-react'
 import type { Message } from '@/types'
 import { useChatStore } from '@/stores/chat.store'
 import { useEventBus } from '@/stores/event-bus.store'
@@ -10,7 +10,7 @@ import { ToolCallSummary } from './reasoning/ToolCallSummary'
 import { ToolCallDiffView } from './reasoning/ToolCallDiffView'
 import { StreamCursor } from './reasoning/StreamCursor'
 import { PipelineTrace } from './reasoning/PipelineTrace'
-import { MessageActionsMenu } from './MessageActionsMenu'
+import { MessageActionsDialog } from './MessageActionsDialog'
 import { SpartaIcon } from './SpartaIcon'
 import { getMessageRenderState } from '@/lib/message-render-state'
 import { MarkdownRenderer } from './MarkdownRenderer'
@@ -28,16 +28,18 @@ export function MessageBubble({ message, isLastUser = false }: MessageBubbleProp
   const [copied, setCopied] = useState(false)
   const [editing, setEditing] = useState(false)
   const [editValue, setEditValue] = useState(message.content)
+  const [dialog, setDialog] = useState<{ kind: 'none' } | { kind: 'delete' } | { kind: 'regenerate' }>({ kind: 'none' })
   const { updateMessage } = useChatStore()
   const { sendMessage } = useChatSession()
   const dispatch = useEventBus((s) => s.dispatch)
 
-  const hasThinking =
+  const hasThinking = !isUser && (
     message.thinkingStatus === 'starting' ||
     message.thinkingStatus === 'streaming' ||
     message.thinkingStatus === 'completed' ||
     message.thinkingStatus === 'collapsed' ||
     (message.reasoningText?.length ?? 0) > 0
+  )
 
   function handleCopy() {
     navigator.clipboard.writeText(message.content).then(() => {
@@ -180,18 +182,6 @@ export function MessageBubble({ message, isLastUser = false }: MessageBubbleProp
             </div>
           ) : null}
 
-          {/* Thinking block — PRIMERO */}
-          {hasThinking && (
-            <div style={{ marginTop: 8 }}>
-              <ThinkingBlock
-                content={message.reasoningText ?? ''}
-                status={message.thinkingStatus ?? (message.isStreaming ? 'streaming' : 'completed')}
-                tokensUsed={message.thinkingTokensUsed ?? 0}
-                pipelineSteps={message.pipelineSteps}
-              />
-            </div>
-          )}
-
           {/* Search progress — VIVO durante búsqueda web */}
           {(message.searchProgress && message.searchProgress.length > 0) ||
             (message.toolCalls?.some((tc) => tc.toolName === 'web_search' && tc.status === 'running')) ? (
@@ -206,7 +196,7 @@ export function MessageBubble({ message, isLastUser = false }: MessageBubbleProp
             </div>
           ) : null}
 
-          {/* Tool calls — SEGUNDO (antes del texto) */}
+          {/* Tool calls — antes del texto */}
           {message.toolCalls && message.toolCalls.filter((tc) => tc.toolName !== 'web_search').length > 0 && (
             <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
               <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
@@ -234,7 +224,7 @@ export function MessageBubble({ message, isLastUser = false }: MessageBubbleProp
             </div>
           )}
 
-          {/* Contenido de texto — TERCERO */}
+          {/* Contenido de texto — PRIMERO */}
           {renderState.kind === 'generating' || renderState.kind === 'responding' || renderState.kind === 'done' ? (
             <>
               {isUser ? (
@@ -266,9 +256,21 @@ export function MessageBubble({ message, isLastUser = false }: MessageBubbleProp
                   />
                 </div>
               )}
-              {(renderState.kind === 'responding' || renderState.kind === 'generating') && <StreamCursor visible />}
+              {!isUser && (renderState.kind === 'responding' || renderState.kind === 'generating') && <StreamCursor visible />}
             </>
           ) : null}
+
+          {/* Thinking block — DESPUÉS del texto (solo assistant) */}
+          {hasThinking && (
+            <div style={{ marginTop: 8 }}>
+              <ThinkingBlock
+                content={message.reasoningText ?? ''}
+                status={message.thinkingStatus ?? (message.isStreaming ? 'streaming' : 'completed')}
+                tokensUsed={message.thinkingTokensUsed ?? 0}
+                pipelineSteps={message.pipelineSteps}
+              />
+            </div>
+          )}
 
           {!message.isStreaming && message.content && !editing && message.thinkingStatus !== 'streaming' && (
             <div
@@ -283,18 +285,23 @@ export function MessageBubble({ message, isLastUser = false }: MessageBubbleProp
               <IconButton icon={copied ? <Check size={11} /> : <Copy size={11} />} onClick={handleCopy} title="Copiar" />
               {isUser && isLastUser && <IconButton icon={<Pencil size={11} />} onClick={() => { setEditValue(message.content); setEditing(true) }} title="Editar" />}
               {isUser && isLastUser && <IconButton icon={<RotateCw size={11} />} onClick={() => sendMessage(message.content)} title="Reenviar" />}
-              <div style={{ marginLeft: 2 }}>
-                <MessageActionsMenu message={message} sessionId={message.sessionId} />
-              </div>
+              {!isUser && <IconButton icon={<RefreshCw size={11} />} onClick={() => setDialog({ kind: 'regenerate' })} title="Regenerar" />}
+              <IconButton icon={<Trash2 size={11} />} onClick={() => setDialog({ kind: 'delete' })} title="Eliminar" style={{ marginLeft: 2, color: 'var(--text-muted)' }} />
             </div>
           )}
         </div>
+        <MessageActionsDialog
+          message={message}
+          sessionId={message.sessionId}
+          state={dialog}
+          onClose={() => setDialog({ kind: 'none' })}
+        />
       </div>
     </>
   )
 }
 
-function IconButton({ icon, onClick, title }: { icon: React.ReactNode; onClick: () => void; title: string }) {
+function IconButton({ icon, onClick, title, style: extraStyle }: { icon: React.ReactNode; onClick: () => void; title: string; style?: React.CSSProperties }) {
   return (
     <button
       onClick={onClick}
@@ -312,6 +319,7 @@ function IconButton({ icon, onClick, title }: { icon: React.ReactNode; onClick: 
         color: 'var(--text-muted)',
         cursor: 'pointer',
         transition: 'all 0.1s',
+        ...extraStyle,
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.background = 'var(--bg-hover)'

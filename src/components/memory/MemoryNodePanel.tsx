@@ -1,7 +1,10 @@
-import { X, ExternalLink, Tag, Calendar, MessageSquare } from 'lucide-react'
+import { useState } from 'react'
+import { X, ExternalLink, Tag, Calendar, MessageSquare, Trash2 } from 'lucide-react'
 import type { MemoryEntry, MemoryGraphNode } from '@/types'
 import { getGraphNodeColor } from '@/lib/graph-colors'
 import { useChatStore } from '@/stores/chat.store'
+import { useMemoryStore } from '@/stores/memory.store'
+import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog'
 
 interface MemoryNodePanelProps {
   entry: MemoryEntry
@@ -10,6 +13,7 @@ interface MemoryNodePanelProps {
 }
 
 export function MemoryNodePanel({ entry, onClose }: MemoryNodePanelProps) {
+  const [confirmOpen, setConfirmOpen] = useState(false)
   const nodeColor = getGraphNodeColor(entry.source, entry.category)
 
   return (
@@ -42,18 +46,33 @@ export function MemoryNodePanel({ entry, onClose }: MemoryNodePanelProps) {
             {entry.source === 'auto' ? 'Aprendido' : 'Manual'}
           </span>
         </div>
-        <button
-          onClick={onClose}
-          style={{
-            width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: 'none', border: 'none', borderRadius: 'var(--radius-sm)',
-            color: 'var(--text-muted)', cursor: 'pointer',
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; e.currentTarget.style.color = 'var(--text-primary)' }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)' }}
-        >
-          <X size={12} strokeWidth={2} />
-        </button>
+        <div style={{ display: 'flex', gap: 2 }}>
+          <button
+            onClick={() => setConfirmOpen(true)}
+            title="Eliminar nodo"
+            style={{
+              width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'none', border: 'none', borderRadius: 'var(--radius-sm)',
+              color: 'var(--text-muted)', cursor: 'pointer',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; e.currentTarget.style.color = 'var(--destructive)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)' }}
+          >
+            <Trash2 size={12} strokeWidth={2} />
+          </button>
+          <button
+            onClick={onClose}
+            style={{
+              width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'none', border: 'none', borderRadius: 'var(--radius-sm)',
+              color: 'var(--text-muted)', cursor: 'pointer',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; e.currentTarget.style.color = 'var(--text-primary)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)' }}
+          >
+            <X size={12} strokeWidth={2} />
+          </button>
+        </div>
       </div>
 
       <p style={{ fontSize: 12.5, color: 'var(--text-primary)', fontFamily: 'var(--font-ui)', lineHeight: 1.5, margin: '4px 0 8px', wordBreak: 'break-word' }}>
@@ -118,6 +137,13 @@ export function MemoryNodePanel({ entry, onClose }: MemoryNodePanelProps) {
           )}
         </div>
       )}
+
+      <ConfirmDeleteDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        itemLabel={entry.content.slice(0, 60) + (entry.content.length > 60 ? '…' : '')}
+        onConfirm={() => { useMemoryStore.getState().deleteEntry(entry.id); onClose() }}
+      />
     </div>
   )
 }

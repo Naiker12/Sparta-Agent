@@ -94,6 +94,28 @@ class OpenAICompatibleTransport(ProviderTransport):
         return ChatOpenAI(**openai_kwargs)
 
 
+class GoogleTransport(ProviderTransport):
+    def build_llm(
+        self,
+        model: str,
+        api_key: str | None,
+        reasoning_enabled: bool,
+        reasoning_budget: int,
+        **kwargs: Any,
+    ) -> Any:
+        from langchain_google_genai import ChatGoogleGenerativeAI
+
+        google_kwargs = {**kwargs, "model": model}
+        if api_key:
+            google_kwargs["google_api_key"] = api_key
+        if reasoning_enabled:
+            google_kwargs["thinking_budget"] = reasoning_budget
+            google_kwargs["include_thoughts"] = True
+
+        logger.info("Building Google LLM: model=%s reasoning=%s", model, reasoning_enabled)
+        return ChatGoogleGenerativeAI(**google_kwargs)
+
+
 class OllamaTransport(ProviderTransport):
     def build_llm(
         self,
@@ -118,6 +140,8 @@ def _get_transport(vendor: str) -> ProviderTransport:
         return AnthropicTransport()
     if vendor == "ollama":
         return OllamaTransport()
+    if vendor in ("google", "google_genai", "gemini"):
+        return GoogleTransport()
     if vendor in (
         "openai",
         "groq",

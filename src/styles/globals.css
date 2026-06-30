@@ -263,7 +263,6 @@ button, input, textarea, select {
 
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes pulse { 0%,100% { opacity:0.4; } 50% { opacity:1; } }
-@keyframes pulse-dot { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
 @keyframes viewFadeIn {
   from { opacity: 0; transform: translateY(4px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -289,13 +288,6 @@ button, input, textarea, select {
   animation: messageSlideIn 0.2s ease-out;
 }
 
-.message-actions-trigger {
-  opacity: 0;
-  transition: opacity 0.12s;
-}
-.message-row:hover .message-actions-trigger {
-  opacity: 1;
-}
 
 .brand-icon-mono {
   filter: none;
