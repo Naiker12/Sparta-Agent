@@ -4,6 +4,7 @@ export type MessageRenderState =
   | { kind: 'generating'; content: string; reasoningText?: undefined }
   | { kind: 'responding'; content: string; reasoningText?: string }
   | { kind: 'done'; content: string; reasoningText?: string }
+  | { kind: 'empty_error' }
 
 export function getMessageRenderState(
   content: string,
@@ -11,6 +12,9 @@ export function getMessageRenderState(
   isStreaming: boolean,
 ): MessageRenderState {
   if (!isStreaming) {
+    if (!content.trim() && !reasoningText?.trim()) {
+      return { kind: 'empty_error' }
+    }
     return {
       kind: 'done',
       content: content || '',

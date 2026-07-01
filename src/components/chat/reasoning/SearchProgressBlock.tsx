@@ -17,7 +17,7 @@ export function SearchProgressBlock({ items, isActive, className }: SearchProgre
       initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        'rounded-sm border border-[#2A2A35] bg-bg-surface overflow-hidden',
+        'rounded-sm border border-border-subtle bg-bg-surface overflow-hidden',
         className
       )}
     >

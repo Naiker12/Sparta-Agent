@@ -86,9 +86,17 @@ class OpenAICompatibleTransport(ProviderTransport):
             openai_kwargs["base_url"] = base_url
 
         if reasoning_enabled:
-            # OpenAI-compatible providers may expose reasoning via model-specific kwargs.
-            # We leave the budget in kwargs so callers can act on it if supported.
-            openai_kwargs.setdefault("reasoning_effort", "medium")
+            if self.vendor == "openrouter":
+                extra_body = dict(openai_kwargs.get("extra_body") or {})
+                reasoning: dict[str, Any] = {}
+                if reasoning_budget > 0:
+                    reasoning["max_tokens"] = reasoning_budget
+                else:
+                    reasoning["effort"] = "medium"
+                extra_body["reasoning"] = reasoning
+                openai_kwargs["extra_body"] = extra_body
+            else:
+                openai_kwargs.setdefault("reasoning_effort", "medium")
 
         logger.info("Building OpenAI-compatible LLM: vendor=%s model=%s", self.vendor, model)
         return ChatOpenAI(**openai_kwargs)

@@ -33,13 +33,23 @@ export function MessageBubble({ message, isLastUser = false }: MessageBubbleProp
   const { sendMessage } = useChatSession()
   const dispatch = useEventBus((s) => s.dispatch)
 
+  const hasReasoningText = (message.reasoningText?.trim().length ?? 0) > 0
   const hasThinking = !isUser && (
+    message.isStreaming ||
     message.thinkingStatus === 'starting' ||
     message.thinkingStatus === 'streaming' ||
-    message.thinkingStatus === 'completed' ||
-    message.thinkingStatus === 'collapsed' ||
-    (message.reasoningText?.length ?? 0) > 0
+    ((message.thinkingStatus === 'completed' || message.thinkingStatus === 'collapsed') && hasReasoningText) ||
+    hasReasoningText
   )
+  const isSearchTool = (toolName: string) => {
+    const normalized = toolName.toLowerCase()
+    return (
+      normalized === 'web_search' ||
+      normalized === 'web_search_tool' ||
+      normalized.includes('web_search') ||
+      normalized.includes('search_tool')
+    )
+  }
 
   function handleCopy() {
     navigator.clipboard.writeText(message.content).then(() => {
@@ -184,12 +194,12 @@ export function MessageBubble({ message, isLastUser = false }: MessageBubbleProp
 
           {/* Search progress — VIVO durante búsqueda web */}
           {(message.searchProgress && message.searchProgress.length > 0) ||
-            (message.toolCalls?.some((tc) => tc.toolName === 'web_search' && tc.status === 'running')) ? (
+            (message.toolCalls?.some((tc) => isSearchTool(tc.toolName) && tc.status === 'running')) ? (
             <div style={{ marginTop: 8 }}>
               <SearchProgressBlock
                 items={message.searchProgress ?? []}
                 isActive={
-                  message.toolCalls?.some((tc) => tc.toolName === 'web_search' && tc.status === 'running') ??
+                  message.toolCalls?.some((tc) => isSearchTool(tc.toolName) && tc.status === 'running') ??
                   false
                 }
               />
@@ -197,13 +207,13 @@ export function MessageBubble({ message, isLastUser = false }: MessageBubbleProp
           ) : null}
 
           {/* Tool calls — antes del texto */}
-          {message.toolCalls && message.toolCalls.filter((tc) => tc.toolName !== 'web_search').length > 0 && (
+          {message.toolCalls && message.toolCalls.filter((tc) => !isSearchTool(tc.toolName)).length > 0 && (
             <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
               <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                Tool Calls ({message.toolCalls.filter((tc) => tc.toolName !== 'web_search').length})
+                Tool Calls ({message.toolCalls.filter((tc) => !isSearchTool(tc.toolName)).length})
               </div>
               {message.toolCalls
-                .filter((tc) => tc.toolName !== 'web_search')
+                .filter((tc) => !isSearchTool(tc.toolName))
                 .map((tc) => (
                   <div key={tc.id} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                     <ToolCallSummary toolCall={tc} />
@@ -224,7 +234,18 @@ export function MessageBubble({ message, isLastUser = false }: MessageBubbleProp
             </div>
           )}
 
-          {/* Contenido de texto — PRIMERO */}
+          {/* Thinking block */}
+          {hasThinking && (
+            <div style={{ marginTop: 8, marginBottom: 8 }}>
+              <ThinkingBlock
+                content={message.reasoningText ?? ''}
+                status={message.thinkingStatus ?? (message.isStreaming ? 'streaming' : 'completed')}
+                tokensUsed={message.thinkingTokensUsed ?? 0}
+                pipelineSteps={message.pipelineSteps}
+              />
+            </div>
+          )}
+
           {renderState.kind === 'generating' || renderState.kind === 'responding' || renderState.kind === 'done' ? (
             <>
               {isUser ? (
@@ -260,19 +281,26 @@ export function MessageBubble({ message, isLastUser = false }: MessageBubbleProp
             </>
           ) : null}
 
-          {/* Thinking block — DESPUÉS del texto (solo assistant) */}
-          {hasThinking && (
-            <div style={{ marginTop: 8 }}>
-              <ThinkingBlock
-                content={message.reasoningText ?? ''}
-                status={message.thinkingStatus ?? (message.isStreaming ? 'streaming' : 'completed')}
-                tokensUsed={message.thinkingTokensUsed ?? 0}
-                pipelineSteps={message.pipelineSteps}
-              />
+          {/* Empty response fallback */}
+          {!isUser && renderState.kind === 'empty_error' && (
+            <div
+              style={{
+                marginTop: 8,
+                padding: '8px 10px',
+                border: '1px solid var(--border-normal)',
+                borderRadius: 'var(--radius-md)',
+                color: 'var(--text-secondary)',
+                background: 'var(--bg-surface)',
+                fontSize: 13,
+                lineHeight: 1.5,
+                fontFamily: 'var(--font-ui)',
+              }}
+            >
+              El modelo no devolvió respuesta. Puede ser un error temporal del proveedor o del modelo seleccionado.
             </div>
           )}
 
-          {!message.isStreaming && message.content && !editing && message.thinkingStatus !== 'streaming' && (
+          {!message.isStreaming && (message.content || renderState.kind === 'empty_error') && !editing && message.thinkingStatus !== 'streaming' && (
             <div
               className="message-actions-bar"
               style={{

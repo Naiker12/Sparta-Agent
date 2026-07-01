@@ -21,6 +21,18 @@ function splitStableMarkdown(content: string): { stable: string; pending: string
   }
 }
 
+function splitPendingFence(content: string): { before: string; language: string; code: string } | null {
+  const fences = [...content.matchAll(/^```([A-Za-z0-9_-]*)[^\n]*\n?/gm)]
+  if (fences.length % 2 === 0) return null
+  const opening = fences[fences.length - 1]
+  if (opening.index === undefined) return null
+  return {
+    before: content.slice(0, opening.index),
+    language: opening[1] || 'text',
+    code: content.slice(opening.index + opening[0].length),
+  }
+}
+
 function handleLinkClick(e: React.MouseEvent<HTMLAnchorElement>, href: string) {
   if (/^https?:\/\//.test(href)) {
     e.preventDefault()
@@ -64,6 +76,7 @@ export function MarkdownRenderer({ content, isStreaming }: MarkdownRendererProps
   const syntaxStyle = isDarkTheme(theme) ? oneDark : oneLight
 
   const { stable, pending } = isStreaming ? splitStableMarkdown(content) : { stable: content, pending: '' }
+  const pendingFence = isStreaming ? splitPendingFence(pending) : null
 
   return (
     <div className="markdown-body">
@@ -138,7 +151,35 @@ export function MarkdownRenderer({ content, isStreaming }: MarkdownRendererProps
           {stable}
         </ReactMarkdown>
       )}
-      {isStreaming && pending && (
+      {isStreaming && pendingFence && (
+        <>
+          {pendingFence.before && (
+            <span style={{ whiteSpace: 'pre-wrap' }}>{pendingFence.before}</span>
+          )}
+          <div className="md-code-block">
+            <div className="md-code-header">
+              <span className="md-code-lang">{pendingFence.language}</span>
+              <CopyCodeButton code={pendingFence.code} />
+            </div>
+            <SyntaxHighlighter
+              language={pendingFence.language}
+              style={syntaxStyle}
+              customStyle={{
+                margin: 0,
+                border: 'none',
+                borderRadius: 0,
+                fontSize: '12.5px',
+                lineHeight: '1.55',
+                background: 'var(--bg-surface)',
+              }}
+              showLineNumbers={pendingFence.code.split('\n').length > 8}
+            >
+              {pendingFence.code}
+            </SyntaxHighlighter>
+          </div>
+        </>
+      )}
+      {isStreaming && pending && !pendingFence && (
         <span style={{ whiteSpace: 'pre-wrap' }}>{pending}</span>
       )}
     </div>

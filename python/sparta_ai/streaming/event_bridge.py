@@ -75,6 +75,8 @@ async def stream_agent_to_electron(
         "thinking_active": False,
         "last_detected_skill": None,
         "active_skill_ids": initial_state.get("active_skills", []),
+        "visible_chars": 0,
+        "reasoning_chars": 0,
     }
     try:
         async for event in graph.astream_events(initial_state, version="v2"):
@@ -99,12 +101,14 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> N
 
         # Some OpenAI-compatible providers expose reasoning in metadata rather than content blocks.
         reasoning_content = _extract_reasoning_content(chunk)
+        reasoning_from_metadata = bool(reasoning_content)
         if reasoning_content:
             if not stream_state["thinking_active"]:
                 logger.debug("Emitting thinking:started for request %s", request_id)
                 _emit(request_id, "thinking:started", {**base_payload})
                 stream_state["thinking_active"] = True
             stream_state["reasoning_tokens"] = stream_state.get("reasoning_tokens", 0) + len(reasoning_content.split())
+            stream_state["reasoning_chars"] = stream_state.get("reasoning_chars", 0) + len(reasoning_content)
             logger.debug("Emitting thinking:token (reasoning_content) for request %s", request_id)
             _emit(request_id, "thinking:token", {**base_payload, "token": reasoning_content})
 
@@ -115,6 +119,8 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> N
         if isinstance(content, list):
             for block in content:
                 if _is_reasoning_block(block):
+                    if reasoning_from_metadata:
+                        continue
                     if not stream_state["thinking_active"]:
                         logger.debug("Emitting thinking:started for request %s", request_id)
                         _emit(request_id, "thinking:started", {**base_payload})
@@ -122,6 +128,7 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> N
                     token = _block_text(block)
                     if token:
                         stream_state["reasoning_tokens"] = stream_state.get("reasoning_tokens", 0) + len(token.split())
+                        stream_state["reasoning_chars"] = stream_state.get("reasoning_chars", 0) + len(token)
                         logger.debug(
                             "Emitting thinking:token (reasoning block) for request %s", request_id
                         )
@@ -132,6 +139,7 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> N
                 elif _is_text_block(block):
                     text = _block_text(block)
                     if text:
+                        stream_state["visible_chars"] = stream_state.get("visible_chars", 0) + len(text)
                         _emit(request_id, "stream:token", {**base_payload, "token": text})
                 elif isinstance(block, dict) and block.get("type") == "tool_use":
                     # Anthropic tool_use blocks are part of the assistant message,
@@ -141,12 +149,13 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> N
             scrubber = stream_state.setdefault("_scrubber", StreamingThinkScrubber())
             visible, reasoning = scrubber.feed(content)
 
-            if reasoning:
+            if reasoning and not reasoning_from_metadata:
                 if not stream_state["thinking_active"]:
                     logger.debug("Emitting thinking:started for request %s", request_id)
                     _emit(request_id, "thinking:started", {**base_payload})
                     stream_state["thinking_active"] = True
                 stream_state["reasoning_tokens"] = stream_state.get("reasoning_tokens", 0) + len(reasoning.split())
+                stream_state["reasoning_chars"] = stream_state.get("reasoning_chars", 0) + len(reasoning)
                 logger.debug(
                     "Emitting thinking:token (inline think tag) for request %s", request_id
                 )
@@ -163,6 +172,7 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> N
                         {**base_payload, "tokens_used": stream_state.get("reasoning_tokens", 0)},
                     )
                     stream_state["thinking_active"] = False
+                stream_state["visible_chars"] = stream_state.get("visible_chars", 0) + len(visible)
                 _emit(request_id, "stream:token", {**base_payload, "token": visible})
 
     elif kind == "on_chat_model_start":
@@ -197,6 +207,7 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> N
         if scrubber:
             leftover = scrubber.flush()
             if leftover:
+                stream_state["visible_chars"] = stream_state.get("visible_chars", 0) + len(leftover)
                 _emit(request_id, "stream:token", {**base_payload, "token": leftover})
 
     elif kind == "on_tool_start":
@@ -255,6 +266,16 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> N
         if stream_state["thinking_active"]:
             _emit(request_id, "thinking:completed", {**base_payload, "tokens_used": 0})
             stream_state["thinking_active"] = False
+        if stream_state.get("visible_chars", 0) == 0:
+            _emit(
+                request_id,
+                "error",
+                {
+                    "code": "empty_response",
+                    "message": "El modelo no devolvió contenido visible.",
+                },
+            )
+            return
         _emit(request_id, "stream:completed", base_payload)
 
 
@@ -308,6 +329,8 @@ async def stream_agent_to_websocket(
         "thinking_active": False,
         "last_detected_skill": None,
         "active_skill_ids": initial_state.get("active_skills", []),
+        "visible_chars": 0,
+        "reasoning_chars": 0,
     }
     try:
         async for event in graph.astream_events(initial_state, version="v2"):
@@ -352,11 +375,13 @@ async def _dispatch_event_ws(
             return
 
         reasoning_content = _extract_reasoning_content(chunk)
+        reasoning_from_metadata = bool(reasoning_content)
         if reasoning_content:
             if not stream_state["thinking_active"]:
                 await _emit_ws_renderer(websocket, "thinking:started", base_payload)
                 stream_state["thinking_active"] = True
             stream_state["reasoning_tokens"] = stream_state.get("reasoning_tokens", 0) + len(reasoning_content.split())
+            stream_state["reasoning_chars"] = stream_state.get("reasoning_chars", 0) + len(reasoning_content)
             await _emit_ws_renderer(
                 websocket,
                 "thinking:token",
@@ -375,12 +400,15 @@ async def _dispatch_event_ws(
         if isinstance(content, list):
             for block in content:
                 if _is_reasoning_block(block):
+                    if reasoning_from_metadata:
+                        continue
                     if not stream_state["thinking_active"]:
                         await _emit_ws_renderer(websocket, "thinking:started", base_payload)
                         stream_state["thinking_active"] = True
                     token = _block_text(block)
                     if token:
                         stream_state["reasoning_tokens"] = stream_state.get("reasoning_tokens", 0) + len(token.split())
+                        stream_state["reasoning_chars"] = stream_state.get("reasoning_chars", 0) + len(token)
                         await _emit_ws_renderer(
                             websocket,
                             "thinking:token",
@@ -397,6 +425,7 @@ async def _dispatch_event_ws(
                 elif _is_text_block(block):
                     text = _block_text(block)
                     if text:
+                        stream_state["visible_chars"] = stream_state.get("visible_chars", 0) + len(text)
                         await _emit_ws_renderer(
                             websocket,
                             "stream:token",
@@ -409,11 +438,12 @@ async def _dispatch_event_ws(
             scrubber = stream_state.setdefault("_scrubber", StreamingThinkScrubber())
             visible, reasoning = scrubber.feed(content)
 
-            if reasoning:
+            if reasoning and not reasoning_from_metadata:
                 if not stream_state["thinking_active"]:
                     await _emit_ws_renderer(websocket, "thinking:started", base_payload)
                     stream_state["thinking_active"] = True
                 stream_state["reasoning_tokens"] = stream_state.get("reasoning_tokens", 0) + len(reasoning.split())
+                stream_state["reasoning_chars"] = stream_state.get("reasoning_chars", 0) + len(reasoning)
                 await _emit_ws_renderer(
                     websocket,
                     "thinking:token",
@@ -437,6 +467,7 @@ async def _dispatch_event_ws(
                         },
                     )
                     stream_state["thinking_active"] = False
+                stream_state["visible_chars"] = stream_state.get("visible_chars", 0) + len(visible)
                 await _emit_ws_renderer(
                     websocket,
                     "stream:token",
@@ -485,6 +516,7 @@ async def _dispatch_event_ws(
         if scrubber:
             leftover = scrubber.flush()
             if leftover:
+                stream_state["visible_chars"] = stream_state.get("visible_chars", 0) + len(leftover)
                 await _emit_ws_renderer(
                     websocket,
                     "stream:token",
@@ -563,6 +595,16 @@ async def _dispatch_event_ws(
                 },
             )
             stream_state["thinking_active"] = False
+        if stream_state.get("visible_chars", 0) == 0:
+            await _emit_ws_renderer(
+                websocket,
+                "stream:error",
+                {
+                    **base_payload,
+                    "error": "El modelo no devolvió contenido visible.",
+                },
+            )
+            return
         await _emit_ws_renderer(websocket, "stream:completed", base_payload)
 
 

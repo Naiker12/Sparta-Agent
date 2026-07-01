@@ -49,11 +49,8 @@ describe('getMessageRenderState', () => {
     }
   })
 
-  it('done: no streaming, sin content (edge case)', () => {
+  it('empty_error: no streaming, sin content ni reasoning', () => {
     const state = getMessageRenderState('', undefined, false)
-    expect(state.kind).toBe('done')
-    if (state.kind === 'done') {
-      expect(state.content).toBe('')
-    }
+    expect(state.kind).toBe('empty_error')
   })
 })

@@ -333,7 +333,6 @@ body.is-dragging-sidebar [data-slot="sidebar-wrapper"] {
 /* ══════════════════════════════════════════════════════ */
 [data-slot="sidebar-inner"] {
   background: var(--bg-sidebar) !important;
-  border-right: 1px solid var(--border-normal);
 }
 [data-slot="sidebar-container"] {
   border-color: var(--border-normal) !important;
@@ -817,6 +816,8 @@ body.is-dragging-sidebar [data-slot="sidebar-wrapper"] {
 
 /* Lists — spacing corregido */
 .md-ul, .md-ol { padding-left: 1.25em; margin: 4px 0 8px 0; color: var(--text-primary); list-style-position: outside; }
+.md-ul { list-style-type: disc; }
+.md-ol { list-style-type: decimal; }
 .md-li { margin-bottom: 2px; padding-left: 2px; color: var(--text-primary); line-height: 1.55; }
 .md-li:last-child { margin-bottom: 0; }
 .md-li > p { margin: 0; }
@@ -906,6 +907,8 @@ body.is-dragging-sidebar [data-slot="sidebar-wrapper"] {
 .markdown-body p { margin: 0 0 8px 0; color: var(--text-primary); }
 .markdown-body p:last-child { margin-bottom: 0; }
 .markdown-body ul, .markdown-body ol { padding-left: 1.25em; margin: 4px 0 8px 0; list-style-position: outside; }
+.markdown-body ul { list-style-type: disc; }
+.markdown-body ol { list-style-type: decimal; }
 .markdown-body li { margin-bottom: 2px; color: var(--text-primary); }
 .markdown-body li:last-child { margin-bottom: 0; }
 .markdown-body li > p { margin: 0; }

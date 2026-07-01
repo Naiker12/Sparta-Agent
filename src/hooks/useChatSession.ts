@@ -19,7 +19,7 @@ import type { ToolCall, Provider, SpartaEvent } from '@/types'
 const _providerBySession = new Map<string, string>()
 
 function getActiveProvider(providers: Provider[], activeModel: string): Provider | null {
-  return providers.find((p) => p.defaultModel === activeModel) ?? providers[0] ?? null
+  return providers.find((p) => p.defaultModel === activeModel || p.models?.includes(activeModel)) ?? providers[0] ?? null
 }
 
 async function runAssistantTurn(
@@ -121,7 +121,7 @@ async function runAssistantTurn(
     const sendResult = messagingAdapter.sendMessage({
       sessionId: sid,
       messageId: assistantId,
-      model: provider.defaultModel ?? '',
+      model: activeModel || provider.defaultModel || '',
       messages: msgs,
       providerKey,
       apiUrl,

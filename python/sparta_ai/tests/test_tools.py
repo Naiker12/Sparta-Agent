@@ -3,32 +3,37 @@ from pathlib import Path
 
 import pytest
 
+from sparta_ai.tools import file_tools
 from sparta_ai.tools.file_tools import read_file_tool, write_file_tool
 from sparta_ai.tools.mcp_bridge import MCPToolWrapper, build_mcp_tools
 from sparta_ai.tools.web_search import web_search_tool
 
 
 class TestFileTools:
-    def test_write_and_read_file(self):
+    def test_write_and_read_file(self, monkeypatch):
         with tempfile.TemporaryDirectory() as tmpdir:
+            monkeypatch.setattr(file_tools, "WORKSPACE_ROOT", Path(tmpdir).resolve())
             test_path = Path(tmpdir) / "test.txt"
-            result = write_file_tool.invoke({"path": str(test_path), "content": "Hello, Sparta!"})
+            result = write_file_tool.invoke({"path": "test.txt", "content": "Hello, Sparta!"})
             assert "Archivo escrito" in result or "written to" in result
             assert test_path.exists()
 
-            content = read_file_tool.invoke({"path": str(test_path)})
+            content = read_file_tool.invoke({"path": "test.txt"})
             assert content == "Hello, Sparta!"
 
-    def test_read_nonexistent_file(self):
-        result = read_file_tool.invoke({"path": "/nonexistent/path/file.txt"})
-        assert "Error" in result
-
-    def test_write_append(self):
+    def test_read_nonexistent_file(self, monkeypatch):
         with tempfile.TemporaryDirectory() as tmpdir:
+            monkeypatch.setattr(file_tools, "WORKSPACE_ROOT", Path(tmpdir).resolve())
+            result = read_file_tool.invoke({"path": "missing.txt"})
+            assert "Error" in result
+
+    def test_write_append(self, monkeypatch):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            monkeypatch.setattr(file_tools, "WORKSPACE_ROOT", Path(tmpdir).resolve())
             test_path = Path(tmpdir) / "append.txt"
-            write_file_tool.invoke({"path": str(test_path), "content": "Line 1\n"})
-            write_file_tool.invoke({"path": str(test_path), "content": "Line 2\n", "append": True})
-            content = read_file_tool.invoke({"path": str(test_path)})
+            write_file_tool.invoke({"path": "append.txt", "content": "Line 1\n"})
+            write_file_tool.invoke({"path": "append.txt", "content": "Line 2\n", "append": True})
+            content = read_file_tool.invoke({"path": "append.txt"})
             assert "Line 1" in content
             assert "Line 2" in content
 

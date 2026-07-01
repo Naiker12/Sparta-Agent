@@ -21,7 +21,7 @@ interface ThinkingLine {
   text: string
 }
 
-function parseThinkingLine(text: string): ThinkingLine {
+function parseThinkingLine(text: string, index: number): ThinkingLine {
   const lower = text.toLowerCase()
   let icon = '\u2192'
   if (lower.includes('search') || lower.includes('busca')) icon = '\ud83d\udd0d'
@@ -29,20 +29,22 @@ function parseThinkingLine(text: string): ThinkingLine {
   else if (lower.includes('plan') || lower.includes('analiz') || lower.includes('razon')) icon = '\ud83e\udde0'
   else if (lower.includes('execut') || lower.includes('ejecut') || lower.includes('run')) icon = '\u26a1'
   else if (lower.includes('done') || lower.includes('complet') || lower.includes('finish')) icon = '\u2713'
-  return { id: crypto.randomUUID(), icon, text }
+  return { id: `line-${index}`, icon, text }
 }
 
 export function ThinkingBlock({ content, status, tokensUsed, pipelineSteps, className }: ThinkingBlockProps) {
   const [isExpanded, setIsExpanded] = useState(status === 'streaming' || status === 'starting')
   const [elapsed, setElapsed] = useState(0)
   const startedAt = useRef(Date.now())
+  const linesEndRef = useRef<HTMLDivElement>(null)
+  const linesContainerRef = useRef<HTMLDivElement>(null)
   const badgesEndRef = useRef<HTMLDivElement>(null)
   const prevBadgeCount = useRef(0)
   const userToggled = useRef(false)
 
   const lines = useMemo(() => {
     if (!content) return []
-    return content.split('\n').filter(Boolean).map((line) => parseThinkingLine(line))
+    return content.split('\n').filter(Boolean).map((line, index) => parseThinkingLine(line, index))
   }, [content])
 
   useEffect(() => {
@@ -84,12 +86,18 @@ export function ThinkingBlock({ content, status, tokensUsed, pipelineSteps, clas
     prevBadgeCount.current = skillBadges.length
   }, [skillBadges.length])
 
+  useEffect(() => {
+    if (linesEndRef.current && (status === 'streaming' || status === 'starting')) {
+      linesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    }
+  }, [lines.length, status])
+
   const canToggle = status !== 'streaming' && status !== 'starting'
 
   return (
     <motion.div
       layout
-      className={cn('rounded-sm border border-[#2A2A35] bg-bg-surface overflow-hidden', className)}
+      className={cn('rounded-sm border border-border-subtle bg-bg-surface overflow-hidden', className)}
     >
       <button
         onClick={() => { if (!canToggle) return; userToggled.current = true; setIsExpanded((v) => !v) }}
@@ -116,8 +124,8 @@ export function ThinkingBlock({ content, status, tokensUsed, pipelineSteps, clas
             transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
             style={{ overflow: 'hidden' }}
           >
-            <div className="thinking-lines">
-              {status === 'starting' && !content && (
+            <div className="thinking-lines" ref={linesContainerRef}>
+              {(status === 'starting' || status === 'streaming') && !content && (
                 <ThinkingSkeletonRows />
               )}
 
@@ -137,9 +145,9 @@ export function ThinkingBlock({ content, status, tokensUsed, pipelineSteps, clas
                   {lines.map((line, idx) => (
                     <motion.div
                       key={line.id}
-                      initial={{ opacity: 0, y: 5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.18, delay: 0 }}
+                      initial={{ opacity: 0, x: -12 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3, ease: 'easeOut' }}
                       className="thinking-line"
                     >
                       <span className="thinking-line-icon">{line.icon}</span>
@@ -153,6 +161,7 @@ export function ThinkingBlock({ content, status, tokensUsed, pipelineSteps, clas
                   ))}
                 </AnimatePresence>
               )}
+              <div ref={linesEndRef} />
 
               {status === 'completed' && lines.length === 0 && content && (
                 <div className="thinking-line" style={{ padding: '4px 0' }}>
