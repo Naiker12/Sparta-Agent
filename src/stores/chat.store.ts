@@ -120,17 +120,23 @@ export const useChatStore = create<ChatState>()(
           const sessionMessages = s.messagesBySession[sessionId]
           if (!sessionMessages) return s
           if (!delta) return s
+          const target = sessionMessages.find((m) => m.id === messageId)
+          if (!target) {
+            console.warn('[chat.store] appendContent: mensaje no encontrado', messageId.slice(0, 8), 'en sesión', sessionId.slice(0, 8))
+            return s
+          }
+          if (chunkSeq !== undefined && target.lastChunkSeq !== undefined && chunkSeq <= target.lastChunkSeq) {
+            console.warn(`[chat.store] Duplicate content chunk #${chunkSeq} <= lastChunkSeq #${target.lastChunkSeq} for message ${messageId.slice(0, 8)}`)
+            return s
+          }
           return {
             messagesBySession: {
               ...s.messagesBySession,
-              [sessionId]: sessionMessages.map((msg) => {
-                if (msg.id !== messageId) return msg
-                if (chunkSeq !== undefined && msg.lastChunkSeq !== undefined && chunkSeq <= msg.lastChunkSeq) {
-                  console.warn(`[chat.store] Duplicate content chunk #${chunkSeq} <= lastChunkSeq #${msg.lastChunkSeq} for message ${messageId.slice(0, 8)}`)
-                  return msg
-                }
-                return { ...msg, content: msg.content + delta, isStreaming: true, lastChunkSeq: chunkSeq ?? msg.lastChunkSeq }
-              }),
+              [sessionId]: sessionMessages.map((msg) =>
+                msg.id === messageId
+                  ? { ...msg, content: msg.content + delta, isStreaming: true, lastChunkSeq: chunkSeq ?? msg.lastChunkSeq }
+                  : msg
+              ),
             },
           }
         }),
@@ -139,23 +145,29 @@ export const useChatStore = create<ChatState>()(
         set((s) => {
           const sessionMessages = s.messagesBySession[sessionId]
           if (!sessionMessages) return s
+          const target = sessionMessages.find((m) => m.id === messageId)
+          if (!target) {
+            console.warn('[chat.store] appendThinking: mensaje no encontrado', messageId.slice(0, 8), 'en sesión', sessionId.slice(0, 8))
+            return s
+          }
+          if (chunkSeq !== undefined && target.lastThinkChunkSeq !== undefined && chunkSeq <= target.lastThinkChunkSeq) {
+            console.warn(`[chat.store] Duplicate thinking chunk #${chunkSeq} <= lastThinkChunkSeq #${target.lastThinkChunkSeq} for message ${messageId.slice(0, 8)}`)
+            return s
+          }
           return {
             messagesBySession: {
               ...s.messagesBySession,
-              [sessionId]: sessionMessages.map((msg) => {
-                if (msg.id !== messageId) return msg
-                if (chunkSeq !== undefined && msg.lastThinkChunkSeq !== undefined && chunkSeq <= msg.lastThinkChunkSeq) {
-                  console.warn(`[chat.store] Duplicate thinking chunk #${chunkSeq} <= lastThinkChunkSeq #${msg.lastThinkChunkSeq} for message ${messageId.slice(0, 8)}`)
-                  return msg
-                }
-                return {
-                  ...msg,
-                  reasoningText: (msg.reasoningText ?? '') + delta,
-                  thinkingStatus: (msg.thinkingStatus === 'idle' || msg.thinkingStatus === 'starting' || msg.thinkingStatus === undefined) ? 'streaming' : msg.thinkingStatus,
-                  isStreaming: true,
-                  lastThinkChunkSeq: chunkSeq ?? msg.lastThinkChunkSeq,
-                }
-              }),
+              [sessionId]: sessionMessages.map((msg) =>
+                msg.id === messageId
+                  ? {
+                      ...msg,
+                      reasoningText: (msg.reasoningText ?? '') + delta,
+                      thinkingStatus: (msg.thinkingStatus === 'idle' || msg.thinkingStatus === 'starting' || msg.thinkingStatus === undefined) ? 'streaming' : msg.thinkingStatus,
+                      isStreaming: true,
+                      lastThinkChunkSeq: chunkSeq ?? msg.lastThinkChunkSeq,
+                    }
+                  : msg
+              ),
             },
           }
         }),

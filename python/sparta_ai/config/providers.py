@@ -67,6 +67,10 @@ class OpenAICompatibleTransport(ProviderTransport):
             "xai": "https://api.x.ai/v1",
         }
 
+    def _is_free_tier_model(self, model: str) -> bool:
+        """Detect OpenRouter free-tier models that commonly degenerate."""
+        return ":free" in model.lower()
+
     def build_llm(
         self,
         model: str,
@@ -80,6 +84,12 @@ class OpenAICompatibleTransport(ProviderTransport):
         openai_kwargs = {**kwargs, "model": model}
         if api_key:
             openai_kwargs["api_key"] = api_key
+
+        # Free-tier models need gentle penalties to avoid degenerate repetition
+        if self.vendor == "openrouter" and self._is_free_tier_model(model):
+            openai_kwargs.setdefault("frequency_penalty", 0.3)
+            openai_kwargs.setdefault("presence_penalty", 0.3)
+            openai_kwargs.setdefault("temperature", 0.7)
 
         base_url = self._base_url_map.get(self.vendor)
         if base_url:

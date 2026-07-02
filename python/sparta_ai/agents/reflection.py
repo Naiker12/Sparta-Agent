@@ -34,7 +34,7 @@ async def reflection_node(state: dict[str, Any]) -> dict:
     )
     return {
         "messages": [{"role": "system", "content": reflection_text}],
-        "tool_calls_this_turn": 0,
+        "reflection_retries": state.get("reflection_retries", 0) + 1,
     }
 
 

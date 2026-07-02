@@ -110,13 +110,21 @@ export function registerChatIPC(): void {
         sendToRenderer({ sessionId, messageId, type: 'thinking:started' })
         break
       case 'thinking:token':
-        sendToRenderer({ sessionId, messageId, type: 'thinking:token', token: data?.token, chunkSeq: getNextSeq(requestId, 'think') })
+        sendToRenderer({ sessionId, messageId, type: 'thinking:token', token: data?.token, chunkSeq: data?.chunkSeq ?? getNextSeq(requestId, 'think') })
         break
       case 'thinking:completed':
         sendToRenderer({ sessionId, messageId, type: 'thinking:completed', tokensUsed: data?.tokens_used ?? data?.tokensUsed ?? 0 })
         break
       case 'stream:token':
-        sendToRenderer({ sessionId, messageId, type: 'stream:token', token: data?.token, chunkSeq: getNextSeq(requestId, 'stream') })
+        sendToRenderer({ sessionId, messageId, type: 'stream:token', token: data?.token, chunkSeq: data?.chunkSeq ?? getNextSeq(requestId, 'stream') })
+        break
+      case 'stream:degenerate':
+        sendToRenderer({
+          sessionId, messageId,
+          type: 'stream:error',
+          error: 'La respuesta del modelo se cortó por repetición detectada. Probá con otro modelo o reintentá.',
+        })
+        clearSeqCounters(requestId)
         break
       case 'stream:completed': {
         sendToRenderer({ sessionId, messageId, type: 'stream:completed', usage: data?.usage })

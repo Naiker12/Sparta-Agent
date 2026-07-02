@@ -18,6 +18,8 @@ from sparta_ai.streaming.event_dispatcher import (
 )
 from sparta_ai.streaming.skill_detector import build_skill_payload, detect_skill
 from sparta_ai.streaming.think_scrubber import StreamingThinkScrubber
+from sparta_ai.streaming.repetition_guard import RepetitionGuard
+from sparta_ai.providers.retry_policy import retry_on_empty, EmptyResponseError
 
 logger = logging.getLogger("sparta_ai.streaming")
 
@@ -47,11 +49,38 @@ async def _detect_and_emit_skill(
         _emit(request_id, "skill:activated", build_skill_payload(detected, base_payload))
 
 
+async def _run_single_stream(
+    graph: Any,
+    initial_state: dict,
+    request_id: str,
+    thread_id: str,
+    stream_state: dict,
+) -> dict | None:
+    """Run a single streaming pass through the graph.
+
+    Returns the final stream_state dict on success, or None if the stream was
+    aborted explicitly (not via empty response).
+    """
+    config = {"configurable": {"thread_id": thread_id or request_id}}
+    try:
+        async for event in graph.astream_events(initial_state, config, version="v2"):
+            abort = await _dispatch_event(request_id, event, stream_state)
+            if abort:
+                return None
+    except Exception as e:
+        logger.exception("Stream error")
+        _emit(request_id, "error", {"code": "stream_error", "message": str(e)})
+        _emit(request_id, "stream_end", {"error": str(e)})
+        return None
+    return stream_state
+
+
 async def stream_agent_to_electron(
     graph: Any,
     initial_state: dict,
     request_id: str,
     thread_id: str = "",
+    max_empty_retries: int = 1,
 ) -> None:
     # Mutable state so thinking flag persists across separate astream_events events.
     stream_state = {
@@ -60,18 +89,42 @@ async def stream_agent_to_electron(
         "active_skill_ids": initial_state.get("active_skills", []),
         "visible_chars": 0,
         "reasoning_chars": 0,
+        "_empty_retries": 0,
     }
-    config = {"configurable": {"thread_id": thread_id or request_id}}
-    try:
-        async for event in graph.astream_events(initial_state, config, version="v2"):
-            await _dispatch_event(request_id, event, stream_state)
-    except Exception as e:
-        logger.exception("Stream error")
-        _emit(request_id, "error", {"code": "stream_error", "message": str(e)})
-        _emit(request_id, "stream_end", {"error": str(e)})
+
+    async def _try_stream() -> None:
+        result = await _run_single_stream(graph, initial_state, request_id, thread_id, stream_state)
+        if result is None:
+            return
+        if result.get("visible_chars", 0) == 0 and result.get("_empty_retries", 0) < max_empty_retries:
+            stream_state["_empty_retries"] = result["_empty_retries"] + 1
+            logger.warning(
+                "Empty response (retry %d/%d) for request %s",
+                stream_state["_empty_retries"], max_empty_retries, request_id,
+            )
+            _emit(
+                request_id,
+                "error",
+                {
+                    "code": "empty_response_retry",
+                    "message": f"El modelo no devolvió respuesta. Reintentando ({stream_state['_empty_retries']}/{max_empty_retries})...",
+                },
+            )
+            # Reset state for retry
+            stream_state["visible_chars"] = 0
+            stream_state["thinking_active"] = False
+            stream_state["_rep_guard"] = RepetitionGuard()
+            await _try_stream()
+
+    await _try_stream()
 
 
-async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> None:
+async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> bool:
+    """Dispatch a single LangGraph event.
+
+    Returns True if the stream should be aborted (degeneration detected),
+    False to continue streaming normally.
+    """
     kind = event.get("event", "")
     data: dict = event.get("data", {})
     name: str = event.get("name", "")
@@ -81,7 +134,7 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> N
     if kind == "on_chat_model_stream":
         chunk = data.get("chunk")
         if chunk is None:
-            return
+            return False
 
         # Some OpenAI-compatible providers expose reasoning in metadata rather than content blocks.
         reasoning_content = _extract_reasoning_content(chunk)
@@ -101,7 +154,7 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> N
 
             # If reasoning came from metadata, the same text often appears duplicated in the
             # content string on the same chunk. Skip processing content to avoid emitting it twice.
-            return
+            return False
 
         content = getattr(chunk, "content", "")
         if isinstance(content, list):
@@ -127,6 +180,11 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> N
                 elif _is_text_block(block):
                     text = _block_text(block)
                     if text:
+                        rep_guard = stream_state.setdefault("_rep_guard", RepetitionGuard())
+                        if rep_guard.feed(text):
+                            logger.warning("Repetition detected in text block, aborting")
+                            _emit(request_id, "stream:degenerate", {**base_payload})
+                            return True
                         stream_state["visible_chars"] = stream_state.get("visible_chars", 0) + len(text)
                         _emit(request_id, "stream:token", {**base_payload, "token": text})
                 elif isinstance(block, dict) and block.get("type") == "tool_use":
@@ -153,6 +211,11 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> N
                 await _detect_and_emit_skill(request_id, reasoning, stream_state, base_payload)
 
             if visible:
+                rep_guard = stream_state.setdefault("_rep_guard", RepetitionGuard())
+                if rep_guard.feed(visible):
+                    logger.warning("Repetition detected in visible text, aborting")
+                    _emit(request_id, "stream:degenerate", {**base_payload})
+                    return True
                 if stream_state["thinking_active"] and not reasoning:
                     _emit(
                         request_id,
@@ -263,8 +326,9 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> N
                     "message": "El modelo no devolvió contenido visible.",
                 },
             )
-            return
+            return False
         _emit(request_id, "stream:completed", base_payload)
+        return False
 
 
 async def _detect_and_emit_skill_ws(

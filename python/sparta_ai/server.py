@@ -8,6 +8,7 @@ from typing import Any
 
 from sparta_ai.agents.sparta_agent import build_sparta_graph, SpartaState
 from sparta_ai.streaming.event_bridge import stream_agent_to_electron
+from sparta_ai.providers.retry_policy import retry_on_empty
 
 logger = logging.getLogger("sparta_ai.server")
 
@@ -200,9 +201,12 @@ class StdioServer:
         mcp_tools = build_mcp_tools(mcp_servers)
 
         from sparta_ai.tools.memory_tools import read_memory_tool, write_memory_tool
-        from sparta_ai.tools.file_tools import read_file_tool, write_file_tool
+        from sparta_ai.tools.file_tools import read_file_tool, write_file_tool, inject_workspace_guidance
         from sparta_ai.tools.skill_tools import skill_view_tool
         from sparta_ai.tools.terminal_tools import terminal_execute_tool
+
+        # Ensure tool descriptions reflect the current workspace root (may have changed since import)
+        inject_workspace_guidance()
 
         agent_tools = [read_memory_tool, write_memory_tool, read_file_tool, write_file_tool, skill_view_tool, terminal_execute_tool] + mcp_tools
         if web_search_enabled:

@@ -7,24 +7,24 @@ from langchain_core.tools import tool
 
 logger = logging.getLogger("sparta_ai.tools.file")
 
-WORKSPACE_ROOT = Path(os.environ.get("SPARTA_WORKSPACE_ROOT", Path.cwd())).resolve()
-DENYLIST_FILES = {".env", "sparta-vault.json", "id_rsa", "id_ed25519", "id_ecdsa", "id_ecdsa_sk", "id_ed25519_sk"}
-WORKSPACE_GUIDANCE = (
-    f"Workspace permitido: {WORKSPACE_ROOT}. Usa rutas relativas al workspace, "
-    "por ejemplo 'src/authController.js'. No uses rutas absolutas como /tmp/... ni C:\\..."
-)
-
-if not os.environ.get("SPARTA_WORKSPACE_ROOT"):
+def _workspace_root() -> Path:
+    root = os.environ.get("SPARTA_WORKSPACE_ROOT")
+    if root:
+        return Path(root).resolve()
     logger.warning(
         "SPARTA_WORKSPACE_ROOT no está definida. Usando CWD: %s. "
         "Las herramientas de archivo pueden rechazar rutas del usuario.",
-        WORKSPACE_ROOT,
+        Path.cwd(),
     )
+    return Path.cwd().resolve()
+
+DENYLIST_FILES = {".env", "sparta-vault.json", "id_rsa", "id_ed25519", "id_ecdsa", "id_ecdsa_sk", "id_ed25519_sk"}
 
 
 def _get_safe_path(path: str) -> Path:
     raw_path = path.strip()
     candidate = Path(raw_path)
+    root = _workspace_root()
 
     if (
         os.name == "nt"
@@ -35,17 +35,21 @@ def _get_safe_path(path: str) -> Path:
         candidate = Path(raw_path.lstrip("/\\"))
 
     if not candidate.is_absolute():
-        candidate = WORKSPACE_ROOT / candidate
+        candidate = root / candidate
 
     resolved = candidate.resolve()
     try:
-        inside_workspace = os.path.commonpath([str(WORKSPACE_ROOT), str(resolved)]) == str(WORKSPACE_ROOT)
+        inside_workspace = os.path.commonpath([str(root), str(resolved)]) == str(root)
     except ValueError:
         inside_workspace = False
 
     if not inside_workspace:
+        guidance = (
+            f"Workspace permitido: {root}. Usa rutas relativas al workspace, "
+            "por ejemplo 'src/authController.js'. No uses rutas absolutas como /tmp/... ni C:\\..."
+        )
         raise PermissionError(
-            f"Ruta fuera del workspace permitido: {resolved}. {WORKSPACE_GUIDANCE}"
+            f"Ruta fuera del workspace permitido: {resolved}. {guidance}"
         )
     if resolved.name in DENYLIST_FILES:
         raise PermissionError(f"Acceso bloqueado a archivo sensible: {resolved}")
@@ -140,8 +144,32 @@ def write_file_tool(path: str, content: str, append: bool = False) -> str:
         return f"Error al escribir archivo: {e}. Informa este error al usuario; no pegues el archivo completo en el chat como respaldo."
 
 
-read_file_tool.description = f"{getattr(read_file_tool, 'description', '')}\n\n{WORKSPACE_GUIDANCE}"
-write_file_tool.description = (
-    f"{getattr(write_file_tool, 'description', '')}\n\n{WORKSPACE_GUIDANCE}\n"
-    "Si la escritura falla, informa el error al usuario y no pegues el archivo completo en el chat."
-)
+def _workspace_guidance() -> str:
+    root = _workspace_root()
+    return (
+        f"Workspace permitido: {root}. Usa rutas relativas al workspace, "
+        "por ejemplo 'src/authController.js'. No uses rutas absolutas como /tmp/... ni C:\\..."
+    )
+
+# Description is set dynamically before each agent run via inject_workspace_guidance().
+# The static defaults at import time use whatever SPARTA_WORKSPACE_ROOT is set to then.
+
+
+def inject_workspace_guidance() -> None:
+    """Update tool descriptions with current workspace root.
+
+    Call this right before each graph execution so the LLM sees the correct
+    workspace path even if SPARTA_WORKSPACE_ROOT changed since import time.
+    """
+    guidance = _workspace_guidance()
+    read_file_tool.description = f"{getattr(read_file_tool, '__original_description', '')}\n\n{guidance}"
+    write_file_tool.description = (
+        f"{getattr(write_file_tool, '__original_description', '')}\n\n{guidance}\n"
+        "Si la escritura falla, informa el error al usuario y no pegues el archivo completo en el chat."
+    )
+
+
+# Save original descriptions without workspace guidance
+read_file_tool.__original_description = read_file_tool.description
+write_file_tool.__original_description = write_file_tool.description
+inject_workspace_guidance()

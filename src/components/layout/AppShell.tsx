@@ -11,6 +11,7 @@ import { SettingsDialog } from '../settings/SettingsDialog'
 import { EditorPanel } from '@/components/editor/EditorPanel'
 import { TerminalPanel } from '@/components/terminal/TerminalPanel'
 import { AgentsPanel } from '@/components/agents/AgentsPanel'
+import { ChatErrorBoundary } from '@/components/ErrorBoundary'
 import { initTheme } from '@/stores/theme.store'
 import { useCronEngine } from '@/hooks/useCronEngine'
 import { useSidecarToasts } from '@/hooks/useSidecarToasts'
@@ -141,7 +142,9 @@ export function AppShell() {
               <>
                 <div className="flex flex-1 min-h-0 flex-col">
                   <div className="flex-1 min-h-0 overflow-hidden">
-                    <ChatArea />
+                    <ChatErrorBoundary>
+                      <ChatArea />
+                    </ChatErrorBoundary>
                   </div>
                   <AnimatePresence>
                     {terminalOpen && (

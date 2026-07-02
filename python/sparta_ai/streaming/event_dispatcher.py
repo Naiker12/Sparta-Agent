@@ -9,6 +9,7 @@ from typing import Any, Callable
 
 from sparta_ai.streaming.skill_detector import build_skill_payload, detect_skill
 from sparta_ai.streaming.think_scrubber import StreamingThinkScrubber
+from sparta_ai.streaming.repetition_guard import RepetitionGuard
 
 logger = logging.getLogger("sparta_ai.streaming.dispatcher")
 
@@ -61,11 +62,14 @@ def _extract_reasoning_content(chunk: Any) -> str:
 class EventDispatcher:
     def __init__(self, emit_fn: Callable[[str, dict | None], None]):
         self._emit = emit_fn
+        self._repetition_guard = RepetitionGuard()
         self._stream_state: dict[str, Any] = {
             "thinking_active": False,
             "last_detected_skill": None,
             "visible_chars": 0,
             "reasoning_chars": 0,
+            "_stream_seq": 0,
+            "_think_seq": 0,
         }
 
     def get_state(self) -> dict[str, Any]:
@@ -73,6 +77,14 @@ class EventDispatcher:
 
     def set_active_skills(self, skill_ids: list[str]) -> None:
         self._stream_state["active_skill_ids"] = skill_ids
+
+    def _next_stream_seq(self) -> int:
+        self._stream_state["_stream_seq"] += 1
+        return self._stream_state["_stream_seq"]
+
+    def _next_think_seq(self) -> int:
+        self._stream_state["_think_seq"] += 1
+        return self._stream_state["_think_seq"]
 
     async def dispatch(self, event: dict) -> None:
         kind = event.get("event", "")
@@ -111,7 +123,7 @@ class EventDispatcher:
                 self._stream_state["thinking_active"] = True
             self._stream_state["reasoning_tokens"] = self._stream_state.get("reasoning_tokens", 0) + len(reasoning_content.split())
             self._stream_state["reasoning_chars"] = self._stream_state.get("reasoning_chars", 0) + len(reasoning_content)
-            self._emit("thinking:token", {**base_payload, "token": reasoning_content})
+            self._emit("thinking:token", {**base_payload, "token": reasoning_content, "chunkSeq": self._next_think_seq()})
             await self._detect_and_emit_skill(reasoning_content, base_payload)
             # Avoid duplicated reasoning that often appears in the content string on the same chunk.
             return
@@ -129,13 +141,17 @@ class EventDispatcher:
                     if token:
                         self._stream_state["reasoning_tokens"] = self._stream_state.get("reasoning_tokens", 0) + len(token.split())
                         self._stream_state["reasoning_chars"] = self._stream_state.get("reasoning_chars", 0) + len(token)
-                        self._emit("thinking:token", {**base_payload, "token": token})
+                        self._emit("thinking:token", {**base_payload, "token": token, "chunkSeq": self._next_think_seq()})
                         await self._detect_and_emit_skill(token, base_payload)
                 elif _is_text_block(block):
                     text = _block_text(block)
                     if text:
+                        if self._repetition_guard.feed(text):
+                            logger.warning("Repetition detected in text block, aborting stream")
+                            self._emit("stream:degenerate", {**base_payload})
+                            return
                         self._stream_state["visible_chars"] = self._stream_state.get("visible_chars", 0) + len(text)
-                        self._emit("stream:token", {**base_payload, "token": text})
+                        self._emit("stream:token", {**base_payload, "token": text, "chunkSeq": self._next_stream_seq()})
                 elif isinstance(block, dict) and block.get("type") == "tool_use":
                     # Anthropic tool_use blocks are part of the assistant message,
                     # not streamed tokens; ignore here.
@@ -150,10 +166,14 @@ class EventDispatcher:
                     self._stream_state["thinking_active"] = True
                 self._stream_state["reasoning_tokens"] = self._stream_state.get("reasoning_tokens", 0) + len(reasoning.split())
                 self._stream_state["reasoning_chars"] = self._stream_state.get("reasoning_chars", 0) + len(reasoning)
-                self._emit("thinking:token", {**base_payload, "token": reasoning})
+                self._emit("thinking:token", {**base_payload, "token": reasoning, "chunkSeq": self._next_think_seq()})
                 await self._detect_and_emit_skill(reasoning, base_payload)
 
             if visible:
+                if self._repetition_guard.feed(visible):
+                    logger.warning("Repetition detected in visible text, aborting stream")
+                    self._emit("stream:degenerate", {**base_payload})
+                    return
                 if self._stream_state["thinking_active"] and not reasoning:
                     self._emit(
                         "thinking:completed",
@@ -161,7 +181,7 @@ class EventDispatcher:
                     )
                     self._stream_state["thinking_active"] = False
                 self._stream_state["visible_chars"] = self._stream_state.get("visible_chars", 0) + len(visible)
-                self._emit("stream:token", {**base_payload, "token": visible})
+                self._emit("stream:token", {**base_payload, "token": visible, "chunkSeq": self._next_stream_seq()})
 
     def _handle_chat_model_start(self, data: dict, base_payload: dict) -> None:
         additional_kwargs = data.get("additional_kwargs", {})
@@ -195,7 +215,7 @@ class EventDispatcher:
             leftover = scrubber.flush()
             if leftover:
                 self._stream_state["visible_chars"] = self._stream_state.get("visible_chars", 0) + len(leftover)
-                self._emit("stream:token", {**base_payload, "token": leftover})
+                self._emit("stream:token", {**base_payload, "token": leftover, "chunkSeq": self._next_stream_seq()})
 
     def _handle_tool_start(self, event: dict, data: dict, name: str, base_payload: dict) -> None:
         tool_call_id = event.get("run_id", str(id(event)))
@@ -259,6 +279,7 @@ class EventDispatcher:
                 },
             )
             return
+        self._repetition_guard.reset()
         self._emit("stream:completed", base_payload)
 
     async def _detect_and_emit_skill(self, thinking_text: str, base_payload: dict) -> None:

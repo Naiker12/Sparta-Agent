@@ -6,6 +6,7 @@ import { useSettingsStore } from '@/stores/settings.store'
 import { useEventBus } from '@/stores/event-bus.store'
 import { useMCPStore } from '@/stores/mcp.store'
 import { useSkillStore } from '@/stores/skill.store'
+import { useProjectStore } from '@/stores/project.store'
 import { getProviderKey } from '@/lib/vault-helper'
 import { messagingAdapter } from '@/lib/messaging-adapter'
 import { IS_WEB } from '@/lib/env-adapter'
@@ -79,6 +80,8 @@ async function runAssistantTurn(
       name: s.name,
       tools: s.tools ?? [],
     }))
+    const activeProject = useProjectStore.getState().getActiveProject()
+    const workspaceRoot = activeProject?.rootPath
 
     const sendResult = messagingAdapter.sendMessage({
       sessionId: sid,
@@ -97,6 +100,7 @@ async function runAssistantTurn(
       semanticMemory: semanticMemoryEnabled,
       reasoning: { enabled: reasoningEnabled ?? false, budget: reasoningBudget ?? 8000 },
       webSearchEnabled,
+      workspaceRoot,
     })
     const resolved = sendResult instanceof Promise ? await sendResult : null
     if (resolved && !resolved.ok) {
