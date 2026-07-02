@@ -32,6 +32,9 @@ dist-electron/
 # Vault: encrypted API keys (DO NOT COMMIT)
 sparta-vault.json
 
+# App data directory
+.sparta/
+
 # Rust Security Layer
 rust/sparta-security/target/
 rust/sparta-security/*.node
