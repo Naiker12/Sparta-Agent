@@ -31,6 +31,22 @@ function getPythonCwd(): string {
     : path.join(process.cwd(), 'python')
 }
 
+function getWorkspaceRoot(): string {
+  // Preferimos el workspace abierto por el usuario; si no hay, usamos CWD.
+  const fromEnv = process.env.SPARTA_WORKSPACE_ROOT
+  if (fromEnv) return fromEnv
+  return app.isPackaged ? process.cwd() : process.cwd()
+}
+
+function getDataDir(): string {
+  // Directorio de datos de la app: userData en prod, .sparta en CWD en dev.
+  const fromEnv = process.env.SPARTA_DATA_DIR
+  if (fromEnv) return fromEnv
+  return app.isPackaged
+    ? path.join(app.getPath('userData'), 'data')
+    : path.join(process.cwd(), '.sparta')
+}
+
 function getPythonCommand(): { command: string; args: string[]; cwd: string } {
   const cwd = getPythonCwd()
 
@@ -63,6 +79,9 @@ function spawnSidecar(): void {
 
   sidecarReady = false
 
+  const workspaceRoot = getWorkspaceRoot()
+  const dataDir = getDataDir()
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const proc: any = spawn(command, args, {
     cwd,
@@ -70,6 +89,8 @@ function spawnSidecar(): void {
     env: {
       ...process.env,
       SPARTA_ENV: 'electron',
+      SPARTA_WORKSPACE_ROOT: workspaceRoot,
+      SPARTA_DATA_DIR: dataDir,
       PYTHONUNBUFFERED: '1',
       PYTHONIOENCODING: 'utf-8',
       PYTHONUTF8: '1',

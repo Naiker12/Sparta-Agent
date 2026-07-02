@@ -51,6 +51,8 @@ contextBridge.exposeInMainWorld('sparta', {
     mcpServers?: unknown[]
     semanticMemory?: boolean
     reasoning?: { enabled: boolean; budget: number }
+    webSearchEnabled?: boolean
+    workspaceRoot?: string
   }) => ipcRenderer.invoke('chat:send', req),
   abortMessage: (sessionId: string) => ipcRenderer.invoke('chat:abort', sessionId),
   isSidecarReady: () => ipcRenderer.invoke('sidecar:status') as Promise<{ running: boolean; ready: boolean }>,

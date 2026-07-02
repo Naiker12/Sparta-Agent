@@ -18,6 +18,7 @@ interface ChatRequest {
   semanticMemory?: boolean
   reasoning?: { enabled: boolean; budget: number }
   webSearchEnabled?: boolean
+  workspaceRoot?: string
 }
 
 const activeStreams = new Map<string, { active: boolean; messageId: string }>()
@@ -212,6 +213,7 @@ export function registerChatIPC(): void {
         semantic_memory: req.semanticMemory ?? false,
         reasoning: req.reasoning ?? { enabled: false, budget: 8000 },
         web_search_enabled: req.webSearchEnabled ?? true,
+        workspace_root: req.workspaceRoot ?? process.env.SPARTA_WORKSPACE_ROOT ?? process.cwd(),
       },
     }
 
