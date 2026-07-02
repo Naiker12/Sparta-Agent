@@ -65,5 +65,5 @@ def test_openrouter_reasoning_uses_extra_body():
     kwargs = chat_openai.call_args.kwargs
     assert kwargs["base_url"] == "https://openrouter.ai/api/v1"
     assert kwargs["extra_body"]["provider"] == {"allow_fallbacks": True}
-    assert kwargs["extra_body"]["reasoning"] == {"effort": "medium", "max_tokens": 2048}
+    assert kwargs["extra_body"]["reasoning"] == {"max_tokens": 2048}
     assert "reasoning_effort" not in kwargs

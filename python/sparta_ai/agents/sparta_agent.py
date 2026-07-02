@@ -10,6 +10,8 @@ from langgraph.types import Command
 from sparta_ai.agents.subagents.research_agent import research_topic, build_research_graph
 from sparta_ai.agents.subagents.code_agent import execute_code_task, build_code_graph
 from sparta_ai.agents.subagents.memory_agent import recall_memories, build_memory_graph
+from sparta_ai.agents.planner import planner_node
+from sparta_ai.agents.reflection import reflection_node, should_reflect
 
 logger = logging.getLogger("sparta_ai.agents.sparta")
 
@@ -24,6 +26,10 @@ class SpartaState(MessagesState):
     subagent_results: Annotated[list, operator.add]
     pending_human_input: str | None
     abort_requested: bool
+    plan: list[str]
+    current_step: int
+    plan_complete: bool
+    reflection_retries: int
 
 
 def build_sparta_graph(
@@ -31,6 +37,7 @@ def build_sparta_graph(
     tools: list,
     skill_context: str = "",
     memory_context: str = "",
+    checkpointer: Any | None = None,
 ) -> StateGraph:
     # Include delegate tools so the LLM can decide to hand off to sub-graphs.
     delegate_tools = [research_topic, execute_code_task, recall_memories]
@@ -134,6 +141,12 @@ def build_sparta_graph(
             *state["messages"],
         ])
         return {"messages": [response]}
+
+    async def planner_node_wrapped(state: SpartaState) -> dict:
+        return await planner_node(state, llm)
+
+    async def reflection_node_wrapped(state: SpartaState) -> dict:
+        return await reflection_node(state)
 
     async def tool_node(state: SpartaState) -> dict:
         last_message = state["messages"][-1]
@@ -239,11 +252,14 @@ def build_sparta_graph(
         return "__end__"
 
     graph = StateGraph(SpartaState)
+    graph.add_node("planner", planner_node_wrapped)
     graph.add_node("agent", agent_node)
     graph.add_node("tools", tool_node)
     graph.add_node("subagent_coordinator", subagent_node)
+    graph.add_node("reflection", reflection_node_wrapped)
 
-    graph.add_edge(START, "agent")
+    graph.add_edge(START, "planner")
+    graph.add_edge("planner", "agent")
     graph.add_conditional_edges(
         "agent",
         should_continue,
@@ -253,8 +269,17 @@ def build_sparta_graph(
             "__end__": END,
         },
     )
-    graph.add_edge("tools", "agent")
+    graph.add_conditional_edges(
+        "tools",
+        should_reflect,
+        {
+            "reflection": "reflection",
+            "agent": "agent",
+            "__end__": END,
+        },
+    )
+    graph.add_edge("reflection", "agent")
     graph.add_edge("subagent_coordinator", "agent")
 
-    return graph.compile()
+    return graph.compile(checkpointer=checkpointer)
 

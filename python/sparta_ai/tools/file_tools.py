@@ -14,6 +14,13 @@ WORKSPACE_GUIDANCE = (
     "por ejemplo 'src/authController.js'. No uses rutas absolutas como /tmp/... ni C:\\..."
 )
 
+if not os.environ.get("SPARTA_WORKSPACE_ROOT"):
+    logger.warning(
+        "SPARTA_WORKSPACE_ROOT no está definida. Usando CWD: %s. "
+        "Las herramientas de archivo pueden rechazar rutas del usuario.",
+        WORKSPACE_ROOT,
+    )
+
 
 def _get_safe_path(path: str) -> Path:
     raw_path = path.strip()

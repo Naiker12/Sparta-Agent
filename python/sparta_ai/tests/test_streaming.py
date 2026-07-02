@@ -69,7 +69,9 @@ class TestEventBridge:
             events = [c[0][1] for c in mock_emit.call_args_list]
             assert "thinking:started" in events
             assert "thinking:token" in events
-            assert "stream:token" in events
+            # When reasoning comes from metadata, the same chunk's content string
+            # is skipped to avoid emitting duplicated text.
+            assert "stream:token" not in events
 
     @pytest.mark.asyncio
     async def test_stream_tool_events(self):

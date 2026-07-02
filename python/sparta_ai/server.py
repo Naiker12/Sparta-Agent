@@ -1,3 +1,4 @@
+import os
 import sys
 import json
 import asyncio
@@ -97,6 +98,9 @@ class StdioServer:
         reasoning = params.get("reasoning", {"enabled": False, "budget": 8000})
         web_search_enabled = params.get("web_search_enabled", True)
         session_id = params.get("session_id", "")
+        workspace_root = params.get("workspace_root") or os.environ.get("SPARTA_WORKSPACE_ROOT")
+        if workspace_root:
+            os.environ["SPARTA_WORKSPACE_ROOT"] = str(workspace_root)
 
         task = asyncio.create_task(
             self._execute_agent(
@@ -152,7 +156,9 @@ class StdioServer:
     ) -> None:
         from sparta_ai.skills.skill_loader import build_skills_context, skills_index
         from sparta_ai.memory.chroma_store import build_memory_context
+        from sparta_ai.memory.context_manager import compress_if_needed
         from sparta_ai.config.providers import build_llm
+        from sparta_ai.persistence.sqlite_store import get_checkpointer
 
         llm = build_llm(
             model=model,
@@ -162,6 +168,8 @@ class StdioServer:
             reasoning_enabled=reasoning.get("enabled", False),
             reasoning_budget=reasoning.get("budget", 8000),
         )
+
+        compressed_messages = await compress_if_needed(messages, llm)
 
         # Level 1: lightweight index in system prompt
         all_skills = skills_index()
@@ -201,15 +209,17 @@ class StdioServer:
             from sparta_ai.tools.web_search import web_search_tool
             agent_tools.insert(0, web_search_tool)
 
+        checkpointer = get_checkpointer()
         graph = build_sparta_graph(
             llm=llm,
             tools=agent_tools,
             skill_context=skill_context,
             memory_context=memory_context,
+            checkpointer=checkpointer,
         )
 
         initial_state: SpartaState = {
-            "messages": messages,
+            "messages": compressed_messages,
             "session_id": session_id,
             "mode": mode,
             "active_skills": skills,
@@ -219,9 +229,15 @@ class StdioServer:
             "subagent_results": [],
             "pending_human_input": None,
             "abort_requested": False,
+            "plan": [],
+            "current_step": 0,
+            "plan_complete": False,
+            "reflection_retries": 0,
         }
 
-        await stream_agent_to_electron(graph, initial_state, request_id)
+        await stream_agent_to_electron(
+            graph, initial_state, request_id, thread_id=session_id or request_id
+        )
 
 
 def _emit(request_id: str, event: str, data: dict | None = None):

@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import os
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
@@ -72,6 +73,9 @@ async def handle_chat_stream(ws: WebSocket, params: dict):
     web_search_enabled = params.get("web_search_enabled", True)
     session_id = params.get("sessionId") or params.get("session_id", "")
     message_id = params.get("messageId") or params.get("message_id", "")
+    workspace_root = params.get("workspace_root") or params.get("workspaceRoot") or os.environ.get("SPARTA_WORKSPACE_ROOT")
+    if workspace_root:
+        os.environ["SPARTA_WORKSPACE_ROOT"] = str(workspace_root)
 
     if not provider_key:
         await ws.send_text(json.dumps({
@@ -152,7 +156,9 @@ async def _execute_agent_ws(
 ) -> None:
     from sparta_ai.skills.skill_loader import build_skills_context, skills_index
     from sparta_ai.memory.chroma_store import build_memory_context
+    from sparta_ai.memory.context_manager import compress_if_needed
     from sparta_ai.config.providers import build_llm
+    from sparta_ai.persistence.sqlite_store import get_checkpointer
 
     llm = build_llm(
         model=model,
@@ -162,6 +168,8 @@ async def _execute_agent_ws(
         reasoning_enabled=reasoning.get("enabled", False),
         reasoning_budget=reasoning.get("budget", 8000),
     )
+
+    compressed_messages = await compress_if_needed(messages, llm)
 
     # Level 1: lightweight index in system prompt
     all_skills = skills_index()
@@ -201,15 +209,17 @@ async def _execute_agent_ws(
         from sparta_ai.tools.web_search import web_search_tool
         agent_tools.insert(0, web_search_tool)
 
+    checkpointer = get_checkpointer()
     graph = build_sparta_graph(
         llm=llm,
         tools=agent_tools,
         skill_context=skill_context,
         memory_context=memory_context,
+        checkpointer=checkpointer,
     )
 
     initial_state: SpartaState = {
-        "messages": messages,
+        "messages": compressed_messages,
         "session_id": session_id,
         "mode": mode,
         "active_skills": skills,
@@ -219,9 +229,16 @@ async def _execute_agent_ws(
         "subagent_results": [],
         "pending_human_input": None,
         "abort_requested": False,
+        "plan": [],
+        "current_step": 0,
+        "plan_complete": False,
+        "reflection_retries": 0,
     }
 
-    await stream_agent_to_websocket(graph, initial_state, ws, request_id, session_id, message_id)
+    await stream_agent_to_websocket(
+        graph, initial_state, ws, request_id, session_id, message_id,
+        thread_id=session_id or request_id,
+    )
 
 
 @app.get("/api/skills/index")
