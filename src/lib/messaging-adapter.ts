@@ -18,6 +18,7 @@ interface ChatSendRequest {
   semanticMemory?: boolean
   reasoning?: { enabled: boolean; budget: number }
   webSearchEnabled?: boolean
+  workspaceRoot?: string
 }
 
 interface MessagingAdapterSendResult {
@@ -139,6 +140,7 @@ class WebAdapter implements MessagingAdapter {
           semantic_memory: request.semanticMemory,
           reasoning: request.reasoning,
           web_search_enabled: request.webSearchEnabled ?? true,
+          workspace_root: request.workspaceRoot,
         },
       }))
       return Promise.resolve({ ok: true })

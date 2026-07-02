@@ -1,0 +1,162 @@
+GUIA DE PRUEBAS PARA PROMPTS - SPARTA AGENT
+============================================
+
+Este archivo explica como probar los prompts del agente y que partes del sistema hay que revisar para confirmar que todo funciona bien.
+
+
+1. ANTES DE PROBAR
+------------------
+1. Asegurate de tener instaladas las dependencias:
+   - Frontend: pnpm install (en D:\sparta-agent)
+   - Python:   .venv\Scripts\python -m pip install -r requirements.txt (en D:\sparta-agent\python)
+
+2. Verifica que los tests automaticos pasen:
+   - Frontend: pnpm tsc --noEmit
+               pnpm test
+   - Python:   cd python
+               .venv\Scripts\python -m pytest sparta_ai/tests/ -q
+
+3. Levanta la aplicacion:
+   - pnpm dev   (modo desarrollo Electron + Vite)
+   - O si usas el backend web: cd python && .venv\Scripts\python -m sparta_ai.server_web
+
+
+2. QUE PROMPTS USAR PARA PROBAR
+-------------------------------
+A continuacion hay prompts por categoria. Cada uno toca una parte distinta del sistema.
+
+A) RESPUESTA NORMAL
+   Prompt: "Explicame que es TypeScript en dos oraciones."
+   Revisar:
+   - El mensaje del usuario aparece en el chat.
+   - Llega la respuesta del asistente.
+   - No se queda "pensando" para siempre.
+   - El estado thinking pasa de "starting" -> "streaming" -> "completed".
+
+B) RAZONAMIENTO / THINKING
+   Prompt: "Resuelve paso a paso: si tengo 10 manzanas y doy 3, cuantas me quedan?"
+   Revisar:
+   - Se muestra el bloque de thinking (lineas de razonamiento).
+   - Aparece "thinking:started" y luego "thinking:completed".
+   - El texto visible no incluye basura de razonamiento (ej. tags <think>).
+
+C) HERRAMIENTAS / TOOLS
+   Prompt: "Busca en internet cuanto mide la Torre Eiffel."
+   Revisar:
+   - Se emite el evento "tool:called" con la herramienta de busqueda.
+   - Aparece "search:progress" si tarda.
+   - Se recibe "tool:result".
+   - La respuesta final usa la informacion de la herramienta.
+
+D) TERMINAL
+   Prompt: "Ejecuta el comando 'echo hola desde sparta' en la terminal."
+   Revisar:
+   - Se emite "terminal:agent_command".
+   - El comando aparece en el panel de terminal.
+   - Se ve la salida del comando.
+
+E) PLANNER / REFLECTION (Semana 4)
+   Prompt: "Planifica como crear una API REST en Python con FastAPI y luego reflexiona sobre el plan."
+   Revisar:
+   - Aparece el componente EventTimeline con los pasos del planner.
+   - Aparece el componente ReflectionBlock con la reflexion.
+   - El plan incluye subtareas numeradas.
+
+F) SKILLS
+   Prompt: "Activa el skill de codigo y escribe una funcion de factorial en Python."
+   Revisar:
+   - En el thinking se detecta el skill.
+   - Se emite "skill:activated".
+   - Aparece el icono/nombre del skill en la UI.
+
+G) MULTIMODAL / IMAGEN (si aplica)
+   Prompt: "Describe esta imagen" (adjuntando imagen).
+   Revisar:
+   - La imagen se muestra en el mensaje del usuario.
+   - El modelo responde sobre la imagen.
+
+H) PERSISTENCIA DE SESION
+   Prompt: "Mi color favorito es el azul."
+   Accion: Cerrar y volver a abrir la app.
+   Revisar:
+   - La sesion y el mensaje siguen ahi.
+   - Nuevo prompt: "Cual es mi color favorito?" debe responder "azul".
+
+I) MEMORIA / CONTEXT MANAGER
+   Prompt: "Recuerda que trabajo con React."
+   Prompt siguiente: "Que libreria uso para interfaces?"
+   Revisar:
+   - La respuesta menciona React.
+   - En el backend se guardo el dato en la memoria persistente.
+
+J) ERROR / EMPTY RESPONSE
+   Prompt: "" (mensaje vacio) o un prompt que falle.
+   Revisar:
+   - Se muestra un mensaje de error amigable.
+   - No se rompe la UI.
+
+
+3. QUE REVISAR DURANTE LAS PRUEBAS
+----------------------------------
+A) Consola del renderer (DevTools de Electron):
+   - Errores de TypeScript/React.
+   - Eventos recibidos por IPC.
+   - Estados de Zustand.
+
+B) Consola del proceso principal:
+   - Logs del sidecar Python.
+   - Errores de comunicacion IPC.
+
+C) Consola del sidecar Python:
+   - Eventos emitidos por stdout/WebSocket.
+   - Errores de LangGraph, tools o skills.
+
+D) Archivos de persistencia:
+   - sparta-session (sessiones).
+   - sparta-chat (mensajes).
+   - python/data/memory.json o sqlite (memoria).
+
+E) Network / WebSocket:
+   - Si usas server_web, revisar la pestana Network > WS en DevTools.
+   - Confirmar que llegan eventos tipo "stream:token", "thinking:token", etc.
+
+
+4. CHECKLIST FINAL
+------------------
+- [ ] tsc pasa sin errores.
+- [ ] pnpm test pasa (41 tests).
+- [ ] pytest pasa (39 tests).
+- [ ] Prompt basico responde correctamente.
+- [ ] Thinking se muestra y oculta bien.
+- [ ] Tools emiten eventos y la respuesta las usa.
+- [ ] Terminal ejecuta comandos.
+- [ ] Planner/Reflection renderizan.
+- [ ] Skills se detectan y muestran.
+- [ ] Persistencia de sesion funciona despues de reiniciar.
+- [ ] Memoria recuerda datos entre mensajes.
+- [ ] Errores se manejan sin crashear.
+
+
+5. COMANDOS RAPIDOS
+-------------------
+Type-check:
+  pnpm tsc --noEmit
+
+Tests frontend:
+  pnpm test
+
+Tests Python:
+  cd python
+  .venv\Scripts\python -m pytest sparta_ai/tests/ -q
+
+Levantar app:
+  pnpm dev
+
+Levantar backend web:
+  cd python
+  .venv\Scripts\python -m sparta_ai.server_web
+
+
+FIN
+---
+Actualiza este archivo si aparecen nuevas funcionalidades o nuevos casos de prueba.

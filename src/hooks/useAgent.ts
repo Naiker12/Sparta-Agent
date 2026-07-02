@@ -65,7 +65,6 @@ export function useAgent() {
       timestamp: Date.now(),
     })
 
-    const model = provider?.defaultModel ?? agent.model ?? 'gpt-4'
     const defaultSystem = systemPrompt ?? (
       `Eres el agente "${agent.name}" (${agent.type}).\n` +
       `Completas tareas usando herramientas MCP.\n` +
@@ -122,7 +121,6 @@ export function useAgent() {
         agentId,
         taskDescription,
         defaultSystem,
-        model,
         allowedTools,
         toolDefs,
         toolRunner,

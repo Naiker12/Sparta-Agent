@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { useChatStore } from '../chat.store'
+import { useSessionStore } from '../session.store'
 
 function createMessage(sessionId: string, role: 'user' | 'assistant' = 'user', content = 'hola'): ReturnType<typeof useChatStore.getState>['messagesBySession'][string][number] {
   return {
@@ -13,28 +14,31 @@ function createMessage(sessionId: string, role: 'user' | 'assistant' = 'user', c
 
 describe('chat store deletion', () => {
   beforeEach(() => {
-    useChatStore.setState(useChatStore.getInitialState?.() ?? { sessions: [], activeSessionId: null, messagesBySession: {} } as never)
+    useChatStore.setState(useChatStore.getInitialState?.() ?? { messagesBySession: {} } as never)
+    useSessionStore.setState(useSessionStore.getInitialState?.() ?? { sessions: [], activeSessionId: null } as never)
   })
 
   it('deleteSession removes session, messages and cleans streaming state', () => {
-    const sid = useChatStore.getState().createSession('Test')
+    const sid = useSessionStore.getState().createSession('Test')
     const msg = createMessage(sid)
     useChatStore.getState().addMessage(msg)
     useChatStore.getState().startStreaming(sid)
-    useChatStore.getState().switchSession(sid)
+    useSessionStore.getState().switchSession(sid)
 
-    useChatStore.getState().deleteSession(sid)
+    useSessionStore.getState().deleteSession(sid)
+    useChatStore.getState().deleteSessionMessages(sid)
 
-    const state = useChatStore.getState()
-    expect(state.sessions.find((s) => s.id === sid)).toBeUndefined()
-    expect(state.messagesBySession[sid]).toBeUndefined()
-    expect(state.streamingBySession[sid]).toBeUndefined()
-    expect(state.activeSessionId).toBeNull()
-    expect(state.isStreaming).toBe(false)
+    const sessionState = useSessionStore.getState()
+    const chatState = useChatStore.getState()
+    expect(sessionState.sessions.find((s) => s.id === sid)).toBeUndefined()
+    expect(chatState.messagesBySession[sid]).toBeUndefined()
+    expect(chatState.streamingBySession[sid]).toBeUndefined()
+    expect(sessionState.activeSessionId).toBeNull()
+    expect(chatState.isStreaming).toBe(false)
   })
 
   it('transiciona thinkingStatus: starting → streaming → completed sin quedarse pegado', () => {
-    const sid = useChatStore.getState().createSession('Test')
+    const sid = useSessionStore.getState().createSession('Test')
     const msg = createMessage(sid, 'assistant', '')
     useChatStore.getState().addMessage(msg)
     const mid = msg.id
@@ -60,15 +64,16 @@ describe('chat store deletion', () => {
   })
 
   it('deleteMessage removes a single message and decrements count', () => {
-    const sid = useChatStore.getState().createSession('Test')
+    const sid = useSessionStore.getState().createSession('Test')
     const msg = createMessage(sid)
     useChatStore.getState().addMessage(msg)
-    const beforeCount = useChatStore.getState().sessions.find((s) => s.id === sid)!.messageCount
+    const beforeCount = useSessionStore.getState().sessions.find((s) => s.id === sid)!.messageCount
 
     useChatStore.getState().deleteMessage(sid, msg.id)
 
-    const state = useChatStore.getState()
-    expect(state.messagesBySession[sid].find((m) => m.id === msg.id)).toBeUndefined()
-    expect(state.sessions.find((s) => s.id === sid)!.messageCount).toBe(beforeCount - 1)
+    const chatState = useChatStore.getState()
+    const sessionState = useSessionStore.getState()
+    expect(chatState.messagesBySession[sid].find((m) => m.id === msg.id)).toBeUndefined()
+    expect(sessionState.sessions.find((s) => s.id === sid)!.messageCount).toBe(beforeCount - 1)
   })
 })
