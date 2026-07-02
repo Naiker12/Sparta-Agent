@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { X, ExternalLink, Tag, Calendar, MessageSquare, Trash2 } from 'lucide-react'
 import type { MemoryEntry, MemoryGraphNode } from '@/types'
 import { getGraphNodeColor } from '@/lib/graph-colors'
-import { useChatStore } from '@/stores/chat.store'
+import { useSessionStore } from '@/stores/session.store'
 import { useMemoryStore } from '@/stores/memory.store'
 import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog'
 
@@ -125,7 +125,7 @@ export function MemoryNodePanel({ entry, onClose }: MemoryNodePanelProps) {
           {entry.sourceMessageId && (
             <button
               onClick={() => {
-                useChatStore.getState().switchSession(entry.sourceSessionId!)
+                useSessionStore.getState().switchSession(entry.sourceSessionId!)
               }}
               style={{
                 fontSize: 10, color: 'var(--accent)', background: 'none', border: 'none',
