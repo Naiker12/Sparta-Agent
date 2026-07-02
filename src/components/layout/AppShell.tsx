@@ -60,7 +60,7 @@ export function AppShell() {
 
   useEffect(() => {
     initTheme()
-    useChatStore.getState().cleanupStaleSessions()
+    useChatStore.getState().cleanupStaleStreams()
   }, [])
 
   const { settingsOpen } = useSettingsStore()

@@ -1,0 +1,101 @@
+.drag-region { -webkit-app-region: drag; }
+.no-drag { -webkit-app-region: no-drag; }
+
+/* Disable sidebar transitions when dragging to ensure smooth resizing */
+body.is-dragging-sidebar [data-slot="sidebar-gap"],
+body.is-dragging-sidebar [data-slot="sidebar-container"],
+body.is-dragging-sidebar [data-sidebar="sidebar"],
+body.is-dragging-sidebar [data-slot="sidebar-wrapper"] {
+  transition: none !important;
+}
+
+/* Remove default focus outline on ALL sidebar interactive elements */
+[data-sidebar="sidebar"] button,
+[data-sidebar="sidebar"] input,
+[data-sidebar="sidebar"] [role="button"] {
+  outline: none !important;
+}
+[data-sidebar="sidebar"] button:focus,
+[data-sidebar="sidebar"] button:focus-visible,
+[data-sidebar="sidebar"] input:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* SIDEBAR INNER — background + border */
+[data-slot="sidebar-inner"] {
+  background: var(--bg-sidebar) !important;
+}
+[data-slot="sidebar-container"] {
+  border-color: var(--border-normal) !important;
+}
+
+/* PANEL SLIDE (Editor derecha, Terminal abajo) */
+.panel-editor {
+  background: var(--bg-base);
+  overflow: hidden;
+  animation: panelSlideInRight 0.2s ease-out;
+  z-index: 10;
+}
+
+.panel-terminal {
+  background: var(--bg-base);
+  overflow: hidden;
+  animation: panelSlideInBottom 0.2s ease-out;
+  z-index: 10;
+}
+
+/* Resize handles */
+.editor-resize-handle {
+  position: absolute;
+  left: -3px;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+  background: transparent;
+  transition: background 0.15s;
+}
+
+.editor-resize-handle:hover,
+.editor-resize-handle:active {
+  background: var(--accent);
+  opacity: 0.4;
+}
+
+.terminal-resize-handle {
+  position: absolute;
+  top: -3px;
+  left: 0;
+  right: 0;
+  height: 6px;
+  cursor: row-resize;
+  background: transparent;
+  transition: background 0.15s;
+}
+
+.terminal-resize-handle:hover,
+.terminal-resize-handle:active {
+  background: var(--accent);
+  opacity: 0.4;
+}
+
+/* Panel close button */
+.panel-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.panel-close-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}

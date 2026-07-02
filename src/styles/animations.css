@@ -1,0 +1,60 @@
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pulse { 0%,100% { opacity:0.4; } 50% { opacity:1; } }
+@keyframes viewFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes messageSlideIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes modalBackdropIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes modalScaleIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes panelSlideInRight {
+  from { width: 0; opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes panelSlideInBottom {
+  from { height: 0; opacity: 0; }
+  to { opacity: 1; }
+}
+
+.message-row {
+  animation: messageSlideIn 0.2s ease-out;
+}
+
+.brand-icon-mono {
+  filter: none;
+  transition: filter 150ms ease;
+}
+[data-theme-mode="dark"] .brand-icon-mono {
+  filter: invert(1) brightness(1.8);
+}
+
+.generating-dots {
+  display: flex;
+  gap: 4px;
+  padding: 8px 0 4px;
+}
+
+.generating-dots span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  display: inline-block;
+}

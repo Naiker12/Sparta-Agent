@@ -9,7 +9,7 @@ import './index.css'
 initTheme()
 
 // Clean up stale streaming sessions on app start
-useChatStore.getState().cleanupStaleSessions()
+useChatStore.getState().cleanupStaleStreams()
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

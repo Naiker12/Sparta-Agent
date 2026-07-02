@@ -3,6 +3,7 @@ import { Bot, Clock, Sparkles, Circle, Zap } from 'lucide-react'
 import { useSettingsStore } from '@/stores/settings.store'
 import { useProviderStore } from '@/stores/provider.store'
 import { useChatStore } from '@/stores/chat.store'
+import { useSessionStore } from '@/stores/session.store'
 import { useAgentStore } from '@/stores/agent.store'
 import { useCronStore } from '@/stores/cron.store'
 import { useUsageStore } from '@/stores/usage.store'
@@ -20,7 +21,7 @@ export function StatusBar() {
   const providers = useProviderStore((s) => s.providers)
   const activeProvider = providers.find((p) => p.defaultModel === activeModel)
   const streamingBySession = useChatStore((s) => s.streamingBySession)
-  const activeSessionId = useChatStore((s) => s.activeSessionId)
+  const activeSessionId = useSessionStore((s) => s.activeSessionId)
   const agents = useAgentStore((s) => s.agents)
   const cronJobs = useCronStore((s) => s.jobs)
   const totalInput = useUsageStore((s) => s.totalInput)

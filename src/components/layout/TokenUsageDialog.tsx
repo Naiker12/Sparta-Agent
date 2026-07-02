@@ -1,6 +1,6 @@
 import { X } from 'lucide-react'
 import { useUsageStore } from '@/stores/usage.store'
-import { useChatStore } from '@/stores/chat.store'
+import { useSessionStore } from '@/stores/session.store'
 
 interface TokenUsageDialogProps {
   open: boolean
@@ -8,7 +8,7 @@ interface TokenUsageDialogProps {
 }
 
 export function TokenUsageDialog({ open, onClose }: TokenUsageDialogProps) {
-  const activeSessionId = useChatStore((s) => s.activeSessionId)
+  const activeSessionId = useSessionStore((s) => s.activeSessionId)
   const totalInput = useUsageStore((s) => s.totalInput)
   const totalOutput = useUsageStore((s) => s.totalOutput)
   const currentTurnInput = useUsageStore((s) => s.currentTurnInput)
