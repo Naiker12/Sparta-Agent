@@ -2,7 +2,6 @@ import type { ToolCall, TaskStep } from '@/types'
 import { useAgentStore } from '@/stores/agent.store'
 import { useEventBus } from '@/stores/event-bus.store'
 import { executeTool, executeToolsParallel, areToolCallsIndependent } from './tool-executor'
-import { spawnSubagent } from './subagent-spawner'
 
 const MAX_LLM_TURNS = 10
 
@@ -43,11 +42,6 @@ function extractFinalResult(text: string): string {
   return clean || text
 }
 
-function detectSubagentRequest(text: string): string | null {
-  const delegMatch = /<delegar>\s*<tarea>([\s\S]*?)<\/tarea>\s*<\/delegar>/.exec(text)
-  return delegMatch ? delegMatch[1].trim() : null
-}
-
 function buildStepId(name: string, index: number): string {
   return `step-${index}-${name.toLowerCase().replace(/\s+/g, '-')}`
 }
@@ -57,13 +51,10 @@ export async function runAgentTask(
   agentId: string,
   taskDescription: string,
   systemPrompt: string,
-  model: string,
   allowedTools: string[],
   toolDefinitions: unknown[],
   toolRunner: (name: string, args: unknown) => Promise<unknown>,
   llmCall: (prompt: string) => Promise<string>,
-  depth = 0,
-  _tokenBudget = 32000,
 ): Promise<string> {
   const messages: { role: string; content: string }[] = [
     { role: 'user', content: taskDescription },
@@ -85,49 +76,9 @@ export async function runAgentTask(
 
     const toolUseBlocks = parseToolUseBlocks(response)
 
-    const subagentTask = detectSubagentRequest(response)
-
-    if (toolUseBlocks.length === 0 && !subagentTask) {
+    if (toolUseBlocks.length === 0) {
       accumulatedResult = extractFinalResult(response)
       break
-    }
-
-    if (subagentTask) {
-      const subResult = await spawnSubagent(
-        subagentTask,
-        {
-          parentAgentId: agentId,
-          depth,
-          allowedTools,
-        },
-        model,
-        llmCall,
-        toolDefinitions,
-        toolRunner,
-      )
-
-      const subStep: TaskStep = {
-        id: buildStepId(`subagente-${depth}`, turnCount),
-        name: `Subagente: ${subagentTask.slice(0, 40)}`,
-        status: subResult.error ? 'error' : 'completed',
-        tool: 'subagent',
-        durationMs: subResult.durationMs,
-        error: subResult.error,
-      }
-
-      const store = useAgentStore.getState()
-      store.updateTask(agentId, taskId, {
-        steps: [
-          ...(store.tasks[agentId]?.find((t) => t.id === taskId)?.steps ?? []),
-          subStep,
-        ],
-      })
-
-      messages.push({
-        role: 'user',
-        content: `Resultado del subagente: ${subResult.result}`,
-      })
-      continue
     }
 
     const toolCalls: ToolCall[] = toolUseBlocks.map((b) => ({
@@ -232,9 +183,6 @@ function buildPrompt(
     prompt += `## Herramientas disponibles\n`
     prompt += `Puedes usar las siguientes herramientas. Cuando necesites usar una, responde con:\n`
     prompt += `<tool_use>\n<tool_name>nombre-de-la-herramienta</tool_name>\n<tool_input>{json input}</tool_input>\n</tool_use>\n\n`
-    prompt += `Si necesitas delegar una subtarea a un subagente, responde con:\n`
-    prompt += `<delegar>\n<tarea>descripción de la tarea a delegar</tarea>\n</delegar>\n\n`
-
     for (const def of toolDefinitions) {
       const td = def as { name: string; description: string }
       if (allowedTools.includes(td.name)) {

@@ -64,8 +64,9 @@ async function duckduckgoSearch(query: string): Promise<string> {
     .join('\n\n')
 }
 
-export async function executeWebSearch(query: string, _count = 5): Promise<string> {
+export async function executeWebSearch(query: string, count = 5): Promise<string> {
   const results = await duckduckgoSearch(query)
   if (!results) return 'No se encontraron resultados en la búsqueda web.'
-  return ['Información obtenida de búsqueda web:', results].join('\n')
+  const limited = results.split('\n\n').slice(0, count).join('\n\n')
+  return ['Información obtenida de búsqueda web:', limited].join('\n')
 }
