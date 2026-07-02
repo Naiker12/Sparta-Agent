@@ -31,11 +31,26 @@ export function useStreamEvents() {
     }
     let flushTimerRef: ReturnType<typeof setTimeout> | null = null
 
+    const thinkBufferRef: { sid: string; mid: string; tokens: string[] } = {
+      sid: '',
+      mid: '',
+      tokens: [],
+    }
+    let thinkFlushTimerRef: ReturnType<typeof setTimeout> | null = null
+
     function flushTokenBuffer() {
       const { sid, mid, tokens } = tokenBufferRef
       if (tokens.length === 0) return
       appendContent(sid, mid, tokens.join(''))
       tokenBufferRef.tokens = []
+    }
+
+    function flushThinkBuffer() {
+      const { sid, mid, tokens } = thinkBufferRef
+      if (tokens.length === 0) return
+      const store = useChatStore.getState()
+      store.appendThinking(sid, mid, tokens.join(''))
+      thinkBufferRef.tokens = []
     }
 
     const unsub = messagingAdapter.onEvent((rawEvent: SpartaEvent) => {
@@ -67,12 +82,22 @@ export function useStreamEvents() {
             console.warn('[useStreamEvents] thinking:token ignorado, thinking ya completó')
             break
           }
-          console.debug('[useStreamEvents] thinking:token', thinkToken.slice(0, 40))
-          store.appendThinking(sid, mid, thinkToken, (event as { chunkSeq?: number }).chunkSeq)
+          if (thinkBufferRef.sid !== sid || thinkBufferRef.mid !== mid) {
+            flushThinkBuffer()
+            thinkBufferRef.sid = sid
+            thinkBufferRef.mid = mid
+          }
+          thinkBufferRef.tokens.push(thinkToken)
+          if (thinkFlushTimerRef) clearTimeout(thinkFlushTimerRef)
+          thinkFlushTimerRef = setTimeout(() => {
+            thinkFlushTimerRef = null
+            flushThinkBuffer()
+          }, 16)
           break
         }
         case 'thinking:completed': {
           console.debug('[useStreamEvents] thinking:completed', sid, mid)
+          flushThinkBuffer()
           const tokensUsed = (event as { tokensUsed: number }).tokensUsed ?? 0
           store.onThinkingEnd(sid, mid, tokensUsed)
           store.updateMessage(mid, { reasoningCompletedAt: Date.now() })
@@ -127,6 +152,7 @@ export function useStreamEvents() {
         }
         case 'stream:completed': {
           flushTokenBuffer()
+          flushThinkBuffer()
           const currentMsg = store.messagesBySession[sid]?.find((m) => m.id === mid)
           if (currentMsg?.thinkingStatus === 'streaming' || (currentMsg?.reasoningText && currentMsg?.thinkingStatus !== 'completed')) {
             console.debug('[safety-net] cerrando thinking en stream:completed')
@@ -158,6 +184,7 @@ export function useStreamEvents() {
         }
         case 'stream:aborted': {
           flushTokenBuffer()
+          flushThinkBuffer()
           const abortedMsg = store.messagesBySession[sid]?.find((m) => m.id === mid)
           if (abortedMsg?.thinkingStatus === 'streaming' || (abortedMsg?.reasoningText && abortedMsg?.thinkingStatus !== 'completed')) {
             console.debug('[safety-net] cerrando thinking en stream:aborted')
@@ -169,6 +196,7 @@ export function useStreamEvents() {
         }
         case 'stream:error': {
           flushTokenBuffer()
+          flushThinkBuffer()
           store.onStreamEnd(sid, mid)
           stopStreamingFn(sid)
           const errorMsg = (event as { error?: string }).error ?? 'Error durante la generación'

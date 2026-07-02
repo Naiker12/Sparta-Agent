@@ -41,14 +41,27 @@ export function ThinkingBlock({ content, status, tokensUsed, pipelineSteps, clas
   const badgesEndRef = useRef<HTMLDivElement>(null)
   const prevBadgeCount = useRef(0)
   const userToggled = useRef(false)
+  const accumulatedContent = useRef('')
+  const allLines = useRef<ThinkingLine[]>([])
+  const streamingIndex = useRef(0)
 
   const [displayedLines, setDisplayedLines] = useState<ThinkingLine[]>([])
   const pendingLinesRef = useRef<ThinkingLine[]>([])
 
-  const lines = useMemo(() => {
-    if (!content) return []
-    return content.split('\n').filter(Boolean).map((line, index) => parseThinkingLine(line, index))
-  }, [content])
+  // Append-only parsing: only parse new content since last render
+  if (content && content.length > accumulatedContent.current.length) {
+    const newText = content.slice(accumulatedContent.current.length)
+    accumulatedContent.current = content
+    if (newText) {
+      const newLines = newText.split('\n').filter(Boolean).map((line) => parseThinkingLine(line, streamingIndex.current++))
+      allLines.current.push(...newLines)
+    }
+  } else if (!content) {
+    accumulatedContent.current = ''
+    allLines.current = []
+    streamingIndex.current = 0
+  }
+  const lines = allLines.current
 
   useEffect(() => {
     pendingLinesRef.current = lines
@@ -106,7 +119,7 @@ export function ThinkingBlock({ content, status, tokensUsed, pipelineSteps, clas
   const canToggle = status !== 'streaming' && status !== 'starting'
 
   return (
-    <motion.div layout className={cn('thinking-block-v2', className)}>
+    <motion.div layout={status !== 'streaming' && status !== 'starting'} className={cn('thinking-block-v2', className)}>
       <button
         onClick={() => { if (!canToggle) return; userToggled.current = true; setIsExpanded((v) => !v) }}
         disabled={!canToggle}
