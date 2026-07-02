@@ -18,6 +18,7 @@ export type EventType =
   | 'stream:error'
   | 'pipeline:step'
   | 'chat:message'
+  | 'chat:send_queued'
   | 'session:created'
   | 'session:switched'
   | 'project:created'
@@ -172,6 +173,12 @@ export interface ChatMessageEvent extends BaseEvent {
   type: 'chat:message'
   role: 'user' | 'assistant' | 'system'
   content: string
+}
+
+export interface ChatSendQueuedEvent extends BaseEvent {
+  type: 'chat:send_queued'
+  text: string
+  sessionId?: string
 }
 
 export interface SessionCreatedEvent extends BaseEvent {
@@ -335,6 +342,7 @@ export type SpartaEvent =
   | StreamErrorEvent
   | PipelineStepEvent
   | ChatMessageEvent
+  | ChatSendQueuedEvent
   | SessionCreatedEvent
   | SessionSwitchedEvent
   | ProjectCreatedEvent
