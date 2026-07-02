@@ -1,8 +1,8 @@
 import { MessageSquare } from 'lucide-react'
-import { useChatStore } from '@/stores/chat.store'
+import { useSessionStore } from '@/stores/session.store'
 
 export function SessionsView() {
-  const { sessions, activeSessionId, switchSession, createSession } = useChatStore()
+  const { sessions, activeSessionId, switchSession, createSession } = useSessionStore()
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>

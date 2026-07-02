@@ -1,8 +1,8 @@
-import { useChatStore } from '@/stores/chat.store'
+import { useSessionStore } from '@/stores/session.store'
 import { SessionItem } from './SessionItem'
 
 export function SessionList() {
-  const { sessions } = useChatStore()
+  const { sessions } = useSessionStore()
 
   if (sessions.length === 0) {
     return (

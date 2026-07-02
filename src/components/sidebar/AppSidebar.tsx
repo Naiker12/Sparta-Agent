@@ -7,7 +7,7 @@ import {
   SidebarRail,
 } from '@/components/ui/sidebar'
 import { Plus, Search, X, MessageSquare, Zap, Plug, Hash, Brain, Settings, SlidersHorizontal } from 'lucide-react'
-import { useChatStore } from '@/stores/chat.store'
+import { useSessionStore } from '@/stores/session.store'
 import { useSkillStore } from '@/stores/skill.store'
 import { useMCPStore } from '@/stores/mcp.store'
 import { useChannelStore } from '@/stores/channel.store'
@@ -25,7 +25,7 @@ const NAV_ITEMS = [
 ]
 
 export function AppSidebar() {
-  const { sessions, createSession }   = useChatStore()
+  const { sessions, createSession }   = useSessionStore()
   const { activeSkillIds }            = useSkillStore()
   const { servers }                   = useMCPStore()
   const { channels }                  = useChannelStore()

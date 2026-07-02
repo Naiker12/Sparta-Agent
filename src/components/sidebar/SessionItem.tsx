@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dialog'
 import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog'
 import { useChatStore } from '@/stores/chat.store'
+import { useSessionStore } from '@/stores/session.store'
 import { useUIStore } from '@/stores/ui.store'
 import type { Session } from '@/types'
 
@@ -24,7 +25,8 @@ interface SessionItemProps {
 }
 
 export function SessionItem({ session }: SessionItemProps) {
-  const { activeSessionId, switchSession, pinSession, deleteSession, renameSession, streamingBySession } = useChatStore()
+  const { activeSessionId, switchSession, pinSession, deleteSession, renameSession } = useSessionStore()
+  const { deleteSessionMessages, streamingBySession } = useChatStore()
   const { setMainView } = useUIStore()
   const [menuOpen, setMenuOpen]       = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
@@ -183,6 +185,7 @@ export function SessionItem({ session }: SessionItemProps) {
         itemLabel={title}
         onConfirm={() => {
           deleteSession(session.id)
+          deleteSessionMessages(session.id)
           if (isActive) setMainView({ type: 'chat' })
         }}
       />
