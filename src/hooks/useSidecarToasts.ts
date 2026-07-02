@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { toast } from 'sonner'
 import { useEventBus } from '@/stores/event-bus.store'
 import type { SpartaEvent } from '@/types'
@@ -27,15 +27,33 @@ function getErrorMessage(event: SpartaEvent): string {
   }
 }
 
+function sanitizeForToast(message: string): string {
+  return message
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 220)
+}
+
 export function useSidecarToasts() {
   const { subscribe } = useEventBus()
+  const lastShown = useRef<Map<string, string>>(new Map())
 
   useEffect(() => {
     const unsub = subscribe((event) => {
       if (!ERROR_EVENTS.includes(event.type)) return
 
+      const raw = getErrorMessage(event as SpartaEvent)
+      const message = sanitizeForToast(raw)
+      const requestId = 'requestId' in event ? (event as SpartaEvent & { requestId?: string }).requestId : undefined
+      const dedupeKey = requestId ?? 'global'
+
+      if (lastShown.current.get(dedupeKey) === message) return
+      lastShown.current.set(dedupeKey, message)
+
       toast.error('Error de Sparta', {
-        description: getErrorMessage(event as SpartaEvent),
+        description: message,
+        id: `sparta-error-${dedupeKey}`,
       })
     })
     return unsub

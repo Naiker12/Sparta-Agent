@@ -1,6 +1,7 @@
 import { X } from 'lucide-react'
 import { useUsageStore } from '@/stores/usage.store'
 import { useSessionStore } from '@/stores/session.store'
+import { useProviderStore, getVendorLabel } from '@/stores/provider.store'
 
 interface TokenUsageDialogProps {
   open: boolean
@@ -15,6 +16,13 @@ export function TokenUsageDialog({ open, onClose }: TokenUsageDialogProps) {
   const currentTurnOutput = useUsageStore((s) => s.currentTurnOutput)
   const sessionObj = useUsageStore((s) => activeSessionId ? s.bySession[activeSessionId] : undefined)
   const byProvider = useUsageStore((s) => s.byProvider)
+  const providers = useProviderStore((s) => s.providers)
+
+  function labelForProvider(providerId: string): string {
+    const p = providers.find((pr) => pr.id === providerId)
+    if (!p) return providerId.slice(0, 8)
+    return p.label || getVendorLabel(p.vendor)
+  }
 
   if (!open) return null
 
@@ -86,7 +94,7 @@ export function TokenUsageDialog({ open, onClose }: TokenUsageDialogProps) {
                   padding: '4px 8px', borderRadius: 'var(--radius-sm)',
                   background: 'var(--bg-input)',
                 }}>
-                  <span style={{ fontSize: 10, color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', flex: 1 }}>{providerId.slice(0, 12)}</span>
+                  <span style={{ fontSize: 10, color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', flex: 1 }}>{labelForProvider(providerId)}</span>
                   <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)' }}>I:{usage.input}</span>
                   <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)' }}>O:{usage.output}</span>
                 </div>
@@ -119,7 +127,7 @@ export function TokenUsageDialog({ open, onClose }: TokenUsageDialogProps) {
                   padding: '4px 8px', borderRadius: 'var(--radius-sm)',
                   background: 'var(--bg-input)',
                 }}>
-                  <span style={{ fontSize: 10, color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', flex: 1 }}>{providerId.slice(0, 12)}</span>
+                  <span style={{ fontSize: 10, color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', flex: 1 }}>{labelForProvider(providerId)}</span>
                   <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)' }}>I:{usage.input}</span>
                   <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)' }}>O:{usage.output}</span>
                 </div>

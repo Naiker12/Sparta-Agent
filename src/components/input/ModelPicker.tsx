@@ -24,10 +24,19 @@ export function ModelPicker() {
   const activeSessionId = useSessionStore((s) => s.activeSessionId)
   const updateSessionModel = useSessionStore((s) => s.updateSessionModel)
 
-  const allModels: ModelOption[] = providers.flatMap((p) => {
+  const allModelsRaw: ModelOption[] = providers.flatMap((p) => {
     const ids = p.models?.length ? p.models : (p.defaultModel ? [p.defaultModel] : [])
     return ids.map((id) => ({ id, providerLabel: p.label, vendor: p.vendor }))
   })
+
+  const seen = new Set<string>()
+  const allModels: ModelOption[] = []
+  for (const m of allModelsRaw) {
+    const key = `${m.vendor}:${m.id}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    allModels.push(m)
+  }
 
   const modelIds = allModels.map((m) => m.id)
   const activeVendor = allModels.find((m) => m.id === activeModel)?.vendor

@@ -209,7 +209,7 @@ class StdioServer:
             from sparta_ai.tools.web_search import web_search_tool
             agent_tools.insert(0, web_search_tool)
 
-        checkpointer = get_checkpointer()
+        checkpointer = await get_checkpointer()
         graph = build_sparta_graph(
             llm=llm,
             tools=agent_tools,
