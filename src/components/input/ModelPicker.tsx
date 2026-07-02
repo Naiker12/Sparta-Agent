@@ -1,7 +1,7 @@
 import { AlertCircle } from 'lucide-react'
 import { useSettingsStore } from '@/stores/settings.store'
 import { useProviderStore } from '@/stores/provider.store'
-import { useChatStore } from '@/stores/chat.store'
+import { useSessionStore } from '@/stores/session.store'
 import { BrandIcon } from '@/components/ui/BrandIcon'
 import {
   Combobox,
@@ -21,8 +21,8 @@ interface ModelOption {
 export function ModelPicker() {
   const providers = useProviderStore((s) => s.providers)
   const { activeModel, setDefaultModel } = useSettingsStore()
-  const activeSessionId = useChatStore((s) => s.activeSessionId)
-  const updateSessionModel = useChatStore((s) => s.updateSessionModel)
+  const activeSessionId = useSessionStore((s) => s.activeSessionId)
+  const updateSessionModel = useSessionStore((s) => s.updateSessionModel)
 
   const allModels: ModelOption[] = providers.flatMap((p) => {
     const ids = p.models?.length ? p.models : (p.defaultModel ? [p.defaultModel] : [])

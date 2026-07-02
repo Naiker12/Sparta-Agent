@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { Plus, Code2, Search, Settings } from 'lucide-react'
 import { useSettingsStore } from '@/stores/settings.store'
-import { useChatStore } from '@/stores/chat.store'
+import { useSessionStore } from '@/stores/session.store'
 
 const QUICK_ACTIONS = [
   { icon: Plus,    label: 'Nueva sesión', action: 'new' as const },
@@ -21,7 +21,7 @@ const EXAMPLE_PROMPTS = [
 
 export function HeroScreen() {
   const { openSettings, setInput } = useSettingsStore()
-  const { createSession } = useChatStore()
+  const { createSession } = useSessionStore()
 
   function handleAction(action: string) {
     if (action === 'settings') { openSettings(); return }

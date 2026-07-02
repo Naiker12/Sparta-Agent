@@ -3,6 +3,7 @@ import { Plus, Mic, ArrowUp, Square, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { useSettingsStore } from '@/stores/settings.store'
 import { useChatStore } from '@/stores/chat.store'
+import { useSessionStore } from '@/stores/session.store'
 import { useProviderStore } from '@/stores/provider.store'
 import { useChatSession } from '@/hooks/useChatSession'
 import { cn } from '@/lib/utils'
@@ -22,7 +23,7 @@ export function ChatInput({ className }: ChatInputProps) {
   const [showSlash, setShowSlash] = useState(false)
   const { input, setInput } = useSettingsStore()
   const isStreaming = useChatStore((s) => s.isStreaming)
-  const activeSessionId = useChatStore((s) => s.activeSessionId)
+  const activeSessionId = useSessionStore((s) => s.activeSessionId)
   const providers = useProviderStore((s) => s.providers)
   const hasProvider = providers.some((p) => p.kind === 'local' || p.apiKey || p.hasVaultKey)
   const stopStreaming = useChatStore((s) => s.stopStreaming)

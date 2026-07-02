@@ -246,6 +246,12 @@ export function MessageBubble({ message, isLastUser = false }: MessageBubbleProp
             </div>
           )}
 
+          {renderState.kind === 'thinking_pending' && !hasThinking && (
+            <div style={{ marginTop: 8, marginBottom: 8 }}>
+              <ThinkingBlock content="" status="starting" tokensUsed={0} />
+            </div>
+          )}
+
           {renderState.kind === 'generating' || renderState.kind === 'responding' || renderState.kind === 'done' ? (
             <>
               {isUser ? (

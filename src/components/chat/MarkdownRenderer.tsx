@@ -13,6 +13,12 @@ interface MarkdownRendererProps {
 }
 
 function splitStableMarkdown(content: string): { stable: string; pending: string } {
+  // Do not split while we are inside an open code block; otherwise the trailing
+  // backticks remain visible as raw text until the block closes.
+  const codeBlockCount = (content.match(/```/g) || []).length
+  if (codeBlockCount % 2 !== 0) {
+    return { stable: '', pending: content }
+  }
   const lastBoundary = content.lastIndexOf('\n\n')
   if (lastBoundary === -1) return { stable: '', pending: content }
   return {

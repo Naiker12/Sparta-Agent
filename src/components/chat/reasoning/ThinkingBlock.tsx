@@ -42,10 +42,21 @@ export function ThinkingBlock({ content, status, tokensUsed, pipelineSteps, clas
   const prevBadgeCount = useRef(0)
   const userToggled = useRef(false)
 
+  const [displayedLines, setDisplayedLines] = useState<ThinkingLine[]>([])
+  const pendingLinesRef = useRef<ThinkingLine[]>([])
+
   const lines = useMemo(() => {
     if (!content) return []
     return content.split('\n').filter(Boolean).map((line, index) => parseThinkingLine(line, index))
   }, [content])
+
+  useEffect(() => {
+    pendingLinesRef.current = lines
+    const timer = setTimeout(() => {
+      setDisplayedLines([...pendingLinesRef.current])
+    }, 50)
+    return () => clearTimeout(timer)
+  }, [lines])
 
   useEffect(() => {
     if (status === 'starting' || status === 'streaming') {
@@ -90,7 +101,7 @@ export function ThinkingBlock({ content, status, tokensUsed, pipelineSteps, clas
     if (linesEndRef.current && (status === 'streaming' || status === 'starting')) {
       linesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
     }
-  }, [lines.length, status])
+  }, [displayedLines.length, status])
 
   const canToggle = status !== 'streaming' && status !== 'starting'
 
@@ -140,9 +151,9 @@ export function ThinkingBlock({ content, status, tokensUsed, pipelineSteps, clas
               ))}
               <div ref={badgesEndRef} />
 
-              {lines.length > 0 && (
+              {displayedLines.length > 0 && (
                 <AnimatePresence initial={false}>
-                  {lines.map((line, idx) => (
+                  {displayedLines.map((line, idx) => (
                     <motion.div
                       key={line.id}
                       initial={{ opacity: 0, x: -12 }}
@@ -153,7 +164,7 @@ export function ThinkingBlock({ content, status, tokensUsed, pipelineSteps, clas
                       <span className="thinking-line-icon">{line.icon}</span>
                       <span className="thinking-line-text">
                         {line.text}
-                        {idx === lines.length - 1 && status === 'streaming' && (
+                        {idx === displayedLines.length - 1 && status === 'streaming' && (
                           <StreamCursor visible />
                         )}
                       </span>
@@ -163,7 +174,7 @@ export function ThinkingBlock({ content, status, tokensUsed, pipelineSteps, clas
               )}
               <div ref={linesEndRef} />
 
-              {status === 'completed' && lines.length === 0 && content && (
+              {status === 'completed' && displayedLines.length === 0 && content && (
                 <div className="thinking-line" style={{ padding: '4px 0' }}>
                   <span className="thinking-line-icon">\u2713</span>
                   <span className="thinking-line-text">{content}</span>

@@ -13,9 +13,13 @@ const COMMANDS: SlashCommand[] = [
     description: 'Limpiar la conversación actual',
     usage: '/clear',
     action: () => {
+      const { useSessionStore } = require('@/stores/session.store')
       const { useChatStore } = require('@/stores/chat.store')
-      const sid = useChatStore.getState().activeSessionId
-      if (sid) useChatStore.getState().deleteSession(sid)
+      const sid = useSessionStore.getState().activeSessionId
+      if (sid) {
+        useSessionStore.getState().deleteSession(sid)
+        useChatStore.getState().deleteSessionMessages(sid)
+      }
     },
   },
   {
@@ -55,8 +59,9 @@ const COMMANDS: SlashCommand[] = [
     description: 'Mostrar comandos disponibles',
     usage: '/help',
     action: () => {
+      const { useSessionStore } = require('@/stores/session.store')
       const { useChatStore } = require('@/stores/chat.store')
-      const sid = useChatStore.getState().activeSessionId
+      const sid = useSessionStore.getState().activeSessionId
       if (!sid) return
       const content = COMMANDS.map((c) => `- \`${c.usage}\` — ${c.description}`).join('\n')
       useChatStore.getState().addMessage({

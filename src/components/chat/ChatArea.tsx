@@ -1,10 +1,11 @@
 import { useChatStore } from '@/stores/chat.store'
+import { useSessionStore } from '@/stores/session.store'
 import { MessageList } from './MessageList'
 import { ChatInput } from '@/components/input/ChatInput'
 import { HeroScreen } from './HeroScreen'
 
 export function ChatArea() {
-  const activeSessionId = useChatStore((s) => s.activeSessionId)
+  const activeSessionId = useSessionStore((s) => s.activeSessionId)
   const messagesBySession = useChatStore((s) => s.messagesBySession)
   const messages = activeSessionId ? (messagesBySession[activeSessionId] ?? []) : []
 
