@@ -97,14 +97,24 @@ export function TerminalPanel() {
     })
     cleanupRef.current.push(unsubData)
 
-    const result = await window.terminal.create({
-      terminalId: TERMINAL_ID,
-      cols,
-      rows,
-    })
+    let result: { success: boolean; shell: string; error?: string }
+    try {
+      result = await window.terminal.create({
+        terminalId: TERMINAL_ID,
+        cols,
+        rows,
+      })
+    } catch (err) {
+      terminal.writeln('\r\n\x1b[31mError: No se pudo iniciar el shell\x1b[0m')
+      terminal.writeln(`\x1b[90m${err instanceof Error ? err.message : String(err)}\x1b[0m`)
+      return
+    }
 
     if (!result.success) {
       terminal.writeln('\r\n\x1b[31mError: No se pudo iniciar el shell\x1b[0m')
+      if (result.error) {
+        terminal.writeln(`\x1b[90m${result.error}\x1b[0m`)
+      }
       return
     }
 
@@ -130,9 +140,19 @@ export function TerminalPanel() {
     window.electron.send('terminal:ready', { terminalId: TERMINAL_ID })
   }
 
+  async function handleNewSession() {
+    await window.terminal?.destroy(TERMINAL_ID)
+    setIsConnected(false)
+    setShell('')
+    if (terminalRef.current) {
+      terminalRef.current.reset()
+      await initPTY(terminalRef.current)
+    }
+  }
+
   return (
     <div className="terminal-panel">
-      <TerminalHeader shell={shell} isConnected={isConnected} />
+      <TerminalHeader shell={shell} isConnected={isConnected} onNewSession={handleNewSession} />
       <div
         ref={containerRef}
         className="terminal-container"
@@ -141,7 +161,7 @@ export function TerminalPanel() {
   )
 }
 
-function TerminalHeader({ shell, isConnected }: { shell: string; isConnected: boolean }) {
+function TerminalHeader({ shell, isConnected, onNewSession }: { shell: string; isConnected: boolean; onNewSession: () => void }) {
   const toggleTerminal = useUIStore((s) => s.toggleTerminal)
 
   return (
@@ -159,7 +179,7 @@ function TerminalHeader({ shell, isConnected }: { shell: string; isConnected: bo
         <button
           className="terminal-action-btn"
           title="Nueva sesión"
-          onClick={() => window.terminal?.destroy(TERMINAL_ID)}
+          onClick={onNewSession}
         >
           <Plus className="w-3.5 h-3.5" />
         </button>

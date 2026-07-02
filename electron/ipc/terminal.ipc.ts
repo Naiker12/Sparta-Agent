@@ -46,17 +46,29 @@ export function registerTerminalIPC() {
       ? 'powershell.exe'
       : (process.env.SHELL ?? '/bin/bash')
 
-    const ptyProcess = pty.spawn(shell, [], {
-      name: 'xterm-256color',
-      cols: cols ?? 80,
-      rows: rows ?? 24,
-      cwd: process.env.HOME ?? process.cwd(),
-      env: {
-        ...process.env,
-        SPARTA_TERMINAL: '1',
-        TERM_PROGRAM: 'SpartaAgent',
-      },
-    })
+    let ptyProcess: pty.IPty
+    try {
+      ptyProcess = pty.spawn(shell, [], {
+        name: 'xterm-256color',
+        cols: cols ?? 80,
+        rows: rows ?? 24,
+        cwd: process.env.HOME ?? process.cwd(),
+        env: {
+          ...process.env,
+          SPARTA_TERMINAL: '1',
+          TERM_PROGRAM: 'SpartaAgent',
+        },
+      })
+    } catch (err) {
+      console.error('[terminal] pty.spawn failed:', err)
+      return {
+        success: false,
+        shell,
+        error: `No se pudo iniciar la terminal. node-pty probablemente no esta ` +
+               `compilado para esta version de Electron. Corre: npm run rebuild-native. ` +
+               `(${err instanceof Error ? err.message : String(err)})`,
+      }
+    }
 
     const win = getWin(event)
     const state: SessionState = { pty: ptyProcess, buffer: [], ready: false, win }

@@ -775,10 +775,27 @@
   animation: pulse 2s infinite;
 }
 
-/* THINKING SYSTEM */
-.thinking-lines {
-  border-top: 1px solid var(--border-subtle);
-  padding: 6px 10px 8px;
+/* THINKING SYSTEM v2 - sin card, con acento lateral */
+.thinking-block-v2 {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 4px 0;
+}
+
+.thinking-block-trigger {
+  display: inline-flex;
+  width: fit-content;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.thinking-lines-v2 {
+  margin-top: 6px;
+  margin-left: 4px;
+  padding: 2px 0 4px 12px;
+  border-left: 2px solid color-mix(in srgb, var(--status-think) 35%, transparent);
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -795,21 +812,21 @@
 }
 
 .thinking-line-icon {
-  font-size: 13px;
+  font-size: 12px;
   flex-shrink: 0;
-  width: 18px;
+  width: 16px;
   text-align: center;
+  opacity: 0.7;
 }
 
 .thinking-line-text {
-  color: var(--text-secondary);
+  color: var(--text-muted);
   font-family: var(--font-mono);
   word-break: break-word;
 }
 
 .thinking-skeleton {
   padding: 8px 10px;
-  border-top: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -819,16 +836,4 @@
   height: 10px;
   border-radius: 4px;
   background: var(--bg-active);
-}
-
-.text-status-thinking {
-  color: var(--status-thinking);
-}
-
-.text-status-think {
-  color: var(--status-think);
-}
-
-.bg-status-think\/10 {
-  background: color-mix(in srgb, var(--status-think) 10%, transparent);
 }

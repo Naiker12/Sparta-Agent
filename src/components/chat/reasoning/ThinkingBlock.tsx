@@ -106,14 +106,11 @@ export function ThinkingBlock({ content, status, tokensUsed, pipelineSteps, clas
   const canToggle = status !== 'streaming' && status !== 'starting'
 
   return (
-    <motion.div
-      layout
-      className={cn('rounded-sm border border-border-subtle bg-bg-surface overflow-hidden', className)}
-    >
+    <motion.div layout className={cn('thinking-block-v2', className)}>
       <button
         onClick={() => { if (!canToggle) return; userToggled.current = true; setIsExpanded((v) => !v) }}
         disabled={!canToggle}
-        className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-status-thinking hover:bg-bg-elevated transition-colors"
+        className="thinking-block-trigger"
         style={{ cursor: canToggle ? 'pointer' : 'default' }}
       >
         <ThinkingPill
@@ -135,7 +132,7 @@ export function ThinkingBlock({ content, status, tokensUsed, pipelineSteps, clas
             transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
             style={{ overflow: 'hidden' }}
           >
-            <div className="thinking-lines" ref={linesContainerRef}>
+            <div className="thinking-lines-v2" ref={linesContainerRef}>
               {(status === 'starting' || status === 'streaming') && !content && (
                 <ThinkingSkeletonRows />
               )}

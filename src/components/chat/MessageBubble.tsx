@@ -22,9 +22,7 @@ interface MessageBubbleProps {
 
 export function MessageBubble({ message, isLastUser = false }: MessageBubbleProps) {
   const isUser = message.role === 'user'
-  const sessionStreaming = useChatStore((s) => s.streamingBySession[message.sessionId])
-  const isStreaming = sessionStreaming?.isStreaming ?? false
-  const renderState = getMessageRenderState(message.content, message.reasoningText, isStreaming)
+  const renderState = getMessageRenderState(message.content, message.reasoningText, message.isStreaming ?? false)
   const [copied, setCopied] = useState(false)
   const [editing, setEditing] = useState(false)
   const [editValue, setEditValue] = useState(message.content)
