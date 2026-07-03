@@ -38,6 +38,7 @@ class AnthropicTransport(ProviderTransport):
     ) -> Any:
         from langchain_anthropic import ChatAnthropic
 
+        kwargs.pop("reasoning_effort", None)
         anthropic_kwargs = {**kwargs, "model": model}
         if api_key:
             anthropic_kwargs["api_key"] = api_key
@@ -96,17 +97,30 @@ class OpenAICompatibleTransport(ProviderTransport):
             openai_kwargs["base_url"] = base_url
 
         if reasoning_enabled:
+            # Map reasoning_effort from the frontend if provided
+            reasoning_effort = kwargs.pop("reasoning_effort", "medium")
+            openai_kwargs.pop("reasoning_effort", None)
             if self.vendor == "openrouter":
                 extra_body = dict(openai_kwargs.get("extra_body") or {})
                 reasoning: dict[str, Any] = {}
-                if reasoning_budget > 0:
-                    reasoning["max_tokens"] = reasoning_budget
-                else:
-                    reasoning["effort"] = "medium"
+                if reasoning_effort and reasoning_effort != "none":
+                    if reasoning_budget > 0:
+                        reasoning["max_tokens"] = reasoning_budget
+                    else:
+                        reasoning["effort"] = reasoning_effort
                 extra_body["reasoning"] = reasoning
                 openai_kwargs["extra_body"] = extra_body
-            else:
-                openai_kwargs.setdefault("reasoning_effort", "medium")
+            elif self.vendor == "deepseek":
+                openai_kwargs["reasoning_effort"] = reasoning_effort
+
+        # Ensure reasoning_effort is not passed directly to ChatOpenAI (it's folded into extra_body)
+        openai_kwargs.pop("reasoning_effort", None)
+
+        if self.vendor == "openrouter":
+            eb = openai_kwargs.get("extra_body", {})
+            reas = eb.get("reasoning", {})
+            logger.info("OpenRouter extra_body.reasoning: %s (max_tokens=%s, effort=%s)",
+                       reas, reas.get("max_tokens"), reas.get("effort"))
 
         logger.info("Building OpenAI-compatible LLM: vendor=%s model=%s", self.vendor, model)
         return ChatOpenAI(**openai_kwargs)
@@ -123,6 +137,7 @@ class GoogleTransport(ProviderTransport):
     ) -> Any:
         from langchain_google_genai import ChatGoogleGenerativeAI
 
+        kwargs.pop("reasoning_effort", None)
         google_kwargs = {**kwargs, "model": model}
         if api_key:
             google_kwargs["google_api_key"] = api_key
@@ -145,6 +160,7 @@ class OllamaTransport(ProviderTransport):
     ) -> Any:
         from langchain_community.llms import Ollama
 
+        kwargs.pop("reasoning_effort", None)
         ollama_kwargs = {**kwargs, "model": model}
         ollama_kwargs.pop("streaming", None)
         # Ollama does not use API keys in the same way; ignore reasoning kwargs.
@@ -183,6 +199,7 @@ def build_llm(
     api_key: str | None = None,
     reasoning_enabled: bool = False,
     reasoning_budget: int = 8000,
+    reasoning_effort: str = "medium",
     **kwargs: Any,
 ) -> Any:
     vendor = (vendor or provider).lower()
@@ -202,6 +219,7 @@ def build_llm(
         api_key=api_key,
         reasoning_enabled=reasoning_enabled,
         reasoning_budget=reasoning_budget,
+        reasoning_effort=reasoning_effort,
         **kwargs,
     )
 

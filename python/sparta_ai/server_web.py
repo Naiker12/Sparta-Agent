@@ -159,6 +159,10 @@ async def _execute_agent_ws(
     from sparta_ai.memory.context_manager import compress_if_needed
     from sparta_ai.config.providers import build_llm
     from sparta_ai.persistence.sqlite_store import get_checkpointer
+    from sparta_ai.agents.message_cleanup import (
+        copy_reasoning_content_for_api,
+        drop_thinking_only_and_merge_users,
+    )
 
     llm = build_llm(
         model=model,
@@ -167,31 +171,16 @@ async def _execute_agent_ws(
         api_key=provider_key,
         reasoning_enabled=reasoning.get("enabled", False),
         reasoning_budget=reasoning.get("budget", 8000),
+        reasoning_effort=reasoning.get("effort", "medium"),
     )
 
-    compressed_messages = await compress_if_needed(messages, llm)
+    # Clean messages for API safety: drop thinking-only turns + sanitize reasoning fields
+    api_messages = drop_thinking_only_and_merge_users(messages)
+    api_messages = copy_reasoning_content_for_api(api_messages, vendor or provider)
+    compressed_messages = await compress_if_needed(api_messages, llm)
 
-    # Level 1: lightweight index in system prompt
-    all_skills = skills_index()
-    if all_skills:
-        index_lines = ["<available_skills>"]
-        for s in all_skills:
-            index_lines.append(
-                f'  <skill id="{s["id"]}" category="{s.get("category","")}" featured={str(s.get("featured",False)).lower()}>'
-            )
-            index_lines.append(f'    {s["name"]}: {s["description"]}')
-            index_lines.append("  </skill>")
-        index_lines.append("</available_skills>")
-        index_lines.append(
-            'Use skill_view_tool(skill_id) to load the full content of any skill above.'
-        )
-        skills_index_block = "\n".join(index_lines)
-    else:
-        skills_index_block = ""
-
+    # Active skills context only (full index discoverable via skills_list_tool)
     skill_context = build_skills_context(skills) if skills else ""
-    if skills_index_block:
-        skill_context = skills_index_block + "\n\n" + skill_context if skill_context else skills_index_block
     memory_context = ""
     if semantic_memory and session_id:
         memory_context = await build_memory_context(messages[-1].get("content", "") if messages else "")
@@ -201,10 +190,10 @@ async def _execute_agent_ws(
 
     from sparta_ai.tools.memory_tools import read_memory_tool, write_memory_tool
     from sparta_ai.tools.file_tools import read_file_tool, write_file_tool
-    from sparta_ai.tools.skill_tools import skill_view_tool
+    from sparta_ai.tools.skill_tools import skill_view_tool, skills_list_tool, skill_manage_tool
     from sparta_ai.tools.terminal_tools import terminal_execute_tool
 
-    agent_tools = [read_memory_tool, write_memory_tool, read_file_tool, write_file_tool, skill_view_tool, terminal_execute_tool] + mcp_tools
+    agent_tools = [read_memory_tool, write_memory_tool, read_file_tool, write_file_tool, skill_view_tool, skills_list_tool, skill_manage_tool, terminal_execute_tool] + mcp_tools
     if web_search_enabled:
         from sparta_ai.tools.web_search import web_search_tool
         agent_tools.insert(0, web_search_tool)

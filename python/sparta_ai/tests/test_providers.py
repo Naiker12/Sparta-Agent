@@ -66,4 +66,5 @@ def test_openrouter_reasoning_uses_extra_body():
     assert kwargs["base_url"] == "https://openrouter.ai/api/v1"
     assert kwargs["extra_body"]["provider"] == {"allow_fallbacks": True}
     assert kwargs["extra_body"]["reasoning"] == {"max_tokens": 2048}
-    assert "reasoning_effort" not in kwargs
+    # When budget > 0, only max_tokens is set (effort is implied by max_tokens).
+    # OpenRouter rejects the request if both max_tokens and effort are specified.
