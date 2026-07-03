@@ -240,13 +240,14 @@ export function MessageBubble({ message, isLastUser = false }: MessageBubbleProp
                 status={message.thinkingStatus ?? (message.isStreaming ? 'streaming' : 'completed')}
                 tokensUsed={message.thinkingTokensUsed ?? 0}
                 pipelineSteps={message.pipelineSteps}
+                messageId={message.id}
               />
             </div>
           )}
 
           {renderState.kind === 'thinking_pending' && !hasThinking && (
             <div style={{ marginTop: 8, marginBottom: 8 }}>
-              <ThinkingBlock content="" status="starting" tokensUsed={0} />
+              <ThinkingBlock content="" status="starting" tokensUsed={0} messageId={message.id} />
             </div>
           )}
 

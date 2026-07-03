@@ -1,10 +1,17 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
+import type { Skill } from '@/types'
 
 export interface SlashCommand {
   name: string
   description: string
   usage: string
   action: (args: string) => void
+}
+
+let _cachedSkills: Skill[] = []
+
+export function setSlashSkillCache(skills: Skill[]) {
+  _cachedSkills = skills
 }
 
 const COMMANDS: SlashCommand[] = [
@@ -45,13 +52,19 @@ const COMMANDS: SlashCommand[] = [
   },
   {
     name: 'reasoning',
-    description: 'Activar o desactivar razonamiento visible',
-    usage: '/reasoning on|off',
+    description: 'Controlar razonamiento: on|off|show|hide|full|none|low|medium|high',
+    usage: '/reasoning <show|hide|full|clamp|on|off|none|low|medium|high|xhigh>',
     action: (args) => {
       const { useSettingsStore } = require('@/stores/settings.store')
       const state = useSettingsStore.getState()
-      if (args.trim() === 'on' && !state.reasoningEnabled) state.toggleReasoning()
-      else if (args.trim() === 'off' && state.reasoningEnabled) state.toggleReasoning()
+      const arg = args.trim().toLowerCase()
+      if (arg === 'on' && !state.reasoningEnabled) state.toggleReasoning()
+      else if (arg === 'off' && state.reasoningEnabled) state.toggleReasoning()
+      else if (['none', 'minimal', 'low', 'medium', 'high', 'xhigh'].includes(arg)) {
+        const { useSettingsStore } = require('@/stores/settings.store')
+        useSettingsStore.getState().setReasoningEffort(arg as 'none' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh')
+        if (!state.reasoningEnabled) state.toggleReasoning()
+      }
     },
   },
   {
@@ -75,11 +88,21 @@ const COMMANDS: SlashCommand[] = [
   },
   {
     name: 'skill',
-    description: 'Activar o desactivar una skill por ID',
-    usage: '/skill <id> [on|off]',
+    description: 'Activar o desactivar una skill por ID, o ver lista',
+    usage: '/skill <id> [on|off|view]',
     action: (args) => {
       const [skillId, action] = args.trim().split(/\s+/)
-      if (!skillId) return
+      if (!skillId) {
+        const names = _cachedSkills.map((s) => `  \u2022 /${s.id} - ${s.name}`).join('\n')
+        const { useSessionStore } = require('@/stores/session.store')
+        const { useChatStore } = require('@/stores/chat.store')
+        const sid = useSessionStore.getState().activeSessionId
+        if (!sid) return
+        useChatStore.getState().addMessage({
+          id: crypto.randomUUID(), role: 'assistant', content: `**Skills disponibles:**\n\n${names}\n\nUsa \`/skill <id> on\` para activar una skill.`, timestamp: Date.now(), sessionId: sid,
+        })
+        return
+      }
       const { useSkillStore } = require('@/stores/skill.store')
       const store = useSkillStore.getState()
       const isCurrentlyActive = store.activeSkillIds.includes(skillId)
@@ -87,9 +110,20 @@ const COMMANDS: SlashCommand[] = [
         if (!isCurrentlyActive) store.toggleActive(skillId)
       } else if (action === 'off' || (action === undefined && isCurrentlyActive)) {
         if (isCurrentlyActive) store.toggleActive(skillId)
+      } else if (action === 'view') {
+        const skill = _cachedSkills.find((s) => s.id === skillId)
+        if (!skill) return
+        const { useSessionStore } = require('@/stores/session.store')
+        const { useChatStore } = require('@/stores/chat.store')
+        const sid = useSessionStore.getState().activeSessionId
+        if (!sid) return
+        useChatStore.getState().addMessage({
+          id: crypto.randomUUID(), role: 'assistant', content: `**${skill.name}**\n\n${skill.description || 'Sin descripci\u00f3n.'}`, timestamp: Date.now(), sessionId: sid,
+        })
       }
     },
   },
+  // Auto-generated /<skill-id> commands (filled by setSlashSkillCache)
 ]
 
 export function parseSlashCommand(text: string): { command: SlashCommand; args: string } | null {
@@ -97,7 +131,23 @@ export function parseSlashCommand(text: string): { command: SlashCommand; args: 
   const parts = text.slice(1).split(/\s+/)
   const name = parts[0].toLowerCase()
   const args = parts.slice(1).join(' ')
-  const cmd = COMMANDS.find((c) => c.name === name)
+
+  // Build skill commands for lookup
+  const skillCommands: SlashCommand[] = _cachedSkills.map((skill) => ({
+    name: skill.id,
+    description: `Activar skill: ${skill.name}`,
+    usage: `/${skill.id}`,
+    action: () => {
+      const { useSkillStore } = require('@/stores/skill.store')
+      const store = useSkillStore.getState()
+      if (!store.activeSkillIds.includes(skill.id)) {
+        store.toggleActive(skill.id)
+      }
+    },
+  }))
+
+  const allCommands = [...COMMANDS, ...skillCommands]
+  const cmd = allCommands.find((c) => c.name === name)
   return cmd ? { command: cmd, args } : null
 }
 
@@ -106,7 +156,23 @@ export function getSlashSuggestions(text: string): SlashCommand[] {
   const parts = text.slice(1).split(/\s+/)
   const partial = parts[0].toLowerCase()
   if (parts.length > 1) return []
-  return COMMANDS.filter((c) => c.name.startsWith(partial))
+
+  // Build dynamic skill commands
+  const skillCommands: SlashCommand[] = _cachedSkills.map((skill) => ({
+    name: skill.id,
+    description: `Activar skill: ${skill.name}`,
+    usage: `/${skill.id}`,
+    action: () => {
+      const { useSkillStore } = require('@/stores/skill.store')
+      const store = useSkillStore.getState()
+      if (!store.activeSkillIds.includes(skill.id)) {
+        store.toggleActive(skill.id)
+      }
+    },
+  }))
+
+  const allCommands = [...COMMANDS, ...skillCommands]
+  return allCommands.filter((c) => c.name.startsWith(partial))
 }
 
 interface SlashCommandMenuProps {

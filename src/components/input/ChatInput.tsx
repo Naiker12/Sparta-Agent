@@ -6,11 +6,12 @@ import { useChatStore } from '@/stores/chat.store'
 import { useSessionStore } from '@/stores/session.store'
 import { useProviderStore } from '@/stores/provider.store'
 import { useChatSession } from '@/hooks/useChatSession'
+import { useLocalSkillsLoader } from '@/hooks/useLocalSkillsLoader'
 import { cn } from '@/lib/utils'
 import { messagingAdapter } from '@/lib/messaging-adapter'
 import { ModelPicker } from './ModelPicker'
 import { AttachMenu } from './AttachMenu'
-import { SlashCommandMenu, executeSlashCommand, type SlashCommand } from './SlashCommandMenu'
+import { SlashCommandMenu, executeSlashCommand, type SlashCommand, setSlashSkillCache } from './SlashCommandMenu'
 
 interface ChatInputProps {
   className?: string
@@ -29,6 +30,15 @@ export function ChatInput({ className }: ChatInputProps) {
   const stopStreaming = useChatStore((s) => s.stopStreaming)
   const injectWhileStreaming = useChatStore((s) => s.injectWhileStreaming)
   const { sendMessage } = useChatSession()
+
+  const { skills: localSkills } = useLocalSkillsLoader()
+
+  useEffect(() => {
+    const mapped = (localSkills as unknown as { id: string; name: string; description?: string }[]).map((s) => ({
+      id: s.id, name: s.name, description: s.description || '', prompt: '', createdAt: Date.now(),
+    }))
+    setSlashSkillCache(mapped)
+  }, [localSkills])
 
   useEffect(() => {
     setShowSlash(input.startsWith('/') && input.length > 0)

@@ -1,6 +1,8 @@
+import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
-import { ChevronRightIcon, Loader2, Check } from 'lucide-react'
+import { ChevronRightIcon, Check } from 'lucide-react'
+import { getRandomSpinner, type SpinnerSet } from '@/lib/spinners'
 import type { ThinkingStatus } from '@/types'
 
 interface ThinkingPillProps {
@@ -12,7 +14,20 @@ interface ThinkingPillProps {
   className?: string
 }
 
+const spinner = getRandomSpinner()
+
 export function ThinkingPill({ status, tokensUsed, isExpanded, elapsed, lastSkillName, className }: ThinkingPillProps) {
+  const [frame, setFrame] = useState(0)
+  const spinnerRef = useRef<SpinnerSet>(spinner)
+
+  useEffect(() => {
+    if (status !== 'starting' && status !== 'streaming') return
+    const interval = setInterval(() => {
+      setFrame((f) => (f + 1) % spinnerRef.current.frames.length)
+    }, spinnerRef.current.interval)
+    return () => clearInterval(interval)
+  }, [status])
+
   if (status === 'starting' || status === 'streaming') {
     return (
       <motion.div
@@ -23,7 +38,9 @@ export function ThinkingPill({ status, tokensUsed, isExpanded, elapsed, lastSkil
         className={cn('inline-flex items-center gap-1.5 rounded-full px-2.5 py-1', className)}
         style={{ background: 'var(--status-think)' }}
       >
-        <Loader2 className="size-3 text-white animate-spin" />
+        <span className="text-white text-[11px] font-mono leading-none" style={{ width: 10, textAlign: 'center' }}>
+          {spinnerRef.current.frames[frame]}
+        </span>
         <span className="text-[10px] font-mono text-white/80">{elapsed.toFixed(1)}s</span>
         <motion.span
           className="text-[10px] font-medium text-white"

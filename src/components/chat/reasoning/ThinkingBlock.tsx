@@ -5,6 +5,7 @@ import { StreamCursor } from './StreamCursor'
 import { ThinkingPill } from './ThinkingPill'
 import { ThinkingSkeletonRows } from './ThinkingSkeletonRows'
 import { SkillActivationBadge } from './SkillActivationBadge'
+import { StreamStallIndicator } from './StreamStallIndicator'
 import type { ThinkingStatus, PipelineStep } from '@/types'
 
 interface ThinkingBlockProps {
@@ -13,6 +14,7 @@ interface ThinkingBlockProps {
   tokensUsed: number
   pipelineSteps?: PipelineStep[]
   className?: string
+  messageId?: string
 }
 
 interface ThinkingLine {
@@ -20,6 +22,8 @@ interface ThinkingLine {
   icon: string
   text: string
 }
+
+const PREVIEW_MAX_HEIGHT = 160
 
 function parseThinkingLine(text: string, index: number): ThinkingLine {
   const lower = text.toLowerCase()
@@ -32,23 +36,41 @@ function parseThinkingLine(text: string, index: number): ThinkingLine {
   return { id: `line-${index}`, icon, text }
 }
 
-export function ThinkingBlock({ content, status, tokensUsed, pipelineSteps, className }: ThinkingBlockProps) {
-  const [isExpanded, setIsExpanded] = useState(status === 'streaming' || status === 'starting')
+function loadCollapseState(messageId?: string): boolean | null {
+  if (!messageId) return null
+  try {
+    const stored = localStorage.getItem(`sparta:think:${messageId}`)
+    if (stored !== null) return JSON.parse(stored)
+  } catch { /* ignore */ }
+  return null
+}
+
+function saveCollapseState(messageId: string, expanded: boolean) {
+  try {
+    localStorage.setItem(`sparta:think:${messageId}`, JSON.stringify(expanded))
+  } catch { /* ignore */ }
+}
+
+export function ThinkingBlock({ content, status, tokensUsed, pipelineSteps, className, messageId }: ThinkingBlockProps) {
+  const savedState = useMemo(() => loadCollapseState(messageId), [messageId])
+  const [isExpanded, setIsExpanded] = useState(
+    savedState !== null ? savedState : (status === 'streaming' || status === 'starting')
+  )
   const [elapsed, setElapsed] = useState(0)
   const startedAt = useRef(Date.now())
   const linesEndRef = useRef<HTMLDivElement>(null)
   const linesContainerRef = useRef<HTMLDivElement>(null)
   const badgesEndRef = useRef<HTMLDivElement>(null)
   const prevBadgeCount = useRef(0)
-  const userToggled = useRef(false)
+  const userToggled = useRef(savedState !== null)
   const accumulatedContent = useRef('')
   const allLines = useRef<ThinkingLine[]>([])
   const streamingIndex = useRef(0)
+  const [isHovered, setIsHovered] = useState(false)
 
   const [displayedLines, setDisplayedLines] = useState<ThinkingLine[]>([])
   const pendingLinesRef = useRef<ThinkingLine[]>([])
 
-  // Append-only parsing: only parse new content since last render
   if (content && content.length > accumulatedContent.current.length) {
     const newText = content.slice(accumulatedContent.current.length)
     accumulatedContent.current = content
@@ -63,20 +85,22 @@ export function ThinkingBlock({ content, status, tokensUsed, pipelineSteps, clas
   }
   const lines = allLines.current
 
+  const hasContent = content.length > 0 || lines.length > 0
+  if (!hasContent && status === 'completed') return null
+
+  const isLong = content.length > 200 || lines.length > 15
+
   useEffect(() => {
     pendingLinesRef.current = lines
-    const timer = setTimeout(() => {
-      setDisplayedLines([...pendingLinesRef.current])
-    }, 50)
+    const timer = setTimeout(() => setDisplayedLines([...pendingLinesRef.current]), 50)
     return () => clearTimeout(timer)
   }, [lines])
 
   useEffect(() => {
     if (status === 'starting' || status === 'streaming') {
+      if (!userToggled.current) setIsExpanded(true)
       startedAt.current = Date.now()
-      setIsExpanded(true)
       setElapsed(0)
-      userToggled.current = false
     }
     if (status === 'completed' && !userToggled.current) {
       const timer = setTimeout(() => setIsExpanded(false), 600)
@@ -86,11 +110,13 @@ export function ThinkingBlock({ content, status, tokensUsed, pipelineSteps, clas
 
   useEffect(() => {
     if (status !== 'streaming' && status !== 'starting') return
-    const interval = setInterval(() => {
-      setElapsed(Math.floor((Date.now() - startedAt.current) / 100) / 10)
-    }, 100)
+    const interval = setInterval(() => setElapsed(Math.floor((Date.now() - startedAt.current) / 100) / 10), 100)
     return () => clearInterval(interval)
   }, [status])
+
+  useEffect(() => {
+    if (userToggled.current && messageId) saveCollapseState(messageId, isExpanded)
+  }, [isExpanded, messageId])
 
   const skillBadges = useMemo(
     () => pipelineSteps?.filter((s) => s.id?.startsWith('skill-')) ?? [],
@@ -99,32 +125,59 @@ export function ThinkingBlock({ content, status, tokensUsed, pipelineSteps, clas
 
   const lastSkillName = useMemo(() => {
     const completed = skillBadges.filter((s) => s.status === 'completed')
-    if (completed.length === 0) return null
-    return completed[completed.length - 1].name ?? null
+    return completed.length > 0 ? completed[completed.length - 1].name : null
   }, [skillBadges])
 
   useEffect(() => {
-    if (skillBadges.length > prevBadgeCount.current && badgesEndRef.current) {
+    if (skillBadges.length > prevBadgeCount.current && badgesEndRef.current)
       badgesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-    }
     prevBadgeCount.current = skillBadges.length
   }, [skillBadges.length])
 
   useEffect(() => {
-    if (linesEndRef.current && (status === 'streaming' || status === 'starting')) {
+    if (linesEndRef.current && (status === 'streaming' || status === 'starting'))
       linesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-    }
   }, [displayedLines.length, status])
 
-  const canToggle = status !== 'streaming' && status !== 'starting'
+  function handleToggle(e: React.MouseEvent) {
+    if (e.shiftKey) {
+      document.querySelectorAll('[data-thinking-block]').forEach((el) => {
+        const btn = el.querySelector('button')
+        if (btn) btn.click()
+      })
+      return
+    }
+    userToggled.current = true
+    setIsExpanded((v) => !v)
+  }
 
   return (
-    <motion.div layout={status !== 'streaming' && status !== 'starting'} className={cn('thinking-block-v2', className)}>
+    <motion.div
+      layout
+      className={cn('thinking-block-v2', className)}
+      data-thinking-block={messageId}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      style={{
+        borderRadius: 'var(--radius-md)',
+        transition: 'background 0.15s',
+        background: isHovered && !isExpanded ? 'var(--bg-hover)' : 'transparent',
+      }}
+    >
       <button
-        onClick={() => { if (!canToggle) return; userToggled.current = true; setIsExpanded((v) => !v) }}
-        disabled={!canToggle}
+        onClick={handleToggle}
         className="thinking-block-trigger"
-        style={{ cursor: canToggle ? 'pointer' : 'default' }}
+        style={{
+          cursor: 'pointer',
+          width: '100%',
+          textAlign: 'left',
+          border: 'none',
+          background: 'none',
+          padding: '4px 6px',
+          borderRadius: 'var(--radius-md)',
+          transition: 'background 0.1s',
+          outline: 'none',
+        }}
       >
         <ThinkingPill
           status={status}
@@ -145,10 +198,22 @@ export function ThinkingBlock({ content, status, tokensUsed, pipelineSteps, clas
             transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
             style={{ overflow: 'hidden' }}
           >
-            <div className="thinking-lines-v2" ref={linesContainerRef}>
-              {(status === 'starting' || status === 'streaming') && !content && (
-                <ThinkingSkeletonRows />
-              )}
+            <div
+              className="thinking-lines-v2"
+              ref={linesContainerRef}
+              style={{
+                maxHeight: isLong && status === 'completed' ? PREVIEW_MAX_HEIGHT : 'none',
+                overflowY: isLong && status === 'completed' ? 'hidden' : 'visible',
+                maskImage: isLong && status === 'completed'
+                  ? 'linear-gradient(to bottom, black 60%, transparent 100%)'
+                  : 'none',
+                WebkitMaskImage: isLong && status === 'completed'
+                  ? 'linear-gradient(to bottom, black 60%, transparent 100%)'
+                  : 'none',
+                padding: '0 6px 4px',
+              }}
+            >
+              {(status === 'starting' || status === 'streaming') && !content && <ThinkingSkeletonRows />}
 
               {skillBadges.map((step) => (
                 <SkillActivationBadge
@@ -174,9 +239,7 @@ export function ThinkingBlock({ content, status, tokensUsed, pipelineSteps, clas
                       <span className="thinking-line-icon">{line.icon}</span>
                       <span className="thinking-line-text">
                         {line.text}
-                        {idx === displayedLines.length - 1 && status === 'streaming' && (
-                          <StreamCursor visible />
-                        )}
+                        {idx === displayedLines.length - 1 && status === 'streaming' && <StreamCursor visible />}
                       </span>
                     </motion.div>
                   ))}
@@ -190,7 +253,33 @@ export function ThinkingBlock({ content, status, tokensUsed, pipelineSteps, clas
                   <span className="thinking-line-text">{content}</span>
                 </div>
               )}
+
+              {isLong && status === 'completed' && (
+                <div
+                  style={{
+                    textAlign: 'center',
+                    fontSize: 10,
+                    color: 'var(--accent)',
+                    fontFamily: 'var(--font-ui)',
+                    cursor: 'pointer',
+                    padding: '4px 0',
+                    opacity: 0.7,
+                    transition: 'opacity 0.1s',
+                  }}
+                  onClick={(e) => { e.stopPropagation(); handleToggle(e) }}
+                  onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+                  onMouseLeave={(e) => e.currentTarget.style.opacity = '0.7'}
+                >
+                  Mostrar todo ({lines.length} l\u00edneas)
+                </div>
+              )}
             </div>
+
+            {(status === 'streaming' || status === 'starting') && (
+              <div style={{ padding: '0 6px 4px' }}>
+                <StreamStallIndicator streaming={status === 'streaming'} />
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

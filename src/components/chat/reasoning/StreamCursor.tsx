@@ -14,7 +14,7 @@ export function StreamCursor({ visible }: StreamCursorProps) {
     }
     const interval = setInterval(() => {
       setShow((s) => !s)
-    }, 530)
+    }, 420)
     return () => clearInterval(interval)
   }, [visible])
 

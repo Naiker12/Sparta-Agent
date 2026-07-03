@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Bot, Clock, Sparkles, Circle, Zap } from 'lucide-react'
+import { Bot, Clock, Sparkles, Circle, Zap, Brain } from 'lucide-react'
 import { useSettingsStore } from '@/stores/settings.store'
 import { useProviderStore } from '@/stores/provider.store'
 import { useChatStore } from '@/stores/chat.store'
@@ -15,12 +15,15 @@ import { CronStatusDialog } from './CronStatusDialog'
 import { IS_WEB } from '@/lib/env-adapter'
 import { useWebSocketStatus } from '@/hooks/useWebSocketStatus'
 import { messagingAdapter } from '@/lib/messaging-adapter'
+import { DEFAULT_SPINNER } from '@/lib/spinners'
+
 export function StatusBar() {
   const [appVersion, setAppVersion] = useState('')
   const activeModel = useSettingsStore((s) => s.activeModel)
   const providers = useProviderStore((s) => s.providers)
   const activeProvider = providers.find((p) => p.defaultModel === activeModel)
   const streamingBySession = useChatStore((s) => s.streamingBySession)
+  const messagesBySession = useChatStore((s) => s.messagesBySession)
   const activeSessionId = useSessionStore((s) => s.activeSessionId)
   const agents = useAgentStore((s) => s.agents)
   const cronJobs = useCronStore((s) => s.jobs)
@@ -31,9 +34,24 @@ export function StatusBar() {
   const [tokenOpen, setTokenOpen] = useState(false)
   const [agentsOpen, setAgentsOpen] = useState(false)
   const [cronOpen, setCronOpen] = useState(false)
+  const [spinnerFrame, setSpinnerFrame] = useState(0)
+  const sbSpinner = DEFAULT_SPINNER
 
   const wsStatus = useWebSocketStatus()
   const [sidecarReady, setSidecarReady] = useState(false)
+
+  const isThinking = Object.values(messagesBySession).some((msgs) =>
+    msgs.some((m) => m.thinkingStatus === 'streaming' || m.thinkingStatus === 'starting')
+  )
+
+  // Thinking spinner animation
+  useEffect(() => {
+    if (!isThinking) { setSpinnerFrame(0); return }
+    const interval = setInterval(() => {
+      setSpinnerFrame((f) => (f + 1) % sbSpinner.frames.length)
+    }, sbSpinner.interval)
+    return () => clearInterval(interval)
+  }, [isThinking, sbSpinner])
 
   useEffect(() => {
     if (IS_WEB) return
@@ -119,6 +137,13 @@ export function StatusBar() {
           <SBItem style={{ color: 'var(--status-think)' }}>
             <Sparkles size={11} strokeWidth={1.5} />
             {bgStreamingCount} generando en background
+          </SBItem>
+        )}
+
+        {isThinking && (
+          <SBItem style={{ color: 'var(--accent)', fontVariantNumeric: 'tabular-nums' }}>
+            <Brain size={11} strokeWidth={1.5} style={{ marginRight: 2 }} />
+            {sbSpinner.frames[spinnerFrame]}
           </SBItem>
         )}
 
