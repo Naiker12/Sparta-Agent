@@ -117,6 +117,7 @@ class EventDispatcher:
 
         reasoning_content = _extract_reasoning_content(chunk)
         reasoning_from_metadata = bool(reasoning_content)
+        self._stream_state["_reasoning_extracted"] = bool(reasoning_content)
         if reasoning_content:
             if not self._stream_state["thinking_active"]:
                 self._emit("thinking:started", base_payload)
@@ -157,6 +158,18 @@ class EventDispatcher:
                     # not streamed tokens; ignore here.
                     continue
         elif isinstance(content, str) and content:
+            # Skip inline scrubber if reasoning was already extracted from metadata
+            if self._stream_state.get("_reasoning_extracted"):
+                if content.strip():
+                    if self._repetition_guard.feed(content):
+                        logger.warning("Repetition detected in visible text, aborting stream")
+                        self._emit("stream:degenerate", {**base_payload})
+                        return
+                    self._stream_state["visible_chars"] = self._stream_state.get("visible_chars", 0) + len(content)
+                    self._emit("stream:token", {**base_payload, "token": content, "chunkSeq": self._next_stream_seq()})
+                self._stream_state["_reasoning_extracted"] = False
+                return
+
             scrubber = self._stream_state.setdefault("_scrubber", StreamingThinkScrubber())
             visible, reasoning = scrubber.feed(content)
 
@@ -267,6 +280,8 @@ class EventDispatcher:
             self._emit("search:progress", {**base_payload, **event_data})
 
     def _handle_chain_end_agent(self, base_payload: dict) -> None:
+        if self._stream_state.get("_stream_completed"):
+            return
         if self._stream_state["thinking_active"]:
             self._emit("thinking:completed", {**base_payload, "tokens_used": 0})
             self._stream_state["thinking_active"] = False
@@ -278,9 +293,11 @@ class EventDispatcher:
                     "message": "El modelo no devolvió contenido visible.",
                 },
             )
+            self._stream_state["_stream_completed"] = True
             return
         self._repetition_guard.reset()
         self._emit("stream:completed", base_payload)
+        self._stream_state["_stream_completed"] = True
 
     async def _detect_and_emit_skill(self, thinking_text: str, base_payload: dict) -> None:
         """Detect if the LLM is activating a skill and emit skill:activated."""

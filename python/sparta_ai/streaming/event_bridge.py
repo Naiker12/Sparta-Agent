@@ -90,6 +90,11 @@ async def stream_agent_to_electron(
         "visible_chars": 0,
         "reasoning_chars": 0,
         "_empty_retries": 0,
+        "_reasoning_extracted": False,
+        "_stream_completed": False,
+        "_emitted_text": "",
+        "_skip_mode": False,
+        "_skip_pending": "",
     }
 
     async def _try_stream() -> None:
@@ -139,6 +144,8 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> b
         # Some OpenAI-compatible providers expose reasoning in metadata rather than content blocks.
         reasoning_content = _extract_reasoning_content(chunk)
         reasoning_from_metadata = bool(reasoning_content)
+        stream_state["_reasoning_extracted"] = bool(reasoning_content)
+
         if reasoning_content:
             if not stream_state["thinking_active"]:
                 logger.debug("Emitting thinking:started for request %s", request_id)
@@ -192,8 +199,53 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> b
                     # not streamed tokens; ignore here.
                     continue
         elif isinstance(content, str) and content:
+            # Skip inline scrubber if reasoning was already extracted from metadata
+            # (avoid double-emission: the same text is often in both metadata and content)
+            if stream_state.get("_reasoning_extracted"):
+                if content.strip():
+                    rep_guard = stream_state.setdefault("_rep_guard", RepetitionGuard())
+                    if rep_guard.feed(content):
+                        logger.warning("Repetition detected in visible text, aborting")
+                        _emit(request_id, "stream:degenerate", {**base_payload})
+                        return True
+                    stream_state["visible_chars"] = stream_state.get("visible_chars", 0) + len(content)
+                    _emit(request_id, "stream:token", {**base_payload, "token": content})
+                stream_state["_reasoning_extracted"] = False
+                return False
+
             scrubber = stream_state.setdefault("_scrubber", StreamingThinkScrubber())
             visible, reasoning = scrubber.feed(content)
+
+            # Dedup: detect graph-loop replay (model re-emits prior content)
+            emitted = stream_state.get("_emitted_text", "")
+            if visible and emitted:
+                pending = stream_state.get("_skip_pending", "")
+                if stream_state.get("_skip_mode"):
+                    pending += visible
+                    if emitted.startswith(pending):
+                        stream_state["_skip_pending"] = pending
+                        return False
+                    else:
+                        overlap_start = len(emitted[:len(pending)])
+                        new_text = pending[overlap_start:]
+                        stream_state["_skip_mode"] = False
+                        stream_state["_skip_pending"] = ""
+                        if new_text:
+                            rep_guard = stream_state.setdefault("_rep_guard", RepetitionGuard())
+                            if rep_guard.feed(new_text):
+                                return True
+                            stream_state["visible_chars"] = stream_state.get("visible_chars", 0) + len(new_text)
+                            stream_state["_emitted_text"] = emitted + new_text
+                            _emit(request_id, "stream:token", {**base_payload, "token": new_text})
+                        return False
+                else:
+                    test_text = (pending + visible)[:80]
+                    if len(test_text) >= 10 and emitted.startswith(test_text) and len(emitted) > len(test_text) * 2:
+                        stream_state["_skip_mode"] = True
+                        stream_state["_skip_pending"] = test_text
+                        return False
+            elif visible:
+                stream_state["_emitted_text"] = emitted + visible
 
             if reasoning and not reasoning_from_metadata:
                 if not stream_state["thinking_active"]:
@@ -224,6 +276,7 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> b
                     )
                     stream_state["thinking_active"] = False
                 stream_state["visible_chars"] = stream_state.get("visible_chars", 0) + len(visible)
+                stream_state["_emitted_text"] = stream_state.get("_emitted_text", "") + visible
                 _emit(request_id, "stream:token", {**base_payload, "token": visible})
 
     elif kind == "on_chat_model_start":
@@ -314,6 +367,9 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> b
             _emit(request_id, "search:progress", {**base_payload, **event_data})
 
     elif kind == "on_chain_end" and name == "agent":
+        # Guard against multiple stream:completed emissions (graph loops)
+        if stream_state.get("_stream_completed"):
+            return False
         if stream_state["thinking_active"]:
             _emit(request_id, "thinking:completed", {**base_payload, "tokens_used": 0})
             stream_state["thinking_active"] = False
@@ -326,8 +382,10 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> b
                     "message": "El modelo no devolvió contenido visible.",
                 },
             )
+            stream_state["_stream_completed"] = True
             return False
         _emit(request_id, "stream:completed", base_payload)
+        stream_state["_stream_completed"] = True
         return False
 
 
@@ -364,6 +422,11 @@ async def stream_agent_to_websocket(
         "active_skill_ids": initial_state.get("active_skills", []),
         "visible_chars": 0,
         "reasoning_chars": 0,
+        "_reasoning_extracted": False,
+        "_stream_completed": False,
+        "_emitted_text": "",
+        "_skip_mode": False,
+        "_skip_pending": "",
     }
     config = {"configurable": {"thread_id": thread_id or session_id or request_id}}
     try:
@@ -410,6 +473,7 @@ async def _dispatch_event_ws(
 
         reasoning_content = _extract_reasoning_content(chunk)
         reasoning_from_metadata = bool(reasoning_content)
+        stream_state["_reasoning_extracted"] = bool(reasoning_content)
         if reasoning_content:
             if not stream_state["thinking_active"]:
                 await _emit_ws_renderer(websocket, "thinking:started", base_payload)
@@ -472,6 +536,16 @@ async def _dispatch_event_ws(
                             },
                         )
         elif isinstance(content, str) and content:
+            # Skip inline scrubber if reasoning was already extracted from metadata
+            if stream_state.get("_reasoning_extracted"):
+                if content.strip():
+                    stream_state["visible_chars"] = stream_state.get("visible_chars", 0) + len(content)
+                    await _emit_ws_renderer(
+                        websocket, "stream:token", {**base_payload, "token": content}
+                    )
+                stream_state["_reasoning_extracted"] = False
+                return
+
             scrubber = stream_state.setdefault("_scrubber", StreamingThinkScrubber())
             visible, reasoning = scrubber.feed(content)
 
@@ -494,25 +568,21 @@ async def _dispatch_event_ws(
                 await _detect_and_emit_skill_ws(websocket, reasoning, stream_state, base_payload)
 
             if visible:
+                rep_guard = stream_state.setdefault("_rep_guard", RepetitionGuard())
+                if rep_guard.feed(visible):
+                    logger.warning("Repetition detected in visible text, aborting")
+                    _emit(request_id, "stream:degenerate", {**base_payload})
+                    return True
                 if stream_state["thinking_active"] and not reasoning:
-                    await _emit_ws_renderer(
-                        websocket,
+                    _emit(
+                        request_id,
                         "thinking:completed",
-                        {
-                            **base_payload,
-                            "tokensUsed": stream_state.get("reasoning_tokens", 0),
-                        },
+                        {**base_payload, "tokens_used": stream_state.get("reasoning_tokens", 0)},
                     )
                     stream_state["thinking_active"] = False
                 stream_state["visible_chars"] = stream_state.get("visible_chars", 0) + len(visible)
-                await _emit_ws_renderer(
-                    websocket,
-                    "stream:token",
-                    {
-                        **base_payload,
-                        "token": visible,
-                    },
-                )
+                stream_state["_emitted_text"] = stream_state.get("_emitted_text", "") + visible
+                _emit(request_id, "stream:token", {**base_payload, "token": visible})
 
     elif kind == "on_chat_model_start":
         additional_kwargs = data.get("additional_kwargs", {})
@@ -622,6 +692,8 @@ async def _dispatch_event_ws(
             )
 
     elif kind == "on_chain_end" and name == "agent":
+        if stream_state.get("_stream_completed"):
+            return
         if stream_state["thinking_active"]:
             await _emit_ws_renderer(
                 websocket,
@@ -641,8 +713,10 @@ async def _dispatch_event_ws(
                     "error": "El modelo no devolvió contenido visible.",
                 },
             )
+            stream_state["_stream_completed"] = True
             return
         await _emit_ws_renderer(websocket, "stream:completed", base_payload)
+        stream_state["_stream_completed"] = True
 
 
 async def _emit_ws_renderer(websocket: Any, event_type: str, data: dict | None = None) -> None:

@@ -2,21 +2,22 @@ import re
 
 _OPEN_RE = re.compile(r"<(think|thinking|reasoning)>", re.IGNORECASE)
 _CLOSE_RE = re.compile(r"</(think|thinking|reasoning)>", re.IGNORECASE)
+_PARTIAL_OPEN_RE = re.compile(r"<[a-zA-Z]*$")
+_PARTIAL_CLOSE_RE = re.compile(r"</[a-zA-Z]*$")
+
+_BLOCK_BOUNDARY_RE = re.compile(r"(^|\n\s*)(<(?:think|thinking|reasoning)>)", re.IGNORECASE)
 
 
 class StreamingThinkScrubber:
-    """Separa tags <think>...</think> inline del content, delta por delta.
+    """Improved think scrubber with proper block-boundary rules and partial tag handling.
 
-    Muchos modelos gratuitos de OpenRouter (y otros proveedores open) no emiten
-    reasoning en campos estructurados ni en content blocks tipados; en cambio
-    escriben el razonamiento directamente dentro del texto como tags
-    ``<think>`` / ``<thinking>`` / ``<reasoning>``. Esta clase consume los
-    deltas de texto en tiempo real y devuelve dos flujos separados:
-    texto visible y texto de razonamiento.
+    Block-boundary rules (from Hermes Agent best practices):
+    - Open tags are ONLY recognized at line boundaries (start of stream, after newline,
+      or when only whitespace precedes the tag on the current line).
+    - Closed pairs <tag>X</tag> are ALWAYS suppressed, even mid-line.
+    - Partial tags split between chunks are retained in a buffer until the next chunk.
 
-    Reconoce tags de apertura solo cuando están al inicio de una línea (o al
-    inicio del stream), y retiene posibles tags partidos entre chunks para no
-    perderlos ni emitirlos como texto visible.
+    This prevents false positives like "use <think> in your code" from being suppressed.
     """
 
     def __init__(self):
@@ -25,54 +26,96 @@ class StreamingThinkScrubber:
     def reset(self):
         self._in_block = False
         self._buf = ""
+        self._reasoning_emitted = False
 
     def feed(self, text: str) -> tuple[str, str]:
-        """Devuelve (visible_text, reasoning_text) para este delta."""
+        """Process a text delta, return (visible_text, reasoning_text).
+
+        The reasoning text is only returned once per block to avoid flooding the
+        frontend with repeated emissions. Returns ('', '') when nothing to emit.
+        """
         self._buf += text
         visible, reasoning = "", ""
 
         while self._buf:
             if not self._in_block:
-                m = _OPEN_RE.search(self._buf)
-                if m and self._buf[: m.start()].strip() == "":
-                    visible += self._buf[: m.start()]
-                    self._buf = self._buf[m.end() :]
-                    self._in_block = True
+                m = _BLOCK_BOUNDARY_RE.search(self._buf)
+                if m:
+                    before = self._buf[: m.start(2)]
+                    if before.strip() == "" or m.group(1).strip() == "":
+                        visible += before
+                        tag = m.group(2).lower()
+                        self._buf = self._buf[m.end(2):]
+                        self._in_block = True
+                        self._reasoning_emitted = False
+
+                        close = _CLOSE_RE.search(self._buf)
+                        if close:
+                            reasoning += self._buf[: close.start()]
+                            self._buf = self._buf[close.end():]
+                            self._in_block = False
+                            self._reasoning_emitted = True
+                        continue
+
+                # Also detect closed pairs mid-line (always suppress)
+                closed_pair = re.search(
+                    r"<(think|thinking|reasoning)>.*?</\1>", self._buf, re.IGNORECASE
+                )
+                if closed_pair:
+                    visible += self._buf[: closed_pair.start()]
+                    self._buf = self._buf[closed_pair.end():]
                     continue
 
-                # Podría ser un tag partido al final del buffer: retenerlo.
-                tail_match = re.search(r"<[a-zA-Z]*$", self._buf)
-                if tail_match:
+                # Partial open tag at buffer end: retain
+                tail_match = _PARTIAL_OPEN_RE.search(self._buf)
+                if tail_match and tail_match.end() == len(self._buf):
                     if tail_match.start() > 0:
                         visible += self._buf[: tail_match.start()]
-                        self._buf = self._buf[tail_match.start() :]
+                        self._buf = self._buf[tail_match.start():]
                     break
 
                 visible += self._buf
                 self._buf = ""
             else:
-                m = _CLOSE_RE.search(self._buf)
-                if m:
-                    reasoning += self._buf[: m.start()]
-                    self._buf = self._buf[m.end() :]
+                close = _CLOSE_RE.search(self._buf)
+                if close:
+                    new_reasoning = self._buf[: close.start()]
+                    if new_reasoning:
+                        reasoning += new_reasoning
+                        self._reasoning_emitted = True
+                    self._buf = self._buf[close.end():]
                     self._in_block = False
+
+                    after = self._buf
+                    self._buf = ""
+                    next_open = _BLOCK_BOUNDARY_RE.search(after)
+                    if next_open and after[: next_open.start(2)].strip() == "":
+                        self._buf = after
+                    else:
+                        visible += after
                     continue
 
-                # Podría ser un cierre partido al final del buffer: retenerlo.
-                tail_match = re.search(r"</[a-zA-Z]*$", self._buf)
-                if tail_match:
+                tail_match = _PARTIAL_CLOSE_RE.search(self._buf)
+                if tail_match and tail_match.end() == len(self._buf):
                     if tail_match.start() > 0:
                         reasoning += self._buf[: tail_match.start()]
-                        self._buf = self._buf[tail_match.start() :]
+                        self._reasoning_emitted = True
+                        self._buf = self._buf[tail_match.start():]
                     break
 
                 reasoning += self._buf
+                self._reasoning_emitted = True
                 self._buf = ""
 
         return visible, reasoning
 
     def flush(self) -> str:
-        """Al terminar el stream, suelta lo que haya quedado retenido como visible."""
+        """Release any buffered content as visible text at stream end."""
+        if self._in_block:
+            leftover, self._buf = self._buf, ""
+            self._in_block = False
+            self._reasoning_emitted = False
+            return leftover
         leftover, self._buf = self._buf, ""
         self._in_block = False
         return leftover
