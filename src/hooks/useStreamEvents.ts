@@ -7,7 +7,6 @@ import type { SpartaEvent, ToolCall } from '@/types'
 
 const _providerBySession = new Map<string, string>()
 const lastUserMessageRef = new Map<string, { text: string; userMessageId: string }>()
-
 export function useStreamEvents() {
   const appendContent = useChatStore((s) => s.appendContent)
   const addToolCall = useChatStore((s) => s.addToolCall)
@@ -25,16 +24,12 @@ export function useStreamEvents() {
     if (!adapterReady) return
 
     const tokenBufferRef: { sid: string; mid: string; tokens: string[] } = {
-      sid: '',
-      mid: '',
-      tokens: [],
+      sid: '', mid: '', tokens: [],
     }
     let flushTimerRef: ReturnType<typeof setTimeout> | null = null
 
     const thinkBufferRef: { sid: string; mid: string; tokens: string[] } = {
-      sid: '',
-      mid: '',
-      tokens: [],
+      sid: '', mid: '', tokens: [],
     }
     let thinkFlushTimerRef: ReturnType<typeof setTimeout> | null = null
 
@@ -103,34 +98,48 @@ export function useStreamEvents() {
           store.updateMessage(mid, { reasoningCompletedAt: Date.now() })
           break
         }
+        case 'thinking:status': {
+          break
+        }
+        case 'reasoning:token': {
+          const reasonToken = (event as { token: string }).token ?? ''
+          const currentMsg = store.messagesBySession[sid]?.find((m) => m.id === mid)
+          if (currentMsg?.thinkingStatus === 'completed') break
+          if (thinkBufferRef.sid !== sid || thinkBufferRef.mid !== mid) {
+            flushThinkBuffer()
+            thinkBufferRef.sid = sid
+            thinkBufferRef.mid = mid
+          }
+          thinkBufferRef.tokens.push(reasonToken)
+          if (thinkFlushTimerRef) clearTimeout(thinkFlushTimerRef)
+          thinkFlushTimerRef = setTimeout(() => {
+            thinkFlushTimerRef = null
+            flushThinkBuffer()
+          }, 16)
+          break
+        }
+        case 'reasoning:available': {
+          const reasoningText = (event as { text: string }).text ?? ''
+          console.debug('[useStreamEvents] reasoning:available', sid, mid)
+          store.onReasoningAvailable(sid, mid, reasoningText)
+          break
+        }
         case 'search:progress': {
           const progressEvent = event as {
             stage: 'searching' | 'visiting' | 'done'
-            url?: string
-            title?: string
-            index?: number
-            total?: number
+            url?: string; title?: string; index?: number; total?: number
           }
           store.updateSearchProgress(sid, mid, (items) => {
-            if (progressEvent.stage === 'searching') {
-              return []
-            }
+            if (progressEvent.stage === 'searching') return []
             if (progressEvent.stage === 'visiting' && progressEvent.url) {
               const existing = items.find((i) => i.url === progressEvent.url)
               if (existing) return items
               return [
                 ...items,
-                {
-                  id: crypto.randomUUID(),
-                  url: progressEvent.url,
-                  title: progressEvent.title || progressEvent.url,
-                  status: 'pending' as const,
-                },
+                { id: crypto.randomUUID(), url: progressEvent.url, title: progressEvent.title || progressEvent.url, status: 'pending' as const },
               ]
             }
-            if (progressEvent.stage === 'done') {
-              return items.map((i) => ({ ...i, status: 'visited' as const }))
-            }
+            if (progressEvent.stage === 'done') return items.map((i) => ({ ...i, status: 'visited' as const }))
             return items
           })
           break
@@ -158,6 +167,7 @@ export function useStreamEvents() {
             console.debug('[safety-net] cerrando thinking en stream:completed')
             store.onThinkingEnd(sid, mid, currentMsg?.thinkingTokensUsed ?? 0)
           }
+          store.deduplicateReasoningFromContent(sid, mid)
           store.onStreamEnd(sid, mid)
           stopStreamingFn(sid)
           const pid = _providerBySession.get(sid)
@@ -203,10 +213,7 @@ export function useStreamEvents() {
           store.updateMessage(mid, { content: `Error: ${errorMsg}`, isStreaming: false })
           useEventBus.getState().dispatch({
             type: 'stream:error',
-            sessionId: sid,
-            messageId: mid,
-            error: errorMsg,
-            timestamp: Date.now(),
+            sessionId: sid, messageId: mid, error: errorMsg, timestamp: Date.now(),
           })
           break
         }
@@ -235,10 +242,7 @@ export function useStreamEvents() {
           const tcNameErr = evtErr.toolName as string | undefined
           updateToolCallStatus(sid, mid, tcIdErr, 'error', errorMsg, tcNameErr)
           useEventBus.getState().dispatch({
-            type: 'tool:error',
-            toolName: tcNameErr ?? '',
-            error: errorMsg,
-            timestamp: Date.now(),
+            type: 'tool:error', toolName: tcNameErr ?? '', error: errorMsg, timestamp: Date.now(),
           })
           break
         }
@@ -252,24 +256,11 @@ export function useStreamEvents() {
           store.updateMessage(mid, (msg) => ({
             pipelineSteps: [
               ...(msg.pipelineSteps ?? []),
-              {
-                id: `skill-${skillId}-${Date.now()}`,
-                name: `${skillIcon} ${skillName}`,
-                status: 'running' as const,
-                timestamp: Date.now(),
-                meta: skillCategory,
-              },
+              { id: `skill-${skillId}-${Date.now()}`, name: `${skillIcon} ${skillName}`, status: 'running' as const, timestamp: Date.now(), meta: skillCategory },
             ],
           }))
           useEventBus.getState().dispatch({
-            type: 'skill:activated' as const,
-            skillId,
-            skillName,
-            skillIcon,
-            skillCategory,
-            sessionId: sid,
-            messageId: mid,
-            timestamp: Date.now(),
+            type: 'skill:activated' as const, skillId, skillName, skillIcon, skillCategory, sessionId: sid, messageId: mid, timestamp: Date.now(),
           })
           break
         }
@@ -287,9 +278,7 @@ export function useStreamEvents() {
         }
         case 'sidecar:log': {
           const { level, text } = event as { level?: string; text?: string }
-          if (level === 'stderr' && text) {
-            console.warn('[sidecar stderr]', text)
-          }
+          if (level === 'stderr' && text) console.warn('[sidecar stderr]', text)
           break
         }
         case 'terminal:agent_command': {
@@ -307,9 +296,7 @@ export function useStreamEvents() {
         }
       }
     })
-    return () => {
-      unsub()
-    }
+    return () => { unsub() }
   }, [adapterReady, appendContent, addToolCall, updateMessage, updateToolCallStatus, stopStreamingFn])
 
   return {

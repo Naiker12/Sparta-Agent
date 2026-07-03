@@ -121,6 +121,15 @@ export class ChatCompletionsTransport extends BaseTransport {
           if (choice?.delta?.reasoning_content) {
             yield { type: 'thinking_token', delta: choice.delta.reasoning_content }
           }
+          // OpenRouter unified format: reasoning_details array
+          if (choice?.delta?.reasoning_details) {
+            const details = Array.isArray(choice.delta.reasoning_details)
+              ? choice.delta.reasoning_details.map((d: { text?: string }) => d.text ?? '').join('')
+              : String(choice.delta.reasoning_details)
+            if (details) {
+              yield { type: 'thinking_token', delta: details }
+            }
+          }
           if (choice?.finish_reason === 'stop' || choice?.finish_reason === 'end_turn') {
             yield { type: 'done' }
           }

@@ -73,7 +73,7 @@ async function runAssistantTurn(
     const providerKey = await getProviderKey(provider)
     const system = await buildMemorySystemPrompt(text, freshProviders)
 
-    const { semanticMemoryEnabled, webSearchEnabled, sessionMode, reasoningEnabled, reasoningBudget } = useSettingsStore.getState()
+    const { semanticMemoryEnabled, webSearchEnabled, sessionMode, reasoningEnabled, reasoningBudget, reasoningEffort } = useSettingsStore.getState()
     const skills = useSkillStore.getState().activeSkillIds ?? []
     const mcpServers = useMCPStore.getState().servers.map((s: { id: string; name: string; tools?: unknown[] }) => ({
       id: s.id,
@@ -98,7 +98,7 @@ async function runAssistantTurn(
       skills,
       mcpServers,
       semanticMemory: semanticMemoryEnabled,
-      reasoning: { enabled: reasoningEnabled ?? false, budget: reasoningBudget ?? 8000 },
+      reasoning: { enabled: reasoningEnabled ?? false, budget: reasoningBudget ?? 8000, effort: reasoningEffort ?? 'medium' },
       webSearchEnabled,
       workspaceRoot,
     })
@@ -161,7 +161,14 @@ export function useChatSession() {
       const allMessages = useChatStore.getState().messagesBySession[sid] ?? []
       const msgs = allMessages
         .filter((m) => m.id !== assistantId)
-        .map((m) => ({ role: m.role, content: m.content }))
+        .map((m) => {
+          const base: { role: string; content: string; reasoning_content?: string } = { role: m.role, content: m.content }
+          if (m.role === 'assistant') {
+            if (m.reasoningContent) base.reasoning_content = m.reasoningContent
+            else if (m.reasoningText) base.reasoning_content = m.reasoningText
+          }
+          return base
+        })
 
       // Signal main process that renderer is ready to receive events for this session (Electron only)
       if (typeof window !== 'undefined' && window.electron?.send) {
@@ -208,7 +215,14 @@ export function useChatSession() {
 
       const msgs = sessionMessages
         .slice(0, idx)
-        .map((m) => ({ role: m.role, content: m.content }))
+        .map((m) => {
+          const base: { role: string; content: string; reasoning_content?: string } = { role: m.role, content: m.content }
+          if (m.role === 'assistant') {
+            if (m.reasoningContent) base.reasoning_content = m.reasoningContent
+            else if (m.reasoningText) base.reasoning_content = m.reasoningText
+          }
+          return base
+        })
       await runAssistantTurn(sid, assistantId, prevUser.content, msgs, buildMemorySystemPrompt)
 
       return { sessionId: sid, assistantId }
