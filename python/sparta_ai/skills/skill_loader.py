@@ -10,6 +10,7 @@ Sources (searched in order):
 import logging
 import os
 import re
+import sys
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -21,6 +22,15 @@ except ImportError:
     HAS_YAML = False
 
 logger = logging.getLogger("sparta_ai.skills")
+
+# Platform detection for skill gating
+_CURRENT_PLATFORM = (
+    "windows" if sys.platform.startswith("win")
+    else "macos" if sys.platform == "darwin"
+    else "linux"
+)
+
+_SUPPORTED_PLATFORMS = {"windows", "macos", "linux"}
 
 # ── Path resolution ────────────────────────────────────────────
 # <project-root>/skills/  (same level as package.json)
@@ -91,6 +101,16 @@ def _scan_skills_dir(skills_dir: Path) -> list[dict[str, Any]]:
                 continue
             meta, body = _parse_frontmatter(skill_md.read_text(encoding="utf-8"))
             sid = meta.get("id") or skill_dir.name
+
+            # Platform gating: skip skills not compatible with current OS
+            platforms = meta.get("platforms")
+            if platforms:
+                if isinstance(platforms, str):
+                    platforms = [p.strip().lower() for p in platforms.split(",")]
+                if isinstance(platforms, list):
+                    if _CURRENT_PLATFORM not in [p.lower() for p in platforms]:
+                        continue
+
             skills.append({
                 "id": sid,
                 "name": meta.get("name", sid),
@@ -102,6 +122,7 @@ def _scan_skills_dir(skills_dir: Path) -> list[dict[str, Any]]:
                 "author": meta.get("author", "Sparta Team"),
                 "source": meta.get("source", "builtin"),
                 "featured": meta.get("featured", False),
+                "platforms": meta.get("platforms", ""),
             })
     return skills
 

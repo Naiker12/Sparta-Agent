@@ -129,17 +129,26 @@ def build_sparta_graph(
             system_parts.append(
                 f"\n<memoria_relevante>\n{state['memory_context']}\n</memoria_relevante>"
             )
-        if skill_context:
-            system_parts.append(f"\n{skill_context}")
 
         system = "\n\n".join(system_parts)
 
-        # Use the async interface so the parent graph's astream_events can see
-        # tokens as they are produced instead of waiting for a sync .invoke().
-        response = await llm_with_tools.ainvoke([
+        # Build message list: system prompt + active skills as user message + history
+        messages: list[dict] = [
             {"role": "system", "content": system},
-            *state["messages"],
-        ])
+        ]
+
+        # Inject active skills as a user message (preserves system prompt prefix cache)
+        if skill_context:
+            messages.append({
+                "role": "user",
+                "content": f"[Active skills loaded]\n\n{skill_context}\n\n"
+                           f"Follow the active skills listed above. Use skills_list_tool to explore "
+                           f"more skills, and skill_view_tool to load their full content.",
+            })
+
+        messages.extend(state["messages"])
+
+        response = await llm_with_tools.ainvoke(messages)
         return {"messages": [response]}
 
     async def planner_node_wrapped(state: SpartaState) -> dict:
