@@ -36,7 +36,9 @@ interface ChatState {
   // Thinking lifecycle
   onThinkingStart: (sessionId: string, messageId: string) => void
   onThinkingEnd: (sessionId: string, messageId: string, tokensUsed: number) => void
+  onReasoningAvailable: (sessionId: string, messageId: string, text: string) => void
   onStreamEnd: (sessionId: string, messageId: string) => void
+  deduplicateReasoningFromContent: (sessionId: string, messageId: string) => void
 }
 
 export const useChatStore = create<ChatState>()(
@@ -125,6 +127,10 @@ export const useChatStore = create<ChatState>()(
             console.warn('[chat.store] appendContent: mensaje no encontrado', messageId.slice(0, 8), 'en sesión', sessionId.slice(0, 8))
             return s
           }
+          if (!target.isStreaming) {
+            console.warn('[chat.store] appendContent ignorado: mensaje ya no está stremeando', messageId.slice(0, 8))
+            return s
+          }
           if (chunkSeq !== undefined && target.lastChunkSeq !== undefined && chunkSeq <= target.lastChunkSeq) {
             console.warn(`[chat.store] Duplicate content chunk #${chunkSeq} <= lastChunkSeq #${target.lastChunkSeq} for message ${messageId.slice(0, 8)}`)
             return s
@@ -148,6 +154,11 @@ export const useChatStore = create<ChatState>()(
           const target = sessionMessages.find((m) => m.id === messageId)
           if (!target) {
             console.warn('[chat.store] appendThinking: mensaje no encontrado', messageId.slice(0, 8), 'en sesión', sessionId.slice(0, 8))
+            return s
+          }
+          // Reject thinking after streaming ended
+          if (!target.isStreaming) {
+            console.warn('[chat.store] appendThinking ignorado: mensaje ya no está stremeando', messageId.slice(0, 8))
             return s
           }
           if (chunkSeq !== undefined && target.lastThinkChunkSeq !== undefined && chunkSeq <= target.lastThinkChunkSeq) {
@@ -327,6 +338,73 @@ export const useChatStore = create<ChatState>()(
           }
         }),
 
+      onReasoningAvailable: (sessionId, messageId, text) =>
+        set((s) => {
+          const sessionMessages = s.messagesBySession[sessionId]
+          if (!sessionMessages) return s
+          const target = sessionMessages.find((m) => m.id === messageId)
+          if (!target) return s
+          if (target.reasoningText && target.reasoningText.length >= text.length) return s
+          return {
+            messagesBySession: {
+              ...s.messagesBySession,
+              [sessionId]: sessionMessages.map((msg) =>
+                msg.id === messageId
+                  ? {
+                      ...msg,
+                      reasoningText: text,
+                      thinkingStatus: 'completed' as ThinkingStatus,
+                    }
+                  : msg
+              ),
+            },
+          }
+        }),
+
+      deduplicateReasoningFromContent: (sessionId, messageId) =>
+        set((s) => {
+          const sessionMessages = s.messagesBySession[sessionId]
+          if (!sessionMessages) return s
+          const target = sessionMessages.find((m) => m.id === messageId)
+          if (!target || !target.reasoningText) return s
+          const rt = target.reasoningText.trim()
+          let content = target.content
+          if (!rt || !content) return s
+
+          // Strip inline think/reasoning tags from content first
+          content = content.replace(/<(think|thinking|reasoning)>[\s\S]*?<\/\1>/gi, '')
+          content = content.replace(/<\/?(?:think|thinking|reasoning)>/gi, '').trim()
+
+          // Normalize whitespace for comparison (like Hermes)
+          const normalize = (v: string) => v.replace(/\s+/g, ' ').trim()
+          const nRt = normalize(rt)
+          const nContent = normalize(content)
+
+          if (nContent.startsWith(nRt) || nRt.startsWith(nContent)) {
+            const deduped = content.slice(rt.length).trimStart()
+            if (deduped.length > 0) {
+              return {
+                messagesBySession: {
+                  ...s.messagesBySession,
+                  [sessionId]: sessionMessages.map((msg) =>
+                    msg.id === messageId ? { ...msg, content: deduped } : msg
+                  ),
+                },
+              }
+            }
+            // If dedup leaves empty content but we have reasoning, keep content empty
+            return {
+              messagesBySession: {
+                ...s.messagesBySession,
+                [sessionId]: sessionMessages.map((msg) =>
+                  msg.id === messageId ? { ...msg, content: '' } : msg
+                ),
+              },
+            }
+          }
+          return s
+        }),
+
       onStreamEnd: (sessionId, messageId) =>
         set((s) => {
           const sessionMessages = s.messagesBySession[sessionId]
@@ -357,7 +435,7 @@ export const useChatStore = create<ChatState>()(
     }),
     {
       name: 'sparta-chat',
-      version: 2,
+      version: 3,
       migrate: (persisted, version) => {
         const state = persisted as Record<string, unknown>
         if (version < 2) {
@@ -374,6 +452,26 @@ export const useChatStore = create<ChatState>()(
                             isStreaming: false,
                             lastChunkSeq: (m as { lastChunkSeq?: number }).lastChunkSeq,
                             lastThinkChunkSeq: (m as { lastThinkChunkSeq?: number }).lastThinkChunkSeq,
+                          }))
+                        : [],
+                    ])
+                  )
+                : {},
+          }
+        }
+        if (version < 3) {
+          return {
+            messagesBySession:
+              state.messagesBySession && typeof state.messagesBySession === 'object'
+                ? Object.fromEntries(
+                    Object.entries(state.messagesBySession as Record<string, unknown>).map(([sid, msgs]) => [
+                      sid,
+                      Array.isArray(msgs)
+                        ? msgs.map((m: Record<string, unknown>) => ({
+                            ...m,
+                            reasoningContent: (m as { reasoningContent?: string }).reasoningContent,
+                            reasoningDetails: (m as { reasoningDetails?: unknown[] }).reasoningDetails,
+                            codexReasoningItems: (m as { codexReasoningItems?: unknown[] }).codexReasoningItems,
                           }))
                         : [],
                     ])

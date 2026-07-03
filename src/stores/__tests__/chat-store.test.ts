@@ -40,6 +40,7 @@ describe('chat store deletion', () => {
   it('transiciona thinkingStatus: starting → streaming → completed sin quedarse pegado', () => {
     const sid = useSessionStore.getState().createSession('Test')
     const msg = createMessage(sid, 'assistant', '')
+    msg.isStreaming = true
     useChatStore.getState().addMessage(msg)
     const mid = msg.id
 

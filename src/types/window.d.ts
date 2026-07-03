@@ -16,7 +16,7 @@ interface SpartaSendMessageRequest {
   skills?: string[]
   mcpServers?: unknown[]
   semanticMemory?: boolean
-  reasoning?: { enabled: boolean; budget: number }
+  reasoning?: { enabled: boolean; budget: number; effort?: string }
 }
 
 interface SpartaAPI {

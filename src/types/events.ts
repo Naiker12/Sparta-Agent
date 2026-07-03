@@ -5,6 +5,9 @@ export type EventType =
   | 'thinking:started'
   | 'thinking:token'
   | 'thinking:completed'
+  | 'thinking:status'
+  | 'reasoning:token'
+  | 'reasoning:available'
   | 'search:progress'
   | 'tool:called'
   | 'tool:result'
@@ -86,6 +89,28 @@ export interface ThinkingCompletedEvent extends BaseEvent {
   sessionId: string
   messageId: string
   tokensUsed: number
+}
+
+export interface ThinkingStatusEvent extends BaseEvent {
+  type: 'thinking:status'
+  sessionId: string
+  messageId: string
+  text?: string
+}
+
+export interface ReasoningTokenEvent extends BaseEvent {
+  type: 'reasoning:token'
+  sessionId: string
+  messageId: string
+  token: string
+}
+
+export interface ReasoningAvailableEvent extends BaseEvent {
+  type: 'reasoning:available'
+  sessionId: string
+  messageId: string
+  text: string
+  verbose?: boolean
 }
 
 export interface SearchProgressEvent extends BaseEvent {
@@ -329,6 +354,9 @@ export type SpartaEvent =
   | ThinkingStartedEvent
   | ThinkingTokenEvent
   | ThinkingCompletedEvent
+  | ThinkingStatusEvent
+  | ReasoningTokenEvent
+  | ReasoningAvailableEvent
   | SearchProgressEvent
   | ToolCalledEvent
   | StreamAbortedEvent

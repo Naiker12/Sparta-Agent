@@ -14,6 +14,7 @@ interface SessionState {
   renameSession: (id: string, newTitle: string) => void
   updateSessionModel: (id: string, model: string) => void
   updateSessionMeta: (id: string, updater: Partial<Session>) => void
+  addReasoningTokens: (id: string, tokens: number) => void
 }
 
 export const useSessionStore = create<SessionState>()(
@@ -83,6 +84,12 @@ export const useSessionStore = create<SessionState>()(
         set((s) => ({
           sessions: s.sessions.map((sess) =>
             sess.id === id ? { ...sess, ...updater, updatedAt: Date.now() } : sess
+          ),
+        })),
+      addReasoningTokens: (id, tokens) =>
+        set((s) => ({
+          sessions: s.sessions.map((sess) =>
+            sess.id === id ? { ...sess, reasoningTokens: (sess.reasoningTokens ?? 0) + tokens } : sess
           ),
         })),
     }),

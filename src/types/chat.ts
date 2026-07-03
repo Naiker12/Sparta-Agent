@@ -28,6 +28,14 @@ export interface SearchProgressItem {
 
 export type ThinkingStatus = 'idle' | 'starting' | 'streaming' | 'completed' | 'collapsed'
 
+export type ReasoningEffort = 'none' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh'
+
+export interface ReasoningDetail {
+  type?: string
+  text?: string
+  signature?: string
+}
+
 export interface Message {
   id: string
   role: MessageRole
@@ -38,6 +46,9 @@ export interface Message {
   reasoningText?: string
   thinkingStatus?: ThinkingStatus
   thinkingTokensUsed?: number
+  reasoningContent?: string
+  reasoningDetails?: ReasoningDetail[]
+  codexReasoningItems?: unknown[]
   isStreaming?: boolean
   lastChunkSeq?: number
   lastThinkChunkSeq?: number
@@ -59,17 +70,19 @@ export interface Session {
   agentId?: string
   pinned?: boolean
   archived?: boolean
+  reasoningTokens?: number
 }
 
 export interface ChatRequest {
   model: string
-  messages: { role: MessageRole; content: string }[]
+  messages: { role: MessageRole; content: string; reasoning_content?: string; reasoning?: string }[]
   system?: string
   stream?: boolean
   maxTokens?: number
   temperature?: number
   thinkingEnabled?: boolean
   thinkingBudget?: number
+  reasoningEffort?: ReasoningEffort
 }
 
 export interface ChatStreamChunk {

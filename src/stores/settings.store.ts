@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-import type { SessionMode, Language } from '@/types'
+import type { SessionMode, Language, ReasoningEffort } from '@/types'
 
 interface SettingsStore {
   settingsOpen: boolean
@@ -13,6 +13,7 @@ interface SettingsStore {
   webSearchEnabled: boolean
   reasoningEnabled: boolean
   reasoningBudget: number
+  reasoningEffort: ReasoningEffort
   sessionMode: SessionMode
   apiKeys: Record<string, string>
   language: Language
@@ -26,6 +27,8 @@ interface SettingsStore {
   toggleSemanticMemory: () => void
   toggleWebSearch: () => void
   toggleReasoning: () => void
+  setReasoningEffort: (effort: ReasoningEffort) => void
+  setReasoningBudget: (budget: number) => void
   setSessionMode: (mode: SessionMode) => void
   setLanguage: (lang: Language) => void
 }
@@ -42,6 +45,7 @@ export const useSettingsStore = create<SettingsStore>()(
   webSearchEnabled: false,
   reasoningEnabled: true,
   reasoningBudget: 8000,
+  reasoningEffort: 'medium',
   sessionMode: 'chat',
   apiKeys: {},
   language: 'es',
@@ -56,12 +60,14 @@ export const useSettingsStore = create<SettingsStore>()(
   toggleSemanticMemory: () => set((s) => ({ semanticMemoryEnabled: !s.semanticMemoryEnabled })),
   toggleWebSearch: () => set((s) => ({ webSearchEnabled: !s.webSearchEnabled })),
   toggleReasoning: () => set((s) => ({ reasoningEnabled: !s.reasoningEnabled })),
+  setReasoningEffort: (effort) => set({ reasoningEffort: effort }),
+  setReasoningBudget: (budget) => set({ reasoningBudget: budget }),
   setSessionMode: (mode) => set({ sessionMode: mode }),
   setLanguage: (lang) => set({ language: lang }),
 }),
     {
       name: 'sparta-settings',
-      version: 3,
+      version: 4,
       migrate: (persisted: unknown, version: number) => {
         const state = persisted as Record<string, unknown>
         if (version < 2) {
@@ -69,6 +75,9 @@ export const useSettingsStore = create<SettingsStore>()(
         }
         if (version < 3) {
           state.reasoningBudget = 8000
+        }
+        if (version < 4) {
+          state.reasoningEffort = 'medium'
         }
         return state
       },
@@ -79,6 +88,7 @@ export const useSettingsStore = create<SettingsStore>()(
         semanticMemoryEnabled: state.semanticMemoryEnabled,
         webSearchEnabled: state.webSearchEnabled,
         reasoningEnabled: state.reasoningEnabled,
+        reasoningEffort: state.reasoningEffort,
         sessionMode: state.sessionMode,
         language: state.language,
         apiKeys: state.apiKeys,
