@@ -1,0 +1,52 @@
+╔══════════════════════════════════════════════════════════════════╗
+║  17 - CANALES (CHANNELS)                                        ║
+║  Sistema de canales de comunicación e integraciones             ║
+╚══════════════════════════════════════════════════════════════════╝
+
+1. FRONTEND STORE (src/stores/channel.store.ts)
+---------------------------------------------------
+Persistida (sparta-channels)
+Estado:
+  channels: Channel[]      — lista de canales
+  activeChannelId: string  — canal activo
+
+Canales default (7):
+  general    — interno
+  agentes    — interno
+  telegram   — integración
+  discord    — integración
+  slack      — integración
+  whatsapp   — integración
+  email      — integración
+
+Channel kinds:
+  internal      — chat local entre usuario y agente
+  integration   — conectado a plataforma externa
+
+Acciones:
+  addChannel, deleteChannel, markRead
+  setActiveChannel, updateIntegration
+
+2. TIPOS (src/types/channel.ts)
+----------------------------------
+Channel: id, name, kind, type, unread, icon, integration?
+IntegrationConfig: platform, enabled, botToken, webhookUrl, etc.
+
+3. COMPONENTES UI (src/components/channels/)
+----------------------------------------------
+ChannelSidebar.tsx             — Lista de canales en sidebar
+ChannelDialog.tsx              — Diálogo gestión de canales
+InternalChannelView.tsx        — Vista chat para canales internos
+IntegrationStatusBadge.tsx     — Indicador estado integración
+TelegramIntegrationPanel.tsx   — Config bot de Telegram
+ComingSoonPanel.tsx            — Placeholder integraciones futuras
+
+4. EVENTOS DE CANAL
+---------------------
+channel:created    — canal creado
+channel:message    — mensaje en canal
+channel:deleted    — canal eliminado
+
+5. VISTA COMPLETA
+-------------------
+ChannelsView.tsx (lazy loaded)

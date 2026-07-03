@@ -1,0 +1,105 @@
+╔══════════════════════════════════════════════════════════════════╗
+║  03 - MEMORIA (GRAFO + VECTORIAL)                               ║
+║  Sistema de persistencia de conocimiento a largo plazo          ║
+╚══════════════════════════════════════════════════════════════════╝
+
+1. ARQUITECTURA DE MEMORIA
+----------------------------
+Dos sistemas paralelos:
+
+  A) MEMORIA VECTORIAL (ChromaDB) — búsqueda semántica
+  B) GRAFO DE CONOCIMIENTO (SQLite + D3) — entidades y relaciones
+
+2. MEMORIA VECTORIAL — ChromaDB
+---------------------------------
+Python (python/sparta_ai/memory/chroma_store.py):
+  Conexión HTTP a ChromaDB (localhost:8000)
+  Colección: sparta_memory
+  Funciones:
+    index_entry(entry)        → almacena con metadata
+    semantic_search(query,k)  → query → score de similitud
+    build_memory_context(q,k) → texto para system prompt
+    delete_entry(id)
+    count_entries()
+    ensure_ready()
+
+Frontend (src/services/memory/vector/):
+  chroma-client.ts            → HTTP client directo a ChromaDB REST API
+  embeddings.ts               → OpenAI text-embedding-3-small u Ollama
+  semantic-search.ts          → query(text, k) → MemoryEntry[]
+  __tests__/embeddings.test.ts (7 tests)
+
+3. GRAFO DE CONOCIMIENTO
+--------------------------
+Python (python/sparta_ai/memory/graph_memory.py):
+  SQLite en memory/graph.db
+  Tablas:
+    entities (id, name, type, data, confidence, session_id, created_at)
+    relations (source_id, target_id, relation_type, data, created_at)
+  Funciones:
+    add_entity(), add_relation()
+    query_graph()
+    extract_entities_from_text() — extracción vía regex
+
+Frontend — Graph Writer (src/services/memory/graph-writer.ts):
+  findDuplicateEntry()       → dedup por Levenshtein (>0.85)
+  updateTrustScore(rel, bool) → ajusta peso (+0.1 / -0.3)
+  writeExtractedMemory()     → escribe entidades/hechos/relaciones
+                               con dedup y entity linking
+
+Frontend — Graph Layout (src/services/memory/graph-layout.ts):
+  computeRelations()         → relaciones implícitas por categoría
+                               (same_category: 0.6, same_project: 0.8)
+                               Filtra peso < 0.05
+
+4. EXTRACTOR DE MEMORIA (src/services/memory/extractor.ts)
+------------------------------------------------------------
+Extracción LLM de entidades/hechos/relaciones desde mensajes.
+Integrado al final del flujo de chat:
+  Al completar mensaje → extractMemory()
+    → writeExtractedMemory()
+    → rebuildGraph()
+    → (si semanticMemoryEnabled) indexInChroma()
+
+5. FRONTEND STORE (src/stores/memory.store.ts)
+------------------------------------------------
+Persistida (sparta-memory, v1)
+Estado:
+  entries: MemoryEntry[]          — entradas de memoria
+  relations: MemoryRelation[]     — relaciones entre entradas
+  graphNodes: MemoryGraphNode[]   — nodos para visualización
+
+Acciones: addEntry, updateEntry, deleteEntry,
+          addRelation, updateRelation, removeRelation,
+          addEntriesFromExtraction, deleteEntriesBySourceMessageId,
+          rebuildGraph
+
+6. VISUALIZACIÓN (src/components/memory/)
+-------------------------------------------
+Componentes:
+  MemoryView.tsx          — Vista completa (lazy loaded)
+  MemoryGraph.tsx         — Thin Suspense wrapper → MemoryGraphD3
+  MemoryGraphD3.tsx       — D3 Force layout + Canvas 2D (~45KB)
+                           Zoom/pan drag nativo, edges animados
+                           Nodos con glow por categoría
+  MemoryGraphControls.tsx — Controles zoom/pan
+  MemoryNodePanel.tsx     — Panel detalle de nodo seleccionado
+  MemoryListView.tsx      — Vista de lista
+  MemoryEntryItem.tsx     — Item individual
+  MemoryDialog.tsx        — Diálogo principal
+
+7. FLUJO COMPLETO
+-------------------
+Mensaje completado
+  → extractMemory() (LLM extrae entidades/hechos/relaciones)
+    → writeExtractedMemory()
+      → Dedup con findDuplicateEntry()
+      → updateTrustScore() para relaciones existentes
+      → memory.store.addEntriesFromExtraction()
+      → rebuildGraph() → D3 re-render
+    → (opcional) indexInChroma() → ChromaDB
+
+Consulta de memoria (chat):
+  → buildMemorySystemPrompt()
+    → semanticSearch(query, k) → ChromaDB
+    → buildMemoryContext() → texto para system prompt

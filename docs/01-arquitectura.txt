@@ -1,0 +1,104 @@
+╔══════════════════════════════════════════════════════════════════╗
+║  01 - ARQUITECTURA GENERAL                                      ║
+║  Sparta Agent — Documentación Técnica por Funciones             ║
+╚══════════════════════════════════════════════════════════════════╝
+
+1. VISIÓN GENERAL
+------------------
+Sparta Agent es una aplicación de escritorio "local-first" para orquestar
+agentes de IA. Combina React + TypeScript + Vite + Electron en el frontend
+con un sidecar Python (LangGraph) y una capa de seguridad nativa en Rust.
+
+Arquitectura en 4 capas:
+
+  React Renderer (src/)
+       ↕ IPC (contextBridge)
+  Electron Main (electron/)
+       ↕ stdio JSON-RPC
+  Python Sidecar (python/sparta_ai/)
+       ↕ (seguridad)
+  Rust Native Addon (rust/sparta-security/)
+
+2. CAPA 1 — RENDERER (React + TypeScript)
+-------------------------------------------
+Entry point: src/main.tsx → renderiza <AppShell>
+Routing: No hay router — navegación por estado MainView (ui.store.ts)
+  Tipos: 'chat' | 'editor' | 'terminal' | 'agents' | 'sessions'
+         | 'skills' | 'mcp' | 'channels' | 'memory'
+Estado global: 15 stores Zustand (11 persistidas, 4 en memoria)
+Estilo: Tailwind CSS v4 + shadcn/ui + 13 temas (8 oscuros + 5 claros)
+
+3. CAPA 2 — ELECTRON MAIN PROCESS
+------------------------------------
+Archivo clave: electron/main.ts
+  - startSidecar(): spawn proceso Python
+  - createWindow(): BrowserWindow 1280×800, titleBarStyle: 'hidden'
+  - Registra 8 módulos IPC: chat, memory, vault, keymanager, security,
+    terminal, filesystem, skills
+  - wireSecurityIntoPipeline(): hook Rust → validación de mensajes
+  - contextIsolation: true, nodeIntegration: false
+
+Preload (electron/preload.ts):
+  Expone 6 APIs en window via contextBridge:
+    window.electronAPI  → min/max/close/version/titlebar
+    window.electron     → on/send/invoke genérico
+    window.sparta       → sendMessage/abortMessage/onEvent
+    window.vault        → storeKey/getKey/deleteKey/listKeys
+    window.terminal     → create/write/resize/destroy/onData
+    window.fs           → openFolder/readDir/readFile/writeFile/delete
+
+4. CAPA 3 — PYTHON SIDECAR (LangGraph)
+----------------------------------------
+Entry point: python/sparta_ai/main.py → StdioServer
+Comunicación: JSON-RPC por stdin/stdout
+Motor: LangGraph StateGraph con 5 nodos (planner→agent→tools→reflection→END)
+Subagentes: research, code, memory (cada uno su propio sub-grafo)
+Streaming: astream_events → event_bridge.py → stdout JSON lines
+Memoria: ChromaDB (vectorial) + SQLite (grafo de conocimiento)
+Tools: web_search, file_tools, terminal_tools, memory_tools, skill_tools, MCP
+
+5. CAPA 4 — RUST SECURITY LAYER (napi-rs)
+-------------------------------------------
+Compilado como native addon (.node) via napi-rs
+6 funciones exportadas:
+  - validate_message()      — valida esquema JSON-RPC
+  - sanitize_tool_call()    — sanitiza paths/URLs por tipo de tool
+  - sanitize_tool_calls()   — versión batch
+  - check_rate_limit()      — rate limiting por sesión
+  - validate_tool_call_count() — máximo tools por turno
+  - audit_log_*()           — log de auditoría persistente
+
+Puntos de integración:
+  1. wireSecurityIntoPipeline(): valida todos los mensajes Python→Electron
+  2. IPC handlers: validateMessage/sanitizeToolCall/checkRateLimit
+
+6. FLUJO DE DATOS COMPLETO
+----------------------------
+Usuario escribe mensaje
+  → ChatInput → useChatSession.sendMessage()
+    → addMessage() a chat.store
+    → messagingAdapter.sendMessage()
+      → Electron chat.ipc → sendToPython(stdin)
+        → Python server.py → chat.stream
+          → build_llm() (transports: Anthropic/OpenAI/Ollama)
+          → build_sparta_graph() (LangGraph)
+            → agent node → tools/subagentes
+          → event_bridge.py emite eventos JSON a stdout
+      ← Electron chat.ipc lee stdout
+        → sendToRenderer('sparta:event')
+      ← preload recibe IPC → window.sparta.onEvent()
+    ← useStreamEvents procesa eventos
+      → chat.store: appendContent/addToolCall/onStreamEnd
+      → event-bus.store.dispatch() (pub/sub cross-store)
+    ← React re-renders MessageList
+
+7. ARCHIVOS CLAVE
+-------------------
+electron/main.ts              — Entrada Electron, registro IPC
+electron/preload.ts           — contextBridge APIs
+src/main.tsx                  — Entry point React
+src/App.tsx                   — Re-exports de paneles
+src/lib/messaging-adapter.ts  — Adaptador dual Electron/WebSocket
+src/lib/env-adapter.ts        — Feature flags (IS_ELECTRON, FEATURES)
+vite.config.ts                — Config Vite + electron plugin
+electron-builder.json5        — Empaquetado con Python embedded

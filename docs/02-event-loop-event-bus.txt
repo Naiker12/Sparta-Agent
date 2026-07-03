@@ -1,0 +1,122 @@
+╔══════════════════════════════════════════════════════════════════╗
+║  02 - EVENT LOOP / EVENT BUS                                    ║
+║  Sistema de eventos y comunicación en tiempo real               ║
+╚══════════════════════════════════════════════════════════════════╝
+
+1. TIPOS DE EVENTOS (src/types/events.ts)
+-------------------------------------------
+47 tipos de eventos SpartaEvent organizados por dominio:
+
+  AGENTE:
+    agent:started | agent:completed | agent:error
+
+  THINKING/RAZONAMIENTO:
+    thinking:started | thinking:token | thinking:completed
+
+  STREAMING:
+    stream:token | stream:completed | stream:aborted | stream:error
+
+  HERRAMIENTAS:
+    tool:called | tool:result | tool:error
+
+  MCP:
+    mcp:connected | mcp:tool_discovered | mcp:disconnected
+
+  PIPELINE:
+    pipeline:step
+
+  CHAT:
+    chat:message | chat:send_queued
+
+  SESIÓN:
+    session:created | session:switched
+
+  PROYECTO:
+    project:created | project:switched | project:deleted
+    project:rootPathSet
+
+  SKILL:
+    skill:created | skill:updated | skill:deleted | skill:invoked
+    skill:activated | skill:completed
+
+  CANAL:
+    channel:created | channel:message | channel:deleted
+
+  MEMORIA:
+    memory:added | memory:updated | memory:deleted
+    memory:semantic_search | memory:indexed
+    memory:extraction_empty | memory:unavailable
+
+  MENSAJE:
+    message:deleted | message:edited | message:shared
+
+  BÚSQUEDA:
+    search:progress
+
+  SIDECAR:
+    sidecar:log
+
+  TERMINAL:
+    terminal:agent_command
+
+2. EVENT BUS STORE (src/stores/event-bus.store.ts)
+----------------------------------------------------
+Store en memoria (no persistida)
+  events: SpartaEvent[]              — últimos 500 eventos
+  listeners: Set<(event) => void>    — suscriptores
+  dispatch(event)                    — llama listeners + appendea
+  subscribe(listener)                — retorna unsubscribe
+  clear()                            — limpia array
+
+3. FLUJO DE EVENTOS (Python → Renderer)
+------------------------------------------
+Python LangGraph emite astream_events
+  → event_bridge.py serializa a JSON → stdout
+    → sidecar.ipc.ts parsea línea
+      → chat.ipc.ts sendToRenderer('sparta:event')
+        → preload.ts ipcRenderer.on('sparta:event')
+          → window.sparta.onEvent() callback
+            → useStreamEvents.ts procesa (buffer 16ms)
+              → chat.store actions (appendContent, addToolCall, etc.)
+              → event-bus.store dispatch (cross-store)
+
+4. USE STREAM EVENTS (src/hooks/useStreamEvents.ts)
+-----------------------------------------------------
+Hook principal de procesamiento de eventos entrantes.
+Buffer system: Token y thinking buffers con flush cada 16ms.
+Eventos manejados:
+  thinking:started → chat.store.onThinkingStart()
+  thinking:token   → chat.store.appendThinking()
+  thinking:completed → chat.store.onThinkingEnd()
+  stream:token     → chat.store.appendContent()
+  stream:completed → chat.store.onStreamEnd() + usage.store.recordTurn()
+  tool:called      → chat.store.addToolCall()
+  tool:result      → chat.store.updateToolCallStatus()
+  skill:activated  → skill.store + event-bus dispatch
+  sidecar:log      → console.log
+
+5. PIPELINE DE SEGURIDAD RUST
+-------------------------------
+wireSecurityIntoPipeline() en main.ts:
+  - Reemplaza sidecarEvents.emit original
+  - Valida cada mensaje Python contra Rust validator.rs
+  - Si inválido: emite stream:error y aborta
+  - Si válido: pasa al handler original
+
+6. DIAGRAMA DE FLUJO COMPLETO
+-------------------------------
+[Python] astream_events
+   ↓ stdout JSON lines
+[sidecar.ipc.ts] parseLine()
+   ↓
+[chat.ipc.ts] sendToRenderer()
+   ↓ ipcRenderer.send('sparta:event')
+[preload.ts] onEvent callback
+   ↓
+[messaging-adapter.ts] onEvent
+   ↓
+[useStreamEvents.ts] processEvent()
+   ├→ chat.store (contenido, thinking, tools)
+   ├→ event-bus.store.dispatch() (pub/sub)
+   ├→ usage.store.recordTurn()
+   └→ React re-render

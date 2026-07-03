@@ -1,0 +1,109 @@
+╔══════════════════════════════════════════════════════════════════╗
+║  05 - AGENTES (SISTEMA DE AGENTES)                              ║
+║  Loop LLM → tools → subagentes con ejecución paralela          ║
+╚══════════════════════════════════════════════════════════════════╝
+
+1. PYTHON — SPARTA AGENT (python/sparta_ai/agents/sparta_agent.py)
+-------------------------------------------------------------------
+StateGraph principal con SpartaState (extends MessagesState):
+  - session_id, mode (chat|agent), active_skills, memory_context
+  - thinking_tokens, tool_calls_this_turn, subagent_results
+  - plan, current_step, plan_complete, reflection_retries
+
+Nodos del grafo:
+  1. planner     → genera plan estructurado (tareas complejas)
+  2. agent       → nodo principal LLM con tools
+  3. tools       → ejecuta tools via ToolNode
+  4. subagent_coordinator → delega a sub-grafos
+  5. reflection  → analiza errores de tools y recuperación
+
+Edges condicionales:
+  agent → tools (si hay tool calls)
+  agent → subagent_coordinator (si hay delegación)
+  agent → END (respuesta final)
+  tools → reflection (si errores)
+  tools → agent (continuar)
+  Max 8 tool calls por turno
+
+2. ROUTER (python/sparta_ai/agents/router.py)
+-----------------------------------------------
+classify_intent(message, active_skills) → regex-based:
+  chat | code_task | research | memory_query | agent
+
+3. PLANNER (python/sparta_ai/agents/planner.py)
+-------------------------------------------------
+Genera plan JSON para tareas complejas (multi-step) usando LLM.
+Solo se activa en modo 'agent' con mensajes >= 10 palabras.
+
+4. REFLECTION (python/sparta_ai/agents/reflection.py)
+-------------------------------------------------------
+Cuando hay errores de tools, inyecta prompt de reflexión.
+Máximo 3 reintentos (reflection_retries).
+
+5. SUBAGENTES (python/sparta_ai/agents/subagents/)
+------------------------------------------------------
+Cada subagente es su propio sub-grafo LangGraph:
+
+  research_agent.py  — búsqueda web + síntesis de resultados
+  code_agent.py      — read_file/write_file + generación código
+  memory_agent.py    — consulta ChromaDB + grafo de conocimiento
+
+Límites: depth ≤ 2, timeout 120s
+
+6. FRONTEND — AGENT RUNTIME (src/services/agents/agent-runtime.ts)
+--------------------------------------------------------------------
+Loop principal en TypeScript (alternativa al Python):
+  LOOP (max 10 turnos):
+    buildPrompt(system + tools + historial)
+    llmCall(prompt) → respuesta
+    parseToolUseBlocks() → [tool_use, ...]
+    detectSubagentRequest() → delegar? spawnSubagent()
+    executeToolsParallel() si ≥ 2 tools independientes
+    feed results al LLM
+    updateTask steps en vivo
+
+7. FRONTEND — TOOL EXECUTOR (src/services/agents/tool-executor.ts)
+-------------------------------------------------------------------
+Ejecución paralela de tools MCP.
+Tasks independientes corren simultáneamente.
+
+8. FRONTEND — SUBAGENT SPAWNER (src/services/agents/subagent-spawner.ts)
+--------------------------------------------------------------------------
+Sesiones hijas con límites: depth ≤ 2, timeout 120s.
+
+9. FRONTEND — TASK PLANNER (src/services/agents/task-planner.ts)
+------------------------------------------------------------------
+Descomposición Task → TaskStep[].
+
+10. FRONTEND STORE (src/stores/agent.store.ts)
+-----------------------------------------------
+No persistida (en memoria)
+Estado: agents[], activeAgentId, tasks{}
+Acciones: registerAgent, setActiveAgent, updateAgentStatus,
+          addTask, updateTask
+
+11. COMPONENTES UI (src/components/agents/)
+----------------------------------------------
+AgentsPanel.tsx        — Cards de agente + input tarea + steps timeline
+SubagentWatchPane.tsx  — Panel lateral 340px con eventos en tiempo real
+
+12. FLUJO COMPLETO
+--------------------
+Usuario escribe tarea
+  → useAgent.executeTask(agentId, descripción)
+    → registerAgent + addTask + updateAgentStatus('running')
+    → dispatch agent:started
+    → runAgentTask(taskId, agentId, ...)
+      LOOP:
+        → buildPrompt() + llmCall()
+        → parseToolUseBlocks()
+        → detectSubagentRequest()? spawnSubagent()
+        → executeToolsParallel()
+        → updateTask steps en vivo
+    → updateAgentStatus('completed')
+    → dispatch agent:completed
+
+13. TESTS
+-----------
+src/services/agents/__tests__/agent-runtime.test.ts (9 tests)
+python/sparta_ai/tests/test_agent.py

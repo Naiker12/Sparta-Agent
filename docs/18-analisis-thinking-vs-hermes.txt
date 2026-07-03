@@ -1,0 +1,343 @@
+╔══════════════════════════════════════════════════════════════════╗
+║  18 - ANÁLISIS: SISTEMA THINKING vs HERMES AGENT                ║
+║  Comparativa y mejoras necesarias en Sparta Agent               ║
+╚══════════════════════════════════════════════════════════════════╝
+
+Basado en el análisis de Hermes Agent (D:\hermes-agent\thinking-system.md)
+vs Sparta Agent (D:\sparta-agent). A continuación, las diferencias clave
+y lo que Sparta debería implementar.
+
+================================================================================
+1. CAPTURA DE REASONING — MÚLTIPLES FORMATOS
+================================================================================
+
+HERMES AGENT (completo):
+  • reasoning — texto plano (DeepSeek, Qwen)
+  • reasoning_content — raw del proveedor (OpenAI-compatible)
+  • reasoning_details — array objetos (OpenRouter unified format)
+  • Bloques type:"thinking" en content (Anthropic, DeepSeek V4 Pro)
+  • Tags inline <think>/<thinking>/<reasoning> en content
+  • codex_reasoning_items — Codex Responses API
+  Prioridad estricta: 1→2→3→4→5, no duplica.
+
+SPARTA AGENT (actual):
+  • reasoning_content de delta (OpenAI-compatible) — openai.transport.ts:121
+  • Bloques type:"thinking" de Anthropic — anthropic.transport.ts:110-116
+  • Tags inline <think>/<thinking>/<reasoning> — think_scrubber.py:3-4
+  • reasoning en additional_kwargs — event_bridge.py:140
+  ✗ NO maneja reasoning_details de OpenRouter
+  ✗ NO maneja codex_reasoning_items
+  ✗ NO tiene prioridad ordenada entre formatos
+
+CAMBIOS NECESARIOS:
+  [x] Añadir extracción de reasoning_details en openai.transport.ts
+      (OpenRouter unified format: delta.reasoning_details array)
+  [~] Implementar extracción con prioridad ordenada en Python event_bridge.py
+      (parcial: se extrae de metadata, bloques, y tags inline, pero sin prioridad 1→2→3 formal)
+  [x] Preservar reasoning_details como campo separado en Message (types/chat.ts)
+  [x] Añadir codex_reasoning_items al tipo Message
+
+================================================================================
+2. STREAMING THINK SCRUBBER — PARTIAL TAGS
+================================================================================
+
+HERMES AGENT (386 líneas, agent/think_scrubber.py):
+  • Máquina de estados con _in_block, _buf, _last_emitted_ended_newline
+  • Block-boundary rules: open tag solo se reconoce si está al inicio del
+    stream, después de newline, o solo whitespace antes
+  • Pares cerrados se suprimen SIEMPRE (incluso mid-line)
+  • Partial tag detection: retiene tails tipo "<thin" hasta próximo chunk
+  • flush() al final suelta texto retenido
+
+SPARTA AGENT (78 líneas, python/sparta_ai/streaming/think_scrubber.py):
+  • Implementación básica con feed() y flush()
+  • Busca open/close tags pero SIN block-boundary rules
+  ✗ NO distingue entre tags en boundary vs mid-sentence
+  ✗ Propenso a falsos positivos: "usa <think> en tu código" se suprime
+  ✗ Manejo de partial tags muy simple
+
+CAMBIOS NECESARIOS:
+  [x] Mejorar StreamingThinkScrubber con block-boundary rules
+  [x] Añadir detección de partial tags con buffer tail
+  [x] Implementar regla: pares cerrados se suprimen SIEMPRE,
+      opens solo en boundary de línea
+  [x] Tests existentes pasan (7 tests de think_scrubber + 7 de streaming)
+  [~] Tests adicionales para boundary cases mejorados (pendiente: casos mid-sentence con prosa)
+
+================================================================================
+3. COLLAPSE/EXPAND — UX Y ESTADO
+================================================================================
+
+HERMES AGENT (ThinkingDisclosure + ReasoningAccordionGroup):
+  • Auto-open mientras streaming (pending=true)
+  • Auto-close cuando completed
+  • User override: si el usuario hace clic, su elección PERSISTE
+  • Shift+click expande todas las secciones
+  • reasoning.delta vs thinking.delta separados
+  • ReasoningAccordionGroup agrupa reasoning parts consecutivos
+  • Self-gating: no renderiza si no hay contenido (evita bloques vacíos)
+  • StreamStallIndicator: detecta silencio >2s y muestra indicador
+
+SPARTA AGENT (ThinkingBlock.tsx):
+  • Auto-open durante streaming
+  • Auto-close tras 600ms al completar
+  • User override: trackea con userToggled ref pero NO persiste
+    entre mensajes (se pierde en cada nuevo mensaje)
+  • canToggle se deshabilita durante streaming (no se puede colapsar
+    mientras stremea — UX pobre)
+  ✗ NO persiste preferencia de collapse/expand entre sesiones
+  ✗ NO agrupa reasoning parts consecutivos
+  ✗ NO tiene self-gating para bloques vacíos
+  ✗ No hay indicador de stall (stream congelado)
+
+CAMBIOS NECESARIOS:
+  [x] Persistir estado de collapse en localStorage por messageId
+  [x] Permitir toggle incluso durante streaming (se eliminó canToggle)
+  [x] Añadir self-gating: no renderiza si content vacío y status===completed
+  [ ] Agrupar reasoning parts consecutivos en un solo disclosure (ReasoningAccordionGroup)
+  [ ] Implementar StreamStallIndicator (timer 2s de silencio)
+  [ ] Añadir preview mode (max-h-40 con fade CSS)
+  [ ] Shift+click expande todas las secciones
+
+================================================================================
+4. DEDUPLICACIÓN — REASONING DUPLICADO EN CONTENT
+================================================================================
+
+HERMES AGENT:
+  • replaceTextPart() en message.complete elimina reasoning que se
+    repite verbatim en el text final
+  • build_assistant_message() NO vuelve a disparar callback si ya
+    se mostró en streaming
+  • Gateway prepone reasoning a respuesta (no duplica)
+
+SPARTA AGENT:
+  ✗ NO hay deduplicación: si el modelo repite el reasoning en el
+    content visible, el usuario lo ve dos veces
+  ✗ NO hay lógica para evitar doble callback
+
+CAMBIOS NECESARIOS:
+  [x] En useStreamEvents.ts stream:completed: llama a deduplicateReasoningFromContent()
+      que recorta content si empieza con el reasoningText
+  [x] En Python event_bridge.py: _reasoning_extracted flag evita doble emisión
+      cuando el reasoning llega en metadata + content simultáneamente
+
+================================================================================
+5. THINKING-ONLY TURNS
+================================================================================
+
+HERMES AGENT:
+  • drop_thinking_only_and_merge_users() elimina turns de assistant
+    que solo contienen reasoning (sin content ni tool_calls)
+  • Opera sobre COPIA de mensajes (la que va al API, no el histórico)
+  • Si quedan dos user messages adyacentes, los fusiona
+  • Preserva role alternation invariant para el proveedor
+
+SPARTA AGENT:
+  ✗ NO hay filtrado de thinking-only turns
+  ✗ Si el modelo genera un turno solo de reasoning, se envía al API
+    y puede romper la alternancia de roles
+
+CAMBIOS NECESARIOS:
+  [ ] ⚠️ Implementar drop_thinking_only en Python agent pipeline
+  [ ] ⚠️ Añadir merge de user messages adyacentes
+  [ ] ⚠️ Asegurar que solo afecta a la copia del API, no al histórico
+
+================================================================================
+6. CROSS-PROVIDER SAFETY — REASONING FIELDS
+================================================================================
+
+HERMES AGENT:
+  • copy_reasoning_content_for_api(): elimina reasoning_content si el
+    proveedor activo NO lo soporta (Mistral/Cerebras/Groq → 422)
+  • Inyecta " " (espacio) para DeepSeek/Kimi que exigen el campo
+  • reapply_reasoning_echo_for_provider(): reconcilia campos contra
+    proveedor activo en fallbacks mid-conversación
+  • Maneja tool_calls + reasoning sin reasoning_content
+
+SPARTA AGENT:
+  ✗ NO hay lógica cross-provider para reasoning fields
+  ✗ Si se hace fallback de DeepSeek a Mistral, el reasoning_content
+    puede causar HTTP 422
+  ✗ No se inyecta " " para modelos que exigen reasoning_content
+
+CAMBIOS NECESARIOS:
+  [ ] ⚠️ Implementar copy_reasoning_content_for_api() en Python
+  [ ] ⚠️ Añadir lógica por vendor: qué proveedores requieren/rechazan
+      reasoning_content (DeepSeek requiere, Mistral/Groq rechazan con 422)
+  [ ] ⚠️ Implementar reapply para fallbacks mid-conversación
+
+================================================================================
+7. PERSISTENCIA DE REASONING
+================================================================================
+
+HERMES AGENT (SQLite):
+  • reasoning TEXT — texto plano
+  • reasoning_content TEXT — raw del proveedor
+  • reasoning_details TEXT — JSON serializado
+  • codex_reasoning_items TEXT — JSON serializado
+  • reasoning_tokens INTEGER en sessions
+
+SPARTA AGENT (localStorage JSON):
+  • reasoningText: string — solo texto plano
+  • thinkingTokensUsed?: number
+  ✗ NO guarda reasoning_content raw
+  ✗ NO guarda reasoning_details
+  ✗ NO guarda reasoning_tokens por sesión
+
+CAMBIOS NECESARIOS:
+  [x] Añadir reasoning_content, reasoning_details, codex_reasoning_items
+      al tipo Message en types/chat.ts
+  [x] Persistir estos campos en chat.store v3 (localStorage)
+  [x] Añadir reasoning_tokens a session.store + addReasoningTokens()
+
+================================================================================
+8. REASONING EFFORT / CONTROLS
+================================================================================
+
+HERMES AGENT:
+  • reasoning_effort: none | minimal | low | medium | high | xhigh
+  • Comando /reasoning show|hide|full|clamp|none|low|medium|high|xhigh
+  • Persistido en localStorage (hermes.desktop.composer.reasoning-effort)
+  • Slider en settings
+
+SPARTA AGENT:
+  • reasoningBudget: number (default 8000) — solo budget de tokens
+  • reasoningEnabled: boolean (on/off)
+  ✗ NO hay niveles de esfuerzo
+  ✗ NO hay comando /reasoning completo
+  ✗ Solo control on/off + budget, sin granularidad
+
+CAMBIOS NECESARIOS:
+  [x] Añadir reasoningEffort al settings.store + migración v4
+  [x] Mapear effort levels a valores de API según vendor (OpenRouter/DeepSeek)
+  [x] Expandir SlashCommandMenu con /reasoning show|hide|full|none|low|medium|high|xhigh
+  [ ] Slider/selector visual en Settings UI (solo store, falta componente)
+
+================================================================================
+9. UI — ANIMACIONES Y SPINNERS
+================================================================================
+
+HERMES AGENT:
+  • Spinners variados: helix, breathe, orbit, dna, wave, snake, pulse
+  • FaceTicker status bar: kaomoji/emoji/ascii/unicode rotando
+  • Loader SVG con 20 curvas paramétricas (rose, cardioid, lissajous)
+  • StreamCursor `▍` parpadeante 420ms
+  • Pet mascota con frases de thinking
+
+SPARTA AGENT:
+  • StreamCursor `▍` parpadeante 530ms
+  • ThinkingBlock con animación framer-motion (expand/collapse)
+  • ThinkingPill con Loader2 spinner de lucide-react
+  ✗ NO hay spinners variados para thinking
+  ✗ NO hay status bar animada
+  ✗ Solo un spinner estático
+
+CAMBIOS NECESARIOS:
+  [ ] Añadir spinners variados para thinking (aleatorios o por tema)
+  [x] StatusBar con indicador animado (braille spinner ◔◑◕◐)
+  [ ] Reducir blink rate del cursor StreamCursor a 420ms (actual 530ms)
+
+================================================================================
+10. SEPARACIÓN thinking.delta vs reasoning.delta
+================================================================================
+
+HERMES AGENT:
+  • thinking.delta: texto corto de estado ("Hermes está pensando...")
+    IGNORADO por Desktop App (redundante)
+  • reasoning.delta: texto real de razonamiento chunk por chunk
+  • reasoning.available: reasoning disponible post-facto
+
+SPARTA AGENT:
+  • Solo reasoning: unifica todo en thinking:token
+  ✗ NO hay separación entre "status ping" y razonamiento real
+  ✗ NO hay reasoning.available para post-facto
+
+CAMBIOS NECESARIOS:
+  [ ] Separar eventos: thinking:status vs reasoning token real (status ping separado)
+  [x] Añadir reasoning:available event + handler en useStreamEvents + chat.ipc.ts
+
+================================================================================
+11. RESTAURACIÓN DE REASONING EN HISTORIAL
+================================================================================
+
+HERMES AGENT:
+  • Al cargar sesión, se restauran reasoning, reasoning_content,
+    reasoning_details, codex_reasoning_items
+  • Al reenviar al API, copy_reasoning_content_for_api() decide
+    qué incluir según el proveedor activo
+
+SPARTA AGENT:
+  • reasoningText se restaura como parte del mensaje desde localStorage
+  ✗ NO se reenvía reasoning al API en mensajes históricos
+  ✗ Si se cambia de proveedor, puede haber incompatibilidad
+
+CAMBIOS NECESARIOS:
+  [ ] ⚠️ Al enviar historial al API, incluir reasoning según vendor
+  [ ] ⚠️ Implementar limpieza de reasoning fields por vendor (cross-provider)
+
+================================================================================
+12. RESUMEN: ARCHIVOS A MODIFICAR EN SPARTA
+================================================================================
+
+✅ COMPLETADO (v0.3.0):
+  src/types/chat.ts              — Añadido reasoningDetails, reasoningContent, codexReasoningItems, ReasoningEffort
+  src/types/events.ts            — Añadido ReasoningAvailableEvent
+  src/stores/chat.store.ts       — v3 migration, deduplicateReasoningFromContent(), onReasoningAvailable()
+  src/hooks/useStreamEvents.ts   — Deduplicación, reasoning.available handler
+  python/.../streaming/think_scrubber.py — Block-boundary rules + partial tags + closed pairs
+  python/.../streaming/event_bridge.py   — _reasoning_extracted flag anti-dedup
+  python/.../streaming/event_dispatcher.py — Misma mejora de dedup
+  python/.../config/providers.py — Reasoning effort mapping (OpenRouter/DeepSeek)
+  electron/ipc/chat.ipc.ts       — reasoning:available forwarding
+  src/components/chat/reasoning/ThinkingBlock.tsx — Self-gating, persist collapse, toggle siempre
+  src/components/input/SlashCommandMenu.tsx — /reasoning expandido con effort levels
+  src/stores/settings.store.ts   — reasoningEffort + migrate v4
+  src/stores/session.store.ts    — reasoningTokens + addReasoningTokens()
+  src/components/layout/StatusBar.tsx — Spinner animado braille durante thinking
+  src/lib/messaging-adapter.ts   — reasoning.effort en ChatSendRequest
+  src/types/window.d.ts          — reasoning.effort en SpartaSendMessageRequest
+  python/.../server.py/web.py    — reasoning_effort pasado a build_llm()
+  src/services/ai/transports/openai.transport.ts — reasoning_details extraction
+
+✅ COMPLETADO (v0.3.0):
+  python/sparta_ai/agents/message_cleanup.py — drop_thinking_only_and_merge_users()
+  python/sparta_ai/agents/message_cleanup.py — copy_reasoning_content_for_api() (cross-provider safety)
+  python/sparta_ai/agents/message_cleanup.py — reapply_reasoning_echo_for_provider() (fallbacks)
+  python/.../server.py/web.py — integrado message_cleanup en pipeline
+  src/components/settings/tabs/GeneralTab.tsx — Slider reasoningEffort + budget en Settings
+  src/components/chat/reasoning/StreamCursor.tsx — Blink rate 420ms
+  src/components/chat/reasoning/ThinkingBlock.tsx — Preview mode (max-h-40 + fade CSS)
+  src/components/chat/reasoning/ThinkingBlock.tsx — StreamStallIndicator (timer 2s)
+  src/components/chat/reasoning/ThinkingBlock.tsx — Shift+click expand all sections
+  src/components/chat/reasoning/StreamStallIndicator.tsx — Nuevo componente
+  src/components/chat/reasoning/ReasoningAccordionGroup.tsx — Nuevo componente
+  python/.../streaming/event_bridge.py — _skip_mode dedup + _emitted_text accumulator
+  python/.../streaming/event_bridge.py — _stream_completed guard (anti multi-emit)
+  python/.../streaming/event_dispatcher.py — _stream_completed guard
+  src/stores/chat.store.ts — appendContent/appendThinking isStreaming guard
+  src/stores/chat.store.ts — deduplicateReasoningFromContent mejorado
+
+⚪ PENDIENTE — PRIORIDAD MEDIA:
+  Migrar a streaming HTTP directo (sin LangGraph astream_events)
+  O reestructurar graph para evitar loops agent->tools->agent
+  Añadir namespace filter para subgraph events
+
+⚪ PENDIENTE — PRIORIDAD BAJA:
+  Restauración de reasoning al API en historial
+  Spinners variados aleatorios para thinking
+  thinking:status separado de reasoning:token
+
+================================================================================
+13. MEJORES PRÁCTICAS DE HERMES APLICABLES
+================================================================================
+
+1. Prompt caching: reasoning como campo separado del content → NO invalida cache
+2. No duplicación: si ya se mostró en streaming, no repetir en mensaje final
+3. Filtrado honesto: dropear thinking-only turns en COPIA, no en histórico
+4. Persistencia fiel: guardar TODOS los formatos, no solo texto plano
+5. Block-boundary rules: evitar falsos positivos con tags mencionados en prosa
+6. Partial tag handling: retener tails entre chunks
+7. User override: si el usuario hace clic, su estado persiste
+8. Self-gating: no renderizar bloques vacíos
+9. Cross-provider safety: limpiar/inyectar reasoning según vendor activo
+10. Reasoning effort granular: none → xhigh, mapeado por vendor

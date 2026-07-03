@@ -1,0 +1,107 @@
+╔══════════════════════════════════════════════════════════════════╗
+║  12 - RUST SECURITY LAYER                                       ║
+║  Módulo nativo de seguridad (napi-rs)                           ║
+╚══════════════════════════════════════════════════════════════════╝
+
+1. PROYECTO
+---------------
+rust/sparta-security/
+  Cargo.toml          — napi + serde_json + regex + chrono + once_cell
+  build.rs            — napi build script
+  package.json        — npm build script
+  build.bat           — build Windows
+  rust-toolchain.toml
+  src/
+    lib.rs            — Entry point N-API (6 funciones exportadas)
+    validator.rs      — Validación JSON-RPC
+    sanitizer.rs      — Sanitización de tool calls
+    guard.rs          — Rate limiting + límites
+    audit.rs          — Log de auditoría persistente
+
+2. FUNCIONES EXPORTADAS (lib.rs)
+-----------------------------------
+validate_message(line)          → valida formato JSON-RPC
+sanitize_tool_call(name, json)  → sanitiza args por tipo tool
+sanitize_tool_calls(json)       → versión batch
+check_rate_limit(session_id)    → rate limit por sesión
+validate_tool_call_count(count) → max tools por turno
+configure_audit_log(path)       → configura archivo de auditoría
+audit_log_tool_call(...)        → log de tool call
+audit_log_security(...)         → log de evento seguridad
+is_audit_enabled()              → check estado auditoría
+
+3. VALIDADOR (validator.rs)
+------------------------------
+Validación de requests:
+  id: alphanumeric + :_- max 128
+  method: whitelist (5 métodos)
+  params: session_id max 64, message_id max 64
+          messages array max 200, content max 100KB
+          roles whitelist
+
+Validación de responses:
+  event: whitelist (12 tipos de evento)
+  token: max 50KB
+
+Raw validation:
+  Max 1KB mensaje
+  Debe tener method o event
+
+4. SANITIZADOR (sanitizer.rs)
+--------------------------------
+Por tipo de tool:
+
+File tools (read_file, write_file):
+  Bloquea: .env, .pem, .key, sparta-vault.json
+  Bloquea: node_modules/, .git/, .venv/
+  Bloquea: path traversal (.., ~, $HOME)
+  Content max 5MB
+
+Web search:
+  Query max 500 chars, count max 50
+
+Memory tools:
+  Content max 50KB, query max 2000, k max 100
+
+Dangerous tools blocklist:
+  exec_command, shell_exec, run_terminal
+  execute_bash, execute_powershell
+
+Delegate tasks: max 10KB
+
+5. GUARD (guard.rs)
+-----------------------
+Rate limiting: 30 requests / 60s window / sesión
+Tool call count: max 20 por turno
+Message size: max 1MB
+Provider key validation: max 200 chars, alphanumeric + -_
+
+6. AUDITORÍA (audit.rs)
+---------------------------
+JSON-line audit log a archivo
+AuditEntry schema:
+  timestamp, event_type, session_id, actor,
+  action, resource, result, details, message_id
+
+Funciones: configure(), log_tool_call(), log_message(),
+           log_security_event()
+
+7. INTEGRACIÓN EN ELECTRON (electron/ipc/security.ipc.ts)
+-----------------------------------------------------------
+Carga vía require() del .node compilado
+wireSecurityIntoPipeline():
+  → Reemplaza sidecarEvents.emit()
+  → Valida todos los mensajes Python → Electron
+  → Si inválido: emite stream:error + aborta
+  → Si válido: pasa al handler original
+
+IPC handlers expuestos:
+  security:validateMessage
+  security:sanitizeToolCall
+  security:sanitizeToolCalls
+  security:checkRateLimit
+  security:status
+
+8. TESTS
+---------
+cargo test → 9 tests

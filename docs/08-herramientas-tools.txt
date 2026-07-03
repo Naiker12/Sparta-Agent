@@ -1,0 +1,86 @@
+╔══════════════════════════════════════════════════════════════════╗
+║  08 - HERRAMIENTAS / TOOLS                                      ║
+║  Tools del agente: web search, archivos, memoria, terminal      ║
+╚══════════════════════════════════════════════════════════════════╝
+
+1. PYTHON TOOLS (python/sparta_ai/tools/)
+-------------------------------------------
+Cada herramienta es un LangChain tool que el agente puede invocar.
+
+A) WEB SEARCH (web_search.py)
+  web_search_tool(query, count)
+    → Brave Search API (si key configurada)
+    → Fallback DuckDuckGo (sync en thread)
+    → Emite tool_progress events para UI
+    → Retorna resultados en markdown
+
+  web_search_providers.py:
+    duckduckgo_search() — HTML scraping como fallback
+
+B) FILE TOOLS (file_tools.py)
+  read_file_tool(path, offset?, limit?)
+    → Lee archivos dentro del workspace (validación path_guard)
+    → Strips leading '/' en Windows
+    → Bloquea: .env, sparta-vault.json, SSH keys, .ssh
+    → Max path 512, max content 5MB
+
+  write_file_tool(path, content, append?)
+    → Escribe/crea archivos (crea directorios)
+    → Mismas restricciones de seguridad
+
+  inject_workspace_guidance():
+    → Actualiza descripciones de tools con workspace actual
+
+C) TERMINAL TOOLS (terminal_tools.py)
+  terminal_execute_tool(command)
+    → Envía comando al PTY via JSON-RPC
+    → Usa CommandSanitizer para bloquear patrones peligrosos
+    → Usuario ve ejecución en vivo en terminal panel
+
+D) MEMORY TOOLS (memory_tools.py)
+  read_memory_tool(query, k)
+    → Query semántica a ChromaDB
+
+  write_memory_tool(content, memory_type, tags)
+    → Almacena en ChromaDB
+
+E) SKILL TOOLS (skill_tools.py)
+  skill_view_tool(skill_id)
+    → Carga SKILL.md completo (level-2 progressive disclosure)
+
+F) MCP BRIDGE (mcp_bridge.py)
+  build_mcp_tools(mcp_servers)
+    → Fábrica de wrappers MCP desde configs del frontend
+
+2. FRONTEND TOOLS (src/services/tools/web-search/)
+-----------------------------------------------------
+buildWebSearchTool() → definición tool con inputSchema
+executeWebSearch(query, count) → DuckDuckGo scraping
+
+3. SEGURIDAD EN TOOLS
+-----------------------
+Python Security Layer:
+  command_sanitizer.py — 16 patrones de comandos peligrosos
+  path_guard.py        — validación de paths del workspace
+  permission_policy.py — permisos por tool
+  secrets_redactor.py  — redacción de API keys/tokens
+
+Rust Security Layer (sanitizer.rs):
+  Por tipo de tool:
+    File tools: bloquea .env, .pem, .key, node_modules/, .git/,
+                path traversal (.., ~, $HOME), content >5MB
+    Web search: query max 500 chars, count max 50
+    Memory tools: content max 50KB, query max 2000, k max 100
+    Dangerous tools blocklist: exec_command, shell_exec, etc.
+    Delegate tasks: max 10KB
+
+4. FLUJO DE EJECUCIÓN DE TOOL
+-------------------------------
+Agent LLM genera tool call
+  → parseToolUseBlocks() detecta
+    → Rust sanitizer.rs valida args
+    → Python tool ejecuta
+      → Emite tool:called event (UI)
+      → Resultado → tool:result event
+      → (Si error) → reflection node analiza
+    → Resultado vuelve al LLM

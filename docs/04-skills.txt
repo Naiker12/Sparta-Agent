@@ -1,0 +1,88 @@
+╔══════════════════════════════════════════════════════════════════╗
+║  04 - SKILLS                                                    ║
+║  Sistema de habilidades reutilizables para el agente            ║
+╚══════════════════════════════════════════════════════════════════╝
+
+1. ¿QUÉ SON LOS SKILLS?
+--------------------------
+Habilidades reutilizables que extienden las capacidades del agente.
+Cada skill tiene un archivo SKILL.md con frontmatter YAML.
+22 skills instaladas en skills/ (análisis, coding, research, etc.)
+
+2. PYTHON — SKILL LOADER (python/sparta_ai/skills/skill_loader.py)
+------------------------------------------------------------------
+Two-level progressive disclosure:
+  Nivel 1: skills_index() → manifiesto ligero (caché LRU, maxsize=1)
+            Se inyecta en system prompt del LLM
+  Nivel 2: skill_view(id) → carga SKILL.md completo bajo demanda
+            Disponible como skill_view_tool()
+
+build_skills_context(active_skill_ids) → bloque XML para system prompt
+Escanea: <project>/skills/<category>/<name>/SKILL.md
+         + directorio skills de usuario
+
+3. PYTHON — SKILLS GUARD (python/sparta_ai/skills/skills_guard.py)
+-------------------------------------------------------------------
+Análisis estático de patrones peligrosos en skills:
+  exec, subprocess, file_write, base64_decode, etc.
+  scan_skill_content() → risk_score (0-100) + risk_level
+  detect_skill_in_thought() → detección runtime de activación
+                              en pensamiento del LLM
+
+4. PYTHON — SKILL TOOLS (python/sparta_ai/tools/skill_tools.py)
+-----------------------------------------------------------------
+skill_view_tool(skill_id) — LangChain tool para cargar SKILL.md
+
+5. FRONTEND — STORE (src/stores/skill.store.ts)
+---------------------------------------------------
+Persistida (sparta-skills)
+Estado:
+  skills: Skill[]              — skills del usuario
+  activeSkillIds: string[]     — skills activas
+  installedSkills: InstalledSkill[] — skills instaladas vía IPC
+  loading: boolean
+
+Acciones: addSkill, updateSkill, deleteSkill, toggleActive,
+          isActive, loadInstalledSkills(), installFromUrl(), uninstallSkill
+
+6. FRONTEND — HOOKS
+---------------------
+useSkills.ts (src/hooks/useSkills.ts):
+  Wrapper simple: {skills, addSkill, updateSkill, deleteSkill}
+
+useLocalSkillsLoader.ts (src/hooks/useLocalSkillsLoader.ts):
+  Carga skills desde ../../skills/**/SKILL.md via import.meta.glob
+  Parseo de frontmatter YAML-like
+  Mapeo categoría → icono/color
+  Retorna: {skills, byCategory, loading, error}
+
+7. ELECTRON IPC — SKILLS (electron/ipc/skills.ipc.ts)
+-------------------------------------------------------
+skills:list       → escanea skills/ por SKILL.md (user dir override)
+skills:view       → retorna SKILL.md completo
+skills:install    → delega a npx skills CLI
+skills:uninstall  → elimina directorio
+skills:repo-list  → lista repositorio remoto
+skills:find       → búsqueda en repositorio
+skills:update     → actualiza skill
+
+8. COMPONENTES UI (src/components/skills/)
+--------------------------------------------
+SkillCard.tsx           — Card con toggle on/off
+SkillCreator.tsx        — Formulario crear skill
+SkillDialog.tsx         — Diálogo gestión
+SkillExplorer.tsx       — Explorar/instalar skills
+SkillInstaller.ts       — Lógica de instalación
+SkillMarkdownDialog.tsx — Ver SKILL.md completo
+SkillToggle.tsx         — Toggle on/off
+
+9. FLUJO DE ACTIVACIÓN
+------------------------
+Usuario activa skill en UI
+  → skill.store.toggleActive(skillId)
+    → activeSkillIds se actualiza
+    → Próximo mensaje incluye active_skills en chat request
+      → Python build_skills_context() genera bloque XML
+        → LLM puede usar skill_view_tool si necesita más info
+        → skills_guard.detect_skill_in_thought() monitorea uso
+          → Emite evento skill:activated

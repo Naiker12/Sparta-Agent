@@ -1,0 +1,53 @@
+╔══════════════════════════════════════════════════════════════════╗
+║  16 - MCP (MODEL CONTEXT PROTOCOL)                              ║
+║  Servidores y herramientas MCP                                  ║
+╚══════════════════════════════════════════════════════════════════╝
+
+1. ¿QUÉ ES MCP?
+------------------
+Protocolo de Contexto de Modelo — permite que el agente IA use
+herramientas externas via servidores MCP (stdio o HTTP).
+
+2. FRONTEND STORE (src/stores/mcp.store.ts)
+-----------------------------------------------
+Persistida (sparta-mcp, v1) — antes en memoria
+Estado:
+  servers: MCPServer[]    — cada server: id, name, type,
+                             connected, tools[], config
+Acciones:
+  addServer, removeServer, setConnected
+  addTool, removeTool, toggleServer
+
+3. TIPOS (src/types/mcp.ts)
+-------------------------------
+MCPServerType: 'stdio' | 'http'
+MCPServerConfig:
+  id, name, type, command?, args?, url?, enabled
+MCPTool:
+  name, description, inputSchema, serverId
+
+4. FRONTEND SERVICE (src/services/mcp/index.ts)
+--------------------------------------------------
+StdioMCPClient — stub (implementación planificada)
+
+5. COMPONENTES UI (src/components/mcp/)
+-----------------------------------------
+AddMcpServerDialog.tsx   — Formulario añadir server
+McpServerCard.tsx        — Card con estado conexión + tools + edit/delete
+McpToolItem.tsx          — Tool individual dentro de server
+
+6. PYTHON BRIDGE (python/sparta_ai/tools/mcp_bridge.py)
+----------------------------------------------------------
+build_mcp_tools(mcp_servers):
+  → Crea MCPToolWrapper instances desde configs del frontend
+  → Se inyectan como herramientas disponibles para el agente
+
+7. EVENTOS MCP
+----------------
+mcp:connected           — servidor conectado
+mcp:tool_discovered     — herramienta descubierta
+mcp:disconnected        — servidor desconectado
+
+8. VISTA COMPLETA
+-------------------
+McpView.tsx (lazy loaded) — tabs: Conectados / Marketplace

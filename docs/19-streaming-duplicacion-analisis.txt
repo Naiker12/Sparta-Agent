@@ -1,0 +1,145 @@
+╔══════════════════════════════════════════════════════════════════╗
+║  19 - ANÁLISIS: DUPLICACIÓN DE STREAMING                        ║
+║  Comparativa Hermes Agent vs Sparta Agent                       ║
+╚══════════════════════════════════════════════════════════════════╝
+
+Basado en investigación de D:\hermes-agent vs D:\sparta-agent.
+
+================================================================================
+1. ARQUITECTURA DE STREAMING
+================================================================================
+
+HERMES AGENT:
+  • Streaming DIRECTO via HTTP: for chunk in client.chat.completions.create(stream=True)
+  • Bucle síncrono simple: cada chunk SSE se procesa UNA sola vez
+  • No hay LangGraph, no hay subgraph replay, no hay loops
+  • Cada turno de conversación = 1 API call streaming
+
+SPARTA AGENT:
+  • Streaming via LangGraph astream_events: async for event in graph.astream_events()
+  • Graph loops: agent -> tools -> subagent -> reflection -> agent (hasta 8 veces)
+  • CADA loop genera eventos on_chat_model_stream NUEVOS con contenido REPETIDO
+  • Subgraphs (research_agent, code_agent, memory_agent) filtran sus eventos al padre
+
+================================================================================
+2. CAUSA RAÍZ DE LA DUPLICACIÓN
+================================================================================
+
+HERMES:
+  • 1 turno = 1 streaming HTTP. No hay repetición posible.
+  • Si hay tool calls: el assistant message se guarda COMPLETO en historial,
+    la SIGUIENTE llamada API es un nuevo turno que NO repite el contenido anterior.
+
+SPARTA (CAUSA A — Graph Loop):
+  • agent_node() (sparta_agent.py:139) llama a llm_with_tools.ainvoke()
+  • El modelo ve todo el historial (incluyendo su propia respuesta anterior)
+  • En el SIGUIENTE loop, el modelo REGENERA el mismo texto
+  • El contenido se acumula: "Hola" + "Hola! Soy..." + "Hola! Soy...! Soy..."
+  • Hasta MAX_TOOL_CALLS_PER_TURN=8 veces de repetición
+
+SPARTA (CAUSA B — Sin acumulador):
+  • No hay _current_streamed_assistant_text como en Hermes
+  • No hay forma de saber QUÉ texto ya se emitió
+  • El event_bridge emite cada on_chat_model_stream sin contexto de lo anterior
+
+SPARTA (CAUSA C — Subgraph events):
+  • research_agent, code_agent, memory_agent son subgrafos compilados
+  • Sus eventos astream_events se PROPAGAN al padre
+  • El event_bridge recibe eventos MEZCLADOS del padre y del subgrafo
+
+================================================================================
+3. COMPARATIVA DE MECANISMOS
+================================================================================
+
+┌─────────────────────────┬──────────────────────────┬──────────────────────────┐
+│ Mecanismo               │ Hermes Agent             │ Sparta Agent             │
+├─────────────────────────┼──────────────────────────┼──────────────────────────┤
+│ Streaming               │ HTTP directo (SSE)       │ LangGraph astream_events │
+│ Loop de agente          │ No hay loop              │ agent->tools->agent loop │
+│ Acumulador de texto     │ _current_streamed_       │ Ninguno                  │
+│                         │ _assistant_text          │                          │
+│ Dedup en backend        │ No necesario             │ _skip_mode / _skip_      │
+│                         │                          │ pending (nuevo v0.3.0)   │
+│ Subgraph event leak     │ No aplica                │ Namespace filter faltante│
+│ Tool calls              │ Nuevo turno API          │ Mismo graph loop         │
+│ Detección de replay     │ No necesaria             │ _emitted_text prefix     │
+│                         │                          │ check (nuevo v0.3.0)    │
+│ chunkSeq en frontend    │ No necesario             │ Existe pero sin uso      │
+│                         │                          │ real (no se pasa)        │
+│ isStreaming guard       │ No necesario             │ Nuevo v0.3.0             │
+│ _stream_completed guard │ No necesario             │ Nuevo v0.3.0             │
+└─────────────────────────┴──────────────────────────┴──────────────────────────┘
+
+================================================================================
+4. SOLUCIONES IMPLEMENTADAS EN SPARTA (v0.3.0)
+================================================================================
+
+A) _emitted_text accumulator (event_bridge.py):
+   - Acumula todo el texto visible emitido como stream:token
+   - Se usa para detectar cuándo el modelo empieza a repetir contenido
+   - Al detectar replay, entra en _skip_mode y descarta el texto repetido
+   - Cuando el texto nuevo DIVERGE del repetido, emite solo la parte nueva
+
+B) _skip_mode / _skip_pending (event_bridge.py):
+   - Cuando visible empieza a coincidir con _emitted_text, entra en skip mode
+   - Acumula texto en _skip_pending sin emitir
+   - Si _skip_pending sigue siendo un prefijo de _emitted_text, sigue skippeando
+   - Si _skip_pending diverge, emite solo la PARTE NUEVA
+
+C) _stream_completed guard (event_bridge.py + event_dispatcher.py):
+   - Evita que on_chain_end("agent") emita stream:completed más de una vez
+   - Previene que el frontend procese múltiples finalizaciones
+
+D) isStreaming guard (chat.store.ts):
+   - appendContent y appendThinking ahora rechazan datos si !isStreaming
+   - Evita que tokens tardíos se agreguen después de stream:completed
+
+E) deduplicateReasoningFromContent mejorado (chat.store.ts):
+   - Normaliza whitespace antes de comparar
+   - Chequea ambas direcciones (content startsWith reasoning Y viceversa)
+   - Stripea tags <think>/<thinking>/<reasoning> del content
+
+================================================================================
+5. CAMBIOS PENDIENTES RECOMENDADOS
+================================================================================
+
+ALTA PRIORIDAD (arquitectura):
+  [ ] Migrar a streaming HTTP directo en vez de LangGraph astream_events
+      (Hermes usa SDK directo: for chunk in client.chat.completions.create)
+  [ ] O alternativamente: reestructurar el grafo para que el nodo agent NO
+      se re-ejecute después de tools. Usar subgraph independiente para tools.
+
+MEDIA PRIORIDAD (backend):
+  [ ] Añadir namespace filter: ignorar eventos de subgraphs en el event_bridge
+      (namespace contiene "subagent_coordinator" o nombres de subgrafos)
+  [ ] Implementar _record_streamed_assistant_text como Hermes
+  [ ] Resetear _skip_mode cuando se emite tool:called (después de tool, el 
+      contenido nuevo es legítimo)
+
+BAJA PRIORIDAD (frontend):
+  [ ] Pasar chunkSeq desde Python (event_bridge.py) para que el frontend
+      pueda detectar duplicados por sequence number
+  [ ] Implementar rolling window de últimos N chars en appendContent
+      para detectar duplicados a nivel de caracteres
+
+================================================================================
+6. COMPARATIVA DE RENDIMIENTO
+================================================================================
+
+HERMES:
+  • 1 llamada HTTP streaming por turno
+  • Sin sobrecarga de LangGraph
+  • Sin loops ni reevaluaciones
+  • Streaming directo = menor latencia
+
+SPARTA (actual):
+  • LangGraph añade overhead de state machine
+  • Cada loop = nueva llamada LLM (costo x tokens)
+  • astream_events = procesamiento de eventos en múltiples niveles
+  • Sin el dedup, el usuario ve N copias del texto (N = número de loops)
+
+SPARTA (con fixes v0.3.0):
+  • _skip_mode detecta y filtra replays en backend
+  • isStreaming guard protege frontend de tokens tardíos
+  • _stream_completed evita finalizaciones múltiples
+  • Aún hay overhead de LangGraph, pero el usuario ya no ve duplicados

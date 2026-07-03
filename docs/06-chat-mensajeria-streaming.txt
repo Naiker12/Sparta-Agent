@@ -1,0 +1,113 @@
+╔══════════════════════════════════════════════════════════════════╗
+║  06 - CHAT / MENSAJERÍA / STREAMING                             ║
+║  Flujo de envío de mensajes, streaming y procesamiento          ║
+╚══════════════════════════════════════════════════════════════════╝
+
+1. FRONTEND STORE (src/stores/chat.store.ts)
+-----------------------------------------------
+Persistida (sparta-chat, v2)
+Estado clave:
+  messagesBySession: Record<string, Message[]>
+  isStreaming: boolean
+  abortController: AbortController | null
+  streamingBySession: Record<string, boolean>
+  pendingInjections: string[]     — para interrupt-and-redirect
+
+Acciones principales:
+  addMessage()              — auto-titula sesión del primer mensaje
+  appendContent()           — con detección de duplicados (lastChunkSeq)
+  appendThinking()          — reasoningText + thinkingStatus
+  addToolCall()             — ciclo de vida de tool call
+  updateToolCallStatus()
+  startStreaming()          — con AbortController
+  stopStreaming()
+  injectWhileStreaming()    — encola mensaje para redirección
+  consumePendingInjections()
+  onThinkingStart/End()     — ciclo de vida explícito de thinking
+  onStreamEnd()             — finaliza streaming
+
+2. FRONTEND HOOK — useChatSession (src/hooks/useChatSession.ts)
+-----------------------------------------------------------------
+Orquesta ciclo de vida de sesión y envío.
+sendMessage(text):
+  → Crea mensajes user + assistant
+  → Señala chat:ready al main process
+  → Llama runAssistantTurn()
+
+runAssistantTurn():
+  → Resuelve provider + API key
+  → Construye request con skills/MCP/memoria/config
+  → Envía via messagingAdapter.sendMessage()
+
+regenerateMessage() → reemplaza último assistant message
+
+3. FRONTEND HOOK — useStreamEvents (src/hooks/useStreamEvents.ts)
+-------------------------------------------------------------------
+Procesa eventos entrantes del messaging adapter.
+Buffer system: tokens y thinking se agrupan cada 16ms.
+Eventos manejados:
+  thinking:* → chat.store thinking lifecycle
+  stream:*   → appendContent + finish
+  tool:*     → addToolCall + updateToolCallStatus
+  search:progress → updateSearchProgress
+  skill:*    → skill activation events
+  sidecar:log → logging
+  terminal:agent_command → terminal output
+
+4. ELECTRON IPC — CHAT (electron/ipc/chat.ipc.ts)
+---------------------------------------------------
+Maneja chat:send → envía JSON-RPC a Python via stdin
+Mantiene activeStreams map (streamId → {sessionId, requestId, active})
+Buffer de eventos hasta señal chat:ready
+Convierte eventos Python → formato renderer
+chat:abort → marca stream inactive
+Sidecar crash → aborta todos los streams + envía errores
+
+5. MESSAGING ADAPTER (src/lib/messaging-adapter.ts)
+-----------------------------------------------------
+Patrón adaptador dual:
+  ElectronAdapter:
+    sendMessage() → window.sparta.sendMessage() (IPC)
+    onEvent() → window.sparta.onEvent() callback
+  WebAdapter:
+    sendMessage() → WebSocket
+    onEvent() → WebSocket message handler
+
+Selección automática basada en FEATURES (env-adapter.ts)
+
+6. COMPONENTES UI DE CHAT (src/components/chat/)
+---------------------------------------------------
+ChatArea.tsx          — Panel activo: MessageList o HeroScreen + ChatInput
+MessageList.tsx       — Lista scrollable de mensajes
+MessageBubble.tsx     — Burbuja con ToolCallSummary, DiffView, StreamCursor
+MarkdownRenderer.tsx  — react-markdown + remark-gfm
+HeroScreen.tsx        — Pantalla inicio con branding + acciones rápidas
+SpartaIcon.tsx        — SVG icono Sparta
+EventTimeline.tsx     — Timeline de eventos
+
+Reasoning (src/components/chat/reasoning/):
+  ThinkingBlock.tsx   — Colapso animado (framer-motion)
+  ThinkingPill.tsx    — Indicador con contador tokens
+  PipelineTrace.tsx   — Timeline de herramientas
+  ToolCallSummary.tsx — Tool call expandible
+  ToolCallDiffView.tsx — Diff visual (+/-) para edición archivos
+  StreamCursor.tsx    — Cursor parpadeante durante streaming
+
+7. INPUT (src/components/input/)
+----------------------------------
+ChatInput.tsx           — Textarea con slash commands + interrupt-and-redirect
+ModelPicker.tsx         — Selector de modelo
+AttachMenu.tsx          — Menú adjuntos
+ConnectorsSubmenu.tsx   — Submenú MCP
+ModeSwitch.tsx          — Toggle Chat/Agente
+SlashCommandMenu.tsx    — Autocomplete /clear, /model, /memory, /reasoning, /help
+
+8. FLUJO DE INTERRUPT-AND-REDIRECT
+-------------------------------------
+Durante streaming, el usuario escribe nuevo texto:
+  → ChatInput detecta isStreaming
+  → Enter ejecuta injectWhileStreaming() (no stopStreaming())
+  → Se encola mensaje en pendingInjections[]
+  → Al completar stream: stream:completed → consumePendingInjections()
+    → Se envía nuevo mensaje con contexto previo
+  → Placeholder cambia a "Corrige o redirige al agente..."

@@ -1,0 +1,79 @@
+╔══════════════════════════════════════════════════════════════════╗
+║  10 - ZUSTAND STORES                                            ║
+║  Estado global de la aplicación — 15 stores                     ║
+╚══════════════════════════════════════════════════════════════════╝
+
+1. STORES PERSISTIDAS (11)
+----------------------------
+
+A) chat.store.ts — sparta-chat (v2)
+   Mensajes por sesión, streaming, pendingInjections
+   thinkingStatus: 'idle'|'streaming'|'completed'|'collapsed'
+
+B) session.store.ts — sparta-session (v1)
+   Lista de sesiones, sesión activa, CRUD
+
+C) memory.store.ts — sparta-memory (v1)
+   entries[], relations[], graphNodes[], rebuildGraph()
+
+D) skill.store.ts — sparta-skills
+   skills[], activeSkillIds[], installedSkills[]
+
+E) provider.store.ts — sparta-providers (v1)
+   17 vendors, apiKey via vault (hasVaultKey: boolean)
+
+F) settings.store.ts — sparta-settings (v3)
+   defaultModel, memoryEnabled, semanticMemoryEnabled,
+   webSearchEnabled, reasoningEnabled, reasoningBudget (8000),
+   sessionMode, language
+
+G) ui.store.ts — sparta-ui
+   MainView, previousMainView, goBack(),
+   sidebarWidth, editorExplorerVisible
+
+H) theme.store.ts — sparta-theme
+   Tema activo (default: midnight)
+
+I) project.store.ts — sparta-projects
+   projects[], activeProject, rootPath
+
+J) channel.store.ts — sparta-channels
+   7 canales default: general, agentes, telegram, discord, etc.
+
+K) mcp.store.ts — sparta-mcp (v1)
+   servers[], tools[], connection state
+   Antes en memoria, ahora persistido
+
+L) cron.store.ts — sparta-cron
+   Cron jobs con frecuencia: hourly/daily/weekly
+
+M) usage.store.ts — sparta-usage (v2)
+   Tokens por sesión, por proveedor, totales
+   currentTurnInput/currentTurnOutput
+
+2. STORES EN MEMORIA (4)
+--------------------------
+
+N) agent.store.ts
+   agents[], activeAgentId, tasks{}
+
+O) event-bus.store.ts
+   events[500], listeners Set, dispatch/subscribe/clear
+
+P) gateway.store.ts
+   Últimas 20 requests del gateway para health monitoring
+
+Q) mcp.store.ts → AHORA persistida (ver #1K)
+
+3. VALORES CLAVE
+-----------------
+15 stores total (11 persist + 4 mem)
+Persist middleware → localStorage
+API keys: Solo hasVaultKey:boolean en store
+         Key real cifrada en sparta-vault.json (Electron safeStorage)
+Migraciones: settings v3, chat v2, usage v2, mcp v1
+4 stores con migrate: settings, chat (migrated from sessions), usage, mcp
+
+4. TESTS DE MIGRACIÓN
+----------------------
+src/stores/__tests__/migrate.test.ts — 8 tests

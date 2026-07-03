@@ -1,0 +1,80 @@
+╔══════════════════════════════════════════════════════════════════╗
+║  09 - UI / COMPONENTES REACT                                    ║
+║  Estructura de componentes, layout y temas                      ║
+╚══════════════════════════════════════════════════════════════════╝
+
+1. LAYOUT PRINCIPAL
+--------------------
+AppShell.tsx — Shell raíz
+  ├─ TitleBar.tsx (drag region + AppMenu + tabs)
+  ├─ SidebarProvider
+  │   ├─ AppSidebar.tsx
+  │   └─ Panel Activo (según MainView)
+  ├─ StatusBar.tsx
+  └─ SettingsDialog.tsx (condicional)
+
+Paneles activos (ui.store MainView.type):
+  chat      → ChatArea.tsx
+  editor    → EditorPanel.tsx (Monaco)
+  terminal  → TerminalPanel.tsx (xterm.js)
+  agents    → AgentsPanel.tsx
+  sessions  → SessionsView.tsx (lazy)
+  skills    → SkillsView.tsx (lazy)
+  mcp       → McpView.tsx (lazy)
+  channels  → ChannelsView.tsx (lazy)
+  memory    → MemoryView.tsx (lazy)
+
+2. COMPONENTES POR DOMINIO
+---------------------------
+src/components/
+  layout/      8 — AppShell, TitleBar, AppMenu, StatusBar, dialogs
+  sidebar/     8 — AppSidebar, SessionList, SessionItem, etc.
+  chat/        8 — ChatArea, MessageList, MessageBubble, etc.
+  chat/reasoning/ 6 — ThinkingBlock, ThinkingPill, PipelineTrace, etc.
+  input/       6 — ChatInput, ModelPicker, AttachMenu, etc.
+  editor/      6 — EditorPanel, MonacoEditor, FileTree*, etc.
+  terminal/    1 — TerminalPanel (xterm.js)
+  memory/      7 — MemoryGraph, MemoryGraphD3, MemoryListView, etc.
+  skills/      7 — SkillCard, SkillExplorer, SkillCreator, etc.
+  agents/      2 — AgentsPanel, SubagentWatchPane
+  mcp/         3 — AddMcpServerDialog, McpServerCard, McpToolItem
+  channels/    6 — ChannelSidebar, InternalChannelView, etc.
+  settings/   12 — SettingsDialog, ThemePicker, 9 tabs
+  providers/   3 — ProviderCard, ChooseProviderDialog, etc.
+  views/       5 — SessionsView, SkillsView, McpView, etc.
+  projects/    1 — ProjectDialog
+  ui/         16 — button, dialog, sidebar, combobox, tooltip, etc.
+  Total: ~101 componentes
+
+3. SISTEMA DE TEMAS (13 temas)
+--------------------------------
+src/styles/themes/
+  midnight.css — default
+  dracula.css, catppuccin.css, nord.css, obsidian.css
+  amber.css, emerald.css, rose.css, sage.css
+  light.css, linen.css, mist.css, sand.css
+
+theme.store.ts — persistido (sparta-theme)
+TitleBarOverlay dinámico por tema
+
+4. INTERNACIONALIZACIÓN (src/i18n/)
+-------------------------------------
+es.ts — diccionario español
+en.ts — diccionario inglés
+useTranslation() hook + getNestedValue()
+
+5. ESTILOS
+-----------
+Tailwind CSS v4 con @theme inline
+src/index.css — animaciones custom
+src/styles/globals.css — design tokens, 13 temas, keyframes
+
+6. LAZY LOADING
+-----------------
+Vistas pesadas con React.lazy + Suspense:
+  SessionsView, SkillsView, McpView, ChannelsView, MemoryView
+Monaco Editor via @monaco-editor/react (no bloquea bundle)
+
+7. ERROR BOUNDARY
+-------------------
+ChatErrorBoundary — captura errores en chat sin romper UI

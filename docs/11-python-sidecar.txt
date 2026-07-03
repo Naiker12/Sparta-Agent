@@ -1,0 +1,109 @@
+╔══════════════════════════════════════════════════════════════════╗
+║  11 - PYTHON SIDECAR                                            ║
+║  Backend de IA con LangGraph, ChromaDB y herramientas           ║
+╚══════════════════════════════════════════════════════════════════╝
+
+1. ESTRUCTURA COMPLETA
+------------------------
+python/sparta_ai/
+  __init__.py
+  main.py           — Entry point: UTF-8 IO, StdioServer, "ready" signal
+  server.py         — StdioServer: JSON lines stdin/stdout → routing
+  server_web.py     — FastAPI/WebSocket server (modo web)
+
+  agents/
+    sparta_agent.py       — StateGraph principal (SpartaState)
+    router.py             — Clasificador de intención (regex)
+    planner.py            — Plan JSON para tareas complejas
+    reflection.py         — Recuperación de errores (max 3 retries)
+    subagents/
+      research_agent.py   — Sub-grafo: búsqueda + síntesis
+      code_agent.py       — Sub-grafo: read/write file + código
+      memory_agent.py     — Sub-grafo: ChromaDB + graph memory
+
+  streaming/
+    event_bridge.py       — astream_events → stdout JSON
+    event_dispatcher.py   — Clase dispatch reutilizable
+    think_scrubber.py     — Separa <think> tags del contenido
+    repetition_guard.py   — Detector de repetición n-gram
+    skill_detector.py     — Detección de activación skill en thinking
+
+  memory/
+    chroma_store.py       — ChromaDB HTTP client (localhost:8000)
+    graph_memory.py       — SQLite entity-relation graph (graph.db)
+    context_manager.py    — Compresión de ventana de contexto
+    summarizer.py         — Summarización de conversación
+
+  tools/
+    file_tools.py         — read_file_tool, write_file_tool
+    terminal_tools.py     — terminal_execute_tool
+    web_search.py         — web_search_tool (Brave + DDG fallback)
+    web_search_providers.py — DuckDuckGo HTML scraper
+    memory_tools.py       — read_memory_tool, write_memory_tool
+    skill_tools.py        — skill_view_tool
+    mcp_bridge.py         — MCP tool wrapper factory
+
+  skills/
+    skill_loader.py       — Carga SKILL.md (progressive disclosure)
+    skills_guard.py       — Análisis estático + detección runtime
+
+  providers/
+    retry_policy.py       — retry_on_empty para fallos transitorios
+    free_tier_guard.py    — Detección modelos :free en OpenRouter
+
+  config/
+    providers.py          — Transport factory: Anthropic/OpenAI/Ollama/Google
+    security.py           — Caché de API keys en memoria
+
+  persistence/
+    sqlite_store.py       — AsyncSqliteSaver para checkpoints LangGraph
+
+  security/
+    command_sanitizer.py  — 16 patrones de comandos peligrosos
+    path_guard.py         — Validación de paths del workspace
+    permission_policy.py  — Config de permisos por tool
+    secrets_redactor.py   — Redacción de keys/tokens
+
+  tests/ (32 tests, 4 suites)
+    test_agent.py, test_memory.py, test_providers.py,
+    test_streaming.py, test_think_scrubber.py, test_tools.py
+
+2. PROTOCOLO DE COMUNICACIÓN
+-------------------------------
+JSON-RPC sobre stdin/stdout:
+  Request:  {"id": 1, "method": "chat.stream", "params": {...}}
+  Response: {"event": "stream:token", "data": {...}}
+
+Métodos soportados:
+  chat.stream       — streaming de mensajes
+  memory.index      — indexar en ChromaDB
+  memory.search     — búsqueda semántica
+  skills.index      — obtener índice de skills
+  skills.view       — ver SKILL.md
+
+3. ENTRY POINT (main.py)
+---------------------------
+Configura UTF-8 IO
+Arranca StdioServer (server.py)
+Emite señal "ready" cuando está listo
+Bucle: read json line → dispatch → write json line
+
+4. SERVIDOR WEB (server_web.py)
+----------------------------------
+FastAPI + WebSocket para modo web
+Alternativa a stdio cuando se ejecuta standalone
+
+5. LANGGRAPH GRAPH
+--------------------
+SpartaState (extends MessagesState):
+  session_id, mode, active_skills, memory_context
+  thinking_tokens, tool_calls_this_turn
+  subagent_results, plan, current_step
+  plan_complete, reflection_retries
+
+Nodos: planner → agent → tools → reflection
+Edges condicionales: agent→tools, agent→subagent, tools→agent, etc.
+
+6. TESTS
+---------
+python -m pytest sparta_ai/tests/ -q → 32 tests

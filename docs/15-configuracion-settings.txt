@@ -1,0 +1,60 @@
+╔══════════════════════════════════════════════════════════════════╗
+║  15 - CONFIGURACIÓN / SETTINGS                                  ║
+║  Sistema de ajustes, vault y preferencias                       ║
+╚══════════════════════════════════════════════════════════════════╝
+
+1. SETTINGS STORE (src/stores/settings.store.ts)
+---------------------------------------------------
+Persistida (sparta-settings, v3)
+Estado:
+  settingsOpen: boolean         — diálogo abierto/cerrado
+  defaultModel: string          — modelo por defecto
+  activeModel: string           — modelo activo actual
+  memoryEnabled: boolean        — memoria activada
+  semanticMemoryEnabled: boolean — ChromaDB activada
+  webSearchEnabled: boolean     — búsqueda web
+  reasoningEnabled: boolean     — razonamiento
+  reasoningBudget: number       — presupuesto tokens (default 8000)
+  sessionMode: 'chat' | 'agent' — modo por defecto
+  apiKeys: Record<string, string> — legacy (no usado con vault)
+  language: 'es' | 'en'         — idioma
+
+Migraciones: v3 (reasoningBudget)
+
+2. SETTINGS DIALOG (src/components/settings/SettingsDialog.tsx)
+-----------------------------------------------------------------
+9 tabs en 900x640px:
+
+  GeneralTab      — Config general, modo, idioma
+  AppearanceTab   — Theme picker (13 temas)
+  KeybindsTab     — Atajos de teclado
+  ModelsTab       — Proveedores de modelo
+  McpTab          — Servidores MCP
+  MemoryTab       — Toggle ChromaDB + contador indexados
+  SkillsTab       — Skills del sistema + usuario
+  AgentsTab       — Config de agentes
+  SearchTab       — API key Brave Search
+
+3. VAULT (Electron safeStorage)
+----------------------------------
+sparta-vault.json — AES-256-GCM cifrado
+API keys nunca en localStorage cuando vault disponible
+ProviderCard muestra Shield + "Key cifrada" si hasVaultKey
+Al eliminar provider → también elimina key del vault
+
+4. IPC HANDLERS DE VAULT
+--------------------------
+vault.ipc.ts:
+  vault:isAvailable
+  vault:storeKey
+  vault:getKey
+  vault:deleteKey
+  vault:listKeys
+  vault:hasKey
+
+5. COMPONENTES DE CONFIGURACIÓN
+---------------------------------
+ProviderCard.tsx             — Card con indicador vault
+ChooseProviderDialog.tsx     — Selección de vendor
+ConfigureProviderDialog.tsx  — Config API key/URL (guarda en vault)
+ThemePicker.tsx              — Grid 13 temas

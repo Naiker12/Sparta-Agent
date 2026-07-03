@@ -1,0 +1,81 @@
+╔══════════════════════════════════════════════════════════════════╗
+║  13 - AI PROVIDERS / GATEWAY                                    ║
+║  Proveedores de modelo, transportes y gateway                   ║
+╚══════════════════════════════════════════════════════════════════╝
+
+1. VENDORS SOPORTADOS (17)
+-----------------------------
+Cloud:  anthropic, openai, google, groq, mistral, azure,
+        deepseek, together, fireworks, openrouter, cohere,
+        perplexity, xai
+Local:  ollama, lmstudio, llamacpp, custom
+
+2 tipos: cloud (requiere API key) | local (servidor propio)
+
+2. FRONTEND — PROVIDER STORE (src/stores/provider.store.ts)
+--------------------------------------------------------------
+Persistida (sparta-providers, v1)
+CRUD de proveedores + getByVendor()
+apiKey: undefined cuando hasVaultKey: true (key en vault)
+
+3. FRONTEND — FETCH MODELS (src/lib/fetch-models.ts)
+-------------------------------------------------------
+fetchModelsByVendor(vendor, apiKey, serverUrl?)
+  → Llama a API de cada vendor para listar modelos disponibles
+
+4. FRONTEND — AI SERVICE (src/services/ai/)
+---------------------------------------------
+types.ts:
+  AIProvider interface:
+    listModels(), testConnection(),
+    streamChat(req): AsyncIterable<ChatStreamChunk>
+
+gateway.ts:
+  AIGateway — punto único para el main process
+  Maneja selección de provider y routing
+
+transports/:
+  base.ts           — buildHeaders() + buildBody() abstractos
+  http-utils.ts     — HTTP_STATUS_MESSAGES, isRetryable, fetchWithRetry
+  anthropic.transport.ts — Anthropic API
+  openai.transport.ts    — OpenAI + Groq + Mistral + DeepSeek + etc
+  ollama.transport.ts    — Ollama (local)
+
+index.ts: createProvider() factory
+
+5. PYTHON — PROVIDER CONFIG (python/sparta_ai/config/providers.py)
+--------------------------------------------------------------------
+Transport pattern (abstract ProviderTransport):
+  AnthropicTransport   → ChatAnthropic (con thinking)
+  OpenAICompatibleTransport → ChatOpenAI (12 vendors, free-tier)
+  GoogleTransport      → ChatGoogleGenerativeAI (thinking_budget)
+  OllamaTransport      → Ollama (langchain_community)
+
+build_llm() — entry point llamado por el agente
+get_embedding_model() — para ChromaDB embeddings
+
+6. VAULT — API KEYS
+---------------------
+Electron safeStorage (AES-256-GCM):
+  sparta-vault.json
+  vault.ipc.ts: storeKey/getKey/deleteKey/listKeys/hasKey
+
+keymanager.ipc.ts:
+  Push de keys del vault al sidecar Python (caché en memoria)
+
+vault-helper.ts (src/lib/vault-helper.ts):
+  getProviderKey() → vault o localStorage (fallback AES-GCM)
+  storeInVault(), removeFromVault()
+
+web-vault.ts (src/lib/web-vault.ts):
+  AES-GCM key management en sessionStorage (modo web)
+
+7. GATEWAY MONITOR (src/stores/gateway.store.ts)
+---------------------------------------------------
+En memoria
+Últimas 20 requests del gateway
+Health monitoring en StatusBar
+
+8. TESTS
+---------
+src/services/ai/__tests__/transports.test.ts — 16 tests

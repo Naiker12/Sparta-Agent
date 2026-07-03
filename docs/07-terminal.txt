@@ -1,0 +1,88 @@
+╔══════════════════════════════════════════════════════════════════╗
+║  07 - TERMINAL (PTY)                                            ║
+║  Terminal real con node-pty + xterm.js                          ║
+╚══════════════════════════════════════════════════════════════════╝
+
+1. ELECTRON IPC — TERMINAL (electron/ipc/terminal.ipc.ts)
+-----------------------------------------------------------
+Maneja el ciclo de vida completo del PTY:
+
+  terminal:create
+    → spawn('powershell.exe' en Windows, $SHELL en Unix)
+    → Envía banner ASCII Sparta
+    → Buffer onData hasta señal terminal:ready
+
+  terminal:ready
+    → Flushea buffer de datos tempranos al renderer
+    → Evita pérdida de datos durante inicio
+
+  terminal:write
+    → Escribe input del usuario al PTY
+
+  terminal:resize
+    → Sincroniza cols/rows con el PTY
+
+  terminal:destroy
+    → kill PTY + limpia sesión
+
+  terminal:agent-write
+    → Envía prefijo [agente] (cyan) al renderer
+    → Luego escribe comando al PTY
+    → Protección contra comandos destructivos (16 regex):
+      rm -rf /, dd if=, format, :(){ :|:& };:, etc.
+    → Requiere agentWriteForce para comandos peligrosos
+
+  terminal:agent-write-force
+    → Ejecución confirmada por usuario
+
+SessionState:
+  { pty: IPty, buffer: string[], ready: boolean, win: BrowserWindow }
+
+2. COMPONENTE FRONTEND — TerminalPanel.tsx
+--------------------------------------------
+src/components/terminal/TerminalPanel.tsx
+  - Usa @xterm/xterm + @xterm/addon-fit
+  - Oculto en web mode (FEATURES.terminal check)
+  - requestAnimationFrame loop: espera contenedor >0
+  - ResizeObserver persistente
+  - Fondo oscuro forzado: SIEMPRE #0C0C10
+  - onData listener registrado ANTES de terminal.create()
+
+3. TEMA — xterm-theme.ts (src/lib/xterm-theme.ts)
+---------------------------------------------------
+getXtermTheme(): ITheme
+  - background fijo #0C0C10
+  - Lee colores ANSI de CSS variables del tema activo
+  - Fallbacks hardcodeados para 16 colores + cursor + selección
+
+4. INTEGRACIÓN CON EL AGENTE
+------------------------------
+El agente IA puede ejecutar comandos en la terminal:
+  → Agent genera tool call → terminal_execute_tool (Python)
+    → Envía JSON-RPC comando
+      → Electron recibe terminal:agent_command event
+        → Escribe comando al PTY (con prefijo [agente])
+  → Usuario ve el comando ejecutándose en vivo
+  → La salida se captura y retorna al agente
+
+Protecciones:
+  - CommandSanitizer (Python) bloquea patrones destructivos
+  - 16 patrones regex de comandos peligrosos
+  - Confirmación usuario requerida para comandos de alto riesgo
+
+5. FLUJO COMPLETO
+-------------------
+Usuario abre terminal
+  → TerminalPanel monta xterm.js
+  → Registra onData listener
+  → window.terminal.create()
+    → Electron spawns PTY (PowerShell/bash)
+    → Envía banner Sparta
+    → Buffer onData hasta ready
+  → TerminalPanel envía terminal:ready
+    → Flushea buffer → xterm.write()
+  → Usuario escribe
+    → onData → terminal.write() → PTY stdin
+  → PTY stdout → onData → terminal:data event → xterm.write()
+  → Resize → terminal:resize → PTY resize
+  → Cierre → terminal:destroy → kill PTY
