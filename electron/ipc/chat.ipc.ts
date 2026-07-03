@@ -115,6 +115,15 @@ export function registerChatIPC(): void {
       case 'thinking:completed':
         sendToRenderer({ sessionId, messageId, type: 'thinking:completed', tokensUsed: data?.tokens_used ?? data?.tokensUsed ?? 0 })
         break
+      case 'thinking:status':
+        sendToRenderer({ sessionId, messageId, type: 'thinking:status', text: data?.text ?? '' })
+        break
+      case 'reasoning:token':
+        sendToRenderer({ sessionId, messageId, type: 'reasoning:token', token: data?.token ?? '' })
+        break
+      case 'reasoning:available':
+        sendToRenderer({ sessionId, messageId, type: 'reasoning:available', text: data?.text ?? '' })
+        break
       case 'stream:token':
         sendToRenderer({ sessionId, messageId, type: 'stream:token', token: data?.token, chunkSeq: data?.chunkSeq ?? getNextSeq(requestId, 'stream') })
         break
