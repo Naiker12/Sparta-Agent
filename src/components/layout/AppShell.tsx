@@ -146,32 +146,22 @@ export function AppShell() {
                       <ChatArea />
                     </ChatErrorBoundary>
                   </div>
-                  <div className="relative flex flex-col" style={{ flexShrink: 0 }}>
+                  <div className="relative" style={{ flexShrink: 0 }}>
                     <motion.div
                       initial={false}
-                      animate={{
-                        height: terminalOpen ? terminalHeight : 0,
-                        opacity: terminalOpen ? 1 : 0,
-                      }}
-                      transition={{ duration: 0.15, ease: 'easeInOut' }}
+                      animate={{ height: terminalOpen ? terminalHeight : 0 }}
+                      transition={{ duration: 0.12, ease: 'easeOut' }}
                       style={{ overflow: 'hidden', position: 'relative' }}
                     >
-                      <div
-                        style={{ height: terminalHeight, minHeight: 0 }}
-                        className={terminalOpen ? '' : 'pointer-events-none'}
-                      >
+                      <div className={terminalOpen ? '' : 'pointer-events-none'}>
                         <TerminalPanel />
                       </div>
                     </motion.div>
-                    {terminalOpen && (
-                      <PanelDragHandle
-                        className="terminal-resize-handle"
-                        onMouseDown={handleTerminalResize}
-                      />
-                    )}
-                    {terminalOpen && (
-                      <div className="border-t border-[var(--border-normal)]" />
-                    )}
+                    <PanelDragHandle
+                      className="terminal-resize-handle"
+                      onMouseDown={handleTerminalResize}
+                    />
+                    <div className="border-t border-[var(--border-normal)]" />
                   </div>
                 </div>
                 <AnimatePresence>

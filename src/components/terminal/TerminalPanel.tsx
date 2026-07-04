@@ -1,45 +1,26 @@
 import { useRef, useEffect, useCallback, useState } from 'react'
 import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
-import { SerializeAddon } from '@xterm/addon-serialize'
-import { WebglAddon } from '@xterm/addon-webgl'
-import { Unicode11Addon } from '@xterm/addon-unicode11'
 import { WebLinksAddon } from '@xterm/addon-web-links'
 import { FEATURES } from '@/lib/env-adapter'
 import { generateId, cn } from '@/lib/utils'
 import { getXtermTheme } from '@/lib/xterm-theme'
-import { Plus, X, ChevronDown, Terminal as TerminalIcon, MessageSquarePlus, Bot } from 'lucide-react'
+import { Plus, ChevronDown, Terminal as TerminalIcon, MessageSquarePlus, Bot } from 'lucide-react'
 import { useUIStore } from '@/stores/ui.store'
 import { useChatStore } from '@/stores/chat.store'
 import { useTerminalStore } from '@/stores/terminal.store'
 import { registerAgentTerminalWriter, seedAgentTerminalCommand, writeAgentTerminalChunk, clearAgentTerminal } from './agent-terminal-stream'
 import '@xterm/xterm/css/xterm.css'
 
-const PERSISTENT_SESSION_SCROLLBACK = 200
-const SNAPSHOT_THROTTLE_MS = 750
-
 interface TerminalInstance {
   terminal: Terminal
   fitAddon: FitAddon
-  serialize?: SerializeAddon
   container: HTMLDivElement
   tabId: string
   ptyId: string
   connected: boolean
   shellName: string
   cleanups: (() => void)[]
-}
-
-function cleanReviveSnapshot(serialized: string): string {
-  const strip = (l: string) => l.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '').replace(/[\s%]/g, '')
-  const lines = serialized.split(/\r?\n/)
-  while (lines.length && strip(lines[lines.length - 1]) === '') lines.pop()
-  let lastBlank = -1
-  for (let i = lines.length - 1; i >= 0; i -= 1) {
-    if (strip(lines[i]) === '') { lastBlank = i; break }
-  }
-  if (lastBlank >= 0 && lines.length - 1 - lastBlank <= 3) lines.length = lastBlank
-  return lines.join('\r\n')
 }
 
 function TerminalSelectionPopup({ style, onAddToChat, onClose }: { style: React.CSSProperties; onAddToChat: () => void; onClose: () => void }) {
@@ -54,9 +35,18 @@ function TerminalSelectionPopup({ style, onAddToChat, onClose }: { style: React.
       </button>
       <button onClick={onClose}
         className="flex items-center justify-center w-5 h-5 text-[#6c7086] hover:text-[#cdd6f4] rounded hover:bg-[#313244] transition-colors">
-        <X className="w-3 h-3" />
+        <XIcon className="w-3 h-3" />
       </button>
     </div>
+  )
+}
+
+function XIcon(props: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={props.className}>
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
   )
 }
 
@@ -71,6 +61,7 @@ export function TerminalPanel() {
   const instancesRef = useRef<Map<string, TerminalInstance>>(new Map())
   const containersRef = useRef<Map<string, HTMLDivElement | null>>(new Map())
   const [, forceRender] = useState(0)
+  const fitTimerRef = useRef<number>(0)
 
   useEffect(() => {
     store.getState().ensureAtLeastOneTab()
@@ -81,14 +72,9 @@ export function TerminalPanel() {
 
   const activeInstance = instancesRef.current.get(activeTabId ?? '')
 
-  function initUserPTY(inst: TerminalInstance, reviveBuffer?: string) {
+  function initUserPTY(inst: TerminalInstance) {
     const terminal = inst.terminal
     const { cols, rows } = terminal
-
-    if (reviveBuffer) {
-      terminal.write(reviveBuffer)
-      terminal.write('\r\n')
-    }
 
     const unsubData = window.terminal.onData(inst.ptyId, (data: string) => terminal.write(data))
     inst.cleanups.push(unsubData)
@@ -107,31 +93,12 @@ export function TerminalPanel() {
       const unsubExit = window.terminal.onExit(inst.ptyId, (code: number) => {
         inst.connected = false
         terminal.writeln(`\r\n\x1b[33mProceso terminado (código: ${code})\x1b[0m`)
-        terminal.writeln('\x1b[90mPresiona cualquier tecla para iniciar una nueva sesión\x1b[0m')
       })
       inst.cleanups.push(unsubExit)
 
       terminal.onData((data: string) => window.terminal.write(inst.ptyId, data))
       terminal.onResize(({ cols, rows }: { cols: number; rows: number }) => window.terminal.resize(inst.ptyId, cols, rows))
       window.electron.send('terminal:ready', { terminalId: inst.ptyId })
-
-      let timer = 0
-      let lastAt = 0
-      const persistSnapshot = () => {
-        lastAt = Date.now()
-        try {
-          const snap = inst.serialize!.serialize({ scrollback: PERSISTENT_SESSION_SCROLLBACK })
-          store.getState().updateReviveBuffer(inst.tabId, cleanReviveSnapshot(snap))
-        } catch {}
-      }
-      const scheduleSnapshot = () => {
-        if (timer) return
-        const elapsed = Date.now() - lastAt
-        if (elapsed >= SNAPSHOT_THROTTLE_MS) { persistSnapshot(); return }
-        timer = window.setTimeout(() => { timer = 0; persistSnapshot() }, SNAPSHOT_THROTTLE_MS - elapsed)
-      }
-      const unsubSnap = terminal.onData(scheduleSnapshot)
-      inst.cleanups.push(() => { unsubSnap.dispose(); if (timer) window.clearTimeout(timer) })
     }).catch((err: Error) => {
       terminal.writeln('\r\n\x1b[31mError de conexión\x1b[0m')
       terminal.writeln(`\x1b[90m${err.message}\x1b[0m`)
@@ -142,6 +109,16 @@ export function TerminalPanel() {
     inst.connected = true
     const unregister = registerAgentTerminalWriter(procId, (chunk) => inst.terminal.write(chunk))
     inst.cleanups.push(unregister)
+  }
+
+  function scheduleFit() {
+    if (fitTimerRef.current) return
+    fitTimerRef.current = window.setTimeout(() => {
+      fitTimerRef.current = 0
+      for (const inst of instancesRef.current.values()) {
+        try { inst.fitAddon.fit() } catch {}
+      }
+    }, 80)
   }
 
   function createTerminalInstance(tabId: string): TerminalInstance | null {
@@ -155,40 +132,22 @@ export function TerminalPanel() {
       disableStdin: tab.kind === 'agent',
       cursorStyle: 'bar',
       fontSize: 13,
-      fontFamily: '"Geist Mono Variable", "Cascadia Code", "Fira Code", monospace',
-      fontWeight: '400',
-      lineHeight: 1.4,
-      letterSpacing: 0,
+      fontFamily: '"Cascadia Code", "Fira Code", monospace',
+      lineHeight: 1.35,
       scrollback: tab.kind === 'agent' ? 2000 : 5000,
       theme: getXtermTheme(),
       allowProposedApi: true,
     })
 
-    terminal.loadAddon(new Unicode11Addon())
     terminal.loadAddon(new WebLinksAddon())
-    terminal.unicode.activeVersion = '11'
 
     const fitAddon = new FitAddon()
     terminal.loadAddon(fitAddon)
 
-    let serialize: SerializeAddon | undefined
-    if (tab.kind === 'user') {
-      serialize = new SerializeAddon()
-      terminal.loadAddon(serialize)
-    }
-
-    try {
-      const webglAddon = new WebglAddon()
-      terminal.loadAddon(webglAddon)
-      webglAddon.onContextLoss(() => webglAddon.dispose())
-    } catch {}
-
-    terminal.onSelectionChange(() => {
-      forceRender(n => n + 1)
-    })
+    terminal.onSelectionChange(() => forceRender(n => n + 1))
 
     const inst: TerminalInstance = {
-      terminal, fitAddon, serialize, container,
+      terminal, fitAddon, container,
       tabId: tab.id,
       ptyId: tab.procId ?? `sparta-term-${generateId()}`,
       connected: false,
@@ -203,11 +162,11 @@ export function TerminalPanel() {
         seedAgentTerminalCommand(tab.procId, tab.title)
         initAgentMirror(inst, tab.procId)
       } else {
-        initUserPTY(inst, tab.reviveBuffer)
+        initUserPTY(inst)
       }
     })
 
-    const ro = new ResizeObserver(() => { try { fitAddon.fit() } catch {} })
+    const ro = new ResizeObserver(() => scheduleFit())
     ro.observe(container)
     inst.cleanups.push(() => ro.disconnect())
 
@@ -237,16 +196,11 @@ export function TerminalPanel() {
   }, [])
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const inst = instancesRef.current.get(activeTabId ?? '')
-      if (inst) { try { inst.fitAddon.fit() } catch {} }
-    }, 250)
-    return () => clearTimeout(timer)
+    const t = setTimeout(() => scheduleFit(), 300)
+    return () => clearTimeout(t)
   }, [activeTabId])
 
-  function addTab() {
-    store.getState().createTab()
-  }
+  function addTab() { store.getState().createTab() }
 
   function closeTab(tabId: string, e: React.MouseEvent) {
     e.stopPropagation()
@@ -255,12 +209,8 @@ export function TerminalPanel() {
       inst.cleanups.forEach((fn) => fn())
       inst.terminal.dispose()
       const tab = store.getState().tabs.find((t) => t.id === tabId)
-      if (tab?.kind === 'user') {
-        window.terminal?.destroy(inst.ptyId)
-      } else if (tab?.kind === 'agent' && tab.procId) {
-        window.terminal?.agentKill(tab.procId)
-        clearAgentTerminal(tab.procId)
-      }
+      if (tab?.kind === 'user') window.terminal?.destroy(inst.ptyId)
+      else if (tab?.kind === 'agent' && tab.procId) { window.terminal?.agentKill(tab.procId); clearAgentTerminal(tab.procId) }
       instancesRef.current.delete(tabId)
     }
     containersRef.current.delete(tabId)
@@ -302,36 +252,33 @@ export function TerminalPanel() {
       <TerminalSelectionPopup
         style={{ left: rect.right - 180, top: rect.top + 8 }}
         onAddToChat={() => {
-          const msg = `\`\`\`terminal\n${sel}\n\`\`\``
-          useChatStore.getState().injectWhileStreaming(msg)
+          useChatStore.getState().injectWhileStreaming(`\`\`\`terminal\n${sel}\n\`\`\``)
         }}
-        onClose={() => {
-          inst.terminal.clearSelection()
-          forceRender(n => n + 1)
-        }}
+        onClose={() => { inst.terminal.clearSelection(); forceRender(n => n + 1) }}
       />
     )
   }
 
   return (
-    <div className="flex flex-col h-full bg-[#0C0C10]">
-      <div className="flex items-center justify-between px-2 py-1 bg-[#0f0f14] border-b border-[#ffffff12] shrink-0 min-h-0">
-        <div className="flex items-center gap-0.5 overflow-x-auto min-w-0">
+    <div className="flex flex-col h-full" style={{ background: '#0C0C10' }}>
+      <div className="flex items-center justify-between shrink-0" style={{ height: 30, background: '#0f0f14', borderBottom: '1px solid #ffffff12', padding: '0 8px' }}>
+        <div className="flex items-center gap-0.5 overflow-x-auto min-w-0" style={{ height: '100%' }}>
           {tabs.map((tab) => {
             const info = renderTabInfo(tab.id)
             return (
               <button key={tab.id} onClick={() => store.getState().selectTab(tab.id)}
                 className={cn(
-                  'flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-[450] rounded-t border-b-[1.5px] transition-colors shrink-0 max-w-[160px] whitespace-nowrap',
-                  tab.id === activeTabId ? 'text-[#e0e0ec] border-[#6366F1] bg-[#0C0C10]' : 'text-[#6b6b80] border-transparent hover:text-[#a0a0b8] hover:bg-[#ffffff08]'
-                )}>
+                  'flex items-center gap-1.5 px-2.5 text-[11px] font-[450] rounded-t border-b-[1.5px] transition-colors shrink-0 max-w-[150px] whitespace-nowrap',
+                  tab.id === activeTabId ? 'text-[#e0e0ec] border-[#6366F1]' : 'text-[#6b6b80] border-transparent hover:text-[#a0a0b8]'
+                )}
+                style={{ height: '100%' }}>
                 {info.kind === 'agent'
                   ? <Bot className="w-3 h-3 text-[#a78bfa] shrink-0" />
                   : <span className={cn('inline-block w-1.5 h-1.5 rounded-full shrink-0', info.connected ? 'bg-[#48bb78]' : 'bg-[#6b6b80]')} />}
                 <span className="truncate">{info.shell}</span>
                 <span onClick={(e) => closeTab(tab.id, e)}
                   className="inline-flex items-center justify-center w-3.5 h-3.5 rounded hover:bg-[#ffffff14] ml-0.5 shrink-0">
-                  <X className="w-2.5 h-2.5" />
+                  <XIcon className="w-2.5 h-2.5" />
                 </span>
               </button>
             )
@@ -343,7 +290,7 @@ export function TerminalPanel() {
           </button>
         </div>
 
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center gap-1 shrink-0" style={{ height: '100%' }}>
           {activeInstance && renderTabInfo(activeTabId ?? '').kind === 'user' && (
             <button onClick={() => handleNewSession(activeTabId!)}
               className="flex items-center gap-1 px-2 py-0.5 text-[10px] text-[#6b6b80] hover:text-[#a0a0b8] rounded hover:bg-[#ffffff08]"
@@ -359,7 +306,7 @@ export function TerminalPanel() {
         </div>
       </div>
 
-      <div className="relative flex-1 min-h-0">
+      <div className="relative flex-1 min-h-0" style={{ background: '#0C0C10' }}>
         {tabs.map((tab) => (
           <div key={tab.id} ref={containerRefCallback(tab.id)}
             className={cn('absolute inset-0', tab.id === activeTabId ? 'visible' : 'invisible pointer-events-none')} />
