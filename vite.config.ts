@@ -24,9 +24,23 @@ export default defineConfig(({ mode }) => {
         ? [electron({
             main: {
               entry: 'electron/main.ts',
+              vite: {
+                build: {
+                  rollupOptions: {
+                    external: ['electron', 'node-pty'],
+                  },
+                },
+              },
             },
             preload: {
               input: path.join(__dirname, 'electron/preload.ts'),
+              vite: {
+                build: {
+                  rollupOptions: {
+                    external: ['electron', 'node-pty'],
+                  },
+                },
+              },
             },
             renderer: process.env.NODE_ENV === 'test'
               ? undefined
@@ -36,9 +50,6 @@ export default defineConfig(({ mode }) => {
     ],
     build: {
       outDir: isElectron ? 'dist' : 'dist-web',
-      rollupOptions: isElectron ? {
-        external: ['electron', 'node-pty'],
-      } : {},
     },
     server: {
       port: 5173,

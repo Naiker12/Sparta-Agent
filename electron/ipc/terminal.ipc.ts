@@ -48,10 +48,17 @@ function getWin(event: IpcMainInvokeEvent | IpcMainEvent): BrowserWindow {
 
 function shellCommand() {
   if (os.platform() === 'win32') {
-    const pwsh = process.env.PWSH || 'pwsh.exe'
-    return { shell: pwsh, args: ['-NoLogo'] }
+    const pwsh = (() => {
+      try { return require('child_process').execSync('where pwsh.exe 2>nul').toString().trim().split('\n')[0]?.trim() || '' } catch { return '' }
+    })()
+    if (pwsh) return { shell: pwsh, args: ['-NoLogo'] }
+    const systemRoot = process.env.SystemRoot || 'C:\\Windows'
+    const winPs = `${systemRoot}\\System32\\WindowsPowerShell\\v1.0\\powershell.exe`
+    try { require('fs').accessSync(winPs); return { shell: winPs, args: ['-NoLogo'] } } catch {}
+    return { shell: process.env.COMSPEC || 'cmd.exe', args: [] }
   }
-  return { shell: process.env.SHELL ?? '/bin/bash', args: [] }
+  const shell = process.env.SHELL || '/bin/bash'
+  return { shell, args: ['-l'] }
 }
 
 export function registerTerminalIPC() {
