@@ -22,12 +22,18 @@ interface SessionState {
   win: BrowserWindow
 }
 
+interface AgentProcState {
+  pty: pty.IPty
+  win: BrowserWindow
+}
+
 const sessions = new Map<string, SessionState>()
+const agentProcs = new Map<string, AgentProcState>()
 
 const BANNER = `\x1b[35m
    _____ ____   ___    ____  ______ ___
   / ___// __ \\ /   |  / __ \\/_  __//   |
-  \\\\__ \\/ /_/ // /| | / /_/ / / /  / /| |
+  \\__ \\/ /_/ // /| | / /_/ / / /  / /| |
  ___/ / ____// ___ |/ _, _/ / /  / ___ |
 /____/_/    /_/  |_/_/ |_| /_/  /_/  |_|
 \x1b[0m
@@ -189,6 +195,58 @@ export function registerTerminalIPC() {
 
   ipcMain.handle('terminal:list-sessions', () => {
     return Array.from(sessions.keys())
+  })
+
+  ipcMain.handle('terminal:agent-spawn', (
+    event: IpcMainInvokeEvent,
+    { procId, command, cwd }: { procId: string; command: string; cwd?: string }
+  ) => {
+    const sanitizedCmd = command.trim()
+    const isDangerous = DESTRUCTIVE_PATTERNS.some((p) => p.test(sanitizedCmd))
+    if (isDangerous) {
+      return { success: false, error: 'Comando bloqueado para procesos de fondo.' }
+    }
+
+    const { shell, args: shellArgs } = shellCommand()
+    const win = getWin(event)
+
+    let ptyProcess: pty.IPty
+    try {
+      ptyProcess = pty.spawn(shell, shellArgs, {
+        name: 'xterm-256color',
+        cols: 120,
+        rows: 30,
+        cwd: cwd || process.env.HOME || process.cwd(),
+        env: { ...process.env, SPARTA_TERMINAL: '1', SPARTA_AGENT_BG: '1' },
+      })
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) }
+    }
+
+    agentProcs.set(procId, { pty: ptyProcess, win })
+
+    ptyProcess.onData((data: string) => {
+      if (!win.isDestroyed()) win.webContents.send('terminal:agent-output', { procId, chunk: data })
+    })
+
+    ptyProcess.onExit(({ exitCode }: { exitCode: number }) => {
+      agentProcs.delete(procId)
+      if (!win.isDestroyed()) win.webContents.send('terminal:agent-exit', { procId, code: exitCode })
+    })
+
+    win.webContents.send('terminal:agent-spawn', { procId, command: sanitizedCmd })
+    ptyProcess.write(sanitizedCmd + '\r')
+
+    return { success: true }
+  })
+
+  ipcMain.handle('terminal:agent-kill', (_event, { procId }: { procId: string }) => {
+    const state = agentProcs.get(procId)
+    if (state) {
+      state.pty.kill()
+      agentProcs.delete(procId)
+    }
+    return { success: true }
   })
 }
 

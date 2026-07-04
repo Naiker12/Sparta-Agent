@@ -34,6 +34,7 @@ class PermissionPolicy:
             tp.name: tp
             for tp in [
                 ToolPermission("terminal_execute_tool", requires_confirmation=True),
+                ToolPermission("terminal_execute_background_tool", requires_confirmation=True),
                 ToolPermission("write_file_tool", requires_confirmation=False),
                 ToolPermission("read_file_tool", requires_confirmation=False),
                 ToolPermission("web_search_tool", requires_confirmation=False),

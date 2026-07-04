@@ -47,6 +47,8 @@ export type EventType =
   | 'message:deleted'
   | 'message:edited'
   | 'message:shared'
+  | 'terminal:agent_command'
+  | 'terminal:agent_spawn'
 
 export interface BaseEvent {
   type: EventType

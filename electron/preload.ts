@@ -97,6 +97,29 @@ contextBridge.exposeInMainWorld('terminal', {
   agentWriteForce: (terminalId: string, command: string) =>
     ipcRenderer.invoke('terminal:agent-write-force', { terminalId, command }),
   listSessions: () => ipcRenderer.invoke('terminal:list-sessions'),
+
+  agentSpawn: (procId: string, command: string, cwd?: string) =>
+    ipcRenderer.invoke('terminal:agent-spawn', { procId, command, cwd }),
+  agentKill: (procId: string) =>
+    ipcRenderer.invoke('terminal:agent-kill', { procId }),
+
+  onAgentSpawn: (callback: (payload: { procId: string; command: string }) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, payload: { procId: string; command: string }) => callback(payload)
+    ipcRenderer.on('terminal:agent-spawn', handler)
+    return () => ipcRenderer.removeListener('terminal:agent-spawn', handler)
+  },
+
+  onAgentOutput: (callback: (payload: { procId: string; chunk: string }) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, payload: { procId: string; chunk: string }) => callback(payload)
+    ipcRenderer.on('terminal:agent-output', handler)
+    return () => ipcRenderer.removeListener('terminal:agent-output', handler)
+  },
+
+  onAgentExit: (callback: (payload: { procId: string; code: number }) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, payload: { procId: string; code: number }) => callback(payload)
+    ipcRenderer.on('terminal:agent-exit', handler)
+    return () => ipcRenderer.removeListener('terminal:agent-exit', handler)
+  },
 })
 
 contextBridge.exposeInMainWorld('fs', {

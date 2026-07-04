@@ -284,13 +284,20 @@ export function useStreamEvents() {
         case 'terminal:agent_command': {
           const { command } = event as { command: string }
           if (window.terminal) {
-            window.terminal.agentWrite('default', command).then((res: { needsConfirmation?: boolean }) => {
+            window.terminal.agentWrite('default', command).then((res) => {
               if (res.needsConfirmation) {
                 if (window.confirm(`El agente quiere ejecutar:\n\n${command}\n\n¿Permitir?`)) {
                   window.terminal.agentWriteForce('default', command)
                 }
               }
             })
+          }
+          break
+        }
+        case 'terminal:agent_spawn': {
+          const { procId, command } = event as { procId: string; command: string }
+          if (procId && command && window.terminal) {
+            void window.terminal.agentSpawn(procId, command)
           }
           break
         }

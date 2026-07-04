@@ -7,6 +7,7 @@ This module keeps the public API (`stream_agent_to_electron`,
 import json
 import logging
 import sys
+import uuid
 from typing import Any
 
 from sparta_ai.streaming.event_dispatcher import (
@@ -332,6 +333,11 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> b
         if name == "terminal_execute_tool":
             cmd = tool_input.get("command", "") if isinstance(tool_input, dict) else str(tool_input)
             _emit(request_id, "terminal:agent_command", {"command": cmd})
+        elif name == "terminal_execute_background_tool":
+            cmd = tool_input.get("command", "") if isinstance(tool_input, dict) else str(tool_input)
+            label = tool_input.get("label") if isinstance(tool_input, dict) else None
+            proc_id = f"bg-{uuid.uuid4().hex[:8]}"
+            _emit(request_id, "terminal:agent_spawn", {"procId": proc_id, "command": cmd, "label": label})
 
     elif kind == "on_tool_end":
         tool_call_id = event.get("run_id", "unknown")
@@ -652,6 +658,11 @@ async def _dispatch_event_ws(
         if name == "terminal_execute_tool":
             cmd = tool_input.get("command", "") if isinstance(tool_input, dict) else str(tool_input)
             await _emit_ws_renderer(websocket, "terminal:agent_command", {"command": cmd})
+        elif name == "terminal_execute_background_tool":
+            cmd = tool_input.get("command", "") if isinstance(tool_input, dict) else str(tool_input)
+            label = tool_input.get("label") if isinstance(tool_input, dict) else None
+            proc_id = f"bg-{uuid.uuid4().hex[:8]}"
+            await _emit_ws_renderer(websocket, "terminal:agent_spawn", {"procId": proc_id, "command": cmd, "label": label})
 
     elif kind == "on_tool_end":
         tool_call_id = event.get("run_id", "unknown")

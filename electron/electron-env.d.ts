@@ -60,7 +60,7 @@ interface FsAPI {
 }
 
 interface TerminalIPC {
-  create: (opts: { terminalId: string; cols: number; rows: number }) => Promise<{ success: boolean; shell: string }>
+  create: (opts: { terminalId: string; cols: number; rows: number }) => Promise<{ success: boolean; shell?: string; error?: string }>
   write: (terminalId: string, data: string) => void
   resize: (terminalId: string, cols: number, rows: number) => void
   destroy: (terminalId: string) => Promise<{ success: boolean }>
@@ -68,6 +68,12 @@ interface TerminalIPC {
   onExit: (terminalId: string, callback: (code: number) => void) => () => void
   agentWrite: (terminalId: string, command: string) => Promise<{ success: boolean; error?: string; needsConfirmation?: boolean }>
   agentWriteForce: (terminalId: string, command: string) => Promise<{ success: boolean; error?: string }>
+  listSessions: () => Promise<string[]>
+  agentSpawn: (procId: string, command: string, cwd?: string) => Promise<{ success: boolean; error?: string }>
+  agentKill: (procId: string) => Promise<{ success: boolean }>
+  onAgentSpawn: (callback: (payload: { procId: string; command: string }) => void) => () => void
+  onAgentOutput: (callback: (payload: { procId: string; chunk: string }) => void) => () => void
+  onAgentExit: (callback: (payload: { procId: string; code: number }) => void) => () => void
 }
 
 interface SkillsIPC {

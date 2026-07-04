@@ -1,25 +1,27 @@
-import { useRef, useState, useCallback, useEffect } from 'react'
+import { useRef, useEffect, useCallback, useState } from 'react'
 import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
+import { SerializeAddon } from '@xterm/addon-serialize'
 import { WebglAddon } from '@xterm/addon-webgl'
 import { Unicode11Addon } from '@xterm/addon-unicode11'
 import { WebLinksAddon } from '@xterm/addon-web-links'
 import { FEATURES } from '@/lib/env-adapter'
 import { generateId, cn } from '@/lib/utils'
 import { getXtermTheme } from '@/lib/xterm-theme'
-import { Plus, X, ChevronDown, Terminal as TerminalIcon, MessageSquarePlus } from 'lucide-react'
+import { Plus, X, ChevronDown, Terminal as TerminalIcon, MessageSquarePlus, Bot } from 'lucide-react'
 import { useUIStore } from '@/stores/ui.store'
 import { useChatStore } from '@/stores/chat.store'
+import { useTerminalStore } from '@/stores/terminal.store'
+import { registerAgentTerminalWriter, seedAgentTerminalCommand, writeAgentTerminalChunk, clearAgentTerminal } from './agent-terminal-stream'
 import '@xterm/xterm/css/xterm.css'
 
-interface TerminalTab {
-  id: string
-  label: string
-}
+const PERSISTENT_SESSION_SCROLLBACK = 200
+const SNAPSHOT_THROTTLE_MS = 750
 
 interface TerminalInstance {
   terminal: Terminal
   fitAddon: FitAddon
+  serialize?: SerializeAddon
   container: HTMLDivElement
   tabId: string
   ptyId: string
@@ -28,46 +30,30 @@ interface TerminalInstance {
   cleanups: (() => void)[]
 }
 
-let _tabCounter = 0
-
-function createNewTab(): TerminalTab {
-  _tabCounter++
-  return {
-    id: generateId(),
-    label: `Terminal ${_tabCounter}`,
+function cleanReviveSnapshot(serialized: string): string {
+  const strip = (l: string) => l.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '').replace(/[\s%]/g, '')
+  const lines = serialized.split(/\r?\n/)
+  while (lines.length && strip(lines[lines.length - 1]) === '') lines.pop()
+  let lastBlank = -1
+  for (let i = lines.length - 1; i >= 0; i -= 1) {
+    if (strip(lines[i]) === '') { lastBlank = i; break }
   }
+  if (lastBlank >= 0 && lines.length - 1 - lastBlank <= 3) lines.length = lastBlank
+  return lines.join('\r\n')
 }
 
-function TerminalSelectionPopup({
-  style,
-  onAddToChat,
-  onClose,
-}: {
-  style: React.CSSProperties
-  onAddToChat: () => void
-  onClose: () => void
-}) {
+function TerminalSelectionPopup({ style, onAddToChat, onClose }: { style: React.CSSProperties; onAddToChat: () => void; onClose: () => void }) {
   return (
-    <div
-      className="fixed z-50 flex items-center gap-1 px-1.5 py-1 rounded-lg shadow-lg"
-      style={{
-        ...style,
-        background: '#1e1e2e',
-        border: '1px solid #313244',
-      }}
-    >
-      <button
-        onClick={() => { onAddToChat(); onClose() }}
+    <div className="fixed z-50 flex items-center gap-1 px-1.5 py-1 rounded-lg shadow-lg"
+      style={{ ...style, background: '#1e1e2e', border: '1px solid #313244' }}>
+      <button onClick={() => { onAddToChat(); onClose() }}
         className="flex items-center gap-1.5 px-2 py-1 text-[11px] text-[#cdd6f4] rounded hover:bg-[#313244] transition-colors"
-        title="Agregar selección al chat"
-      >
+        title="Agregar selección al chat">
         <MessageSquarePlus className="w-3 h-3" />
         <span>Agregar al chat</span>
       </button>
-      <button
-        onClick={onClose}
-        className="flex items-center justify-center w-5 h-5 text-[#6c7086] hover:text-[#cdd6f4] rounded hover:bg-[#313244] transition-colors"
-      >
+      <button onClick={onClose}
+        className="flex items-center justify-center w-5 h-5 text-[#6c7086] hover:text-[#cdd6f4] rounded hover:bg-[#313244] transition-colors">
         <X className="w-3 h-3" />
       </button>
     </div>
@@ -78,40 +64,45 @@ export function TerminalPanel() {
   if (!FEATURES.terminal) return null
 
   const toggleTerminal = useUIStore((s) => s.toggleTerminal)
-
-  const [tabs, setTabs] = useState<TerminalTab[]>([createNewTab()])
-  const [activeTabId, setActiveTabId] = useState<string>(tabs[0].id)
-  const [selectionPopup, setSelectionPopup] = useState<{ text: string; x: number; y: number } | null>(null)
+  const tabs = useTerminalStore((s) => s.tabs)
+  const activeTabId = useTerminalStore((s) => s.activeTabId)
+  const store = useTerminalStore
 
   const instancesRef = useRef<Map<string, TerminalInstance>>(new Map())
   const containersRef = useRef<Map<string, HTMLDivElement | null>>(new Map())
+  const [, forceRender] = useState(0)
 
-  const activeInstance = instancesRef.current.get(activeTabId)
+  useEffect(() => {
+    store.getState().ensureAtLeastOneTab()
+    if (!store.getState().activeTabId) {
+      store.setState({ activeTabId: store.getState().tabs[0]?.id ?? null })
+    }
+  }, [])
 
-  function initPTY(inst: TerminalInstance) {
+  const activeInstance = instancesRef.current.get(activeTabId ?? '')
+
+  function initUserPTY(inst: TerminalInstance, reviveBuffer?: string) {
     const terminal = inst.terminal
     const { cols, rows } = terminal
 
-    const unsubData = window.terminal.onData(inst.ptyId, (data: string) => {
-      terminal.write(data)
-    })
+    if (reviveBuffer) {
+      terminal.write(reviveBuffer)
+      terminal.write('\r\n')
+    }
+
+    const unsubData = window.terminal.onData(inst.ptyId, (data: string) => terminal.write(data))
     inst.cleanups.push(unsubData)
 
-    window.terminal.create({
-      terminalId: inst.ptyId,
-      cols,
-      rows,
-    }).then((result: { success: boolean; shell: string; error?: string }) => {
+    window.terminal.create({ terminalId: inst.ptyId, cols, rows }).then((result) => {
       if (!result.success) {
         terminal.writeln('\r\n\x1b[31mError al iniciar shell\x1b[0m')
-        if (result.error) {
-          terminal.writeln(`\x1b[90m${result.error}\x1b[0m`)
-        }
+        if (result.error) terminal.writeln(`\x1b[90m${result.error}\x1b[0m`)
         return
       }
 
       inst.connected = true
-      inst.shellName = result.shell
+      inst.shellName = result.shell ?? ''
+      store.getState().reportShell(inst.tabId, result.shell ?? '')
 
       const unsubExit = window.terminal.onExit(inst.ptyId, (code: number) => {
         inst.connected = false
@@ -120,34 +111,55 @@ export function TerminalPanel() {
       })
       inst.cleanups.push(unsubExit)
 
-      terminal.onData((data: string) => {
-        window.terminal.write(inst.ptyId, data)
-      })
-
-      terminal.onResize(({ cols, rows }: { cols: number; rows: number }) => {
-        window.terminal.resize(inst.ptyId, cols, rows)
-      })
-
+      terminal.onData((data: string) => window.terminal.write(inst.ptyId, data))
+      terminal.onResize(({ cols, rows }: { cols: number; rows: number }) => window.terminal.resize(inst.ptyId, cols, rows))
       window.electron.send('terminal:ready', { terminalId: inst.ptyId })
+
+      let timer = 0
+      let lastAt = 0
+      const persistSnapshot = () => {
+        lastAt = Date.now()
+        try {
+          const snap = inst.serialize!.serialize({ scrollback: PERSISTENT_SESSION_SCROLLBACK })
+          store.getState().updateReviveBuffer(inst.tabId, cleanReviveSnapshot(snap))
+        } catch {}
+      }
+      const scheduleSnapshot = () => {
+        if (timer) return
+        const elapsed = Date.now() - lastAt
+        if (elapsed >= SNAPSHOT_THROTTLE_MS) { persistSnapshot(); return }
+        timer = window.setTimeout(() => { timer = 0; persistSnapshot() }, SNAPSHOT_THROTTLE_MS - elapsed)
+      }
+      const unsubSnap = terminal.onData(scheduleSnapshot)
+      inst.cleanups.push(() => { unsubSnap.dispose(); if (timer) window.clearTimeout(timer) })
     }).catch((err: Error) => {
       terminal.writeln('\r\n\x1b[31mError de conexión\x1b[0m')
       terminal.writeln(`\x1b[90m${err.message}\x1b[0m`)
     })
   }
 
+  function initAgentMirror(inst: TerminalInstance, procId: string) {
+    inst.connected = true
+    const unregister = registerAgentTerminalWriter(procId, (chunk) => inst.terminal.write(chunk))
+    inst.cleanups.push(unregister)
+  }
+
   function createTerminalInstance(tabId: string): TerminalInstance | null {
     const container = containersRef.current.get(tabId)
     if (!container) return null
+    const tab = store.getState().tabs.find((t) => t.id === tabId)
+    if (!tab) return null
 
     const terminal = new Terminal({
-      cursorBlink: true,
+      cursorBlink: tab.kind === 'user',
+      disableStdin: tab.kind === 'agent',
       cursorStyle: 'bar',
       fontSize: 13,
       fontFamily: '"Geist Mono Variable", "Cascadia Code", "Fira Code", monospace',
       fontWeight: '400',
       lineHeight: 1.4,
       letterSpacing: 0,
-      scrollback: 5000,
+      scrollback: tab.kind === 'agent' ? 2000 : 5000,
       theme: getXtermTheme(),
       allowProposedApi: true,
     })
@@ -159,6 +171,12 @@ export function TerminalPanel() {
     const fitAddon = new FitAddon()
     terminal.loadAddon(fitAddon)
 
+    let serialize: SerializeAddon | undefined
+    if (tab.kind === 'user') {
+      serialize = new SerializeAddon()
+      terminal.loadAddon(serialize)
+    }
+
     try {
       const webglAddon = new WebglAddon()
       terminal.loadAddon(webglAddon)
@@ -166,22 +184,13 @@ export function TerminalPanel() {
     } catch {}
 
     terminal.onSelectionChange(() => {
-      const sel = terminal.getSelection()
-      if (sel) {
-        const rect = container.getBoundingClientRect()
-        setSelectionPopup({ text: sel, x: rect.right - 180, y: rect.top + 8 })
-      } else {
-        setSelectionPopup(null)
-      }
+      forceRender(n => n + 1)
     })
 
-    const ptyId = `sparta-term-${generateId()}`
     const inst: TerminalInstance = {
-      terminal,
-      fitAddon,
-      container,
-      tabId,
-      ptyId,
+      terminal, fitAddon, serialize, container,
+      tabId: tab.id,
+      ptyId: tab.procId ?? `sparta-term-${generateId()}`,
       connected: false,
       shellName: '',
       cleanups: [],
@@ -190,12 +199,15 @@ export function TerminalPanel() {
     terminal.open(container)
     requestAnimationFrame(() => {
       fitAddon.fit()
-      initPTY(inst)
+      if (tab.kind === 'agent' && tab.procId) {
+        seedAgentTerminalCommand(tab.procId, tab.title)
+        initAgentMirror(inst, tab.procId)
+      } else {
+        initUserPTY(inst, tab.reviveBuffer)
+      }
     })
 
-    const ro = new ResizeObserver(() => {
-      try { fitAddon.fit() } catch { }
-    })
+    const ro = new ResizeObserver(() => { try { fitAddon.fit() } catch {} })
     ro.observe(container)
     inst.cleanups.push(() => ro.disconnect())
 
@@ -211,172 +223,150 @@ export function TerminalPanel() {
   }, [])
 
   useEffect(() => {
-    if (!selectionPopup) return
-    const text = selectionPopup.text
-    function onKeyDown(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'l') {
-        e.preventDefault()
-        if (activeInstance) {
-          const msg = `\`\`\`terminal\n${text}\n\`\`\``
-          useChatStore.getState().injectWhileStreaming(msg)
-        }
-        setSelectionPopup(null)
-      }
-      if (e.key === 'Escape') setSelectionPopup(null)
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [selectionPopup, activeInstance])
+    const unsubSpawn = window.terminal.onAgentSpawn?.(({ procId, command }: { procId: string; command: string }) => {
+      store.getState().ensureAgentTab(procId, command)
+      seedAgentTerminalCommand(procId, command)
+    })
+    const unsubOutput = window.terminal.onAgentOutput?.(({ procId, chunk }: { procId: string; chunk: string }) => {
+      writeAgentTerminalChunk(procId, chunk)
+    })
+    const unsubExit = window.terminal.onAgentExit?.(({ procId, code }: { procId: string; code: number }) => {
+      writeAgentTerminalChunk(procId, `\r\n\x1b[33mProceso de agente terminado (código: ${code})\x1b[0m\r\n`)
+    })
+    return () => { unsubSpawn?.(); unsubOutput?.(); unsubExit?.() }
+  }, [])
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      const inst = instancesRef.current.get(activeTabId)
-      if (inst) {
-        try { inst.fitAddon.fit() } catch {}
-      }
+      const inst = instancesRef.current.get(activeTabId ?? '')
+      if (inst) { try { inst.fitAddon.fit() } catch {} }
     }, 250)
     return () => clearTimeout(timer)
   }, [activeTabId])
 
   function addTab() {
-    const tab = createNewTab()
-    setTabs(prev => [...prev, tab])
-    setActiveTabId(tab.id)
+    store.getState().createTab()
   }
 
   function closeTab(tabId: string, e: React.MouseEvent) {
     e.stopPropagation()
     const inst = instancesRef.current.get(tabId)
     if (inst) {
-      inst.cleanups.forEach(fn => fn())
+      inst.cleanups.forEach((fn) => fn())
       inst.terminal.dispose()
-      window.terminal?.destroy(inst.ptyId)
+      const tab = store.getState().tabs.find((t) => t.id === tabId)
+      if (tab?.kind === 'user') {
+        window.terminal?.destroy(inst.ptyId)
+      } else if (tab?.kind === 'agent' && tab.procId) {
+        window.terminal?.agentKill(tab.procId)
+        clearAgentTerminal(tab.procId)
+      }
       instancesRef.current.delete(tabId)
     }
     containersRef.current.delete(tabId)
-
-    setTabs(prev => {
-      const next = prev.filter(t => t.id !== tabId)
-      if (next.length === 0) {
-        return [createNewTab()]
-      }
-      if (tabId === activeTabId) {
-        const idx = prev.findIndex(t => t.id === tabId)
-        const newActive = next[Math.min(idx, next.length - 1)]
-        setTimeout(() => setActiveTabId(newActive.id), 0)
-      }
-      return next
-    })
+    store.getState().closeTab(tabId)
   }
 
   function handleNewSession(tabId: string) {
     const inst = instancesRef.current.get(tabId)
-    if (!inst) return
-    inst.cleanups.forEach(fn => fn())
+    const tab = store.getState().tabs.find((t) => t.id === tabId)
+    if (!inst || tab?.kind !== 'user') return
+    inst.cleanups.forEach((fn) => fn())
     inst.cleanups = []
     inst.terminal.reset()
     inst.connected = false
     inst.shellName = ''
     inst.ptyId = `sparta-term-${generateId()}`
-    initPTY(inst)
+    initUserPTY(inst)
   }
 
-  function renderTabLabel(tabId: string): { shell: string; connected: boolean } {
+  function renderTabInfo(tabId: string): { shell: string; connected: boolean; kind: 'user' | 'agent' } {
     const inst = instancesRef.current.get(tabId)
-    const tab = tabs.find(t => t.id === tabId)
+    const tab = tabs.find((t) => t.id === tabId)
     return {
       shell: inst?.shellName
         ? inst.shellName.split('\\').pop()?.split('/').pop() ?? inst.shellName
-        : tab?.label ?? 'Terminal',
+        : tab?.title ?? 'Terminal',
       connected: inst?.connected ?? false,
+      kind: tab?.kind ?? 'user',
     }
+  }
+
+  function renderSelectionPopup() {
+    const inst = activeInstance
+    if (!inst) return null
+    const sel = inst.terminal.getSelection()
+    if (!sel) return null
+    const rect = inst.container.getBoundingClientRect()
+    return (
+      <TerminalSelectionPopup
+        style={{ left: rect.right - 180, top: rect.top + 8 }}
+        onAddToChat={() => {
+          const msg = `\`\`\`terminal\n${sel}\n\`\`\``
+          useChatStore.getState().injectWhileStreaming(msg)
+        }}
+        onClose={() => {
+          inst.terminal.clearSelection()
+          forceRender(n => n + 1)
+        }}
+      />
+    )
   }
 
   return (
     <div className="flex flex-col h-full bg-[#0C0C10]">
       <div className="flex items-center justify-between px-2 py-1 bg-[#0f0f14] border-b border-[#ffffff12] shrink-0 min-h-0">
         <div className="flex items-center gap-0.5 overflow-x-auto min-w-0">
-          {tabs.map(tab => {
-            const info = renderTabLabel(tab.id)
+          {tabs.map((tab) => {
+            const info = renderTabInfo(tab.id)
             return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTabId(tab.id)}
+              <button key={tab.id} onClick={() => store.getState().selectTab(tab.id)}
                 className={cn(
-                  "flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-[450] rounded-t border-b-[1.5px] transition-colors shrink-0 max-w-[160px] whitespace-nowrap",
-                  tab.id === activeTabId
-                    ? "text-[#e0e0ec] border-[#6366F1] bg-[#0C0C10]"
-                    : "text-[#6b6b80] border-transparent hover:text-[#a0a0b8] hover:bg-[#ffffff08]"
-                )}
-              >
-                <span className={cn(
-                  "inline-block w-1.5 h-1.5 rounded-full shrink-0",
-                  info.connected ? "bg-[#48bb78]" : "bg-[#6b6b80]"
-                )} />
+                  'flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-[450] rounded-t border-b-[1.5px] transition-colors shrink-0 max-w-[160px] whitespace-nowrap',
+                  tab.id === activeTabId ? 'text-[#e0e0ec] border-[#6366F1] bg-[#0C0C10]' : 'text-[#6b6b80] border-transparent hover:text-[#a0a0b8] hover:bg-[#ffffff08]'
+                )}>
+                {info.kind === 'agent'
+                  ? <Bot className="w-3 h-3 text-[#a78bfa] shrink-0" />
+                  : <span className={cn('inline-block w-1.5 h-1.5 rounded-full shrink-0', info.connected ? 'bg-[#48bb78]' : 'bg-[#6b6b80]')} />}
                 <span className="truncate">{info.shell}</span>
-                {tabs.length > 1 && (
-                  <span
-                    onClick={(e) => closeTab(tab.id, e)}
-                    className="inline-flex items-center justify-center w-3.5 h-3.5 rounded hover:bg-[#ffffff14] ml-0.5 shrink-0"
-                  >
-                    <X className="w-2.5 h-2.5" />
-                  </span>
-                )}
+                <span onClick={(e) => closeTab(tab.id, e)}
+                  className="inline-flex items-center justify-center w-3.5 h-3.5 rounded hover:bg-[#ffffff14] ml-0.5 shrink-0">
+                  <X className="w-2.5 h-2.5" />
+                </span>
               </button>
             )
           })}
-          <button
-            onClick={addTab}
+          <button onClick={addTab}
             className="inline-flex items-center justify-center w-5 h-5 rounded text-[#6b6b80] hover:text-[#e0e0ec] hover:bg-[#ffffff0a] shrink-0 ml-1"
-            title="Nueva terminal"
-          >
+            title="Nueva terminal">
             <Plus className="w-3 h-3" />
           </button>
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
-          {activeInstance && (
-            <button
-              onClick={() => handleNewSession(activeTabId)}
+          {activeInstance && renderTabInfo(activeTabId ?? '').kind === 'user' && (
+            <button onClick={() => handleNewSession(activeTabId!)}
               className="flex items-center gap-1 px-2 py-0.5 text-[10px] text-[#6b6b80] hover:text-[#a0a0b8] rounded hover:bg-[#ffffff08]"
-              title="Reiniciar sesión"
-            >
+              title="Reiniciar sesión">
               <TerminalIcon className="w-3 h-3" />
             </button>
           )}
-          <button
-            onClick={toggleTerminal}
+          <button onClick={toggleTerminal}
             className="flex items-center gap-1 px-2 py-0.5 text-[10px] text-[#6b6b80] hover:text-[#e0e0ec] rounded hover:bg-[#ffffff0a]"
-            title="Cerrar terminal"
-          >
+            title="Cerrar terminal">
             <ChevronDown className="w-3 h-3" />
           </button>
         </div>
       </div>
 
       <div className="relative flex-1 min-h-0">
-        {tabs.map(tab => (
-          <div
-            key={tab.id}
-            ref={containerRefCallback(tab.id)}
-            className={cn(
-              "absolute inset-0",
-              tab.id === activeTabId ? "visible" : "invisible pointer-events-none"
-            )}
-          />
+        {tabs.map((tab) => (
+          <div key={tab.id} ref={containerRefCallback(tab.id)}
+            className={cn('absolute inset-0', tab.id === activeTabId ? 'visible' : 'invisible pointer-events-none')} />
         ))}
       </div>
 
-      {selectionPopup && (
-        <TerminalSelectionPopup
-          style={{ left: selectionPopup.x, top: selectionPopup.y }}
-          onAddToChat={() => {
-            const msg = `\`\`\`terminal\n${selectionPopup.text}\n\`\`\``
-            useChatStore.getState().injectWhileStreaming(msg)
-          }}
-          onClose={() => setSelectionPopup(null)}
-        />
-      )}
+      {renderSelectionPopup()}
     </div>
   )
 }

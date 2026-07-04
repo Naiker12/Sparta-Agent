@@ -147,6 +147,9 @@ export function registerChatIPC(): void {
       case 'terminal:agent_command':
         sendToRenderer({ sessionId, messageId, type: 'terminal:agent_command', command: data?.command })
         break
+      case 'terminal:agent_spawn':
+        sendToRenderer({ sessionId, messageId, type: 'terminal:agent_spawn', procId: data?.procId, command: data?.command, label: data?.label })
+        break
       case 'search:progress':
         sendToRenderer({
           sessionId,

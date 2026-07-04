@@ -68,6 +68,12 @@ interface TerminalAPI {
   onExit: (terminalId: string, callback: (code: number) => void) => () => void
   agentWrite: (terminalId: string, command: string) => Promise<{ success: boolean; error?: string; needsConfirmation?: boolean }>
   agentWriteForce: (terminalId: string, command: string) => Promise<{ success: boolean; error?: string }>
+  listSessions: () => Promise<string[]>
+  agentSpawn: (procId: string, command: string, cwd?: string) => Promise<{ success: boolean; error?: string }>
+  agentKill: (procId: string) => Promise<{ success: boolean }>
+  onAgentSpawn: (callback: (payload: { procId: string; command: string }) => void) => () => void
+  onAgentOutput: (callback: (payload: { procId: string; chunk: string }) => void) => () => void
+  onAgentExit: (callback: (payload: { procId: string; code: number }) => void) => () => void
 }
 
 interface SkillsAPI {

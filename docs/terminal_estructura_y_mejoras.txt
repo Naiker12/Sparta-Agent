@@ -1,0 +1,92 @@
+╔══════════════════════════════════════════════════════════════╗
+║  TERMINAL - ESTRUCTURA Y MEJORAS                           ║
+║  Sparta Agent                                              ║
+╚══════════════════════════════════════════════════════════════╝
+
+═══════════════════════════════════════════════════════════════
+ARQUITECTURA ACTUAL
+═══════════════════════════════════════════════════════════════
+
+electron/ipc/terminal.ipc.ts
+  └─ IPC handlers: create, write, resize, destroy, agent-write,
+     agent-write-force, list-sessions, ready
+  └─ node-pty spawn + buffer de datos tempranos
+  └─ 10 patrones destructivos bloqueados
+
+electron/preload.ts
+  └─ contextBridge: window.terminal.* API
+
+src/components/terminal/TerminalPanel.tsx
+  └─ xterm.js con FitAddon + WebGL + Unicode11 + WebLinks
+  └─ Tabs multiples (cada tab = PTY independiente)
+  └─ Persistencia (sesiones NO se destruyen al ocultar)
+  └─ Selection popup "Agregar al chat" (⌘L)
+  └─ Indicator de conexion verde/rojo por tab
+
+src/components/layout/AppShell.tsx
+  └─ motion.div anima height/opacity (0.15s easeInOut)
+  └─ Resize handle fuera del contenedor animado
+  └─ Terminal siempre montada, solo oculta
+
+src/styles/layout.css
+  └─ .panel-terminal, .terminal-resize-handle
+
+═══════════════════════════════════════════════════════════════
+LO QUE SE HIZO (commit 3e9e4f1)
+═══════════════════════════════════════════════════════════════
+
+  ✅ Tabs multiples (como Hermes)
+  ✅ Sesiones persistentes (no se destruyen al cerrar panel)
+  ✅ WebGL renderer (con fallback a canvas)
+  ✅ Unicode11 addon (caracteres especiales)
+  ✅ WebLinks addon (URLs clickeables)
+  ✅ Selection popup "Agregar al chat" (⌘L)
+  ✅ Fix animacion "se pega" (framer-motion + CSS)
+  ✅ Resize handle fuera del contenedor animado
+  ✅ agent-write busca terminal activa
+  ✅ Nuevo IPC: terminal:list-sessions
+  ✅ Dependencias: @xterm/addon-webgl, unicode11, serialize
+
+═══════════════════════════════════════════════════════════════
+PROXIMAS MEJORAS (priorizadas)
+═══════════════════════════════════════════════════════════════
+
+  PRIORIDAD 1 - ALTA (desde Hermes):
+  ──────────────────────────────────
+  [ ] Tabs de agente (read-only mirror de subprocesos AI)
+      Como: apps/desktop/src/app/right-sidebar/terminal/
+      agent-terminal-stream.ts (Hermes)
+  
+  [ ] Scrollback persistente (recuperar historial al reiniciar)
+      Como: apps/desktop/src/app/right-sidebar/terminal/
+      terminals.ts (reviveBuffer, Hermes)
+
+  PRIORIDAD 2 - MEDIA:
+  ────────────────────
+  [ ] SerializeAddon para guardar scrollback en localStorage
+  [ ] Mejorar theme terminal con CSS variables por tema
+      (ya hay --color-terminal-* en cada tema)
+  [ ] Atajo Ctrl+Shift+` para nueva terminal
+  [ ] Drag & drop de archivos a la terminal
+
+  PRIORIDAD 3 - BAJA:
+  ───────────────────
+  [ ] CLI shell real (script Python con PTY)
+  [ ] Tema ANSI desde VS Code marketplace
+  [ ] Terminal web via WebSocket (modo web)
+  [ ] Agregar @xterm/addon-search (buscar en terminal)
+
+═══════════════════════════════════════════════════════════════
+ARCHIVOS CLAVE
+═══════════════════════════════════════════════════════════════
+
+  terminal.ipc.ts    → electron/ipc/terminal.ipc.ts
+  preload.ts         → electron/preload.ts
+  TerminalPanel      → src/components/terminal/TerminalPanel.tsx
+  AppShell           → src/components/layout/AppShell.tsx
+  layout.css         → src/styles/layout.css
+  xterm-theme        → src/lib/xterm-theme.ts
+  UI Store           → src/stores/ui.store.ts
+  env-adapter        → src/lib/env-adapter.ts
+  useStreamEvents    → src/hooks/useStreamEvents.ts
+═══════════════════════════════════════════════════════════════

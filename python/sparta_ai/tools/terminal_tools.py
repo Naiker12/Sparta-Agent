@@ -1,4 +1,5 @@
 import logging
+import uuid
 from langchain_core.tools import tool
 from sparta_ai.security.command_sanitizer import CommandSanitizer
 
@@ -39,3 +40,35 @@ def terminal_execute_tool(command: str) -> str:
             f"Comando enviado a la terminal (requiere confirmación del usuario): {sanitized[:120]}"
         )
     return f"Comando ejecutándose: {sanitized[:120]}. El usuario puede ver la ejecución en vivo."
+
+
+@tool
+def terminal_execute_background_tool(command: str, label: str | None = None) -> str:
+    """
+    Ejecuta un comando en un proceso de fondo dedicado, SIN usar la terminal
+    interactiva del usuario. Usalo para comandos largos o silenciosos
+    (servidores dev, watchers, builds) que no deberían bloquear la terminal
+    que el usuario está mirando.
+
+    El resultado aparece como una pestaña nueva de solo lectura en el panel
+    de terminal. No devuelve stdout — el usuario ve la salida en vivo en esa
+    pestaña.
+
+    Args:
+        command: Comando shell a ejecutar.
+        label: Nombre corto opcional para la pestaña (por defecto, el comando).
+
+    Returns:
+        Confirmación con el identificador del proceso de fondo.
+    """
+    if not command or not command.strip():
+        return "Error: No se proporcionó ningún comando."
+
+    sanitized = _sanitizer.sanitize(command)
+    if sanitized is None:
+        logger.warning("Background command blocked by sanitizer: %s", command.strip()[:120])
+        return "Error de seguridad: comando bloqueado por el sanitizador."
+
+    proc_id = f"bg-{uuid.uuid4().hex[:8]}"
+    logger.info("Background terminal spawn requested: %s (%s)", sanitized[:120], proc_id)
+    return f"Proceso de fondo iniciado ({proc_id}): {sanitized[:120]}. El usuario lo ve en una pestaña nueva."
