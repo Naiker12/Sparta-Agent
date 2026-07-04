@@ -79,35 +79,6 @@
     "vite-plugin-electron-renderer": "^0.14.5",
     "vitest": "^2.1.9"
   },
-  "build": {
-    "appId": "com.sparta.agent",
-    "productName": "Sparta Agent",
-    "directories": {
-      "output": "release"
-    },
-    "win": {
-      "icon": "public/sparta-escritorio.png",
-      "target": [
-        "nsis"
-      ]
-    },
-    "mac": {
-      "icon": "public/sparta-escritorio.png",
-      "target": [
-        "dmg"
-      ]
-    },
-    "linux": {
-      "icon": "public/sparta-escritorio.png",
-      "target": [
-        "AppImage"
-      ]
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true
-    }
-  },
   "main": "dist-electron/main.js",
   "pnpm": {
     "onlyBuiltDependencies": [

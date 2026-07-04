@@ -37,7 +37,7 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: isElectron ? 'dist' : 'dist-web',
       rollupOptions: isElectron ? {
-        external: ['electron'],
+        external: ['electron', 'node-pty'],
       } : {},
     },
     server: {
