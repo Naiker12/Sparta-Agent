@@ -146,30 +146,33 @@ export function AppShell() {
                       <ChatArea />
                     </ChatErrorBoundary>
                   </div>
-                  <AnimatePresence>
-                    {terminalOpen && (
-                      <motion.div
-                        key="terminal-panel"
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: terminalHeight, opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.2, ease: 'easeInOut' }}
-                        className="panel-terminal"
-                        style={{
-                          flexShrink: 0,
-                          borderTop: '1px solid var(--border-normal)',
-                          overflow: 'hidden',
-                          position: 'relative',
-                        }}
+                  <div className="relative flex flex-col" style={{ flexShrink: 0 }}>
+                    <motion.div
+                      initial={false}
+                      animate={{
+                        height: terminalOpen ? terminalHeight : 0,
+                        opacity: terminalOpen ? 1 : 0,
+                      }}
+                      transition={{ duration: 0.15, ease: 'easeInOut' }}
+                      style={{ overflow: 'hidden', position: 'relative' }}
+                    >
+                      <div
+                        style={{ height: terminalHeight, minHeight: 0 }}
+                        className={terminalOpen ? '' : 'pointer-events-none'}
                       >
                         <TerminalPanel />
-                        <PanelDragHandle
-                          className="terminal-resize-handle"
-                          onMouseDown={handleTerminalResize}
-                        />
-                      </motion.div>
+                      </div>
+                    </motion.div>
+                    {terminalOpen && (
+                      <PanelDragHandle
+                        className="terminal-resize-handle"
+                        onMouseDown={handleTerminalResize}
+                      />
                     )}
-                  </AnimatePresence>
+                    {terminalOpen && (
+                      <div className="border-t border-[var(--border-normal)]" />
+                    )}
+                  </div>
                 </div>
                 <AnimatePresence>
                   {editorOpen && (

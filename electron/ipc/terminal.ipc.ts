@@ -27,12 +27,12 @@ const sessions = new Map<string, SessionState>()
 const BANNER = `\x1b[35m
    _____ ____   ___    ____  ______ ___
   / ___// __ \\ /   |  / __ \\/_  __//   |
-  \\__ \\/ /_/ // /| | / /_/ / / /  / /| |
+  \\\\__ \\/ /_/ // /| | / /_/ / / /  / /| |
  ___/ / ____// ___ |/ _, _/ / /  / ___ |
 /____/_/    /_/  |_/_/ |_| /_/  /_/  |_|
 \x1b[0m
 \x1b[2m  Sparta Agent — Terminal integrada · PTY real\x1b[0m
-\x1b[2m  Escribe comandos normalmente, o pide al agente que ejecute algo por ti.\x1b[0m
+\x1b[2m  Presiona Ctrl+\` para mostrar/ocultar\x1b[0m
 
 `
 
@@ -40,15 +40,24 @@ function getWin(event: IpcMainInvokeEvent | IpcMainEvent): BrowserWindow {
   return BrowserWindow.fromWebContents(event.sender)!
 }
 
+function shellCommand() {
+  if (os.platform() === 'win32') {
+    const pwsh = process.env.PWSH || 'pwsh.exe'
+    return { shell: pwsh, args: ['-NoLogo'] }
+  }
+  return { shell: process.env.SHELL ?? '/bin/bash', args: [] }
+}
+
 export function registerTerminalIPC() {
-  ipcMain.handle('terminal:create', (event: IpcMainInvokeEvent, { terminalId, cols, rows }: { terminalId: string; cols: number; rows: number }) => {
-    const shell = os.platform() === 'win32'
-      ? 'powershell.exe'
-      : (process.env.SHELL ?? '/bin/bash')
+  ipcMain.handle('terminal:create', (
+    event: IpcMainInvokeEvent,
+    { terminalId, cols, rows }: { terminalId: string; cols: number; rows: number }
+  ) => {
+    const { shell, args: shellArgs } = shellCommand()
 
     let ptyProcess: pty.IPty
     try {
-      ptyProcess = pty.spawn(shell, [], {
+      ptyProcess = pty.spawn(shell, shellArgs, {
         name: 'xterm-256color',
         cols: cols ?? 80,
         rows: rows ?? 24,
@@ -64,16 +73,14 @@ export function registerTerminalIPC() {
       return {
         success: false,
         shell,
-        error: `No se pudo iniciar la terminal. node-pty probablemente no esta ` +
-               `compilado para esta version de Electron. Corre: npm run rebuild-native. ` +
-               `(${err instanceof Error ? err.message : String(err)})`,
+        error: `No se pudo iniciar la terminal. Corre: npm run rebuild-native. ` +
+          `(${err instanceof Error ? err.message : String(err)})`,
       }
     }
 
     const win = getWin(event)
     const state: SessionState = { pty: ptyProcess, buffer: [], ready: false, win }
 
-    // Send banner immediately (before any PTY data)
     win.webContents.send(`terminal:data:${terminalId}`, BANNER)
 
     ptyProcess.onData((data: string) => {
@@ -86,10 +93,10 @@ export function registerTerminalIPC() {
       }
     })
 
-    ptyProcess.onExit(({ exitCode }: { exitCode: number }) => {
+    ptyProcess.onExit(({ exitCode, signal }: { exitCode: number; signal?: number }) => {
       sessions.delete(terminalId)
       if (!state.win.isDestroyed()) {
-        state.win.webContents.send(`terminal:exit:${terminalId}`, { exitCode })
+        state.win.webContents.send(`terminal:exit:${terminalId}`, { exitCode, signal: signal ?? null })
       }
     })
 
@@ -97,7 +104,6 @@ export function registerTerminalIPC() {
     return { success: true, shell }
   })
 
-  // Renderer signals that its onData listener is registered
   ipcMain.on('terminal:ready', (_event: IpcMainEvent, { terminalId }: { terminalId: string }) => {
     const state = sessions.get(terminalId)
     if (!state) return
@@ -112,15 +118,24 @@ export function registerTerminalIPC() {
     }
   })
 
-  ipcMain.on('terminal:write', (_event: IpcMainEvent, { terminalId, data }: { terminalId: string; data: string }) => {
+  ipcMain.on('terminal:write', (
+    _event: IpcMainEvent,
+    { terminalId, data }: { terminalId: string; data: string }
+  ) => {
     sessions.get(terminalId)?.pty.write(data)
   })
 
-  ipcMain.on('terminal:resize', (_event: IpcMainEvent, { terminalId, cols, rows }: { terminalId: string; cols: number; rows: number }) => {
+  ipcMain.on('terminal:resize', (
+    _event: IpcMainEvent,
+    { terminalId, cols, rows }: { terminalId: string; cols: number; rows: number }
+  ) => {
     sessions.get(terminalId)?.pty.resize(cols, rows)
   })
 
-  ipcMain.handle('terminal:destroy', (_event: IpcMainInvokeEvent, { terminalId }: { terminalId: string }) => {
+  ipcMain.handle('terminal:destroy', (
+    _event: IpcMainInvokeEvent,
+    { terminalId }: { terminalId: string }
+  ) => {
     const state = sessions.get(terminalId)
     if (state) {
       state.pty.kill()
@@ -129,11 +144,14 @@ export function registerTerminalIPC() {
     return { success: true }
   })
 
-  ipcMain.handle('terminal:agent-write', (_event: IpcMainInvokeEvent, { terminalId, command }: { terminalId: string; command: string }) => {
-    const state = sessions.get(terminalId)
-    if (!state) return { success: false, error: 'No terminal activa' }
+  ipcMain.handle('terminal:agent-write', (
+    _event: IpcMainInvokeEvent,
+    { terminalId, command }: { terminalId: string; command: string }
+  ) => {
+    const id = terminalId || findFirstTerminalId()
+    const state = sessions.get(id)
+    if (!state) return { success: false, error: 'No hay terminal activa. Abre la terminal primero.' }
 
-    // Block destructive commands unless explicitly approved
     const trimmed = command.trim()
     const isDangerous = DESTRUCTIVE_PATTERNS.some((p) => p.test(trimmed))
     if (isDangerous) {
@@ -145,22 +163,35 @@ export function registerTerminalIPC() {
       }
     }
 
-    // Show visual prefix so user can distinguish agent-vs-manual commands
     const prefixed = `\x1b[36m[agente]\x1b[0m ${command}\r\n`
-    state.win.webContents.send(`terminal:data:${terminalId}`, prefixed)
-
+    if (!state.win.isDestroyed()) {
+      state.win.webContents.send(`terminal:data:${id}`, prefixed)
+    }
     state.pty.write(command + '\r')
     return { success: true }
   })
 
-  ipcMain.handle('terminal:agent-write-force', (_event: IpcMainInvokeEvent, { terminalId, command }: { terminalId: string; command: string }) => {
-    const state = sessions.get(terminalId)
-    if (!state) return { success: false, error: 'No terminal activa' }
+  ipcMain.handle('terminal:agent-write-force', (
+    _event: IpcMainInvokeEvent,
+    { terminalId, command }: { terminalId: string; command: string }
+  ) => {
+    const id = terminalId || findFirstTerminalId()
+    const state = sessions.get(id)
+    if (!state) return { success: false, error: 'No hay terminal activa' }
 
     const prefixed = `\x1b[36m[agente]\x1b[0m ${command}\r\n\x1b[33m⚠  Confirmado por el usuario\x1b[0m\r\n`
-    state.win.webContents.send(`terminal:data:${terminalId}`, prefixed)
-
+    if (!state.win.isDestroyed()) {
+      state.win.webContents.send(`terminal:data:${id}`, prefixed)
+    }
     state.pty.write(command + '\r')
     return { success: true }
   })
+
+  ipcMain.handle('terminal:list-sessions', () => {
+    return Array.from(sessions.keys())
+  })
+}
+
+function findFirstTerminalId(): string {
+  return Array.from(sessions.keys())[0] || ''
 }

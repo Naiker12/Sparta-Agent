@@ -1,0 +1,125 @@
+╔══════════════════════════════════════════════════════════════════╗
+║  ANALISIS COMPLETO DEL SISTEMA DE TERMINAL (ACTUALIZADO)       ║
+║  Hermes Agent vs Sparta Agent                                  ║
+╚══════════════════════════════════════════════════════════════════╝
+
+═══════════════════════════════════════════════════════════════════
+1. ESTADO ACTUAL (después de mejoras)
+═══════════════════════════════════════════════════════════════════
+
+  HERMES AGENT tiene 3 superficies de terminal:
+  ───────────────────────────────────────────
+  ✅ CLI    - hermes_cli/console_engine.py (comandos curados, no shell real)
+  ✅ Web    - web/ (React + xterm.js, conecta por WebSocket al gateway)
+  ✅ Desktop - apps/desktop/ (Electron + node-pty + xterm.js, tabs, persistencia)
+
+  SPARTA AGENT tiene 2 superficies:
+  ──────────────────────────────────
+  ✅ Web    - src/ (React + xterm.js, modo web via WebSocket)
+  ✅ Desktop - electron/ (Electron + node-pty + xterm.js)
+
+═══════════════════════════════════════════════════════════════════
+2. MEJORAS APLICADAS A SPARTA
+═══════════════════════════════════════════════════════════════════
+
+  BASADO EN LO QUE HERMES HACE:
+
+  ╔══════════════════════════════════════════════════════════════╗
+  ║  TerminalPanel.tsx - MULTIPLES TABS + PERSISTENCIA          ║
+  ╚══════════════════════════════════════════════════════════════╝
+  ● Cada tab es una sesion PTY independiente (como Hermes)
+  ● Las sesiones NO se destruyen al ocultar el panel
+  ● Tabs con indicador de conexion (verde/rojo)
+  ● Boton + para nueva terminal, X para cerrar
+  ● Reinicio de sesion individual por tab
+  ● WebGL renderer (fallback a canvas si no disponible)
+  ● Unicode11 addon (soporte Unicode completo)
+  ● WebLinks addon (URLs clickeables)
+
+  ╔══════════════════════════════════════════════════════════════╗
+  ║  AppShell.tsx - TERMINAL PERSISTENTE                        ║
+  ╚══════════════════════════════════════════════════════════════╝
+  ● Cambio de AnimatePresence (destroy on close) a motion.div
+  ● El panel se oculta visualmente pero xterm+PTY siguen vivos
+  ● Animacion suave al mostrar/ocultar (height + opacity)
+  ● Ya no se pierde el historial al cerrar/abrir terminal
+
+  ╔══════════════════════════════════════════════════════════════╗
+  ║  terminal.ipc.ts - AGENTE MEJORADO                          ║
+  ╚══════════════════════════════════════════════════════════════╝
+  ● agent-write busca cualquier terminal activa si no se da ID
+  ● Nuevo IPC terminal:list-sessions para monitorear sesiones
+  ● Deteccion mejorada del shell en Windows
+
+  ╔══════════════════════════════════════════════════════════════╗
+  ║  preload.ts - NUEVA API                                      ║
+  ╚══════════════════════════════════════════════════════════════╝
+  ● window.terminal.listSessions()
+
+═══════════════════════════════════════════════════════════════════
+3. CARACTERISTICAS COMPARATIVAS
+═══════════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────┬──────────┬──────────┐
+│  CARACTERISTICA                 │ HERMES   │ SPARTA   │
+├─────────────────────────────────┼──────────┼──────────┤
+│  Tabs multiples                 │    ✅    │    ✅    │
+│  Terminal persistente           │    ✅    │    ✅    │
+│  node-pty (PTY real)           │    ✅    │    ✅    │
+│  xterm.js                       │    ✅    │    ✅    │
+│  WebGL renderer                 │    ✅    │    ✅    │
+│  Unicode11                      │    ✅    │    ✅    │
+│  WebLinks                       │    ✅    │    ✅    │
+│  AI -> Terminal (agentWrite)   │    ✅    │    ✅    │
+│  Seguridad (16 patrones)       │    ✅    │    ✅    │
+│  Buffer de datos tempranos     │    ✅    │    ✅    │
+│  Resize automatico              │    ✅    │    ✅    │
+│  Theme por CSS variables        │    ✅    │    ✅    │
+│  Tabs de agente (read-only)    │    ✅    │    ❌    │
+│  Scrollback persistente         │    ✅    │    ❌    │
+│  Popup seleccion -> chat       │    ✅    │    ❌    │
+│  Tema ANSI desde VS Code       │    ✅    │    ❌    │
+│  CLI shell real                 │    ✅    │    ❌    │
+└─────────────────────────────────┴──────────┴──────────┘
+
+═══════════════════════════════════════════════════════════════════
+4. ARCHIVOS MODIFICADOS EN SPARTA
+═══════════════════════════════════════════════════════════════════
+
+  src/components/terminal/TerminalPanel.tsx
+  src/components/layout/AppShell.tsx
+  electron/ipc/terminal.ipc.ts
+  electron/preload.ts
+
+  DEPENDENCIAS NUEVAS:
+  @xterm/addon-webgl      - Renderizado WebGL (rendimiento)
+  @xterm/addon-unicode11  - Unicode 11 (caracteres especiales)
+  @xterm/addon-serialize  - Serializacion (para futuro scrollback persistente)
+
+═══════════════════════════════════════════════════════════════════
+5. PROXIMAS MEJORAS POSIBLES (desde Hermes)
+═══════════════════════════════════════════════════════════════════
+
+  PRIORIDAD ALTA:
+  ─────────────────
+  [ ] Tabs de agente (read-only mirror de subprocesos AI)
+      Ver: apps/desktop/src/app/right-sidebar/terminal/agent-terminal-stream.ts
+  
+  [ ] Popup de seleccion -> "Agregar al chat"
+      Ver: apps/desktop/src/app/right-sidebar/terminal/selection.ts
+
+  PRIORIDAD MEDIA:
+  ─────────────────
+  [ ] Scrollback persistente (recuperar historial al reiniciar)
+      Ver: apps/desktop/src/app/right-sidebar/terminal/terminals.ts (reviveBuffer)
+  
+  [ ] CLI shell real (como Hermes console_engine.py)
+      Script Python que ejecute comandos shell reales con PTY
+
+  PRIORIDAD BAJA:
+  ────────────────
+  [ ] Tema ANSI desde VS Code marketplace
+  [ ] Atajo Ctrl+Shift+` para nueva terminal
+  [ ] Drag & drop de archivos a la terminal
+
+═══════════════════════════════════════════════════════════════════

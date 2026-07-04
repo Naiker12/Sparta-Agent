@@ -96,6 +96,7 @@ contextBridge.exposeInMainWorld('terminal', {
     ipcRenderer.invoke('terminal:agent-write', { terminalId, command }),
   agentWriteForce: (terminalId: string, command: string) =>
     ipcRenderer.invoke('terminal:agent-write-force', { terminalId, command }),
+  listSessions: () => ipcRenderer.invoke('terminal:list-sessions'),
 })
 
 contextBridge.exposeInMainWorld('fs', {
