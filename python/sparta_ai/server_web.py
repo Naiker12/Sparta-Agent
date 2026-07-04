@@ -191,9 +191,9 @@ async def _execute_agent_ws(
     from sparta_ai.tools.memory_tools import read_memory_tool, write_memory_tool
     from sparta_ai.tools.file_tools import read_file_tool, write_file_tool
     from sparta_ai.tools.skill_tools import skill_view_tool, skills_list_tool, skill_manage_tool
-    from sparta_ai.tools.terminal_tools import terminal_execute_tool
+    from sparta_ai.tools.terminal_tools import terminal_execute_tool, terminal_execute_background_tool
 
-    agent_tools = [read_memory_tool, write_memory_tool, read_file_tool, write_file_tool, skill_view_tool, skills_list_tool, skill_manage_tool, terminal_execute_tool] + mcp_tools
+    agent_tools = [read_memory_tool, write_memory_tool, read_file_tool, write_file_tool, skill_view_tool, skills_list_tool, skill_manage_tool, terminal_execute_tool, terminal_execute_background_tool] + mcp_tools
     if web_search_enabled:
         from sparta_ai.tools.web_search import web_search_tool
         agent_tools.insert(0, web_search_tool)
