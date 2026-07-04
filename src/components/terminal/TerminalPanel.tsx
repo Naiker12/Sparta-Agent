@@ -127,6 +127,21 @@ export function TerminalPanel() {
     const tab = store.getState().tabs.find((t) => t.id === tabId)
     if (!tab) return null
 
+    const rect = container.getBoundingClientRect()
+    if (rect.width === 0 || rect.height === 0) {
+      const check = () => {
+        const r = container.getBoundingClientRect()
+        if (r.width > 0 && r.height > 0) {
+          const inst = createTerminalInstance(tabId)
+          if (inst) instancesRef.current.set(tabId, inst)
+        } else {
+          requestAnimationFrame(check)
+        }
+      }
+      requestAnimationFrame(check)
+      return null
+    }
+
     const terminal = new Terminal({
       cursorBlink: tab.kind === 'user',
       disableStdin: tab.kind === 'agent',
@@ -199,6 +214,16 @@ export function TerminalPanel() {
     const t = setTimeout(() => scheduleFit(), 300)
     return () => clearTimeout(t)
   }, [activeTabId])
+
+  useEffect(() => {
+    function onTerminalResize() { scheduleFit() }
+    document.addEventListener('terminal:resize', onTerminalResize)
+    window.addEventListener('resize', onTerminalResize)
+    return () => {
+      document.removeEventListener('terminal:resize', onTerminalResize)
+      window.removeEventListener('resize', onTerminalResize)
+    }
+  }, [])
 
   function addTab() { store.getState().createTab() }
 

@@ -151,6 +151,9 @@ export function AppShell() {
                       initial={false}
                       animate={{ height: terminalOpen ? terminalHeight : 0 }}
                       transition={{ duration: 0.12, ease: 'easeOut' }}
+                      onAnimationComplete={() => {
+                        document.dispatchEvent(new CustomEvent('terminal:resize'))
+                      }}
                       style={{ overflow: 'hidden', position: 'relative' }}
                     >
                       <div className={terminalOpen ? '' : 'pointer-events-none'}>
