@@ -1,92 +1,118 @@
 ╔══════════════════════════════════════════════════════════════╗
-║  TERMINAL - ESTRUCTURA Y MEJORAS                           ║
-║  Sparta Agent                                              ║
+║  TERMINAL SPARTA - ESTRUCTURA COMPLETA                     ║
+║  (Basado en Hermes Agent, commit dd76d0b)                  ║
 ╚══════════════════════════════════════════════════════════════╝
 
 ═══════════════════════════════════════════════════════════════
-ARQUITECTURA ACTUAL
+ARQUITECTURA
 ═══════════════════════════════════════════════════════════════
 
-electron/ipc/terminal.ipc.ts
-  └─ IPC handlers: create, write, resize, destroy, agent-write,
-     agent-write-force, list-sessions, ready
-  └─ node-pty spawn + buffer de datos tempranos
-  └─ 10 patrones destructivos bloqueados
+FRONTEND (React):
+─────────────────
+src/stores/terminal.store.ts      - Zustand persistente (tabs, reviveBuffer)
+src/components/terminal/
+  TerminalPanel.tsx               - xterm.js + WebGL + tabs + scrollback
+  agent-terminal-stream.ts        - Stream de salida de procesos AI
+src/hooks/useStreamEvents.ts      - Recibe eventos terminal:agent_spawn
+src/types/window.d.ts             - Tipos TerminalAPI
+src/types/events.ts               - EventType con terminal:agent_command/spawn
 
-electron/preload.ts
-  └─ contextBridge: window.terminal.* API
+ELECTRON (Main Process):
+────────────────────────
+electron/ipc/terminal.ipc.ts      - PTY sessions + agentProcs + seguridad
+electron/preload.ts               - contextBridge window.terminal.*
+electron/electron-env.d.ts        - Tipos TerminalIPC
+electron/ipc/chat.ipc.ts          - Forward terminal:agent_spawn al renderer
 
-src/components/terminal/TerminalPanel.tsx
-  └─ xterm.js con FitAddon + WebGL + Unicode11 + WebLinks
-  └─ Tabs multiples (cada tab = PTY independiente)
-  └─ Persistencia (sesiones NO se destruyen al ocultar)
-  └─ Selection popup "Agregar al chat" (⌘L)
-  └─ Indicator de conexion verde/rojo por tab
-
-src/components/layout/AppShell.tsx
-  └─ motion.div anima height/opacity (0.15s easeInOut)
-  └─ Resize handle fuera del contenedor animado
-  └─ Terminal siempre montada, solo oculta
-
-src/styles/layout.css
-  └─ .panel-terminal, .terminal-resize-handle
+PYTHON (Sidecar):
+─────────────────
+python/sparta_ai/tools/terminal_tools.py
+  - terminal_execute_tool          (comando visible en terminal del usuario)
+  - terminal_execute_background_tool (proceso fondo, tab read-only)
+python/sparta_ai/streaming/event_bridge.py
+  - Emite terminal:agent_command / terminal:agent_spawn en on_tool_start
+python/sparta_ai/server.py
+  - Registra ambas tools en agent_tools
+python/sparta_ai/security/permission_policy.py
+  - ToolPermission para ambas tools
 
 ═══════════════════════════════════════════════════════════════
-LO QUE SE HIZO (commit 3e9e4f1)
+LO QUE SE IMPLEMENTÓ (2 commits)
 ═══════════════════════════════════════════════════════════════
 
-  ✅ Tabs multiples (como Hermes)
-  ✅ Sesiones persistentes (no se destruyen al cerrar panel)
-  ✅ WebGL renderer (con fallback a canvas)
-  ✅ Unicode11 addon (caracteres especiales)
-  ✅ WebLinks addon (URLs clickeables)
+  COMMIT 1 (3e9e4f1):
+  ────────────────────
+  ✅ Tabs multiples (cada tab = PTY independiente)
+  ✅ Sesiones persistentes (no se destruyen al ocultar panel)
+  ✅ WebGL renderer + Unicode11 + WebLinks addons
   ✅ Selection popup "Agregar al chat" (⌘L)
   ✅ Fix animacion "se pega" (framer-motion + CSS)
   ✅ Resize handle fuera del contenedor animado
   ✅ agent-write busca terminal activa
-  ✅ Nuevo IPC: terminal:list-sessions
-  ✅ Dependencias: @xterm/addon-webgl, unicode11, serialize
+  ✅ terminal:list-sessions IPC
 
-═══════════════════════════════════════════════════════════════
-PROXIMAS MEJORAS (priorizadas)
-═══════════════════════════════════════════════════════════════
-
-  PRIORIDAD 1 - ALTA (desde Hermes):
-  ──────────────────────────────────
-  [ ] Tabs de agente (read-only mirror de subprocesos AI)
-      Como: apps/desktop/src/app/right-sidebar/terminal/
-      agent-terminal-stream.ts (Hermes)
-  
-  [ ] Scrollback persistente (recuperar historial al reiniciar)
-      Como: apps/desktop/src/app/right-sidebar/terminal/
-      terminals.ts (reviveBuffer, Hermes)
-
-  PRIORIDAD 2 - MEDIA:
+  COMMIT 2 (dd76d0b):
   ────────────────────
-  [ ] SerializeAddon para guardar scrollback en localStorage
-  [ ] Mejorar theme terminal con CSS variables por tema
-      (ya hay --color-terminal-* en cada tema)
-  [ ] Atajo Ctrl+Shift+` para nueva terminal
-  [ ] Drag & drop de archivos a la terminal
-
-  PRIORIDAD 3 - BAJA:
-  ───────────────────
-  [ ] CLI shell real (script Python con PTY)
-  [ ] Tema ANSI desde VS Code marketplace
-  [ ] Terminal web via WebSocket (modo web)
-  [ ] Agregar @xterm/addon-search (buscar en terminal)
+  ✅ Scrollback persistente (SerializeAddon + reviveBuffer)
+  ✅ Tabs de agente read-only (processos de fondo)
+  ✅ terminal:agent-spawn / agent-output / agent-exit IPC
+  ✅ agentSpawn / agentKill Electron handlers
+  ✅ terminal_execute_background_tool (Python)
+  ✅ terminal:agent_spawn events desde event_bridge (stdio + WS)
+  ✅ Registro en server.py + permission_policy.py
 
 ═══════════════════════════════════════════════════════════════
-ARCHIVOS CLAVE
+COMPARATIVA FINAL
 ═══════════════════════════════════════════════════════════════
 
-  terminal.ipc.ts    → electron/ipc/terminal.ipc.ts
-  preload.ts         → electron/preload.ts
-  TerminalPanel      → src/components/terminal/TerminalPanel.tsx
-  AppShell           → src/components/layout/AppShell.tsx
-  layout.css         → src/styles/layout.css
-  xterm-theme        → src/lib/xterm-theme.ts
-  UI Store           → src/stores/ui.store.ts
-  env-adapter        → src/lib/env-adapter.ts
-  useStreamEvents    → src/hooks/useStreamEvents.ts
+┌─────────────────────────────────┬──────────┬──────────┐
+│  CARACTERISTICA                 │ HERMES   │ SPARTA   │
+├─────────────────────────────────┼──────────┼──────────┤
+│  Tabs multiples                 │    ✅    │    ✅    │
+│  Terminal persistente           │    ✅    │    ✅    │
+│  node-pty (PTY real)           │    ✅    │    ✅    │
+│  xterm.js                       │    ✅    │    ✅    │
+│  WebGL renderer                 │    ✅    │    ✅    │
+│  Unicode11                      │    ✅    │    ✅    │
+│  WebLinks                       │    ✅    │    ✅    │
+│  AI -> Terminal (agentWrite)   │    ✅    │    ✅    │
+│  Tabs de agente (read-only)    │    ✅    │    ✅    │
+│  Scrollback persistente         │    ✅    │    ✅    │
+│  Selection popup -> chat       │    ✅    │    ✅    │
+│  Seguridad (patrones)          │    ✅    │    ✅    │
+│  Buffer de datos tempranos     │    ✅    │    ✅    │
+│  Resize automatico              │    ✅    │    ✅    │
+│  Theme por CSS variables        │    ✅    │    ✅    │
+│  CLI shell real                 │    ✅    │    ❌    │
+│  Terminal web vía WebSocket    │    ✅    │    ❌    │
+│  Tema ANSI desde VS Code       │    ✅    │    ❌    │
+└─────────────────────────────────┴──────────┴──────────┘
+
+═══════════════════════════════════════════════════════════════
+ARCHIVOS CREADOS/MODIFICADOS
+═══════════════════════════════════════════════════════════════
+
+  NUEVOS:
+  src/stores/terminal.store.ts
+  src/components/terminal/agent-terminal-stream.ts
+  docs/terminal_estructura_y_mejoras.txt
+  docs/analisis_terminal_hermes_vs_sparta.txt
+
+  MODIFICADOS:
+  src/components/terminal/TerminalPanel.tsx
+  src/components/layout/AppShell.tsx
+  src/styles/layout.css
+  src/hooks/useStreamEvents.ts
+  src/types/window.d.ts
+  src/types/events.ts
+  electron/ipc/terminal.ipc.ts
+  electron/ipc/chat.ipc.ts
+  electron/preload.ts
+  electron/electron-env.d.ts
+  package.json (dependencias)
+  pnpm-lock.yaml
+  python/sparta_ai/tools/terminal_tools.py
+  python/sparta_ai/streaming/event_bridge.py
+  python/sparta_ai/server.py
+  python/sparta_ai/security/permission_policy.py
 ═══════════════════════════════════════════════════════════════

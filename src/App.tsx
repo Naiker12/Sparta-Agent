@@ -1,4 +1,4 @@
 export { EditorPanel } from '@/components/editor/EditorPanel'
-export { TerminalPanel } from '@/components/terminal/TerminalPanel'
+export { TerminalWorkspace } from '@/components/terminal/TerminalWorkspace'
 
 export { AgentsPanel } from '@/components/agents/AgentsPanel'

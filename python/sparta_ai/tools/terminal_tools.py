@@ -1,4 +1,5 @@
 import logging
+import subprocess
 import uuid
 from langchain_core.tools import tool
 from sparta_ai.security.command_sanitizer import CommandSanitizer
@@ -6,6 +7,12 @@ from sparta_ai.security.command_sanitizer import CommandSanitizer
 logger = logging.getLogger("sparta_ai.tools.terminal")
 
 _sanitizer = CommandSanitizer()
+_EXECUTE_LOCAL = False
+
+
+def set_execute_local(val: bool = True) -> None:
+    global _EXECUTE_LOCAL
+    _EXECUTE_LOCAL = val
 
 
 @tool
@@ -34,6 +41,23 @@ def terminal_execute_tool(command: str) -> str:
         )
 
     logger.info("Terminal command queued: %s", sanitized[:120])
+
+    if _EXECUTE_LOCAL:
+        try:
+            result = subprocess.run(
+                sanitized, shell=True, capture_output=True, text=True, timeout=60,
+            )
+            output = result.stdout
+            if result.stderr:
+                output += result.stderr
+            if result.returncode != 0:
+                output += f"\n[Exit code: {result.returncode}]"
+            return output.strip() or f"(comando completado, código {result.returncode})"
+        except subprocess.TimeoutExpired:
+            return "[Error: el comando excedió el límite de 60s]"
+        except Exception as e:
+            return f"[Error al ejecutar: {e}]"
+
     needs_confirmation = not _sanitizer.is_safe(sanitized)
     if needs_confirmation:
         return (
@@ -68,6 +92,23 @@ def terminal_execute_background_tool(command: str, label: str | None = None) -> 
     if sanitized is None:
         logger.warning("Background command blocked by sanitizer: %s", command.strip()[:120])
         return "Error de seguridad: comando bloqueado por el sanitizador."
+
+    if _EXECUTE_LOCAL:
+        try:
+            result = subprocess.run(
+                sanitized, shell=True, capture_output=True, text=True, timeout=300,
+            )
+            output = result.stdout
+            if result.stderr:
+                output += result.stderr
+            if result.returncode != 0:
+                output += f"\n[Exit code: {result.returncode}]"
+            label_str = f" ({label})" if label else ""
+            return f"Salida del comando de fondo{label_str}:\n{output.strip()}"
+        except subprocess.TimeoutExpired:
+            return "[Error: el comando de fondo excedió el límite de 300s]"
+        except Exception as e:
+            return f"[Error al ejecutar comando de fondo: {e}]"
 
     proc_id = f"bg-{uuid.uuid4().hex[:8]}"
     logger.info("Background terminal spawn requested: %s (%s)", sanitized[:120], proc_id)

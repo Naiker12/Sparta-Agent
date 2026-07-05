@@ -9,29 +9,87 @@ import re
 
 logger = logging.getLogger("sparta_ai.security.commands")
 
-# Patterns that are always blocked regardless of allowlist
+# Patterns that are always blocked regardless of allowlist.
+# Covers destructive filesystem ops, crypto ransomware patterns,
+# network pivoting, and privilege escalation.
 DANGEROUS_PATTERNS: list[re.Pattern] = [
-    re.compile(r"\brm\s+(-rf|--recursive|-r|-f)", re.IGNORECASE),
-    re.compile(r"\bmv\s+.*\s+/(?:dev|null)", re.IGNORECASE),
-    re.compile(r"\bdd\s+if=", re.IGNORECASE),
-    re.compile(r"\b(wget|curl)\s+.*[|;]", re.IGNORECASE),
-    re.compile(r"\bchmod\s+777", re.IGNORECASE),
-    re.compile(r"\bchown\s", re.IGNORECASE),
-    re.compile(r"\bsudo\s+rm", re.IGNORECASE),
-    re.compile(r"\bmake\s+.*(?:mkfs|format)", re.IGNORECASE),
+    # ── rm -rf / (any path outside cwd) ──
+    re.compile(r"\brm\s+(-rf|--recursive|-r|-f)\s+[/\\~]", re.IGNORECASE),
+    re.compile(r"\brm\s+(-rf|--recursive|-r|-f)\s+\.\.", re.IGNORECASE),
+    re.compile(r"\brmdir\s+[/\\]", re.IGNORECASE),
+
+    # ── Dangerous redirects to raw devices / special files ──
+    re.compile(r">\s*/dev/", re.IGNORECASE),
+    re.compile(r">\s*\\\\\\\\.\\\\", re.IGNORECASE),
+    re.compile(r"dd\s+if=.*\s+of=", re.IGNORECASE),
     re.compile(r"\bmkfs\.", re.IGNORECASE),
-    re.compile(r"\bdd\b", re.IGNORECASE),
-    re.compile(r">\s*/dev/sd", re.IGNORECASE),
+    re.compile(r"\bfdisk\s+", re.IGNORECASE),
+    re.compile(r"\bformat\s+\w:", re.IGNORECASE),
+    re.compile(r"\bmkswap\b", re.IGNORECASE),
+
+    # ── Crypto / ransomware patterns (write + delete cascade) ──
+    re.compile(r"\bgpg\s+--symmetric\s+--passphrase", re.IGNORECASE),
+    re.compile(r"\bopenssl\s+enc\s+-aes-256-cbc\s+-salt\s+-in\s+.*-out\s+.*-k\s+", re.IGNORECASE),
+    re.compile(r"\bfind\s+/.*-exec\s+rm", re.IGNORECASE),
+    re.compile(r"\bfind\s+/.*-delete", re.IGNORECASE),
+    re.compile(r"\bshred\s+", re.IGNORECASE),
+    re.compile(r"\bwipe\s+", re.IGNORECASE),
+    re.compile(r"\bsrm\s+", re.IGNORECASE),
+
+    # ── Remote fetch + pipe-to-shell (supply-chain / drive-by) ──
+    re.compile(r"(wget|curl)\s+.*[|;]", re.IGNORECASE),
+    re.compile(r"(wget|curl)\s+.*\|\s*(ba|z)?sh", re.IGNORECASE),
+    re.compile(r"(wget|curl)\s+.*-O\s*-", re.IGNORECASE),
+    re.compile(r"\bbash\s+<(wget|curl)", re.IGNORECASE),
+
+    # ── Privilege escalation / system tampering ──
+    re.compile(r"\bsudo\s+rm", re.IGNORECASE),
+    re.compile(r"\bsudo\s+dd", re.IGNORECASE),
+    re.compile(r"\bsudo\s+mkfs", re.IGNORECASE),
+    re.compile(r"\bsu\s+-", re.IGNORECASE),
+    re.compile(r"\bchmod\s+777\s+", re.IGNORECASE),
+    re.compile(r"\bchmod\s+4777\s+", re.IGNORECASE),
+    re.compile(r"\bchown\s", re.IGNORECASE),
+    re.compile(r"\bpasswd\b", re.IGNORECASE),
+    re.compile(r"\bvipw\b", re.IGNORECASE),
+    re.compile(r"\bvisudo\b", re.IGNORECASE),
+
+    # ── Network pivoting / internal service discovery ──
+    re.compile(r"\bnmap\s+", re.IGNORECASE),
+    re.compile(r"\bmasscan\s+", re.IGNORECASE),
+    re.compile(r"\bnc\s+-[lv]", re.IGNORECASE),
+    re.compile(r"\bsocat\s+", re.IGNORECASE),
+    re.compile(r"\bssh\s+.*-L\s+", re.IGNORECASE),
+    re.compile(r"\bssh\s+.*-R\s+", re.IGNORECASE),
+    re.compile(r"\bssh\s+.*-D\s+", re.IGNORECASE),
+    re.compile(r"\bproxychains\s+", re.IGNORECASE),
+
+    # ── Windows-specific destructive ──
+    re.compile(r"\bdel\s+/[fFsS]", re.IGNORECASE),
+    re.compile(r"\brd\s+/[sSq]", re.IGNORECASE),
+    re.compile(r"\bcipher\s+/w:", re.IGNORECASE),
+    re.compile(r"\bformat\s+/[qQ]", re.IGNORECASE),
+    re.compile(r"\bdiskpart\b", re.IGNORECASE),
+
+    # ── Environment / credential exfiltration ──
+    re.compile(r"\bexport\s+.*=.*\(`", re.IGNORECASE),
+    re.compile(r"\becho\s+.*\$\(.*\$", re.IGNORECASE),
+    re.compile(r">\s*(sparta-vault\.json|\.env|id_rsa|id_ed25519)", re.IGNORECASE),
 ]
 
-# Commands considered safe enough to execute without human confirmation
+# Commands considered safe enough to execute without human confirmation.
+# Each entry must match the START of a single command (before any shell
+# metacharacter like ; | && ||).
 SAFE_COMMANDS: set[str] = {
-    "ls", "cat", "head", "tail", "echo", "pwd", "which",
+    "ls", "cat", "head", "tail", "echo", "pwd", "which", "whoami", "id",
     "git status", "git log", "git diff", "git branch", "git remote",
     "npm test", "npm run", "pnpm test", "pnpm run", "yarn test", "yarn run",
-    "pip list", "pip freeze",
-    "python --version", "node --version", "npm --version",
-    "dir", "type", "find", "grep", "rg", "ag",
+    "npm ls", "pnpm ls", "yarn list",
+    "pip list", "pip freeze", "pip show",
+    "python --version", "python3 --version", "node --version", "npm --version",
+    "dir", "type", "find", "grep", "rg", "ag", "tree",
+    "date", "cal", "uptime", "uname", "who", "w",
+    "env", "printenv",
 }
 
 
@@ -41,11 +99,31 @@ class CommandSanitizer:
     def __init__(self):
         self._patterns = DANGEROUS_PATTERNS
 
+    @staticmethod
+    def _first_command(cmd: str) -> str:
+        """Extract the first command before shell metacharacters."""
+        for sep in (";", "|", "&&", "||", "`", "$("):
+            idx = cmd.find(sep)
+            if idx >= 0:
+                cmd = cmd[:idx]
+        return cmd.strip()
+
     def is_safe(self, command: str) -> bool:
-        """Check if a command is safe to execute without human confirmation."""
+        """Check if a command is safe to execute without human confirmation.
+
+        Only checks the FIRST command in a chain — chained commands with
+        ``;``, ``|``, ``&&``, ``||`` are never considered safe.
+        """
         stripped = command.strip()
+        # Chained commands are never auto-approved
+        for sep in (";", "|", "&&", "||", "`", "$("):
+            if sep in stripped:
+                return False
+        first = self._first_command(stripped)
+        if not first:
+            return False
         for safe_cmd in SAFE_COMMANDS:
-            if stripped.startswith(safe_cmd):
+            if first == safe_cmd or first.startswith(safe_cmd + " "):
                 return True
         return False
 
@@ -59,14 +137,16 @@ class CommandSanitizer:
     def sanitize(self, command: str) -> str | None:
         """Validate a command.
 
-        Returns the original command if it passes checks, or a redacted message
-        if it's dangerous, or None if empty.
+        Returns the original command if it passes checks, or None if
+        the command is empty, dangerous, or contains shell metacharacters
+        in combination with dangerous operations.
         """
-        if not command or not command.strip():
+        cmd = command.strip()
+        if not cmd:
             return None
 
-        if self.is_dangerous(command):
-            logger.warning("Blocked dangerous command: %s", command[:120])
+        if self.is_dangerous(cmd):
+            logger.warning("Blocked dangerous command: %s", cmd[:120])
             return None
 
-        return command.strip()
+        return cmd

@@ -28,6 +28,7 @@ interface UIState {
   terminalHeight: number
   editorExplorerVisible: boolean
   editorExplorerWidth: number
+  terminalSlotEl: HTMLDivElement | null
 
   toggleSidebar: () => void
   setSidebarWidth: (width: number) => void
@@ -43,6 +44,7 @@ interface UIState {
   setTerminalHeight: (height: number) => void
   toggleEditorExplorer: () => void
   setEditorExplorerWidth: (width: number) => void
+  setTerminalSlotEl: (el: HTMLDivElement | null) => void
 }
 
 export const useUIStore = create<UIState>()(
@@ -63,6 +65,7 @@ export const useUIStore = create<UIState>()(
   terminalHeight: 220,
   editorExplorerVisible: true,
   editorExplorerWidth: 260,
+  terminalSlotEl: null,
 
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
   toggleContextPanel: () => set((s) => ({ contextPanelOpen: !s.contextPanelOpen })),
@@ -89,6 +92,7 @@ export const useUIStore = create<UIState>()(
   setTerminalHeight: (height) => set({ terminalHeight: Math.min(500, Math.max(100, height)) }),
   toggleEditorExplorer: () => set((s) => ({ editorExplorerVisible: !s.editorExplorerVisible })),
   setEditorExplorerWidth: (width) => set({ editorExplorerWidth: Math.min(420, Math.max(180, width)) }),
+  setTerminalSlotEl: (el) => set({ terminalSlotEl: el }),
 }),
     {
       name: 'sparta-ui',

@@ -2,24 +2,50 @@ import asyncio
 import json
 import logging
 import os
+import platform
+import time
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 import uvicorn
 
 from sparta_ai.agents.sparta_agent import build_sparta_graph, SpartaState
 from sparta_ai.streaming.event_bridge import stream_agent_to_websocket
+from sparta_ai.security.command_sanitizer import CommandSanitizer
+from sparta_ai.security.rate_limiter import terminal_rate_limiter
+
 
 logger = logging.getLogger("sparta_ai.server_web")
+_sanitizer = CommandSanitizer()
+
+# Known origins allowed to connect to WebSocket endpoints.
+ALLOWED_ORIGINS = frozenset({
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:3000",
+})
+
+TERMINAL_IDLE_TIMEOUT_USER = 1800   # 30 min
+TERMINAL_IDLE_TIMEOUT_BG = 3600     # 60 min
 
 app = FastAPI(title="Sparta AI Sidecar", version="0.1.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origins=list(ALLOWED_ORIGINS),
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+def _check_origin(websocket: WebSocket) -> bool:
+    """Reject WebSocket connections from unknown origins."""
+    origin = websocket.headers.get("origin") or websocket.headers.get("sec-websocket-origin", "")
+    if not origin:
+        return True  # server-side connections without origin header
+    return origin in ALLOWED_ORIGINS
 
 connections: dict[str, WebSocket] = {}
 _active_streams: dict[str, asyncio.Task] = {}
@@ -239,6 +265,80 @@ async def get_skills_index():
 @app.get("/health")
 async def health():
     return {"status": "ok", "mode": "web"}
+
+
+_terminal_procs: dict[str, tuple[asyncio.subprocess.Process, set[asyncio.Task]]] = {}
+
+
+def _detect_shell() -> str:
+    if platform.system() == "Windows":
+        return os.environ.get("COMSPEC", "cmd.exe")
+    return os.environ.get("SHELL", "/bin/bash")
+
+
+@app.websocket("/ws/terminal/{session_id}")
+async def terminal_endpoint(websocket: WebSocket, session_id: str) -> None:
+    await websocket.accept()
+    shell = _detect_shell()
+
+    process = await asyncio.create_subprocess_exec(
+        shell,
+        stdin=asyncio.subprocess.PIPE,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.STDOUT,
+        env={**os.environ, "SPARTA_TERMINAL": "1", "TERM": "xterm-256color"},
+    )
+    tasks: set[asyncio.Task] = set()
+    _terminal_procs[session_id] = (process, tasks)
+
+    async def read_stdout() -> None:
+        try:
+            while process.stdout and not process.stdout.at_eof():
+                chunk = await process.stdout.read(4096)
+                if not chunk:
+                    break
+                await websocket.send_text(json.dumps({
+                    "type": "output",
+                    "data": chunk.decode("utf-8", errors="replace"),
+                }))
+        except Exception:
+            pass
+        finally:
+            for t in tasks:
+                t.cancel()
+
+    async def read_ws() -> None:
+        try:
+            while True:
+                data = await websocket.receive_text()
+                msg = json.loads(data)
+                t = msg.get("type")
+                if t == "input" and process.stdin:
+                    process.stdin.write(msg["data"].encode("utf-8"))
+                    await process.stdin.drain()
+                elif t == "resize":
+                    pass  # no PTY — resize is a no-op for pipe-based shells
+        except Exception:
+            pass
+
+    t_out = asyncio.create_task(read_stdout())
+    t_in = asyncio.create_task(read_ws())
+    tasks.update([t_out, t_in])
+
+    try:
+        await asyncio.wait([t_out, t_in], return_when=asyncio.FIRST_COMPLETED)
+    finally:
+        t_out.cancel()
+        t_in.cancel()
+        if process.returncode is None:
+            process.kill()
+            await process.wait()
+        _terminal_procs.pop(session_id, None)
+        exit_code = process.returncode or 0
+        try:
+            await websocket.send_text(json.dumps({"type": "exit", "code": exit_code}))
+        except Exception:
+            pass
 
 
 def start_web_server(host: str = "0.0.0.0", port: int = 8765):

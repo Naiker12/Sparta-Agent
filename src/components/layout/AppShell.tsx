@@ -9,7 +9,8 @@ import { Toaster } from '@/components/ui/sonner'
 import { ChatArea } from '../chat/ChatArea'
 import { SettingsDialog } from '../settings/SettingsDialog'
 import { EditorPanel } from '@/components/editor/EditorPanel'
-import { TerminalPanel } from '@/components/terminal/TerminalPanel'
+import { TerminalSlot } from '@/components/terminal/TerminalSlot'
+import { PersistentTerminal } from '@/components/terminal/PersistentTerminal'
 import { AgentsPanel } from '@/components/agents/AgentsPanel'
 import { ChatErrorBoundary } from '@/components/ErrorBoundary'
 import { initTheme } from '@/stores/theme.store'
@@ -119,6 +120,7 @@ export function AppShell() {
   return (
     <div className="flex flex-col h-screen bg-[var(--bg-base)] overflow-hidden">
       <TitleBar />
+      <PersistentTerminal />
       <div ref={containerRef} className="relative flex flex-1 min-h-0 overflow-hidden">
         <SidebarProvider
           open={sidebarOpen}
@@ -151,14 +153,9 @@ export function AppShell() {
                       initial={false}
                       animate={{ height: terminalOpen ? terminalHeight : 0 }}
                       transition={{ duration: 0.12, ease: 'easeOut' }}
-                      onAnimationComplete={() => {
-                        document.dispatchEvent(new CustomEvent('terminal:resize'))
-                      }}
                       style={{ overflow: 'hidden', position: 'relative' }}
                     >
-                      <div className={terminalOpen ? '' : 'pointer-events-none'}>
-                        <TerminalPanel />
-                      </div>
+                      <TerminalSlot />
                     </motion.div>
                     <PanelDragHandle
                       className="terminal-resize-handle"
