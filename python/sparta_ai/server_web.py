@@ -284,12 +284,14 @@ async def _execute_agent_ws(
     )
     from sparta_ai.tools.skill_tools import skill_view_tool, skills_list_tool, skill_manage_tool
     from sparta_ai.tools.terminal_tools import terminal_execute_tool, terminal_execute_background_tool
+    from sparta_ai.tools.mcp_manage_tool import mcp_manage_tool
 
     agent_tools = [
         read_memory_tool, write_memory_tool,
         read_file_tool, write_file_tool, search_files_tool, patch_file_tool, delete_file_tool,
         skill_view_tool, skills_list_tool, skill_manage_tool,
         terminal_execute_tool, terminal_execute_background_tool,
+        mcp_manage_tool,
     ] + mcp_tools
     if web_search_enabled:
         from sparta_ai.tools.web_search import web_search_tool
