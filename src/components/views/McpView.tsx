@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plug, Wifi, Globe, Plus, Check, Server, Zap } from 'lucide-react'
+import { Plug, Wifi, Globe, Plus, Check, Server, Zap, ExternalLink } from 'lucide-react'
 import { BrandIcon } from '@/components/ui/BrandIcon'
 import { useMCPStore } from '@/stores/mcp.store'
 import { McpServerCard } from '@/components/mcp/McpServerCard'
@@ -7,83 +7,38 @@ import { AddMcpServerDialog } from '@/components/mcp/AddMcpServerDialog'
 import { Button } from '@/components/ui/button'
 import type { MCPServer, MCPServerConfig } from '@/types'
 import { useTranslation } from '@/i18n'
+import { catalogToMarketplaceItems } from '@/data/mcp-catalog'
 
 type Tab = 'connected' | 'marketplace'
 
 interface MarketplaceItem {
+  id: string
   name: string
-  descEs: string
-  descEn: string
-  icon: string
-  vendor?: string
+  description: string
   type: 'stdio' | 'http'
   cmd: string
   category: string
+  env_required: string[]
+  headers_required: string[]
+  notes?: string
+  docs_url?: string
 }
 
-const PLACEHOLDER_MARKETPLACE: MarketplaceItem[] = [
-  {
-    name: 'Filesystem',
-    descEs: 'Acceso completo al sistema de archivos local para leer, escribir y gestionar archivos.',
-    descEn: 'Full access to the local filesystem to read, write and manage files.',
-    icon: '📂', type: 'stdio',
-    cmd: 'npx -y @modelcontextprotocol/server-filesystem',
-    category: 'Storage',
-  },
-  {
-    name: 'Git',
-    descEs: 'Operaciones de control de versiones: commits, branches, diffs y más.',
-    descEn: 'Version control operations: commits, branches, diffs and more.',
-    vendor: 'git', icon: '', type: 'stdio',
-    cmd: 'npx -y @modelcontextprotocol/server-git',
-    category: 'DevTools',
-  },
-  {
-    name: 'SQLite',
-    descEs: 'Consulta y manipulación directa de bases de datos SQLite locales.',
-    descEn: 'Direct query and manipulation of local SQLite databases.',
-    vendor: 'sqlite', icon: '', type: 'stdio',
-    cmd: 'npx -y @modelcontextprotocol/server-sqlite',
-    category: 'Database',
-  },
-  {
-    name: 'PostgreSQL',
-    descEs: 'Gestión y consulta de bases de datos PostgreSQL remotas o locales.',
-    descEn: 'Management and querying of remote or local PostgreSQL databases.',
-    vendor: 'postgresql', icon: '', type: 'stdio',
-    cmd: 'npx -y @modelcontextprotocol/server-postgres',
-    category: 'Database',
-  },
-  {
-    name: 'Puppeteer',
-    descEs: 'Automatización del navegador, web scraping y control headless de Chrome.',
-    descEn: 'Browser automation, web scraping and headless Chrome control.',
-    icon: '🤖', type: 'stdio',
-    cmd: 'npx -y @modelcontextprotocol/server-puppeteer',
-    category: 'Web',
-  },
-  {
-    name: 'Brave Search',
-    descEs: 'Búsqueda web robusta con privacidad usando la Brave Search API.',
-    descEn: 'Robust privacy-focused web search using the Brave Search API.',
-    icon: '🔍', type: 'stdio',
-    cmd: 'npx -y @modelcontextprotocol/server-brave-search',
-    category: 'Web',
-  },
-]
+const CATALOG_ITEMS = catalogToMarketplaceItems()
 
 function marketItemToConfig(item: MarketplaceItem): MCPServerConfig {
-  const id = item.name.toLowerCase().replace(/\s+/g, '-')
   const parts = item.cmd.split(' ')
-  return { id, name: item.name, type: item.type, command: parts[0], args: parts.slice(1), enabled: true }
+  return { id: item.id, name: item.name, type: item.type, command: parts[0], args: parts.slice(1), enabled: true }
 }
 
 /* ── Category accent colors (CSS-var safe) ─────────────────── */
 const CATEGORY_STYLE: Record<string, { bg: string; color: string }> = {
-  Storage:  { bg: 'rgba(59,130,246,0.12)',  color: '#60a5fa' },
-  DevTools: { bg: 'rgba(249,115,22,0.12)',  color: '#fb923c' },
-  Database: { bg: 'rgba(168,85,247,0.12)',  color: '#c084fc' },
-  Web:      { bg: 'rgba(34,197,94,0.12)',   color: '#4ade80' },
+  Storage:      { bg: 'rgba(59,130,246,0.12)',  color: '#60a5fa' },
+  DevTools:     { bg: 'rgba(249,115,22,0.12)',  color: '#fb923c' },
+  Database:     { bg: 'rgba(168,85,247,0.12)',  color: '#c084fc' },
+  Web:          { bg: 'rgba(34,197,94,0.12)',   color: '#4ade80' },
+  Productivity: { bg: 'rgba(236,72,153,0.12)',  color: '#f472b6' },
+  Other:        { bg: 'var(--bg-active)',        color: 'var(--text-muted)' },
 }
 
 export function McpView() {
@@ -230,18 +185,18 @@ export function McpView() {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 10 }}>
-              {PLACEHOLDER_MARKETPLACE.map((item) => {
-                const installed = servers.some((s) => s.name === item.name)
-                const itemDesc = lang === 'es' ? item.descEs : item.descEn
+              {CATALOG_ITEMS.map((item) => {
+                const installed = servers.some((s) => s.id === item.id || s.name === item.name)
                 return (
                   <MarketplaceCard
-                    key={item.name}
+                    key={item.id}
                     item={item}
-                    desc={itemDesc}
+                    desc={item.description}
                     installed={installed}
                     onInstall={() => handleMarketplaceInstall(item)}
                     installLabel={t('mcp.install')}
                     installedLabel={t('mcp.installed')}
+                    lang={lang}
                   />
                 )
               })}
@@ -347,8 +302,8 @@ function EmptyMcpState({ onAdd, addLabel, title, description }: {
   )
 }
 
-function MarketplaceCard({ item, desc, installed, onInstall, installLabel, installedLabel }: {
-  item: MarketplaceItem; desc: string; installed: boolean
+function MarketplaceCard({ item, desc, installed, onInstall, installLabel, installedLabel, lang }: {
+  item: MarketplaceItem; desc: string; installed: boolean; lang?: string
   onInstall: () => void; installLabel: string; installedLabel: string
 }) {
   const cat = CATEGORY_STYLE[item.category] ?? { bg: 'var(--bg-active)', color: 'var(--text-muted)' }
@@ -433,6 +388,43 @@ function MarketplaceCard({ item, desc, installed, onInstall, installLabel, insta
             {item.cmd}
           </span>
         </div>
+
+        {/* Env requirements */}
+        {item.env_required.length > 0 && (
+          <div style={{ fontSize: 10, color: 'var(--status-warn)', fontFamily: 'var(--font-mono)', lineHeight: 1.5 }}>
+            {lang === 'es' ? 'Requiere' : 'Requires'}: {item.env_required.join(', ')}
+          </div>
+        )}
+        {item.headers_required.length > 0 && (
+          <div style={{ fontSize: 10, color: 'var(--status-warn)', fontFamily: 'var(--font-mono)', lineHeight: 1.5 }}>
+            Headers: {item.headers_required.join(', ')}
+          </div>
+        )}
+
+        {/* Notes */}
+        {item.notes && (
+          <div style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', lineHeight: 1.4, fontStyle: 'italic' }}>
+            {item.notes}
+          </div>
+        )}
+
+        {/* Docs link */}
+        {item.docs_url && (
+          <a
+            href={item.docs_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              fontSize: 10, color: 'var(--accent)', fontFamily: 'var(--font-ui)',
+              display: 'inline-flex', alignItems: 'center', gap: 4,
+              textDecoration: 'none', marginTop: -4,
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <ExternalLink size={10} />
+            Docs
+          </a>
+        )}
       </div>
 
       {/* Footer */}
