@@ -14,12 +14,16 @@ export interface MCPServerConfig {
   // ── stdio ──────────────────────────────
   command?: string
   args?: string[]
-  /** Environment variables injected into the stdio process */
+  /** Environment variables injected into the stdio process (plaintext — deprecated, use env_vault_refs) */
   env?: Record<string, string>
+  /** Names of env vars stored in encrypted vault (preferred over env) */
+  env_vault_refs?: string[]
   // ── http ───────────────────────────────
   url?: string
-  /** HTTP headers (e.g. Authorization) */
+  /** HTTP headers (e.g. Authorization) (plaintext — deprecated, use headers_vault_refs) */
   headers?: Record<string, string>
+  /** Names of headers stored in encrypted vault (preferred over headers) */
+  headers_vault_refs?: string[]
   // ── shared ─────────────────────────────
   enabled: boolean
   /** Tool call timeout in seconds (default: 30) */

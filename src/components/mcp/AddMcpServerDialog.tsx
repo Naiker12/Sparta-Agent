@@ -67,7 +67,44 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
     ? `${command || '[cmd]'} ${args || ''}`.trim()
     : url || '[url]'
 
-  function handleSubmit(e: React.FormEvent) {
+  async function storeSecretsInVault(config: MCPServerConfig): Promise<MCPServerConfig> {
+    /** Move env/headers secrets to Electron vault, return config with refs only. */
+    if (typeof window === 'undefined' || !window.vault?.isAvailable) return config
+
+    const result = { ...config } as Record<string, unknown> & MCPServerConfig
+
+    // Store env vars
+    if (config.env && Object.keys(config.env).length > 0) {
+      const refs: string[] = []
+      for (const [k, v] of Object.entries(config.env)) {
+        if (v) {
+          const vaultKey = `mcp:${config.id}:${k}`
+          await window.vault.storeKey(vaultKey, v, 'mcp')
+          refs.push(k)
+        }
+      }
+      delete result.env
+      if (refs.length > 0) result.env_vault_refs = refs
+    }
+
+    // Store headers
+    if (config.headers && Object.keys(config.headers).length > 0) {
+      const refs: string[] = []
+      for (const [k, v] of Object.entries(config.headers)) {
+        if (v) {
+          const vaultKey = `mcp:${config.id}:${k}`
+          await window.vault.storeKey(vaultKey, v, 'mcp')
+          refs.push(k)
+        }
+      }
+      delete result.headers
+      if (refs.length > 0) result.headers_vault_refs = refs
+    }
+
+    return result as MCPServerConfig
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (inputMode === 'config') {
       try {
@@ -76,12 +113,16 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
         for (const [serverName, serverConfig] of Object.entries(servers)) {
           const cfg = serverConfig as Record<string, unknown>
           const id = serverName.toLowerCase().replace(/\s+/g, '-')
-          addServer({
+          const baseCfg: MCPServerConfig = {
             id, name: serverName, type: cfg.command ? 'stdio' : 'http', enabled: true,
             ...(cfg.command
               ? { command: cfg.command as string, args: (cfg.args as string[]) ?? [] }
               : { url: (cfg.url as string) ?? '' }),
-          })
+            env: cfg.env as Record<string, string> | undefined,
+            headers: cfg.headers as Record<string, string> | undefined,
+          }
+          const safe = await storeSecretsInVault(baseCfg)
+          addServer(safe)
         }
         reset(); onClose()
         return
@@ -91,18 +132,9 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
     if (type === 'stdio' && !command.trim()) return
     if (type === 'http' && !url.trim()) return
 
-    const id = name.toLowerCase().replace(/\s+/g, '-')
-    if (isEditing && editServer.id && editServer.id !== id) removeServer(editServer.id)
-
-    const parsedArgs = (args.match(/(?:[^\s"']+|"[^"]*"|'[^']*')+/g) || [])
-      .map(arg => arg.replace(/^['"]|['"]$/g, ''))
-
-    addServer({
-      id, name: name.trim(), type, enabled: true,
-      ...(type === 'stdio'
-        ? { command: command.trim(), args: parsedArgs }
-        : { url: url.trim() }),
-    })
+    const safe = await storeSecretsInVault(buildConfig())
+    if (isEditing && editServer.id && editServer.id !== safe.id) removeServer(editServer.id)
+    addServer(safe)
     reset(); onClose()
   }
 
