@@ -22,6 +22,7 @@ interface SpartaSendMessageRequest {
 interface SpartaAPI {
   onEvent: (listener: (event: SpartaEvent) => void) => () => void
   sendEvent: (event: unknown) => void
+  getTerminalToken: () => Promise<string | undefined>
   sendMessage: (req: SpartaSendMessageRequest) => Promise<{ ok: boolean; error?: string; aborted?: boolean }>
   abortMessage: (sessionId: string) => Promise<void>
   isSidecarReady: () => Promise<{ running: boolean; ready: boolean }>

@@ -7,7 +7,7 @@ import { registerMemoryIPC } from './ipc/memory.ipc'
 import { registerVaultIPC } from './ipc/vault.ipc'
 import { registerKeyManagerIPC, pushAllKeys } from './ipc/keymanager.ipc'
 import { registerSecurityIPC, wireSecurityIntoPipeline } from './ipc/security.ipc'
-import { startSidecar, stopSidecar, waitForSidecarReady } from './ipc/sidecar.ipc'
+import { startSidecar, stopSidecar, waitForSidecarReady, registerSidecarIPC } from './ipc/sidecar.ipc'
 import { registerTerminalIPC } from './ipc/terminal.ipc'
 import { registerFilesystemIPC } from './ipc/filesystem.ipc'
 import { registerSkillsIPC } from './ipc/skills.ipc'
@@ -96,6 +96,7 @@ app.whenReady().then(async () => {
   registerTerminalIPC()
   registerFilesystemIPC()
   registerSkillsIPC()
+  registerSidecarIPC()
 
   // Wire Rust security layer into the IPC pipeline
   wireSecurityIntoPipeline()

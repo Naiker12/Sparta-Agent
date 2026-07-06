@@ -35,6 +35,7 @@ contextBridge.exposeInMainWorld('sparta', {
   sendEvent: (event: unknown) => {
     ipcRenderer.send('sparta:event', event)
   },
+  getTerminalToken: () => ipcRenderer.invoke('sidecar:terminal-token') as Promise<string | undefined>,
   sendMessage: (req: {
     sessionId: string
     messageId: string

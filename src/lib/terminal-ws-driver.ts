@@ -30,27 +30,94 @@ const agentSpawnCbs = new Set<AgentSpawnCallback>()
 const agentOutputCbs = new Set<AgentOutputCallback>()
 const agentExitCbs = new Set<AgentExitCallback>()
 
+interface SpartaImportMetaEnv {
+  VITE_SIDECAR_HOST?: string
+  VITE_SIDECAR_WS_PORT?: string
+  VITE_SPARTA_WS_TOKEN?: string
+}
+
+const viteEnv = import.meta.env as unknown as SpartaImportMetaEnv
+
 function getWsBaseUrl(): string {
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-  const host = (import.meta as any).env?.VITE_SIDECAR_HOST ?? 'localhost'
-  const port = (import.meta as any).env?.VITE_SIDECAR_WS_PORT ?? '8765'
+  const host = viteEnv.VITE_SIDECAR_HOST ?? 'localhost'
+  const port = viteEnv.VITE_SIDECAR_WS_PORT ?? '8765'
   return `${protocol}//${host}:${port}`
 }
 
-function connectTerminal(sessionId: string): Promise<SessionState> {
+interface TokenSources {
+  SPARTA_WS_TOKEN?: string
+}
+
+function getWsToken(): string {
+  // In web mode the token is provided by whoever starts the sidecar. It can
+  // be injected by the page host as a global or baked into the build for
+  // local development. Electron uses node-pty IPC, so this path is normally
+  // only active in the web build.
+  const fromGlobal = (window as unknown as TokenSources).SPARTA_WS_TOKEN
+  if (typeof fromGlobal === 'string' && fromGlobal) return fromGlobal
+  const fromEnv = viteEnv.VITE_SPARTA_WS_TOKEN
+  if (typeof fromEnv === 'string' && fromEnv) return fromEnv
+  return ''
+}
+
+async function resolveWsToken(): Promise<string> {
+  const fromElectron = window.sparta?.getTerminalToken
+  if (typeof fromElectron === 'function') {
+    try {
+      const token = await fromElectron()
+      if (typeof token === 'string' && token) return token
+    } catch { /* fall through */ }
+  }
+  return getWsToken()
+}
+
+async function connectTerminal(sessionId: string): Promise<SessionState> {
+  const token = await resolveWsToken()
+  if (!token) {
+    throw new Error('No SPARTA_WS_TOKEN configured for terminal WebSocket')
+  }
+
+  const url = `${getWsBaseUrl()}/ws/terminal/${sessionId}`
+  const ws = new WebSocket(url)
+  const state: SessionState = { ws, onData: new Set(), onExit: new Set(), dataBuffer: [], exitCode: null, flushed: false }
+
   return new Promise((resolve, reject) => {
-    const url = `${getWsBaseUrl()}/ws/terminal/${sessionId}`
-    const ws = new WebSocket(url)
-    const state: SessionState = { ws, onData: new Set(), onExit: new Set(), dataBuffer: [], exitCode: null, flushed: false }
+    let authenticated = false
+    let authTimeout: ReturnType<typeof setTimeout> | null = null
+
+    const cleanup = () => {
+      if (authTimeout) {
+        clearTimeout(authTimeout)
+        authTimeout = null
+      }
+    }
 
     ws.onopen = () => {
-      sessions.set(sessionId, state)
-      resolve(state)
+      ws.send(JSON.stringify({ type: 'auth', token }))
+      authTimeout = setTimeout(() => {
+        ws.close()
+        reject(new Error('Terminal authentication timed out'))
+      }, 6000)
     }
 
     ws.onmessage = (ev) => {
       try {
         const msg = JSON.parse(ev.data)
+        if (msg.type === 'ready' && !authenticated) {
+          authenticated = true
+          cleanup()
+          sessions.set(sessionId, state)
+          resolve(state)
+          return
+        }
+        if (!authenticated) {
+          // Any non-ready frame before auth succeeds is treated as a failure.
+          cleanup()
+          ws.close()
+          reject(new Error('Terminal authentication failed'))
+          return
+        }
         if (msg.type === 'output') {
           if (state.flushed) {
             state.onData.forEach((cb) => cb(msg.data))
@@ -74,13 +141,16 @@ function connectTerminal(sessionId: string): Promise<SessionState> {
     }
 
     ws.onerror = () => {
-      if (!sessions.has(sessionId)) {
-        reject(new Error(`WebSocket connection failed for ${sessionId}`))
-      }
+      cleanup()
+      reject(new Error(`WebSocket connection failed for ${sessionId}`))
     }
 
     ws.onclose = () => {
+      cleanup()
       sessions.delete(sessionId)
+      if (!authenticated) {
+        reject(new Error(`Terminal connection closed for ${sessionId} before authentication`))
+      }
     }
   })
 }

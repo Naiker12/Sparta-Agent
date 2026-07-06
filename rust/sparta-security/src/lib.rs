@@ -63,7 +63,7 @@ pub fn sanitize_tool_calls(tool_calls_json: String) -> Result<String> {
 /// Check rate limit for a session
 #[napi]
 pub fn check_rate_limit(session_id: String) -> String {
-    let mut guard = guard::SecurityGuard::new();
+    let mut guard = guard::SECURITY_GUARD.lock().unwrap();
     let result = guard.check_rate_limit(&session_id);
     match result {
         guard::GuardResult::Allowed => {

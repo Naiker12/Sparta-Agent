@@ -2,7 +2,7 @@ import { useRef, useEffect, useCallback, useState } from 'react'
 import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import { WebLinksAddon } from '@xterm/addon-web-links'
-import { FEATURES } from '@/lib/env-adapter'
+import { FEATURES, IS_WEB } from '@/lib/env-adapter'
 import { generateId, cn } from '@/lib/utils'
 import { getXtermTheme } from '@/lib/xterm-theme'
 import { Plus, ChevronDown, Terminal as TerminalIcon, MessageSquarePlus, Bot } from 'lucide-react'
@@ -96,7 +96,14 @@ export function TerminalWorkspace() {
       })
       inst.cleanups.push(unsubExit)
 
-      terminal.onData((data: string) => window.terminal.write(inst.ptyId, data))
+      terminal.onData((data: string) => {
+        // In web mode the Python sidecar uses a pipe-based shell without a
+        // real PTY, so the backend cannot echo typed characters. Enable local
+        // echo to keep the terminal usable. Electron uses node-pty, which
+        // handles echo on its own.
+        if (IS_WEB) terminal.write(data)
+        window.terminal.write(inst.ptyId, data)
+      })
       terminal.onResize(({ cols, rows }: { cols: number; rows: number }) => window.terminal.resize(inst.ptyId, cols, rows))
       window.electron.send('terminal:ready', { terminalId: inst.ptyId })
     }).catch((err: Error) => {

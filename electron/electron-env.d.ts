@@ -20,6 +20,7 @@ interface ElectronAPI {
 interface SpartaAPI {
   onEvent: (listener: (event: unknown) => void) => () => void
   sendEvent: (event: unknown) => void
+  getTerminalToken: () => Promise<string | undefined>
   sendMessage: (req: {
     sessionId: string
     messageId: string

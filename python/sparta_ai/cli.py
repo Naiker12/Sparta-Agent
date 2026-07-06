@@ -267,6 +267,11 @@ def repl(
         console.print("[red]Error: No API key found. Set ANTHROPIC_API_KEY / OPENAI_API_KEY / GOOGLE_API_KEY or pass --key[/red]")
         raise typer.Exit(1)
 
+    # In CLI local mode the agent executes commands directly with the user's
+    # privileges on their own machine. We intentionally skip the user
+    # confirmation step (is_safe) that Desktop/Web require, because running a
+    # command here is equivalent to the user typing it themselves in their shell.
+    # The blocklist sanitization (sanitize) is still applied.
     set_execute_local(True)
     asyncio.run(_run_repl(model, provider, vendor, api_key, skills, semantic_memory, web_search, mode))
 

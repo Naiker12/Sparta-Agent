@@ -27,6 +27,13 @@ ALLOWED_ORIGINS = frozenset({
     "http://127.0.0.1:3000",
 })
 
+# Secret token shared between the sidecar and the frontend. Must be set before
+# accepting any terminal WebSocket connection. In Electron the main process
+# generates it and injects it into both the Python sidecar (env var) and the
+# renderer (contextBridge). In web mode it is provided by whoever starts the
+# sidecar and must reach the browser via build-time env or host injection.
+SPARTA_WS_TOKEN = os.environ.get("SPARTA_WS_TOKEN")
+
 TERMINAL_IDLE_TIMEOUT_USER = 1800   # 30 min
 TERMINAL_IDLE_TIMEOUT_BG = 3600     # 60 min
 
@@ -44,8 +51,33 @@ def _check_origin(websocket: WebSocket) -> bool:
     """Reject WebSocket connections from unknown origins."""
     origin = websocket.headers.get("origin") or websocket.headers.get("sec-websocket-origin", "")
     if not origin:
-        return True  # server-side connections without origin header
+        # Non-browser clients (curl, websocat, scripts) can bypass origin checks
+        # trivially, so we never trust a missing Origin header.
+        return False
     return origin in ALLOWED_ORIGINS
+
+
+def _check_ws_token(websocket: WebSocket) -> bool:
+    """Validate the shared token sent via custom header."""
+    if not SPARTA_WS_TOKEN:
+        return False
+    return websocket.headers.get("x-sparta-token") == SPARTA_WS_TOKEN
+
+
+async def _require_auth_frame(websocket: WebSocket) -> bool:
+    """Wait for a valid auth frame as the first client message.
+
+    Browsers cannot send custom headers on WebSocket connections, so the token
+    is delivered as the first message: ``{"type": "auth", "token": "..."}``.
+    """
+    if not SPARTA_WS_TOKEN:
+        return False
+    try:
+        data = await asyncio.wait_for(websocket.receive_text(), timeout=5.0)
+        msg = json.loads(data)
+        return msg.get("type") == "auth" and msg.get("token") == SPARTA_WS_TOKEN
+    except (asyncio.TimeoutError, json.JSONDecodeError, Exception):
+        return False
 
 connections: dict[str, WebSocket] = {}
 _active_streams: dict[str, asyncio.Task] = {}
@@ -278,7 +310,22 @@ def _detect_shell() -> str:
 
 @app.websocket("/ws/terminal/{session_id}")
 async def terminal_endpoint(websocket: WebSocket, session_id: str) -> None:
+    # Reject unknown origins before accepting the socket.
+    if not _check_origin(websocket):
+        await websocket.close(code=4403)
+        return
+
     await websocket.accept()
+
+    # Token auth: header (server/non-browser clients) or first-message auth
+    # frame (browsers, which cannot set custom WebSocket headers).
+    if not _check_ws_token(websocket) and not await _require_auth_frame(websocket):
+        await websocket.close(code=4403)
+        return
+
+    # Handshake complete — tell the client it can start sending terminal input.
+    await websocket.send_text(json.dumps({"type": "ready"}))
+
     shell = _detect_shell()
 
     process = await asyncio.create_subprocess_exec(
@@ -307,14 +354,39 @@ async def terminal_endpoint(websocket: WebSocket, session_id: str) -> None:
             for t in tasks:
                 t.cancel()
 
+    _line_buffer = ""
+
     async def read_ws() -> None:
+        nonlocal _line_buffer
         try:
             while True:
                 data = await websocket.receive_text()
                 msg = json.loads(data)
                 t = msg.get("type")
                 if t == "input" and process.stdin:
-                    process.stdin.write(msg["data"].encode("utf-8"))
+                    if not terminal_rate_limiter.check(session_id):
+                        await websocket.send_text(json.dumps({
+                            "type": "output",
+                            "data": "\r\n[rate limit excedido]\r\n",
+                        }))
+                        continue
+                    _line_buffer += msg["data"]
+                    # Process every complete line through the sanitizer before
+                    # writing it to the shell pipe. Partial lines are kept in
+                    # the buffer and not forwarded; this avoids echoing raw
+                    # characters to a pipe-based shell and then duplicating
+                    # them when the sanitized line is finally sent.
+                    while "\n" in _line_buffer or "\r" in _line_buffer:
+                        line, _, _line_buffer = _line_buffer.partition("\n")
+                        line = line.rstrip("\r")
+                        sanitized = _sanitizer.sanitize(line)
+                        if sanitized is None:
+                            await websocket.send_text(json.dumps({
+                                "type": "output",
+                                "data": "\r\n[bloqueado por el sanitizador de seguridad]\r\n",
+                            }))
+                            continue
+                        process.stdin.write((sanitized + "\n").encode("utf-8"))
                     await process.stdin.drain()
                 elif t == "resize":
                     pass  # no PTY — resize is a no-op for pipe-based shells
@@ -341,7 +413,12 @@ async def terminal_endpoint(websocket: WebSocket, session_id: str) -> None:
             pass
 
 
-def start_web_server(host: str = "0.0.0.0", port: int = 8765):
+def start_web_server(host: str = "127.0.0.1", port: int = 8765):
+    if not SPARTA_WS_TOKEN:
+        logger.warning(
+            "SPARTA_WS_TOKEN is not set; the terminal WebSocket endpoint will reject "
+            "all connections. Set the environment variable before starting the server."
+        )
     uvicorn.run(app, host=host, port=port, log_level="info")
 
 

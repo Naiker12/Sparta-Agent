@@ -1,5 +1,8 @@
 use std::collections::HashMap;
+use std::sync::Mutex;
 use std::time::{Duration, Instant};
+
+use once_cell::sync::Lazy;
 
 const DEFAULT_RATE_LIMIT_WINDOW_SECS: u64 = 60;
 const DEFAULT_RATE_LIMIT_MAX_REQUESTS: u32 = 30;
@@ -62,6 +65,11 @@ impl SecurityGuard {
         GuardResult::Allowed
     }
 }
+
+/// Instancia global compartida entre todas las llamadas napi.
+/// Sin esto, cada invocación desde JS creaba un RateLimiter vacío y el límite nunca se alcanzaba.
+pub static SECURITY_GUARD: Lazy<Mutex<SecurityGuard>> =
+    Lazy::new(|| Mutex::new(SecurityGuard::new()));
 
 pub enum GuardResult {
     Allowed,

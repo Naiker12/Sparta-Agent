@@ -1,7 +1,8 @@
 import { spawn } from 'node:child_process'
+import { randomUUID } from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
-import { app } from 'electron'
+import { app, ipcMain } from 'electron'
 import { EventEmitter } from 'node:events'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -12,6 +13,8 @@ let restartAttempts = 0
 let restartTimer: ReturnType<typeof setTimeout> | null = null
 
 const MAX_RESTART_ATTEMPTS = 3
+
+let sidecarWsToken: string | null = null
 
 export const sidecarEvents = new EventEmitter()
 export const SidecarEvent = {
@@ -78,6 +81,7 @@ function spawnSidecar(): void {
   const { command, args, cwd } = getPythonCommand()
 
   sidecarReady = false
+  sidecarWsToken = randomUUID()
 
   const workspaceRoot = getWorkspaceRoot()
   const dataDir = getDataDir()
@@ -91,6 +95,7 @@ function spawnSidecar(): void {
       SPARTA_ENV: 'electron',
       SPARTA_WORKSPACE_ROOT: workspaceRoot,
       SPARTA_DATA_DIR: dataDir,
+      SPARTA_WS_TOKEN: sidecarWsToken,
       PYTHONUNBUFFERED: '1',
       PYTHONIOENCODING: 'utf-8',
       PYTHONUTF8: '1',
@@ -230,4 +235,16 @@ export function waitForSidecarReady(timeoutMs = 30_000): Promise<boolean> {
     sidecarEvents.once(SidecarEvent.READY, onReady)
     sidecarEvents.once(SidecarEvent.EXIT, onExit)
   })
+}
+
+export function getSidecarWsToken(): string | null {
+  return sidecarWsToken
+}
+
+export function registerSidecarIPC(): void {
+  // Expose the shared WebSocket token to the renderer. In the current
+  // Electron build the terminal uses node-pty IPC, so this token is not used
+  // by the frontend terminal; it is still generated and shared with the Python
+  // sidecar so that any future web-driver terminal path has authentication.
+  ipcMain.handle('sidecar:terminal-token', () => sidecarWsToken)
 }
