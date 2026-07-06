@@ -14,23 +14,26 @@ logger = logging.getLogger("sparta_ai.tools.web_search")
 def _format_results(query: str, results: list[dict], count: int) -> str:
     if not results:
         return (
-            f"No se encontraron resultados para: **{query}**\n\n"
+            f"No se encontraron resultados para: {query}\n\n"
             "NO uses tu conocimiento de entrenamiento para inventar una respuesta. "
             "Informa al usuario que no se encontraron resultados."
         )
 
-    lines = [f"## Resultados de búsqueda: {query}\n"]
+    lines = [
+        f"[Búsqueda web completada: {len(results[:count])} resultados para '{query}']",
+        "IMPORTANTE: El usuario ya ve las URLs y títulos en la interfaz. NO repitas la lista de resultados.",
+        "Usa esta información para responder DIRECTAMENTE la pregunta del usuario.\n",
+    ]
     for i, r in enumerate(results[:count], 1):
         title = r.get("title", "Sin título")
-        url = r.get("url", "")
+        source = r.get("url", "").split("/")[2] if "/" in r.get("url", "") else ""
         snippet = r.get("snippet") or r.get("description", "")
-        snippet = snippet[:250]
-        lines.append(f"### {i}. {title}")
+        snippet = snippet[:300]
+        lines.append(f"{i}. [{source}] {title}")
         if snippet:
-            lines.append(f"{snippet}")
-        lines.append(f"🔗 [{url}]({url})")
+            lines.append(f"   {snippet}")
 
-    return "\n\n".join(lines)
+    return "\n".join(lines)
 
 
 async def _brave_search(query: str, count: int, api_key: str) -> list[dict]:
@@ -102,6 +105,9 @@ async def web_search_tool(query: str, count: int = 5) -> str:
                 index=i,
                 total=len(results[:count]),
             )
+            # Small staggered delay so the UI shows each result appearing
+            # one by one with smooth animation (real-time feel)
+            await asyncio.sleep(0.15)
 
         await _dispatch_progress("done")
         return _format_results(query, results, count)

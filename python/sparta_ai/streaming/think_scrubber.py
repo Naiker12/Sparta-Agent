@@ -6,6 +6,7 @@ _PARTIAL_OPEN_RE = re.compile(r"<[a-zA-Z]*$")
 _PARTIAL_CLOSE_RE = re.compile(r"</[a-zA-Z]*$")
 
 _BLOCK_BOUNDARY_RE = re.compile(r"(^|\n\s*)(<(?:think|thinking|reasoning)>)", re.IGNORECASE)
+_RESPONSE_TAG_RE = re.compile(r"</?(response)>", re.IGNORECASE)
 
 
 class StreamingThinkScrubber:
@@ -56,6 +57,13 @@ class StreamingThinkScrubber:
                             self._in_block = False
                             self._reasoning_emitted = True
                         continue
+
+                # Detect and strip <response> / </response> tags
+                m_resp = _RESPONSE_TAG_RE.search(self._buf)
+                if m_resp:
+                    visible += self._buf[: m_resp.start()]
+                    self._buf = self._buf[m_resp.end():]
+                    continue
 
                 # Also detect closed pairs mid-line (always suppress)
                 closed_pair = re.search(

@@ -153,7 +153,6 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> b
         # Some OpenAI-compatible providers expose reasoning in metadata rather than content blocks.
         reasoning_content = _extract_reasoning_content(chunk)
         reasoning_from_metadata = bool(reasoning_content)
-        stream_state["_reasoning_extracted"] = bool(reasoning_content)
 
         if reasoning_content:
             if not stream_state["thinking_active"]:
@@ -168,8 +167,12 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> b
             # Detect skill activation in thinking text
             await _detect_and_emit_skill(request_id, reasoning_content, stream_state, base_payload)
 
-            # If reasoning came from metadata, the same text often appears duplicated in the
-            # content string on the same chunk. Skip processing content to avoid emitting it twice.
+            # Feed content to scrubber to synchronize block state, discarding output
+            content = getattr(chunk, "content", "")
+            if isinstance(content, str) and content:
+                scrubber = stream_state.setdefault("_scrubber", StreamingThinkScrubber())
+                scrubber.feed(content)
+
             return False
 
         content = getattr(chunk, "content", "")
@@ -208,20 +211,6 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> b
                     # not streamed tokens; ignore here.
                     continue
         elif isinstance(content, str) and content:
-            # Skip inline scrubber if reasoning was already extracted from metadata
-            # (avoid double-emission: the same text is often in both metadata and content)
-            if stream_state.get("_reasoning_extracted"):
-                if content.strip():
-                    rep_guard = stream_state.setdefault("_rep_guard", RepetitionGuard())
-                    if rep_guard.feed(content):
-                        logger.warning("Repetition detected in visible text, aborting")
-                        _emit(request_id, "stream:degenerate", {**base_payload})
-                        return True
-                    stream_state["visible_chars"] = stream_state.get("visible_chars", 0) + len(content)
-                    _emit(request_id, "stream:token", {**base_payload, "token": content}, stream_state)
-                stream_state["_reasoning_extracted"] = False
-                return False
-
             scrubber = stream_state.setdefault("_scrubber", StreamingThinkScrubber())
             visible, reasoning = scrubber.feed(content)
 
@@ -487,10 +476,8 @@ async def _dispatch_event_ws(
         chunk = data.get("chunk")
         if chunk is None:
             return
-
         reasoning_content = _extract_reasoning_content(chunk)
         reasoning_from_metadata = bool(reasoning_content)
-        stream_state["_reasoning_extracted"] = bool(reasoning_content)
         if reasoning_content:
             if not stream_state["thinking_active"]:
                 await _emit_ws_renderer(websocket, "thinking:started", base_payload)
@@ -511,7 +498,12 @@ async def _dispatch_event_ws(
                 websocket, reasoning_content, stream_state, base_payload
             )
 
-            # Avoid duplicated reasoning that appears in content string on the same chunk.
+            # Feed content to scrubber to synchronize block state, discarding output
+            content = getattr(chunk, "content", "")
+            if isinstance(content, str) and content:
+                scrubber = stream_state.setdefault("_scrubber", StreamingThinkScrubber())
+                scrubber.feed(content)
+
             return
 
         content = getattr(chunk, "content", "")
@@ -553,16 +545,6 @@ async def _dispatch_event_ws(
                             },
                         )
         elif isinstance(content, str) and content:
-            # Skip inline scrubber if reasoning was already extracted from metadata
-            if stream_state.get("_reasoning_extracted"):
-                if content.strip():
-                    stream_state["visible_chars"] = stream_state.get("visible_chars", 0) + len(content)
-                    await _emit_ws_renderer(
-                        websocket, "stream:token", {**base_payload, "token": content}
-                    )
-                stream_state["_reasoning_extracted"] = False
-                return
-
             scrubber = stream_state.setdefault("_scrubber", StreamingThinkScrubber())
             visible, reasoning = scrubber.feed(content)
 
@@ -587,19 +569,23 @@ async def _dispatch_event_ws(
             if visible:
                 rep_guard = stream_state.setdefault("_rep_guard", RepetitionGuard())
                 if rep_guard.feed(visible):
-                    logger.warning("Repetition detected in visible text, aborting")
-                    _emit(request_id, "stream:degenerate", {**base_payload})
-                    return True
+                    logger.warning("Repetition detected in visible text (WS), aborting")
+                    await _emit_ws_renderer(websocket, "stream:degenerate", {**base_payload})
+                    return
                 if stream_state["thinking_active"] and not reasoning:
-                    _emit(
-                        request_id,
+                    await _emit_ws_renderer(
+                        websocket,
                         "thinking:completed",
-                        {**base_payload, "tokens_used": stream_state.get("reasoning_tokens", 0)},
+                        {**base_payload, "tokensUsed": stream_state.get("reasoning_tokens", 0)},
                     )
                     stream_state["thinking_active"] = False
                 stream_state["visible_chars"] = stream_state.get("visible_chars", 0) + len(visible)
                 stream_state["_emitted_text"] = stream_state.get("_emitted_text", "") + visible
-                _emit(request_id, "stream:token", {**base_payload, "token": visible}, stream_state)
+                await _emit_ws_renderer(
+                    websocket,
+                    "stream:token",
+                    {**base_payload, "token": visible},
+                )
 
     elif kind == "on_chat_model_start":
         additional_kwargs = data.get("additional_kwargs", {})
