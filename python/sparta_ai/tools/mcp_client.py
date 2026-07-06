@@ -38,7 +38,7 @@ from sparta_ai.security.rate_limiter import tool_rate_limiter
 logger = logging.getLogger("sparta_ai.tools.mcp_client")
 
 # Maximum number of characters returned by a single MCP tool call.
-# Ported from Hermes — prevents runaway external server responses.
+# Ported from Hermes — prevents runaway external server responses (100K chars).
 _MCP_MAX_RESULT_CHARS = 100_000
 
 

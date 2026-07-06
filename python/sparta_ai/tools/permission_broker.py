@@ -76,17 +76,27 @@ def _is_inside_workspace(resolved: Path) -> bool:
 def _emit_permission_request(
     request_id: str,
     tool_name: str,
-    resolved_path: str,
+    subject: str,
     preview: str,
+    kind: str = "file_access",
 ) -> None:
-    """Emit a permission:request event on stdout (same channel as stream tokens)."""
+    """Emit a permission:request event on stdout (same channel as stream tokens).
+
+    Args:
+        request_id:  Unique id for this request.
+        tool_name:   Name of the tool requesting access (e.g. "write_file_tool").
+        subject:     What is being accessed — path for ``file_access``, server_id for ``mcp_install``.
+        preview:     Short description shown to the user.
+        kind:        Nature of the permission: ``file_access`` (default) or ``mcp_install``.
+    """
     msg: dict[str, Any] = {
         "event": "permission:request",
         "data": {
             "request_id": request_id,
             "tool": tool_name,
-            "path": resolved_path,
+            "path": subject,
             "preview": preview,
+            "kind": kind,
         },
     }
     try:
@@ -252,6 +262,66 @@ def resolve_permission(perm_id: str, approved: bool, remember: str = "once") -> 
 
     logger.warning("resolve_permission: unknown id=%s", perm_id)
     return False
+
+
+def request_permission_sync_generic(
+    kind: str,
+    subject: str,
+    tool_name: str = "",
+    preview: str = "",
+) -> bool:
+    """Request permission for a generic action not based on a file path.
+
+    Unlike ``request_permission_sync``, this function:
+      - Does NOT check ``_is_inside_workspace`` (the concept doesn't apply).
+      - Does NOT cache approvals (every request is presented to the user).
+      - Always requires user confirmation in Desktop mode.
+
+    Args:
+        kind:      Nature of the action (e.g. ``"mcp_install"``).
+        subject:   What the action is about (e.g. ``"github"`` for an MCP server id).
+        tool_name: Name of the tool requesting access.
+        preview:   Short description shown in the dialog (e.g. the command to run).
+
+    Returns:
+        True if the user approved, False otherwise.
+    """
+    if not _IS_ELECTRON:
+        logger.warning(
+            "Permission denied (non-Electron, kind=%s): %s",
+            kind, subject,
+        )
+        return False
+
+    perm_id = str(uuid.uuid4())
+    event = threading.Event()
+    _pending_sync[perm_id] = event
+
+    _emit_permission_request(
+        request_id=perm_id,
+        tool_name=tool_name,
+        subject=subject,
+        preview=preview,
+        kind=kind,
+    )
+    logger.info("Permission requested (sync, kind=%s): %s (id=%s)", kind, subject, perm_id)
+
+    triggered = event.wait(timeout=_TIMEOUT_SECONDS)
+    if not triggered:
+        logger.warning("Permission request timed out (kind=%s, id=%s) — denying", kind, perm_id)
+        approved = False
+    else:
+        # For generic permissions, remember is always "once" — no caching
+        approved, _remember = _pending_sync_results.pop(perm_id, (False, "once"))
+
+    _pending_sync.pop(perm_id, None)
+
+    if approved:
+        logger.info("Permission granted (kind=%s): %s", kind, subject)
+    else:
+        logger.info("Permission denied (kind=%s): %s", kind, subject)
+
+    return approved
 
 
 def clear_session_cache() -> None:

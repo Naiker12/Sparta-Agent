@@ -1,3 +1,10 @@
+// DEPRECATED — La lógica de sanitización se portó a Python
+// (`python/sparta_ai/tools/file_tools.py:_get_safe_path` y `_MAX_CONTENT_SIZE`).
+// Las funciones se mantienen para referencia histórica y para que los tests
+// de Rust (cargo test) sigan pasando, pero YA NO se invocan desde Electron.
+// La única funcionalidad de Rust que sigue activa y aporta valor es la
+// auditoría (`audit.rs`) y el rate limiter singleton (`guard.rs`).
+
 use regex::Regex;
 use serde_json::{json, Value};
 use std::collections::HashSet;
