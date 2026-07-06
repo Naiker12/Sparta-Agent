@@ -6,7 +6,6 @@ import { McpServerCard } from '@/components/mcp/McpServerCard'
 import { AddMcpServerDialog } from '@/components/mcp/AddMcpServerDialog'
 import { Button } from '@/components/ui/button'
 import type { MCPServer, MCPServerConfig } from '@/types'
-import { cn } from '@/lib/utils'
 import { useTranslation } from '@/i18n'
 
 type Tab = 'connected' | 'marketplace'

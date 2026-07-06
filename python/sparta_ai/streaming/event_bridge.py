@@ -373,6 +373,23 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> b
         # Guard against multiple stream:completed emissions (graph loops)
         if stream_state.get("_stream_completed"):
             return False
+
+        # If the agent node's output message contains tool_calls, the graph is
+        # going to continue to the "tools" node — this is NOT the final turn.
+        # Emitting an error or stream:completed here would cut the response short
+        # before the LLM has a chance to reply after seeing the tool results.
+        output = data.get("output", {})
+        output_messages = output.get("messages", []) if isinstance(output, dict) else []
+        last_output_msg = output_messages[-1] if output_messages else None
+        has_pending_tool_calls = bool(getattr(last_output_msg, "tool_calls", None))
+        if has_pending_tool_calls:
+            # The agent is about to invoke a tool — don't treat this as the end.
+            logger.debug(
+                "on_chain_end/agent: pending tool calls detected, skipping completion for request %s",
+                request_id,
+            )
+            return False
+
         if stream_state["thinking_active"]:
             _emit(request_id, "thinking:completed", {**base_payload, "tokens_used": 0})
             stream_state["thinking_active"] = False
@@ -702,6 +719,22 @@ async def _dispatch_event_ws(
     elif kind == "on_chain_end" and name == "agent":
         if stream_state.get("_stream_completed"):
             return
+
+        # If the agent node's output message contains tool_calls, the graph is
+        # going to continue to the "tools" node — this is NOT the final turn.
+        # Emitting an error or stream:completed here would cut the response short
+        # before the LLM has a chance to reply after seeing the tool results.
+        output = data.get("output", {})
+        output_messages = output.get("messages", []) if isinstance(output, dict) else []
+        last_output_msg = output_messages[-1] if output_messages else None
+        has_pending_tool_calls = bool(getattr(last_output_msg, "tool_calls", None))
+        if has_pending_tool_calls:
+            logger.debug(
+                "on_chain_end/agent (WS): pending tool calls detected, skipping completion for request %s",
+                request_id,
+            )
+            return
+
         if stream_state["thinking_active"]:
             await _emit_ws_renderer(
                 websocket,

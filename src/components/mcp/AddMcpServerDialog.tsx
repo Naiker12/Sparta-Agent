@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Plug, Check, Loader2, Upload,
-  Terminal, Globe, Copy, Info, X,
+  Terminal, Globe, Copy, Info,
 } from 'lucide-react'
 import { useMCPStore } from '@/stores/mcp.store'
 import type { MCPServerConfig, MCPServerType } from '@/types'
@@ -10,7 +10,6 @@ import { useTranslation } from '@/i18n'
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
 } from '@/components/ui/dialog'
 
 interface AddMcpServerDialogProps {

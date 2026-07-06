@@ -189,6 +189,7 @@ function _handleEvent(rawEvent: SpartaEvent) {
     case 'stream:completed': {
       flushTokenBuffer()
       flushThinkBuffer()
+      // Leer el mensaje DESPUÉS del flush para tener el contenido completo
       const currentMsg = store.messagesBySession[sid]?.find((m) => m.id === mid)
       if (currentMsg?.thinkingStatus === 'streaming' || (currentMsg?.reasoningText && currentMsg?.thinkingStatus !== 'completed')) {
         console.debug('[safety-net] cerrando thinking en stream:completed')

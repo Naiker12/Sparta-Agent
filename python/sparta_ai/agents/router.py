@@ -7,6 +7,7 @@ Intent = Literal["chat", "agent", "memory_query", "code_task", "research"]
 def classify_intent(
     message: str,
     active_skills: list[str] | None = None,
+    web_search_available: bool = False,
 ) -> Intent:
     lowered = message.lower().strip()
 
@@ -16,8 +17,19 @@ def classify_intent(
         r"\b(refactor(iza|izar)?|debug|test(ea|ear)?|compile|run|execute|npm|pip|git)\b",
     ]
     research_patterns = [
-        r"\b(busca|investiga|encuentra|googlea|averigua|research|search for)\b",
+        r"\b(busca|investiga|encuentra|googlea|averigua|research|search for|buscar)\b",
         r"\b(últimas noticias|latest|news about|qué pasó|what happened)\b",
+        r"\b(en internet|en la web|en google|online)\b",
+    ]
+    # Queries that require real-time data — always need web_search if available
+    realtime_patterns = [
+        r"\b(qu[eé] d[ií]a|qu[eé] fecha|fecha de hoy|d[ií]a de hoy|hoy es|hoy cu[aá]l)\b",
+        r"\b(qu[eé] hora|hora actual|hora es)\b",
+        r"\b(hoy|ahora|actualmente|en este momento|right now|today|current(ly)?)\b.*"
+        r"\b(fecha|d[ií]a|hora|a[nñ]o|mes|semana)\b",
+        r"\b(precio actual|cotizaci[oó]n|tipo de cambio|dolar hoy|euro hoy)\b",
+        r"\b(clima|tiempo hoy|temperatura hoy|lluvia hoy)\b",
+        r"\b(noticias de hoy|[uú]ltimas noticias|breaking news)\b",
     ]
     memory_patterns = [
         r"\b(recuérdame|qué dije|acerca de|qué sabes de|remember|what did I)\b",
@@ -27,6 +39,9 @@ def classify_intent(
     if any(re.search(p, lowered) for p in code_patterns):
         return "code_task"
     if any(re.search(p, lowered) for p in research_patterns):
+        return "research"
+    # Real-time queries: force research intent only when web_search is available
+    if web_search_available and any(re.search(p, lowered) for p in realtime_patterns):
         return "research"
     if any(re.search(p, lowered) for p in memory_patterns):
         return "memory_query"

@@ -147,17 +147,17 @@ export function McpServerCard({ server, onEdit }: McpServerCardProps) {
 
             {/* More menu */}
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button style={{
+              <DropdownMenuTrigger
+                style={{
                   width: 28, height: 28, borderRadius: 7, cursor: 'pointer',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   border: '1px solid transparent',
                   background: 'transparent',
                   color: 'var(--text-muted)',
                   transition: 'all 0.12s', outline: 'none',
-                }}>
-                  <MoreHorizontal size={13} strokeWidth={2} />
-                </button>
+                }}
+              >
+                <MoreHorizontal size={13} strokeWidth={2} />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-40 text-xs">
                 <DropdownMenuItem

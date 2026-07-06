@@ -1,7 +1,9 @@
 import { useCallback } from 'react'
 import { useSettingsStore } from '@/stores/settings.store'
+import { useMemoryStore } from '@/stores/memory.store'
 import { useEventBus } from '@/stores/event-bus.store'
 import { buildMemoryContext, ensureVectorReady, tryAutoConfigure } from '@/services/memory'
+import { buildLocalMemoryContext } from '@/services/memory/local-search'
 import type { Provider } from '@/types'
 
 export function useSessionMemory() {
@@ -11,35 +13,49 @@ export function useSessionMemory() {
     text: string,
     providers: Provider[]
   ): Promise<string | undefined> => {
-    const { semanticMemoryEnabled } = useSettingsStore.getState()
-    if (!semanticMemoryEnabled) return undefined
+    const { memoryEnabled, semanticMemoryEnabled } = useSettingsStore.getState()
 
-    if (!tryAutoConfigure(providers)) {
-      dispatch({
-        type: 'memory:semantic_search',
-        query: text,
-        resultsCount: 0,
-        injectedContext: '',
-        timestamp: Date.now(),
-      })
+    // Si la memoria está completamente desactivada, salir
+    if (!memoryEnabled) return undefined
+
+    const entries = useMemoryStore.getState().entries
+    if (entries.length === 0) return undefined
+
+    // ── Ruta 1: búsqueda semántica con ChromaDB (requiere flag + servidor) ──
+    if (semanticMemoryEnabled) {
+      tryAutoConfigure(providers)
+      const ready = await ensureVectorReady()
+
+      if (ready) {
+        const context = await buildMemoryContext(text, 6)
+        if (context) {
+          dispatch({
+            type: 'memory:semantic_search',
+            query: text,
+            resultsCount: context.split('\n\n').length,
+            injectedContext: context,
+            timestamp: Date.now(),
+          })
+          return context
+        }
+      } else {
+        dispatch({
+          type: 'memory:unavailable',
+          query: text,
+          timestamp: Date.now(),
+        })
+        // Caer al fallback local en vez de retornar undefined
+      }
     }
 
-    const ready = await ensureVectorReady()
-    if (!ready) {
-      dispatch({
-        type: 'memory:unavailable',
-        query: text,
-        timestamp: Date.now(),
-      })
-      return undefined
-    }
-
-    const context = await buildMemoryContext(text, 5)
+    // ── Ruta 2: búsqueda local TF-IDF sobre Zustand (siempre disponible) ───
+    // Se usa cuando: memoria habilitada + (semántica desactivada O ChromaDB no disponible)
+    const context = buildLocalMemoryContext(text, entries, 6)
     if (context) {
       dispatch({
         type: 'memory:semantic_search',
         query: text,
-        resultsCount: context.split('\n\n').length,
+        resultsCount: context.split('\n\n').length - 2, // descontar tags XML
         injectedContext: context,
         timestamp: Date.now(),
       })

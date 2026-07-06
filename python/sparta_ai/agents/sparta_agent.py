@@ -53,7 +53,14 @@ def build_sparta_graph(
                 last_user_msg = m.get("content", "")
                 break
 
-        intent = classify_intent(last_user_msg, state.get("active_skills"))
+        # Detect if web_search is available in the current tool list (closure over `tools`)
+        web_search_available = any(
+            getattr(t, "name", None) == "web_search_tool" or
+            (callable(t) and getattr(t, "__name__", None) == "web_search_tool")
+            for t in tools
+        )
+
+        intent = classify_intent(last_user_msg, state.get("active_skills"), web_search_available=web_search_available)
         effective_mode = "agent" if mode == "agent" or intent != "chat" else "chat"
 
         system_parts = [
@@ -64,18 +71,18 @@ def build_sparta_graph(
             "REGLAS CRÍTICAS PARA FECHA/HORA ACTUAL:",
             "- NUNCA respondas preguntas sobre la fecha, hora o día actual usando tu conocimiento de entrenamiento.",
             "- Tu conocimiento tiene una fecha de corte y NO sabes la fecha actual real.",
-            "- Para preguntas sobre 'qué día es', 'qué fecha es hoy', usa web_search.",
-            "- Si web_search no está disponible o falla, di: 'No tengo acceso a la fecha actual. Revisa la fecha en tu dispositivo o activa la búsqueda web.'",
+            "- Para cualquier pregunta sobre 'qué día es', 'qué fecha es hoy', 'qué hora es', DEBES invocar web_search_tool obligatoriamente.",
             "- NUNCA digas 'según mi conocimiento, hoy es...' porque es información incorrecta.",
+            "- NUNCA respondas 'No tengo acceso a la fecha' si web_search_tool está disponible — úsala.",
             "",
             "REGLAS PARA HERRAMIENTAS:",
-            "- Usa web_search MÁXIMO UNA VEZ por query. Si la búsqueda ya devolvió resultados, no la repitas.",
+            "- Usa web_search_tool MÁXIMO UNA VEZ por query. Si la búsqueda ya devolvió resultados, no la repitas.",
             "- Si una herramienta falla, informa al usuario del error específico.",
             "- No invoques la misma herramienta con los mismos argumentos más de una vez.",
             "- Si una tool devuelve un ERROR, NO inventes la respuesta — reporta el error al usuario.",
             "",
             "REGLAS PARA RESPUESTAS CON BÚSQUEDA WEB:",
-            "- Cuando uses web_search, el usuario YA VE el progreso de búsqueda y las URLs visitadas en tiempo real en la interfaz.",
+            "- Cuando uses web_search_tool, el usuario YA VE el progreso de búsqueda y las URLs visitadas en tiempo real en la interfaz.",
             "- NUNCA repitas la lista de resultados, URLs, títulos ni snippets de la búsqueda en tu respuesta final.",
             "- NO digas frases como: 'Basándome en los resultados de búsqueda...', 'He buscado en internet y encontré...', 'Según mi búsqueda web...'.",
             "- Usa la información encontrada para responder DIRECTAMENTE la pregunta del usuario, como si ya supieras la respuesta.",
@@ -119,7 +126,7 @@ def build_sparta_graph(
                 )
             elif intent == "research":
                 system_parts.append(
-                    "\nIntención detectada: INVESTIGACIÓN. Usa web_search para buscar "
+                    "\nIntención detectada: INVESTIGACIÓN. Usa web_search_tool para buscar "
                     "información actualizada, y delegate_research para investigación profunda."
                 )
             elif intent == "memory_query":
@@ -128,10 +135,18 @@ def build_sparta_graph(
                     "recuperar información almacenada."
                 )
         else:
-            system_parts.append(
-                "\nModo: CHAT — Responde de forma conversacional y directa. "
-                "Usa herramientas solo cuando sea estrictamente necesario."
-            )
+            if web_search_available:
+                system_parts.append(
+                    "\nModo: CHAT — Responde de forma conversacional y directa. "
+                    "Tienes web_search_tool disponible: ÚSALA para cualquier pregunta sobre "
+                    "fechas, noticias, datos actuales, o cuando el usuario pida buscar algo. "
+                    "No necesitas permiso especial para invocarla en modo chat."
+                )
+            else:
+                system_parts.append(
+                    "\nModo: CHAT — Responde de forma conversacional y directa. "
+                    "Usa herramientas solo cuando sea estrictamente necesario."
+                )
 
         if state.get("memory_context"):
             system_parts.append(
