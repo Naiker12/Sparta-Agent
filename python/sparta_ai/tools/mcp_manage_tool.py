@@ -18,6 +18,7 @@ from typing import Any
 from langchain_core.tools import tool
 
 from sparta_ai.tools.permission_broker import request_permission_sync_generic
+from sparta_ai.config.security import store_key as vault_store_key_py
 
 logger = logging.getLogger("sparta_ai.tools.mcp")
 
@@ -259,7 +260,26 @@ def mcp_manage_tool(
                     f"Dile que puede instalarlo manualmente desde la UI de MCP."
                 )
 
-            # ── Write config ────────────────────────────────────────────
+            # ── Store secrets in vault, write refs to config ────────────
+            env_vault_refs: list[str] = []
+            env_plain = config.pop("env", {}) or {}
+            for var_name, value in env_plain.items():
+                if isinstance(value, str) and value:
+                    _store_mcp_secret(server_id, var_name, value)
+                    env_vault_refs.append(var_name)
+            if env_vault_refs:
+                config["env_vault_refs"] = env_vault_refs
+
+            headers_vault_refs: list[str] = []
+            headers_plain = config.pop("headers", {}) or {}
+            for hdr_name, value in headers_plain.items():
+                if isinstance(value, str) and value:
+                    _store_mcp_secret(server_id, hdr_name, value)
+                    headers_vault_refs.append(hdr_name)
+            if headers_vault_refs:
+                config["headers_vault_refs"] = headers_vault_refs
+
+            # ── Write config to disk ────────────────────────────────────
             configured = _load_configured()
             configured[server_id] = config
             _save_configured(configured)
@@ -273,9 +293,9 @@ def mcp_manage_tool(
                     "type": config.get("type", "stdio"),
                     "command": config.get("command"),
                     "args": config.get("args"),
-                    "env": config.get("env"),
+                    "env_vault_refs": env_vault_refs,
+                    "headers_vault_refs": headers_vault_refs,
                     "url": config.get("url"),
-                    "headers": config.get("headers"),
                     "enabled": True,
                 },
             })
@@ -348,6 +368,110 @@ def mcp_manage_tool(
 # Connect + emit helpers
 # ─────────────────────────────────────────────────────────────────────────────
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Vault helpers — MCP secrets stored encrypted, never in plaintext JSON
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _mcp_vault_key(server_id: str, var_name: str) -> str:
+    """Return the vault key for an MCP secret.
+    
+    Convention:  mcp:{serverId}:{VarName}
+    Example:     mcp:github:GITHUB_TOKEN
+    """
+    return f"mcp:{server_id}:{var_name}"
+
+
+def _store_mcp_secret(server_id: str, var_name: str, value: str) -> None:
+    """Store an MCP secret in both:
+      1. Electron vault (encrypted via safeStorage), by emitting an event
+      2. Python in-memory cache (for immediate use in this session)
+
+    The vault key follows the convention ``mcp:{serverId}:{VarName}``
+    so ``pushAllKeys()`` at startup will push it to Python automatically.
+    """
+    vault_key = _mcp_vault_key(server_id, var_name)
+
+    # 1. Tell Electron to store in the encrypted vault
+    _emit_mcp_event("vault:mcp_store", {
+        "key_id": vault_key,
+        "value": value,
+    })
+
+    # 2. Cache locally for immediate use (same process)
+    vault_store_key_py(vault_key, value)
+
+
+def _resolve_vault_refs(server_id: str, refs: list[str]) -> dict[str, str]:
+    """Resolve vault references to actual values from Python in-memory cache.
+
+    These were seeded into Python by ``pushAllKeys()`` at startup
+    (or stored directly by ``_store_mcp_secret`` during install).
+    """
+    from sparta_ai.config.security import get_key
+    resolved = {}
+    for ref in refs:
+        val = get_key(_mcp_vault_key(server_id, ref))
+        if val:
+            resolved[ref] = val
+    return resolved
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Migration — one-time scan of existing sparta.mcp.json
+# ─────────────────────────────────────────────────────────────────────────────
+
+def migrate_existing_config() -> int:
+    """Scan ``sparta.mcp.json`` for secrets stored in plaintext and move
+    them to the vault.  Rewrites the file with ``env_vault_refs`` ``/
+    ``headers_vault_refs`` instead of raw values.
+
+    Returns the number of entries migrated (0 if none or already migrated).
+    """
+    configured = _load_configured()
+    if not configured:
+        return 0
+
+    migrated_count = 0
+    changed = False
+
+    for server_id, cfg in configured.items():
+        # Migrate stdio env vars
+        env = cfg.get("env")
+        if isinstance(env, dict) and len(env) > 0:
+            # Check if already migrated (contains vault refs only)
+            if cfg.get("env_vault_refs"):
+                continue
+            for var_name, value in env.items():
+                if isinstance(value, str) and value:
+                    _store_mcp_secret(server_id, var_name, value)
+            cfg["env_vault_refs"] = list(env.keys())
+            cfg.pop("env", None)
+            changed = True
+            migrated_count += 1
+
+        # Migrate HTTP headers
+        headers = cfg.get("headers")
+        if isinstance(headers, dict) and len(headers) > 0:
+            if cfg.get("headers_vault_refs"):
+                continue
+            for hdr_name, value in headers.items():
+                if isinstance(value, str) and value:
+                    _store_mcp_secret(server_id, hdr_name, value)
+            cfg["headers_vault_refs"] = list(headers.keys())
+            cfg.pop("headers", None)
+            changed = True
+            migrated_count += 1
+
+    if changed:
+        _save_configured(configured)
+
+    return migrated_count
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Event emission helper
+# ─────────────────────────────────────────────────────────────────────────────
+
 def _emit_mcp_event(event: str, data: dict) -> None:
     """Emit an MCP event on stdout (same channel as streaming tokens).
 
@@ -374,14 +498,26 @@ def _connect_and_emit(server_id: str, config: dict) -> None:
     asyncio.run(_async_connect_and_emit(server_id, config))
 
 
+# ── One-time migration at import time ───────────────────────────────────
+_migrated = migrate_existing_config()
+if _migrated:
+    logger.info("MCP config migration: %d entries moved to vault", _migrated)
+
+
 async def _async_connect_and_emit(server_id: str, config: dict) -> None:
     """Async implementation of MCP connection with event emission."""
     from sparta_ai.tools.mcp_client import RealMCPClient
 
-    def _mcp_emit(event: str, data: dict) -> None:
-        _emit_mcp_event(event, {**data, "serverId": server_id})
+    # Resolve vault refs into plain env/headers before connecting
+    resolved_config = {**config}
+    env_refs = resolved_config.pop("env_vault_refs", [])
+    if env_refs:
+        resolved_config["env"] = _resolve_vault_refs(server_id, env_refs)
+    hdr_refs = resolved_config.pop("headers_vault_refs", [])
+    if hdr_refs:
+        resolved_config["headers"] = _resolve_vault_refs(server_id, hdr_refs)
 
-    client = RealMCPClient({**config, "id": server_id, "timeout": 15})
+    client = RealMCPClient({**resolved_config, "id": server_id, "timeout": 15})
     try:
         tools = await client.connect()
         _emit_mcp_event("mcp:connected", {

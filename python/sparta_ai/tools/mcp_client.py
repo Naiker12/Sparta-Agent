@@ -38,8 +38,33 @@ from sparta_ai.security.rate_limiter import tool_rate_limiter
 logger = logging.getLogger("sparta_ai.tools.mcp_client")
 
 # Maximum number of characters returned by a single MCP tool call.
-# Ported from Hermes — prevents runaway external server responses (100K chars).
+# Ported from Hermes — prevents runaway external server responses.
 _MCP_MAX_RESULT_CHARS = 100_000
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Vault ref resolution
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _resolve_vault_refs(server_id: str, refs: list[str]) -> dict[str, str]:
+    """Resolve ``env_vault_refs`` / ``headers_vault_refs`` from the
+    Python in-memory key cache (seeded by ``pushAllKeys`` at startup).
+
+    Key convention:  ``mcp:{serverId}:{varName}``
+    """
+    from sparta_ai.config.security import get_key
+    resolved = {}
+    for ref in refs:
+        vault_key = f"mcp:{server_id}:{ref}"
+        val = get_key(vault_key)
+        if val:
+            resolved[ref] = val
+        else:
+            logger.warning(
+                "Vault ref '%s' not found for server '%s' — skipping",
+                ref, server_id,
+            )
+    return resolved
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -99,6 +124,19 @@ class RealMCPClient:
                 "El paquete 'mcp' no está instalado. "
                 "Ejecuta: pip install mcp>=1.0"
             )
+
+        # ── Resolve vault refs before connecting ──────────────────────
+        # env_vault_refs: named env vars stored in encrypted vault
+        # headers_vault_refs: named headers stored in encrypted vault
+        env_vault_refs = self.config.get("env_vault_refs", [])
+        if env_vault_refs:
+            resolved = _resolve_vault_refs(self.server_id, env_vault_refs)
+            self.config["env"] = {**self.config.get("env", {}), **resolved}
+
+        headers_vault_refs = self.config.get("headers_vault_refs", [])
+        if headers_vault_refs:
+            resolved_headers = _resolve_vault_refs(self.server_id, headers_vault_refs)
+            self.config["headers"] = {**self.config.get("headers", {}), **resolved_headers}
 
         try:
             if self._server_type == "stdio":
