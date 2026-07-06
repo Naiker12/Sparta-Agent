@@ -1,0 +1,70 @@
+{
+  "_comment": "Catalogo curado de servidores MCP conocidos. Solo entradas aprobadas manualmente.",
+  "_comment2": "El agente solo puede instalar servidores que existan aqui, no puede inventar comandos.",
+  "_comment3": "Para agregar un servidor no listado, usar la UI (AddMcpServerDialog).",
+  "servers": {
+    "github": {
+      "name": "GitHub",
+      "description": "Acceso a repositorios, issues, pull requests y mas de GitHub",
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env_required": ["GITHUB_TOKEN"],
+      "env_labels": {
+        "GITHUB_TOKEN": "GitHub Personal Access Token (clasico, con permisos repo)"
+      },
+      "docs_url": "https://github.com/modelcontextprotocol/servers/tree/main/src/github"
+    },
+    "filesystem": {
+      "name": "Filesystem",
+      "description": "Acceso controlado al sistema de archivos local (requiere ruta permitida)",
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "${DIR}"],
+      "env_required": [],
+      "notes": "Requiere especificar un directorio permitido (${DIR}) que el usuario debe configurar manualmente.",
+      "docs_url": "https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem"
+    },
+    "notion": {
+      "name": "Notion",
+      "description": "Lectura y busqueda en paginas y bases de datos de Notion",
+      "type": "http",
+      "url": "https://mcp.notion.com/mcp",
+      "headers_required": ["Authorization"],
+      "header_labels": {
+        "Authorization": "Bearer <tu token de integracion de Notion>"
+      },
+      "env_required": [],
+      "docs_url": "https://developers.notion.com/docs/authorization"
+    },
+    "postgres": {
+      "name": "PostgreSQL",
+      "description": "Consulta y analisis de bases de datos PostgreSQL",
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres", "${DATABASE_URL}"],
+      "env_required": [],
+      "notes": "Requiere DATABASE_URL como argumento (postgresql://user:pass@host/db). Se pasa como ${DATABASE_URL}.",
+      "docs_url": "https://github.com/modelcontextprotocol/servers/tree/main/src/postgres"
+    },
+    "sqlite": {
+      "name": "SQLite",
+      "description": "Consulta y analisis de bases de datos SQLite locales",
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["mcp-server-sqlite", "--db", "${DB_PATH}"],
+      "env_required": [],
+      "notes": "Requiere la ruta a un archivo .db como argumento (${DB_PATH}).",
+      "docs_url": "https://github.com/modelcontextprotocol/servers/tree/main/src/sqlite"
+    },
+    "puppeteer": {
+      "name": "Puppeteer",
+      "description": "Navegacion web automatizada, capturas de pantalla y extraccion de contenido",
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-puppeteer"],
+      "env_required": [],
+      "docs_url": "https://github.com/modelcontextprotocol/servers/tree/main/src/puppeteer"
+    }
+  }
+}
