@@ -65,3 +65,4 @@ export async function getIndexedCount(): Promise<number> {
 
 export { semanticSearch, buildMemoryContext } from './vector/semantic-search'
 export type { SemanticSearchResult } from './vector/semantic-search'
+export { extractMemory } from './extractor'

@@ -18,12 +18,24 @@ export const useMCPStore = create<MCPState>()(
   servers: [],
 
   addServer: (config) =>
-    set((s) => ({
-      servers: [
-        ...s.servers,
-        { id: config.id, name: config.name, type: config.type, connected: false, tools: [], config },
-      ],
-    })),
+    set((s) => {
+      const exists = s.servers.some((sv) => sv.id === config.id)
+      if (exists) {
+        return {
+          servers: s.servers.map((sv) =>
+            sv.id === config.id
+              ? { ...sv, name: config.name, type: config.type, config }
+              : sv
+          ),
+        }
+      }
+      return {
+        servers: [
+          ...s.servers,
+          { id: config.id, name: config.name, type: config.type, connected: false, tools: [], config },
+        ],
+      }
+    }),
 
   removeServer: (id) =>
     set((s) => ({ servers: s.servers.filter((sv) => sv.id !== id) })),
