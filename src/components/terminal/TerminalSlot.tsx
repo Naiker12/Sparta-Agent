@@ -10,5 +10,5 @@ export function TerminalSlot() {
     return () => setTerminalSlotEl(null)
   }, [setTerminalSlotEl])
 
-  return <div ref={ref} className="relative flex min-h-0 min-w-0 flex-1 flex-col" />
+  return <div ref={ref} className="relative flex min-h-0 min-w-0 flex-1 flex-col" style={{ background: '#0C0C10' }} />
 }

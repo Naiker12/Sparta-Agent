@@ -98,7 +98,6 @@ export const useSessionStore = create<SessionState>()(
       version: 1,
       partialize: (state) => ({
         sessions: state.sessions,
-        activeSessionId: state.activeSessionId,
       }),
     }
   )

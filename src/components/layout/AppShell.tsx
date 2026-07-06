@@ -157,10 +157,12 @@ export function AppShell() {
                     >
                       <TerminalSlot />
                     </motion.div>
-                    <PanelDragHandle
-                      className="terminal-resize-handle"
-                      onMouseDown={handleTerminalResize}
-                    />
+                    {terminalOpen && (
+                      <PanelDragHandle
+                        className="terminal-resize-handle"
+                        onMouseDown={handleTerminalResize}
+                      />
+                    )}
                     <div className="border-t border-[var(--border-normal)]" />
                   </div>
                 </div>

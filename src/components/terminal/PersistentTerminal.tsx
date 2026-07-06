@@ -1,37 +1,31 @@
-import { useLayoutEffect, useState, type CSSProperties } from 'react'
+import { useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
 import { useUIStore } from '@/stores/ui.store'
 import { TerminalWorkspace } from './TerminalWorkspace'
 
 interface Rect { top: number; left: number; width: number; height: number }
 
-const sameRect = (a: Rect | null, b: Rect) =>
-  !!a && a.top === b.top && a.left === b.left && a.width === b.width && a.height === b.height
-
 export function PersistentTerminal() {
   const slot = useUIStore((s) => s.terminalSlotEl)
   const terminalOpen = useUIStore((s) => s.terminalOpen)
   const [rect, setRect] = useState<Rect | null>(null)
-  const [mounted, setMounted] = useState(false)
+  const roRef = useRef<ResizeObserver | null>(null)
 
   useLayoutEffect(() => {
     if (!slot) { setRect(null); return }
-    let prev: Rect | null = null
-    let frame = 0
 
-    const tick = () => {
+    const update = () => {
       const r = slot.getBoundingClientRect()
-      const top = Math.floor(r.top)
-      const left = Math.floor(r.left)
-      const next: Rect = { top, left, width: Math.ceil(r.right) - left, height: Math.ceil(r.bottom) - top }
-      if (!sameRect(prev, next)) {
-        prev = next
-        setRect(next)
-        if (next.width > 0 && next.height > 0) setMounted(true)
-      }
-      frame = requestAnimationFrame(tick)
+      setRect({ top: Math.floor(r.top), left: Math.floor(r.left), width: Math.ceil(r.right) - Math.floor(r.left), height: Math.ceil(r.bottom) - Math.floor(r.top) })
     }
-    tick()
-    return () => cancelAnimationFrame(frame)
+
+    update()
+    roRef.current = new ResizeObserver(update)
+    roRef.current.observe(slot)
+
+    return () => {
+      roRef.current?.disconnect()
+      roRef.current = null
+    }
   }, [slot])
 
   const visible = terminalOpen && !!rect && rect.width > 0 && rect.height > 0
@@ -48,12 +42,11 @@ export function PersistentTerminal() {
     pointerEvents: visible ? 'auto' : 'none',
     zIndex: 30,
     background: '#0C0C10',
-    contain: 'layout size paint',
   }
 
   return (
     <div aria-hidden={!visible} style={style}>
-      {mounted && <TerminalWorkspace />}
+      <TerminalWorkspace />
     </div>
   )
 }
