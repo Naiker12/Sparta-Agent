@@ -302,6 +302,17 @@ function EmptyMcpState({ onAdd, addLabel, title, description }: {
   )
 }
 
+function _catalogIcon(item: MarketplaceItem): string {
+  const name = item.name.toLowerCase()
+  if (name.includes('github')) return '\u2764\uFE0F'  // heart for gh
+  if (name.includes('filesystem')) return '\uD83D\uDCC1'  // folder
+  if (name.includes('notion')) return '\uD83D\uDCDD'  // memo
+  if (name.includes('postgres')) return '\uD83D\uDDC4'  // database
+  if (name.includes('sqlite')) return '\uD83D\uDCC4'  // scroll
+  if (name.includes('puppeteer')) return '\uD83E\uDD16'  // robot
+  return '\uD83D\uDD0C'  // plug
+}
+
 function MarketplaceCard({ item, desc, installed, onInstall, installLabel, installedLabel, lang }: {
   item: MarketplaceItem; desc: string; installed: boolean; lang?: string
   onInstall: () => void; installLabel: string; installedLabel: string
@@ -341,9 +352,9 @@ function MarketplaceCard({ item, desc, installed, onInstall, installLabel, insta
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             background: 'var(--bg-elevated)', border: '1px solid var(--border-normal)',
           }}>
-            {item.vendor
-              ? <BrandIcon vendor={item.vendor} size={20} />
-              : <span style={{ fontSize: 18 }}>{item.icon}</span>
+            {'vendor' in item && item.vendor
+              ? <BrandIcon vendor={(item as { vendor: string }).vendor} size={20} />
+              : <span style={{ fontSize: 18, color: cat.color }}>{_catalogIcon(item)}</span>
             }
           </div>
           <div style={{ minWidth: 0 }}>
