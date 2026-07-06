@@ -1,7 +1,6 @@
 export { createProvider } from './ai'
 export { AIGateway, aiGateway } from './ai/gateway'
 export { createChatService } from './chat'
-export { createMCPClient } from './mcp'
 export type { ChatService } from './chat'
 export { writeExtractedMemory, findDuplicateEntry, updateTrustScore } from './memory/graph-writer'
 export { computeRelations } from './memory/graph-layout'

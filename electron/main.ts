@@ -11,6 +11,7 @@ import { startSidecar, stopSidecar, waitForSidecarReady, registerSidecarIPC } fr
 import { registerTerminalIPC } from './ipc/terminal.ipc'
 import { registerFilesystemIPC } from './ipc/filesystem.ipc'
 import { registerSkillsIPC } from './ipc/skills.ipc'
+import { registerPermissionIPC, setPermissionWindow } from './ipc/permission.ipc'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -49,7 +50,10 @@ function createWindow() {
     title: 'Sparta Agent',
   })
 
-  win.once('ready-to-show', () => win?.show())
+  win.once('ready-to-show', () => {
+    win?.show()
+    if (win) setPermissionWindow(win)
+  })
 
   win.webContents.on('did-finish-load', () => {
     win?.webContents.send('main-process-message', new Date().toLocaleString())
@@ -97,6 +101,7 @@ app.whenReady().then(async () => {
   registerFilesystemIPC()
   registerSkillsIPC()
   registerSidecarIPC()
+  registerPermissionIPC()
 
   // Wire Rust security layer into the IPC pipeline
   wireSecurityIntoPipeline()

@@ -11,3 +11,5 @@ httpx>=0.27.0
 python-dotenv>=1.0.0
 fastapi>=0.115.0
 pyyaml>=6.0
+# MCP SDK — required by mcp_client.py (real MCP server connections)
+mcp>=1.0

@@ -71,12 +71,44 @@ function flushThinkBuffer() {
   thinkBuf.tokens = []
 }
 
+// ── MCP lifecycle handler ───────────────────────────────────────────
+function _handleMCPEvent(type: string, event: Record<string, unknown>) {
+  // Import lazily to avoid circular deps at module load time
+  const { useMCPStore } = require('@/stores/mcp.store') as typeof import('@/stores/mcp.store')
+  const store = useMCPStore.getState()
+  const serverId = (event.serverId ?? '') as string
+
+  if (type === 'mcp:connected') {
+    store.setConnected(serverId, true)
+    console.debug('[MCP] connected:', serverId, 'tools:', event.toolCount)
+  } else if (type === 'mcp:tool_discovered') {
+    const tools = (event.tools ?? []) as Array<{ name: string; description: string; inputSchema: unknown }>
+    // Reset tools list then repopulate with discovered tools
+    store.setServerTools(serverId, tools.map((t) => ({
+      name: t.name,
+      description: t.description,
+      inputSchema: t.inputSchema,
+      serverId,
+    })))
+    console.debug('[MCP] tools discovered:', serverId, tools.map((t) => t.name))
+  } else if (type === 'mcp:error') {
+    store.setConnected(serverId, false)
+    console.warn('[MCP] connection error:', serverId, event.error)
+  }
+}
+
 // ── Central event handler (single instance) ─────────────────────────
 function _handleEvent(rawEvent: SpartaEvent) {
   const event = rawEvent as unknown as Record<string, unknown>
   const { type, sessionId, messageId } = event as { type: string; sessionId: string; messageId: string }
   const sid = sessionId ?? ''
   const mid = messageId ?? ''
+
+  // ── MCP lifecycle events (no sessionId/messageId) ───────────────────
+  if (type === 'mcp:connected' || type === 'mcp:tool_discovered' || type === 'mcp:error') {
+    _handleMCPEvent(type, event)
+    return
+  }
 
   if (!sid || !mid) {
     if (type && !type.startsWith('sidecar') && !type.startsWith('terminal')) {

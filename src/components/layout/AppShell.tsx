@@ -13,6 +13,7 @@ import { TerminalSlot } from '@/components/terminal/TerminalSlot'
 import { PersistentTerminal } from '@/components/terminal/PersistentTerminal'
 import { AgentsPanel } from '@/components/agents/AgentsPanel'
 import { ChatErrorBoundary } from '@/components/ErrorBoundary'
+import { PermissionRequestDialog } from '@/components/permission/PermissionRequestDialog'
 import { initTheme } from '@/stores/theme.store'
 import { useCronEngine } from '@/hooks/useCronEngine'
 import { useSidecarToasts } from '@/hooks/useSidecarToasts'
@@ -223,6 +224,7 @@ export function AppShell() {
         <div style={{ position: 'fixed', inset: 0, zIndex: 99999, cursor: 'col-resize', background: 'transparent' }} />
       )}
       <Toaster position="bottom-right" richColors closeButton />
+      <PermissionRequestDialog />
     </div>
   )
 }
