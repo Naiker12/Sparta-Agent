@@ -23,6 +23,10 @@ pub fn validate_message(line: String) -> Result<String> {
 }
 
 /// Sanitize a tool call and return if it's safe
+///
+/// DEPRECATED — la sanitización se maneja ahora en Python
+/// (`file_tools.py` / `mcp_client.py`).  Se mantiene esta exportación
+/// para no romcar código existente, pero no se invoca desde el flujo activo.
 #[napi]
 pub fn sanitize_tool_call(tool_name: String, input_json: String) -> Result<String> {
     let input: Value = serde_json::from_str(&input_json)

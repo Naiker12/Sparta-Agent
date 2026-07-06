@@ -44,6 +44,14 @@ fn contains_blocked_pattern(path: &str) -> Option<String> {
     None
 }
 
+/// DEPRECATED — La sanitización de tool-calls se implementa ahora en
+/// Python (`file_tools.py` → `_get_safe_path()`) para no mantener dos
+/// sanitizadores sincronizados en dos lenguajes.  El módulo Rust se
+/// mantiene únicamente para auditoría persistente (`audit.rs`).
+///
+/// Este código se conserva para referencia pero no se invoca desde
+/// ningún punto del flujo activo.
+#[deprecated(note = "Reemplazado por _get_safe_path() en Python")]
 pub fn sanitize_file_tool_call(tool_name: &str, input: &Value) -> SanitizedToolCall {
     let path = input
         .get("path")
@@ -153,6 +161,8 @@ pub fn sanitize_memory_tool_call(tool_name: &str, input: &Value) -> SanitizedToo
     }
 }
 
+/// DEPRECATED — ver `sanitize_file_tool_call`.
+#[deprecated(note = "Reemplazado por sanitización en Python")]
 pub fn sanitize_tool_call(tool_name: &str, input: &Value) -> SanitizedToolCall {
     let dangerous_tools: HashSet<&str> = [
         "exec_command", "shell_exec", "run_terminal",
