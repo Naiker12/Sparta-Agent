@@ -153,7 +153,7 @@ export function AppShell() {
                       initial={false}
                       animate={{ height: terminalOpen ? terminalHeight : 0 }}
                       transition={{ duration: 0.12, ease: 'easeOut' }}
-                      style={{ overflow: 'hidden', position: 'relative' }}
+                      style={{ overflow: 'hidden', position: 'relative', display: 'flex', flexDirection: 'column' }}
                     >
                       <TerminalSlot />
                     </motion.div>

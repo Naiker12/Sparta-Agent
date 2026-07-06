@@ -26,7 +26,7 @@ export function PersistentTerminal() {
       roRef.current?.disconnect()
       roRef.current = null
     }
-  }, [slot])
+  }, [slot, terminalOpen])
 
   const visible = terminalOpen && !!rect && rect.width > 0 && rect.height > 0
 

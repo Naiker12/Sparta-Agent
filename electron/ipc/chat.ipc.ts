@@ -134,6 +134,9 @@ export function registerChatIPC(): void {
           error: 'La respuesta del modelo se cortó por repetición detectada. Probá con otro modelo o reintentá.',
         })
         clearSeqCounters(requestId)
+        const resolveDeg = streamResolvers.get(requestId)
+        resolveDeg?.()
+        streamResolvers.delete(requestId)
         break
       case 'stream:completed': {
         sendToRenderer({ sessionId, messageId, type: 'stream:completed', usage: data?.usage })

@@ -24,10 +24,15 @@ from sparta_ai.providers.retry_policy import retry_on_empty, EmptyResponseError
 
 logger = logging.getLogger("sparta_ai.streaming")
 
+_SUBGRAPH_NAMESPACE_PREFIXES = ("research_agent/", "code_agent/", "memory_agent/")
 
-def _emit(request_id: str, event: str, data: dict | None = None) -> None:
+
+def _emit(request_id: str, event: str, data: dict | None = None, stream_state: dict | None = None) -> None:
     msg: dict[str, Any] = {"id": request_id, "event": event}
     if data is not None:
+        if stream_state is not None and event in ("stream:token", "thinking:token"):
+            stream_state["_chunk_seq"] = stream_state.get("_chunk_seq", 0) + 1
+            data["chunkSeq"] = stream_state["_chunk_seq"]
         msg["data"] = data
     try:
         sys.stdout.write(json.dumps(msg, ensure_ascii=False) + "\n")
@@ -137,6 +142,9 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> b
     namespace = _extract_namespace(event)
     base_payload = {"ns": namespace} if namespace else {}
 
+    if kind == "on_chat_model_stream" and namespace and namespace.startswith(_SUBGRAPH_NAMESPACE_PREFIXES):
+        return False
+
     if kind == "on_chat_model_stream":
         chunk = data.get("chunk")
         if chunk is None:
@@ -155,7 +163,7 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> b
             stream_state["reasoning_tokens"] = stream_state.get("reasoning_tokens", 0) + len(reasoning_content.split())
             stream_state["reasoning_chars"] = stream_state.get("reasoning_chars", 0) + len(reasoning_content)
             logger.debug("Emitting thinking:token (reasoning_content) for request %s", request_id)
-            _emit(request_id, "thinking:token", {**base_payload, "token": reasoning_content})
+            _emit(request_id, "thinking:token", {**base_payload, "token": reasoning_content}, stream_state)
 
             # Detect skill activation in thinking text
             await _detect_and_emit_skill(request_id, reasoning_content, stream_state, base_payload)
@@ -181,7 +189,7 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> b
                         logger.debug(
                             "Emitting thinking:token (reasoning block) for request %s", request_id
                         )
-                        _emit(request_id, "thinking:token", {**base_payload, "token": token})
+                        _emit(request_id, "thinking:token", {**base_payload, "token": token}, stream_state)
 
                         # Detect skill activation in thinking text
                         await _detect_and_emit_skill(request_id, token, stream_state, base_payload)
@@ -194,7 +202,7 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> b
                             _emit(request_id, "stream:degenerate", {**base_payload})
                             return True
                         stream_state["visible_chars"] = stream_state.get("visible_chars", 0) + len(text)
-                        _emit(request_id, "stream:token", {**base_payload, "token": text})
+                        _emit(request_id, "stream:token", {**base_payload, "token": text}, stream_state)
                 elif isinstance(block, dict) and block.get("type") == "tool_use":
                     # Anthropic tool_use blocks are part of the assistant message,
                     # not streamed tokens; ignore here.
@@ -210,7 +218,7 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> b
                         _emit(request_id, "stream:degenerate", {**base_payload})
                         return True
                     stream_state["visible_chars"] = stream_state.get("visible_chars", 0) + len(content)
-                    _emit(request_id, "stream:token", {**base_payload, "token": content})
+                    _emit(request_id, "stream:token", {**base_payload, "token": content}, stream_state)
                 stream_state["_reasoning_extracted"] = False
                 return False
 
@@ -237,7 +245,7 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> b
                                 return True
                             stream_state["visible_chars"] = stream_state.get("visible_chars", 0) + len(new_text)
                             stream_state["_emitted_text"] = emitted + new_text
-                            _emit(request_id, "stream:token", {**base_payload, "token": new_text})
+                            _emit(request_id, "stream:token", {**base_payload, "token": new_text}, stream_state)
                         return False
                 else:
                     test_text = (pending + visible)[:80]
@@ -258,7 +266,7 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> b
                 logger.debug(
                     "Emitting thinking:token (inline think tag) for request %s", request_id
                 )
-                _emit(request_id, "thinking:token", {**base_payload, "token": reasoning})
+                _emit(request_id, "thinking:token", {**base_payload, "token": reasoning}, stream_state)
 
                 # Detect skill activation in thinking text
                 await _detect_and_emit_skill(request_id, reasoning, stream_state, base_payload)
@@ -278,7 +286,7 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> b
                     stream_state["thinking_active"] = False
                 stream_state["visible_chars"] = stream_state.get("visible_chars", 0) + len(visible)
                 stream_state["_emitted_text"] = stream_state.get("_emitted_text", "") + visible
-                _emit(request_id, "stream:token", {**base_payload, "token": visible})
+                _emit(request_id, "stream:token", {**base_payload, "token": visible}, stream_state)
 
     elif kind == "on_chat_model_start":
         additional_kwargs = data.get("additional_kwargs", {})
@@ -313,7 +321,7 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> b
             leftover = scrubber.flush()
             if leftover:
                 stream_state["visible_chars"] = stream_state.get("visible_chars", 0) + len(leftover)
-                _emit(request_id, "stream:token", {**base_payload, "token": leftover})
+                _emit(request_id, "stream:token", {**base_payload, "token": leftover}, stream_state)
 
     elif kind == "on_tool_start":
         tool_call_id = event.get("run_id", str(id(event)))
@@ -472,6 +480,9 @@ async def _dispatch_event_ws(
     if namespace:
         base_payload["ns"] = namespace
 
+    if kind == "on_chat_model_stream" and namespace and namespace.startswith(_SUBGRAPH_NAMESPACE_PREFIXES):
+        return
+
     if kind == "on_chat_model_stream":
         chunk = data.get("chunk")
         if chunk is None:
@@ -588,7 +599,7 @@ async def _dispatch_event_ws(
                     stream_state["thinking_active"] = False
                 stream_state["visible_chars"] = stream_state.get("visible_chars", 0) + len(visible)
                 stream_state["_emitted_text"] = stream_state.get("_emitted_text", "") + visible
-                _emit(request_id, "stream:token", {**base_payload, "token": visible})
+                _emit(request_id, "stream:token", {**base_payload, "token": visible}, stream_state)
 
     elif kind == "on_chat_model_start":
         additional_kwargs = data.get("additional_kwargs", {})
