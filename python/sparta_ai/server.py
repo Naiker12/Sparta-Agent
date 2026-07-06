@@ -79,12 +79,49 @@ class StdioServer:
         elif method == "skills:list_all":
             from sparta_ai.skills.skill_loader import skills_index
             _emit(request_id, "skills:list_all:response", {"skills": skills_index()})
+        elif method == "mcp.test":
+            await self._handle_mcp_test(request_id, params)
+        elif method == "permission.respond":
+            from sparta_ai.tools.permission_broker import resolve_permission
+            perm_id = params.get("request_id", "")
+            approved = bool(params.get("approved", False))
+            remember = str(params.get("remember", "once"))
+            resolve_permission(perm_id, approved, remember)
         elif method == "shutdown":
             _emit(request_id, "shutdown", {"ok": True})
             self._running = False
         else:
             _emit_error(request_id, "unknown_method", f"Unknown method: {method}")
             _emit(request_id, "stream_end", {})
+
+    async def _handle_mcp_test(self, request_id: str | None, params: dict):
+        """Test connection to an MCP server and return discovered tools."""
+        config = params.get("config", {})
+        server_id = config.get("id", config.get("name", "unknown"))
+        timeout = int(config.get("timeout", 10))
+
+        from sparta_ai.tools.mcp_client import RealMCPClient
+
+        client = RealMCPClient({**config, "timeout": min(timeout, 15)})
+        try:
+            tools = await client.connect()
+            _emit(request_id, "mcp.test.result", {
+                "ok": True,
+                "serverId": server_id,
+                "toolCount": len(tools),
+                "tools": [
+                    {"name": t["name"], "description": t.get("description", ""), "inputSchema": t.get("inputSchema", {})}
+                    for t in tools
+                ],
+            })
+        except Exception as e:
+            _emit(request_id, "mcp.test.result", {
+                "ok": False,
+                "serverId": server_id,
+                "error": str(e),
+            })
+        finally:
+            await client.disconnect()
 
     async def _handle_chat_stream(self, request_id: str, params: dict):
         messages = params.get("messages", [])
@@ -188,18 +225,30 @@ class StdioServer:
         if semantic_memory and session_id:
             memory_context = await build_memory_context(messages[-1].get("content", "") if messages else "")
 
-        from sparta_ai.tools.mcp_bridge import build_mcp_tools
-        mcp_tools = build_mcp_tools(mcp_servers)
+        from sparta_ai.tools.mcp_client import build_mcp_tools
+
+        def _mcp_emit(event: str, data: dict) -> None:
+            _emit(request_id, event, data)
+
+        mcp_tools = await build_mcp_tools(mcp_servers, emit_fn=_mcp_emit)
 
         from sparta_ai.tools.memory_tools import read_memory_tool, write_memory_tool
-        from sparta_ai.tools.file_tools import read_file_tool, write_file_tool, inject_workspace_guidance
+        from sparta_ai.tools.file_tools import (
+            read_file_tool, write_file_tool, inject_workspace_guidance,
+            search_files_tool, patch_file_tool, delete_file_tool,
+        )
         from sparta_ai.tools.skill_tools import skill_view_tool, skills_list_tool, skill_manage_tool
         from sparta_ai.tools.terminal_tools import terminal_execute_tool, terminal_execute_background_tool
 
         # Ensure tool descriptions reflect the current workspace root (may have changed since import)
         inject_workspace_guidance()
 
-        agent_tools = [read_memory_tool, write_memory_tool, read_file_tool, write_file_tool, skill_view_tool, skills_list_tool, skill_manage_tool, terminal_execute_tool, terminal_execute_background_tool] + mcp_tools
+        agent_tools = [
+            read_memory_tool, write_memory_tool,
+            read_file_tool, write_file_tool, search_files_tool, patch_file_tool, delete_file_tool,
+            skill_view_tool, skills_list_tool, skill_manage_tool,
+            terminal_execute_tool, terminal_execute_background_tool,
+        ] + mcp_tools
         if web_search_enabled:
             from sparta_ai.tools.web_search import web_search_tool
             agent_tools.insert(0, web_search_tool)

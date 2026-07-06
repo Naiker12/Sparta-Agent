@@ -1,0 +1,259 @@
+"""Permission broker for out-of-workspace file operations.
+
+Flow for Electron (Desktop mode):
+  1. A file tool calls `request_permission(tool_name, path, preview)`.
+  2. The broker emits a `permission:request` event through the existing
+     stdout channel (same channel used for streaming tokens).
+  3. The broker awaits a Future that the Electron main process resolves
+     when the user approves or denies via the dialog.
+  4. The future is resolved by `resolve_permission(request_id, approved, remember)`,
+     called from a dedicated `permission.respond` stdin message handled
+     by server.py / server_web.py.
+
+In Web / CLI mode (no Electron) all out-of-workspace requests are denied
+immediately — there is no user dialog to show.
+
+Cache semantics (v1 — conservative):
+  - "allow_once":    approve this single call only (no cache).
+  - "allow_session": approve all future calls for this exact (tool, resolved_path) pair
+                     within the current request_id scope.
+  - "deny":          reject immediately.
+
+Two entry points:
+  - `request_permission(tool_name, path, preview)` — async, for callers with
+    access to an event loop (e.g. future MCP client, async tools).
+  - `request_permission_sync(tool_name, path, preview)` — sync, for current
+    file tools which are sync `@tool` functions called by ToolNode in a thread
+    executor. Uses `threading.Event` instead of `asyncio.Future`.
+"""
+from __future__ import annotations
+
+import asyncio
+import json
+import logging
+import os
+import sys
+import threading
+import uuid
+from pathlib import Path
+from typing import Any
+
+logger = logging.getLogger("sparta_ai.tools.permission_broker")
+
+# Environment flag: "electron" means we have a user dialog available.
+_IS_ELECTRON = os.environ.get("SPARTA_ENV", "").lower() == "electron"
+
+# Per-session cache: maps (tool_name, resolved_path_str) → True (allowed)
+_session_cache: dict[tuple[str, str], bool] = {}
+
+# Pending futures: maps request_id → Future[bool]  (for async callers)
+_pending: dict[str, asyncio.Future[bool]] = {}
+
+# Pending sync events: maps request_id → threading.Event  (for sync callers)
+# ToolNode runs sync tools in a thread executor, so we need thread-safe
+# synchronization instead of asyncio.Future.
+_pending_sync: dict[str, threading.Event] = {}
+# Stores (approved: bool, remember: str) results for sync callers
+_pending_sync_results: dict[str, tuple[bool, str]] = {}
+
+# Permission request timeout in seconds — deny by default after this.
+_TIMEOUT_SECONDS = 120
+
+
+def _workspace_root() -> Path:
+    root = os.environ.get("SPARTA_WORKSPACE_ROOT")
+    return Path(root).resolve() if root else Path.cwd().resolve()
+
+
+def _is_inside_workspace(resolved: Path) -> bool:
+    root = _workspace_root()
+    try:
+        return os.path.commonpath([str(root), str(resolved)]) == str(root)
+    except ValueError:
+        return False
+
+
+def _emit_permission_request(
+    request_id: str,
+    tool_name: str,
+    resolved_path: str,
+    preview: str,
+) -> None:
+    """Emit a permission:request event on stdout (same channel as stream tokens)."""
+    msg: dict[str, Any] = {
+        "event": "permission:request",
+        "data": {
+            "request_id": request_id,
+            "tool": tool_name,
+            "path": resolved_path,
+            "preview": preview,
+        },
+    }
+    try:
+        sys.stdout.write(json.dumps(msg, ensure_ascii=False) + "\n")
+        sys.stdout.flush()
+    except (BrokenPipeError, OSError):
+        sys.exit(0)
+
+
+async def request_permission(
+    tool_name: str,
+    resolved_path: Path,
+    preview: str = "",
+    request_id: str = "",
+) -> bool:
+    """Check or request permission for an out-of-workspace path.
+
+    Args:
+        tool_name:     Name of the tool requesting access (e.g. "write_file_tool").
+        resolved_path: Absolute resolved path the tool wants to access.
+        preview:       Short description or diff preview shown to the user.
+        request_id:    Optional parent request_id for scoping the session cache.
+
+    Returns:
+        True if access is granted, False if denied.
+    """
+    if _is_inside_workspace(resolved_path):
+        return True
+
+    cache_key = (tool_name, str(resolved_path))
+    if cache_key in _session_cache:
+        logger.debug("Permission cache hit for %s %s", tool_name, resolved_path)
+        return _session_cache[cache_key]
+
+    if not _IS_ELECTRON:
+        logger.warning(
+            "Out-of-workspace access denied (non-Electron env): %s → %s",
+            tool_name, resolved_path,
+        )
+        return False
+
+    perm_id = str(uuid.uuid4())
+    loop = asyncio.get_event_loop()
+    future: asyncio.Future[bool] = loop.create_future()
+    _pending[perm_id] = future
+
+    _emit_permission_request(perm_id, tool_name, str(resolved_path), preview)
+    logger.info("Permission requested: %s for %s (id=%s)", tool_name, resolved_path, perm_id)
+
+    try:
+        approved = await asyncio.wait_for(asyncio.shield(future), timeout=_TIMEOUT_SECONDS)
+    except asyncio.TimeoutError:
+        logger.warning("Permission request timed out (id=%s) — denying", perm_id)
+        approved = False
+    finally:
+        _pending.pop(perm_id, None)
+
+    if approved:
+        _session_cache[cache_key] = True
+        logger.info("Permission granted (session): %s → %s", tool_name, resolved_path)
+    else:
+        logger.info("Permission denied: %s → %s", tool_name, resolved_path)
+
+    return approved
+
+
+def request_permission_sync(
+    tool_name: str,
+    resolved_path: Path,
+    preview: str = "",
+) -> bool:
+    """Sync version of request_permission for sync @tool functions.
+
+    Uses threading.Event for cross-thread signal instead of asyncio.Future.
+    Designed to be called from ToolNode executor threads.
+
+    Args:
+        tool_name:     Name of the tool requesting access.
+        resolved_path: Absolute resolved path to access.
+        preview:       Short description or diff preview.
+
+    Returns:
+        True if access is granted, False if denied.
+    """
+    if _is_inside_workspace(resolved_path):
+        return True
+
+    cache_key = (tool_name, str(resolved_path))
+    if cache_key in _session_cache:
+        logger.debug("Permission cache hit (sync) for %s %s", tool_name, resolved_path)
+        return _session_cache[cache_key]
+
+    if not _IS_ELECTRON:
+        logger.warning(
+            "Out-of-workspace access denied (non-Electron sync): %s → %s",
+            tool_name, resolved_path,
+        )
+        return False
+
+    perm_id = str(uuid.uuid4())
+    event = threading.Event()
+    _pending_sync[perm_id] = event
+
+    _emit_permission_request(perm_id, tool_name, str(resolved_path), preview)
+    logger.info("Permission requested (sync): %s for %s (id=%s)", tool_name, resolved_path, perm_id)
+
+    triggered = event.wait(timeout=_TIMEOUT_SECONDS)
+    if not triggered:
+        logger.warning("Permission request timed out (sync id=%s) — denying", perm_id)
+        approved = False
+        remember = "once"
+    else:
+        approved, remember = _pending_sync_results.pop(perm_id, (False, "once"))
+
+    _pending_sync.pop(perm_id, None)
+
+    if approved and remember == "session":
+        _session_cache[cache_key] = True
+        logger.info("Permission granted (sync, session cached): %s → %s", tool_name, resolved_path)
+    elif approved:
+        logger.info("Permission granted (sync, once): %s → %s", tool_name, resolved_path)
+    else:
+        logger.info("Permission denied (sync): %s → %s", tool_name, resolved_path)
+
+    return approved
+
+
+def resolve_permission(perm_id: str, approved: bool, remember: str = "once") -> bool:
+    """Resolve a pending permission request.
+
+    Called by server.py when it receives a ``permission.respond`` message
+    from Electron main process.  Handles both async (asyncio.Future) and
+    sync (threading.Event) callers.
+
+    Args:
+        perm_id:  The request_id from the permission:request event.
+        approved: Whether the user approved (True) or denied (False).
+        remember: Cache policy sent by the dialog:
+                  "once"    — do NOT cache, this approval is single-use.
+                  "session" — cache for the current session.
+
+    Returns:
+        True if a matching pending request was found and resolved,
+        False if the id is unknown (already resolved or bogus).
+    """
+    # Try sync pending (threading.Event based)
+    sync_event = _pending_sync.get(perm_id)
+    if sync_event is not None:
+        _pending_sync_results[perm_id] = (approved, remember)
+        sync_event.set()
+        return True
+
+    # Try async pending (asyncio.Future based)
+    future = _pending.get(perm_id)
+    if future is not None:
+        if not future.done():
+            future.set_result(approved)
+        # NOTE: async path always caches in request_permission.
+        # The remember parameter is tracked but the async path uses
+        # session caching for v1.  Future work: pass remember through
+        # to request_permission for proper once-vs-session handling.
+        return True
+
+    logger.warning("resolve_permission: unknown id=%s", perm_id)
+    return False
+
+
+def clear_session_cache() -> None:
+    """Clear the per-session permission cache (call at session end)."""
+    _session_cache.clear()
