@@ -106,6 +106,30 @@ async def websocket_endpoint(websocket: WebSocket):
                     "type": "skills:list_all:response",
                     "skills": skills_index(),
                 }))
+            elif method == "mcp.test":
+                config = params.get("config", {})
+                server_id = config.get("id", config.get("name", "unknown"))
+                timeout = int(config.get("timeout", 10))
+                from sparta_ai.tools.mcp_client import RealMCPClient
+                client = RealMCPClient({**config, "timeout": min(timeout, 15)})
+                try:
+                    tools = await client.connect()
+                    await websocket.send_text(json.dumps({
+                        "type": "mcp.test.result",
+                        "ok": True,
+                        "serverId": server_id,
+                        "toolCount": len(tools),
+                        "tools": [{"name": t["name"], "description": t.get("description", "")} for t in tools],
+                    }))
+                except Exception as e:
+                    await websocket.send_text(json.dumps({
+                        "type": "mcp.test.result",
+                        "ok": False,
+                        "serverId": server_id,
+                        "error": str(e),
+                    }))
+                finally:
+                    await client.disconnect()
             elif method == "ping":
                 await websocket.send_text(json.dumps({"event": "pong"}))
 
@@ -243,15 +267,30 @@ async def _execute_agent_ws(
     if semantic_memory and session_id:
         memory_context = await build_memory_context(messages[-1].get("content", "") if messages else "")
 
-    from sparta_ai.tools.mcp_bridge import build_mcp_tools
-    mcp_tools = build_mcp_tools(mcp_servers)
+    from sparta_ai.tools.mcp_client import build_mcp_tools
+
+    async def _mcp_emit_ws(event: str, data: dict) -> None:
+        try:
+            await ws.send_text(json.dumps({"type": event, **data}))
+        except Exception:
+            pass
+
+    mcp_tools = await build_mcp_tools(mcp_servers, emit_fn=_mcp_emit_ws)
 
     from sparta_ai.tools.memory_tools import read_memory_tool, write_memory_tool
-    from sparta_ai.tools.file_tools import read_file_tool, write_file_tool
+    from sparta_ai.tools.file_tools import (
+        read_file_tool, write_file_tool,
+        search_files_tool, patch_file_tool, delete_file_tool,
+    )
     from sparta_ai.tools.skill_tools import skill_view_tool, skills_list_tool, skill_manage_tool
     from sparta_ai.tools.terminal_tools import terminal_execute_tool, terminal_execute_background_tool
 
-    agent_tools = [read_memory_tool, write_memory_tool, read_file_tool, write_file_tool, skill_view_tool, skills_list_tool, skill_manage_tool, terminal_execute_tool, terminal_execute_background_tool] + mcp_tools
+    agent_tools = [
+        read_memory_tool, write_memory_tool,
+        read_file_tool, write_file_tool, search_files_tool, patch_file_tool, delete_file_tool,
+        skill_view_tool, skills_list_tool, skill_manage_tool,
+        terminal_execute_tool, terminal_execute_background_tool,
+    ] + mcp_tools
     if web_search_enabled:
         from sparta_ai.tools.web_search import web_search_tool
         agent_tools.insert(0, web_search_tool)

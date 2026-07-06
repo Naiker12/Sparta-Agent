@@ -100,10 +100,26 @@ export function registerChatIPC(): void {
   const onMessage = (msg: Record<string, unknown>) => {
     const requestId = (msg.id as string) ?? ''
     const [sessionId, messageId] = requestId.split(':')
-    if (!sessionId || !messageId) return
 
     const event = msg.event as string
     const data = msg.data as Record<string, unknown> | undefined
+
+    // ── MCP lifecycle events: global, no messageId needed ──────────────
+    if (event === 'mcp:connected' || event === 'mcp:tool_discovered' || event === 'mcp:error') {
+      // Broadcast to all windows — MCP state is global, not session-scoped
+      const win = (sessionId ? windowBySession.get(sessionId) : undefined)
+        ?? BrowserWindow.getFocusedWindow()
+        ?? BrowserWindow.getAllWindows()[0]
+      if (win && !win.isDestroyed()) {
+        win.webContents.send('sparta:event', {
+          type: event,
+          ...(data ?? {}),
+        })
+      }
+      return
+    }
+
+    if (!sessionId || !messageId) return
 
     switch (event) {
       case 'thinking:started':
@@ -269,6 +285,37 @@ export function registerChatIPC(): void {
     if (state) {
       activeStreams.set(sessionId, { ...state, active: false })
     }
+  })
+
+  // ── MCP connection test ────────────────────────────────────────────
+  const mcpTestResolvers = new Map<string, (result: unknown) => void>()
+  sidecarEvents.on(SidecarEvent.MESSAGE, (msg: Record<string, unknown>) => {
+    if (msg.event === 'mcp.test.result') {
+      const testId = (msg.id as string) ?? ''
+      const resolve = mcpTestResolvers.get(testId)
+      if (resolve) {
+        resolve(msg.data ?? { ok: false, error: 'Sin datos' })
+        mcpTestResolvers.delete(testId)
+      }
+    }
+  })
+
+  ipcMain.handle('mcp:test', async (_event, config: Record<string, unknown>) => {
+    if (!isSidecarRunning()) {
+      return { ok: false, error: 'Sidecar no iniciado' }
+    }
+    const testId = `mcp_test_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+    sendToPython({ id: testId, method: 'mcp.test', params: { config } })
+
+    return new Promise((resolve) => {
+      mcpTestResolvers.set(testId, resolve)
+      setTimeout(() => {
+        if (mcpTestResolvers.has(testId)) {
+          mcpTestResolvers.delete(testId)
+          resolve({ ok: false, error: 'Timeout — el servidor MCP no respondió en 15s' })
+        }
+      }, 16_000)
+    })
   })
 
   ipcMain.handle('sidecar:status', () => {

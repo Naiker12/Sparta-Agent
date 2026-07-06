@@ -106,13 +106,62 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
     reset(); onClose()
   }
 
-  function handleTest() {
+  function buildConfig(): MCPServerConfig {
+    return {
+      id: (editServer?.id ?? name.toLowerCase().replace(/\s+/g, '-')),
+      name: name.trim(),
+      type,
+      command: type === 'stdio' ? command.trim() : undefined,
+      args: type === 'stdio' ? args.split('\n').map(s => s.trim()).filter(Boolean) : undefined,
+      env: type === 'stdio' && envVars.trim()
+        ? Object.fromEntries(
+            envVars.split('\n').map(l => l.trim()).filter(Boolean).map(l => {
+              const idx = l.indexOf('=')
+              return idx > 0 ? [l.slice(0, idx).trim(), l.slice(idx + 1).trim()] : [l, '']
+            })
+          )
+        : undefined,
+      url: type === 'http' ? url.trim() : undefined,
+      headers: type === 'http' && envVars.trim()
+        ? Object.fromEntries(
+            envVars.split('\n').map(l => l.trim()).filter(Boolean).map(l => {
+              const idx = l.indexOf('=')
+              return idx > 0 ? [l.slice(0, idx).trim(), l.slice(idx + 1).trim()] : [l, '']
+            })
+          )
+        : undefined,
+      enabled: true,
+    }
+  }
+
+  async function handleTest() {
     setTesting(true); setTestResult(null)
-    setTimeout(() => {
-      const count = Math.floor(Math.random() * 8) + 1
-      setTestResult(`${count} ${t('mcp.toolsDiscovered')}`)
+    const config = buildConfig()
+    try {
+      if (typeof window !== 'undefined' && (window as Record<string, unknown>).electron) {
+        const win = window as unknown as { electron: { invoke: (channel: string, ...args: unknown[]) => Promise<unknown> } }
+        const result = await win.electron.invoke('mcp:test', config) as { ok: boolean; toolCount?: number; error?: string }
+        if (result.ok) {
+          setTestResult(`Conectado — ${result.toolCount ?? 0} ${t('mcp.toolsDiscovered')}`)
+        } else {
+          setTestResult(`Error: ${result.error ?? 'Conexión fallida'}`)
+        }
+      } else if (typeof window !== 'undefined' && (window as Record<string, unknown>).sparta) {
+        const win = window as unknown as { sparta: { testMcpConnection: (config: Record<string, unknown>) => Promise<{ ok: boolean; toolCount?: number; error?: string }> } }
+        const result = await win.sparta.testMcpConnection(config)
+        if (result.ok) {
+          setTestResult(`Conectado — ${result.toolCount ?? 0} ${t('mcp.toolsDiscovered')}`)
+        } else {
+          setTestResult(`Error: ${result.error ?? 'Conexión fallida'}`)
+        }
+      } else {
+        setTestResult('Modo web: no disponible')
+      }
+    } catch (err) {
+      setTestResult(`Error: ${(err as Error).message ?? 'Error desconocido'}`)
+    } finally {
       setTesting(false)
-    }, 800)
+    }
   }
 
   function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {

@@ -57,6 +57,7 @@ contextBridge.exposeInMainWorld('sparta', {
   }) => ipcRenderer.invoke('chat:send', req),
   abortMessage: (sessionId: string) => ipcRenderer.invoke('chat:abort', sessionId),
   isSidecarReady: () => ipcRenderer.invoke('sidecar:status') as Promise<{ running: boolean; ready: boolean }>,
+  testMcpConnection: (config: Record<string, unknown>) => ipcRenderer.invoke('mcp:test', config) as Promise<{ ok: boolean; serverId?: string; toolCount?: number; tools?: unknown[]; error?: string }>,
 })
 
 contextBridge.exposeInMainWorld('vault', {
@@ -140,4 +141,21 @@ contextBridge.exposeInMainWorld('skills', {
   find: (query: string) => ipcRenderer.invoke('skills:find', query) as Promise<{ ok: boolean; output: string }>,
   update: () => ipcRenderer.invoke('skills:update') as Promise<{ ok: boolean; output: string }>,
   uninstall: (skillId: string) => ipcRenderer.invoke('skills:uninstall', skillId) as Promise<{ success: boolean; error?: string }>,
+})
+
+contextBridge.exposeInMainWorld('permission', {
+  /**
+   * Subscribe to permission:request events from the Python sidecar.
+   * Returns an unsubscribe function.
+   */
+  onRequest: (callback: (payload: unknown) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, data: unknown) => callback(data)
+    ipcRenderer.on('permission:request', handler)
+    return () => ipcRenderer.removeListener('permission:request', handler)
+  },
+  /**
+   * Send the user's decision back to the sidecar.
+   */
+  respond: (payload: { requestId: string; approved: boolean; remember: 'once' | 'session' }) =>
+    ipcRenderer.invoke('permission:respond', payload) as Promise<{ ok: boolean }>,
 })
