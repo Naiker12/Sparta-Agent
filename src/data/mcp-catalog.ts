@@ -13,6 +13,7 @@ export interface CatalogEntry {
   headers_required?: string[]
   notes?: string
   docs_url?: string
+  vendor?: string
 }
 
 export const MCP_CATALOG: Record<string, CatalogEntry> = {
@@ -24,6 +25,7 @@ export const MCP_CATALOG: Record<string, CatalogEntry> = {
     args: ['-y', '@modelcontextprotocol/server-github'],
     env_required: ['GITHUB_TOKEN'],
     docs_url: 'https://github.com/modelcontextprotocol/servers/tree/main/src/github',
+    vendor: 'github',
   },
   filesystem: {
     name: 'Filesystem',
@@ -33,6 +35,7 @@ export const MCP_CATALOG: Record<string, CatalogEntry> = {
     args: ['-y', '@modelcontextprotocol/server-filesystem', '${DIR}'],
     notes: 'Requiere especificar un directorio permitido.',
     docs_url: 'https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem',
+    vendor: 'filesystem',
   },
   notion: {
     name: 'Notion',
@@ -41,6 +44,7 @@ export const MCP_CATALOG: Record<string, CatalogEntry> = {
     url: 'https://mcp.notion.com/mcp',
     headers_required: ['Authorization'],
     docs_url: 'https://developers.notion.com/docs/authorization',
+    vendor: 'notion',
   },
   postgres: {
     name: 'PostgreSQL',
@@ -50,6 +54,7 @@ export const MCP_CATALOG: Record<string, CatalogEntry> = {
     args: ['-y', '@modelcontextprotocol/server-postgres', '${DATABASE_URL}'],
     notes: 'Requiere DATABASE_URL.',
     docs_url: 'https://github.com/modelcontextprotocol/servers/tree/main/src/postgres',
+    vendor: 'postgresql',
   },
   sqlite: {
     name: 'SQLite',
@@ -59,6 +64,7 @@ export const MCP_CATALOG: Record<string, CatalogEntry> = {
     args: ['mcp-server-sqlite', '--db', '${DB_PATH}'],
     notes: 'Requiere ruta a archivo .db.',
     docs_url: 'https://github.com/modelcontextprotocol/servers/tree/main/src/sqlite',
+    vendor: 'sqlite',
   },
   puppeteer: {
     name: 'Puppeteer',
@@ -67,6 +73,7 @@ export const MCP_CATALOG: Record<string, CatalogEntry> = {
     command: 'npx',
     args: ['-y', '@modelcontextprotocol/server-puppeteer'],
     docs_url: 'https://github.com/modelcontextprotocol/servers/tree/main/src/puppeteer',
+    vendor: 'puppeteer',
   },
 }
 
@@ -84,6 +91,7 @@ export function catalogToMarketplaceItems() {
     headers_required: entry.headers_required ?? [],
     notes: entry.notes,
     docs_url: entry.docs_url,
+    vendor: entry.vendor,
   }))
 }
 

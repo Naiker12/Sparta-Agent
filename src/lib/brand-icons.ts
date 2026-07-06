@@ -104,6 +104,22 @@ export const BRAND_ICONS: Record<string, BrandIconPaths> = {
     light: '/icons/brands/postgresql.svg',
     dark: '/icons/brands/postgresql.svg',
   },
+  github: {
+    light: '/icons/brands/github.svg',
+    dark: '/icons/brands/github.svg',
+  },
+  notion: {
+    light: '/icons/brands/notion.svg',
+    dark: '/icons/brands/notion.svg',
+  },
+  puppeteer: {
+    light: '/icons/brands/puppeteer.svg',
+    dark: '/icons/brands/puppeteer.svg',
+  },
+  filesystem: {
+    light: '/icons/brands/filesystem.svg',
+    dark: '/icons/brands/filesystem.svg',
+  },
 }
 
 export const MONO_BRANDS = ['anthropic', 'openai']

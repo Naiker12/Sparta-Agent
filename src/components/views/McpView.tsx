@@ -22,6 +22,7 @@ interface MarketplaceItem {
   headers_required: string[]
   notes?: string
   docs_url?: string
+  vendor?: string
 }
 
 const CATALOG_ITEMS = catalogToMarketplaceItems()
@@ -352,9 +353,9 @@ function MarketplaceCard({ item, desc, installed, onInstall, installLabel, insta
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             background: 'var(--bg-elevated)', border: '1px solid var(--border-normal)',
           }}>
-            {'vendor' in item && item.vendor
-              ? <BrandIcon vendor={(item as { vendor: string }).vendor} size={20} />
-              : <span style={{ fontSize: 18, color: cat.color }}>{_catalogIcon(item)}</span>
+            {item.vendor
+              ? <BrandIcon vendor={item.vendor} size={20} />
+              : <span style={{ fontSize: 18 }}>{_catalogIcon(item)}</span>
             }
           </div>
           <div style={{ minWidth: 0 }}>
