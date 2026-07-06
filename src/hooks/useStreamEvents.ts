@@ -110,8 +110,32 @@ function _handleEvent(rawEvent: SpartaEvent) {
     return
   }
 
+  // ── MCP server added/removed by mcp_manage_tool ─────────────────────
+  if (type === 'mcp:server_added') {
+    const { useMCPStore } = require('@/stores/mcp.store') as typeof import('@/stores/mcp.store')
+    const store = useMCPStore.getState()
+    const serverId = (event.serverId ?? '') as string
+    const config = event.config as Record<string, unknown> | undefined
+    if (serverId && config) {
+      store.addServer(config as Parameters<typeof store.addServer>[0])
+      console.debug('[MCP] server added via tool:', serverId)
+    }
+    return
+  }
+
+  if (type === 'mcp:server_removed') {
+    const { useMCPStore } = require('@/stores/mcp.store') as typeof import('@/stores/mcp.store')
+    const store = useMCPStore.getState()
+    const serverId = (event.serverId ?? '') as string
+    if (serverId) {
+      store.removeServer(serverId)
+      console.debug('[MCP] server removed via tool:', serverId)
+    }
+    return
+  }
+
   if (!sid || !mid) {
-    if (type && !type.startsWith('sidecar') && !type.startsWith('terminal')) {
+    if (type && !type.startsWith('sidecar') && !type.startsWith('terminal') && !type.startsWith('mcp:')) {
       console.debug('[useStreamEvents] Event sin sessionId/messageId, ignorando:', type)
     }
     return
