@@ -13,7 +13,7 @@
  */
 import { usePermissionStore } from '@/stores/permission.store'
 import { usePermissionRequests } from '@/hooks/usePermissionRequests'
-import { ShieldAlert, FolderOpen, FileEdit, Trash2, X } from 'lucide-react'
+import { ShieldAlert, FolderOpen, FileEdit, Trash2, Download, X } from 'lucide-react'
 
 const TOOL_META: Record<string, { label: string; icon: React.ReactNode; risk: 'low' | 'high' }> = {
   read_file_tool:    { label: 'Leer archivo',    icon: <FolderOpen size={18} />, risk: 'low' },
@@ -21,6 +21,12 @@ const TOOL_META: Record<string, { label: string; icon: React.ReactNode; risk: 'l
   patch_file_tool:   { label: 'Editar archivo',   icon: <FileEdit size={18} />,  risk: 'high' },
   delete_file_tool:  { label: 'Eliminar archivo', icon: <Trash2 size={18} />,    risk: 'high' },
   search_files_tool: { label: 'Buscar archivos',  icon: <FolderOpen size={18} />, risk: 'low' },
+}
+
+const MCP_INSTALL_META = {
+  label: 'Instalar servidor MCP',
+  icon: <Download size={18} />,
+  risk: 'high' as const,
 }
 
 export function PermissionRequestDialog() {
@@ -31,7 +37,10 @@ export function PermissionRequestDialog() {
   const req = queue[0]
   if (!req) return null
 
-  const meta = TOOL_META[req.tool] ?? { label: req.tool, icon: <ShieldAlert size={18} />, risk: 'high' }
+  const isMcpInstall = req.kind === 'mcp_install'
+  const meta = isMcpInstall
+    ? MCP_INSTALL_META
+    : (TOOL_META[req.tool] ?? { label: req.tool, icon: <ShieldAlert size={18} />, risk: 'high' })
   const isHighRisk = meta.risk === 'high'
 
   return (
@@ -99,59 +108,116 @@ export function PermissionRequestDialog() {
         {/* ── Body ────────────────────────────────────────────── */}
         <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
 
-          {/* Path */}
-          <div>
-            <div style={{
-              fontSize: 9, fontWeight: 700, textTransform: 'uppercase',
-              letterSpacing: '0.06em', color: 'var(--text-muted)',
-              fontFamily: 'var(--font-mono)', marginBottom: 5,
-            }}>
-              Ruta solicitada
-            </div>
-            <div style={{
-              padding: '8px 12px', borderRadius: 7,
-              background: 'var(--bg-input)', border: '1px solid var(--border-subtle)',
-              fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-primary)',
-              wordBreak: 'break-all', lineHeight: 1.5,
-            }}>
-              {req.path}
-            </div>
-          </div>
-
-          {/* Preview (diff or content excerpt) */}
-          {req.preview && (
-            <div>
-              <div style={{
-                fontSize: 9, fontWeight: 700, textTransform: 'uppercase',
-                letterSpacing: '0.06em', color: 'var(--text-muted)',
-                fontFamily: 'var(--font-mono)', marginBottom: 5,
-              }}>
-                Vista previa
+          {isMcpInstall ? (
+            <>
+              {/* MCP Install layout */}
+              <div>
+                <div style={{
+                  fontSize: 9, fontWeight: 700, textTransform: 'uppercase',
+                  letterSpacing: '0.06em', color: 'var(--text-muted)',
+                  fontFamily: 'var(--font-mono)', marginBottom: 5,
+                }}>
+                  Servidor MCP a instalar
+                </div>
+                <div style={{
+                  padding: '8px 12px', borderRadius: 7,
+                  background: 'var(--bg-input)', border: '1px solid var(--border-subtle)',
+                  fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-primary)',
+                  wordBreak: 'break-all', lineHeight: 1.5,
+                }}>
+                  {req.path}
+                </div>
               </div>
-              <pre style={{
-                margin: 0, padding: '8px 12px', borderRadius: 7,
-                background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)',
-                fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-secondary)',
-                maxHeight: 120, overflowY: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-all',
-                lineHeight: 1.5,
-              }}>
-                {req.preview.slice(0, 600)}{req.preview.length > 600 ? '\n…' : ''}
-              </pre>
-            </div>
-          )}
 
-          {/* Risk warning for high-risk ops */}
-          {isHighRisk && (
-            <div style={{
-              display: 'flex', gap: 8, padding: '8px 12px', borderRadius: 8,
-              background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
-            }}>
-              <ShieldAlert size={13} style={{ color: '#f87171', flexShrink: 0, marginTop: 1 }} />
-              <span style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                Esta operación modificará o eliminará archivos fuera del proyecto actual.
-                Revisa la ruta antes de aprobar.
-              </span>
-            </div>
+              {/* Command preview */}
+              {req.preview && (
+                <div>
+                  <div style={{
+                    fontSize: 9, fontWeight: 700, textTransform: 'uppercase',
+                    letterSpacing: '0.06em', color: 'var(--text-muted)',
+                    fontFamily: 'var(--font-mono)', marginBottom: 5,
+                  }}>
+                    Detalle
+                  </div>
+                  <pre style={{
+                    margin: 0, padding: '8px 12px', borderRadius: 7,
+                    background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)',
+                    fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-secondary)',
+                    maxHeight: 200, overflowY: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-all',
+                    lineHeight: 1.5,
+                  }}>
+                    {req.preview.slice(0, 1000)}{req.preview.length > 1000 ? '\n…' : ''}
+                  </pre>
+                </div>
+              )}
+
+              <div style={{
+                display: 'flex', gap: 8, padding: '10px 12px', borderRadius: 8,
+                background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
+              }}>
+                <ShieldAlert size={13} style={{ color: '#f87171', flexShrink: 0, marginTop: 2 }} />
+                <span style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                  Esto ejecutará un proceso de terceros en tu máquina.
+                  Verifica que el comando sea seguro antes de aprobar.
+                  Esta instalación no se recordará — cada instalación requiere confirmación.
+                </span>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* File access layout (original) */}
+              <div>
+                <div style={{
+                  fontSize: 9, fontWeight: 700, textTransform: 'uppercase',
+                  letterSpacing: '0.06em', color: 'var(--text-muted)',
+                  fontFamily: 'var(--font-mono)', marginBottom: 5,
+                }}>
+                  Ruta solicitada
+                </div>
+                <div style={{
+                  padding: '8px 12px', borderRadius: 7,
+                  background: 'var(--bg-input)', border: '1px solid var(--border-subtle)',
+                  fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-primary)',
+                  wordBreak: 'break-all', lineHeight: 1.5,
+                }}>
+                  {req.path}
+                </div>
+              </div>
+
+              {req.preview && (
+                <div>
+                  <div style={{
+                    fontSize: 9, fontWeight: 700, textTransform: 'uppercase',
+                    letterSpacing: '0.06em', color: 'var(--text-muted)',
+                    fontFamily: 'var(--font-mono)', marginBottom: 5,
+                  }}>
+                    Vista previa
+                  </div>
+                  <pre style={{
+                    margin: 0, padding: '8px 12px', borderRadius: 7,
+                    background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)',
+                    fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-secondary)',
+                    maxHeight: 120, overflowY: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-all',
+                    lineHeight: 1.5,
+                  }}>
+                    {req.preview.slice(0, 600)}{req.preview.length > 600 ? '\n…' : ''}
+                  </pre>
+                </div>
+              )}
+
+              {isHighRisk && (
+                <div style={{
+                  display: 'flex', gap: 8, padding: '8px 12px', borderRadius: 8,
+                  background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
+                }}>
+                  <ShieldAlert size={13} style={{ color: '#f87171', flexShrink: 0, marginTop: 1 }} />
+                  <span style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                    Esta operación modificará o eliminará archivos fuera del proyecto actual.
+                    Revisa la ruta antes de aprobar.
+                  </span>
+                </div>
+              )}
+            </>
           )}
         </div>
 
@@ -161,36 +227,46 @@ export function PermissionRequestDialog() {
           padding: '12px 20px',
           borderTop: '1px solid var(--border-subtle)',
         }}>
-          {/* Deny */}
-          <ActionBtn
-            label="Denegar"
-            variant="ghost"
-            onClick={() => respond(req.requestId, false, 'once')}
-          />
-
-          {/* Allow once — always available */}
-          <ActionBtn
-            label="Permitir una vez"
-            variant="outline"
-            onClick={() => respond(req.requestId, true, 'once')}
-          />
-
-          {/* Allow session — only for low-risk (reads/search) */}
-          {!isHighRisk && (
-            <ActionBtn
-              label="Permitir en sesión"
-              variant="primary"
-              onClick={() => respond(req.requestId, true, 'session')}
-            />
-          )}
-
-          {/* High-risk: explicit confirm with red accent */}
-          {isHighRisk && (
-            <ActionBtn
-              label="Confirmar y permitir"
-              variant="danger"
-              onClick={() => respond(req.requestId, true, 'once')}
-            />
+          {isMcpInstall ? (
+            <>
+              <ActionBtn
+                label="Cancelar"
+                variant="ghost"
+                onClick={() => respond(req.requestId, false, 'once')}
+              />
+              <ActionBtn
+                label="Instalar"
+                variant="danger"
+                onClick={() => respond(req.requestId, true, 'once')}
+              />
+            </>
+          ) : (
+            <>
+              <ActionBtn
+                label="Denegar"
+                variant="ghost"
+                onClick={() => respond(req.requestId, false, 'once')}
+              />
+              <ActionBtn
+                label="Permitir una vez"
+                variant="outline"
+                onClick={() => respond(req.requestId, true, 'once')}
+              />
+              {!isHighRisk && (
+                <ActionBtn
+                  label="Permitir en sesión"
+                  variant="primary"
+                  onClick={() => respond(req.requestId, true, 'session')}
+                />
+              )}
+              {isHighRisk && (
+                <ActionBtn
+                  label="Confirmar y permitir"
+                  variant="danger"
+                  onClick={() => respond(req.requestId, true, 'once')}
+                />
+              )}
+            </>
           )}
         </div>
       </div>

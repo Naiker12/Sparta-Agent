@@ -1,10 +1,13 @@
 import { create } from 'zustand'
 
+export type PermissionKind = 'file_access' | 'mcp_install'
+
 export interface PermissionRequest {
   requestId: string
   tool: string
   path: string
   preview: string
+  kind: PermissionKind
   /** Timestamp when the request arrived — used to expire stale entries */
   arrivedAt: number
 }

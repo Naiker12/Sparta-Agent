@@ -21,12 +21,13 @@ export function usePermissionRequests() {
     const unlisten = window.electron?.on(
       'permission:request',
       (payload: unknown) => {
-        const p = payload as PermissionRequest & { requestId?: string; request_id?: string }
+        const p = payload as PermissionRequest & { requestId?: string; request_id?: string; kind?: string }
         const req: PermissionRequest = {
           requestId: p.requestId ?? (p as { request_id?: string }).request_id ?? '',
           tool:      p.tool ?? '',
           path:      p.path ?? '',
           preview:   p.preview ?? '',
+          kind:      (p.kind as PermissionRequest['kind']) ?? 'file_access',
           arrivedAt: Date.now(),
         }
         if (req.requestId) {
