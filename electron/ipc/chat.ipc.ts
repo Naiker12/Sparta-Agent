@@ -1,5 +1,6 @@
 import { ipcMain, BrowserWindow, type IpcMainEvent } from 'electron'
 import { sendToPython, isSidecarRunning, isSidecarReady, waitForSidecarReady, sidecarEvents, SidecarEvent } from './sidecar.ipc'
+import { storeKey as vaultStoreKey } from '../vault'
 
 interface ChatRequest {
   sessionId: string
@@ -103,6 +104,18 @@ export function registerChatIPC(): void {
 
     const event = msg.event as string
     const data = msg.data as Record<string, unknown> | undefined
+
+    // ── Vault requests from Python sidecar (MCP secret storage) ───────
+    if (event === 'vault:mcp_store') {
+      const keyId = (data?.key_id ?? '') as string
+      const value = (data?.value ?? '') as string
+      if (keyId && value) {
+        vaultStoreKey(keyId, value, 'mcp')
+      }
+      // Send ack back to Python via existing channel
+      sendToPython({ id: msg.id ?? '', method: 'keymanager.set', params: { key_id: keyId, value } })
+      return
+    }
 
     // ── MCP lifecycle events: global, no messageId needed ──────────────
     if (event === 'mcp:connected' || event === 'mcp:tool_discovered' || event === 'mcp:error') {
