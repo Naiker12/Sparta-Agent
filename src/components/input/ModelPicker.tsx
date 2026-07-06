@@ -106,11 +106,29 @@ export function ModelPicker() {
             if (!model) return null
             return (
               <ComboboxItem key={item} value={item}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%' }}>
                   <BrandIcon vendor={model.vendor as any} size={16} />
-                  <div>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>{item}</div>
-                    <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>
+                  <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                    <div style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: 12,
+                      whiteSpace: 'nowrap',
+                      textOverflow: 'ellipsis',
+                      overflow: 'hidden',
+                      width: '100%',
+                      textAlign: 'left'
+                    }}>
+                      {item}
+                    </div>
+                    <div style={{
+                      fontSize: 10,
+                      color: 'var(--text-muted)',
+                      whiteSpace: 'nowrap',
+                      textOverflow: 'ellipsis',
+                      overflow: 'hidden',
+                      width: '100%',
+                      textAlign: 'left'
+                    }}>
                       {model.providerLabel}
                     </div>
                   </div>

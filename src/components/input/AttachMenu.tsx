@@ -11,40 +11,44 @@ interface AttachMenuProps {
 const btnStyle: Record<string, string | number> = {
   display: 'flex',
   alignItems: 'center',
-  gap: 10,
+  gap: 8,
   width: '100%',
-  padding: '7px 12px',
+  padding: '6px 8px',
   background: 'none',
   border: 'none',
   borderRadius: 'var(--radius-md)',
   color: 'var(--text-secondary)',
-  fontSize: 12.5,
+  fontSize: 12,
   fontFamily: 'var(--font-ui)',
   cursor: 'pointer',
   textAlign: 'left',
-  transition: 'background 0.12s',
+  transition: 'all 0.15s ease',
 }
 
 function AttachMenuBtn({
   icon,
   label,
-  active,
   onClick,
 }: {
   icon: ReactNode
   label: string
-  active?: boolean
   onClick: () => void
 }) {
   return (
     <button
       onClick={onClick}
       style={btnStyle}
-      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)' }}
-      onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = 'var(--bg-hover)'
+        e.currentTarget.style.color = 'var(--text-primary)'
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = 'none'
+        e.currentTarget.style.color = 'var(--text-secondary)'
+      }}
     >
-      {icon}
-      <span style={{ flex: 1, color: active ? 'var(--accent)' : undefined }}>{label}</span>
+      <span style={{ display: 'flex', alignItems: 'center', color: 'var(--text-muted)' }}>{icon}</span>
+      <span style={{ flex: 1 }}>{label}</span>
     </button>
   )
 }
@@ -56,22 +60,25 @@ function ToggleSwitch({ enabled }: { enabled: boolean }) {
         width: 28,
         height: 16,
         borderRadius: 8,
-        background: enabled ? 'var(--accent)' : 'var(--bg-active)',
+        background: enabled ? 'var(--accent)' : 'var(--border-normal)',
         position: 'relative',
-        transition: 'background 0.15s',
+        transition: 'background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
         flexShrink: 0,
+        boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.1)',
       }}
     >
       <span
         style={{
           position: 'absolute',
           top: 2,
-          left: enabled ? 14 : 2,
+          left: 2,
+          transform: enabled ? 'translateX(12px)' : 'translateX(0)',
           width: 12,
           height: 12,
           borderRadius: '50%',
-          background: 'white',
-          transition: 'left 0.15s',
+          background: '#ffffff',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.25)',
+          transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       />
     </span>
@@ -93,11 +100,17 @@ function AttachMenuToggle({
     <button
       onClick={onToggle}
       style={btnStyle}
-      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)' }}
-      onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = 'var(--bg-hover)'
+        e.currentTarget.style.color = 'var(--text-primary)'
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = 'none'
+        e.currentTarget.style.color = 'var(--text-secondary)'
+      }}
     >
-      {icon}
-      <span style={{ flex: 1, color: enabled ? 'var(--accent)' : undefined }}>{label}</span>
+      <span style={{ display: 'flex', alignItems: 'center', color: 'var(--text-muted)' }}>{icon}</span>
+      <span style={{ flex: 1, color: enabled ? 'var(--text-primary)' : 'var(--text-secondary)' }}>{label}</span>
       <ToggleSwitch enabled={enabled} />
     </button>
   )
@@ -128,15 +141,20 @@ export function AttachMenu({ onClose }: AttachMenuProps) {
       ref={menuRef}
       style={{
         position: 'absolute',
-        bottom: 'calc(100% + 4px)',
+        bottom: 'calc(100% + 6px)',
         left: 0,
-        width: 220,
+        width: 210,
         background: 'var(--bg-modal)',
-        border: '1px solid var(--border-normal)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        border: '1px solid var(--border-subtle)',
         borderRadius: 'var(--radius-lg)',
-        boxShadow: '0 12px 40px rgba(0,0,0,0.5)',
+        boxShadow: '0 8px 30px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.05)',
         overflow: 'hidden',
-        padding: '4px',
+        padding: '5px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '2px',
       }}
     >
       <input
@@ -187,7 +205,7 @@ export function AttachMenu({ onClose }: AttachMenuProps) {
       <div
         style={{
           marginTop: 4,
-          paddingTop: 6,
+          paddingTop: 5,
           borderTop: '1px solid var(--border-subtle)',
         }}
       >

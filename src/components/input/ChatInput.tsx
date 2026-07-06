@@ -12,6 +12,7 @@ import { messagingAdapter } from '@/lib/messaging-adapter'
 import { ModelPicker } from './ModelPicker'
 import { AttachMenu } from './AttachMenu'
 import { SlashCommandMenu, executeSlashCommand, type SlashCommand, setSlashSkillCache } from './SlashCommandMenu'
+import { useTranslation } from '@/i18n'
 
 interface ChatInputProps {
   className?: string
@@ -30,6 +31,7 @@ export function ChatInput({ className }: ChatInputProps) {
   const stopStreaming = useChatStore((s) => s.stopStreaming)
   const injectWhileStreaming = useChatStore((s) => s.injectWhileStreaming)
   const { sendMessage } = useChatSession()
+  const { t } = useTranslation()
 
   const { skills: localSkills } = useLocalSkillsLoader()
 
@@ -64,7 +66,7 @@ export function ChatInput({ className }: ChatInputProps) {
     if (isStreaming) {
       injectWhileStreaming(text)
       setInput('')
-      toast.info('Mensaje encolado para cuando termine la respuesta actual')
+      toast.info(t('chat.messageQueued'))
       return
     }
 
@@ -108,12 +110,12 @@ export function ChatInput({ className }: ChatInputProps) {
   }, [isStreaming])
 
   const placeholder = !hasProvider
-    ? 'Configura un proveedor para chatear...'
+    ? t('chat.placeholderNoProvider')
     : isStreaming && isRedirectMode
-    ? 'Escribe para redirigir al agente...'
+    ? t('chat.placeholderRedirect')
     : isStreaming
-    ? 'Generando respuesta...'
-    : 'Ask anything...'
+    ? t('chat.placeholderStreaming')
+    : t('chat.placeholderDefault')
 
   const canSend = input.trim().length > 0 && hasProvider
 
@@ -136,7 +138,7 @@ export function ChatInput({ className }: ChatInputProps) {
           }}>
             <AlertCircle size={14} strokeWidth={1.5} />
             <span>
-              No hay proveedores con API key configurados.{' '}
+              {t('chat.noProviderWarning')}{' '}
               <button
                 onClick={() => useSettingsStore.getState().openSettings()}
                 style={{
@@ -150,9 +152,9 @@ export function ChatInput({ className }: ChatInputProps) {
                   fontFamily: 'var(--font-ui)',
                 }}
               >
-                Configura un proveedor
+                {t('chat.configureProvider')}
               </button>
-              {' '}(Ajustes &gt; Modelos) para empezar a chatear.
+              {' '}{t('chat.configureProviderSuffix')}
             </span>
           </div>
         )}
@@ -247,7 +249,7 @@ export function ChatInput({ className }: ChatInputProps) {
 
               {isStreaming && (
                 <div style={{ fontSize: 10, color: 'var(--status-warn)', fontFamily: 'var(--font-ui)', paddingRight: 4 }}>
-                  Escribe para redirigir
+                  {t('chat.redirectHint')}
                 </div>
               )}
               <button style={{

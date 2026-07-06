@@ -1,4 +1,5 @@
 import { useSettingsStore } from '@/stores/settings.store'
+import { MessageSquare, Bot } from 'lucide-react'
 
 export function ModeSwitch() {
   const { sessionMode, setSessionMode } = useSettingsStore()
@@ -9,8 +10,8 @@ export function ModeSwitch() {
         display: 'flex',
         borderRadius: 'var(--radius-md)',
         overflow: 'hidden',
-        border: '1px solid var(--border-subtle)',
-        background: 'var(--bg-active)',
+        background: 'var(--bg-hover)',
+        padding: '2px',
       }}
     >
       <button
@@ -21,18 +22,21 @@ export function ModeSwitch() {
           alignItems: 'center',
           justifyContent: 'center',
           gap: 6,
-          padding: '5px 10px',
-          background: sessionMode === 'chat' ? 'var(--bg-surface)' : 'none',
+          padding: '6px 10px',
+          borderRadius: 'calc(var(--radius-md) - 2px)',
+          background: sessionMode === 'chat' ? 'var(--bg-surface)' : 'transparent',
           border: 'none',
-          color: sessionMode === 'chat' ? 'var(--text-primary)' : 'var(--text-muted)',
+          boxShadow: sessionMode === 'chat' ? '0 1px 2px rgba(0,0,0,0.08)' : 'none',
+          color: sessionMode === 'chat' ? 'var(--text-primary)' : 'var(--text-secondary)',
           fontSize: 12,
           fontFamily: 'var(--font-ui)',
           fontWeight: sessionMode === 'chat' ? 500 : 400,
           cursor: 'pointer',
-          transition: 'all 0.12s',
+          transition: 'all 0.15s ease',
         }}
       >
-        💬 Chat
+        <MessageSquare size={13} strokeWidth={sessionMode === 'chat' ? 2 : 1.5} style={{ opacity: sessionMode === 'chat' ? 1 : 0.7 }} />
+        <span>Chat</span>
       </button>
       <button
         onClick={() => setSessionMode('agent')}
@@ -42,18 +46,21 @@ export function ModeSwitch() {
           alignItems: 'center',
           justifyContent: 'center',
           gap: 6,
-          padding: '5px 10px',
-          background: sessionMode === 'agent' ? 'var(--bg-surface)' : 'none',
+          padding: '6px 10px',
+          borderRadius: 'calc(var(--radius-md) - 2px)',
+          background: sessionMode === 'agent' ? 'var(--bg-surface)' : 'transparent',
           border: 'none',
-          color: sessionMode === 'agent' ? 'var(--text-primary)' : 'var(--text-muted)',
+          boxShadow: sessionMode === 'agent' ? '0 1px 2px rgba(0,0,0,0.08)' : 'none',
+          color: sessionMode === 'agent' ? 'var(--text-primary)' : 'var(--text-secondary)',
           fontSize: 12,
           fontFamily: 'var(--font-ui)',
           fontWeight: sessionMode === 'agent' ? 500 : 400,
           cursor: 'pointer',
-          transition: 'all 0.12s',
+          transition: 'all 0.15s ease',
         }}
       >
-        🤖 Agente
+        <Bot size={13} strokeWidth={sessionMode === 'agent' ? 2 : 1.5} style={{ opacity: sessionMode === 'agent' ? 1 : 0.7 }} />
+        <span>Agente</span>
       </button>
     </div>
   )
