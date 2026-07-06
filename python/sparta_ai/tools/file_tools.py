@@ -1,6 +1,7 @@
 import difflib
 import fnmatch
 import os
+import re
 import logging
 from pathlib import Path
 from typing import Optional
@@ -8,6 +9,7 @@ from typing import Optional
 from langchain_core.tools import tool
 
 from sparta_ai.tools.permission_broker import request_permission_sync
+from sparta_ai.security.rate_limiter import tool_rate_limiter
 
 logger = logging.getLogger("sparta_ai.tools.file")
 
@@ -28,6 +30,29 @@ DENYLIST_FILES = {
     ".env", "sparta-vault.json",
     "id_rsa", "id_ed25519", "id_ecdsa", "id_ecdsa_sk", "id_ed25519_sk",
 }
+
+# Patterns ported from rust/sparta-security/src/sanitizer.rs
+# Block any path matching these regex patterns (case-insensitive).
+BLOCKED_FILE_PATTERNS: list[re.Pattern] = [
+    re.compile(p, re.IGNORECASE) for p in [
+        r"\.env$",
+        r"\.pem$",
+        r"\.key$",
+        r"\.cert$",
+        r"sparta-vault\.json$",
+        r"node_modules[/\\]",
+        r"\.git[/\\]",
+        r"\.venv[/\\]",
+    ]
+]
+
+# Path components that are never allowed (traversal, home shortcuts).
+BLOCKED_PATH_COMPONENTS: set[str] = {
+    "..", "~", "$HOME", "%USERPROFILE%",
+}
+
+_MAX_PATH_LENGTH = 512
+_MAX_CONTENT_SIZE = 5 * 1024 * 1024  # 5MB
 
 _SKIP_DIRS = {
     ".git", ".venv", "__pycache__", "node_modules",
@@ -56,6 +81,25 @@ def _get_safe_path(path: str, tool_name: str | None = None, preview: str = "") -
     candidate = Path(raw_path)
     root = _workspace_root()
 
+    # ── Path length check (portado de Rust) ──────────────────────────
+    if len(raw_path) > _MAX_PATH_LENGTH:
+        raise PermissionError(
+            f"Ruta excede el límite de {_MAX_PATH_LENGTH} caracteres ({len(raw_path)})."
+        )
+
+    # ── Blocked patterns check (portado de Rust sanitizer.rs) ────────
+    lower_path = raw_path.lower()
+    for pattern in BLOCKED_FILE_PATTERNS:
+        if pattern.search(lower_path):
+            raise PermissionError(
+                f"Acceso bloqueado: la ruta coincide con patrón bloqueado '{pattern.pattern}'."
+            )
+    for component in BLOCKED_PATH_COMPONENTS:
+        if component in lower_path:
+            raise PermissionError(
+                f"Acceso bloqueado: la ruta contiene '{component}'."
+            )
+
     if (
         os.name == "nt"
         and raw_path.startswith(("/", "\\"))
@@ -73,7 +117,7 @@ def _get_safe_path(path: str, tool_name: str | None = None, preview: str = "") -
     except ValueError:
         inside_workspace = False
 
-    # Denylist always blocks, regardless of permission
+    # Denylist always blocks, regardless of permission (nombres exactos)
     if resolved.name in DENYLIST_FILES:
         raise PermissionError(f"Acceso bloqueado a archivo sensible: {resolved}")
     if ".ssh" in {part.lower() for part in resolved.parts}:
@@ -81,7 +125,6 @@ def _get_safe_path(path: str, tool_name: str | None = None, preview: str = "") -
 
     if not inside_workspace:
         if tool_name is not None and request_permission_sync(tool_name, resolved, preview):
-            # Permission granted — allow the operation
             pass
         else:
             guidance = (
@@ -128,6 +171,8 @@ def read_file_tool(path: str, offset: int | None = None, limit: int | None = Non
         Contenido del archivo.
     """
     try:
+        if not _check_rate_limit("read_file_tool"):
+            return "Error: Demasiadas solicitudes. Espera un momento antes de leer más archivos."
         filepath = _get_safe_path(path, tool_name="read_file_tool")
         _validate_path(filepath)
 
@@ -173,6 +218,16 @@ def write_file_tool(path: str, content: str, append: bool = False) -> str:
         Confirmación de la operación.
     """
     try:
+        # Content size limit (portado de Rust sanitizer.rs)
+        if len(content) > _MAX_CONTENT_SIZE:
+            return (
+                f"Error: El contenido excede el límite de 5MB "
+                f"({len(content)} bytes). Reduce el tamaño del archivo."
+            )
+
+        if not _check_rate_limit("write_file_tool"):
+            return "Error: Demasiadas solicitudes. Espera un momento antes de escribir más archivos."
+
         # Build a preview of what will be written (first 300 chars)
         preview_lines = content.split("\n")[:10]
         preview_text = "\n".join(preview_lines)
@@ -228,6 +283,8 @@ def search_files_tool(
         Lista de coincidencias con ruta relativa y, si aplica, extracto de línea.
     """
     try:
+        if not _check_rate_limit("search_files_tool"):
+            return "Error: Demasiadas solicitudes. Espera un momento antes de buscar."
         root = _workspace_root()
         base = _get_safe_path(path, tool_name="search_files_tool") if path != "." else root
         if not base.is_dir():
@@ -305,6 +362,13 @@ def patch_file_tool(path: str, old_string: str, new_string: str) -> str:
         Diff unificado del cambio aplicado, o mensaje de error.
     """
     try:
+        if not _check_rate_limit("patch_file_tool"):
+            return "Error: Demasiadas solicitudes. Espera un momento antes de editar más archivos."
+
+        # Content size limit (el resultado no debe exceder 5MB)
+        if len(old_string) > _MAX_CONTENT_SIZE or len(new_string) > _MAX_CONTENT_SIZE:
+            return "Error: El contenido del parche excede el límite de 5MB."
+
         filepath = _get_safe_path(
             path,
             tool_name="patch_file_tool",
@@ -368,6 +432,9 @@ def delete_file_tool(path: str) -> str:
         Confirmación de la operación o mensaje de error.
     """
     try:
+        if not _check_rate_limit("delete_file_tool"):
+            return "Error: Demasiadas solicitudes. Espera un momento antes de eliminar más archivos."
+
         filepath = _get_safe_path(
             path,
             tool_name="delete_file_tool",
@@ -398,6 +465,23 @@ def delete_file_tool(path: str) -> str:
     except Exception as e:
         logger.error("delete_file_tool failed for '%s': %s", path, e)
         return f"Error al eliminar: {e}"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# inject_workspace_guidance — actualiza descriptions antes de cada ejecución
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Rate limiting helper (conecta tool_rate_limiter a las tools de archivo)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _check_rate_limit(tool_name: str) -> bool:
+    """Check if this tool call passes the global tool rate limiter.
+
+    Uses the tool name as key (coarse but effective — 30 req/s global
+    across all sessions per tool type).  Returns True if allowed.
+    """
+    return tool_rate_limiter.check(f"file:{tool_name}")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
