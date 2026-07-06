@@ -1,36 +1,51 @@
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, Code2, Search, Settings } from 'lucide-react'
+import { Plus, Code2, Search, Settings, Shield, GitCompare, TestTube, Globe, Cpu, Sparkles, RotateCw } from 'lucide-react'
 import { useSettingsStore } from '@/stores/settings.store'
 import { useSessionStore } from '@/stores/session.store'
+import { useTranslation } from '@/i18n'
 
 const QUICK_ACTIONS = [
-  { icon: Plus,    label: 'Nueva sesión', action: 'new' as const },
-  { icon: Code2,   label: 'Código',       action: 'coding' as const },
-  { icon: Search,  label: 'Investigar',   action: 'research' as const },
-  { icon: Settings,label: 'Ajustes',      action: 'settings' as const },
+  { icon: Plus,    labelKey: 'sidebar.newSession', action: 'new' as const },
+  { icon: Code2,   labelKey: 'chat.activeSkills',  action: 'coding' as const, fallbackLabel: 'Código' },
+  { icon: Search,  labelKey: 'sidebar.agents',     action: 'research' as const, fallbackLabel: 'Investigar' },
+  { icon: Settings,labelKey: 'sidebar.settings',   action: 'settings' as const },
 ]
 
 const EXAMPLE_PROMPTS = [
-  '¿Cómo implemento autenticación JWT en Node.js?',
-  'Explícame las diferencias entre REST y GraphQL',
-  'Refactoriza este código para hacerlo más legible:',
-  'Busca las últimas noticias sobre IA generativa',
-  'Escribe tests unitarios para esta función:',
-  '¿Cuál es la complejidad temporal de quicksort?',
+  { es: '¿Cómo implemento autenticación JWT en Node.js?', en: 'How do I implement JWT authentication in Node.js?', icon: Shield, color: '#10b981' },
+  { es: 'Explícame las diferencias entre REST y GraphQL', en: 'Explain the differences between REST and GraphQL', icon: GitCompare, color: '#8b5cf6' },
+  { es: 'Refactoriza este código para hacerlo más legible', en: 'Refactor this code to make it more readable', icon: Code2, color: '#f59e0b' },
+  { es: 'Busca las últimas noticias sobre IA generativa', en: 'Search for the latest news on generative AI', icon: Globe, color: '#3b82f6' },
+  { es: 'Escribe tests unitarios para esta función', en: 'Write unit tests for this function', icon: TestTube, color: '#ec4899' },
+  { es: '¿Cuál es la complejidad temporal de quicksort?', en: 'What is the time complexity of quicksort?', icon: Cpu, color: '#06b6d4' },
 ]
 
 export function HeroScreen() {
   const { openSettings, setInput } = useSettingsStore()
   const { createSession } = useSessionStore()
+  const { t, lang } = useTranslation()
+  const [prompts, setPrompts] = useState<typeof EXAMPLE_PROMPTS>([])
+
+  const shufflePrompts = () => {
+    const shuffled = [...EXAMPLE_PROMPTS]
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 4)
+    setPrompts(shuffled)
+  }
+
+  useEffect(() => {
+    shufflePrompts()
+  }, [])
 
   function handleAction(action: string) {
     if (action === 'settings') { openSettings(); return }
     if (action === 'new') { createSession(); return }
-    const prompts: Record<string, string> = {
-      coding:   'Ayúdame a refactorizar este código: ',
-      research: 'Investiga en profundidad sobre: ',
+    const promptsConfig: Record<string, string> = {
+      coding:   t('chat.activeSkills') === 'Código' ? 'Ayúdame a refactorizar este código: ' : 'Help me refactor this code: ',
+      research: t('chat.activeSkills') === 'Código' ? 'Investiga en profundidad sobre: ' : 'Research in depth about: ',
     }
-    if (prompts[action]) setInput(prompts[action])
+    if (promptsConfig[action]) setInput(promptsConfig[action])
   }
 
   return (
@@ -134,8 +149,7 @@ export function HeroScreen() {
           fontFamily: 'var(--font-ui)',
         }}
       >
-        Describe tu tarea. Elegiré las herramientas,
-        explicaré el plan y confirmaré antes de acciones riesgosas.
+        {t('chat.welcome')}
       </motion.p>
 
       <motion.div
@@ -144,7 +158,7 @@ export function HeroScreen() {
         transition={{ duration: 0.35, delay: 0.18 }}
         style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}
       >
-        {QUICK_ACTIONS.map(({ icon: Icon, label, action }) => (
+        {QUICK_ACTIONS.map(({ icon: Icon, labelKey, action, fallbackLabel }) => (
           <button
             key={action}
             onClick={() => handleAction(action)}
@@ -174,7 +188,7 @@ export function HeroScreen() {
             }}
           >
             <Icon size={12} strokeWidth={1.8} />
-            {label}
+            {t(labelKey) || fallbackLabel}
           </button>
         ))}
       </motion.div>
@@ -184,53 +198,126 @@ export function HeroScreen() {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}
         style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 6,
           width: '100%',
-          maxWidth: 440,
+          maxWidth: 480,
           marginTop: 8,
         }}
       >
-        <span style={{
-          fontSize: 11,
-          color: 'var(--text-muted)',
-          fontFamily: 'var(--font-ui)',
-          marginBottom: 2,
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'between',
+          marginBottom: 10,
         }}>
-          Prueba con:
-        </span>
-        {EXAMPLE_PROMPTS.slice(0, 4).map((prompt) => (
-          <button
-            key={prompt}
-            onClick={() => setInput(prompt)}
-            style={{
-              textAlign: 'left',
-              padding: '6px 12px',
-              background: 'var(--bg-surface)',
-              border: '1px solid var(--border-subtle)',
-              borderRadius: 'var(--radius-md)',
-              color: 'var(--text-secondary)',
-              fontSize: 12,
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1 }}>
+            <Sparkles size={12} style={{ color: 'var(--accent)', opacity: 0.7 }} />
+            <span style={{
+              fontSize: 11,
+              color: 'var(--text-muted)',
               fontFamily: 'var(--font-ui)',
+              fontWeight: 500,
+              letterSpacing: '0.03em',
+              textTransform: 'uppercase',
+            }}>
+              {t('chat.tryWith')}
+            </span>
+          </div>
+          <button
+            onClick={shufflePrompts}
+            title={t('chat.suggestions')}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--text-muted)',
               cursor: 'pointer',
-              transition: 'all 0.12s',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 4,
+              borderRadius: '50%',
+              transition: 'all 0.2s ease',
             }}
             onMouseEnter={e => {
-              e.currentTarget.style.borderColor = 'var(--accent)'
               e.currentTarget.style.color = 'var(--accent)'
+              e.currentTarget.style.background = 'var(--accent-muted)'
+              const icon = e.currentTarget.querySelector('svg')
+              if (icon) icon.style.transform = 'rotate(180deg)'
             }}
             onMouseLeave={e => {
-              e.currentTarget.style.borderColor = 'var(--border-subtle)'
-              e.currentTarget.style.color = 'var(--text-secondary)'
+              e.currentTarget.style.color = 'var(--text-muted)'
+              e.currentTarget.style.background = 'none'
+              const icon = e.currentTarget.querySelector('svg')
+              if (icon) icon.style.transform = 'rotate(0deg)'
             }}
           >
-            {prompt}
+            <RotateCw size={12} style={{ transition: 'transform 0.3s ease' }} />
           </button>
-        ))}
+        </div>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(2, 1fr)',
+          gap: 8,
+        }}>
+          {prompts.map((prompt, idx) => {
+            const Icon = prompt.icon
+            return (
+              <motion.button
+                key={prompt.es}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.35 + idx * 0.07, duration: 0.3, ease: 'easeOut' }}
+                onClick={() => setInput(prompt[lang as 'es' | 'en'] || prompt.es)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 10,
+                  padding: '10px 12px',
+                  background: 'var(--bg-surface)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: 10,
+                  color: 'var(--text-secondary)',
+                  fontSize: 11.5,
+                  fontFamily: 'var(--font-ui)',
+                  cursor: 'pointer',
+                  transition: 'all 0.18s ease',
+                  textAlign: 'left',
+                  lineHeight: 1.45,
+                  position: 'relative',
+                  overflow: 'hidden',
+                }}
+                onMouseEnter={e => {
+                  const el = e.currentTarget
+                  el.style.borderColor = prompt.color
+                  el.style.background = `color-mix(in srgb, ${prompt.color} 6%, var(--bg-surface))`
+                  el.style.transform = 'translateY(-1px)'
+                  el.style.boxShadow = `0 4px 12px color-mix(in srgb, ${prompt.color} 12%, transparent)`
+                }}
+                onMouseLeave={e => {
+                  const el = e.currentTarget
+                  el.style.borderColor = 'var(--border-subtle)'
+                  el.style.background = 'var(--bg-surface)'
+                  el.style.transform = 'translateY(0)'
+                  el.style.boxShadow = 'none'
+                }}
+              >
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 26,
+                  height: 26,
+                  borderRadius: 7,
+                  background: `color-mix(in srgb, ${prompt.color} 12%, transparent)`,
+                  flexShrink: 0,
+                  marginTop: 1,
+                }}>
+                  <Icon size={13} style={{ color: prompt.color }} strokeWidth={2} />
+                </div>
+                <span style={{ flex: 1, paddingTop: 3 }}>{prompt[lang as 'es' | 'en'] || prompt.es}</span>
+              </motion.button>
+            )
+          })}
+        </div>
       </motion.div>
     </div>
   )

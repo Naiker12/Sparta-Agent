@@ -39,13 +39,25 @@ export function MessageList({ messages, className }: MessageListProps) {
     return null
   })()
 
+  const lastAssistantMsgId = (() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === 'assistant') return messages[i].id
+    }
+    return null
+  })()
+
   return (
     <div ref={scrollRef} onScroll={handleScroll} className={cn('min-h-0', className)} style={{
       padding: '12px max(20px, calc(50% - 320px))',
     }}>
       <div style={{ padding: '12px 0', display: 'flex', flexDirection: 'column', gap: 20 }}>
         {messages.map((msg) => (
-          <MessageBubble key={msg.id} message={msg} isLastUser={msg.role === 'user' && msg.id === lastUserMsgId} />
+          <MessageBubble
+            key={msg.id}
+            message={msg}
+            isLastUser={msg.role === 'user' && msg.id === lastUserMsgId}
+            isLastAssistant={msg.role === 'assistant' && msg.id === lastAssistantMsgId}
+          />
         ))}
       </div>
     </div>

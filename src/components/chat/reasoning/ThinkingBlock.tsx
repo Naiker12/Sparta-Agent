@@ -7,6 +7,7 @@ import { ThinkingSkeletonRows } from './ThinkingSkeletonRows'
 import { SkillActivationBadge } from './SkillActivationBadge'
 import { StreamStallIndicator } from './StreamStallIndicator'
 import type { ThinkingStatus, PipelineStep } from '@/types'
+import { useTranslation } from '@/i18n'
 
 interface ThinkingBlockProps {
   content: string
@@ -52,6 +53,7 @@ function saveCollapseState(messageId: string, expanded: boolean) {
 }
 
 export function ThinkingBlock({ content, status, tokensUsed, pipelineSteps, className, messageId }: ThinkingBlockProps) {
+  const { t } = useTranslation()
   const savedState = useMemo(() => loadCollapseState(messageId), [messageId])
   const [isExpanded, setIsExpanded] = useState(
     savedState !== null ? savedState : (status === 'streaming' || status === 'starting')
@@ -270,7 +272,7 @@ export function ThinkingBlock({ content, status, tokensUsed, pipelineSteps, clas
                   onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
                   onMouseLeave={(e) => e.currentTarget.style.opacity = '0.7'}
                 >
-                  Mostrar todo ({lines.length} l\u00edneas)
+                  {t('chat.showAllLines').replace('{{count}}', String(lines.length))}
                 </div>
               )}
             </div>

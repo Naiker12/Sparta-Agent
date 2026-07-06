@@ -77,9 +77,32 @@ function CopyCodeButton({ code }: { code: string }) {
   )
 }
 
+const cleanSyntaxStyle = (style: any) => {
+  if (!style) return style
+  const cleaned = { ...style }
+  for (const key in cleaned) {
+    if (
+      key.includes('pre') ||
+      key.includes('code') ||
+      key === 'pre[class*="language-"]' ||
+      key === 'code[class*="language-"]'
+    ) {
+      if (cleaned[key]) {
+        cleaned[key] = {
+          ...cleaned[key],
+          background: 'transparent',
+          backgroundColor: 'transparent',
+        }
+      }
+    }
+  }
+  return cleaned
+}
+
 export function MarkdownRenderer({ content, isStreaming }: MarkdownRendererProps) {
   const { theme } = useThemeStore()
-  const syntaxStyle = isDarkTheme(theme) ? oneDark : oneLight
+  const rawStyle = isDarkTheme(theme) ? oneDark : oneLight
+  const syntaxStyle = cleanSyntaxStyle(rawStyle)
 
   const { stable, pending } = isStreaming ? splitStableMarkdown(content) : { stable: content, pending: '' }
   const pendingFence = isStreaming ? splitPendingFence(pending) : null
@@ -131,6 +154,13 @@ export function MarkdownRenderer({ content, isStreaming }: MarkdownRendererProps
                       lineHeight: '1.55',
                       background: 'var(--bg-surface)',
                     }}
+                    codeTagProps={{
+                      style: {
+                        background: 'transparent',
+                        backgroundColor: 'transparent',
+                        fontFamily: 'inherit',
+                      }
+                    }}
                     showLineNumbers={code.split('\n').length > 8}
                   >
                     {code}
@@ -177,6 +207,13 @@ export function MarkdownRenderer({ content, isStreaming }: MarkdownRendererProps
                 fontSize: '12.5px',
                 lineHeight: '1.55',
                 background: 'var(--bg-surface)',
+              }}
+              codeTagProps={{
+                style: {
+                  background: 'transparent',
+                  backgroundColor: 'transparent',
+                  fontFamily: 'inherit',
+                }
               }}
               showLineNumbers={pendingFence.code.split('\n').length > 8}
             >

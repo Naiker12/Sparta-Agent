@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils'
 import { ChevronRightIcon, Check } from 'lucide-react'
 import { getRandomSpinner, type SpinnerSet } from '@/lib/spinners'
 import type { ThinkingStatus } from '@/types'
+import { useTranslation } from '@/i18n'
 
 interface ThinkingPillProps {
   status: ThinkingStatus
@@ -17,6 +18,7 @@ interface ThinkingPillProps {
 const spinner = getRandomSpinner()
 
 export function ThinkingPill({ status, tokensUsed, isExpanded, elapsed, lastSkillName, className }: ThinkingPillProps) {
+  const { t } = useTranslation()
   const [frame, setFrame] = useState(0)
   const spinnerRef = useRef<SpinnerSet>(spinner)
 
@@ -45,7 +47,7 @@ export function ThinkingPill({ status, tokensUsed, isExpanded, elapsed, lastSkil
         <motion.span
           className="text-[10px] font-medium text-white"
         >
-          Pensando...
+          {t('chat.thinking')}
         </motion.span>
       </motion.div>
     )
@@ -64,7 +66,7 @@ export function ThinkingPill({ status, tokensUsed, isExpanded, elapsed, lastSkil
     >
       <Check className="size-3 shrink-0" />
       <span className="text-[10px] font-medium">
-        Pens\u00f3 por {elapsed.toFixed(1)}s
+        {t('chat.thoughtFor').replace('{{seconds}}', elapsed.toFixed(1))}
       </span>
       {lastSkillName && (
         <span className="text-[9px] text-status-think/60 ml-0.5 font-mono truncate max-w-[120px]">
@@ -73,7 +75,7 @@ export function ThinkingPill({ status, tokensUsed, isExpanded, elapsed, lastSkil
       )}
       {tokensUsed > 0 && (
         <span className="text-[9px] text-status-think/60 ml-0.5 font-mono">
-          &middot; {tokensUsed.toLocaleString()} tok
+          &middot; {tokensUsed.toLocaleString()} {t('chat.tokensUnit')}
         </span>
       )}
       <ChevronRightIcon
