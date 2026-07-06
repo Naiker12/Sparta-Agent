@@ -15,14 +15,7 @@ import { useMemoryStore } from '@/stores/memory.store'
 import { useUIStore, type MainView } from '@/stores/ui.store'
 import { useSettingsStore } from '@/stores/settings.store'
 import { SessionItem } from './SessionItem'
-
-const NAV_ITEMS = [
-  { type: 'sessions' as const, icon: MessageSquare, label: 'Sesiones' },
-  { type: 'skills'   as const, icon: Zap,           label: 'Skills'   },
-  { type: 'mcp'      as const, icon: Plug,          label: 'MCP'      },
-  { type: 'channels' as const, icon: Hash,          label: 'Canales'  },
-  { type: 'memory'   as const, icon: Brain,         label: 'Memoria'  },
-]
+import { useTranslation } from '@/i18n'
 
 export function AppSidebar() {
   const { sessions, createSession }   = useSessionStore()
@@ -33,6 +26,15 @@ export function AppSidebar() {
   const { mainView, setMainView }     = useUIStore()
   const [query, setQuery]             = useState('')
   const [searchFocused, setSearchFocused] = useState(false)
+  const { t } = useTranslation()
+
+  const NAV_ITEMS = [
+    { type: 'sessions' as const, icon: MessageSquare, label: t('sidebar.sessions') },
+    { type: 'skills'   as const, icon: Zap,           label: 'Skills'   },
+    { type: 'mcp'      as const, icon: Plug,          label: 'MCP'      },
+    { type: 'channels' as const, icon: Hash,          label: t('chat.activeSkills') === 'Código' ? 'Canales' : 'Channels' },
+    { type: 'memory'   as const, icon: Brain,         label: t('settings.memory') },
+  ]
 
   const counts: Record<string, string | number> = {
     sessions: sessions.length,
@@ -71,7 +73,7 @@ export function AppSidebar() {
             onClick={() => { createSession(); setMainView({ type: 'chat' }) }}
           >
             <Plus size={16} strokeWidth={2.5} className="btn-icon" />
-            <span className="btn-label" style={{ flex: 1, textAlign: 'left' }}>Nueva sesión</span>
+            <span className="btn-label" style={{ flex: 1, textAlign: 'left' }}>{t('sidebar.newSession')}</span>
             <span className="btn-kbd">⌘N</span>
           </button>
         </div>
@@ -107,7 +109,7 @@ export function AppSidebar() {
         {/* Pinned Section */}
         {pinned.length > 0 && (
           <div style={{ marginBottom: 8 }}>
-            <div className="sidebar-section-label">Fijados</div>
+            <div className="sidebar-section-label">{t('sidebar.pin') === 'Fijar' ? 'Fijados' : 'Pinned'}</div>
             <div className="sidebar-sessions-list">
               {pinned.map(s => (
                 <SessionItem key={s.id} session={s} />
@@ -126,7 +128,7 @@ export function AppSidebar() {
             onChange={e => setQuery(e.target.value)}
             onFocus={() => setSearchFocused(true)}
             onBlur={() => setSearchFocused(false)}
-            placeholder="Buscar sesiones..."
+            placeholder={t('sidebar.search')}
           />
           {query ? (
             <button type="button" className="search-action-btn" onClick={() => setQuery('')}>
@@ -141,11 +143,11 @@ export function AppSidebar() {
 
         {/* Recientes Section */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-          <div className="sidebar-section-label">Recientes</div>
+          <div className="sidebar-section-label">{t('sidebar.pin') === 'Fijar' ? 'Recientes' : 'Recent'}</div>
           {unpinned.length === 0 && pinned.length === 0 ? (
             <div className="sidebar-empty-state">
-              <p>Aún no hay sesiones.</p>
-              <p>Crea una nueva sesión para empezar.</p>
+              <p>{t('sidebar.emptyState')}</p>
+              <p>{t('chat.welcome').split('.')[0] + '.'}</p>
             </div>
           ) : (
             <div className="sidebar-sessions-list" style={{ overflow: 'auto', flex: 1, paddingBottom: 16 }}>
@@ -167,7 +169,7 @@ export function AppSidebar() {
           onClick={() => useSettingsStore.getState().openSettings()}
         >
           <Settings size={18} strokeWidth={1.75} className="footer-icon" />
-          <span className="footer-label">Configuración</span>
+          <span className="footer-label">{t('sidebar.settings')}</span>
         </button>
       </SidebarFooter>
 

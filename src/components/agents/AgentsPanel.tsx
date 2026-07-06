@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useAgentStore } from '@/stores/agent.store'
 import { useAgent } from '@/hooks/useAgent'
 import { SubagentWatchPane } from './SubagentWatchPane'
 import type { Task } from '@/types'
+import { useTranslation } from '@/i18n'
 
 const STATUS_COLORS: Record<string, string> = {
   idle: 'var(--text-muted)',
@@ -12,16 +13,9 @@ const STATUS_COLORS: Record<string, string> = {
   completed: 'var(--status-ok)',
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  idle: 'Inactivo',
-  running: 'Ejecutando',
-  thinking: 'Pensando',
-  error: 'Error',
-  completed: 'Completado',
-}
-
 function AgentCard({ agent }: { agent: { id: string; name: string; type: string; status: string; description: string; model: string; tools: string[] } }) {
   const { executeTask } = useAgent()
+  const { t } = useTranslation()
   const [taskInput, setTaskInput] = useState('')
   const [result, setResult] = useState('')
   const [running, setRunning] = useState(false)
@@ -36,7 +30,7 @@ function AgentCard({ agent }: { agent: { id: string; name: string; type: string;
       const res = await executeTask(agent.id, taskInput.trim())
       setResult(res)
     } catch (err) {
-      setResult(err instanceof Error ? err.message : 'Error al ejecutar tarea')
+      setResult(err instanceof Error ? err.message : t('agents.taskError'))
     } finally {
       setRunning(false)
     }
@@ -69,7 +63,7 @@ function AgentCard({ agent }: { agent: { id: string; name: string; type: string;
           fontFamily: 'var(--font-ui)',
           marginLeft: 'auto',
         }}>
-          {STATUS_LABELS[agent.status] ?? agent.status}
+          {t(`agents.${agent.status}`) || agent.status}
         </span>
       </div>
 
@@ -99,7 +93,7 @@ function AgentCard({ agent }: { agent: { id: string; name: string; type: string;
         <input
           value={taskInput}
           onChange={(e) => setTaskInput(e.target.value)}
-          placeholder="Describe una tarea para este agente..."
+          placeholder={t('agents.describeTask')}
           disabled={running}
           style={{
             flex: 1,
@@ -129,7 +123,7 @@ function AgentCard({ agent }: { agent: { id: string; name: string; type: string;
             opacity: running || !taskInput.trim() ? 0.6 : 1,
           }}
         >
-          {running ? 'Ejecutando...' : 'Ejecutar'}
+          {running ? t('agents.executing') : t('agents.execute')}
         </button>
       </div>
 
@@ -197,28 +191,12 @@ function StepIcon({ status }: { status: string }) {
 
 export function AgentsPanel() {
   const { agents, createAgent } = useAgent()
+  const { t } = useTranslation()
   const [showNewForm, setShowNewForm] = useState(false)
   const [newAgent, setNewAgent] = useState({ name: '', type: 'research' as const, model: '', description: '' })
   const [watchAgentId, setWatchAgentId] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (agents.length === 0) {
-      createAgent({
-        name: 'Investigador',
-        type: 'research',
-        model: 'gpt-4',
-        description: 'Busca información y la consolida en informes estructurados.',
-        tools: [],
-      })
-      createAgent({
-        name: 'Asistente General',
-        type: 'automation',
-        model: 'gpt-4',
-        description: 'Ejecuta tareas generales usando las herramientas MCP disponibles.',
-        tools: [],
-      })
-    }
-  }, [agents.length, createAgent])
+
 
   const handleCreate = () => {
     if (!newAgent.name.trim()) return
@@ -250,7 +228,7 @@ export function AgentsPanel() {
             fontFamily: 'var(--font-ui)',
             margin: 0,
           }}>
-            Agentes
+            {t('agents.panelTitle')}
           </h2>
           <button
             onClick={() => setShowNewForm(!showNewForm)}
@@ -266,7 +244,7 @@ export function AgentsPanel() {
               cursor: 'pointer',
             }}
           >
-            {showNewForm ? 'Cancelar' : '+ Nuevo agente'}
+            {showNewForm ? t('agents.cancel') : t('agents.newAgent')}
           </button>
         </div>
 
@@ -283,7 +261,7 @@ export function AgentsPanel() {
             <input
               value={newAgent.name}
               onChange={(e) => setNewAgent({ ...newAgent, name: e.target.value })}
-              placeholder="Nombre del agente"
+              placeholder={t('agents.agentName')}
               style={{
                 width: '100%',
                 background: 'var(--bg-input)',
@@ -311,15 +289,15 @@ export function AgentsPanel() {
                 outline: 'none',
               }}
             >
-              <option value="research">Investigador</option>
-              <option value="coding">Programador</option>
-              <option value="automation">Automatización</option>
-              <option value="project">Proyecto</option>
+              <option value="research">{t('agents.researcher')}</option>
+              <option value="coding">{t('agents.programmer')}</option>
+              <option value="automation">{t('agents.automation')}</option>
+              <option value="project">{t('agents.project')}</option>
             </select>
             <textarea
               value={newAgent.description}
               onChange={(e) => setNewAgent({ ...newAgent, description: e.target.value })}
-              placeholder="Descripción del agente"
+              placeholder={t('agents.agentDesc')}
               rows={2}
               style={{
                 width: '100%',
@@ -351,7 +329,7 @@ export function AgentsPanel() {
                 alignSelf: 'flex-end',
               }}
             >
-              Crear agente
+              {t('agents.create')}
             </button>
           </div>
         )}
@@ -366,7 +344,7 @@ export function AgentsPanel() {
             color: 'var(--text-muted)',
             fontFamily: 'var(--font-ui)',
           }}>
-            No hay agentes configurados. Crea uno para empezar.
+            {t('agents.noAgents')}
           </div>
         ) : (
           agents.map((agent) => (
@@ -389,7 +367,7 @@ export function AgentsPanel() {
                     cursor: 'pointer',
                   }}
                 >
-                  Ver
+                  {t('agents.watch')}
                 </button>
               )}
             </div>

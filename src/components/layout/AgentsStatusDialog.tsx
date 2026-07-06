@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { X, Bot, Clock, ChevronRight } from 'lucide-react'
 import { useAgentStore } from '@/stores/agent.store'
 
@@ -17,6 +18,15 @@ function formatElapsed(startedAt: number): string {
 export function AgentsStatusDialog({ open, onClose, onFocusAgent }: AgentsStatusDialogProps) {
   const agents = useAgentStore((s) => s.agents)
   const tasksByAgent = useAgentStore((s) => s.tasks)
+  const [tick, setTick] = useState(0)
+
+  useEffect(() => {
+    if (!open) return
+    const timer = setInterval(() => {
+      setTick((t) => t + 1)
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [open])
 
   const runningAgents = agents.filter((a) => a.status === 'running' || a.status === 'thinking')
 
@@ -38,6 +48,7 @@ export function AgentsStatusDialog({ open, onClose, onFocusAgent }: AgentsStatus
           borderRadius: 'var(--radius-xl)', boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
           display: 'flex', flexDirection: 'column', overflow: 'hidden',
         }}
+        data-tick={tick}
         onClick={(e) => e.stopPropagation()}
       >
         <div style={{

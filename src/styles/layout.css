@@ -47,19 +47,29 @@ body.is-dragging-sidebar [data-slot="sidebar-wrapper"] {
 /* Resize handles */
 .editor-resize-handle {
   position: absolute;
-  left: -3px;
+  left: -4px;
   top: 0;
   bottom: 0;
-  width: 6px;
+  width: 8px;
   cursor: col-resize;
+  background: transparent;
+  z-index: 25;
+}
+
+.editor-resize-handle::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
   background: transparent;
   transition: background 0.15s;
 }
 
-.editor-resize-handle:hover,
-.editor-resize-handle:active {
+.editor-resize-handle:hover::after,
+.editor-resize-handle:active::after {
   background: var(--accent);
-  opacity: 0.4;
 }
 
 .terminal-resize-handle {
@@ -70,14 +80,23 @@ body.is-dragging-sidebar [data-slot="sidebar-wrapper"] {
   height: 8px;
   cursor: row-resize;
   background: transparent;
-  transition: background 0.15s;
   z-index: 25;
 }
 
-.terminal-resize-handle:hover,
-.terminal-resize-handle:active {
+.terminal-resize-handle::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: transparent;
+  transition: background 0.15s;
+}
+
+.terminal-resize-handle:hover::after,
+.terminal-resize-handle:active::after {
   background: var(--accent);
-  opacity: 0.5;
 }
 
 /* Panel close button */

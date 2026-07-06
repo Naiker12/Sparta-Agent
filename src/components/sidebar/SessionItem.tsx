@@ -19,6 +19,7 @@ import { useChatStore } from '@/stores/chat.store'
 import { useSessionStore } from '@/stores/session.store'
 import { useUIStore } from '@/stores/ui.store'
 import type { Session } from '@/types'
+import { useTranslation } from '@/i18n'
 
 interface SessionItemProps {
   session: Session
@@ -28,15 +29,16 @@ export function SessionItem({ session }: SessionItemProps) {
   const { activeSessionId, switchSession, pinSession, deleteSession, renameSession } = useSessionStore()
   const { deleteSessionMessages, streamingBySession } = useChatStore()
   const { setMainView } = useUIStore()
+  const { t } = useTranslation()
   const [menuOpen, setMenuOpen]       = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [shareOpen, setShareOpen]     = useState(false)
   const [renaming, setRenaming]       = useState(false)
-  const [renameValue, setRenameValue] = useState(session.title || 'Nueva conversación')
+  const [renameValue, setRenameValue] = useState(session.title || t('sidebar.newChat'))
 
   const isActive = session.id === activeSessionId
   const isStreamingThis = streamingBySession[session.id]?.isStreaming ?? false
-  const title    = session.title || 'Nueva conversación'
+  const title    = session.title || t('sidebar.newChat')
 
   // Relative time helper
   const date = new Date(session.updatedAt ?? session.createdAt)
@@ -44,14 +46,14 @@ export function SessionItem({ session }: SessionItemProps) {
     const now = Date.now()
     const diff = now - date.getTime()
     const mins = Math.floor(diff / 60000)
-    if (mins < 1) return 'ahora'
+    if (mins < 1) return t('sidebar.now')
     if (mins < 60) return `${mins}m`
     const hrs = Math.floor(mins / 60)
     if (hrs < 24) return `${hrs}h`
     const days = Math.floor(hrs / 24)
     if (days < 30) return `${days}d`
     const months = Math.floor(days / 30)
-    return `${months}mes`
+    return `${months}${t('sidebar.month')}`
   }
   const relTime = getRelativeTime()
 
@@ -130,18 +132,20 @@ export function SessionItem({ session }: SessionItemProps) {
             >
               <MoreVertical size={14} />
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" sideOffset={4} className="w-44">
+            <DropdownMenuContent align="end" sideOffset={4} className="min-w-0 w-[130px] p-1">
               <DropdownMenuItem
+                className="px-2 py-1 text-xs gap-2 cursor-pointer rounded-sm"
                 onClick={(e) => {
                   e.stopPropagation()
                   pinSession(session.id)
                   setMenuOpen(false)
                 }}
               >
-                <Pin size={13} className="flex-shrink-0" />
-                {session.pinned ? 'Quitar fijado' : 'Fijar'}
+                <Pin className="flex-shrink-0 size-3.5" />
+                {session.pinned ? t('sidebar.unpin') : t('sidebar.pin')}
               </DropdownMenuItem>
               <DropdownMenuItem
+                className="px-2 py-1 text-xs gap-2 cursor-pointer rounded-sm"
                 onClick={(e) => {
                   e.stopPropagation()
                   setMenuOpen(false)
@@ -149,30 +153,32 @@ export function SessionItem({ session }: SessionItemProps) {
                   setRenaming(true)
                 }}
               >
-                <Pencil size={13} className="flex-shrink-0" />
-                Renombrar
+                <Pencil className="flex-shrink-0 size-3.5" />
+                {t('sidebar.rename')}
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
+              <DropdownMenuSeparator className="my-1" />
               <DropdownMenuItem
+                className="px-2 py-1 text-xs gap-2 cursor-pointer rounded-sm"
                 onClick={(e) => {
                   e.stopPropagation()
                   setShareOpen(true)
                   setMenuOpen(false)
                 }}
               >
-                <Share2 size={13} className="flex-shrink-0" />
-                Compartir
+                <Share2 className="flex-shrink-0 size-3.5" />
+                {t('sidebar.shareMessage')}
               </DropdownMenuItem>
               <DropdownMenuItem
                 variant="destructive"
+                className="px-2 py-1 text-xs gap-2 cursor-pointer rounded-sm"
                 onClick={(e) => {
                   e.stopPropagation()
                   setConfirmOpen(true)
                   setMenuOpen(false)
                 }}
               >
-                <Trash2 size={13} className="flex-shrink-0" />
-                Eliminar
+                <Trash2 className="flex-shrink-0 size-3.5" />
+                {t('sidebar.delete')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -193,7 +199,7 @@ export function SessionItem({ session }: SessionItemProps) {
       <Dialog open={shareOpen} onOpenChange={(open) => { if (!open) setShareOpen(false) }}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Compartir sesión</DialogTitle>
+            <DialogTitle>{t('sidebar.shareSession')}</DialogTitle>
           </DialogHeader>
           <div className="px-6 pb-4">
             <div style={{
@@ -217,13 +223,13 @@ export function SessionItem({ session }: SessionItemProps) {
                 sparta://session/{session.id}
               </code>
               <Button size="sm" variant="ghost" onClick={() => navigator.clipboard.writeText(`sparta://session/${session.id}`)}>
-                Copiar
+                {t('sidebar.copy')}
               </Button>
             </div>
           </div>
           <DialogFooter>
             <Button variant="ghost" size="sm" onClick={() => setShareOpen(false)}>
-              Cerrar
+              {t('sidebar.close')}
             </Button>
           </DialogFooter>
         </DialogContent>

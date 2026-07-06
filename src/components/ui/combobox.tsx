@@ -135,10 +135,17 @@ function ComboboxContent({ children, className }: { children: React.ReactNode; c
     const spaceAbove = rect.top
     const flip = spaceBelow < contentHeight + 12 && spaceAbove > contentHeight + 12
 
+    const width = Math.max(rect.width, 320)
+    let left = rect.left
+    // Evitar que se desborde por la derecha
+    if (left + width > window.innerWidth) {
+      left = Math.max(4, window.innerWidth - width - 12)
+    }
+
     setPosition({
       top: flip ? Math.max(4, rect.top - contentHeight - 4) : rect.bottom + 4,
-      left: rect.left,
-      width: rect.width,
+      left,
+      width,
     })
     setVisible(true)
   }, [ctx.open, ctx.triggerRef, ctx.search])

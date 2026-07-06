@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useCallback, useRef } from 'react'
+import { lazy, Suspense, useEffect, useCallback, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { TitleBar } from './TitleBar'
 import { SidebarProvider } from '@/components/ui/sidebar'
@@ -68,6 +68,9 @@ export function AppShell() {
   const { settingsOpen } = useSettingsStore()
   const { mainView, sidebarOpen, sidebarWidth, editorOpen, terminalOpen, editorWidth, terminalHeight } = useUIStore()
 
+  const [isDraggingTerminal, setIsDraggingTerminal] = useState(false)
+  const [isDraggingEditor, setIsDraggingEditor] = useState(false)
+
   const effectiveView = (mainView.type === 'editor' || mainView.type === 'terminal') ? 'chat' : mainView.type
   const isFullView = effectiveView !== 'chat'
 
@@ -75,19 +78,27 @@ export function AppShell() {
 
   const handleEditorResize = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
+    setIsDraggingEditor(true)
 
     const onMove = (ev: MouseEvent) => {
       const container = containerRef.current
       if (!container) return
       const rect = container.getBoundingClientRect()
-      const newWidth = Math.min(800, Math.max(300, rect.right - ev.clientX))
-      useUIStore.setState({ editorWidth: newWidth })
+      const rawWidth = rect.right - ev.clientX
+
+      if (rawWidth < 150) {
+        useUIStore.setState({ editorOpen: false })
+      } else {
+        const newWidth = Math.min(800, Math.max(300, rawWidth))
+        useUIStore.setState({ editorWidth: newWidth, editorOpen: true })
+      }
     }
 
     const onUp = () => {
       document.removeEventListener('mousemove', onMove)
       document.removeEventListener('mouseup', onUp)
       document.body.style.cursor = ''
+      setIsDraggingEditor(false)
     }
 
     document.body.style.cursor = 'col-resize'
@@ -97,19 +108,27 @@ export function AppShell() {
 
   const handleTerminalResize = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
+    setIsDraggingTerminal(true)
 
     const onMove = (ev: MouseEvent) => {
       const container = containerRef.current
       if (!container) return
       const rect = container.getBoundingClientRect()
-      const newHeight = Math.min(500, Math.max(100, rect.bottom - ev.clientY))
-      useUIStore.setState({ terminalHeight: newHeight })
+      const rawHeight = rect.bottom - ev.clientY
+
+      if (rawHeight < 60) {
+        useUIStore.setState({ terminalOpen: false })
+      } else {
+        const newHeight = Math.min(500, Math.max(100, rawHeight))
+        useUIStore.setState({ terminalHeight: newHeight, terminalOpen: true })
+      }
     }
 
     const onUp = () => {
       document.removeEventListener('mousemove', onMove)
       document.removeEventListener('mouseup', onUp)
       document.body.style.cursor = ''
+      setIsDraggingTerminal(false)
     }
 
     document.body.style.cursor = 'row-resize'
@@ -149,10 +168,11 @@ export function AppShell() {
                     </ChatErrorBoundary>
                   </div>
                   <div className="relative" style={{ flexShrink: 0 }}>
+                    {terminalOpen && <div className="border-t border-[var(--border-normal)]" />}
                     <motion.div
                       initial={false}
                       animate={{ height: terminalOpen ? terminalHeight : 0 }}
-                      transition={{ duration: 0.12, ease: 'easeOut' }}
+                      transition={{ duration: isDraggingTerminal ? 0 : 0.12, ease: 'easeOut' }}
                       style={{ overflow: 'hidden', position: 'relative', display: 'flex', flexDirection: 'column' }}
                     >
                       <TerminalSlot />
@@ -163,7 +183,6 @@ export function AppShell() {
                         onMouseDown={handleTerminalResize}
                       />
                     )}
-                    <div className="border-t border-[var(--border-normal)]" />
                   </div>
                 </div>
                 <AnimatePresence>
@@ -173,7 +192,7 @@ export function AppShell() {
                       initial={{ width: 0, opacity: 0 }}
                       animate={{ width: editorWidth, opacity: 1 }}
                       exit={{ width: 0, opacity: 0 }}
-                      transition={{ duration: 0.2, ease: 'easeInOut' }}
+                      transition={{ duration: isDraggingEditor ? 0 : 0.2, ease: 'easeInOut' }}
                       className="panel-editor"
                       style={{
                         flexShrink: 0,
@@ -197,6 +216,12 @@ export function AppShell() {
       </div>
       <StatusBar />
       {settingsOpen && <SettingsDialog />}
+      {isDraggingTerminal && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 99999, cursor: 'row-resize', background: 'transparent' }} />
+      )}
+      {isDraggingEditor && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 99999, cursor: 'col-resize', background: 'transparent' }} />
+      )}
       <Toaster position="bottom-right" richColors closeButton />
     </div>
   )

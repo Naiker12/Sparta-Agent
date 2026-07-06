@@ -63,7 +63,7 @@ export function MemoryEntryItem({ entry, onEdit, onDelete }: MemoryEntryItemProp
       </div>
       <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
         <button
-          onClick={onEdit}
+          onClick={(e) => { e.stopPropagation(); onEdit() }}
           title="Editar"
           style={btnStyle}
           onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text-secondary)')}
@@ -72,7 +72,7 @@ export function MemoryEntryItem({ entry, onEdit, onDelete }: MemoryEntryItemProp
           <Pencil size={11} strokeWidth={1.5} />
         </button>
         <button
-          onClick={() => setConfirmDeleteOpen(true)}
+          onClick={(e) => { e.stopPropagation(); setConfirmDeleteOpen(true) }}
           title="Eliminar"
           style={btnStyle}
           onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--destructive)')}
