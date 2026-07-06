@@ -26,6 +26,7 @@ interface SpartaAPI {
   sendMessage: (req: SpartaSendMessageRequest) => Promise<{ ok: boolean; error?: string; aborted?: boolean }>
   abortMessage: (sessionId: string) => Promise<void>
   isSidecarReady: () => Promise<{ running: boolean; ready: boolean }>
+  testMcpConnection: (config: Record<string, unknown>) => Promise<{ ok: boolean; serverId?: string; toolCount?: number; tools?: unknown[]; error?: string }>
 }
 
 interface VaultAPI {
@@ -85,6 +86,11 @@ interface SkillsAPI {
   uninstall: (skillId: string) => Promise<{ success: boolean; error?: string }>
 }
 
+interface PermissionAPI {
+  onRequest: (callback: (payload: unknown) => void) => () => void
+  respond: (payload: { requestId: string; approved: boolean; remember: 'once' | 'session' }) => Promise<{ ok: boolean }>
+}
+
 declare global {
   interface Window {
     sparta?: SpartaAPI
@@ -94,5 +100,6 @@ declare global {
     fs?: FilesystemAPI
     terminal?: TerminalAPI
     skills?: SkillsAPI
+    permission?: PermissionAPI
   }
 }

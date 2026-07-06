@@ -7,6 +7,7 @@ interface MCPState {
   addServer: (config: MCPServerConfig) => void
   removeServer: (id: string) => void
   setConnected: (id: string, connected: boolean) => void
+  setServerTools: (serverId: string, tools: MCPTool[]) => void
   addTool: (serverId: string, tool: MCPTool) => void
   removeTool: (serverId: string, toolName: string) => void
   toggleServer: (id: string) => void
@@ -43,6 +44,13 @@ export const useMCPStore = create<MCPState>()(
   setConnected: (id, connected) =>
     set((s) => ({
       servers: s.servers.map((sv) => (sv.id === id ? { ...sv, connected } : sv)),
+    })),
+
+  setServerTools: (serverId, tools) =>
+    set((s) => ({
+      servers: s.servers.map((sv) =>
+        sv.id === serverId ? { ...sv, tools } : sv
+      ),
     })),
 
   addTool: (serverId, tool) =>
