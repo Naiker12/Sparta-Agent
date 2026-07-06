@@ -31,7 +31,7 @@
 
 ## Visión general
 
-**Sparta Agent** es un entorno de desarrollo integrado (IDE) para agentes de inteligencia artificial con enfoque *local-first*. Orquesta agentes de lenguaje desde tres superficies de ejecución —escritorio, navegador y terminal— combinando chat unificado, sistema de agentes con subagentes, memoria semántica vectorial, grafo 3D de conocimiento, servidores MCP, skills reutilizables y múltiples canales de comunicación.
+**Sparta Agent** es un entorno de desarrollo integrado (IDE) para agentes de inteligencia artificial con enfoque *local-first*. Orquesta agentes de lenguaje desde tres superficies de ejecución —escritorio, navegador y terminal— combinando chat unificado, sistema de agentes con subagentes, memoria semántica vectorial, grafo 3D de conocimiento, **servidores MCP reales** (protocolo MCP con SDK oficial, stdio + HTTP), sistema de permisos para acceso fuera del workspace, skills reutilizables y múltiples canales de comunicación.
 
 La aplicación separa claramente la capa de presentación (React + Electron/Web), la capa de inteligencia (sidecar Python con LangGraph) y la capa de seguridad nativa (Rust vía N-API), permitiendo ejecutar el mismo agente en contextos muy distintos sin duplicar lógica de negocio.
 
@@ -54,7 +54,8 @@ La aplicación separa claramente la capa de presentación (React + Electron/Web)
 - **Memoria semántica vectorial** con ChromaDB y embeddings (OpenAI / Ollama).
 - **Grafo 3D de conocimiento** interactivo con Three.js.
 - **Skills reutilizables** con explorador, creador y exportador a `.skill.json`.
-- **Servidores MCP** con registro de conectados y marketplace.
+- **Servidores MCP reales** (SDK oficial `mcp`, stdio + HTTP, filtros include/exclude, eventos en tiempo real).
+- **Sistema de permisos** para operaciones de archivo fuera del workspace con diálogo de aprobación en Desktop (allow-once / allow-session).
 - **Canales de comunicación** (Telegram funcional; Discord, Slack, WhatsApp y Email en roadmap).
 - **Vault cifrado** para API keys mediante `safeStorage` de Electron (AES-256-GCM).
 - **Editor de código** con Monaco Editor (9 lenguajes), file tree y toolbar.
@@ -110,11 +111,15 @@ Sparta Agent sigue una arquitectura de tres capas principales que se comunican a
 │   │         ▼                 ▼                 ▼                   │        │
 │   │  ┌────────────┐  ┌──────────────┐  ┌──────────────┐            │        │
 │   │  │ file_tools │  │ terminal_    │  │   web_search │            │        │
-│   │  │            │  │ tools        │  │              │            │        │
+│   │  │ (read/write│  │ tools        │  │              │            │        │
+│   │  │  search/   │  │              │  │              │            │        │
+│   │  │  patch/    │  │              │  │              │            │        │
+│   │  │  delete)   │  │              │  │              │            │        │
 │   │  └────────────┘  └──────────────┘  └──────────────┘            │        │
 │   │                                                                 │        │
 │   │  ┌─────────────────────────────────────────────────────────┐   │        │
-│   │  │ Seguridad: CommandSanitizer · RateLimiter · MCP bridge  │   │        │
+│   │  │ Seguridad: CommandSanitizer · RateLimiter · Permission  │   │        │
+│   │  │ Broker · MCP Client (oficial SDK)                       │   │        │
 │   │  └─────────────────────────────────────────────────────────┘   │        │
 │   └─────────────────────────────────────────────────────────────────┘        │
 └──────────────────────────────────────────────────────────────────────────────┘
@@ -170,7 +175,7 @@ Sparta Agent sigue una arquitectura de tres capas principales que se comunican a
 | Iconos | Lucide React + SVGs propios | Iconografía consistente. |
 | Fuentes | Inter, Space Grotesk, Geist Variable | Tipografía de interfaz. |
 | Tests JS | vitest (59 tests) | Tests unitarios del frontend. |
-| Tests Python | pytest (32 tests) | Tests del sidecar. |
+| Tests Python | pytest (63 tests) | Tests del sidecar (tools, streaming, agent, providers). |
 | Tests Rust | cargo test (9 tests) | Tests del módulo nativo. |
 | Package Manager | pnpm | Gestión de dependencias. |
 | Builder | electron-builder | Empaquetado de la aplicación. |
@@ -327,7 +332,7 @@ Las siguientes variables de entorno controlan comportamientos críticos de segur
 | `pnpm lint` | Ejecuta ESLint sobre `.ts` y `.tsx`. |
 | `pnpm preview` | Previsualiza el build de Vite. |
 | `pnpm sidecar:setup` | Crea venv Python e instala dependencias del sidecar. |
-| `pnpm sidecar:test` | Ejecuta tests Python (pytest, 32 tests). |
+| `pnpm sidecar:test` | Ejecuta tests Python (pytest, 63 tests). |
 | `pnpm sidecar:run` | Ejecuta el sidecar manualmente (stdin/stdout). |
 | `pnpm sidecar:web` | Ejecuta el servidor FastAPI del sidecar para modo web. |
 | `pnpm rust:test` | Ejecuta tests Rust (cargo test, 9 tests). |
@@ -366,7 +371,7 @@ sparta-agent/
 ├── python/
 │   └── sparta_ai/             # Sidecar Python
 │       ├── agents/            # StateGraph, subagentes, research, code, memory
-│       ├── tools/             # web_search, file_tools, memory_tools, terminal_tools, mcp_bridge
+│       ├── tools/             # web_search, file_tools, memory_tools, terminal_tools, mcp_client
 │       ├── security/          # CommandSanitizer, RateLimiter
 │       ├── memory/            # ChromaDB VectorStore + grafo de conocimiento
 │       ├── streaming/         # Event bridge LangGraph → JSON-RPC / WebSocket
@@ -447,6 +452,9 @@ TerminalWorkspace monta <PersistentTerminal /> como hermano de <TitleBar />
 - [x] Thinking block, tool calls, interrupt-and-redirect.
 - [x] Endurecimiento de `/ws/terminal` (token de auth, sanitizar input por línea, bind a `127.0.0.1` por defecto).
 - [x] Rate limiter Rust persistente entre llamadas napi (instancia global vía `Lazy<Mutex<>>`).
+- [x] Cliente MCP real (SDK oficial `mcp`, stdio + HTTP, include/exclude filters, eventos en tiempo real vía emit_fn).
+- [x] Sistema de permisos para archivos fuera del workspace (diálogo allow-once / allow-session en Desktop).
+- [x] Nuevas tools de archivo: `search_files_tool` (grep+glob), `patch_file_tool` (old→new + diff), `delete_file_tool`.
 
 ### En progreso / Pendiente
 - [ ] Terminal Web con PTY real (hoy usa pipes: sin job control, programas interactivos como `vim` / `htop` no redibujan bien).
@@ -456,8 +464,8 @@ TerminalWorkspace monta <PersistentTerminal /> como hermano de <TitleBar />
 - [ ] Adjuntos reales (archivos, snippets, imágenes, URLs).
 - [ ] Grabación de audio por micrófono.
 - [ ] Integraciones reales de Discord, Slack, WhatsApp y Email.
-- [ ] Conexión real a servidores MCP (stdio / http).
 - [ ] Auto-learning de la memoria.
+- [ ] Endurecimiento Fase 5: stale file check, fuzzy matching en patch, denylist ampliada, límites de tamaño.
 - [ ] Tests y CI/CD completo.
 
 ---

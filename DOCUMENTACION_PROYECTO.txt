@@ -475,7 +475,7 @@ D:\sparta-agent\
 │       │   ├── web_search.py      # Brave Search API
 │       │   ├── memory_tools.py    # read/write memory
   │       │   ├── file_tools.py      # read/write file
-  │       │   ├── mcp_bridge.py      # Bridge MCP servers
+  │       │   ├── mcp_client.py      # Cliente MCP real (SDK oficial) + permission_broker
   │       │   └── terminal_tools.py  # terminal_execute tool para el agente
 │       ├── memory\
 │       │   ├── chroma_store.py    # ChromaDB VectorStore
@@ -1174,7 +1174,7 @@ D:\sparta-agent\
    ✔ chat.ipc.ts delega al sidecar vía stdio JSON-RPC
    ✔ StateGraph con routing condicional (tools/subagent/end)
    ✔ Subagentes: research, code, memory como tools del agente principal
-   ✔ Tools: web_search, file_tools, memory_tools, mcp_bridge, terminal_execute
+    ✔ Tools: web_search, file_tools, memory_tools, mcp_client, terminal_execute
    ✔ Memory VectorStore + grafo de conocimiento + extractor LLM
    ✔ Skills: skill_loader.py con caché LRU
    ✔ sidecar-bridge.ts: puente simplificado frontend → sidecar

@@ -48,9 +48,11 @@ E) SKILL TOOLS (skill_tools.py)
   skill_view_tool(skill_id)
     → Carga SKILL.md completo (level-2 progressive disclosure)
 
-F) MCP BRIDGE (mcp_bridge.py)
-  build_mcp_tools(mcp_servers)
-    → Fábrica de wrappers MCP desde configs del frontend
+F) MCP CLIENT (mcp_client.py)
+  build_mcp_tools(servers_config)
+    → Conecta servidores MCP reales vía SDK oficial mcp (stdio + http)
+    → Soporta filtros include/exclude por servidor
+    → Reporta estado vía eventos mcp:connected / mcp:error al frontend
 
 2. FRONTEND TOOLS (src/services/tools/web-search/)
 -----------------------------------------------------

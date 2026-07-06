@@ -41,7 +41,7 @@ python/sparta_ai/
     web_search_providers.py — DuckDuckGo HTML scraper
     memory_tools.py       — read_memory_tool, write_memory_tool
     skill_tools.py        — skill_view_tool
-    mcp_bridge.py         — MCP tool wrapper factory
+    mcp_client.py         — Cliente MCP real (SDK oficial) + build_mcp_tools
 
   skills/
     skill_loader.py       — Carga SKILL.md (progressive disclosure)
