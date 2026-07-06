@@ -1,12 +1,17 @@
 import { useState, useEffect, useRef } from 'react'
-import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import {
-  Plug, Check, Loader2, FileJson, Upload,
+  Plug, Check, Loader2, Upload,
   Terminal, Globe, Copy, Info, X,
 } from 'lucide-react'
 import { useMCPStore } from '@/stores/mcp.store'
 import type { MCPServerConfig, MCPServerType } from '@/types'
+import { useTranslation } from '@/i18n'
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+} from '@/components/ui/dialog'
 
 interface AddMcpServerDialogProps {
   open: boolean
@@ -16,8 +21,19 @@ interface AddMcpServerDialogProps {
 
 type InputMode = 'manual' | 'config'
 
+/* ── Shared input style ─────────────────────────────────── */
+const inputStyle: React.CSSProperties = {
+  width: '100%', height: 34, padding: '0 10px',
+  borderRadius: 7, border: '1px solid var(--border-normal)',
+  background: 'var(--bg-input)', color: 'var(--text-primary)',
+  fontSize: 11, fontFamily: 'var(--font-ui)',
+  outline: 'none', boxSizing: 'border-box',
+  transition: 'border-color 0.12s',
+}
+
 export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDialogProps) {
-  const { addServer } = useMCPStore()
+  const { addServer, removeServer } = useMCPStore()
+  const { t } = useTranslation()
 
   const [name, setName] = useState('')
   const [type, setType] = useState<MCPServerType>('stdio')
@@ -44,12 +60,12 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
       setInputMode('manual')
       setTestResult(null)
     }
-  }, [open, editServer?.args, editServer?.command, editServer?.name, editServer?.type, editServer?.url])
+  }, [open, editServer])
 
   const isEditing = !!editServer
   const isEmpty = type === 'stdio' ? !command.trim() : !url.trim()
   const preview = type === 'stdio'
-    ? `${command || '[comando]'} ${args || ''}`.trim()
+    ? `${command || '[cmd]'} ${args || ''}`.trim()
     : url || '[url]'
 
   function handleSubmit(e: React.FormEvent) {
@@ -75,11 +91,17 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
     if (!name.trim()) return
     if (type === 'stdio' && !command.trim()) return
     if (type === 'http' && !url.trim()) return
+
     const id = name.toLowerCase().replace(/\s+/g, '-')
+    if (isEditing && editServer.id && editServer.id !== id) removeServer(editServer.id)
+
+    const parsedArgs = (args.match(/(?:[^\s"']+|"[^"]*"|'[^']*')+/g) || [])
+      .map(arg => arg.replace(/^['"]|['"]$/g, ''))
+
     addServer({
       id, name: name.trim(), type, enabled: true,
       ...(type === 'stdio'
-        ? { command: command.trim(), args: args.split(/\s+/).filter(Boolean) }
+        ? { command: command.trim(), args: parsedArgs }
         : { url: url.trim() }),
     })
     reset(); onClose()
@@ -89,7 +111,7 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
     setTesting(true); setTestResult(null)
     setTimeout(() => {
       const count = Math.floor(Math.random() * 8) + 1
-      setTestResult(`${count} tools descubiertas`)
+      setTestResult(`${count} ${t('mcp.toolsDiscovered')}`)
       setTesting(false)
     }, 800)
   }
@@ -117,312 +139,299 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
   const canSubmitManual = name.trim() && (type === 'stdio' ? command.trim() : url.trim())
   const canSubmitConfig = configJson.trim().length > 2
 
-  if (!open) return null
-
   return (
-    <div
-      style={{
-        position: 'fixed', inset: 0, zIndex: 100,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: 'rgba(0,0,0,0.3)',
-      }}
-      onClick={() => { reset(); onClose() }}
-    >
-      <div
+    <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) { reset(); onClose() } }}>
+      <DialogContent
         style={{
-          width: 600, maxWidth: '92vw', maxHeight: '85vh',
-          background: 'var(--bg-modal)', border: '1px solid var(--border-strong)',
-          borderRadius: 'var(--radius-xl)', boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
-          display: 'flex', flexDirection: 'column', overflow: 'hidden',
+          background: 'var(--bg-modal)',
+          border: '1px solid var(--border-normal)',
+          borderRadius: 14,
+          padding: 0,
+          maxWidth: 500,
+          width: '100%',
+          overflow: 'hidden',
+          fontFamily: 'var(--font-ui)',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
         }}
-        onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
+        {/* ── Header ────────────────────────────────────────── */}
         <div style={{
-          display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12,
-          padding: '20px 24px 0', flexShrink: 0,
+          padding: '18px 20px 14px',
+          borderBottom: '1px solid var(--border-subtle)',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              width: 28, height: 28, borderRadius: 'var(--radius-md)',
-              background: 'var(--accent-muted)', color: 'var(--accent)', flexShrink: 0,
-            }}>
-              <Plug size={14} strokeWidth={2} />
-            </span>
-            <div>
-              <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-ui)', margin: 0 }}>
-                {isEditing ? 'Editar servidor MCP' : 'Agregar servidor MCP'}
-              </h3>
-              <p style={{ fontSize: 11.5, color: 'var(--text-secondary)', fontFamily: 'var(--font-ui)', margin: '2px 0 0' }}>
-                Conecta un servidor MCP para exponer herramientas al agente.
-              </p>
-            </div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>
+            {isEditing ? t('mcp.editServer') : t('mcp.addServerTitle')}
           </div>
-          <button onClick={() => { reset(); onClose() }} style={{
-            width: 24, height: 24, background: 'none', border: 'none',
-            borderRadius: 'var(--radius-sm)', color: 'var(--text-muted)',
-            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            flexShrink: 0, marginTop: -2,
-          }}>
-            <X size={14} />
-          </button>
-        </div>
+          <div style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+            {t('mcp.addServerDesc')}
+          </div>
 
-        {/* Body */}
-        <form id="mcp-form" onSubmit={handleSubmit} style={{
-          flex: 1, overflowY: 'auto', overflowX: 'hidden',
-          padding: '16px 24px', display: 'flex', flexDirection: 'column', gap: 0,
-        }}>
           {/* Mode tabs */}
           <div style={{
-            display: 'flex', gap: 4, marginBottom: 16, padding: 4,
-            background: 'var(--bg-surface)', borderRadius: 'var(--radius-lg)',
-            border: '1px solid var(--border-subtle)',
+            display: 'flex', marginTop: 14, gap: 0,
+            borderBottom: '1px solid var(--border-subtle)',
           }}>
-            <ModeTab
-              active={inputMode === 'manual'}
-              icon={<Terminal size={13} />}
-              label="Configuración manual"
-              onClick={() => setInputMode('manual')}
-            />
-            <ModeTab
-              active={inputMode === 'config'}
-              icon={<FileJson size={13} />}
-              label="Importar JSON"
-              onClick={() => setInputMode('config')}
-            />
+            {(['manual', 'config'] as InputMode[]).map((mode) => {
+              const label = mode === 'manual' ? t('mcp.manualConfig') : t('mcp.importJson')
+              const active = inputMode === mode
+              return (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => setInputMode(mode)}
+                  style={{
+                    padding: '6px 14px 8px', fontSize: 11, fontWeight: active ? 600 : 500,
+                    fontFamily: 'var(--font-ui)', cursor: 'pointer',
+                    border: 'none', background: 'transparent',
+                    borderBottom: `2px solid ${active ? 'var(--accent)' : 'transparent'}`,
+                    color: active ? 'var(--accent)' : 'var(--text-muted)',
+                    marginBottom: -1, outline: 'none', transition: 'all 0.12s',
+                  }}
+                >
+                  {label}
+                </button>
+              )
+            })}
           </div>
+        </div>
 
-          {inputMode === 'manual' ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-              <Field label="Nombre del servidor">
-                <Input
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="ej. filesystem-server"
-                  autoFocus
-                />
-              </Field>
+        {/* ── Body ──────────────────────────────────────────── */}
+        <form id="mcp-form" onSubmit={handleSubmit}>
+          <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
 
-              <Field label="Tipo de conexión">
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                  <TypeCard
-                    active={type === 'stdio'}
-                    icon={<Terminal size={16} />}
-                    title="Stdio"
-                    subtitle="Proceso local"
-                    onClick={() => { setType('stdio'); setTestResult(null) }}
+            {inputMode === 'manual' ? (
+              <>
+                {/* Server name */}
+                <FieldRow label={t('mcp.serverName')}>
+                  <FocusInput
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder={t('mcp.serverNamePlaceholder')}
+                    autoFocus
                   />
-                  <TypeCard
-                    active={type === 'http'}
-                    icon={<Globe size={16} />}
-                    title="HTTP / SSE"
-                    subtitle="Servidor remoto"
-                    onClick={() => { setType('http'); setTestResult(null) }}
-                  />
-                </div>
-              </Field>
+                </FieldRow>
 
-              {type === 'stdio' ? (
-                <div style={{ display: 'grid', gridTemplateColumns: '160px 1fr', gap: 12 }}>
-                  <Field label="Comando">
-                    <Input
-                      value={command}
-                      onChange={(e) => setCommand(e.target.value)}
-                      placeholder="npx"
+                {/* Connection type */}
+                <FieldRow label={t('mcp.connectionType')}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                    <TypeCard
+                      active={type === 'stdio'}
+                      icon={<Terminal size={13} />}
+                      title={t('mcp.stdio')}
+                      subtitle={t('mcp.stdioDesc')}
+                      onClick={() => { setType('stdio'); setTestResult(null) }}
                     />
-                  </Field>
-                  <Field label="Argumentos">
-                    <Input
-                      value={args}
-                      onChange={(e) => setArgs(e.target.value)}
-                      placeholder="-y @modelcontextprotocol/server-filesystem ./"
+                    <TypeCard
+                      active={type === 'http'}
+                      icon={<Globe size={13} />}
+                      title={t('mcp.httpSse')}
+                      subtitle={t('mcp.httpSseDesc')}
+                      onClick={() => { setType('http'); setTestResult(null) }}
                     />
-                  </Field>
-                </div>
-              ) : (
-                <Field label="URL del servidor">
-                  <Input
-                    value={url}
-                    onChange={(e) => setUrl(e.target.value)}
-                    placeholder="http://localhost:3001/mcp"
+                  </div>
+                </FieldRow>
+
+                {/* Command / URL */}
+                {type === 'stdio' ? (
+                  <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: 8 }}>
+                    <FieldRow label={t('mcp.command')}>
+                      <FocusInput value={command} onChange={(e) => setCommand(e.target.value)} placeholder="npx" />
+                    </FieldRow>
+                    <FieldRow label={t('mcp.arguments')}>
+                      <FocusInput
+                        value={args}
+                        onChange={(e) => setArgs(e.target.value)}
+                        placeholder="-y @modelcontextprotocol/server-filesystem ./"
+                      />
+                    </FieldRow>
+                  </div>
+                ) : (
+                  <FieldRow label={t('mcp.serverUrl')}>
+                    <FocusInput value={url} onChange={(e) => setUrl(e.target.value)} placeholder="http://localhost:3001/mcp" />
+                  </FieldRow>
+                )}
+
+                {/* Env vars */}
+                <FieldRow label={t('mcp.envVars')}>
+                  <FocusInput
+                    value={envVars}
+                    onChange={(e) => setEnvVars(e.target.value)}
+                    placeholder="KEY=value KEY2=value2"
                   />
-                </Field>
-              )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 5 }}>
+                    <Info size={10} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+                    <span style={{ fontSize: 10, color: 'var(--text-muted)', lineHeight: 1.4 }}>
+                      {t('mcp.envVarsHint')}
+                    </span>
+                  </div>
+                </FieldRow>
 
-              <Field label="Variables de entorno">
-                <Input
-                  value={envVars}
-                  onChange={(e) => setEnvVars(e.target.value)}
-                  placeholder="KEY=value KEY2=value2"
-                />
-                <span style={{
-                  display: 'flex', alignItems: 'center', gap: 5, marginTop: 5,
-                  fontSize: 11, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)',
-                }}>
-                  <Info size={10} />
-                  Opcional · separar con espacios: API_KEY=sk-xxx PORT=3001
-                </span>
-              </Field>
+                {/* Command preview */}
+                <FieldRow label={t('mcp.commandPreview')}>
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    padding: '0 10px', minHeight: 34, borderRadius: 7,
+                    border: '1px solid var(--border-subtle)',
+                    background: 'var(--bg-elevated)',
+                    fontFamily: 'var(--font-mono)', fontSize: 11,
+                  }}>
+                    <span style={{
+                      flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      color: isEmpty ? 'var(--text-muted)' : 'var(--text-primary)',
+                      fontStyle: isEmpty ? 'italic' : 'normal',
+                      userSelect: 'all',
+                    }}>
+                      {isEmpty ? t('mcp.commandPreviewPlaceholder') : preview}
+                    </span>
+                    {!isEmpty && (
+                      <button
+                        type="button"
+                        onClick={copyPreview}
+                        title="Copy"
+                        style={{
+                          width: 22, height: 22, borderRadius: 5, border: 'none',
+                          background: copied ? 'rgba(34,197,94,0.12)' : 'transparent',
+                          color: copied ? 'var(--status-ok)' : 'var(--text-muted)',
+                          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          flexShrink: 0, transition: 'all 0.12s',
+                        }}
+                      >
+                        {copied ? <Check size={11} strokeWidth={2.5} /> : <Copy size={11} />}
+                      </button>
+                    )}
+                  </div>
+                </FieldRow>
 
-              <Field label="Vista previa del comando">
+                {/* Test connection */}
                 <div style={{
-                  display: 'flex', alignItems: 'center', gap: 8,
-                  padding: '9px 12px', borderRadius: 'var(--radius-lg)',
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '10px 12px', borderRadius: 8,
                   border: '1px solid var(--border-subtle)',
                   background: 'var(--bg-surface)',
-                  fontFamily: 'var(--font-mono)', fontSize: 12, minHeight: 38,
                 }}>
-                  <span style={{
-                    flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                    userSelect: 'all',
-                    color: !isEmpty ? 'var(--text-primary)' : 'var(--text-muted)',
-                    fontStyle: isEmpty ? 'italic' : 'normal',
-                  }}>
-                    {!isEmpty ? preview : 'El comando aparecerá aquí'}
-                  </span>
-                  {!isEmpty && (
-                    <button
-                      type="button"
-                      onClick={copyPreview}
-                      title="Copiar"
-                      style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        width: 24, height: 24, borderRadius: 5, border: 'none',
-                        background: copied ? 'var(--accent-muted)' : 'transparent',
-                        color: copied ? 'var(--accent)' : 'var(--text-muted)',
-                        cursor: 'pointer', transition: 'all 0.12s', flexShrink: 0,
-                      }}
-                    >
-                      {copied ? <Check size={12} /> : <Copy size={12} />}
-                    </button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleTest}
+                    disabled={testing || (type === 'stdio' ? !command.trim() : !url.trim())}
+                    style={{ fontSize: 11, fontWeight: 600, gap: 6, height: 28, paddingLeft: 10, paddingRight: 10, flexShrink: 0 }}
+                  >
+                    {testing
+                      ? <Loader2 size={11} style={{ animation: 'spin 1s linear infinite' }} />
+                      : <Plug size={11} />}
+                    {t('mcp.testConnection')}
+                  </Button>
+                  {testResult ? (
+                    <span style={{ fontSize: 11, color: 'var(--status-ok)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5 }}>
+                      <Check size={11} strokeWidth={2.5} />
+                      {testResult}
+                    </span>
+                  ) : !testing && (
+                    <span style={{ fontSize: 10, color: 'var(--text-muted)', lineHeight: 1.4 }}>
+                      {t('mcp.testHint')}
+                    </span>
                   )}
                 </div>
-              </Field>
+              </>
+            ) : (
+              <>
+                {/* Info banner */}
+                <div style={{
+                  display: 'flex', gap: 8, padding: '10px 12px', borderRadius: 8,
+                  background: 'var(--accent-muted)', border: '1px solid var(--accent-dim)',
+                }}>
+                  <Info size={13} style={{ color: 'var(--accent)', flexShrink: 0, marginTop: 1 }} />
+                  <span
+                    style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.5, fontFamily: 'var(--font-ui)' }}
+                    dangerouslySetInnerHTML={{ __html: t('mcp.importJsonHint') }}
+                  />
+                </div>
 
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: 12,
-                padding: '12px 16px', borderRadius: 'var(--radius-lg)',
-                border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)',
-              }}>
-                <Button
-                  type="button" variant="outline" size="sm"
-                  onClick={handleTest}
-                  disabled={testing || (type === 'stdio' ? !command.trim() : !url.trim())}
-                  style={{ fontSize: 12, gap: 6, flexShrink: 0 }}
-                >
-                  {testing
-                    ? <Loader2 size={12} className="animate-spin" />
-                    : <Plug size={12} />}
-                  Probar conexión
-                </Button>
-                {testResult ? (
-                  <span style={{
-                    fontSize: 12, color: 'var(--status-ok)', fontFamily: 'var(--font-ui)',
-                    display: 'flex', alignItems: 'center', gap: 5, fontWeight: 600,
-                  }}>
-                    <Check size={12} strokeWidth={2.5} />
-                    {testResult}
-                  </span>
-                ) : !testing && (
-                  <span style={{ fontSize: 11.5, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)' }}>
-                    Verifica que el servidor responde correctamente
-                  </span>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div style={{
-                display: 'flex', gap: 10, padding: '12px 16px',
-                borderRadius: 'var(--radius-lg)',
-                background: 'var(--accent-muted)', border: '1px solid var(--accent-dim)',
-              }}>
-                <Info size={14} style={{ color: 'var(--accent)', flexShrink: 0, marginTop: 1 }} />
-                <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontFamily: 'var(--font-ui)', lineHeight: 1.6 }}>
-                  Pega tu configuración en formato{' '}
-                  <strong style={{ color: 'var(--text-primary)' }}>claude_desktop_config.json</strong>{' '}
-                  o carga el archivo directamente. Se importarán todos los servidores definidos.
-                </span>
-              </div>
+                {/* JSON textarea */}
+                <FieldRow label={t('mcp.jsonConfig')}>
+                  <textarea
+                    value={configJson}
+                    onChange={(e) => setConfigJson(e.target.value)}
+                    placeholder={`{\n  "mcpServers": {\n    "filesystem": {\n      "command": "npx",\n      "args": ["-y", "@modelcontextprotocol/server-filesystem", "./"]\n    }\n  }\n}`}
+                    style={{
+                      width: '100%', minHeight: 160, resize: 'vertical',
+                      padding: '10px 12px', borderRadius: 7,
+                      border: '1px solid var(--border-normal)',
+                      background: 'var(--bg-input)', color: 'var(--text-primary)',
+                      fontFamily: 'var(--font-mono)', fontSize: 11, lineHeight: 1.5,
+                      outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.12s',
+                    }}
+                    onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)' }}
+                    onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border-normal)' }}
+                  />
+                </FieldRow>
 
-              <Field label="Configuración JSON">
-                <textarea
-                  value={configJson}
-                  onChange={(e) => setConfigJson(e.target.value)}
-                  placeholder={`{\n  "mcpServers": {\n    "filesystem": {\n      "command": "npx",\n      "args": ["-y", "@modelcontextprotocol/server-filesystem", "./"]\n    }\n  }\n}`}
+                <input ref={fileInputRef} type="file" accept=".json" onChange={handleFileUpload} style={{ display: 'none' }} />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
                   style={{
-                    width: '100%', minHeight: 180, resize: 'vertical',
-                    padding: '12px 14px', borderRadius: 'var(--radius-lg)',
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    padding: '6px 12px', borderRadius: 7, cursor: 'pointer',
                     border: '1px solid var(--border-normal)',
-                    background: 'var(--bg-input)', color: 'var(--text-primary)',
-                    fontFamily: 'var(--font-mono)', fontSize: 12, lineHeight: 1.7,
-                    outline: 'none', transition: 'border-color 0.15s, box-shadow 0.15s',
+                    background: 'var(--bg-elevated)', color: 'var(--text-secondary)',
+                    fontSize: 11, fontWeight: 600, fontFamily: 'var(--font-ui)',
+                    alignSelf: 'flex-start', transition: 'all 0.12s',
                   }}
-                  onFocus={e => {
-                    e.currentTarget.style.borderColor = 'var(--accent)'
-                    e.currentTarget.style.boxShadow = '0 0 0 3px var(--accent-muted)'
-                  }}
-                  onBlur={e => {
-                    e.currentTarget.style.borderColor = 'var(--border-normal)'
-                    e.currentTarget.style.boxShadow = 'none'
-                  }}
-                />
-              </Field>
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-primary)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border-strong)' }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-secondary)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border-normal)' }}
+                >
+                  <Upload size={12} />
+                  {t('mcp.loadConfigFile')}
+                </button>
+              </>
+            )}
+          </div>
 
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".json"
-                onChange={handleFileUpload}
-                style={{ display: 'none' }}
-              />
-              <Button
-                type="button" variant="outline"
-                onClick={() => fileInputRef.current?.click()}
-                style={{ gap: 8, alignSelf: 'flex-start' }}
-              >
-                <Upload size={13} />
-                Cargar archivo de configuración
-              </Button>
-            </div>
-          )}
+          {/* ── Footer ──────────────────────────────────────── */}
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8,
+            padding: '12px 20px', borderTop: '1px solid var(--border-subtle)',
+          }}>
+            <button
+              type="button"
+              onClick={() => { reset(); onClose() }}
+              style={{
+                padding: '6px 16px', borderRadius: 7, cursor: 'pointer',
+                border: '1px solid var(--border-normal)',
+                background: 'transparent', color: 'var(--text-secondary)',
+                fontSize: 11, fontWeight: 500, fontFamily: 'var(--font-ui)',
+                transition: 'all 0.12s',
+              }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--bg-hover)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-primary)' }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-secondary)' }}
+            >
+              {t('mcp.cancel')}
+            </button>
+            <Button
+              form="mcp-form"
+              type="submit"
+              disabled={inputMode === 'manual' ? !canSubmitManual : !canSubmitConfig}
+              style={{ fontSize: 11, fontWeight: 600, height: 32, minWidth: 130, paddingLeft: 16, paddingRight: 16 }}
+            >
+              {inputMode === 'config'
+                ? t('mcp.importServers')
+                : isEditing ? t('mcp.saveChanges') : t('mcp.addServer')}
+            </Button>
+          </div>
         </form>
-
-        {/* Footer */}
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8,
-          padding: '12px 24px', borderTop: '1px solid var(--border-subtle)',
-          background: 'var(--bg-surface)', flexShrink: 0,
-        }}>
-          <Button variant="ghost" onClick={() => { reset(); onClose() }} style={{ minWidth: 90 }}>
-            Cancelar
-          </Button>
-          <Button
-            form="mcp-form"
-            type="submit"
-            disabled={inputMode === 'manual' ? !canSubmitManual : !canSubmitConfig}
-            style={{ minWidth: 160 }}
-          >
-            {inputMode === 'config'
-              ? 'Importar servidores'
-              : isEditing ? 'Guardar cambios' : 'Agregar servidor'}
-          </Button>
-        </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+/* ─── Sub-components ─────────────────────────────────────────── */
+
+function FieldRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-      <label style={{
-        display: 'block', fontSize: 10, fontWeight: 700,
-        textTransform: 'uppercase', letterSpacing: '0.07em',
-        color: 'var(--text-secondary)', fontFamily: 'var(--font-ui)',
-      }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+      <label style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'var(--font-ui)' }}>
         {label}
       </label>
       {children}
@@ -430,26 +439,24 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 
-function ModeTab({ active, icon, label, onClick }: {
-  active: boolean; icon: React.ReactNode; label: string; onClick: () => void
+function FocusInput({
+  value, onChange, placeholder, autoFocus,
+}: {
+  value: string
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  placeholder?: string
+  autoFocus?: boolean
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      style={{
-        flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-        padding: '7px 14px', borderRadius: 'var(--radius-md)', border: 'none',
-        background: active ? 'var(--bg-elevated)' : 'transparent',
-        color: active ? 'var(--text-primary)' : 'var(--text-muted)',
-        fontSize: 12, fontWeight: active ? 600 : 500,
-        fontFamily: 'var(--font-ui)', cursor: 'pointer', transition: 'all 0.15s',
-        boxShadow: active ? '0 1px 4px rgba(0,0,0,0.15)' : 'none',
-      }}
-    >
-      <span style={{ color: active ? 'var(--accent)' : 'inherit' }}>{icon}</span>
-      {label}
-    </button>
+    <input
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      autoFocus={autoFocus}
+      style={inputStyle}
+      onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)' }}
+      onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border-normal)' }}
+    />
   )
 }
 
@@ -461,27 +468,28 @@ function TypeCard({ active, icon, title, subtitle, onClick }: {
       type="button"
       onClick={onClick}
       style={{
-        display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px',
-        borderRadius: 'var(--radius-lg)', border: '1.5px solid',
-        borderColor: active ? 'var(--accent)' : 'var(--border-normal)',
-        background: active ? 'var(--accent-muted)' : 'var(--bg-surface)',
-        color: active ? 'var(--accent)' : 'var(--text-primary)',
-        textAlign: 'left', cursor: 'pointer', transition: 'all 0.12s',
-        fontFamily: 'var(--font-ui)', width: '100%',
+        display: 'flex', alignItems: 'center', gap: 10,
+        padding: '10px 12px', borderRadius: 9, cursor: 'pointer',
+        border: active ? '1px solid var(--accent)' : '1px solid var(--border-normal)',
+        background: active ? 'var(--accent-muted)' : 'var(--bg-elevated)',
+        outline: 'none', textAlign: 'left', width: '100%',
+        transition: 'all 0.12s',
       }}
     >
       <div style={{
+        width: 30, height: 30, borderRadius: 7, flexShrink: 0,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        width: 34, height: 34, borderRadius: 'var(--radius-md)',
         background: active ? 'var(--accent)' : 'var(--bg-active)',
-        color: active ? '#fff' : 'var(--text-secondary)',
-        flexShrink: 0, transition: 'all 0.12s',
+        color: active ? '#fff' : 'var(--text-muted)',
+        transition: 'all 0.12s',
       }}>
         {icon}
       </div>
-      <div>
-        <div style={{ fontSize: 13, fontWeight: 700 }}>{title}</div>
-        <div style={{ fontSize: 11, color: active ? 'var(--accent)' : 'var(--text-muted)', fontWeight: 400, marginTop: 2, opacity: 0.8 }}>
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: active ? 'var(--accent)' : 'var(--text-primary)', lineHeight: 1.2 }}>
+          {title}
+        </div>
+        <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2, lineHeight: 1.3 }}>
           {subtitle}
         </div>
       </div>
