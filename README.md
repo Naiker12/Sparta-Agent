@@ -55,7 +55,9 @@ La aplicación separa claramente la capa de presentación (React + Electron/Web)
 - **Grafo 3D de conocimiento** interactivo con Three.js.
 - **Skills reutilizables** con explorador, creador y exportador a `.skill.json`.
 - **Servidores MCP reales** (SDK oficial `mcp`, stdio + HTTP, filtros include/exclude, eventos en tiempo real).
+- **Auto-instalación de MCP por el agente** via `mcp_manage_tool` con catálogo curado de 6 servidores, solo instala lo listado, nunca inventa comandos.
 - **Sistema de permisos** para operaciones de archivo fuera del workspace con diálogo de aprobación en Desktop (allow-once / allow-session).
+- **Secretos MCP en vault cifrado** (`safeStorage` → DPAPI/Keychain), nunca en texto plano en disco.
 - **Canales de comunicación** (Telegram funcional; Discord, Slack, WhatsApp y Email en roadmap).
 - **Vault cifrado** para API keys mediante `safeStorage` de Electron (AES-256-GCM).
 - **Editor de código** con Monaco Editor (9 lenguajes), file tree y toolbar.
@@ -191,6 +193,7 @@ La seguridad se aplica en múltiples capas:
 - El sidecar Python se spawnea desde el proceso principal de Electron con un token único (`SPARTA_WS_TOKEN`) y variables de entorno controladas.
 - El módulo Rust valida el framing de los mensajes JSON-RPC y mantiene un log de auditoría.
 - Las API keys no viajan en texto plano: se almacenan en el vault cifrado de Electron y se inyectan en caché al sidecar una vez que este reporta estar listo.
+- Los secretos de servidores MCP (tokens, connection strings) siguen el mismo criterio: se guardan en el vault cifrado como `mcp:{serverId}:{varName}` y el archivo `sparta.mcp.json` solo contiene referencias (`env_vault_refs`).
 
 ### 2. Sanitización de comandos de shell
 
@@ -455,6 +458,10 @@ TerminalWorkspace monta <PersistentTerminal /> como hermano de <TitleBar />
 - [x] Cliente MCP real (SDK oficial `mcp`, stdio + HTTP, include/exclude filters, eventos en tiempo real vía emit_fn).
 - [x] Sistema de permisos para archivos fuera del workspace (diálogo allow-once / allow-session en Desktop).
 - [x] Nuevas tools de archivo: `search_files_tool` (grep+glob), `patch_file_tool` (old→new + diff), `delete_file_tool`.
+- [x] `mcp_manage_tool`: agente puede instalar servidores del catálogo curado (6 entradas) con permiso explícito vía diálogo.
+- [x] Secretos MCP en vault cifrado (`safeStorage` → DPAPI/Keychain) — nunca en texto plano en disco.
+- [x] Catálogo curado visible en marketplace de la UI (McpView → pestaña Marketplace).
+- [x] Tests de seguridad: `permission_broker` + `mcp_manage_tool` (14 tests).
 
 ### En progreso / Pendiente
 - [ ] Terminal Web con PTY real (hoy usa pipes: sin job control, programas interactivos como `vim` / `htop` no redibujan bien).
