@@ -117,7 +117,7 @@ function _handleEvent(rawEvent: SpartaEvent) {
     const serverId = (event.serverId ?? '') as string
     const config = event.config as Record<string, unknown> | undefined
     if (serverId && config) {
-      store.addServer(config as Parameters<typeof store.addServer>[0])
+      store.addServer(config as unknown as Parameters<typeof store.addServer>[0])
       console.debug('[MCP] server added via tool:', serverId)
     }
     return

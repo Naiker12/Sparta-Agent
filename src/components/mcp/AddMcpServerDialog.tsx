@@ -170,7 +170,7 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
     setTesting(true); setTestResult(null)
     const config = buildConfig()
     try {
-      if (typeof window !== 'undefined' && (window as Record<string, unknown>).electron) {
+      if (typeof window !== 'undefined' && (window as unknown as Record<string, unknown>).electron) {
         const win = window as unknown as { electron: { invoke: (channel: string, ...args: unknown[]) => Promise<unknown> } }
         const result = await win.electron.invoke('mcp:test', config) as { ok: boolean; toolCount?: number; error?: string }
         if (result.ok) {
@@ -178,9 +178,9 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
         } else {
           setTestResult(`Error: ${result.error ?? 'Conexión fallida'}`)
         }
-      } else if (typeof window !== 'undefined' && (window as Record<string, unknown>).sparta) {
+      } else if (typeof window !== 'undefined' && (window as unknown as Record<string, unknown>).sparta) {
         const win = window as unknown as { sparta: { testMcpConnection: (config: Record<string, unknown>) => Promise<{ ok: boolean; toolCount?: number; error?: string }> } }
-        const result = await win.sparta.testMcpConnection(config)
+        const result = await win.sparta.testMcpConnection(config as unknown as Record<string, unknown>)
         if (result.ok) {
           setTestResult(`Conectado — ${result.toolCount ?? 0} ${t('mcp.toolsDiscovered')}`)
         } else {
