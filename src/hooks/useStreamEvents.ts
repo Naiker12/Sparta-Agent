@@ -50,25 +50,45 @@ function _detachSingleton() {
   }
 }
 
-// ── Buffering ───────────────────────────────────────────────────────
-const tokenBuf: { sid: string; mid: string; tokens: string[] } = { sid: '', mid: '', tokens: [] }
-let tokenTimer: ReturnType<typeof setTimeout> | null = null
+// ── Immediate flush (no buffering delay) ────────────────────────────
+// Previously used 16ms setTimeout per token, which added visible latency
+// for local models. Now flushes immediately on every event.
+const _writeBuf: { sid: string; mid: string; text: string } = { sid: '', mid: '', text: '' }
 
-const thinkBuf: { sid: string; mid: string; tokens: string[] } = { sid: '', mid: '', tokens: [] }
-let thinkTimer: ReturnType<typeof setTimeout> | null = null
-
-function flushTokenBuffer() {
-  const { sid, mid, tokens } = tokenBuf
-  if (tokens.length === 0) return
-  useChatStore.getState().appendContent(sid, mid, tokens.join(''))
-  tokenBuf.tokens = []
+function _flushContent() {
+  const { sid, mid, text } = _writeBuf
+  if (!text) return
+  _writeBuf.text = ''
+  useChatStore.getState().appendContent(sid, mid, text)
 }
 
-function flushThinkBuffer() {
-  const { sid, mid, tokens } = thinkBuf
-  if (tokens.length === 0) return
-  useChatStore.getState().appendThinking(sid, mid, tokens.join(''))
-  thinkBuf.tokens = []
+function _queueContent(sid: string, mid: string, token: string) {
+  if (_writeBuf.sid !== sid || _writeBuf.mid !== mid) {
+    _flushContent()
+    _writeBuf.sid = sid
+    _writeBuf.mid = mid
+  }
+  _writeBuf.text += token
+  _flushContent()
+}
+
+const _thinkBuf: { sid: string; mid: string; text: string } = { sid: '', mid: '', text: '' }
+
+function _flushThinking() {
+  const { sid, mid, text } = _thinkBuf
+  if (!text) return
+  _thinkBuf.text = ''
+  useChatStore.getState().appendThinking(sid, mid, text)
+}
+
+function _queueThinking(sid: string, mid: string, token: string) {
+  if (_thinkBuf.sid !== sid || _thinkBuf.mid !== mid) {
+    _flushThinking()
+    _thinkBuf.sid = sid
+    _thinkBuf.mid = mid
+  }
+  _thinkBuf.text += token
+  _flushThinking()
 }
 
 // ── MCP lifecycle handler ───────────────────────────────────────────
@@ -157,22 +177,12 @@ function _handleEvent(rawEvent: SpartaEvent) {
         console.warn('[useStreamEvents] thinking:token ignorado, thinking ya completó')
         break
       }
-      if (thinkBuf.sid !== sid || thinkBuf.mid !== mid) {
-        flushThinkBuffer()
-        thinkBuf.sid = sid
-        thinkBuf.mid = mid
-      }
-      thinkBuf.tokens.push(thinkToken)
-      if (thinkTimer) clearTimeout(thinkTimer)
-      thinkTimer = setTimeout(() => {
-        thinkTimer = null
-        flushThinkBuffer()
-      }, 16)
+      _queueThinking(sid, mid, thinkToken)
       break
     }
     case 'thinking:completed': {
       console.debug('[useStreamEvents] thinking:completed', sid, mid)
-      flushThinkBuffer()
+      _flushThinking()
       const tokensUsed = (event as { tokensUsed: number }).tokensUsed ?? 0
       store.onThinkingEnd(sid, mid, tokensUsed)
       store.updateMessage(mid, { reasoningCompletedAt: Date.now() })
@@ -185,17 +195,7 @@ function _handleEvent(rawEvent: SpartaEvent) {
       const reasonToken = (event as { token: string }).token ?? ''
       const currentMsg = store.messagesBySession[sid]?.find((m) => m.id === mid)
       if (currentMsg?.thinkingStatus === 'completed') break
-      if (thinkBuf.sid !== sid || thinkBuf.mid !== mid) {
-        flushThinkBuffer()
-        thinkBuf.sid = sid
-        thinkBuf.mid = mid
-      }
-      thinkBuf.tokens.push(reasonToken)
-      if (thinkTimer) clearTimeout(thinkTimer)
-      thinkTimer = setTimeout(() => {
-        thinkTimer = null
-        flushThinkBuffer()
-      }, 16)
+      _queueThinking(sid, mid, reasonToken)
       break
     }
     case 'reasoning:available': {
@@ -213,7 +213,12 @@ function _handleEvent(rawEvent: SpartaEvent) {
         store.updateMessage(mid, { searchQuery: progressEvent.query })
       }
       store.updateSearchProgress(sid, mid, (items) => {
-        if (progressEvent.stage === 'searching') return []
+        if (progressEvent.stage === 'searching') {
+          // Ignore if we already have items — prevents late astream_events
+          // "searching" events from reverting progress shown by _emit_direct.
+          if (items.length > 0) return items
+          return []
+        }
         if (progressEvent.stage === 'visiting' && progressEvent.url) {
           const existing = items.find((i) => i.url === progressEvent.url)
           if (existing) return items
@@ -229,27 +234,21 @@ function _handleEvent(rawEvent: SpartaEvent) {
     }
     case 'stream:token': {
       const token = (event as { token: string }).token ?? ''
-      if (tokenBuf.sid !== sid || tokenBuf.mid !== mid) {
-        flushTokenBuffer()
-        tokenBuf.sid = sid
-        tokenBuf.mid = mid
-      }
-      tokenBuf.tokens.push(token)
-      if (tokenTimer) clearTimeout(tokenTimer)
-      tokenTimer = setTimeout(() => {
-        tokenTimer = null
-        flushTokenBuffer()
-      }, 16)
+      _queueContent(sid, mid, token)
       break
     }
     case 'stream:completed': {
-      flushTokenBuffer()
-      flushThinkBuffer()
+      _flushContent()
+      _flushThinking()
       // Leer el mensaje DESPUÉS del flush para tener el contenido completo
       const currentMsg = store.messagesBySession[sid]?.find((m) => m.id === mid)
       if (currentMsg?.thinkingStatus === 'streaming' || (currentMsg?.reasoningText && currentMsg?.thinkingStatus !== 'completed')) {
         console.debug('[safety-net] cerrando thinking en stream:completed')
         store.onThinkingEnd(sid, mid, currentMsg?.thinkingTokensUsed ?? 0)
+      }
+      const suggestions = (event as Record<string, unknown>).suggestions as string[] | undefined
+      if (suggestions && suggestions.length > 0) {
+        store.updateMessage(mid, { suggestions })
       }
       store.deduplicateReasoningFromContent(sid, mid)
       store.onStreamEnd(sid, mid)
@@ -282,8 +281,8 @@ function _handleEvent(rawEvent: SpartaEvent) {
       break
     }
     case 'stream:aborted': {
-      flushTokenBuffer()
-      flushThinkBuffer()
+      _flushContent()
+      _flushThinking()
       const abortedMsg = store.messagesBySession[sid]?.find((m) => m.id === mid)
       if (abortedMsg?.thinkingStatus === 'streaming' || (abortedMsg?.reasoningText && abortedMsg?.thinkingStatus !== 'completed')) {
         console.debug('[safety-net] cerrando thinking en stream:aborted')
@@ -294,8 +293,8 @@ function _handleEvent(rawEvent: SpartaEvent) {
       break
     }
     case 'stream:error': {
-      flushTokenBuffer()
-      flushThinkBuffer()
+      _flushContent()
+      _flushThinking()
       store.onStreamEnd(sid, mid)
       store.stopStreaming(sid)
       const errorMsg = (event as { error?: string }).error ?? 'Error durante la generación'

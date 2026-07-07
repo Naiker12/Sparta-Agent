@@ -26,17 +26,41 @@ logger = logging.getLogger("sparta_ai.streaming")
 
 _SUBGRAPH_NAMESPACE_PREFIXES = ("research_agent/", "code_agent/", "memory_agent/")
 
+_FLUSH_BATCH_SIZE = 8
+_flush_counter = 0
+
+_TOKEN_EVENTS = frozenset({"stream:token", "thinking:token"})
+
+_CONTROL_EVENTS = frozenset({
+    "stream:completed", "stream:aborted", "stream:error", "stream:degenerate",
+    "stream:end",
+    "thinking:started", "thinking:completed",
+    "tool:called", "tool:result", "tool:error",
+    "terminal:agent_command", "terminal:agent_spawn",
+    "usage", "skill:activated", "search:progress",
+})
+
 
 def _emit(request_id: str, event: str, data: dict | None = None, stream_state: dict | None = None) -> None:
+    global _flush_counter
     msg: dict[str, Any] = {"id": request_id, "event": event}
     if data is not None:
-        if stream_state is not None and event in ("stream:token", "thinking:token"):
+        if stream_state is not None and event in _TOKEN_EVENTS:
             stream_state["_chunk_seq"] = stream_state.get("_chunk_seq", 0) + 1
             data["chunkSeq"] = stream_state["_chunk_seq"]
         msg["data"] = data
     try:
         sys.stdout.write(json.dumps(msg, ensure_ascii=False) + "\n")
-        sys.stdout.flush()
+        should_flush = event in _CONTROL_EVENTS
+        if not should_flush and event in _TOKEN_EVENTS:
+            _flush_counter += 1
+            if _flush_counter >= _FLUSH_BATCH_SIZE:
+                should_flush = True
+                _flush_counter = 0
+        else:
+            _flush_counter = 0
+        if should_flush:
+            sys.stdout.flush()
     except (BrokenPipeError, OSError):
         # Parent process closed the pipe; exit cleanly instead of crashing.
         sys.exit(0)
@@ -131,10 +155,36 @@ async def stream_agent_to_electron(
 
 
 async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> bool:
-    """Dispatch a single LangGraph event.
+    """Dispatch a single LangGraph event to stdout (Electron mode).
 
     Returns True if the stream should be aborted (degeneration detected),
     False to continue streaming normally.
+    """
+    return await _dispatch_event_core(
+        emit_fn=lambda e, d: _emit(request_id, e, d, stream_state),
+        emit_control_fn=lambda e, d: _emit(request_id, e, d, stream_state),
+        event=event,
+        stream_state=stream_state,
+        request_id=request_id,
+    )
+
+
+async def _dispatch_event_core(
+    emit_fn: Any,
+    emit_control_fn: Any,
+    event: dict,
+    stream_state: dict,
+    request_id: str = "",
+) -> bool:
+    """Shared LangGraph event dispatch logic for both Electron and WebSocket.
+
+    Args:
+        emit_fn: Called for token events (stream:token, thinking:token).
+        emit_control_fn: Called for control events (start, end, tool, etc.).
+        event: The LangGraph astream_events event dict.
+        stream_state: Mutable dict shared across events.
+
+    Returns True if the stream should be aborted.
     """
     kind = event.get("event", "")
     data: dict = event.get("data", {})
@@ -150,24 +200,21 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> b
         if chunk is None:
             return False
 
-        # Some OpenAI-compatible providers expose reasoning in metadata rather than content blocks.
         reasoning_content = _extract_reasoning_content(chunk)
         reasoning_from_metadata = bool(reasoning_content)
 
         if reasoning_content:
             if not stream_state["thinking_active"]:
                 logger.debug("Emitting thinking:started for request %s", request_id)
-                _emit(request_id, "thinking:started", {**base_payload})
+                emit_control_fn("thinking:started", {**base_payload})
                 stream_state["thinking_active"] = True
             stream_state["reasoning_tokens"] = stream_state.get("reasoning_tokens", 0) + len(reasoning_content.split())
             stream_state["reasoning_chars"] = stream_state.get("reasoning_chars", 0) + len(reasoning_content)
             logger.debug("Emitting thinking:token (reasoning_content) for request %s", request_id)
-            _emit(request_id, "thinking:token", {**base_payload, "token": reasoning_content}, stream_state)
+            emit_fn("thinking:token", {**base_payload, "token": reasoning_content})
 
-            # Detect skill activation in thinking text
             await _detect_and_emit_skill(request_id, reasoning_content, stream_state, base_payload)
 
-            # Feed content to scrubber to synchronize block state, discarding output
             content = getattr(chunk, "content", "")
             if isinstance(content, str) and content:
                 scrubber = stream_state.setdefault("_scrubber", StreamingThinkScrubber())
@@ -183,18 +230,14 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> b
                         continue
                     if not stream_state["thinking_active"]:
                         logger.debug("Emitting thinking:started for request %s", request_id)
-                        _emit(request_id, "thinking:started", {**base_payload})
+                        emit_control_fn("thinking:started", {**base_payload})
                         stream_state["thinking_active"] = True
                     token = _block_text(block)
                     if token:
                         stream_state["reasoning_tokens"] = stream_state.get("reasoning_tokens", 0) + len(token.split())
                         stream_state["reasoning_chars"] = stream_state.get("reasoning_chars", 0) + len(token)
-                        logger.debug(
-                            "Emitting thinking:token (reasoning block) for request %s", request_id
-                        )
-                        _emit(request_id, "thinking:token", {**base_payload, "token": token}, stream_state)
-
-                        # Detect skill activation in thinking text
+                        logger.debug("Emitting thinking:token (reasoning block) for request %s", request_id)
+                        emit_fn("thinking:token", {**base_payload, "token": token})
                         await _detect_and_emit_skill(request_id, token, stream_state, base_payload)
                 elif _is_text_block(block):
                     text = _block_text(block)
@@ -202,19 +245,16 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> b
                         rep_guard = stream_state.setdefault("_rep_guard", RepetitionGuard())
                         if rep_guard.feed(text):
                             logger.warning("Repetition detected in text block, aborting")
-                            _emit(request_id, "stream:degenerate", {**base_payload})
+                            emit_control_fn("stream:degenerate", {**base_payload})
                             return True
                         stream_state["visible_chars"] = stream_state.get("visible_chars", 0) + len(text)
-                        _emit(request_id, "stream:token", {**base_payload, "token": text}, stream_state)
+                        emit_fn("stream:token", {**base_payload, "token": text})
                 elif isinstance(block, dict) and block.get("type") == "tool_use":
-                    # Anthropic tool_use blocks are part of the assistant message,
-                    # not streamed tokens; ignore here.
                     continue
         elif isinstance(content, str) and content:
             scrubber = stream_state.setdefault("_scrubber", StreamingThinkScrubber())
             visible, reasoning = scrubber.feed(content)
 
-            # Dedup: detect graph-loop replay (model re-emits prior content)
             emitted = stream_state.get("_emitted_text", "")
             if visible and emitted:
                 pending = stream_state.get("_skip_pending", "")
@@ -234,7 +274,7 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> b
                                 return True
                             stream_state["visible_chars"] = stream_state.get("visible_chars", 0) + len(new_text)
                             stream_state["_emitted_text"] = emitted + new_text
-                            _emit(request_id, "stream:token", {**base_payload, "token": new_text}, stream_state)
+                            emit_fn("stream:token", {**base_payload, "token": new_text})
                         return False
                 else:
                     test_text = (pending + visible)[:80]
@@ -248,40 +288,35 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> b
             if reasoning and not reasoning_from_metadata:
                 if not stream_state["thinking_active"]:
                     logger.debug("Emitting thinking:started for request %s", request_id)
-                    _emit(request_id, "thinking:started", {**base_payload})
+                    emit_control_fn("thinking:started", {**base_payload})
                     stream_state["thinking_active"] = True
                 stream_state["reasoning_tokens"] = stream_state.get("reasoning_tokens", 0) + len(reasoning.split())
                 stream_state["reasoning_chars"] = stream_state.get("reasoning_chars", 0) + len(reasoning)
-                logger.debug(
-                    "Emitting thinking:token (inline think tag) for request %s", request_id
-                )
-                _emit(request_id, "thinking:token", {**base_payload, "token": reasoning}, stream_state)
-
-                # Detect skill activation in thinking text
+                logger.debug("Emitting thinking:token (inline think tag) for request %s", request_id)
+                emit_fn("thinking:token", {**base_payload, "token": reasoning})
                 await _detect_and_emit_skill(request_id, reasoning, stream_state, base_payload)
 
             if visible:
                 rep_guard = stream_state.setdefault("_rep_guard", RepetitionGuard())
                 if rep_guard.feed(visible):
                     logger.warning("Repetition detected in visible text, aborting")
-                    _emit(request_id, "stream:degenerate", {**base_payload})
+                    emit_control_fn("stream:degenerate", {**base_payload})
                     return True
                 if stream_state["thinking_active"] and not reasoning:
-                    _emit(
-                        request_id,
+                    emit_control_fn(
                         "thinking:completed",
                         {**base_payload, "tokens_used": stream_state.get("reasoning_tokens", 0)},
                     )
                     stream_state["thinking_active"] = False
                 stream_state["visible_chars"] = stream_state.get("visible_chars", 0) + len(visible)
                 stream_state["_emitted_text"] = stream_state.get("_emitted_text", "") + visible
-                _emit(request_id, "stream:token", {**base_payload, "token": visible}, stream_state)
+                emit_fn("stream:token", {**base_payload, "token": visible})
 
     elif kind == "on_chat_model_start":
         additional_kwargs = data.get("additional_kwargs", {})
         if additional_kwargs.get("thinking"):
             if not stream_state["thinking_active"]:
-                _emit(request_id, "thinking:started", {**base_payload})
+                emit_control_fn("thinking:started", {**base_payload})
                 stream_state["thinking_active"] = True
 
     elif kind == "on_chat_model_end":
@@ -292,98 +327,63 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> b
         if usage_metadata:
             input_tokens = getattr(usage_metadata, "input_tokens", 0)
             output_tokens = getattr(usage_metadata, "output_tokens", 0)
-            _emit(
-                request_id,
+            emit_control_fn(
                 "usage",
-                {
-                    **base_payload,
-                    "input_tokens": input_tokens,
-                    "output_tokens": output_tokens,
-                },
+                {**base_payload, "input_tokens": input_tokens, "output_tokens": output_tokens},
             )
         if stream_state["thinking_active"]:
-            _emit(request_id, "thinking:completed", {**base_payload, "tokens_used": output_tokens})
+            emit_control_fn("thinking:completed", {**base_payload, "tokens_used": output_tokens})
             stream_state["thinking_active"] = False
-        # Soltar cualquier tag partido retenido por el scrubber.
         scrubber = stream_state.get("_scrubber")
         if scrubber:
             leftover = scrubber.flush()
             if leftover:
                 stream_state["visible_chars"] = stream_state.get("visible_chars", 0) + len(leftover)
-                _emit(request_id, "stream:token", {**base_payload, "token": leftover}, stream_state)
+                emit_fn("stream:token", {**base_payload, "token": leftover})
 
     elif kind == "on_tool_start":
         tool_call_id = event.get("run_id", str(id(event)))
         tool_input = data.get("input", {})
-        _emit(
-            request_id,
+        emit_control_fn(
             "tool:called",
-            {
-                **base_payload,
-                "name": name,
-                "input": tool_input,
-                "tool_call_id": tool_call_id,
-            },
+            {**base_payload, "name": name, "input": tool_input, "tool_call_id": tool_call_id},
         )
-        # Emit terminal command immediately so it reaches the PTY without waiting for tool
-        # completion.
         if name == "terminal_execute_tool":
             cmd = tool_input.get("command", "") if isinstance(tool_input, dict) else str(tool_input)
-            _emit(request_id, "terminal:agent_command", {"command": cmd})
+            emit_control_fn("terminal:agent_command", {"command": cmd})
         elif name == "terminal_execute_background_tool":
             cmd = tool_input.get("command", "") if isinstance(tool_input, dict) else str(tool_input)
             label = tool_input.get("label") if isinstance(tool_input, dict) else None
             proc_id = f"bg-{uuid.uuid4().hex[:8]}"
-            _emit(request_id, "terminal:agent_spawn", {"procId": proc_id, "command": cmd, "label": label})
+            emit_control_fn("terminal:agent_spawn", {"procId": proc_id, "command": cmd, "label": label})
 
     elif kind == "on_tool_end":
         tool_call_id = event.get("run_id", "unknown")
-        _emit(
-            request_id,
+        emit_control_fn(
             "tool:result",
-            {
-                **base_payload,
-                "name": name,
-                "output": str(data.get("output", "")),
-                "duration_ms": data.get("run_time_ms", 0),
-                "tool_call_id": tool_call_id,
-            },
+            {**base_payload, "name": name, "output": str(data.get("output", "")), "duration_ms": data.get("run_time_ms", 0), "tool_call_id": tool_call_id},
         )
 
     elif kind == "on_tool_error":
         tool_call_id = event.get("run_id", "unknown")
-        _emit(
-            request_id,
+        emit_control_fn(
             "tool:error",
-            {
-                **base_payload,
-                "name": name,
-                "error": str(data.get("error", "Tool execution failed")),
-                "tool_call_id": tool_call_id,
-            },
+            {**base_payload, "name": name, "error": str(data.get("error", "Tool execution failed")), "tool_call_id": tool_call_id},
         )
 
     elif kind == "on_custom_event":
-        event_name = data.get("name", "")
-        event_data = data.get("data", {})
-        if event_name == "tool_progress":
-            _emit(request_id, "search:progress", {**base_payload, **event_data})
+        if name == "tool_progress":
+            emit_control_fn("search:progress", {**base_payload, **data})
 
     elif kind == "on_chain_end" and name == "agent":
-        # Guard against multiple stream:completed emissions (graph loops)
         if stream_state.get("_stream_completed"):
             return False
 
-        # If the agent node's output message contains tool_calls, the graph is
-        # going to continue to the "tools" node — this is NOT the final turn.
-        # Emitting an error or stream:completed here would cut the response short
-        # before the LLM has a chance to reply after seeing the tool results.
         output = data.get("output", {})
         output_messages = output.get("messages", []) if isinstance(output, dict) else []
         last_output_msg = output_messages[-1] if output_messages else None
         has_pending_tool_calls = bool(getattr(last_output_msg, "tool_calls", None))
         if has_pending_tool_calls:
-            # The agent is about to invoke a tool — don't treat this as the end.
             logger.debug(
                 "on_chain_end/agent: pending tool calls detected, skipping completion for request %s",
                 request_id,
@@ -391,20 +391,20 @@ async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> b
             return False
 
         if stream_state["thinking_active"]:
-            _emit(request_id, "thinking:completed", {**base_payload, "tokens_used": 0})
+            emit_control_fn("thinking:completed", {**base_payload, "tokens_used": 0})
             stream_state["thinking_active"] = False
         if stream_state.get("visible_chars", 0) == 0:
-            _emit(
-                request_id,
+            emit_control_fn(
                 "error",
-                {
-                    "code": "empty_response",
-                    "message": "El modelo no devolvió contenido visible.",
-                },
+                {"code": "empty_response", "message": "El modelo no devolvió contenido visible."},
             )
             stream_state["_stream_completed"] = True
             return False
-        _emit(request_id, "stream:completed", base_payload)
+        completed_payload = {**base_payload}
+        suggestions = output.get("suggestions") if isinstance(output, dict) else None
+        if suggestions:
+            completed_payload["suggestions"] = suggestions
+        emit_control_fn("stream:completed", completed_payload)
         stream_state["_stream_completed"] = True
         return False
 
@@ -704,15 +704,13 @@ async def _dispatch_event_ws(
         )
 
     elif kind == "on_custom_event":
-        event_name = data.get("name", "")
-        event_data = data.get("data", {})
-        if event_name == "tool_progress":
+        if name == "tool_progress":
             await _emit_ws_renderer(
                 websocket,
                 "search:progress",
                 {
                     **base_payload,
-                    **event_data,
+                    **data,
                 },
             )
 
@@ -756,7 +754,11 @@ async def _dispatch_event_ws(
             )
             stream_state["_stream_completed"] = True
             return
-        await _emit_ws_renderer(websocket, "stream:completed", base_payload)
+        completed_payload = {**base_payload}
+        suggestions = output.get("suggestions") if isinstance(output, dict) else None
+        if suggestions:
+            completed_payload["suggestions"] = suggestions
+        await _emit_ws_renderer(websocket, "stream:completed", completed_payload)
         stream_state["_stream_completed"] = True
 
 
