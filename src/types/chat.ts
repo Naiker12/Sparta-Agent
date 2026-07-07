@@ -58,6 +58,7 @@ export interface Message {
   pipelineSteps?: PipelineStep[]
   searchProgress?: SearchProgressItem[]
   searchQuery?: string
+  suggestions?: string[]
 }
 
 export interface Session {

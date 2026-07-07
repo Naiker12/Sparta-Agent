@@ -326,6 +326,7 @@ async def _execute_agent_ws(
         "current_step": 0,
         "plan_complete": False,
         "reflection_retries": 0,
+        "suggestions": [],
     }
 
     await stream_agent_to_websocket(
