@@ -30,6 +30,8 @@ def classify_intent(
         r"\b(precio actual|cotizaci[oó]n|tipo de cambio|dolar hoy|euro hoy)\b",
         r"\b(clima|tiempo hoy|temperatura hoy|lluvia hoy)\b",
         r"\b(noticias de hoy|[uú]ltimas noticias|breaking news)\b",
+        r"\b(qui[eé]n va ganando|qui[eé]n gana|resultado|marcador|partido[sz]? en vivo|va ganando)\b",
+        r"\b(deporte[s]?|f[uú]tbol|mundial|champions|liga|partido|juega[n]?|jugar[aá]n)\b.*\b(contra|vs\.?|versus)\b",
     ]
     memory_patterns = [
         r"\b(recuérdame|qué dije|acerca de|qué sabes de|remember|what did I)\b",

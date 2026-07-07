@@ -93,6 +93,7 @@ function spawnSidecar(): void {
     env: {
       ...process.env,
       SPARTA_ENV: 'electron',
+      SPARTA_ELECTRON: '1',
       SPARTA_WORKSPACE_ROOT: workspaceRoot,
       SPARTA_DATA_DIR: dataDir,
       SPARTA_WS_TOKEN: sidecarWsToken,
