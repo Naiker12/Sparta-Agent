@@ -147,6 +147,8 @@ async def handle_chat_stream(ws: WebSocket, params: dict):
     provider = params.get("provider", "anthropic")
     vendor = params.get("vendor", "anthropic")
     provider_key = params.get("provider_key")
+    api_url = params.get("api_url")
+    is_local = bool(params.get("is_local", False))
     mode = params.get("mode", "chat")
     skills = params.get("skills", [])
     mcp_servers = params.get("mcp_servers", [])
@@ -159,7 +161,7 @@ async def handle_chat_stream(ws: WebSocket, params: dict):
     if workspace_root:
         os.environ["SPARTA_WORKSPACE_ROOT"] = str(workspace_root)
 
-    if not provider_key:
+    if not provider_key and not (is_local or vendor in {"ollama", "lmstudio", "llamacpp", "custom"}):
         await ws.send_text(json.dumps({
             "type": "stream:error",
             "error": "No provider key provided",
@@ -181,6 +183,7 @@ async def handle_chat_stream(ws: WebSocket, params: dict):
             provider=provider,
             vendor=vendor,
             provider_key=provider_key,
+            api_url=api_url,
             mode=mode,
             skills=skills,
             mcp_servers=mcp_servers,
@@ -229,6 +232,7 @@ async def _execute_agent_ws(
     provider: str,
     vendor: str,
     provider_key: str | None,
+    api_url: str | None,
     mode: str,
     skills: list[str],
     mcp_servers: list,
@@ -251,6 +255,7 @@ async def _execute_agent_ws(
         provider=provider,
         vendor=vendor,
         api_key=provider_key,
+        api_url=api_url,
         reasoning_enabled=reasoning.get("enabled", False),
         reasoning_budget=reasoning.get("budget", 8000),
         reasoning_effort=reasoning.get("effort", "medium"),

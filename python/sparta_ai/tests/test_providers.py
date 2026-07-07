@@ -68,3 +68,41 @@ def test_openrouter_reasoning_uses_extra_body():
     assert kwargs["extra_body"]["reasoning"] == {"max_tokens": 2048}
     # When budget > 0, only max_tokens is set (effort is implied by max_tokens).
     # OpenRouter rejects the request if both max_tokens and effort are specified.
+
+
+def test_lmstudio_uses_local_openai_compatible_base_url_without_real_key():
+    chat_openai = MagicMock(return_value="llm")
+    fake_module = SimpleNamespace(ChatOpenAI=chat_openai)
+
+    with patch.dict(sys.modules, {"langchain_openai": fake_module}):
+        llm = OpenAICompatibleTransport("lmstudio").build_llm(
+            model="qwen/qwen3-vl-4b",
+            api_key=None,
+            reasoning_enabled=False,
+            reasoning_budget=8000,
+            base_url="http://localhost:1234",
+        )
+
+    assert llm == "llm"
+    kwargs = chat_openai.call_args.kwargs
+    assert kwargs["model"] == "qwen/qwen3-vl-4b"
+    assert kwargs["api_key"] == "not-needed"
+    assert kwargs["base_url"] == "http://localhost:1234/v1"
+
+
+def test_get_transport_accepts_lmstudio():
+    chat_openai = MagicMock(return_value="llm")
+    fake_module = SimpleNamespace(ChatOpenAI=chat_openai)
+
+    with patch.dict(sys.modules, {"langchain_openai": fake_module}):
+        llm = build_llm(
+            model="qwen/qwen3-vl-4b",
+            provider="lmstudio",
+            vendor="lmstudio",
+            api_key=None,
+            api_url="http://localhost:1234/v1",
+        )
+
+    assert llm == "llm"
+    kwargs = chat_openai.call_args.kwargs
+    assert kwargs["base_url"] == "http://localhost:1234/v1"

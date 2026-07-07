@@ -57,6 +57,8 @@ class OpenAICompatibleTransport(ProviderTransport):
     def __init__(self, vendor: str):
         self.vendor = vendor
         self._base_url_map = {
+            "lmstudio": "http://localhost:1234/v1",
+            "llamacpp": "http://localhost:8080/v1",
             "groq": "https://api.groq.com/openai/v1",
             "mistral": "https://api.mistral.ai/v1",
             "deepseek": "https://api.deepseek.com/v1",
@@ -66,7 +68,14 @@ class OpenAICompatibleTransport(ProviderTransport):
             "cohere": "https://api.cohere.ai/v1",
             "perplexity": "https://api.perplexity.ai/v1",
             "xai": "https://api.x.ai/v1",
+            "nvidia": "https://integrate.api.nvidia.com/v1",
         }
+
+    def _normalize_base_url(self, base_url: str) -> str:
+        base_url = base_url.rstrip("/")
+        if base_url.endswith("/v1"):
+            return base_url
+        return f"{base_url}/v1"
 
     def _is_free_tier_model(self, model: str) -> bool:
         """Detect OpenRouter free-tier models that commonly degenerate."""
@@ -82,9 +91,13 @@ class OpenAICompatibleTransport(ProviderTransport):
     ) -> Any:
         from langchain_openai import ChatOpenAI
 
+        requested_base_url = kwargs.pop("base_url", None) or kwargs.pop("api_url", None)
         openai_kwargs = {**kwargs, "model": model}
         if api_key:
             openai_kwargs["api_key"] = api_key
+        elif self.vendor in ("lmstudio", "llamacpp", "custom"):
+            # ChatOpenAI requires a key client-side even when local servers ignore auth.
+            openai_kwargs["api_key"] = "not-needed"
 
         # Free-tier models need gentle penalties to avoid degenerate repetition
         if self.vendor == "openrouter" and self._is_free_tier_model(model):
@@ -92,9 +105,9 @@ class OpenAICompatibleTransport(ProviderTransport):
             openai_kwargs.setdefault("presence_penalty", 0.3)
             openai_kwargs.setdefault("temperature", 0.7)
 
-        base_url = self._base_url_map.get(self.vendor)
+        base_url = requested_base_url or self._base_url_map.get(self.vendor)
         if base_url:
-            openai_kwargs["base_url"] = base_url
+            openai_kwargs["base_url"] = self._normalize_base_url(str(base_url))
 
         if reasoning_enabled:
             # Map reasoning_effort from the frontend if provided
@@ -187,6 +200,10 @@ def _get_transport(vendor: str) -> ProviderTransport:
         "cohere",
         "perplexity",
         "xai",
+        "nvidia",
+        "lmstudio",
+        "llamacpp",
+        "custom",
     ):
         return OpenAICompatibleTransport(vendor)
     raise ValueError(f"Unknown vendor/provider: {vendor}")
@@ -200,6 +217,8 @@ def build_llm(
     reasoning_enabled: bool = False,
     reasoning_budget: int = 8000,
     reasoning_effort: str = "medium",
+    api_url: str | None = None,
+    base_url: str | None = None,
     **kwargs: Any,
 ) -> Any:
     vendor = (vendor or provider).lower()
@@ -214,6 +233,9 @@ def build_llm(
         kwargs.setdefault("max_tokens", 4096)
 
     transport = _get_transport(vendor)
+    resolved_base_url = base_url or api_url
+    if resolved_base_url:
+        kwargs["base_url"] = resolved_base_url
     return transport.build_llm(
         model=model,
         api_key=api_key,

@@ -12,6 +12,7 @@ import { registerTerminalIPC } from './ipc/terminal.ipc'
 import { registerFilesystemIPC } from './ipc/filesystem.ipc'
 import { registerSkillsIPC } from './ipc/skills.ipc'
 import { registerPermissionIPC, setPermissionWindow } from './ipc/permission.ipc'
+import { registerModelsIPC } from './ipc/models.ipc'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -102,6 +103,7 @@ app.whenReady().then(async () => {
   registerSkillsIPC()
   registerSidecarIPC()
   registerPermissionIPC()
+  registerModelsIPC()
 
   // Wire Rust security layer into the IPC pipeline
   wireSecurityIntoPipeline()

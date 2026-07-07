@@ -17,6 +17,8 @@ interface SpartaSendMessageRequest {
   mcpServers?: unknown[]
   semanticMemory?: boolean
   reasoning?: { enabled: boolean; budget: number; effort?: string }
+  webSearchEnabled?: boolean
+  workspaceRoot?: string
 }
 
 interface SpartaAPI {
@@ -26,6 +28,7 @@ interface SpartaAPI {
   sendMessage: (req: SpartaSendMessageRequest) => Promise<{ ok: boolean; error?: string; aborted?: boolean }>
   abortMessage: (sessionId: string) => Promise<void>
   isSidecarReady: () => Promise<{ running: boolean; ready: boolean }>
+  fetchModels?: (req: { vendor: string; apiKey?: string; serverUrl?: string }) => Promise<{ models: string[]; error?: string }>
   testMcpConnection: (config: Record<string, unknown>) => Promise<{ ok: boolean; serverId?: string; toolCount?: number; tools?: unknown[]; error?: string }>
 }
 

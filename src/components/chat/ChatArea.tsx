@@ -16,7 +16,7 @@ export function ChatArea() {
       ) : (
         <HeroScreen />
       )}
-      <ChatInput className="shrink-0 px-4 py-3 mb-4" />
+      <ChatInput className="shrink-0 px-4 py-3" />
     </div>
   )
 }

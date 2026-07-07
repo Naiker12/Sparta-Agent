@@ -216,6 +216,14 @@ export function SlashCommandMenu({ text, onSelect, onClose, inputRef }: SlashCom
     setSelectedIndex(0)
   }, [suggestions.length])
 
+  useEffect(() => {
+    if (!ref.current) return
+    const activeEl = ref.current.children[selectedIndex] as HTMLElement
+    if (activeEl) {
+      activeEl.scrollIntoView({ block: 'nearest' })
+    }
+  }, [selectedIndex])
+
   if (suggestions.length === 0) return null
 
   return (
@@ -223,14 +231,15 @@ export function SlashCommandMenu({ text, onSelect, onClose, inputRef }: SlashCom
       ref={ref}
       style={{
         position: 'absolute',
-        bottom: 'calc(100% + 4px)',
+        bottom: 'calc(100% + 8px)',
         left: 0,
-        width: 260,
+        width: 320,
+        maxHeight: 260,
+        overflowY: 'auto',
         background: 'var(--bg-modal)',
         border: '1px solid var(--border-normal)',
         borderRadius: 'var(--radius-lg)',
         boxShadow: '0 12px 40px rgba(0,0,0,0.5)',
-        overflow: 'hidden',
         padding: 4,
       }}
     >

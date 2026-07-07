@@ -22,6 +22,35 @@ interface MemoryState {
   rebuildGraph: () => void
 }
 
+function migrateMemoryState(persisted: unknown, version: number): MemoryState | unknown {
+  const state = persisted as Partial<MemoryState> & Record<string, unknown>
+  const entries = Array.isArray(state.entries) ? state.entries : []
+  const relations = Array.isArray(state.relations) ? state.relations : []
+
+  if (version < 2) {
+    const cleanedEntries = entries.filter((entry) => {
+      const item = entry as MemoryEntry
+      const isLegacyAutoTurnFragment =
+        item.source === 'auto' &&
+        Boolean(item.sourceMessageId) &&
+        item.category !== 'conversation_turn'
+      return !isLegacyAutoTurnFragment
+    })
+    const validIds = new Set(cleanedEntries.map((entry) => (entry as MemoryEntry).id))
+    return {
+      ...state,
+      entries: cleanedEntries,
+      relations: relations.filter((rel) => {
+        const item = rel as MemoryRelation
+        return validIds.has(item.fromId) && validIds.has(item.toId)
+      }),
+      graphNodes: [],
+    }
+  }
+
+  return persisted
+}
+
 export const useMemoryStore = create<MemoryState>()(
   persist(
     (set, get) => ({
@@ -134,18 +163,8 @@ export const useMemoryStore = create<MemoryState>()(
 }),
     {
       name: 'sparta-memory',
-      version: 1,
-      migrate: (persisted, version) => {
-        const state = persisted as Record<string, unknown>
-        if (version < 1) {
-          return {
-            entries: Array.isArray(state.entries) ? state.entries : [],
-            relations: Array.isArray(state.relations) ? state.relations : [],
-            graphNodes: [],
-          }
-        }
-        return persisted as MemoryState
-      },
+      version: 2,
+      migrate: migrateMemoryState,
       partialize: (state) => ({
         entries: state.entries,
         relations: state.relations,

@@ -9,6 +9,7 @@ export function computeRelations(
   const categories = new Map<string, string[]>()
   for (const entry of entries) {
     const cat = entry.category || '__none__'
+    if (cat === 'conversation_turn') continue
     if (!categories.has(cat)) categories.set(cat, [])
     categories.get(cat)!.push(entry.id)
   }

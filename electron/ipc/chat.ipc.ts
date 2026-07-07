@@ -259,6 +259,8 @@ export function registerChatIPC(): void {
         provider: req.vendor ?? 'openai',
         vendor: req.vendor ?? 'openai',
         provider_key: req.providerKey,
+        api_url: req.apiUrl,
+        is_local: req.isLocal,
         mode: req.mode ?? 'chat',
         skills: req.skills ?? [],
         mcp_servers: req.mcpServers ?? [],

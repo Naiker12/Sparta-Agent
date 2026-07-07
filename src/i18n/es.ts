@@ -176,7 +176,7 @@ export const es = {
     placeholderNoProvider: 'Configura un proveedor para chatear...',
     placeholderRedirect: 'Escribe para redirigir al agente...',
     placeholderStreaming: 'Generando respuesta...',
-    placeholderDefault: 'Ask anything...',
+    placeholderDefault: 'Pregunta lo que quieras...',
     noProviderWarning: 'No hay proveedores con API key configurados.',
     configureProvider: 'Configura un proveedor',
     configureProviderSuffix: '(Ajustes > Modelos) para empezar a chatear.',

@@ -36,10 +36,13 @@ interface SpartaAPI {
     skills?: string[]
     mcpServers?: unknown[]
     semanticMemory?: boolean
-    reasoning?: { enabled: boolean; budget: number }
+    reasoning?: { enabled: boolean; budget: number; effort?: string }
+    webSearchEnabled?: boolean
+    workspaceRoot?: string
   }) => Promise<{ ok: boolean; error?: string; aborted?: boolean }>
   abortMessage: (sessionId: string) => Promise<void>
   isSidecarReady: () => Promise<{ running: boolean; ready: boolean }>
+  fetchModels: (req: { vendor: string; apiKey?: string; serverUrl?: string }) => Promise<{ models: string[]; error?: string }>
 }
 
 interface VaultAPI {
