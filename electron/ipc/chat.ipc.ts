@@ -181,7 +181,11 @@ export function registerChatIPC(): void {
         streamResolvers.delete(requestId)
         break
       case 'stream:completed': {
-        sendToRenderer({ sessionId, messageId, type: 'stream:completed', usage: data?.usage })
+        sendToRenderer({
+          sessionId, messageId, type: 'stream:completed',
+          usage: data?.usage,
+          suggestions: data?.suggestions,
+        })
         clearSeqCounters(requestId)
         break
       }
