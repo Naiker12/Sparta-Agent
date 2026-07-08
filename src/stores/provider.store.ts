@@ -16,6 +16,7 @@ const VENDOR_LABELS: Record<ProviderVendor, string> = {
   cohere: 'Cohere',
   perplexity: 'Perplexity',
   xai: 'xAI',
+  nvidia: 'NVIDIA',
   ollama: 'Ollama',
   lmstudio: 'LM Studio',
   llamacpp: 'llama.cpp',

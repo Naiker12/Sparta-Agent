@@ -132,6 +132,19 @@ export function registerChatIPC(): void {
       return
     }
 
+    // ── search:progress may arrive without sessionId/messageId ─────────
+    // Fallback: use the first active stream from the map.
+    if ((!sessionId || !messageId) && event === 'search:progress') {
+      for (const [sid, stream] of activeStreams.entries()) {
+        if (stream.active) {
+          const fallbackId = `${sid}:${stream.messageId}`
+          const [s, m] = fallbackId.split(':')
+          sendToRenderer({ sessionId: s, messageId: m, type: 'search:progress', ...((data ?? {}) as Record<string, unknown>) })
+          return
+        }
+      }
+    }
+
     if (!sessionId || !messageId) return
 
     switch (event) {
@@ -168,7 +181,11 @@ export function registerChatIPC(): void {
         streamResolvers.delete(requestId)
         break
       case 'stream:completed': {
-        sendToRenderer({ sessionId, messageId, type: 'stream:completed', usage: data?.usage })
+        sendToRenderer({
+          sessionId, messageId, type: 'stream:completed',
+          usage: data?.usage,
+          suggestions: data?.suggestions,
+        })
         clearSeqCounters(requestId)
         break
       }
@@ -196,7 +213,7 @@ export function registerChatIPC(): void {
         })
         break
       case 'tool:called':
-        sendToRenderer({ sessionId, messageId, type: 'tool:called', toolCall: { id: data?.tool_call_id, toolName: data?.name, input: data?.input, status: 'running' } })
+        sendToRenderer({ sessionId, messageId, type: 'tool:called', name: data?.name, toolName: data?.name, toolCallId: data?.tool_call_id, tool_call_id: data?.tool_call_id, id: data?.tool_call_id, input: data?.input })
         break
       case 'tool:result':
         sendToRenderer({ sessionId, messageId, type: 'tool:result', toolCallId: data?.tool_call_id, toolName: data?.name, output: data?.output, durationMs: data?.duration_ms })
@@ -259,6 +276,8 @@ export function registerChatIPC(): void {
         provider: req.vendor ?? 'openai',
         vendor: req.vendor ?? 'openai',
         provider_key: req.providerKey,
+        api_url: req.apiUrl,
+        is_local: req.isLocal,
         mode: req.mode ?? 'chat',
         skills: req.skills ?? [],
         mcp_servers: req.mcpServers ?? [],

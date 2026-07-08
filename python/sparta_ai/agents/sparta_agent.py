@@ -30,6 +30,7 @@ class SpartaState(MessagesState):
     current_step: int
     plan_complete: bool
     reflection_retries: int
+    suggestions: list[str]
 
 
 def build_sparta_graph(
@@ -54,9 +55,9 @@ def build_sparta_graph(
                 break
 
         # Detect if web_search is available in the current tool list (closure over `tools`)
+        # LangChain 0.3+ @tool strips "_tool" suffix, so name may be "web_search"
         web_search_available = any(
-            getattr(t, "name", None) == "web_search_tool" or
-            (callable(t) and getattr(t, "__name__", None) == "web_search_tool")
+            getattr(t, "name", None) in ("web_search_tool", "web_search")
             for t in tools
         )
 
@@ -68,12 +69,14 @@ def build_sparta_graph(
             "Tienes acceso a herramientas para buscar en web, leer/escribir archivos,",
             "consultar memoria, y conectar con servidores MCP externos.",
             "",
-            "REGLAS CRÍTICAS PARA FECHA/HORA ACTUAL:",
+            "REGLAS CRÍTICAS PARA DATOS EN VIVO:",
             "- NUNCA respondas preguntas sobre la fecha, hora o día actual usando tu conocimiento de entrenamiento.",
             "- Tu conocimiento tiene una fecha de corte y NO sabes la fecha actual real.",
             "- Para cualquier pregunta sobre 'qué día es', 'qué fecha es hoy', 'qué hora es', DEBES invocar web_search_tool obligatoriamente.",
             "- NUNCA digas 'según mi conocimiento, hoy es...' porque es información incorrecta.",
             "- NUNCA respondas 'No tengo acceso a la fecha' si web_search_tool está disponible — úsala.",
+            "- Para preguntas sobre resultados deportivos en vivo (fútbol, tenis, etc.), quién va ganando, marcadores, o eventos actuales: DEBES invocar web_search_tool — tu conocimiento de entrenamiento no tiene esta información.",
+            "- No respondas con 'no tengo información actualizada' si web_search_tool está disponible — úsala siempre para datos en tiempo real.",
             "",
             "REGLAS PARA HERRAMIENTAS:",
             "- Usa web_search_tool MÁXIMO UNA VEZ por query. Si la búsqueda ya devolvió resultados, no la repitas.",
@@ -137,10 +140,10 @@ def build_sparta_graph(
         else:
             if web_search_available:
                 system_parts.append(
-                    "\nModo: CHAT — Responde de forma conversacional y directa. "
-                    "Tienes web_search_tool disponible: ÚSALA para cualquier pregunta sobre "
-                    "fechas, noticias, datos actuales, o cuando el usuario pida buscar algo. "
-                    "No necesitas permiso especial para invocarla en modo chat."
+                "\nModo: CHAT — Responde de forma conversacional y directa. "
+                "Tienes web_search_tool disponible: ÚSALA para cualquier pregunta sobre "
+                "fechas, noticias, datos actuales, resultados deportivos en vivo, "
+                "o cuando el usuario pida buscar algo. No necesitas permiso especial para invocarla en modo chat."
                 )
             else:
                 system_parts.append(
@@ -172,7 +175,24 @@ def build_sparta_graph(
         messages.extend(state["messages"])
 
         response = await llm_with_tools.ainvoke(messages)
-        return {"messages": [response]}
+        result: dict[str, Any] = {"messages": [response]}
+
+        # Generate contextual follow-up suggestions on the FINAL response
+        # (no pending tool calls means this is the actual answer).
+        if not getattr(response, "tool_calls", None):
+            try:
+                from sparta_ai.tools.suggestions import generate_suggestions
+                suggestions = await generate_suggestions(
+                    llm,
+                    user_query=last_user_msg,
+                    llm_response=response.content if hasattr(response, "content") else "",
+                )
+                if suggestions:
+                    result["suggestions"] = suggestions
+            except Exception:
+                logger.debug("suggestion generation skipped", exc_info=True)
+
+        return result
 
     async def planner_node_wrapped(state: SpartaState) -> dict:
         return await planner_node(state, llm)

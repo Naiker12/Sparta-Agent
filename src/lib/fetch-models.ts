@@ -13,11 +13,20 @@ const API_BASE: Record<string, string> = {
   cohere: 'https://api.cohere.ai',
   perplexity: 'https://api.perplexity.ai',
   xai: 'https://api.x.ai',
+  nvidia: 'https://integrate.api.nvidia.com',
 }
 
 interface FetchModelsResult {
   models: string[]
   error?: string
+}
+
+function chatModelsOnly(models: string[]): string[] {
+  const chatModels = models.filter((model) => {
+    const id = model.toLowerCase()
+    return !id.includes('embedding') && !id.includes('embed-')
+  })
+  return chatModels.length > 0 ? chatModels : models
 }
 
 export async function fetchModelsByVendor(
@@ -28,6 +37,9 @@ export async function fetchModelsByVendor(
   try {
     switch (vendor) {
       case 'ollama': {
+        if (typeof window !== 'undefined' && window.sparta?.fetchModels) {
+          return window.sparta.fetchModels({ vendor, apiKey, serverUrl })
+        }
         const url = `${serverUrl || 'http://localhost:11434'}/api/tags`
         const res = await fetch(url)
         if (!res.ok) return { models: [], error: `HTTP ${res.status}: ${res.statusText}` }
@@ -39,11 +51,14 @@ export async function fetchModelsByVendor(
       case 'lmstudio':
       case 'llamacpp':
       case 'custom': {
+        if (typeof window !== 'undefined' && window.sparta?.fetchModels) {
+          return window.sparta.fetchModels({ vendor, apiKey, serverUrl })
+        }
         const base = serverUrl || 'http://localhost:1234'
         const res = await fetch(`${base}/v1/models`)
         if (!res.ok) return { models: [], error: `HTTP ${res.status}: ${res.statusText}` }
         const data = await res.json()
-        const models = (data.data || []).map((m: { id: string }) => m.id)
+        const models = chatModelsOnly((data.data || []).map((m: { id: string }) => m.id))
         return { models }
       }
 

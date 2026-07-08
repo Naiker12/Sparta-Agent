@@ -51,12 +51,14 @@ contextBridge.exposeInMainWorld('sparta', {
     skills?: string[]
     mcpServers?: unknown[]
     semanticMemory?: boolean
-    reasoning?: { enabled: boolean; budget: number }
+    reasoning?: { enabled: boolean; budget: number; effort?: string }
     webSearchEnabled?: boolean
     workspaceRoot?: string
   }) => ipcRenderer.invoke('chat:send', req),
   abortMessage: (sessionId: string) => ipcRenderer.invoke('chat:abort', sessionId),
   isSidecarReady: () => ipcRenderer.invoke('sidecar:status') as Promise<{ running: boolean; ready: boolean }>,
+  fetchModels: (req: { vendor: string; apiKey?: string; serverUrl?: string }) =>
+    ipcRenderer.invoke('models:list', req) as Promise<{ models: string[]; error?: string }>,
   testMcpConnection: (config: Record<string, unknown>) => ipcRenderer.invoke('mcp:test', config) as Promise<{ ok: boolean; serverId?: string; toolCount?: number; tools?: unknown[]; error?: string }>,
 })
 

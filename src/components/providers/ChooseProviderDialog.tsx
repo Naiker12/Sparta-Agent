@@ -10,7 +10,7 @@ interface ChooseProviderDialogProps {
   onClose: () => void
 }
 
-const CLOUD_VENDORS: ProviderVendor[] = ['anthropic', 'openai', 'google', 'groq', 'mistral', 'azure', 'deepseek', 'together', 'fireworks', 'openrouter', 'cohere', 'perplexity', 'xai']
+const CLOUD_VENDORS: ProviderVendor[] = ['anthropic', 'openai', 'google', 'groq', 'mistral', 'azure', 'deepseek', 'together', 'fireworks', 'openrouter', 'cohere', 'perplexity', 'xai', 'nvidia']
 const LOCAL_VENDORS: ProviderVendor[] = ['ollama', 'lmstudio', 'llamacpp', 'custom']
 
 export function ChooseProviderDialog({ open, onSelect, onClose }: ChooseProviderDialogProps) {

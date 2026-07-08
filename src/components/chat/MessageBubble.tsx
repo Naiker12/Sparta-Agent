@@ -80,7 +80,7 @@ export function MessageBubble({ message, isLastUser = false, isLastAssistant = f
   const { sendMessage } = useChatSession()
   const dispatch = useEventBus((s) => s.dispatch)
   const { t, lang } = useTranslation()
-  const suggestions = !isUser ? getFollowUpSuggestions(message.content, lang) : []
+  const suggestions = !isUser ? (message.suggestions ?? getFollowUpSuggestions(message.content, lang)) : []
 
   const hasReasoningText = (message.reasoningText?.trim().length ?? 0) > 0
   const hasThinking = !isUser && (

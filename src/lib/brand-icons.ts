@@ -69,8 +69,12 @@ export const BRAND_ICONS: Record<string, BrandIconPaths> = {
     dark: '/icons/brands/ollama_dark.svg',
   },
   lmstudio: {
-    light: '/icons/brands/lmstudio.svg',
-    dark: '/icons/brands/lmstudio.svg',
+    light: '/icons/brands/lmstudio_light.svg',
+    dark: '/icons/brands/lmstudio_dark.svg',
+  },
+  nvidia: {
+    light: '/icons/brands/nvidia.svg',
+    dark: '/icons/brands/nvidia.svg',
   },
   llamacpp: {
     light: '/icons/brands/meta.svg',

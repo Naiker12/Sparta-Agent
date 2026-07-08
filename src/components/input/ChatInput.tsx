@@ -31,7 +31,7 @@ export function ChatInput({ className }: ChatInputProps) {
   const stopStreaming = useChatStore((s) => s.stopStreaming)
   const injectWhileStreaming = useChatStore((s) => s.injectWhileStreaming)
   const { sendMessage } = useChatSession()
-  const { t } = useTranslation()
+  const { t, lang } = useTranslation()
 
   const { skills: localSkills } = useLocalSkillsLoader()
 
@@ -100,6 +100,9 @@ export function ChatInput({ className }: ChatInputProps) {
   }
 
   const [isRedirectMode, setIsRedirectMode] = useState(false)
+  const [typedText, setTypedText] = useState('')
+  const [phraseIndex, setPhraseIndex] = useState(0)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
     if (isStreaming) {
@@ -109,18 +112,67 @@ export function ChatInput({ className }: ChatInputProps) {
     }
   }, [isStreaming])
 
+  useEffect(() => {
+    if (!hasProvider || isStreaming || input.length > 0) {
+      setTypedText('')
+      return
+    }
+
+    const phrases = lang === 'es' ? [
+      'Pregunta lo que quieras...',
+      'Explica este pedazo de código...',
+      'Crea un script en Python...',
+      'Ayúdame a debugear un error...',
+      '¿Cómo puedo optimizar esta función?...',
+      'Escribe un comando usando /...',
+    ] : [
+      'Ask anything...',
+      'Explain this piece of code...',
+      'Create a Python script...',
+      'Help me debug an error...',
+      'How can I optimize this function?...',
+      'Type a command using /...',
+    ]
+
+    const currentPhrase = phrases[phraseIndex]
+    const typeSpeed = isDeleting ? 30 : 60
+    const delayTimeout = !isDeleting && typedText === currentPhrase
+      ? 2000
+      : isDeleting && typedText === ''
+        ? 500
+        : typeSpeed
+
+    const handleType = () => {
+      if (!isDeleting) {
+        setTypedText(currentPhrase.substring(0, typedText.length + 1))
+        if (typedText === currentPhrase) {
+          setIsDeleting(true)
+        }
+      } else {
+        setTypedText(currentPhrase.substring(0, typedText.length - 1))
+        if (typedText === '') {
+          setIsDeleting(false)
+          setPhraseIndex((prev) => (prev + 1) % phrases.length)
+        }
+      }
+    }
+
+    const timer = setTimeout(handleType, delayTimeout)
+    return () => clearTimeout(timer)
+  }, [typedText, isDeleting, phraseIndex, hasProvider, isStreaming, lang, input])
+
   const placeholder = !hasProvider
     ? t('chat.placeholderNoProvider')
     : isStreaming && isRedirectMode
-    ? t('chat.placeholderRedirect')
-    : isStreaming
-    ? t('chat.placeholderStreaming')
-    : t('chat.placeholderDefault')
+      ? t('chat.placeholderRedirect')
+      : isStreaming
+        ? t('chat.placeholderStreaming')
+        : typedText || t('chat.placeholderDefault')
 
   const canSend = input.trim().length > 0 && hasProvider
 
   return (
-    <div className={className} style={{ position: 'relative' }}>
+    <div className={className} style={{ position: 'relative', paddingBottom: 16 }}>
       <div style={{ maxWidth: 680, margin: '0 auto' }}>
         {!hasProvider && (
           <div style={{
@@ -173,33 +225,8 @@ export function ChatInput({ className }: ChatInputProps) {
             <div style={{
               display: 'flex',
               alignItems: 'flex-start',
-              padding: '10px 12px 8px',
-              gap: 8,
+              padding: '10px 14px 8px',
             }}>
-              <div style={{ position: 'relative' }}>
-                <button
-                  onClick={() => setShowAttach(!showAttach)}
-                  style={{
-                    width: 28,
-                    height: 28,
-                    background: showAttach ? 'var(--bg-active)' : 'none',
-                    border: '1px solid var(--border-normal)',
-                    borderRadius: 'var(--radius-md)',
-                    color: showAttach ? 'var(--accent)' : 'var(--text-muted)',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                    marginTop: 1,
-                    transition: 'all 0.15s',
-                  }}
-                >
-                  <Plus size={13} strokeWidth={2} />
-                </button>
-                {showAttach && <AttachMenu onClose={() => setShowAttach(false)} />}
-              </div>
-
               <div style={{ flex: 1, position: 'relative' }}>
                 {showSlash && (
                   <SlashCommandMenu
@@ -241,8 +268,31 @@ export function ChatInput({ className }: ChatInputProps) {
               display: 'flex',
               alignItems: 'center',
               padding: '0 12px 10px',
-              gap: 6,
+              gap: 8,
             }}>
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <button
+                  onClick={() => setShowAttach(!showAttach)}
+                  style={{
+                    width: 28,
+                    height: 28,
+                    background: showAttach ? 'var(--bg-active)' : 'none',
+                    border: '1px solid var(--border-normal)',
+                    borderRadius: 'var(--radius-md)',
+                    color: showAttach ? 'var(--accent)' : 'var(--text-muted)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  <Plus size={13} strokeWidth={2} />
+                </button>
+                {showAttach && <AttachMenu onClose={() => setShowAttach(false)} />}
+              </div>
+
               <ModelPicker />
 
               <div style={{ flex: 1 }} />

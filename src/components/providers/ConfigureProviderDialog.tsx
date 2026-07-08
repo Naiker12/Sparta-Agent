@@ -42,6 +42,7 @@ const VENDOR_DEFAULTS: Partial<Record<ProviderVendor, { serverUrl?: string; kind
   cohere: { kind: 'cloud' },
   perplexity: { kind: 'cloud' },
   xai: { kind: 'cloud' },
+  nvidia: { kind: 'cloud' },
 }
 
 export function ConfigureProviderDialog({
@@ -98,7 +99,11 @@ export function ConfigureProviderDialog({
     }
 
     setFetchedModels(result.models)
-    setDefaultModel(result.models[0])
+    if (defaultModel && result.models.includes(defaultModel)) {
+      // Preserve existing default model if still valid
+    } else {
+      setDefaultModel('')
+    }
   }
 
   async function handleSave() {

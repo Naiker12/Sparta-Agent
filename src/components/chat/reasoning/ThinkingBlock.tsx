@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useMemo } from 'react'
+import { useEffect, useRef, useState, useMemo, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { StreamCursor } from './StreamCursor'
@@ -18,23 +18,17 @@ interface ThinkingBlockProps {
   messageId?: string
 }
 
-interface ThinkingLine {
-  id: string
-  icon: string
-  text: string
-}
+const PREVIEW_MAX_LINES = 15
+const PREVIEW_MAX_CHARS = 200
 
-const PREVIEW_MAX_HEIGHT = 160
-
-function parseThinkingLine(text: string, index: number): ThinkingLine {
+function lineIcon(text: string): string {
   const lower = text.toLowerCase()
-  let icon = '\u2192'
-  if (lower.includes('search') || lower.includes('busca')) icon = '\ud83d\udd0d'
-  else if (lower.includes('read') || lower.includes('lee') || lower.includes('archivo')) icon = '\ud83d\udcc4'
-  else if (lower.includes('plan') || lower.includes('analiz') || lower.includes('razon')) icon = '\ud83e\udde0'
-  else if (lower.includes('execut') || lower.includes('ejecut') || lower.includes('run')) icon = '\u26a1'
-  else if (lower.includes('done') || lower.includes('complet') || lower.includes('finish')) icon = '\u2713'
-  return { id: `line-${index}`, icon, text }
+  if (lower.includes('search') || lower.includes('busca')) return '\ud83d\udd0d'
+  if (lower.includes('read') || lower.includes('lee') || lower.includes('archivo')) return '\ud83d\udcc4'
+  if (lower.includes('plan') || lower.includes('analiz') || lower.includes('razon')) return '\ud83e\udde0'
+  if (lower.includes('execut') || lower.includes('ejecut') || lower.includes('run')) return '\u26a1'
+  if (lower.includes('done') || lower.includes('complet') || lower.includes('finish')) return '\u2713'
+  return '\u2192'
 }
 
 function loadCollapseState(messageId?: string): boolean | null {
@@ -58,45 +52,39 @@ export function ThinkingBlock({ content, status, tokensUsed, pipelineSteps, clas
   const [isExpanded, setIsExpanded] = useState(
     savedState !== null ? savedState : (status === 'streaming' || status === 'starting')
   )
+  const [showFullContent, setShowFullContent] = useState(false)
   const [elapsed, setElapsed] = useState(0)
   const startedAt = useRef(Date.now())
   const linesEndRef = useRef<HTMLDivElement>(null)
-  const linesContainerRef = useRef<HTMLDivElement>(null)
   const badgesEndRef = useRef<HTMLDivElement>(null)
   const prevBadgeCount = useRef(0)
   const userToggled = useRef(savedState !== null)
-  const accumulatedContent = useRef('')
-  const allLines = useRef<ThinkingLine[]>([])
-  const streamingIndex = useRef(0)
   const [isHovered, setIsHovered] = useState(false)
 
-  const [displayedLines, setDisplayedLines] = useState<ThinkingLine[]>([])
-  const pendingLinesRef = useRef<ThinkingLine[]>([])
+  const lines = useMemo(() => {
+    if (!content) return []
+    return content.split('\n').filter(Boolean).map((line, i) => ({
+      id: `think-line-${i}`,
+      icon: lineIcon(line),
+      text: line,
+    }))
+  }, [content])
 
-  if (content && content.length > accumulatedContent.current.length) {
-    const newText = content.slice(accumulatedContent.current.length)
-    accumulatedContent.current = content
-    if (newText) {
-      const newLines = newText.split('\n').filter(Boolean).map((line) => parseThinkingLine(line, streamingIndex.current++))
-      allLines.current.push(...newLines)
-    }
-  } else if (!content) {
-    accumulatedContent.current = ''
-    allLines.current = []
-    streamingIndex.current = 0
-  }
-  const lines = allLines.current
+  const isLong = lines.length > PREVIEW_MAX_LINES || content.length > PREVIEW_MAX_CHARS
+  const showingLines = useMemo(() => {
+    if (showFullContent || status === 'streaming' || status === 'starting') return lines
+    return isLong ? lines.slice(0, PREVIEW_MAX_LINES) : lines
+  }, [lines, showFullContent, status, isLong])
 
-  const hasContent = content.length > 0 || lines.length > 0
-  if (!hasContent && status === 'completed') return null
+  const skillBadges = useMemo(
+    () => pipelineSteps?.filter((s) => s.id?.startsWith('skill-')) ?? [],
+    [pipelineSteps]
+  )
 
-  const isLong = content.length > 200 || lines.length > 15
-
-  useEffect(() => {
-    pendingLinesRef.current = lines
-    const timer = setTimeout(() => setDisplayedLines([...pendingLinesRef.current]), 50)
-    return () => clearTimeout(timer)
-  }, [lines])
+  const lastSkillName = useMemo(() => {
+    const completed = skillBadges.filter((s) => s.status === 'completed')
+    return completed.length > 0 ? completed[completed.length - 1].name : null
+  }, [skillBadges])
 
   useEffect(() => {
     if (status === 'starting' || status === 'streaming') {
@@ -120,16 +108,6 @@ export function ThinkingBlock({ content, status, tokensUsed, pipelineSteps, clas
     if (userToggled.current && messageId) saveCollapseState(messageId, isExpanded)
   }, [isExpanded, messageId])
 
-  const skillBadges = useMemo(
-    () => pipelineSteps?.filter((s) => s.id?.startsWith('skill-')) ?? [],
-    [pipelineSteps]
-  )
-
-  const lastSkillName = useMemo(() => {
-    const completed = skillBadges.filter((s) => s.status === 'completed')
-    return completed.length > 0 ? completed[completed.length - 1].name : null
-  }, [skillBadges])
-
   useEffect(() => {
     if (skillBadges.length > prevBadgeCount.current && badgesEndRef.current)
       badgesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
@@ -139,9 +117,9 @@ export function ThinkingBlock({ content, status, tokensUsed, pipelineSteps, clas
   useEffect(() => {
     if (linesEndRef.current && (status === 'streaming' || status === 'starting'))
       linesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-  }, [displayedLines.length, status])
+  }, [showingLines.length, status])
 
-  function handleToggle(e: React.MouseEvent) {
+  const handleToggle = useCallback((e: React.MouseEvent) => {
     if (e.shiftKey) {
       document.querySelectorAll('[data-thinking-block]').forEach((el) => {
         const btn = el.querySelector('button')
@@ -151,7 +129,10 @@ export function ThinkingBlock({ content, status, tokensUsed, pipelineSteps, clas
     }
     userToggled.current = true
     setIsExpanded((v) => !v)
-  }
+  }, [])
+
+  const hasContent = content.length > 0 || lines.length > 0
+  if (!hasContent && status === 'completed') return null
 
   return (
     <motion.div
@@ -160,25 +141,15 @@ export function ThinkingBlock({ content, status, tokensUsed, pipelineSteps, clas
       data-thinking-block={messageId}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      style={{
-        borderRadius: 'var(--radius-md)',
-        transition: 'background 0.15s',
-        background: isHovered && !isExpanded ? 'var(--bg-hover)' : 'transparent',
-      }}
     >
       <button
         onClick={handleToggle}
         className="thinking-block-trigger"
         style={{
-          cursor: 'pointer',
-          width: '100%',
-          textAlign: 'left',
-          border: 'none',
-          background: 'none',
-          padding: '4px 6px',
+          background: isHovered && !isExpanded ? 'var(--bg-hover)' : 'transparent',
           borderRadius: 'var(--radius-md)',
-          transition: 'background 0.1s',
-          outline: 'none',
+          padding: '4px 6px',
+          transition: 'background 0.15s',
         }}
       >
         <ThinkingPill
@@ -200,21 +171,7 @@ export function ThinkingBlock({ content, status, tokensUsed, pipelineSteps, clas
             transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
             style={{ overflow: 'hidden' }}
           >
-            <div
-              className="thinking-lines-v2"
-              ref={linesContainerRef}
-              style={{
-                maxHeight: isLong && status === 'completed' ? PREVIEW_MAX_HEIGHT : 'none',
-                overflowY: isLong && status === 'completed' ? 'hidden' : 'visible',
-                maskImage: isLong && status === 'completed'
-                  ? 'linear-gradient(to bottom, black 60%, transparent 100%)'
-                  : 'none',
-                WebkitMaskImage: isLong && status === 'completed'
-                  ? 'linear-gradient(to bottom, black 60%, transparent 100%)'
-                  : 'none',
-                padding: '0 6px 4px',
-              }}
-            >
+            <div className="thinking-lines-v2">
               {(status === 'starting' || status === 'streaming') && !content && <ThinkingSkeletonRows />}
 
               {skillBadges.map((step) => (
@@ -228,9 +185,9 @@ export function ThinkingBlock({ content, status, tokensUsed, pipelineSteps, clas
               ))}
               <div ref={badgesEndRef} />
 
-              {displayedLines.length > 0 && (
+              {showingLines.length > 0 && (
                 <AnimatePresence initial={false}>
-                  {displayedLines.map((line, idx) => (
+                  {showingLines.map((line, idx) => (
                     <motion.div
                       key={line.id}
                       initial={{ opacity: 0, x: -12 }}
@@ -241,7 +198,7 @@ export function ThinkingBlock({ content, status, tokensUsed, pipelineSteps, clas
                       <span className="thinking-line-icon">{line.icon}</span>
                       <span className="thinking-line-text">
                         {line.text}
-                        {idx === displayedLines.length - 1 && status === 'streaming' && <StreamCursor visible />}
+                        {idx === showingLines.length - 1 && status === 'streaming' && <StreamCursor visible />}
                       </span>
                     </motion.div>
                   ))}
@@ -249,33 +206,24 @@ export function ThinkingBlock({ content, status, tokensUsed, pipelineSteps, clas
               )}
               <div ref={linesEndRef} />
 
-              {status === 'completed' && displayedLines.length === 0 && content && (
-                <div className="thinking-line" style={{ padding: '4px 0' }}>
-                  <span className="thinking-line-icon">\u2713</span>
+              {status === 'completed' && showingLines.length === 0 && content && (
+                <div className="thinking-line">
+                  <span className="thinking-line-icon">{'\u2713'}</span>
                   <span className="thinking-line-text">{content}</span>
                 </div>
               )}
-
-              {isLong && status === 'completed' && (
-                <div
-                  style={{
-                    textAlign: 'center',
-                    fontSize: 10,
-                    color: 'var(--accent)',
-                    fontFamily: 'var(--font-ui)',
-                    cursor: 'pointer',
-                    padding: '4px 0',
-                    opacity: 0.7,
-                    transition: 'opacity 0.1s',
-                  }}
-                  onClick={(e) => { e.stopPropagation(); handleToggle(e) }}
-                  onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
-                  onMouseLeave={(e) => e.currentTarget.style.opacity = '0.7'}
-                >
-                  {t('chat.showAllLines').replace('{{count}}', String(lines.length))}
-                </div>
-              )}
             </div>
+
+            {isLong && status === 'completed' && (
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowFullContent((v) => !v) }}
+                className="thinking-expand-btn"
+              >
+                {showFullContent
+                  ? t('chat.showLess')
+                  : t('chat.showAllLines').replace('{{count}}', String(lines.length))}
+              </button>
+            )}
 
             {(status === 'streaming' || status === 'starting') && (
               <div style={{ padding: '0 6px 4px' }}>

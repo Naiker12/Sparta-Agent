@@ -129,6 +129,7 @@ class StdioServer:
         provider = params.get("provider", "anthropic")
         vendor = params.get("vendor", "anthropic")
         provider_key = params.get("provider_key")
+        api_url = params.get("api_url")
         mode = params.get("mode", "chat")
         skills = params.get("skills", [])
         mcp_servers = params.get("mcp_servers", [])
@@ -149,6 +150,7 @@ class StdioServer:
                 provider=provider,
                 vendor=vendor,
                 provider_key=provider_key,
+                api_url=api_url,
                 mode=mode,
                 skills=skills,
                 mcp_servers=mcp_servers,
@@ -185,6 +187,7 @@ class StdioServer:
         provider: str,
         vendor: str,
         provider_key: str | None,
+        api_url: str | None,
         mode: str,
         skills: list[str],
         mcp_servers: list,
@@ -208,6 +211,7 @@ class StdioServer:
             provider=provider,
             vendor=vendor,
             api_key=provider_key,
+            api_url=api_url,
             reasoning_enabled=reasoning.get("enabled", False),
             reasoning_budget=reasoning.get("budget", 8000),
             reasoning_effort=reasoning.get("effort", "medium"),
@@ -279,6 +283,7 @@ class StdioServer:
             "current_step": 0,
             "plan_complete": False,
             "reflection_retries": 0,
+            "suggestions": [],
         }
 
         await stream_agent_to_electron(

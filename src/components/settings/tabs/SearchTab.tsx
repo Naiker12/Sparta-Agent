@@ -55,16 +55,22 @@ export function SearchTab() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-      <SettingGroup title={t('search.provider') || 'Proveedor de búsqueda'} description={t('search.providerDesc') || 'Opcional — sin key usamos DuckDuckGo automáticamente. Agregá tu key de Brave Search si querés resultados de mejor calidad.'}>
+      <SettingGroup
+        title={t('search.provider') || 'Búsqueda web'}
+        description={
+          t('search.providerDesc')
+          || 'La búsqueda funciona automáticamente con DuckDuckGo, sin necesidad de API key. Opcionalmente podés agregar una key de Brave Search para usar Brave como alternativa.'
+        }
+      >
         <SettingRow
-          title={t('search.apiKey') || 'Brave Search API Key'}
+          title={t('search.apiKey') || 'Brave Search API Key (opcional)'}
           description=""
           control={
             <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
               {hasKey && !showKey && (
                 <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--status-ok)' }}>
                   <Check size={12} strokeWidth={2.5} />
-                  Configurada
+                  Brave configurada
                 </span>
               )}
             </div>
@@ -76,7 +82,7 @@ export function SearchTab() {
               type={showKey ? 'text' : 'password'}
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
-              placeholder="API key de Brave Search (opcional)"
+              placeholder="Brave API key (opcional — DuckDuckGo por defecto)"
               style={{
                 width: '100%',
                 background: 'var(--bg-input)',
