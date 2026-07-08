@@ -244,11 +244,11 @@ def write_file_tool(path: str, content: str, append: bool = False) -> str:
         if not _check_rate_limit("write_file_tool"):
             return "Error: Demasiadas solicitudes. Espera un momento antes de escribir más archivos."
 
-        # Build a preview of what will be written (first 300 chars)
-        preview_lines = content.split("\n")[:10]
+        # Build preview: show what will be written
+        preview_lines = content.split("\n")[:15]
         preview_text = "\n".join(preview_lines)
-        if len(content) > 300:
-            preview_text += "\n..."
+        if len(content) > 500:
+            preview_text += "\n... (truncado, {len(content)} chars total)"
         # Always ask for permission when autonomy is "always_ask"
         need_permission = get_agent_autonomy() == "always_ask"
         filepath = _get_safe_path(path, tool_name="write_file_tool", preview=preview_text,
@@ -384,20 +384,31 @@ def patch_file_tool(path: str, old_string: str, new_string: str) -> str:
         if not _check_rate_limit("patch_file_tool"):
             return "Error: Demasiadas solicitudes. Espera un momento antes de editar más archivos."
 
-        # Content size limit (el resultado no debe exceder 5MB)
         if len(old_string) > _MAX_CONTENT_SIZE or len(new_string) > _MAX_CONTENT_SIZE:
             return "Error: El contenido del parche excede el límite de 5MB."
 
-        need_permission = get_agent_autonomy() == "always_ask"
-        filepath = _get_safe_path(
-            path,
-            tool_name="patch_file_tool",
-            preview=f"Reemplazar: '{old_string[:80]}' → '{new_string[:80]}'",
-            require_permission=need_permission,
-        )
-        _validate_path(filepath)
+        # Resolve and validate path
+        raw_path = path.strip()
+        root = _workspace_root()
+        candidate = Path(raw_path)
+        if not candidate.is_absolute():
+            candidate = root / candidate
+        resolved = candidate.resolve()
 
-        original = filepath.read_text(encoding="utf-8")
+        # Validate blocked patterns (siempre, antes de leer)
+        lower_path = str(resolved).lower()
+        for pattern in BLOCKED_FILE_PATTERNS:
+            if pattern.search(lower_path):
+                return f"Error de seguridad: ruta bloqueada por patrón '{pattern.pattern}'."
+        if resolved.name in DENYLIST_FILES:
+            return f"Error de seguridad: archivo bloqueado: {resolved}"
+        if ".ssh" in {part.lower() for part in resolved.parts}:
+            return f"Error de seguridad: archivo bloqueado: {resolved}"
+
+        _validate_path(resolved)
+
+        # Leer archivo y generar diff ANTES de pedir permiso
+        original = resolved.read_text(encoding="utf-8")
 
         count = original.count(old_string)
         if count == 0:
@@ -412,7 +423,6 @@ def patch_file_tool(path: str, old_string: str, new_string: str) -> str:
             )
 
         patched = original.replace(old_string, new_string, 1)
-        filepath.write_text(patched, encoding="utf-8")
 
         diff = difflib.unified_diff(
             original.splitlines(keepends=True),
@@ -422,6 +432,20 @@ def patch_file_tool(path: str, old_string: str, new_string: str) -> str:
             lineterm="",
         )
         diff_text = "".join(diff)
+
+        # Pedir permiso con el diff completo como preview
+        need_permission = get_agent_autonomy() == "always_ask"
+        if need_permission:
+            allowed = request_permission_sync(
+                "patch_file_tool", resolved,
+                preview=f"```diff\n{diff_text[:2000]}\n```",
+            )
+            if not allowed:
+                return "Edición rechazada por el usuario."
+
+        # Escribir solo si hay permiso
+        filepath = resolved
+        filepath.write_text(patched, encoding="utf-8")
 
         logger.info("patch_file_tool: patched %s", filepath)
         return f"Archivo editado exitosamente: {path}\n\n```diff\n{diff_text}\n```"
