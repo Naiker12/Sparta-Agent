@@ -14,6 +14,7 @@ import { PersistentTerminal } from '@/components/terminal/PersistentTerminal'
 import { AgentsPanel } from '@/components/agents/AgentsPanel'
 import { ChatErrorBoundary } from '@/components/ErrorBoundary'
 import { PermissionRequestDialog } from '@/components/permission/PermissionRequestDialog'
+import { DiffProposalDialog } from '@/components/permission/DiffProposalDialog'
 import { initTheme } from '@/stores/theme.store'
 import { useCronEngine } from '@/hooks/useCronEngine'
 import { useSidecarToasts } from '@/hooks/useSidecarToasts'
@@ -225,6 +226,7 @@ export function AppShell() {
       )}
       <Toaster position="bottom-right" richColors closeButton />
       <PermissionRequestDialog />
+      <DiffProposalDialog />
     </div>
   )
 }

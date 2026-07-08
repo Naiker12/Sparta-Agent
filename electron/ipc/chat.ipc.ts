@@ -162,6 +162,23 @@ export function registerChatIPC(): void {
       return
     }
 
+    // ── editor:diff_proposed events: no sessionId/messageId needed ─────
+    if (event === 'editor:diff_proposed') {
+      const win = BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0]
+      if (win && !win.isDestroyed()) {
+        win.webContents.send('sparta:event', {
+          type: 'editor:diff_proposed',
+          requestId: data?.request_id ?? '',
+          filePath: data?.file_path ?? '',
+          originalContent: data?.original_content ?? '',
+          newContent: data?.new_content ?? '',
+          language: data?.language ?? '',
+          timestamp: Date.now(),
+        })
+      }
+      return
+    }
+
     // ── file:changed events: no sessionId/messageId needed ─────────────
     if (event === 'file:changed') {
       const win = BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0]
@@ -329,6 +346,18 @@ export function registerChatIPC(): void {
         reasoning: req.reasoning ?? { enabled: false, budget: 8000 },
         web_search_enabled: req.webSearchEnabled ?? true,
           workspace_root: req.workspaceRoot ?? process.env.SPARTA_WORKSPACE_ROOT ?? '',
+  ipcMain.handle('editor:diff_respond', (_event, payload: { requestId: string; approved: boolean }) => {
+    sendToPython({
+      method: 'permission.respond',
+      params: {
+        request_id: payload.requestId,
+        approved: payload.approved,
+        remember: 'once',
+      },
+    })
+    return { ok: true }
+  })
+
         agent_autonomy: req.agentAutonomy ?? 'ask_risky',
         agent_execute_local: req.agentExecuteLocal ?? false,
         security_loaded: req.securityLoaded ?? true,

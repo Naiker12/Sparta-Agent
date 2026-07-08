@@ -166,3 +166,8 @@ contextBridge.exposeInMainWorld('permission', {
   respond: (payload: { requestId: string; approved: boolean; remember: 'once' | 'session' }) =>
     ipcRenderer.invoke('permission:respond', payload) as Promise<{ ok: boolean }>,
 })
+
+contextBridge.exposeInMainWorld('editorBridge', {
+  respondDiff: (payload: { requestId: string; approved: boolean }) =>
+    ipcRenderer.invoke('editor:diff_respond', payload) as Promise<{ ok: boolean }>,
+})

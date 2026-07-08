@@ -94,6 +94,10 @@ interface PermissionAPI {
   respond: (payload: { requestId: string; approved: boolean; remember: 'once' | 'session' }) => Promise<{ ok: boolean }>
 }
 
+interface EditorBridgeAPI {
+  respondDiff: (payload: { requestId: string; approved: boolean }) => Promise<{ ok: boolean }>
+}
+
 declare global {
   interface Window {
     sparta?: SpartaAPI
@@ -104,5 +108,6 @@ declare global {
     terminal?: TerminalAPI
     skills?: SkillsAPI
     permission?: PermissionAPI
+    editorBridge?: EditorBridgeAPI
   }
 }

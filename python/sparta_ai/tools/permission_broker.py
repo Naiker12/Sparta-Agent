@@ -336,6 +336,80 @@ def request_permission_sync_generic(
     return approved
 
 
+def request_diff_approval(
+    file_path: str,
+    original_content: str,
+    new_content: str,
+    language: str = "",
+) -> bool:
+    """Ask the user to approve a code change via Monaco DiffEditor.
+
+    Emits an editor:diff_proposed event and waits for the user to accept
+    or reject the change in the DiffEditor dialog.
+
+    Args:
+        file_path: Path to the file being changed.
+        original_content: The current file content.
+        new_content: The proposed new content.
+        language: Language identifier for syntax highlighting.
+
+    Returns:
+        True if the user approved, False if rejected.
+    """
+    if not _IS_ELECTRON:
+        logger.warning("Diff approval denied (non-Electron env): %s", file_path)
+        return False
+
+    perm_id = str(uuid.uuid4())
+    event = threading.Event()
+    _pending_sync[perm_id] = event
+
+    msg = {
+        "event": "editor:diff_proposed",
+        "data": {
+            "request_id": perm_id,
+            "file_path": file_path,
+            "original_content": original_content,
+            "new_content": new_content,
+            "language": language or _detect_language(file_path),
+        },
+    }
+    try:
+        sys.stdout.write(json.dumps(msg, ensure_ascii=False) + "\n")
+        sys.stdout.flush()
+    except (BrokenPipeError, OSError):
+        sys.exit(0)
+
+    logger.info("Diff proposed for %s (id=%s)", file_path, perm_id)
+
+    triggered = event.wait(timeout=_TIMEOUT_SECONDS)
+    if not triggered:
+        logger.warning("Diff approval timed out (id=%s) — denying", perm_id)
+        approved = False
+    else:
+        approved, _remember = _pending_sync_results.pop(perm_id, (False, "once"))
+
+    _pending_sync.pop(perm_id, None)
+
+    if approved:
+        logger.info("Diff approved: %s", file_path)
+    else:
+        logger.info("Diff rejected: %s", file_path)
+
+    return approved
+
+
+def _detect_language(file_path: str) -> str:
+    ext = file_path.rsplit(".", 1)[-1].lower() if "." in file_path else ""
+    lang_map = {
+        "ts": "typescript", "tsx": "typescript", "js": "javascript",
+        "jsx": "javascript", "py": "python", "rs": "rust", "go": "go",
+        "css": "css", "scss": "scss", "html": "html", "json": "json",
+        "md": "markdown", "yaml": "yaml", "yml": "yaml", "toml": "toml",
+    }
+    return lang_map.get(ext, "")
+
+
 def clear_session_cache() -> None:
     """Clear the per-session permission cache (call at session end)."""
     _session_cache.clear()

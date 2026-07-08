@@ -52,6 +52,8 @@ export type EventType =
   | 'plan:created'
   | 'plan:step'
   | 'file:changed'
+  | 'editor:diff_proposed'
+  | 'editor:diff_responded'
 
 export interface BaseEvent {
   type: EventType
@@ -364,6 +366,15 @@ export interface PlanCreatedEvent extends BaseEvent {
   planComplete: boolean
 }
 
+export interface DiffProposedEvent extends BaseEvent {
+  type: 'editor:diff_proposed'
+  requestId: string
+  filePath: string
+  originalContent: string
+  newContent: string
+  language: string
+}
+
 export interface PlanStepEvent extends BaseEvent {
   type: 'plan:step'
   plan: string[]
@@ -423,3 +434,4 @@ export type SpartaEvent =
   | PlanCreatedEvent
   | PlanStepEvent
   | FileChangedEvent
+  | DiffProposedEvent

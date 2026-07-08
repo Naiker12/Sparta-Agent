@@ -8,7 +8,7 @@ from typing import Optional
 
 from langchain_core.tools import tool
 
-from sparta_ai.tools.permission_broker import request_permission_sync, get_agent_autonomy
+from sparta_ai.tools.permission_broker import request_permission_sync, request_diff_approval, get_agent_autonomy
 from sparta_ai.security.rate_limiter import tool_rate_limiter
 
 logger = logging.getLogger("sparta_ai.tools.file")
@@ -433,17 +433,19 @@ def patch_file_tool(path: str, old_string: str, new_string: str) -> str:
         )
         diff_text = "".join(diff)
 
-        # Pedir permiso con el diff completo como preview
-        need_permission = get_agent_autonomy() == "always_ask"
-        if need_permission:
-            allowed = request_permission_sync(
-                "patch_file_tool", resolved,
-                preview=f"```diff\n{diff_text[:2000]}\n```",
-            )
-            if not allowed:
-                return "Edición rechazada por el usuario."
+        # Mostrar diff en Monaco (Editor Bridge) antes de escribir
+        # Siempre usa request_diff_approval cuando hay Electron
+        # (cae a preview text si no hay Electron o si timeout)
+        approved = request_diff_approval(
+            file_path=str(resolved),
+            original_content=original,
+            new_content=patched,
+            language=path.rsplit(".", 1)[-1] if "." in path else "",
+        )
+        if not approved:
+            return "Edición rechazada por el usuario."
 
-        # Escribir solo si hay permiso
+        # Escribir solo si hay aprobación
         filepath = resolved
         filepath.write_text(patched, encoding="utf-8")
 
