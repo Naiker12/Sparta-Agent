@@ -5,6 +5,7 @@ import type { editor } from 'monaco-editor'
 import { PanelLeft, X, FolderX } from 'lucide-react'
 import { useUIStore } from '@/stores/ui.store'
 import { useProjectStore } from '@/stores/project.store'
+import { useEditorStore } from '@/stores/editor.store'
 import { FileTreeSidebar } from './FileTreeSidebar'
 import { EditorTabs } from './EditorTabs'
 import { MonacoEditor } from './MonacoEditor'
@@ -33,6 +34,11 @@ export function EditorPanel() {
   const treeKey = useRef(0)
 
   const activeFile = openFiles.find((f) => f.path === activePath)
+
+  // Sync open files to global store so the agent can query them
+  useEffect(() => {
+    useEditorStore.getState().setOpenFiles(openFiles.map((f) => f.path))
+  }, [openFiles])
 
   const openFile = useCallback(async (filePath: string) => {
     if (!window.fs) return

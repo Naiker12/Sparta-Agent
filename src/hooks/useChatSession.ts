@@ -5,6 +5,7 @@ import { useProviderStore } from '@/stores/provider.store'
 import { useSettingsStore } from '@/stores/settings.store'
 import { useEventBus } from '@/stores/event-bus.store'
 import { useSecurityStore } from '@/stores/security.store'
+import { useEditorStore } from '@/stores/editor.store'
 import { useMCPStore } from '@/stores/mcp.store'
 import { useSkillStore } from '@/stores/skill.store'
 import { useProjectStore } from '@/stores/project.store'
@@ -107,6 +108,7 @@ async function runAssistantTurn(
       agentExecuteLocal,
       securityLoaded,
       sandboxMode,
+      openFiles: useEditorStore.getState().openFiles,
     })
     const resolved = sendResult instanceof Promise ? await sendResult : null
     if (resolved && !resolved.ok) {

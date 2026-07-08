@@ -24,6 +24,7 @@ interface ChatRequest {
   agentExecuteLocal?: boolean
   securityLoaded?: boolean
   sandboxMode?: string
+  openFiles?: string[]
 }
 
 const activeStreams = new Map<string, { active: boolean; messageId: string }>()
@@ -332,6 +333,7 @@ export function registerChatIPC(): void {
         agent_execute_local: req.agentExecuteLocal ?? false,
         security_loaded: req.securityLoaded ?? true,
         sandbox_mode: req.sandboxMode ?? 'none',
+        open_files: req.openFiles ?? [],
       },
     }
 

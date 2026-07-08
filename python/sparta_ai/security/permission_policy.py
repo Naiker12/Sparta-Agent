@@ -23,6 +23,7 @@ _READ_TOOLS = frozenset({
     "create_plan",
     "get_diagnostics_tool",
     "terminal_check_tool",
+    "get_open_files_tool",
 })
 
 _WRITE_TOOLS = frozenset({

@@ -15,6 +15,14 @@ _EXECUTE_LOCAL = False
 # Process result cache: maps proc_id → {"output": str, "exit_code": int, "done": bool}
 _proc_results: dict[str, dict] = {}
 
+# Open files in the editor — updated from each chat request
+_open_files: list[str] = []
+
+
+def _set_open_files(files: list[str]) -> None:
+    global _open_files
+    _open_files = files
+
 
 def _emit_terminal_event(event: str, data: dict) -> None:
     """Write a terminal bridge event to stdout (visible in the terminal panel)."""
@@ -212,3 +220,22 @@ def terminal_check_tool(proc_id: str) -> str:
             return f"Proceso '{proc_id}': {status}\n{out[:3000]}"
         return f"Proceso '{proc_id}': {status} (sin salida)"
     return f"Proceso '{proc_id}': aún en ejecución."
+
+
+@tool
+def get_open_files_tool() -> str:
+    """Devuelve la lista de archivos abiertos actualmente en el editor.
+
+    Úsalo para saber qué archivos está viendo el usuario y priorizar contexto.
+    Los archivos se listan en orden de apertura (el último es el activo).
+
+    Returns:
+        Lista de rutas de archivos abiertos en el editor.
+    """
+    if not _open_files:
+        return "No hay archivos abiertos en el editor."
+    lines = [f"Archivos abiertos en el editor ({len(_open_files)}):"]
+    for i, fp in enumerate(_open_files, 1):
+        marker = "  ►" if i == len(_open_files) else "   "
+        lines.append(f"{marker} {fp}")
+    return "\n".join(lines)

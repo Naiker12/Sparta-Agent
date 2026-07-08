@@ -23,6 +23,7 @@ interface ChatSendRequest {
   agentExecuteLocal?: boolean
   securityLoaded?: boolean
   sandboxMode?: string
+  openFiles?: string[]
 }
 
 interface MessagingAdapterSendResult {
