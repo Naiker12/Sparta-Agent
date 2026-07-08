@@ -34,7 +34,7 @@ _TOKEN_EVENTS = frozenset({"stream:token", "thinking:token"})
 _CONTROL_EVENTS = frozenset({
     "stream:completed", "stream:aborted", "stream:error", "stream:degenerate",
     "stream:end",
-    "thinking:started", "thinking:completed",
+    "thinking:started", "thinking:completed", "thinking:status",
     "tool:called", "tool:result", "tool:error",
     "terminal:agent_command", "terminal:agent_spawn",
     "usage", "skill:activated", "search:progress",
@@ -370,6 +370,12 @@ async def _dispatch_event_core(
         emit_control_fn(
             "tool:error",
             {**base_payload, "name": name, "error": str(data.get("error", "Tool execution failed")), "tool_call_id": tool_call_id},
+        )
+
+    elif kind == "on_chain_start" and name == "planner":
+        emit_control_fn(
+            "thinking:status",
+            {**base_payload, "text": "Analizando la tarea y generando plan…"},
         )
 
     elif kind == "on_custom_event":

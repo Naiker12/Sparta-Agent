@@ -140,6 +140,10 @@ class StdioServer:
         workspace_root = params.get("workspace_root") or os.environ.get("SPARTA_WORKSPACE_ROOT")
         if workspace_root:
             os.environ["SPARTA_WORKSPACE_ROOT"] = str(workspace_root)
+        else:
+            # Ensure stale value from previous session doesn't leak
+            os.environ.pop("SPARTA_WORKSPACE_ROOT", None)
+            logger.warning("No workspace_root provided — file tools will fail with explicit error")
 
         agent_autonomy = params.get("agent_autonomy", "ask_risky")
         agent_execute_local = params.get("agent_execute_local", False)
@@ -306,6 +310,7 @@ class StdioServer:
             "subagent_results": [],
             "pending_human_input": None,
             "abort_requested": False,
+            "force_summary": False,
             "plan": [],
             "current_step": 0,
             "plan_complete": False,

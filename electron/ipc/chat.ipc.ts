@@ -303,7 +303,7 @@ export function registerChatIPC(): void {
         semantic_memory: req.semanticMemory ?? false,
         reasoning: req.reasoning ?? { enabled: false, budget: 8000 },
         web_search_enabled: req.webSearchEnabled ?? true,
-          workspace_root: req.workspaceRoot ?? process.env.SPARTA_WORKSPACE_ROOT ?? process.cwd(),
+          workspace_root: req.workspaceRoot ?? process.env.SPARTA_WORKSPACE_ROOT ?? '',
         agent_autonomy: req.agentAutonomy ?? 'ask_risky',
         agent_execute_local: req.agentExecuteLocal ?? false,
         security_loaded: req.securityLoaded ?? true,

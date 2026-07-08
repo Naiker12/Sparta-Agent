@@ -27,6 +27,7 @@ class SpartaState(MessagesState):
     subagent_results: Annotated[list, operator.add]
     pending_human_input: str | None
     abort_requested: bool
+    force_summary: bool
     plan: list[str]
     current_step: int
     plan_complete: bool
@@ -44,6 +45,7 @@ def build_sparta_graph(
     # Include delegate tools so the LLM can decide to hand off to sub-graphs.
     delegate_tools = [research_topic, execute_code_task, recall_memories]
     llm_with_tools = llm.bind_tools(tools + delegate_tools)
+    llm_readonly = llm.bind_tools([t for t in tools if "read" in getattr(t, "name", "") or "search" in getattr(t, "name", "") or "web" in getattr(t, "name", "")] + delegate_tools)
 
     async def agent_node(state: SpartaState) -> dict:
         from sparta_ai.agents.router import classify_intent
@@ -92,6 +94,14 @@ def build_sparta_graph(
             "- Usa la información encontrada para responder DIRECTAMENTE la pregunta del usuario, como si ya supieras la respuesta.",
             "- Tu respuesta debe ser una síntesis clara y directa, NO un resumen de los resultados de búsqueda.",
             "- Si quieres citar una fuente, menciona el nombre del sitio brevemente (ej: 'según MDN...') pero NO incluyas URLs completas ni listas de enlaces.",
+            "",
+            "REGLAS PARA RESPUESTAS:",
+            "- NUNCA incluyas JSON de planificación interna en tu respuesta al usuario.",
+            "- Tu plan interno se muestra automáticamente en el panel 'Plan de ejecución'.",
+            "- Si necesitas planificar, hazlo internamente sin mostrar el JSON.",
+            "- Responde siempre en lenguaje natural, sin bloques JSON visibles.",
+            "- Si usas <think> o <reasoning> tags, el contenido se mostrará como",
+            "  'Pensando...' y no contaminará tu respuesta visible.",
             "",
             "FORMATO DE RESPUESTA:",
             "- Usa Markdown solo cuando sea necesario (código, tablas, listas de pasos).",
@@ -175,8 +185,36 @@ def build_sparta_graph(
 
         messages.extend(state["messages"])
 
-        response = await llm_with_tools.ainvoke(messages)
-        result: dict[str, Any] = {"messages": [response]}
+        # Scope tools by intent/mode (Build vs Plan pattern)
+        scope = "full"
+        if effective_mode == "chat":
+            scope = "chat"
+        elif intent == "research":
+            scope = "readonly"
+        elif intent == "memory_query":
+            scope = "readonly"
+
+        # Detect forced summary mode: tool limit reached or loop detected
+        is_forced_summary = state.get("force_summary", False) or state.get("tool_calls_this_turn", 0) >= 8
+        if is_forced_summary:
+            # Use plain LLM without tools so it can't make more tool calls
+            # and must produce a final summary response
+            messages.append({
+                "role": "system",
+                "content": (
+                    "Has alcanzado el límite de herramientas para este turno. "
+                    "NO puedes hacer más llamadas a herramientas ahora. "
+                    "Resume lo que lograste hasta el momento, qué información "
+                    "obtuviste, y qué recomiendas como siguiente paso. "
+                    "Sé conciso y directo."
+                ),
+            })
+            response = await llm.ainvoke(messages)
+        elif scope == "readonly":
+            response = await llm_readonly.ainvoke(messages)
+        else:
+            response = await llm_with_tools.ainvoke(messages)
+        result: dict[str, Any] = {"messages": [response], "force_summary": False}
 
         # Generate contextual follow-up suggestions on the FINAL response
         # (no pending tool calls means this is the actual answer).
@@ -325,17 +363,17 @@ def build_sparta_graph(
                     seen_queries.add(query)
         return False
 
-    def should_continue(state: SpartaState) -> Literal["tools", "subagent", "__end__"]:
+    def should_continue(state: SpartaState) -> Literal["tools", "subagent", "agent", "__end__"]:
         if state.get("abort_requested"):
             return "__end__"
 
         if state.get("tool_calls_this_turn", 0) >= MAX_TOOL_CALLS_PER_TURN:
-            logger.warning("Tool call limit reached (%s), ending turn", MAX_TOOL_CALLS_PER_TURN)
-            return "__end__"
+            logger.warning("Tool call limit reached (%s), forcing final synthesis", MAX_TOOL_CALLS_PER_TURN)
+            return "agent"
 
         if _detect_loop(state):
-            logger.warning("Loop detected: same query repeated in recent tool calls, ending turn")
-            return "__end__"
+            logger.warning("Loop detected: same query repeated in recent tool calls, forcing final synthesis")
+            return "agent"
 
         last_message = state["messages"][-1]
         tool_calls = getattr(last_message, "tool_calls", [])
@@ -363,6 +401,7 @@ def build_sparta_graph(
         {
             "tools": "tools",
             "subagent": "subagent_coordinator",
+            "agent": "agent",
             "__end__": END,
         },
     )

@@ -42,8 +42,8 @@ def should_reflect(state: dict[str, Any]) -> Literal["reflection", "agent", "__e
     """Route to reflection when recent errors exist and we haven't retried too much."""
     tool_calls = state.get("tool_calls_this_turn", 0)
     if tool_calls >= 8:
-        logger.warning("Tool call limit reached, ending turn")
-        return "__end__"
+        logger.warning("Tool call limit reached, routing to agent for final synthesis")
+        return "agent"
 
     errors = _extract_tool_errors(state)
     retries = state.get("reflection_retries", 0)
