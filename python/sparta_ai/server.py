@@ -168,6 +168,9 @@ class StdioServer:
         from sparta_ai.tools.permission_broker import set_agent_autonomy
         set_agent_autonomy(agent_autonomy)
 
+        # Determine policy mode from autonomy setting
+        policy_mode = "plan" if (read_only_mode or agent_autonomy == "autonomous_readonly") else "build"
+
         task = asyncio.create_task(
             self._execute_agent(
                 request_id=request_id,
@@ -185,6 +188,7 @@ class StdioServer:
                 reasoning=reasoning,
                 web_search_enabled=web_search_enabled,
                 read_only=read_only_mode,
+                policy_mode=policy_mode,
             )
         )
         _active_streams[request_id] = task
@@ -223,6 +227,7 @@ class StdioServer:
         reasoning: dict,
         web_search_enabled: bool = True,
         read_only: bool = False,
+        policy_mode: str = "build",
     ) -> None:
         from sparta_ai.skills.skill_loader import build_skills_context, skills_index
         from sparta_ai.memory.chroma_store import build_memory_context
@@ -302,9 +307,6 @@ class StdioServer:
         if web_search_enabled:
             from sparta_ai.tools.web_search import web_search_tool
             agent_tools.insert(0, web_search_tool)
-
-        # Determine policy mode from autonomy setting
-        policy_mode = "plan" if (read_only or agent_autonomy == "autonomous_readonly") else "build"
 
         checkpointer = await get_checkpointer()
         graph = build_sparta_graph(
