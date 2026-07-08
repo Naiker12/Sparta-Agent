@@ -31,7 +31,9 @@ DENYLIST_FILES = {
     "id_rsa", "id_ed25519", "id_ecdsa", "id_ecdsa_sk", "id_ed25519_sk",
 }
 
-# Patterns ported from rust/sparta-security/src/sanitizer.rs
+# Patterns originally ported from rust/sparta-security/src/sanitizer.rs (DEPRECATED in Rust).
+# Python is now the SINGLE SOURCE OF TRUTH for sanitization logic.
+# Do NOT modify the Rust copy — update here only.
 # Block any path matching these regex patterns (case-insensitive).
 BLOCKED_FILE_PATTERNS: list[re.Pattern] = [
     re.compile(p, re.IGNORECASE) for p in [

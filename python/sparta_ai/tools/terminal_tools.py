@@ -3,6 +3,7 @@ import subprocess
 import uuid
 from langchain_core.tools import tool
 from sparta_ai.security.command_sanitizer import CommandSanitizer
+from sparta_ai.tools.permission_broker import request_permission_sync_generic
 
 logger = logging.getLogger("sparta_ai.tools.terminal")
 
@@ -41,6 +42,18 @@ def terminal_execute_tool(command: str) -> str:
         )
 
     logger.info("Terminal command queued: %s", sanitized[:120])
+
+    # NUEVO: gate de permiso real, igual que file_tools.py
+    # Los comandos no seguros requieren confirmación explícita del usuario
+    if not _sanitizer.is_safe(sanitized):
+        allowed = request_permission_sync_generic(
+            kind="terminal_exec",
+            subject=command.strip()[:200],
+            tool_name="terminal_execute_tool",
+            preview=f"Comando: {command.strip()[:500]}",
+        )
+        if not allowed:
+            return "Comando rechazado por el usuario."
 
     if _EXECUTE_LOCAL:
         try:

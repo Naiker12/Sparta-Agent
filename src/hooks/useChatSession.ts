@@ -4,6 +4,7 @@ import { useSessionStore } from '@/stores/session.store'
 import { useProviderStore } from '@/stores/provider.store'
 import { useSettingsStore } from '@/stores/settings.store'
 import { useEventBus } from '@/stores/event-bus.store'
+import { useSecurityStore } from '@/stores/security.store'
 import { useMCPStore } from '@/stores/mcp.store'
 import { useSkillStore } from '@/stores/skill.store'
 import { useProjectStore } from '@/stores/project.store'
@@ -73,7 +74,8 @@ async function runAssistantTurn(
     const providerKey = await getProviderKey(provider)
     const system = await buildMemorySystemPrompt(text, freshProviders)
 
-    const { semanticMemoryEnabled, webSearchEnabled, sessionMode, reasoningEnabled, reasoningBudget, reasoningEffort } = useSettingsStore.getState()
+    const { semanticMemoryEnabled, webSearchEnabled, sessionMode, reasoningEnabled, reasoningBudget, reasoningEffort, agentAutonomy, agentExecuteLocal, sandboxMode } = useSettingsStore.getState()
+    const securityLoaded = useSecurityStore.getState().loaded
     const skills = useSkillStore.getState().activeSkillIds ?? []
     const mcpServers = useMCPStore.getState().servers.map((s: { id: string; name: string; tools?: unknown[] }) => ({
       id: s.id,
@@ -101,6 +103,10 @@ async function runAssistantTurn(
       reasoning: { enabled: reasoningEnabled ?? false, budget: reasoningBudget ?? 8000, effort: reasoningEffort ?? 'medium' },
       webSearchEnabled,
       workspaceRoot,
+      agentAutonomy,
+      agentExecuteLocal,
+      securityLoaded,
+      sandboxMode,
     })
     const resolved = sendResult instanceof Promise ? await sendResult : null
     if (resolved && !resolved.ok) {

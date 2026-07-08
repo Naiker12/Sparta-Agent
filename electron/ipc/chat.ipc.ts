@@ -20,6 +20,10 @@ interface ChatRequest {
   reasoning?: { enabled: boolean; budget: number }
   webSearchEnabled?: boolean
   workspaceRoot?: string
+  agentAutonomy?: string
+  agentExecuteLocal?: boolean
+  securityLoaded?: boolean
+  sandboxMode?: string
 }
 
 const activeStreams = new Map<string, { active: boolean; messageId: string }>()
@@ -143,6 +147,21 @@ export function registerChatIPC(): void {
           return
         }
       }
+    }
+
+    // ── Plan lifecycle events: no sessionId/messageId needed ────────────
+    if (event === 'plan:created' || event === 'plan:step') {
+      const win = BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0]
+      if (win && !win.isDestroyed()) {
+        win.webContents.send('sparta:event', {
+          type: event,
+          plan: data?.plan,
+          currentStep: data?.current_step ?? data?.currentStep ?? 0,
+          planComplete: data?.plan_complete ?? data?.planComplete ?? false,
+          ns: data?.ns,
+        })
+      }
+      return
     }
 
     if (!sessionId || !messageId) return
@@ -284,7 +303,11 @@ export function registerChatIPC(): void {
         semantic_memory: req.semanticMemory ?? false,
         reasoning: req.reasoning ?? { enabled: false, budget: 8000 },
         web_search_enabled: req.webSearchEnabled ?? true,
-        workspace_root: req.workspaceRoot ?? process.env.SPARTA_WORKSPACE_ROOT ?? process.cwd(),
+          workspace_root: req.workspaceRoot ?? process.env.SPARTA_WORKSPACE_ROOT ?? process.cwd(),
+        agent_autonomy: req.agentAutonomy ?? 'ask_risky',
+        agent_execute_local: req.agentExecuteLocal ?? false,
+        security_loaded: req.securityLoaded ?? true,
+        sandbox_mode: req.sandboxMode ?? 'none',
       },
     }
 

@@ -49,6 +49,8 @@ export type EventType =
   | 'message:shared'
   | 'terminal:agent_command'
   | 'terminal:agent_spawn'
+  | 'plan:created'
+  | 'plan:step'
 
 export interface BaseEvent {
   type: EventType
@@ -349,6 +351,20 @@ export interface MessageSharedEvent extends BaseEvent {
   messageId: string
 }
 
+export interface PlanCreatedEvent extends BaseEvent {
+  type: 'plan:created'
+  plan: string[]
+  currentStep: number
+  planComplete: boolean
+}
+
+export interface PlanStepEvent extends BaseEvent {
+  type: 'plan:step'
+  plan: string[]
+  currentStep: number
+  planComplete: boolean
+}
+
 export type SpartaEvent =
   | AgentStartedEvent
   | AgentCompletedEvent
@@ -398,3 +414,5 @@ export type SpartaEvent =
   | MessageDeletedEvent
   | MessageEditedEvent
   | MessageSharedEvent
+  | PlanCreatedEvent
+  | PlanStepEvent

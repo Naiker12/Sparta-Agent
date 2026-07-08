@@ -1,3 +1,4 @@
+import asyncio
 import json
 import operator
 import logging
@@ -209,9 +210,21 @@ def build_sparta_graph(
         from langgraph.prebuilt import ToolNode
         tool_node_exec = ToolNode(tools)
         result = await tool_node_exec.ainvoke(state)
+
+        # Increment plan step counter for each tool executed
+        plan = state.get("plan", [])
+        current_step = state.get("current_step", 0)
+        plan_complete = state.get("plan_complete", True)
+        if plan:
+            current_step = min(current_step + len(tool_calls), len(plan))
+            plan_complete = current_step >= len(plan)
+
         return {
             "messages": result.get("messages", []),
             "tool_calls_this_turn": state.get("tool_calls_this_turn", 0) + len(tool_calls),
+            "current_step": current_step,
+            "plan": plan,
+            "plan_complete": plan_complete,
         }
 
     async def subagent_node(state: SpartaState) -> dict:
@@ -230,12 +243,24 @@ def build_sparta_graph(
             "delegate_memory": build_memory_graph,
         }
 
-        results = []
-        tool_messages = []
-        for tc in delegate_calls:
+        # Apply tool call limit BEFORE launching parallel subagents
+        max_calls = MAX_TOOL_CALLS_PER_TURN - state.get("tool_calls_this_turn", 0)
+        delegate_calls = delegate_calls[:max_calls]
+        if max_calls <= 0:
+            logger.warning("Tool call limit reached, skipping subagent delegation")
+            return {"subagent_results": [], "tool_calls_this_turn": state.get("tool_calls_this_turn", 0)}
+
+        async def _run_subagent(tc: dict) -> tuple[dict, ToolMessage]:
             builder = subagent_map.get(tc["name"])
             if not builder:
-                continue
+                return (
+                    {"subagent": tc["name"], "error": "Unknown subagent type"},
+                    ToolMessage(
+                        content="Error: Tipo de subagente desconocido.",
+                        tool_call_id=tc.get("id", ""),
+                        name=tc["name"],
+                    ),
+                )
             try:
                 graph = builder()
                 args = tc.get("args", {})
@@ -243,26 +268,46 @@ def build_sparta_graph(
                 # through the parent graph's astream_events thanks to their namespace.
                 result = await graph.ainvoke({"messages": [HumanMessage(content=json.dumps(args))]})
                 output = result.get("output") if isinstance(result, dict) else str(result)
-                results.append({"subagent": tc["name"], "output": output})
-                tool_messages.append(ToolMessage(
-                    content=str(output),
-                    tool_call_id=tc.get("id", ""),
-                    name=tc["name"],
-                ))
+                return (
+                    {"subagent": tc["name"], "output": output},
+                    ToolMessage(
+                        content=str(output),
+                        tool_call_id=tc.get("id", ""),
+                        name=tc["name"],
+                    ),
+                )
             except Exception as e:
                 logger.error("Subagent %s failed: %s", tc["name"], e)
                 error_msg = str(e)
-                results.append({"subagent": tc["name"], "error": error_msg})
-                tool_messages.append(ToolMessage(
-                    content=f"Error: {error_msg}",
-                    tool_call_id=tc.get("id", ""),
-                    name=tc["name"],
-                ))
+                return (
+                    {"subagent": tc["name"], "error": error_msg},
+                    ToolMessage(
+                        content=f"Error: {error_msg}",
+                        tool_call_id=tc.get("id", ""),
+                        name=tc["name"],
+                    ),
+                )
+
+        # Run all subagents in parallel, preserving order
+        gathered = await asyncio.gather(*[_run_subagent(tc) for tc in delegate_calls])
+        results = [r[0] for r in gathered]
+        tool_messages = [r[1] for r in gathered]
+
+        # Increment plan step counter for each subagent executed
+        plan = state.get("plan", [])
+        current_step = state.get("current_step", 0)
+        plan_complete = state.get("plan_complete", True)
+        if plan:
+            current_step = min(current_step + len(delegate_calls), len(plan))
+            plan_complete = current_step >= len(plan)
 
         return {
             "messages": tool_messages,
             "subagent_results": results,
             "tool_calls_this_turn": state.get("tool_calls_this_turn", 0),
+            "current_step": current_step,
+            "plan": plan,
+            "plan_complete": plan_complete,
         }
 
     MAX_TOOL_CALLS_PER_TURN = 8

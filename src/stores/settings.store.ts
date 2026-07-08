@@ -3,6 +3,9 @@ import { persist } from 'zustand/middleware'
 
 import type { SessionMode, Language, ReasoningEffort } from '@/types'
 
+export type AgentAutonomyLevel = 'always_ask' | 'ask_risky' | 'autonomous_readonly'
+export type SandboxMode = 'none' | 'docker'
+
 interface SettingsStore {
   settingsOpen: boolean
   defaultModel: string
@@ -17,6 +20,9 @@ interface SettingsStore {
   sessionMode: SessionMode
   apiKeys: Record<string, string>
   language: Language
+  agentAutonomy: AgentAutonomyLevel
+  agentExecuteLocal: boolean
+  sandboxMode: SandboxMode
 
   openSettings: () => void
   closeSettings: () => void
@@ -31,6 +37,9 @@ interface SettingsStore {
   setReasoningBudget: (budget: number) => void
   setSessionMode: (mode: SessionMode) => void
   setLanguage: (lang: Language) => void
+  setAgentAutonomy: (level: AgentAutonomyLevel) => void
+  setAgentExecuteLocal: (val: boolean) => void
+  setSandboxMode: (mode: SandboxMode) => void
 }
 
 export const useSettingsStore = create<SettingsStore>()(
@@ -49,6 +58,9 @@ export const useSettingsStore = create<SettingsStore>()(
   sessionMode: 'chat',
   apiKeys: {},
   language: 'es',
+  agentAutonomy: 'ask_risky',
+  agentExecuteLocal: false,
+  sandboxMode: 'none',
 
   openSettings: () => set({ settingsOpen: true }),
   closeSettings: () => set({ settingsOpen: false }),
@@ -64,10 +76,13 @@ export const useSettingsStore = create<SettingsStore>()(
   setReasoningBudget: (budget) => set({ reasoningBudget: budget }),
   setSessionMode: (mode) => set({ sessionMode: mode }),
   setLanguage: (lang) => set({ language: lang }),
+  setAgentAutonomy: (level) => set({ agentAutonomy: level }),
+  setAgentExecuteLocal: (val) => set({ agentExecuteLocal: val }),
+  setSandboxMode: (mode) => set({ sandboxMode: mode }),
 }),
     {
       name: 'sparta-settings',
-      version: 4,
+      version: 6,
       migrate: (persisted: unknown, version: number) => {
         const state = persisted as Record<string, unknown>
         if (version < 2) {
@@ -78,6 +93,13 @@ export const useSettingsStore = create<SettingsStore>()(
         }
         if (version < 4) {
           state.reasoningEffort = 'medium'
+        }
+        if (version < 5) {
+          state.agentAutonomy = 'ask_risky'
+          state.agentExecuteLocal = false
+        }
+        if (version < 6) {
+          state.sandboxMode = 'none'
         }
         return state
       },
@@ -92,6 +114,9 @@ export const useSettingsStore = create<SettingsStore>()(
         sessionMode: state.sessionMode,
         language: state.language,
         apiKeys: state.apiKeys,
+        agentAutonomy: state.agentAutonomy,
+        agentExecuteLocal: state.agentExecuteLocal,
+        sandboxMode: state.sandboxMode,
       }),
     }
   )

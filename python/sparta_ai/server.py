@@ -141,6 +141,18 @@ class StdioServer:
         if workspace_root:
             os.environ["SPARTA_WORKSPACE_ROOT"] = str(workspace_root)
 
+        agent_autonomy = params.get("agent_autonomy", "ask_risky")
+        agent_execute_local = params.get("agent_execute_local", False)
+        security_loaded = params.get("security_loaded", True)
+        sandbox_mode = params.get("sandbox_mode", "none")
+
+        # Apply agent policy settings
+        from sparta_ai.tools.terminal_tools import set_execute_local
+        set_execute_local(bool(agent_execute_local))
+
+        # If security module is not loaded, degrade to read-only mode
+        read_only_mode = not security_loaded
+
         task = asyncio.create_task(
             self._execute_agent(
                 request_id=request_id,
@@ -157,6 +169,7 @@ class StdioServer:
                 semantic_memory=semantic_memory,
                 reasoning=reasoning,
                 web_search_enabled=web_search_enabled,
+                read_only=read_only_mode,
             )
         )
         _active_streams[request_id] = task
@@ -194,6 +207,7 @@ class StdioServer:
         semantic_memory: bool,
         reasoning: dict,
         web_search_enabled: bool = True,
+        read_only: bool = False,
     ) -> None:
         from sparta_ai.skills.skill_loader import build_skills_context, skills_index
         from sparta_ai.memory.chroma_store import build_memory_context
@@ -248,13 +262,21 @@ class StdioServer:
         # Ensure tool descriptions reflect the current workspace root (may have changed since import)
         inject_workspace_guidance()
 
-        agent_tools = [
-            read_memory_tool, write_memory_tool,
-            read_file_tool, write_file_tool, search_files_tool, patch_file_tool, delete_file_tool,
-            skill_view_tool, skills_list_tool, skill_manage_tool,
-            terminal_execute_tool, terminal_execute_background_tool,
-            mcp_manage_tool,
-        ] + mcp_tools
+        if read_only:
+            logger.warning("Security module unavailable — running in READ-ONLY mode")
+            agent_tools = [
+                read_memory_tool,
+                read_file_tool, search_files_tool,
+                skill_view_tool, skills_list_tool,
+            ] + mcp_tools
+        else:
+            agent_tools = [
+                read_memory_tool, write_memory_tool,
+                read_file_tool, write_file_tool, search_files_tool, patch_file_tool, delete_file_tool,
+                skill_view_tool, skills_list_tool, skill_manage_tool,
+                terminal_execute_tool, terminal_execute_background_tool,
+                mcp_manage_tool,
+            ] + mcp_tools
         if web_search_enabled:
             from sparta_ai.tools.web_search import web_search_tool
             agent_tools.insert(0, web_search_tool)

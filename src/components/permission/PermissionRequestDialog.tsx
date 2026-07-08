@@ -13,7 +13,7 @@
  */
 import { usePermissionStore } from '@/stores/permission.store'
 import { usePermissionRequests } from '@/hooks/usePermissionRequests'
-import { ShieldAlert, FolderOpen, FileEdit, Trash2, Download, X } from 'lucide-react'
+import { ShieldAlert, FolderOpen, FileEdit, Trash2, Download, Terminal, X } from 'lucide-react'
 
 const TOOL_META: Record<string, { label: string; icon: React.ReactNode; risk: 'low' | 'high' }> = {
   read_file_tool:    { label: 'Leer archivo',    icon: <FolderOpen size={18} />, risk: 'low' },
@@ -21,6 +21,8 @@ const TOOL_META: Record<string, { label: string; icon: React.ReactNode; risk: 'l
   patch_file_tool:   { label: 'Editar archivo',   icon: <FileEdit size={18} />,  risk: 'high' },
   delete_file_tool:  { label: 'Eliminar archivo', icon: <Trash2 size={18} />,    risk: 'high' },
   search_files_tool: { label: 'Buscar archivos',  icon: <FolderOpen size={18} />, risk: 'low' },
+  terminal_execute_tool: { label: 'Ejecutar comando', icon: <Terminal size={18} />, risk: 'high' },
+  terminal_execute_background_tool: { label: 'Ejecutar comando (fondo)', icon: <Terminal size={18} />, risk: 'high' },
 }
 
 const MCP_INSTALL_META = {
@@ -163,6 +165,40 @@ export function PermissionRequestDialog() {
                 </span>
               </div>
             </>
+          ) : req.kind === 'terminal_exec' ? (
+            <>
+              {/* Terminal exec layout */}
+              <div>
+                <div style={{
+                  fontSize: 9, fontWeight: 700, textTransform: 'uppercase',
+                  letterSpacing: '0.06em', color: 'var(--text-muted)',
+                  fontFamily: 'var(--font-mono)', marginBottom: 5,
+                }}>
+                  Comando a ejecutar
+                </div>
+                <pre style={{
+                  margin: 0, padding: '8px 12px', borderRadius: 7,
+                  background: 'var(--bg-input)', border: '1px solid var(--border-subtle)',
+                  fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-primary)',
+                  wordBreak: 'break-all', whiteSpace: 'pre-wrap', lineHeight: 1.5,
+                  maxHeight: 200, overflowY: 'auto',
+                }}>
+                  {req.path}
+                </pre>
+              </div>
+
+              <div style={{
+                display: 'flex', gap: 8, padding: '10px 12px', borderRadius: 8,
+                background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
+              }}>
+                <ShieldAlert size={13} style={{ color: '#f87171', flexShrink: 0, marginTop: 2 }} />
+                <span style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                  El agente quiere ejecutar este comando en tu sistema.
+                  Revisa el comando antes de aprobar. Esta acción no se recordará —
+                  cada comando requiere confirmación individual.
+                </span>
+              </div>
+            </>
           ) : (
             <>
               {/* File access layout (original) */}
@@ -236,6 +272,24 @@ export function PermissionRequestDialog() {
               />
               <ActionBtn
                 label="Instalar"
+                variant="danger"
+                onClick={() => respond(req.requestId, true, 'once')}
+              />
+            </>
+          ) : req.kind === 'terminal_exec' ? (
+            <>
+              <ActionBtn
+                label="Denegar"
+                variant="ghost"
+                onClick={() => respond(req.requestId, false, 'once')}
+              />
+              <ActionBtn
+                label="Permitir una vez"
+                variant="outline"
+                onClick={() => respond(req.requestId, true, 'once')}
+              />
+              <ActionBtn
+                label="Ejecutar"
                 variant="danger"
                 onClick={() => respond(req.requestId, true, 'once')}
               />

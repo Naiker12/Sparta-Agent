@@ -38,6 +38,7 @@ _CONTROL_EVENTS = frozenset({
     "tool:called", "tool:result", "tool:error",
     "terminal:agent_command", "terminal:agent_spawn",
     "usage", "skill:activated", "search:progress",
+    "plan:created", "plan:step",
 })
 
 
@@ -374,6 +375,30 @@ async def _dispatch_event_core(
     elif kind == "on_custom_event":
         if name == "tool_progress":
             emit_control_fn("search:progress", {**base_payload, **data})
+
+    elif kind == "on_chain_end" and name == "planner":
+        output = data.get("output", {})
+        if isinstance(output, dict):
+            plan = output.get("plan", [])
+            if plan:
+                emit_control_fn("plan:created", {
+                    **base_payload,
+                    "plan": plan,
+                    "current_step": output.get("current_step", 0),
+                    "plan_complete": output.get("plan_complete", False),
+                })
+
+    elif kind == "on_chain_end" and name in ("tools", "subagent_coordinator"):
+        output = data.get("output", {})
+        if isinstance(output, dict):
+            plan = output.get("plan", [])
+            if plan:
+                emit_control_fn("plan:step", {
+                    **base_payload,
+                    "plan": plan,
+                    "current_step": output.get("current_step", 0),
+                    "plan_complete": output.get("plan_complete", False),
+                })
 
     elif kind == "on_chain_end" and name == "agent":
         if stream_state.get("_stream_completed"):

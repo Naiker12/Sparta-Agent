@@ -1,4 +1,4 @@
-import { ipcMain } from 'electron'
+import { ipcMain, BrowserWindow } from 'electron'
 import path from 'node:path'
 import { createRequire } from 'node:module'
 import { app } from 'electron'
@@ -61,6 +61,12 @@ export function registerSecurityIPC(): void {
     )
     mod.configureAuditLog(auditLogPath)
     console.log(`[security] Audit log: ${auditLogPath}`)
+  } else {
+    // Notify all windows that security module is unavailable
+    const wins = BrowserWindow.getAllWindows()
+    for (const win of wins) {
+      win.webContents.send('security:status-changed', { loaded: false, auditEnabled: false })
+    }
   }
 
   ipcMain.handle('security:validateMessage', (_event, line: string) => {
@@ -88,6 +94,25 @@ export function registerSecurityIPC(): void {
       loaded: mod !== null,
       auditEnabled: mod?.isAuditEnabled() ?? false,
     }
+  })
+
+  ipcMain.handle('security:auditLogPath', () => {
+    if (!mod) return null
+    return path.join(
+      app.getPath('userData'),
+      'sparta-security-audit.log'
+    )
+  })
+
+  ipcMain.handle('security:openAuditLog', () => {
+    if (!mod) return { ok: false, error: 'Audit log not available' }
+    const logPath = path.join(
+      app.getPath('userData'),
+      'sparta-security-audit.log'
+    )
+    const { shell } = require('electron')
+    shell.openPath(logPath)
+    return { ok: true }
   })
 }
 

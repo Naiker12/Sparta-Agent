@@ -54,6 +54,10 @@ contextBridge.exposeInMainWorld('sparta', {
     reasoning?: { enabled: boolean; budget: number; effort?: string }
     webSearchEnabled?: boolean
     workspaceRoot?: string
+    agentAutonomy?: string
+    agentExecuteLocal?: boolean
+    securityLoaded?: boolean
+    sandboxMode?: string
   }) => ipcRenderer.invoke('chat:send', req),
   abortMessage: (sessionId: string) => ipcRenderer.invoke('chat:abort', sessionId),
   isSidecarReady: () => ipcRenderer.invoke('sidecar:status') as Promise<{ running: boolean; ready: boolean }>,

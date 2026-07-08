@@ -3,6 +3,7 @@ import { useChatStore } from '@/stores/chat.store'
 import { useUsageStore } from '@/stores/usage.store'
 import { useEventBus } from '@/stores/event-bus.store'
 import { useAgentStore } from '@/stores/agent.store'
+import { usePlanStore } from '@/stores/plan.store'
 import { messagingAdapter } from '@/lib/messaging-adapter'
 import { extractMemory } from '@/services'
 import type { SpartaEvent } from '@/types'
@@ -117,14 +118,29 @@ function _handleMCPEvent(type: string, event: Record<string, unknown>) {
   }
 }
 
-// ── Central event handler (single instance) ─────────────────────────
-function _handleEvent(rawEvent: SpartaEvent) {
-  const event = rawEvent as unknown as Record<string, unknown>
-  const { type, sessionId, messageId } = event as { type: string; sessionId: string; messageId: string }
-  const sid = sessionId ?? ''
-  const mid = messageId ?? ''
+  // ── Central event handler (single instance) ─────────────────────────
+  function _handleEvent(rawEvent: SpartaEvent) {
+    const event = rawEvent as unknown as Record<string, unknown>
+    const { type, sessionId, messageId } = event as { type: string; sessionId: string; messageId: string }
+    const sid = sessionId ?? ''
+    const mid = messageId ?? ''
 
-  // ── MCP lifecycle events (no sessionId/messageId) ───────────────────
+    // ── Plan lifecycle events (no sessionId/messageId) ──────────────────
+    if (type === 'plan:created') {
+      const planData = event as { plan?: string[]; currentStep?: number; planComplete?: boolean }
+      const steps = planData.plan ?? []
+      if (steps.length > 0) {
+        usePlanStore.getState().setPlan(steps, planData.currentStep ?? 0, planData.planComplete ?? false)
+      }
+      return
+    }
+    if (type === 'plan:step') {
+      const planData = event as { plan?: string[]; currentStep?: number; planComplete?: boolean }
+      usePlanStore.getState().updateStep(planData.currentStep ?? 0, planData.planComplete ?? false)
+      return
+    }
+
+    // ── MCP lifecycle events (no sessionId/messageId) ───────────────────
   if (type === 'mcp:connected' || type === 'mcp:tool_discovered' || type === 'mcp:error') {
     _handleMCPEvent(type, event)
     return
@@ -240,6 +256,8 @@ function _handleEvent(rawEvent: SpartaEvent) {
     case 'stream:completed': {
       _flushContent()
       _flushThinking()
+      // Clear plan tracker when stream finishes
+      usePlanStore.getState().clear()
       // Leer el mensaje DESPUÉS del flush para tener el contenido completo
       const currentMsg = store.messagesBySession[sid]?.find((m) => m.id === mid)
       if (currentMsg?.thinkingStatus === 'streaming' || (currentMsg?.reasoningText && currentMsg?.thinkingStatus !== 'completed')) {

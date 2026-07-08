@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export type PermissionKind = 'file_access' | 'mcp_install'
+export type PermissionKind = 'file_access' | 'mcp_install' | 'terminal_exec'
 
 export interface PermissionRequest {
   requestId: string

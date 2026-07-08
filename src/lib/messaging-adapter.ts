@@ -19,6 +19,10 @@ interface ChatSendRequest {
   reasoning?: { enabled: boolean; budget: number; effort?: string }
   webSearchEnabled?: boolean
   workspaceRoot?: string
+  agentAutonomy?: string
+  agentExecuteLocal?: boolean
+  securityLoaded?: boolean
+  sandboxMode?: string
 }
 
 interface MessagingAdapterSendResult {
