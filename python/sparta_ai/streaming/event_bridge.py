@@ -128,6 +128,8 @@ async def stream_agent_to_electron(
         "_skip_mode": False,
         "_skip_pending": "",
         "_pending_file_path": "",
+        "_pending_terminal_command": "",
+        "_pending_terminal_proc": {},
     }
 
     async def _try_stream() -> None:
@@ -358,12 +360,14 @@ async def _dispatch_event_core(
                 stream_state["_pending_file_path"] = file_path
         if name == "terminal_execute_tool":
             cmd = tool_input.get("command", "") if isinstance(tool_input, dict) else str(tool_input)
-            emit_control_fn("terminal:agent_command", {"command": cmd})
+            # Store in state instead of emitting now — emission happens in on_tool_end
+            # AFTER the permission gate has run inside the tool function.
+            stream_state["_pending_terminal_command"] = cmd
         elif name == "terminal_execute_background_tool":
             cmd = tool_input.get("command", "") if isinstance(tool_input, dict) else str(tool_input)
             label = tool_input.get("label") if isinstance(tool_input, dict) else None
             proc_id = f"bg-{uuid.uuid4().hex[:8]}"
-            emit_control_fn("terminal:agent_spawn", {"procId": proc_id, "command": cmd, "label": label})
+            stream_state["_pending_terminal_proc"] = {"proc_id": proc_id, "command": cmd, "label": label}
 
     elif kind == "on_tool_end":
         tool_call_id = event.get("run_id", "unknown")
@@ -377,6 +381,21 @@ async def _dispatch_event_core(
             if file_path:
                 emit_control_fn("file:changed", {"path": file_path})
                 stream_state["_pending_file_path"] = ""
+
+        # Emit terminal events ONLY after permission gate has run (tool completed)
+        # The tool output contains "rechazado" if the user denied permission.
+        output_str = str(data.get("output", ""))
+        if name == "terminal_execute_tool":
+            cmd = stream_state.get("_pending_terminal_command", "")
+            if cmd and "rechazado" not in output_str and "bloqueado" not in output_str:
+                emit_control_fn("terminal:agent_command", {"command": cmd})
+            stream_state["_pending_terminal_command"] = ""
+
+        if name == "terminal_execute_background_tool":
+            proc_info = stream_state.get("_pending_terminal_proc", {})
+            if proc_info and "rechazado" not in output_str and "bloqueado" not in output_str:
+                emit_control_fn("terminal:agent_spawn", proc_info)
+            stream_state["_pending_terminal_proc"] = {}
 
     elif kind == "on_tool_error":
         tool_call_id = event.get("run_id", "unknown")
@@ -492,6 +511,8 @@ async def stream_agent_to_websocket(
         "_skip_mode": False,
         "_skip_pending": "",
         "_pending_file_path": "",
+        "_pending_terminal_command": "",
+        "_pending_terminal_proc": {},
     }
     config = {"configurable": {"thread_id": thread_id or session_id or request_id}}
     try:
@@ -716,15 +737,28 @@ async def _dispatch_event_ws(
         )
         if name == "terminal_execute_tool":
             cmd = tool_input.get("command", "") if isinstance(tool_input, dict) else str(tool_input)
-            await _emit_ws_renderer(websocket, "terminal:agent_command", {"command": cmd})
+            stream_state["_pending_terminal_command"] = cmd
         elif name == "terminal_execute_background_tool":
             cmd = tool_input.get("command", "") if isinstance(tool_input, dict) else str(tool_input)
             label = tool_input.get("label") if isinstance(tool_input, dict) else None
             proc_id = f"bg-{uuid.uuid4().hex[:8]}"
-            await _emit_ws_renderer(websocket, "terminal:agent_spawn", {"procId": proc_id, "command": cmd, "label": label})
+            stream_state["_pending_terminal_proc"] = {"proc_id": proc_id, "command": cmd, "label": label}
 
     elif kind == "on_tool_end":
         tool_call_id = event.get("run_id", "unknown")
+        output_str = str(data.get("output", ""))
+        # Emit terminal events AFTER permission gate (in tool result), not before
+        if name == "terminal_execute_tool":
+            cmd = stream_state.get("_pending_terminal_command", "")
+            if cmd and "rechazado" not in output_str and "bloqueado" not in output_str:
+                await _emit_ws_renderer(websocket, "terminal:agent_command", {"command": cmd})
+            stream_state["_pending_terminal_command"] = ""
+        if name == "terminal_execute_background_tool":
+            proc_info = stream_state.get("_pending_terminal_proc", {})
+            if proc_info and "rechazado" not in output_str and "bloqueado" not in output_str:
+                await _emit_ws_renderer(websocket, "terminal:agent_spawn", proc_info)
+            stream_state["_pending_terminal_proc"] = {}
+
         await _emit_ws_renderer(
             websocket,
             "tool:result",
