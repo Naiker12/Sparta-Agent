@@ -156,8 +156,9 @@ class StdioServer:
         _set_open_files(list(open_files))
 
         # Apply agent policy settings
-        from sparta_ai.tools.terminal_tools import set_execute_local
+        from sparta_ai.tools.terminal_tools import set_execute_local, set_sandbox_mode
         set_execute_local(bool(agent_execute_local))
+        set_sandbox_mode(sandbox_mode)
 
         # If security module is not loaded, degrade to read-only mode
         # Also apply autonomy policy — autonomous_readonly forces read-only regardless of Rust status

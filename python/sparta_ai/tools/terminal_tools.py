@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import subprocess
 import sys
 import uuid
@@ -18,10 +19,98 @@ _proc_results: dict[str, dict] = {}
 # Open files in the editor — updated from each chat request
 _open_files: list[str] = []
 
+# Sandbox mode: "none" (direct execution) or "docker" (ephemeral container)
+_SANDBOX_MODE: str = "none"
+_DEFAULT_DOCKER_IMAGE = "ubuntu:latest"
+_DOCKER_TIMEOUT = 120
+
+
+def set_sandbox_mode(mode: str) -> None:
+    global _SANDBOX_MODE
+    _SANDBOX_MODE = mode
+
+
+def _run_in_docker(command: str, timeout: int = _DOCKER_TIMEOUT) -> tuple[str, int, bool]:
+    """Run a command inside an ephemeral Docker container.
+
+    Returns:
+        (output: str, exit_code: int, docker_available: bool)
+    """
+    root = os.environ.get("SPARTA_WORKSPACE_ROOT", "")
+    if not root:
+        return "Error: No hay workspace configurado para montar en el contenedor.", -1, True
+
+    # Check Docker is available
+    try:
+        subprocess.run(["docker", "--version"], capture_output=True, timeout=10)
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        logger.warning("Docker not available, falling back to local execution")
+        return "", 0, False
+
+    container_name = f"sparta-sandbox-{uuid.uuid4().hex[:12]}"
+    docker_cmd = [
+        "docker", "run", "--rm",
+        "--name", container_name,
+        "-v", f"{root}:{root}:ro",  # Bind mount read-only for security
+        "-w", root,
+        "--network", "none",  # No network access from sandbox
+        "--memory", "512m",   # Limit memory
+        "--cpus", "1",        # Limit CPU
+        _DEFAULT_DOCKER_IMAGE,
+        "sh", "-c", command,
+    ]
+
+    try:
+        result = subprocess.run(
+            docker_cmd,
+            capture_output=True, text=True,
+            timeout=timeout,
+        )
+        output = result.stdout
+        if result.stderr:
+            output += f"\n[stderr]\n{result.stderr}"
+        return output.strip(), result.returncode, True
+    except FileNotFoundError:
+        logger.warning("Docker binary not found")
+        return "", 0, False
+    except subprocess.TimeoutExpired:
+        # Kill the container if it times out
+        subprocess.run(["docker", "kill", container_name], capture_output=True, timeout=5)
+        return f"[Timeout: el comando excedió el límite de {timeout}s en el sandbox]", -1, True
+    except Exception as e:
+        return f"[Error en sandbox Docker: {e}]", -1, True
+
 
 def _set_open_files(files: list[str]) -> None:
     global _open_files
     _open_files = files
+
+
+def _execute_command(command: str, timeout: int) -> tuple[str, int]:
+    """Execute a command either directly or in a Docker sandbox.
+
+    Returns:
+        (output: str, exit_code: int)
+    """
+    if _SANDBOX_MODE == "docker":
+        output, code, available = _run_in_docker(command, timeout)
+        if available:
+            return output, code
+        # Docker not available, fall through to local
+        logger.warning("Docker sandbox requested but not available, running locally")
+
+    try:
+        result = subprocess.run(
+            command, shell=True, capture_output=True, text=True, timeout=timeout,
+        )
+        output = result.stdout
+        if result.stderr:
+            output += result.stderr
+        return output.strip(), result.returncode
+    except subprocess.TimeoutExpired:
+        return f"[Timeout: el comando excedió el límite de {timeout}s]", -1
+    except Exception as e:
+        return f"[Error al ejecutar: {e}]", -1
 
 
 def _emit_terminal_event(event: str, data: dict) -> None:
@@ -77,39 +166,21 @@ def terminal_execute_tool(command: str) -> str:
         )
         if not allowed:
             return "Comando rechazado por el usuario."
+    if _EXECUTE_LOCAL or _SANDBOX_MODE == "docker":
+        proc_id = f"term-{uuid.uuid4().hex[:8]}"
+        _emit_terminal_event("terminal:agent_spawn", {"procId": proc_id, "command": sanitized[:200]})
 
-    if _EXECUTE_LOCAL:
-        try:
-            proc_id = f"term-{uuid.uuid4().hex[:8]}"
-            # Spawn a background terminal tab so the user sees the command
-            _emit_terminal_event("terminal:agent_spawn", {"procId": proc_id, "command": sanitized[:200]})
+        output, code = _execute_command(sanitized, timeout=60)
 
-            result = subprocess.run(
-                sanitized, shell=True, capture_output=True, text=True, timeout=60,
-            )
-            output = result.stdout
-            if result.stderr:
-                output += result.stderr
-            if result.returncode != 0:
-                output += f"\n[Exit code: {result.returncode}]"
+        # Stream output to the terminal tab
+        if output:
+            _emit_terminal_event("terminal:agent_output", {"procId": proc_id, "chunk": output[:5000]})
+        _emit_terminal_event("terminal:agent_exit", {"procId": proc_id, "code": code})
 
-            # Stream output to the terminal tab
-            if output.strip():
-                _emit_terminal_event("terminal:agent_output", {"procId": proc_id, "chunk": output[:5000]})
-            _emit_terminal_event("terminal:agent_exit", {"procId": proc_id, "code": result.returncode})
+        # Cache result for terminal_check_tool
+        _proc_results[proc_id] = {"output": output, "exit_code": code, "done": True}
 
-            # Cache result for terminal_check_tool
-            _proc_results[proc_id] = {"output": output.strip(), "exit_code": result.returncode, "done": True}
-
-            return output.strip() or f"(comando completado, código {result.returncode})"
-        except subprocess.TimeoutExpired:
-            _emit_terminal_event("terminal:agent_exit", {"procId": proc_id, "code": -1})
-            _proc_results[proc_id] = {"output": "[Timeout 60s]", "exit_code": -1, "done": True}
-            return "[Error: el comando excedió el límite de 60s]"
-        except Exception as e:
-            _emit_terminal_event("terminal:agent_exit", {"procId": proc_id, "code": -1})
-            _proc_results[proc_id] = {"output": str(e), "exit_code": -1, "done": True}
-            return f"[Error al ejecutar: {e}]"
+        return output or f"(comando completado, código {code})"
 
     needs_confirmation = get_agent_autonomy() == "always_ask" or not _sanitizer.is_safe(sanitized)
     if needs_confirmation:
@@ -157,36 +228,20 @@ def terminal_execute_background_tool(command: str, label: str | None = None) -> 
         if not allowed:
             return "Comando de fondo rechazado por el usuario."
 
-    if _EXECUTE_LOCAL:
-        try:
-            proc_id = f"bg-{uuid.uuid4().hex[:8]}"
-            label_str = f" ({label})" if label else ""
-            _emit_terminal_event("terminal:agent_spawn", {"procId": proc_id, "command": sanitized[:200], "label": label or ""})
+    if _EXECUTE_LOCAL or _SANDBOX_MODE == "docker":
+        proc_id = f"bg-{uuid.uuid4().hex[:8]}"
+        label_str = f" ({label})" if label else ""
+        _emit_terminal_event("terminal:agent_spawn", {"procId": proc_id, "command": sanitized[:200], "label": label or ""})
 
-            result = subprocess.run(
-                sanitized, shell=True, capture_output=True, text=True, timeout=300,
-            )
-            output = result.stdout
-            if result.stderr:
-                output += result.stderr
-            if result.returncode != 0:
-                output += f"\n[Exit code: {result.returncode}]"
+        output, code = _execute_command(sanitized, timeout=300)
 
-            if output.strip():
-                _emit_terminal_event("terminal:agent_output", {"procId": proc_id, "chunk": output[:10000]})
-            _emit_terminal_event("terminal:agent_exit", {"procId": proc_id, "code": result.returncode})
+        if output:
+            _emit_terminal_event("terminal:agent_output", {"procId": proc_id, "chunk": output[:10000]})
+        _emit_terminal_event("terminal:agent_exit", {"procId": proc_id, "code": code})
 
-            _proc_results[proc_id] = {"output": output.strip(), "exit_code": result.returncode, "done": True}
+        _proc_results[proc_id] = {"output": output, "exit_code": code, "done": True}
 
-            return f"Salida del comando de fondo{label_str}:\n{output.strip()}"
-        except subprocess.TimeoutExpired:
-            _emit_terminal_event("terminal:agent_exit", {"procId": proc_id, "code": -1})
-            _proc_results[proc_id] = {"output": "[Timeout 300s]", "exit_code": -1, "done": True}
-            return "[Error: el comando de fondo excedió el límite de 300s]"
-        except Exception as e:
-            _emit_terminal_event("terminal:agent_exit", {"procId": proc_id, "code": -1})
-            _proc_results[proc_id] = {"output": str(e), "exit_code": -1, "done": True}
-            return f"[Error al ejecutar comando de fondo: {e}]"
+        return f"Salida del comando de fondo{label_str}:\n{output}"
 
     proc_id = f"bg-{uuid.uuid4().hex[:8]}"
     logger.info("Background terminal spawn requested: %s (%s)", sanitized[:120], proc_id)
