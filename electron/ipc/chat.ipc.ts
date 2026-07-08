@@ -149,6 +149,18 @@ export function registerChatIPC(): void {
       }
     }
 
+    // ── Terminal bridge events: no sessionId/messageId needed ──────────
+    if (event === 'terminal:agent_output' || event === 'terminal:agent_exit') {
+      const win = BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0]
+      if (win && !win.isDestroyed()) {
+        win.webContents.send('sparta:event', {
+          type: event,
+          ...(data ?? {}),
+        })
+      }
+      return
+    }
+
     // ── file:changed events: no sessionId/messageId needed ─────────────
     if (event === 'file:changed') {
       const win = BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0]

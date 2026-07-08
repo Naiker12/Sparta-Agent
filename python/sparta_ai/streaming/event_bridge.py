@@ -37,6 +37,7 @@ _CONTROL_EVENTS = frozenset({
     "thinking:started", "thinking:completed", "thinking:status",
     "tool:called", "tool:result", "tool:error",
     "terminal:agent_command", "terminal:agent_spawn",
+    "terminal:agent_output", "terminal:agent_exit",
     "usage", "skill:activated", "search:progress",
     "plan:created", "plan:step",
     "file:changed",

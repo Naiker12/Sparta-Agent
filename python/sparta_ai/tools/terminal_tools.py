@@ -1,5 +1,7 @@
+import json
 import logging
 import subprocess
+import sys
 import uuid
 from langchain_core.tools import tool
 from sparta_ai.security.command_sanitizer import CommandSanitizer
@@ -9,6 +11,15 @@ logger = logging.getLogger("sparta_ai.tools.terminal")
 
 _sanitizer = CommandSanitizer()
 _EXECUTE_LOCAL = False
+
+
+def _emit_terminal_event(event: str, data: dict) -> None:
+    """Write a terminal bridge event to stdout (visible in the terminal panel)."""
+    try:
+        sys.stdout.write(json.dumps({"event": event, "data": data}, ensure_ascii=False) + "\n")
+        sys.stdout.flush()
+    except (BrokenPipeError, OSError):
+        pass
 
 
 def set_execute_local(val: bool = True) -> None:
@@ -58,6 +69,10 @@ def terminal_execute_tool(command: str) -> str:
 
     if _EXECUTE_LOCAL:
         try:
+            proc_id = f"term-{uuid.uuid4().hex[:8]}"
+            # Spawn a background terminal tab so the user sees the command
+            _emit_terminal_event("terminal:agent_spawn", {"procId": proc_id, "command": sanitized[:200]})
+
             result = subprocess.run(
                 sanitized, shell=True, capture_output=True, text=True, timeout=60,
             )
@@ -66,10 +81,18 @@ def terminal_execute_tool(command: str) -> str:
                 output += result.stderr
             if result.returncode != 0:
                 output += f"\n[Exit code: {result.returncode}]"
+
+            # Stream output to the terminal tab
+            if output.strip():
+                _emit_terminal_event("terminal:agent_output", {"procId": proc_id, "chunk": output[:5000]})
+            _emit_terminal_event("terminal:agent_exit", {"procId": proc_id, "code": result.returncode})
+
             return output.strip() or f"(comando completado, código {result.returncode})"
         except subprocess.TimeoutExpired:
+            _emit_terminal_event("terminal:agent_exit", {"procId": proc_id, "code": -1})
             return "[Error: el comando excedió el límite de 60s]"
         except Exception as e:
+            _emit_terminal_event("terminal:agent_exit", {"procId": proc_id, "code": -1})
             return f"[Error al ejecutar: {e}]"
 
     needs_confirmation = get_agent_autonomy() == "always_ask" or not _sanitizer.is_safe(sanitized)
@@ -120,6 +143,10 @@ def terminal_execute_background_tool(command: str, label: str | None = None) -> 
 
     if _EXECUTE_LOCAL:
         try:
+            proc_id = f"bg-{uuid.uuid4().hex[:8]}"
+            label_str = f" ({label})" if label else ""
+            _emit_terminal_event("terminal:agent_spawn", {"procId": proc_id, "command": sanitized[:200], "label": label or ""})
+
             result = subprocess.run(
                 sanitized, shell=True, capture_output=True, text=True, timeout=300,
             )
@@ -128,11 +155,17 @@ def terminal_execute_background_tool(command: str, label: str | None = None) -> 
                 output += result.stderr
             if result.returncode != 0:
                 output += f"\n[Exit code: {result.returncode}]"
-            label_str = f" ({label})" if label else ""
+
+            if output.strip():
+                _emit_terminal_event("terminal:agent_output", {"procId": proc_id, "chunk": output[:10000]})
+            _emit_terminal_event("terminal:agent_exit", {"procId": proc_id, "code": result.returncode})
+
             return f"Salida del comando de fondo{label_str}:\n{output.strip()}"
         except subprocess.TimeoutExpired:
+            _emit_terminal_event("terminal:agent_exit", {"procId": proc_id, "code": -1})
             return "[Error: el comando de fondo excedió el límite de 300s]"
         except Exception as e:
+            _emit_terminal_event("terminal:agent_exit", {"procId": proc_id, "code": -1})
             return f"[Error al ejecutar comando de fondo: {e}]"
 
     proc_id = f"bg-{uuid.uuid4().hex[:8]}"
