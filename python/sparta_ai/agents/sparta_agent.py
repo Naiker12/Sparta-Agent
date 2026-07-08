@@ -13,6 +13,7 @@ from sparta_ai.agents.subagents.code_agent import execute_code_task, build_code_
 from sparta_ai.agents.subagents.memory_agent import recall_memories, build_memory_graph
 from sparta_ai.agents.planner import planner_node
 from sparta_ai.agents.reflection import reflection_node, should_reflect
+from sparta_ai.security.permission_policy import PermissionPolicy, get_policy, set_policy_mode
 
 logger = logging.getLogger("sparta_ai.agents.sparta")
 
@@ -28,6 +29,7 @@ class SpartaState(MessagesState):
     pending_human_input: str | None
     abort_requested: bool
     force_summary: bool
+    accumulated_text: str
     plan: list[str]
     current_step: int
     plan_complete: bool
@@ -41,11 +43,18 @@ def build_sparta_graph(
     skill_context: str = "",
     memory_context: str = "",
     checkpointer: Any | None = None,
+    policy_mode: str = "build",
 ) -> StateGraph:
-    # Include delegate tools so the LLM can decide to hand off to sub-graphs.
+    # Apply permission policy to tools
+    set_policy_mode(policy_mode)
+    policy = PermissionPolicy(mode=policy_mode)
+    all_tools = tools
     delegate_tools = [research_topic, execute_code_task, recall_memories]
-    llm_with_tools = llm.bind_tools(tools + delegate_tools)
-    llm_readonly = llm.bind_tools([t for t in tools if "read" in getattr(t, "name", "") or "search" in getattr(t, "name", "") or "web" in getattr(t, "name", "")] + delegate_tools)
+
+    # Create two LLM bindings: one for build mode (all tools), one for plan mode (read-only)
+    llm_with_tools = llm.bind_tools(all_tools + delegate_tools)
+    plan_tools = policy.filter_tools(all_tools)
+    llm_plan = llm.bind_tools(plan_tools + delegate_tools) if plan_tools else llm
 
     async def agent_node(state: SpartaState) -> dict:
         from sparta_ai.agents.router import classify_intent
@@ -183,7 +192,28 @@ def build_sparta_graph(
                            f"more skills, and skill_view_tool to load their full content.",
             })
 
-        messages.extend(state["messages"])
+        # Deduplicate messages: replace already-emitted assistant responses
+        # (those without tool_calls) with a short placeholder so the LLM
+        # doesn't regenerate the same text on loop turns.
+        raw_messages = state["messages"]
+        deduped = []
+        for m in raw_messages:
+            if isinstance(m, dict):
+                role = m.get("role", "")
+                content = m.get("content", "")
+                tool_calls = m.get("tool_calls", [])
+            else:
+                role = getattr(m, "type", "")
+                content = str(getattr(m, "content", ""))
+                tool_calls = getattr(m, "tool_calls", None) or []
+            if role in ("assistant", "ai") and not tool_calls and content:
+                deduped.append({
+                    "role": "assistant",
+                    "content": "[Respuesta anterior — omitida para evitar repetición]",
+                })
+            else:
+                deduped.append(m)
+        messages.extend(deduped)
 
         # Scope tools by intent/mode (Build vs Plan pattern)
         scope = "full"
@@ -210,11 +240,17 @@ def build_sparta_graph(
                 ),
             })
             response = await llm.ainvoke(messages)
-        elif scope == "readonly":
-            response = await llm_readonly.ainvoke(messages)
+        elif scope == "readonly" or policy_mode == "plan":
+            response = await llm_plan.ainvoke(messages)
         else:
             response = await llm_with_tools.ainvoke(messages)
-        result: dict[str, Any] = {"messages": [response], "force_summary": False}
+        # Track accumulated text for deduplication
+        response_content = getattr(response, "content", "")
+        if isinstance(response_content, str) and response_content:
+            prev = state.get("accumulated_text", "")
+            result["accumulated_text"] = prev + response_content
+        result["force_summary"] = False
+        result["messages"] = [response]
 
         # Generate contextual follow-up suggestions on the FINAL response
         # (no pending tool calls means this is the actual answer).

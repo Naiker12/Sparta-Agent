@@ -290,6 +290,9 @@ class StdioServer:
             from sparta_ai.tools.web_search import web_search_tool
             agent_tools.insert(0, web_search_tool)
 
+        # Determine policy mode from autonomy setting
+        policy_mode = "plan" if (read_only or agent_autonomy == "autonomous_readonly") else "build"
+
         checkpointer = await get_checkpointer()
         graph = build_sparta_graph(
             llm=llm,
@@ -297,6 +300,7 @@ class StdioServer:
             skill_context=skill_context,
             memory_context=memory_context,
             checkpointer=checkpointer,
+            policy_mode=policy_mode,
         )
 
         initial_state: SpartaState = {
@@ -311,6 +315,7 @@ class StdioServer:
             "pending_human_input": None,
             "abort_requested": False,
             "force_summary": False,
+            "accumulated_text": "",
             "plan": [],
             "current_step": 0,
             "plan_complete": False,
