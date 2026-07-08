@@ -1,0 +1,160 @@
+Cómo probar el Modo Agente — verificación manual
+=================================================
+
+Requisito: la app debe estar corriendo (pnpm dev o el build compilado).
+
+
+1. Verificar que el módulo de seguridad está activo
+---------------------------------------------------
+- Abrí la app.
+- Fijate al lado del switch Chat|Agente: el badge rojo "Seguridad"
+  debe haber DESAPARECIDO. Si sigue apareciendo, ejecutá:
+      cd rust/sparta-security && npm run build
+  y reiniciá la app.
+- También podés verificar en Ajustes > Agentes: la fila "Estado del
+  módulo de seguridad" debe decir "Activo" con un ícono verde.
+
+
+2. El plan ahora es una tool call (create_plan)
+------------------------------------------------
+- Poné el switch en "Agente".
+- Escribí un mensaje que requiera varios pasos, por ejemplo:
+    "Buscá el archivo src/index.ts, leé las primeras 20 líneas,
+     después creá un archivo src/resumen.txt con un resumen"
+- Durante la ejecución, el modelo debería llamar a la herramienta
+  "create_plan" para registrar los pasos.
+- Arriba del input de chat debería aparecer una cajita
+  "Plan de ejecución" con checkboxes:
+    ✓ Primer paso completado
+    ▶ Paso actual
+    ○ Pasos pendientes
+- Al terminar, la cajita debe decir "Completado".
+- El plan NUNCA debe aparecer como JSON en la respuesta de chat
+  (es un bloque tool_use, no texto).
+
+
+3. Permiso para comandos de terminal con resultado real
+--------------------------------------------------------
+- En Ajustes > Agentes, asegurate de que:
+    - Nivel de autonomía = "Preguntar solo en acciones riesgosas"
+    - Ejecutar comandos localmente = ACTIVADO (por defecto desde la
+      última actualización)
+
+- En el chat (Modo Agente), escribí:
+    "Ejecutá ls -la en la terminal"
+  → El modelo DEBE recibir el stdout del comando (la lista de archivos),
+    no solo "Comando enviado a la terminal". Esto prueba que ahora
+    el modelo ve el resultado real del comando.
+
+- Después probá:
+    "Ejecutá rm -rf /tmp/test en la terminal"
+  → Este comando NO es seguro (is_safe=False), así que DEBE
+    aparecer el diálogo "Permiso requerido: Ejecutar comando"
+    con el comando en preview y botones Denegar / Permitir una vez.
+
+- Probá también con el fondo:
+    "Ejecutá ping google.com -c 5 en background"
+  → Debe comportarse igual que el comando en terminal visible
+    (también pasa por el gate de permiso).
+
+
+4. Nivel de autonomía "Siempre preguntar"
+-------------------------------------------
+- En Ajustes > Agentes, cambiá "Nivel de autonomía" a
+  "Siempre preguntar".
+- En el chat (Modo Agente), escribí:
+    "Ejecutá ls"
+  → Ahora SÍ debe aparecer el diálogo de permiso, aunque ls sea
+    un comando seguro. Esto prueba que "always_ask" funciona.
+
+
+5. Nivel de autonomía "Autónomo (solo lectura)" + BUILD/PLAN
+--------------------------------------------------------------
+- En Ajustes > Agentes, cambiá a "Autónomo (solo lectura)".
+- En el chat, escribí:
+    "Escribí un archivo test.txt con el texto 'hola'"
+  → El agente NO debe tener la herramienta write_file disponible.
+    Debería responder algo como "No tengo una herramienta para
+    escribir archivos" (está en modo PLAN = solo lectura).
+- También probá que SÍ puede leer archivos:
+    "Leé el archivo package.json"
+  → Debe poder leerlo sin problemas (read/search tools disponibles
+    en modo PLAN).
+
+
+6. Paralelismo de subagentes con el mismo modelo
+-------------------------------------------------
+- En Modo Agente, escribí:
+    "Investigá sobre inteligencia artificial y al mismo tiempo
+     buscá el archivo package.json y leélo"
+- En la UI, deberían aparecer dos subagentes ("Investigador Delegado"
+  y "Programador Delegado") ejecutándose en paralelo, no uno
+  después del otro.
+- Ambos subagentes usan el MISMO modelo/proveedor que configuraste
+  (ya no tienen ChatOpenAI hardcodeado).
+
+
+7. Plan con subagentes
+-----------------------
+- Escribí una tarea compleja que delegue a subagentes, por ejemplo:
+    "Investigá sobre el framework LangGraph y después leé el
+     archivo README.md del proyecto actual"
+- El plan debe mostrar los pasos, y cada paso debe marcarse como
+  completado a medida que se ejecuta.
+
+
+8. file:changed — sincronización con el editor
+-----------------------------------------------
+- Abrí un archivo en el editor interno (Monaco).
+- En el chat (Modo Agente), pedí:
+    "Agregá un comentario al inicio de <archivo-abierto>"
+- Cuando el agente ejecute write_file_tool o patch_file_tool,
+  el editor debería reflejar el cambio automáticamente (sin
+  necesidad de recargar manual).
+
+
+9. Síntesis forzada al llegar al límite de pasos
+--------------------------------------------------
+- En el chat, pedí una tarea que requiera MUCHOS pasos:
+    "Buscá todos los archivos .ts, leé cada uno, y decime cuántas
+     líneas tiene cada uno"
+- El agente debería ejecutar varias tools, y al llegar al límite
+  (8 llamadas por turno), debe producir automáticamente un resumen
+  de lo que logró, en vez de cortar en silencio.
+
+
+10. Botón de log de auditoría
+------------------------------
+- En Ajustes > Agentes, al final de la sección "Política del
+  Modo Agente", debería haber un botón "Abrir log".
+- Al clickearlo, debería abrir el archivo de auditoría en el
+  editor de texto del sistema (si el módulo Rust está activo).
+
+
+11. Errores de tools reflejados correctamente (sin falsos positivos)
+---------------------------------------------------------------------
+- En el chat, escribí una ruta que no existe:
+    "Leé el archivo /no-existe/archivo.txt"
+- El agente debe reconocer que la tool devolvió un error estructurado
+  (status="error") y reflexionar sobre cómo corregirlo, NO confundir
+  un ToolMessage exitoso que contenga la palabra "Error" en su
+  contenido con un fallo real.
+
+
+Resumen rápido de qué esperar:
+-------------------------------
+  ✔ Badge "Seguridad" desaparece       → módulo Rust compilado
+  ✔ Plan como tool call, no JSON       → create_plan tool, no planner ciego
+  ✔ Plan visible arriba del input      → plan conectado a UI
+  ✔ Diálogo de permiso en rm -rf       → gate de terminal funciona
+  ✔ Diálogo también en background      → ambos tools cubiertos
+  ✔ Diálogo incluso en ls con always_ask → autonomía respetada
+  ✔ Sin write_file en autonomous_readonly → modo PLAN (solo lectura)
+  ✔ Terminal devuelve resultado real    → _EXECUTE_LOCAL=True por defecto
+  ✔ Subagentes en paralelo             → asyncio.gather funciona
+  ✔ Subagentes usan tu modelo          → builder unificado, sin ChatOpenAI hardcodeado
+  ✔ Editor sincronizado                → file:changed event
+  ✔ Síntesis forzada al límite         → no más cortes silenciosos
+  ✔ Errores estructurados              → status="error", no "Error:" in content
+  ✔ Log de auditoría abrible           → IPC handler funciona
+  ✔ Sandbox Docker configurable        → selector en UI (pendiente implementación)
