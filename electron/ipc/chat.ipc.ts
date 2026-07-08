@@ -149,6 +149,18 @@ export function registerChatIPC(): void {
       }
     }
 
+    // ── file:changed events: no sessionId/messageId needed ─────────────
+    if (event === 'file:changed') {
+      const win = BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0]
+      if (win && !win.isDestroyed()) {
+        win.webContents.send('sparta:event', {
+          type: 'file:changed',
+          path: data?.path ?? '',
+        })
+      }
+      return
+    }
+
     // ── Plan lifecycle events: no sessionId/messageId needed ────────────
     if (event === 'plan:created' || event === 'plan:step') {
       const win = BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0]

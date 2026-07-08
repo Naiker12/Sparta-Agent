@@ -83,8 +83,9 @@ def execute_code_task(
     return result.get("output", str(result))
 
 
-def _build_code_agent():
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.2)
+def _build_code_agent(llm=None):
+    if llm is None:
+        llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.2)
     tools = [read_file_tool, write_file_tool]
     prompt = (
         "Eres un agente de programación experto. Tu tarea es escribir, "
@@ -95,9 +96,15 @@ def _build_code_agent():
     return create_react_agent(llm, tools, prompt=prompt)
 
 
-def build_code_graph():
-    """Return a compiled LangGraph sub-graph that streams through the parent."""
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.2)
+def build_code_graph(llm=None):
+    """Return a compiled LangGraph sub-graph that streams through the parent.
+
+    Args:
+        llm: Optional LLM instance from the parent graph. If None, falls back
+             to ChatOpenAI(model="gpt-4o-mini") for backward compatibility.
+    """
+    if llm is None:
+        llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.2)
     tools = [read_file_tool, write_file_tool]
     llm_with_tools = llm.bind_tools(tools)
 

@@ -300,7 +300,7 @@ def build_sparta_graph(
                     ),
                 )
             try:
-                graph = builder()
+                graph = builder(llm=llm)
                 args = tc.get("args", {})
                 # Compiled sub-graphs stream their internal events automatically
                 # through the parent graph's astream_events thanks to their namespace.

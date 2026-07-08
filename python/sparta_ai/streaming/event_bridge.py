@@ -39,6 +39,7 @@ _CONTROL_EVENTS = frozenset({
     "terminal:agent_command", "terminal:agent_spawn",
     "usage", "skill:activated", "search:progress",
     "plan:created", "plan:step",
+    "file:changed",
 })
 
 
@@ -126,6 +127,7 @@ async def stream_agent_to_electron(
         "_emitted_text": "",
         "_skip_mode": False,
         "_skip_pending": "",
+        "_pending_file_path": "",
     }
 
     async def _try_stream() -> None:
@@ -349,6 +351,11 @@ async def _dispatch_event_core(
             "tool:called",
             {**base_payload, "name": name, "input": tool_input, "tool_call_id": tool_call_id},
         )
+        # Capture file path from write/patch/delete tools for file:changed event
+        if name in ("write_file_tool", "patch_file_tool", "delete_file_tool"):
+            file_path = tool_input.get("path", "") if isinstance(tool_input, dict) else ""
+            if file_path:
+                stream_state["_pending_file_path"] = file_path
         if name == "terminal_execute_tool":
             cmd = tool_input.get("command", "") if isinstance(tool_input, dict) else str(tool_input)
             emit_control_fn("terminal:agent_command", {"command": cmd})
@@ -364,6 +371,12 @@ async def _dispatch_event_core(
             "tool:result",
             {**base_payload, "name": name, "output": str(data.get("output", "")), "duration_ms": data.get("run_time_ms", 0), "tool_call_id": tool_call_id},
         )
+        # Emit file:changed when agent modifies a file so open editor tabs can refresh
+        if name in ("write_file_tool", "patch_file_tool", "delete_file_tool"):
+            file_path = stream_state.get("_pending_file_path", "")
+            if file_path:
+                emit_control_fn("file:changed", {"path": file_path})
+                stream_state["_pending_file_path"] = ""
 
     elif kind == "on_tool_error":
         tool_call_id = event.get("run_id", "unknown")
@@ -478,6 +491,7 @@ async def stream_agent_to_websocket(
         "_emitted_text": "",
         "_skip_mode": False,
         "_skip_pending": "",
+        "_pending_file_path": "",
     }
     config = {"configurable": {"thread_id": thread_id or session_id or request_id}}
     try:

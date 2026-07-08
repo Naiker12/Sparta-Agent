@@ -125,6 +125,21 @@ function _handleMCPEvent(type: string, event: Record<string, unknown>) {
     const sid = sessionId ?? ''
     const mid = messageId ?? ''
 
+    // ── file:changed events — notify editor to refresh open tabs ─────
+    if (type === 'file:changed') {
+      const fileEvent = event as { path?: string }
+      if (fileEvent.path && window.fs?.readFile) {
+        console.debug('[file:changed] Agent modified:', fileEvent.path)
+        // Dispatch to event bus so editor components can react
+        useEventBus.getState().dispatch({
+          type: 'file:changed' as any,
+          path: fileEvent.path,
+          timestamp: Date.now(),
+        })
+      }
+      return
+    }
+
     // ── Plan lifecycle events (no sessionId/messageId) ──────────────────
     if (type === 'plan:created') {
       const planData = event as { plan?: string[]; currentStep?: number; planComplete?: boolean }

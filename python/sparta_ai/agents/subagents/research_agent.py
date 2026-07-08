@@ -100,9 +100,15 @@ async def research_topic(
         return f"Error investigando '{topic}': {e}"
 
 
-def build_research_graph():
-    """Return a compiled LangGraph sub-graph that streams through the parent."""
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.3)
+def build_research_graph(llm=None):
+    """Return a compiled LangGraph sub-graph that streams through the parent.
+
+    Args:
+        llm: Optional LLM instance from the parent graph. If None, falls back
+             to ChatOpenAI(model="gpt-4o-mini") for backward compatibility.
+    """
+    if llm is None:
+        llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.3)
     tools = [web_search_tool]
     llm_with_tools = llm.bind_tools(tools)
 

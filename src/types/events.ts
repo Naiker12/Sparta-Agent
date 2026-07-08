@@ -51,6 +51,7 @@ export type EventType =
   | 'terminal:agent_spawn'
   | 'plan:created'
   | 'plan:step'
+  | 'file:changed'
 
 export interface BaseEvent {
   type: EventType
@@ -351,6 +352,11 @@ export interface MessageSharedEvent extends BaseEvent {
   messageId: string
 }
 
+export interface FileChangedEvent extends BaseEvent {
+  type: 'file:changed'
+  path: string
+}
+
 export interface PlanCreatedEvent extends BaseEvent {
   type: 'plan:created'
   plan: string[]
@@ -416,3 +422,4 @@ export type SpartaEvent =
   | MessageSharedEvent
   | PlanCreatedEvent
   | PlanStepEvent
+  | FileChangedEvent

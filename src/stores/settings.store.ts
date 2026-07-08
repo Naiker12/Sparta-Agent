@@ -59,7 +59,7 @@ export const useSettingsStore = create<SettingsStore>()(
   apiKeys: {},
   language: 'es',
   agentAutonomy: 'ask_risky',
-  agentExecuteLocal: false,
+  agentExecuteLocal: true,
   sandboxMode: 'none',
 
   openSettings: () => set({ settingsOpen: true }),

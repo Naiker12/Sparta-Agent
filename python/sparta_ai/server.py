@@ -146,7 +146,7 @@ class StdioServer:
             logger.warning("No workspace_root provided — file tools will fail with explicit error")
 
         agent_autonomy = params.get("agent_autonomy", "ask_risky")
-        agent_execute_local = params.get("agent_execute_local", False)
+        agent_execute_local = params.get("agent_execute_local", True)
         security_loaded = params.get("security_loaded", True)
         sandbox_mode = params.get("sandbox_mode", "none")
 
