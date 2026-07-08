@@ -239,18 +239,38 @@ def build_sparta_graph(
                     "Sé conciso y directo."
                 ),
             })
-            response = await llm.ainvoke(messages)
-        elif scope == "readonly" or policy_mode == "plan":
-            response = await llm_plan.ainvoke(messages)
-        else:
-            response = await llm_with_tools.ainvoke(messages)
+        try:
+            if is_forced_summary:
+                response = await llm.ainvoke(messages)
+            elif scope == "readonly" or policy_mode == "plan":
+                response = await llm_plan.ainvoke(messages)
+            else:
+                response = await llm_with_tools.ainvoke(messages)
+        except Exception as e:
+            err_str = str(e)
+            if "tool use" in err_str.lower() or "tools" in err_str.lower() and "not found" in err_str.lower():
+                error_msg = (
+                    "Error: El modelo seleccionado no soporta herramientas (tool use). "
+                    "Cambiá a un modelo que sí las soporte (Claude, GPT-4, Gemini Pro, etc.) "
+                    "en Configuración > Modelos."
+                )
+            elif "404" in err_str:
+                error_msg = (
+                    f"Error 404 del proveedor: {err_str[:200]}. "
+                    "Probablemente el modelo no existe o no soporta esta API."
+                )
+            else:
+                error_msg = f"Error del modelo: {err_str[:300]}"
+            return {"messages": [{"role": "assistant", "content": error_msg}], "force_summary": False}
+
+        # Build result dict
+        result: dict[str, Any] = {"messages": [response]}
         # Track accumulated text for deduplication
         response_content = getattr(response, "content", "")
         if isinstance(response_content, str) and response_content:
             prev = state.get("accumulated_text", "")
             result["accumulated_text"] = prev + response_content
         result["force_summary"] = False
-        result["messages"] = [response]
 
         # Generate contextual follow-up suggestions on the FINAL response
         # (no pending tool calls means this is the actual answer).
