@@ -46,6 +46,18 @@ _IS_ELECTRON = os.environ.get("SPARTA_ENV", "").lower() == "electron"
 # Per-session cache: maps (tool_name, resolved_path_str) → True (allowed)
 _session_cache: dict[tuple[str, str], bool] = {}
 
+# Autonomy level from agent policy — controls when to ask for permission
+_AGENT_AUTONOMY: str = "ask_risky"
+
+
+def set_agent_autonomy(level: str) -> None:
+    global _AGENT_AUTONOMY
+    _AGENT_AUTONOMY = level
+
+
+def get_agent_autonomy() -> str:
+    return _AGENT_AUTONOMY
+
 # Pending futures: maps request_id → Future[bool]  (for async callers)
 _pending: dict[str, asyncio.Future[bool]] = {}
 

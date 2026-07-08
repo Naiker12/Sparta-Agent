@@ -3,7 +3,7 @@ import subprocess
 import uuid
 from langchain_core.tools import tool
 from sparta_ai.security.command_sanitizer import CommandSanitizer
-from sparta_ai.tools.permission_broker import request_permission_sync_generic
+from sparta_ai.tools.permission_broker import request_permission_sync_generic, get_agent_autonomy
 
 logger = logging.getLogger("sparta_ai.tools.terminal")
 
@@ -43,9 +43,10 @@ def terminal_execute_tool(command: str) -> str:
 
     logger.info("Terminal command queued: %s", sanitized[:120])
 
-    # NUEVO: gate de permiso real, igual que file_tools.py
+    # Gate de permiso real, igual que file_tools.py
     # Los comandos no seguros requieren confirmación explícita del usuario
-    if not _sanitizer.is_safe(sanitized):
+    # Con autonomía "always_ask", incluso los comandos seguros requieren confirmación
+    if get_agent_autonomy() == "always_ask" or not _sanitizer.is_safe(sanitized):
         allowed = request_permission_sync_generic(
             kind="terminal_exec",
             subject=command.strip()[:200],
@@ -71,7 +72,7 @@ def terminal_execute_tool(command: str) -> str:
         except Exception as e:
             return f"[Error al ejecutar: {e}]"
 
-    needs_confirmation = not _sanitizer.is_safe(sanitized)
+    needs_confirmation = get_agent_autonomy() == "always_ask" or not _sanitizer.is_safe(sanitized)
     if needs_confirmation:
         return (
             f"Comando enviado a la terminal (requiere confirmación del usuario): {sanitized[:120]}"
@@ -105,6 +106,17 @@ def terminal_execute_background_tool(command: str, label: str | None = None) -> 
     if sanitized is None:
         logger.warning("Background command blocked by sanitizer: %s", command.strip()[:120])
         return "Error de seguridad: comando bloqueado por el sanitizador."
+
+    # Gate de permiso real (mismo que terminal_execute_tool)
+    if get_agent_autonomy() == "always_ask" or not _sanitizer.is_safe(sanitized):
+        allowed = request_permission_sync_generic(
+            kind="terminal_exec",
+            subject=command.strip()[:200],
+            tool_name="terminal_execute_background_tool",
+            preview=f"Comando (fondo): {command.strip()[:500]}",
+        )
+        if not allowed:
+            return "Comando de fondo rechazado por el usuario."
 
     if _EXECUTE_LOCAL:
         try:

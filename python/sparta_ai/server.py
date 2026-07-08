@@ -151,7 +151,12 @@ class StdioServer:
         set_execute_local(bool(agent_execute_local))
 
         # If security module is not loaded, degrade to read-only mode
-        read_only_mode = not security_loaded
+        # Also apply autonomy policy — autonomous_readonly forces read-only regardless of Rust status
+        read_only_mode = not security_loaded or agent_autonomy == "autonomous_readonly"
+
+        # Expose autonomy level so tools can adjust permission behavior
+        from sparta_ai.tools.permission_broker import set_agent_autonomy
+        set_agent_autonomy(agent_autonomy)
 
         task = asyncio.create_task(
             self._execute_agent(
