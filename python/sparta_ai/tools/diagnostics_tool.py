@@ -12,16 +12,24 @@ _DIAGNOSTIC_COMMANDS: dict[str, list[str]] = {
     ".tsx":   ["npx", "tsc", "--noEmit", "--pretty"],
     ".js":    ["npx", "eslint"],
     ".jsx":   ["npx", "eslint"],
+    ".mjs":   ["npx", "eslint"],
+    ".cjs":   ["npx", "eslint"],
     ".py":    ["python", "-m", "pylint", "--output-format=text"],
     ".rs":    ["cargo", "check", "--message-format=short"],
     ".go":    ["go", "vet"],
+    ".css":   ["npx", "stylelint"],
+    ".scss":  ["npx", "stylelint"],
+    ".sass":  ["npx", "stylelint"],
 }
 
 _EXTENSION_PATTERNS: dict[str, list[re.Pattern]] = {
-    "eslint": [re.compile(r"^(.+?):(\d+):(\d+):\s+(.+?)\s+(.+)$")],
-    "tsc":    [re.compile(r"^(.+)\((\d+),(\d+)\):\s+(error|warning)\s+(.+)$")],
-    "pylint": [re.compile(r"^(.+):(\d+):(\d+):\s+([WE CFR]+\d+):\s+(.+)$")],
-    "cargo":  [re.compile(r"^(.+):(\d+):(\d+):\s+(error|warning)\[.*\]\s+(.+)$")],
+    "eslint":   [re.compile(r"^(.+?):(\d+):(\d+):\s+(.+?)\s+(.+)$")],
+    "tsc":      [re.compile(r"^(.+)\((\d+),(\d+)\):\s+(error|warning)\s+(.+)$")],
+    "pylint":   [re.compile(r"^(.+):(\d+):(\d+):\s+([WE CFR]+\d+):\s+(.+)$")],
+    "cargo":    [re.compile(r"^(.+):(\d+):(\d+):\s+(error|warning)\[.*\]\s+(.+)$")],
+    "ruff":     [re.compile(r"^(.+):(\d+):(\d+):\s+(\d+)\s+(.+)$")],
+    "mypy":     [re.compile(r"^(.+):(\d+):(\d+):\s+(error|warning|note):\s+(.+)$")],
+    "stylelint":[re.compile(r"^(.+):(\d+):(\d+):\s+\u2716\s+(.+)$")],
 }
 
 _IGNORED_DIRS = {"node_modules", ".git", ".venv", "__pycache__", "dist", "build", ".next", "target"}
@@ -34,37 +42,87 @@ def _workspace_root() -> Path | None:
 
 def _detect_command(file_path: str) -> tuple[str | None, list[str]]:
     ext = Path(file_path).suffix.lower()
+    parent = Path(file_path).parent
+
     base_cmd = _DIAGNOSTIC_COMMANDS.get(ext)
-    if not base_cmd:
-        parent = Path(file_path).parent
-        if (parent / "tsconfig.json").exists() or (parent / "jsconfig.json").exists():
-            base_cmd = ["npx", "tsc", "--noEmit", "--pretty"]
-        elif list(parent.glob("*.sln")) or list(parent.glob("*.csproj")):
-            base_cmd = ["dotnet", "build", "--no-restore"]
-        else:
-            return None, []
-    return ext, base_cmd
+    if base_cmd:
+        return ext, base_cmd
+
+    # Fallbacks por deteccion de config
+    if (parent / "tsconfig.json").exists() or (parent / "jsconfig.json").exists():
+        return ".ts", ["npx", "tsc", "--noEmit", "--pretty"]
+    if (parent / "pyproject.toml").exists():
+        # Prefer ruff if configured, fallback to pylint
+        pyproject = parent / "pyproject.toml"
+        if "ruff" in pyproject.read_text():
+            return ".py", ["python", "-m", "ruff", "check"]
+        return ".py", ["python", "-m", "pylint", "--output-format=text"]
+    if list(parent.glob("*.sln")) or list(parent.glob("*.csproj")):
+        return ".cs", ["dotnet", "build", "--no-restore"]
+    if (parent / ".eslintrc.js").exists() or (parent / ".eslintrc.json").exists() or (parent / "eslint.config.js").exists():
+        return ".js", ["npx", "eslint"]
+    return None, []
 
 
-def _parse_output(output: str, ext: str | None) -> list[dict]:
+def _try_fallback(cmd_base: list[str], target: Path, root: Path) -> str | None:
+    """Try running a diagnostic, return None if tool not found."""
+    try:
+        result = subprocess.run(
+            cmd_base + [str(target)],
+            capture_output=True, text=True, timeout=30,
+            cwd=str(root),
+        )
+        combined = (result.stdout or "") + ("\n" + result.stderr if result.stderr else "")
+        return combined.strip() or None
+    except FileNotFoundError:
+        return None
+    except subprocess.TimeoutExpired:
+        return None
+
+
+def _parse_output(output: str, ext: str | None, raw_cmd: list[str]) -> list[dict]:
     results: list[dict] = []
-    patterns = _EXTENSION_PATTERNS.get(
-        "eslint" if ext in (".js", ".jsx", ".ts", ".tsx") else
-        "tsc" if ext in (".ts", ".tsx") else
-        "pylint" if ext == ".py" else
-        "cargo" if ext == ".rs" else "",
-        [],
-    )
+    cmd_name = Path(raw_cmd[0]).name if raw_cmd else ""
+
+    # Detect linter from command
+    linter_key = ""
+    if "ruff" in cmd_name:
+        linter_key = "ruff"
+    elif "mypy" in cmd_name:
+        linter_key = "mypy"
+    elif "stylelint" in cmd_name:
+        linter_key = "stylelint"
+    elif "eslint" in cmd_name:
+        linter_key = "eslint"
+    elif "tsc" in cmd_name:
+        linter_key = "tsc"
+    elif "pylint" in cmd_name:
+        linter_key = "pylint"
+    elif "cargo" in cmd_name or "rustc" in cmd_name:
+        linter_key = "cargo"
+    elif ext in (".ts", ".tsx"):
+        linter_key = "tsc"
+    elif ext in (".js", ".jsx", ".mjs", ".cjs"):
+        linter_key = "eslint"
+    elif ext == ".py":
+        linter_key = "pylint"
+    elif ext == ".rs":
+        linter_key = "cargo"
+
+    patterns = _EXTENSION_PATTERNS.get(linter_key, [])
     for line in output.splitlines():
         for pat in patterns:
-            m = pat.match(line)
+            m = pat.match(line.strip())
             if m:
+                file = m.group(1)
+                line_num = int(m.group(2))
+                col = int(m.group(3))
+                severity = "error" if "error" in m.group(4).lower() else \
+                           "warning" if "warning" in m.group(4).lower() else "info"
+                msg = m.group(5).strip() if m.lastindex >= 5 else m.group(4).strip()
                 results.append({
-                    "file": m.group(1),
-                    "line": int(m.group(2)),
-                    "column": int(m.group(3)),
-                    "severity": "error" if "error" in m.group(4).lower() else "warning",
-                    "message": m.group(5).strip(),
+                    "file": file, "line": line_num, "column": col,
+                    "severity": severity, "message": msg,
                 })
                 break
     return results
@@ -75,18 +133,15 @@ def get_diagnostics_tool(path: str) -> str:
     """Ejecuta lint o type-check sobre un archivo y devuelve errores estructurados.
 
     Detecta automáticamente el lenguaje por extensión:
-      .ts/.tsx → tsc --noEmit
-      .js/.jsx → eslint
-      .py      → pylint
-      .rs      → cargo check
-      .go      → go vet
+      .ts/.tsx → tsc --noEmit         .js/.jsx → eslint
+      .py      → pylint (o ruff)      .rs      → cargo check
+      .go      → go vet               .css/.scss → stylelint
 
     Args:
         path: Ruta del archivo a analizar (relativa al workspace).
 
     Returns:
         Lista de errores/advertencias con archivo, línea, columna y mensaje.
-        Vacío si no hay errores o si el lenguaje no tiene diagnóstico disponible.
     """
     root = _workspace_root()
     if not root:
@@ -100,7 +155,7 @@ def get_diagnostics_tool(path: str) -> str:
 
     ext, cmd = _detect_command(str(target))
     if not cmd:
-        return f"No hay diagnóstico disponible para archivos {ext or 'con esta extensión'}."
+        return f"No hay diagnóstico disponible para '{path}'."
 
     logger.info("Running diagnostics on %s: %s", target, " ".join(cmd))
     try:
@@ -110,22 +165,39 @@ def get_diagnostics_tool(path: str) -> str:
             cwd=str(root),
         )
     except FileNotFoundError:
-        return f"Error: El comando '{cmd[0]}' no está instalado en el sistema."
+        # Try fallback linters
+        fallbacks = {
+            ".py": [["python", "-m", "ruff", "check"], ["python", "-m", "mypy", "--show-error-codes"]],
+            ".js": [["npx", "oxlint"], ["npx", "eslint"]],
+            ".ts": [["npx", "oxlint"], ["npx", "eslint"]],
+        }
+        for fb_cmd in fallbacks.get(ext or "", []):
+            fb_result = _try_fallback(fb_cmd, target, root)
+            if fb_result:
+                parsed = _parse_output(fb_result, ext, fb_cmd)
+                return _format_result(path, parsed, fb_result)
+        return f"Error: El comando '{cmd[0]}' no está instalado."
     except subprocess.TimeoutExpired:
         return f"Error: El diagnóstico excedió el límite de 60s."
 
     combined = (result.stdout or "") + ("\n" + result.stderr if result.stderr else "")
     if not combined.strip():
-        return "No se encontraron errores de diagnóstico."
+        return f"No se encontraron errores de diagnóstico en '{path}'."
 
-    parsed = _parse_output(combined, ext)
+    parsed = _parse_output(combined, ext, cmd)
     if not parsed:
-        return combined.strip()[:2000]
+        return combined.strip()[:3000]
 
-    lines = [f"Diagnóstico de {path}: ({len(parsed)} problemas encontrados)"]
+    return _format_result(path, parsed, combined)
+
+
+def _format_result(path: str, parsed: list[dict], raw: str = "") -> str:
+    errors = [p for p in parsed if p["severity"] == "error"]
+    warnings = [p for p in parsed if p["severity"] in ("warning", "info")]
+    lines = [f"Diagnóstico de {path}: {len(errors)} errores, {len(warnings)} advertencias"]
     for p in parsed[:50]:
-        sev = "🔴" if p["severity"] == "error" else "🟡"
-        lines.append(f"  {sev} {p['file']}:{p['line']}:{p['column']} — {p['message']}")
+        icon = "🔴" if p["severity"] == "error" else "🟡"
+        lines.append(f"  {icon} {p['file']}:{p['line']}:{p['column']} — {p['message']}")
     if len(parsed) > 50:
         lines.append(f"  ... y {len(parsed) - 50} más")
     return "\n".join(lines)

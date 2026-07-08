@@ -22,6 +22,7 @@ _READ_TOOLS = frozenset({
     "web_search_tool", "web_search",
     "create_plan",
     "get_diagnostics_tool",
+    "terminal_check_tool",
 })
 
 _WRITE_TOOLS = frozenset({

@@ -12,6 +12,9 @@ logger = logging.getLogger("sparta_ai.tools.terminal")
 _sanitizer = CommandSanitizer()
 _EXECUTE_LOCAL = False
 
+# Process result cache: maps proc_id → {"output": str, "exit_code": int, "done": bool}
+_proc_results: dict[str, dict] = {}
+
 
 def _emit_terminal_event(event: str, data: dict) -> None:
     """Write a terminal bridge event to stdout (visible in the terminal panel)."""
@@ -87,12 +90,17 @@ def terminal_execute_tool(command: str) -> str:
                 _emit_terminal_event("terminal:agent_output", {"procId": proc_id, "chunk": output[:5000]})
             _emit_terminal_event("terminal:agent_exit", {"procId": proc_id, "code": result.returncode})
 
+            # Cache result for terminal_check_tool
+            _proc_results[proc_id] = {"output": output.strip(), "exit_code": result.returncode, "done": True}
+
             return output.strip() or f"(comando completado, código {result.returncode})"
         except subprocess.TimeoutExpired:
             _emit_terminal_event("terminal:agent_exit", {"procId": proc_id, "code": -1})
+            _proc_results[proc_id] = {"output": "[Timeout 60s]", "exit_code": -1, "done": True}
             return "[Error: el comando excedió el límite de 60s]"
         except Exception as e:
             _emit_terminal_event("terminal:agent_exit", {"procId": proc_id, "code": -1})
+            _proc_results[proc_id] = {"output": str(e), "exit_code": -1, "done": True}
             return f"[Error al ejecutar: {e}]"
 
     needs_confirmation = get_agent_autonomy() == "always_ask" or not _sanitizer.is_safe(sanitized)
@@ -160,14 +168,47 @@ def terminal_execute_background_tool(command: str, label: str | None = None) -> 
                 _emit_terminal_event("terminal:agent_output", {"procId": proc_id, "chunk": output[:10000]})
             _emit_terminal_event("terminal:agent_exit", {"procId": proc_id, "code": result.returncode})
 
+            _proc_results[proc_id] = {"output": output.strip(), "exit_code": result.returncode, "done": True}
+
             return f"Salida del comando de fondo{label_str}:\n{output.strip()}"
         except subprocess.TimeoutExpired:
             _emit_terminal_event("terminal:agent_exit", {"procId": proc_id, "code": -1})
+            _proc_results[proc_id] = {"output": "[Timeout 300s]", "exit_code": -1, "done": True}
             return "[Error: el comando de fondo excedió el límite de 300s]"
         except Exception as e:
             _emit_terminal_event("terminal:agent_exit", {"procId": proc_id, "code": -1})
+            _proc_results[proc_id] = {"output": str(e), "exit_code": -1, "done": True}
             return f"[Error al ejecutar comando de fondo: {e}]"
 
     proc_id = f"bg-{uuid.uuid4().hex[:8]}"
     logger.info("Background terminal spawn requested: %s (%s)", sanitized[:120], proc_id)
     return f"Proceso de fondo iniciado ({proc_id}): {sanitized[:120]}. El usuario lo ve en una pestaña nueva."
+
+
+@tool
+def terminal_check_tool(proc_id: str) -> str:
+    """Consulta el resultado de un comando de fondo iniciado previamente.
+
+    Úsalo para saber si un comando en background ya terminó y obtener su salida.
+
+    Args:
+        proc_id: El identificador del proceso devuelto por terminal_execute_background_tool.
+
+    Returns:
+        Estado del proceso (completado, ejecutando, o no encontrado).
+    """
+    result = _proc_results.get(proc_id)
+    if result is None:
+        return (
+            f"No se encontró el proceso '{proc_id}'. "
+            "Puede que siga ejecutándose (si se inició desde la terminal visible) "
+            "o que el ID sea incorrecto."
+        )
+    if result["done"]:
+        out = result.get("output", "").strip()
+        code = result["exit_code"]
+        status = f"Completado (código {code})"
+        if out:
+            return f"Proceso '{proc_id}': {status}\n{out[:3000]}"
+        return f"Proceso '{proc_id}': {status} (sin salida)"
+    return f"Proceso '{proc_id}': aún en ejecución."
