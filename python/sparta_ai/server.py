@@ -267,6 +267,7 @@ class StdioServer:
         from sparta_ai.tools.skill_tools import skill_view_tool, skills_list_tool, skill_manage_tool
         from sparta_ai.tools.terminal_tools import terminal_execute_tool, terminal_execute_background_tool
         from sparta_ai.tools.mcp_manage_tool import mcp_manage_tool
+        from sparta_ai.tools.diagnostics_tool import get_diagnostics_tool
 
         # Ensure tool descriptions reflect the current workspace root (may have changed since import)
         inject_workspace_guidance()
@@ -277,6 +278,7 @@ class StdioServer:
                 read_memory_tool,
                 read_file_tool, search_files_tool,
                 skill_view_tool, skills_list_tool,
+                get_diagnostics_tool,
             ] + mcp_tools
         else:
             agent_tools = [
@@ -285,6 +287,7 @@ class StdioServer:
                 skill_view_tool, skills_list_tool, skill_manage_tool,
                 terminal_execute_tool, terminal_execute_background_tool,
                 mcp_manage_tool,
+                get_diagnostics_tool,
             ] + mcp_tools
         if web_search_enabled:
             from sparta_ai.tools.web_search import web_search_tool

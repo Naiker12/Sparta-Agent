@@ -21,6 +21,7 @@ _READ_TOOLS = frozenset({
     "skill_view_tool", "skills_list_tool",
     "web_search_tool", "web_search",
     "create_plan",
+    "get_diagnostics_tool",
 })
 
 _WRITE_TOOLS = frozenset({
