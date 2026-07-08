@@ -8,7 +8,7 @@ from typing import Optional
 
 from langchain_core.tools import tool
 
-from sparta_ai.tools.permission_broker import request_permission_sync
+from sparta_ai.tools.permission_broker import request_permission_sync, get_agent_autonomy
 from sparta_ai.security.rate_limiter import tool_rate_limiter
 
 logger = logging.getLogger("sparta_ai.tools.file")
@@ -61,8 +61,13 @@ _SKIP_DIRS = {
 }
 
 
-def _get_safe_path(path: str, tool_name: str | None = None, preview: str = "") -> Path:
-    """Resolve and validate a path, requesting permission if outside workspace.
+def _get_safe_path(
+    path: str,
+    tool_name: str | None = None,
+    preview: str = "",
+    require_permission: bool = False,
+) -> Path:
+    """Resolve and validate a path, requesting permission if needed.
 
     Args:
         path:      User-provided path (relative or absolute).
@@ -70,6 +75,8 @@ def _get_safe_path(path: str, tool_name: str | None = None, preview: str = "") -
                    the permission broker may request user approval for paths
                    outside the workspace in Desktop mode.
         preview:   Short preview / diff to show in the permission dialog.
+        require_permission: If True, ALWAYS request user permission even for
+                   paths inside the workspace. Used by delete/write tools.
 
     Returns:
         Resolved Path object.
@@ -135,6 +142,14 @@ def _get_safe_path(path: str, tool_name: str | None = None, preview: str = "") -
             raise PermissionError(
                 f"Ruta fuera del workspace permitido: {resolved}. {guidance}"
             )
+    elif require_permission:
+        # Even inside workspace, some operations (delete, always_ask) need confirmation
+        if tool_name is not None:
+            allowed = request_permission_sync(tool_name, resolved, preview)
+            if not allowed:
+                raise PermissionError(
+                    f"Operación rechazada por el usuario: {resolved}"
+                )
 
     return resolved
 
@@ -234,7 +249,10 @@ def write_file_tool(path: str, content: str, append: bool = False) -> str:
         preview_text = "\n".join(preview_lines)
         if len(content) > 300:
             preview_text += "\n..."
-        filepath = _get_safe_path(path, tool_name="write_file_tool", preview=preview_text)
+        # Always ask for permission when autonomy is "always_ask"
+        need_permission = get_agent_autonomy() == "always_ask"
+        filepath = _get_safe_path(path, tool_name="write_file_tool", preview=preview_text,
+                                  require_permission=need_permission)
 
         if append and filepath.exists():
             with open(filepath, "a", encoding="utf-8") as f:
@@ -370,10 +388,12 @@ def patch_file_tool(path: str, old_string: str, new_string: str) -> str:
         if len(old_string) > _MAX_CONTENT_SIZE or len(new_string) > _MAX_CONTENT_SIZE:
             return "Error: El contenido del parche excede el límite de 5MB."
 
+        need_permission = get_agent_autonomy() == "always_ask"
         filepath = _get_safe_path(
             path,
             tool_name="patch_file_tool",
             preview=f"Reemplazar: '{old_string[:80]}' → '{new_string[:80]}'",
+            require_permission=need_permission,
         )
         _validate_path(filepath)
 
@@ -440,6 +460,7 @@ def delete_file_tool(path: str) -> str:
             path,
             tool_name="delete_file_tool",
             preview="Operación de eliminación",
+            require_permission=True,
         )
 
         if not filepath.exists():

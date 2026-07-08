@@ -83,7 +83,7 @@ DANGEROUS_PATTERNS: list[re.Pattern] = [
 SAFE_COMMANDS: set[str] = {
     "ls", "cat", "head", "tail", "echo", "pwd", "which", "whoami", "id",
     "git status", "git log", "git diff", "git branch", "git remote",
-    "npm test", "npm run", "pnpm test", "pnpm run", "yarn test", "yarn run",
+    "npm test", "pnpm test", "yarn test",
     "npm ls", "pnpm ls", "yarn list",
     "pip list", "pip freeze", "pip show",
     "python --version", "python3 --version", "node --version", "npm --version",
