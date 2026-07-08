@@ -56,14 +56,19 @@ def _extract_tool_errors(state: dict[str, Any]) -> list[dict]:
     errors: list[dict] = []
     for m in state.get("messages", [])[-4:]:
         content = ""
+        status = ""
         if isinstance(m, dict):
             content = str(m.get("content", ""))
             msg_type = m.get("role", "")
+            status = str(m.get("status", ""))
         else:
             content = str(getattr(m, "content", ""))
             msg_type = getattr(m, "type", "")
+            status = getattr(m, "status", "")
 
         is_tool = msg_type in ("tool", "ToolMessage") or isinstance(m, dict) and msg_type == "tool"
-        if is_tool and "Error:" in content:
-            errors.append({"content": content})
+        # Use structured status field (preferred) with "Error:" fallback for backward compatibility
+        is_error = status == "error" or (is_tool and "Error:" in content)
+        if is_tool and is_error:
+            errors.append({"content": content, "status": status or "error"})
     return errors

@@ -11,9 +11,9 @@ from langgraph.types import Command
 from sparta_ai.agents.subagents.research_agent import research_topic, build_research_graph
 from sparta_ai.agents.subagents.code_agent import execute_code_task, build_code_graph
 from sparta_ai.agents.subagents.memory_agent import recall_memories, build_memory_graph
-from sparta_ai.agents.planner import planner_node
 from sparta_ai.agents.reflection import reflection_node, should_reflect
 from sparta_ai.security.permission_policy import PermissionPolicy, get_policy, set_policy_mode
+from sparta_ai.tools.plan_tool import create_plan_tool
 
 logger = logging.getLogger("sparta_ai.agents.sparta")
 
@@ -44,11 +44,12 @@ def build_sparta_graph(
     memory_context: str = "",
     checkpointer: Any | None = None,
     policy_mode: str = "build",
+    vendor: str = "openai",
 ) -> StateGraph:
     # Apply permission policy to tools
     set_policy_mode(policy_mode)
     policy = PermissionPolicy(mode=policy_mode)
-    all_tools = tools
+    all_tools = tools + [create_plan_tool]
     delegate_tools = [research_topic, execute_code_task, recall_memories]
 
     # Create two LLM bindings: one for build mode (all tools), one for plan mode (read-only)
@@ -104,11 +105,10 @@ def build_sparta_graph(
             "- Tu respuesta debe ser una síntesis clara y directa, NO un resumen de los resultados de búsqueda.",
             "- Si quieres citar una fuente, menciona el nombre del sitio brevemente (ej: 'según MDN...') pero NO incluyas URLs completas ni listas de enlaces.",
             "",
-            "REGLAS PARA RESPUESTAS:",
-            "- NUNCA incluyas JSON de planificación interna en tu respuesta al usuario.",
-            "- Tu plan interno se muestra automáticamente en el panel 'Plan de ejecución'.",
-            "- Si necesitas planificar, hazlo internamente sin mostrar el JSON.",
-            "- Responde siempre en lenguaje natural, sin bloques JSON visibles.",
+            "REGLAS PARA PLANIFICACIÓN:",
+            "- Para tareas complejas de varios pasos, usa la herramienta create_plan",
+            "  para registrar tu plan. El panel 'Plan de ejecución' lo mostrará.",
+            "- NUNCA incluyas JSON de planificación en tu respuesta al usuario.",
             "- Si usas <think> o <reasoning> tags, el contenido se mostrará como",
             "  'Pensando...' y no contaminará tu respuesta visible.",
             "",
@@ -269,17 +269,37 @@ def build_sparta_graph(
 
         return result
 
-    async def planner_node_wrapped(state: SpartaState) -> dict:
-        return await planner_node(state, llm)
-
     async def reflection_node_wrapped(state: SpartaState) -> dict:
         return await reflection_node(state)
 
     async def tool_node(state: SpartaState) -> dict:
+        from langchain_core.messages import ToolMessage
+
         last_message = state["messages"][-1]
         tool_calls = getattr(last_message, "tool_calls", [])
         if not tool_calls:
             return {"tool_calls_this_turn": state.get("tool_calls_this_turn", 0)}
+
+        # Intercept create_plan calls — they update state["plan"] instead of running a real tool
+        plan_calls = [tc for tc in tool_calls if tc.get("name") == "create_plan"]
+        if plan_calls:
+            plan_tc = plan_calls[0]
+            steps = plan_tc.get("args", {}).get("steps", [])
+            plan = [s.get("action", f"Paso {i+1}") for i, s in enumerate(steps)]
+            plan_messages = [
+                ToolMessage(
+                    content="Plan registrado. Los pasos se mostrarán en el panel de ejecución.",
+                    tool_call_id=plan_tc.get("id", ""),
+                    name="create_plan",
+                )
+            ]
+            return {
+                "messages": plan_messages,
+                "tool_calls_this_turn": state.get("tool_calls_this_turn", 0) + 1,
+                "plan": plan,
+                "current_step": 0,
+                "plan_complete": False,
+            }
 
         from langgraph.prebuilt import ToolNode
         tool_node_exec = ToolNode(tools)
@@ -333,6 +353,7 @@ def build_sparta_graph(
                         content="Error: Tipo de subagente desconocido.",
                         tool_call_id=tc.get("id", ""),
                         name=tc["name"],
+                        status="error",
                     ),
                 )
             try:
@@ -359,6 +380,7 @@ def build_sparta_graph(
                         content=f"Error: {error_msg}",
                         tool_call_id=tc.get("id", ""),
                         name=tc["name"],
+                        status="error",
                     ),
                 )
 
@@ -423,14 +445,12 @@ def build_sparta_graph(
         return "__end__"
 
     graph = StateGraph(SpartaState)
-    graph.add_node("planner", planner_node_wrapped)
     graph.add_node("agent", agent_node)
     graph.add_node("tools", tool_node)
     graph.add_node("subagent_coordinator", subagent_node)
     graph.add_node("reflection", reflection_node_wrapped)
 
-    graph.add_edge(START, "planner")
-    graph.add_edge("planner", "agent")
+    graph.add_edge(START, "agent")
     graph.add_conditional_edges(
         "agent",
         should_continue,

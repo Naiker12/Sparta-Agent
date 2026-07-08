@@ -20,6 +20,7 @@ _READ_TOOLS = frozenset({
     "read_memory_tool",
     "skill_view_tool", "skills_list_tool",
     "web_search_tool", "web_search",
+    "create_plan",
 })
 
 _WRITE_TOOLS = frozenset({

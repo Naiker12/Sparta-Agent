@@ -301,6 +301,7 @@ class StdioServer:
             memory_context=memory_context,
             checkpointer=checkpointer,
             policy_mode=policy_mode,
+            vendor=vendor or provider or "openai",
         )
 
         initial_state: SpartaState = {
