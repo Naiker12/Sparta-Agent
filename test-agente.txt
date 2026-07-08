@@ -16,7 +16,7 @@ Requisito: la app debe estar corriendo (pnpm dev o el build compilado).
 
 
 2. El plan ahora es una tool call (create_plan)
-------------------------------------------------
+-----------------------------------------------
 - Poné el switch en "Agente".
 - Escribí un mensaje que requiera varios pasos, por ejemplo:
     "Buscá el archivo src/index.ts, leé las primeras 20 líneas,
@@ -37,8 +37,7 @@ Requisito: la app debe estar corriendo (pnpm dev o el build compilado).
 --------------------------------------------------------
 - En Ajustes > Agentes, asegurate de que:
     - Nivel de autonomía = "Preguntar solo en acciones riesgosas"
-    - Ejecutar comandos localmente = ACTIVADO (por defecto desde la
-      última actualización)
+    - Ejecutar comandos localmente = ACTIVADO (por defecto)
 
 - En el chat (Modo Agente), escribí:
     "Ejecutá ls -la en la terminal"
@@ -48,14 +47,17 @@ Requisito: la app debe estar corriendo (pnpm dev o el build compilado).
 
 - Después probá:
     "Ejecutá rm -rf /tmp/test en la terminal"
-  → Este comando NO es seguro (is_safe=False), así que DEBE
-    aparecer el diálogo "Permiso requerido: Ejecutar comando"
-    con el comando en preview y botones Denegar / Permitir una vez.
+  → DEBE aparecer el diálogo "Permiso requerido: Ejecutar comando"
+    por ser un comando no seguro (is_safe=False).
 
 - Probá también con el fondo:
     "Ejecutá ping google.com -c 5 en background"
-  → Debe comportarse igual que el comando en terminal visible
-    (también pasa por el gate de permiso).
+  → Debe comportarse igual (también pasa por el gate de permiso).
+
+- Probá un comando con npm run (ya no es automático):
+    "Ejecutá npm run build"
+  → DEBE aparecer el diálogo de permiso porque npm run fue eliminado
+    de SAFE_COMMANDS (ejecuta scripts arbitrarios del package.json).
 
 
 4. Nivel de autonomía "Siempre preguntar"
@@ -66,6 +68,11 @@ Requisito: la app debe estar corriendo (pnpm dev o el build compilado).
     "Ejecutá ls"
   → Ahora SÍ debe aparecer el diálogo de permiso, aunque ls sea
     un comando seguro. Esto prueba que "always_ask" funciona.
+
+- También probá escribir un archivo:
+    "Escribí un archivo test.txt con el texto 'hola'"
+  → Con always_ask, DEBE aparecer el diálogo de permiso incluso
+    para escribir dentro del workspace. Antes no preguntaba.
 
 
 5. Nivel de autonomía "Autónomo (solo lectura)" + BUILD/PLAN
@@ -82,39 +89,48 @@ Requisito: la app debe estar corriendo (pnpm dev o el build compilado).
     en modo PLAN).
 
 
-6. Paralelismo de subagentes con el mismo modelo
--------------------------------------------------
+6. Seguridad: borrar archivos siempre pide permiso
+----------------------------------------------------
+- En Ajustes > Agentes, asegurate autonomía "Preguntar solo en
+  acciones riesgosas".
+- En el chat, escribí:
+    "Borrá el archivo src/test.txt" (o cualquier archivo existente)
+  → DEBE aparecer el diálogo "Permiso requerido: Eliminar archivo"
+    aunque el archivo esté dentro del workspace. delete_file_tool
+    ahora require_permission=True siempre.
+
+
+7. Paralelismo de subagentes con el mismo modelo
+--------------------------------------------------
 - En Modo Agente, escribí:
     "Investigá sobre inteligencia artificial y al mismo tiempo
      buscá el archivo package.json y leélo"
 - En la UI, deberían aparecer dos subagentes ("Investigador Delegado"
-  y "Programador Delegado") ejecutándose en paralelo, no uno
-  después del otro.
+  y "Programador Delegado") ejecutándose en paralelo.
 - Ambos subagentes usan el MISMO modelo/proveedor que configuraste
   (ya no tienen ChatOpenAI hardcodeado).
 
 
-7. Plan con subagentes
+8. Plan con subagentes
 -----------------------
-- Escribí una tarea compleja que delegue a subagentes, por ejemplo:
+- Escribí una tarea compleja que delegue a subagentes:
     "Investigá sobre el framework LangGraph y después leé el
      archivo README.md del proyecto actual"
 - El plan debe mostrar los pasos, y cada paso debe marcarse como
   completado a medida que se ejecuta.
 
 
-8. file:changed — sincronización con el editor
+9. file:changed — sincronización con el editor
 -----------------------------------------------
 - Abrí un archivo en el editor interno (Monaco).
 - En el chat (Modo Agente), pedí:
     "Agregá un comentario al inicio de <archivo-abierto>"
 - Cuando el agente ejecute write_file_tool o patch_file_tool,
-  el editor debería reflejar el cambio automáticamente (sin
-  necesidad de recargar manual).
+  el editor debería reflejar el cambio automáticamente.
 
 
-9. Síntesis forzada al llegar al límite de pasos
---------------------------------------------------
+10. Síntesis forzada al llegar al límite de pasos
+---------------------------------------------------
 - En el chat, pedí una tarea que requiera MUCHOS pasos:
     "Buscá todos los archivos .ts, leé cada uno, y decime cuántas
      líneas tiene cada uno"
@@ -123,7 +139,7 @@ Requisito: la app debe estar corriendo (pnpm dev o el build compilado).
   de lo que logró, en vez de cortar en silencio.
 
 
-10. Botón de log de auditoría
+11. Botón de log de auditoría
 ------------------------------
 - En Ajustes > Agentes, al final de la sección "Política del
   Modo Agente", debería haber un botón "Abrir log".
@@ -131,30 +147,33 @@ Requisito: la app debe estar corriendo (pnpm dev o el build compilado).
   editor de texto del sistema (si el módulo Rust está activo).
 
 
-11. Errores de tools reflejados correctamente (sin falsos positivos)
+12. Errores de tools reflejados correctamente (sin falsos positivos)
 ---------------------------------------------------------------------
 - En el chat, escribí una ruta que no existe:
     "Leé el archivo /no-existe/archivo.txt"
 - El agente debe reconocer que la tool devolvió un error estructurado
-  (status="error") y reflexionar sobre cómo corregirlo, NO confundir
-  un ToolMessage exitoso que contenga la palabra "Error" en su
-  contenido con un fallo real.
+  (status="error") y reflexionar sobre cómo corregirlo. NO debe
+  confundir un ToolMessage exitoso que contenga la palabra "Error"
+  en su contenido con un fallo real.
 
 
 Resumen rápido de qué esperar:
 -------------------------------
-  ✔ Badge "Seguridad" desaparece       → módulo Rust compilado
-  ✔ Plan como tool call, no JSON       → create_plan tool, no planner ciego
-  ✔ Plan visible arriba del input      → plan conectado a UI
-  ✔ Diálogo de permiso en rm -rf       → gate de terminal funciona
-  ✔ Diálogo también en background      → ambos tools cubiertos
+  ✔ Badge "Seguridad" desaparece        → módulo Rust compilado
+  ✔ Plan como tool call, no JSON        → create_plan tool, no planner ciego
+  ✔ Plan visible arriba del input       → plan conectado a UI
+  ✔ Diálogo de permiso en rm -rf        → gate de terminal funciona
+  ✔ Diálogo también en background       → ambos tools cubiertos
+  ✔ Diálogo en npm run                  → sacado de SAFE_COMMANDS
   ✔ Diálogo incluso en ls con always_ask → autonomía respetada
+  ✔ Diálogo al borrar archivos           → delete_file_tool siempre require_permission
+  ✔ Diálogo al escribir con always_ask   → write/patch dentro del workspace preguntan
   ✔ Sin write_file en autonomous_readonly → modo PLAN (solo lectura)
-  ✔ Terminal devuelve resultado real    → _EXECUTE_LOCAL=True por defecto
-  ✔ Subagentes en paralelo             → asyncio.gather funciona
-  ✔ Subagentes usan tu modelo          → builder unificado, sin ChatOpenAI hardcodeado
-  ✔ Editor sincronizado                → file:changed event
-  ✔ Síntesis forzada al límite         → no más cortes silenciosos
-  ✔ Errores estructurados              → status="error", no "Error:" in content
-  ✔ Log de auditoría abrible           → IPC handler funciona
-  ✔ Sandbox Docker configurable        → selector en UI (pendiente implementación)
+  ✔ Terminal devuelve resultado real     → _EXECUTE_LOCAL=True por defecto
+  ✔ Subagentes en paralelo              → asyncio.gather funciona
+  ✔ Subagentes usan tu modelo           → builder unificado, sin ChatOpenAI hardcodeado
+  ✔ Editor sincronizado                 → file:changed event
+  ✔ Síntesis forzada al límite          → no más cortes silenciosos
+  ✔ Errores estructurados               → status="error", no "Error:" in content
+  ✔ Log de auditoría abrible            → IPC handler funciona
+  ✔ Sandbox Docker configurable         → selector en UI (pendiente implementación)
