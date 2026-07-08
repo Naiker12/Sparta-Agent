@@ -1,8 +1,13 @@
 import asyncio
+import fcntl
 import json
 import logging
 import os
 import platform
+import pty
+import signal
+import struct
+import termios
 import time
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
@@ -347,6 +352,16 @@ async def health():
 
 
 _terminal_procs: dict[str, tuple[asyncio.subprocess.Process, set[asyncio.Task]]] = {}
+_terminal_fds: dict[str, int] = {}
+
+
+def _set_pty_size(fd: int, cols: int, rows: int) -> None:
+    """Set the terminal size on a PTY master fd."""
+    try:
+        winsize = struct.pack("HHHH", rows, cols, 0, 0)
+        fcntl.ioctl(fd, termios.TIOCSWINSZ, winsize)
+    except (OSError, TypeError):
+        pass
 
 
 def _detect_shell() -> str:
@@ -374,27 +389,57 @@ async def terminal_endpoint(websocket: WebSocket, session_id: str) -> None:
     await websocket.send_text(json.dumps({"type": "ready"}))
 
     shell = _detect_shell()
+    use_pty = platform.system() != "Windows"
 
-    process = await asyncio.create_subprocess_exec(
-        shell,
-        stdin=asyncio.subprocess.PIPE,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.STDOUT,
-        env={**os.environ, "SPARTA_TERMINAL": "1", "TERM": "xterm-256color"},
-    )
+    if use_pty:
+        # Create a real PTY for job control, interactive programs, etc.
+        master_fd, slave_fd = os.openpty()
+        _set_pty_size(master_fd, 80, 24)
+        process = await asyncio.create_subprocess_exec(
+            shell,
+            stdin=slave_fd,
+            stdout=slave_fd,
+            stderr=slave_fd,
+            env={**os.environ, "SPARTA_TERMINAL": "1", "TERM": "xterm-256color"},
+            close_fds=True,
+            start_new_session=True,
+        )
+        # Close slave fd in parent — shell owns it
+        os.close(slave_fd)
+        _terminal_fds[session_id] = master_fd
+    else:
+        process = await asyncio.create_subprocess_exec(
+            shell,
+            stdin=asyncio.subprocess.PIPE,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.STDOUT,
+            env={**os.environ, "SPARTA_TERMINAL": "1", "TERM": "xterm-256color"},
+        )
     tasks: set[asyncio.Task] = set()
     _terminal_procs[session_id] = (process, tasks)
 
     async def read_stdout() -> None:
         try:
-            while process.stdout and not process.stdout.at_eof():
-                chunk = await process.stdout.read(4096)
-                if not chunk:
-                    break
-                await websocket.send_text(json.dumps({
-                    "type": "output",
-                    "data": chunk.decode("utf-8", errors="replace"),
-                }))
+            if use_pty and session_id in _terminal_fds:
+                master_fd = _terminal_fds[session_id]
+                loop = asyncio.get_event_loop()
+                while process.returncode is None:
+                    chunk = await loop.run_in_executor(None, os.read, master_fd, 4096)
+                    if not chunk:
+                        break
+                    await websocket.send_text(json.dumps({
+                        "type": "output",
+                        "data": chunk.decode("utf-8", errors="replace"),
+                    }))
+            else:
+                while process.stdout and not process.stdout.at_eof():
+                    chunk = await process.stdout.read(4096)
+                    if not chunk:
+                        break
+                    await websocket.send_text(json.dumps({
+                        "type": "output",
+                        "data": chunk.decode("utf-8", errors="replace"),
+                    }))
         except Exception:
             pass
         finally:
@@ -410,33 +455,38 @@ async def terminal_endpoint(websocket: WebSocket, session_id: str) -> None:
                 data = await websocket.receive_text()
                 msg = json.loads(data)
                 t = msg.get("type")
-                if t == "input" and process.stdin:
+                if t == "input":
                     if not terminal_rate_limiter.check(session_id):
                         await websocket.send_text(json.dumps({
                             "type": "output",
                             "data": "\r\n[rate limit excedido]\r\n",
                         }))
                         continue
-                    _line_buffer += msg["data"]
-                    # Process every complete line through the sanitizer before
-                    # writing it to the shell pipe. Partial lines are kept in
-                    # the buffer and not forwarded; this avoids echoing raw
-                    # characters to a pipe-based shell and then duplicating
-                    # them when the sanitized line is finally sent.
-                    while "\n" in _line_buffer or "\r" in _line_buffer:
-                        line, _, _line_buffer = _line_buffer.partition("\n")
-                        line = line.rstrip("\r")
-                        sanitized = _sanitizer.sanitize(line)
-                        if sanitized is None:
-                            await websocket.send_text(json.dumps({
-                                "type": "output",
-                                "data": "\r\n[bloqueado por el sanitizador de seguridad]\r\n",
-                            }))
-                            continue
-                        process.stdin.write((sanitized + "\n").encode("utf-8"))
-                    await process.stdin.drain()
+                    if use_pty and session_id in _terminal_fds:
+                        # PTY: write raw bytes directly (preserves escape sequences)
+                        master_fd = _terminal_fds[session_id]
+                        raw = msg["data"].encode("utf-8")
+                        os.write(master_fd, raw)
+                    elif process.stdin:
+                        # Pipe: sanitize complete lines
+                        _line_buffer += msg["data"]
+                        while "\n" in _line_buffer or "\r" in _line_buffer:
+                            line, _, _line_buffer = _line_buffer.partition("\n")
+                            line = line.rstrip("\r")
+                            sanitized = _sanitizer.sanitize(line)
+                            if sanitized is None:
+                                await websocket.send_text(json.dumps({
+                                    "type": "output",
+                                    "data": "\r\n[bloqueado por el sanitizador de seguridad]\r\n",
+                                }))
+                                continue
+                            process.stdin.write((sanitized + "\n").encode("utf-8"))
+                        await process.stdin.drain()
                 elif t == "resize":
-                    pass  # no PTY — resize is a no-op for pipe-based shells
+                    if use_pty and session_id in _terminal_fds:
+                        cols = msg.get("cols", 80)
+                        rows = msg.get("rows", 24)
+                        _set_pty_size(_terminal_fds[session_id], cols, rows)
         except Exception:
             pass
 
@@ -453,6 +503,11 @@ async def terminal_endpoint(websocket: WebSocket, session_id: str) -> None:
             process.kill()
             await process.wait()
         _terminal_procs.pop(session_id, None)
+        if session_id in _terminal_fds:
+            try:
+                os.close(_terminal_fds.pop(session_id))
+            except OSError:
+                pass
         exit_code = process.returncode or 0
         try:
             await websocket.send_text(json.dumps({"type": "exit", "code": exit_code}))
