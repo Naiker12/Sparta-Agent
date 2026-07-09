@@ -1,15 +1,20 @@
 import difflib
 import fnmatch
+import logging
 import os
 import re
-import logging
+import shutil
+from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 from langchain_core.tools import tool
 
-from sparta_ai.tools.permission_broker import request_permission_sync, request_diff_approval, get_agent_autonomy
 from sparta_ai.security.rate_limiter import tool_rate_limiter
+from sparta_ai.tools.permission_broker import (
+    get_agent_autonomy,
+    request_diff_approval,
+    request_permission_sync,
+)
 
 logger = logging.getLogger("sparta_ai.tools.file")
 
@@ -121,8 +126,10 @@ def _get_safe_path(
 
     resolved = candidate.resolve()
     try:
-        inside_workspace = os.path.commonpath([str(root), str(resolved)]) == str(root)
-    except ValueError:
+        resolved_norm = Path(os.path.normcase(str(resolved)))
+        root_norm = Path(os.path.normcase(str(root)))
+        inside_workspace = resolved_norm.is_relative_to(root_norm)
+    except (ValueError, AttributeError):
         inside_workspace = False
 
     # Denylist always blocks, regardless of permission (nombres exactos)
@@ -145,7 +152,7 @@ def _get_safe_path(
     elif require_permission:
         # Even inside workspace, some operations (delete, always_ask) need confirmation
         if tool_name is not None:
-            allowed = request_permission_sync(tool_name, resolved, preview)
+            allowed = request_permission_sync(tool_name, resolved, preview, force=True)
             if not allowed:
                 raise PermissionError(
                     f"Operación rechazada por el usuario: {resolved}"
@@ -167,6 +174,30 @@ def _workspace_guidance() -> str:
         f"Workspace permitido: {root}. Usa rutas relativas al workspace, "
         "por ejemplo 'src/authController.js'. No uses rutas absolutas como /tmp/... ni C:\\..."
     )
+
+
+def _move_to_trash(path: Path) -> Path:
+    """Move a file or empty directory to the application trash folder.
+
+    Uses SPARTA_DATA_DIR when available; otherwise falls back to a .sparta/.trash
+    folder inside the workspace. Items are grouped under a timestamped subdirectory
+    to avoid name collisions and to keep the trash organized.
+
+    Returns:
+        The path where the item was moved.
+    """
+    data_dir = os.environ.get("SPARTA_DATA_DIR")
+    if data_dir:
+        trash_root = Path(data_dir).resolve() / ".trash"
+    else:
+        trash_root = _workspace_root() / ".sparta" / ".trash"
+    trash_root.mkdir(parents=True, exist_ok=True)
+
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    dest = trash_root / ts / path.name
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    shutil.move(str(path), str(dest))
+    return dest
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -253,6 +284,14 @@ def write_file_tool(path: str, content: str, append: bool = False) -> str:
         need_permission = get_agent_autonomy() == "always_ask"
         filepath = _get_safe_path(path, tool_name="write_file_tool", preview=preview_text,
                                   require_permission=need_permission)
+
+        # If file already exists with content (overwrite), force confirmation
+        if not need_permission and not append and filepath.exists() and filepath.stat().st_size > 0:
+            overwrite_allowed = request_permission_sync(
+                "write_file_tool", filepath, preview_text, force=True,
+            )
+            if not overwrite_allowed:
+                return "Operación rechazada por el usuario: el archivo ya existe y tiene contenido."
 
         if append and filepath.exists():
             with open(filepath, "a", encoding="utf-8") as f:
@@ -405,6 +444,17 @@ def patch_file_tool(path: str, old_string: str, new_string: str) -> str:
         if ".ssh" in {part.lower() for part in resolved.parts}:
             return f"Error de seguridad: archivo bloqueado: {resolved}"
 
+        # Check workspace containment (misma lógica que _get_safe_path)
+        try:
+            resolved_norm = Path(os.path.normcase(str(resolved)))
+            root_norm = Path(os.path.normcase(str(root)))
+            inside_workspace = resolved_norm.is_relative_to(root_norm)
+        except (ValueError, AttributeError):
+            inside_workspace = False
+        if not inside_workspace:
+            if not request_permission_sync("patch_file_tool", resolved, ""):
+                return "Edición rechazada por el usuario: ruta fuera del workspace permitido."
+
         _validate_path(resolved)
 
         # Leer archivo y generar diff ANTES de pedir permiso
@@ -499,13 +549,13 @@ def delete_file_tool(path: str) -> str:
                     f"Error: El directorio '{path}' no está vacío ({len(contents)} elementos). "
                     "Elimina los archivos internos primero, o usa delete_file_tool sobre cada uno."
                 )
-            filepath.rmdir()
-            logger.info("delete_file_tool: removed empty dir %s", filepath)
-            return f"Directorio vacío eliminado: {path}"
+            trash_path = _move_to_trash(filepath)
+            logger.info("delete_file_tool: moved empty dir to trash %s -> %s", filepath, trash_path)
+            return f"Directorio vacío movido a la papelera: {path}"
         else:
-            filepath.unlink()
-            logger.info("delete_file_tool: deleted file %s", filepath)
-            return f"Archivo eliminado: {path}"
+            trash_path = _move_to_trash(filepath)
+            logger.info("delete_file_tool: moved file to trash %s -> %s", filepath, trash_path)
+            return f"Archivo movido a la papelera: {path}"
 
     except PermissionError as e:
         logger.warning("delete_file_tool blocked: %s", e)
