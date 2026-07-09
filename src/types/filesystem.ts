@@ -21,4 +21,8 @@ export interface FilesystemAPI {
   readDir: (dirPath: string) => Promise<FileTreeNode[]>
   readFile: (filePath: string) => Promise<FileReadResult>
   writeFile: (filePath: string, content: string) => Promise<FileWriteResult>
+  deleteFile: (filePath: string) => Promise<{ success: boolean; error?: string }>
+  deleteFolder: (folderPath: string) => Promise<{ success: boolean; error?: string }>
+  startWatcher: (dirPath: string) => Promise<{ success: boolean }>
+  stopWatcher: () => Promise<{ success: boolean }>
 }

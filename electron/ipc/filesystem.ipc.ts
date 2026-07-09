@@ -1,6 +1,7 @@
 import { ipcMain, dialog, shell } from 'electron'
 import fs from 'node:fs'
 import path from 'node:path'
+import { startFileWatcher, stopFileWatcher } from './file-watcher'
 
 export interface FileTreeNode {
   name: string
@@ -101,5 +102,16 @@ export function registerFilesystemIPC() {
     } catch (err) {
       return { success: false, error: (err as Error).message }
     }
+  })
+
+  ipcMain.handle('fs:startWatcher', (_event, dirPath: string) => {
+    if (!dirPath || typeof dirPath !== 'string') return { success: false }
+    startFileWatcher(dirPath)
+    return { success: true }
+  })
+
+  ipcMain.handle('fs:stopWatcher', () => {
+    stopFileWatcher()
+    return { success: true }
   })
 }

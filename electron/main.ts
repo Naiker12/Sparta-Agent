@@ -13,6 +13,7 @@ import { registerFilesystemIPC } from './ipc/filesystem.ipc'
 import { registerSkillsIPC } from './ipc/skills.ipc'
 import { registerPermissionIPC, setPermissionWindow } from './ipc/permission.ipc'
 import { registerModelsIPC } from './ipc/models.ipc'
+import { stopFileWatcher } from './ipc/file-watcher'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -152,7 +153,8 @@ app.whenReady().then(async () => {
   })
 })
 
-// Graceful shutdown: stop sidecar when app quits
+// Graceful shutdown: stop sidecar and file watcher when app quits
 app.on('before-quit', () => {
+  stopFileWatcher()
   stopSidecar()
 })

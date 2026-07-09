@@ -66,6 +66,8 @@ interface FsAPI {
   writeFile: (filePath: string, content: string) => Promise<{ success: boolean; error?: string }>
   deleteFile: (filePath: string) => Promise<{ success: boolean; error?: string }>
   deleteFolder: (folderPath: string) => Promise<{ success: boolean; error?: string }>
+  startWatcher: (dirPath: string) => Promise<{ success: boolean }>
+  stopWatcher: () => Promise<{ success: boolean }>
 }
 
 interface TerminalIPC {

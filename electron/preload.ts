@@ -143,6 +143,8 @@ contextBridge.exposeInMainWorld('fs', {
   writeFile: (filePath: string, content: string) => ipcRenderer.invoke('fs:writeFile', filePath, content) as Promise<{ success: boolean; error?: string }>,
   deleteFile: (filePath: string) => ipcRenderer.invoke('fs:deleteFile', filePath) as Promise<{ success: boolean; error?: string }>,
   deleteFolder: (folderPath: string) => ipcRenderer.invoke('fs:deleteFolder', folderPath) as Promise<{ success: boolean; error?: string }>,
+  startWatcher: (dirPath: string) => ipcRenderer.invoke('fs:startWatcher', dirPath) as Promise<{ success: boolean }>,
+  stopWatcher: () => ipcRenderer.invoke('fs:stopWatcher') as Promise<{ success: boolean }>,
 })
 
 contextBridge.exposeInMainWorld('skills', {
