@@ -38,6 +38,8 @@ import uuid
 from pathlib import Path
 from typing import Any
 
+from sparta_ai.security.permission_policy import PermissionDecision, get_policy
+
 logger = logging.getLogger("sparta_ai.tools.permission_broker")
 
 # Environment flag: "electron" means we have a user dialog available.
@@ -80,8 +82,10 @@ def _workspace_root() -> Path:
 def _is_inside_workspace(resolved: Path) -> bool:
     root = _workspace_root()
     try:
-        return os.path.commonpath([str(root), str(resolved)]) == str(root)
-    except ValueError:
+        resolved_norm = Path(os.path.normcase(str(resolved.resolve())))
+        root_norm = Path(os.path.normcase(str(root.resolve())))
+        return resolved_norm.is_relative_to(root_norm)
+    except (ValueError, AttributeError):
         return False
 
 
@@ -123,6 +127,7 @@ async def request_permission(
     resolved_path: Path,
     preview: str = "",
     request_id: str = "",
+    force: bool = False,
 ) -> bool:
     """Check or request permission for an out-of-workspace path.
 
@@ -131,11 +136,17 @@ async def request_permission(
         resolved_path: Absolute resolved path the tool wants to access.
         preview:       Short description or diff preview shown to the user.
         request_id:    Optional parent request_id for scoping the session cache.
+        force:         If True, request user confirmation even inside workspace.
 
     Returns:
         True if access is granted, False if denied.
     """
-    if _is_inside_workspace(resolved_path):
+    decision = get_policy().get_decision(tool_name, resolved_path)
+    if decision == PermissionDecision.DENY:
+        logger.info("Permission DENY by policy: %s → %s", tool_name, resolved_path)
+        return False
+
+    if _is_inside_workspace(resolved_path) and not force and decision == PermissionDecision.ALLOW:
         return True
 
     cache_key = (tool_name, str(resolved_path))
@@ -179,6 +190,7 @@ def request_permission_sync(
     tool_name: str,
     resolved_path: Path,
     preview: str = "",
+    force: bool = False,
 ) -> bool:
     """Sync version of request_permission for sync @tool functions.
 
@@ -189,11 +201,21 @@ def request_permission_sync(
         tool_name:     Name of the tool requesting access.
         resolved_path: Absolute resolved path to access.
         preview:       Short description or diff preview.
+        force:         If True, request user confirmation even when the path
+                       is inside the workspace. Used by destructive tools such
+                       as delete_file_tool.
 
     Returns:
         True if access is granted, False if denied.
     """
-    if _is_inside_workspace(resolved_path):
+    # Check permission policy rules first (allow / ask / deny per tool+path)
+    decision = get_policy().get_decision(tool_name, resolved_path)
+    if decision == PermissionDecision.DENY:
+        logger.info("Permission DENY by policy: %s → %s", tool_name, resolved_path)
+        return False
+
+    # Inside workspace: skip dialog unless forced or policy requires ASK
+    if _is_inside_workspace(resolved_path) and not force and decision == PermissionDecision.ALLOW:
         return True
 
     cache_key = (tool_name, str(resolved_path))
