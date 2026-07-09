@@ -291,6 +291,7 @@ export function MessageBubble({ message, isLastUser = false, isLastAssistant = f
                 content={message.reasoningText ?? ''}
                 status={message.thinkingStatus ?? (message.isStreaming ? 'streaming' : 'completed')}
                 tokensUsed={message.thinkingTokensUsed ?? 0}
+                thinkingStatusText={message.thinkingStatusText}
                 pipelineSteps={message.pipelineSteps}
                 messageId={message.id}
               />
@@ -299,7 +300,7 @@ export function MessageBubble({ message, isLastUser = false, isLastAssistant = f
 
           {renderState.kind === 'thinking_pending' && !hasThinking && (
             <div style={{ marginTop: 8, marginBottom: 8 }}>
-              <ThinkingBlock content="" status="starting" tokensUsed={0} messageId={message.id} />
+              <ThinkingBlock content="" status="starting" tokensUsed={0} thinkingStatusText={message.thinkingStatusText} messageId={message.id} />
             </div>
           )}
 

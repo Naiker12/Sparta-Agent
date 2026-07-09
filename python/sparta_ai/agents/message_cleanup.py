@@ -21,6 +21,9 @@ _REQUIRE_REASONING_CONTENT = {"deepseek", "kimi"}
 # Vendors that REJECT reasoning_content (will return HTTP 422)
 _REJECT_REASONING_CONTENT = {"mistral", "groq", "cerebras"}
 
+# Vendors that expect reasoning as native content blocks instead of a separate field
+_BLOCK_REASONING_VENDORS = {"anthropic"}
+
 
 def drop_thinking_only_and_merge_users(messages: list[dict]) -> list[dict]:
     """Filter out assistant-only-thinking turns from a COPY of messages.
@@ -226,5 +229,62 @@ def reapply_reasoning_echo_for_provider(
             _promote_reasoning_if_present(msg)
             if vendor_lower not in _REQUIRE_REASONING_CONTENT:
                 pass
+
+    return result
+
+
+def format_reasoning_for_provider(
+    messages: list[dict],
+    vendor: str,
+) -> list[dict]:
+    """Convert reasoning fields to the native format expected by the target provider.
+
+    LangChain's `_format_messages` for Anthropic ignores the `reasoning_content`
+    field on assistant messages, so historical reasoning would be silently lost
+    when resuming a conversation with Claude. This function converts it to the
+    Anthropic-native list of content blocks (`thinking` + `text`) so the model
+    receives the full conversation context.
+
+    For providers that require `reasoning_content` (DeepSeek/Kimi) the field is
+    preserved. For providers that reject it, it is removed.
+
+    Args:
+        messages: The message list to process (will be copied).
+        vendor: The target provider vendor string.
+
+    Returns:
+        A new list with reasoning formatted for the active provider.
+    """
+    result = copy.deepcopy(messages)
+    vendor_lower = vendor.lower()
+
+    for msg in result:
+        if msg.get("role") != "assistant":
+            continue
+
+        reasoning = msg.get("reasoning_content") or msg.get("reasoning")
+        if not reasoning:
+            continue
+
+        if vendor_lower in _REJECT_REASONING_CONTENT:
+            _remove_reasoning_fields(msg)
+            continue
+
+        if vendor_lower in _BLOCK_REASONING_VENDORS:
+            content = msg.get("content", "") or ""
+            blocks: list[dict] = []
+            if reasoning and str(reasoning).strip():
+                blocks.append({"type": "thinking", "thinking": str(reasoning)})
+            if content:
+                blocks.append({"type": "text", "text": str(content)})
+            msg["content"] = blocks if blocks else ""
+            _remove_reasoning_fields(msg)
+            continue
+
+        # DeepSeek/Kimi and other neutral providers: keep reasoning_content if present
+        if vendor_lower in _REQUIRE_REASONING_CONTENT:
+            _ensure_reasoning_content(msg)
+        else:
+            _promote_reasoning_if_present(msg)
 
     return result

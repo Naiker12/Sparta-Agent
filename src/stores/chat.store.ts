@@ -36,6 +36,7 @@ interface ChatState {
   // Thinking lifecycle
   onThinkingStart: (sessionId: string, messageId: string) => void
   onThinkingEnd: (sessionId: string, messageId: string, tokensUsed: number) => void
+  setThinkingStatusText: (sessionId: string, messageId: string, text: string) => void
   onReasoningAvailable: (sessionId: string, messageId: string, text: string) => void
   onStreamEnd: (sessionId: string, messageId: string) => void
   deduplicateReasoningFromContent: (sessionId: string, messageId: string) => void
@@ -333,6 +334,20 @@ export const useChatStore = create<ChatState>()(
               ...s.messagesBySession,
               [sessionId]: sessionMessages.map((msg) =>
                 msg.id === messageId ? { ...msg, thinkingStatus: 'completed' as ThinkingStatus, thinkingTokensUsed: tokensUsed } : msg
+              ),
+            },
+          }
+        }),
+
+      setThinkingStatusText: (sessionId, messageId, text) =>
+        set((s) => {
+          const sessionMessages = s.messagesBySession[sessionId]
+          if (!sessionMessages) return s
+          return {
+            messagesBySession: {
+              ...s.messagesBySession,
+              [sessionId]: sessionMessages.map((msg) =>
+                msg.id === messageId ? { ...msg, thinkingStatusText: text } : msg
               ),
             },
           }

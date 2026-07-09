@@ -304,6 +304,7 @@ class StdioServer:
         from sparta_ai.agents.message_cleanup import (
             copy_reasoning_content_for_api,
             drop_thinking_only_and_merge_users,
+            format_reasoning_for_provider,
             reapply_reasoning_echo_for_provider,
         )
 
@@ -321,6 +322,7 @@ class StdioServer:
         # Clean messages for API safety: drop thinking-only turns + sanitize reasoning fields
         api_messages = drop_thinking_only_and_merge_users(messages)
         api_messages = copy_reasoning_content_for_api(api_messages, vendor or provider)
+        api_messages = format_reasoning_for_provider(api_messages, vendor or provider)
         compressed_messages = await compress_if_needed(api_messages, llm)
 
         # Build active skills context (user-toggled skills only)

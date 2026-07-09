@@ -91,6 +91,7 @@ export const en = {
     testing: 'Testing...',
     testSuccess: 'Connection successful',
     testError: 'Error:',
+    testNetworkHint: 'If the key is correct, try saving and using the chat directly; some providers restrict the connection test.',
     selectModel: 'Select model',
     testFirst: 'Test connection first',
   },

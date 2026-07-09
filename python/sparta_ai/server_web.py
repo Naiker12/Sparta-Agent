@@ -253,6 +253,7 @@ async def _execute_agent_ws(
     from sparta_ai.agents.message_cleanup import (
         copy_reasoning_content_for_api,
         drop_thinking_only_and_merge_users,
+        format_reasoning_for_provider,
     )
 
     llm = build_llm(
@@ -269,6 +270,7 @@ async def _execute_agent_ws(
     # Clean messages for API safety: drop thinking-only turns + sanitize reasoning fields
     api_messages = drop_thinking_only_and_merge_users(messages)
     api_messages = copy_reasoning_content_for_api(api_messages, vendor or provider)
+    api_messages = format_reasoning_for_provider(api_messages, vendor or provider)
     compressed_messages = await compress_if_needed(api_messages, llm)
 
     # Active skills context only (full index discoverable via skills_list_tool)

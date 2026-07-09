@@ -79,6 +79,18 @@ export function ConfigureProviderDialog({
     setFetchedModels([])
   }, [vendor, editProvider])
 
+  function isNetworkError(message: string): boolean {
+    const lower = message.toLowerCase()
+    return (
+      lower.includes('failed to fetch') ||
+      lower.includes('load failed') ||
+      lower.includes('networkerror') ||
+      lower.includes('cors') ||
+      lower.includes('connection failed') ||
+      lower.includes('network request failed')
+    )
+  }
+
   async function handleTest() {
     if (!vendor) return
     setTesting(true)
@@ -89,7 +101,13 @@ export function ConfigureProviderDialog({
     setTesting(false)
 
     if (result.error) {
-      setTestError(result.error)
+      if (isNetworkError(result.error)) {
+        setTestError(
+          `${result.error} — ${t('models.testNetworkHint') || 'Si la clave es correcta, prueba guardar y usar el chat directamente; algunos proveedores restringen la prueba de conexión.'}`,
+        )
+      } else {
+        setTestError(result.error)
+      }
       return
     }
 

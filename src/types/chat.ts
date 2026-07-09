@@ -45,6 +45,7 @@ export interface Message {
   agentId?: string
   reasoningText?: string
   thinkingStatus?: ThinkingStatus
+  thinkingStatusText?: string
   thinkingTokensUsed?: number
   reasoningContent?: string
   reasoningDetails?: ReasoningDetail[]

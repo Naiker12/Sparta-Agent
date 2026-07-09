@@ -4,7 +4,6 @@ import logging
 
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage, ToolMessage
 from langchain_core.tools import tool
-from langchain_openai import ChatOpenAI
 from langgraph.graph import END, START, MessagesState, StateGraph
 from langgraph.prebuilt import ToolNode
 
@@ -127,11 +126,14 @@ def build_research_graph(llm=None):
     """Return a compiled LangGraph sub-graph that streams through the parent.
 
     Args:
-        llm: Optional LLM instance from the parent graph. If None, falls back
-             to ChatOpenAI(model="gpt-4o-mini") for backward compatibility.
+        llm: LLM instance from the parent graph. Must be provided; the subagent
+             will use the user's configured provider/model instead of a fallback.
     """
     if llm is None:
-        llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.3)
+        raise ValueError(
+            "build_research_graph: se requiere una instancia de LLM. "
+            "Asegurate de que el subagente reciba el modelo activo del usuario."
+        )
 
     tools = [web_search_tool, web_fetch_tool]
     llm_with_tools = llm.bind_tools(tools)

@@ -2,13 +2,25 @@ import json
 import logging
 from typing import TypedDict
 
+from langchain_core.callbacks.manager import adispatch_custom_event
 from langchain_core.messages import BaseMessage, SystemMessage
 from langchain_core.tools import tool
-from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, START, END, MessagesState
 from langgraph.prebuilt import ToolNode
 
-from sparta_ai.tools.file_tools import read_file_tool, write_file_tool
+from sparta_ai.tools.file_tools import (
+    read_file_tool,
+    write_file_tool,
+    patch_file_tool,
+    delete_file_tool,
+    search_files_tool,
+)
+from sparta_ai.tools.code_search_tools import (
+    list_directory_tool,
+    glob_search_tool,
+    grep_search_tool,
+    git_status_tool,
+)
 
 logger = logging.getLogger("sparta_ai.subagents.code")
 
@@ -21,9 +33,20 @@ class CodeState(MessagesState):
 
 
 CODE_PROMPT = (
-    "Eres un agente de programación experto. Tu tarea es escribir, "
-    "refactorizar y depurar código. Siempre explica los cambios que haces "
-    "y sigue las mejores prácticas del lenguaje correspondiente."
+    "Eres un agente de programación experto. Antes de escribir o modificar "
+    "código en un proyecto que no conoces, sigue SIEMPRE este orden:\n"
+    "1. list_directory en la raíz para entender la estructura.\n"
+    "2. Lee package.json / pyproject.toml / Cargo.toml / requirements.txt "
+    "(el que exista) para identificar el stack y las dependencias.\n"
+    "3. Usa grep_search o glob_search para localizar el código relevante "
+    "a la tarea (no adivines rutas).\n"
+    "4. Antes de escribir, muestra qué archivo vas a tocar y por qué.\n"
+    "5. Después de escribir, si el proyecto tiene git, usa git_status "
+    "para confirmar el alcance real del cambio.\n"
+    "Nunca toques node_modules/, .git/, .env, ni archivos fuera del "
+    "workspace del proyecto. Explica siempre los cambios que haces y "
+    "sigue las convenciones ya presentes en el código (no inventes un "
+    "estilo nuevo si el proyecto ya tiene uno)."
 )
 
 
@@ -53,8 +76,9 @@ def execute_code_task(
     file_path: str | None = None,
 ) -> str:
     """
-    Ejecuta tareas de programación: escribir código, refactorizar,
-    depurar, o analizar archivos de código fuente.
+    Señala al orquestador que se debe activar el subagente de código.
+    El trabajo real lo realiza el subagente compilado (build_code_graph)
+    con el LLM que el usuario configuró, no esta función.
 
     Args:
         task: Descripción de la tarea de código a realizar.
@@ -63,35 +87,33 @@ def execute_code_task(
         file_path: Ruta opcional al archivo a modificar o analizar.
 
     Returns:
-        Código generado o modificado, con explicación de los cambios.
+        Confirmación de que la tarea será delegada al subagente de código.
     """
-    context = ""
-    if file_path:
-        try:
-            context = read_file_tool.invoke({"path": file_path})
-        except Exception as e:
-            context = f"(No se pudo leer {file_path}: {e})"
-
-    prompt_parts = [f"Tarea: {task}"]
-    if language and language != "auto":
-        prompt_parts.append(f"Lenguaje: {language}")
-    if context:
-        prompt_parts.append(f"Contexto del archivo:\n{context}")
-
-    agent = _build_code_agent()
-    result = agent.invoke({"input": "\n".join(prompt_parts)})
-    return result.get("output", str(result))
+    # This tool is intentionally lightweight: the parent graph intercepts
+    # delegate_* tool calls and runs the compiled sub-graph with the active
+    # user-selected LLM. Keeping this function free of side-effects prevents
+    # accidentally using a fallback model.
+    return f"Delegando tarea de código al subagente (lenguaje={language}, archivo={file_path}): {task[:200]}"
 
 
 def _build_code_agent(llm=None):
     if llm is None:
-        llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.2)
-    tools = [read_file_tool, write_file_tool]
-    prompt = (
-        "Eres un agente de programación experto. Tu tarea es escribir, "
-        "refactorizar y depurar código. Siempre explica los cambios que haces "
-        "y sigue las mejores prácticas del lenguaje correspondiente."
-    )
+        raise ValueError(
+            "code_agent: se requiere una instancia de LLM. "
+            "No se permite un modelo hardcodeado."
+        )
+    tools = [
+        list_directory_tool,
+        glob_search_tool,
+        grep_search_tool,
+        git_status_tool,
+        read_file_tool,
+        write_file_tool,
+        patch_file_tool,
+        delete_file_tool,
+        search_files_tool,
+    ]
+    prompt = CODE_PROMPT
     from langchain.agents import create_react_agent
     return create_react_agent(llm, tools, prompt=prompt)
 
@@ -100,16 +122,30 @@ def build_code_graph(llm=None):
     """Return a compiled LangGraph sub-graph that streams through the parent.
 
     Args:
-        llm: Optional LLM instance from the parent graph. If None, falls back
-             to ChatOpenAI(model="gpt-4o-mini") for backward compatibility.
+        llm: LLM instance from the parent graph. Must be provided; the subagent
+             will use the user's configured provider/model instead of a fallback.
     """
     if llm is None:
-        llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.2)
-    tools = [read_file_tool, write_file_tool]
+        raise ValueError(
+            "build_code_graph: se requiere una instancia de LLM. "
+            "Asegurate de que el subagente reciba el modelo activo del usuario."
+        )
+    tools = [
+        list_directory_tool,
+        glob_search_tool,
+        grep_search_tool,
+        git_status_tool,
+        read_file_tool,
+        write_file_tool,
+        patch_file_tool,
+        delete_file_tool,
+        search_files_tool,
+    ]
     llm_with_tools = llm.bind_tools(tools)
 
     async def agent_node(state: CodeState) -> dict:
         task, language, file_path = _extract_task_args(state["messages"])
+        await adispatch_custom_event("thinking:status", {"text": "Explorando el código y planificando cambios…"})
         system = SystemMessage(content=CODE_PROMPT)
         prompt_parts = [f"Tarea: {task}"]
         if language and language != "auto":

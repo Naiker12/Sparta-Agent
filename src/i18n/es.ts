@@ -91,6 +91,7 @@ export const es = {
     testing: 'Probando...',
     testSuccess: 'Conexión exitosa',
     testError: 'Error:',
+    testNetworkHint: 'Si la clave es correcta, prueba guardar y usar el chat directamente; algunos proveedores restringen la prueba de conexión.',
     selectModel: 'Seleccionar modelo',
     testFirst: 'Prueba conexión primero',
   },

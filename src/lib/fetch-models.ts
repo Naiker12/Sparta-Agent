@@ -29,17 +29,25 @@ function chatModelsOnly(models: string[]): string[] {
   return chatModels.length > 0 ? chatModels : models
 }
 
+function canUseMainProcess(): boolean {
+  return typeof window !== 'undefined' && !!window.sparta?.fetchModels
+}
+
 export async function fetchModelsByVendor(
   vendor: ProviderVendor,
   apiKey: string,
   serverUrl?: string,
 ): Promise<FetchModelsResult> {
   try {
+    // In Electron, always route model listing through the main process. The renderer
+    // (browser window) is subject to CORS, and some providers such as NVIDIA do not
+    // allow browser-side requests to their API. The main process has no CORS limits.
+    if (canUseMainProcess()) {
+      return window.sparta.fetchModels({ vendor, apiKey, serverUrl })
+    }
+
     switch (vendor) {
       case 'ollama': {
-        if (typeof window !== 'undefined' && window.sparta?.fetchModels) {
-          return window.sparta.fetchModels({ vendor, apiKey, serverUrl })
-        }
         const url = `${serverUrl || 'http://localhost:11434'}/api/tags`
         const res = await fetch(url)
         if (!res.ok) return { models: [], error: `HTTP ${res.status}: ${res.statusText}` }
@@ -51,9 +59,6 @@ export async function fetchModelsByVendor(
       case 'lmstudio':
       case 'llamacpp':
       case 'custom': {
-        if (typeof window !== 'undefined' && window.sparta?.fetchModels) {
-          return window.sparta.fetchModels({ vendor, apiKey, serverUrl })
-        }
         const base = serverUrl || 'http://localhost:1234'
         const res = await fetch(`${base}/v1/models`)
         if (!res.ok) return { models: [], error: `HTTP ${res.status}: ${res.statusText}` }
@@ -143,7 +148,7 @@ export async function fetchModelsByVendor(
         if (!res.ok) return { models: [], error: `HTTP ${res.status}: ${res.statusText}` }
         const data = await res.json()
         const models = (data.data || []).map((m: { id: string }) => m.id)
-        return { models }
+        return { models: chatModelsOnly(models) }
       }
     }
   } catch (err) {

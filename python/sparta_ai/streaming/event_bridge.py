@@ -156,6 +156,28 @@ async def stream_agent_to_electron(
             stream_state["thinking_active"] = False
             stream_state["_rep_guard"] = RepetitionGuard()
             await _try_stream()
+            return
+
+        # Final empty response after exhausting retries
+        if result.get("visible_chars", 0) == 0 and not stream_state.get("_stream_completed"):
+            logger.error("Empty response after %d retries for request %s", max_empty_retries, request_id)
+            _emit(
+                request_id,
+                "error",
+                {
+                    "code": "empty_response",
+                    "message": (
+                        "El modelo no devolvió contenido visible. "
+                        "Causas comunes: (1) el modelo no existe para este proveedor, "
+                        "(2) la API key es inválida o no tiene acceso al modelo, "
+                        "(3) el proveedor seleccionado no corresponde al modelo "
+                        "(por ejemplo, un modelo de NVIDIA configurado como Google). "
+                        "Verificá la configuración en Configuración > Modelos."
+                    ),
+                },
+            )
+            _emit(request_id, "stream_end", {"error": "empty_response"})
+            stream_state["_stream_completed"] = True
 
     await _try_stream()
 
@@ -411,9 +433,31 @@ async def _dispatch_event_core(
             {**base_payload, "text": "Analizando la tarea y generando plan…"},
         )
 
+    elif kind == "on_chain_start" and name == "agent":
+        emit_control_fn(
+            "thinking:status",
+            {**base_payload, "text": "Razonando sobre el siguiente paso…"},
+        )
+
+    elif kind == "on_chain_start" and name == "tools":
+        emit_control_fn(
+            "thinking:status",
+            {**base_payload, "text": "Ejecutando herramientas…"},
+        )
+
+    elif kind == "on_chain_start" and name == "subagent_coordinator":
+        emit_control_fn(
+            "thinking:status",
+            {**base_payload, "text": "Delegando tarea al especialista…"},
+        )
+
     elif kind == "on_custom_event":
         if name == "tool_progress":
             emit_control_fn("search:progress", {**base_payload, **data})
+        elif name == "thinking:status":
+            text = data.get("text") if isinstance(data, dict) else None
+            if text:
+                emit_control_fn("thinking:status", {**base_payload, "text": text})
 
     elif kind == "on_chain_end" and name == "planner":
         output = data.get("output", {})
@@ -793,6 +837,17 @@ async def _dispatch_event_ws(
                     **data,
                 },
             )
+        elif name == "thinking:status":
+            text = data.get("text") if isinstance(data, dict) else None
+            if text:
+                await _emit_ws_renderer(
+                    websocket,
+                    "thinking:status",
+                    {
+                        **base_payload,
+                        "text": text,
+                    },
+                )
 
     elif kind == "on_chain_end" and name == "agent":
         if stream_state.get("_stream_completed"):

@@ -198,8 +198,29 @@ pub fn sanitize_tool_call(tool_name: &str, input: &Value) -> SanitizedToolCall {
             }
             SanitizedToolCall { safe: true, blocked_reason: None, sanitized_input: None }
         }
-        "read_file" | "write_file" | "read_file_tool" | "write_file_tool" => {
+        "read_file" | "write_file" | "read_file_tool" | "write_file_tool" |
+        "list_directory" | "list_directory_tool" |
+        "glob_search" | "glob_search_tool" |
+        "grep_search" | "grep_search_tool" => {
             sanitize_file_tool_call(tool_name, input)
+        }
+        "git_status" | "git_status_tool" => {
+            // git_status reads inside the workspace; apply path-based checks and
+            // limit the reported diff size to avoid huge payloads.
+            let file_result = sanitize_file_tool_call(tool_name, input);
+            if !file_result.safe {
+                return file_result;
+            }
+            if let Some(output) = input.get("output").and_then(|v| v.as_str()) {
+                if output.len() > 50_000 {
+                    return SanitizedToolCall {
+                        safe: false,
+                        blocked_reason: Some("git_status output exceeds 50KB".into()),
+                        sanitized_input: None,
+                    };
+                }
+            }
+            SanitizedToolCall { safe: true, blocked_reason: None, sanitized_input: None }
         }
         "web_search" | "web_search_tool" => {
             sanitize_web_search_call(input)

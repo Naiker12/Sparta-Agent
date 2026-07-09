@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils'
 import { StreamCursor } from './StreamCursor'
 import { ThinkingPill } from './ThinkingPill'
 import { ThinkingSkeletonRows } from './ThinkingSkeletonRows'
+import { ThinkingStatusLine } from './ThinkingStatusLine'
 import { SkillActivationBadge } from './SkillActivationBadge'
 import { StreamStallIndicator } from './StreamStallIndicator'
 import type { ThinkingStatus, PipelineStep } from '@/types'
@@ -13,6 +14,7 @@ interface ThinkingBlockProps {
   content: string
   status: ThinkingStatus
   tokensUsed: number
+  thinkingStatusText?: string
   pipelineSteps?: PipelineStep[]
   className?: string
   messageId?: string
@@ -46,7 +48,7 @@ function saveCollapseState(messageId: string, expanded: boolean) {
   } catch { /* ignore */ }
 }
 
-export function ThinkingBlock({ content, status, tokensUsed, pipelineSteps, className, messageId }: ThinkingBlockProps) {
+export function ThinkingBlock({ content, status, tokensUsed, thinkingStatusText, pipelineSteps, className, messageId }: ThinkingBlockProps) {
   const { t } = useTranslation()
   const savedState = useMemo(() => loadCollapseState(messageId), [messageId])
   const [isExpanded, setIsExpanded] = useState(
@@ -172,7 +174,15 @@ export function ThinkingBlock({ content, status, tokensUsed, pipelineSteps, clas
             style={{ overflow: 'hidden' }}
           >
             <div className="thinking-lines-v2">
-              {(status === 'starting' || status === 'streaming') && !content && <ThinkingSkeletonRows />}
+              {(status === 'starting' || status === 'streaming') && !content && (
+                <>
+                  {thinkingStatusText ? (
+                    <ThinkingStatusLine text={thinkingStatusText} />
+                  ) : (
+                    <ThinkingSkeletonRows />
+                  )}
+                </>
+              )}
 
               {skillBadges.map((step) => (
                 <SkillActivationBadge

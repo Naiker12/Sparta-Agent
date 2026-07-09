@@ -223,6 +223,10 @@ function _handleMCPEvent(type: string, event: Record<string, unknown>) {
       break
     }
     case 'thinking:status': {
+      const statusText = (event as { text?: string }).text
+      if (statusText) {
+        store.setThinkingStatusText(sid, mid, statusText)
+      }
       break
     }
     case 'reasoning:token': {
