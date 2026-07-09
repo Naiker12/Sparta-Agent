@@ -8,6 +8,7 @@ const ERROR_EVENTS: SpartaEvent['type'][] = [
   'stream:error',
   'tool:error',
   'mcp:disconnected',
+  'terminal:tool_crash',
 ]
 
 function getErrorMessage(event: SpartaEvent): string {
@@ -22,6 +23,8 @@ function getErrorMessage(event: SpartaEvent): string {
         : 'Error al ejecutar una herramienta.')
     case 'mcp:disconnected':
       return `Se desconectó el servidor MCP ${event.serverId}.`
+    case 'terminal:tool_crash':
+      return event.error ?? 'Ocurrió un error inesperado ejecutando un comando.'
     default:
       return 'Ocurrió un error inesperado.'
   }

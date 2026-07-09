@@ -151,7 +151,7 @@ export function registerChatIPC(): void {
     }
 
     // ── Terminal bridge events: no sessionId/messageId needed ──────────
-    if (event === 'terminal:agent_output' || event === 'terminal:agent_exit') {
+    if (event === 'terminal:agent_output' || event === 'terminal:agent_exit' || event === 'terminal:tool_crash') {
       const win = BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0]
       if (win && !win.isDestroyed()) {
         win.webContents.send('sparta:event', {

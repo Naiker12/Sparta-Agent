@@ -54,6 +54,7 @@ export type EventType =
   | 'file:changed'
   | 'editor:diff_proposed'
   | 'editor:diff_responded'
+  | 'terminal:tool_crash'
 
 export interface BaseEvent {
   type: EventType
@@ -375,6 +376,11 @@ export interface DiffProposedEvent extends BaseEvent {
   language: string
 }
 
+export interface TerminalToolCrashEvent extends BaseEvent {
+  type: 'terminal:tool_crash'
+  error: string
+}
+
 export interface PlanStepEvent extends BaseEvent {
   type: 'plan:step'
   plan: string[]
@@ -435,3 +441,4 @@ export type SpartaEvent =
   | PlanStepEvent
   | FileChangedEvent
   | DiffProposedEvent
+  | TerminalToolCrashEvent
