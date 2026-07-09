@@ -187,6 +187,12 @@ export function useChatSession() {
 
   const sendMessage = useCallback(
     async (text: string) => {
+      const existingSid = activeIdRef.current
+      const streamState = existingSid ? useChatStore.getState().getStreamState(existingSid) : undefined
+      if (streamState?.isStreaming) {
+        console.warn('[useChatSession] sendMessage ignorado: sesión ya está stremeando', existingSid)
+        return { sessionId: existingSid!, assistantId: '', userMessageId: '' }
+      }
       const sid = activeIdRef.current ?? createSession()
       const userMessageId = crypto.randomUUID()
       addMessage({

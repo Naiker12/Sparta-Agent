@@ -3,6 +3,7 @@ import { Copy, Check, Pencil, CheckCheck, X, RotateCw, Trash2, RefreshCw } from 
 import type { Message } from '@/types'
 import { useChatStore } from '@/stores/chat.store'
 import { useEventBus } from '@/stores/event-bus.store'
+import { messagingAdapter } from '@/lib/messaging-adapter'
 import { useChatSession } from '@/hooks/useChatSession'
 import { ThinkingBlock } from './reasoning/ThinkingBlock'
 import { SearchProgressBlock } from './reasoning/SearchProgressBlock'
@@ -20,6 +21,7 @@ interface MessageBubbleProps {
   message: Message
   isLastUser?: boolean
   isLastAssistant?: boolean
+  hideSearchProgress?: boolean
 }
 
 function getFollowUpSuggestions(content: string, lang: string): string[] {
@@ -69,7 +71,7 @@ function getFollowUpSuggestions(content: string, lang: string): string[] {
     : ['Show me a practical example of this', 'What are the alternatives to this approach?', 'Give me a simplified explanation']
 }
 
-export function MessageBubble({ message, isLastUser = false, isLastAssistant = false }: MessageBubbleProps) {
+export function MessageBubble({ message, isLastUser = false, isLastAssistant = false, hideSearchProgress = false }: MessageBubbleProps) {
   const isUser = message.role === 'user'
   const renderState = getMessageRenderState(message.content, message.reasoningText, message.isStreaming ?? false)
   const [copied, setCopied] = useState(false)
@@ -242,8 +244,8 @@ export function MessageBubble({ message, isLastUser = false, isLastAssistant = f
           ) : null}
 
           {/* Search progress — VIVO durante búsqueda web */}
-          {(message.searchProgress && message.searchProgress.length > 0) ||
-            (message.toolCalls?.some((tc) => isSearchTool(tc.toolName) && tc.status === 'running')) ? (
+          {!hideSearchProgress && ((message.searchProgress && message.searchProgress.length > 0) ||
+            (message.toolCalls?.some((tc) => isSearchTool(tc.toolName) && tc.status === 'running'))) ? (
             <div style={{ marginTop: 8 }}>
               <SearchProgressBlock
                 items={message.searchProgress ?? []}
@@ -252,6 +254,14 @@ export function MessageBubble({ message, isLastUser = false, isLastAssistant = f
                   false
                 }
                 query={message.searchQuery}
+                onCancel={() => {
+                  const sid = message.sessionId
+                  if (sid) {
+                    useChatStore.getState().stopStreaming(sid)
+                    messagingAdapter.abortMessage(sid)
+                  }
+                }}
+                onRetry={() => sendMessage(message.content)}
               />
             </div>
           ) : null}
@@ -294,13 +304,14 @@ export function MessageBubble({ message, isLastUser = false, isLastAssistant = f
                 thinkingStatusText={message.thinkingStatusText}
                 pipelineSteps={message.pipelineSteps}
                 messageId={message.id}
+                reasoningStartedAt={message.reasoningStartedAt}
               />
             </div>
           )}
 
           {renderState.kind === 'thinking_pending' && !hasThinking && (
             <div style={{ marginTop: 8, marginBottom: 8 }}>
-              <ThinkingBlock content="" status="starting" tokensUsed={0} thinkingStatusText={message.thinkingStatusText} messageId={message.id} />
+              <ThinkingBlock content="" status="starting" tokensUsed={0} thinkingStatusText={message.thinkingStatusText} messageId={message.id} reasoningStartedAt={message.reasoningStartedAt} />
             </div>
           )}
 

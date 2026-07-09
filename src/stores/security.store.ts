@@ -8,7 +8,7 @@ interface SecurityState {
 }
 
 export const useSecurityStore = create<SecurityState>((set) => ({
-  loaded: true,
+  loaded: false,
   auditEnabled: false,
   checked: false,
   setStatus: (loaded, auditEnabled) => set({ loaded, auditEnabled, checked: true }),

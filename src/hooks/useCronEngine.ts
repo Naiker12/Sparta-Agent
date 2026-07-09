@@ -7,9 +7,12 @@ import { useAgent } from './useAgent'
 export function useCronEngine() {
   const { executeTask } = useAgent()
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const mountedRef = useRef(true)
 
   useEffect(() => {
+    mountedRef.current = true
     intervalRef.current = setInterval(async () => {
+      if (!mountedRef.current) return
       const pending = useCronStore.getState().getPendingJobs()
       for (const job of pending) {
         console.debug(`[cron] Executing job: ${job.name} (${job.id.slice(0, 8)})`)
@@ -33,6 +36,7 @@ export function useCronEngine() {
     }, 60000)
 
     return () => {
+      mountedRef.current = false
       if (intervalRef.current) clearInterval(intervalRef.current)
     }
   }, [executeTask])

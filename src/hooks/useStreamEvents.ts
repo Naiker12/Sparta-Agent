@@ -342,6 +342,8 @@ function _handleMCPEvent(type: string, event: Record<string, unknown>) {
       }
       store.onStreamEnd(sid, mid)
       store.stopStreaming(sid)
+      _providerBySession.delete(sid)
+      lastUserMessageRef.delete(sid)
       break
     }
     case 'stream:error': {
@@ -355,6 +357,8 @@ function _handleMCPEvent(type: string, event: Record<string, unknown>) {
         type: 'stream:error',
         sessionId: sid, messageId: mid, error: errorMsg, timestamp: Date.now(),
       })
+      _providerBySession.delete(sid)
+      lastUserMessageRef.delete(sid)
       break
     }
     case 'tool:called': {
@@ -424,7 +428,7 @@ function _handleMCPEvent(type: string, event: Record<string, unknown>) {
       const tcName = evt.toolName as string | undefined
 
       store.updateToolCallStatus(sid, mid, tcId, 'completed', resultOutput, tcName)
-      if (tcName === 'web_search') {
+      if (tcName === 'web_search' || tcName === 'web_search_tool') {
         store.updateSearchProgress(sid, mid, (items) =>
           items.map((i) => ({ ...i, status: 'visited' as const }))
         )

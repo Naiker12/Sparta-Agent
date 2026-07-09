@@ -2,6 +2,7 @@ import type { Message } from '@/types'
 import { useChatStore } from '@/stores/chat.store'
 import { useMemoryStore } from '@/stores/memory.store'
 import { useEventBus } from '@/stores/event-bus.store'
+import { useChatSession } from '@/hooks/useChatSession'
 import { deleteEntry as chromaDeleteEntry } from '@/services/memory/vector/chroma-client'
 import {
   Dialog,
@@ -32,6 +33,7 @@ export function MessageActionsDialog({
 }: MessageActionsDialogProps) {
   const { deleteMessage } = useChatStore()
   const dispatch = useEventBus((s) => s.dispatch)
+  const { sendMessage } = useChatSession()
 
   const isOpen = state.kind !== 'none'
 
@@ -97,7 +99,7 @@ export function MessageActionsDialog({
           {state.kind === 'regenerate' && (
             <>
               <Button variant="ghost" size="sm" onClick={onClose}>Cancelar</Button>
-              <Button size="sm" onClick={onClose}>Regenerar</Button>
+              <Button size="sm" onClick={() => { sendMessage(message.content); onClose() }}>Regenerar</Button>
             </>
           )}
         </DialogFooter>

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { BookOpen, Check, ChevronDown, Globe, Loader2 } from 'lucide-react'
+import { BookOpen, Check, ChevronDown, Globe, Loader2, X, RotateCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { SearchProgressItem } from '@/types'
 import { useTranslation } from '@/i18n'
@@ -10,6 +10,8 @@ interface SearchProgressBlockProps {
   isActive: boolean
   query?: string
   className?: string
+  onCancel?: () => void
+  onRetry?: () => void
 }
 
 function extractDomain(url: string): string {
@@ -23,7 +25,7 @@ function rowDelay(idx: number): number {
 const chevronTransition = { duration: 0.2, ease: 'easeInOut' as const }
 const urlListTransition = { duration: 0.2, ease: 'easeInOut' as const }
 
-export function SearchProgressBlock({ items, isActive, query, className }: SearchProgressBlockProps) {
+export function SearchProgressBlock({ items, isActive, query, className, onCancel, onRetry }: SearchProgressBlockProps) {
   const { t } = useTranslation()
   const [isExpanded, setIsExpanded] = useState(true)
   const prevActiveRef = useRef(isActive)
@@ -51,19 +53,19 @@ export function SearchProgressBlock({ items, isActive, query, className }: Searc
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2, ease: 'easeOut' }}
       className={cn(
-        'rounded-xl overflow-hidden shadow-sm transition-shadow duration-300 relative',
+        'rounded-xl overflow-hidden transition-shadow duration-300 relative',
         isActive
-          ? 'border border-[var(--accent)]/15 shadow-[var(--accent)]/5'
-          : 'border border-[var(--border-normal)] shadow-black/5',
+          ? 'border-2 border-[var(--accent)]/20 shadow-[var(--accent)]/10 shadow-lg'
+          : 'border border-[var(--border-normal)] shadow-md',
         className
       )}
-      style={{ margin: '8px 0' }}
+      style={{ margin: '4px 0' }}
     >
       {/* Accent left bar — active only */}
       {isActive && (
         <div
-          className="absolute left-0 inset-y-0 w-[2px] rounded-l-xl"
-          style={{ background: 'var(--accent)', opacity: 0.4 }}
+          className="absolute left-0 inset-y-0 w-[3px] rounded-l-xl"
+          style={{ background: 'var(--accent)', opacity: 0.7, boxShadow: '0 0 8px var(--accent)/0.3' }}
         />
       )}
 
@@ -142,6 +144,28 @@ export function SearchProgressBlock({ items, isActive, query, className }: Searc
         </div>
 
         <div className="flex items-center gap-2 shrink-0 ml-2">
+          {/* Cancel button (active search only) */}
+          {isActive && onCancel && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onCancel() }}
+              className="flex items-center justify-center w-5 h-5 rounded-md text-[var(--text-muted)] hover:text-[var(--status-err)] hover:bg-[var(--status-err)]/10 transition-colors duration-150"
+              title="Cancelar búsqueda"
+            >
+              <X className="size-3" strokeWidth={2.5} />
+            </button>
+          )}
+
+          {/* Retry button (failed/incomplete search) */}
+          {!isActive && !allVisited && onRetry && items.length > 0 && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onRetry() }}
+              className="flex items-center justify-center w-5 h-5 rounded-md text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--accent)]/10 transition-colors duration-150"
+              title="Reintentar búsqueda"
+            >
+              <RotateCw className="size-3" strokeWidth={2.5} />
+            </button>
+          )}
+
           {/* Count badge */}
           <span
             className={cn(

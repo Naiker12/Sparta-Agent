@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react'
-import { Plus, Mic, ArrowUp, Square, AlertCircle } from 'lucide-react'
+import { Plus, Mic, ArrowUp, Square, AlertCircle, Eye, EyeOff } from 'lucide-react'
 import { toast } from 'sonner'
 import { useSettingsStore } from '@/stores/settings.store'
 import { useChatStore } from '@/stores/chat.store'
@@ -8,6 +8,7 @@ import { useProviderStore } from '@/stores/provider.store'
 import { useChatSession } from '@/hooks/useChatSession'
 import { useLocalSkillsLoader } from '@/hooks/useLocalSkillsLoader'
 import { cn } from '@/lib/utils'
+import { IS_ELECTRON } from '@/lib/env-adapter'
 import { messagingAdapter } from '@/lib/messaging-adapter'
 import { ModelPicker } from './ModelPicker'
 import { AttachMenu } from './AttachMenu'
@@ -23,7 +24,7 @@ export function ChatInput({ className }: ChatInputProps) {
   const [focused, setFocused] = useState(false)
   const [showAttach, setShowAttach] = useState(false)
   const [showSlash, setShowSlash] = useState(false)
-  const { input, setInput } = useSettingsStore()
+  const { input, setInput, agentAutonomy, setAgentAutonomy } = useSettingsStore()
   const isStreaming = useChatStore((s) => s.isStreaming)
   const activeSessionId = useSessionStore((s) => s.activeSessionId)
   const providers = useProviderStore((s) => s.providers)
@@ -294,6 +295,36 @@ export function ChatInput({ className }: ChatInputProps) {
               </div>
 
               <ModelPicker />
+
+              {IS_ELECTRON && (
+                <button
+                  onClick={() => {
+                    const next = agentAutonomy === 'autonomous_readonly' ? 'ask_risky' : 'autonomous_readonly'
+                    setAgentAutonomy(next)
+                    toast.info(next === 'autonomous_readonly' ? 'Modo Plan: solo lectura' : 'Modo Build: ejecutar cambios')
+                  }}
+                  title={agentAutonomy === 'autonomous_readonly' ? 'Plan mode (read-only)' : 'Build mode (execute changes)'}
+                  style={{
+                    height: 28,
+                    padding: '0 8px',
+                    background: agentAutonomy === 'autonomous_readonly' ? 'var(--accent)' : 'none',
+                    border: '1px solid var(--border-normal)',
+                    borderRadius: 'var(--radius-md)',
+                    color: agentAutonomy === 'autonomous_readonly' ? 'white' : 'var(--text-muted)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    fontSize: 10,
+                    fontFamily: 'var(--font-ui)',
+                    transition: 'all 0.15s',
+                    flexShrink: 0,
+                  }}
+                >
+                  {agentAutonomy === 'autonomous_readonly' ? <EyeOff size={11} /> : <Eye size={11} />}
+                  {agentAutonomy === 'autonomous_readonly' ? 'Plan' : 'Build'}
+                </button>
+              )}
 
               <div style={{ flex: 1 }} />
 

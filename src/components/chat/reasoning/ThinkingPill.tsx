@@ -61,8 +61,11 @@ export function ThinkingPill({ status, tokensUsed, isExpanded, elapsed, lastSkil
       ) : (
         <>
           <Check size={12} strokeWidth={2.5} style={{ flexShrink: 0 }} />
+          <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', opacity: 0.8 }}>
+            {elapsed.toFixed(1)}s
+          </span>
           <span style={{ fontSize: 10, fontWeight: 500 }}>
-            {t('chat.thoughtFor').replace('{{seconds}}', elapsed.toFixed(1))}
+            {t('chat.thinking')}
           </span>
           {lastSkillName && (
             <span style={{ fontSize: 9, opacity: 0.6, fontFamily: 'var(--font-mono)', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginLeft: 2 }}>

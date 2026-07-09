@@ -54,6 +54,10 @@ export const useChatStore = create<ChatState>()(
 
       deleteSessionMessages: (sessionId: string) =>
         set((s) => {
+          const streamEntry = s.streamingBySession[sessionId]
+          if (streamEntry) {
+            streamEntry.abortController.abort()
+          }
           const { [sessionId]: _p, ...rest } = s.messagesBySession
           void _p
           const { [sessionId]: _stream, ...restStreaming } = s.streamingBySession

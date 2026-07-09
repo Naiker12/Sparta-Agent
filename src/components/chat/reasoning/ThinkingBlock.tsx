@@ -18,6 +18,7 @@ interface ThinkingBlockProps {
   pipelineSteps?: PipelineStep[]
   className?: string
   messageId?: string
+  reasoningStartedAt?: number
 }
 
 const PREVIEW_MAX_LINES = 15
@@ -48,7 +49,7 @@ function saveCollapseState(messageId: string, expanded: boolean) {
   } catch { /* ignore */ }
 }
 
-export function ThinkingBlock({ content, status, tokensUsed, thinkingStatusText, pipelineSteps, className, messageId }: ThinkingBlockProps) {
+export function ThinkingBlock({ content, status, tokensUsed, thinkingStatusText, pipelineSteps, className, messageId, reasoningStartedAt }: ThinkingBlockProps) {
   const { t } = useTranslation()
   const savedState = useMemo(() => loadCollapseState(messageId), [messageId])
   const [isExpanded, setIsExpanded] = useState(
@@ -56,7 +57,7 @@ export function ThinkingBlock({ content, status, tokensUsed, thinkingStatusText,
   )
   const [showFullContent, setShowFullContent] = useState(false)
   const [elapsed, setElapsed] = useState(0)
-  const startedAt = useRef(Date.now())
+  const startedAt = useRef(reasoningStartedAt ?? Date.now())
   const linesEndRef = useRef<HTMLDivElement>(null)
   const badgesEndRef = useRef<HTMLDivElement>(null)
   const prevBadgeCount = useRef(0)
@@ -91,14 +92,14 @@ export function ThinkingBlock({ content, status, tokensUsed, thinkingStatusText,
   useEffect(() => {
     if (status === 'starting' || status === 'streaming') {
       if (!userToggled.current) setIsExpanded(true)
-      startedAt.current = Date.now()
+      startedAt.current = reasoningStartedAt ?? Date.now()
       setElapsed(0)
     }
     if (status === 'completed' && !userToggled.current) {
       const timer = setTimeout(() => setIsExpanded(false), 600)
       return () => clearTimeout(timer)
     }
-  }, [status])
+  }, [status, reasoningStartedAt])
 
   useEffect(() => {
     if (status !== 'streaming' && status !== 'starting') return
