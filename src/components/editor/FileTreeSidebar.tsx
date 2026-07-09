@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { FolderOpen, RefreshCw } from 'lucide-react'
+import { toast } from 'sonner'
 import type { FileTreeNode } from '@/types'
 import { useProjectStore } from '@/stores/project.store'
 import { useEventBusListener } from '@/hooks/useEventBus'
@@ -30,6 +31,11 @@ export function FileTreeSidebar({ activePath, onSelectFile, onDeleteFile }: File
     }
   }, [activeProject?.rootPath])
 
+  const debouncedLoadTree = useCallback(() => {
+    const id = setTimeout(loadTree, 400)
+    return () => clearTimeout(id)
+  }, [loadTree])
+
   useEffect(() => {
     if (activeProject?.rootPath) {
       loadTree()
@@ -39,10 +45,9 @@ export function FileTreeSidebar({ activePath, onSelectFile, onDeleteFile }: File
   }, [activeProject?.rootPath, loadTree])
 
   useEventBusListener('file:changed', () => {
-    if (activeProject?.rootPath) loadTree()
+    if (activeProject?.rootPath) debouncedLoadTree()
   })
 
-  // Start/stop the chokidar file watcher when the project root changes
   useEffect(() => {
     if (activeProject?.rootPath && window.fs?.startWatcher) {
       window.fs.startWatcher(activeProject.rootPath)
@@ -57,6 +62,42 @@ export function FileTreeSidebar({ activePath, onSelectFile, onDeleteFile }: File
     const path = await window.fs.openFolderDialog()
     if (path) {
       useProjectStore.getState().setProjectRootPath(activeProject.id, path)
+    }
+  }
+
+  function handleCopyPath(p: string) {
+    navigator.clipboard.writeText(p).then(
+      () => toast.success('Ruta copiada'),
+      () => toast.error('No se pudo copiar'),
+    )
+  }
+
+  async function handleNewFile(dirPath: string) {
+    const name = prompt('Nombre del nuevo archivo:')
+    if (!name) return
+    const filePath = dirPath.includes('/') ? `${dirPath}/${name}` : `${dirPath}\\${name}`
+    if (!window.fs) return
+    const res = await window.fs.writeFile(filePath, '')
+    if (res.success) {
+      toast.success(`Archivo creado: ${name}`)
+      loadTree()
+      onSelectFile(filePath)
+    } else {
+      toast.error(`Error: ${res.error}`)
+    }
+  }
+
+  async function handleNewFolder(dirPath: string) {
+    const name = prompt('Nombre de la nueva carpeta:')
+    if (!name) return
+    const folderPath = dirPath.includes('/') ? `${dirPath}/${name}` : `${dirPath}\\${name}`
+    if (!window.fs) return
+    const res = await window.fs.mkdir(folderPath)
+    if (res.success) {
+      toast.success(`Carpeta creada: ${name}`)
+      loadTree()
+    } else {
+      toast.error(`Error: ${res.error}`)
     }
   }
 
@@ -95,6 +136,9 @@ export function FileTreeSidebar({ activePath, onSelectFile, onDeleteFile }: File
             activePath={activePath}
             onSelectFile={onSelectFile}
             onDelete={onDeleteFile}
+            onCopyPath={handleCopyPath}
+            onNewFile={handleNewFile}
+            onNewFolder={handleNewFolder}
           />
         ))}
       </div>

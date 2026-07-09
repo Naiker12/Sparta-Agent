@@ -21,6 +21,7 @@ import { useSidecarToasts } from '@/hooks/useSidecarToasts'
 import { useSettingsStore } from '@/stores/settings.store'
 import { useUIStore } from '@/stores/ui.store'
 import { useChatStore } from '@/stores/chat.store'
+import { IS_ELECTRON } from '@/lib/env-adapter'
 
 const SessionsView = lazy(() => import('@/components/views/SessionsView').then(m => ({ default: m.SessionsView })))
 const SkillsView = lazy(() => import('@/components/views/SkillsView').then(m => ({ default: m.SkillsView })))
@@ -141,7 +142,7 @@ export function AppShell() {
   return (
     <div className="flex flex-col h-screen bg-[var(--bg-base)] overflow-hidden">
       <TitleBar />
-      <PersistentTerminal />
+      {IS_ELECTRON && <PersistentTerminal />}
       <div ref={containerRef} className="relative flex flex-1 min-h-0 overflow-hidden">
         <SidebarProvider
           open={sidebarOpen}
@@ -169,26 +170,28 @@ export function AppShell() {
                       <ChatArea />
                     </ChatErrorBoundary>
                   </div>
-                  <div className="relative" style={{ flexShrink: 0 }}>
-                    {terminalOpen && <div className="border-t border-[var(--border-normal)]" />}
-                    <motion.div
-                      initial={false}
-                      animate={{ height: terminalOpen ? terminalHeight : 0 }}
-                      transition={{ duration: isDraggingTerminal ? 0 : 0.12, ease: 'easeOut' }}
-                      style={{ overflow: 'hidden', position: 'relative', display: 'flex', flexDirection: 'column' }}
-                    >
-                      <TerminalSlot />
-                    </motion.div>
-                    {terminalOpen && (
-                      <PanelDragHandle
-                        className="terminal-resize-handle"
-                        onMouseDown={handleTerminalResize}
-                      />
-                    )}
-                  </div>
+                  {IS_ELECTRON && (
+                    <div className="relative" style={{ flexShrink: 0 }}>
+                      {terminalOpen && <div className="border-t border-[var(--border-normal)]" />}
+                      <motion.div
+                        initial={false}
+                        animate={{ height: terminalOpen ? terminalHeight : 0 }}
+                        transition={{ duration: isDraggingTerminal ? 0 : 0.12, ease: 'easeOut' }}
+                        style={{ overflow: 'hidden', position: 'relative', display: 'flex', flexDirection: 'column' }}
+                      >
+                        <TerminalSlot />
+                      </motion.div>
+                      {terminalOpen && (
+                        <PanelDragHandle
+                          className="terminal-resize-handle"
+                          onMouseDown={handleTerminalResize}
+                        />
+                      )}
+                    </div>
+                  )}
                 </div>
                 <AnimatePresence>
-                  {editorOpen && (
+                  {editorOpen && IS_ELECTRON && (
                     <motion.div
                       key="editor-panel"
                       initial={{ width: 0, opacity: 0 }}

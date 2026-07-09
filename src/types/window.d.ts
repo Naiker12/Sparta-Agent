@@ -67,6 +67,7 @@ interface FilesystemAPI {
   readDir: (dirPath: string) => Promise<FileTreeNode[]>
   readFile: (filePath: string) => Promise<FileReadResult>
   writeFile: (filePath: string, content: string) => Promise<FileWriteResult>
+  mkdir: (dirPath: string) => Promise<{ success: boolean; error?: string }>
   deleteFile: (filePath: string) => Promise<{ success: boolean; error?: string }>
   deleteFolder: (folderPath: string) => Promise<{ success: boolean; error?: string }>
   startWatcher: (dirPath: string) => Promise<{ success: boolean }>
@@ -74,7 +75,7 @@ interface FilesystemAPI {
 }
 
 interface TerminalAPI {
-  create: (opts: { terminalId: string; cols: number; rows: number }) => Promise<{ success: boolean; shell?: string; error?: string }>
+  create: (opts: { terminalId: string; cols: number; rows: number; shell?: string }) => Promise<{ success: boolean; shell?: string; error?: string }>
   write: (terminalId: string, data: string) => void
   resize: (terminalId: string, cols: number, rows: number) => void
   destroy: (terminalId: string) => Promise<{ success: boolean }>
@@ -107,6 +108,27 @@ interface EditorBridgeAPI {
   respondDiff: (payload: { requestId: string; approved: boolean }) => Promise<{ ok: boolean }>
 }
 
+interface AgentTaskRequest {
+  taskId: string
+  agentId: string
+  taskDescription: string
+  systemPrompt: string
+  allowedTools: string[]
+  model: string
+  provider: string
+  vendor?: string
+  providerKey?: string
+  apiUrl?: string
+  workspaceRoot?: string
+  agentAutonomy: string
+  maxTurns?: number
+}
+
+interface AgentAPI {
+  executeTask: (req: AgentTaskRequest) => Promise<{ ok: boolean; result?: string; error?: string }>
+  onTaskEvent: (callback: (payload: { event: string; data: unknown }) => void) => () => void
+}
+
 declare global {
   interface Window {
     sparta?: SpartaAPI
@@ -115,6 +137,7 @@ declare global {
     electron?: ElectronIPC
     fs?: FilesystemAPI
     terminal?: TerminalAPI
+    agent?: AgentAPI
     skills?: SkillsAPI
     permission?: PermissionAPI
     editorBridge?: EditorBridgeAPI

@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useEffect } from 'react'
 import { useAgentStore } from '@/stores/agent.store'
 import { useProviderStore } from '@/stores/provider.store'
 import { useMCPStore } from '@/stores/mcp.store'
@@ -8,7 +8,9 @@ import { runAgentTask, buildToolDefinitions } from '@/services/agents'
 import { buildWebSearchTool, executeWebSearch } from '@/services/tools/web-search'
 import { getProviderKey } from '@/lib/vault-helper'
 import { aiGateway } from '@/services/ai/gateway'
-import type { AgentStatus, Agent, Task, AgentType, Provider } from '@/types'
+import { IS_ELECTRON } from '@/lib/env-adapter'
+import { useProjectStore } from '@/stores/project.store'
+import type { AgentStatus, Agent, Task, AgentType, Provider, TaskStep } from '@/types'
 
 const AGENT_NAMESPACE_MAP: Partial<Record<AgentType, string>> = {
   research: 'delegate_research',
@@ -17,6 +19,39 @@ const AGENT_NAMESPACE_MAP: Partial<Record<AgentType, string>> = {
 
 export function useAgent() {
   const store = useAgentStore()
+
+  // Listen for server-side agent task events (Electron mode)
+  useEffect(() => {
+    if (!IS_ELECTRON || !window.agent?.onTaskEvent) return
+    const unsub = window.agent.onTaskEvent(({ event, data }) => {
+      const d = data as Record<string, unknown>
+      const taskId = d.task_id as string
+      const agentId = d.agent_id as string
+      if (!taskId || !agentId) return
+
+      if (event === 'agent:step') {
+        const step: TaskStep = {
+          id: d.step_id as string,
+          name: `Ejecutar ${d.tool_name}`,
+          status: (d.status as TaskStep['status']) ?? 'running',
+          tool: d.tool_name as string,
+          durationMs: d.duration_ms as number | undefined,
+          error: d.error as string | undefined,
+        }
+        const current = store.tasks[agentId]?.find((t) => t.id === taskId)
+        const steps = current?.steps ?? []
+        // Replace or append step
+        const idx = steps.findIndex((s) => s.id === step.id)
+        const updated = idx >= 0 ? [...steps.slice(0, idx), step, ...steps.slice(idx + 1)] : [...steps, step]
+        store.updateTask(agentId, taskId, { steps: updated })
+      } else if (event === 'agent:completed') {
+        store.updateAgentStatus(agentId, 'completed')
+        store.updateTask(agentId, taskId, { status: 'completed', completedAt: Date.now() })
+        useEventBus.getState().dispatch({ type: 'agent:completed', agentId, result: d.result as string, timestamp: Date.now() })
+      }
+    })
+    return unsub
+  }, [store])
 
   const executeTask = useCallback(async (
     agentId: string,
@@ -37,13 +72,9 @@ export function useAgent() {
     let allowedTools = agent.tools.length > 0
       ? agent.tools
       : allMcpTools.map((t) => t.name)
-    let toolDefs = buildToolDefinitions(
-      allMcpTools.filter((t) => allowedTools.includes(t.name)),
-    )
 
     if (webSearchEnabled) {
       allowedTools = [...allowedTools, 'web_search']
-      toolDefs = [...toolDefs, buildWebSearchTool() as unknown as Record<string, unknown>]
     }
 
     const task: Task = {
@@ -73,6 +104,44 @@ export function useAgent() {
       `IMPORTANTE: Responde SIEMPRE en español.`
     )
 
+    // Electron mode: delegate LLM loop to Python server
+    if (IS_ELECTRON && window.agent?.executeTask) {
+      try {
+        const resolvedKey = provider ? await getProviderKey(provider) : undefined
+        const result = await window.agent.executeTask({
+          taskId: task.id,
+          agentId,
+          taskDescription,
+          systemPrompt: defaultSystem,
+          allowedTools,
+          model: agent.model,
+          provider: provider?.vendor ?? 'openai',
+          vendor: provider?.vendor,
+          providerKey: resolvedKey,
+          workspaceRoot: useProjectStore.getState().getActiveProject()?.rootPath ?? '',
+          agentAutonomy: useSettingsStore.getState().agentAutonomy,
+        })
+        if (!result.ok) {
+          store.updateAgentStatus(agentId, 'error')
+          store.updateTask(agentId, task.id, { status: 'error' })
+          throw new Error(result.error ?? 'Agent task failed')
+        }
+        return result.result ?? ''
+      } catch (err) {
+        store.updateAgentStatus(agentId, 'error')
+        store.updateTask(agentId, task.id, { status: 'error' })
+        throw err
+      }
+    }
+
+    // Web mode fallback: run LLM loop on frontend (legacy agent-runtime.ts)
+    const toolDefs = buildToolDefinitions(
+      allMcpTools.filter((t) => allowedTools.includes(t.name)),
+    )
+    if (webSearchEnabled) {
+      toolDefs.push(buildWebSearchTool() as unknown as Record<string, unknown>)
+    }
+
     const toolRunner = async (name: string, args: unknown): Promise<unknown> => {
       if (name === 'web_search') {
         const query = typeof args === 'object' && args !== null && 'query' in args
@@ -93,12 +162,9 @@ export function useAgent() {
 
     const llmCall = async (prompt: string): Promise<string> => {
       if (!provider) return 'Error: No hay proveedor configurado.'
-
       const resolvedKey = await getProviderKey(provider)
       if (!resolvedKey) return 'Error: No hay API key configurada para el proveedor.'
-
       const providerWithKey: Provider = { ...provider, apiKey: resolvedKey, hasVaultKey: false }
-
       try {
         const stream = await aiGateway.sendMessage(
           providerWithKey,

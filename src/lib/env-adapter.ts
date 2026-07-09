@@ -17,7 +17,7 @@ export const IS_ELECTRON = ENV === 'electron'
 export const IS_WEB = ENV === 'web'
 
 export const FEATURES = {
-  terminal: IS_ELECTRON || IS_WEB,
+  terminal: IS_ELECTRON,
   vault: IS_ELECTRON,
   rustSecurity: IS_ELECTRON,
   pythonSidecar: IS_ELECTRON,

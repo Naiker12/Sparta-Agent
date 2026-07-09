@@ -2,10 +2,11 @@ import { useRef, useEffect, useCallback, useState } from 'react'
 import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import { WebLinksAddon } from '@xterm/addon-web-links'
+import { SearchAddon } from '@xterm/addon-search'
 import { FEATURES, IS_WEB } from '@/lib/env-adapter'
 import { generateId, cn } from '@/lib/utils'
 import { getXtermTheme } from '@/lib/xterm-theme'
-import { Plus, ChevronDown, Terminal as TerminalIcon, MessageSquarePlus, Bot } from 'lucide-react'
+import { Plus, ChevronDown, Terminal as TerminalIcon, MessageSquarePlus, Bot, Columns2, Shell } from 'lucide-react'
 import { useUIStore } from '@/stores/ui.store'
 import { useChatStore } from '@/stores/chat.store'
 import { useTerminalStore } from '@/stores/terminal.store'
@@ -15,6 +16,7 @@ import '@xterm/xterm/css/xterm.css'
 interface TerminalInstance {
   terminal: Terminal
   fitAddon: FitAddon
+  searchAddon: SearchAddon
   container: HTMLDivElement
   tabId: string
   ptyId: string
@@ -70,16 +72,38 @@ export function TerminalWorkspace() {
     }
   }, [])
 
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchVisible, setSearchVisible] = useState(false)
+  const searchInputRef = useRef<HTMLInputElement>(null)
+  const [splitMode, setSplitMode] = useState<'none' | 'horizontal' | 'vertical'>('none')
+  const [selectedProfile, setSelectedProfile] = useState<string>('')
+  const [showProfileMenu, setShowProfileMenu] = useState(false)
+
   const activeInstance = instancesRef.current.get(activeTabId ?? '')
 
-  function initUserPTY(inst: TerminalInstance) {
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        e.preventDefault()
+        setSearchVisible((v) => !v)
+      }
+      if (e.key === 'Escape' && searchVisible) {
+        setSearchVisible(false)
+        activeInstance?.searchAddon.clearDecorations()
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [searchVisible, activeInstance])
+
+  function initUserPTY(inst: TerminalInstance, shellProfile?: string) {
     const terminal = inst.terminal
     const { cols, rows } = terminal
 
     const unsubData = window.terminal.onData(inst.ptyId, (data: string) => terminal.write(data))
     inst.cleanups.push(unsubData)
 
-    window.terminal.create({ terminalId: inst.ptyId, cols, rows }).then((result) => {
+    window.terminal.create({ terminalId: inst.ptyId, cols, rows, shell: shellProfile }).then((result) => {
       if (!result.success) {
         terminal.writeln('\r\n\x1b[31mError al iniciar shell\x1b[0m')
         if (result.error) terminal.writeln(`\x1b[90m${result.error}\x1b[0m`)
@@ -151,10 +175,13 @@ export function TerminalWorkspace() {
     const fitAddon = new FitAddon()
     terminal.loadAddon(fitAddon)
 
+    const searchAddon = new SearchAddon()
+    terminal.loadAddon(searchAddon)
+
     terminal.onSelectionChange(() => forceRender(n => n + 1))
 
     const inst: TerminalInstance = {
-      terminal, fitAddon, container,
+      terminal, fitAddon, searchAddon, container,
       tabId: tab.id,
       ptyId: tab.procId ?? `sparta-term-${generateId()}`,
       connected: false,
@@ -169,7 +196,7 @@ export function TerminalWorkspace() {
         seedAgentTerminalCommand(tab.procId, tab.title)
         initAgentMirror(inst, tab.procId)
       } else {
-        initUserPTY(inst)
+        initUserPTY(inst, selectedProfile || undefined)
       }
     })
 
@@ -198,8 +225,28 @@ export function TerminalWorkspace() {
     })
     const unsubExit = window.terminal.onAgentExit?.(({ procId, code }: { procId: string; code: number }) => {
       writeAgentTerminalChunk(procId, `\r\n\x1b[33mProceso de agente terminado (código: ${code})\x1b[0m\r\n`)
+      // Close the agent tab and dispose xterm after a short delay so the user sees the exit message
+      setTimeout(() => store.getState().closeAgentTabByProc(procId), 3000)
     })
     return () => { unsubSpawn?.(); unsubOutput?.(); unsubExit?.() }
+  }, [])
+
+  // Clean up xterm instances when tabs are removed (e.g. by closeAgentTabByProc)
+  useEffect(() => {
+    const unsub = useTerminalStore.subscribe((state, prev) => {
+      if (state.tabs.length >= prev.tabs.length) return
+      const removed = prev.tabs.filter((t) => !state.tabs.some((st) => st.id === t.id))
+      for (const tab of removed) {
+        const inst = instancesRef.current.get(tab.id)
+        if (inst) {
+          inst.cleanups.forEach((fn) => fn())
+          inst.terminal.dispose()
+          instancesRef.current.delete(tab.id)
+          containersRef.current.delete(tab.id)
+        }
+      }
+    })
+    return () => unsub()
   }, [])
 
   useEffect(() => {
@@ -234,7 +281,7 @@ export function TerminalWorkspace() {
     inst.connected = false
     inst.shellName = ''
     inst.ptyId = `sparta-term-${generateId()}`
-    initUserPTY(inst)
+    initUserPTY(inst, selectedProfile || undefined)
   }
 
   function renderTabInfo(tabId: string): { shell: string; connected: boolean; kind: 'user' | 'agent' } {
@@ -299,12 +346,41 @@ export function TerminalWorkspace() {
 
         <div className="flex items-center gap-1 shrink-0" style={{ height: '100%' }}>
           {activeInstance && renderTabInfo(activeTabId ?? '').kind === 'user' && (
-            <button onClick={() => handleNewSession(activeTabId!)}
-              className="flex items-center gap-1 px-2 py-0.5 text-[10px] text-[#6b6b80] hover:text-[#a0a0b8] rounded hover:bg-[#ffffff08]"
-              title="Reiniciar sesión">
-              <TerminalIcon className="w-3 h-3" />
-            </button>
+            <>
+              <button onClick={() => handleNewSession(activeTabId!)}
+                className="flex items-center gap-1 px-2 py-0.5 text-[10px] text-[#6b6b80] hover:text-[#a0a0b8] rounded hover:bg-[#ffffff08]"
+                title="Reiniciar sesión">
+                <TerminalIcon className="w-3 h-3" />
+              </button>
+              <div className="relative">
+                <button onClick={() => setShowProfileMenu((v) => !v)}
+                  className="flex items-center gap-1 px-2 py-0.5 text-[10px] text-[#6b6b80] hover:text-[#a0a0b8] rounded hover:bg-[#ffffff08]"
+                  title="Shell profile">
+                  <Shell className="w-3 h-3" />
+                </button>
+                {showProfileMenu && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setShowProfileMenu(false)} />
+                    <div className="absolute right-0 top-full mt-1 z-50 w-36 py-1 rounded-lg shadow-lg"
+                      style={{ background: '#1e1e2e', border: '1px solid #313244' }}>
+                      {['', 'cmd', 'pwsh', 'bash', 'zsh'].map((p) => (
+                        <button key={p} onClick={() => { setSelectedProfile(p); setShowProfileMenu(false); handleNewSession(activeTabId!) }}
+                          className="w-full text-left px-3 py-1.5 text-[11px] hover:bg-[#313244] text-[#cdd6f4]">
+                          {p || 'Default'}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            </>
           )}
+          <button onClick={() => setSplitMode((m) => m === 'none' ? 'horizontal' : 'none')}
+            className={cn('flex items-center gap-1 px-2 py-0.5 text-[10px] rounded hover:bg-[#ffffff08]',
+              splitMode !== 'none' ? 'text-[#6366F1]' : 'text-[#6b6b80] hover:text-[#a0a0b8]')}
+            title="Dividir terminal">
+            <Columns2 className="w-3 h-3" />
+          </button>
           <button onClick={toggleTerminal}
             className="flex items-center gap-1 px-2 py-0.5 text-[10px] text-[#6b6b80] hover:text-[#e0e0ec] rounded hover:bg-[#ffffff0a]"
             title="Cerrar terminal">
@@ -313,11 +389,69 @@ export function TerminalWorkspace() {
         </div>
       </div>
 
-      <div className="relative flex-1 min-h-0" style={{ background: '#0C0C10' }}>
-        {tabs.map((tab) => (
-          <div key={tab.id} ref={containerRefCallback(tab.id)}
-            className={cn('absolute inset-0', tab.id === activeTabId ? 'visible' : 'invisible pointer-events-none')} />
-        ))}
+      <div className={cn('relative flex min-h-0', splitMode === 'horizontal' ? 'flex-row' : 'flex-col')} style={{ background: '#0C0C10', flex: 1 }}>
+        <div className={cn('relative min-h-0', splitMode === 'horizontal' ? 'flex-1' : 'flex-1')}>
+          {tabs.map((tab) => (
+            <div key={tab.id} ref={containerRefCallback(tab.id)}
+              className={cn('absolute inset-0', tab.id === activeTabId ? 'visible' : 'invisible pointer-events-none')} />
+          ))}
+          {searchVisible && (
+            <div style={{
+              position: 'absolute', top: 4, right: 12, zIndex: 20,
+              display: 'flex', alignItems: 'center', gap: 4,
+              background: '#1e1e2e', border: '1px solid #313244', borderRadius: 6,
+              padding: '4px 8px', boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
+            }}>
+              <input
+                ref={searchInputRef}
+                autoFocus
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value)
+                  if (activeInstance) {
+                    if (e.target.value) {
+                      activeInstance.searchAddon.findNext(e.target.value)
+                    } else {
+                      activeInstance.searchAddon.clearDecorations()
+                    }
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    if (activeInstance && searchQuery) {
+                      activeInstance.searchAddon.findNext(searchQuery, { caseSensitive: false, incremental: e.shiftKey })
+                    }
+                  }
+                }}
+                placeholder="Buscar en terminal... (Ctrl+F)"
+                style={{
+                  background: '#0C0C10', border: '1px solid #313244', borderRadius: 4,
+                  padding: '3px 8px', color: '#cdd6f4', fontSize: 11, fontFamily: 'monospace',
+                  width: 200, outline: 'none',
+                }}
+              />
+              <button onClick={() => {
+                if (activeInstance && searchQuery) {
+                  activeInstance.searchAddon.findNext(searchQuery, { caseSensitive: false })
+                }
+              }} style={{ background: 'transparent', border: 'none', color: '#6c7086', cursor: 'pointer', fontSize: 11 }}>▼</button>
+              <button onClick={() => {
+                if (activeInstance && searchQuery) {
+                  activeInstance.searchAddon.findPrevious(searchQuery, { caseSensitive: false })
+                }
+              }} style={{ background: 'transparent', border: 'none', color: '#6c7086', cursor: 'pointer', fontSize: 11 }}>▲</button>
+              <button onClick={() => { setSearchVisible(false); setSearchQuery(''); activeInstance?.searchAddon.clearDecorations() }}
+                style={{ background: 'transparent', border: 'none', color: '#6c7086', cursor: 'pointer', fontSize: 11, marginLeft: 2 }}>✕</button>
+            </div>
+          )}
+        </div>
+        {splitMode !== 'none' && (
+          <div className={cn('relative min-h-0', splitMode === 'horizontal' ? 'flex-1 border-l border-[#ffffff12]' : 'flex-1 border-t border-[#ffffff12]')}>
+            <div className="absolute inset-0 flex items-center justify-center text-[11px] text-[#6b6b80]">
+              Click + to add a terminal, then drag tabs to split
+            </div>
+          </div>
+        )}
       </div>
 
       {renderSelectionPopup()}

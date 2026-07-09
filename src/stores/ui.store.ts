@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { toast } from 'sonner'
 import type { SettingsTab } from '@/types'
+import { IS_ELECTRON } from '@/lib/env-adapter'
 
 export type MainView =
   | { type: 'chat'; sessionId?: string }
@@ -86,8 +88,26 @@ export const useUIStore = create<UIState>()(
     })),
   setActiveSettingsTab: (tab) => set({ activeSettingsTab: tab }),
 
-  toggleEditor: () => set((s) => ({ editorOpen: !s.editorOpen })),
-  toggleTerminal: () => set((s) => ({ terminalOpen: !s.terminalOpen })),
+  toggleEditor: () => {
+    if (!IS_ELECTRON) {
+      toast.info('Editor disponible solo en app de escritorio', {
+        description: 'Descarga Sparta Agent para acceder al editor de código.',
+        duration: 4000,
+      })
+      return
+    }
+    set((s) => ({ editorOpen: !s.editorOpen }))
+  },
+  toggleTerminal: () => {
+    if (!IS_ELECTRON) {
+      toast.info('Terminal disponible solo en app de escritorio', {
+        description: 'Descarga Sparta Agent para acceder a la terminal.',
+        duration: 4000,
+      })
+      return
+    }
+    set((s) => ({ terminalOpen: !s.terminalOpen }))
+  },
   setEditorWidth: (width) => set({ editorWidth: Math.min(800, Math.max(300, width)) }),
   setTerminalHeight: (height) => set({ terminalHeight: Math.min(500, Math.max(100, height)) }),
   toggleEditorExplorer: () => set((s) => ({ editorExplorerVisible: !s.editorExplorerVisible })),

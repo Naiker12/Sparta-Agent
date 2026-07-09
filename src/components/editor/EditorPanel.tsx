@@ -2,10 +2,12 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react'
 import type { editor } from 'monaco-editor'
-import { PanelLeft, X, FolderX } from 'lucide-react'
+import { PanelLeft, X, FolderX, ChevronRight } from 'lucide-react'
+import { toast } from 'sonner'
 import { useUIStore } from '@/stores/ui.store'
 import { useProjectStore } from '@/stores/project.store'
 import { useEditorStore } from '@/stores/editor.store'
+import { useEventBusListener } from '@/hooks/useEventBus'
 import { FileTreeSidebar } from './FileTreeSidebar'
 import { EditorTabs } from './EditorTabs'
 import { MonacoEditor } from './MonacoEditor'
@@ -29,15 +31,27 @@ export function EditorPanel() {
   const closeProject = useProjectStore((s) => s.closeProject)
   const [openFiles, setOpenFiles] = useState<OpenFile[]>([])
   const [activePath, setActivePath] = useState<string | undefined>()
+  const [pinnedPaths, setPinnedPaths] = useState<Set<string>>(new Set())
   const [deleteTarget, setDeleteTarget] = useState<FileTreeNode | null>(null)
+  const [closingUnsavedPath, setClosingUnsavedPath] = useState<string | null>(null)
+  const [cursorPos, setCursorPos] = useState({ line: 1, col: 1 })
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null)
   const treeKey = useRef(0)
+  const handleEditorMount = useCallback((ed: editor.IStandaloneCodeEditor) => {
+    editorRef.current = ed
+    ed.onDidChangeCursorPosition((e) => {
+      setCursorPos({ line: e.position.lineNumber, col: e.position.column })
+    })
+  }, [])
 
   const activeFile = openFiles.find((f) => f.path === activePath)
 
-  // Sync open files to global store so the agent can query them
+  // Sync open files to global store (single source of truth for the agent)
+  // Using a ref to avoid the extra render cycle from useEffect
+  const openFilesRef = useRef(openFiles)
+  openFilesRef.current = openFiles
   useEffect(() => {
-    useEditorStore.getState().setOpenFiles(openFiles.map((f) => f.path))
+    useEditorStore.getState().setOpenFiles(openFilesRef.current.map((f) => f.path))
   }, [openFiles])
 
   const openFile = useCallback(async (filePath: string) => {
@@ -63,6 +77,11 @@ export function EditorPanel() {
   }, [openFiles])
 
   const closeFile = useCallback((filePath: string) => {
+    const file = openFiles.find((f) => f.path === filePath)
+    if (file && file.content !== file.originalContent) {
+      setClosingUnsavedPath(filePath)
+      return
+    }
     setOpenFiles((prev) => {
       const next = prev.filter((f) => f.path !== filePath)
       if (activePath === filePath) {
@@ -70,7 +89,25 @@ export function EditorPanel() {
       }
       return next
     })
-  }, [activePath])
+  }, [activePath, openFiles])
+
+  const confirmCloseUnsaved = useCallback((save: boolean) => {
+    if (!closingUnsavedPath) return
+    if (save) {
+      const file = openFiles.find((f) => f.path === closingUnsavedPath)
+      if (file && window.fs) {
+        window.fs.writeFile(file.path, file.content)
+      }
+    }
+    setOpenFiles((prev) => {
+      const next = prev.filter((f) => f.path !== closingUnsavedPath)
+      if (activePath === closingUnsavedPath) {
+        setActivePath(next.length > 0 ? next[next.length - 1].path : undefined)
+      }
+      return next
+    })
+    setClosingUnsavedPath(null)
+  }, [closingUnsavedPath, activePath, openFiles])
 
   const updateFileContent = useCallback((filePath: string, value: string) => {
     setOpenFiles((prev) =>
@@ -108,7 +145,39 @@ export function EditorPanel() {
     closeProject(activeProject.id)
     setOpenFiles([])
     setActivePath(undefined)
+    setPinnedPaths(new Set())
   }, [activeProject, closeProject])
+
+  const handleTogglePin = useCallback((path: string) => {
+    setPinnedPaths((prev) => {
+      const next = new Set(prev)
+      if (next.has(path)) next.delete(path)
+      else next.add(path)
+      return next
+    })
+  }, [])
+
+  const handleCloseAll = useCallback(() => {
+    setOpenFiles([])
+    setActivePath(undefined)
+    setPinnedPaths(new Set())
+  }, [])
+
+  const handleCloseOthers = useCallback((keepPath: string) => {
+    setOpenFiles((prev) => prev.filter((f) => f.path === keepPath))
+    setActivePath(keepPath)
+  }, [])
+
+  const handleReorder = useCallback((fromIdx: number, toIdx: number) => {
+    setOpenFiles((prev) => {
+      const pinnedList = prev.filter((f) => pinnedPaths.has(f.path))
+      const unpinnedList = prev.filter((f) => !pinnedPaths.has(f.path))
+      const all = [...pinnedList, ...unpinnedList]
+      const [moved] = all.splice(fromIdx, 1)
+      all.splice(toIdx, 0, moved)
+      return all
+    })
+  }, [pinnedPaths])
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 's') {
@@ -125,6 +194,28 @@ export function EditorPanel() {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [handleKeyDown])
+
+  // BUG-ED1: Detect external file changes for open files
+  useEventBusListener('file:changed', (data: { path?: string } | unknown) => {
+    const changedPath = (data as { path?: string })?.path
+    if (!changedPath || !window.fs) return
+    const openFile = openFiles.find((f) => f.path === changedPath)
+    if (!openFile) return
+    // Skip if we just saved this file
+    if (openFile.content === openFile.originalContent) return
+    window.fs.readFile(changedPath).then((result) => {
+      if (result.success && result.content !== undefined && result.content !== openFile.content) {
+        toast.info('Archivo modificado externamente', {
+          description: openFile.name,
+          action: {
+            label: 'Recargar',
+            onClick: () => updateFileContent(changedPath, result.content as string),
+          },
+          duration: 8000,
+        })
+      }
+    })
+  })
 
   const tabs = openFiles.map((f) => ({
     path: f.path,
@@ -181,20 +272,36 @@ export function EditorPanel() {
           activePath={activePath}
           onSelect={setActivePath}
           onClose={closeFile}
+          pinnedPaths={pinnedPaths}
+          onTogglePin={handleTogglePin}
+          onCloseAll={handleCloseAll}
+          onCloseOthers={handleCloseOthers}
+          onReorder={handleReorder}
         />
+        {activeFile && <Breadcrumb path={activeFile.path} />}
         {activeFile ? (
           <div style={{ flex: 1, minHeight: 0 }}>
             <MonacoEditor
               path={activeFile.path}
               content={activeFile.content}
               onChange={(value) => updateFileContent(activeFile.path, value)}
-              onMount={(editor) => { editorRef.current = editor }}
+              onMount={handleEditorMount}
             />
           </div>
         ) : (
-          <EmptyEditorState
-            projectName={activeProject?.name}
-            onClose={toggleEditor}
+          <div style={{ flex: 1, minHeight: 0 }}>
+            <MonacoEditor onMount={handleEditorMount} />
+            <EmptyEditorState
+              projectName={activeProject?.name}
+              onClose={toggleEditor}
+            />
+          </div>
+        )}
+        {activeFile && (
+          <StatusBar
+            path={activeFile.path}
+            line={cursorPos.line}
+            col={cursorPos.col}
           />
         )}
       </div>
@@ -206,6 +313,15 @@ export function EditorPanel() {
         itemLabel={deleteTarget?.name ?? ''}
         onConfirm={handleDeleteConfirm}
       />
+
+      {closingUnsavedPath && (
+        <UnsavedChangesDialog
+          fileName={openFiles.find((f) => f.path === closingUnsavedPath)?.name ?? ''}
+          onSave={() => confirmCloseUnsaved(true)}
+          onDiscard={() => confirmCloseUnsaved(false)}
+          onCancel={() => setClosingUnsavedPath(null)}
+        />
+      )}
     </div>
   )
 }
@@ -303,10 +419,71 @@ function EditorToolbar({
   )
 }
 
+function Breadcrumb({ path }: { path: string }) {
+  const parts = path.replace(/\\/g, '/').split('/')
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 2,
+      padding: '3px 12px',
+      borderBottom: '1px solid var(--border-subtle)',
+      background: 'var(--bg-surface)',
+      fontSize: 11,
+      fontFamily: 'var(--font-mono)',
+      color: 'var(--text-muted)',
+      flexShrink: 0,
+      overflow: 'hidden',
+    }}>
+      {parts.map((part, i) => (
+        <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 2, whiteSpace: 'nowrap' }}>
+          {i > 0 && <ChevronRight size={10} style={{ color: 'var(--text-muted)', opacity: 0.5 }} />}
+          <span style={{ color: i === parts.length - 1 ? 'var(--text-primary)' : undefined }}>
+            {part}
+          </span>
+        </span>
+      ))}
+    </div>
+  )
+}
+
+const LANG_MAP: Record<string, string> = {
+  ts: 'TypeScript', tsx: 'TypeScript React', js: 'JavaScript', jsx: 'JavaScript React',
+  py: 'Python', rb: 'Ruby', go: 'Go', rs: 'Rust', java: 'Java',
+  html: 'HTML', htm: 'HTML', css: 'CSS', scss: 'SCSS', json: 'JSON',
+  yaml: 'YAML', yml: 'YAML', md: 'Markdown', sh: 'Shell', bash: 'Shell',
+  xml: 'XML', toml: 'TOML', vue: 'Vue', svelte: 'Svelte',
+}
+
+function StatusBar({ path, line, col }: { path: string; line: number; col: number }) {
+  const ext = path.split('.').pop()?.toLowerCase() ?? ''
+  const lang = LANG_MAP[ext] ?? (ext.toUpperCase() || 'Plain text')
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'flex-end',
+      gap: 12,
+      padding: '2px 12px',
+      borderTop: '1px solid var(--border-subtle)',
+      background: 'var(--bg-surface)',
+      fontSize: 10.5,
+      fontFamily: 'var(--font-mono)',
+      color: 'var(--text-muted)',
+      flexShrink: 0,
+      userSelect: 'none',
+    }}>
+      <span>Ln {line}, Col {col}</span>
+      <span>UTF-8</span>
+      <span>{lang}</span>
+    </div>
+  )
+}
+
 function EmptyEditorState({ projectName, onClose }: { projectName?: string; onClose: () => void }) {
   return (
     <div style={{
-      flex: 1,
+      position: 'absolute', inset: 0, zIndex: 10,
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
@@ -315,6 +492,7 @@ function EmptyEditorState({ projectName, onClose }: { projectName?: string; onCl
       color: 'var(--text-muted)',
       fontSize: 12,
       fontFamily: 'var(--font-ui)',
+      background: 'var(--bg-surface)',
     }}>
       <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
         {projectName ? `Proyecto: ${projectName}` : 'Ningún proyecto seleccionado'}
@@ -334,6 +512,74 @@ function EmptyEditorState({ projectName, onClose }: { projectName?: string; onCl
       >
         Cerrar editor
       </button>
+    </div>
+  )
+}
+
+function UnsavedChangesDialog({
+  fileName,
+  onSave,
+  onDiscard,
+  onCancel,
+}: {
+  fileName: string
+  onSave: () => void
+  onDiscard: () => void
+  onCancel: () => void
+}) {
+  return (
+    <div
+      style={{
+        position: 'fixed', inset: 0, zIndex: 110,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: 'rgba(0,0,0,0.3)',
+      }}
+      onClick={onCancel}
+    >
+      <div
+        style={{
+          width: 420, maxWidth: '92vw',
+          background: 'var(--bg-modal)', border: '1px solid var(--border-strong)',
+          borderRadius: 'var(--radius-xl)', boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
+          display: 'flex', flexDirection: 'column', overflow: 'hidden',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div style={{ padding: '20px 24px 12px' }}>
+          <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-ui)', margin: 0 }}>
+            Cambios sin guardar
+          </h3>
+        </div>
+        <div style={{ padding: '0 24px 20px' }}>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', fontFamily: 'var(--font-ui)', lineHeight: 1.5, margin: 0 }}>
+            <span style={{ fontWeight: 600 }}>{fileName}</span> tiene cambios sin guardar.
+          </p>
+        </div>
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8,
+          padding: '12px 24px', borderTop: '1px solid var(--border-subtle)',
+          background: 'var(--bg-surface)', flexShrink: 0,
+        }}>
+          <button onClick={onCancel} style={{
+            padding: '5px 12px', background: 'var(--bg-input)', border: '1px solid var(--border-normal)',
+            borderRadius: 'var(--radius-md)', color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer',
+          }}>
+            Cancelar
+          </button>
+          <button onClick={onDiscard} style={{
+            padding: '5px 12px', background: 'transparent', border: '1px solid var(--border-normal)',
+            borderRadius: 'var(--radius-md)', color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer',
+          }}>
+            Descartar
+          </button>
+          <button onClick={onSave} style={{
+            padding: '5px 12px', background: 'var(--accent)', border: 'none',
+            borderRadius: 'var(--radius-md)', color: '#fff', fontSize: 12, cursor: 'pointer', fontWeight: 500,
+          }}>
+            Guardar
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

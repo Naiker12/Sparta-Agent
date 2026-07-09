@@ -7,7 +7,6 @@ export interface TerminalTab {
   title: string
   auto: boolean
   cwd: string
-  reviveBuffer?: string
   kind: 'user' | 'agent'
   procId?: string
 }
@@ -20,13 +19,11 @@ interface TerminalState {
   selectTab: (id: string) => void
   renameTab: (id: string, title: string) => void
   reportShell: (id: string, shell: string) => void
-  updateReviveBuffer: (id: string, buffer: string) => void
   ensureAgentTab: (procId: string, title: string) => string | null
   closeAgentTabByProc: (procId: string) => boolean
   ensureAtLeastOneTab: () => void
 }
 
-const MAX_REVIVE_BUFFER_CHARS = 48_000
 const surfacedProcs = new Set<string>()
 
 export const useTerminalStore = create<TerminalState>()(
@@ -69,13 +66,6 @@ export const useTerminalStore = create<TerminalState>()(
         const name = shell.trim()
         if (!name) return
         set((s) => ({ tabs: s.tabs.map((t) => (t.id === id && t.auto ? { ...t, title: name } : t)) }))
-      },
-
-      updateReviveBuffer: (id, buffer) => {
-        const capped = buffer.length > MAX_REVIVE_BUFFER_CHARS ? buffer.slice(-MAX_REVIVE_BUFFER_CHARS) : buffer
-        set((s) => ({
-          tabs: s.tabs.map((t) => (t.id === id && t.kind === 'user' ? { ...t, reviveBuffer: capped } : t)),
-        }))
       },
 
       ensureAgentTab: (procId, title) => {

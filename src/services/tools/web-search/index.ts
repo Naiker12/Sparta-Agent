@@ -37,6 +37,10 @@ async function duckduckgoSearch(query: string): Promise<string> {
   if (!resp.ok) throw new Error(`DuckDuckGo error HTTP ${resp.status}`)
   const html = await resp.text()
 
+  if (html.toLowerCase().includes('captcha') || html.toLowerCase().includes('challenge')) {
+    throw new Error('DuckDuckGo returned a CAPTCHA challenge')
+  }
+
   const results: SearchResult[] = []
   const linkPattern = /<a[^>]+class="result__a"[^>]*href="([^"]+)"[^>]*>(.*?)<\/a>/g
   const snippetPattern = /<a[^>]+class="result__snippet"[^>]*>(.*?)<\/a>/g
@@ -45,7 +49,7 @@ async function duckduckgoSearch(query: string): Promise<string> {
   const titles: string[] = []
   let m: RegExpExecArray | null
   while ((m = linkPattern.exec(html)) !== null) {
-    urls.push(m[1])
+    urls.push(resolveDdgUrl(m[1]))
     titles.push(m[2].replace(/<[^>]+>/g, '').trim())
   }
   while ((m = snippetPattern.exec(html)) !== null) {
@@ -62,6 +66,17 @@ async function duckduckgoSearch(query: string): Promise<string> {
   return results
     .map((r, i) => `${i + 1}. ${r.title}\n   URL: ${r.url}\n   ${r.snippet}`)
     .join('\n\n')
+}
+
+function resolveDdgUrl(url: string): string {
+  if (url.includes('duckduckgo.com/l/') && url.includes('uddg=')) {
+    try {
+      const parsed = new URL(url)
+      const uddg = parsed.searchParams.get('uddg')
+      if (uddg) return decodeURIComponent(uddg)
+    } catch { /* not a valid URL, return as-is */ }
+  }
+  return url
 }
 
 export async function executeWebSearch(query: string, count = 5): Promise<string> {
