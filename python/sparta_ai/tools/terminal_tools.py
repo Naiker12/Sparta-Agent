@@ -99,18 +99,23 @@ def _execute_command(command: str, timeout: int) -> tuple[str, int]:
         # Docker not available, fall through to local
         logger.warning("Docker sandbox requested but not available, running locally")
 
+    root = os.environ.get("SPARTA_WORKSPACE_ROOT") or None
+
     try:
         result = subprocess.run(
             command, shell=True, capture_output=True, text=True, timeout=timeout,
+            cwd=root,
+            stdin=subprocess.DEVNULL,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
         )
-        output = result.stdout
-        if result.stderr:
-            output += result.stderr
+        output = (result.stdout or "") + (result.stderr or "")
         return output.strip(), result.returncode
     except subprocess.TimeoutExpired:
         return f"[Timeout: el comando excedió el límite de {timeout}s]", -1
     except Exception as e:
-        return f"[Error al ejecutar: {e}]", -1
+        logger.error("terminal_execute_tool crashed unexpectedly: %s", e, exc_info=True)
+        _emit_terminal_event("terminal:tool_crash", {"error": str(e)})
+        return f"[Error interno al ejecutar el comando: {e}]", -1
 
 
 def _emit_terminal_event(event: str, data: dict) -> None:
@@ -177,6 +182,10 @@ def terminal_execute_tool(command: str) -> str:
             _emit_terminal_event("terminal:agent_output", {"procId": proc_id, "chunk": output[:5000]})
         _emit_terminal_event("terminal:agent_exit", {"procId": proc_id, "code": code})
 
+        # Notify frontend to refresh file tree after command execution
+        if code == 0:
+            _emit_terminal_event("file:changed", {"path": os.environ.get("SPARTA_WORKSPACE_ROOT", "")})
+
         # Cache result for terminal_check_tool
         _proc_results[proc_id] = {"output": output, "exit_code": code, "done": True}
 
@@ -238,6 +247,10 @@ def terminal_execute_background_tool(command: str, label: str | None = None) -> 
         if output:
             _emit_terminal_event("terminal:agent_output", {"procId": proc_id, "chunk": output[:10000]})
         _emit_terminal_event("terminal:agent_exit", {"procId": proc_id, "code": code})
+
+        # Notify frontend to refresh file tree after command execution
+        if code == 0:
+            _emit_terminal_event("file:changed", {"path": os.environ.get("SPARTA_WORKSPACE_ROOT", "")})
 
         _proc_results[proc_id] = {"output": output, "exit_code": code, "done": True}
 

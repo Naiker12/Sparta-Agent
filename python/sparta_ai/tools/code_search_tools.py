@@ -32,11 +32,11 @@ def _is_excluded(path: Path) -> bool:
     return any(part in EXCLUDED_DIRS for part in path.parts)
 
 
-def _safe_base(path: str) -> Path:
+def _safe_base(path: str, tool_name: str = "list_directory_tool", preview: str = "") -> Path:
     """Resolve and validate a directory path inside the workspace."""
     if not path or path.strip() in (".", ""):
         return _workspace_root()
-    resolved = _get_safe_path(path, tool_name=None, require_permission=False)
+    resolved = _get_safe_path(path, tool_name=tool_name, preview=preview)
     if resolved.is_file():
         return resolved.parent
     return resolved
