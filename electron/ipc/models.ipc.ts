@@ -90,7 +90,9 @@ async function fetchCloudModels(
     }
 
     case 'google': {
-      const res = await fetch(`${API_BASE.google}/v1beta/models?key=${apiKey || ''}`)
+      const res = await fetch(`${API_BASE.google}/v1beta/models`, {
+        headers: { 'X-Goog-Api-Key': apiKey || '' },
+      })
       if (!res.ok) return { models: [], error: `HTTP ${res.status}: ${res.statusText}` }
       const data = await res.json()
       const models = (data.models || [])

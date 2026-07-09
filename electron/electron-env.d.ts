@@ -64,6 +64,7 @@ interface FsAPI {
   readDir: (dirPath: string) => Promise<import('./ipc/filesystem.ipc').FileTreeNode[]>
   readFile: (filePath: string) => Promise<{ success: boolean; content?: string; error?: string }>
   writeFile: (filePath: string, content: string) => Promise<{ success: boolean; error?: string }>
+  mkdir: (dirPath: string) => Promise<{ success: boolean; error?: string }>
   deleteFile: (filePath: string) => Promise<{ success: boolean; error?: string }>
   deleteFolder: (folderPath: string) => Promise<{ success: boolean; error?: string }>
   startWatcher: (dirPath: string) => Promise<{ success: boolean }>
@@ -71,7 +72,7 @@ interface FsAPI {
 }
 
 interface TerminalIPC {
-  create: (opts: { terminalId: string; cols: number; rows: number }) => Promise<{ success: boolean; shell?: string; error?: string }>
+  create: (opts: { terminalId: string; cols: number; rows: number; shell?: string }) => Promise<{ success: boolean; shell?: string; error?: string }>
   write: (terminalId: string, data: string) => void
   resize: (terminalId: string, cols: number, rows: number) => void
   destroy: (terminalId: string) => Promise<{ success: boolean }>
@@ -85,6 +86,27 @@ interface TerminalIPC {
   onAgentSpawn: (callback: (payload: { procId: string; command: string }) => void) => () => void
   onAgentOutput: (callback: (payload: { procId: string; chunk: string }) => void) => () => void
   onAgentExit: (callback: (payload: { procId: string; code: number }) => void) => () => void
+}
+
+interface AgentTaskRequest {
+  taskId: string
+  agentId: string
+  taskDescription: string
+  systemPrompt: string
+  allowedTools: string[]
+  model: string
+  provider: string
+  vendor?: string
+  providerKey?: string
+  apiUrl?: string
+  workspaceRoot?: string
+  agentAutonomy: string
+  maxTurns?: number
+}
+
+interface AgentIPC {
+  executeTask: (req: AgentTaskRequest) => Promise<{ ok: boolean; result?: string; error?: string }>
+  onTaskEvent: (callback: (payload: { event: string; data: unknown }) => void) => () => void
 }
 
 interface SkillsIPC {
@@ -105,6 +127,7 @@ interface Window {
   sparta: SpartaAPI
   vault: VaultAPI
   terminal: TerminalIPC
+  agent: AgentIPC
   fs: FsAPI
   skills: SkillsIPC
 }

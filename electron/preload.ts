@@ -16,14 +16,37 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getVersion: () => ipcRenderer.invoke('app:getVersion'),
 })
 
+const ALLOWED_SEND_CHANNELS = new Set([
+  'chat:ready',
+  'terminal:ready',
+  'shell:open-external',
+])
+
+const ALLOWED_INVOKE_CHANNELS = new Set([
+  'win:isMaximized',
+  'app:getVersion',
+])
+
 contextBridge.exposeInMainWorld('electron', {
   on: (channel: string, listener: (...args: unknown[]) => void) => {
     const subscription = (_event: Electron.IpcRendererEvent, ...args: unknown[]) => listener(...args)
     ipcRenderer.on(channel, subscription)
     return () => ipcRenderer.removeListener(channel, subscription)
   },
-  send: (channel: string, ...args: unknown[]) => ipcRenderer.send(channel, ...args),
-  invoke: (channel: string, ...args: unknown[]) => ipcRenderer.invoke(channel, ...args),
+  send: (channel: string, ...args: unknown[]) => {
+    if (!ALLOWED_SEND_CHANNELS.has(channel)) {
+      console.warn(`[preload] Blocked send to disallowed channel: ${channel}`)
+      return
+    }
+    ipcRenderer.send(channel, ...args)
+  },
+  invoke: (channel: string, ...args: unknown[]) => {
+    if (!ALLOWED_INVOKE_CHANNELS.has(channel)) {
+      console.warn(`[preload] Blocked invoke to disallowed channel: ${channel}`)
+      return Promise.reject(new Error(`Channel "${channel}" is not allowed`))
+    }
+    return ipcRenderer.invoke(channel, ...args)
+  },
 })
 
 contextBridge.exposeInMainWorld('sparta', {
@@ -136,11 +159,37 @@ contextBridge.exposeInMainWorld('terminal', {
   },
 })
 
+// ── Agent task execution (server-side LLM loop) ──────────────────────
+contextBridge.exposeInMainWorld('agent', {
+  executeTask: (req: {
+    taskId: string
+    agentId: string
+    taskDescription: string
+    systemPrompt: string
+    allowedTools: string[]
+    model: string
+    provider: string
+    vendor?: string
+    providerKey?: string
+    apiUrl?: string
+    workspaceRoot?: string
+    agentAutonomy: string
+    maxTurns?: number
+  }) => ipcRenderer.invoke('agent:execute-task', req) as Promise<{ ok: boolean; result?: string; error?: string }>,
+
+  onTaskEvent: (callback: (payload: { event: string; data: unknown }) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, payload: { event: string; data: unknown }) => callback(payload)
+    ipcRenderer.on('agent:task-event', handler)
+    return () => ipcRenderer.removeListener('agent:task-event', handler)
+  },
+})
+
 contextBridge.exposeInMainWorld('fs', {
   openFolderDialog: () => ipcRenderer.invoke('fs:openFolderDialog') as Promise<string | null>,
   readDir: (dirPath: string) => ipcRenderer.invoke('fs:readDir', dirPath) as Promise<FileTreeNode[]>,
   readFile: (filePath: string) => ipcRenderer.invoke('fs:readFile', filePath) as Promise<{ success: boolean; content?: string; error?: string }>,
   writeFile: (filePath: string, content: string) => ipcRenderer.invoke('fs:writeFile', filePath, content) as Promise<{ success: boolean; error?: string }>,
+  mkdir: (dirPath: string) => ipcRenderer.invoke('fs:mkdir', dirPath) as Promise<{ success: boolean; error?: string }>,
   deleteFile: (filePath: string) => ipcRenderer.invoke('fs:deleteFile', filePath) as Promise<{ success: boolean; error?: string }>,
   deleteFolder: (folderPath: string) => ipcRenderer.invoke('fs:deleteFolder', folderPath) as Promise<{ success: boolean; error?: string }>,
   startWatcher: (dirPath: string) => ipcRenderer.invoke('fs:startWatcher', dirPath) as Promise<{ success: boolean }>,
