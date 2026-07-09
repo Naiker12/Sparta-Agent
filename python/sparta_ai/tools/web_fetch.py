@@ -1,3 +1,4 @@
+import asyncio
 import ipaddress
 import logging
 import socket
@@ -75,32 +76,37 @@ async def web_fetch_tool(url: str, max_chars: int = 8000) -> str:
     await dispatch_progress("reading", url=url)
 
     try:
-        async with httpx.AsyncClient(
-            timeout=_TIMEOUT,
-            follow_redirects=True,
-            headers={"User-Agent": "Mozilla/5.0 (compatible; SpartaAgent/1.0)"},
-        ) as client:
-            async with client.stream("GET", url) as resp:
-                resp.raise_for_status()
-                content_type = resp.headers.get("content-type", "")
-                if "text/html" not in content_type and "text/plain" not in content_type:
-                    return f"Error: contenido no soportado ({content_type}). Solo HTML/texto."
-                raw = b""
-                async for chunk in resp.aiter_bytes():
-                    raw += chunk
-                    if len(raw) > _MAX_CONTENT_BYTES:
-                        break
-        html = raw.decode("utf-8", errors="ignore")
-        text = _extract_readable_text(html)
-        if not text:
-            return f"No se pudo extraer contenido legible de {url}."
-        truncated = text[:max_chars]
-        suffix = "\n\n[contenido truncado]" if len(text) > max_chars else ""
-        return f"[Contenido de {url}]\n\n{truncated}{suffix}"
-    except httpx.TimeoutException:
-        return f"Timeout leyendo {url}."
-    except httpx.HTTPStatusError as e:
-        return f"Error HTTP {e.response.status_code} leyendo {url}."
+        return await asyncio.wait_for(
+            _do_fetch(url, max_chars), timeout=30.0
+        )
+    except TimeoutError:
+        logger.error("web_fetch_tool total timeout for %s", url)
+        return f"Timeout: la página '{url}' no respondió en 30 segundos."
     except Exception as e:
         logger.exception("web_fetch_tool failed for %s", url)
         return f"Error inesperado leyendo {url}: {e}"
+
+
+async def _do_fetch(url: str, max_chars: int) -> str:
+    async with httpx.AsyncClient(
+        timeout=_TIMEOUT,
+        follow_redirects=True,
+        headers={"User-Agent": "Mozilla/5.0 (compatible; SpartaAgent/1.0)"},
+    ) as client:
+        async with client.stream("GET", url) as resp:
+            resp.raise_for_status()
+            content_type = resp.headers.get("content-type", "")
+            if "text/html" not in content_type and "text/plain" not in content_type:
+                return f"Error: contenido no soportado ({content_type}). Solo HTML/texto."
+            raw = b""
+            async for chunk in resp.aiter_bytes():
+                raw += chunk
+                if len(raw) > _MAX_CONTENT_BYTES:
+                    break
+    html = raw.decode("utf-8", errors="ignore")
+    text = _extract_readable_text(html)
+    if not text:
+        return f"No se pudo extraer contenido legible de {url}."
+    truncated = text[:max_chars]
+    suffix = "\n\n[contenido truncado]" if len(text) > max_chars else ""
+    return f"[Contenido de {url}]\n\n{truncated}{suffix}"

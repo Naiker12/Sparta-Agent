@@ -86,12 +86,23 @@ async def web_search_tool(
     try:
         if api_key:
             try:
-                results = await _brave_search(query, count, api_key)
+                results = await asyncio.wait_for(
+                    _brave_search(query, count, api_key), timeout=20.0
+                )
+            except TimeoutError:
+                logger.warning("Brave Search timed out, falling back to DuckDuckGo")
+                results = await asyncio.wait_for(
+                    _duckduckgo_search_async(query, count), timeout=15.0
+                )
             except Exception as e:
                 logger.warning("Brave Search failed (%s), falling back to DuckDuckGo", e)
-                results = await _duckduckgo_search_async(query, count)
+                results = await asyncio.wait_for(
+                    _duckduckgo_search_async(query, count), timeout=15.0
+                )
         else:
-            results = await _duckduckgo_search_async(query, count)
+            results = await asyncio.wait_for(
+                _duckduckgo_search_async(query, count), timeout=15.0
+            )
 
         for i, r in enumerate(results[:count], 1):
             await dispatch_progress(
@@ -106,6 +117,12 @@ async def web_search_tool(
         await dispatch_progress("done")
         return _format_results(query, results, count)
 
+    except TimeoutError:
+        logger.error("Search timed out for query: %s", query)
+        return (
+            f"TIMEOUT: La búsqueda '{query}' excedió el tiempo de espera total.\n"
+            "Informa al usuario. NO uses tu conocimiento de entrenamiento como sustituto."
+        )
     except httpx.HTTPStatusError as e:
         logger.error("Search HTTP error: %s", e)
         code = e.response.status_code
@@ -127,9 +144,9 @@ async def web_search_tool(
             f"con tu conocimiento de entrenamiento."
         )
     except httpx.TimeoutException:
-        logger.error("Search timeout")
+        logger.error("Search HTTP timeout")
         return (
-            f"TIMEOUT: La búsqueda '{query}' excedió el tiempo de espera.\n"
+            f"TIMEOUT: La búsqueda '{query}' excedió el tiempo de espera HTTP.\n"
             "Informa al usuario. NO uses tu conocimiento de entrenamiento como sustituto."
         )
     except Exception as e:
