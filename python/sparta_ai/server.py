@@ -147,11 +147,10 @@ class StdioServer:
         reasoning = params.get("reasoning", {"enabled": False, "budget": 8000})
         web_search_enabled = params.get("web_search_enabled", True)
         session_id = params.get("session_id", "")
-        workspace_root = params.get("workspace_root") or os.environ.get("SPARTA_WORKSPACE_ROOT")
+        workspace_root = params.get("workspace_root")
         if workspace_root:
             os.environ["SPARTA_WORKSPACE_ROOT"] = str(workspace_root)
         else:
-            # Ensure stale value from previous session doesn't leak
             os.environ.pop("SPARTA_WORKSPACE_ROOT", None)
             logger.warning("No workspace_root provided — file tools will fail with explicit error")
 

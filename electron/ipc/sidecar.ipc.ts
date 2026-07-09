@@ -35,10 +35,9 @@ function getPythonCwd(): string {
 }
 
 function getWorkspaceRoot(): string {
-  // Preferimos el workspace abierto por el usuario; si no hay, usamos CWD.
-  const fromEnv = process.env.SPARTA_WORKSPACE_ROOT
-  if (fromEnv) return fromEnv
-  return app.isPackaged ? process.cwd() : process.cwd()
+  // Solo devolvemos el workspace que el usuario seleccionó explícitamente.
+  // Vacío = sin workspace → el sidecar lanzará error pidiendo abrir una carpeta.
+  return process.env.SPARTA_WORKSPACE_ROOT ?? ''
 }
 
 function getDataDir(): string {

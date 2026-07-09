@@ -162,9 +162,11 @@ async def handle_chat_stream(ws: WebSocket, params: dict):
     web_search_enabled = params.get("web_search_enabled", True)
     session_id = params.get("sessionId") or params.get("session_id", "")
     message_id = params.get("messageId") or params.get("message_id", "")
-    workspace_root = params.get("workspace_root") or params.get("workspaceRoot") or os.environ.get("SPARTA_WORKSPACE_ROOT")
+    workspace_root = params.get("workspace_root") or params.get("workspaceRoot")
     if workspace_root:
         os.environ["SPARTA_WORKSPACE_ROOT"] = str(workspace_root)
+    else:
+        os.environ.pop("SPARTA_WORKSPACE_ROOT", None)
 
     if not provider_key and not (is_local or vendor in {"ollama", "lmstudio", "llamacpp", "custom"}):
         await ws.send_text(json.dumps({
