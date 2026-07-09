@@ -46,7 +46,7 @@ def _extract_task_args(messages: list[BaseMessage]) -> tuple[str, str, str | Non
     return "", "auto", None
 
 
-@tool
+@tool("delegate_code")
 def execute_code_task(
     task: str,
     language: str = "auto",

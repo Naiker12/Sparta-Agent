@@ -57,7 +57,7 @@ def _recall(query: str, limit: int) -> str:
     return "\n".join(parts)
 
 
-@tool
+@tool("delegate_memory")
 def recall_memories(
     query: str,
     limit: int = 5,
