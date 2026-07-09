@@ -87,6 +87,16 @@ class StdioServer:
             approved = bool(params.get("approved", False))
             remember = str(params.get("remember", "once"))
             resolve_permission(perm_id, approved, remember)
+        elif method == "memory.index":
+            await self._handle_memory_index(request_id, params)
+        elif method == "memory.search":
+            await self._handle_memory_search(request_id, params)
+        elif method == "memory.embed":
+            await self._handle_memory_embed(request_id, params)
+        elif method == "memory.delete":
+            await self._handle_memory_delete(request_id, params)
+        elif method == "memory.count":
+            await self._handle_memory_count(request_id)
         elif method == "shutdown":
             _emit(request_id, "shutdown", {"ok": True})
             self._running = False
@@ -210,6 +220,63 @@ class StdioServer:
             _active_streams[request_id].cancel()
             logger.info("Aborted stream %s", request_id)
 
+    async def _handle_memory_index(self, request_id: str | None, params: dict):
+        from sparta_ai.memory.chroma_store import index_entry
+        entry = params.get("entry", {})
+        try:
+            entry_id = index_entry(entry)
+            _emit(request_id, "memory.index:response", {"ok": bool(entry_id), "id": entry_id})
+        except Exception as e:
+            logger.error("memory.index failed: %s", e)
+            _emit(request_id, "memory.index:response", {"ok": False, "error": str(e)})
+
+    async def _handle_memory_search(self, request_id: str | None, params: dict):
+        from sparta_ai.memory.chroma_store import semantic_search
+        query = params.get("query", "")
+        k = int(params.get("k", 5))
+        try:
+            results = semantic_search(query, k=k)
+            _emit(request_id, "memory.search:response", {"ok": True, "results": results})
+        except Exception as e:
+            logger.error("memory.search failed: %s", e)
+            _emit(request_id, "memory.search:response", {"ok": False, "error": str(e)})
+
+    async def _handle_memory_embed(self, request_id: str | None, params: dict):
+        from sparta_ai.memory.embeddings import embed_text, embed_texts
+        texts = params.get("texts", [])
+        single = params.get("text")
+        try:
+            if single is not None:
+                vector = embed_text(single)
+                _emit(request_id, "memory.embed:response", {"ok": True, "embedding": vector})
+            elif isinstance(texts, list) and texts:
+                vectors = embed_texts(texts)
+                _emit(request_id, "memory.embed:response", {"ok": True, "embeddings": vectors})
+            else:
+                _emit(request_id, "memory.embed:response", {"ok": False, "error": "text or texts required"})
+        except Exception as e:
+            logger.error("memory.embed failed: %s", e)
+            _emit(request_id, "memory.embed:response", {"ok": False, "error": str(e)})
+
+    async def _handle_memory_delete(self, request_id: str | None, params: dict):
+        from sparta_ai.memory.chroma_store import delete_entry
+        entry_id = params.get("entry_id", "")
+        try:
+            delete_entry(entry_id)
+            _emit(request_id, "memory.delete:response", {"ok": True})
+        except Exception as e:
+            logger.error("memory.delete failed: %s", e)
+            _emit(request_id, "memory.delete:response", {"ok": False, "error": str(e)})
+
+    async def _handle_memory_count(self, request_id: str | None):
+        from sparta_ai.memory.chroma_store import count_entries
+        try:
+            count = count_entries()
+            _emit(request_id, "memory.count:response", {"ok": True, "count": count})
+        except Exception as e:
+            logger.error("memory.count failed: %s", e)
+            _emit(request_id, "memory.count:response", {"ok": False, "error": str(e)})
+
     async def _execute_agent(
         self,
         request_id: str,
@@ -306,7 +373,9 @@ class StdioServer:
             ] + mcp_tools
         if web_search_enabled:
             from sparta_ai.tools.web_search import web_search_tool
+            from sparta_ai.tools.web_fetch import web_fetch_tool
             agent_tools.insert(0, web_search_tool)
+            agent_tools.insert(1, web_fetch_tool)
 
         checkpointer = await get_checkpointer()
         graph = build_sparta_graph(

@@ -305,7 +305,9 @@ async def _execute_agent_ws(
     ] + mcp_tools
     if web_search_enabled:
         from sparta_ai.tools.web_search import web_search_tool
+        from sparta_ai.tools.web_fetch import web_fetch_tool
         agent_tools.insert(0, web_search_tool)
+        agent_tools.insert(1, web_fetch_tool)
 
     checkpointer = await get_checkpointer()
     graph = build_sparta_graph(
@@ -344,6 +346,73 @@ async def _execute_agent_ws(
 async def get_skills_index():
     from sparta_ai.skills.skill_loader import skills_index
     return {"skills": skills_index()}
+
+
+@app.post("/api/memory/index")
+async def memory_index(request: Request):
+    from sparta_ai.memory.chroma_store import index_entry
+    body = await request.json()
+    entry = body.get("entry", {})
+    try:
+        entry_id = index_entry(entry)
+        return {"ok": bool(entry_id), "id": entry_id}
+    except Exception as e:
+        logger.error("memory.index failed: %s", e)
+        return {"ok": False, "error": str(e)}
+
+
+@app.post("/api/memory/search")
+async def memory_search(request: Request):
+    from sparta_ai.memory.chroma_store import semantic_search
+    body = await request.json()
+    query = body.get("query", "")
+    k = int(body.get("k", 5))
+    try:
+        results = semantic_search(query, k=k)
+        return {"ok": True, "results": results}
+    except Exception as e:
+        logger.error("memory.search failed: %s", e)
+        return {"ok": False, "error": str(e)}
+
+
+@app.post("/api/memory/embed")
+async def memory_embed(request: Request):
+    from sparta_ai.memory.embeddings import embed_text, embed_texts
+    body = await request.json()
+    texts = body.get("texts", [])
+    single = body.get("text")
+    try:
+        if single is not None:
+            return {"ok": True, "embedding": embed_text(single)}
+        if isinstance(texts, list) and texts:
+            return {"ok": True, "embeddings": embed_texts(texts)}
+        return {"ok": False, "error": "text or texts required"}
+    except Exception as e:
+        logger.error("memory.embed failed: %s", e)
+        return {"ok": False, "error": str(e)}
+
+
+@app.post("/api/memory/delete")
+async def memory_delete(request: Request):
+    from sparta_ai.memory.chroma_store import delete_entry
+    body = await request.json()
+    entry_id = body.get("entry_id", "")
+    try:
+        delete_entry(entry_id)
+        return {"ok": True}
+    except Exception as e:
+        logger.error("memory.delete failed: %s", e)
+        return {"ok": False, "error": str(e)}
+
+
+@app.get("/api/memory/count")
+async def memory_count():
+    from sparta_ai.memory.chroma_store import count_entries
+    try:
+        return {"ok": True, "count": count_entries()}
+    except Exception as e:
+        logger.error("memory.count failed: %s", e)
+        return {"ok": False, "error": str(e)}
 
 
 @app.get("/health")
