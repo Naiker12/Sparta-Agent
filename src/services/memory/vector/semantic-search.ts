@@ -1,6 +1,5 @@
 import type { MemoryEntry } from '@/types'
-import { embed } from './embeddings'
-import { search as chromaSearch } from './chroma-client'
+import { searchByQuery } from './chroma-client'
 
 export interface SemanticSearchResult {
   entry: MemoryEntry
@@ -12,10 +11,7 @@ export async function semanticSearch(
   k = 5,
   minScore = 0.5,
 ): Promise<SemanticSearchResult[]> {
-  const queryEmbedding = await embed(query)
-  if (!queryEmbedding) return []
-
-  const results = await chromaSearch(queryEmbedding, k)
+  const results = await searchByQuery(query, k)
 
   return results
     .filter((r) => {

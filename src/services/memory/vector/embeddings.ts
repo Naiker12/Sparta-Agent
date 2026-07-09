@@ -1,106 +1,59 @@
-import type { ProviderVendor } from '@/types'
+const _sidecarBaseUrl = (() => {
+  const fromEnv = import.meta.env.VITE_SIDECAR_HTTP_URL as string | undefined
+  if (fromEnv) return fromEnv
+  const host = (import.meta.env.VITE_SIDECAR_HOST as string) || 'localhost'
+  const port = (import.meta.env.VITE_SIDECAR_HTTP_PORT as string) || '8765'
+  return `http://${host}:${port}`
+})()
 
-interface EmbeddingProvider {
-  vendor: ProviderVendor
-  apiKey?: string
-  serverUrl?: string
+function isElectron(): boolean {
+  return typeof window !== 'undefined' && !!window.sparta?.memoryEmbed
 }
 
-const OPENAI_EMBEDDING_MODEL = 'text-embedding-3-small'
-const OLLAMA_EMBEDDING_MODEL = 'nomic-embed-text'
-
-let _activeProvider: EmbeddingProvider | null = null
-
-export function setActiveProvider(provider: EmbeddingProvider | null): void {
-  _activeProvider = provider
-}
-
-export function getActiveProvider(): EmbeddingProvider | null {
-  return _activeProvider
-}
-
-async function openaiEmbed(texts: string[], apiKey: string): Promise<number[][] | null> {
+async function sidecarEmbed(texts: string[]): Promise<number[][] | null> {
+  if (isElectron()) {
+    const result = await window.sparta!.memoryEmbed(texts)
+    if (!result.ok || !Array.isArray(result.embeddings)) return null
+    return result.embeddings
+  }
   try {
-    const res = await fetch('https://api.openai.com/v1/embeddings', {
+    const res = await fetch(`${_sidecarBaseUrl}/api/memory/embed`, {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: OPENAI_EMBEDDING_MODEL,
-        input: texts,
-      }),
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ texts }),
     })
     if (!res.ok) return null
-    const data = await res.json()
-    return data.data
-      .sort((a: { index: number }, b: { index: number }) => a.index - b.index)
-      .map((d: { embedding: number[] }) => d.embedding)
-  } catch {
-    return null
-  }
-}
-
-async function ollamaEmbed(texts: string[], serverUrl: string): Promise<number[][] | null> {
-  try {
-    const results: number[][] = []
-    for (const text of texts) {
-      const res = await fetch(`${serverUrl}/api/embeddings`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ model: OLLAMA_EMBEDDING_MODEL, prompt: text }),
-      })
-      if (!res.ok) return null
-      const data = await res.json()
-      results.push(data.embedding)
-    }
-    return results
+    const data = await res.json() as { ok: boolean; embeddings?: number[][]; error?: string }
+    if (!data.ok || !Array.isArray(data.embeddings)) return null
+    return data.embeddings
   } catch {
     return null
   }
 }
 
 export async function embed(text: string): Promise<number[] | null> {
-  const provider = _activeProvider
-  if (!provider) return null
-
-  if (provider.vendor === 'openai' && provider.apiKey) {
-    const result = await openaiEmbed([text], provider.apiKey)
-    if (result) return result[0]
-  }
-
-  if (provider.vendor === 'ollama' && provider.serverUrl) {
-    const result = await ollamaEmbed([text], provider.serverUrl)
-    if (result) return result[0]
-  }
-
-  return null
+  const result = await sidecarEmbed([text])
+  return result?.[0] ?? null
 }
 
 export async function embedBatch(texts: string[]): Promise<(number[] | null)[]> {
   if (texts.length === 0) return []
+  const result = await sidecarEmbed(texts)
+  if (!result) return texts.map(() => null)
+  return result
+}
 
-  const provider = _activeProvider
-  if (!provider) return texts.map(() => null)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function setActiveProvider(_provider: unknown): void {
+  // Deprecated: embeddings are now computed exclusively by the Python sidecar
+  // using a single model (all-MiniLM-L6-v2). This function is kept for API
+  // compatibility but does nothing.
+}
 
-  if (provider.vendor === 'openai' && provider.apiKey) {
-    const result = await openaiEmbed(texts, provider.apiKey)
-    if (result) return result
-  }
-
-  if (provider.vendor === 'ollama' && provider.serverUrl) {
-    const result = await ollamaEmbed(texts, provider.serverUrl)
-    if (result) return result
-  }
-
-  return texts.map(() => null)
+export function getActiveProvider(): null {
+  return null
 }
 
 export function getEmbeddingModelLabel(): string {
-  const provider = _activeProvider
-  if (!provider) return 'No disponible'
-  if (provider.vendor === 'openai') return `OpenAI ${OPENAI_EMBEDDING_MODEL}`
-  if (provider.vendor === 'ollama') return `Ollama ${OLLAMA_EMBEDDING_MODEL}`
-  return provider.vendor
+  return 'Sidecar all-MiniLM-L6-v2'
 }

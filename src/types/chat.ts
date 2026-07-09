@@ -23,7 +23,7 @@ export interface SearchProgressItem {
   id: string
   url: string
   title: string
-  status: 'pending' | 'visited'
+  status: 'pending' | 'reading' | 'visited'
 }
 
 export type ThinkingStatus = 'idle' | 'starting' | 'streaming' | 'completed' | 'collapsed'

@@ -1,11 +1,10 @@
-import type { MemoryEntry, ProviderVendor } from '@/types'
-import { connect as chromaConnect, addEntry as chromaAdd, getIndexedCount as chromaCount, isConnected } from './vector'
-import { setActiveProvider, embed } from './vector/embeddings'
+import type { MemoryEntry } from '@/types'
+import { connect as sidecarConnect, addEntry as sidecarAdd, getIndexedCount as sidecarCount, isConnected } from './vector'
 
 export interface VectorConfig {
   enabled: boolean
   provider?: {
-    vendor: ProviderVendor
+    vendor: string
     apiKey?: string
     serverUrl?: string
   }
@@ -15,52 +14,47 @@ let _vectorConfig: VectorConfig = { enabled: false }
 
 export function configureVector(config: VectorConfig): void {
   _vectorConfig = config
-  if (config.provider) {
-    setActiveProvider(config.provider)
-  }
+  // Embedding computation is now centralized in the Python sidecar; the
+  // provider field here is ignored but kept for API compatibility.
 }
 
 export function isVectorEnabled(): boolean {
   return _vectorConfig.enabled && isConnected()
 }
 
-export function tryAutoConfigure(providers: { vendor: ProviderVendor; apiKey?: string; serverUrl?: string }[]): boolean {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function tryAutoConfigure(_providers: { vendor: string; apiKey?: string; serverUrl?: string }[]): boolean {
   if (_vectorConfig.enabled) return true
-  const openai = providers.find((p) => p.vendor === 'openai')
-  if (openai?.apiKey) {
-    configureVector({ enabled: true, provider: { vendor: 'openai', apiKey: openai.apiKey } })
-    return true
-  }
-  const ollama = providers.find((p) => p.vendor === 'ollama')
-  if (ollama?.serverUrl) {
-    configureVector({ enabled: true, provider: { vendor: 'ollama', serverUrl: ollama.serverUrl } })
-    return true
-  }
-  return false
+  // The sidecar computes embeddings locally; we just need the user to have
+  // semantic memory enabled. Auto-configure if Chroma/sidecar is reachable.
+  configureVector({ enabled: true })
+  return true
 }
 
 export async function ensureVectorReady(): Promise<boolean> {
   if (!_vectorConfig.enabled) return false
-  const ok = await chromaConnect()
-  return ok
+  return sidecarConnect()
 }
 
 export async function indexInChroma(entry: MemoryEntry): Promise<boolean> {
   if (!_vectorConfig.enabled) return false
-  const ok = await chromaConnect()
+  const ok = await sidecarConnect()
   if (!ok) return false
-
-  const embedding = await embed(entry.content)
-  if (!embedding) return false
-
-  return chromaAdd(entry, embedding)
+  const normalized = {
+    id: entry.id,
+    content: entry.content,
+    memory_type: entry.category ?? entry.source ?? 'general',
+    tags: entry.category ? [entry.category] : [],
+    timestamp: entry.createdAt,
+  }
+  return sidecarAdd(normalized as unknown as MemoryEntry)
 }
 
 export async function getIndexedCount(): Promise<number> {
   if (!_vectorConfig.enabled) return 0
-  const ok = await chromaConnect()
+  const ok = await sidecarConnect()
   if (!ok) return 0
-  return chromaCount()
+  return sidecarCount()
 }
 
 export { semanticSearch, buildMemoryContext } from './vector/semantic-search'
