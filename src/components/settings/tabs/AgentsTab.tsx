@@ -136,7 +136,7 @@ export function AgentsTab() {
             <div style={{ display: 'flex', gap: 6 }}>
               <button
                 onClick={async () => {
-                  const result = await window.electron?.invoke('security:openAuditLog')
+                  const result = await window.electron?.invoke('security:openAuditLog') as { ok?: boolean } | undefined
                   if (result?.ok === false) {
                     alert('Audit log not available. Security module is not loaded.')
                   }

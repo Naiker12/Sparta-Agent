@@ -9,17 +9,17 @@ import { extractMemory } from '@/services'
 import type { SpartaEvent } from '@/types'
 
 const SUBAGENT_TOOL_MAP: Record<string, { name: string; type: 'research' | 'coding' | 'automation' | 'project'; description: string }> = {
-  research_topic: {
+  delegate_research: {
     name: 'Investigador Delegado',
     type: 'research',
     description: 'Búsqueda de información y consolidación en vivo.',
   },
-  execute_code_task: {
+  delegate_code: {
     name: 'Programador Delegado',
     type: 'coding',
     description: 'Análisis y generación de código en tiempo real.',
   },
-  recall_memories: {
+  delegate_memory: {
     name: 'Asistente de Memoria',
     type: 'automation',
     description: 'Recuperación de conocimientos de la memoria semántica.',
@@ -95,6 +95,7 @@ function _queueThinking(sid: string, mid: string, token: string) {
 // ── MCP lifecycle handler ───────────────────────────────────────────
 function _handleMCPEvent(type: string, event: Record<string, unknown>) {
   // Import lazily to avoid circular deps at module load time
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { useMCPStore } = require('@/stores/mcp.store') as typeof import('@/stores/mcp.store')
   const store = useMCPStore.getState()
   const serverId = (event.serverId ?? '') as string
@@ -128,11 +129,11 @@ function _handleMCPEvent(type: string, event: Record<string, unknown>) {
     // ── file:changed events — notify editor to refresh open tabs ─────
     if (type === 'file:changed') {
       const fileEvent = event as { path?: string }
-      if (fileEvent.path && window.fs?.readFile) {
+      if (fileEvent.path && typeof window.fs?.readFile === 'function') {
         console.debug('[file:changed] Agent modified:', fileEvent.path)
         // Dispatch to event bus so editor components can react
         useEventBus.getState().dispatch({
-          type: 'file:changed' as any,
+          type: 'file:changed' as const,
           path: fileEvent.path,
           timestamp: Date.now(),
         })
@@ -163,6 +164,7 @@ function _handleMCPEvent(type: string, event: Record<string, unknown>) {
 
   // ── MCP server added/removed by mcp_manage_tool ─────────────────────
   if (type === 'mcp:server_added') {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { useMCPStore } = require('@/stores/mcp.store') as typeof import('@/stores/mcp.store')
     const store = useMCPStore.getState()
     const serverId = (event.serverId ?? '') as string
@@ -175,6 +177,7 @@ function _handleMCPEvent(type: string, event: Record<string, unknown>) {
   }
 
   if (type === 'mcp:server_removed') {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { useMCPStore } = require('@/stores/mcp.store') as typeof import('@/stores/mcp.store')
     const store = useMCPStore.getState()
     const serverId = (event.serverId ?? '') as string
@@ -237,7 +240,7 @@ function _handleMCPEvent(type: string, event: Record<string, unknown>) {
     }
     case 'search:progress': {
       const progressEvent = event as {
-        stage: 'searching' | 'visiting' | 'done'
+        stage: 'searching' | 'visiting' | 'reading' | 'done'
         url?: string; title?: string; index?: number; total?: number; query?: string
       }
       if (progressEvent.stage === 'searching' && progressEvent.query) {
@@ -256,6 +259,18 @@ function _handleMCPEvent(type: string, event: Record<string, unknown>) {
           return [
             ...items,
             { id: crypto.randomUUID(), url: progressEvent.url, title: progressEvent.title || progressEvent.url, status: 'pending' as const },
+          ]
+        }
+        if (progressEvent.stage === 'reading' && progressEvent.url) {
+          const existing = items.find((i) => i.url === progressEvent.url)
+          if (existing) {
+            return items.map((i) =>
+              i.url === progressEvent.url ? { ...i, status: 'reading' as const } : i,
+            )
+          }
+          return [
+            ...items,
+            { id: crypto.randomUUID(), url: progressEvent.url, title: progressEvent.title || `Leyendo ${progressEvent.url}`, status: 'reading' as const },
           ]
         }
         if (progressEvent.stage === 'done') return items.map((i) => ({ ...i, status: 'visited' as const }))
@@ -365,7 +380,7 @@ function _handleMCPEvent(type: string, event: Record<string, unknown>) {
               status: 'running',
               model: 'Subagente',
               createdAt: Date.now(),
-              tools: name === 'research_topic' ? ['web_search'] : [],
+              tools: name === 'delegate_research' ? ['web_search', 'web_fetch'] : [],
               description: subagentMeta.description,
             })
           } else {
@@ -389,7 +404,7 @@ function _handleMCPEvent(type: string, event: Record<string, unknown>) {
             steps: [
               {
                 id: `${id}-step1`,
-                name: name === 'research_topic' ? 'Buscando información' : 'Ejecutando análisis',
+                name: name === 'delegate_research' ? 'Investigando en profundidad' : 'Ejecutando análisis',
                 status: 'running',
               }
             ]

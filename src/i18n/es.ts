@@ -178,6 +178,7 @@ export const es = {
     liveAgents: 'Agentes en vivo',
     noLiveAgents: 'No hay agentes trabajando en este momento.',
     searchingWeb: 'Buscando en la web...',
+    readingSources: 'Leyendo fuentes en profundidad...',
     searchCompleted: 'Búsqueda web completada',
     searchingWebQuery: 'Buscando "{{query}}" en la web...',
     searchResultsQuery: 'Resultados para "{{query}}"',

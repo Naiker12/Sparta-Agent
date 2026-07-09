@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Check, ChevronDown, Globe, Loader2 } from 'lucide-react'
+import { BookOpen, Check, ChevronDown, Globe, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { SearchProgressItem } from '@/types'
 import { useTranslation } from '@/i18n'
@@ -41,6 +41,7 @@ export function SearchProgressBlock({ items, isActive, query, className }: Searc
   if (items.length === 0 && !isActive) return null
 
   const visitedCount = items.filter((i) => i.status === 'visited').length
+  const readingCount = items.filter((i) => i.status === 'reading').length
   const isDone = !isActive && visitedCount > 0
   const allVisited = items.length > 0 && items.every((i) => i.status === 'visited')
 
@@ -123,12 +124,14 @@ export function SearchProgressBlock({ items, isActive, query, className }: Searc
                     : 'text-[var(--text-secondary)]'
               )}
             >
-              {isActive
-                ? (query ?? t('chat.searchingWeb'))
-                : allVisited
-                  ? t('chat.searchedSites').replace('{n}', String(visitedCount))
-                  : t('chat.searchCompleted')
-              }
+            {isActive
+              ? readingCount > 0
+                ? t('chat.readingSources')
+                : (query ?? t('chat.searchingWeb'))
+              : allVisited
+                ? t('chat.searchedSites').replace('{n}', String(visitedCount))
+                : t('chat.searchCompleted')
+            }
             </span>
             {isActive && query && (
               <span className="text-[11px] text-[var(--text-muted)] truncate max-w-[260px] leading-tight">
@@ -210,6 +213,10 @@ export function SearchProgressBlock({ items, isActive, query, className }: Searc
                           <div className="size-[10px] rounded-full bg-[var(--status-ok)]/12 flex items-center justify-center group-hover:bg-[var(--status-ok)]/20 transition-colors duration-200">
                             <Check className="size-[6px] text-[var(--status-ok)]" strokeWidth={3} />
                           </div>
+                        ) : item.status === 'reading' ? (
+                          <div className="size-[10px] rounded-full bg-[var(--accent)]/12 flex items-center justify-center group-hover:bg-[var(--accent)]/20 transition-colors duration-200">
+                            <BookOpen className="size-[6px] text-[var(--accent)]" strokeWidth={3} />
+                          </div>
                         ) : (
                           <motion.div
                             animate={{ opacity: [0.3, 0.8, 0.3] }}
@@ -227,7 +234,9 @@ export function SearchProgressBlock({ items, isActive, query, className }: Searc
                           'size-[10px] shrink-0 transition-colors duration-200',
                           item.status === 'visited'
                             ? 'text-[var(--text-muted)] group-hover:text-[var(--text-secondary)]'
-                            : 'text-[var(--accent)]/40'
+                            : item.status === 'reading'
+                              ? 'text-[var(--accent)]/60'
+                              : 'text-[var(--accent)]/40'
                         )}
                         strokeWidth={1.5}
                       />
@@ -238,14 +247,16 @@ export function SearchProgressBlock({ items, isActive, query, className }: Searc
                           'truncate text-[12px] leading-tight font-medium transition-colors duration-200 flex-1',
                           item.status === 'visited'
                             ? 'text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]'
-                            : 'text-[var(--text-muted)]'
+                            : item.status === 'reading'
+                              ? 'text-[var(--text-primary)]'
+                              : 'text-[var(--text-muted)]'
                         )}
                       >
                         {item.title}
                       </span>
 
                       {/* Domain (visible on hover) */}
-                      {item.status === 'visited' && (
+                      {(item.status === 'visited' || item.status === 'reading') && (
                         <span className="hidden sm:inline text-[10px] text-[var(--text-muted)] truncate max-w-[100px] shrink-0 ml-1 font-mono opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                           {extractDomain(item.url)}
                         </span>

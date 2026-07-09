@@ -178,6 +178,7 @@ export const en = {
     liveAgents: 'Live Agents',
     noLiveAgents: 'No agents are working at the moment.',
     searchingWeb: 'Searching the web...',
+    readingSources: 'Reading sources in depth...',
     searchCompleted: 'Web search completed',
     searchingWebQuery: 'Searching for "{{query}}" on the web...',
     searchResultsQuery: 'Results for "{{query}}"',
