@@ -230,7 +230,7 @@ export function registerChatIPC(): void {
       case 'stream:token':
         sendToRenderer({ sessionId, messageId, type: 'stream:token', token: data?.token, chunkSeq: data?.chunkSeq ?? getNextSeq(requestId, 'stream') })
         break
-      case 'stream:degenerate':
+      case 'stream:degenerate': {
         sendToRenderer({
           sessionId, messageId,
           type: 'stream:error',
@@ -241,6 +241,7 @@ export function registerChatIPC(): void {
         resolveDeg?.()
         streamResolvers.delete(requestId)
         break
+      }
       case 'stream:completed': {
         sendToRenderer({
           sessionId, messageId, type: 'stream:completed',
@@ -345,19 +346,7 @@ export function registerChatIPC(): void {
         semantic_memory: req.semanticMemory ?? false,
         reasoning: req.reasoning ?? { enabled: false, budget: 8000 },
         web_search_enabled: req.webSearchEnabled ?? true,
-          workspace_root: req.workspaceRoot ?? process.env.SPARTA_WORKSPACE_ROOT ?? '',
-  ipcMain.handle('editor:diff_respond', (_event, payload: { requestId: string; approved: boolean }) => {
-    sendToPython({
-      method: 'permission.respond',
-      params: {
-        request_id: payload.requestId,
-        approved: payload.approved,
-        remember: 'once',
-      },
-    })
-    return { ok: true }
-  })
-
+        workspace_root: req.workspaceRoot ?? process.env.SPARTA_WORKSPACE_ROOT ?? '',
         agent_autonomy: req.agentAutonomy ?? 'ask_risky',
         agent_execute_local: req.agentExecuteLocal ?? false,
         security_loaded: req.securityLoaded ?? true,
@@ -428,8 +417,74 @@ export function registerChatIPC(): void {
     })
   })
 
+  ipcMain.handle('editor:diff_respond', (_event, payload: { requestId: string; approved: boolean }) => {
+    sendToPython({
+      method: 'permission.respond',
+      params: {
+        request_id: payload.requestId,
+        approved: payload.approved,
+        remember: 'once',
+      },
+    })
+    return { ok: true }
+  })
+
   ipcMain.handle('sidecar:status', () => {
     return { running: isSidecarRunning(), ready: isSidecarReady() }
+  })
+
+  // ── Memory bridge: delegate vector operations to the Python sidecar ─
+  const memoryResolvers = new Map<string, (result: unknown) => void>()
+  sidecarEvents.on(SidecarEvent.MESSAGE, (msg: Record<string, unknown>) => {
+    const event = msg.event as string
+    if (event === 'memory.index:response' || event === 'memory.search:response' || event === 'memory.embed:response') {
+      const resolver = memoryResolvers.get((msg.id as string) ?? '')
+      if (resolver) {
+        resolver(msg.data ?? { ok: false, error: 'Sin datos' })
+        memoryResolvers.delete((msg.id as string) ?? '')
+      }
+    }
+  })
+
+  async function callMemoryMethod(method: string, params: Record<string, unknown>): Promise<unknown> {
+    if (!isSidecarRunning()) {
+      return { ok: false, error: 'Sidecar no iniciado' }
+    }
+    const ready = await waitForSidecarReady(10_000)
+    if (!ready) {
+      return { ok: false, error: 'Sidecar no listo' }
+    }
+    const requestId = `mem_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+    sendToPython({ id: requestId, method, params })
+    return new Promise((resolve) => {
+      memoryResolvers.set(requestId, resolve)
+      setTimeout(() => {
+        if (memoryResolvers.has(requestId)) {
+          memoryResolvers.delete(requestId)
+          resolve({ ok: false, error: 'Timeout esperando respuesta del sidecar' })
+        }
+      }, 15_000)
+    })
+  }
+
+  ipcMain.handle('memory:index', async (_event, entry: Record<string, unknown>) => {
+    return callMemoryMethod('memory.index', { entry })
+  })
+
+  ipcMain.handle('memory:search', async (_event, { query, k }: { query: string; k?: number }) => {
+    return callMemoryMethod('memory.search', { query, k: k ?? 5 })
+  })
+
+  ipcMain.handle('memory:embed', async (_event, { texts }: { texts: string[] }) => {
+    return callMemoryMethod('memory.embed', { texts })
+  })
+
+  ipcMain.handle('memory:delete', async (_event, entryId: string) => {
+    return callMemoryMethod('memory.delete', { entry_id: entryId })
+  })
+
+  ipcMain.handle('memory:count', async () => {
+    return callMemoryMethod('memory.count', {})
   })
 
   // Renderer signals that its event listener is registered; flush buffered events

@@ -65,6 +65,11 @@ contextBridge.exposeInMainWorld('sparta', {
   fetchModels: (req: { vendor: string; apiKey?: string; serverUrl?: string }) =>
     ipcRenderer.invoke('models:list', req) as Promise<{ models: string[]; error?: string }>,
   testMcpConnection: (config: Record<string, unknown>) => ipcRenderer.invoke('mcp:test', config) as Promise<{ ok: boolean; serverId?: string; toolCount?: number; tools?: unknown[]; error?: string }>,
+  memoryIndex: (entry: Record<string, unknown>) => ipcRenderer.invoke('memory:index', entry) as Promise<{ ok: boolean; id?: string | null; error?: string }>,
+  memorySearch: (query: string, k?: number) => ipcRenderer.invoke('memory:search', { query, k }) as Promise<{ ok: boolean; results?: unknown[]; error?: string }>,
+  memoryEmbed: (texts: string[]) => ipcRenderer.invoke('memory:embed', { texts }) as Promise<{ ok: boolean; embeddings?: number[][]; error?: string }>,
+  memoryDelete: (entryId: string) => ipcRenderer.invoke('memory:delete', entryId) as Promise<{ ok: boolean; error?: string }>,
+  memoryCount: () => ipcRenderer.invoke('memory:count') as Promise<{ ok: boolean; count?: number; error?: string }>,
 })
 
 contextBridge.exposeInMainWorld('vault', {

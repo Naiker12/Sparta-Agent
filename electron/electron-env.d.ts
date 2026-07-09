@@ -43,6 +43,11 @@ interface SpartaAPI {
   abortMessage: (sessionId: string) => Promise<void>
   isSidecarReady: () => Promise<{ running: boolean; ready: boolean }>
   fetchModels: (req: { vendor: string; apiKey?: string; serverUrl?: string }) => Promise<{ models: string[]; error?: string }>
+  memoryIndex: (entry: Record<string, unknown>) => Promise<{ ok: boolean; id?: string | null; error?: string }>
+  memorySearch: (query: string, k?: number) => Promise<{ ok: boolean; results?: unknown[]; error?: string }>
+  memoryEmbed: (texts: string[]) => Promise<{ ok: boolean; embeddings?: number[][]; error?: string }>
+  memoryDelete: (entryId: string) => Promise<{ ok: boolean; error?: string }>
+  memoryCount: () => Promise<{ ok: boolean; count?: number; error?: string }>
 }
 
 interface VaultAPI {
