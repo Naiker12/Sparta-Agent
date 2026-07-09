@@ -57,3 +57,7 @@ dist-web/
 
 # MCP server config — may contain API keys/tokens; never commit real credentials
 sparta.mcp.json
+
+# Temporary / runtime files
+.tmp/
+build-log.txt
