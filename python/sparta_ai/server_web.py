@@ -1,14 +1,16 @@
 import asyncio
-import fcntl
 import json
 import logging
 import os
 import platform
-import pty
 import signal
 import struct
-import termios
 import time
+
+if platform.system() != "Windows":
+    import fcntl
+    import pty
+    import termios
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -164,9 +166,14 @@ async def handle_chat_stream(ws: WebSocket, params: dict):
     message_id = params.get("messageId") or params.get("message_id", "")
     workspace_root = params.get("workspace_root") or params.get("workspaceRoot")
     if workspace_root:
-        os.environ["SPARTA_WORKSPACE_ROOT"] = str(workspace_root)
+        from sparta_ai.tools.file_tools import set_session_workspace
+        set_session_workspace(session_id, str(workspace_root))
     else:
-        os.environ.pop("SPARTA_WORKSPACE_ROOT", None)
+        from sparta_ai.tools.file_tools import clear_session_workspace
+        clear_session_workspace(session_id)
+
+    from sparta_ai.tools.permission_broker import set_current_session
+    set_current_session(session_id)
 
     if not provider_key and not (is_local or vendor in {"ollama", "lmstudio", "llamacpp", "custom"}):
         await ws.send_text(json.dumps({
@@ -430,6 +437,8 @@ _terminal_fds: dict[str, int] = {}
 
 def _set_pty_size(fd: int, cols: int, rows: int) -> None:
     """Set the terminal size on a PTY master fd."""
+    if platform.system() == "Windows":
+        return
     try:
         winsize = struct.pack("HHHH", rows, cols, 0, 0)
         fcntl.ioctl(fd, termios.TIOCSWINSZ, winsize)

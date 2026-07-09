@@ -72,8 +72,12 @@ def _resolve_vault_refs(server_id: str, refs: list[str]) -> dict[str, str]:
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _resolve_env(raw_env: dict[str, str] | None) -> dict[str, str]:
-    """Merge server-specific env vars with the current process environment."""
-    merged = {**os.environ}
+    """Merge server-specific env vars with a safe subset of the current process environment."""
+    safe_vars = {
+        k: v for k, v in os.environ.items()
+        if k in {"PATH", "HOME", "USER", "USERNAME", "TEMP", "TMP", "SHELL", "COMSPEC", "TERM", "LANG"}
+    }
+    merged = {**safe_vars}
     if raw_env:
         merged.update(raw_env)
     return merged

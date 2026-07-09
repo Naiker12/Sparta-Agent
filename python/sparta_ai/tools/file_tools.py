@@ -20,9 +20,31 @@ from sparta_ai.tools.permission_broker import (
 
 logger = logging.getLogger("sparta_ai.tools.file")
 
+# Per-session workspace roots — set by server.py / server_web.py before each request.
+# Avoids race conditions from mutating os.environ in concurrent web requests.
+_SESSION_WORKSPACES: dict[str, str] = {}
+
+
+def set_session_workspace(session_id: str, workspace_root: str) -> None:
+    """Register a workspace root for a specific session."""
+    if workspace_root:
+        _SESSION_WORKSPACES[session_id] = workspace_root
+
+
+def clear_session_workspace(session_id: str) -> None:
+    """Remove a session's workspace root."""
+    _SESSION_WORKSPACES.pop(session_id, None)
+
+
+def _get_workspace_root(session_id: str = "") -> str | None:
+    """Resolve workspace root: session-local first, then environ, then None."""
+    if session_id and session_id in _SESSION_WORKSPACES:
+        return _SESSION_WORKSPACES[session_id]
+    return os.environ.get("SPARTA_WORKSPACE_ROOT")
+
 
 def _workspace_root() -> Path:
-    root = os.environ.get("SPARTA_WORKSPACE_ROOT")
+    root = _get_workspace_root()
     if root:
         return Path(root).resolve()
     raise RuntimeError(
@@ -235,6 +257,9 @@ def read_file_tool(path: str, offset: int | None = None, limit: int | None = Non
         filepath = _get_safe_path(path, tool_name="read_file_tool")
         _validate_path(filepath)
 
+        size_mb = filepath.stat().st_size / (1024 * 1024)
+        if size_mb > 50:
+            return f"Error: File too large ({size_mb:.1f} MB). Maximum allowed is 50 MB."
         content = filepath.read_text(encoding="utf-8")
         lines = content.split("\n")
 
@@ -297,13 +322,28 @@ def write_file_tool(path: str, content: str, append: bool = False) -> str:
         filepath = _get_safe_path(path, tool_name="write_file_tool", preview=preview_text,
                                   require_permission=need_permission)
 
-        # If file already exists with content (overwrite), force confirmation
+        # If file already exists with content (overwrite), show real diff
         if not need_permission and not append and filepath.exists() and filepath.stat().st_size > 0:
-            overwrite_allowed = request_permission_sync(
-                "write_file_tool", filepath, preview_text, force=True,
+            original = filepath.read_text(encoding="utf-8")
+            approved = request_diff_approval(
+                file_path=str(filepath),
+                original_content=original,
+                new_content=content,
+                language=path.rsplit(".", 1)[-1] if "." in path else "",
             )
-            if not overwrite_allowed:
+            if not approved:
                 return "Operación rechazada por el usuario: el archivo ya existe y tiene contenido."
+        elif need_permission:
+            # For always_ask mode, also show a diff for new files
+            original = filepath.read_text(encoding="utf-8") if filepath.exists() else ""
+            approved = request_diff_approval(
+                file_path=str(filepath),
+                original_content=original,
+                new_content=content,
+                language=path.rsplit(".", 1)[-1] if "." in path else "",
+            )
+            if not approved:
+                return "Operación rechazada por el usuario."
 
         if append and filepath.exists():
             with open(filepath, "a", encoding="utf-8") as f:

@@ -17,6 +17,8 @@ from sparta_ai.tools.plan_tool import create_plan_tool
 
 logger = logging.getLogger("sparta_ai.agents.sparta")
 
+MAX_TOOL_CALLS_PER_TURN = 8
+
 
 class SpartaState(MessagesState):
     session_id: str
@@ -193,12 +195,11 @@ def build_sparta_graph(
                            f"more skills, and skill_view_tool to load their full content.",
             })
 
-        # Deduplicate messages: replace already-emitted assistant responses
-        # (those without tool_calls) with a short placeholder so the LLM
-        # doesn't regenerate the same text on loop turns.
+        # Deduplicate messages: only replace consecutive exact-duplicate
+        # assistant responses so the LLM retains real multi-turn context.
         raw_messages = state["messages"]
         deduped = []
-        for m in raw_messages:
+        for i, m in enumerate(raw_messages):
             if isinstance(m, dict):
                 role = m.get("role", "")
                 content = m.get("content", "")
@@ -207,7 +208,15 @@ def build_sparta_graph(
                 role = getattr(m, "type", "")
                 content = str(getattr(m, "content", ""))
                 tool_calls = getattr(m, "tool_calls", None) or []
+            is_dup = False
             if role in ("assistant", "ai") and not tool_calls and content:
+                # Check if the previous message is identical
+                if deduped:
+                    prev = deduped[-1]
+                    prev_content = prev.get("content", "") if isinstance(prev, dict) else str(getattr(prev, "content", ""))
+                    if prev_content == content:
+                        is_dup = True
+            if is_dup:
                 deduped.append({
                     "role": "assistant",
                     "content": "[Respuesta anterior — omitida para evitar repetición]",
@@ -226,7 +235,7 @@ def build_sparta_graph(
             scope = "readonly"
 
         # Detect forced summary mode: tool limit reached or loop detected
-        is_forced_summary = state.get("force_summary", False) or state.get("tool_calls_this_turn", 0) >= 8
+        is_forced_summary = state.get("force_summary", False) or state.get("tool_calls_this_turn", 0) >= MAX_TOOL_CALLS_PER_TURN
         if is_forced_summary:
             # Use plain LLM without tools so it can't make more tool calls
             # and must produce a final summary response
@@ -249,7 +258,7 @@ def build_sparta_graph(
                 response = await llm_with_tools.ainvoke(messages)
         except Exception as e:
             err_str = str(e)
-            if "tool use" in err_str.lower() or "tools" in err_str.lower() and "not found" in err_str.lower():
+            if ("tool use" in err_str.lower() or "tools" in err_str.lower()) and "not found" in err_str.lower():
                 error_msg = (
                     "Error: El modelo seleccionado no soporta herramientas (tool use). "
                     "Cambiá a un modelo que sí las soporte (Claude, GPT-4, Gemini Pro, etc.) "
@@ -382,7 +391,10 @@ def build_sparta_graph(
                 args = tc.get("args", {})
                 # Compiled sub-graphs stream their internal events automatically
                 # through the parent graph's astream_events thanks to their namespace.
-                result = await graph.ainvoke({"messages": [HumanMessage(content=json.dumps(args))]})
+                result = await asyncio.wait_for(
+                    graph.ainvoke({"messages": [HumanMessage(content=json.dumps(args))]}),
+                    timeout=120,
+                )
                 output = result.get("output") if isinstance(result, dict) else str(result)
                 return (
                     {"subagent": tc["name"], "output": output},
@@ -390,6 +402,17 @@ def build_sparta_graph(
                         content=str(output),
                         tool_call_id=tc.get("id", ""),
                         name=tc["name"],
+                    ),
+                )
+            except asyncio.TimeoutError:
+                logger.warning("Subagent %s timed out after 120s", tc["name"])
+                return (
+                    {"subagent": tc["name"], "error": "Timeout after 120s"},
+                    ToolMessage(
+                        content="Error: El subagente excedió el tiempo de espera (120s).",
+                        tool_call_id=tc.get("id", ""),
+                        name=tc["name"],
+                        status="error",
                     ),
                 )
             except Exception as e:
@@ -421,25 +444,30 @@ def build_sparta_graph(
         return {
             "messages": tool_messages,
             "subagent_results": results,
-            "tool_calls_this_turn": state.get("tool_calls_this_turn", 0),
+            "tool_calls_this_turn": state.get("tool_calls_this_turn", 0) + 1,
             "current_step": current_step,
             "plan": plan,
             "plan_complete": plan_complete,
         }
 
-    MAX_TOOL_CALLS_PER_TURN = 8
-
+    @staticmethod
     def _detect_loop(state: SpartaState) -> bool:
         messages = state.get("messages", [])
-        seen_queries: set[str] = set()
-        for msg in messages[-6:]:
+        seen_signatures: set[str] = set()
+        # Check last 20 messages (covers multi-turn conversations)
+        for msg in messages[-20:]:
             tool_calls = getattr(msg, "tool_calls", [])
             for tc in tool_calls:
-                query = str(tc.get("args", {}).get("query", ""))
-                if query in seen_queries:
+                args = tc.get("args", {})
+                if isinstance(args, dict):
+                    key_fields = [args.get(f, "") for f in ("query", "command", "path", "file_path", "url", "pattern", "content")]
+                    key_text = "|".join(str(k) for k in key_fields if k)
+                else:
+                    key_text = str(args)
+                if key_text and key_text in seen_signatures:
                     return True
-                if query:
-                    seen_queries.add(query)
+                if key_text:
+                    seen_signatures.add(key_text)
         return False
 
     def should_continue(state: SpartaState) -> Literal["tools", "subagent", "agent", "__end__"]:

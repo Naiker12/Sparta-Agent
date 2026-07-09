@@ -35,6 +35,7 @@ import os
 import sys
 import threading
 import uuid
+from contextvars import ContextVar
 from pathlib import Path
 from typing import Any
 
@@ -45,8 +46,12 @@ logger = logging.getLogger("sparta_ai.tools.permission_broker")
 # Environment flag: "electron" means we have a user dialog available.
 _IS_ELECTRON = os.environ.get("SPARTA_ENV", "").lower() == "electron"
 
-# Per-session cache: maps (tool_name, resolved_path_str) → True (allowed)
-_session_cache: dict[tuple[str, str], bool] = {}
+# Per-session cache: maps session_id → {(tool_name, resolved_path_str) → True (allowed)}
+# Each session gets its own cache so permissions don't leak between sessions.
+_session_cache: dict[str, dict[tuple[str, str], bool]] = {}
+
+# Current session ID — set per-request by server.py / server_web.py
+_current_session: ContextVar[str] = ContextVar("_current_session", default="")
 
 # Autonomy level from agent policy — controls when to ask for permission
 _AGENT_AUTONOMY: str = "ask_risky"
@@ -75,7 +80,8 @@ _TIMEOUT_SECONDS = 120
 
 
 def _workspace_root() -> Path:
-    root = os.environ.get("SPARTA_WORKSPACE_ROOT")
+    from sparta_ai.tools.file_tools import _get_workspace_root
+    root = _get_workspace_root(_current_session.get())
     return Path(root).resolve() if root else Path.cwd().resolve()
 
 
@@ -149,10 +155,12 @@ async def request_permission(
     if _is_inside_workspace(resolved_path) and not force and decision == PermissionDecision.ALLOW:
         return True
 
+    sid = _current_session.get()
     cache_key = (tool_name, str(resolved_path))
-    if cache_key in _session_cache:
+    session_cache = _session_cache.get(sid, {})
+    if cache_key in session_cache:
         logger.debug("Permission cache hit for %s %s", tool_name, resolved_path)
-        return _session_cache[cache_key]
+        return session_cache[cache_key]
 
     if not _IS_ELECTRON:
         logger.warning(
@@ -178,7 +186,9 @@ async def request_permission(
         _pending.pop(perm_id, None)
 
     if approved:
-        _session_cache[cache_key] = True
+        if sid not in _session_cache:
+            _session_cache[sid] = {}
+        _session_cache[sid][cache_key] = True
         logger.info("Permission granted (session): %s → %s", tool_name, resolved_path)
     else:
         logger.info("Permission denied: %s → %s", tool_name, resolved_path)
@@ -218,10 +228,12 @@ def request_permission_sync(
     if _is_inside_workspace(resolved_path) and not force and decision == PermissionDecision.ALLOW:
         return True
 
+    sid = _current_session.get()
     cache_key = (tool_name, str(resolved_path))
-    if cache_key in _session_cache:
+    session_cache = _session_cache.get(sid, {})
+    if cache_key in session_cache:
         logger.debug("Permission cache hit (sync) for %s %s", tool_name, resolved_path)
-        return _session_cache[cache_key]
+        return session_cache[cache_key]
 
     if not _IS_ELECTRON:
         logger.warning(
@@ -248,7 +260,9 @@ def request_permission_sync(
     _pending_sync.pop(perm_id, None)
 
     if approved and remember == "session":
-        _session_cache[cache_key] = True
+        if sid not in _session_cache:
+            _session_cache[sid] = {}
+        _session_cache[sid][cache_key] = True
         logger.info("Permission granted (sync, session cached): %s → %s", tool_name, resolved_path)
     elif approved:
         logger.info("Permission granted (sync, once): %s → %s", tool_name, resolved_path)
@@ -432,6 +446,17 @@ def _detect_language(file_path: str) -> str:
     return lang_map.get(ext, "")
 
 
-def clear_session_cache() -> None:
-    """Clear the per-session permission cache (call at session end)."""
-    _session_cache.clear()
+def clear_session_cache(session_id: str | None = None) -> None:
+    """Clear the permission cache. When session_id is given, clears only that
+    session's cache.  Otherwise clears all sessions (global reset)."""
+    if session_id:
+        _session_cache.pop(session_id, None)
+    else:
+        _session_cache.clear()
+
+
+def set_current_session(session_id: str) -> None:
+    """Set the current session ID for permission scoping.
+    Must be called at the start of each request before any tool calls.
+    """
+    _current_session.set(session_id)

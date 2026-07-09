@@ -183,8 +183,7 @@ def terminal_execute_tool(command: str) -> str:
         _emit_terminal_event("terminal:agent_exit", {"procId": proc_id, "code": code})
 
         # Notify frontend to refresh file tree after command execution
-        if code == 0:
-            _emit_terminal_event("file:changed", {"path": os.environ.get("SPARTA_WORKSPACE_ROOT", "")})
+        _emit_terminal_event("file:changed", {"path": os.environ.get("SPARTA_WORKSPACE_ROOT", "")})
 
         # Cache result for terminal_check_tool
         _proc_results[proc_id] = {"output": output, "exit_code": code, "done": True}
@@ -249,8 +248,7 @@ def terminal_execute_background_tool(command: str, label: str | None = None) -> 
         _emit_terminal_event("terminal:agent_exit", {"procId": proc_id, "code": code})
 
         # Notify frontend to refresh file tree after command execution
-        if code == 0:
-            _emit_terminal_event("file:changed", {"path": os.environ.get("SPARTA_WORKSPACE_ROOT", "")})
+        _emit_terminal_event("file:changed", {"path": os.environ.get("SPARTA_WORKSPACE_ROOT", "")})
 
         _proc_results[proc_id] = {"output": output, "exit_code": code, "done": True}
 

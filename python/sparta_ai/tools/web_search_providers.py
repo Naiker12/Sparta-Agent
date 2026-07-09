@@ -2,7 +2,7 @@ import logging
 import random
 import re
 from html import unescape
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs, unquote
 
 import httpx
 
@@ -20,6 +20,16 @@ _DDG_URL = "https://html.duckduckgo.com/html/"
 
 def _clean_html(html: str) -> str:
     return unescape(re.sub(r"<[^>]+>", "", html)).strip()
+
+
+def _resolve_ddg_url(url: str) -> str:
+    """Extract the real destination URL from a DuckDuckGo redirect wrapper."""
+    if "duckduckgo.com/l/" in url and "uddg=" in url:
+        parsed = urlparse(url)
+        uddg = parse_qs(parsed.query).get("uddg", [None])[0]
+        if uddg:
+            return unquote(uddg)
+    return url
 
 
 def duckduckgo_search(query: str, count: int = 5) -> list[dict]:
@@ -77,6 +87,7 @@ def duckduckgo_search(query: str, count: int = 5) -> list[dict]:
     for pattern in (pattern1, pattern2):
         for url, title, snippet in pattern.findall(text):
             url = url.strip()
+            url = _resolve_ddg_url(url)
             if url in seen_urls:
                 continue
             seen_urls.add(url)
@@ -95,6 +106,7 @@ def duckduckgo_search(query: str, count: int = 5) -> list[dict]:
     if len(results) < count:
         for match in pattern3.finditer(text):
             url = match.group(1).strip()
+            url = _resolve_ddg_url(url)
             if url in seen_urls or not url.startswith("http"):
                 continue
             seen_urls.add(url)

@@ -16,6 +16,7 @@ DANGEROUS_PATTERNS: list[re.Pattern] = [
     # ── rm -rf / (any path outside cwd) ──
     re.compile(r"\brm\s+(-rf|--recursive|-r|-f)\s+[/\\~]", re.IGNORECASE),
     re.compile(r"\brm\s+(-rf|--recursive|-r|-f)\s+\.\.", re.IGNORECASE),
+    re.compile(r"\brm\s+(-rf|--recursive|-r|-f)\s", re.IGNORECASE),
     re.compile(r"\brmdir\s+[/\\]", re.IGNORECASE),
 
     # ── Dangerous redirects to raw devices / special files ──
@@ -102,7 +103,7 @@ class CommandSanitizer:
     @staticmethod
     def _first_command(cmd: str) -> str:
         """Extract the first command before shell metacharacters."""
-        for sep in (";", "|", "&&", "||", "`", "$("):
+        for sep in (";", "|", "&&", "||", "`", "$(", "\n", "\r\n"):
             idx = cmd.find(sep)
             if idx >= 0:
                 cmd = cmd[:idx]

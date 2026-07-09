@@ -98,9 +98,9 @@ async def research_topic(
     depth: str = "quick",
 ) -> str:
     """
-    Investiga un tema en profundidad: descompone en sub-preguntas si hace falta,
-    busca, LEE el contenido completo de las fuentes más relevantes (no solo
-    snippets), y sintetiza una respuesta con citas.
+    Señala al orquestador que se debe activar el subagente de investigación.
+    El trabajo real lo realiza el subagente compilado (build_research_graph)
+    con el LLM que el usuario configuró, no esta función.
 
     Args:
         topic: El tema a investigar.
@@ -109,17 +109,13 @@ async def research_topic(
                fuentes top, indexa en caché para preguntas de seguimiento).
 
     Returns:
-        Síntesis de la investigación con fuentes citadas.
+        Confirmación de que la tarea será delegada al subagente de investigación.
     """
-    try:
-        graph = build_research_graph()
-        result = await graph.ainvoke({
-            "messages": [HumanMessage(content=json.dumps({"topic": topic, "depth": depth}))],
-        })
-        return result.get("output", "No se pudo completar la investigación.")
-    except Exception as e:
-        logger.error("Research failed for topic '%s': %s", topic, e)
-        return f"Error investigando '{topic}': {e}"
+    # This tool is intentionally lightweight: the parent graph intercepts
+    # delegate_* tool calls and runs the compiled sub-graph with the active
+    # user-selected LLM. Keeping this function free of side-effects prevents
+    # accidentally using a fallback model.
+    return f"Delegando investigación al subagente (modo={depth}): {topic[:200]}"
 
 
 def build_research_graph(llm=None):

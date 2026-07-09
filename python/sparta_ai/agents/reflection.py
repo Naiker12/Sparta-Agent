@@ -7,6 +7,11 @@ import json
 import logging
 from typing import Any, Literal
 
+# Import lazily to avoid circular dependency (sparta_agent → reflection → sparta_agent)
+def _get_max_tool_calls() -> int:
+    from sparta_ai.agents.sparta_agent import MAX_TOOL_CALLS_PER_TURN
+    return MAX_TOOL_CALLS_PER_TURN
+
 logger = logging.getLogger("sparta_ai.agents.reflection")
 
 REFLECTION_PROMPT = """Analiza el siguiente error de una herramienta y decide cómo proceder:
@@ -41,7 +46,7 @@ async def reflection_node(state: dict[str, Any]) -> dict:
 def should_reflect(state: dict[str, Any]) -> Literal["reflection", "agent", "__end__"]:
     """Route to reflection when recent errors exist and we haven't retried too much."""
     tool_calls = state.get("tool_calls_this_turn", 0)
-    if tool_calls >= 8:
+    if tool_calls >= _get_max_tool_calls():
         logger.warning("Tool call limit reached, routing to agent for final synthesis")
         return "agent"
 

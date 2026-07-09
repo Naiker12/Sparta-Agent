@@ -153,7 +153,11 @@ def _build_skill_md(name: str, description: str, body: str, category: str = "Use
 
 def _sanitize_skill_name(name: str) -> str:
     """Ensure skill name is safe for filesystem."""
-    safe = "".join(c for c in name if c.isalnum() or c in "._- ")
+    safe = "".join(c for c in name if c.isalnum() or c in "_- ")
+    safe = safe.strip().strip(".") or "unnamed-skill"
+    # Prevent path traversal via leading dots
+    while safe.startswith("."):
+        safe = safe[1:]
     return safe.strip() or "unnamed-skill"
 
 

@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import time
 
 import httpx
 from langchain_core.tools import tool
@@ -8,6 +9,10 @@ from sparta_ai.tools.web_progress import dispatch_progress
 from sparta_ai.tools.web_search_providers import duckduckgo_search
 
 logger = logging.getLogger("sparta_ai.tools.web_search")
+
+# Simple in-memory cache for identical search queries (TTL: 5 minutes)
+_search_cache: dict[str, tuple[float, list[dict]]] = {}
+_CACHE_TTL = 300  # seconds
 
 
 def _format_results(query: str, results: list[dict], count: int) -> str:
@@ -39,7 +44,7 @@ async def _brave_search(query: str, count: int, api_key: str) -> list[dict]:
     async with httpx.AsyncClient(timeout=15.0) as client:
         response = await client.get(
             "https://api.search.brave.com/res/v1/web/search",
-            params={"q": query, "count": min(count, 10), "search_lang": "es"},
+            params={"q": query, "count": min(count, 10)},
             headers={
                 "X-Subscription-Token": api_key,
                 "Accept": "application/json",
@@ -81,6 +86,24 @@ async def web_search_tool(
 
     await dispatch_progress("searching", query=query)
 
+    # Check cache for identical query
+    now = time.monotonic()
+    cache_key = f"{query}:{count}"
+    if cache_key in _search_cache:
+        cached_time, cached_results = _search_cache[cache_key]
+        if now - cached_time < _CACHE_TTL:
+            logger.debug("Cache hit for query: %s", query)
+            for i, r in enumerate(cached_results[:count], 1):
+                await dispatch_progress(
+                    "visiting",
+                    url=r.get("url", ""),
+                    title=r.get("title", "Sin título"),
+                    index=i,
+                    total=len(cached_results[:count]),
+                )
+            await dispatch_progress("done")
+            return _format_results(query, cached_results, count)
+
     results: list[dict] = []
 
     try:
@@ -112,9 +135,16 @@ async def web_search_tool(
                 index=i,
                 total=len(results[:count]),
             )
-            await asyncio.sleep(0.15)
 
         await dispatch_progress("done")
+
+        # Store in cache for identical future queries
+        _search_cache[cache_key] = (time.monotonic(), results)
+        # Evict old entries
+        if len(_search_cache) > 50:
+            oldest = min(_search_cache, key=lambda k: _search_cache[k][0])
+            del _search_cache[oldest]
+
         return _format_results(query, results, count)
 
     except TimeoutError:

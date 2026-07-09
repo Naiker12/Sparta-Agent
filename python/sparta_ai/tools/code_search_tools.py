@@ -158,6 +158,7 @@ def grep_search_tool(query: str, path: str = ".", max_results: int = 50) -> str:
             result = subprocess.run(
                 [
                     "rg",
+                    "--fixed-strings",
                     "--line-number",
                     "--max-count",
                     str(max_results),

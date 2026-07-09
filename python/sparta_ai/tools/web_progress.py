@@ -4,8 +4,6 @@ import os
 import sys
 from typing import Any
 
-from langchain_core.callbacks.manager import adispatch_custom_event
-
 logger = logging.getLogger("sparta_ai.tools.web_progress")
 
 _IS_ELECTRON = "SPARTA_ELECTRON" in os.environ
@@ -21,10 +19,9 @@ def emit_direct(data: dict) -> None:
 
 
 async def dispatch_progress(stage: str, **kwargs: Any) -> None:
-    """Emit a progress event via LangGraph + direct stdout (Electron)."""
+    """Emit a progress event via stdout (Electron) only.
+
+    Uses a single channel to avoid duplicate events on the frontend.
+    """
     payload = {"stage": stage, **kwargs}
-    try:
-        await adispatch_custom_event("tool_progress", payload)
-    except Exception:
-        pass
     emit_direct(payload)

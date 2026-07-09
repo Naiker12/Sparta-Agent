@@ -394,9 +394,14 @@ async def _dispatch_event_core(
 
     elif kind == "on_tool_end":
         tool_call_id = event.get("run_id", "unknown")
+        raw_output = data.get("output", "")
+        if hasattr(raw_output, 'content'):
+            output_str = str(raw_output.content) if raw_output.content is not None else ""
+        else:
+            output_str = str(raw_output)
         emit_control_fn(
             "tool:result",
-            {**base_payload, "name": name, "output": str(data.get("output", "")), "duration_ms": data.get("run_time_ms", 0), "tool_call_id": tool_call_id},
+            {**base_payload, "name": name, "output": output_str, "duration_ms": data.get("run_time_ms", 0), "tool_call_id": tool_call_id},
         )
         # Emit file:changed when agent modifies a file so open editor tabs can refresh
         if name in ("write_file_tool", "patch_file_tool", "delete_file_tool"):
@@ -459,31 +464,30 @@ async def _dispatch_event_core(
             if text:
                 emit_control_fn("thinking:status", {**base_payload, "text": text})
 
-    elif kind == "on_chain_end" and name == "planner":
+    elif kind == "on_chain_end" and name in ("agent", "tools", "subagent_coordinator"):
         output = data.get("output", {})
         if isinstance(output, dict):
             plan = output.get("plan", [])
             if plan:
-                emit_control_fn("plan:created", {
-                    **base_payload,
-                    "plan": plan,
-                    "current_step": output.get("current_step", 0),
-                    "plan_complete": output.get("plan_complete", False),
-                })
+                # First time a plan appears → created; subsequent → step
+                if not stream_state.get("_plan_seen"):
+                    stream_state["_plan_seen"] = True
+                    emit_control_fn("plan:created", {
+                        **base_payload,
+                        "plan": plan,
+                        "current_step": output.get("current_step", 0),
+                        "plan_complete": output.get("plan_complete", False),
+                    })
+                elif name in ("tools", "subagent_coordinator"):
+                    emit_control_fn("plan:step", {
+                        **base_payload,
+                        "plan": plan,
+                        "current_step": output.get("current_step", 0),
+                        "plan_complete": output.get("plan_complete", False),
+                    })
 
-    elif kind == "on_chain_end" and name in ("tools", "subagent_coordinator"):
-        output = data.get("output", {})
-        if isinstance(output, dict):
-            plan = output.get("plan", [])
-            if plan:
-                emit_control_fn("plan:step", {
-                    **base_payload,
-                    "plan": plan,
-                    "current_step": output.get("current_step", 0),
-                    "plan_complete": output.get("plan_complete", False),
-                })
-
-    elif kind == "on_chain_end" and name == "agent":
+        if name != "agent":
+            return None
         if stream_state.get("_stream_completed"):
             return False
 
@@ -791,7 +795,11 @@ async def _dispatch_event_ws(
 
     elif kind == "on_tool_end":
         tool_call_id = event.get("run_id", "unknown")
-        output_str = str(data.get("output", ""))
+        raw_output = data.get("output", "")
+        if hasattr(raw_output, 'content'):
+            output_str = str(raw_output.content) if raw_output.content is not None else ""
+        else:
+            output_str = str(raw_output)
         # Emit terminal events AFTER permission gate (in tool result), not before
         if name == "terminal_execute_tool":
             cmd = stream_state.get("_pending_terminal_command", "")
@@ -810,7 +818,7 @@ async def _dispatch_event_ws(
             {
                 **base_payload,
                 "toolCallId": tool_call_id,
-                "output": str(data.get("output", "")),
+                "output": output_str,
                 "durationMs": data.get("run_time_ms", 0),
             },
         )
