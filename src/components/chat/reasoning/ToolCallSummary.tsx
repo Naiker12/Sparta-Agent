@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronDown, Check, Loader2, X } from 'lucide-react'
+import { ChevronDown, Check, Loader2, X, AlertTriangle, FileText, PenSquare, Trash2, Search, Terminal, Globe, Edit3 } from 'lucide-react'
 import { MarkdownRenderer } from '@/components/chat/MarkdownRenderer'
 import type { ToolCall } from '@/types'
 
@@ -8,30 +8,90 @@ interface ToolCallSummaryProps {
   toolCall: ToolCall
 }
 
+function getToolCallSummary(toolCall: ToolCall): { icon: React.ReactNode; label: string; description: string } {
+  const input = toolCall.input as Record<string, unknown> | undefined
+  const path = (input?.path ?? input?.file_path ?? '') as string | undefined
+  const query = (input?.query ?? '') as string | undefined
+  const command = (input?.command ?? '') as string | undefined
+  const pattern = (input?.pattern ?? '') as string | undefined
+  const searchContent = (input?.content ?? '') as string | undefined
+  const url = (input?.url ?? '') as string | undefined
+
+  const truncate = (s: string, max = 50) =>
+    s.length > max ? s.slice(0, max) + '…' : s
+
+  const iconSize = 12
+
+  switch (toolCall.toolName) {
+    case 'read_file_tool':
+      return {
+        icon: <FileText size={iconSize} strokeWidth={1.5} />,
+        label: 'Leyendo archivo',
+        description: path ? truncate(path) : '',
+      }
+    case 'write_file_tool': {
+      const mode = input?.append ? 'Añadiendo a' : 'Escribiendo'
+      return {
+        icon: <PenSquare size={iconSize} strokeWidth={1.5} />,
+        label: mode,
+        description: path ? truncate(path) : '',
+      }
+    }
+    case 'delete_file_tool':
+      return {
+        icon: <Trash2 size={iconSize} strokeWidth={1.5} />,
+        label: 'Eliminando',
+        description: path ? truncate(path) : '',
+      }
+    case 'patch_file_tool':
+      return {
+        icon: <Edit3 size={iconSize} strokeWidth={1.5} />,
+        label: 'Editando archivo',
+        description: path ? truncate(path) : '',
+      }
+    case 'search_files_tool':
+      return {
+        icon: <Search size={iconSize} strokeWidth={1.5} />,
+        label: 'Buscando archivos',
+        description: pattern ? `*${truncate(pattern)}*` : searchContent ? `«${truncate(searchContent)}»` : '',
+      }
+    case 'terminal_execute_tool':
+    case 'terminal_execute_background_tool':
+      return {
+        icon: <Terminal size={iconSize} strokeWidth={1.5} />,
+        label: 'Ejecutando comando',
+        description: command ? truncate(command, 40) : '',
+      }
+    case 'web_search':
+    case 'web_search_tool':
+      return {
+        icon: <Globe size={iconSize} strokeWidth={1.5} />,
+        label: 'Buscando en la web',
+        description: query ? truncate(query, 40) : '',
+      }
+    case 'web_fetch':
+    case 'web_fetch_tool':
+      return {
+        icon: <Globe size={iconSize} strokeWidth={1.5} />,
+        label: 'Leyendo página',
+        description: url ? truncate(url, 40) : '',
+      }
+    default:
+      return {
+        icon: null,
+        label: toolCall.toolName.replace(/_tool$/, '').replace(/_/g, ' '),
+        description: '',
+      }
+  }
+}
+
 export function ToolCallSummary({ toolCall }: ToolCallSummaryProps) {
   const [expanded, setExpanded] = useState(false)
-
-  function extractInputPreview(input: unknown): string {
-    if (!input) return ''
-    if (typeof input === 'string') return input.slice(0, 60) + (input.length > 60 ? '…' : '')
-    if (typeof input === 'object') {
-      const obj = input as Record<string, unknown>
-      for (const key of ['query', 'url', 'path', 'command', 'text', 'content', 'topic']) {
-        const val = obj[key]
-        if (typeof val === 'string' && val) return val.slice(0, 60) + (val.length > 60 ? '…' : '')
-      }
-      const firstStr = Object.values(obj).find((v) => typeof v === 'string')
-      if (firstStr) return String(firstStr).slice(0, 60) + (String(firstStr).length > 60 ? '…' : '')
-    }
-    const str = JSON.stringify(input)
-    return str.length > 60 ? str.slice(0, 60) + '…' : str
-  }
+  const { icon, label, description } = getToolCallSummary(toolCall)
 
   const inputStr = typeof toolCall.input === 'string'
     ? toolCall.input
     : JSON.stringify(toolCall.input, null, 2)
-
-  const inputPreview = extractInputPreview(toolCall.input)
 
   return (
     <div style={{
@@ -52,32 +112,42 @@ export function ToolCallSummary({ toolCall }: ToolCallSummaryProps) {
           border: 'none',
           cursor: 'pointer',
           fontSize: 11.5,
-          fontFamily: 'var(--font-mono)',
+          fontFamily: 'var(--font-ui)',
           textAlign: 'left',
           transition: 'background 0.12s',
         }}
         onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)' }}
         onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
       >
-        <StatusIcon status={toolCall.status} />
+        <StatusIcon status={toolCall.status} error={toolCall.error} />
+
+        {icon && (
+          <span style={{ color: 'var(--text-muted)', display: 'flex', flexShrink: 0 }}>
+            {icon}
+          </span>
+        )}
 
         <span style={{
           color: toolCall.status === 'running' ? 'var(--status-warn)' : 'var(--text-secondary)',
           fontWeight: 500,
-          minWidth: 80,
-        }}>
-          {toolCall.toolName}
-        </span>
-
-        <span style={{
-          color: 'var(--text-muted)',
-          flex: 1,
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
         }}>
-          {inputPreview}
+          {label}
         </span>
+
+        {description && (
+          <span style={{
+            color: 'var(--text-muted)',
+            flex: 1,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            fontFamily: 'var(--font-mono)',
+            fontSize: 11,
+          }}>
+            {description}
+          </span>
+        )}
 
         {toolCall.durationMs !== undefined && (
           <span style={{ color: 'var(--text-muted)', fontSize: 10, flexShrink: 0 }}>
@@ -118,15 +188,19 @@ export function ToolCallSummary({ toolCall }: ToolCallSummaryProps) {
               {toolCall.status === 'error' && (toolCall.error || toolCall.output) && (
                 <div style={{
                   fontSize: 11,
-                  color: 'var(--status-err)',
+                  color: isInterrupted(toolCall.error) ? 'var(--status-warn)' : 'var(--status-err)',
                   fontFamily: 'var(--font-mono)',
                   whiteSpace: 'pre-wrap',
-                  background: 'color-mix(in srgb, var(--status-err) 8%, transparent)',
-                  border: '1px solid color-mix(in srgb, var(--status-err) 20%, transparent)',
+                  background: isInterrupted(toolCall.error)
+                    ? 'color-mix(in srgb, var(--status-warn) 8%, transparent)'
+                    : 'color-mix(in srgb, var(--status-err) 8%, transparent)',
+                  border: isInterrupted(toolCall.error)
+                    ? '1px solid color-mix(in srgb, var(--status-warn) 20%, transparent)'
+                    : '1px solid color-mix(in srgb, var(--status-err) 20%, transparent)',
                   borderRadius: 'var(--radius-sm)',
                   padding: '4px 8px',
                 }}>
-                  ✕ Error: {toolCall.error ?? toolCall.output}
+                  {isInterrupted(toolCall.error) ? '⚠ Interrumpido: ' : '✕ Error: '}{toolCall.error ?? toolCall.output}
                 </div>
               )}
               {toolCall.output && toolCall.status !== 'error' && (
@@ -223,11 +297,19 @@ function DetailSection({ label, content }: { label: string; content: string }) {
   )
 }
 
-function StatusIcon({ status }: { status: ToolCall['status'] }) {
+function isInterrupted(error?: string): boolean {
+  return (error ?? '').startsWith('Interrumpido')
+}
+
+function StatusIcon({ status, error }: { status: ToolCall['status']; error?: string }) {
   if (status === 'completed')
     return <Check size={12} strokeWidth={2.5} style={{ color: 'var(--status-ok)', flexShrink: 0 }} />
-  if (status === 'error')
+  if (status === 'error') {
+    if (isInterrupted(error)) {
+      return <AlertTriangle size={12} strokeWidth={2.5} style={{ color: 'var(--status-warn)', flexShrink: 0 }} />
+    }
     return <X size={12} strokeWidth={2.5} style={{ color: 'var(--status-err)', flexShrink: 0 }} />
+  }
   return (
     <Loader2
       size={12}
