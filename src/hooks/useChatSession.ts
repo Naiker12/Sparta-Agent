@@ -21,6 +21,48 @@ function getActiveProvider(providers: Provider[], activeModel: string): Provider
   return providers.find((p) => p.defaultModel === activeModel || p.models?.includes(activeModel)) ?? providers[0] ?? null
 }
 
+function resolveWorkspaceRoot(): string | undefined {
+  const projectStore = useProjectStore.getState()
+  const activeProject = projectStore.getActiveProject()
+  if (activeProject?.rootPath) {
+    return activeProject.rootPath
+  }
+
+  // If the active project has no root path, look for any project that does and
+  // activate it automatically. This covers the case where the user opened a
+  // folder in the editor but the chat session was created before that.
+  const projectWithRoot = projectStore.projects.find((p) => p.rootPath)
+  if (projectWithRoot?.rootPath) {
+    projectStore.setActiveProject(projectWithRoot.id)
+    return projectWithRoot.rootPath
+  }
+
+  // Fallback: infer from currently open files in the editor.
+  const openFiles = useEditorStore.getState().openFiles
+  if (openFiles && openFiles.length > 0) {
+    const dirs = openFiles
+      .filter((f) => f.length > 0)
+      .map((f) => f.replace(/\\/g, '/').split('/').slice(0, -1).join('/'))
+      .filter((d) => d.length > 0)
+    if (dirs.length > 0) {
+      const common = dirs.reduce((acc, dir) => {
+        if (!acc) return dir
+        const a = acc.split('/')
+        const b = dir.split('/')
+        const commonParts: string[] = []
+        for (let i = 0; i < Math.min(a.length, b.length); i++) {
+          if (a[i] === b[i]) commonParts.push(a[i])
+          else break
+        }
+        return commonParts.join('/')
+      }, dirs[0])
+      if (common) return common.replace(/\//g, '\\')
+    }
+  }
+
+  return undefined
+}
+
 async function runAssistantTurn(
   sid: string,
   assistantId: string,
@@ -83,8 +125,7 @@ async function runAssistantTurn(
       name: s.name,
       tools: s.tools ?? [],
     }))
-    const activeProject = useProjectStore.getState().getActiveProject()
-    const workspaceRoot = activeProject?.rootPath
+    const workspaceRoot = resolveWorkspaceRoot()
 
     const sendResult = messagingAdapter.sendMessage({
       sessionId: sid,

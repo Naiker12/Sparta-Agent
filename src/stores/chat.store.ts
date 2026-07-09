@@ -25,6 +25,7 @@ interface ChatState {
   appendThinking: (sessionId: string, messageId: string, delta: string, chunkSeq?: number) => void
   addToolCall: (sessionId: string, messageId: string, toolCall: ToolCall) => void
   updateToolCallStatus: (sessionId: string, messageId: string, toolCallId: string, status: ToolCall['status'], result?: string, toolName?: string) => void
+  closeStaleToolCalls: (sessionId: string, messageId: string) => void
   updateSearchProgress: (sessionId: string, messageId: string, updater: (items: SearchProgressItem[]) => SearchProgressItem[]) => void
   startStreaming: (sessionId: string) => AbortController
   stopStreaming: (sessionId?: string) => void
@@ -237,6 +238,25 @@ export const useChatStore = create<ChatState>()(
           }
         }),
 
+      closeStaleToolCalls: (sessionId, messageId) =>
+        set((s) => {
+          const sessionMessages = s.messagesBySession[sessionId]
+          if (!sessionMessages) return s
+          const staleError = 'Interrumpido: el stream terminó sin resultado'
+          let changed = false
+          const updated = sessionMessages.map((msg) => {
+            if (msg.id !== messageId) return msg
+            const updatedToolCalls = (msg.toolCalls ?? []).map((tc) => {
+              if (tc.status !== 'running') return tc
+              changed = true
+              return { ...tc, status: 'error' as const, error: staleError, completedAt: Date.now() }
+            })
+            return { ...msg, toolCalls: updatedToolCalls }
+          })
+          if (!changed) return s
+          return { messagesBySession: { ...s.messagesBySession, [sessionId]: updated } }
+        }),
+
       updateSearchProgress: (sessionId, messageId, updater) =>
         set((s) => {
           const sessionMessages = s.messagesBySession[sessionId]
@@ -424,14 +444,16 @@ export const useChatStore = create<ChatState>()(
         set((s) => {
           const sessionMessages = s.messagesBySession[sessionId]
           if (!sessionMessages) return s
-          return {
-            messagesBySession: {
-              ...s.messagesBySession,
-              [sessionId]: sessionMessages.map((msg) =>
-                msg.id === messageId ? { ...msg, isStreaming: false } : msg
-              ),
-            },
-          }
+          const staleError = 'Interrumpido: el stream terminó sin resultado'
+          const updated = sessionMessages.map((msg) => {
+            if (msg.id !== messageId) return msg
+            const updatedToolCalls = (msg.toolCalls ?? []).map((tc) => {
+              if (tc.status !== 'running') return tc
+              return { ...tc, status: 'error' as const, error: staleError, completedAt: Date.now() }
+            })
+            return { ...msg, isStreaming: false, toolCalls: updatedToolCalls }
+          })
+          return { messagesBySession: { ...s.messagesBySession, [sessionId]: updated } }
         }),
 
       cleanupStaleStreams: () => {

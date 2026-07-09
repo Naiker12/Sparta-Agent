@@ -8,6 +8,7 @@ interface ProjectState {
   activeProjectId: string | null
   addProject: (name: string, description?: string) => string
   switchProject: (id: string) => void
+  setActiveProject: (id: string) => void
   deleteProject: (id: string) => void
   getActiveProject: () => Project | null
   setProjectRootPath: (id: string, rootPath: string) => void
@@ -39,6 +40,11 @@ export const useProjectStore = create<ProjectState>()(
       },
 
       switchProject: (id) => {
+        set({ activeProjectId: id })
+        useEventBus.getState().dispatch({ type: 'project:switched', projectId: id, timestamp: Date.now() })
+      },
+
+      setActiveProject: (id) => {
         set({ activeProjectId: id })
         useEventBus.getState().dispatch({ type: 'project:switched', projectId: id, timestamp: Date.now() })
       },
