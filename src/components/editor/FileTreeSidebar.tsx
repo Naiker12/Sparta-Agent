@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { FolderOpen, RefreshCw } from 'lucide-react'
 import type { FileTreeNode } from '@/types'
 import { useProjectStore } from '@/stores/project.store'
+import { useEventBusListener } from '@/hooks/useEventBus'
 import { FileTreeItem } from './FileTreeItem'
 import { ProjectFolderPicker } from './ProjectFolderPicker'
 
@@ -36,6 +37,20 @@ export function FileTreeSidebar({ activePath, onSelectFile, onDeleteFile }: File
       setTree([])
     }
   }, [activeProject?.rootPath, loadTree])
+
+  useEventBusListener('file:changed', () => {
+    if (activeProject?.rootPath) loadTree()
+  })
+
+  // Start/stop the chokidar file watcher when the project root changes
+  useEffect(() => {
+    if (activeProject?.rootPath && window.fs?.startWatcher) {
+      window.fs.startWatcher(activeProject.rootPath)
+    }
+    return () => {
+      window.fs?.stopWatcher?.()
+    }
+  }, [activeProject?.rootPath])
 
   async function handleOpenFolder() {
     if (!window.fs || !activeProject) return

@@ -1,9 +1,11 @@
 import difflib
 import fnmatch
+import json
 import logging
 import os
 import re
 import shutil
+import sys
 from datetime import datetime
 from pathlib import Path
 
@@ -64,6 +66,16 @@ _SKIP_DIRS = {
     ".git", ".venv", "__pycache__", "node_modules",
     ".pytest_cache", "dist", "build", ".next",
 }
+
+
+def _emit_file_changed(file_path: Path) -> None:
+    """Emit a file:changed event so the frontend can refresh the file tree."""
+    try:
+        msg = {"event": "file:changed", "data": {"path": str(file_path)}}
+        sys.stdout.write(json.dumps(msg, ensure_ascii=False) + "\n")
+        sys.stdout.flush()
+    except (BrokenPipeError, OSError):
+        pass
 
 
 def _get_safe_path(
@@ -305,6 +317,7 @@ def write_file_tool(path: str, content: str, append: bool = False) -> str:
         line_count = content.count("\n") + 1
         char_count = len(content)
         logger.info("File %s: %s (%d lines, %d chars)", mode, filepath, line_count, char_count)
+        _emit_file_changed(filepath)
         return f"Archivo {mode}: {filepath} ({line_count} líneas, {char_count} caracteres)."
 
     except PermissionError as e:
@@ -500,6 +513,7 @@ def patch_file_tool(path: str, old_string: str, new_string: str) -> str:
         filepath.write_text(patched, encoding="utf-8")
 
         logger.info("patch_file_tool: patched %s", filepath)
+        _emit_file_changed(filepath)
         return f"Archivo editado exitosamente: {path}\n\n```diff\n{diff_text}\n```"
 
     except FileNotFoundError as e:
@@ -551,10 +565,12 @@ def delete_file_tool(path: str) -> str:
                 )
             trash_path = _move_to_trash(filepath)
             logger.info("delete_file_tool: moved empty dir to trash %s -> %s", filepath, trash_path)
+            _emit_file_changed(filepath.parent)
             return f"Directorio vacío movido a la papelera: {path}"
         else:
             trash_path = _move_to_trash(filepath)
             logger.info("delete_file_tool: moved file to trash %s -> %s", filepath, trash_path)
+            _emit_file_changed(filepath.parent)
             return f"Archivo movido a la papelera: {path}"
 
     except PermissionError as e:
