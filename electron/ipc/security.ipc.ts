@@ -20,6 +20,10 @@ type SecurityModule = {
 
 let security: SecurityModule | null = null
 
+export function isSecurityLoaded(): boolean {
+  return security !== null
+}
+
 function getSecurityModuleRoot(): string {
   return app.isPackaged
     ? path.join(process.resourcesPath, 'rust', 'sparta-security')
@@ -61,6 +65,12 @@ export function registerSecurityIPC(): void {
     )
     mod.configureAuditLog(auditLogPath)
     console.log(`[security] Audit log: ${auditLogPath}`)
+
+    // Broadcast loaded status so late subscribers start from the correct state.
+    const wins = BrowserWindow.getAllWindows()
+    for (const win of wins) {
+      win.webContents.send('security:status-changed', { loaded: true, auditEnabled: mod.isAuditEnabled() })
+    }
   } else {
     // Notify all windows that security module is unavailable
     const wins = BrowserWindow.getAllWindows()

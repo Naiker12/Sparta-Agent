@@ -1,5 +1,6 @@
 import { ipcMain, BrowserWindow, type IpcMainEvent } from 'electron'
-import { sendToPython, isSidecarRunning, isSidecarReady, waitForSidecarReady, sidecarEvents, SidecarEvent } from './sidecar.ipc'
+import { sendToPython, isSidecarRunning, isSidecarReady, waitForSidecarReady, startSidecar, sidecarEvents, SidecarEvent } from './sidecar.ipc'
+import { isSecurityLoaded } from './security.ipc'
 import { storeKey as vaultStoreKey } from '../vault'
 
 interface ChatRequest {
@@ -304,13 +305,20 @@ export function registerChatIPC(): void {
       windowBySession.set(sessionId, win)
     }
 
-    if (!isSidecarRunning()) {
+    // Prevent concurrent streams for the same sessionId
+    const existing = activeStreams.get(sessionId)
+    if (existing?.active) {
       sendToRenderer({
         sessionId, messageId,
-        type: 'error',
-        error: 'Python sidecar no está iniciado. Reinicia la aplicación.',
+        type: 'stream:error',
+        error: 'Ya hay un stream activo para esta sesión. Espera a que termine o aborta el anterior.',
       })
-      return { ok: false, error: 'Sidecar not running' }
+      return { ok: false, error: 'Concurrent stream not allowed for same session' }
+    }
+
+    if (!isSidecarRunning()) {
+      console.log('[chat:send] Sidecar not running — attempting restart...')
+      startSidecar()
     }
 
     // Wait for the sidecar to finish its cold start (imports + model init).
@@ -319,7 +327,7 @@ export function registerChatIPC(): void {
       sendToRenderer({
         sessionId, messageId,
         type: 'error',
-        error: 'Python sidecar no respondió a tiempo. Reinicia la aplicación.',
+        error: 'Python sidecar no pudo iniciarse. Revisa la terminal de desarrollo o reinicia la aplicación.',
       })
       return { ok: false, error: 'Sidecar not ready' }
     }
@@ -349,7 +357,7 @@ export function registerChatIPC(): void {
         workspace_root: req.workspaceRoot ?? '',
         agent_autonomy: req.agentAutonomy ?? 'ask_risky',
         agent_execute_local: req.agentExecuteLocal ?? false,
-        security_loaded: req.securityLoaded ?? true,
+        security_loaded: isSecurityLoaded(),
         sandbox_mode: req.sandboxMode ?? 'none',
         open_files: req.openFiles ?? [],
       },
@@ -361,6 +369,7 @@ export function registerChatIPC(): void {
     const timeout = 300_000
     const startTime = Date.now()
 
+    let timedOut = false
     while (Date.now() - startTime < timeout) {
       const streamState = activeStreams.get(sessionId)
       if (!streamState?.active) {
@@ -374,8 +383,13 @@ export function registerChatIPC(): void {
       const done = await waitForDone(requestId, 200)
       if (done) break
     }
+    timedOut = Date.now() - startTime >= timeout
 
     activeStreams.delete(sessionId)
+    if (timedOut) {
+      sendToRenderer({ sessionId, messageId, type: 'stream:error', error: 'El agente tardó demasiado en responder (5 min). Intenta de nuevo.' })
+      return { ok: false, error: 'Timeout' }
+    }
     return { ok: true }
   })
 
@@ -384,6 +398,88 @@ export function registerChatIPC(): void {
     if (state) {
       activeStreams.set(sessionId, { ...state, active: false })
     }
+  })
+
+  // ── Agent task execution (moved from frontend agent-runtime.ts) ───
+  ipcMain.handle('agent:execute-task', async (_event, req: {
+    taskId: string
+    agentId: string
+    taskDescription: string
+    systemPrompt: string
+    allowedTools: string[]
+    model: string
+    provider: string
+    vendor?: string
+    providerKey?: string
+    apiUrl?: string
+    workspaceRoot?: string
+    agentAutonomy: string
+    maxTurns?: number
+  }) => {
+    if (!isSidecarRunning()) {
+      return { ok: false, error: 'Sidecar no iniciado' }
+    }
+    const ready = await waitForSidecarReady(15_000)
+    if (!ready) {
+      return { ok: false, error: 'Sidecar no listo' }
+    }
+
+    const win = BrowserWindow.fromWebContents(_event.sender)
+    const requestId = `agent:${req.taskId}`
+
+    // Listen for step events from sidecar and forward to renderer
+    const onMessage = (msg: Record<string, unknown>) => {
+      if (msg.id !== requestId) return
+      const event = msg.event as string
+      if (event === 'agent:step' || event === 'agent:completed') {
+        if (win && !win.isDestroyed()) {
+          win.webContents.send('agent:task-event', { event, data: msg.data })
+        }
+      }
+    }
+
+    // Register listeners BEFORE sending to avoid race condition
+    const result = await new Promise<{ ok: boolean; result?: string; error?: string }>((resolve) => {
+      sidecarEvents.on(SidecarEvent.MESSAGE, onMessage)
+
+      const timeout = setTimeout(() => {
+        sidecarEvents.removeListener(SidecarEvent.MESSAGE, onMessage)
+        resolve({ ok: false, error: 'Timeout esperando resultado del agente' })
+      }, 120_000)
+
+      const onDone = (msg: Record<string, unknown>) => {
+        if (msg.id !== requestId || msg.event !== 'agent:completed') return
+        clearTimeout(timeout)
+        sidecarEvents.removeListener(SidecarEvent.MESSAGE, onMessage)
+        sidecarEvents.removeListener(SidecarEvent.MESSAGE, onDone)
+        const data = msg.data as Record<string, unknown> | undefined
+        resolve({ ok: true, result: (data?.result as string) ?? '' })
+      }
+      sidecarEvents.on(SidecarEvent.MESSAGE, onDone)
+
+      // Send AFTER listeners are registered
+      sendToPython({
+        id: requestId,
+        method: 'agent.task',
+        params: {
+          task_id: req.taskId,
+          agent_id: req.agentId,
+          task_description: req.taskDescription,
+          system_prompt: req.systemPrompt,
+          allowed_tools: req.allowedTools,
+          model: req.model,
+          provider: req.provider,
+          vendor: req.vendor ?? req.provider,
+          provider_key: req.providerKey,
+          api_url: req.apiUrl,
+          workspace_root: req.workspaceRoot ?? '',
+          agent_autonomy: req.agentAutonomy,
+          max_turns: req.maxTurns ?? 10,
+        },
+      })
+    })
+
+    return result
   })
 
   // ── MCP connection test ────────────────────────────────────────────

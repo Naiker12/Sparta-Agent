@@ -61,6 +61,22 @@ function createWindow() {
     win?.webContents.send('main-process-message', new Date().toLocaleString())
   })
 
+  win.on('closed', () => {
+    const { sessions, agentProcs } = require('./ipc/terminal.ipc') as typeof import('./ipc/terminal.ipc')
+    for (const [id, session] of sessions) {
+      if (session.win.isDestroyed() || session.win === win) {
+        session.pty.kill()
+        sessions.delete(id)
+      }
+    }
+    for (const [id, proc] of agentProcs) {
+      if (proc.win.isDestroyed() || proc.win === win) {
+        proc.pty.kill()
+        agentProcs.delete(id)
+      }
+    }
+  })
+
   ipcMain.on('win:minimize', () => win?.minimize())
   ipcMain.on('win:maximize', () => {
     if (win?.isMaximized()) { win.unmaximize() } else { win?.maximize() }
@@ -92,13 +108,16 @@ app.whenReady().then(async () => {
   // Start Python AI sidecar before creating window
   startSidecar()
 
+  // Register security IPC early so the renderer gets the real module status
+  // as soon as the window loads (avoids false "security unavailable" warning).
+  registerSecurityIPC()
+
   createWindow()
 
   registerChatIPC()
   registerMemoryIPC()
   registerVaultIPC()
   registerKeyManagerIPC()
-  registerSecurityIPC()
   registerTerminalIPC()
   registerFilesystemIPC()
   registerSkillsIPC()
@@ -157,4 +176,14 @@ app.whenReady().then(async () => {
 app.on('before-quit', () => {
   stopFileWatcher()
   stopSidecar()
+  // Kill all terminal PTY sessions to prevent orphan processes
+  const { sessions, agentProcs } = require('./ipc/terminal.ipc') as typeof import('./ipc/terminal.ipc')
+  for (const [id, session] of sessions) {
+    session.pty.kill()
+    sessions.delete(id)
+  }
+  for (const [id, proc] of agentProcs) {
+    proc.pty.kill()
+    agentProcs.delete(id)
+  }
 })
