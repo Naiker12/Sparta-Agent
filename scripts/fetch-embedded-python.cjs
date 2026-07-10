@@ -138,11 +138,11 @@ async function findAsset(tag, cpythonVersion, target) {
 
   console.log(`[fetch-python] Release has ${release.assets.length} assets`)
 
-  // Match: cpython-3.12+N-timestamp-target-install_only.tar.xz (or .zip)
-  // The pattern must be flexible because timestamps vary
+  // Match: cpython-3.12.20+20260623-x86_64-pc-windows-msvc-install_only.tar.gz
+  // The version is full (e.g. 3.12.20), and the + separator is literal
   const escapedTarget = target.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')
   const pattern = new RegExp(
-    `cpython-${cpythonVersion.replace('.', '\\.')}\\+[\\w.-]+-${escapedTarget}-install_only\\.(tar\\.xz|tar\\.gz|zip)`
+    `cpython-${cpythonVersion.replace('.', '\\.')}[\\w.+]-${escapedTarget}-install_only\\.(tar\\.gz|tar\\.xz|zip)`
   )
 
   for (const asset of release.assets) {
