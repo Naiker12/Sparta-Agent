@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
@@ -193,6 +193,10 @@ function makeMarkdownComponents(syntaxStyle: any): Components {
   }
 }
 
+const StableMarkdown = memo(function StableMarkdown({ content, components }: { content: string; components: Components }) {
+  return <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>{content}</ReactMarkdown>
+}, (prev, next) => prev.content === next.content)
+
 export function MarkdownRenderer({ content, isStreaming }: MarkdownRendererProps) {
   const { theme } = useThemeStore()
   const rawStyle = isDarkTheme(theme) ? oneDark : oneLight
@@ -205,11 +209,7 @@ export function MarkdownRenderer({ content, isStreaming }: MarkdownRendererProps
 
   return (
     <div className="markdown-body">
-      {stable && (
-        <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
-          {stable}
-        </ReactMarkdown>
-      )}
+      {stable && <StableMarkdown content={stable} components={components} />}
       {isStreaming && pendingFence && (
         <>
           {pendingFence.before && (
@@ -220,28 +220,19 @@ export function MarkdownRenderer({ content, isStreaming }: MarkdownRendererProps
               <span className="md-code-lang">{pendingFence.language}</span>
               <CopyCodeButton code={pendingFence.code} />
             </div>
-            <SyntaxHighlighter
-              language={pendingFence.language}
-              style={syntaxStyle}
-              customStyle={{
+            <pre
+              style={{
                 margin: 0,
-                border: 'none',
-                borderRadius: 0,
+                fontFamily: 'var(--font-mono)',
                 fontSize: '12.5px',
-                lineHeight: '1.55',
-                background: 'var(--bg-surface)',
+                lineHeight: 1.55,
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+                color: 'var(--text-primary)',
               }}
-              codeTagProps={{
-                style: {
-                  background: 'transparent',
-                  backgroundColor: 'transparent',
-                  fontFamily: 'inherit',
-                }
-              }}
-              showLineNumbers={pendingFence.code.split('\n').length > 8}
             >
               {pendingFence.code}
-            </SyntaxHighlighter>
+            </pre>
           </div>
         </>
       )}
