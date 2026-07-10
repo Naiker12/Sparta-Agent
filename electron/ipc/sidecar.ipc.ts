@@ -61,7 +61,7 @@ function getPythonCommand(): { command: string; args: string[]; cwd: string } {
         process.resourcesPath,
         'python-runtime',
         process.platform === 'win32'
-          ? path.join('Scripts', 'python.exe')
+          ? 'python.exe'
           : path.join('bin', 'python3'),
       )
     : ''

@@ -24,14 +24,13 @@
       "filter": ["*.node", "index.js", "index.d.ts"]
     },
     // Python embebido para distribución (sin depender del Python del sistema)
-    // Requiere: node scripts/fetch-embedded-python.js && node scripts/setup-embedded-python.js
     {
-      "from": "vendor/python-${env.TARGET_PLATFORM}",
+      "from": "vendor/python-win32-x64",
       "to": "python-runtime",
       "filter": ["**/*"]
     }
   ],
-  "icon": "public/sparta-icon.png",
+  "icon": "public/sparta-escritorio.png",
   "mac": {
     "target": ["dmg"],
     "artifactName": "Sparta-Agent-Mac-${version}-Installer.${ext}"

@@ -294,7 +294,7 @@ async function main() {
 
   // 7. Verify
   const pythonBin = process.platform === 'win32'
-    ? path.join(destDir, 'Scripts', 'python.exe')
+    ? path.join(destDir, 'python.exe')
     : path.join(destDir, 'bin', 'python3')
 
   if (!fs.existsSync(pythonBin)) {
