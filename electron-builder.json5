@@ -18,13 +18,18 @@
       "to": "python",
       "filter": ["**/*"]
     },
-    // Opcional: Python embebido para distribución (sin depender del Python del sistema)
-    // Descargar de https://www.python.org/downloads/ y extraer en vendor/python-3.12
-    // {
-    //   "from": "vendor/python-3.12",
-    //   "to": "python-runtime",
-    //   "filter": ["**/*"]
-    // }
+    {
+      "from": "rust/sparta-security",
+      "to": "rust/sparta-security",
+      "filter": ["*.node", "index.js", "index.d.ts"]
+    },
+    // Python embebido para distribución (sin depender del Python del sistema)
+    // Requiere: node scripts/fetch-embedded-python.js && node scripts/setup-embedded-python.js
+    {
+      "from": "vendor/python-${env.TARGET_PLATFORM}",
+      "to": "python-runtime",
+      "filter": ["**/*"]
+    }
   ],
   "icon": "public/sparta-escritorio.png",
   "mac": {

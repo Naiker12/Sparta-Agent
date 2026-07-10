@@ -58,3 +58,29 @@
   background: var(--text-muted);
   display: inline-block;
 }
+
+@keyframes shimmer-sweep {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.shimmer-text {
+  background-image: linear-gradient(90deg,
+    color-mix(in srgb, var(--text-on-accent) 55%, transparent) 0%,
+    var(--text-on-accent) 50%,
+    color-mix(in srgb, var(--text-on-accent) 55%, transparent) 100%);
+  background-size: 200% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+.shimmer-text-active {
+  animation: shimmer-sweep 1.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer-text-active {
+    animation: none;
+  }
+}

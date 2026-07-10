@@ -26,6 +26,9 @@ dist-ssr
 # Build output (large files exceeding GitHub 100MB limit)
 release/
 
+# Embedded Python runtime (downloaded by scripts/fetch-embedded-python.js)
+vendor/
+
 # Electron build output
 dist-electron/
 

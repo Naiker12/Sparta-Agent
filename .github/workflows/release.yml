@@ -1,28 +1,69 @@
 name: Release
+
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version bump type"
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
 
 jobs:
   build:
     strategy:
+      fail-fast: false
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
+        include:
+          - os: windows-latest
+            platform: win32-x64
+          - os: macos-latest
+            platform: darwin-arm64
+          - os: macos-13
+            platform: darwin-x64
+          - os: ubuntu-latest
+            platform: linux-x64
+
     runs-on: ${{ matrix.os }}
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: pnpm/action-setup@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: pnpm
-      - uses: actions/setup-python@v5
+
+      # Rust toolchain for sparta-security NAPI build
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
         with:
-          python-version: "3.12"
+          workspaces: rust/sparta-security
+
+      # Embedded Python for the sidecar (no system Python needed)
+      - name: Fetch embedded Python
+        run: node scripts/fetch-embedded-python.js --platform ${{ matrix.platform }}
+
+      - name: Install Python deps into embedded runtime
+        run: node scripts/setup-embedded-python.js --platform ${{ matrix.platform }}
+
+      # Install JS deps (triggers prebuild → rust:napi automatically)
       - run: pnpm install
-      - run: pnpm sparta build
+
+      # Build: tsc → vite build → electron-builder
+      - run: pnpm build
         env:
+          TARGET_PLATFORM: ${{ matrix.platform }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Publish artifacts to GitHub Release
       - uses: softprops/action-gh-release@v2
         with:
           files: release/**/*.{exe,dmg,AppImage}

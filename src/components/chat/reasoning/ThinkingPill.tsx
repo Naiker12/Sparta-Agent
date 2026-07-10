@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { ChevronRightIcon, Check } from 'lucide-react'
 import { getRandomSpinner, type SpinnerSet } from '@/lib/spinners'
+import { ShimmerText } from './ShimmerText'
 import type { ThinkingStatus } from '@/types'
 import { useTranslation } from '@/i18n'
 
@@ -54,9 +55,11 @@ export function ThinkingPill({ status, tokensUsed, isExpanded, elapsed, lastSkil
           <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', opacity: 0.8 }}>
             {elapsed.toFixed(1)}s
           </span>
-          <span style={{ fontSize: 10, fontWeight: 500 }}>
-            {t('chat.thinking')}
-          </span>
+          <ShimmerText
+            text={t('chat.thinking')}
+            active
+            className="text-[10px] font-medium"
+          />
         </>
       ) : (
         <>

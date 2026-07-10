@@ -1,12 +1,14 @@
 {
   "name": "sparta-agent",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "bin": {
     "sparta": "./bin/sparta.mjs"
   },
   "scripts": {
+    "predev": "npm run rust:napi:if-missing",
+    "prebuild": "npm run rust:napi",
     "dev": "vite",
     "dev:web": "vite --mode web",
     "build": "tsc && vite build && electron-builder",
@@ -22,6 +24,9 @@
     "rust:build": "cd rust/sparta-security && cargo build --release",
     "rust:test": "cd rust/sparta-security && cargo test",
     "rust:napi": "cd rust/sparta-security && npx napi build --platform --release",
+    "rust:napi:if-missing": "node scripts/build-rust-if-missing.cjs",
+    "python:fetch": "node scripts/fetch-embedded-python.js",
+    "python:setup": "node scripts/setup-embedded-python.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "rebuild-native": "npx @electron/rebuild -f -w node-pty"

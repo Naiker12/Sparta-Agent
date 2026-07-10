@@ -6,6 +6,7 @@ import { useAgentStore } from '@/stores/agent.store'
 import { usePlanStore } from '@/stores/plan.store'
 import { messagingAdapter } from '@/lib/messaging-adapter'
 import { extractMemory } from '@/services'
+import { labelForToolCall } from '@/lib/thinking-status-labels'
 import type { SpartaEvent } from '@/types'
 
 const SUBAGENT_TOOL_MAP: Record<string, { name: string; type: 'research' | 'coding' | 'automation' | 'project'; description: string }> = {
@@ -374,6 +375,12 @@ function _handleMCPEvent(type: string, event: Record<string, unknown>) {
           input: toolInput,
           status: 'running',
         })
+
+        // Actualizar el status line de thinking con la acción concreta en curso
+        const inputObj = toolInput && typeof toolInput === 'object'
+          ? (toolInput as Record<string, unknown>)
+          : {}
+        store.setThinkingStatusText(sid, mid, labelForToolCall(name, inputObj))
 
         // Conectar con useAgentStore si es un subagente delegado
         const subagentMeta = SUBAGENT_TOOL_MAP[name]
