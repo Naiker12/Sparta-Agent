@@ -136,6 +136,8 @@ async def web_search_tool(
                     index=i,
                     total=len(cached_results[:count]),
                 )
+                if i < len(cached_results[:count]):
+                    await asyncio.sleep(0.1)
             await dispatch_progress("done")
             return _format_results(query, cached_results, count)
 
@@ -167,6 +169,11 @@ async def web_search_tool(
                 _duckduckgo_search_async(query, count, freshness), timeout=15.0
             )
 
+        # Emitimos cada resultado con un pequeño espaciado para que la UI
+        # pueda animarlos uno por uno (como hace Claude Code), en vez de
+        # recibirlos todos en el mismo tick de evento. El costo total es
+        # de unos ~150ms por resultado, imperceptible frente a los 1-3s
+        # que ya toma la búsqueda en sí.
         for i, r in enumerate(results[:count], 1):
             await dispatch_progress(
                 "visiting",
@@ -175,6 +182,8 @@ async def web_search_tool(
                 index=i,
                 total=len(results[:count]),
             )
+            if i < len(results[:count]):
+                await asyncio.sleep(0.15)
 
         await dispatch_progress("done")
 

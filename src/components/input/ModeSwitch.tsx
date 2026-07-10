@@ -28,12 +28,15 @@ export function ModeSwitch() {
       style={{
         display: 'flex',
         alignItems: 'center',
+        flexWrap: 'wrap',
         gap: 4,
       }}
     >
       <div
         style={{
           display: 'flex',
+          flex: '1 1 auto',
+          minWidth: 0,
           borderRadius: 'var(--radius-md)',
           overflow: 'hidden',
           background: 'var(--bg-hover)',

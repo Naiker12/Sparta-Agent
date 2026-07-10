@@ -1,10 +1,16 @@
-import { motion, LayoutGroup } from 'framer-motion'
 import { useUIStore, type MainView } from '@/stores/ui.store'
 import { useSettingsStore } from '@/stores/settings.store'
 import { AppMenu } from './AppMenu'
 import { Settings, PanelLeftOpen, PanelLeftClose } from 'lucide-react'
 import { SpartaIcon } from '@/components/chat/SpartaIcon'
 import { FEATURES } from '@/lib/env-adapter'
+import {
+  Tabs,
+  TabsList,
+  TabsHighlight,
+  TabsHighlightItem,
+  TabsTrigger,
+} from '@/components/animate-ui/primitives/animate/tabs'
 
 const TABS: { type: MainView['type']; label: string }[] = [
   { type: 'chat', label: 'Chat' },
@@ -17,7 +23,12 @@ export function TitleBar() {
   const { mainView, setMainView, sidebarOpen, toggleSidebar, editorOpen, terminalOpen, toggleEditor, toggleTerminal } = useUIStore()
   const { openSettings } = useSettingsStore()
 
-  const isChat = mainView.type === 'chat' || mainView.type === 'editor' || mainView.type === 'terminal'
+  const activeValue = (() => {
+    if (mainView.type === 'agents') return 'agents'
+    if (editorOpen) return 'editor'
+    if (terminalOpen) return 'terminal'
+    return 'chat'
+  })()
 
   function handleTabClick(type: MainView['type']) {
     if (type === 'editor') {
@@ -35,13 +46,6 @@ export function TitleBar() {
       return
     }
     setMainView({ type } as MainView)
-  }
-
-  function isActive(type: MainView['type']): boolean {
-    if (type === 'chat') return isChat
-    if (type === 'editor') return editorOpen
-    if (type === 'terminal') return terminalOpen
-    return mainView.type === type
   }
 
   return (
@@ -113,8 +117,8 @@ export function TitleBar() {
         </span>
       </div>
 
-      <LayoutGroup>
-        <div
+      <Tabs value={activeValue} onValueChange={(v) => handleTabClick(v as MainView['type'])}>
+        <TabsList
           className="no-drag"
           style={{
             display: 'flex',
@@ -122,49 +126,39 @@ export function TitleBar() {
             gap: 2,
           }}
         >
-          {TABS.map((tab) => {
-            const active = isActive(tab.type)
-            return (
-              <motion.button
-                key={tab.type}
-                onClick={() => handleTabClick(tab.type)}
-                style={{
-                  padding: '4px 12px',
-                  background: 'none',
-                  border: 'none',
-                  borderRadius: 'var(--radius-md)',
-                  color: active ? 'var(--text-display)' : 'var(--text-muted)',
-                  fontSize: 12,
-                  fontFamily: 'var(--font-ui)',
-                  fontWeight: active ? 500 : 400,
-                  cursor: 'pointer',
-                  position: 'relative',
-                }}
-                whileHover={{ color: 'var(--text-display)' }}
-                transition={{ color: { duration: 0.15 } }}
-              >
-                {tab.label}
-                {active && (
-                  <motion.span
-                    layoutId="tab-indicator"
-                    style={{
-                      position: 'absolute',
-                      bottom: -1,
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      width: 16,
-                      height: 1.5,
-                      background: 'var(--accent)',
-                      borderRadius: 1,
-                    }}
-                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                  />
-                )}
-              </motion.button>
-            )
-          })}
-        </div>
-      </LayoutGroup>
+          <TabsHighlight
+            style={{
+              borderRadius: 4,
+              background: 'color-mix(in srgb, var(--text-muted) 10%, transparent)',
+            }}
+          >
+            {TABS.map((tab) => (
+              <TabsHighlightItem key={tab.type} value={tab.type}>
+                <TabsTrigger
+                  value={tab.type}
+                  style={{
+                    padding: '4px 12px',
+                    background: 'none',
+                    border: 'none',
+                    borderRadius: 'var(--radius-md)',
+                    color: activeValue === tab.type ? 'var(--text-display)' : 'var(--text-muted)',
+                    fontSize: 12,
+                    fontFamily: 'var(--font-ui)',
+                    fontWeight: activeValue === tab.type ? 500 : 400,
+                    cursor: 'pointer',
+                    position: 'relative',
+                    zIndex: 1,
+                  }}
+                  whileHover={{ color: 'var(--text-display)' }}
+                  transition={{ color: { duration: 0.15 } }}
+                >
+                  {tab.label}
+                </TabsTrigger>
+              </TabsHighlightItem>
+            ))}
+          </TabsHighlight>
+        </TabsList>
+      </Tabs>
 
       <div style={{ flex: 1 }} />
 

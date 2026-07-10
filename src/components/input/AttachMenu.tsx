@@ -1,5 +1,5 @@
 import { useRef, useEffect, type ReactNode } from 'react'
-import { FileIcon, Globe, Brain } from 'lucide-react'
+import { File, Globe, Brain } from 'lucide-react'
 import { useSettingsStore } from '@/stores/settings.store'
 import { ConnectorsSubmenu } from './ConnectorsSubmenu'
 import { ModeSwitch } from './ModeSwitch'
@@ -143,14 +143,15 @@ export function AttachMenu({ onClose }: AttachMenuProps) {
         position: 'absolute',
         bottom: 'calc(100% + 6px)',
         left: 0,
-        width: 210,
+        width: 230,
+        maxWidth: 'calc(100vw - 24px)',
         background: 'var(--bg-modal)',
         backdropFilter: 'blur(16px)',
         WebkitBackdropFilter: 'blur(16px)',
         border: '1px solid var(--border-subtle)',
         borderRadius: 'var(--radius-lg)',
         boxShadow: '0 8px 30px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.05)',
-        overflow: 'hidden',
+        overflow: 'visible',
         padding: '5px',
         display: 'flex',
         flexDirection: 'column',
@@ -181,7 +182,7 @@ export function AttachMenu({ onClose }: AttachMenuProps) {
       />
 
       <AttachMenuBtn
-        icon={<FileIcon size={14} strokeWidth={1.5} />}
+        icon={<File size={14} strokeWidth={1.5} />}
         label="Agregar archivo"
         onClick={handleFileClick}
       />
