@@ -52,16 +52,40 @@ function _detachSingleton() {
   }
 }
 
-// ── Immediate flush (no buffering delay) ────────────────────────────
-// Previously used 16ms setTimeout per token, which added visible latency
-// for local models. Now flushes immediately on every event.
+// ── RAF-throttled flush ─────────────────────────────────────────────
+// Accumulates tokens and flushes to the store at most once per
+// animation frame (~16ms). This avoids re-render storms during fast
+// streaming without adding latency — data is received and buffered
+// immediately, only React re-renders are throttled.
 const _writeBuf: { sid: string; mid: string; text: string } = { sid: '', mid: '', text: '' }
+const _thinkBuf: { sid: string; mid: string; text: string } = { sid: '', mid: '', text: '' }
+let _flushRaf: number | null = null
 
 function _flushContent() {
   const { sid, mid, text } = _writeBuf
   if (!text) return
   _writeBuf.text = ''
   useChatStore.getState().appendContent(sid, mid, text)
+}
+
+function _flushThinking() {
+  const { sid, mid, text } = _thinkBuf
+  if (!text) return
+  _thinkBuf.text = ''
+  useChatStore.getState().appendThinking(sid, mid, text)
+}
+
+function _flushBoth() {
+  _flushContent()
+  _flushThinking()
+}
+
+function _scheduleFlush() {
+  if (_flushRaf !== null) return
+  _flushRaf = requestAnimationFrame(() => {
+    _flushRaf = null
+    _flushBoth()
+  })
 }
 
 function _queueContent(sid: string, mid: string, token: string) {
@@ -71,16 +95,7 @@ function _queueContent(sid: string, mid: string, token: string) {
     _writeBuf.mid = mid
   }
   _writeBuf.text += token
-  _flushContent()
-}
-
-const _thinkBuf: { sid: string; mid: string; text: string } = { sid: '', mid: '', text: '' }
-
-function _flushThinking() {
-  const { sid, mid, text } = _thinkBuf
-  if (!text) return
-  _thinkBuf.text = ''
-  useChatStore.getState().appendThinking(sid, mid, text)
+  _scheduleFlush()
 }
 
 function _queueThinking(sid: string, mid: string, token: string) {
@@ -90,7 +105,7 @@ function _queueThinking(sid: string, mid: string, token: string) {
     _thinkBuf.mid = mid
   }
   _thinkBuf.text += token
-  _flushThinking()
+  _scheduleFlush()
 }
 
 // ── MCP lifecycle handler ───────────────────────────────────────────
@@ -217,7 +232,8 @@ function _handleMCPEvent(type: string, event: Record<string, unknown>) {
     }
     case 'thinking:completed': {
       console.debug('[useStreamEvents] thinking:completed', sid, mid)
-      _flushThinking()
+      if (_flushRaf !== null) { cancelAnimationFrame(_flushRaf); _flushRaf = null }
+      _flushBoth()
       const tokensUsed = (event as { tokensUsed: number }).tokensUsed ?? 0
       store.onThinkingEnd(sid, mid, tokensUsed)
       store.updateMessage(mid, { reasoningCompletedAt: Date.now() })
@@ -289,8 +305,8 @@ function _handleMCPEvent(type: string, event: Record<string, unknown>) {
       break
     }
     case 'stream:completed': {
-      _flushContent()
-      _flushThinking()
+      if (_flushRaf !== null) { cancelAnimationFrame(_flushRaf); _flushRaf = null }
+      _flushBoth()
       // Clear plan tracker when stream finishes
       usePlanStore.getState().clear()
       // Leer el mensaje DESPUÉS del flush para tener el contenido completo
@@ -334,8 +350,8 @@ function _handleMCPEvent(type: string, event: Record<string, unknown>) {
       break
     }
     case 'stream:aborted': {
-      _flushContent()
-      _flushThinking()
+      if (_flushRaf !== null) { cancelAnimationFrame(_flushRaf); _flushRaf = null }
+      _flushBoth()
       const abortedMsg = store.messagesBySession[sid]?.find((m) => m.id === mid)
       if (abortedMsg?.thinkingStatus === 'streaming' || (abortedMsg?.reasoningText && abortedMsg?.thinkingStatus !== 'completed')) {
         console.debug('[safety-net] cerrando thinking en stream:aborted')
@@ -348,8 +364,8 @@ function _handleMCPEvent(type: string, event: Record<string, unknown>) {
       break
     }
     case 'stream:error': {
-      _flushContent()
-      _flushThinking()
+      if (_flushRaf !== null) { cancelAnimationFrame(_flushRaf); _flushRaf = null }
+      _flushBoth()
       store.onStreamEnd(sid, mid)
       store.stopStreaming(sid)
       const errorMsg = (event as { error?: string }).error ?? 'Error durante la generación'
