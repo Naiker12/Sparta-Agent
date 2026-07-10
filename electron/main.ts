@@ -43,7 +43,7 @@ function createWindow() {
     },
     backgroundColor: '#0C0C10',
     show: false,
-    icon: path.join(process.env.VITE_PUBLIC, 'sparta-escritorio.png'),
+    icon: path.join(process.env.VITE_PUBLIC, 'sparta-icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
       contextIsolation: true,

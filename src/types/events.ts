@@ -19,6 +19,7 @@ export type EventType =
   | 'stream:completed'
   | 'stream:aborted'
   | 'stream:error'
+  | 'stream:notice'
   | 'pipeline:step'
   | 'chat:message'
   | 'chat:send_queued'
@@ -54,6 +55,7 @@ export type EventType =
   | 'file:changed'
   | 'editor:diff_proposed'
   | 'editor:diff_responded'
+  | 'editor:open_file'
   | 'terminal:tool_crash'
 
 export interface BaseEvent {
@@ -194,6 +196,13 @@ export interface StreamErrorEvent extends BaseEvent {
   sessionId: string
   messageId: string
   error: string
+}
+
+export interface StreamNoticeEvent extends BaseEvent {
+  type: 'stream:notice'
+  sessionId: string
+  messageId: string
+  message: string
 }
 
 export interface PipelineStepEvent extends BaseEvent {
@@ -376,6 +385,11 @@ export interface DiffProposedEvent extends BaseEvent {
   language: string
 }
 
+export interface EditorOpenFileEvent extends BaseEvent {
+  type: 'editor:open_file'
+  filePath: string
+}
+
 export interface TerminalToolCrashEvent extends BaseEvent {
   type: 'terminal:tool_crash'
   error: string
@@ -409,6 +423,7 @@ export type SpartaEvent =
   | StreamTokenEvent
   | StreamCompletedEvent
   | StreamErrorEvent
+  | StreamNoticeEvent
   | PipelineStepEvent
   | ChatMessageEvent
   | ChatSendQueuedEvent
@@ -441,4 +456,5 @@ export type SpartaEvent =
   | PlanStepEvent
   | FileChangedEvent
   | DiffProposedEvent
+  | EditorOpenFileEvent
   | TerminalToolCrashEvent

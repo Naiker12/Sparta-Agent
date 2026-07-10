@@ -1,5 +1,7 @@
 import { useSettingsStore } from '@/stores/settings.store'
+import { useProviderStore } from '@/stores/provider.store'
 import { useTranslation } from '@/i18n'
+import { modelSupportsThinking, thinkingUnsupportedReason } from '@/lib/model-capabilities'
 import { SettingRow, SettingGroup } from './primitives'
 import type { ReasoningEffort } from '@/types'
 
@@ -47,7 +49,12 @@ const EFFORT_STEPS = ['none', 'minimal', 'low', 'medium', 'high', 'xhigh'] as co
 
 export function GeneralTab() {
   const { defaultModel, setDefaultModel, memoryEnabled, toggleMemory, language, setLanguage, reasoningEnabled, toggleReasoning, reasoningEffort, setReasoningEffort, reasoningBudget, setReasoningBudget } = useSettingsStore()
+  const providers = useProviderStore((s) => s.providers)
   const { t } = useTranslation()
+
+  const activeVendor = providers.find((p) => p.models?.includes(defaultModel))?.vendor
+  const thinkingSupported = modelSupportsThinking(defaultModel, activeVendor)
+  const thinkingReason = thinkingUnsupportedReason(defaultModel, activeVendor)
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -120,10 +127,40 @@ export function GeneralTab() {
       <SettingGroup title="Razonamiento" description="Control de razonamiento visible del modelo">
         <SettingRow
           title="Razonamiento visible"
-          description="Mostrar el proceso de razonamiento del modelo"
-          control={<Toggle value={reasoningEnabled} onChange={toggleReasoning} />}
+          description={thinkingReason ?? "Mostrar el proceso de razonamiento del modelo"}
+          control={
+            <button
+              onClick={thinkingSupported ? toggleReasoning : undefined}
+              style={{
+                width: 32,
+                height: 16,
+                borderRadius: 8,
+                background: thinkingSupported
+                  ? (reasoningEnabled ? 'var(--accent)' : 'var(--border-normal)')
+                  : 'var(--bg-muted)',
+                border: 'none',
+                cursor: thinkingSupported ? 'pointer' : 'not-allowed',
+                position: 'relative',
+                transition: 'background 0.15s',
+                opacity: thinkingSupported ? 1 : 0.4,
+              }}
+            >
+              <div
+                style={{
+                  width: 12,
+                  height: 12,
+                  borderRadius: '50%',
+                  background: 'white',
+                  position: 'absolute',
+                  top: 2,
+                  left: reasoningEnabled ? 18 : 2,
+                  transition: 'left 0.15s',
+                }}
+              />
+            </button>
+          }
         />
-        {reasoningEnabled && (
+        {reasoningEnabled && thinkingSupported && (
           <>
             <div style={{ paddingTop: 8 }}>
               <label style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)', display: 'block', marginBottom: 4 }}>

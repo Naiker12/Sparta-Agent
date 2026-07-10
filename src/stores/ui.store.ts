@@ -121,7 +121,6 @@ export const useUIStore = create<UIState>()(
         sidebarWidth: state.sidebarWidth,
         sidebarExpandedSections: state.sidebarExpandedSections,
         activeSettingsTab: state.activeSettingsTab,
-        editorOpen: state.editorOpen,
         editorWidth: state.editorWidth,
         terminalOpen: state.terminalOpen,
         terminalHeight: state.terminalHeight,

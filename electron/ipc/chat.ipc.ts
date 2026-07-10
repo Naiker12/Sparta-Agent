@@ -303,6 +303,9 @@ export function registerChatIPC(): void {
       case 'usage':
         sendToRenderer({ sessionId, messageId, type: 'usage', inputTokens: data?.input_tokens, outputTokens: data?.output_tokens })
         break
+      case 'stream:notice':
+        sendToRenderer({ sessionId, messageId, type: 'stream:notice', message: data?.message ?? '' })
+        break
       case 'error':
         sendToRenderer({ sessionId, messageId, type: 'stream:error', error: data?.message ?? 'Unknown error' })
         clearSeqCounters(requestId)

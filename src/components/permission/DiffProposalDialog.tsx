@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useEventBus } from '@/stores/event-bus.store'
+import { useUIStore } from '@/stores/ui.store'
 import { X, Check, FileCode } from 'lucide-react'
 
 interface DiffProposal {
@@ -52,9 +53,23 @@ export function DiffProposalDialog() {
   if (!proposal) return null
 
   const handleRespond = async (approved: boolean) => {
+    const filePath = proposal.filePath
     await window.editorBridge?.respondDiff({ requestId: proposal.requestId, approved })
     setProposal(null)
     setDiffHtml('')
+
+    if (approved) {
+      // Open the editor if closed, then open/activate the file tab
+      const { editorOpen, toggleEditor } = useUIStore.getState()
+      if (!editorOpen) toggleEditor()
+
+      // Dispatch event so EditorPanel picks it up and opens the file
+      useEventBus.getState().dispatch({
+        type: 'editor:open_file',
+        filePath,
+        timestamp: Date.now(),
+      })
+    }
   }
 
   const fileName = proposal.filePath.split(/[\\/]/).pop() ?? proposal.filePath

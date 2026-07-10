@@ -20,7 +20,7 @@ from sparta_ai.streaming.event_dispatcher import (
 from sparta_ai.streaming.skill_detector import build_skill_payload, detect_skill
 from sparta_ai.streaming.think_scrubber import StreamingThinkScrubber
 from sparta_ai.streaming.repetition_guard import RepetitionGuard
-from sparta_ai.providers.retry_policy import retry_on_empty, EmptyResponseError
+from sparta_ai.providers.free_tier_guard import is_free_tier_model
 
 logger = logging.getLogger("sparta_ai.streaming")
 
@@ -114,7 +114,12 @@ async def stream_agent_to_electron(
     request_id: str,
     thread_id: str = "",
     max_empty_retries: int = 1,
+    model: str = "",
 ) -> None:
+    # Free-tier models need more retries and longer backoff
+    if model and is_free_tier_model(model):
+        max_empty_retries = max(max_empty_retries, 2)
+        logger.info("Free-tier model detected (%s) — retries=%d", model, max_empty_retries)
     # Mutable state so thinking flag persists across separate astream_events events.
     stream_state = {
         "thinking_active": False,
@@ -133,53 +138,68 @@ async def stream_agent_to_electron(
         "_pending_terminal_proc": {},
     }
 
-    async def _try_stream() -> None:
-        result = await _run_single_stream(graph, initial_state, request_id, thread_id, stream_state)
-        if result is None:
-            return
-        if result.get("visible_chars", 0) == 0 and result.get("_empty_retries", 0) < max_empty_retries:
-            stream_state["_empty_retries"] = result["_empty_retries"] + 1
-            logger.warning(
-                "Empty response (retry %d/%d) for request %s",
-                stream_state["_empty_retries"], max_empty_retries, request_id,
-            )
-            _emit(
-                request_id,
-                "error",
-                {
-                    "code": "empty_response_retry",
-                    "message": f"El modelo no devolvió respuesta. Reintentando ({stream_state['_empty_retries']}/{max_empty_retries})...",
-                },
-            )
-            # Reset state for retry
-            stream_state["visible_chars"] = 0
-            stream_state["thinking_active"] = False
-            stream_state["_rep_guard"] = RepetitionGuard()
-            await _try_stream()
-            return
+    async def _run_with_retry() -> dict | None:
+        """Run stream with retry_on_empty for proper backoff between attempts."""
+        last_result = None
+        for attempt in range(max_empty_retries + 1):
+            if attempt > 0:
+                wait = 2.0 * attempt  # 2s, 4s, 6s...
+                logger.info("Retrying empty response in %.1fs (attempt %d/%d)", wait, attempt, max_empty_retries)
+                _emit(
+                    request_id,
+                    "stream:notice",
+                    {
+                        "code": "empty_response_retry",
+                        "message": f"El modelo no devolvió respuesta. Reintentando ({attempt}/{max_empty_retries})...",
+                    },
+                )
+                await asyncio.sleep(wait)
+                # Reset mutable state for a clean retry
+                stream_state["visible_chars"] = 0
+                stream_state["reasoning_chars"] = 0
+                stream_state["thinking_active"] = False
+                stream_state["_reasoning_extracted"] = False
+                stream_state["_emitted_text"] = ""
+                stream_state["_skip_mode"] = False
+                stream_state["_skip_pending"] = ""
+                stream_state["_pending_file_path"] = ""
+                stream_state["_pending_terminal_command"] = ""
+                stream_state["_pending_terminal_proc"] = {}
+                stream_state["last_detected_skill"] = None
+                stream_state["_rep_guard"] = RepetitionGuard()
+                stream_state["_scrubber"] = StreamingThinkScrubber()
+                stream_state["_chunk_seq"] = 0
+                stream_state["reasoning_tokens"] = 0
+                stream_state["_plan_seen"] = False
 
-        # Final empty response after exhausting retries
-        if result.get("visible_chars", 0) == 0 and not stream_state.get("_stream_completed"):
-            logger.error("Empty response after %d retries for request %s", max_empty_retries, request_id)
-            _emit(
-                request_id,
-                "error",
-                {
-                    "code": "empty_response",
-                    "message": (
-                        "El modelo no devolvió contenido visible. "
-                        "Causas comunes: (1) el modelo no existe para este proveedor, "
-                        "(2) la API key es inválida o no tiene acceso al modelo, "
-                        "(3) el proveedor seleccionado no corresponde al modelo "
-                        "(por ejemplo, un modelo de NVIDIA configurado como Google). "
-                        "Verificá la configuración en Configuración > Modelos."
-                    ),
-                },
-            )
-            _emit(request_id, "stream_end", {"error": "empty_response"})
-            stream_state["_stream_completed"] = True
+            last_result = await _run_single_stream(graph, initial_state, request_id, thread_id, stream_state)
+            if last_result is None:
+                return None
+            if last_result.get("visible_chars", 0) > 0:
+                return last_result
 
-    await _try_stream()
+        # All retries exhausted — surface final empty result
+        logger.error("Empty response after %d retries for request %s", max_empty_retries, request_id)
+        _emit(
+            request_id,
+            "error",
+            {
+                "code": "empty_response",
+                "message": (
+                    "El modelo no devolvió contenido visible. "
+                    "Causas comunes: (1) el modelo no existe para este proveedor, "
+                    "(2) la API key es inválida o no tiene acceso al modelo, "
+                    "(3) el proveedor seleccionado no corresponde al modelo "
+                    "(por ejemplo, un modelo de NVIDIA configurado como Google). "
+                    "Verificá la configuración en Configuración > Modelos."
+                ),
+            },
+        )
+        _emit(request_id, "stream_end", {"error": "empty_response"})
+        stream_state["_stream_completed"] = True
+        return last_result
+
+    await _run_with_retry()
 
 
 async def _dispatch_event(request_id: str, event: dict, stream_state: dict) -> bool:

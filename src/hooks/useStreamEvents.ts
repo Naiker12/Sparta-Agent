@@ -363,6 +363,12 @@ function _handleMCPEvent(type: string, event: Record<string, unknown>) {
       lastUserMessageRef.delete(sid)
       break
     }
+    case 'stream:notice': {
+      const noticeMsg = (event as { message?: string }).message ?? ''
+      store.setThinkingStatusText(sid, mid, noticeMsg)
+      console.debug('[useStreamEvents] stream:notice:', noticeMsg)
+      break
+    }
     case 'stream:error': {
       if (_flushRaf !== null) { cancelAnimationFrame(_flushRaf); _flushRaf = null }
       _flushBoth()

@@ -1,6 +1,8 @@
 import { useRef, useEffect, type ReactNode } from 'react'
 import { File, Globe, Brain } from 'lucide-react'
 import { useSettingsStore } from '@/stores/settings.store'
+import { useProviderStore } from '@/stores/provider.store'
+import { modelSupportsThinking } from '@/lib/model-capabilities'
 import { ConnectorsSubmenu } from './ConnectorsSubmenu'
 import { ModeSwitch } from './ModeSwitch'
 
@@ -119,7 +121,10 @@ function AttachMenuToggle({
 export function AttachMenu({ onClose }: AttachMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const { webSearchEnabled, reasoningEnabled, toggleWebSearch, toggleReasoning } = useSettingsStore()
+  const { defaultModel, webSearchEnabled, reasoningEnabled, toggleWebSearch, toggleReasoning } = useSettingsStore()
+  const providers = useProviderStore((s) => s.providers)
+  const activeVendor = providers.find((p) => p.models?.includes(defaultModel))?.vendor
+  const thinkingSupported = modelSupportsThinking(defaultModel, activeVendor)
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -196,9 +201,9 @@ export function AttachMenu({ onClose }: AttachMenuProps) {
 
       <AttachMenuToggle
         icon={<Brain size={14} strokeWidth={1.5} />}
-        label="Razonamiento"
-        enabled={reasoningEnabled}
-        onToggle={() => { toggleReasoning(); onClose() }}
+        label={thinkingSupported ? "Razonamiento" : "Razonamiento (no soportado)"}
+        enabled={reasoningEnabled && thinkingSupported}
+        onToggle={() => { if (thinkingSupported) { toggleReasoning(); onClose() } }}
       />
 
       <ConnectorsSubmenu />

@@ -53,9 +53,17 @@ function getPythonCommand(): { command: string; args: string[]; cwd: string } {
   const cwd = getPythonCwd()
 
   // En dev preferimos el venv creado por sidecar:setup si existe.
-  const venvPython = path.join(process.cwd(), 'python', '.venv', 'Scripts', 'python.exe')
+  const venvPython = process.platform === 'win32'
+    ? path.join(process.cwd(), 'python', '.venv', 'Scripts', 'python.exe')
+    : path.join(process.cwd(), 'python', '.venv', 'bin', 'python')
   const bundledPython = app.isPackaged
-    ? path.join(process.resourcesPath, 'python-runtime', 'python.exe')
+    ? path.join(
+        process.resourcesPath,
+        'python-runtime',
+        process.platform === 'win32'
+          ? path.join('Scripts', 'python.exe')
+          : path.join('bin', 'python3'),
+      )
     : ''
 
   if (app.isPackaged && bundledPython && fs.existsSync(bundledPython)) {

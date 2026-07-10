@@ -37,6 +37,8 @@ export function EditorPanel() {
   const [cursorPos, setCursorPos] = useState({ line: 1, col: 1 })
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null)
   const treeKey = useRef(0)
+  // Track files we just saved ourselves, to distinguish our own writes from external/agent writes
+  const recentlySavedRef = useRef<Set<string>>(new Set())
   const handleEditorMount = useCallback((ed: editor.IStandaloneCodeEditor) => {
     editorRef.current = ed
     ed.onDidChangeCursorPosition((e) => {
@@ -117,6 +119,10 @@ export function EditorPanel() {
 
   const saveActiveFile = useCallback(async () => {
     if (!activeFile || !window.fs) return
+    // Mark this path as recently saved so file:changed ignores it
+    recentlySavedRef.current.add(activeFile.path)
+    setTimeout(() => { recentlySavedRef.current.delete(activeFile.path) }, 500)
+
     const result = await window.fs.writeFile(activeFile.path, activeFile.content)
     if (result.success) {
       setOpenFiles((prev) =>
@@ -195,21 +201,51 @@ export function EditorPanel() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [handleKeyDown])
 
-  // BUG-ED1: Detect external file changes for open files
+  // Listen for editor:open_file events (from DiffProposalDialog after approving a change)
+  useEventBusListener('editor:open_file', (data: { filePath?: string } | unknown) => {
+    const filePath = (data as { filePath?: string })?.filePath
+    if (filePath) openFile(filePath)
+  })
+
+  // BUG-ED1 fix: Detect external file changes for open files
   useEventBusListener('file:changed', (data: { path?: string } | unknown) => {
     const changedPath = (data as { path?: string })?.path
     if (!changedPath || !window.fs) return
     const openFile = openFiles.find((f) => f.path === changedPath)
     if (!openFile) return
-    // Skip if we just saved this file
-    if (openFile.content === openFile.originalContent) return
+
+    // Skip if WE just saved this file (not an external/agent change)
+    if (recentlySavedRef.current.has(changedPath)) return
+
     window.fs.readFile(changedPath).then((result) => {
-      if (result.success && result.content !== undefined && result.content !== openFile.content) {
+      if (!result.success || result.content === undefined) return
+      if (result.content === openFile.content) return // already up to date
+
+      const hasLocalEdits = openFile.content !== openFile.originalContent
+
+      if (!hasLocalEdits) {
+        // No local edits — reload silently (agent edited the file)
+        updateFileContent(changedPath, result.content as string)
+        // Also update originalContent so the tab doesn't show "modified"
+        setOpenFiles((prev) =>
+          prev.map((f) => f.path === changedPath
+            ? { ...f, content: result.content as string, originalContent: result.content as string }
+            : f)
+        )
+      } else {
+        // User has local edits — show conflict toast
         toast.info('Archivo modificado externamente', {
-          description: openFile.name,
+          description: `${openFile.name} tiene cambios locales y externos.`,
           action: {
             label: 'Recargar',
-            onClick: () => updateFileContent(changedPath, result.content as string),
+            onClick: () => {
+              updateFileContent(changedPath, result.content as string)
+              setOpenFiles((prev) =>
+                prev.map((f) => f.path === changedPath
+                  ? { ...f, originalContent: result.content as string }
+                  : f)
+              )
+            },
           },
           duration: 8000,
         })

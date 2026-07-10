@@ -6,7 +6,8 @@ import sys
 import uuid
 from langchain_core.tools import tool
 from sparta_ai.security.command_sanitizer import CommandSanitizer
-from sparta_ai.tools.permission_broker import request_permission_sync_generic, get_agent_autonomy
+from sparta_ai.security.rate_limiter import terminal_rate_limiter
+from sparta_ai.tools.permission_broker import request_permission_sync_generic, get_agent_autonomy, _current_session
 
 logger = logging.getLogger("sparta_ai.tools.terminal")
 
@@ -157,11 +158,16 @@ def terminal_execute_tool(command: str) -> str:
             "coincide con un patrón peligroso. Si necesitás ejecutarlo, usá la terminal manualmente."
         )
 
+    session_id = _current_session.get()
+    if session_id and not terminal_rate_limiter.check(session_id):
+        logger.warning("Terminal command rate-limited for session %s", session_id[:40])
+        return (
+            "Error de rate limit: se alcanzó el límite de comandos por sesión. "
+            "Esperá unos segundos y volvé a intentar."
+        )
+
     logger.info("Terminal command queued: %s", sanitized[:120])
 
-    # Gate de permiso real, igual que file_tools.py
-    # Los comandos no seguros requieren confirmación explícita del usuario
-    # Con autonomía "always_ask", incluso los comandos seguros requieren confirmación
     if get_agent_autonomy() == "always_ask" or not _sanitizer.is_safe(sanitized):
         allowed = request_permission_sync_generic(
             kind="terminal_exec",
@@ -224,6 +230,11 @@ def terminal_execute_background_tool(command: str, label: str | None = None) -> 
     if sanitized is None:
         logger.warning("Background command blocked by sanitizer: %s", command.strip()[:120])
         return "Error de seguridad: comando bloqueado por el sanitizador."
+
+    session_id = _current_session.get()
+    if session_id and not terminal_rate_limiter.check(session_id):
+        logger.warning("Background command rate-limited for session %s", session_id[:40])
+        return "Error de rate limit: se alcanzó el límite de comandos por sesión."
 
     # Gate de permiso real (mismo que terminal_execute_tool)
     if get_agent_autonomy() == "always_ask" or not _sanitizer.is_safe(sanitized):

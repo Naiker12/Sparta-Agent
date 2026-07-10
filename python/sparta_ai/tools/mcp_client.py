@@ -261,14 +261,14 @@ class RealMCPClient:
         if self._session is not None:
             try:
                 await self._session.__aexit__(None, None, None)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("MCP session cleanup error for '%s': %s", self.server_id, e)
             self._session = None
         if self._cm is not None:
             try:
                 await self._cm.__aexit__(None, None, None)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("MCP transport cleanup error for '%s': %s", self.server_id, e)
             self._cm = None
 
 
@@ -374,8 +374,8 @@ async def build_mcp_tools(
             if emit_fn:
                 try:
                     emit_fn("mcp:error", {"serverId": server_id, "error": str(e)})
-                except Exception:
-                    pass
+                except Exception as emit_err:
+                    logger.debug("Failed to emit mcp:error for '%s': %s", server_id, emit_err)
             continue
 
         # ── Report successful connection to the frontend ──────────────
@@ -397,8 +397,8 @@ async def build_mcp_tools(
                             for t in tool_defs
                         ],
                     })
-            except Exception:
-                pass  # never let reporting break the agent
+            except Exception as emit_err:
+                logger.debug("Failed to emit mcp:connected/tool_discovered for '%s': %s", server_id, emit_err)
 
         for tool_def in tool_defs:
             try:

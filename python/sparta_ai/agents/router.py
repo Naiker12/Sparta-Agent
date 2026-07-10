@@ -21,14 +21,12 @@ def classify_intent(
         r"\b(últimas noticias|latest|news about|qué pasó|what happened)\b",
         r"\b(en internet|en la web|en google|online)\b",
     ]
-    # Queries that require real-time data — always need web_search if available
+    # Queries that genuinely need web search (weather, prices, news, sports)
+    # NOTE: Pure date/time questions ("qué día es hoy", "qué hora es") are NOT here —
+    # the system prompt injects datetime.now() so the agent answers directly.
     realtime_patterns = [
-        r"\b(qu[eé] d[ií]a|qu[eé] fecha|fecha de hoy|d[ií]a de hoy|hoy es|hoy cu[aá]l)\b",
-        r"\b(qu[eé] hora|hora actual|hora es)\b",
-        r"\b(hoy|ahora|actualmente|en este momento|right now|today|current(ly)?)\b.*"
-        r"\b(fecha|d[ií]a|hora|a[nñ]o|mes|semana)\b",
         r"\b(precio actual|cotizaci[oó]n|tipo de cambio|dolar hoy|euro hoy)\b",
-        r"\b(clima|tiempo hoy|temperatura hoy|lluvia hoy)\b",
+        r"\b(clima|tiempo (hace|actual)|temperatura (hoy|actual)|lluvia (hoy|actual))\b",
         r"\b(noticias de hoy|[uú]ltimas noticias|breaking news)\b",
         r"\b(qui[eé]n va ganando|qui[eé]n gana|resultado|marcador|partido[sz]? en vivo|va ganando)\b",
         r"\b(deporte[s]?|f[uú]tbol|mundial|champions|liga|partido|juega[n]?|jugar[aá]n)\b.*\b(contra|vs\.?|versus)\b",

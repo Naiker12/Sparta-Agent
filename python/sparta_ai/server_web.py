@@ -3,13 +3,11 @@ import json
 import logging
 import os
 import platform
-import signal
 import struct
-import time
+from typing import Optional
 
 if platform.system() != "Windows":
     import fcntl
-    import pty
     import termios
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
@@ -17,16 +15,25 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import uvicorn
 
-from sparta_ai.agents.sparta_agent import build_sparta_graph, SpartaState
 from sparta_ai.streaming.event_bridge import stream_agent_to_websocket
 from sparta_ai.security.command_sanitizer import CommandSanitizer
 from sparta_ai.security.rate_limiter import terminal_rate_limiter
 
+from sparta_ai.server_handlers import (
+    _active_streams,
+    _session_workspaces,
+    handle_memory_index,
+    handle_memory_search,
+    handle_memory_embed,
+    handle_memory_delete,
+    handle_memory_count,
+    handle_mcp_test,
+    run_agent_stream,
+)
 
 logger = logging.getLogger("sparta_ai.server_web")
 _sanitizer = CommandSanitizer()
 
-# Known origins allowed to connect to WebSocket endpoints.
 ALLOWED_ORIGINS = frozenset({
     "http://localhost:5173",
     "http://localhost:3000",
@@ -34,15 +41,10 @@ ALLOWED_ORIGINS = frozenset({
     "http://127.0.0.1:3000",
 })
 
-# Secret token shared between the sidecar and the frontend. Must be set before
-# accepting any terminal WebSocket connection. In Electron the main process
-# generates it and injects it into both the Python sidecar (env var) and the
-# renderer (contextBridge). In web mode it is provided by whoever starts the
-# sidecar and must reach the browser via build-time env or host injection.
 SPARTA_WS_TOKEN = os.environ.get("SPARTA_WS_TOKEN")
 
-TERMINAL_IDLE_TIMEOUT_USER = 1800   # 30 min
-TERMINAL_IDLE_TIMEOUT_BG = 3600     # 60 min
+TERMINAL_IDLE_TIMEOUT_USER = 1800
+TERMINAL_IDLE_TIMEOUT_BG = 3600
 
 app = FastAPI(title="Sparta AI Sidecar", version="0.1.0")
 
@@ -55,28 +57,19 @@ app.add_middleware(
 
 
 def _check_origin(websocket: WebSocket) -> bool:
-    """Reject WebSocket connections from unknown origins."""
     origin = websocket.headers.get("origin") or websocket.headers.get("sec-websocket-origin", "")
     if not origin:
-        # Non-browser clients (curl, websocat, scripts) can bypass origin checks
-        # trivially, so we never trust a missing Origin header.
         return False
     return origin in ALLOWED_ORIGINS
 
 
 def _check_ws_token(websocket: WebSocket) -> bool:
-    """Validate the shared token sent via custom header."""
     if not SPARTA_WS_TOKEN:
         return False
     return websocket.headers.get("x-sparta-token") == SPARTA_WS_TOKEN
 
 
 async def _require_auth_frame(websocket: WebSocket) -> bool:
-    """Wait for a valid auth frame as the first client message.
-
-    Browsers cannot send custom headers on WebSocket connections, so the token
-    is delivered as the first message: ``{"type": "auth", "token": "..."}``.
-    """
     if not SPARTA_WS_TOKEN:
         return False
     try:
@@ -86,8 +79,8 @@ async def _require_auth_frame(websocket: WebSocket) -> bool:
     except (asyncio.TimeoutError, json.JSONDecodeError, Exception):
         return False
 
+
 connections: dict[str, WebSocket] = {}
-_active_streams: dict[str, asyncio.Task] = {}
 
 
 @app.websocket("/ws")
@@ -114,29 +107,23 @@ async def websocket_endpoint(websocket: WebSocket):
                     "skills": skills_index(),
                 }))
             elif method == "mcp.test":
-                config = params.get("config", {})
-                server_id = config.get("id", config.get("name", "unknown"))
-                timeout = int(config.get("timeout", 10))
-                from sparta_ai.tools.mcp_client import RealMCPClient
-                client = RealMCPClient({**config, "timeout": min(timeout, 15)})
-                try:
-                    tools = await client.connect()
-                    await websocket.send_text(json.dumps({
-                        "type": "mcp.test.result",
-                        "ok": True,
-                        "serverId": server_id,
-                        "toolCount": len(tools),
-                        "tools": [{"name": t["name"], "description": t.get("description", "")} for t in tools],
-                    }))
-                except Exception as e:
-                    await websocket.send_text(json.dumps({
-                        "type": "mcp.test.result",
-                        "ok": False,
-                        "serverId": server_id,
-                        "error": str(e),
-                    }))
-                finally:
-                    await client.disconnect()
+                result = await handle_mcp_test(params)
+                await websocket.send_text(json.dumps({"type": "mcp.test.result", **result}))
+            elif method == "memory.index":
+                result = await handle_memory_index(params)
+                await websocket.send_text(json.dumps({"type": "memory.index:response", **result}))
+            elif method == "memory.search":
+                result = await handle_memory_search(params)
+                await websocket.send_text(json.dumps({"type": "memory.search:response", **result}))
+            elif method == "memory.embed":
+                result = await handle_memory_embed(params)
+                await websocket.send_text(json.dumps({"type": "memory.embed:response", **result}))
+            elif method == "memory.delete":
+                result = await handle_memory_delete(params)
+                await websocket.send_text(json.dumps({"type": "memory.delete:response", **result}))
+            elif method == "memory.count":
+                result = await handle_memory_count()
+                await websocket.send_text(json.dumps({"type": "memory.count:response", **result}))
             elif method == "ping":
                 await websocket.send_text(json.dumps({"event": "pong"}))
 
@@ -145,7 +132,6 @@ async def websocket_endpoint(websocket: WebSocket):
         for rid, task in list(_active_streams.items()):
             if str(id(websocket)) in rid:
                 task.cancel()
-                logger.info("Cancelled stream %s on disconnect", rid)
 
 
 async def handle_chat_stream(ws: WebSocket, params: dict):
@@ -165,8 +151,9 @@ async def handle_chat_stream(ws: WebSocket, params: dict):
     session_id = params.get("sessionId") or params.get("session_id", "")
     message_id = params.get("messageId") or params.get("message_id", "")
     workspace_root = params.get("workspace_root") or params.get("workspaceRoot")
+
     if workspace_root:
-        from sparta_ai.tools.file_tools import set_session_workspace
+        from sparta_ai.server_handlers import set_session_workspace
         set_session_workspace(session_id, str(workspace_root))
     else:
         from sparta_ai.tools.file_tools import clear_session_workspace
@@ -186,6 +173,12 @@ async def handle_chat_stream(ws: WebSocket, params: dict):
 
     request_id = f"ws_{session_id or id(ws)}_{asyncio.get_running_loop().time()}"
 
+    async def _mcp_emit(event: str, data: dict) -> None:
+        try:
+            await ws.send_text(json.dumps({"type": event, **data}))
+        except Exception:
+            pass
+
     task = asyncio.create_task(
         _execute_agent_ws(
             ws=ws,
@@ -204,6 +197,7 @@ async def handle_chat_stream(ws: WebSocket, params: dict):
             semantic_memory=semantic_memory,
             reasoning=reasoning,
             web_search_enabled=web_search_enabled,
+            emit_fn=_mcp_emit,
         )
     )
     _active_streams[request_id] = task
@@ -233,7 +227,6 @@ async def handle_abort(params: dict):
     for request_id, task in list(_active_streams.items()):
         if session_id and session_id in request_id:
             task.cancel()
-            logger.info("Aborted stream for session %s", session_id)
 
 
 async def _execute_agent_ws(
@@ -245,112 +238,45 @@ async def _execute_agent_ws(
     model: str,
     provider: str,
     vendor: str,
-    provider_key: str | None,
-    api_url: str | None,
+    provider_key: Optional[str],
+    api_url: Optional[str],
     mode: str,
     skills: list[str],
     mcp_servers: list,
     semantic_memory: bool,
     reasoning: dict,
     web_search_enabled: bool = True,
+    emit_fn=None,
 ) -> None:
-    from sparta_ai.skills.skill_loader import build_skills_context, skills_index
-    from sparta_ai.memory.chroma_store import build_memory_context
-    from sparta_ai.memory.context_manager import compress_if_needed
-    from sparta_ai.config.providers import build_llm
-    from sparta_ai.persistence.sqlite_store import get_checkpointer
-    from sparta_ai.agents.message_cleanup import (
-        copy_reasoning_content_for_api,
-        drop_thinking_only_and_merge_users,
-        format_reasoning_for_provider,
-    )
+    async def _stream(graph, initial_state):
+        await stream_agent_to_websocket(
+            graph, initial_state, ws, request_id, session_id, message_id,
+            thread_id=session_id or request_id,
+        )
 
-    llm = build_llm(
+    await run_agent_stream(
+        request_id=request_id,
+        session_id=session_id,
+        messages=messages,
         model=model,
         provider=provider,
         vendor=vendor,
-        api_key=provider_key,
+        provider_key=provider_key,
         api_url=api_url,
-        reasoning_enabled=reasoning.get("enabled", False),
-        reasoning_budget=reasoning.get("budget", 8000),
-        reasoning_effort=reasoning.get("effort", "medium"),
+        mode=mode,
+        skills=skills,
+        mcp_servers=mcp_servers,
+        semantic_memory=semantic_memory,
+        reasoning=reasoning,
+        web_search_enabled=web_search_enabled,
+        read_only=False,
+        policy_mode="build",
+        emit_fn=emit_fn,
+        stream_fn=_stream,
     )
 
-    # Clean messages for API safety: drop thinking-only turns + sanitize reasoning fields
-    api_messages = drop_thinking_only_and_merge_users(messages)
-    api_messages = copy_reasoning_content_for_api(api_messages, vendor or provider)
-    api_messages = format_reasoning_for_provider(api_messages, vendor or provider)
-    compressed_messages = await compress_if_needed(api_messages, llm)
 
-    # Active skills context only (full index discoverable via skills_list_tool)
-    skill_context = build_skills_context(skills) if skills else ""
-    memory_context = ""
-    if semantic_memory and session_id:
-        memory_context = await build_memory_context(messages[-1].get("content", "") if messages else "")
-
-    from sparta_ai.tools.mcp_client import build_mcp_tools
-
-    async def _mcp_emit_ws(event: str, data: dict) -> None:
-        try:
-            await ws.send_text(json.dumps({"type": event, **data}))
-        except Exception:
-            pass
-
-    mcp_tools = await build_mcp_tools(mcp_servers, emit_fn=_mcp_emit_ws)
-
-    from sparta_ai.tools.memory_tools import read_memory_tool, write_memory_tool
-    from sparta_ai.tools.file_tools import (
-        read_file_tool, write_file_tool,
-        search_files_tool, patch_file_tool, delete_file_tool,
-    )
-    from sparta_ai.tools.skill_tools import skill_view_tool, skills_list_tool, skill_manage_tool
-    from sparta_ai.tools.terminal_tools import terminal_execute_tool, terminal_execute_background_tool
-    from sparta_ai.tools.mcp_manage_tool import mcp_manage_tool
-
-    agent_tools = [
-        read_memory_tool, write_memory_tool,
-        read_file_tool, write_file_tool, search_files_tool, patch_file_tool, delete_file_tool,
-        skill_view_tool, skills_list_tool, skill_manage_tool,
-        terminal_execute_tool, terminal_execute_background_tool,
-        mcp_manage_tool,
-    ] + mcp_tools
-    if web_search_enabled:
-        from sparta_ai.tools.web_search import web_search_tool
-        from sparta_ai.tools.web_fetch import web_fetch_tool
-        agent_tools.insert(0, web_search_tool)
-        agent_tools.insert(1, web_fetch_tool)
-
-    checkpointer = await get_checkpointer()
-    graph = build_sparta_graph(
-        llm=llm,
-        tools=agent_tools,
-        skill_context=skill_context,
-        memory_context=memory_context,
-        checkpointer=checkpointer,
-    )
-
-    initial_state: SpartaState = {
-        "messages": compressed_messages,
-        "session_id": session_id,
-        "mode": mode,
-        "active_skills": skills,
-        "memory_context": memory_context,
-        "thinking_tokens": 0,
-        "tool_calls_this_turn": 0,
-        "subagent_results": [],
-        "pending_human_input": None,
-        "abort_requested": False,
-        "plan": [],
-        "current_step": 0,
-        "plan_complete": False,
-        "reflection_retries": 0,
-        "suggestions": [],
-    }
-
-    await stream_agent_to_websocket(
-        graph, initial_state, ws, request_id, session_id, message_id,
-        thread_id=session_id or request_id,
-    )
+# ── REST endpoints ───────────────────────────────────────────────────────
 
 
 @app.get("/api/skills/index")
@@ -361,69 +287,31 @@ async def get_skills_index():
 
 @app.post("/api/memory/index")
 async def memory_index(request: Request):
-    from sparta_ai.memory.chroma_store import index_entry
     body = await request.json()
-    entry = body.get("entry", {})
-    try:
-        entry_id = index_entry(entry)
-        return {"ok": bool(entry_id), "id": entry_id}
-    except Exception as e:
-        logger.error("memory.index failed: %s", e)
-        return {"ok": False, "error": str(e)}
+    return await handle_memory_index(body)
 
 
 @app.post("/api/memory/search")
 async def memory_search(request: Request):
-    from sparta_ai.memory.chroma_store import semantic_search
     body = await request.json()
-    query = body.get("query", "")
-    k = int(body.get("k", 5))
-    try:
-        results = semantic_search(query, k=k)
-        return {"ok": True, "results": results}
-    except Exception as e:
-        logger.error("memory.search failed: %s", e)
-        return {"ok": False, "error": str(e)}
+    return await handle_memory_search(body)
 
 
 @app.post("/api/memory/embed")
 async def memory_embed(request: Request):
-    from sparta_ai.memory.embeddings import embed_text, embed_texts
     body = await request.json()
-    texts = body.get("texts", [])
-    single = body.get("text")
-    try:
-        if single is not None:
-            return {"ok": True, "embedding": embed_text(single)}
-        if isinstance(texts, list) and texts:
-            return {"ok": True, "embeddings": embed_texts(texts)}
-        return {"ok": False, "error": "text or texts required"}
-    except Exception as e:
-        logger.error("memory.embed failed: %s", e)
-        return {"ok": False, "error": str(e)}
+    return await handle_memory_embed(body)
 
 
 @app.post("/api/memory/delete")
 async def memory_delete(request: Request):
-    from sparta_ai.memory.chroma_store import delete_entry
     body = await request.json()
-    entry_id = body.get("entry_id", "")
-    try:
-        delete_entry(entry_id)
-        return {"ok": True}
-    except Exception as e:
-        logger.error("memory.delete failed: %s", e)
-        return {"ok": False, "error": str(e)}
+    return await handle_memory_delete(body)
 
 
 @app.get("/api/memory/count")
 async def memory_count():
-    from sparta_ai.memory.chroma_store import count_entries
-    try:
-        return {"ok": True, "count": count_entries()}
-    except Exception as e:
-        logger.error("memory.count failed: %s", e)
-        return {"ok": False, "error": str(e)}
+    return await handle_memory_count()
 
 
 @app.get("/health")
@@ -431,12 +319,13 @@ async def health():
     return {"status": "ok", "mode": "web"}
 
 
+# ── Terminal WebSocket ───────────────────────────────────────────────────
+
 _terminal_procs: dict[str, tuple[asyncio.subprocess.Process, set[asyncio.Task]]] = {}
 _terminal_fds: dict[str, int] = {}
 
 
 def _set_pty_size(fd: int, cols: int, rows: int) -> None:
-    """Set the terminal size on a PTY master fd."""
     if platform.system() == "Windows":
         return
     try:
@@ -454,27 +343,22 @@ def _detect_shell() -> str:
 
 @app.websocket("/ws/terminal/{session_id}")
 async def terminal_endpoint(websocket: WebSocket, session_id: str) -> None:
-    # Reject unknown origins before accepting the socket.
     if not _check_origin(websocket):
         await websocket.close(code=4403)
         return
 
     await websocket.accept()
 
-    # Token auth: header (server/non-browser clients) or first-message auth
-    # frame (browsers, which cannot set custom WebSocket headers).
     if not _check_ws_token(websocket) and not await _require_auth_frame(websocket):
         await websocket.close(code=4403)
         return
 
-    # Handshake complete — tell the client it can start sending terminal input.
     await websocket.send_text(json.dumps({"type": "ready"}))
 
     shell = _detect_shell()
     use_pty = platform.system() != "Windows"
 
     if use_pty:
-        # Create a real PTY for job control, interactive programs, etc.
         master_fd, slave_fd = os.openpty()
         _set_pty_size(master_fd, 80, 24)
         process = await asyncio.create_subprocess_exec(
@@ -486,7 +370,6 @@ async def terminal_endpoint(websocket: WebSocket, session_id: str) -> None:
             close_fds=True,
             start_new_session=True,
         )
-        # Close slave fd in parent — shell owns it
         os.close(slave_fd)
         _terminal_fds[session_id] = master_fd
     else:
@@ -545,12 +428,10 @@ async def terminal_endpoint(websocket: WebSocket, session_id: str) -> None:
                         }))
                         continue
                     if use_pty and session_id in _terminal_fds:
-                        # PTY: write raw bytes directly (preserves escape sequences)
                         master_fd = _terminal_fds[session_id]
                         raw = msg["data"].encode("utf-8")
                         os.write(master_fd, raw)
                     elif process.stdin:
-                        # Pipe: sanitize complete lines
                         _line_buffer += msg["data"]
                         while "\n" in _line_buffer or "\r" in _line_buffer:
                             line, _, _line_buffer = _line_buffer.partition("\n")

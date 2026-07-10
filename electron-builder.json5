@@ -31,7 +31,7 @@
       "filter": ["**/*"]
     }
   ],
-  "icon": "public/sparta-escritorio.png",
+  "icon": "public/sparta-icon.png",
   "mac": {
     "target": ["dmg"],
     "artifactName": "Sparta-Agent-Mac-${version}-Installer.${ext}"

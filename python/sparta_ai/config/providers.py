@@ -77,10 +77,6 @@ class OpenAICompatibleTransport(ProviderTransport):
             return base_url
         return f"{base_url}/v1"
 
-    def _is_free_tier_model(self, model: str) -> bool:
-        """Detect OpenRouter free-tier models that commonly degenerate."""
-        return ":free" in model.lower()
-
     def build_llm(
         self,
         model: str,
@@ -100,7 +96,8 @@ class OpenAICompatibleTransport(ProviderTransport):
             openai_kwargs["api_key"] = "not-needed"
 
         # Free-tier models need gentle penalties to avoid degenerate repetition
-        if self.vendor == "openrouter" and self._is_free_tier_model(model):
+        from sparta_ai.providers.free_tier_guard import is_free_tier_model as _is_free
+        if self.vendor == "openrouter" and _is_free(model):
             openai_kwargs.setdefault("frequency_penalty", 0.3)
             openai_kwargs.setdefault("presence_penalty", 0.3)
             openai_kwargs.setdefault("temperature", 0.7)
