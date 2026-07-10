@@ -110,6 +110,9 @@ function downloadFile(url, dest) {
   })
 }
 
+// ── Fallback versions (preferred first) ──────────────────────────────
+const FALLBACK_VERSIONS = ['3.12', '3.11', '3.13']
+
 // ── Find the correct asset name ─────────────────────────────────────
 async function findAsset(tag, cpythonVersion, target) {
   // Use the /releases endpoint (not /releases/tags/) to ensure assets are included
@@ -142,7 +145,7 @@ async function findAsset(tag, cpythonVersion, target) {
   // The version is full (e.g. 3.12.20), and the + separator is literal
   const escapedTarget = target.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')
   const pattern = new RegExp(
-    `cpython-${cpythonVersion.replace('.', '\\.')}[\\w.+]-${escapedTarget}-install_only\\.(tar\\.gz|tar\\.xz|zip)`
+    `cpython-${cpythonVersion.replace('.', '\\.')}[\\w.+]+-${escapedTarget}-install_only\\.(tar\\.gz|tar\\.xz|zip)`
   )
 
   for (const asset of release.assets) {
@@ -158,6 +161,47 @@ async function findAsset(tag, cpythonVersion, target) {
     `No install_only asset found for CPython ${cpythonVersion} (${target}) in release ${tag}.\n` +
     `Sample assets: ${sample.join(', ')}\n` +
     `Check: https://github.com/astral-sh/python-build-standalone/releases/tag/${tag}`
+  )
+}
+
+// ── Find asset with version fallback ────────────────────────────────
+async function findAssetWithFallback(target, preferredVersion) {
+  const versionsToTry = [preferredVersion, ...FALLBACK_VERSIONS.filter((v) => v !== preferredVersion)]
+
+  // Step 1: try the "latest" release tag
+  const latest = await httpGetJson(
+    'https://raw.githubusercontent.com/astral-sh/python-build-standalone/latest-release/latest-release.json'
+  )
+  for (const version of versionsToTry) {
+    try {
+      const asset = await findAsset(latest.tag, version, target)
+      if (version !== preferredVersion) {
+        console.warn(`[fetch-python] WARNING: usando Python ${version} (no había ${preferredVersion} para ${target} en ${latest.tag})`)
+      }
+      return asset
+    } catch { /* try next version */ }
+  }
+
+  // Step 2: try recent releases in case "latest" is stale for this platform
+  console.log('[fetch-python] Latest tag had no match; checking recent releases...')
+  const releases = await httpGetJson(
+    'https://api.github.com/repos/astral-sh/python-build-standalone/releases?per_page=5'
+  )
+  for (const rel of releases) {
+    for (const version of versionsToTry) {
+      try {
+        const asset = await findAsset(rel.tag_name, version, target)
+        if (version !== preferredVersion) {
+          console.warn(`[fetch-python] WARNING: usando Python ${version} (no había ${preferredVersion} para ${target} en ${rel.tag_name})`)
+        }
+        return asset
+      } catch { /* try next combination */ }
+    }
+  }
+
+  throw new Error(
+    `No install_only asset found for CPython (${versionsToTry.join('/')}) for target ${target} ` +
+    `in any of the last 5 releases.`
   )
 }
 
@@ -212,17 +256,9 @@ async function main() {
     return
   }
 
-  // 1. Get latest release tag
-  console.log('[fetch-python] Querying latest release...')
-  const latest = await httpGetJson(
-    'https://raw.githubusercontent.com/astral-sh/python-build-standalone/latest-release/latest-release.json'
-  )
-  const tag = latest.tag
-  console.log(`[fetch-python] Release tag: ${tag}`)
-
-  // 2. Find the right asset
+  // 1. Find the right asset (with version + tag fallback)
   console.log(`[fetch-python] Looking for CPython ${cpythonVersion} (${target})...`)
-  const asset = await findAsset(tag, cpythonVersion, target)
+  const asset = await findAssetWithFallback(target, cpythonVersion)
   console.log(`[fetch-python] Asset: ${asset.name}`)
 
   // 3. Download
