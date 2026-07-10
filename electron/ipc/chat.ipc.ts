@@ -3,6 +3,22 @@ import { sendToPython, isSidecarRunning, isSidecarReady, waitForSidecarReady, st
 import { isSecurityLoaded } from './security.ipc'
 import { storeKey as vaultStoreKey } from '../vault'
 
+interface MCPServerConfig {
+  id?: string
+  name?: string
+  type?: string
+  command?: string
+  args?: string[]
+  env?: Record<string, string>
+  env_vault_refs?: string[]
+  url?: string
+  headers?: Record<string, string>
+  headers_vault_refs?: string[]
+  enabled?: boolean
+  timeout?: number
+  tools?: { include?: string[]; exclude?: string[] }
+}
+
 interface ChatRequest {
   sessionId: string
   messageId: string
@@ -16,7 +32,7 @@ interface ChatRequest {
   providerId?: string
   mode?: string
   skills?: string[]
-  mcpServers?: unknown[]
+  mcpServers?: MCPServerConfig[]
   semanticMemory?: boolean
   reasoning?: { enabled: boolean; budget: number }
   webSearchEnabled?: boolean

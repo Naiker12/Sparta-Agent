@@ -61,6 +61,9 @@ dist-web/
 # MCP server config — may contain API keys/tokens; never commit real credentials
 sparta.mcp.json
 
+# Lockfile consistency: project uses pnpm only
+package-lock.json
+
 # Temporary / runtime files
 .tmp/
 build-log.txt

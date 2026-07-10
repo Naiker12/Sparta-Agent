@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Bot, Clock, Sparkles, Circle, Zap, Brain } from 'lucide-react'
+import { Bot, Clock, Sparkles, Circle, Zap, Brain, FolderOpen, FolderX } from 'lucide-react'
 import { useSettingsStore } from '@/stores/settings.store'
 import { useProviderStore } from '@/stores/provider.store'
 import { useChatStore } from '@/stores/chat.store'
@@ -7,6 +7,7 @@ import { useSessionStore } from '@/stores/session.store'
 import { useAgentStore } from '@/stores/agent.store'
 import { useCronStore } from '@/stores/cron.store'
 import { useUsageStore } from '@/stores/usage.store'
+import { useProjectStore } from '@/stores/project.store'
 import { BrandIcon } from '@/components/ui/BrandIcon'
 import { GatewayStatusDialog } from './GatewayStatusDialog'
 import { TokenUsageDialog } from './TokenUsageDialog'
@@ -29,6 +30,9 @@ export function StatusBar() {
   const cronJobs = useCronStore((s) => s.jobs)
   const totalInput = useUsageStore((s) => s.totalInput)
   const totalOutput = useUsageStore((s) => s.totalOutput)
+  const activeProject = useProjectStore((s) => s.projects.find((p) => p.id === s.activeProjectId))
+  const hasProjectRoot = !!activeProject?.rootPath
+  const projectName = activeProject?.name
 
   const [gatewayOpen, setGatewayOpen] = useState(false)
   const [tokenOpen, setTokenOpen] = useState(false)
@@ -149,6 +153,18 @@ export function StatusBar() {
 
         <div style={{ flex: 1 }} />
 
+        <SBItem
+          style={{ color: hasProjectRoot ? 'var(--status-ok)' : 'var(--status-warn)' }}
+          title={hasProjectRoot
+            ? `Proyecto: ${activeProject!.rootPath}`
+            : 'Sin carpeta de proyecto abierta — herramientas de archivos desactivadas'}
+        >
+          {hasProjectRoot
+            ? <FolderOpen size={11} strokeWidth={1.5} />
+            : <FolderX size={11} strokeWidth={1.5} />}
+          {projectName ?? 'Sin proyecto'}
+        </SBItem>
+
         <SBItem style={{ borderLeft: '1px solid var(--border-subtle)' }}>
           {activeProvider ? <BrandIcon vendor={activeProvider.vendor} size={14} /> : null}
           {activeModel}
@@ -167,9 +183,10 @@ export function StatusBar() {
   )
 }
 
-function SBItem({ children, style, onClick }: { children: React.ReactNode; style?: React.CSSProperties; onClick?: () => void }) {
+function SBItem({ children, style, onClick, title }: { children: React.ReactNode; style?: React.CSSProperties; onClick?: () => void; title?: string }) {
   return (
     <div
+      title={title}
       onClick={onClick}
       style={{
         display: 'flex',
