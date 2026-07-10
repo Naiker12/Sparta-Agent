@@ -63,6 +63,13 @@ def build_sparta_graph(
     async def agent_node(state: SpartaState) -> dict:
         from sparta_ai.agents.router import classify_intent
 
+        # ── Instrumentation: log how many times LLM is called per turn ──
+        current_tool_calls = state.get("tool_calls_this_turn", 0)
+        logger.debug(
+            "agent_node invoked: tool_calls_this_turn=%d/%d",
+            current_tool_calls, MAX_TOOL_CALLS_PER_TURN,
+        )
+
         mode = state.get("mode", "chat")
         last_user_msg = ""
         for m in reversed(state.get("messages", [])):
@@ -272,6 +279,16 @@ def build_sparta_graph(
                     f"Error 404 del proveedor: {err_str[:200]}. "
                     "Probablemente el modelo no existe o no soporta esta API."
                 )
+            elif any(kw in err_str.lower() for kw in ("429", "too many requests", "resource_exhausted", "quota exceeded", "rate_limit")):
+                error_msg = (
+                    "⚠️ ** Cuota de API agotada **\n\n"
+                    "El proveedor de IA ha alcanzado su límite de uso diario.\n\n"
+                    "**Opciones:**\n"
+                    "1. Cambia a otro modelo en Configuración > Modelos\n"
+                    "2. Espera a que se restablezca la cuota (suele ser diaria)\n"
+                    "3. Usa un modelo local (Ollama/LM Studio) para no depender de APIs externas"
+                )
+                logger.warning("API quota exhausted for provider: %s", err_str[:200])
             else:
                 error_msg = f"Error del modelo: {err_str[:300]}"
             return {"messages": [{"role": "assistant", "content": error_msg}], "force_summary": False}
