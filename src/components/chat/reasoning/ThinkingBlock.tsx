@@ -95,10 +95,6 @@ export function ThinkingBlock({ content, status, tokensUsed, thinkingStatusText,
       startedAt.current = reasoningStartedAt ?? Date.now()
       setElapsed(0)
     }
-    if (status === 'completed' && !userToggled.current) {
-      const timer = setTimeout(() => setIsExpanded(false), 600)
-      return () => clearTimeout(timer)
-    }
   }, [status, reasoningStartedAt])
 
   useEffect(() => {
