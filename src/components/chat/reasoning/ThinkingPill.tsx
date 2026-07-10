@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils'
 import { ChevronRightIcon, Check } from 'lucide-react'
 import { getRandomSpinner, type SpinnerSet } from '@/lib/spinners'
 import { ShimmerText } from './ShimmerText'
+import { SlidingNumber } from '@/components/animate-ui/primitives/texts/sliding-number'
 import type { ThinkingStatus } from '@/types'
 import { useTranslation } from '@/i18n'
 
@@ -52,8 +53,9 @@ export function ThinkingPill({ status, tokensUsed, isExpanded, elapsed, lastSkil
           <span style={{ width: 10, textAlign: 'center', fontSize: 11, fontFamily: 'var(--font-mono)' }}>
             {spinnerRef.current.frames[frame]}
           </span>
-          <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', opacity: 0.8 }}>
-            {elapsed.toFixed(1)}s
+          <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', opacity: 0.8, display: 'inline-flex', alignItems: 'center' }}>
+            <SlidingNumber number={elapsed} decimalPlaces={1} transition={{ stiffness: 200, damping: 25, mass: 0.3 }} />
+            <span>s</span>
           </span>
           <ShimmerText
             text={t('chat.thinking')}
@@ -64,8 +66,9 @@ export function ThinkingPill({ status, tokensUsed, isExpanded, elapsed, lastSkil
       ) : (
         <>
           <Check size={12} strokeWidth={2.5} style={{ flexShrink: 0 }} />
-          <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', opacity: 0.8 }}>
-            {elapsed.toFixed(1)}s
+          <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', opacity: 0.8, display: 'inline-flex', alignItems: 'center' }}>
+            <SlidingNumber number={elapsed} decimalPlaces={1} transition={{ stiffness: 200, damping: 25, mass: 0.3 }} />
+            <span>s</span>
           </span>
           <span style={{ fontSize: 10, fontWeight: 500 }}>
             {t('chat.thinking')}
