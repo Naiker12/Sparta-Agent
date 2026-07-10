@@ -1,3 +1,4 @@
+import { motion, LayoutGroup } from 'framer-motion'
 import { useUIStore, type MainView } from '@/stores/ui.store'
 import { useSettingsStore } from '@/stores/settings.store'
 import { AppMenu } from './AppMenu'
@@ -112,53 +113,58 @@ export function TitleBar() {
         </span>
       </div>
 
-      <div
-        className="no-drag"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 2,
-        }}
-      >
-        {TABS.map((tab) => {
-          const active = isActive(tab.type)
-          return (
-            <button
-              key={tab.type}
-              onClick={() => handleTabClick(tab.type)}
-              style={{
-                padding: '4px 12px',
-                background: 'none',
-                border: 'none',
-                borderRadius: 'var(--radius-md)',
-                color: active ? 'var(--text-display)' : 'var(--text-muted)',
-                fontSize: 12,
-                fontFamily: 'var(--font-ui)',
-                fontWeight: active ? 500 : 400,
-                cursor: 'pointer',
-                transition: 'color 0.15s',
-                position: 'relative',
-              }}
-            >
-              {tab.label}
-              {active && (
-                <span
-                  style={{
-                    position: 'absolute',
-                    bottom: -1,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    width: 16,
-                    height: 1.5,
-                    background: 'var(--accent)',
-                    borderRadius: 1,
-                  }}
-                />
-              )}
-            </button>
-          )
-        })}
-      </div>
+      <LayoutGroup>
+        <div
+          className="no-drag"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+          }}
+        >
+          {TABS.map((tab) => {
+            const active = isActive(tab.type)
+            return (
+              <motion.button
+                key={tab.type}
+                onClick={() => handleTabClick(tab.type)}
+                style={{
+                  padding: '4px 12px',
+                  background: 'none',
+                  border: 'none',
+                  borderRadius: 'var(--radius-md)',
+                  color: active ? 'var(--text-display)' : 'var(--text-muted)',
+                  fontSize: 12,
+                  fontFamily: 'var(--font-ui)',
+                  fontWeight: active ? 500 : 400,
+                  cursor: 'pointer',
+                  position: 'relative',
+                }}
+                whileHover={{ color: 'var(--text-display)' }}
+                transition={{ color: { duration: 0.15 } }}
+              >
+                {tab.label}
+                {active && (
+                  <motion.span
+                    layoutId="tab-indicator"
+                    style={{
+                      position: 'absolute',
+                      bottom: -1,
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      width: 16,
+                      height: 1.5,
+                      background: 'var(--accent)',
+                      borderRadius: 1,
+                    }}
+                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                  />
+                )}
+              </motion.button>
+            )
+          })}
+        </div>
+      </LayoutGroup>
 
       <div style={{ flex: 1 }} />
 
