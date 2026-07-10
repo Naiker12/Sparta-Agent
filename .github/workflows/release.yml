@@ -49,10 +49,10 @@ jobs:
 
       # Embedded Python for the sidecar (no system Python needed)
       - name: Fetch embedded Python
-        run: node scripts/fetch-embedded-python.js --platform ${{ matrix.platform }}
+        run: node scripts/fetch-embedded-python.cjs --platform ${{ matrix.platform }}
 
       - name: Install Python deps into embedded runtime
-        run: node scripts/setup-embedded-python.js --platform ${{ matrix.platform }}
+        run: node scripts/setup-embedded-python.cjs --platform ${{ matrix.platform }}
 
       # Install JS deps (triggers prebuild → rust:napi automatically)
       - run: pnpm install
