@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import re
 import time
 
 import httpx
@@ -40,11 +41,45 @@ def _format_results(query: str, results: list[dict], count: int) -> str:
     return "\n".join(lines)
 
 
-async def _brave_search(query: str, count: int, api_key: str) -> list[dict]:
+# Realtime patterns — matched against the search query to auto-apply freshness filter
+_REALTIME_PATTERNS = [
+    re.compile(r"\b(qu[eé] d[ií]a|qu[eé] fecha|fecha de hoy|d[ií]a de hoy|hoy es|hoy cu[aá]l)\b", re.IGNORECASE),
+    re.compile(r"\b(qu[eé] hora|hora actual|hora es)\b", re.IGNORECASE),
+    re.compile(r"\b(hoy|ahora|actualmente|en este momento|right now|today|current(ly)?)\b.*\b(fecha|d[ií]a|hora|a[nñ]o|mes|semana)\b", re.IGNORECASE),
+    re.compile(r"\b(precio actual|cotizaci[oó]n|tipo de cambio|dolar hoy|euro hoy)\b", re.IGNORECASE),
+    re.compile(r"\b(clima|tiempo hoy|temperatura hoy|lluvia hoy)\b", re.IGNORECASE),
+    re.compile(r"\b(noticias de hoy|[uú]ltimas noticias|breaking news)\b", re.IGNORECASE),
+    re.compile(r"\b(qui[eé]n va ganando|qui[eé]n gana|resultado|marcador|partido[sz]? en vivo|va ganando)\b", re.IGNORECASE),
+    re.compile(r"\b(deporte[s]?|f[uú]tbol|mundial|champions|liga|partido|juega[n]?|jugar[aá]n)\b.*\b(contra|vs\.?|versus)\b", re.IGNORECASE),
+]
+
+
+def _detect_freshness(query: str) -> str | None:
+    """Detect if a query needs fresh results and return the appropriate
+    DuckDuckGo freshness parameter (df) value.
+    
+    Returns 'd' (day), 'w' (week), or None for no filter.
+    """
+    lowered = query.lower().strip()
+    # Strong signals for "right now" data → use day filter
+    if any(p.search(lowered) for p in _REALTIME_PATTERNS):
+        return "d"
+    # Words suggesting recent events → week filter
+    if re.search(r"\b(esta semana|this week|reciente|new|latest|nuevo|ultim[oa])\b", lowered, re.IGNORECASE):
+        return "w"
+    return None
+
+
+async def _brave_search(query: str, count: int, api_key: str, freshness: str | None = None) -> list[dict]:
+    params: dict[str, object] = {"q": query, "count": min(count, 10)}
+    if freshness:
+        # Brave Search uses: 'pd' (past day), 'pw' (past week), 'pm' (past month), 'py' (past year)
+        brave_map = {"d": "pd", "w": "pw", "m": "pm", "y": "py"}
+        params["freshness"] = brave_map.get(freshness, "pw")
     async with httpx.AsyncClient(timeout=15.0) as client:
         response = await client.get(
             "https://api.search.brave.com/res/v1/web/search",
-            params={"q": query, "count": min(count, 10)},
+            params=params,
             headers={
                 "X-Subscription-Token": api_key,
                 "Accept": "application/json",
@@ -55,9 +90,9 @@ async def _brave_search(query: str, count: int, api_key: str) -> list[dict]:
         return data.get("web", {}).get("results", [])
 
 
-async def _duckduckgo_search_async(query: str, count: int) -> list[dict]:
+async def _duckduckgo_search_async(query: str, count: int, freshness: str | None = None) -> list[dict]:
     """Run the sync DuckDuckGo scraper in a thread to avoid blocking the loop."""
-    return await asyncio.to_thread(duckduckgo_search, query, min(count, 10))
+    return await asyncio.to_thread(duckduckgo_search, query, min(count, 10), freshness)
 
 
 @tool
@@ -106,25 +141,30 @@ async def web_search_tool(
 
     results: list[dict] = []
 
+    # Auto-detect freshness filter for realtime queries
+    freshness = _detect_freshness(query)
+    if freshness:
+        logger.debug("Applying freshness filter '%s' for query: %s", freshness, query)
+
     try:
         if api_key:
             try:
                 results = await asyncio.wait_for(
-                    _brave_search(query, count, api_key), timeout=20.0
+                    _brave_search(query, count, api_key, freshness), timeout=20.0
                 )
             except TimeoutError:
                 logger.warning("Brave Search timed out, falling back to DuckDuckGo")
                 results = await asyncio.wait_for(
-                    _duckduckgo_search_async(query, count), timeout=15.0
+                    _duckduckgo_search_async(query, count, freshness), timeout=15.0
                 )
             except Exception as e:
                 logger.warning("Brave Search failed (%s), falling back to DuckDuckGo", e)
                 results = await asyncio.wait_for(
-                    _duckduckgo_search_async(query, count), timeout=15.0
+                    _duckduckgo_search_async(query, count, freshness), timeout=15.0
                 )
         else:
             results = await asyncio.wait_for(
-                _duckduckgo_search_async(query, count), timeout=15.0
+                _duckduckgo_search_async(query, count, freshness), timeout=15.0
             )
 
         for i, r in enumerate(results[:count], 1):

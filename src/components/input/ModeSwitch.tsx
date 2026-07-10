@@ -1,11 +1,27 @@
-import { useSettingsStore } from '@/stores/settings.store'
+import { useSessionStore } from '@/stores/session.store'
 import { useSecurityStore } from '@/stores/security.store'
+import { useSettingsStore } from '@/stores/settings.store'
 import { MessageSquare, Bot, ShieldOff } from 'lucide-react'
 
 export function ModeSwitch() {
-  const { sessionMode, setSessionMode } = useSettingsStore()
+  const activeSessionId = useSessionStore((s) => s.activeSessionId)
+  const sessions = useSessionStore((s) => s.sessions)
+  const updateSessionMeta = useSessionStore((s) => s.updateSessionMeta)
+  const defaultSessionMode = useSettingsStore((s) => s.sessionMode)
+  const setDefaultSessionMode = useSettingsStore((s) => s.setSessionMode)
   const securityLoaded = useSecurityStore((s) => s.loaded)
   const securityChecked = useSecurityStore((s) => s.checked)
+
+  const activeSession = activeSessionId ? sessions.find((s) => s.id === activeSessionId) : null
+  const sessionMode = activeSession?.sessionMode ?? defaultSessionMode
+
+  const setSessionMode = (mode: 'chat' | 'agent') => {
+    if (activeSessionId) {
+      updateSessionMeta(activeSessionId, { sessionMode: mode })
+    } else {
+      setDefaultSessionMode(mode)
+    }
+  }
 
   return (
     <div

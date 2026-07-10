@@ -2,6 +2,7 @@ import asyncio
 import json
 import operator
 import logging
+from datetime import datetime
 from typing import Annotated, Any, Literal
 
 from langchain_core.messages import HumanMessage
@@ -80,6 +81,8 @@ def build_sparta_graph(
         effective_mode = "agent" if mode == "agent" or intent != "chat" else "chat"
 
         system_parts = [
+            f"Fecha y hora actual del sistema: {datetime.now().isoformat()}",
+            "",
             "Eres Sparta Agent, un orquestador de agentes de IA.",
             "Tienes acceso a herramientas para buscar en web, leer/escribir archivos,",
             "consultar memoria, y conectar con servidores MCP externos.",

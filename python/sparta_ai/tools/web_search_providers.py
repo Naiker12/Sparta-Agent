@@ -32,8 +32,15 @@ def _resolve_ddg_url(url: str) -> str:
     return url
 
 
-def duckduckgo_search(query: str, count: int = 5) -> list[dict]:
-    """Search via DuckDuckGo HTML endpoint. No API key required."""
+def duckduckgo_search(query: str, count: int = 5, freshness: str | None = None) -> list[dict]:
+    """Search via DuckDuckGo HTML endpoint. No API key required.
+
+    Args:
+        query: Search terms.
+        count: Number of results (max 10).
+        freshness: Time range filter. One of 'd' (day), 'w' (week),
+            'm' (month), 'y' (year), or None for no filter.
+    """
     headers = {
         "User-Agent": random.choice(_USER_AGENTS),
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
@@ -43,9 +50,12 @@ def duckduckgo_search(query: str, count: int = 5) -> list[dict]:
     }
 
     try:
+        data: dict[str, str] = {"q": query}
+        if freshness:
+            data["df"] = freshness
         resp = httpx.post(
             _DDG_URL,
-            data={"q": query},
+            data=data,
             headers=headers,
             timeout=15.0,
             follow_redirects=True,

@@ -8,6 +8,7 @@ interface SessionState {
 
   createSession: (title?: string, model?: string, providerId?: string) => string
   switchSession: (id: string) => void
+  resetActiveSession: () => void
   deleteSession: (id: string) => void
   pinSession: (id: string) => void
   archiveSession: (id: string) => void
@@ -42,6 +43,8 @@ export const useSessionStore = create<SessionState>()(
       },
 
       switchSession: (id) => set({ activeSessionId: id }),
+
+      resetActiveSession: () => set({ activeSessionId: null }),
 
       deleteSession: (id) =>
         set((s) => {

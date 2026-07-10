@@ -1,3 +1,5 @@
+import type { SessionMode } from './settings'
+
 export type MessageRole = 'user' | 'assistant' | 'system'
 
 export interface ToolCall {
@@ -74,6 +76,7 @@ export interface Session {
   pinned?: boolean
   archived?: boolean
   reasoningTokens?: number
+  sessionMode?: SessionMode
 }
 
 export interface ChatRequest {

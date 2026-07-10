@@ -18,7 +18,7 @@ import { SessionItem } from './SessionItem'
 import { useTranslation } from '@/i18n'
 
 export function AppSidebar() {
-  const { sessions, createSession }   = useSessionStore()
+  const { sessions, resetActiveSession }   = useSessionStore()
   const { activeSkillIds }            = useSkillStore()
   const { servers }                   = useMCPStore()
   const { channels }                  = useChannelStore()
@@ -70,7 +70,7 @@ export function AppSidebar() {
           <button
             type="button"
             className="sidebar-new-session-btn"
-            onClick={() => { createSession(); setMainView({ type: 'chat' }) }}
+            onClick={() => { resetActiveSession(); setMainView({ type: 'chat' }) }}
           >
             <Plus size={16} strokeWidth={2.5} className="btn-icon" />
             <span className="btn-label" style={{ flex: 1, textAlign: 'left' }}>{t('sidebar.newSession')}</span>

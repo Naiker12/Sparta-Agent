@@ -64,3 +64,5 @@ sparta.mcp.json
 # Temporary / runtime files
 .tmp/
 build-log.txt
+test-workspace-root.txt
+test-agente.txt

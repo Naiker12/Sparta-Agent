@@ -117,7 +117,10 @@ async function runAssistantTurn(
     const providerKey = await getProviderKey(provider)
     const system = await buildMemorySystemPrompt(text, freshProviders)
 
-    const { semanticMemoryEnabled, webSearchEnabled, sessionMode, reasoningEnabled, reasoningBudget, reasoningEffort, agentAutonomy, agentExecuteLocal, sandboxMode } = useSettingsStore.getState()
+    const settingsState = useSettingsStore.getState()
+    const { semanticMemoryEnabled, webSearchEnabled, reasoningEnabled, reasoningBudget, reasoningEffort, agentAutonomy, agentExecuteLocal, sandboxMode } = settingsState
+    // Use per-session mode if set, otherwise fall back to global default
+    const sessionMode = session?.sessionMode ?? settingsState.sessionMode
     const securityLoaded = useSecurityStore.getState().loaded
     const skills = useSkillStore.getState().activeSkillIds ?? []
     const mcpServers = useMCPStore.getState().servers.map((s: { id: string; name: string; tools?: unknown[] }) => ({
