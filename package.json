@@ -30,6 +30,7 @@
     "python:setup": "node scripts/setup-embedded-python.cjs",
     "test": "vitest run",
     "test:watch": "vitest",
+    "postinstall": "node -e \"try { require('fs').rmSync('node_modules/.vite', { recursive: true, force: true }); console.log('✓ Vite cache cleaned'); } catch(e) { /* ignore */ }\"",
     "rebuild-native": "npx @electron/rebuild -f -w node-pty"
   },
   "dependencies": {
@@ -54,7 +55,7 @@
     "clsx": "^2.1.1",
     "d3": "^7.9.0",
     "framer-motion": "^12.41.0",
-    "lucide-react": "^1.21.0",
+    "lucide-react": "^1.24.0",
     "monaco-editor": "^0.55.1",
     "next-themes": "^0.4.6",
     "node-pty": "^1.1.0",
