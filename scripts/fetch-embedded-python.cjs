@@ -33,9 +33,20 @@ function parseArgs() {
 }
 
 // ── Platform detection ───────────────────────────────────────────────
+function parsePlatformArg(platformOverride) {
+  if (!platformOverride) return { os: process.platform, arch: process.arch }
+  // "darwin-arm64" → { os: "darwin", arch: "arm64" }
+  // "win32-x64" → { os: "win32", arch: "x64" }
+  // "linux-x64" → { os: "linux", arch: "x64" }
+  const parts = platformOverride.split('-')
+  if (parts.length >= 2) {
+    return { os: parts[0], arch: parts[1] }
+  }
+  return { os: process.platform, arch: process.arch }
+}
+
 function detectTarget(platformOverride) {
-  const p = platformOverride || process.platform
-  const a = process.arch
+  const { os, arch } = parsePlatformArg(platformOverride)
 
   const map = {
     'win32-x64':   'x86_64-pc-windows-msvc',
@@ -46,10 +57,10 @@ function detectTarget(platformOverride) {
     'linux-arm64': 'aarch64-unknown-linux-gnu',
   }
 
-  const key = `${p}-${a}`
-  const target = platformOverride || map[key]
+  const key = `${os}-${arch}`
+  const target = map[key]
   if (!target) {
-    console.error(`[fetch-python] Unsupported platform: ${p} ${a}`)
+    console.error(`[fetch-python] Unsupported platform: ${os} ${arch}`)
     process.exit(1)
   }
   return target
@@ -57,9 +68,8 @@ function detectTarget(platformOverride) {
 
 // ── Vendor dir name for electron-builder ─────────────────────────────
 function vendorDirName(platformOverride) {
-  const p = platformOverride || process.platform
-  const a = process.arch
-  return `python-${p}-${a}`
+  const { os, arch } = parsePlatformArg(platformOverride)
+  return `python-${os}-${arch}`
 }
 
 // ── GitHub API helpers ───────────────────────────────────────────────
@@ -102,27 +112,52 @@ function downloadFile(url, dest) {
 
 // ── Find the correct asset name ─────────────────────────────────────
 async function findAsset(tag, cpythonVersion, target) {
-  // Query releases API for assets (paginate if needed)
-  const perPage = 100
-  let page = 1
-  const pattern = new RegExp(`cpython-${cpythonVersion.replace('.', '\\.')}\\+\\d+-${target.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}-install_only`)
+  // Use the /releases endpoint (not /releases/tags/) to ensure assets are included
+  const url = `https://api.github.com/repos/astral-sh/python-build-standalone/releases/tags/${tag}`
+  console.log(`[fetch-python] Fetching release info: ${url}`)
 
-  while (page <= 5) {
-    const url = `https://api.github.com/repos/astral-sh/python-build-standalone/releases/tags/${tag}?per_page=${perPage}&page=${page}`
-    const release = await httpGetJson(url)
-    if (!release.assets) throw new Error(`No assets found for tag ${tag}`)
+  const { status, body } = await httpGet(url)
+  const text = body.toString()
 
-    for (const asset of release.assets) {
-      if (pattern.test(asset.name)) {
-        return { name: asset.name, url: asset.browser_download_url }
-      }
-    }
-    break // single tag endpoint returns all assets
+  if (status !== 200) {
+    throw new Error(`GitHub API returned HTTP ${status}: ${text.slice(0, 200)}`)
   }
 
+  let release
+  try {
+    release = JSON.parse(text)
+  } catch (e) {
+    throw new Error(`Failed to parse GitHub API response: ${text.slice(0, 200)}`)
+  }
+
+  if (!release.assets || !Array.isArray(release.assets)) {
+    throw new Error(
+      `Release ${tag} has no assets array. Response keys: ${Object.keys(release).join(', ')}`
+    )
+  }
+
+  console.log(`[fetch-python] Release has ${release.assets.length} assets`)
+
+  // Match: cpython-3.12+N-timestamp-target-install_only.tar.xz (or .zip)
+  // The pattern must be flexible because timestamps vary
+  const escapedTarget = target.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')
+  const pattern = new RegExp(
+    `cpython-${cpythonVersion.replace('.', '\\.')}\\+[\\w.-]+-${escapedTarget}-install_only\\.(tar\\.xz|tar\\.gz|zip)`
+  )
+
+  for (const asset of release.assets) {
+    if (pattern.test(asset.name)) {
+      console.log(`[fetch-python] Matched asset: ${asset.name}`)
+      return { name: asset.name, url: asset.browser_download_url }
+    }
+  }
+
+  // Debug: show some asset names to help diagnose
+  const sample = release.assets.slice(0, 5).map((a) => a.name)
   throw new Error(
     `No install_only asset found for CPython ${cpythonVersion} (${target}) in release ${tag}.\n` +
-    `Check https://github.com/astral-sh/python-build-standalone/releases/tag/${tag}`
+    `Sample assets: ${sample.join(', ')}\n` +
+    `Check: https://github.com/astral-sh/python-build-standalone/releases/tag/${tag}`
   )
 }
 

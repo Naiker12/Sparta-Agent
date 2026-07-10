@@ -28,11 +28,12 @@ function parseArgs() {
   return { platform }
 }
 
-// ── Vendor dir name (matches fetch-embedded-python.js) ───────────────
+// ── Vendor dir name (matches fetch-embedded-python.cjs) ──────────────
 function vendorDirName(platformOverride) {
-  const p = platformOverride || process.platform
-  const a = process.arch
-  return `python-${p}-${a}`
+  if (!platformOverride) return `python-${process.platform}-${process.arch}`
+  const parts = platformOverride.split('-')
+  return `python-${parts[0]}-${parts[1]}`
+}
 }
 
 // ── Find the Python binary inside the vendor dir ─────────────────────
