@@ -1,0 +1,20 @@
+{
+  "anthropic":  { "label": "Anthropic",         "kind": "cloud", "env": "ANTHROPIC_API_KEY",  "base_url": null,                         "docs": "https://docs.anthropic.com" },
+  "openai":     { "label": "OpenAI",             "kind": "cloud", "env": "OPENAI_API_KEY",     "base_url": null,                         "docs": "https://platform.openai.com/docs" },
+  "google":     { "label": "Google",             "kind": "cloud", "env": "GOOGLE_API_KEY",     "base_url": null,                         "docs": "https://ai.google.dev" },
+  "groq":       { "label": "Groq",               "kind": "cloud", "env": "GROQ_API_KEY",       "base_url": "https://api.groq.com/openai/v1",               "docs": "https://console.groq.com" },
+  "mistral":    { "label": "Mistral",            "kind": "cloud", "env": "MISTRAL_API_KEY",    "base_url": "https://api.mistral.ai/v1",                   "docs": "https://docs.mistral.ai" },
+  "azure":      { "label": "Azure OpenAI",       "kind": "cloud", "env": "AZURE_OPENAI_API_KEY", "base_url": null,                         "docs": "https://learn.microsoft.com/azure/ai-services/openai" },
+  "deepseek":   { "label": "DeepSeek",           "kind": "cloud", "env": "DEEPSEEK_API_KEY",   "base_url": "https://api.deepseek.com/v1",                 "docs": "https://platform.deepseek.com" },
+  "together":   { "label": "Together AI",        "kind": "cloud", "env": "TOGETHER_API_KEY",   "base_url": "https://api.together.xyz/v1",                "docs": "https://docs.together.ai" },
+  "fireworks":  { "label": "Fireworks AI",       "kind": "cloud", "env": "FIREWORKS_API_KEY",  "base_url": "https://api.fireworks.ai/inference/v1",       "docs": "https://docs.fireworks.ai" },
+  "openrouter": { "label": "OpenRouter",         "kind": "cloud", "env": "OPENROUTER_API_KEY", "base_url": "https://openrouter.ai/api/v1",               "docs": "https://openrouter.ai/docs" },
+  "cohere":     { "label": "Cohere",             "kind": "cloud", "env": "COHERE_API_KEY",     "base_url": "https://api.cohere.ai/v1",                   "docs": "https://docs.cohere.com" },
+  "perplexity": { "label": "Perplexity",         "kind": "cloud", "env": "PERPLEXITY_API_KEY", "base_url": "https://api.perplexity.ai/v1",               "docs": "https://docs.perplexity.ai" },
+  "xai":        { "label": "xAI",                "kind": "cloud", "env": "XAI_API_KEY",        "base_url": "https://api.x.ai/v1",                        "docs": "https://docs.x.ai" },
+  "nvidia":     { "label": "NVIDIA",             "kind": "cloud", "env": "NVIDIA_API_KEY",     "base_url": "https://integrate.api.nvidia.com/v1",         "docs": "https://build.nvidia.com" },
+  "ollama":     { "label": "Ollama",             "kind": "local", "env": null,                 "base_url": "http://localhost:11434",                      "docs": "https://ollama.ai" },
+  "lmstudio":   { "label": "LM Studio",          "kind": "local", "env": null,                 "base_url": "http://localhost:1234/v1",                    "docs": "https://lmstudio.ai" },
+  "llamacpp":   { "label": "llama.cpp",          "kind": "local", "env": null,                 "base_url": "http://localhost:8080/v1",                    "docs": "https://github.com/ggerganov/llama.cpp" },
+  "custom":     { "label": "Servidor personalizado", "kind": "local", "env": null,             "base_url": null,                                         "docs": null }
+}

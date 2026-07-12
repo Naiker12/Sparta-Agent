@@ -136,6 +136,33 @@ class OpenAICompatibleTransport(ProviderTransport):
         return ChatOpenAI(**openai_kwargs)
 
 
+class AzureOpenAITransport(ProviderTransport):
+    """Transport for Azure OpenAI deployments.
+
+    Azure uses a different endpoint pattern than other OpenAI-compatible
+    endpoints, requiring ``azure_deployment`` and ``api_version``.
+    """
+
+    def build_llm(
+        self,
+        model: str,
+        api_key: str | None,
+        reasoning_enabled: bool,
+        reasoning_budget: int,
+        **kwargs: Any,
+    ) -> Any:
+        from langchain_openai import AzureChatOpenAI
+
+        kwargs.pop("reasoning_effort", None)
+        azure_kwargs = {**kwargs, "azure_deployment": model}
+        if api_key:
+            azure_kwargs["api_key"] = api_key
+        # These can be overridden via kwargs if the user passes them
+        azure_kwargs.setdefault("api_version", "2024-08-01-preview")
+        logger.info("Building Azure OpenAI LLM: deployment=%s", model)
+        return AzureChatOpenAI(**azure_kwargs)
+
+
 class GoogleTransport(ProviderTransport):
     def build_llm(
         self,
@@ -196,6 +223,8 @@ def _get_transport(vendor: str) -> ProviderTransport:
         return OllamaTransport()
     if vendor in ("google", "google_genai", "gemini"):
         return GoogleTransport()
+    if vendor == "azure":
+        return AzureOpenAITransport()
     if vendor in (
         "openai",
         "groq",
@@ -214,6 +243,39 @@ def _get_transport(vendor: str) -> ProviderTransport:
     ):
         return OpenAICompatibleTransport(vendor)
     raise ValueError(f"Unknown vendor/provider: {vendor}")
+
+
+def check_provider_health(provider: str, vendor: str | None = None) -> str | None:
+    """Check if a local provider (Ollama, LM Studio, llama.cpp) is reachable.
+
+    Returns a warning string if the provider appears unhealthy, or None if OK.
+    For cloud providers, always returns None (no health check).
+    """
+    import urllib.request
+    import urllib.error
+
+    v = (vendor or provider).lower()
+    base_urls = {
+        "ollama": "http://localhost:11434",
+        "lmstudio": "http://localhost:1234",
+        "llamacpp": "http://localhost:8080",
+    }
+    base_url = base_urls.get(v)
+    if not base_url:
+        return None
+
+    try:
+        urllib.request.urlopen(f"{base_url}/api/tags", timeout=3)
+        return None
+    except urllib.error.URLError as e:
+        return (
+            f"No se pudo conectar a {v} ({base_url}). "
+            f"Asegurate de que el servicio esté corriendo. "
+            f"Usá /provider para cambiar de proveedor. "
+            f"(Error: {e.reason})"
+        )
+    except Exception as e:
+        return f"No se pudo verificar {v}: {e}"
 
 
 def build_llm(
