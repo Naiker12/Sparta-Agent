@@ -34,12 +34,14 @@ function vendorDirName(platformOverride) {
   const parts = platformOverride.split('-')
   return `python-${parts[0]}-${parts[1]}`
 }
-}
 
 // ── Find the Python binary inside the vendor dir ─────────────────────
 function findPythonBin(vendorDir) {
   const candidates = process.platform === 'win32'
-    ? [path.join(vendorDir, 'Scripts', 'python.exe')]
+    ? [
+        path.join(vendorDir, 'python.exe'),
+        path.join(vendorDir, 'Scripts', 'python.exe'),
+      ]
     : [
         path.join(vendorDir, 'bin', 'python3'),
         path.join(vendorDir, 'bin', 'python'),
