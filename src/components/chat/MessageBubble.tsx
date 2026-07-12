@@ -3,12 +3,8 @@ import { Copy, Check, Pencil, CheckCheck, X, RotateCw, Trash2, RefreshCw } from 
 import type { Message } from '@/types'
 import { useChatStore } from '@/stores/chat.store'
 import { useEventBus } from '@/stores/event-bus.store'
-import { messagingAdapter } from '@/lib/messaging-adapter'
 import { useChatSession } from '@/hooks/useChatSession'
-import { ThinkingBlock } from './reasoning/ThinkingBlock'
-import { SearchProgressBlock } from './reasoning/SearchProgressBlock'
-import { ToolCallSummary } from './reasoning/ToolCallSummary'
-import { ToolCallDiffView } from './reasoning/ToolCallDiffView'
+import { TimelineBlock } from './reasoning/TimelineBlock'
 import { StreamCursor } from './reasoning/StreamCursor'
 import { PipelineTrace } from './reasoning/PipelineTrace'
 import { MessageActionsDialog } from './MessageActionsDialog'
@@ -71,7 +67,7 @@ function getFollowUpSuggestions(content: string, lang: string): string[] {
     : ['Show me a practical example of this', 'What are the alternatives to this approach?', 'Give me a simplified explanation']
 }
 
-export function MessageBubble({ message, isLastUser = false, isLastAssistant = false, hideSearchProgress = false }: MessageBubbleProps) {
+export function MessageBubble({ message, isLastUser = false, isLastAssistant = false }: MessageBubbleProps) {
   const isUser = message.role === 'user'
   const renderState = getMessageRenderState(message.content, message.reasoningText, message.isStreaming ?? false)
   const [copied, setCopied] = useState(false)
@@ -83,24 +79,6 @@ export function MessageBubble({ message, isLastUser = false, isLastAssistant = f
   const dispatch = useEventBus((s) => s.dispatch)
   const { t, lang } = useTranslation()
   const suggestions = !isUser ? (message.suggestions ?? getFollowUpSuggestions(message.content, lang)) : []
-
-  const hasReasoningText = (message.reasoningText?.trim().length ?? 0) > 0
-  const hasThinking = !isUser && (
-    message.isStreaming ||
-    message.thinkingStatus === 'starting' ||
-    message.thinkingStatus === 'streaming' ||
-    ((message.thinkingStatus === 'completed' || message.thinkingStatus === 'collapsed') && hasReasoningText) ||
-    hasReasoningText
-  )
-  const isSearchTool = (toolName: string) => {
-    const normalized = toolName.toLowerCase()
-    return (
-      normalized === 'web_search' ||
-      normalized === 'web_search_tool' ||
-      normalized.includes('web_search') ||
-      normalized.includes('search_tool')
-    )
-  }
 
   function handleCopy() {
     navigator.clipboard.writeText(message.content).then(() => {
@@ -243,75 +221,17 @@ export function MessageBubble({ message, isLastUser = false, isLastAssistant = f
             </div>
           ) : null}
 
-          {/* Search progress — VIVO durante búsqueda web */}
-          {!hideSearchProgress && ((message.searchProgress && message.searchProgress.length > 0) ||
-            (message.toolCalls?.some((tc) => isSearchTool(tc.toolName) && tc.status === 'running'))) ? (
-            <div style={{ marginTop: 8 }}>
-              <SearchProgressBlock
-                items={message.searchProgress ?? []}
-                isActive={
-                  message.toolCalls?.some((tc) => isSearchTool(tc.toolName) && tc.status === 'running') ??
-                  false
-                }
-                query={message.searchQuery}
-                onCancel={() => {
-                  const sid = message.sessionId
-                  if (sid) {
-                    useChatStore.getState().stopStreaming(sid)
-                    messagingAdapter.abortMessage(sid)
-                  }
-                }}
-                onRetry={() => sendMessage(message.content)}
-              />
-            </div>
-          ) : null}
-
-          {/* Tool calls — antes del texto */}
-          {message.toolCalls && message.toolCalls.filter((tc) => !isSearchTool(tc.toolName)).length > 0 && (
-            <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                Tool Calls ({message.toolCalls.filter((tc) => !isSearchTool(tc.toolName)).length})
-              </div>
-              {message.toolCalls
-                .filter((tc) => !isSearchTool(tc.toolName))
-                .map((tc) => (
-                  <div key={tc.id} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    <ToolCallSummary toolCall={tc} />
-                    <ToolCallDiffView
-                      toolName={tc.toolName}
-                      input={tc.input}
-                      output={tc.output}
-                    />
-                  </div>
-                ))}
+          {/* Unified Timeline — replaces SearchProgressBlock + ToolCalls + ThinkingBlock */}
+          {!isUser && (
+            <div style={{ marginTop: 8, marginBottom: 8 }}>
+              <TimelineBlock message={message} />
             </div>
           )}
 
-          {/* Pipeline trace */}
+          {/* Pipeline trace (kept separate as it's not part of the reasoning/tool timeline) */}
           {message.pipelineSteps && message.pipelineSteps.length > 0 && (
             <div style={{ marginTop: 8 }}>
               <PipelineTrace steps={message.pipelineSteps} message={message} />
-            </div>
-          )}
-
-          {/* Thinking block */}
-          {hasThinking && (
-            <div style={{ marginTop: 8, marginBottom: 8 }}>
-              <ThinkingBlock
-                content={message.reasoningText ?? ''}
-                status={message.thinkingStatus ?? (message.isStreaming ? 'streaming' : 'completed')}
-                tokensUsed={message.thinkingTokensUsed ?? 0}
-                thinkingStatusText={message.thinkingStatusText}
-                pipelineSteps={message.pipelineSteps}
-                messageId={message.id}
-                reasoningStartedAt={message.reasoningStartedAt}
-              />
-            </div>
-          )}
-
-          {renderState.kind === 'thinking_pending' && !hasThinking && (
-            <div style={{ marginTop: 8, marginBottom: 8 }}>
-              <ThinkingBlock content="" status="starting" tokensUsed={0} thinkingStatusText={message.thinkingStatusText} messageId={message.id} reasoningStartedAt={message.reasoningStartedAt} />
             </div>
           )}
 
