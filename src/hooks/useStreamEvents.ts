@@ -263,10 +263,24 @@ function _handleMCPEvent(type: string, event: Record<string, unknown>) {
       const progressEvent = event as {
         stage: 'searching' | 'visiting' | 'reading' | 'done'
         url?: string; title?: string; index?: number; total?: number; query?: string
+        tool_call_id?: string
       }
+      const tcId = progressEvent.tool_call_id ?? undefined
+
       if (progressEvent.stage === 'searching' && progressEvent.query) {
-        store.updateMessage(mid, { searchQuery: progressEvent.query })
+        if (tcId) {
+          // Scoped: set searchQuery on the specific ToolCall
+          store.updateMessage(mid, (msg) => ({
+            toolCalls: (msg.toolCalls ?? []).map((tc) =>
+              tc.id === tcId ? { ...tc, searchQuery: progressEvent.query } : tc
+            ),
+          }))
+        } else {
+          // Legacy: set on message level
+          store.updateMessage(mid, { searchQuery: progressEvent.query } as Partial<import('@/types').Message>)
+        }
       }
+
       store.updateSearchProgress(sid, mid, (items) => {
         if (progressEvent.stage === 'searching') {
           // Ignore if we already have items — prevents late astream_events
@@ -296,7 +310,7 @@ function _handleMCPEvent(type: string, event: Record<string, unknown>) {
         }
         if (progressEvent.stage === 'done') return items.map((i) => ({ ...i, status: 'visited' as const }))
         return items
-      })
+      }, tcId)
       break
     }
     case 'stream:token': {

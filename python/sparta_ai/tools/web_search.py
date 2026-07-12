@@ -4,6 +4,7 @@ import re
 import time
 
 import httpx
+from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import tool
 
 from sparta_ai.tools.web_progress import dispatch_progress
@@ -99,6 +100,7 @@ async def _duckduckgo_search_async(query: str, count: int, freshness: str | None
 async def web_search_tool(
     query: str,
     count: int = 5,
+    config: RunnableConfig | None = None,
 ) -> str:
     """
     Busca información actualizada en internet.
@@ -116,10 +118,13 @@ async def web_search_tool(
     """
     from sparta_ai.config.security import get_key
 
+    # Extract tool_call_id from RunnableConfig (set by LangGraph ToolNode)
+    tool_call_id = (config.get("configurable", {}).get("tool_call_id") if config else None) or None
+
     api_key = get_key("brave-search")
     count = min(count, 10)
 
-    await dispatch_progress("searching", query=query)
+    await dispatch_progress("searching", query=query, tool_call_id=tool_call_id)
 
     # Check cache for identical query
     now = time.monotonic()
@@ -135,10 +140,11 @@ async def web_search_tool(
                     title=r.get("title", "Sin título"),
                     index=i,
                     total=len(cached_results[:count]),
+                    tool_call_id=tool_call_id,
                 )
                 if i < len(cached_results[:count]):
                     await asyncio.sleep(0.1)
-            await dispatch_progress("done")
+            await dispatch_progress("done", tool_call_id=tool_call_id)
             return _format_results(query, cached_results, count)
 
     results: list[dict] = []
@@ -181,11 +187,12 @@ async def web_search_tool(
                 title=r.get("title", "Sin título"),
                 index=i,
                 total=len(results[:count]),
+                tool_call_id=tool_call_id,
             )
             if i < len(results[:count]):
                 await asyncio.sleep(0.15)
 
-        await dispatch_progress("done")
+        await dispatch_progress("done", tool_call_id=tool_call_id)
 
         # Store in cache for identical future queries
         _search_cache[cache_key] = (time.monotonic(), results)

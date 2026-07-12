@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { Message, ToolCall, ThinkingStatus, SearchProgressItem } from '@/types'
+import type { Message, ToolCall, ThinkingStatus, SearchProgressItem, MessagePart } from '@/types'
 import { useSessionStore } from './session.store'
 
 export interface StreamState {
@@ -26,7 +26,7 @@ interface ChatState {
   addToolCall: (sessionId: string, messageId: string, toolCall: ToolCall) => void
   updateToolCallStatus: (sessionId: string, messageId: string, toolCallId: string, status: ToolCall['status'], result?: string, toolName?: string) => void
   closeStaleToolCalls: (sessionId: string, messageId: string) => void
-  updateSearchProgress: (sessionId: string, messageId: string, updater: (items: SearchProgressItem[]) => SearchProgressItem[]) => void
+  updateSearchProgress: (sessionId: string, messageId: string, updater: (items: SearchProgressItem[]) => SearchProgressItem[], toolCallId?: string) => void
   startStreaming: (sessionId: string) => AbortController
   stopStreaming: (sessionId?: string) => void
   injectWhileStreaming: (text: string) => void
@@ -41,6 +41,7 @@ interface ChatState {
   onReasoningAvailable: (sessionId: string, messageId: string, text: string) => void
   onStreamEnd: (sessionId: string, messageId: string) => void
   deduplicateReasoningFromContent: (sessionId: string, messageId: string) => void
+  closeReasoningPart: (sessionId: string, messageId: string) => void
 }
 
 export const useChatStore = create<ChatState>()(
@@ -171,6 +172,44 @@ export const useChatStore = create<ChatState>()(
             console.warn(`[chat.store] Duplicate thinking chunk #${chunkSeq} <= lastThinkChunkSeq #${target.lastThinkChunkSeq} for message ${messageId.slice(0, 8)}`)
             return s
           }
+          const newText = (target.reasoningText ?? '') + delta
+          const parts = target.parts ?? []
+          const lastPart = parts.length > 0 ? parts[parts.length - 1] : null
+
+          // If last part is already a reasoning part that's not completed, extend it
+          if (lastPart && lastPart.kind === 'reasoning' && !lastPart.completedAt) {
+            const updatedParts = [...parts]
+            updatedParts[updatedParts.length - 1] = {
+              ...lastPart,
+              text: (lastPart as Extract<MessagePart, { kind: 'reasoning' }>).text + delta,
+            } as MessagePart
+            return {
+              messagesBySession: {
+                ...s.messagesBySession,
+                [sessionId]: sessionMessages.map((msg) =>
+                  msg.id === messageId
+                    ? {
+                        ...msg,
+                        reasoningText: newText,
+                        parts: updatedParts,
+                        thinkingStatus: (msg.thinkingStatus === 'idle' || msg.thinkingStatus === 'starting' || msg.thinkingStatus === undefined) ? 'streaming' : msg.thinkingStatus,
+                        isStreaming: true,
+                        lastThinkChunkSeq: chunkSeq ?? msg.lastThinkChunkSeq,
+                      }
+                    : msg
+                ),
+              },
+            }
+          }
+
+          // No reasoning part yet — create one
+          const now = Date.now()
+          const reasoningPart: MessagePart = {
+            kind: 'reasoning',
+            id: `reasoning-${now}`,
+            text: delta,
+            startedAt: now,
+          }
           return {
             messagesBySession: {
               ...s.messagesBySession,
@@ -178,7 +217,8 @@ export const useChatStore = create<ChatState>()(
                 msg.id === messageId
                   ? {
                       ...msg,
-                      reasoningText: (msg.reasoningText ?? '') + delta,
+                      reasoningText: newText,
+                      parts: [...parts, reasoningPart],
                       thinkingStatus: (msg.thinkingStatus === 'idle' || msg.thinkingStatus === 'starting' || msg.thinkingStatus === undefined) ? 'streaming' : msg.thinkingStatus,
                       isStreaming: true,
                       lastThinkChunkSeq: chunkSeq ?? msg.lastThinkChunkSeq,
@@ -196,16 +236,40 @@ export const useChatStore = create<ChatState>()(
           return {
             messagesBySession: {
               ...s.messagesBySession,
-              [sessionId]: sessionMessages.map((msg) =>
-                msg.id === messageId
-                  ? {
-                      ...msg,
-                      toolCalls: (msg.toolCalls ?? []).some((tc) => tc.id === toolCall.id)
-                        ? msg.toolCalls
-                        : [...(msg.toolCalls ?? []), toolCall],
-                    }
-                  : msg
-              ),
+              [sessionId]: sessionMessages.map((msg) => {
+                if (msg.id !== messageId) return msg
+
+                // Skip if toolCall already exists
+                if ((msg.toolCalls ?? []).some((tc) => tc.id === toolCall.id)) return msg
+
+                const now = Date.now()
+                const parts = msg.parts ?? []
+
+                // Close any open reasoning part before inserting tool part
+                const updatedParts = [...parts]
+                const lastPart = updatedParts.length > 0 ? updatedParts[updatedParts.length - 1] : null
+                if (lastPart && lastPart.kind === 'reasoning' && !lastPart.completedAt) {
+                  updatedParts[updatedParts.length - 1] = {
+                    ...lastPart,
+                    completedAt: now,
+                    text: lastPart.text,
+                  } as MessagePart
+                }
+
+                // Add tool part
+                updatedParts.push({
+                  kind: 'tool',
+                  id: `tool-${now}`,
+                  toolCallId: toolCall.id,
+                  startedAt: now,
+                } as MessagePart)
+
+                return {
+                  ...msg,
+                  toolCalls: [...(msg.toolCalls ?? []), toolCall],
+                  parts: updatedParts,
+                }
+              }),
             },
           }
         }),
@@ -261,7 +325,7 @@ export const useChatStore = create<ChatState>()(
           return { messagesBySession: { ...s.messagesBySession, [sessionId]: updated } }
         }),
 
-      updateSearchProgress: (sessionId, messageId, updater) =>
+      updateSearchProgress: (sessionId, messageId, updater, toolCallId) =>
         set((s) => {
           const sessionMessages = s.messagesBySession[sessionId]
           if (!sessionMessages) return s
@@ -270,9 +334,55 @@ export const useChatStore = create<ChatState>()(
               ...s.messagesBySession,
               [sessionId]: sessionMessages.map((msg) =>
                 msg.id === messageId
-                  ? { ...msg, searchProgress: updater(msg.searchProgress ?? []) }
+                  ? toolCallId
+                    // Scoped write: update searchProgress inside the matching ToolCall
+                    ? {
+                        ...msg,
+                        toolCalls: (msg.toolCalls ?? []).map((tc) =>
+                          tc.id === toolCallId
+                            ? { ...tc, searchProgress: updater(tc.searchProgress ?? []) }
+                            : tc
+                        ),
+                      }
+                    // Legacy unscoped write: update message-level searchProgress (deprecated path)
+                    : { ...msg, searchProgress: updater(msg.searchProgress ?? []) }
                   : msg
               ),
+            },
+          }
+        }),
+
+      closeReasoningPart: (sessionId, messageId) =>
+        set((s) => {
+          const sessionMessages = s.messagesBySession[sessionId]
+          if (!sessionMessages) return s
+          return {
+            messagesBySession: {
+              ...s.messagesBySession,
+              [sessionId]: sessionMessages.map((msg) => {
+                if (msg.id !== messageId) return msg
+                const parts = msg.parts ?? []
+                if (parts.length === 0) {
+                  // Create initial reasoning part from existing reasoningText
+                  const text = msg.reasoningText ?? ''
+                  if (!text) return msg
+                  return {
+                    ...msg,
+                    parts: [{ kind: 'reasoning', id: `reasoning-${Date.now()}`, text, startedAt: msg.reasoningStartedAt ?? Date.now(), completedAt: Date.now() } as MessagePart],
+                  }
+                }
+                const lastPart = parts[parts.length - 1]
+                if (lastPart.kind === 'reasoning' && !lastPart.completedAt) {
+                  const updated = [...parts]
+                  updated[updated.length - 1] = {
+                    ...lastPart,
+                    completedAt: Date.now(),
+                    text: msg.reasoningText ?? lastPart.text,
+                  }
+                  return { ...msg, parts: updated }
+                }
+                return msg
+              }),
             },
           }
         }),

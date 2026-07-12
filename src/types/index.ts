@@ -1,5 +1,5 @@
 export * from './events'
-export { type MessageRole, type ToolCall, type PipelineStep, type Message, type Session, type ChatRequest, type ChatStreamChunk, type ThinkingStatus, type SearchProgressItem, type ReasoningEffort, type ReasoningDetail } from './chat'
+export { type MessageRole, type ToolCall, type PipelineStep, type Message, type Session, type ChatRequest, type ChatStreamChunk, type ThinkingStatus, type SearchProgressItem, type ReasoningEffort, type ReasoningDetail, type MessagePart } from './chat'
 export { type ProviderVendor, type ProviderKind, type Provider, type ModelInfo, type AIProvider, type ConnectionTestResult } from './provider'
 export { type MCPServerType, type MCPServerConfig, type MCPTool, type MCPServer } from './mcp'
 export { type MemoryEntry, type MemoryRelation, type MemoryGraphNode, type MemoryGraph, type ExtractedMemory, type RelationType } from './memory'

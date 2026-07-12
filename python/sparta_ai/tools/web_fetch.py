@@ -6,6 +6,7 @@ from html import unescape
 from urllib.parse import urlparse
 
 import httpx
+from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import tool
 
 from sparta_ai.tools.web_progress import dispatch_progress
@@ -55,7 +56,7 @@ def _extract_readable_text(html: str) -> str:
 
 
 @tool
-async def web_fetch_tool(url: str, max_chars: int = 8000) -> str:
+async def web_fetch_tool(url: str, max_chars: int = 8000, config: RunnableConfig | None = None) -> str:
     """
     Descarga y extrae el contenido de texto legible de una página web.
     Úsala DESPUÉS de web_search_tool cuando necesites el contenido completo
@@ -68,12 +69,15 @@ async def web_fetch_tool(url: str, max_chars: int = 8000) -> str:
     Returns:
         Texto extraído de la página, o un mensaje de error.
     """
+    # Extract tool_call_id from RunnableConfig (set by LangGraph ToolNode)
+    tool_call_id = (config.get("configurable", {}).get("tool_call_id") if config else None) or None
+
     safe, reason = _is_safe_url(url)
     if not safe:
         logger.warning("web_fetch_tool blocked url=%s reason=%s", url, reason)
         return f"Error de seguridad: {reason}"
 
-    await dispatch_progress("reading", url=url)
+    await dispatch_progress("reading", url=url, tool_call_id=tool_call_id)
 
     try:
         return await asyncio.wait_for(

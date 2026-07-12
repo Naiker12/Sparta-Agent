@@ -10,6 +10,11 @@ export interface ToolCall {
   status: 'running' | 'completed' | 'error'
   durationMs?: number
   error?: string
+  startedAt?: number
+  /** Query string for web_search tool calls (moved from Message level to fix multi-search bug) */
+  searchQuery?: string
+  /** Progress items scoped to this specific tool call (moved from Message level) */
+  searchProgress?: SearchProgressItem[]
 }
 
 export interface PipelineStep {
@@ -38,6 +43,16 @@ export interface ReasoningDetail {
   signature?: string
 }
 
+/**
+ * A single "part" in the message timeline.
+ * Parts are rendered in order to create a unified timeline of reasoning + tool calls.
+ * This replaces the old approach of rendering SearchProgressBlock + ToolCalls + ThinkingBlock
+ * as three separate disconnected blocks.
+ */
+export type MessagePart =
+  | { kind: 'reasoning'; id: string; text: string; startedAt: number; completedAt?: number }
+  | { kind: 'tool'; id: string; toolCallId: string; startedAt: number }
+
 export interface Message {
   id: string
   role: MessageRole
@@ -59,7 +74,11 @@ export interface Message {
   reasoningCompletedAt?: number
   toolCalls?: ToolCall[]
   pipelineSteps?: PipelineStep[]
+  /** Ordered list of parts for unified timeline rendering */
+  parts?: MessagePart[]
+  /** @deprecated Moved to ToolCall.searchProgress — kept for backward compat during migration */
   searchProgress?: SearchProgressItem[]
+  /** @deprecated Moved to ToolCall.searchQuery — kept for backward compat during migration */
   searchQuery?: string
   suggestions?: string[]
 }
