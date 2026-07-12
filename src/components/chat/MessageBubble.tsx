@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Copy, Check, Pencil, CheckCheck, X, RotateCw, Trash2, RefreshCw } from 'lucide-react'
+import { Copy, Check, Pencil, CheckCircle, X, RefreshCw, Trash2 } from 'lucide-react'
 import type { Message } from '@/types'
 import { useChatStore } from '@/stores/chat.store'
 import { useEventBus } from '@/stores/event-bus.store'
@@ -17,54 +17,6 @@ interface MessageBubbleProps {
   message: Message
   isLastUser?: boolean
   isLastAssistant?: boolean
-  hideSearchProgress?: boolean
-}
-
-function getFollowUpSuggestions(content: string, lang: string): string[] {
-  const text = content.toLowerCase()
-  const isEs = lang === 'es'
-
-  // 1. Code
-  if (
-    text.includes('javascript') ||
-    text.includes('typescript') ||
-    text.includes('react') ||
-    text.includes('const ') ||
-    text.includes('function ') ||
-    text.includes('import ') ||
-    text.includes('def ') ||
-    text.includes('class ')
-  ) {
-    return isEs
-      ? ['Explícame cómo funciona este código paso a paso', '¿Cómo puedo manejar errores y excepciones en este código?', 'Escribe pruebas unitarias para esta lógica']
-      : ['Explain how this code works step by step', 'How can I handle errors and exceptions here?', 'Write unit tests for this logic']
-  }
-
-  // 2. Styles
-  if (text.includes('css') || text.includes('flexbox') || text.includes('style') || text.includes('design') || text.includes('html')) {
-    return isEs
-      ? ['¿Cómo hago que este diseño sea responsivo para móviles?', 'Agrega una animación de entrada suave al componente', '¿Cuáles son las mejores prácticas para estructurar este HTML/CSS?']
-      : ['How do I make this design responsive for mobile?', 'Add a smooth entrance animation to the component', 'What are best practices for structuring this HTML/CSS?']
-  }
-
-  // 3. Backend, databases, APIs
-  if (text.includes('sql') || text.includes('database') || text.includes('base de datos') || text.includes('api') || text.includes('jwt') || text.includes('auth') || text.includes('server')) {
-    return isEs
-      ? ['¿Cómo puedo proteger esta API contra ataques comunes?', 'Muéstrame cómo conectar esto a una base de datos', '¿Cuáles son las ventajas y desventajas de este diseño de backend?']
-      : ['How can I protect this API against common attacks?', 'Show me how to connect this to a database', 'What are the pros and cons of this backend design?']
-  }
-
-  // 4. Research
-  if (text.includes('noticias') || text.includes('investiga') || text.includes('resultados') || text.includes('información') || text.includes('artículo') || text.includes('news') || text.includes('research') || text.includes('results') || text.includes('article')) {
-    return isEs
-      ? ['Profundiza más en el punto más importante', '¿Cuáles son las fuentes originales de esta información?', 'Dame un resumen ejecutivo en formato de lista']
-      : ['Go deeper into the most important point', 'What are the original sources of this information?', 'Give me an executive summary in list format']
-  }
-
-  // 5. Generic
-  return isEs
-    ? ['Muéstrame un ejemplo práctico de esto', '¿Cuáles son las alternativas a este enfoque?', 'Dame una explicación simplificada']
-    : ['Show me a practical example of this', 'What are the alternatives to this approach?', 'Give me a simplified explanation']
 }
 
 export function MessageBubble({ message, isLastUser = false, isLastAssistant = false }: MessageBubbleProps) {
@@ -77,8 +29,9 @@ export function MessageBubble({ message, isLastUser = false, isLastAssistant = f
   const { updateMessage } = useChatStore()
   const { sendMessage } = useChatSession()
   const dispatch = useEventBus((s) => s.dispatch)
-  const { t, lang } = useTranslation()
-  const suggestions = !isUser ? (message.suggestions ?? getFollowUpSuggestions(message.content, lang)) : []
+  const { t } = useTranslation()
+  const isErrorMessage = !isUser && message.content.startsWith('Error:')
+  const suggestions = !isUser && !isErrorMessage ? (message.suggestions ?? []) : []
 
   function handleCopy() {
     navigator.clipboard.writeText(message.content).then(() => {
@@ -201,7 +154,7 @@ export function MessageBubble({ message, isLastUser = false, isLastAssistant = f
                     opacity: editValue.trim() ? 1 : 0.5,
                   }}
                 >
-                  <CheckCheck size={12} />
+                  <CheckCircle size={12} />
                   Guardar
                 </button>
                 <button
@@ -339,7 +292,7 @@ export function MessageBubble({ message, isLastUser = false, isLastAssistant = f
             >
               <IconButton icon={copied ? <Check size={11} /> : <Copy size={11} />} onClick={handleCopy} title={t('chat.copy')} />
               {isUser && isLastUser && <IconButton icon={<Pencil size={11} />} onClick={() => { setEditValue(message.content); setEditing(true) }} title={t('chat.edit')} />}
-              {isUser && isLastUser && <IconButton icon={<RotateCw size={11} />} onClick={() => sendMessage(message.content)} title={t('chat.resend')} />}
+              {isUser && isLastUser && <IconButton icon={<RefreshCw size={11} />} onClick={() => sendMessage(message.content)} title={t('chat.resend')} />}
               {!isUser && <IconButton icon={<RefreshCw size={11} />} onClick={() => setDialog({ kind: 'regenerate' })} title={t('chat.regenerate')} />}
               <IconButton icon={<Trash2 size={11} />} onClick={() => setDialog({ kind: 'delete' })} title={t('chat.delete')} style={{ marginLeft: 2, color: 'var(--text-muted)' }} />
             </div>

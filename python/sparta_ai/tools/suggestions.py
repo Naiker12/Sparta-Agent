@@ -1,5 +1,6 @@
 """Contextual follow-up suggestion generation using the LLM."""
 
+import asyncio
 import json
 import logging
 from typing import Any
@@ -44,7 +45,8 @@ async def generate_suggestions(
     ]
 
     try:
-        response = await llm.ainvoke(messages)
+        # Add timeout to prevent hanging on slow/unresponsive models
+        response = await asyncio.wait_for(llm.ainvoke(messages), timeout=10.0)
         content = response.content if hasattr(response, "content") else str(response)
         content = content.strip()
         if content.startswith("```"):
@@ -54,6 +56,10 @@ async def generate_suggestions(
         suggestions = json.loads(content)
         if isinstance(suggestions, list) and len(suggestions) >= 2:
             return [str(s).strip() for s in suggestions[:3]]
+    except asyncio.TimeoutError:
+        logger.warning("suggestion generation timed out after 10s")
+    except json.JSONDecodeError as e:
+        logger.warning("suggestion generation returned invalid JSON: %s", e)
     except Exception as e:
         logger.warning("suggestion generation failed: %s", e)
 

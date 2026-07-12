@@ -327,11 +327,6 @@ export function registerChatIPC(): void {
     // Prevent concurrent streams for the same sessionId
     const existing = activeStreams.get(sessionId)
     if (existing?.active) {
-      sendToRenderer({
-        sessionId, messageId,
-        type: 'stream:error',
-        error: 'Ya hay un stream activo para esta sesión. Espera a que termine o aborta el anterior.',
-      })
       return { ok: false, error: 'Concurrent stream not allowed for same session' }
     }
 
@@ -343,11 +338,6 @@ export function registerChatIPC(): void {
     // Wait for the sidecar to finish its cold start (imports + model init).
     const ready = await waitForSidecarReady(30_000)
     if (!ready) {
-      sendToRenderer({
-        sessionId, messageId,
-        type: 'error',
-        error: 'Python sidecar no pudo iniciarse. Revisa la terminal de desarrollo o reinicia la aplicación.',
-      })
       return { ok: false, error: 'Sidecar not ready' }
     }
 
@@ -406,7 +396,6 @@ export function registerChatIPC(): void {
 
     activeStreams.delete(sessionId)
     if (timedOut) {
-      sendToRenderer({ sessionId, messageId, type: 'stream:error', error: 'El agente tardó demasiado en responder (5 min). Intenta de nuevo.' })
       return { ok: false, error: 'Timeout' }
     }
     return { ok: true }

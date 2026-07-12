@@ -1,7 +1,5 @@
 export { ThinkingPill } from './ThinkingPill'
-export { ThinkingBlock } from './ThinkingBlock'
 export { ReflectionBlock } from './ReflectionBlock'
 export { PipelineTrace } from './PipelineTrace'
-export { ToolCallSummary } from './ToolCallSummary'
 export { ToolCallDiffView } from './ToolCallDiffView'
 export { StreamCursor } from './StreamCursor'

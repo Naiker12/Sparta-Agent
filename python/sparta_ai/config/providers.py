@@ -177,14 +177,15 @@ class OllamaTransport(ProviderTransport):
         reasoning_budget: int,
         **kwargs: Any,
     ) -> Any:
-        from langchain_community.llms import Ollama
+        from langchain_ollama import ChatOllama
 
         kwargs.pop("reasoning_effort", None)
         ollama_kwargs = {**kwargs, "model": model}
         ollama_kwargs.pop("streaming", None)
-        # Ollama does not use API keys in the same way; ignore reasoning kwargs.
+        ollama_kwargs.pop("max_tokens", None)
+        ollama_kwargs.pop("temperature", None)
         logger.info("Building Ollama LLM: model=%s", model)
-        return Ollama(**ollama_kwargs)
+        return ChatOllama(**ollama_kwargs)
 
 
 def _get_transport(vendor: str) -> ProviderTransport:

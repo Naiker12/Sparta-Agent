@@ -61,3 +61,30 @@ export function thinkingUnsupportedReason(modelId: string, vendor?: ProviderVend
 
   return 'Este modelo no soporta razonamiento extendido. Probá con Claude 3.7+, o1, o3, Gemini 2.5+ o DeepSeek-R1.'
 }
+
+/**
+ * Determine if a model needs emulated reasoning via prompt engineering.
+ *
+ * This mirrors the backend logic in `emulated_reasoning.needs_emulated_reasoning()`
+ * to let the frontend know whether to show the "thinking" toggle for a given model.
+ */
+export function modelNeedsEmulatedReasoning(modelId: string, vendor?: ProviderVendor): boolean {
+  const id = modelId.toLowerCase()
+
+  // Vendors that expose native reasoning don't need emulation
+  if (vendor === 'anthropic' && (id.includes('claude-3-7') || id.includes('claude-sonnet-4') || id.includes('claude-opus-4'))) {
+    return false
+  }
+  if (vendor === 'openai' && /^(o1|o3|o4|gpt-5)/.test(id)) {
+    return false
+  }
+  if (vendor === 'google' && (id.includes('gemini-2.5') || id.includes('gemini-3'))) {
+    return false
+  }
+  if (vendor === 'deepseek' && (id.includes('deepseek-r1') || id.includes('deepseek-v3'))) {
+    return false
+  }
+
+  // Everything else needs emulated reasoning
+  return true
+}

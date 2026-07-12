@@ -314,7 +314,7 @@ def build_sparta_graph(
                 if suggestions:
                     result["suggestions"] = suggestions
             except Exception:
-                logger.debug("suggestion generation skipped", exc_info=True)
+                logger.warning("suggestion generation failed", exc_info=True)
 
         return result
 
