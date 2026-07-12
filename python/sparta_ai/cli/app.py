@@ -41,6 +41,34 @@ DEFAULT_PROVIDER = "anthropic"
 DEFAULT_VENDOR = "anthropic"
 
 
+def _build_tools_only(skills: list[str], web_search: bool) -> tuple[list, str]:
+    """Build tools list + skill context WITHOUT touching the LLM/graph.
+
+    Used when there's no provider yet, so the banner can still show real counts
+    and /provider doesn't need to rebuild everything from scratch.
+    """
+    from sparta_ai.skills.skill_loader import build_skills_context
+    from sparta_ai.tools.file_tools import read_file_tool, write_file_tool
+    from sparta_ai.tools.memory_tools import read_memory_tool, write_memory_tool
+    from sparta_ai.tools.skill_tools import (
+        skill_view_tool, skills_list_tool, skill_manage_tool,
+    )
+    from sparta_ai.tools.terminal_tools import (
+        terminal_execute_tool, terminal_execute_background_tool,
+    )
+    from sparta_ai.tools.web_search import web_search_tool
+
+    skill_context = build_skills_context(skills) if skills else ""
+    tools = [
+        read_memory_tool, write_memory_tool, read_file_tool, write_file_tool,
+        skill_view_tool, skills_list_tool, skill_manage_tool,
+        terminal_execute_tool, terminal_execute_background_tool,
+    ]
+    if web_search:
+        tools.insert(0, web_search_tool)
+    return tools, skill_context
+
+
 def repl(
     model: str = typer.Option(DEFAULT_MODEL, "--model", "-m", help="Model name"),
     provider: str = typer.Option(DEFAULT_PROVIDER, "--provider", "-p", help="Provider"),
@@ -55,29 +83,40 @@ def repl(
     api_key = resolve_env_key(provider) or provider_key
 
     if not api_key:
-        console.print(
-            f"[{WARNING}]⚠ No API key found. "
-            f"Using ollama (local). Use /provider to change.[/{WARNING}]"
+        # No API key → neutral state. No auto-fallback to Ollama.
+        # No provider is assumed; the user chooses explicitly via /provider.
+        tools, skill_context = _build_tools_only(skills, web_search)
+        state = SessionState(
+            model=model,
+            provider="",
+            vendor="",
+            api_key=None,
+            graph=None,
+            llm=None,
+            tools=tools,
+            skill_context=skill_context,
+            session_id=f"cli-{os.urandom(4).hex()}",
+            mode=mode,
+            skills=skills,
+            semantic_memory=semantic_memory,
+            web_search=web_search,
+            tool_count=len(tools),
+            skills_count=len(skills),
+            mcp_count=0,
         )
-        provider = "ollama"
-        vendor = "ollama"
-        model = "llama3.1"
-    else:
-        catalog = load_catalog()
-        if provider not in catalog:
-            vendor = provider
-        if model == DEFAULT_MODEL and provider != "anthropic":
-            entry = catalog.get(provider, {})
-            models = entry.get("models", []) if hasattr(catalog, "get") else []
-            # Use fallback from models.py or keep default
-            pass
+        asyncio.run(run_repl(state, provider_warning=None))
+        return
 
-    # Build the initial session state with tools, skill loader, graph, etc.
+    # API key present → normal flow (no automatic health check at startup)
+    catalog = load_catalog()
+    if provider not in catalog:
+        vendor = provider
+
     state = _build_initial_state(
         model=model,
         provider=provider,
         vendor=vendor,
-        api_key=api_key or provider_key,
+        api_key=api_key,
         skills=skills,
         semantic_memory=semantic_memory,
         web_search=web_search,
@@ -87,23 +126,12 @@ def repl(
     from sparta_ai.tools.terminal_tools import set_execute_local
     set_execute_local(True)
 
-    # Determine provider warning for the banner
-    from sparta_ai.config.providers import check_provider_health
     provider_warning = None
-    if state.graph is None and not api_key:
-        provider_warning = (
-            "Sin API key — usando ollama (local). /provider para cambiar."
-        )
-    elif state.graph is None:
+    if state.graph is None:
         provider_warning = (
             f"No se pudo inicializar el provider '{provider}'. "
             "Usá /provider para configurar uno válido."
         )
-    elif provider in ("ollama", "lmstudio", "llamacpp"):
-        # Health check for local providers
-        health_warning = check_provider_health(provider, vendor)
-        if health_warning:
-            provider_warning = health_warning
 
     asyncio.run(run_repl(state, provider_warning=provider_warning))
 
@@ -122,35 +150,8 @@ def _build_initial_state(
     from sparta_ai.agents.sparta_agent import build_sparta_graph
     from sparta_ai.config.providers import build_llm
     from sparta_ai.persistence.sqlite_store import get_checkpointer
-    from sparta_ai.skills.skill_loader import build_skills_context
-    from sparta_ai.tools.file_tools import read_file_tool, write_file_tool
-    from sparta_ai.tools.memory_tools import read_memory_tool, write_memory_tool
-    from sparta_ai.tools.skill_tools import (
-        skill_view_tool,
-        skills_list_tool,
-        skill_manage_tool,
-    )
-    from sparta_ai.tools.terminal_tools import (
-        terminal_execute_tool,
-        terminal_execute_background_tool,
-    )
-    from sparta_ai.tools.web_search import web_search_tool
 
-    skill_context = build_skills_context(skills) if skills else ""
-
-    tools = [
-        read_memory_tool,
-        write_memory_tool,
-        read_file_tool,
-        write_file_tool,
-        skill_view_tool,
-        skills_list_tool,
-        skill_manage_tool,
-        terminal_execute_tool,
-        terminal_execute_background_tool,
-    ]
-    if web_search:
-        tools.insert(0, web_search_tool)
+    tools, skill_context = _build_tools_only(skills, web_search)
 
     llm = None
     graph = None
@@ -177,9 +178,6 @@ def _build_initial_state(
     except Exception as e:
         console.print(
             f"[{WARNING}]⚠ No se pudo inicializar el provider: {e}[/{WARNING}]"
-        )
-        console.print(
-            f"[dim]Usá /provider para configurar un provider válido.[/dim]"
         )
 
     return SessionState(

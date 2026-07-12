@@ -19,7 +19,7 @@ from datetime import datetime
 from rich.console import Console
 from rich.rule import Rule
 
-from sparta_ai.cli.banner import print_welcome_banner, build_provider_warning
+from sparta_ai.cli.banner import print_welcome_banner
 from sparta_ai.cli.commands import build_registry, CommandRegistry
 from sparta_ai.cli.completion import SlashCommandCompleter
 from sparta_ai.cli.session.state import SessionState
@@ -154,12 +154,15 @@ async def run_repl(
             continue
 
         # ── 4b. Agent turn ─────────────────────────────────────────
-        # Do NOT increment turn_count if graph is None (v2 spec 5.3)
+        # No provider → short message, no traceback, no dead-end.
+        # User's input stays in prompt_toolkit history (arrow up recovers it).
+        # Turn counter NOT incremented — this wasn't a real agent turn.
         if state.graph is None:
-            warning = build_provider_warning(
-                "No hay provider configurado. Usá /provider para configurar uno."
+            console.print(
+                f"[{WARNING}]⚠ Todavía no tenés un proveedor conectado.[/{WARNING}]\n"
+                f"[dim {MUTED}]Usá /provider para elegir uno "
+                f"(Anthropic, OpenAI, Google, Ollama local, etc.)[/]"
             )
-            console.print(warning)
             console.print()
             continue
 

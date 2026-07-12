@@ -16,9 +16,13 @@ console = Console()
 
 
 async def _cmd_provider(state: "SessionState", args: str) -> None:
-    """Run the interactive provider setup and rebuild the graph."""
+    """Run the interactive provider setup and rebuild the graph.
+
+    Health check for local providers (Ollama, LM Studio, llama.cpp) only runs
+    here — after the user explicitly chose the provider. Never at startup.
+    """
     from sparta_ai.cli.providers.setup import provider_setup_flow
-    from sparta_ai.config.providers import build_llm
+    from sparta_ai.config.providers import build_llm, check_provider_health
     from sparta_ai.agents.sparta_agent import build_sparta_graph
     from sparta_ai.persistence.sqlite_store import get_checkpointer
 
@@ -55,6 +59,12 @@ async def _cmd_provider(state: "SessionState", args: str) -> None:
             f"[{SUCCESS}]✓ Provider: {state.provider} ({state.vendor}) — "
             f"Modelo: {state.model}[/{SUCCESS}]"
         )
+
+        # Health check ONLY here, ONLY for explicitly chosen local providers
+        if state.vendor in ("ollama", "lmstudio", "llamacpp"):
+            health_warning = check_provider_health(state.provider, state.vendor)
+            if health_warning:
+                console.print(f"[{WARNING}]⚠ {health_warning}[/{WARNING}]")
     except Exception as e:
         console.print(f"[{WARNING}]⚠ Error al conectar: {e}[/{WARNING}]")
         state.graph = None

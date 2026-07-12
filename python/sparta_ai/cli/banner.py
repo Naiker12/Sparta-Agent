@@ -129,8 +129,8 @@ def print_welcome_banner(
     print_title(console)
     console.print()
 
-    # ── 2. Session panel ─────────────────────────────────────────────
-    _print_session_panel(console, model, provider, cwd, session_id)
+    # ── 2. Session + tips panels (Claude Code style) ─────────────────
+    _print_session_and_tips(console, model, provider, cwd, session_id)
 
     # ── 3. Tools / Skills panel ──────────────────────────────────────
     _print_tools_skills_panel(console, tools or [], tool_count)
@@ -145,7 +145,12 @@ def print_welcome_banner(
     console.print()
 
     # ── 5. Welcome message ───────────────────────────────────────────
-    console.print(f"[bold {ACCENT}]Escribí tu mensaje. /help para ver comandos.[/]")
+    if provider:
+        console.print(f"[bold {ACCENT}]Escribí tu mensaje. /help para ver comandos.[/]")
+    else:
+        console.print(
+            f"[bold {ACCENT}]Escribí tu mensaje o /provider para conectar un proveedor.[/]"
+        )
     console.print()
 
     # ── 6. Provider warning (if any) ─────────────────────────────────
@@ -160,37 +165,45 @@ def print_welcome_banner(
         console.print()
 
 
-def _print_session_panel(console, model: str, provider: str, cwd: str, session_id: str) -> None:
-    """Print a compact 2-column session info panel."""
+def _print_session_and_tips(console, model: str, provider: str, cwd: str, session_id: str) -> None:
+    """Two side-by-side panels: Sesión (left) | Empezar (right) — Claude Code style."""
+    from rich.columns import Columns
+
+    has_provider = bool(provider)
     model_short = model.split("/")[-1] if "/" in model else model
     if len(model_short) > 28:
         model_short = model_short[:25] + "..."
 
-    configured = count_configured()
-    total = vendor_count()
-
-    table = Table.grid(padding=(0, 4))
-    table.add_column("left", justify="left", no_wrap=True)
-    table.add_column("right", justify="left", no_wrap=True)
-
-    left = (
-        f"[bold {ACCENT}]{model_short}[/] · [dim {MUTED}]{provider}[/]\n"
-        f"[dim {MUTED}]Session {session_id}[/]"
-    )
-    right = (
-        f"[dim {MUTED}]{cwd}[/]\n"
-        f"[{OK}]{configured}[/] de {total} providers con key"
-    )
-    table.add_row(left, right)
-
-    console.print(
-        Panel(
-            table,
-            title=f"[dim {ACCENT_DIM}]Sesión[/]",
-            border_style=ACCENT_DIM,
-            padding=(0, 2),
+    if has_provider:
+        session_body = (
+            f"[bold {ACCENT}]{model_short}[/] · [dim {MUTED}]{provider}[/]\n"
+            f"[dim {MUTED}]{cwd}[/]\n"
+            f"[dim {MUTED}]Session {session_id}[/]"
         )
-    )
+    else:
+        session_body = (
+            f"[dim {MUTED}]Sin provider conectado[/]\n"
+            f"[dim {MUTED}]{cwd}[/]\n"
+            f"[dim {MUTED}]Session {session_id}[/]"
+        )
+
+    if has_provider:
+        tips_lines = (
+            f"[bold]/help[/]       ver todos los comandos\n"
+            f"[bold]/model[/]      elegir modelo\n"
+            f"[bold]/provider[/]   cambiar proveedor"
+        )
+    else:
+        tips_lines = (
+            f"[bold]/provider[/]   conectar un proveedor\n"
+            f"[bold]/help[/]       ver todos los comandos\n"
+            f"[bold]/model[/]      elegir modelo (una vez conectado)"
+        )
+
+    left = Panel(session_body, title=f"[dim {ACCENT_DIM}]Sesión[/]", border_style=ACCENT_DIM, padding=(0, 2))
+    right = Panel(tips_lines, title=f"[dim {ACCENT_DIM}]Empezar[/]", border_style=ACCENT_DIM, padding=(0, 2))
+
+    console.print(Columns([left, right], equal=True, expand=True))
     console.print()
 
 
