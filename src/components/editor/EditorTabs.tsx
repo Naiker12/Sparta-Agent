@@ -19,6 +19,10 @@ interface EditorTabsProps {
   onCloseAll?: () => void
   onCloseOthers?: (path: string) => void
   onReorder?: (from: number, to: number) => void
+  /** Paths currently being edited by the agent (pulsing indicator) */
+  agentEditingPaths?: Set<string>
+  /** Paths with pending diffs awaiting review */
+  diffsPending?: Set<string>
 }
 
 interface TabContextMenu {
@@ -30,6 +34,7 @@ interface TabContextMenu {
 export function EditorTabs({
   tabs, activePath, onSelect, onClose,
   pinnedPaths = new Set(), onTogglePin, onCloseAll, onCloseOthers, onReorder,
+  agentEditingPaths = new Set(), diffsPending = new Set(),
 }: EditorTabsProps) {
   const [ctx, setCtx] = useState<TabContextMenu | null>(null)
   const [dragIdx, setDragIdx] = useState<number | null>(null)
@@ -81,6 +86,8 @@ export function EditorTabs({
         {ordered.map((tab, idx) => {
           const isActive = tab.path === activePath
           const isPinned = pinnedPaths.has(tab.path)
+          const isAgentEditing = agentEditingPaths.has(tab.path)
+          const isPendingDiff = diffsPending.has(tab.path)
           return (
             <div
               key={tab.path}
@@ -118,8 +125,42 @@ export function EditorTabs({
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
+                position: 'relative',
               }}>
                 {tab.name}
+                {/* Agent editing indicator: pulsing orange dot */}
+                {isAgentEditing && (
+                  <span
+                    style={{
+                      position: 'absolute',
+                      right: -6,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      width: 6,
+                      height: 6,
+                      borderRadius: '50%',
+                      background: 'var(--accent)',
+                      animation: 'pulse 1.5s ease-in-out infinite',
+                    }}
+                    title="Agente editando..."
+                  />
+                )}
+                {/* Pending diff review indicator: solid orange dot */}
+                {isPendingDiff && !isAgentEditing && (
+                  <span
+                    style={{
+                      position: 'absolute',
+                      right: -6,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      width: 6,
+                      height: 6,
+                      borderRadius: '50%',
+                      background: 'var(--status-warn)',
+                    }}
+                    title="Pendiente de revisión"
+                  />
+                )}
                 {tab.modified && <span style={{ color: 'var(--status-warn)', marginLeft: 3 }}>●</span>}
               </span>
               <button

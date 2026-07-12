@@ -7,10 +7,14 @@ import { toast } from 'sonner'
 import { useUIStore } from '@/stores/ui.store'
 import { useProjectStore } from '@/stores/project.store'
 import { useEditorStore } from '@/stores/editor.store'
+import { useDiffReviewStore } from '@/stores/diff-review.store'
 import { useEventBusListener } from '@/hooks/useEventBus'
+import { useEventBus } from '@/stores/event-bus.store'
 import { FileTreeSidebar } from './FileTreeSidebar'
 import { EditorTabs } from './EditorTabs'
 import { MonacoEditor } from './MonacoEditor'
+import { DiffReviewTab } from './DiffReviewTab'
+import { InlineAskWidget } from './InlineAskWidget'
 import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog'
 import type { FileTreeNode } from '@/types'
 
@@ -32,11 +36,19 @@ export function EditorPanel() {
   const [openFiles, setOpenFiles] = useState<OpenFile[]>([])
   const [activePath, setActivePath] = useState<string | undefined>()
   const [pinnedPaths, setPinnedPaths] = useState<Set<string>>(new Set())
+  // Agent editing state: toolCallId → filePath for currently-in-progress edits
+  const [agentEditing, setAgentEditing] = useState<Map<string, string>>(new Map())
+  const [agentEditingPaths, setAgentEditingPaths] = useState<Set<string>>(new Set())
   const [deleteTarget, setDeleteTarget] = useState<FileTreeNode | null>(null)
   const [closingUnsavedPath, setClosingUnsavedPath] = useState<string | null>(null)
   const [cursorPos, setCursorPos] = useState({ line: 1, col: 1 })
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null)
   const treeKey = useRef(0)
+  // Inline ask widget state
+  const [inlineAsk, setInlineAsk] = useState<{
+    selection: { startLineNumber: number; startColumn: number; endLineNumber: number; endColumn: number }
+    selectedText: string
+  } | null>(null)
   // Track files we just saved ourselves, to distinguish our own writes from external/agent writes
   const recentlySavedRef = useRef<Set<string>>(new Set())
   const handleEditorMount = useCallback((ed: editor.IStandaloneCodeEditor) => {
@@ -46,7 +58,36 @@ export function EditorPanel() {
     })
   }, [])
 
+  const handleInlineAsk = useCallback((
+    selection: { startLineNumber: number; startColumn: number; endLineNumber: number; endColumn: number },
+    selectedText: string
+  ) => {
+    setInlineAsk({ selection, selectedText })
+  }, [])
+
+  const handleCloseInlineAsk = useCallback(() => {
+    setInlineAsk(null)
+  }, [])
+
   const activeFile = openFiles.find((f) => f.path === activePath)
+
+  // Derive diff tab presence from store
+  const { activeProposal } = useDiffReviewStore()
+  const hasActiveDiff = activeProposal !== null
+
+  // Active tab path — either a normal file or diff: prefix
+  let activeTab: { kind: 'file'; path: string } | { kind: 'diff' }
+  if (activePath && activePath.startsWith('diff:')) {
+    activeTab = { kind: 'diff' }
+  } else if (activePath) {
+    activeTab = { kind: 'file', path: activePath }
+  } else if (hasActiveDiff) {
+    activeTab = { kind: 'diff' }
+  } else if (activeFile) {
+    activeTab = { kind: 'file', path: activeFile.path }
+  } else {
+    activeTab = { kind: 'file', path: '' }
+  }
 
   // Sync open files to global store (single source of truth for the agent)
   // Using a ref to avoid the extra render cycle from useEffect
@@ -201,10 +242,65 @@ export function EditorPanel() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [handleKeyDown])
 
-  // Listen for editor:open_file events (from DiffProposalDialog after approving a change)
+  // Listen for editor:open_file events (from DiffReviewTab after approving a change)
   useEventBusListener('editor:open_file', (data: { filePath?: string } | unknown) => {
     const filePath = (data as { filePath?: string })?.filePath
     if (filePath) openFile(filePath)
+  })
+
+  // Listen for editor:diff_proposed — open the diff tab
+  useEventBusListener('editor:diff_proposed', () => {
+    // Switch to diff tab to show the current proposal
+    // The diff tab is virtual — it uses 'diff:active' as its path
+    setActivePath('diff:active')
+  })
+
+  // Listen for tool:called / tool:result to track agent editing state
+  useEventBusListener('tool:called', (data: Record<string, unknown> | unknown) => {
+    const evt = data as Record<string, unknown>
+    const name = (evt.name ?? evt.toolName ?? '') as string
+    const id = (evt.toolCallId ?? evt.tool_call_id ?? evt.id ?? '') as string
+    if (!name || !id) return
+    // Extract file path from tool input
+    const input = evt.input as Record<string, unknown> | undefined
+    const filePath = (input?.path ?? input?.file_path ?? '') as string | undefined
+    if (!filePath) return
+
+    setAgentEditing((prev) => {
+      const next = new Map(prev)
+      next.set(id, filePath)
+      return next
+    })
+    setAgentEditingPaths((prev) => {
+      const next = new Set(prev)
+      next.add(filePath)
+      return next
+    })
+
+    // Auto-open the file being edited (read-only preview)
+    openFile(filePath)
+  })
+
+  useEventBusListener('tool:result', (data: Record<string, unknown> | unknown) => {
+    const evt = data as Record<string, unknown>
+    const id = (evt.toolCallId ?? evt.tool_call_id ?? evt.id ?? '') as string
+    if (!id) return
+
+    const filePath = agentEditing.get(id)
+    setAgentEditing((prev) => {
+      const next = new Map(prev)
+      next.delete(id)
+      return next
+    })
+    if (filePath) {
+      setAgentEditingPaths((prev) => {
+        const next = new Set(prev)
+        // Only remove if no other active edits for this path
+        const stillEditing = Array.from(agentEditing.values()).filter((p) => p === filePath && p !== id)
+        if (stillEditing.length === 0) next.delete(filePath)
+        return next
+      })
+    }
   })
 
   // BUG-ED1 fix: Detect external file changes for open files
@@ -253,11 +349,18 @@ export function EditorPanel() {
     })
   })
 
-  const tabs = openFiles.map((f) => ({
-    path: f.path,
-    name: f.name,
-    modified: f.content !== f.originalContent,
-  }))
+  const tabs = [
+    // Show diff tab if there's an active proposal
+    ...(hasActiveDiff
+      ? [{ path: 'diff:active', name: 'Cambio propuesto', modified: false } as const]
+      : []),
+    // Regular open files
+    ...openFiles.map((f) => ({
+      path: f.path,
+      name: f.name,
+      modified: f.content !== f.originalContent,
+    })),
+  ]
 
   return (
     <div className="editor-panel" style={{ flex: 1, display: 'flex', flexDirection: 'row', height: '100%', minHeight: 0 }}>
@@ -307,23 +410,55 @@ export function EditorPanel() {
           tabs={tabs}
           activePath={activePath}
           onSelect={setActivePath}
-          onClose={closeFile}
+          onClose={(path) => {
+            if (path === 'diff:active') {
+              // Switching away from diff: resolve without action
+              useDiffReviewStore.getState().next()
+              setActivePath(undefined)
+            } else {
+              closeFile(path)
+            }
+          }}
           pinnedPaths={pinnedPaths}
           onTogglePin={handleTogglePin}
           onCloseAll={handleCloseAll}
           onCloseOthers={handleCloseOthers}
           onReorder={handleReorder}
+          agentEditingPaths={agentEditingPaths}
+          diffsPending={useDiffReviewStore.getState().pendingPaths}
         />
-        {activeFile && <Breadcrumb path={activeFile.path} />}
-        {activeFile ? (
+        {activeTab.kind === 'diff' ? (
           <div style={{ flex: 1, minHeight: 0 }}>
-            <MonacoEditor
-              path={activeFile.path}
-              content={activeFile.content}
-              onChange={(value) => updateFileContent(activeFile.path, value)}
-              onMount={handleEditorMount}
-            />
+            <DiffReviewTab />
           </div>
+        ) : activeTab.kind === 'file' && activeFile ? (
+          <>
+            <Breadcrumb path={activeFile.path} />
+            <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
+              <MonacoEditor
+                path={activeFile.path}
+                content={activeFile.content}
+                onChange={(value) => updateFileContent(activeFile.path, value)}
+                onMount={handleEditorMount}
+                onInlineAsk={handleInlineAsk}
+              />
+              {inlineAsk && activeFile && (
+                <InlineAskWidget
+                  editor={editorRef.current!}
+                  selection={inlineAsk.selection}
+                  filePath={activeFile.path}
+                  selectedText={inlineAsk.selectedText}
+                  language={activeFile.path.split('.').pop()?.toLowerCase() ?? 'plaintext'}
+                  onClose={handleCloseInlineAsk}
+                />
+              )}
+            </div>
+            <StatusBar
+              path={activeFile.path}
+              line={cursorPos.line}
+              col={cursorPos.col}
+            />
+          </>
         ) : (
           <div style={{ flex: 1, minHeight: 0 }}>
             <MonacoEditor onMount={handleEditorMount} />
@@ -332,13 +467,6 @@ export function EditorPanel() {
               onClose={toggleEditor}
             />
           </div>
-        )}
-        {activeFile && (
-          <StatusBar
-            path={activeFile.path}
-            line={cursorPos.line}
-            col={cursorPos.col}
-          />
         )}
       </div>
 
