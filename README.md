@@ -289,5 +289,5 @@ MIT
 ---
 
 <div align="center">
-  <sub>Hecho con disciplina espartana.</sub>
+  <sub>Hecho con disciplina espartana..</sub>
 </div>
