@@ -1,10 +1,10 @@
 import logging
 import random
-import re
 from html import unescape
 from urllib.parse import urlparse, parse_qs, unquote
 
 import httpx
+from selectolax.parser import HTMLParser
 
 logger = logging.getLogger("sparta_ai.tools.web_search_providers")
 
@@ -16,10 +16,6 @@ _USER_AGENTS = [
 ]
 
 _DDG_URL = "https://html.duckduckgo.com/html/"
-
-
-def _clean_html(html: str) -> str:
-    return unescape(re.sub(r"<[^>]+>", "", html)).strip()
 
 
 def _resolve_ddg_url(url: str) -> str:
@@ -34,6 +30,10 @@ def _resolve_ddg_url(url: str) -> str:
 
 def duckduckgo_search(query: str, count: int = 5, freshness: str | None = None) -> list[dict]:
     """Search via DuckDuckGo HTML endpoint. No API key required.
+
+    Uses selectolax (fast HTML parser) instead of fragile regex patterns
+    to extract search results. This eliminates the "cross-contamination"
+    bug where regex would mix titles and snippets between adjacent results.
 
     Args:
         query: Search terms.
@@ -67,67 +67,79 @@ def duckduckgo_search(query: str, count: int = 5, freshness: str | None = None) 
 
     text = resp.text
 
+    # Detect CAPTCHA challenge
     if "captcha" in text.lower() or "challenge" in text.lower():
         logger.warning("DuckDuckGo returned a CAPTCHA challenge")
         return []
 
+    # Parse HTML with selectolax parser (replaces all three regex patterns)
+    tree = HTMLParser(text)
     results: list[dict] = []
     seen_urls: set[str] = set()
 
-    # Pattern 1: Modern DDG HTML (result__a + result__snippet)
-    pattern1 = re.compile(
-        r'class="result__a"[^>]*href="([^"]+)"[^>]*>(.*?)</a>.*?'
-        r'class="result__snippet"[^>]*>(.*?)</a>',
-        re.DOTALL,
-    )
+    # Primary selector: DDG HTML typically uses div.result wrappers
+    for node in tree.css("div.result"):
+        a = node.css_first("a.result__a")
+        if not a:
+            continue
 
-    # Pattern 2: Alternative DDG HTML (result__title + result__snippet)
-    pattern2 = re.compile(
-        r'class="result__title"[^>]*>.*?href="([^"]+)"[^>]*>(.*?)</a>.*?'
-        r'class="result__snippet"[^>]*>(.*?)</(?:a|span|div)',
-        re.DOTALL,
-    )
+        url = a.attributes.get("href", "").strip()
+        url = _resolve_ddg_url(url)
 
-    # Pattern 3: Links with article heading (fallback)
-    pattern3 = re.compile(
-        r'<a[^>]*class="[^"]*result[^"]*"[^>]*href="([^"]+)"[^>]*>(.*?)</a>',
-        re.DOTALL,
-    )
+        if not url.startswith("http") or url in seen_urls:
+            continue
+        seen_urls.add(url)
 
-    for pattern in (pattern1, pattern2):
-        for url, title, snippet in pattern.findall(text):
-            url = url.strip()
-            url = _resolve_ddg_url(url)
-            if url in seen_urls:
-                continue
-            seen_urls.add(url)
-            title_clean = _clean_html(title)[:200]
-            snippet_clean = _clean_html(snippet)[:300]
-            if title_clean and url.startswith("http"):
-                results.append({
-                    "title": title_clean,
-                    "url": url,
-                    "snippet": snippet_clean,
-                })
-            if len(results) >= count:
-                return results
+        title = a.text(strip=True)[:200]
 
-    # Pattern 3 fallback: extract from generic result links
+        # Snippet can be in result__snippet (modern) or snippet (legacy)
+        snippet_node = node.css_first(".result__snippet") or node.css_first(".snippet")
+        snippet = snippet_node.text(strip=True)[:300] if snippet_node else ""
+
+        results.append({
+            "title": title or "Sin título",
+            "url": url,
+            "snippet": snippet or "",
+        })
+
+        if len(results) >= count:
+            break
+
+    # Fallback: try older DDG markup structure with result__title
     if len(results) < count:
-        for match in pattern3.finditer(text):
-            url = match.group(1).strip()
+        for node in tree.css("div.result"):
+            a = node.css_first("a.result__title")
+            if not a:
+                continue
+
+            url = a.attributes.get("href", "").strip()
             url = _resolve_ddg_url(url)
-            if url in seen_urls or not url.startswith("http"):
+
+            if not url.startswith("http") or url in seen_urls:
                 continue
             seen_urls.add(url)
-            title_clean = _clean_html(match.group(2))[:200]
-            if title_clean:
-                results.append({
-                    "title": title_clean,
-                    "url": url,
-                    "snippet": "",
-                })
+
+            title = a.text(strip=True)[:200]
+            snippet_node = node.css_first("div.snippet") or node.css_first(".result__snippet")
+            snippet = snippet_node.text(strip=True)[:300] if snippet_node else ""
+
+            results.append({
+                "title": title or "Sin título",
+                "url": url,
+                "snippet": snippet or "",
+            })
+
             if len(results) >= count:
-                return results
+                break
+
+    # If we got zero results and the HTML doesn't look like a CAPTCHA,
+    # raise RuntimeError so the caller can distinguish "0 results" from
+    # "DDG changed their HTML markup".
+    if len(results) == 0 and "result" not in text:
+        raise RuntimeError(
+            "DuckDuckGo HTML structure appears to have changed. "
+            "No 'result' class elements found and no CAPTCHA detected. "
+            "The selectolax parser needs to be updated."
+        )
 
     return results
