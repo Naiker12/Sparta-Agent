@@ -291,4 +291,9 @@ export const es = {
     showTools: 'Mostrar tools',
     availableTools: 'Herramientas disponibles',
   },
+  editor: {
+    fsNotAvailable: 'Sistema de archivos no disponible',
+    folderOpened: 'Carpeta del proyecto abierta',
+    folderOpenFailed: 'No se pudo abrir la carpeta',
+  },
 }

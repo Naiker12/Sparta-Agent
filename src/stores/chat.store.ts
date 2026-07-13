@@ -466,9 +466,21 @@ export const useChatStore = create<ChatState>()(
           return {
             messagesBySession: {
               ...s.messagesBySession,
-              [sessionId]: sessionMessages.map((msg) =>
-                msg.id === messageId ? { ...msg, thinkingStatus: 'completed' as ThinkingStatus, thinkingTokensUsed: tokensUsed } : msg
-              ),
+              [sessionId]: sessionMessages.map((msg) => {
+                if (msg.id !== messageId) return msg
+                // Close any open reasoning part so the next thinking:started creates a new one
+                const parts = msg.parts ?? []
+                let updatedParts = parts
+                const lastPart = parts.length > 0 ? parts[parts.length - 1] : null
+                if (lastPart && lastPart.kind === 'reasoning' && !lastPart.completedAt) {
+                  updatedParts = [...parts]
+                  updatedParts[updatedParts.length - 1] = {
+                    ...lastPart,
+                    completedAt: Date.now(),
+                  } as MessagePart
+                }
+                return { ...msg, thinkingStatus: 'completed' as ThinkingStatus, thinkingTokensUsed: tokensUsed, parts: updatedParts }
+              }),
             },
           }
         }),

@@ -56,6 +56,12 @@ app.add_middleware(
 )
 
 
+@app.on_event("shutdown")
+async def _shutdown_mcp():
+    from sparta_ai.tools.mcp_manager import mcp_manager
+    await mcp_manager.disconnect_all()
+
+
 def _check_origin(websocket: WebSocket) -> bool:
     origin = websocket.headers.get("origin") or websocket.headers.get("sec-websocket-origin", "")
     if not origin:

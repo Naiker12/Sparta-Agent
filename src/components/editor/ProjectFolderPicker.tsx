@@ -1,6 +1,7 @@
 import { FolderOpen } from 'lucide-react'
-import { toast } from 'sonner'
 import { useProjectStore } from '@/stores/project.store'
+import { useTranslation } from '@/i18n'
+import { toastReplace } from '@/lib/toast-helpers'
 
 interface ProjectFolderPickerProps {
   projectId: string
@@ -8,20 +9,23 @@ interface ProjectFolderPickerProps {
 
 export function ProjectFolderPicker({ projectId }: ProjectFolderPickerProps) {
   const setProjectRootPath = useProjectStore((s) => s.setProjectRootPath)
+  const { t } = useTranslation()
 
   async function handleOpenFolder() {
     if (!window.fs) {
-      toast.error('File system not available')
+      toastReplace('error', 'folder-picker', t('editor.fsNotAvailable'))
       return
     }
     try {
       const path = await window.fs.openFolderDialog()
       if (path) {
         setProjectRootPath(projectId, path)
-        toast.success('Project folder opened')
+        toastReplace('success', 'folder-picker', t('editor.folderOpened'))
       }
     } catch (err) {
-      toast.error('Failed to open folder', { description: (err as Error).message })
+      toastReplace('error', 'folder-picker', t('editor.folderOpenFailed'), {
+        description: (err as Error).message,
+      })
     }
   }
 

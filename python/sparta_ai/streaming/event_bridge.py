@@ -401,8 +401,10 @@ async def _dispatch_event_core(
     # ── on_tool_error ───────────────────────────────────────────────
     elif kind == "on_tool_error":
         tool_call_id = event.get("run_id", "unknown")
+        from sparta_ai.errors.user_messages import to_user_message
+        raw_error = str(data.get("error", "Tool execution failed"))
         emit_control_fn(*tool_events.tool_error(
-            base_payload, name, str(data.get("error", "Tool execution failed")), tool_call_id,
+            base_payload, name, to_user_message(raw_error), tool_call_id,
         ))
 
     # ── on_chain_start — status messages ────────────────────────────
@@ -417,7 +419,7 @@ async def _dispatch_event_core(
         if status_text:
             emit_control_fn(*reasoning_events.thinking_status(base_payload, status_text))
 
-    # ── on_custom_event — search progress, thinking status ──────────
+    # ── on_custom_event — search progress, thinking status, subagent lifecycle ──
     elif kind == "on_custom_event":
         if name == "tool_progress":
             emit_control_fn(*search_events.search_progress(base_payload, data))
@@ -425,6 +427,16 @@ async def _dispatch_event_core(
             text = data.get("text") if isinstance(data, dict) else None
             if text:
                 emit_control_fn(*reasoning_events.thinking_status(base_payload, text))
+        elif name in ("subagent:started", "subagent:thinking", "subagent:completed"):
+            from sparta_ai.streaming.emitters import subagent_events
+            if isinstance(data, dict):
+                sub_name = data.get("subagentName", "")
+                if name == "subagent:started":
+                    emit_control_fn(*subagent_events.subagent_started(base_payload, sub_name, data.get("taskSummary", "")))
+                elif name == "subagent:thinking":
+                    emit_control_fn(*subagent_events.subagent_thinking(base_payload, sub_name, data.get("statusText", "")))
+                elif name == "subagent:completed":
+                    emit_control_fn(*subagent_events.subagent_completed(base_payload, sub_name, data.get("durationMs", 0), data.get("success", False)))
 
     # ── on_chain_end — plan events + stream completion ──────────────
     elif kind == "on_chain_end" and name in ("agent", "tools", "subagent_coordinator"):
@@ -504,8 +516,9 @@ async def _run_single_stream(
                 return None
     except Exception as e:
         logger.exception("Stream error")
-        _emit(request_id, "error", {"code": "stream_error", "message": str(e)})
-        _emit(request_id, "stream_end", {"error": str(e)})
+        from sparta_ai.errors.user_messages import to_user_message
+        _emit(request_id, "error", {"code": "stream_error", "message": to_user_message(str(e))})
+        _emit(request_id, "stream_end", {"error": to_user_message(str(e))})
         return None
     return stream_state
 
@@ -596,8 +609,9 @@ async def stream_agent_to_websocket(
             await _dispatch_event_core(_ws_emit, _ws_emit, event, stream_state, request_id)
     except Exception as e:
         logger.exception("Stream error")
+        from sparta_ai.errors.user_messages import to_user_message
         adapted = _ws_adapt("stream:error", {
-            "error": str(e),
+            "error": to_user_message(str(e)),
             "sessionId": session_id,
             "messageId": message_id,
         })

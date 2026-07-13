@@ -227,7 +227,7 @@ export function AppShell() {
       {isDraggingEditor && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 99999, cursor: 'col-resize', background: 'transparent' }} />
       )}
-      <Toaster position="bottom-right" richColors closeButton />
+      <Toaster position="top-center" richColors closeButton />
       <PermissionRequestDialog />
       <DiffProposalDialog />
     </div>

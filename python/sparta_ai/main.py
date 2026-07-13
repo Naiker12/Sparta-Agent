@@ -1,9 +1,10 @@
-import os
-import sys
-import json
-import signal
-import logging
+import argparse
 import io
+import json
+import logging
+import os
+import signal
+import sys
 
 # Red de seguridad: asegura que la carpeta padre (python/) esté en sys.path
 # para que el paquete sparta_ai se resuelva correctamente sin depender del cwd.
@@ -52,6 +53,22 @@ def _emit_ready():
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Sparta AI Sidecar")
+    parser.add_argument(
+        "--mcp-server",
+        action="store_true",
+        help="Run as an MCP server (stdio) exposing curated Sparta tools to external clients.",
+    )
+    args = parser.parse_args()
+
+    if args.mcp_server:
+        logger.info("Starting Sparta MCP Server mode")
+        import asyncio
+
+        from sparta_ai.mcp_server.server import run_stdio_server
+        asyncio.run(run_stdio_server())
+        return
+
     logger.info("Starting Sparta AI Sidecar (Python + LangGraph)")
 
     server = StdioServer()

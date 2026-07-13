@@ -291,4 +291,9 @@ export const en = {
     showTools: 'Show tools',
     availableTools: 'Available tools',
   },
+  editor: {
+    fsNotAvailable: 'File system not available',
+    folderOpened: 'Project folder opened',
+    folderOpenFailed: 'Failed to open folder',
+  },
 }

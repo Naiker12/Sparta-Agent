@@ -64,6 +64,78 @@ describe('chat store deletion', () => {
     expect(afterEnd?.thinkingTokensUsed).toBe(42)
   })
 
+  it('thinking intercalado crea reasoning parts separados (think → text → think)', () => {
+    const sid = useSessionStore.getState().createSession('Test')
+    const msg = createMessage(sid, 'assistant', '')
+    msg.isStreaming = true
+    useChatStore.getState().addMessage(msg)
+    const mid = msg.id
+
+    const getMsg = () => useChatStore.getState().messagesBySession[sid].find((m) => m.id === mid)!
+    const getReasoningPart = (i: number) => getMsg().parts![i] as Extract<import('@/types').MessagePart, { kind: 'reasoning' }>
+
+    // ── Primer ciclo de thinking ──
+    useChatStore.getState().onThinkingStart(sid, mid)
+    useChatStore.getState().appendThinking(sid, mid, 'analizo el request', 1)
+    useChatStore.getState().appendThinking(sid, mid, ', veo que falta algo', 2)
+
+    expect(getMsg().parts).toHaveLength(1)
+    expect(getReasoningPart(0).kind).toBe('reasoning')
+    expect(getReasoningPart(0).completedAt).toBeUndefined()
+    expect(getReasoningPart(0).text).toBe('analizo el request, veo que falta algo')
+
+    // ── thinking:completed cierra el primer reasoning part ──
+    useChatStore.getState().onThinkingEnd(sid, mid, 10)
+
+    expect(getMsg().thinkingStatus).toBe('completed')
+    expect(getMsg().parts).toHaveLength(1)
+    expect(getReasoningPart(0).completedAt).toBeDefined()
+
+    // ── Segundo ciclo de thinking (simula modelo que piensa de nuevo a mitad de respuesta) ──
+    useChatStore.getState().onThinkingStart(sid, mid)
+    useChatStore.getState().appendThinking(sid, mid, 'ahora busco archivos', 3)
+    useChatStore.getState().appendThinking(sid, mid, ' relevantes', 4)
+
+    expect(getMsg().parts).toHaveLength(2)
+    // Primer part sigue cerrado
+    expect(getReasoningPart(0).completedAt).toBeDefined()
+    // Segundo part está abierto
+    expect(getReasoningPart(1).kind).toBe('reasoning')
+    expect(getReasoningPart(1).completedAt).toBeUndefined()
+    expect(getReasoningPart(1).text).toBe('ahora busco archivos relevantes')
+    // reasoningText acumula todo
+    expect(getMsg().reasoningText).toBe('analizo el request, veo que falta algoahora busco archivos relevantes')
+
+    // ── thinking:completed cierra el segundo reasoning part ──
+    useChatStore.getState().onThinkingEnd(sid, mid, 25)
+
+    expect(getMsg().thinkingStatus).toBe('completed')
+    expect(getMsg().parts).toHaveLength(2)
+    expect(getReasoningPart(0).completedAt).toBeDefined()
+    expect(getReasoningPart(1).completedAt).toBeDefined()
+    expect(getMsg().thinkingTokensUsed).toBe(25)
+  })
+
+  it('onThinkingEnd cierra el reasoning part abierto con completedAt', () => {
+    const sid = useSessionStore.getState().createSession('Test')
+    const msg = createMessage(sid, 'assistant', '')
+    msg.isStreaming = true
+    useChatStore.getState().addMessage(msg)
+    const mid = msg.id
+
+    useChatStore.getState().onThinkingStart(sid, mid)
+    useChatStore.getState().appendThinking(sid, mid, 'pensando', 1)
+
+    const getPart = () => useChatStore.getState().messagesBySession[sid].find((m) => m.id === mid)!.parts![0] as Extract<import('@/types').MessagePart, { kind: 'reasoning' }>
+    expect(getPart().completedAt).toBeUndefined()
+
+    useChatStore.getState().onThinkingEnd(sid, mid, 5)
+
+    expect(getPart().completedAt).toBeDefined()
+    const afterState = useChatStore.getState().messagesBySession[sid].find((m) => m.id === mid)
+    expect(afterState?.thinkingStatus).toBe('completed')
+  })
+
   it('deleteMessage removes a single message and decrements count', () => {
     const sid = useSessionStore.getState().createSession('Test')
     const msg = createMessage(sid)

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { FolderOpen, RefreshCw } from 'lucide-react'
-import { toast } from 'sonner'
+import { toastReplace } from '@/lib/toast-helpers'
 import type { FileTreeNode } from '@/types'
 import { useProjectStore } from '@/stores/project.store'
 import { useEventBusListener } from '@/hooks/useEventBus'
@@ -24,8 +24,20 @@ export function FileTreeSidebar({ activePath, onSelectFile, onDeleteFile }: File
     if (!activeProject?.rootPath || !window.fs) return
     setLoading(true)
     try {
-      const nodes = await window.fs.readDir(activeProject.rootPath)
-      setTree(nodes)
+      const result = await window.fs.readDir(activeProject.rootPath)
+      // Support both old format (array) and new format ({ nodes, error })
+      if (Array.isArray(result)) {
+        setTree(result)
+      } else if (result && typeof result === 'object') {
+        const { nodes, error } = result as { nodes?: FileTreeNode[]; error?: string }
+        if (error) {
+          toastReplace('error', 'load-tree', `Error cargando proyecto: ${error}`)
+        }
+        setTree(nodes ?? [])
+      }
+    } catch (err) {
+      toastReplace('error', 'load-tree', `Error cargando archivos: ${err instanceof Error ? err.message : err}`)
+      setTree([])
     } finally {
       setLoading(false)
     }
@@ -67,8 +79,8 @@ export function FileTreeSidebar({ activePath, onSelectFile, onDeleteFile }: File
 
   function handleCopyPath(p: string) {
     navigator.clipboard.writeText(p).then(
-      () => toast.success('Ruta copiada'),
-      () => toast.error('No se pudo copiar'),
+      () => toastReplace('success', 'copy-path', 'Ruta copiada'),
+      () => toastReplace('error', 'copy-path', 'No se pudo copiar'),
     )
   }
 
@@ -79,11 +91,11 @@ export function FileTreeSidebar({ activePath, onSelectFile, onDeleteFile }: File
     if (!window.fs) return
     const res = await window.fs.writeFile(filePath, '')
     if (res.success) {
-      toast.success(`Archivo creado: ${name}`)
+      toastReplace('success', 'create-file', `Archivo creado: ${name}`)
       loadTree()
       onSelectFile(filePath)
     } else {
-      toast.error(`Error: ${res.error}`)
+      toastReplace('error', 'create-file', `Error: ${res.error}`)
     }
   }
 
@@ -94,10 +106,10 @@ export function FileTreeSidebar({ activePath, onSelectFile, onDeleteFile }: File
     if (!window.fs) return
     const res = await window.fs.mkdir(folderPath)
     if (res.success) {
-      toast.success(`Carpeta creada: ${name}`)
+      toastReplace('success', 'create-folder', `Carpeta creada: ${name}`)
       loadTree()
     } else {
-      toast.error(`Error: ${res.error}`)
+      toastReplace('error', 'create-folder', `Error: ${res.error}`)
     }
   }
 

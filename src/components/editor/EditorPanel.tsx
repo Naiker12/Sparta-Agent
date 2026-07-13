@@ -3,13 +3,13 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import type { editor } from 'monaco-editor'
 import { PanelLeft, X, FolderX, ChevronRight } from 'lucide-react'
-import { toast } from 'sonner'
+import { toastReplace } from '@/lib/toast-helpers'
 import { useUIStore } from '@/stores/ui.store'
 import { useProjectStore } from '@/stores/project.store'
 import { useEditorStore } from '@/stores/editor.store'
+import { useSettingsStore } from '@/stores/settings.store'
 import { useDiffReviewStore } from '@/stores/diff-review.store'
 import { useEventBusListener } from '@/hooks/useEventBus'
-import { useEventBus } from '@/stores/event-bus.store'
 import { FileTreeSidebar } from './FileTreeSidebar'
 import { EditorTabs } from './EditorTabs'
 import { MonacoEditor } from './MonacoEditor'
@@ -307,17 +307,25 @@ export function EditorPanel() {
   useEventBusListener('file:changed', (data: { path?: string } | unknown) => {
     const changedPath = (data as { path?: string })?.path
     if (!changedPath || !window.fs) return
-    const openFile = openFiles.find((f) => f.path === changedPath)
-    if (!openFile) return
+    const existingOpen = openFiles.find((f) => f.path === changedPath)
+
+    if (!existingOpen) {
+      // Auto-open files touched by the agent in Build/Agent mode (not read-only chat)
+      const autonomy = useSettingsStore.getState().agentAutonomy
+      if (autonomy !== 'autonomous_readonly') {
+        openFile(changedPath)
+      }
+      return
+    }
 
     // Skip if WE just saved this file (not an external/agent change)
     if (recentlySavedRef.current.has(changedPath)) return
 
     window.fs.readFile(changedPath).then((result) => {
       if (!result.success || result.content === undefined) return
-      if (result.content === openFile.content) return // already up to date
+      if (result.content === existingOpen.content) return // already up to date
 
-      const hasLocalEdits = openFile.content !== openFile.originalContent
+      const hasLocalEdits = existingOpen.content !== existingOpen.originalContent
 
       if (!hasLocalEdits) {
         // No local edits — reload silently (agent edited the file)
@@ -330,8 +338,8 @@ export function EditorPanel() {
         )
       } else {
         // User has local edits — show conflict toast
-        toast.info('Archivo modificado externamente', {
-          description: `${openFile.name} tiene cambios locales y externos.`,
+        toastReplace('info', 'file-external-change', 'Archivo modificado externamente', {
+          description: `${existingOpen.name} tiene cambios locales y externos.`,
           action: {
             label: 'Recargar',
             onClick: () => {

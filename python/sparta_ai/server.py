@@ -54,7 +54,13 @@ class StdioServer:
         self._running = False
         for request_id, task in list(_active_streams.items()):
             task.cancel()
+        # Flush MCP connections before stopping the loop.
         if self._loop and not self._loop.is_closed():
+            try:
+                from sparta_ai.tools.mcp_manager import mcp_manager
+                self._loop.run_until_complete(mcp_manager.disconnect_all())
+            except Exception:
+                pass
             self._loop.stop()
 
     async def _read_loop(self):

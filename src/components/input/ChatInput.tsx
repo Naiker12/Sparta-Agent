@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect } from 'react'
 import { Plus, Mic, ArrowUp, Square, AlertCircle, Eye, EyeOff } from 'lucide-react'
 import { toast } from 'sonner'
+import { toastReplace } from '@/lib/toast-helpers'
 import { useSettingsStore } from '@/stores/settings.store'
 import { useChatStore } from '@/stores/chat.store'
 import { useSessionStore } from '@/stores/session.store'
@@ -301,7 +302,7 @@ export function ChatInput({ className }: ChatInputProps) {
                   onClick={() => {
                     const next = agentAutonomy === 'autonomous_readonly' ? 'ask_risky' : 'autonomous_readonly'
                     setAgentAutonomy(next)
-                    toast.info(next === 'autonomous_readonly' ? 'Modo Plan: solo lectura' : 'Modo Build: ejecutar cambios')
+                    toastReplace('info', 'mode-toggle', next === 'autonomous_readonly' ? 'Modo Plan: solo lectura' : 'Modo Build: ejecutar cambios')
                   }}
                   title={agentAutonomy === 'autonomous_readonly' ? 'Plan mode (read-only)' : 'Build mode (execute changes)'}
                   style={{
