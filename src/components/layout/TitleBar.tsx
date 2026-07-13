@@ -57,7 +57,8 @@ export function TitleBar() {
         borderBottom: '1px solid var(--border-subtle)',
         display: 'flex',
         alignItems: 'center',
-        padding: '0 8px',
+        gap: 4,
+        padding: '0 10px',
         flexShrink: 0,
         userSelect: 'none',
       }}
@@ -100,7 +101,7 @@ export function TitleBar() {
           display: 'flex',
           alignItems: 'center',
           gap: 6,
-          padding: '0 10px',
+          padding: '0 6px',
         }}
       >
         <SpartaIcon size={18} />
@@ -116,7 +117,7 @@ export function TitleBar() {
         </span>
       </div>
 
-      <div style={{ width: 1, height: 18, background: 'var(--border-subtle)', margin: '0 12px' }} />
+      <div style={{ width: 1, height: 18, background: 'var(--border-normal)', margin: '0 10px' }} />
 
       <Tabs value={activeValue} onValueChange={(v) => handleTabClick(v as MainView['type'])}>
         <TabsList
@@ -124,7 +125,7 @@ export function TitleBar() {
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 4,
+            gap: 6,
           }}
         >
           <TabsHighlight
@@ -138,7 +139,7 @@ export function TitleBar() {
                 <TabsTrigger
                   value={tab.type}
                   style={{
-                    padding: '4px 12px',
+                    padding: '5px 14px',
                     background: 'none',
                     border: 'none',
                     borderRadius: 'var(--radius-md)',
