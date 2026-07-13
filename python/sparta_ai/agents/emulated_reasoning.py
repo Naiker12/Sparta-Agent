@@ -4,7 +4,7 @@ For models that don't expose a separate reasoning/thinking channel via API
 (Llama, Mistral, local models via Ollama/LMStudio), this module provides:
 
 1. A system prompt suffix that instructs the model to wrap its reasoning in
-   <tool_call>...</think>` tags.
+   think/thinking/reasoning tags.
 2. A function to extract and strip those tags from the model's output,
    returning the reasoning separately so the frontend can display it in a
    ThinkingBlock just like native reasoning.
@@ -29,24 +29,23 @@ import re
 
 # ── Prompt engineering ───────────────────────────────────────────────────
 
-_REASONING_INSTRUCTION = """
-<reasoning_mode>
+_REASONING_INSTRUCTION = """<reasoning_mode>
 Antes de responder, razoná internamente sobre la tarea. Describí tu análisis,
 las opciones que evaluás, y por qué elegís una estrategia sobre otra.
 
 Usá EXCLUSIVAMENTE estos tags para envolver tu razonamiento:
 
-<tool_call>
+<think>
 [tu razonamiento completo acá]
 </think>
 
 Después del tag de cierre </think>, escribí tu respuesta final visible
 para el usuario. NO repitas en la respuesta visible lo que ya dijiste
-dentro de <tool_call>.
+dentro de <think>.
 
 Ejemplo de formato correcto:
 
-<tool_call>
+<think>
 El usuario quiere agregar autenticación. Evalúo tres opciones:
 1. JWT simple — rápido pero sin refresh token
 2. Session-based — más seguro pero requiere Redis
@@ -55,8 +54,7 @@ Elijo JWT simple porque el proyecto es pequeño y no maneja datos sensibles.
 </think>
 
 Para agregar autenticación con JWT, voy a crear los siguientes archivos...
-</reasoning_mode>
-""".strip()
+</reasoning_mode>"""
 
 # Maximum character length for the emulated thinking block.
 # If the extracted reasoning exceeds this, it gets truncated to avoid
@@ -66,8 +64,8 @@ MAX_REASONING_CHARS = 8_000
 
 # ── Tag detection regex (coordinated with think_scrubber.py) ─────────────
 
-_OPEN_TAG_RE = re.compile(r"<(?:think(?:ing|reasoning)?|tool_call)>", re.IGNORECASE)
-_CLOSE_TAG_RE = re.compile(r"</(?:think(?:ing|reasoning)?|tool_call)>", re.IGNORECASE)
+_OPEN_TAG_RE = re.compile(r"<(?:think(?:ing|reasoning)?)>", re.IGNORECASE)
+_CLOSE_TAG_RE = re.compile(r"</(?:think(?:ing|reasoning)?)>", re.IGNORECASE)
 
 
 # ── Public API ───────────────────────────────────────────────────────────
@@ -104,7 +102,7 @@ def append_reasoning_prompt(base_system: str) -> str:
     If the system prompt already contains the instruction (idempotency
     check), returns it unchanged.
     """
-    if "<tool_call>" in base_system:
+    if "<think>" in base_system or "<thinking>" in base_system:
         return base_system
     return f"{base_system}\n\n{_REASONING_INSTRUCTION}"
 
@@ -114,7 +112,7 @@ def extract_thinking(content: str) -> tuple[str, str]:
 
     Returns:
         (reasoning, visible) where:
-        - reasoning: the text inside <tool_call>...</think> (or all tags)
+        - reasoning: the text inside think/thinking/reasoning tags
         - visible: the content with all thinking tags stripped
 
     Handles multiple blocks, nested content, and partial/unclosed tags.

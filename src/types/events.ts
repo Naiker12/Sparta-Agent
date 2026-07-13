@@ -57,6 +57,9 @@ export type EventType =
   | 'editor:diff_responded'
   | 'editor:open_file'
   | 'terminal:tool_crash'
+  | 'subagent:started'
+  | 'subagent:thinking'
+  | 'subagent:completed'
 
 export interface BaseEvent {
   type: EventType
@@ -402,6 +405,25 @@ export interface PlanStepEvent extends BaseEvent {
   planComplete: boolean
 }
 
+export interface SubagentStartedEvent extends BaseEvent {
+  type: 'subagent:started'
+  subagentName: string
+  taskSummary: string
+}
+
+export interface SubagentThinkingEvent extends BaseEvent {
+  type: 'subagent:thinking'
+  subagentName: string
+  statusText: string
+}
+
+export interface SubagentCompletedEvent extends BaseEvent {
+  type: 'subagent:completed'
+  subagentName: string
+  durationMs: number
+  success: boolean
+}
+
 export type SpartaEvent =
   | AgentStartedEvent
   | AgentCompletedEvent
@@ -458,3 +480,6 @@ export type SpartaEvent =
   | DiffProposedEvent
   | EditorOpenFileEvent
   | TerminalToolCrashEvent
+  | SubagentStartedEvent
+  | SubagentThinkingEvent
+  | SubagentCompletedEvent

@@ -52,6 +52,7 @@ export interface ReasoningDetail {
 export type MessagePart =
   | { kind: 'reasoning'; id: string; text: string; startedAt: number; completedAt?: number }
   | { kind: 'tool'; id: string; toolCallId: string; startedAt: number }
+  | { kind: 'subagent'; id: string; subagentName: string; taskSummary: string; startedAt: number; completedAt?: number; durationMs?: number; success?: boolean }
 
 export interface Message {
   id: string

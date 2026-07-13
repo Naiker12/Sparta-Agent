@@ -7,8 +7,9 @@ import { ToolTraceRow } from './ToolTraceRow'
 import { ThinkingSkeletonRows } from './ThinkingSkeletonRows'
 import { ThinkingStatusLine } from './ThinkingStatusLine'
 import { SkillActivationBadge } from './SkillActivationBadge'
+import { SubagentActivationBadge } from './SubagentActivationBadge'
 import { StreamStallIndicator } from './StreamStallIndicator'
-import type { Message, MessagePart, ThinkingStatus, PipelineStep } from '@/types'
+import type { Message, ThinkingStatus } from '@/types'
 
 interface TimelineBlockProps {
   message: Message
@@ -83,6 +84,14 @@ export function TimelineBlock({ message, className }: TimelineBlockProps) {
     }
   }, [status, message.reasoningStartedAt])
 
+  // Auto-collapse when thinking completes (like Claude.ai behavior).
+  // Respects manual user toggles — if the user opened it, keep it open.
+  useEffect(() => {
+    if (status === 'completed' && !userToggled.current) {
+      setIsExpanded(false)
+    }
+  }, [status])
+
   useEffect(() => {
     if (status !== 'streaming' && status !== 'starting') return
     const interval = setInterval(() => setElapsed(Math.floor((Date.now() - startedAt.current) / 100) / 10), 100)
@@ -107,6 +116,14 @@ export function TimelineBlock({ message, className }: TimelineBlockProps) {
 
   // If no parts, no reasoning text, and no tool calls, render nothing
   if (!hasContent && status === 'completed') return null
+
+  // Hide trivial thinking: fast response (< 1s), no tool calls, short text.
+  // Prevents the pill from flashing when the model barely thinks.
+  const isTrivial = status === 'completed'
+    && elapsed < 1
+    && !hasToolCalls
+    && (message.reasoningText?.length ?? 0) < 40
+  if (isTrivial) return null
 
   return (
     <motion.div
@@ -191,6 +208,18 @@ export function TimelineBlock({ message, className }: TimelineBlockProps) {
                     const tc = message.toolCalls?.find((t) => t.id === part.toolCallId)
                     if (!tc) return null
                     return <ToolTraceRow key={part.id} toolCall={tc} />
+                  }
+                  if (part.kind === 'subagent') {
+                    return (
+                      <SubagentActivationBadge
+                        key={part.id}
+                        subagentName={part.subagentName}
+                        taskSummary={part.taskSummary}
+                        status={part.completedAt ? 'completed' : 'running'}
+                        durationMs={part.durationMs}
+                        success={part.success}
+                      />
+                    )
                   }
                   return null
                 })

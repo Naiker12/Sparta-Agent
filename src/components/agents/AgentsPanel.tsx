@@ -194,9 +194,7 @@ export function AgentsPanel() {
   const { t } = useTranslation()
   const [showNewForm, setShowNewForm] = useState(false)
   const [newAgent, setNewAgent] = useState({ name: '', type: 'research' as const, model: '', description: '' })
-  const [watchAgentId, setWatchAgentId] = useState<string | null>(null)
-
-
+  const [showWatchPane, setShowWatchPane] = useState(false)
 
   const handleCreate = () => {
     if (!newAgent.name.trim()) return
@@ -230,22 +228,40 @@ export function AgentsPanel() {
           }}>
             {t('agents.panelTitle')}
           </h2>
-          <button
-            onClick={() => setShowNewForm(!showNewForm)}
-            style={{
-              padding: '5px 12px',
-              background: 'var(--accent)',
-              border: 'none',
-              borderRadius: 'var(--radius-md)',
-              color: 'white',
-              fontSize: 11,
-              fontFamily: 'var(--font-ui)',
-              fontWeight: 500,
-              cursor: 'pointer',
-            }}
-          >
-            {showNewForm ? t('agents.cancel') : t('agents.newAgent')}
-          </button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              onClick={() => setShowWatchPane(!showWatchPane)}
+              style={{
+                padding: '5px 12px',
+                background: showWatchPane ? 'var(--bg-active)' : 'var(--bg-input)',
+                border: '1px solid var(--border-normal)',
+                borderRadius: 'var(--radius-md)',
+                color: 'var(--text-secondary)',
+                fontSize: 11,
+                fontFamily: 'var(--font-ui)',
+                fontWeight: 500,
+                cursor: 'pointer',
+              }}
+            >
+              {t('chat.liveAgents')}
+            </button>
+            <button
+              onClick={() => setShowNewForm(!showNewForm)}
+              style={{
+                padding: '5px 12px',
+                background: 'var(--accent)',
+                border: 'none',
+                borderRadius: 'var(--radius-md)',
+                color: 'white',
+                fontSize: 11,
+                fontFamily: 'var(--font-ui)',
+                fontWeight: 500,
+                cursor: 'pointer',
+              }}
+            >
+              {showNewForm ? t('agents.cancel') : t('agents.newAgent')}
+            </button>
+          </div>
         </div>
 
         {showNewForm && (
@@ -334,52 +350,33 @@ export function AgentsPanel() {
           </div>
         )}
 
-        {agents.length === 0 ? (
+        {agents.length === 0 && !showWatchPane && (
           <div style={{
             flex: 1,
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: 12,
+            gap: 12,
             color: 'var(--text-muted)',
             fontFamily: 'var(--font-ui)',
           }}>
-            {t('agents.noAgents')}
-          </div>
-        ) : (
-          agents.map((agent) => (
-            <div key={agent.id} style={{ position: 'relative' }}>
-              <AgentCard agent={agent} />
-              {agent.status === 'running' && (
-                <button
-                  onClick={() => setWatchAgentId(agent.id)}
-                  style={{
-                    position: 'absolute',
-                    top: 8,
-                    right: 8,
-                    padding: '3px 8px',
-                    background: 'var(--bg-input)',
-                    border: '1px solid var(--border-subtle)',
-                    borderRadius: 'var(--radius-md)',
-                    color: 'var(--text-secondary)',
-                    fontSize: 10,
-                    fontFamily: 'var(--font-ui)',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {t('agents.watch')}
-                </button>
-              )}
+            <div style={{ fontSize: 12 }}>{t('agents.noAgents')}</div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', textAlign: 'center', maxWidth: 320, lineHeight: 1.5 }}>
+              Los subagentes internos (research, code, memory, review) se activan automáticamente cuando el modelo delega tareas.
             </div>
-          ))
+          </div>
         )}
+
+        {agents.map((agent) => (
+          <div key={agent.id}>
+            <AgentCard agent={agent} />
+          </div>
+        ))}
       </div>
 
-      {watchAgentId && (
-        <SubagentWatchPane
-          agentId={watchAgentId}
-          onClose={() => setWatchAgentId(null)}
-        />
+      {showWatchPane && (
+        <SubagentWatchPane onClose={() => setShowWatchPane(false)} />
       )}
     </div>
   )

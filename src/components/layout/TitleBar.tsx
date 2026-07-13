@@ -110,12 +110,13 @@ export function TitleBar() {
             fontWeight: 600,
             color: 'var(--text-display)',
             fontFamily: 'var(--font-ui)',
-            marginRight: 8,
           }}
         >
           Sparta
         </span>
       </div>
+
+      <div style={{ width: 1, height: 16, background: 'var(--border-subtle)', margin: '0 8px' }} />
 
       <Tabs value={activeValue} onValueChange={(v) => handleTabClick(v as MainView['type'])}>
         <TabsList
@@ -123,7 +124,7 @@ export function TitleBar() {
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 2,
+            gap: 4,
           }}
         >
           <TabsHighlight

@@ -81,7 +81,7 @@ def recall_memories(
         return f"Error recuperando memoria: {e}"
 
 
-def build_memory_graph():
+def build_memory_graph(llm=None):  # noqa: ARG001 — llm not used (recall_node doesn't call the model), accepted for uniform subagent call signature
     """Return a compiled LangGraph sub-graph that streams through the parent."""
 
     async def recall_node(state: MemoryState) -> dict:
