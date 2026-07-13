@@ -72,6 +72,7 @@ interface FilesystemAPI {
   deleteFolder: (folderPath: string) => Promise<{ success: boolean; error?: string }>
   startWatcher: (dirPath: string) => Promise<{ success: boolean }>
   stopWatcher: () => Promise<{ success: boolean }>
+  setWorkspaceRoot: (root: string) => Promise<{ success: boolean; error?: string }>
 }
 
 interface TerminalAPI {

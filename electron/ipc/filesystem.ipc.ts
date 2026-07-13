@@ -153,6 +153,13 @@ export function registerFilesystemIPC() {
     return { success: true }
   })
 
+  ipcMain.handle('fs:setWorkspaceRoot', (_event, root: string) => {
+    if (!root || typeof root !== 'string') return { success: false, error: 'Invalid path' }
+    _workspaceRoot = root
+    startFileWatcher(root)
+    return { success: true }
+  })
+
   ipcMain.handle('fs:stopWatcher', () => {
     stopFileWatcher()
     return { success: true }

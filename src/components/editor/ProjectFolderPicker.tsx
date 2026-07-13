@@ -20,6 +20,8 @@ export function ProjectFolderPicker({ projectId }: ProjectFolderPickerProps) {
       const path = await window.fs.openFolderDialog()
       if (path) {
         setProjectRootPath(projectId, path)
+        // Sync the workspace root to Electron so filesystem guards are consistent
+        await window.fs.setWorkspaceRoot(path)
         toastReplace('success', 'folder-picker', t('editor.folderOpened'))
       }
     } catch (err) {

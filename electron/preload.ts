@@ -195,6 +195,7 @@ contextBridge.exposeInMainWorld('fs', {
   deleteFolder: (folderPath: string) => ipcRenderer.invoke('fs:deleteFolder', folderPath) as Promise<{ success: boolean; error?: string }>,
   startWatcher: (dirPath: string) => ipcRenderer.invoke('fs:startWatcher', dirPath) as Promise<{ success: boolean }>,
   stopWatcher: () => ipcRenderer.invoke('fs:stopWatcher') as Promise<{ success: boolean }>,
+  setWorkspaceRoot: (root: string) => ipcRenderer.invoke('fs:setWorkspaceRoot', root) as Promise<{ success: boolean; error?: string }>,
 })
 
 contextBridge.exposeInMainWorld('skills', {
