@@ -10,9 +10,10 @@ if platform.system() != "Windows":
     import fcntl
     import termios
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+import tempfile
 import uvicorn
 
 from sparta_ai.streaming.event_bridge import stream_agent_to_websocket
@@ -323,6 +324,35 @@ async def memory_count():
 @app.get("/health")
 async def health():
     return {"status": "ok", "mode": "web"}
+
+
+@app.post("/api/audio/transcribe")
+async def transcribe_audio(file: UploadFile = File(...)):
+    """Transcribe an audio file using local Whisper (faster-whisper).
+
+    Returns { "text": "..." } on success, or 503 if the audio extra is not installed.
+    """
+    try:
+        from sparta_ai.audio.transcriber import transcribe
+    except ImportError:
+        return JSONResponse(
+            status_code=503,
+            content={"error": "Transcripción no disponible. Instala el extra de audio: pip install -e '.[audio]'"},
+        )
+    suffix = os.path.splitext(file.filename or "audio.webm")[1] or ".webm"
+    tmp_path = ""
+    try:
+        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
+            tmp.write(await file.read())
+            tmp_path = tmp.name
+        text = transcribe(tmp_path)
+        return {"text": text}
+    except Exception as e:
+        logger.exception("Audio transcription failed")
+        return JSONResponse(status_code=500, content={"error": str(e)})
+    finally:
+        if tmp_path and os.path.exists(tmp_path):
+            os.unlink(tmp_path)
 
 
 # ── Terminal WebSocket ───────────────────────────────────────────────────

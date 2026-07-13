@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react'
-import { Plus, Mic, ArrowUp, Square, AlertCircle, Eye, EyeOff } from 'lucide-react'
+import { Plus, ArrowUp, Square, AlertCircle, Eye, EyeOff } from 'lucide-react'
 import { toast } from 'sonner'
 import { toastReplace } from '@/lib/toast-helpers'
 import { useSettingsStore } from '@/stores/settings.store'
@@ -13,6 +13,7 @@ import { IS_ELECTRON } from '@/lib/env-adapter'
 import { messagingAdapter } from '@/lib/messaging-adapter'
 import { ModelPicker } from './ModelPicker'
 import { AttachMenu } from './AttachMenu'
+import { VoiceRecordButton } from './VoiceRecordButton'
 import { SlashCommandMenu, executeSlashCommand, type SlashCommand, setSlashSkillCache } from './SlashCommandMenu'
 import { useTranslation } from '@/i18n'
 
@@ -334,18 +335,10 @@ export function ChatInput({ className }: ChatInputProps) {
                   {t('chat.redirectHint')}
                 </div>
               )}
-              <button style={{
-                width: 28, height: 28,
-                background: 'none',
-                border: 'none',
-                borderRadius: 'var(--radius-md)',
-                color: 'var(--text-muted)',
-                cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                transition: 'color 0.15s',
-              }}>
-                <Mic size={13} strokeWidth={1.5} />
-              </button>
+              <VoiceRecordButton onTranscript={(text) => {
+                const current = useSettingsStore.getState().input
+                setInput(current + text)
+              }} />
 
               {isStreaming ? (
                 <button
