@@ -85,6 +85,15 @@ export function McpServerCard({ server, onEdit }: McpServerCardProps) {
               }}>
                 {server.type}
               </span>
+              {server.config.maintained === false && (
+                <span style={{
+                  fontSize: 9, fontWeight: 600, letterSpacing: '0.03em',
+                  padding: '1px 5px', borderRadius: 4, fontFamily: 'var(--font-ui)',
+                  background: 'rgba(234,179,8,0.12)', color: 'rgb(234,179,8)',
+                }}>
+                  Archivado
+                </span>
+              )}
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

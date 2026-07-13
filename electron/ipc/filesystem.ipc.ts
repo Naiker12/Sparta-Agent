@@ -28,7 +28,8 @@ async function buildFileTree(dirPath: string, depth = 0): Promise<FileTreeNode[]
   let entries: fs.Dirent[] = []
   try {
     entries = await fsPromises.readdir(dirPath, { withFileTypes: true })
-  } catch {
+  } catch (err) {
+    console.error(`[fs] readDir failed for ${dirPath}:`, (err as Error).message)
     return []
   }
 
@@ -69,9 +70,15 @@ export function registerFilesystemIPC() {
   })
 
   ipcMain.handle('fs:readDir', async (_event, dirPath: string) => {
-    if (!dirPath || typeof dirPath !== 'string') return []
+    if (!dirPath || typeof dirPath !== 'string') return { nodes: [], error: 'Invalid path' }
     if (!_workspaceRoot) _workspaceRoot = dirPath
-    return buildFileTree(dirPath)
+    try {
+      const nodes = await buildFileTree(dirPath)
+      return { nodes }
+    } catch (err) {
+      console.error(`[fs] readDir error for ${dirPath}:`, (err as Error).message)
+      return { nodes: [], error: (err as Error).message }
+    }
   })
 
   ipcMain.handle('fs:readFile', async (_event, filePath: string) => {

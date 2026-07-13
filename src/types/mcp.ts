@@ -30,6 +30,8 @@ export interface MCPServerConfig {
   timeout?: number
   /** Optional tool include/exclude filter */
   tools?: MCPToolFilter
+  /** Whether this server package is actively maintained (false = archived/deprecated) */
+  maintained?: boolean
 }
 
 export interface MCPTool {

@@ -14,6 +14,8 @@ export interface CatalogEntry {
   notes?: string
   docs_url?: string
   vendor?: string
+  /** Whether this server package is actively maintained. false = archived by upstream. */
+  maintained?: boolean
 }
 
 export const MCP_CATALOG: Record<string, CatalogEntry> = {
@@ -24,8 +26,10 @@ export const MCP_CATALOG: Record<string, CatalogEntry> = {
     command: 'npx',
     args: ['-y', '@modelcontextprotocol/server-github'],
     env_required: ['GITHUB_TOKEN'],
+    notes: 'Paquete archivado por MCP. Usar github/github-mcp-server (HTTP remoto) como alternativa.',
     docs_url: 'https://github.com/modelcontextprotocol/servers/tree/main/src/github',
     vendor: 'github',
+    maintained: false,
   },
   filesystem: {
     name: 'Filesystem',
@@ -36,6 +40,7 @@ export const MCP_CATALOG: Record<string, CatalogEntry> = {
     notes: 'Requiere especificar un directorio permitido.',
     docs_url: 'https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem',
     vendor: 'filesystem',
+    maintained: true,
   },
   notion: {
     name: 'Notion',
@@ -45,6 +50,7 @@ export const MCP_CATALOG: Record<string, CatalogEntry> = {
     headers_required: ['Authorization'],
     docs_url: 'https://developers.notion.com/docs/authorization',
     vendor: 'notion',
+    maintained: true,
   },
   postgres: {
     name: 'PostgreSQL',
@@ -52,9 +58,10 @@ export const MCP_CATALOG: Record<string, CatalogEntry> = {
     type: 'stdio',
     command: 'npx',
     args: ['-y', '@modelcontextprotocol/server-postgres', '${DATABASE_URL}'],
-    notes: 'Requiere DATABASE_URL.',
+    notes: 'Paquete archivado por MCP. Requiere DATABASE_URL.',
     docs_url: 'https://github.com/modelcontextprotocol/servers/tree/main/src/postgres',
     vendor: 'postgresql',
+    maintained: false,
   },
   sqlite: {
     name: 'SQLite',
@@ -62,9 +69,10 @@ export const MCP_CATALOG: Record<string, CatalogEntry> = {
     type: 'stdio',
     command: 'uvx',
     args: ['mcp-server-sqlite', '--db', '${DB_PATH}'],
-    notes: 'Requiere ruta a archivo .db.',
+    notes: 'Paquete archivado por MCP. Requiere ruta a archivo .db.',
     docs_url: 'https://github.com/modelcontextprotocol/servers/tree/main/src/sqlite',
     vendor: 'sqlite',
+    maintained: false,
   },
   puppeteer: {
     name: 'Puppeteer',
@@ -72,8 +80,51 @@ export const MCP_CATALOG: Record<string, CatalogEntry> = {
     type: 'stdio',
     command: 'npx',
     args: ['-y', '@modelcontextprotocol/server-puppeteer'],
+    notes: 'Paquete archivado por MCP.',
     docs_url: 'https://github.com/modelcontextprotocol/servers/tree/main/src/puppeteer',
     vendor: 'puppeteer',
+    maintained: false,
+  },
+  fetch: {
+    name: 'Fetch',
+    description: 'Obtención de contenido web con conversión a markdown (útil para RAG)',
+    type: 'stdio',
+    command: 'uvx',
+    args: ['mcp-server-fetch'],
+    docs_url: 'https://github.com/modelcontextprotocol/servers/tree/main/src/fetch',
+    vendor: 'fetch',
+    maintained: true,
+  },
+  git: {
+    name: 'Git',
+    description: 'Operaciones git estructuradas: diff, log, status, blame, branches',
+    type: 'stdio',
+    command: 'uvx',
+    args: ['mcp-server-git', '--repository', '${REPO_DIR}'],
+    notes: 'Requiere la ruta al repositorio git.',
+    docs_url: 'https://github.com/modelcontextprotocol/servers/tree/main/src/git',
+    vendor: 'git',
+    maintained: true,
+  },
+  memory: {
+    name: 'Memory',
+    description: 'Knowledge graph en memoria para recall de contexto entre sesiones',
+    type: 'stdio',
+    command: 'uvx',
+    args: ['mcp-server-memory'],
+    docs_url: 'https://github.com/modelcontextprotocol/servers/tree/main/src/memory',
+    vendor: 'memory',
+    maintained: true,
+  },
+  time: {
+    name: 'Time',
+    description: 'Zona horaria y hora actual del sistema',
+    type: 'stdio',
+    command: 'uvx',
+    args: ['mcp-server-time'],
+    docs_url: 'https://github.com/modelcontextprotocol/servers/tree/main/src/time',
+    vendor: 'time',
+    maintained: true,
   },
 }
 
@@ -92,6 +143,7 @@ export function catalogToMarketplaceItems() {
     notes: entry.notes,
     docs_url: entry.docs_url,
     vendor: entry.vendor,
+    maintained: entry.maintained,
   }))
 }
 
@@ -99,8 +151,10 @@ function _inferCategory(entry: CatalogEntry): string {
   const name = entry.name.toLowerCase()
   if (name.includes('git')) return 'DevTools'
   if (name.includes('sql') || name.includes('postgres')) return 'Database'
-  if (name.includes('puppeteer') || name.includes('brave') || name.includes('search')) return 'Web'
+  if (name.includes('puppeteer') || name.includes('brave') || name.includes('search') || name.includes('fetch')) return 'Web'
   if (name.includes('filesystem') || name.includes('storage')) return 'Storage'
   if (name.includes('notion')) return 'Productivity'
+  if (name.includes('memory')) return 'Knowledge'
+  if (name.includes('time')) return 'Utility'
   return 'Other'
 }

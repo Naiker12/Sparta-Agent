@@ -25,6 +25,7 @@ const ALLOWED_SEND_CHANNELS = new Set([
 const ALLOWED_INVOKE_CHANNELS = new Set([
   'win:isMaximized',
   'app:getVersion',
+  'security:status',
 ])
 
 contextBridge.exposeInMainWorld('electron', {
@@ -186,7 +187,7 @@ contextBridge.exposeInMainWorld('agent', {
 
 contextBridge.exposeInMainWorld('fs', {
   openFolderDialog: () => ipcRenderer.invoke('fs:openFolderDialog') as Promise<string | null>,
-  readDir: (dirPath: string) => ipcRenderer.invoke('fs:readDir', dirPath) as Promise<FileTreeNode[]>,
+  readDir: (dirPath: string) => ipcRenderer.invoke('fs:readDir', dirPath) as Promise<{ nodes: FileTreeNode[]; error?: string }>,
   readFile: (filePath: string) => ipcRenderer.invoke('fs:readFile', filePath) as Promise<{ success: boolean; content?: string; error?: string }>,
   writeFile: (filePath: string, content: string) => ipcRenderer.invoke('fs:writeFile', filePath, content) as Promise<{ success: boolean; error?: string }>,
   mkdir: (dirPath: string) => ipcRenderer.invoke('fs:mkdir', dirPath) as Promise<{ success: boolean; error?: string }>,

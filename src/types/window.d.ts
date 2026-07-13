@@ -64,7 +64,7 @@ interface ElectronIPC {
 
 interface FilesystemAPI {
   openFolderDialog: () => Promise<string | null>
-  readDir: (dirPath: string) => Promise<FileTreeNode[]>
+  readDir: (dirPath: string) => Promise<{ nodes: FileTreeNode[]; error?: string }>
   readFile: (filePath: string) => Promise<FileReadResult>
   writeFile: (filePath: string, content: string) => Promise<FileWriteResult>
   mkdir: (dirPath: string) => Promise<{ success: boolean; error?: string }>
