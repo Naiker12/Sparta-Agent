@@ -2,6 +2,7 @@ import asyncio
 import json
 import operator
 import logging
+import platform
 from datetime import datetime
 from typing import Annotated, Any, Literal
 
@@ -18,6 +19,24 @@ from sparta_ai.security.permission_policy import PermissionPolicy, get_policy, s
 from sparta_ai.tools.plan_tool import create_plan_tool
 
 logger = logging.getLogger("sparta_ai.agents.sparta")
+
+
+def _os_shell_hint() -> str:
+    """Describe el SO real del usuario para que terminal_execute_tool genere
+    comandos válidos. Sin esto, el modelo asume Unix por defecto y genera
+    combinaciones rotas como 'dir ... | head -50' en Windows."""
+    system = platform.system()
+    if system == "Windows":
+        return (
+            "Windows (cmd.exe/PowerShell). Usa SOLO comandos nativos de Windows: "
+            "'dir' (no 'ls'), 'type' (no 'cat'), 'findstr' (no 'grep'), 'del' (no 'rm'). "
+            "NUNCA uses 'head', 'tail', 'grep', 'ls', 'cat', 'wc' ni pipes de estilo Unix — "
+            "no existen en cmd.exe y el comando fallará. Para limitar líneas de salida en "
+            "PowerShell usa 'Select-Object -First N', NO '| head -N'."
+        )
+    if system == "Darwin":
+        return "macOS (zsh/bash). Podés usar comandos Unix estándar: ls, head, tail, grep, cat, etc."
+    return "Linux (bash). Podés usar comandos Unix estándar: ls, head, tail, grep, cat, etc."
 
 MAX_TOOL_CALLS_PER_TURN = 8
 
@@ -91,6 +110,7 @@ def build_sparta_graph(
 
         system_parts = [
             f"Fecha y hora actual del sistema: {datetime.now().isoformat()}",
+            f"Sistema operativo del usuario: {_os_shell_hint()}",
             "",
             "Eres Sparta Agent, un orquestador de agentes de IA.",
             "Tienes acceso a herramientas para buscar en web, leer/escribir archivos,",
@@ -103,6 +123,12 @@ def build_sparta_graph(
             "- Para preguntas sobre resultados deportivos en vivo (fútbol, tenis, etc.), quién va ganando, marcadores, o eventos actuales: DEBES invocar web_search_tool — tu conocimiento de entrenamiento no tiene esta información.",
             "- Para clima, noticias, precios actualizados, cotizaciones: DEBES invocar web_search_tool — esta información cambia constantemente.",
             "- No respondas con 'no tengo información actualizada' si web_search_tool está disponible — úsala siempre para datos en tiempo real que no estén en la fecha del sistema.",
+            "",
+            "REGLAS PARA COMANDOS DE TERMINAL:",
+            "- Antes de usar terminal_execute_tool, revisa 'Sistema operativo del usuario' (arriba)",
+            "  y genera el comando exacto para ESE sistema operativo, no para Unix por defecto.",
+            "- Si el comando falla o es rechazado, NO reintentes variantes al azar — corrige",
+            "  específicamente el motivo del fallo (sintaxis equivocada para el SO, ruta, etc.).",
             "",
             "REGLAS PARA HERRAMIENTAS:",
             "- No invoques la misma herramienta con los mismos argumentos más de una vez (evita loops).",
@@ -599,4 +625,3 @@ def build_sparta_graph(
     graph.add_edge("subagent_coordinator", "agent")
 
     return graph.compile(checkpointer=checkpointer)
-

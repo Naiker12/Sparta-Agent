@@ -1,45 +1,34 @@
 import { loader } from '@monaco-editor/react'
 import * as monaco from 'monaco-editor'
 
-// Use the locally installed monaco-editor package instead of fetching from CDN.
-// This removes the runtime dependency on cdn.jsdelivr.net and makes the editor
-// work fully offline.
+// Vite worker imports — Vite bundles these from node_modules and serves
+// them with the correct MIME type via blob URLs.
+import EditorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
+import CssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker'
+import HtmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker'
+import JsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker'
+import TsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
+
 loader.config({ monaco })
 
-// Configure Monaco web workers to also come from the local bundle.
 ;(window as any).MonacoEnvironment = {
   getWorker(_workerId: string, label: string) {
     switch (label) {
       case 'css':
       case 'scss':
       case 'less':
-        return new Worker(
-          new URL('monaco-editor/esm/vs/language/css/css.worker', import.meta.url),
-          { type: 'module' },
-        )
+        return new CssWorker()
       case 'html':
       case 'handlebars':
       case 'razor':
-        return new Worker(
-          new URL('monaco-editor/esm/vs/language/html/html.worker', import.meta.url),
-          { type: 'module' },
-        )
+        return new HtmlWorker()
       case 'json':
-        return new Worker(
-          new URL('monaco-editor/esm/vs/language/json/json.worker', import.meta.url),
-          { type: 'module' },
-        )
+        return new JsonWorker()
       case 'javascript':
       case 'typescript':
-        return new Worker(
-          new URL('monaco-editor/esm/vs/language/typescript/ts.worker', import.meta.url),
-          { type: 'module' },
-        )
+        return new TsWorker()
       default:
-        return new Worker(
-          new URL('monaco-editor/esm/vs/editor/editor.worker', import.meta.url),
-          { type: 'module' },
-        )
+        return new EditorWorker()
     }
   },
 }

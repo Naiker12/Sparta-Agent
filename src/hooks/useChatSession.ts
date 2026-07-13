@@ -123,9 +123,8 @@ async function runAssistantTurn(
     const sessionMode = session?.sessionMode ?? settingsState.sessionMode
     const securityLoaded = useSecurityStore.getState().loaded
     const skills = useSkillStore.getState().activeSkillIds ?? []
-    const mcpServers = useMCPStore.getState().servers.map((s: { id: string; name: string; tools?: unknown[] }) => ({
-      id: s.id,
-      name: s.name,
+    const mcpServers = useMCPStore.getState().servers.map((s) => ({
+      ...s.config,
       tools: s.tools ?? [],
     }))
     const workspaceRoot = resolveWorkspaceRoot()

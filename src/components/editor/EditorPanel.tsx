@@ -472,6 +472,9 @@ export function EditorPanel() {
             <MonacoEditor onMount={handleEditorMount} />
             <EmptyEditorState
               projectName={activeProject?.name}
+              hasRootPath={!!activeProject?.rootPath}
+              explorerVisible={editorExplorerVisible}
+              onShowExplorer={() => { if (!editorExplorerVisible) toggleEditorExplorer() }}
               onClose={toggleEditor}
             />
           </div>
@@ -652,7 +655,25 @@ function StatusBar({ path, line, col }: { path: string; line: number; col: numbe
   )
 }
 
-function EmptyEditorState({ projectName, onClose }: { projectName?: string; onClose: () => void }) {
+function EmptyEditorState({
+  projectName,
+  hasRootPath,
+  explorerVisible,
+  onShowExplorer,
+  onClose,
+}: {
+  projectName?: string
+  hasRootPath: boolean
+  explorerVisible: boolean
+  onShowExplorer: () => void
+  onClose: () => void
+}) {
+  // Si el explorador (donde vive el botón "Abrir carpeta") quedó oculto por
+  // una preferencia guardada previamente, este es el único punto de la UI
+  // donde el usuario puede volver a mostrarlo — nunca debe ser un callejón
+  // sin salida.
+  const needsExplorer = !hasRootPath && !explorerVisible
+
   return (
     <div style={{
       position: 'absolute', inset: 0, zIndex: 10,
@@ -669,21 +690,43 @@ function EmptyEditorState({ projectName, onClose }: { projectName?: string; onCl
       <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
         {projectName ? `Proyecto: ${projectName}` : 'Ningún proyecto seleccionado'}
       </div>
-      <p>Selecciona un archivo del explorador para empezar a editar.</p>
-      <button
-        onClick={onClose}
-        style={{
-          padding: '5px 12px',
-          background: 'var(--bg-input)',
-          border: '1px solid var(--border-normal)',
-          borderRadius: 'var(--radius-md)',
-          color: 'var(--text-secondary)',
-          fontSize: 12,
-          cursor: 'pointer',
-        }}
-      >
-        Cerrar editor
-      </button>
+      <p>
+        {needsExplorer
+          ? 'El explorador de archivos está oculto. Mostralo para abrir una carpeta de proyecto.'
+          : 'Selecciona un archivo del explorador para empezar a editar.'}
+      </p>
+      <div style={{ display: 'flex', gap: 8 }}>
+        {needsExplorer && (
+          <button
+            onClick={onShowExplorer}
+            style={{
+              padding: '5px 12px',
+              background: 'var(--accent)',
+              border: 'none',
+              borderRadius: 'var(--radius-md)',
+              color: 'white',
+              fontSize: 12,
+              cursor: 'pointer',
+            }}
+          >
+            Mostrar explorador / Abrir carpeta
+          </button>
+        )}
+        <button
+          onClick={onClose}
+          style={{
+            padding: '5px 12px',
+            background: 'var(--bg-input)',
+            border: '1px solid var(--border-normal)',
+            borderRadius: 'var(--radius-md)',
+            color: 'var(--text-secondary)',
+            fontSize: 12,
+            cursor: 'pointer',
+          }}
+        >
+          Cerrar editor
+        </button>
+      </div>
     </div>
   )
 }

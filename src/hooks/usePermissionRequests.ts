@@ -43,7 +43,7 @@ export function usePermissionRequests() {
     async (requestId: string, approved: boolean, remember: RememberChoice = 'once') => {
       dequeue(requestId)
       if (!IS_WEB) {
-        await window.electron?.invoke('permission:respond', { requestId, approved, remember })
+        await (window as any).permission?.respond({ requestId, approved, remember })
       }
     },
     [dequeue],

@@ -509,7 +509,7 @@ async def _run_single_stream(
     thread_id: str,
     stream_state: dict,
 ) -> dict | None:
-    config = {"configurable": {"thread_id": thread_id or request_id}}
+    config = {"configurable": {"thread_id": thread_id or request_id}, "recursion_limit": 100}
     try:
         async for event in graph.astream_events(initial_state, config, version="v2"):
             abort = await _dispatch_event(request_id, event, stream_state)
@@ -604,7 +604,7 @@ async def stream_agent_to_websocket(
         adapted = _ws_adapt(event_type, data) if data is not None else None
         asyncio.ensure_future(_emit_ws_renderer(websocket, event_type, adapted))
 
-    config = {"configurable": {"thread_id": thread_id or session_id or request_id}}
+    config = {"configurable": {"thread_id": thread_id or session_id or request_id}, "recursion_limit": 100}
     try:
         async for event in graph.astream_events(initial_state, config, version="v2"):
             await _dispatch_event_core(_ws_emit, _ws_emit, event, stream_state, request_id)
