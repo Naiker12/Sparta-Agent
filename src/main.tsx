@@ -1,5 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
+import './lib/monaco-setup' // Must run before any Monaco import
 import { AppShell } from './components/layout/AppShell'
 import { ChatErrorBoundary } from './components/ErrorBoundary'
 import { useChatStore } from './stores/chat.store'
