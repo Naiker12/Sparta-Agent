@@ -29,7 +29,7 @@
 - **Memoria semántica vectorial** — ChromaDB + embeddings
 - **Servidores MCP reales** — SDK oficial `mcp`, stdio + HTTP, catálogo curado
 - **Vault cifrado** — API keys almacenadas con `safeStorage` (AES-256-GCM)
-- **Tres superficies** — Desktop (Electron), Web (FastAPI), CLI (REPL)
+- **Dos superficies** — Desktop (Electron), Web (FastAPI)
 - **13 temas visuales** — 8 oscuros + 5 claros
 - **i18n** — Español e Inglés
 
@@ -102,7 +102,7 @@ pnpm rust:napi
 pnpm dev
 ```
 
-Más opciones: [Instalación detallada](#instalación-detallada), [Modo Web](#modo-web), [CLI](#cli).
+Más opciones: [Instalación detallada](#instalación-detallada), [Modo Web](#modo-web).
 
 ---
 
@@ -214,12 +214,6 @@ pnpm sidecar:web
 
 # Terminal 2
 pnpm dev:web
-```
-
-### CLI
-
-```bash
-python -m sparta_ai.cli repl
 ```
 
 ---
