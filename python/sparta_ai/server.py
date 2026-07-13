@@ -158,6 +158,7 @@ class StdioServer:
         workspace_root = params.get("workspace_root")
         if workspace_root:
             set_session_workspace(session_id, str(workspace_root))
+            _emit(request_id, "workspace:connected", {"root": str(workspace_root)})
         else:
             _session_workspaces.pop(session_id, None)
 

@@ -50,6 +50,7 @@ _CONTROL_EVENTS = frozenset({
     "usage", "skill:activated", "search:progress",
     "plan:created", "plan:step",
     "file:changed",
+    "workspace:connected",
 })
 
 # ── WebSocket camelCase mapping ──────────────────────────────────────

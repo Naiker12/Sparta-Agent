@@ -204,6 +204,18 @@ function _handleMCPEvent(type: string, event: Record<string, unknown>) {
     return
   }
 
+  // ── Workspace confirmation toast ────────────────────────────────────
+  if (type === 'workspace:connected') {
+    const root = (event as { root?: string }).root
+    if (root) {
+      // Dynamic import to avoid circular deps
+      import('sonner').then(({ toast }) => {
+        toast.success('Workspace conectado', { description: root, duration: 3000 })
+      })
+    }
+    return
+  }
+
   if (!sid || !mid) {
     if (type && !type.startsWith('sidecar') && !type.startsWith('terminal') && !type.startsWith('mcp:')) {
       console.debug('[useStreamEvents] Event sin sessionId/messageId, ignorando:', type)

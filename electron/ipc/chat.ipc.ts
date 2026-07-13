@@ -223,6 +223,18 @@ export function registerChatIPC(): void {
       return
     }
 
+    // ── Workspace connected confirmation: no sessionId/messageId needed ──
+    if (event === 'workspace:connected') {
+      const win = BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0]
+      if (win && !win.isDestroyed()) {
+        win.webContents.send('sparta:event', {
+          type: 'workspace:connected',
+          root: data?.root ?? '',
+        })
+      }
+      return
+    }
+
     if (!sessionId || !messageId) return
 
     switch (event) {
