@@ -24,6 +24,11 @@ from sparta_ai.streaming.emitters.permission_events import (
     diff_proposed,
     permission_request,
 )
+from sparta_ai.streaming.emitters.subagent_events import (
+    subagent_started,
+    subagent_thinking,
+    subagent_completed,
+)
 
 __all__ = [
     "thinking_started",
@@ -37,4 +42,7 @@ __all__ = [
     "usage",
     "permission_request",
     "diff_proposed",
+    "subagent_started",
+    "subagent_thinking",
+    "subagent_completed",
 ]

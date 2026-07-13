@@ -158,6 +158,40 @@ def terminal_execute_tool(command: str) -> str:
             "coincide con un patrón peligroso. Si necesitás ejecutarlo, usá la terminal manualmente."
         )
 
+    # Exec policy check (after sanitizer, before permission gate)
+    from sparta_ai.security.exec_policy import evaluate as eval_policy
+    workspace_root = os.environ.get("SPARTA_WORKSPACE_ROOT", "")
+    policy_result = eval_policy(sanitized, workspace_root)
+    if policy_result is not None:
+        if policy_result.decision == "forbid":
+            just = policy_result.justification or "Comando prohibido por la política del proyecto."
+            logger.warning("Terminal command forbidden by exec policy: %s", sanitized[:120])
+            return f"Error de seguridad: {just}"
+        elif policy_result.decision == "allow":
+            logger.info("Terminal command allowed by exec policy: %s", sanitized[:120])
+            # Skip permission gate — proceed directly to execution
+            if _EXECUTE_LOCAL or _SANDBOX_MODE == "docker":
+                proc_id = f"term-{uuid.uuid4().hex[:8]}"
+                _emit_terminal_event("terminal:agent_spawn", {"procId": proc_id, "command": sanitized[:200]})
+                output, code = _execute_command(sanitized, timeout=60)
+                if output:
+                    _emit_terminal_event("terminal:agent_output", {"procId": proc_id, "chunk": output[:5000]})
+                _emit_terminal_event("terminal:agent_exit", {"procId": proc_id, "code": code})
+                _emit_terminal_event("file:changed", {"path": os.environ.get("SPARTA_WORKSPACE_ROOT", "")})
+                _proc_results[proc_id] = {"output": output, "exit_code": code, "done": True}
+                return output or f"(comando completado, código {code})"
+            return f"Comando ejecutándose: {sanitized[:120]}. El usuario puede ver la ejecución en vivo."
+        elif policy_result.decision == "prompt":
+            just = policy_result.justification or "Requiere confirmación según la política del proyecto."
+            allowed = request_permission_sync_generic(
+                kind="terminal_exec",
+                subject=f"[Política] {just}\n\nComando: {command.strip()[:200]}",
+                tool_name="terminal_execute_tool",
+                preview=f"[Política del proyecto]\n{just}\n\nComando: {command.strip()[:500]}",
+            )
+            if not allowed:
+                return "Comando rechazado por el usuario (política del proyecto)."
+
     session_id = _current_session.get()
     if session_id and not terminal_rate_limiter.check(session_id):
         logger.warning("Terminal command rate-limited for session %s", session_id[:40])
@@ -230,6 +264,47 @@ def terminal_execute_background_tool(command: str, label: str | None = None) -> 
     if sanitized is None:
         logger.warning("Background command blocked by sanitizer: %s", command.strip()[:120])
         return "Error de seguridad: comando bloqueado por el sanitizador."
+
+    # Exec policy check (after sanitizer, before permission gate)
+    from sparta_ai.security.exec_policy import evaluate as eval_policy
+    workspace_root = os.environ.get("SPARTA_WORKSPACE_ROOT", "")
+    policy_result = eval_policy(sanitized, workspace_root)
+    if policy_result is not None:
+        if policy_result.decision == "forbid":
+            just = policy_result.justification or "Comando prohibido por la política del proyecto."
+            logger.warning("Background command forbidden by exec policy: %s", sanitized[:120])
+            return f"Error de seguridad: {just}"
+        elif policy_result.decision == "allow":
+            logger.info("Background command allowed by exec policy: %s", sanitized[:120])
+            if _EXECUTE_LOCAL or _SANDBOX_MODE == "docker":
+                proc_id = f"bg-{uuid.uuid4().hex[:8]}"
+                label_str = f" ({label})" if label else ""
+                _emit_terminal_event("terminal:agent_spawn", {
+                    "procId": proc_id, "command": sanitized[:200], "label": label or "",
+                })
+                output, code = _execute_command(sanitized, timeout=300)
+                if output:
+                    _emit_terminal_event("terminal:agent_output", {
+                        "procId": proc_id, "chunk": output[:10000],
+                    })
+                _emit_terminal_event("terminal:agent_exit", {"procId": proc_id, "code": code})
+                _emit_terminal_event("file:changed", {"path": os.environ.get("SPARTA_WORKSPACE_ROOT", "")})
+                _proc_results[proc_id] = {"output": output, "exit_code": code, "done": True}
+                return f"Salida del comando de fondo{label_str}:\n{output}"
+            return (
+                f"Comando de fondo ejecutándose: {sanitized[:120]}. "
+                "El usuario lo ve en una pestaña nueva."
+            )
+        elif policy_result.decision == "prompt":
+            just = policy_result.justification or "Requiere confirmación según la política del proyecto."
+            allowed = request_permission_sync_generic(
+                kind="terminal_exec",
+                subject=f"[Política] {just}\n\nComando: {command.strip()[:200]}",
+                tool_name="terminal_execute_background_tool",
+                preview=f"[Política del proyecto]\n{just}\n\nComando (fondo): {command.strip()[:500]}",
+            )
+            if not allowed:
+                return "Comando de fondo rechazado por el usuario (política del proyecto)."
 
     session_id = _current_session.get()
     if session_id and not terminal_rate_limiter.check(session_id):

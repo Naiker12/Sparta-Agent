@@ -12,6 +12,7 @@ from langgraph.types import Command
 from sparta_ai.agents.subagents.research_agent import research_topic, build_research_graph
 from sparta_ai.agents.subagents.code_agent import execute_code_task, build_code_graph
 from sparta_ai.agents.subagents.memory_agent import recall_memories, build_memory_graph
+from sparta_ai.agents.subagents.review_agent import review_changes, build_review_graph
 from sparta_ai.agents.reflection import reflection_node, should_reflect
 from sparta_ai.security.permission_policy import PermissionPolicy, get_policy, set_policy_mode
 from sparta_ai.tools.plan_tool import create_plan_tool
@@ -48,12 +49,13 @@ def build_sparta_graph(
     checkpointer: Any | None = None,
     policy_mode: str = "build",
     vendor: str = "openai",
+    model: str = "",
 ) -> StateGraph:
     # Apply permission policy to tools
     set_policy_mode(policy_mode)
     policy = PermissionPolicy(mode=policy_mode)
     all_tools = tools + [create_plan_tool]
-    delegate_tools = [research_topic, execute_code_task, recall_memories]
+    delegate_tools = [research_topic, execute_code_task, recall_memories, review_changes]
 
     # Create two LLM bindings: one for build mode (all tools), one for plan mode (read-only)
     llm_with_tools = llm.bind_tools(all_tools + delegate_tools)
@@ -106,6 +108,14 @@ def build_sparta_graph(
             "- No invoques la misma herramienta con los mismos argumentos más de una vez (evita loops).",
             "- Si una herramienta falla, informa al usuario del error específico.",
             "- Si una tool devuelve un ERROR, NO inventes la respuesta — reporta el error al usuario.",
+            "",
+            "REGLAS PARA EDICIÓN DE ARCHIVOS:",
+            "- Para un solo cambio en un archivo, usa patch_file_tool (más ligero).",
+            "- Para cambios coordinados en 2+ archivos relacionados, usa apply_patch_tool",
+            "  para que se apliquen de forma atómica (todo o nada).",
+            "- apply_patch_tool recibe una lista de edits, cada uno con path, old_string, new_string.",
+            "- Después de cambios no triviales en código, considerá delegar en delegate_review",
+            "  para detectar problemas de calidad o seguridad antes de la respuesta final.",
             "",
             "REGLAS PARA RESPUESTAS CON BÚSQUEDA WEB:",
             "- web_search_tool te da snippets; si necesitas el contenido completo de una fuente, usa web_fetch_tool.",
@@ -189,6 +199,18 @@ def build_sparta_graph(
             )
 
         system = "\n\n".join(system_parts)
+
+        # For models without native reasoning, inject the emulated thinking
+        # prompt so the model wraps its reasoning in think/thinking tags.
+        # The StreamingThinkScrubber in event_bridge.py already strips these
+        # and emits them as thinking:token events for the frontend.
+        if vendor and model:
+            from sparta_ai.agents.emulated_reasoning import (
+                needs_emulated_reasoning,
+                append_reasoning_prompt,
+            )
+            if needs_emulated_reasoning(vendor, model):
+                system = append_reasoning_prompt(system)
 
         # Build message list: system prompt + active skills as user message + history
         messages: list[dict] = [
@@ -384,6 +406,7 @@ def build_sparta_graph(
             "delegate_research": build_research_graph,
             "delegate_code": build_code_graph,
             "delegate_memory": build_memory_graph,
+            "delegate_review": build_review_graph,
         }
 
         # Apply tool call limit BEFORE launching parallel subagents
@@ -394,8 +417,24 @@ def build_sparta_graph(
             return {"subagent_results": [], "tool_calls_this_turn": state.get("tool_calls_this_turn", 0)}
 
         async def _run_subagent(tc: dict) -> tuple[dict, ToolMessage]:
+            from langchain_core.callbacks.manager import adispatch_custom_event
+            import time
+
+            subagent_name = tc["name"].replace("delegate_", "")
+            args = tc.get("args", {})
+            task_summary = json.dumps(args)[:200]
+            await adispatch_custom_event("subagent:started", {
+                "subagentName": subagent_name,
+                "taskSummary": task_summary,
+            })
+
             builder = subagent_map.get(tc["name"])
             if not builder:
+                await adispatch_custom_event("subagent:completed", {
+                    "subagentName": subagent_name,
+                    "durationMs": 0,
+                    "success": False,
+                })
                 return (
                     {"subagent": tc["name"], "error": "Unknown subagent type"},
                     ToolMessage(
@@ -405,9 +444,9 @@ def build_sparta_graph(
                         status="error",
                     ),
                 )
+            t0 = time.monotonic()
             try:
                 graph = builder(llm=llm)
-                args = tc.get("args", {})
                 # Compiled sub-graphs stream their internal events automatically
                 # through the parent graph's astream_events thanks to their namespace.
                 result = await asyncio.wait_for(
@@ -415,6 +454,12 @@ def build_sparta_graph(
                     timeout=120,
                 )
                 output = result.get("output") if isinstance(result, dict) else str(result)
+                duration_ms = int((time.monotonic() - t0) * 1000)
+                await adispatch_custom_event("subagent:completed", {
+                    "subagentName": subagent_name,
+                    "durationMs": duration_ms,
+                    "success": True,
+                })
                 return (
                     {"subagent": tc["name"], "output": output},
                     ToolMessage(
@@ -424,7 +469,13 @@ def build_sparta_graph(
                     ),
                 )
             except asyncio.TimeoutError:
+                duration_ms = int((time.monotonic() - t0) * 1000)
                 logger.warning("Subagent %s timed out after 120s", tc["name"])
+                await adispatch_custom_event("subagent:completed", {
+                    "subagentName": subagent_name,
+                    "durationMs": duration_ms,
+                    "success": False,
+                })
                 return (
                     {"subagent": tc["name"], "error": "Timeout after 120s"},
                     ToolMessage(
@@ -435,8 +486,14 @@ def build_sparta_graph(
                     ),
                 )
             except Exception as e:
+                duration_ms = int((time.monotonic() - t0) * 1000)
                 logger.error("Subagent %s failed: %s", tc["name"], e)
                 error_msg = str(e)
+                await adispatch_custom_event("subagent:completed", {
+                    "subagentName": subagent_name,
+                    "durationMs": duration_ms,
+                    "success": False,
+                })
                 return (
                     {"subagent": tc["name"], "error": error_msg},
                     ToolMessage(
