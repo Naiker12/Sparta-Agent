@@ -51,7 +51,7 @@ export function PermissionRequestDialog() {
       aria-modal="true"
       aria-labelledby="perm-title"
       style={{
-        position: 'fixed', inset: 0, zIndex: 9999,
+        position: 'fixed', inset: 0, zIndex: 100,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)',
       }}

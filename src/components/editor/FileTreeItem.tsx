@@ -103,7 +103,7 @@ export function FileTreeItem({
     position: 'fixed',
     top: ctx?.y ?? 0,
     left: ctx?.x ?? 0,
-    zIndex: 9999,
+    zIndex: 999,
     minWidth: 160,
     background: 'var(--bg-elevated, #1e1e2e)',
     border: '1px solid var(--border-normal, #333)',

@@ -46,6 +46,14 @@
   --radius-lg:     10px;
   --radius-xl:     14px;
 
+  /* z-index scale — centralizado para evitar pisadas */
+  --z-panel:       10;
+  --z-dropdown:    50;
+  --z-modal:       100;
+  --z-modal-confirm: 110;
+  --z-popover:     120;
+  --z-drag-overlay: 9999;
+
   --font-ui:       'Inter', system-ui, sans-serif;
   --font-display:  'Space Grotesk', system-ui, sans-serif;
   --font-mono:     'Geist Variable', 'JetBrains Mono', monospace;

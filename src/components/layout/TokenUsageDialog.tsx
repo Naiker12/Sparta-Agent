@@ -29,7 +29,7 @@ export function TokenUsageDialog({ open, onClose }: TokenUsageDialogProps) {
   return (
     <div
       style={{
-        position: 'fixed', inset: 0, zIndex: 9999,
+        position: 'fixed', inset: 0, zIndex: 100,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         background: 'rgba(0,0,0,0.4)',
         backdropFilter: 'blur(3px)',

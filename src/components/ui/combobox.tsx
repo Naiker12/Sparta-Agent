@@ -163,7 +163,7 @@ function ComboboxContent({ children, className }: { children: React.ReactNode; c
       className={cn("overflow-hidden rounded-lg border border-border-strong bg-popover shadow-xl", className)}
       style={{
         position: 'fixed',
-        zIndex: 999999,
+        zIndex: 999,
         top: position.top,
         left: position.left,
         width: position.width,

@@ -222,10 +222,10 @@ export function AppShell() {
       <StatusBar />
       {settingsOpen && <SettingsDialog />}
       {isDraggingTerminal && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 99999, cursor: 'row-resize', background: 'transparent' }} />
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, cursor: 'row-resize', background: 'transparent' }} />
       )}
       {isDraggingEditor && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 99999, cursor: 'col-resize', background: 'transparent' }} />
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, cursor: 'col-resize', background: 'transparent' }} />
       )}
       <Toaster position="top-center" richColors closeButton />
       <PermissionRequestDialog />

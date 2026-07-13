@@ -100,7 +100,7 @@ export function TitleBar() {
           display: 'flex',
           alignItems: 'center',
           gap: 6,
-          padding: '0 6px',
+          padding: '0 10px',
         }}
       >
         <SpartaIcon size={18} />
@@ -116,7 +116,7 @@ export function TitleBar() {
         </span>
       </div>
 
-      <div style={{ width: 1, height: 16, background: 'var(--border-subtle)', margin: '0 8px' }} />
+      <div style={{ width: 1, height: 18, background: 'var(--border-subtle)', margin: '0 12px' }} />
 
       <Tabs value={activeValue} onValueChange={(v) => handleTabClick(v as MainView['type'])}>
         <TabsList
