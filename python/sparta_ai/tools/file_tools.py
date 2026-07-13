@@ -47,11 +47,15 @@ def _workspace_root() -> Path:
     root = _get_workspace_root()
     if root:
         return Path(root).resolve()
-    raise RuntimeError(
-        "SPARTA_WORKSPACE_ROOT no está definida. "
-        "No hay un proyecto vinculado a esta sesión. "
-        "Selecciona una carpeta de proyecto antes de usar herramientas de archivo."
+    # Fallback to CWD — consistent with PathGuard's hierarchy:
+    # session → env → cwd (never RuntimeError)
+    cwd = Path.cwd().resolve()
+    logger.warning(
+        "SPARTA_WORKSPACE_ROOT no está definida para esta sesión. "
+        "Usando CWD como workspace: %s",
+        cwd,
     )
+    return cwd
 
 
 DENYLIST_FILES = {
@@ -647,12 +651,8 @@ def inject_workspace_guidance() -> None:
 
     Call this right before each graph execution so the LLM sees the correct
     workspace path even if SPARTA_WORKSPACE_ROOT changed since import time.
-    If no workspace root is configured, tools will show a clear error message.
     """
-    try:
-        guidance = _workspace_guidance()
-    except RuntimeError:
-        guidance = "No hay un proyecto vinculado. Las herramientas de archivo no estarán disponibles."
+    guidance = _workspace_guidance()
     read_file_tool.description = (
         f"{read_file_tool.__original_description}\n\n{guidance}"  # type: ignore[attr-defined]
     )
@@ -668,7 +668,4 @@ def inject_workspace_guidance() -> None:
 _ALL_FILE_TOOLS = (read_file_tool, write_file_tool, search_files_tool, patch_file_tool, delete_file_tool)
 for _t in _ALL_FILE_TOOLS:
     _t.__original_description = _t.description  # type: ignore[attr-defined]
-try:
-    inject_workspace_guidance()
-except RuntimeError:
-    logger.warning("Workspace root not available at import time — tools will be injected at first execution")
+inject_workspace_guidance()
