@@ -57,11 +57,13 @@ const MENU_ITEMS = [
 export function AppMenu() {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger aria-label="Menú de aplicación" className="no-drag">
-        <Button variant="ghost" size="icon-sm">
-          <Menu size={16} strokeWidth={1.5} />
-        </Button>
-      </DropdownMenuTrigger>
+      <DropdownMenuTrigger
+        render={
+          <Button variant="ghost" size="icon-sm" className="no-drag" aria-label="Menú de aplicación">
+            <Menu size={16} strokeWidth={1.5} />
+          </Button>
+        }
+      />
       <DropdownMenuContent align="start" sideOffset={4}>
         {MENU_ITEMS.map((group, gi) => (
           <div key={group.label}>

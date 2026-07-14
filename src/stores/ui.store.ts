@@ -2,7 +2,6 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { toast } from 'sonner'
 import type { SettingsTab } from '@/types'
-import { IS_ELECTRON } from '@/lib/env-adapter'
 
 export type MainView =
   | { type: 'chat'; sessionId?: string }
@@ -24,13 +23,14 @@ interface UIState {
   sidebarExpandedSections: Record<string, boolean>
   activeSettingsTab: SettingsTab
 
-  editorOpen: boolean
   terminalOpen: boolean
-  editorWidth: number
   terminalHeight: number
   editorExplorerVisible: boolean
   editorExplorerWidth: number
+  agentPanelWidth: number
+  editorAgentPanelVisible: boolean
   terminalSlotEl: HTMLDivElement | null
+  editorSplitWidth: number
 
   toggleSidebar: () => void
   setSidebarWidth: (width: number) => void
@@ -40,13 +40,14 @@ interface UIState {
   toggleSidebarSection: (key: string) => void
   setActiveSettingsTab: (tab: SettingsTab) => void
 
-  toggleEditor: () => void
   toggleTerminal: () => void
-  setEditorWidth: (width: number) => void
   setTerminalHeight: (height: number) => void
   toggleEditorExplorer: () => void
   setEditorExplorerWidth: (width: number) => void
+  setAgentPanelWidth: (width: number) => void
+  toggleEditorAgentPanel: () => void
   setTerminalSlotEl: (el: HTMLDivElement | null) => void
+  setEditorSplitWidth: (width: number) => void
 }
 
 export const useUIStore = create<UIState>()(
@@ -61,13 +62,14 @@ export const useUIStore = create<UIState>()(
   sidebarExpandedSections: {},
   activeSettingsTab: 'general',
 
-  editorOpen: false,
   terminalOpen: false,
-  editorWidth: 420,
   terminalHeight: 220,
   editorExplorerVisible: true,
   editorExplorerWidth: 260,
+  agentPanelWidth: 280,
+  editorAgentPanelVisible: true,
   terminalSlotEl: null,
+  editorSplitWidth: 50,
 
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
   toggleContextPanel: () => set((s) => ({ contextPanelOpen: !s.contextPanelOpen })),
@@ -88,18 +90,8 @@ export const useUIStore = create<UIState>()(
     })),
   setActiveSettingsTab: (tab) => set({ activeSettingsTab: tab }),
 
-  toggleEditor: () => {
-    if (!IS_ELECTRON) {
-      toast.info('Editor disponible solo en app de escritorio', {
-        description: 'Descarga Sparta Agent para acceder al editor de código.',
-        duration: 4000,
-      })
-      return
-    }
-    set((s) => ({ editorOpen: !s.editorOpen }))
-  },
   toggleTerminal: () => {
-    if (!IS_ELECTRON) {
+    if (typeof window !== 'undefined' && !(window as any).__ELECTRON__) {
       toast.info('Terminal disponible solo en app de escritorio', {
         description: 'Descarga Sparta Agent para acceder a la terminal.',
         duration: 4000,
@@ -108,11 +100,13 @@ export const useUIStore = create<UIState>()(
     }
     set((s) => ({ terminalOpen: !s.terminalOpen }))
   },
-  setEditorWidth: (width) => set({ editorWidth: Math.min(800, Math.max(300, width)) }),
   setTerminalHeight: (height) => set({ terminalHeight: Math.min(500, Math.max(100, height)) }),
   toggleEditorExplorer: () => set((s) => ({ editorExplorerVisible: !s.editorExplorerVisible })),
-  setEditorExplorerWidth: (width) => set({ editorExplorerWidth: Math.min(420, Math.max(180, width)) }),
+  setEditorExplorerWidth: (width) => set({ editorExplorerWidth: Math.min(600, Math.max(180, width)) }),
+  setAgentPanelWidth: (width) => set({ agentPanelWidth: Math.min(500, Math.max(200, width)) }),
+  toggleEditorAgentPanel: () => set((s) => ({ editorAgentPanelVisible: !s.editorAgentPanelVisible })),
   setTerminalSlotEl: (el) => set({ terminalSlotEl: el }),
+  setEditorSplitWidth: (width) => set({ editorSplitWidth: Math.min(85, Math.max(15, width)) }),
 }),
     {
       name: 'sparta-ui',
@@ -121,11 +115,14 @@ export const useUIStore = create<UIState>()(
         sidebarWidth: state.sidebarWidth,
         sidebarExpandedSections: state.sidebarExpandedSections,
         activeSettingsTab: state.activeSettingsTab,
-        editorWidth: state.editorWidth,
+
         terminalOpen: state.terminalOpen,
         terminalHeight: state.terminalHeight,
         editorExplorerVisible: state.editorExplorerVisible,
         editorExplorerWidth: state.editorExplorerWidth,
+        agentPanelWidth: state.agentPanelWidth,
+        editorAgentPanelVisible: state.editorAgentPanelVisible,
+        editorSplitWidth: state.editorSplitWidth,
       }),
     }
   )

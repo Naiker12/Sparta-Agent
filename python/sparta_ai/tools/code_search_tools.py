@@ -32,6 +32,23 @@ def _is_excluded(path: Path) -> bool:
     return any(part in EXCLUDED_DIRS for part in path.parts)
 
 
+def fast_rglob_files(root: Path) -> list[Path]:
+    files = []
+    def walk(path: Path):
+        try:
+            for item in path.iterdir():
+                if item.name.startswith(".") or item.name in EXCLUDED_DIRS:
+                    continue
+                if item.is_dir():
+                    walk(item)
+                elif item.is_file():
+                    files.append(item)
+        except (PermissionError, OSError):
+            pass
+    walk(root)
+    return files
+
+
 def _safe_base(path: str, tool_name: str = "list_directory_tool", preview: str = "") -> Path:
     """Resolve and validate a directory path inside the workspace."""
     if not path or path.strip() in (".", ""):
@@ -112,11 +129,7 @@ def glob_search_tool(pattern: str, path: str = ".") -> str:
             return f"Error: '{path}' no es un directorio válido en el workspace."
 
         matches: list[str] = []
-        for p in root.rglob("*"):
-            if not p.is_file():
-                continue
-            if _is_excluded(p):
-                continue
+        for p in fast_rglob_files(root):
             rel = p.relative_to(root)
             if fnmatch.fnmatch(str(rel), pattern) or fnmatch.fnmatch(p.name, pattern):
                 matches.append(str(rel))
@@ -195,11 +208,9 @@ def grep_search_tool(query: str, path: str = ".", max_results: int = 50) -> str:
             pass
 
         out: list[str] = []
-        for p in root.rglob("*"):
+        for p in fast_rglob_files(root):
             if len(out) >= max_results:
                 break
-            if not p.is_file() or _is_excluded(p):
-                continue
             try:
                 text = p.read_text(encoding="utf-8", errors="ignore")
                 for i, line in enumerate(text.splitlines(), 1):

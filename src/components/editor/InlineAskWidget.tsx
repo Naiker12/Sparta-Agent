@@ -24,7 +24,6 @@ export function InlineAskWidget({ editor, selection, filePath, selectedText, lan
   const [submitting, setSubmitting] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const dispatch = useEventBus((s) => s.dispatch)
-  const widgetId = useRef(`inline-ask-${Date.now()}`)
 
   useEffect(() => {
     inputRef.current?.focus()

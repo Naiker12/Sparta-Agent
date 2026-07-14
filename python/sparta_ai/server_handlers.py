@@ -230,22 +230,39 @@ def _build_project_context(workspace_root: str) -> str:
     if stack:
         lines.append(f"Stack: {', '.join(stack)}")
 
-    # Count files by extension (top 2 levels only)
+    # Count files by extension (top 3 levels only, pruning heavy folders)
     ext_counts: dict[str, int] = {}
     file_count = 0
+    skip_dirs = {
+        "node_modules", ".git", ".venv", "venv", "env", "target", ".cargo",
+        "__pycache__", ".pytest_cache", "dist", "build", ".next", ".out",
+        "out", ".nuxt", ".idea", ".vscode", "dist-electron", "dist-web",
+        "release", ".ruff_cache", ".sparta", ".agents", "vendor", "tmp", "temp"
+    }
+
+    def walk_dir(path: Path, depth: int = 0):
+        nonlocal file_count
+        if file_count > 2000 or depth > 3:
+            return
+        try:
+            for item in path.iterdir():
+                if item.is_dir():
+                    if item.name in skip_dirs or item.name.startswith("."):
+                        continue
+                    walk_dir(item, depth + 1)
+                elif item.is_file():
+                    file_count += 1
+                    ext = item.suffix.lower()
+                    if ext:
+                        ext_counts[ext] = ext_counts.get(ext, 0) + 1
+                    if file_count > 2000:
+                        break
+        except (PermissionError, OSError):
+            pass
+
     try:
-        for f in root.rglob("*"):
-            if f.is_file() and not any(
-                part.startswith(".") or part == "node_modules" or part == "__pycache__"
-                for part in f.relative_to(root).parts
-            ):
-                file_count += 1
-                ext = f.suffix.lower()
-                if ext:
-                    ext_counts[ext] = ext_counts.get(ext, 0) + 1
-                if file_count > 2000:
-                    break
-    except (PermissionError, OSError):
+        walk_dir(root)
+    except Exception:
         pass
 
     if file_count:

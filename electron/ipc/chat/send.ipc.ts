@@ -5,7 +5,7 @@ import {
   type ChatRequest,
   activeStreams,
   windowBySession,
-  waitForDone,
+  streamResolvers,
 } from './shared'
 
 export function registerChatSendIPC(): void {
@@ -33,9 +33,17 @@ export function registerChatSendIPC(): void {
       req.securityLoaded = false
     }
 
+    const donePromise = new Promise<boolean>((resolve) => {
+      const markDone = () => {
+        streamResolvers.delete(requestId)
+        resolve(true)
+      }
+      streamResolvers.set(requestId, markDone)
+    })
+
     sendToPython({
       id: requestId,
-      method: 'chat',
+      method: 'chat.stream',
       params: {
         session_id: sessionId,
         message_id: messageId,
@@ -71,15 +79,20 @@ export function registerChatSendIPC(): void {
       const state = activeStreams.get(sessionId)
 
       if (!state?.active) {
+        streamResolvers.delete(requestId)
         return { ok: true, aborted: true }
       }
 
-      const done = await waitForDone(requestId, 200)
-      if (done) break
+      const completed = await Promise.race([
+        donePromise,
+        new Promise<boolean>((r) => setTimeout(() => r(false), 100)),
+      ])
+      if (completed) break
     }
     timedOut = Date.now() - startTime >= timeout
 
     activeStreams.delete(sessionId)
+    streamResolvers.delete(requestId)
     if (timedOut) {
       return { ok: false, error: 'Timeout' }
     }

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Check, Loader2, X, AlertTriangle, FileText, SquarePen, Trash2, Search, Terminal, Globe, Pen, ChevronRight, BookOpen } from 'lucide-react'
+import { Check, Loader2, X, AlertTriangle, FileText, SquarePen, Trash2, Search, Terminal, Globe, Pen, ChevronRight } from 'lucide-react'
 import { MarkdownRenderer } from '@/components/chat/MarkdownRenderer'
 import { SearchResultsList } from './SearchResultsList'
 import type { ToolCall } from '@/types'

@@ -1,5 +1,7 @@
 import { ipcMain, BrowserWindow, dialog, type IpcMainInvokeEvent, type IpcMainEvent } from 'electron'
 import * as pty from 'node-pty'
+import { execSync } from 'node:child_process'
+import { accessSync } from 'node:fs'
 import os from 'os'
 
 // Canonical source of truth: python/sparta_ai/security/command_sanitizer.py
@@ -87,7 +89,7 @@ function shellCommand(profile?: string) {
   if (os.platform() === 'win32') {
     if (profile === 'pwsh') {
       const pwsh = (() => {
-        try { return require('child_process').execSync('where pwsh.exe 2>nul').toString().trim().split('\n')[0]?.trim() || '' } catch { return '' }
+        try { return execSync('where pwsh.exe 2>nul').toString().trim().split('\n')[0]?.trim() || '' } catch { return '' }
       })()
       if (pwsh) return { shell: pwsh, args: ['-NoLogo'] }
     }
@@ -96,12 +98,12 @@ function shellCommand(profile?: string) {
     }
     // Default: try pwsh first, then powershell, then cmd
     const pwsh = (() => {
-      try { return require('child_process').execSync('where pwsh.exe 2>nul').toString().trim().split('\n')[0]?.trim() || '' } catch { return '' }
+      try { return execSync('where pwsh.exe 2>nul').toString().trim().split('\n')[0]?.trim() || '' } catch { return '' }
     })()
     if (pwsh) return { shell: pwsh, args: ['-NoLogo'] }
     const systemRoot = process.env.SystemRoot || 'C:\\Windows'
     const winPs = `${systemRoot}\\System32\\WindowsPowerShell\\v1.0\\powershell.exe`
-    try { require('fs').accessSync(winPs); return { shell: winPs, args: ['-NoLogo'] } } catch {}
+    try { accessSync(winPs); return { shell: winPs, args: ['-NoLogo'] } } catch {}
     return { shell: process.env.COMSPEC || 'cmd.exe', args: [] }
   }
   if (profile === 'zsh') return { shell: '/bin/zsh', args: ['-l'] }

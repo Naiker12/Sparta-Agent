@@ -1,94 +1,118 @@
-import { PanelLeft, FolderX, X } from 'lucide-react'
+import { PanelLeft, PanelRight, FolderX, X } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { Separator } from '@/components/ui/separator'
+import { useTranslation } from '@/i18n'
 
 export function EditorToolbar({
   explorerVisible,
   onToggleExplorer,
+  agentPanelVisible,
+  onToggleAgentPanel,
   projectName,
   onCloseProject,
   onCloseEditor,
 }: {
   explorerVisible: boolean
   onToggleExplorer: () => void
+  agentPanelVisible: boolean
+  onToggleAgentPanel: () => void
   projectName?: string
   onCloseProject: () => void
   onCloseEditor: () => void
 }) {
+  const { t } = useTranslation()
+
   return (
     <div
+      className="flex items-center gap-1 shrink-0"
       style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 4,
         padding: '4px 8px',
         borderBottom: '1px solid var(--border-normal)',
         background: 'var(--bg-surface)',
-        flexShrink: 0,
       }}
     >
-      <button
-        onClick={onToggleExplorer}
-        title="Mostrar/ocultar explorador (Ctrl+B)"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: 26,
-          height: 26,
-          border: 'none',
-          background: explorerVisible ? 'var(--bg-active)' : 'transparent',
-          borderRadius: 'var(--radius-sm)',
-          color: 'var(--text-secondary)',
-          cursor: 'pointer',
-        }}
-      >
-        <PanelLeft size={14} />
-      </button>
+      <TooltipProvider delay={400}>
+        <Tooltip>
+          <TooltipTrigger>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-pressed={explorerVisible}
+              className={explorerVisible ? 'bg-[var(--bg-active)]' : ''}
+              onClick={onToggleExplorer}
+            >
+              <PanelLeft size={14} />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="text-xs">
+            {t('editor.toolbar.toggleExplorer')}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
 
-      <div style={{ flex: 1 }} />
+      <TooltipProvider delay={400}>
+        <Tooltip>
+          <TooltipTrigger>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-pressed={agentPanelVisible}
+              className={agentPanelVisible ? 'bg-[var(--bg-active)]' : ''}
+              onClick={onToggleAgentPanel}
+            >
+              <PanelRight size={14} />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="text-xs">
+            {t('editor.toolbar.toggleAgentPanel')}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      <div className="flex-1" />
 
       {projectName && (
         <>
-          <button
-            onClick={onCloseProject}
-            title="Cerrar proyecto"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4,
-              padding: '4px 8px',
-              border: 'none',
-              background: 'transparent',
-              borderRadius: 'var(--radius-sm)',
-              color: 'var(--text-muted)',
-              fontSize: 11,
-              cursor: 'pointer',
-            }}
-          >
-            <FolderX size={12} />
-            <span>Cerrar proyecto</span>
-          </button>
-          <div style={{ width: 1, height: 16, background: 'var(--border-subtle)', margin: '0 4px' }} />
+          <TooltipProvider delay={400}>
+            <Tooltip>
+              <TooltipTrigger>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-1 text-[11px]"
+                  style={{ color: 'var(--text-muted)' }}
+                  onClick={onCloseProject}
+                >
+                  <FolderX size={12} />
+                  <span>{t('editor.toolbar.closeProject')}</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">
+                {t('editor.toolbar.closeProject')}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <Separator orientation="vertical" className="mx-1 h-4" />
         </>
       )}
 
-      <button
-        onClick={onCloseEditor}
-        title="Cerrar editor"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: 26,
-          height: 26,
-          border: 'none',
-          background: 'transparent',
-          borderRadius: 'var(--radius-sm)',
-          color: 'var(--text-muted)',
-          cursor: 'pointer',
-        }}
-      >
-        <X size={14} />
-      </button>
+      <TooltipProvider delay={400}>
+        <Tooltip>
+          <TooltipTrigger>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={onCloseEditor}
+            >
+              <X size={14} />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="text-xs">
+            {t('editor.toolbar.closeEditor')}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     </div>
   )
 }

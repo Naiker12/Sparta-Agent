@@ -148,6 +148,7 @@ export function FileTreeItem({
           fontSize: 11.5,
           fontFamily: 'var(--font-mono)',
           userSelect: 'none',
+          transition: 'background-color 0.12s ease-out, color 0.12s ease-out',
         }}
       >
         <span style={{ width: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

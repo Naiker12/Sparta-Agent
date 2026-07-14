@@ -1,4 +1,4 @@
-import chokidar, { type FSWatcher } from 'chokidar'
+import type { FSWatcher } from 'chokidar'
 import path from 'node:path'
 import { BrowserWindow } from 'electron'
 
@@ -12,9 +12,18 @@ const IGNORED_DIRS = [
   '**/__pycache__/**',
   '**/dist/**',
   '**/dist-electron/**',
+  '**/dist-web/**',
   '**/.next/**',
   '**/.pytest_cache/**',
   '**/build/**',
+  '**/target/**',
+  '**/release/**',
+  '**/.sparta/**',
+  '**/.agents/**',
+  '**/vendor/**',
+  '**/.tmp/**',
+  '**/tmp/**',
+  '**/temp/**',
 ]
 
 function broadcastFileChanged(filePath: string): void {
@@ -27,10 +36,11 @@ function broadcastFileChanged(filePath: string): void {
   })
 }
 
-export function startFileWatcher(rootPath: string): void {
+export async function startFileWatcher(rootPath: string): Promise<void> {
   if (watchedRoot === rootPath && watcher) return
   stopFileWatcher()
 
+  const chokidar = await import('chokidar')
   const absRoot = path.resolve(rootPath)
   watcher = chokidar.watch(absRoot, {
     ignored: IGNORED_DIRS,

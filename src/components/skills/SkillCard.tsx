@@ -1,4 +1,4 @@
-import { Check, Download, MoreVertical, Edit2, Trash2, Copy, Star } from 'lucide-react'
+import { Check, Download, MoreVertical, Pencil, Trash2, Copy, Star } from 'lucide-react'
 import { useState } from 'react'
 import type { Skill, DownloadableSkill } from '@/types'
 import { useSkillStore } from '@/stores/skill.store'
@@ -129,7 +129,7 @@ export function SkillCard({
                     }}
                   >
                     {onEdit && (
-                      <MenuItem icon={<Edit2 size={11} />} label="Editar" onClick={() => { setMenuOpen(false); onEdit() }} />
+                      <MenuItem icon={<Pencil size={11} />} label="Editar" onClick={() => { setMenuOpen(false); onEdit() }} />
                     )}
                     {onExport && (
                       <MenuItem icon={<Copy size={11} />} label="Exportar" onClick={() => { setMenuOpen(false); onExport() }} />

@@ -11,7 +11,11 @@ export interface FileTreeNode {
   children?: FileTreeNode[]
 }
 
-const SKIP_DIRS = new Set(['node_modules', '.git', '.venv', '__pycache__', '.pytest_cache', 'dist', 'build', '.next'])
+const SKIP_DIRS = new Set([
+  'node_modules', '.git', '.venv', 'venv', 'env', 'target', '.cargo',
+  '__pycache__', '.pytest_cache', 'dist', 'build', '.next', '.out', 'out', '.nuxt', '.idea', '.vscode',
+  'dist-electron', 'dist-web', 'release', '.ruff_cache', '.sparta', '.agents', 'vendor', '.tmp', 'temp', 'tmp'
+])
 const MAX_DEPTH = 8
 
 let _workspaceRoot: string | null = null
@@ -146,17 +150,17 @@ export function registerFilesystemIPC() {
     }
   })
 
-  ipcMain.handle('fs:startWatcher', (_event, dirPath: string) => {
+  ipcMain.handle('fs:startWatcher', async (_event, dirPath: string) => {
     if (!dirPath || typeof dirPath !== 'string') return { success: false }
     _workspaceRoot = dirPath
-    startFileWatcher(dirPath)
+    await startFileWatcher(dirPath)
     return { success: true }
   })
 
-  ipcMain.handle('fs:setWorkspaceRoot', (_event, root: string) => {
+  ipcMain.handle('fs:setWorkspaceRoot', async (_event, root: string) => {
     if (!root || typeof root !== 'string') return { success: false, error: 'Invalid path' }
     _workspaceRoot = root
-    startFileWatcher(root)
+    await startFileWatcher(root)
     return { success: true }
   })
 

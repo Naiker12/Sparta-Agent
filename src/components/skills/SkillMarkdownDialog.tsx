@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FileText, Code2, Copy, Check } from 'lucide-react'
+import { FileText, Code, Copy, Check } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -63,7 +63,7 @@ export function SkillMarkdownDialog({ open, onClose, skill }: SkillMarkdownDialo
           borderBottom: '1px solid var(--border-subtle)', flexShrink: 0,
         }}>
           <ViewToggleButton active={!raw} onClick={() => setRaw(false)} icon={<FileText size={11} strokeWidth={1.5} />} label="Renderizado" />
-          <ViewToggleButton active={raw} onClick={() => setRaw(true)} icon={<Code2 size={11} strokeWidth={1.5} />} label="Markdown crudo" />
+          <ViewToggleButton active={raw} onClick={() => setRaw(true)} icon={<Code size={11} strokeWidth={1.5} />} label="Markdown crudo" />
           <div style={{ flex: 1 }} />
           <ToolbarButton onClick={handleCopy} icon={copied ? <Check size={11} strokeWidth={1.5} /> : <Copy size={11} strokeWidth={1.5} />} label={copied ? 'Copiado' : 'Copiar'} />
         </div>

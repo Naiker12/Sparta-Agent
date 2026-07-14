@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
-import { ChevronRightIcon, Check } from 'lucide-react'
+import { ChevronRight, Check } from 'lucide-react'
 import { getRandomSpinner, type SpinnerSet } from '@/lib/spinners'
 import { ShimmerText } from './ShimmerText'
 import { SlidingNumber } from '@/components/animate-ui/primitives/texts/sliding-number'
@@ -83,7 +83,7 @@ export function ThinkingPill({ status, tokensUsed, isExpanded, elapsed, lastSkil
               &middot; {tokensUsed.toLocaleString()} {t('chat.tokensUnit')}
             </span>
           )}
-          <ChevronRightIcon
+          <ChevronRight
             size={12}
             style={{
               marginLeft: 2,

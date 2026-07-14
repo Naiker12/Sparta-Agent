@@ -152,6 +152,7 @@ async function runAssistantTurn(
       securityLoaded,
       sandboxMode,
       openFiles: useEditorStore.getState().openFiles,
+      activeFilePath: useEditorStore.getState().activeFilePath,
     })
     const resolved = sendResult instanceof Promise ? await sendResult : null
     if (resolved && !resolved.ok) {

@@ -27,9 +27,6 @@ export function DiffReviewTab() {
   const fileName = filePath.split(/[\\/]/).pop() ?? filePath
   const pendingCount = queue.filter((q) => q.status === 'pending').length
   const currentIndex = queue.findIndex((q) => q.requestId === requestId)
-  const resolvedIndex = queue.findIndex(
-    (q) => q.status === 'approved' || q.status === 'rejected'
-  )
   // Queue position for display
   const pos = queue.filter((q, i) => i <= currentIndex && q.status === 'pending').length
 

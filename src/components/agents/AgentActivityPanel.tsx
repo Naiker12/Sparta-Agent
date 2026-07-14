@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react'
 import { useEventBus } from '@/stores/event-bus.store'
 import { useProjectStore } from '@/stores/project.store'
 import { useDiffReviewStore } from '@/stores/diff-review.store'
+import { useUIStore } from '@/stores/ui.store'
 import {
   FileSearch, FilePen, FileX, Terminal, Globe, Brain,
   ChevronDown, ChevronRight, Loader2, Check, X,
@@ -227,6 +228,7 @@ const ActivityEntryRow = memo(function ActivityEntryRow({ entry, onOpenFile }: E
 })
 
 export function AgentActivityPanel() {
+  const agentPanelWidth = useUIStore((s) => s.agentPanelWidth)
   const [entries, setEntries] = useState<ActivityEntry[]>([])
   const [expanded, setExpanded] = useState(true)
   const listRef = useRef<HTMLDivElement>(null)
@@ -363,10 +365,11 @@ export function AgentActivityPanel() {
   }, [dispatch])
 
   const pendingCount = queue.filter((q) => q.status === 'pending').length
+  const toggleEditorAgentPanel = useUIStore((s) => s.toggleEditorAgentPanel)
 
   return (
     <div style={{
-      width: 280,
+      width: agentPanelWidth,
       borderLeft: '1px solid var(--border-subtle)',
       background: 'var(--bg-surface)',
       display: 'flex',
@@ -416,19 +419,51 @@ export function AgentActivityPanel() {
             {runningCount > 0 ? 'Agente trabajando…' : 'Actividad del agente'}
           </span>
         </div>
-        {runningCount > 0 && (
-          <span style={{
-            background: 'var(--accent)',
-            color: '#fff',
-            borderRadius: 10,
-            padding: '1px 6px',
-            fontSize: 10,
-            fontWeight: 600,
-            animation: 'scaleIn 0.15s ease',
-          }}>
-            {runningCount}
-          </span>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          {runningCount > 0 && (
+            <span style={{
+              background: 'var(--accent)',
+              color: '#fff',
+              borderRadius: 10,
+              padding: '1px 6px',
+              fontSize: 10,
+              fontWeight: 600,
+              animation: 'scaleIn 0.15s ease',
+            }}>
+              {runningCount}
+            </span>
+          )}
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              toggleEditorAgentPanel()
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 20,
+              height: 20,
+              border: 'none',
+              borderRadius: 4,
+              background: 'transparent',
+              color: 'var(--text-muted)',
+              cursor: 'pointer',
+              transition: 'all 0.12s',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = 'var(--text-primary)'
+              e.currentTarget.style.background = 'var(--bg-hover)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = 'var(--text-muted)'
+              e.currentTarget.style.background = 'transparent'
+            }}
+            title="Ocultar panel"
+          >
+            <X size={12} />
+          </button>
+        </div>
       </div>
 
       {/* Project info card */}

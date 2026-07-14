@@ -1,21 +1,21 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, Code2, Search, Settings, Shield, GitCompare, TestTube, Globe, Cpu, Sparkles, RotateCw } from 'lucide-react'
+import { Plus, Code, Search, Settings, Shield, Split, TestTube, Globe, Cpu, Sparkles, RotateCw } from 'lucide-react'
 import { useSettingsStore } from '@/stores/settings.store'
 import { useSessionStore } from '@/stores/session.store'
 import { useTranslation } from '@/i18n'
 
 const QUICK_ACTIONS = [
   { icon: Plus,    labelKey: 'sidebar.newSession', action: 'new' as const },
-  { icon: Code2,   labelKey: 'chat.activeSkills',  action: 'coding' as const, fallbackLabel: 'Código' },
+  { icon: Code,   labelKey: 'chat.activeSkills',  action: 'coding' as const, fallbackLabel: 'Código' },
   { icon: Search,  labelKey: 'sidebar.agents',     action: 'research' as const, fallbackLabel: 'Investigar' },
   { icon: Settings,labelKey: 'sidebar.settings',   action: 'settings' as const },
 ]
 
 const EXAMPLE_PROMPTS = [
   { es: '¿Cómo implemento autenticación JWT en Node.js?', en: 'How do I implement JWT authentication in Node.js?', icon: Shield, color: '#10b981' },
-  { es: 'Explícame las diferencias entre REST y GraphQL', en: 'Explain the differences between REST and GraphQL', icon: GitCompare, color: '#8b5cf6' },
-  { es: 'Refactoriza este código para hacerlo más legible', en: 'Refactor this code to make it more readable', icon: Code2, color: '#f59e0b' },
+  { es: 'Explícame las diferencias entre REST y GraphQL', en: 'Explain the differences between REST and GraphQL', icon: Split, color: '#8b5cf6' },
+  { es: 'Refactoriza este código para hacerlo más legible', en: 'Refactor this code to make it more readable', icon: Code, color: '#f59e0b' },
   { es: 'Busca las últimas noticias sobre IA generativa', en: 'Search for the latest news on generative AI', icon: Globe, color: '#3b82f6' },
   { es: 'Escribe tests unitarios para esta función', en: 'Write unit tests for this function', icon: TestTube, color: '#ec4899' },
   { es: '¿Cuál es la complejidad temporal de quicksort?', en: 'What is the time complexity of quicksort?', icon: Cpu, color: '#06b6d4' },

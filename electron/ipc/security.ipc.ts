@@ -1,4 +1,4 @@
-import { ipcMain, BrowserWindow } from 'electron'
+import { ipcMain, BrowserWindow, shell } from 'electron'
 import path from 'node:path'
 import { createRequire } from 'node:module'
 import { app } from 'electron'
@@ -120,7 +120,6 @@ export function registerSecurityIPC(): void {
       app.getPath('userData'),
       'sparta-security-audit.log'
     )
-    const { shell } = require('electron')
     shell.openPath(logPath)
     return { ok: true }
   })

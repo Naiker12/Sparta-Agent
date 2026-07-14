@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { cn } from "@/lib/utils"
-import { ChevronDownIcon } from "lucide-react"
+import { ChevronDown } from "lucide-react"
 
 interface ComboboxContextValue {
   open: boolean
@@ -110,7 +110,7 @@ const ComboboxInput = React.forwardRef<HTMLInputElement, React.ComponentPropsWit
             display: "flex", alignItems: "center", padding: 0,
           }}
         >
-          <ChevronDownIcon className="size-3.5" />
+          <ChevronDown className="size-3.5" />
         </button>
       </div>
     )

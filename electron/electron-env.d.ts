@@ -39,6 +39,12 @@ interface SpartaAPI {
     reasoning?: { enabled: boolean; budget: number; effort?: string }
     webSearchEnabled?: boolean
     workspaceRoot?: string
+    agentAutonomy?: string
+    agentExecuteLocal?: boolean
+    securityLoaded?: boolean
+    sandboxMode?: string
+    openFiles?: string[]
+    activeFilePath?: string
   }) => Promise<{ ok: boolean; error?: string; aborted?: boolean }>
   abortMessage: (sessionId: string) => Promise<void>
   isSidecarReady: () => Promise<{ running: boolean; ready: boolean }>

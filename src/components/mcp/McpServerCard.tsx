@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Plug, Power, Trash2, Edit2, ChevronDown, Wifi, WifiOff, Wrench, MoreHorizontal } from 'lucide-react'
+import { Plug, Zap, Trash2, Pencil, ChevronDown, Wifi, WifiOff, Wrench, MoreHorizontal } from 'lucide-react'
 import type { MCPServer } from '@/types'
 import { useMCPStore } from '@/stores/mcp.store'
 import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog'
@@ -151,7 +151,7 @@ export function McpServerCard({ server, onEdit }: McpServerCardProps) {
                 transition: 'all 0.12s',
               }}
             >
-              <Power size={11} strokeWidth={2} />
+              <Zap size={11} strokeWidth={2} />
             </button>
 
             {/* More menu */}
@@ -173,7 +173,7 @@ export function McpServerCard({ server, onEdit }: McpServerCardProps) {
                   onClick={() => onEdit(server)}
                   className="gap-2 text-xs cursor-pointer"
                 >
-                  <Edit2 size={12} />
+                  <Pencil size={12} />
                   {t('mcp.edit')}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />

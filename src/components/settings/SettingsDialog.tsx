@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useSettingsStore } from '@/stores/settings.store'
 import { useTranslation } from '@/i18n'
-import { XIcon } from 'lucide-react'
+import { X } from 'lucide-react'
 import { GeneralTab } from './tabs/GeneralTab'
 import { AppearanceTab } from './tabs/AppearanceTab'
 import { KeybindsTab } from './tabs/KeybindsTab'
@@ -125,7 +125,7 @@ export function SettingsDialog() {
               cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
-              <XIcon size={14} />
+              <X size={14} />
             </button>
           </div>
 

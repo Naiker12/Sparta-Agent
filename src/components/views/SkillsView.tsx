@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
-import { Search, Layers, Compass, Plus, Package } from 'lucide-react'
+import { Search, Layers, Compass, Plus } from 'lucide-react'
 import { useSkillStore } from '@/stores/skill.store'
 import { useLocalSkillsLoader } from '@/hooks/useLocalSkillsLoader'
 import { SkillCard } from '@/components/skills/SkillCard'
@@ -116,7 +116,7 @@ function EmptyState({ message }: { message: string }) {
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       flexDirection: 'column', gap: 8, padding: '48px 24px', color: 'var(--text-muted)',
     }}>
-      <Package size={28} strokeWidth={1} />
+      <Layers size={28} strokeWidth={1} />
       <span style={{ fontSize: 12, fontFamily: 'var(--font-ui)' }}>{message}</span>
     </div>
   )

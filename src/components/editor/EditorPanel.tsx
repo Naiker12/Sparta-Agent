@@ -25,6 +25,11 @@ import { EditorSkeleton } from './EditorSkeleton'
 import { useAgentEditingTracker } from './hooks/useAgentEditingTracker'
 import { useInlineDiffDecorations } from './hooks/useInlineDiffDecorations'
 import type { FileTreeNode } from '@/types'
+import { IS_ELECTRON } from '@/lib/env-adapter'
+import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Monitor, Download } from 'lucide-react'
+import { useTranslation } from '@/i18n'
 
 interface OpenFile {
   path: string
@@ -34,13 +39,18 @@ interface OpenFile {
 }
 
 export function EditorPanel() {
-  const toggleEditor = useUIStore((s) => s.toggleEditor)
+  const { t } = useTranslation()
+  const setMainView = useUIStore((s) => s.setMainView)
   const editorExplorerVisible = useUIStore((s) => s.editorExplorerVisible)
   const editorExplorerWidth = useUIStore((s) => s.editorExplorerWidth)
   const toggleEditorExplorer = useUIStore((s) => s.toggleEditorExplorer)
   const setEditorExplorerWidth = useUIStore((s) => s.setEditorExplorerWidth)
   const activeProject = useProjectStore((s) => s.getActiveProject())
   const closeProject = useProjectStore((s) => s.closeProject)
+  const agentPanelWidth = useUIStore((s) => s.agentPanelWidth)
+  const setAgentPanelWidth = useUIStore((s) => s.setAgentPanelWidth)
+  const editorAgentPanelVisible = useUIStore((s) => s.editorAgentPanelVisible)
+  const toggleEditorAgentPanel = useUIStore((s) => s.toggleEditorAgentPanel)
   const [openFiles, setOpenFiles] = useState<OpenFile[]>([])
   const [activePath, setActivePath] = useState<string | undefined>()
   const [pinnedPaths, setPinnedPaths] = useState<Set<string>>(new Set())
@@ -96,6 +106,10 @@ export function EditorPanel() {
   useEffect(() => {
     useEditorStore.getState().setOpenFiles(openFilesRef.current.map((f) => f.path))
   }, [openFiles])
+
+  useEffect(() => {
+    useEditorStore.getState().setActiveFilePath(activePath)
+  }, [activePath])
 
   const openFile = useCallback(async (filePath: string) => {
     if (!window.fs) {
@@ -335,156 +349,230 @@ export function EditorPanel() {
     })),
   ]
 
+
   return (
-    <div className="editor-panel" style={{ flex: 1, display: 'flex', flexDirection: 'row', height: '100%', minHeight: 0 }}>
-      {editorExplorerVisible && (
-        <>
-          <div style={{ width: editorExplorerWidth, flexShrink: 0, height: '100%', minHeight: 0 }}>
-            <FileTreeSidebar
-              key={treeKey.current}
-              activePath={activePath}
-              onSelectFile={openFile}
-              onDeleteFile={setDeleteTarget}
-            />
-          </div>
-          <div
-            onMouseDown={(e) => {
-              const startX = e.clientX
-              const startW = editorExplorerWidth
-              function onMove(ev: MouseEvent) {
-                const newW = startW + (ev.clientX - startX)
-                setEditorExplorerWidth(newW)
-              }
-              function onUp() {
-                document.removeEventListener('mousemove', onMove)
-                document.removeEventListener('mouseup', onUp)
-              }
-              document.addEventListener('mousemove', onMove)
-              document.addEventListener('mouseup', onUp)
-            }}
-            style={{
-              width: 4,
-              cursor: 'col-resize',
-              flexShrink: 0,
-              background: 'transparent',
-            }}
-          />
-        </>
-      )}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, minWidth: 0 }}>
-        <EditorToolbar
-          explorerVisible={editorExplorerVisible}
-          onToggleExplorer={toggleEditorExplorer}
-          projectName={activeProject?.name}
-          onCloseProject={handleCloseProject}
-          onCloseEditor={toggleEditor}
-        />
-        <EditorTabs
-          tabs={tabs}
-          activePath={activePath}
-          onSelect={setActivePath}
-          onClose={(path) => {
-            if (path === 'diff:active') {
-              useDiffReviewStore.getState().next()
-              setActivePath(undefined)
-            } else {
-              closeFile(path)
-            }
-          }}
-          pinnedPaths={pinnedPaths}
-          onTogglePin={handleTogglePin}
-          onCloseAll={handleCloseAll}
-          onCloseOthers={handleCloseOthers}
-          onReorder={handleReorder}
-          agentEditingPaths={agentEditingPaths}
-          diffsPending={useDiffReviewStore.getState().pendingPaths}
-        />
-        {activeTab.kind === 'diff' ? (
-          <div style={{ flex: 1, minHeight: 0 }}>
-            <DiffReviewTab />
-          </div>
-        ) : activeTab.kind === 'file' && activeFile ? (
-          <>
-            <Breadcrumb path={activeFile.path} agentEditingPaths={agentEditingPaths} />
-            <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
-              <MonacoEditor
-                path={activeFile.path}
-                content={activeFile.content}
-                onChange={(value) => updateFileContent(activeFile.path, value)}
-                onMount={handleEditorMount}
-                onInlineAsk={handleInlineAsk}
+    <div className="editor-panel" style={{ flex: 1, display: 'flex', flexDirection: 'row', height: '100%', minHeight: 0, position: 'relative' }}>
+      {!IS_ELECTRON ? (
+        <div className="absolute inset-0 z-10 flex items-center justify-center animate-in fade-in duration-150"
+          style={{ background: 'var(--bg-surface)' }}
+        >
+          <Card className="w-full max-w-[400px] flex flex-col items-center gap-4 p-8 text-center shadow-lg animate-in zoom-in-95 duration-150">
+            <div
+              className="flex size-12 items-center justify-center rounded-lg"
+              style={{
+                background: 'var(--bg-hover)',
+              }}
+            >
+              <Monitor
+                size={24}
+                strokeWidth={1.25}
+                style={{ color: 'var(--text-muted)' }}
               />
-              {inlineAsk && activeFile && (
-                <InlineAskWidget
-                  editor={editorRef.current!}
-                  selection={inlineAsk.selection}
-                  filePath={activeFile.path}
-                  selectedText={inlineAsk.selectedText}
-                  language={activeFile.path.split('.').pop()?.toLowerCase() ?? 'plaintext'}
-                  onClose={handleCloseInlineAsk}
-                />
-              )}
             </div>
-            <StatusBar
-              path={activeFile.path}
-              line={cursorPos.line}
-              col={cursorPos.col}
-            />
-          </>
-        ) : loadingPath ? (
-          <EditorSkeleton path={loadingPath} />
-        ) : (
-          <div style={{ flex: 1, minHeight: 0 }}>
-            <MonacoEditor onMount={handleEditorMount} />
-            <EmptyEditorState
-              projectName={activeProject?.name}
-              hasRootPath={!!activeProject?.rootPath}
-              explorerVisible={editorExplorerVisible}
-              onShowExplorer={() => { if (!editorExplorerVisible) toggleEditorExplorer() }}
-              onOpenFolder={async () => {
-                if (!window.fs) return
-                try {
-                  const path = await window.fs.openFolderDialog()
-                  if (path) {
-                    let project = useProjectStore.getState().getActiveProject()
-                    if (!project) {
-                      const folderName = path.split(/[/\\]/).pop() ?? 'Proyecto'
-                      useProjectStore.getState().addProject(folderName)
-                      project = useProjectStore.getState().getActiveProject()
-                    }
-                    if (project) {
-                      useProjectStore.getState().setProjectRootPath(project.id, path)
-                      await window.fs.setWorkspaceRoot(path)
-                    }
+
+            <CardContent className="flex flex-col items-center gap-1 p-0">
+              <h3 className="text-[15px] font-semibold" style={{ color: 'var(--text-primary)' }}>
+                {t('editor.desktopOnly.title')}
+              </h3>
+              <p className="max-w-[340px] text-[13px] leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                {t('editor.desktopOnly.desc')}
+              </p>
+              <p className="max-w-[340px] text-[11px] mt-2" style={{ color: 'var(--text-muted)' }}>
+                {t('editor.desktopOnly.downloadHint')}
+              </p>
+            </CardContent>
+
+            <div className="flex w-full flex-col gap-1.5 mt-2">
+              <Button className="w-full gap-2">
+                <Download size={14} />
+                {t('editor.empty.openFolder').replace(/.*Folder.*/i, 'Download App').replace(/.*carpeta.*/i, 'Descargar App')}
+              </Button>
+              <Button variant="outline" className="w-full" onClick={() => setMainView({ type: 'chat' })}>
+                {t('editor.empty.closeEditor')}
+              </Button>
+            </div>
+          </Card>
+        </div>
+      ) : (
+        <>
+          {editorExplorerVisible && (
+            <>
+              <div style={{ width: editorExplorerWidth, flexShrink: 0, height: '100%', minHeight: 0 }}>
+                <FileTreeSidebar
+                  key={treeKey.current}
+                  activePath={activePath}
+                  onSelectFile={openFile}
+                  onDeleteFile={setDeleteTarget}
+                />
+              </div>
+              <div
+                onMouseDown={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  const startX = e.clientX
+                  const startW = editorExplorerWidth
+                  document.body.classList.add('is-resizing')
+                  function onMove(ev: MouseEvent) {
+                    const newW = startW + (ev.clientX - startX)
+                    setEditorExplorerWidth(newW)
                   }
-                } catch (err) {
-                  // Dialog cancelled or error
+                  function onUp() {
+                    document.removeEventListener('mousemove', onMove)
+                    document.removeEventListener('mouseup', onUp)
+                    document.body.classList.remove('is-resizing')
+                  }
+                  document.addEventListener('mousemove', onMove)
+                  document.addEventListener('mouseup', onUp)
+                }}
+                className="pane-resizer"
+              />
+            </>
+          )}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, minWidth: 0 }}>
+            <EditorToolbar
+              explorerVisible={editorExplorerVisible}
+              onToggleExplorer={toggleEditorExplorer}
+              agentPanelVisible={editorAgentPanelVisible}
+              onToggleAgentPanel={toggleEditorAgentPanel}
+              projectName={activeProject?.name}
+              onCloseProject={handleCloseProject}
+              onCloseEditor={() => setMainView({ type: 'chat' })}
+            />
+            <EditorTabs
+              tabs={tabs}
+              activePath={activePath}
+              onSelect={setActivePath}
+              onClose={(path) => {
+                if (path === 'diff:active') {
+                  useDiffReviewStore.getState().next()
+                  setActivePath(undefined)
+                } else {
+                  closeFile(path)
                 }
               }}
-              onCloseProject={handleCloseProject}
-              onClose={toggleEditor}
+              pinnedPaths={pinnedPaths}
+              onTogglePin={handleTogglePin}
+              onCloseAll={handleCloseAll}
+              onCloseOthers={handleCloseOthers}
+              onReorder={handleReorder}
+              agentEditingPaths={agentEditingPaths}
+              diffsPending={useDiffReviewStore.getState().pendingPaths}
             />
+            {activeTab.kind === 'diff' ? (
+              <div style={{ flex: 1, minHeight: 0 }}>
+                <DiffReviewTab />
+              </div>
+            ) : activeTab.kind === 'file' && activeFile ? (
+              <>
+                <Breadcrumb path={activeFile.path} agentEditingPaths={agentEditingPaths} />
+                <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
+                  <MonacoEditor
+                    path={activeFile.path}
+                    content={activeFile.content}
+                    onChange={(value) => updateFileContent(activeFile.path, value)}
+                    onMount={handleEditorMount}
+                    onInlineAsk={handleInlineAsk}
+                  />
+                  {inlineAsk && activeFile && (
+                    <InlineAskWidget
+                      editor={editorRef.current!}
+                      selection={inlineAsk.selection}
+                      filePath={activeFile.path}
+                      selectedText={inlineAsk.selectedText}
+                      language={activeFile.path.split('.').pop()?.toLowerCase() ?? 'plaintext'}
+                      onClose={handleCloseInlineAsk}
+                    />
+                  )}
+                </div>
+                <StatusBar
+                  path={activeFile.path}
+                  line={cursorPos.line}
+                  col={cursorPos.col}
+                />
+              </>
+            ) : loadingPath ? (
+              <EditorSkeleton path={loadingPath} />
+            ) : (
+              <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
+                <MonacoEditor onMount={handleEditorMount} />
+                {!activeProject?.rootPath && (
+                  <EmptyEditorState
+                    projectName={activeProject?.name}
+                    hasRootPath={!!activeProject?.rootPath}
+                    explorerVisible={editorExplorerVisible}
+                    onShowExplorer={() => { if (!editorExplorerVisible) toggleEditorExplorer() }}
+                    onOpenFolder={async () => {
+                      if (!window.fs) return
+                      try {
+                        const path = await window.fs.openFolderDialog()
+                        if (path) {
+                          let project = useProjectStore.getState().getActiveProject()
+                          if (!project) {
+                            const folderName = path.split(/[/\\]/).pop() ?? 'Proyecto'
+                            useProjectStore.getState().addProject(folderName)
+                            project = useProjectStore.getState().getActiveProject()
+                          }
+                          if (project) {
+                            useProjectStore.getState().setProjectRootPath(project.id, path)
+                            await window.fs.setWorkspaceRoot(path)
+                          }
+                        }
+                      } catch (err) {
+                        // Dialog cancelled or error
+                      }
+                    }}
+                    onCloseProject={handleCloseProject}
+                    onClose={() => setMainView({ type: 'chat' })}
+                  />
+                )}
+              </div>
+            )}
           </div>
-        )}
-      </div>
 
-      <AgentActivityPanel />
+          {editorAgentPanelVisible && (
+            <>
+              <div
+                onMouseDown={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  const startX = e.clientX
+                  const startW = agentPanelWidth
+                  document.body.classList.add('is-resizing')
+                  function onMove(ev: MouseEvent) {
+                    const newW = startW - (ev.clientX - startX)
+                    setAgentPanelWidth(newW)
+                  }
+                  function onUp() {
+                    document.removeEventListener('mousemove', onMove)
+                    document.removeEventListener('mouseup', onUp)
+                    document.body.classList.remove('is-resizing')
+                  }
+                  document.addEventListener('mousemove', onMove)
+                  document.addEventListener('mouseup', onUp)
+                }}
+                className="pane-resizer"
+              />
+              <AgentActivityPanel />
+            </>
+          )}
 
-      <ConfirmDeleteDialog
-        open={!!deleteTarget}
-        onOpenChange={(open) => { if (!open) setDeleteTarget(null) }}
-        title={`Eliminar ${deleteTarget?.type === 'directory' ? 'carpeta' : 'archivo'}`}
-        itemLabel={deleteTarget?.name ?? ''}
-        onConfirm={handleDeleteConfirm}
-      />
+          <ConfirmDeleteDialog
+            open={!!deleteTarget}
+            onOpenChange={(open) => { if (!open) setDeleteTarget(null) }}
+            title={`Eliminar ${deleteTarget?.type === 'directory' ? 'carpeta' : 'archivo'}`}
+            itemLabel={deleteTarget?.name ?? ''}
+            onConfirm={handleDeleteConfirm}
+          />
 
-      {closingUnsavedPath && (
-        <UnsavedChangesDialog
-          fileName={openFiles.find((f) => f.path === closingUnsavedPath)?.name ?? ''}
-          onSave={() => confirmCloseUnsaved(true)}
-          onDiscard={() => confirmCloseUnsaved(false)}
-          onCancel={() => setClosingUnsavedPath(null)}
-        />
+          {closingUnsavedPath && (
+            <UnsavedChangesDialog
+              fileName={openFiles.find((f) => f.path === closingUnsavedPath)?.name ?? ''}
+              onSave={() => confirmCloseUnsaved(true)}
+              onDiscard={() => confirmCloseUnsaved(false)}
+              onCancel={() => setClosingUnsavedPath(null)}
+            />
+          )}
+        </>
       )}
     </div>
   )

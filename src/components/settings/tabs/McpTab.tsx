@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useMCPStore } from '@/stores/mcp.store'
 import { SettingGroup } from './primitives'
-import { Plus, Power, Trash2 } from 'lucide-react'
+import { Plus, Zap, Trash2 } from 'lucide-react'
 import { useTranslation } from '@/i18n'
 import { AddMcpServerDialog } from '@/components/mcp/AddMcpServerDialog'
 import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog'
@@ -66,7 +66,7 @@ export function McpTab() {
                 onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-hover)' }}
                 onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
               >
-                <Power size={12} strokeWidth={1.5} />
+                <Zap size={12} strokeWidth={1.5} />
               </button>
               <button
                 onClick={() => setServerToDelete(server.id)}

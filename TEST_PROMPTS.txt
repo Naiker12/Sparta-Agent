@@ -1,0 +1,226 @@
+=====================================
+  SPARTA AGENT - GUIA DE PRUEBAS
+=====================================
+
+Antes de empezar, asegurate de tener la app corriendo:
+  npm run dev
+  (en otra terminal si el sidecar no arranca solo: npm run sidecar:run)
+
+
+-------------------------------------
+ 1. MODO CHAT BASICO
+-------------------------------------
+
+Copia y pega estos mensajes en el chat para verificar que el sidecar responde:
+
+  Hola, que puedes hacer?
+
+  Crea un archivo hello.py con un print("Hola mundo")
+
+  Que hora es?
+
+  Escribe un poema corto sobre programacion
+
+  Cual es la capital de Francia?
+
+  Resume en 3 lineas que es Python
+
+VERIFICAR:
+  - El sidecar responde (no queda en "pensando" eternamente)
+  - Los tokens se ven en streaming (aparecen letra por letra)
+  - No hay errores en la consola del terminal (F12 o Ctrl+Shift+I)
+
+
+-------------------------------------
+ 2. MODO AGENTE (EJECUCION DE TAREAS)
+-------------------------------------
+
+Activa el modo agente (switch/boton en la UI) y prueba:
+
+  Ejecuta el comando: python --version
+
+  Crea una carpeta llamada test_folder y dentro pon un archivo index.js con "console.log('test')"
+
+  Lee el archivo package.json y dime que version es
+
+  Borra la carpeta test_folder que acabamos de crear
+
+  Ejecuta: dir (en Windows) o ls (en Mac/Linux)
+
+VERIFICAR:
+  - El agente ejecuta comandos en la terminal integrada
+  - Se ven los comandos con el prefijo [agente] en color cyan
+  - Los resultados se devuelven al chat
+  - Si un comando es peligroso (rm -rf, etc.) aparece dialogo de confirmacion
+
+
+-------------------------------------
+ 3. TERMINAL INTEGRADA
+-------------------------------------
+
+Presiona Ctrl+` para abrir/cerrar la terminal:
+
+  dir
+  echo "Hola desde Sparta"
+  python --version
+  cd ..
+  pwd
+  whoami
+
+  (En Mac/Linux):
+  ls -la
+  echo $HOME
+  uname -a
+
+VERIFICAR:
+  - La terminal abre sin errores (no "require is not defined")
+  - Se muestra el banner ASCII de Sparta
+  - Se puede escribir y ver output
+  - Ctrl+` alterna visibilidad
+
+
+-------------------------------------
+ 4. FILE WATCHER (EXPLORADOR DE ARCHIVOS)
+-------------------------------------
+
+  a) Abre el explorador de archivos de la app
+  b) Navega a la carpeta del proyecto (D:\sparta-agent)
+  c) Haz clic en una carpeta para expandirla
+  d) Abre un archivo .ts o .tsx
+  e) Editar un archivo desde la app y guardar
+
+VERIFICAR:
+  - El arbol de carpetas se carga (no queda en "cargando")
+  - Se ven archivos y subcarpetas
+  - Al modificar un archivo externamente, se detecta el cambio
+  - No hay errores en consola
+
+
+-------------------------------------
+ 5. VAULT (ALMACEN DE KEYS)
+-------------------------------------
+
+  a) Ve a la configuracion/settings
+  b) Guarda una API key de prueba:
+     - Provider: openai
+     - Key: sk-test-1234567890
+  c) Cierra y reabre la app
+  d) Verifica que la key sigue ahi
+  e) Elimina la key
+
+VERIFICAR:
+  - La key se guarda sin errores
+  - Al reabrir la app, la key persiste
+  - La key se muestra enmascarada (no el texto completo)
+  - Se puede eliminar correctamente
+
+
+-------------------------------------
+ 6. MODELOS (LISTA DE PROVIDERS)
+-------------------------------------
+
+  a) Ve a la seccion de modelos/configuracion
+  b) Verifica que se muestra la lista de providers:
+     - Anthropic
+     - OpenAI
+     - Google
+     - Groq
+     - Mistral
+     - DeepSeek
+  c) Si tienes API keys configuradas, verifica que carga los modelos
+
+VERIFICAR:
+  - La lista de providers aparece (no error de conexion)
+  - Si hay keys, los modelos se cargan correctamente
+  - Se puede seleccionar un modelo
+
+
+-------------------------------------
+ 7. SKILLS
+-------------------------------------
+
+  a) Ve a la seccion de Skills
+  b) Verifica que aparecen skills instalados
+  c) Si hay skills de ejemplo, abrite uno
+
+VERIFICAR:
+  - La lista de skills se carga
+  - Se puede ver el detalle de un skill
+  - No hay errores de parsing
+
+
+-------------------------------------
+ 8. MEMORIA
+-------------------------------------
+
+Escribe en el chat:
+
+  Recuerda que me gusta el color azul
+  Cual es mi color favorito?
+  Guarda esto: mi lenguaje favorito es TypeScript
+  Que lenguaje favorito tengo guardado?
+
+VERIFICAR:
+  - La memoria guarda informacion
+  - Al preguntar, recupera la info guardada
+  - No hay errores al indexar/buscar
+
+
+-------------------------------------
+ 9. MCP (MODEL CONTEXT PROTOCOL)
+-------------------------------------
+
+  a) Ve a la configuracion de MCP servers
+  b) Verifica si hay servers configurados
+  c) Si hay alguno, verifica su estado (conectado/desconectado)
+
+VERIFICAR:
+  - La seccion MCP carga sin errores
+  - Muestra el estado de los servers
+  - Si hay servers activos, responden
+
+
+-------------------------------------
+ 10. VERIFICACION DE ERRORES EN CONSOLA
+-------------------------------------
+
+Abri las DevTools (F12 o Ctrl+Shift+I) y revisa:
+
+  a) Pestaña Console:
+     - No debe haber "ReferenceError: require is not defined"
+     - No debe haber errores rojos
+     - Los warnings amarillos son ok
+
+  b) Pestaña Network:
+     - Las llamadas al sidecar (localhost:8765) deben retornar 200
+     - No debe haber errores 500 o CORS
+
+VERIFICAR:
+  - Consola limpia (sin errores Criticos)
+  - Sidecar responde en puerto 8765
+  - No hay requests fallidos
+
+
+=====================================
+  PROBLEMAS COMUNES Y SOLUCIONES
+=====================================
+
+PROBLEMA: "require is not defined" en consola
+SOLUCION: Ya fue arreglado. Si persiste, hacer: npm run build
+
+PROBLEMA: Sidecar no responde
+SOLUCION: Verificar que Python esta instalado y que el venv existe:
+  python/.venv/Scripts/python.exe --version
+  Si no existe: cd python && python -m venv .venv && .venv\Scripts\pip install -r requirements.txt
+
+PROBLEMA: Terminal no abre
+SOLUCION: Rebuild de node-pty:
+  npm run rebuild-native
+
+PROBLEMA: App no arranca
+SOLUCION: Limpiar cache y reinstalar:
+  Remove-Item -Recurse -Force node_modules\.vite
+  npm install
+  npm run dev
+
+=====================================

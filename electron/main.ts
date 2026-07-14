@@ -8,7 +8,7 @@ import { registerVaultIPC } from './ipc/vault.ipc'
 import { registerKeyManagerIPC, pushAllKeys } from './ipc/keymanager.ipc'
 import { registerSecurityIPC, wireSecurityIntoPipeline } from './ipc/security.ipc'
 import { startSidecar, stopSidecar, waitForSidecarReady, registerSidecarIPC } from './ipc/sidecar.ipc'
-import { registerTerminalIPC } from './ipc/terminal.ipc'
+import { registerTerminalIPC, sessions, agentProcs } from './ipc/terminal.ipc'
 import { registerFilesystemIPC } from './ipc/filesystem.ipc'
 import { registerSkillsIPC } from './ipc/skills.ipc'
 import { registerPermissionIPC, setPermissionWindow } from './ipc/permission.ipc'
@@ -62,7 +62,6 @@ function createWindow() {
   })
 
   win.on('closed', () => {
-    const { sessions, agentProcs } = require('./ipc/terminal.ipc') as typeof import('./ipc/terminal.ipc')
     for (const [id, session] of sessions) {
       if (session.win.isDestroyed() || session.win === win) {
         session.pty.kill()
@@ -178,7 +177,6 @@ app.on('before-quit', () => {
   try { stopSidecar() } catch { /* ignore */ }
   // Kill all terminal PTY sessions to prevent orphan processes
   try {
-    const { sessions, agentProcs } = require('./ipc/terminal.ipc') as typeof import('./ipc/terminal.ipc')
     for (const [id, session] of sessions) {
       try { session.pty.kill() } catch { /* ignore */ }
       sessions.delete(id)

@@ -1,13 +1,17 @@
 "use client"
 
-import { useEffect, useState, useCallback } from 'react'
-import { FolderOpen, RefreshCw, Loader2 } from 'lucide-react'
+import { useEffect, useState, useCallback, useRef } from 'react'
+import { FolderOpen, RefreshCw } from 'lucide-react'
 import { toastReplace } from '@/lib/toast-helpers'
 import type { FileTreeNode } from '@/types'
 import { useProjectStore } from '@/stores/project.store'
 import { useEventBusListener } from '@/hooks/useEventBus'
 import { FileTreeItem } from './FileTreeItem'
-import { ProjectFolderPicker } from './ProjectFolderPicker'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { useTranslation } from '@/i18n'
 
 const LANG_MAP: Record<string, string> = {
   ts: 'TypeScript', tsx: 'TypeScript', js: 'JavaScript', jsx: 'JavaScript',
@@ -46,6 +50,7 @@ interface FileTreeSidebarProps {
 }
 
 export function FileTreeSidebar({ activePath, onSelectFile, onDeleteFile }: FileTreeSidebarProps) {
+  const { t } = useTranslation()
   const activeProject = useProjectStore((s) => s.getActiveProject())
   const [tree, setTree] = useState<FileTreeNode[]>([])
   const [loading, setLoading] = useState(false)
@@ -84,9 +89,15 @@ export function FileTreeSidebar({ activePath, onSelectFile, onDeleteFile }: File
     }
   }, [activeProject?.rootPath])
 
-  const debouncedLoadTree = useCallback(() => {
-    const id = setTimeout(loadTree, 400)
-    return () => clearTimeout(id)
+  const loadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const triggerLoadTree = useCallback(() => {
+    if (loadTimerRef.current) {
+      clearTimeout(loadTimerRef.current)
+    }
+    loadTimerRef.current = setTimeout(() => {
+      loadTree()
+    }, 300)
   }, [loadTree])
 
   useEffect(() => {
@@ -95,10 +106,15 @@ export function FileTreeSidebar({ activePath, onSelectFile, onDeleteFile }: File
     } else {
       setTree([])
     }
+    return () => {
+      if (loadTimerRef.current) {
+        clearTimeout(loadTimerRef.current)
+      }
+    }
   }, [activeProject?.rootPath, loadTree])
 
   useEventBusListener('file:changed', () => {
-    if (activeProject?.rootPath) debouncedLoadTree()
+    if (activeProject?.rootPath) triggerLoadTree()
   })
 
   useEffect(() => {
@@ -156,153 +172,152 @@ export function FileTreeSidebar({ activePath, onSelectFile, onDeleteFile }: File
 
   if (!activeProject?.rootPath) {
     return (
-      <div style={{
-        width: '100%',
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        borderRight: '1px solid var(--border-normal)',
-        background: 'var(--bg-sidebar)',
-      }}>
-        <SidebarHeader onOpenFolder={handleOpenFolder} />
-        <ProjectFolderPicker projectId={activeProject?.id ?? ''} />
+      <div className="flex h-full w-full flex-col"
+        style={{ borderRight: '1px solid var(--border-normal)', background: 'var(--bg-sidebar)' }}
+      >
+        <SidebarHeader t={t} onOpenFolder={handleOpenFolder} />
+        <div className="flex flex-1 flex-col items-center justify-center p-6 text-center gap-3 animate-in fade-in duration-200">
+          <div style={{
+            width: 36,
+            height: 36,
+            borderRadius: 'var(--radius-lg)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'var(--bg-hover)',
+            color: 'var(--text-muted)',
+          }}>
+            <FolderOpen size={18} strokeWidth={1.5} />
+          </div>
+          <div className="flex flex-col gap-1">
+            <p className="text-[12px] font-semibold text-[var(--text-primary)]">
+              Sin proyecto abierto
+            </p>
+            <p className="text-[10.5px] text-[var(--text-muted)] leading-relaxed max-w-[180px] mx-auto">
+              Arrastrá una carpeta al editor o hacé clic abajo para empezar.
+            </p>
+          </div>
+          <Button
+            size="sm"
+            onClick={handleOpenFolder}
+            className="mt-2 text-[11px] font-medium h-7 px-3"
+          >
+            Abrir carpeta
+          </Button>
+        </div>
       </div>
     )
   }
 
   return (
-    <div style={{
-      width: '100%',
-      height: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-      borderRight: '1px solid var(--border-normal)',
-      background: 'var(--bg-sidebar)',
-      overflow: 'hidden',
-    }}>
-      <SidebarHeader onOpenFolder={handleOpenFolder} onRefresh={loadTree} loading={loading} />
-      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '6px 4px' }}>
-        {loading && tree.length === 0 ? (
-          <div style={{
-            padding: '24px 16px',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 8,
-            animation: 'fadeIn 0.2s ease-out',
-          }}>
-            <Loader2 size={16} className="animate-spin" style={{ color: 'var(--accent)' }} />
-            <div style={{
-              fontSize: 11,
-              fontWeight: 500,
-              color: 'var(--text-secondary)',
-              textAlign: 'center',
-            }}>
-              Escaneando estructura del proyecto…
+    <div className="flex h-full w-full flex-col overflow-hidden"
+      style={{ borderRight: '1px solid var(--border-normal)', background: 'var(--bg-sidebar)' }}
+    >
+      <SidebarHeader t={t} onOpenFolder={handleOpenFolder} onRefresh={loadTree} loading={loading} />
+      <ScrollArea className="flex-1 min-h-0">
+        <div className="p-1.5">
+          {loading && tree.length === 0 ? (
+            <div className="flex flex-col items-center gap-2 px-4 py-6 animate-in fade-in duration-200">
+              <Skeleton className="h-3 w-24 rounded" />
+              <Skeleton className="h-3 w-32 rounded" />
+              <Skeleton className="h-3 w-20 rounded" />
+              <p className="mt-1 text-[11px] font-medium" style={{ color: 'var(--text-secondary)' }}>
+                {t('editor.sidebar.scanning')}
+              </p>
             </div>
-          </div>
-        ) : tree.length > 0 ? (
-          <>
-            {treeStats && treeStats.fileCount > 0 && (
-              <div style={{
-                padding: '4px 8px 6px',
-                fontSize: 10,
-                color: 'var(--text-muted)',
-                fontFamily: 'var(--font-mono)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 4,
-                opacity: 0.7,
-              }}>
-                {treeStats.fileCount} archivos
-                {treeStats.languages.length > 0 && (
-                  <> · {treeStats.languages.join(', ')}</>
-                )}
-              </div>
-            )}
-            {tree.map((node) => (
-              <FileTreeItem
-                key={node.path}
-                node={node}
-                activePath={activePath}
-                onSelectFile={onSelectFile}
-                onDelete={onDeleteFile}
-                onCopyPath={handleCopyPath}
-                onNewFile={handleNewFile}
-                onNewFolder={handleNewFolder}
-              />
-            ))}
-          </>
-        ) : null}
-      </div>
+          ) : tree.length > 0 ? (
+            <>
+              {treeStats && treeStats.fileCount > 0 && (
+                <div
+                  className="flex items-center gap-1 px-2 py-1 text-[10px] opacity-70"
+                  style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}
+                >
+                  {treeStats.fileCount} {t('editor.sidebar.files')}
+                  {treeStats.languages.length > 0 && (
+                    <> · {treeStats.languages.join(', ')}</>
+                  )}
+                </div>
+              )}
+              {tree.map((node) => (
+                <FileTreeItem
+                  key={node.path}
+                  node={node}
+                  activePath={activePath}
+                  onSelectFile={onSelectFile}
+                  onDelete={onDeleteFile}
+                  onCopyPath={handleCopyPath}
+                  onNewFile={handleNewFile}
+                  onNewFolder={handleNewFolder}
+                />
+              ))}
+            </>
+          ) : null}
+        </div>
+      </ScrollArea>
     </div>
   )
 }
 
 function SidebarHeader({
+  t,
   onOpenFolder,
   onRefresh,
   loading,
 }: {
+  t: (key: string) => string
   onOpenFolder: () => void
   onRefresh?: () => void
   loading?: boolean
 }) {
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      padding: '8px 10px',
-      borderBottom: '1px solid var(--border-normal)',
-      fontSize: 11,
-      fontWeight: 600,
-      color: 'var(--text-muted)',
-      fontFamily: 'var(--font-ui)',
-      textTransform: 'uppercase',
-      letterSpacing: '0.04em',
-    }}>
-      <span>Explorador</span>
-      <div style={{ display: 'flex', gap: 4 }}>
-        {onRefresh && (
-          <button
-            onClick={onRefresh}
-            disabled={loading}
-            title="Refrescar"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 18,
-              height: 18,
-              background: 'transparent',
-              border: 'none',
-              borderRadius: 'var(--radius-sm)',
-              color: 'var(--text-muted)',
-              cursor: 'pointer',
-            }}
-          >
-            <RefreshCw size={11} className={loading ? 'animate-spin' : ''} />
-          </button>
-        )}
-        <button
-          onClick={onOpenFolder}
-          title="Abrir carpeta"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 18,
-            height: 18,
-            background: 'transparent',
-            border: 'none',
-            borderRadius: 'var(--radius-sm)',
-            color: 'var(--text-muted)',
-            cursor: 'pointer',
-          }}
-        >
-          <FolderOpen size={11} />
-        </button>
+    <div
+      className="flex shrink-0 items-center justify-between"
+      style={{
+        padding: '8px 10px',
+        borderBottom: '1px solid var(--border-normal)',
+        fontSize: 11,
+        fontWeight: 600,
+        color: 'var(--text-muted)',
+        fontFamily: 'var(--font-ui)',
+        textTransform: 'uppercase',
+        letterSpacing: '0.04em',
+      }}
+    >
+      <span>{t('editor.sidebar.explorer')}</span>
+      <div className="flex gap-0.5">
+        <TooltipProvider delay={400}>
+          {onRefresh && (
+            <Tooltip>
+              <TooltipTrigger>
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  disabled={loading}
+                  onClick={onRefresh}
+                >
+                  <RefreshCw size={11} className={loading ? 'animate-spin' : ''} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">
+                {t('editor.sidebar.refresh')}
+              </TooltipContent>
+            </Tooltip>
+          )}
+          <Tooltip>
+            <TooltipTrigger>
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                onClick={onOpenFolder}
+              >
+                <FolderOpen size={11} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">
+              {t('editor.sidebar.openFolder')}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
     </div>
   )

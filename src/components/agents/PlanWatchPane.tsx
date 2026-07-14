@@ -1,5 +1,5 @@
 import { usePlanStore } from '@/stores/plan.store'
-import { CheckCircle2, Circle, Play } from 'lucide-react'
+import { CheckCircle, Circle, Play } from 'lucide-react'
 
 export function PlanWatchPane() {
   const { steps, currentStep, complete, active } = usePlanStore()
@@ -62,7 +62,7 @@ export function PlanWatchPane() {
               }}
             >
               {isDone ? (
-                <CheckCircle2 size={13} style={{ color: 'var(--status-ok)', flexShrink: 0 }} />
+                <CheckCircle size={13} style={{ color: 'var(--status-ok)', flexShrink: 0 }} />
               ) : isCurrent ? (
                 <Play size={12} style={{ color: 'var(--status-warn)', flexShrink: 0 }} />
               ) : (

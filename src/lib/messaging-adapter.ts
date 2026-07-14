@@ -24,6 +24,7 @@ interface ChatSendRequest {
   securityLoaded?: boolean
   sandboxMode?: string
   openFiles?: string[]
+  activeFilePath?: string
 }
 
 interface MessagingAdapterSendResult {
@@ -146,6 +147,11 @@ class WebAdapter implements MessagingAdapter {
           reasoning: request.reasoning,
           web_search_enabled: request.webSearchEnabled ?? true,
           workspace_root: request.workspaceRoot,
+          agent_autonomy: request.agentAutonomy,
+          agent_execute_local: request.agentExecuteLocal,
+          sandbox_mode: request.sandboxMode,
+          open_files: request.openFiles,
+          active_file_path: request.activeFilePath,
         },
       }))
       return Promise.resolve({ ok: true })
