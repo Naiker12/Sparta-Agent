@@ -1,13 +1,43 @@
 "use client"
 
 import { useEffect, useState, useCallback } from 'react'
-import { FolderOpen, RefreshCw } from 'lucide-react'
+import { FolderOpen, RefreshCw, Loader2 } from 'lucide-react'
 import { toastReplace } from '@/lib/toast-helpers'
 import type { FileTreeNode } from '@/types'
 import { useProjectStore } from '@/stores/project.store'
 import { useEventBusListener } from '@/hooks/useEventBus'
 import { FileTreeItem } from './FileTreeItem'
 import { ProjectFolderPicker } from './ProjectFolderPicker'
+
+const LANG_MAP: Record<string, string> = {
+  ts: 'TypeScript', tsx: 'TypeScript', js: 'JavaScript', jsx: 'JavaScript',
+  py: 'Python', rb: 'Ruby', go: 'Go', rs: 'Rust', java: 'Java',
+  css: 'CSS', scss: 'SCSS', html: 'HTML', vue: 'Vue', svelte: 'Svelte',
+  json: 'JSON', yaml: 'YAML', yml: 'YAML', md: 'Markdown', toml: 'TOML',
+  sql: 'SQL', sh: 'Shell', bash: 'Shell', dockerfile: 'Docker',
+}
+
+function countFiles(nodes: FileTreeNode[]): number {
+  let count = 0
+  for (const n of nodes) {
+    if (n.type === 'file') count++
+    else if (n.children) count += countFiles(n.children)
+  }
+  return count
+}
+
+function detectLanguages(nodes: FileTreeNode[], acc: Map<string, number> = new Map()): Map<string, number> {
+  for (const n of nodes) {
+    if (n.type === 'file') {
+      const ext = n.name.split('.').pop()?.toLowerCase() ?? ''
+      const lang = LANG_MAP[ext]
+      if (lang) acc.set(lang, (acc.get(lang) ?? 0) + 1)
+    } else if (n.children) {
+      detectLanguages(n.children, acc)
+    }
+  }
+  return acc
+}
 
 interface FileTreeSidebarProps {
   activePath?: string
@@ -19,25 +49,36 @@ export function FileTreeSidebar({ activePath, onSelectFile, onDeleteFile }: File
   const activeProject = useProjectStore((s) => s.getActiveProject())
   const [tree, setTree] = useState<FileTreeNode[]>([])
   const [loading, setLoading] = useState(false)
+  const [treeStats, setTreeStats] = useState<{ fileCount: number; languages: string[] } | null>(null)
 
   const loadTree = useCallback(async () => {
     if (!activeProject?.rootPath || !window.fs) return
     setLoading(true)
+    setTreeStats(null)
     try {
       const result = await window.fs.readDir(activeProject.rootPath)
-      // Support both old format (array) and new format ({ nodes, error })
+      let nodes: FileTreeNode[] = []
       if (Array.isArray(result)) {
-        setTree(result)
+        nodes = result
       } else if (result && typeof result === 'object') {
-        const { nodes, error } = result as { nodes?: FileTreeNode[]; error?: string }
+        const { nodes: n, error } = result as { nodes?: FileTreeNode[]; error?: string }
         if (error) {
           toastReplace('error', 'load-tree', `Error cargando proyecto: ${error}`)
         }
-        setTree(nodes ?? [])
+        nodes = n ?? []
       }
+      setTree(nodes)
+      const fileCount = countFiles(nodes)
+      const langMap = detectLanguages(nodes)
+      const languages = [...langMap.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([lang]) => lang)
+      setTreeStats({ fileCount, languages })
     } catch (err) {
       toastReplace('error', 'load-tree', `Error cargando archivos: ${err instanceof Error ? err.message : err}`)
       setTree([])
+      setTreeStats(null)
     } finally {
       setLoading(false)
     }
@@ -141,18 +182,58 @@ export function FileTreeSidebar({ activePath, onSelectFile, onDeleteFile }: File
     }}>
       <SidebarHeader onOpenFolder={handleOpenFolder} onRefresh={loadTree} loading={loading} />
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '6px 4px' }}>
-        {tree.map((node) => (
-          <FileTreeItem
-            key={node.path}
-            node={node}
-            activePath={activePath}
-            onSelectFile={onSelectFile}
-            onDelete={onDeleteFile}
-            onCopyPath={handleCopyPath}
-            onNewFile={handleNewFile}
-            onNewFolder={handleNewFolder}
-          />
-        ))}
+        {loading && tree.length === 0 ? (
+          <div style={{
+            padding: '24px 16px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 8,
+            animation: 'fadeIn 0.2s ease-out',
+          }}>
+            <Loader2 size={16} className="animate-spin" style={{ color: 'var(--accent)' }} />
+            <div style={{
+              fontSize: 11,
+              fontWeight: 500,
+              color: 'var(--text-secondary)',
+              textAlign: 'center',
+            }}>
+              Escaneando estructura del proyecto…
+            </div>
+          </div>
+        ) : tree.length > 0 ? (
+          <>
+            {treeStats && treeStats.fileCount > 0 && (
+              <div style={{
+                padding: '4px 8px 6px',
+                fontSize: 10,
+                color: 'var(--text-muted)',
+                fontFamily: 'var(--font-mono)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                opacity: 0.7,
+              }}>
+                {treeStats.fileCount} archivos
+                {treeStats.languages.length > 0 && (
+                  <> · {treeStats.languages.join(', ')}</>
+                )}
+              </div>
+            )}
+            {tree.map((node) => (
+              <FileTreeItem
+                key={node.path}
+                node={node}
+                activePath={activePath}
+                onSelectFile={onSelectFile}
+                onDelete={onDeleteFile}
+                onCopyPath={handleCopyPath}
+                onNewFile={handleNewFile}
+                onNewFolder={handleNewFolder}
+              />
+            ))}
+          </>
+        ) : null}
       </div>
     </div>
   )
