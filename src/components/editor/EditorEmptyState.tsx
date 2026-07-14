@@ -1,4 +1,4 @@
-import { FolderOpen, FileSearch } from 'lucide-react'
+import { FolderOpen, FileSearch, Command } from 'lucide-react'
 
 export function EmptyEditorState({
   projectName,
@@ -40,7 +40,7 @@ export function EmptyEditorState({
         background: 'var(--bg-elevated)',
         border: '1px solid var(--border-subtle)',
         borderRadius: 'var(--radius-xl)',
-        boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
+        boxShadow: '0 4px 24px color-mix(in srgb, var(--text-primary) 8%, transparent)',
         animation: 'scaleIn 0.18s ease-out',
       }}>
         <div style={{
@@ -87,6 +87,23 @@ export function EmptyEditorState({
               ? 'El explorador de archivos está oculto. Mostralo para elegir un archivo.'
               : 'Selecciona un archivo del explorador para empezar a editar.'}
           </p>
+          {!noProject && explorerVisible && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 4,
+              marginTop: 8,
+              fontSize: 11,
+              color: 'var(--text-muted)',
+            }}>
+              <Command size={10} />
+              <span>
+                <strong style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>Cmd+P</strong>{' '}
+                para buscar un archivo rápido
+              </span>
+            </div>
+          )}
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, width: '100%' }}>

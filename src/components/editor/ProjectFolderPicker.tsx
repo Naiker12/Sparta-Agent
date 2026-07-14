@@ -1,3 +1,4 @@
+import { useState, useCallback } from 'react'
 import { FolderOpen } from 'lucide-react'
 import { useProjectStore } from '@/stores/project.store'
 import { useTranslation } from '@/i18n'
@@ -10,6 +11,7 @@ interface ProjectFolderPickerProps {
 export function ProjectFolderPicker({ projectId }: ProjectFolderPickerProps) {
   const setProjectRootPath = useProjectStore((s) => s.setProjectRootPath)
   const { t } = useTranslation()
+  const [dragOver, setDragOver] = useState(false)
 
   async function handleOpenFolder() {
     if (!window.fs) {
@@ -30,6 +32,35 @@ export function ProjectFolderPicker({ projectId }: ProjectFolderPickerProps) {
     }
   }
 
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault()
+    setDragOver(false)
+    const files = e.dataTransfer.files
+    if (files.length === 0) return
+    const file = files[0] as File & { path?: string }
+    const path = file.path ?? file.webkitRelativePath
+    if (!path || !window.fs) return
+    try {
+      setProjectRootPath(projectId, path)
+      await window.fs.setWorkspaceRoot(path)
+      toastReplace('success', 'folder-picker', t('editor.folderOpened'))
+    } catch (err) {
+      toastReplace('error', 'folder-picker', t('editor.folderOpenFailed'), {
+        description: (err as Error).message,
+      })
+    }
+  }, [projectId, setProjectRootPath, t])
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    setDragOver(true)
+  }, [])
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    setDragOver(false)
+  }, [])
+
   return (
     <div style={{
       display: 'flex',
@@ -39,19 +70,31 @@ export function ProjectFolderPicker({ projectId }: ProjectFolderPickerProps) {
       background: 'var(--bg-surface)',
       animation: 'fadeIn 0.18s ease-out',
     }}>
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: 16,
-        padding: '32px 40px',
-        maxWidth: 380,
-        background: 'var(--bg-elevated)',
-        border: '1px dashed var(--border-normal)',
-        borderRadius: 'var(--radius-xl)',
-        animation: 'scaleIn 0.18s ease-out',
-        transition: 'border-color 0.2s, box-shadow 0.2s',
-      }}>
+      <div
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 16,
+          padding: '32px 40px',
+          maxWidth: 380,
+          background: dragOver
+            ? 'color-mix(in srgb, var(--accent) 8%, var(--bg-elevated))'
+            : 'var(--bg-elevated)',
+          border: dragOver
+            ? '2px dashed var(--accent)'
+            : '1px dashed var(--border-normal)',
+          borderRadius: 'var(--radius-xl)',
+          animation: 'scaleIn 0.18s ease-out',
+          transition: 'all 0.2s ease',
+          boxShadow: dragOver
+            ? '0 0 24px color-mix(in srgb, var(--accent) 15%, transparent)'
+            : 'none',
+        }}
+      >
         <div style={{
           width: 48,
           height: 48,
@@ -59,10 +102,20 @@ export function ProjectFolderPicker({ projectId }: ProjectFolderPickerProps) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'var(--bg-hover)',
-          animation: 'pulse 3s ease-in-out infinite',
+          background: dragOver
+            ? 'color-mix(in srgb, var(--accent) 15%, transparent)'
+            : 'var(--bg-hover)',
+          transition: 'all 0.2s ease',
+          animation: dragOver ? undefined : 'pulse 3s ease-in-out infinite',
         }}>
-          <FolderOpen size={24} strokeWidth={1.25} style={{ color: 'var(--text-muted)' }} />
+          <FolderOpen
+            size={24}
+            strokeWidth={1.25}
+            style={{
+              color: dragOver ? 'var(--accent)' : 'var(--text-muted)',
+              transition: 'color 0.2s',
+            }}
+          />
         </div>
 
         <div style={{ textAlign: 'center' }}>
@@ -73,7 +126,7 @@ export function ProjectFolderPicker({ projectId }: ProjectFolderPickerProps) {
             color: 'var(--text-primary)',
             marginBottom: 4,
           }}>
-            Abrir proyecto
+            {dragOver ? 'Soltá la carpeta aquí' : 'Abrir proyecto'}
           </div>
           <p style={{
             fontSize: 13,
@@ -82,34 +135,38 @@ export function ProjectFolderPicker({ projectId }: ProjectFolderPickerProps) {
             maxWidth: 280,
             margin: 0,
           }}>
-            Seleccioná una carpeta para empezar a trabajar con el editor y el agente.
+            {dragOver
+              ? 'Soltá para abrir esta carpeta como proyecto'
+              : 'Seleccioná una carpeta para empezar a trabajar con el editor y el agente.'}
           </p>
         </div>
 
-        <button
-          onClick={handleOpenFolder}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 6,
-            padding: '8px 20px',
-            background: 'var(--accent)',
-            border: 'none',
-            borderRadius: 'var(--radius-md)',
-            color: '#fff',
-            fontSize: 13,
-            fontWeight: 500,
-            fontFamily: 'var(--font-ui)',
-            cursor: 'pointer',
-            transition: 'filter 0.15s',
-          }}
-          onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.filter = 'brightness(1.1)' }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.filter = '' }}
-        >
-          <FolderOpen size={14} />
-          Abrir carpeta
-        </button>
+        {!dragOver && (
+          <button
+            onClick={handleOpenFolder}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+              padding: '8px 20px',
+              background: 'var(--accent)',
+              border: 'none',
+              borderRadius: 'var(--radius-md)',
+              color: '#fff',
+              fontSize: 13,
+              fontWeight: 500,
+              fontFamily: 'var(--font-ui)',
+              cursor: 'pointer',
+              transition: 'filter 0.15s',
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.filter = 'brightness(1.1)' }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.filter = '' }}
+          >
+            <FolderOpen size={14} />
+            Abrir carpeta
+          </button>
+        )}
       </div>
     </div>
   )
