@@ -55,6 +55,7 @@ export type EventType =
   | 'file:changed'
   | 'editor:diff_proposed'
   | 'editor:diff_responded'
+  | 'editor:diff_resolved'
   | 'editor:open_file'
   | 'terminal:tool_crash'
   | 'subagent:started'

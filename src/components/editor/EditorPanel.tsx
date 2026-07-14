@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useCallback, useEffect, useRef } from 'react'
-import type { editor } from 'monaco-editor'
+import type { editor as MonacoEditorNS } from 'monaco-editor'
+import * as monaco from 'monaco-editor'
 import { PanelLeft, X, FolderX, ChevronRight } from 'lucide-react'
 import { toastReplace } from '@/lib/toast-helpers'
 import { useUIStore } from '@/stores/ui.store'
@@ -42,8 +43,9 @@ export function EditorPanel() {
   const [agentEditingPaths, setAgentEditingPaths] = useState<Set<string>>(new Set())
   const [deleteTarget, setDeleteTarget] = useState<FileTreeNode | null>(null)
   const [closingUnsavedPath, setClosingUnsavedPath] = useState<string | null>(null)
+  const [loadingPath, setLoadingPath] = useState<string | null>(null)
   const [cursorPos, setCursorPos] = useState({ line: 1, col: 1 })
-  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null)
+  const editorRef = useRef<MonacoEditorNS.IStandaloneCodeEditor | null>(null)
   const treeKey = useRef(0)
   // Inline ask widget state
   const [inlineAsk, setInlineAsk] = useState<{
@@ -52,7 +54,7 @@ export function EditorPanel() {
   } | null>(null)
   // Track files we just saved ourselves, to distinguish our own writes from external/agent writes
   const recentlySavedRef = useRef<Set<string>>(new Set())
-  const handleEditorMount = useCallback((ed: editor.IStandaloneCodeEditor) => {
+  const handleEditorMount = useCallback((ed: MonacoEditorNS.IStandaloneCodeEditor) => {
     editorRef.current = ed
     ed.onDidChangeCursorPosition((e) => {
       setCursorPos({ line: e.position.lineNumber, col: e.position.column })
@@ -99,25 +101,39 @@ export function EditorPanel() {
   }, [openFiles])
 
   const openFile = useCallback(async (filePath: string) => {
-    if (!window.fs) return
+    if (!window.fs) {
+      console.warn('[EditorPanel] window.fs not available')
+      return
+    }
     const existing = openFiles.find((f) => f.path === filePath)
     if (existing) {
       setActivePath(filePath)
       return
     }
 
-    const result = await window.fs.readFile(filePath)
-    if (!result.success || result.content === undefined) return
+    setLoadingPath(filePath)
+    try {
+      const result = await window.fs.readFile(filePath)
+      if (!result.success || result.content === undefined) {
+        console.warn('[EditorPanel] readFile failed:', filePath, result.error)
+        toastReplace('error', 'open-file', `No se pudo abrir: ${result.error ?? 'error desconocido'}`)
+        return
+      }
 
-    const name = filePath.split(/[\\/]/).pop() ?? filePath
-    const newFile: OpenFile = {
-      path: filePath,
-      name,
-      content: result.content,
-      originalContent: result.content,
+      const name = filePath.split(/[\\/]/).pop() ?? filePath
+      const newFile: OpenFile = {
+        path: filePath,
+        name,
+        content: result.content,
+        originalContent: result.content,
+      }
+      setOpenFiles((prev) => [...prev, newFile])
+      setActivePath(filePath)
+    } catch (err) {
+      console.error('[EditorPanel] openFile error:', filePath, err)
+    } finally {
+      setLoadingPath(null)
     }
-    setOpenFiles((prev) => [...prev, newFile])
-    setActivePath(filePath)
   }, [openFiles])
 
   const closeFile = useCallback((filePath: string) => {
@@ -249,11 +265,88 @@ export function EditorPanel() {
     if (filePath) openFile(filePath)
   })
 
-  // Listen for editor:diff_proposed — open the diff tab
-  useEventBusListener('editor:diff_proposed', () => {
-    // Switch to diff tab to show the current proposal
-    // The diff tab is virtual — it uses 'diff:active' as its path
+  // Listen for editor:diff_proposed — apply inline decorations then open diff tab
+  useEventBusListener('editor:diff_proposed', (data: Record<string, unknown> | unknown) => {
+    const evt = data as Record<string, unknown>
+    const filePath = (evt.filePath ?? evt.path ?? '') as string
+    const originalContent = evt.originalContent as string | undefined
+    const newContent = evt.newContent as string | undefined
+    // Apply inline decorations to the editor BEFORE switching tabs
+    if (filePath && originalContent && newContent && activeFile?.path === filePath) {
+      applyInlineDiffDecorations(filePath, originalContent, newContent)
+    }
+    // Switch to diff tab to show the full side-by-side view
     setActivePath('diff:active')
+  })
+
+  // --- Inline diff decorations (highlight changed lines in the editor) ---
+  const inlineDiffDecorationsRef = useRef<string[]>([])
+
+  const computeLineDiff = useCallback((original: string, modified: string) => {
+    const origLines = original.split('\n')
+    const modLines = modified.split('\n')
+    const changedOrigLines = new Set<number>()
+    const maxLen = Math.max(origLines.length, modLines.length)
+    for (let i = 0; i < maxLen; i++) {
+      if (origLines[i] !== modLines[i]) changedOrigLines.add(i + 1)
+    }
+    return changedOrigLines
+  }, [])
+
+  const applyInlineDiffDecorations = useCallback((filePath: string, original: string, modified: string) => {
+    const ed = editorRef.current
+    if (!ed) return
+    const model = ed.getModel()
+    if (!model || model.uri.fsPath.replace(/\\/g, '/') !== filePath.replace(/\\/g, '/')) return
+
+    // Clear previous decorations
+    inlineDiffDecorationsRef.current = ed.deltaDecorations(inlineDiffDecorationsRef.current, [])
+
+    const changedLines = computeLineDiff(original, modified)
+    if (changedLines.size === 0) return
+
+    // Find contiguous ranges of changed lines
+    const sorted = Array.from(changedLines).sort((a, b) => a - b)
+    const ranges: { start: number; end: number }[] = []
+    let rangeStart = sorted[0]
+    let rangeEnd = sorted[0]
+    for (let i = 1; i < sorted.length; i++) {
+      if (sorted[i] === rangeEnd + 1) {
+        rangeEnd = sorted[i]
+      } else {
+        ranges.push({ start: rangeStart, end: rangeEnd })
+        rangeStart = sorted[i]
+        rangeEnd = sorted[i]
+      }
+    }
+    ranges.push({ start: rangeStart, end: rangeEnd })
+
+    const newDecorations: MonacoEditorNS.IModelDeltaDecoration[] = ranges.map(({ start, end }) => ({
+      range: new monaco.Range(start, 1, end, model.getLineMaxColumn(end)),
+      options: {
+        isWholeLine: true,
+        className: 'inline-diff-highlight',
+        overviewRuler: {
+          color: 'rgba(234, 179, 8, 0.6)',
+          position: monaco.editor.OverviewRulerLane.Right,
+        },
+        glyphMarginClassName: 'inline-diff-glyph',
+      },
+    }))
+
+    inlineDiffDecorationsRef.current = ed.deltaDecorations([], newDecorations)
+  }, [computeLineDiff])
+
+  const clearInlineDiffDecorations = useCallback(() => {
+    const ed = editorRef.current
+    if (ed && inlineDiffDecorationsRef.current.length > 0) {
+      inlineDiffDecorationsRef.current = ed.deltaDecorations(inlineDiffDecorationsRef.current, [])
+    }
+  }, [])
+
+  // Clear inline decorations when diff is resolved
+  useEventBusListener('editor:diff_resolved', () => {
+    clearInlineDiffDecorations()
   })
 
   // Listen for tool:called / tool:result to track agent editing state
@@ -442,7 +535,7 @@ export function EditorPanel() {
           </div>
         ) : activeTab.kind === 'file' && activeFile ? (
           <>
-            <Breadcrumb path={activeFile.path} />
+            <Breadcrumb path={activeFile.path} agentEditingPaths={agentEditingPaths} />
             <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
               <MonacoEditor
                 path={activeFile.path}
@@ -468,6 +561,8 @@ export function EditorPanel() {
               col={cursorPos.col}
             />
           </>
+        ) : loadingPath ? (
+          <EditorSkeleton path={loadingPath} />
         ) : (
           <div style={{ flex: 1, minHeight: 0 }}>
             <MonacoEditor onMount={handleEditorMount} />
@@ -477,13 +572,26 @@ export function EditorPanel() {
               explorerVisible={editorExplorerVisible}
               onShowExplorer={() => { if (!editorExplorerVisible) toggleEditorExplorer() }}
               onOpenFolder={async () => {
-                if (!window.fs || !activeProject) return
-                const path = await window.fs.openFolderDialog()
-                if (path) {
-                  useProjectStore.getState().setProjectRootPath(activeProject.id, path)
-                  await window.fs.setWorkspaceRoot(path)
+                if (!window.fs) return
+                try {
+                  const path = await window.fs.openFolderDialog()
+                  if (path) {
+                    let project = useProjectStore.getState().getActiveProject()
+                    if (!project) {
+                      const folderName = path.split(/[/\\]/).pop() ?? 'Proyecto'
+                      useProjectStore.getState().addProject(folderName)
+                      project = useProjectStore.getState().getActiveProject()
+                    }
+                    if (project) {
+                      useProjectStore.getState().setProjectRootPath(project.id, path)
+                      await window.fs.setWorkspaceRoot(path)
+                    }
+                  }
+                } catch (err) {
+                  // Dialog cancelled or error — silently ignore
                 }
               }}
+              onCloseProject={handleCloseProject}
               onClose={toggleEditor}
             />
           </div>
@@ -605,8 +713,9 @@ function EditorToolbar({
   )
 }
 
-function Breadcrumb({ path }: { path: string }) {
+function Breadcrumb({ path, agentEditingPaths }: { path: string; agentEditingPaths?: Set<string> }) {
   const parts = path.replace(/\\/g, '/').split('/')
+  const isAgentEditing = agentEditingPaths?.has(path) ?? false
   return (
     <div style={{
       display: 'flex',
@@ -629,6 +738,23 @@ function Breadcrumb({ path }: { path: string }) {
           </span>
         </span>
       ))}
+      {isAgentEditing && (
+        <span style={{
+          marginLeft: 8,
+          padding: '1px 6px',
+          borderRadius: 4,
+          background: 'rgba(234, 179, 8, 0.12)',
+          border: '1px solid rgba(234, 179, 8, 0.3)',
+          color: 'var(--status-warn)',
+          fontSize: 10,
+          fontFamily: 'var(--font-ui)',
+          fontWeight: 500,
+          whiteSpace: 'nowrap',
+          flexShrink: 0,
+        }}>
+          Agente editando…
+        </span>
+      )}
     </div>
   )
 }
@@ -672,6 +798,7 @@ function EmptyEditorState({
   explorerVisible,
   onShowExplorer,
   onOpenFolder,
+  onCloseProject,
   onClose,
 }: {
   projectName?: string
@@ -679,6 +806,7 @@ function EmptyEditorState({
   explorerVisible: boolean
   onShowExplorer: () => void
   onOpenFolder: () => void
+  onCloseProject: () => void
   onClose: () => void
 }) {
   const noProject = !hasRootPath
@@ -720,6 +848,22 @@ function EmptyEditorState({
             }}
           >
             Abrir carpeta
+          </button>
+        )}
+        {!noProject && (
+          <button
+            onClick={onCloseProject}
+            style={{
+              padding: '6px 16px',
+              background: 'var(--bg-input)',
+              border: '1px solid var(--border-normal)',
+              borderRadius: 'var(--radius-md)',
+              color: 'var(--text-secondary)',
+              fontSize: 13,
+              cursor: 'pointer',
+            }}
+          >
+            Cerrar proyecto
           </button>
         )}
         {noProject && !explorerVisible && (
@@ -820,6 +964,39 @@ function UnsavedChangesDialog({
             Guardar
           </button>
         </div>
+      </div>
+    </div>
+  )
+}
+
+function EditorSkeleton({ path }: { path: string }) {
+  const name = path.split(/[\\/]/).pop() ?? path
+  return (
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 2,
+        padding: '3px 12px', borderBottom: '1px solid var(--border-subtle)',
+        background: 'var(--bg-surface)', fontSize: 11,
+        fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', flexShrink: 0,
+      }}>
+        <span style={{ color: 'var(--text-secondary)' }}>{name}</span>
+        <span style={{
+          marginLeft: 8, fontSize: 10, color: 'var(--text-muted)',
+          fontFamily: 'var(--font-ui)',
+        }}>
+          Cargando…
+        </span>
+      </div>
+      <div style={{ flex: 1, padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {Array.from({ length: 14 }, (_, i) => (
+          <div key={i} style={{
+            height: 13,
+            borderRadius: 3,
+            background: 'var(--bg-hover)',
+            width: `${50 + Math.sin(i * 1.7) * 30}%`,
+            opacity: 0.5,
+          }} />
+        ))}
       </div>
     </div>
   )

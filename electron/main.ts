@@ -174,16 +174,18 @@ app.whenReady().then(async () => {
 
 // Graceful shutdown: stop sidecar and file watcher when app quits
 app.on('before-quit', () => {
-  stopFileWatcher()
-  stopSidecar()
+  try { stopFileWatcher() } catch { /* ignore */ }
+  try { stopSidecar() } catch { /* ignore */ }
   // Kill all terminal PTY sessions to prevent orphan processes
-  const { sessions, agentProcs } = require('./ipc/terminal.ipc') as typeof import('./ipc/terminal.ipc')
-  for (const [id, session] of sessions) {
-    session.pty.kill()
-    sessions.delete(id)
-  }
-  for (const [id, proc] of agentProcs) {
-    proc.pty.kill()
-    agentProcs.delete(id)
-  }
+  try {
+    const { sessions, agentProcs } = require('./ipc/terminal.ipc') as typeof import('./ipc/terminal.ipc')
+    for (const [id, session] of sessions) {
+      try { session.pty.kill() } catch { /* ignore */ }
+      sessions.delete(id)
+    }
+    for (const [id, proc] of agentProcs) {
+      try { proc.pty.kill() } catch { /* ignore */ }
+      agentProcs.delete(id)
+    }
+  } catch { /* ignore */ }
 })

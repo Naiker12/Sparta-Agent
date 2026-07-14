@@ -84,3 +84,16 @@
     animation: none;
   }
 }
+
+/* Inline diff decorations for Monaco editor */
+.inline-diff-highlight {
+  background: rgba(234, 179, 8, 0.08) !important;
+}
+.inline-diff-glyph {
+  background: rgba(234, 179, 8, 0.4);
+  border-radius: 2px;
+  margin-left: 4px;
+  width: 4px !important;
+  height: 4px !important;
+  margin-top: 6px;
+}

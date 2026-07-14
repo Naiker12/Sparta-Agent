@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useEventBus } from '@/stores/event-bus.store'
 import { useProjectStore } from '@/stores/project.store'
+import { useDiffReviewStore } from '@/stores/diff-review.store'
 import {
   FileSearch, FilePen, FileX, Terminal, Globe, Brain,
   ChevronDown, ChevronRight, Loader2, Check, X,
@@ -68,6 +69,8 @@ export function AgentActivityPanel() {
   const [expanded, setExpanded] = useState(true)
   const listRef = useRef<HTMLDivElement>(null)
   const activeProject = useProjectStore((s) => s.getActiveProject())
+  const { activeProposal, queue, resolve, next } = useDiffReviewStore()
+  const dispatch = useEventBus((s) => s.dispatch)
 
   useEffect(() => {
     const unsub = useEventBus.getState().subscribe((event) => {
@@ -139,6 +142,19 @@ export function AgentActivityPanel() {
   const runningCount = entries.filter((e) => e.status === 'running').length
   const recentEntries = entries.slice(-50) // Keep last 50
 
+  const handleDiffRespond = async (approved: boolean) => {
+    if (!activeProposal) return
+    await window.editorBridge?.respondDiff({ requestId: activeProposal.requestId, approved })
+    resolve(activeProposal.requestId, approved)
+    dispatch({ type: 'editor:diff_resolved', filePath: activeProposal.filePath, approved, timestamp: Date.now() } as any)
+    if (approved) {
+      dispatch({ type: 'editor:open_file', filePath: activeProposal.filePath, timestamp: Date.now() } as any)
+    }
+    next()
+  }
+
+  const pendingCount = queue.filter((q) => q.status === 'pending').length
+
   return (
     <div style={{
       width: 280,
@@ -198,6 +214,61 @@ export function AgentActivityPanel() {
           <span style={{ marginLeft: 6, opacity: 0.6 }}>
             {activeProject.rootPath.split(/[/\\]/).pop()}
           </span>
+        </div>
+      )}
+
+      {/* Pending diff review card */}
+      {activeProposal && (
+        <div style={{
+          padding: '8px 12px',
+          borderBottom: '1px solid var(--border-subtle)',
+          background: 'rgba(234, 179, 8, 0.04)',
+        }}>
+          <div style={{
+            fontSize: 11, fontWeight: 500, color: 'var(--text-primary)',
+            marginBottom: 4,
+          }}>
+            Cambio propuesto
+            {pendingCount > 1 && (
+              <span style={{ fontSize: 10, color: 'var(--text-muted)', marginLeft: 4 }}>
+                ({pendingCount} pendientes)
+              </span>
+            )}
+          </div>
+          <div style={{
+            fontSize: 10, color: 'var(--text-secondary)',
+            fontFamily: 'var(--font-mono)',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            marginBottom: 6,
+          }}>
+            {activeProposal.filePath.split(/[\\/]/).pop()}
+          </div>
+          <div style={{ display: 'flex', gap: 4 }}>
+            <button
+              onClick={() => handleDiffRespond(false)}
+              style={{
+                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3,
+                padding: '4px 0', borderRadius: 5, cursor: 'pointer',
+                fontSize: 11, fontFamily: 'var(--font-ui)',
+                background: 'transparent', border: '1px solid var(--border-normal)',
+                color: 'var(--status-err)',
+              }}
+            >
+              <X size={11} /> Rechazar
+            </button>
+            <button
+              onClick={() => handleDiffRespond(true)}
+              style={{
+                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3,
+                padding: '4px 0', borderRadius: 5, cursor: 'pointer',
+                fontSize: 11, fontWeight: 600, fontFamily: 'var(--font-ui)',
+                background: 'var(--accent)', border: '1px solid var(--accent)',
+                color: '#fff',
+              }}
+            >
+              <Check size={11} /> Aceptar
+            </button>
+          </div>
         </div>
       )}
 

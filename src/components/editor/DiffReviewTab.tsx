@@ -39,6 +39,14 @@ export function DiffReviewTab() {
       await window.editorBridge?.respondDiff({ requestId, approved })
       resolve(requestId, approved)
 
+      // Notify listeners (e.g. inline diff decorations) that the diff was resolved
+      dispatch({
+        type: 'editor:diff_resolved',
+        filePath,
+        approved,
+        timestamp: Date.now(),
+      } as any)
+
       if (approved) {
         // Open/activate the file so user sees the result
         dispatch({

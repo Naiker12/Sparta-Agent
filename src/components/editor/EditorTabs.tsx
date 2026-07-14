@@ -111,12 +111,20 @@ export function EditorTabs({
                 color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
                 fontSize: 11,
                 fontFamily: 'var(--font-mono)',
-                border: isActive ? '1px solid var(--border-subtle)' : '1px solid transparent',
-                borderBottomColor: isActive ? 'var(--bg-base)' : 'transparent',
+                border: isAgentEditing
+                  ? '1px solid transparent'
+                  : isActive
+                    ? '1px solid var(--border-subtle)'
+                    : '1px solid transparent',
+                borderBottomColor: isActive && !isAgentEditing ? 'var(--bg-base)' : 'transparent',
+                borderTop: isAgentEditing
+                  ? '2px solid var(--status-warn)'
+                  : dragOverIdx === idx && dragIdx !== idx
+                    ? '2px solid var(--accent)'
+                    : undefined,
                 marginBottom: isActive ? -1 : 0,
                 userSelect: 'none',
                 opacity: dragIdx === idx ? 0.4 : 1,
-                borderTop: dragOverIdx === idx && dragIdx !== idx ? '2px solid var(--accent)' : undefined,
               }}
             >
               {isPinned && <Pin size={9} style={{ color: 'var(--accent)', flexShrink: 0 }} />}
