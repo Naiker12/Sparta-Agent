@@ -31,6 +31,7 @@ import asyncio
 import json
 import logging
 import os
+import re
 from typing import Any, Callable
 
 from sparta_ai.security.rate_limiter import tool_rate_limiter
@@ -151,10 +152,19 @@ class RealMCPClient:
                 if not command:
                     raise ValueError(f"MCP server '{self.server_id}' requires 'command' for stdio type.")
 
+                unresolved = [a for a in args if re.search(r"\$\{[A-Z_]+\}", a)]
+                if unresolved:
+                    raise ValueError(
+                        f"MCP server '{self.server_id}' tiene variables de template sin resolver: "
+                        f"{unresolved}. Configura el servidor con argumentos reales desde "
+                        f"la UI de MCP."
+                    )
+
                 params = StdioServerParameters(
                     command=command,
                     args=args,
                     env=env,
+                    encoding_error_handler="replace",
                 )
                 self._cm = stdio_client(params)
 
