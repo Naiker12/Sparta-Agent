@@ -207,7 +207,7 @@ def _assemble_agent_tools(
 ) -> list:
     from sparta_ai.tools.memory_tools import read_memory_tool, write_memory_tool
     from sparta_ai.tools.file_tools import (
-        read_file_tool, write_file_tool, search_files_tool,
+        read_file_tool, read_files_tool, write_file_tool, search_files_tool,
         patch_file_tool, delete_file_tool, inject_workspace_guidance,
     )
     from sparta_ai.tools.patch_tools import apply_patch_tool
@@ -235,7 +235,7 @@ def _assemble_agent_tools(
     if read_only:
         tools = [
             read_memory_tool,
-            read_file_tool, search_files_tool,
+            read_file_tool, read_files_tool, search_files_tool,
             skill_view_tool, skills_list_tool,
             get_diagnostics_tool,
             terminal_check_tool,
@@ -244,7 +244,7 @@ def _assemble_agent_tools(
     else:
         tools = [
             read_memory_tool, write_memory_tool,
-            read_file_tool, write_file_tool, search_files_tool, patch_file_tool, delete_file_tool,
+            read_file_tool, read_files_tool, write_file_tool, search_files_tool, patch_file_tool, delete_file_tool,
             apply_patch_tool,
             skill_view_tool, skills_list_tool, skill_manage_tool,
             terminal_execute_tool, terminal_execute_background_tool,

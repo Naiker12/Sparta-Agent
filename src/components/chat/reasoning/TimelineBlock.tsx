@@ -34,10 +34,8 @@ function saveCollapseState(messageId: string, expanded: boolean) {
 /**
  * TimelineBlock — unified timeline of reasoning + tool calls.
  *
- * Replaces the old approach of rendering SearchProgressBlock + ToolCalls section
- * + ThinkingBlock as three separate disconnected blocks. Instead, this component
- * renders a single disclosure (using ThinkingPill as trigger) whose body iterates
- * over message.parts in chronological order.
+ * Renders a single disclosure (using ThinkingPill as trigger) whose body
+ * iterates over message.parts in chronological order.
  *
  * Each part is either:
  *   - reasoning → rendered as ThinkingLines (same visual as before)

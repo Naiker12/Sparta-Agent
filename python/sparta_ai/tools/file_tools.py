@@ -288,6 +288,61 @@ def read_file_tool(path: str, offset: int | None = None, limit: int | None = Non
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# read_files_tool
+# ─────────────────────────────────────────────────────────────────────────────
+
+@tool
+def read_files_tool(paths: list[str]) -> str:
+    """
+    Lee el contenido de varios archivos del sistema de archivos local en una sola invocación.
+
+    Úsalo cuando necesités leer múltiples archivos relacionados para entender
+    un proyecto o responder una pregunta. Es más eficiente que llamar
+    read_file_tool varias veces.
+
+    Args:
+        paths: Lista de rutas relativas al workspace permitido.
+
+    Returns:
+        Contenido de todos los archivos concatenados con separadores claros.
+    """
+    try:
+        if not _check_rate_limit("read_files_tool"):
+            return "Error: Demasiadas solicitudes. Espera un momento antes de leer más archivos."
+        if not paths:
+            return "Error: Se requiere al menos una ruta."
+        if len(paths) > 20:
+            return "Error: Máximo 20 archivos por llamada."
+
+        results = []
+        for p in paths:
+            try:
+                filepath = _get_safe_path(p, tool_name="read_files_tool")
+                _validate_path(filepath)
+                size_mb = filepath.stat().st_size / (1024 * 1024)
+                if size_mb > 50:
+                    results.append(f"### {p}\n\nError: File too large ({size_mb:.1f} MB). Maximum allowed is 50 MB.")
+                    continue
+                content = filepath.read_text(encoding="utf-8")
+                results.append(f"### {p}\n\n{content}")
+            except FileNotFoundError as e:
+                results.append(f"### {p}\n\nError: {e}")
+            except PermissionError as e:
+                logger.warning("read_files_tool blocked: %s", e)
+                results.append(f"### {p}\n\nError de seguridad: {e}")
+            except Exception as e:
+                logger.error("read_files_tool failed for '%s': %s", p, e)
+                results.append(f"### {p}\n\nError al leer archivo: {e}")
+
+        logger.info("Files read: %d paths", len(paths))
+        return "\n\n".join(results)
+
+    except Exception as e:
+        logger.error("read_files_tool failed: %s", e)
+        return f"Error al leer archivos: {e}"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # write_file_tool
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -660,12 +715,12 @@ def inject_workspace_guidance() -> None:
         f"{write_file_tool.__original_description}\n\n{guidance}\n"  # type: ignore[attr-defined]
         "Si la escritura falla, informa el error al usuario y no pegues el archivo completo en el chat."
     )
-    for _t in (search_files_tool, patch_file_tool, delete_file_tool):
+    for _t in (search_files_tool, patch_file_tool, delete_file_tool, read_files_tool):
         _t.description = f"{_t.__original_description}\n\n{guidance}"  # type: ignore[attr-defined]
 
 
 # Bootstrap: save originals once, then inject current workspace
-_ALL_FILE_TOOLS = (read_file_tool, write_file_tool, search_files_tool, patch_file_tool, delete_file_tool)
+_ALL_FILE_TOOLS = (read_file_tool, read_files_tool, write_file_tool, search_files_tool, patch_file_tool, delete_file_tool)
 for _t in _ALL_FILE_TOOLS:
     _t.__original_description = _t.description  # type: ignore[attr-defined]
 inject_workspace_guidance()

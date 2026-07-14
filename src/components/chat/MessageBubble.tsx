@@ -174,7 +174,7 @@ export function MessageBubble({ message, isLastUser = false, isLastAssistant = f
             </div>
           ) : null}
 
-          {/* Unified Timeline — replaces SearchProgressBlock + ToolCalls + ThinkingBlock */}
+          {/* Unified Timeline */}
           {!isUser && (
             <div style={{ marginTop: 8, marginBottom: 8 }}>
               <TimelineBlock message={message} />

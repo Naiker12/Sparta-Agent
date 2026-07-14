@@ -46,8 +46,6 @@ export interface ReasoningDetail {
 /**
  * A single "part" in the message timeline.
  * Parts are rendered in order to create a unified timeline of reasoning + tool calls.
- * This replaces the old approach of rendering SearchProgressBlock + ToolCalls + ThinkingBlock
- * as three separate disconnected blocks.
  */
 export type MessagePart =
   | { kind: 'reasoning'; id: string; text: string; startedAt: number; completedAt?: number }

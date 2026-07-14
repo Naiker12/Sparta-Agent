@@ -401,7 +401,12 @@ function _handleMCPEvent(type: string, event: Record<string, unknown>) {
       store.onStreamEnd(sid, mid)
       store.stopStreaming(sid)
       const errorMsg = (event as { error?: string }).error ?? 'Error durante la generación'
-      store.updateMessage(mid, { content: `Error: ${errorMsg}`, isStreaming: false })
+      // Append the error to the existing content instead of replacing it,
+      // so the text generated before the cut is preserved.
+      store.updateMessage(mid, (msg) => ({
+        content: msg.content ? `${msg.content}\n\n> **Error:** ${errorMsg}` : `Error: ${errorMsg}`,
+        isStreaming: false,
+      }))
       useEventBus.getState().dispatch({
         type: 'stream:error',
         sessionId: sid, messageId: mid, error: errorMsg, timestamp: Date.now(),

@@ -1,21 +1,32 @@
 import { AlertTriangle, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import type { ReactNode } from 'react'
 
-interface ConfirmDeleteDialogProps {
+interface ConfirmDialogShellProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  title?: string
-  itemLabel: string
+  title: string
+  icon?: ReactNode
+  iconBg?: string
+  iconColor?: string
+  children: ReactNode
+  confirmLabel?: string
+  confirmVariant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
   onConfirm: () => void
 }
 
-export function ConfirmDeleteDialog({
+export function ConfirmDialogShell({
   open,
   onOpenChange,
-  title = '¿Eliminar este elemento?',
-  itemLabel,
+  title,
+  icon,
+  iconBg = 'rgba(239, 68, 68, 0.12)',
+  iconColor = 'var(--status-err)',
+  children,
+  confirmLabel = 'Confirmar',
+  confirmVariant = 'default',
   onConfirm,
-}: ConfirmDeleteDialogProps) {
+}: ConfirmDialogShellProps) {
   function handleConfirm() {
     onConfirm()
     onOpenChange(false)
@@ -49,9 +60,9 @@ export function ConfirmDeleteDialog({
             <span style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               width: 28, height: 28, borderRadius: 'var(--radius-md)',
-              background: 'rgba(239, 68, 68, 0.12)', color: 'var(--status-err)', flexShrink: 0,
+              background: iconBg, color: iconColor, flexShrink: 0,
             }}>
-              <AlertTriangle size={15} strokeWidth={2.25} />
+              {icon ?? <AlertTriangle size={15} strokeWidth={2.25} />}
             </span>
             <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-ui)', margin: 0 }}>
               {title}
@@ -68,14 +79,7 @@ export function ConfirmDeleteDialog({
         </div>
 
         <div style={{ padding: '12px 24px 20px' }}>
-          <p style={{
-            fontSize: 13, color: 'var(--text-secondary)', fontFamily: 'var(--font-ui)',
-            lineHeight: 1.5, margin: 0,
-          }}>
-            Vas a eliminar{' '}
-            <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{itemLabel}</span>.
-            Esta acción no se puede deshacer.
-          </p>
+          {children}
         </div>
 
         <div style={{
@@ -86,11 +90,91 @@ export function ConfirmDeleteDialog({
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button variant="destructive" onClick={handleConfirm}>
-            Eliminar
+          <Button variant={confirmVariant} onClick={handleConfirm}>
+            {confirmLabel}
           </Button>
         </div>
       </div>
     </div>
+  )
+}
+
+// ── Delete variant ──────────────────────────────────────────────────
+
+interface ConfirmDeleteDialogProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  title?: string
+  itemLabel: string
+  onConfirm: () => void
+}
+
+export function ConfirmDeleteDialog({
+  open,
+  onOpenChange,
+  title = '¿Eliminar este elemento?',
+  itemLabel,
+  onConfirm,
+}: ConfirmDeleteDialogProps) {
+  return (
+    <ConfirmDialogShell
+      open={open}
+      onOpenChange={onOpenChange}
+      title={title}
+      iconBg="rgba(239, 68, 68, 0.12)"
+      iconColor="var(--status-err)"
+      confirmLabel="Eliminar"
+      confirmVariant="destructive"
+      onConfirm={onConfirm}
+    >
+      <p style={{
+        fontSize: 13, color: 'var(--text-secondary)', fontFamily: 'var(--font-ui)',
+        lineHeight: 1.5, margin: 0,
+      }}>
+        Vas a eliminar{' '}
+        <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{itemLabel}</span>.
+        Esta acción no se puede deshacer.
+      </p>
+    </ConfirmDialogShell>
+  )
+}
+
+// ── Action variant (e.g. regenerate) ────────────────────────────────
+
+interface ConfirmActionDialogProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  title: string
+  description: string
+  confirmLabel?: string
+  onConfirm: () => void
+}
+
+export function ConfirmActionDialog({
+  open,
+  onOpenChange,
+  title,
+  description,
+  confirmLabel = 'Confirmar',
+  onConfirm,
+}: ConfirmActionDialogProps) {
+  return (
+    <ConfirmDialogShell
+      open={open}
+      onOpenChange={onOpenChange}
+      title={title}
+      iconBg="rgba(234, 179, 8, 0.12)"
+      iconColor="var(--status-warn)"
+      confirmLabel={confirmLabel}
+      confirmVariant="default"
+      onConfirm={onConfirm}
+    >
+      <p style={{
+        fontSize: 13, color: 'var(--text-secondary)', fontFamily: 'var(--font-ui)',
+        lineHeight: 1.5, margin: 0,
+      }}>
+        {description}
+      </p>
+    </ConfirmDialogShell>
   )
 }

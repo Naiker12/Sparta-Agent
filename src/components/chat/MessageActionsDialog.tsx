@@ -4,14 +4,7 @@ import { useMemoryStore } from '@/stores/memory.store'
 import { useEventBus } from '@/stores/event-bus.store'
 import { useChatSession } from '@/hooks/useChatSession'
 import { deleteEntry as chromaDeleteEntry } from '@/services/memory/vector/chroma-client'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
+import { ConfirmDeleteDialog, ConfirmActionDialog } from '@/components/ui/confirm-delete-dialog'
 
 type DialogState =
   | { kind: 'none' }
@@ -35,8 +28,6 @@ export function MessageActionsDialog({
   const dispatch = useEventBus((s) => s.dispatch)
   const { sendMessage } = useChatSession()
 
-  const isOpen = state.kind !== 'none'
-
   function handleDelete() {
     deleteMessage(sessionId, message.id)
     const entryIds = useMemoryStore.getState().deleteEntriesBySourceMessageId(message.id)
@@ -52,58 +43,27 @@ export function MessageActionsDialog({
     onClose()
   }
 
-  const title =
-    state.kind === 'delete' ? 'Eliminar mensaje' :
-    state.kind === 'regenerate' ? 'Regenerar respuesta' : ''
+  const preview = message.content.length > 60
+    ? message.content.slice(0, 60) + '...'
+    : message.content
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
-      <DialogContent className="sm:max-w-sm">
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-        </DialogHeader>
-
-        <div className="px-6 pb-2">
-          {state.kind === 'delete' && (
-            <p style={{
-              fontSize: 13, color: 'var(--text-secondary)',
-              fontFamily: 'var(--font-ui)', lineHeight: 1.6,
-            }}>
-              Vas a eliminar{' '}
-              <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
-                {message.content.length > 60
-                  ? message.content.slice(0, 60) + '...'
-                  : message.content}
-              </span>
-              . Esta acción no se puede deshacer.
-            </p>
-          )}
-
-          {state.kind === 'regenerate' && (
-            <p style={{
-              fontSize: 13, color: 'var(--text-secondary)',
-              fontFamily: 'var(--font-ui)', lineHeight: 1.6,
-            }}>
-              Se volverá a pedir al agente una respuesta. ¿Continuar?
-            </p>
-          )}
-        </div>
-
-        <DialogFooter>
-          {state.kind === 'delete' && (
-            <>
-              <Button variant="ghost" size="sm" onClick={onClose}>Cancelar</Button>
-              <Button variant="destructive" size="sm" onClick={handleDelete}>Eliminar</Button>
-            </>
-          )}
-          {state.kind === 'regenerate' && (
-            <>
-              <Button variant="ghost" size="sm" onClick={onClose}>Cancelar</Button>
-              <Button size="sm" onClick={() => { sendMessage(message.content); onClose() }}>Regenerar</Button>
-            </>
-          )}
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <>
+      <ConfirmDeleteDialog
+        open={state.kind === 'delete'}
+        onOpenChange={(open) => { if (!open) onClose() }}
+        title="¿Eliminar este mensaje?"
+        itemLabel={preview}
+        onConfirm={handleDelete}
+      />
+      <ConfirmActionDialog
+        open={state.kind === 'regenerate'}
+        onOpenChange={(open) => { if (!open) onClose() }}
+        title="Regenerar respuesta"
+        description="Se volverá a pedir al agente una respuesta. ¿Continuar?"
+        confirmLabel="Regenerar"
+        onConfirm={() => { sendMessage(message.content); onClose() }}
+      />
+    </>
   )
 }

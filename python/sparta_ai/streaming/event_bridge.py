@@ -362,6 +362,26 @@ async def _dispatch_event_core(
         tool_input = data.get("input", {})
         emit_control_fn(*tool_events.tool_called(base_payload, name, tool_input, tool_call_id))
 
+        # Reset repetition guard at tool boundaries: the model has finished
+        # narrating and is about to execute a tool.  This prevents text from
+        # distinct tool outputs (e.g. multiple file reads with similar
+        # imports) from accumulating into one buffer and triggering false
+        # positives.
+        stream_state.setdefault("_rep_guard", RepetitionGuard()).reset_boundary()
+
+        # Emit granular status for file reads so the thinking pill shows
+        # "Leyendo {filename}..." instead of a generic spinner.
+        if name == "read_file_tool":
+            file_path = tool_input.get("path", "") if isinstance(tool_input, dict) else ""
+            if file_path:
+                filename = file_path.rsplit("/", 1)[-1].rsplit("\\", 1)[-1]
+                emit_control_fn(*reasoning_events.thinking_status(base_payload, f"Leyendo {filename}…"))
+        elif name == "read_files_tool":
+            file_paths = tool_input.get("paths", []) if isinstance(tool_input, dict) else []
+            if file_paths:
+                count = len(file_paths)
+                emit_control_fn(*reasoning_events.thinking_status(base_payload, f"Leyendo {count} archivos…"))
+
         if name in ("write_file_tool", "patch_file_tool", "delete_file_tool"):
             file_path = tool_input.get("path", "") if isinstance(tool_input, dict) else ""
             if file_path:
@@ -380,6 +400,10 @@ async def _dispatch_event_core(
         tool_call_id = event.get("run_id", "unknown")
         output_str = _extract_tool_output_str(data)
         emit_control_fn(*tool_events.tool_result(base_payload, name, output_str, data.get("run_time_ms", 0), tool_call_id))
+
+        # Reset repetition guard after tool result: the next segment of
+        # narration starts fresh.
+        stream_state.setdefault("_rep_guard", RepetitionGuard()).reset_boundary()
 
         if name in ("write_file_tool", "patch_file_tool", "delete_file_tool"):
             file_path = stream_state.get("_pending_file_path", "")

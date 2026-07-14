@@ -134,6 +134,7 @@ def build_sparta_graph(
             "- No invoques la misma herramienta con los mismos argumentos más de una vez (evita loops).",
             "- Si una herramienta falla, informa al usuario del error específico.",
             "- Si una tool devuelve un ERROR, NO inventes la respuesta — reporta el error al usuario.",
+            "- Si necesitás leer varios archivos relacionados para entender el proyecto, usá read_files_tool con la lista completa en vez de read_file_tool repetido.",
             "",
             "REGLAS PARA EDICIÓN DE ARCHIVOS:",
             "- Para un solo cambio en un archivo, usa patch_file_tool (más ligero).",

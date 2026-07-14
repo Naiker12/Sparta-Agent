@@ -263,7 +263,7 @@ export function registerChatIPC(): void {
         sendToRenderer({
           sessionId, messageId,
           type: 'stream:error',
-          error: 'La respuesta del modelo se cortó por repetición detectada. Probá con otro modelo o reintentá.',
+          error: 'La respuesta se cortó por repetición detectada. El texto generado hasta el corte se conserva. Probá con otro modelo o reintentá.',
         })
         clearSeqCounters(requestId)
         const resolveDeg = streamResolvers.get(requestId)

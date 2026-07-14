@@ -5,17 +5,24 @@ where they repeat the same text fragment indefinitely. This guard monitors the
 token stream and signals abortion when a repeating pattern is detected.
 """
 import logging
+import re
 
 logger = logging.getLogger("sparta_ai.streaming.repetition_guard")
+
+_CODE_BLOCK_RE = re.compile(r"```[\s\S]*?```", re.DOTALL)
 
 
 class RepetitionGuard:
     """Cuts off the stream if an n-gram or phrase repeats consecutively N+ times.
 
     Two detection strategies:
-    1. Short n-gram (default 6-char window, 4 repeats) — catches token-level loops.
-    2. Long phrase (default 24-char phrase, 3 consecutive repeats) — catches
+    1. Short n-gram (default 12-char window, 6 repeats) — catches token-level loops.
+    2. Long phrase (default 40-char phrase, 3 consecutive repeats) — catches
        sentence-level degeneration common in free-tier models.
+
+    The buffer is reset on tool call boundaries (``reset_boundary``) so that
+    text from distinct file reads or tool outputs does not accumulate and
+    trigger false positives.
 
     Usage:
         guard = RepetitionGuard()
@@ -28,9 +35,9 @@ class RepetitionGuard:
 
     def __init__(
         self,
-        ngram_size: int = 6,
-        max_repeats: int = 4,
-        phrase_len: int = 24,
+        ngram_size: int = 12,
+        max_repeats: int = 6,
+        phrase_len: int = 40,
         phrase_max_repeats: int = 3,
     ):
         if ngram_size < 1:
@@ -46,6 +53,7 @@ class RepetitionGuard:
         self.phrase_len = phrase_len
         self.phrase_max_repeats = phrase_max_repeats
         self.buffer = ""
+        self._code_block_open = False
 
     def feed(self, token: str) -> bool:
         """Feed a new token into the guard.
@@ -55,6 +63,22 @@ class RepetitionGuard:
         """
         if not token:
             return False
+
+        # Track fenced code blocks (```).  Count opening/closing fence
+        # lines in this token so that a token containing both open and
+        # close (e.g. a complete short code block) is handled correctly.
+        backtick_lines = sum(
+            1 for line in token.split("\n") if line.strip().startswith("```")
+        )
+        if backtick_lines % 2 == 1:
+            self._code_block_open = not self._code_block_open
+
+        if self._code_block_open:
+            # Still accumulate so the buffer stays coherent for later,
+            # but skip the repetition check while inside a code block.
+            self.buffer += token
+            return False
+
         self.buffer += token
         return self._check()
 
@@ -78,5 +102,17 @@ class RepetitionGuard:
 
         return False
 
+    def reset_boundary(self) -> None:
+        """Reset the buffer at a tool call boundary.
+
+        Call this when the model finishes narrating and starts executing or
+        has just finished reading a tool result.  This prevents text from
+        distinct tool outputs (e.g. multiple file reads with similar imports)
+        from accumulating into a single buffer and triggering false positives.
+        """
+        self.buffer = ""
+        self._code_block_open = False
+
     def reset(self) -> None:
         self.buffer = ""
+        self._code_block_open = False
