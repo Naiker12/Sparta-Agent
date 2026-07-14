@@ -199,6 +199,67 @@ def _wrap_tools_with_hooks(tools: list, workspace_root: str) -> list:
     return wrapped
 
 
+def _build_project_context(workspace_root: str) -> str:
+    """Build a brief project context string from the workspace root.
+
+    Detects the stack by checking for common config files and counts
+    files by extension.  Returns a 10-15 line summary for the system prompt.
+    """
+    from pathlib import Path
+
+    root = Path(workspace_root)
+    if not root.exists():
+        return ""
+
+    lines = [f"Raíz: {root.name}"]
+
+    # Detect stack
+    stack = []
+    if (root / "package.json").exists():
+        stack.append("Node.js")
+    if (root / "pyproject.toml").exists() or (root / "setup.py").exists():
+        stack.append("Python")
+    if (root / "Cargo.toml").exists():
+        stack.append("Rust")
+    if (root / "go.mod").exists():
+        stack.append("Go")
+    if (root / "pom.xml").exists() or (root / "build.gradle").exists():
+        stack.append("Java")
+    if (root / "*.csproj").exists() or list(root.glob("*.sln")):
+        stack.append(".NET")
+    if stack:
+        lines.append(f"Stack: {', '.join(stack)}")
+
+    # Count files by extension (top 2 levels only)
+    ext_counts: dict[str, int] = {}
+    file_count = 0
+    try:
+        for f in root.rglob("*"):
+            if f.is_file() and not any(
+                part.startswith(".") or part == "node_modules" or part == "__pycache__"
+                for part in f.relative_to(root).parts
+            ):
+                file_count += 1
+                ext = f.suffix.lower()
+                if ext:
+                    ext_counts[ext] = ext_counts.get(ext, 0) + 1
+                if file_count > 2000:
+                    break
+    except (PermissionError, OSError):
+        pass
+
+    if file_count:
+        lines.append(f"Archivos: ~{file_count}")
+
+    # Top extensions
+    top_exts = sorted(ext_counts.items(), key=lambda x: -x[1])[:5]
+    if top_exts:
+        ext_str = ", ".join(f"{ext}({cnt})" for ext, cnt in top_exts)
+        lines.append(f"Tipos: {ext_str}")
+
+    return "\n".join(lines)
+
+
 def _assemble_agent_tools(
     read_only: bool,
     web_search_enabled: bool,
@@ -278,6 +339,7 @@ def _build_initial_state(
     mode: str,
     skills: list[str],
     memory_context: str,
+    project_context: str = "",
 ) -> SpartaState:
     return {
         "messages": compressed_messages,
@@ -285,6 +347,7 @@ def _build_initial_state(
         "mode": mode,
         "active_skills": skills,
         "memory_context": memory_context,
+        "project_context": project_context,
         "thinking_tokens": 0,
         "tool_calls_this_turn": 0,
         "subagent_results": [],
@@ -357,6 +420,14 @@ async def prepare_agent(
             messages[-1].get("content", "") if messages else ""
         )
 
+    # Build project context from workspace root
+    project_context = ""
+    workspace_root = os.environ.get("SPARTA_WORKSPACE_ROOT", "")
+    if session_id:
+        workspace_root = get_session_workspace(session_id) or workspace_root
+    if workspace_root:
+        project_context = _build_project_context(workspace_root)
+
     from sparta_ai.tools.mcp_manager import mcp_manager
     mcp_tools = await mcp_manager.get_tools(session_id, mcp_servers, emit_fn=emit_fn)
 
@@ -390,7 +461,8 @@ async def prepare_agent(
     )
 
     initial_state = _build_initial_state(
-        compressed_messages, session_id, mode, skills, memory_context
+        compressed_messages, session_id, mode, skills, memory_context,
+        project_context=project_context,
     )
 
     return graph, initial_state

@@ -16,6 +16,7 @@ import { MonacoEditor } from './MonacoEditor'
 import { DiffReviewTab } from './DiffReviewTab'
 import { InlineAskWidget } from './InlineAskWidget'
 import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog'
+import { AgentActivityPanel } from '@/components/agents/AgentActivityPanel'
 import type { FileTreeNode } from '@/types'
 
 interface OpenFile {
@@ -475,11 +476,21 @@ export function EditorPanel() {
               hasRootPath={!!activeProject?.rootPath}
               explorerVisible={editorExplorerVisible}
               onShowExplorer={() => { if (!editorExplorerVisible) toggleEditorExplorer() }}
+              onOpenFolder={async () => {
+                if (!window.fs || !activeProject) return
+                const path = await window.fs.openFolderDialog()
+                if (path) {
+                  useProjectStore.getState().setProjectRootPath(activeProject.id, path)
+                  await window.fs.setWorkspaceRoot(path)
+                }
+              }}
               onClose={toggleEditor}
             />
           </div>
         )}
       </div>
+
+      <AgentActivityPanel />
 
       <ConfirmDeleteDialog
         open={!!deleteTarget}
@@ -660,19 +671,17 @@ function EmptyEditorState({
   hasRootPath,
   explorerVisible,
   onShowExplorer,
+  onOpenFolder,
   onClose,
 }: {
   projectName?: string
   hasRootPath: boolean
   explorerVisible: boolean
   onShowExplorer: () => void
+  onOpenFolder: () => void
   onClose: () => void
 }) {
-  // Si el explorador (donde vive el botón "Abrir carpeta") quedó oculto por
-  // una preferencia guardada previamente, este es el único punto de la UI
-  // donde el usuario puede volver a mostrarlo — nunca debe ser un callejón
-  // sin salida.
-  const needsExplorer = !hasRootPath && !explorerVisible
+  const noProject = !hasRootPath
 
   return (
     <div style={{
@@ -691,36 +700,53 @@ function EmptyEditorState({
         {projectName ? `Proyecto: ${projectName}` : 'Ningún proyecto seleccionado'}
       </div>
       <p>
-        {needsExplorer
-          ? 'El explorador de archivos está oculto. Mostralo para abrir una carpeta de proyecto.'
+        {noProject
+          ? 'Abrí una carpeta de proyecto para empezar a trabajar con el editor y el agente.'
           : 'Selecciona un archivo del explorador para empezar a editar.'}
       </p>
       <div style={{ display: 'flex', gap: 8 }}>
-        {needsExplorer && (
+        {noProject && (
           <button
-            onClick={onShowExplorer}
+            onClick={onOpenFolder}
             style={{
-              padding: '5px 12px',
+              padding: '6px 16px',
               background: 'var(--accent)',
               border: 'none',
               borderRadius: 'var(--radius-md)',
               color: 'white',
-              fontSize: 12,
+              fontSize: 13,
+              fontWeight: 500,
               cursor: 'pointer',
             }}
           >
-            Mostrar explorador / Abrir carpeta
+            Abrir carpeta
+          </button>
+        )}
+        {noProject && !explorerVisible && (
+          <button
+            onClick={onShowExplorer}
+            style={{
+              padding: '6px 16px',
+              background: 'var(--bg-input)',
+              border: '1px solid var(--border-normal)',
+              borderRadius: 'var(--radius-md)',
+              color: 'var(--text-secondary)',
+              fontSize: 13,
+              cursor: 'pointer',
+            }}
+          >
+            Mostrar explorador
           </button>
         )}
         <button
           onClick={onClose}
           style={{
-            padding: '5px 12px',
+            padding: '6px 16px',
             background: 'var(--bg-input)',
             border: '1px solid var(--border-normal)',
             borderRadius: 'var(--radius-md)',
             color: 'var(--text-secondary)',
-            fontSize: 12,
+            fontSize: 13,
             cursor: 'pointer',
           }}
         >

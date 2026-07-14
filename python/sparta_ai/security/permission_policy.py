@@ -1,9 +1,10 @@
-"""Defines tool permissions and mode-based scoping (BUILD vs PLAN).
+"""Defines tool permissions and mode-based scoping (BUILD vs PLAN vs CHAT).
 
 Connects to sparta_agent.py's bind_tools() so that the available tools
 change depending on the active mode:
   - BUILD:  all tools available (write, delete, terminal, etc.)
   - PLAN:   only read/search/diagnostic tools (no destructive operations)
+  - CHAT:   read/search + web + memory (no write, delete, terminal)
 
 Tools not listed here default to requires_confirmation=False.
 
@@ -26,7 +27,7 @@ logger = logging.getLogger("sparta_ai.security.permissions")
 
 # Built-in tool classification by scope
 _READ_TOOLS = frozenset({
-    "read_file_tool", "search_files_tool",
+    "read_file_tool", "read_files_tool", "search_files_tool",
     "read_memory_tool",
     "skill_view_tool", "skills_list_tool",
     "web_search_tool", "web_search",
@@ -34,6 +35,15 @@ _READ_TOOLS = frozenset({
     "get_diagnostics_tool",
     "terminal_check_tool",
     "get_open_files_tool",
+})
+
+# Chat mode: read/search + web + memory, no write/delete/terminal
+_CHAT_TOOLS = frozenset({
+    "read_file_tool", "read_files_tool", "search_files_tool",
+    "read_memory_tool", "write_memory_tool",
+    "skill_view_tool", "skills_list_tool",
+    "web_search_tool", "web_search", "web_fetch_tool",
+    "get_diagnostics_tool",
 })
 
 _WRITE_TOOLS = frozenset({
@@ -97,9 +107,10 @@ class ToolPermission:
 class PermissionPolicy:
     """Central policy for tool permissions and mode scoping.
 
-    Two modes:
+    Three modes:
       - "build": full access — all tools available (respecting per-tool rules)
       - "plan":  read-only — only read/search tools; write/delete/terminal blocked
+      - "chat":  conversational — read/search/web/memory; no write/delete/terminal
 
     Permission rules are evaluated from the beginning of the list; the last
     matching rule wins.  A catch-all "*" rule at the end sets the default.
@@ -154,7 +165,7 @@ class PermissionPolicy:
 
     @mode.setter
     def mode(self, value: str) -> None:
-        if value not in ("build", "plan"):
+        if value not in ("build", "plan", "chat"):
             raise ValueError(f"Unknown policy mode: {value}")
         self._mode = value
 
@@ -184,6 +195,7 @@ class PermissionPolicy:
         """Filter a tool list according to the current policy mode.
 
         In "plan" mode, only read/search/diagnostic tools are allowed.
+        In "chat" mode, read/search/web/memory tools are allowed (no write/delete/terminal).
         In "build" mode, all tools pass through (respecting per-tool rules).
         """
         if not tools:
@@ -192,6 +204,8 @@ class PermissionPolicy:
             return tools
         if self._mode == "plan":
             return [t for t in tools if getattr(t, "name", "") in _READ_TOOLS]
+        if self._mode == "chat":
+            return [t for t in tools if getattr(t, "name", "") in _CHAT_TOOLS]
         return tools
 
 

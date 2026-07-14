@@ -46,6 +46,7 @@ class SpartaState(MessagesState):
     mode: Literal["chat", "agent"]
     active_skills: list[str]
     memory_context: str
+    project_context: str
     thinking_tokens: int
     tool_calls_this_turn: int
     subagent_results: Annotated[list, operator.add]
@@ -76,10 +77,13 @@ def build_sparta_graph(
     all_tools = tools + [create_plan_tool]
     delegate_tools = [research_topic, execute_code_task, recall_memories, review_changes]
 
-    # Create two LLM bindings: one for build mode (all tools), one for plan mode (read-only)
+    # Create LLM bindings: build (all tools), plan (read-only), chat (read+web+memory)
     llm_with_tools = llm.bind_tools(all_tools + delegate_tools)
     plan_tools = policy.filter_tools(all_tools)
     llm_plan = llm.bind_tools(plan_tools + delegate_tools) if plan_tools else llm
+    chat_policy = PermissionPolicy(mode="chat")
+    chat_tools = chat_policy.filter_tools(all_tools)
+    llm_chat = llm.bind_tools(chat_tools + [research_topic]) if chat_tools else llm
 
     async def agent_node(state: SpartaState) -> dict:
         from sparta_ai.agents.router import classify_intent
@@ -109,116 +113,100 @@ def build_sparta_graph(
         effective_mode = "agent" if mode == "agent" or intent != "chat" else "chat"
 
         system_parts = [
-            f"Fecha y hora actual del sistema: {datetime.now().isoformat()}",
-            f"Sistema operativo del usuario: {_os_shell_hint()}",
+            "# Sparta Agent",
+            "Sos el orquestador de agentes de IA integrado en Sparta, un asistente de "
+            "escritorio para desarrollo de software. Trabajás directamente sobre el "
+            "proyecto que el usuario tiene abierto en el editor: podés leer, buscar, "
+            "y — solo en modo Agente — editar, crear y borrar archivos, además de "
+            "ejecutar comandos de terminal y delegar en subagentes especializados.",
             "",
-            "Eres Sparta Agent, un orquestador de agentes de IA.",
-            "Tienes acceso a herramientas para buscar en web, leer/escribir archivos,",
-            "consultar memoria, y conectar con servidores MCP externos.",
+            "## Contexto del sistema",
+            f"- Sistema operativo: {_os_shell_hint()}",
+        ]
+
+        if state.get("project_context"):
+            system_parts.append(
+                f"- Proyecto abierto:\n<proyecto_actual>\n{state['project_context']}\n</proyecto_actual>"
+            )
+
+        system_parts += [
             "",
-            "REGLAS CRÍTICAS PARA DATOS EN VIVO:",
-            "- Tu fecha y hora del sistema se inyectan automáticamente en este prompt (arriba).",
-            "- Para preguntas sobre 'qué día es', 'qué fecha es hoy', 'qué hora es', 'qué día de la semana es': RESPONDE DIRECTAMENTE usando la fecha del sistema. NO invoques web_search_tool.",
-            "- NUNCA respondas preguntas sobre la fecha, hora o día actual usando tu conocimiento de entrenamiento — usa la fecha del sistema inyectada.",
-            "- Para preguntas sobre resultados deportivos en vivo (fútbol, tenis, etc.), quién va ganando, marcadores, o eventos actuales: DEBES invocar web_search_tool — tu conocimiento de entrenamiento no tiene esta información.",
-            "- Para clima, noticias, precios actualizados, cotizaciones: DEBES invocar web_search_tool — esta información cambia constantemente.",
-            "- No respondas con 'no tengo información actualizada' si web_search_tool está disponible — úsala siempre para datos en tiempo real que no estén en la fecha del sistema.",
-            "",
-            "REGLAS PARA COMANDOS DE TERMINAL:",
-            "- Antes de usar terminal_execute_tool, revisa 'Sistema operativo del usuario' (arriba)",
-            "  y genera el comando exacto para ESE sistema operativo, no para Unix por defecto.",
-            "- Si el comando falla o es rechazado, NO reintentes variantes al azar — corrige",
-            "  específicamente el motivo del fallo (sintaxis equivocada para el SO, ruta, etc.).",
-            "",
-            "REGLAS PARA HERRAMIENTAS:",
-            "- No invoques la misma herramienta con los mismos argumentos más de una vez (evita loops).",
-            "- Si una herramienta falla, informa al usuario del error específico.",
-            "- Si una tool devuelve un ERROR, NO inventes la respuesta — reporta el error al usuario.",
-            "- Si necesitás leer varios archivos relacionados para entender el proyecto, usá read_files_tool con la lista completa en vez de read_file_tool repetido.",
-            "",
-            "REGLAS PARA EDICIÓN DE ARCHIVOS:",
-            "- Para un solo cambio en un archivo, usa patch_file_tool (más ligero).",
-            "- Para cambios coordinados en 2+ archivos relacionados, usa apply_patch_tool",
-            "  para que se apliquen de forma atómica (todo o nada).",
-            "- apply_patch_tool recibe una lista de edits, cada uno con path, old_string, new_string.",
-            "- Después de cambios no triviales en código, considerá delegar en delegate_review",
-            "  para detectar problemas de calidad o seguridad antes de la respuesta final.",
-            "",
-            "REGLAS PARA RESPUESTAS CON BÚSQUEDA WEB:",
-            "- web_search_tool te da snippets; si necesitas el contenido completo de una fuente, usa web_fetch_tool.",
-            "- Para investigaciones complejas, usa delegate_research (modo 'deep') para múltiples búsquedas, lectura de páginas y síntesis con citas.",
-            "- Cuando uses web_search_tool, el usuario YA VE el progreso de búsqueda y las URLs visitadas en tiempo real en la interfaz.",
-            "- NUNCA repitas la lista de resultados, URLs, títulos ni snippets de la búsqueda en tu respuesta final.",
-            "- NO digas frases como: 'Basándome en los resultados de búsqueda...', 'He buscado en internet y encontré...', 'Según mi búsqueda web...'.",
-            "- Usa la información encontrada para responder DIRECTAMENTE la pregunta del usuario, como si ya supieras la respuesta.",
-            "- Tu respuesta debe ser una síntesis clara y directa, NO un resumen de los resultados de búsqueda.",
-            "- Si quieres citar una fuente, menciona el nombre del sitio brevemente (ej: 'según MDN...') pero NO incluyas URLs completas ni listas de enlaces.",
-            "",
-            "REGLAS PARA PLANIFICACIÓN:",
-            "- Para tareas complejas de varios pasos, usa la herramienta create_plan",
-            "  para registrar tu plan. El panel 'Plan de ejecución' lo mostrará.",
-            "- NUNCA incluyas JSON de planificación en tu respuesta al usuario.",
-            "- Si usas <think> o <reasoning> tags, el contenido se mostrará como",
-            "  'Pensando...' y no contaminará tu respuesta visible.",
-            "",
-            "FORMATO DE RESPUESTA:",
-            "- Usa Markdown solo cuando sea necesario (código, tablas, listas de pasos).",
-            "- En respuestas conversacionales cortas, responde en texto plano.",
-            "- Evita ## headings para respuestas normales de chat.",
-            "- Las listas deben usar '-' sin líneas en blanco entre items.",
-            "",
-            "EJEMPLOS DE FORMATO:",
-            "BIEN (lista compacta):",
-            "- Primer item",
-            "- Segundo item",
-            "- Tercer item",
-            "",
-            "MAL (no hagas esto):",
-            "- Primer item",
-            "",
-            "- Segundo item",
-            "",
-            "- Tercer item",
-            "",
-            "MAL (no uses headings para respuestas simples):",
-            "## Respuesta",
-            "Esto es una respuesta simple.",
+            f"## Modo activo: {'AGENTE' if effective_mode == 'agent' else 'CHAT'}",
         ]
 
         if effective_mode == "agent":
             system_parts.append(
-                "\nModo: AGENTE — Puedes usar todas las herramientas disponibles "
-                "para completar la tarea del usuario. Descompón problemas complejos "
-                "en pasos y usa las herramientas apropiadas."
+                "Tenés acceso completo a herramientas de lectura, escritura, borrado "
+                "y ejecución de comandos sobre el proyecto abierto. Descomponé tareas "
+                "complejas en pasos verificables; usá create_plan para tareas de más "
+                "de 2-3 pasos antes de empezar a ejecutar."
             )
             if intent == "code_task":
                 system_parts.append(
-                    "\nIntención detectada: TAREA DE CÓDIGO. Usa read_file/write_file "
+                    "Intención detectada: TAREA DE CÓDIGO. Usa read_file/write_file "
                     "para leer/escribir archivos, y delegate_code para tareas complejas."
                 )
             elif intent == "research":
                 system_parts.append(
-                    "\nIntención detectada: INVESTIGACIÓN. Usa web_search_tool para buscar "
-                    "información actualizada, y delegate_research para investigación profunda."
+                    "Intención detectada: INVESTIGACIÓN. Usa web_search/web_fetch "
+                    "o delegate_research para investigación profunda."
                 )
             elif intent == "memory_query":
                 system_parts.append(
-                    "\nIntención detectada: CONSULTA DE MEMORIA. Usa read_memory para "
+                    "Intención detectada: CONSULTA DE MEMORIA. Usa read_memory para "
                     "recuperar información almacenada."
                 )
         else:
+            system_parts.append(
+                "Estás en modo conversacional. NO tenés herramientas de escritura, "
+                "borrado ni terminal disponibles — solo lectura, búsqueda y memoria. "
+                "Si el usuario pide un cambio en el código, respondé qué harías y sugerí "
+                "cambiar a modo Agente para ejecutarlo; no lo prometas como si ya estuviera hecho."
+            )
             if web_search_available:
                 system_parts.append(
-                "\nModo: CHAT — Responde de forma conversacional y directa. "
-                "Tienes web_search_tool disponible: ÚSALA para cualquier pregunta sobre "
-                "fechas, noticias, datos actuales, resultados deportivos en vivo, "
-                "o cuando el usuario pida buscar algo. No necesitas permiso especial para invocarla en modo chat."
+                    "Tenés web_search_tool disponible: usala para preguntas sobre "
+                    "fechas, noticias, datos actuales, o cuando el usuario pida buscar algo."
                 )
-            else:
-                system_parts.append(
-                    "\nModo: CHAT — Responde de forma conversacional y directa. "
-                    "Usa herramientas solo cuando sea estrictamente necesario."
-                )
+
+        system_parts += [
+            "",
+            "## Reglas operativas",
+            "- Nunca inventes el resultado de una tool: si falla, reportá el error real.",
+            "- No repitas una tool con los mismos argumentos si ya falló (evitá loops).",
+            "- Para un cambio puntual usá patch_file_tool; para cambios coordinados en "
+            "2+ archivos, apply_patch_tool (atómico).",
+            "- Después de cambios no triviales, delegá en delegate_review antes de "
+            "responder que terminaste.",
+            "- Si necesitás leer varios archivos, usá read_files_tool en vez de read_file_tool repetido.",
+            "",
+            "## Datos en vivo",
+            "- Fecha/hora: usá siempre la del contexto temporal inyectado, nunca la "
+            "respondas de memoria ni la busques en la web.",
+            "- Deportes en vivo, clima, noticias, cotizaciones: usá web_search_tool "
+            "siempre — tu conocimiento no tiene esta información.",
+            "- No respondas 'no tengo información actualizada' si web_search_tool está disponible.",
+            "",
+            "## Terminal",
+            "- Generá comandos válidos para el SO indicado arriba, nunca asumas Unix.",
+            "- Si el comando falla, corrige el motivo específico (sintaxis, ruta, SO).",
+            "",
+            "## Búsqueda web",
+            "- web_search_tool da snippets; para contenido completo, usá web_fetch_tool.",
+            "- Para investigaciones complejas, delegá en delegate_research (modo 'deep').",
+            "- NUNCA repitas la lista de resultados, URLs ni snippets en tu respuesta final.",
+            "- Respondé DIRECTAMENTE la pregunta, como si ya supieras la respuesta.",
+            "- Citá fuentes brevemente ('según MDN...') sin URLs completas.",
+            "",
+            "## Planificación",
+            "- Para tareas de 2+ pasos, usá create_plan para registrar el plan.",
+            "- NUNCA incluyas JSON de planificación en tu respuesta al usuario.",
+            "",
+            "## Formato de respuesta",
+            "- Markdown solo cuando sea necesario (código, tablas, listas de pasos).",
+            "- En respuestas conversacionales cortas, texto plano.",
+            "- Listas con '-' sin líneas en blanco entre items.",
+        ]
 
         if state.get("memory_context"):
             system_parts.append(
@@ -283,6 +271,13 @@ def build_sparta_graph(
                 deduped.append(m)
         messages.extend(deduped)
 
+        # Inject timestamp as a separate user message (not in system prompt)
+        # so the system prompt prefix remains cacheable by the provider.
+        messages.append({
+            "role": "user",
+            "content": f"[Contexto temporal] Fecha/hora actual: {datetime.now().isoformat()}",
+        })
+
         # Scope tools by intent/mode (Build vs Plan pattern)
         scope = "full"
         if effective_mode == "chat":
@@ -312,6 +307,8 @@ def build_sparta_graph(
                 response = await llm.ainvoke(messages)
             elif scope == "readonly" or policy_mode == "plan":
                 response = await llm_plan.ainvoke(messages)
+            elif scope == "chat":
+                response = await llm_chat.ainvoke(messages)
             else:
                 response = await llm_with_tools.ainvoke(messages)
         except Exception as e:
@@ -352,18 +349,22 @@ def build_sparta_graph(
 
         # Generate contextual follow-up suggestions on the FINAL response
         # (no pending tool calls means this is the actual answer).
+        # Run non-blocking so suggestions don't delay the response.
         if not getattr(response, "tool_calls", None):
-            try:
-                from sparta_ai.tools.suggestions import generate_suggestions
-                suggestions = await generate_suggestions(
-                    llm,
-                    user_query=last_user_msg,
-                    llm_response=response.content if hasattr(response, "content") else "",
-                )
-                if suggestions:
-                    result["suggestions"] = suggestions
-            except Exception:
-                logger.warning("suggestion generation failed", exc_info=True)
+            async def _gen_suggestions():
+                try:
+                    from sparta_ai.tools.suggestions import generate_suggestions
+                    suggestions = await generate_suggestions(
+                        llm,
+                        user_query=last_user_msg,
+                        llm_response=response.content if hasattr(response, "content") else "",
+                    )
+                    if suggestions:
+                        result["suggestions"] = suggestions
+                except Exception:
+                    logger.warning("suggestion generation failed", exc_info=True)
+            import asyncio
+            asyncio.ensure_future(_gen_suggestions())
 
         return result
 
