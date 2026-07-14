@@ -144,7 +144,7 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
       name: name.trim(),
       type,
       command: type === 'stdio' ? command.trim() : undefined,
-      args: type === 'stdio' ? parseArgs(args) : undefined,
+      args: type === 'stdio' ? parseShellArgs(args) : undefined,
       env: type === 'stdio' && envVars.trim()
         ? Object.fromEntries(
             envVars.split('\n').map(l => l.trim()).filter(Boolean).map(l => {
@@ -506,25 +506,27 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
   )
 }
 
-/* ─── Args parser ─────────────────────────────────────────────── */
-
 /**
- * Parse a space-separated argument string into an array, respecting
- * double-quoted segments (e.g. paths with spaces on Windows).
+ * Splits a single-line "Arguments" field like a shell would:
+ * `-y @modelcontextprotocol/server-filesystem ./` → 3 separate args.
+ * Supports quoted segments so paths with spaces (common on Windows) survive
+ * as one argument: `-y "C:\My Projects\app"` → ['-y', 'C:\My Projects\app'].
  *
- * This replaces the old `args.split('\n')` which broke everything when
- * arguments were typed as a single line with spaces — the root cause
- * of Doc 26's broken MCP command.
+ * Previously this field was split on '\n' (newline), which does nothing on
+ * a single-line input — the whole string was passed to the MCP server's
+ * command as one malformed argument (e.g. npx received
+ * "-y @modelcontextprotocol/server-filesystem ./" as a single arg instead
+ * of three), which is what broke stdio server connections silently.
  */
-function parseArgs(input: string): string[] {
-  if (!input.trim()) return []
-  const result: string[] = []
-  const re = /(?:([^\s"]+)|"([^"]*)")/g
-  let m: RegExpExecArray | null
-  while ((m = re.exec(input.trim())) !== null) {
-    result.push(m[1] ?? m[2] ?? '')
-  }
-  return result
+function parseShellArgs(input: string): string[] {
+  const matches = input.trim().match(/"[^"]*"|'[^']*'|\S+/g)
+  if (!matches) return []
+  return matches.map((tok) => {
+    if ((tok.startsWith('"') && tok.endsWith('"')) || (tok.startsWith("'") && tok.endsWith("'"))) {
+      return tok.slice(1, -1)
+    }
+    return tok
+  })
 }
 
 /* ─── Sub-components ─────────────────────────────────────────── */

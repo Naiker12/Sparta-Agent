@@ -17,7 +17,7 @@ from typing import Any
 
 from langchain_core.tools import tool
 
-from sparta_ai.tools.mcp_client import resolve_template_vars
+from sparta_ai.tools.mcp_client import resolve_arg_placeholders
 from sparta_ai.tools.permission_broker import request_permission_sync_generic
 from sparta_ai.config.security import store_key as vault_store_key_py
 
@@ -168,19 +168,24 @@ def mcp_manage_tool(
             if entry.get("type") == "stdio":
                 config["command"] = entry["command"]
                 args = list(entry.get("args", []))
-                # Check if any arguments contain unresolved templates.
-                # If extra_args is provided, inject it as the project dir
-                # and use the shared resolver. Otherwise, keep the template
-                # bare so the resolver inside RealMCPClient.connect() will
-                # fill it with the cwd at connection time.
-                has_templates = any(
-                    "${DIR}" in a or "${DATABASE_URL}" in a or "${DB_PATH}" in a
+                # Si el catalogo necesita un argumento explicito (ej: ruta de
+                # directorio) y el usuario no lo dio, avisar ANTES de resolver
+                # con el workspace por defecto — instalar "a ciegas" contra el
+                # workspace actual cuando el usuario claramente queria apuntar
+                # a otro lado es peor que preguntar.
+                needs_extra = any(
+                    ("${DIR}" in a or "${DATABASE_URL}" in a or "${DB_PATH}" in a)
                     for a in args
                 )
-                if has_templates and extra_args:
-                    config["args"] = resolve_template_vars(args, project_dir=extra_args[0])
-                else:
-                    config["args"] = resolve_template_vars(args)
+                if needs_extra and not extra_args:
+                    return (
+                        f"Error: El servidor '{server_id}' requiere un argumento "
+                        f"adicional (ej: ruta de directorio, URL de base de datos). "
+                        f"Proporcionalo via el parametro extra_args."
+                    )
+                config["args"] = resolve_arg_placeholders(
+                    args, override=extra_args[0] if extra_args else None
+                )
 
             elif entry.get("type") == "http":
                 config["url"] = entry["url"]

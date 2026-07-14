@@ -28,7 +28,6 @@ LangChain integration:
 from __future__ import annotations
 
 import asyncio
-import contextlib
 import json
 import logging
 import os
@@ -43,10 +42,8 @@ logger = logging.getLogger("sparta_ai.tools.mcp_client")
 # Ported from Hermes — prevents runaway external server responses.
 _MCP_MAX_RESULT_CHARS = 100_000
 
-# Default timeout for the initial connection handshake (stdio_client.__aenter__
-# + session.initialize() + list_tools()).  A normal chat message should not
-# depend on an external server responding in >10s for the handshake.
-_MCP_CONNECT_DEFAULT_TIMEOUT = 10
+# Placeholders that can appear in MCP server args (from catalog / dialog).
+_ARG_PLACEHOLDERS = ("${DIR}", "${DATABASE_URL}", "${DB_PATH}")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -75,23 +72,30 @@ def _resolve_vault_refs(server_id: str, refs: list[str]) -> dict[str, str]:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Template variable resolution (shared across all code paths)
+# Placeholder resolution (shared across all code paths)
 # ─────────────────────────────────────────────────────────────────────────────
 
-def resolve_template_vars(args: list[str], project_dir: str | None = None) -> list[str]:
-    """Resolve ``${DIR}``, ``${DATABASE_URL}``, ``${DB_PATH}`` in argument
-    lists.  This is called from *every* code path that connects to an MCP
-    server (dialog, catalog, agent), not just from ``mcp_manage_tool.py``.
+def resolve_arg_placeholders(args: list[str], override: str | None = None) -> list[str]:
+    """Replace ``${DIR}`` / ``${DATABASE_URL}`` / ``${DB_PATH}`` templates in
+    stdio server args with a real path.
 
-    If ``project_dir`` is None, uses the current working directory as fallback.
+    This used to live only inside ``mcp_manage_tool.py`` (the agent's
+    autonomous-install path), so servers added by hand from the UI dialog or
+    from the catalog kept the literal, unresolved placeholder — which is what
+    made ``npx ... "${DIR}"`` fail on Windows with an invalid path error.
+    Every connection path now goes through this single function.
+
+    Falls back to ``SPARTA_WORKSPACE_ROOT`` (the same env var the file tools
+    use) when no explicit ``override`` is provided, so a manually-added
+    server resolves to the current project root instead of staying literal.
     """
-    if project_dir is None:
-        project_dir = os.getcwd()
+    if not args:
+        return args
+    workspace = override or os.environ.get("SPARTA_WORKSPACE_ROOT") or os.getcwd()
     resolved: list[str] = []
     for a in args:
-        a = a.replace("${DIR}", project_dir)
-        a = a.replace("${DATABASE_URL}", project_dir)
-        a = a.replace("${DB_PATH}", project_dir)
+        if any(p in a for p in _ARG_PLACEHOLDERS):
+            a = a.replace("${DIR}", workspace).replace("${DATABASE_URL}", workspace).replace("${DB_PATH}", workspace)
         resolved.append(a)
     return resolved
 
@@ -137,28 +141,49 @@ class RealMCPClient:
         self.server_id: str = config.get("id", config.get("name", "unknown"))
         self.server_name: str = config.get("name", self.server_id)
         self._server_type: str = config.get("type", "stdio")
-        self._timeout: int = int(config.get("timeout", _MCP_CONNECT_DEFAULT_TIMEOUT))
+        self._timeout: int = int(config.get("timeout", 30))
+        # Timeout for the *initial* handshake (process spawn + initialize +
+        # list_tools). Deliberately shorter than `_timeout` (which also
+        # bounds individual tool calls once connected): a broken server
+        # should fail fast instead of hanging every chat turn for 30s+.
+        self._connect_timeout: int = int(config.get("connect_timeout", min(self._timeout, 10)))
         self._tool_filter: dict = config.get("tools", {})
         self._discovered_tools: list[dict] = []
         self._session: Any = None
-        self._cm: Any = None  # context manager handle
-        self._exit_stack: contextlib.AsyncExitStack | None = None
+        self._cm: Any = None  # context manager handle (kept for backwards-compat introspection)
+        self._exit_stack: Any = None
 
     async def connect(self) -> list[dict]:
         """Connect to the server and return the list of discovered tools.
 
-        The *entire* connection handshake (stdio_client.__aenter__ +
-        session.initialize() + list_tools()) is wrapped in a single
-        ``asyncio.wait_for(..., timeout=self._timeout)`` so that a broken
-        server never blocks a chat turn for more than ~10s.
+        Raises RuntimeError if the mcp SDK is not installed, TimeoutError if
+        the handshake doesn't complete within `connect_timeout`, or the
+        original exception for any other connection failure.
 
-        Uses ``contextlib.AsyncExitStack`` to ensure that all enter/exit
-        lifecycle calls happen in the same asyncio task, eliminating the
-        ``RuntimeError: Attempted to exit cancel scope in a different task``
-        that occurred when cleanup ran after a failed connection.
-
-        Raises RuntimeError if the mcp SDK is not installed or connection fails.
+        The whole handshake (process spawn → session init → list_tools) runs
+        under a single timeout — previously only `list_tools()` had one,
+        so a server that never finished spawning (e.g. malformed args) could
+        hang indefinitely and block every subsequent chat message.
         """
+        try:
+            return await asyncio.wait_for(self._do_connect(), timeout=self._connect_timeout)
+        except asyncio.TimeoutError:
+            logger.error(
+                "MCP server '%s' timed out after %ds during connect (process never finished handshake)",
+                self.server_id, self._connect_timeout,
+            )
+            await self._cleanup()
+            raise TimeoutError(
+                f"El servidor MCP '{self.server_id}' no respondió en {self._connect_timeout}s. "
+                f"Revisá el comando/args configurados."
+            )
+        except Exception as e:
+            logger.error("Failed to connect to MCP server '%s': %s", self.server_id, e)
+            await self._cleanup()
+            raise
+
+    async def _do_connect(self) -> list[dict]:
+        from contextlib import AsyncExitStack
         try:
             from mcp import ClientSession
             from mcp.client.stdio import stdio_client, StdioServerParameters
@@ -182,135 +207,79 @@ class RealMCPClient:
             resolved_headers = _resolve_vault_refs(self.server_id, headers_vault_refs)
             self.config["headers"] = {**self.config.get("headers", {}), **resolved_headers}
 
-        # ── Normalize args: handle broken format from old UI bug ─────
-        # The original AddMcpServerDialog had args.split('\n') which,
-        # on a single line, produced a list with ONE string containing
-        # spaces: ["-y @modelcontextprotocol/server-filesystem ./"].
-        # Also handle the case where args is a bare string.
-        raw_args = self.config.get("args", [])
-        if isinstance(raw_args, str):
-            raw_args = [raw_args]
-        # If any element has spaces AND contains typical MCP arg patterns,
-        # it's the old broken format — split each element by spaces.
-        normalized: list[str] = []
-        for a in raw_args:
-            if isinstance(a, str) and (' ' in a or '\t' in a):
-                # Check if this looks like the fused-args bug:
-                # e.g. "-y @modelcontextprotocol/..." or has "${DIR}" etc.
-                # Split by whitespace into individual arguments.
-                import re as _re
-                parts = [p for p in _re.split(r'\s+', a) if p]
-                if len(parts) > 1:
-                    logger.warning(
-                        "MCP server '%s' has fused args element: %r -> %r",
-                        self.server_id, a, parts,
-                    )
-                    normalized.extend(parts)
-                else:
-                    normalized.append(a)
-            else:
-                normalized.append(a)
-        self.config["args"] = normalized
-
-        # ── Resolve template variables (${DIR}, etc.) ────────────────
-        # This runs for *every* code path, not just mcp_manage_tool.py.
-        self.config["args"] = resolve_template_vars(self.config.get("args", []))
-
-        # ── End-to-end timeout: wrap the entire handshake ────────────
+        # AsyncExitStack keeps enter/exit of the stdio transport + session
+        # tied together and, via pop_all(), lets us hand the still-open
+        # resources off to `disconnect()` later without splitting a single
+        # anyio cancel scope across two unrelated try/except blocks (that
+        # split is what produced "cancel scope in a different task" before).
+        stack = AsyncExitStack()
         try:
-            result = await asyncio.wait_for(
-                self._connect_impl(
-                    ClientSession, stdio_client, StdioServerParameters, streamablehttp_client,
-                ),
-                timeout=self._timeout,
-            )
-            return result
-        except asyncio.TimeoutError:
-            logger.error(
-                "MCP server '%s' connection timed out after %ds",
-                self.server_id, self._timeout,
-            )
-            await self._cleanup()
-            raise RuntimeError(
-                f"MCP server '{self.server_id}' no respondió en {self._timeout}s. "
-                f"Verifica que el comando y argumentos sean correctos."
-            )
-        except Exception as e:
-            logger.error("Failed to connect to MCP server '%s': %s", self.server_id, e)
-            await self._cleanup()
-            raise
+            if self._server_type == "stdio":
+                command = self.config.get("command", "")
+                args = resolve_arg_placeholders(self.config.get("args", []))
+                env = _resolve_env(self.config.get("env"))
 
-    async def _connect_impl(
-        self,
-        ClientSession: type,
-        stdio_client: Any,
-        StdioServerParameters: type,
-        streamablehttp_client: Any,
-    ) -> list[dict]:
-        """Internal connection logic — wrapped by ``connect()`` with timeout."""
-        # Use AsyncExitStack so enter/exit stay in the same asyncio task.
-        self._exit_stack = contextlib.AsyncExitStack()
+                if not command:
+                    raise ValueError(f"MCP server '{self.server_id}' requires 'command' for stdio type.")
 
-        if self._server_type == "stdio":
-            command = self.config.get("command", "")
-            args = self.config.get("args", [])
-            env = _resolve_env(self.config.get("env"))
+                unresolved = [a for a in args if re.search(r"\$\{[A-Z_]+\}", a)]
+                if unresolved:
+                    raise ValueError(
+                        f"MCP server '{self.server_id}' tiene variables de template sin resolver: "
+                        f"{unresolved}. Configura el servidor con argumentos reales desde "
+                        f"la UI de MCP."
+                    )
 
-            if not command:
-                raise ValueError(f"MCP server '{self.server_id}' requires 'command' for stdio type.")
-
-            unresolved = [a for a in args if re.search(r"\$\{[A-Z_]+\}", a)]
-            if unresolved:
-                raise ValueError(
-                    f"MCP server '{self.server_id}' tiene variables de template sin resolver: "
-                    f"{unresolved}. Configura el servidor con argumentos reales desde "
-                    f"la UI de MCP."
+                params = StdioServerParameters(
+                    command=command,
+                    args=args,
+                    env=env,
                 )
+                self._cm = stdio_client(params)
+                read_stream, write_stream, *_ = await stack.enter_async_context(self._cm)
 
-            params = StdioServerParameters(
-                command=command,
-                args=args,
-                env=env,
-                encoding_error_handler="replace",
+            elif self._server_type in ("http", "streamable_http"):
+                url = self.config.get("url", "")
+                headers = self.config.get("headers", {})
+                if not url:
+                    raise ValueError(f"MCP server '{self.server_id}' requires 'url' for http type.")
+                self._cm = streamablehttp_client(url, headers=headers)
+                read_stream, write_stream, *_ = await stack.enter_async_context(self._cm)
+            else:
+                raise ValueError(f"Unsupported MCP server type: {self._server_type}")
+
+            self._session = ClientSession(read_stream, write_stream)
+            await stack.enter_async_context(self._session)
+            await self._session.initialize()
+
+            tools_result = await self._session.list_tools()
+            raw_tools = [
+                {
+                    "name": t.name,
+                    "description": t.description or "",
+                    "inputSchema": t.inputSchema or {},
+                }
+                for t in (tools_result.tools or [])
+            ]
+
+            include = self._tool_filter.get("include", [])
+            exclude = self._tool_filter.get("exclude", [])
+            self._discovered_tools = _apply_tool_filter(raw_tools, include, exclude)
+
+            logger.info(
+                "MCP server '%s' connected: %d tools discovered (%d after filter)",
+                self.server_id, len(raw_tools), len(self._discovered_tools),
             )
-            self._cm = stdio_client(params)
-
-        elif self._server_type in ("http", "streamable_http"):
-            url = self.config.get("url", "")
-            headers = self.config.get("headers", {})
-            if not url:
-                raise ValueError(f"MCP server '{self.server_id}' requires 'url' for http type.")
-            self._cm = streamablehttp_client(url, headers=headers)
-        else:
-            raise ValueError(f"Unsupported MCP server type: {self._server_type}")
-
-        # Enter the transport context manager via AsyncExitStack.
-        transport = await self._exit_stack.enter_async_context(self._cm)
-        read_stream, write_stream, *_ = transport
-
-        self._session = ClientSession(read_stream, write_stream)
-        await self._exit_stack.enter_async_context(self._session)
-        await self._session.initialize()
-
-        tools_result = await self._session.list_tools()
-        raw_tools = [
-            {
-                "name": t.name,
-                "description": t.description or "",
-                "inputSchema": t.inputSchema or {},
-            }
-            for t in (tools_result.tools or [])
-        ]
-
-        include = self._tool_filter.get("include", [])
-        exclude = self._tool_filter.get("exclude", [])
-        self._discovered_tools = _apply_tool_filter(raw_tools, include, exclude)
-
-        logger.info(
-            "MCP server '%s' connected: %d tools discovered (%d after filter)",
-            self.server_id, len(raw_tools), len(self._discovered_tools),
-        )
-        return self._discovered_tools
+            # Detach: keep the transport/session alive for call_tool()/disconnect(),
+            # but from here on `stack` itself no longer owns the cleanup.
+            self._exit_stack = stack.pop_all()
+            return self._discovered_tools
+        except Exception:
+            # Close whatever was opened so far, in the same task that opened it.
+            await stack.aclose()
+            self._session = None
+            self._cm = None
+            raise
 
     async def call_tool(self, tool_name: str, arguments: dict) -> str:
         """Execute a tool on the connected server and return the sanitized result.
@@ -371,34 +340,24 @@ class RealMCPClient:
         await self._cleanup()
 
     async def _cleanup(self) -> None:
-        """Clean up the connection using AsyncExitStack.
+        """Close the transport/session opened by a successful `connect()`.
 
-        This guarantees that all __aexit__ calls happen in the same asyncio
-        task that opened them, preventing the ``RuntimeError: Attempted to
-        exit cancel scope in a different task than it was entered in``.
+        Uses the detached `AsyncExitStack` (`pop_all()` in `_do_connect`)
+        instead of calling `__aexit__` on `_session`/`_cm` directly — those
+        were entered as *separate* manual context managers, which is what
+        let their exit run outside the task/cancel-scope that opened them
+        when the caller (e.g. a session teardown, or a different request)
+        triggered cleanup. `AsyncExitStack.aclose()` unwinds everything it
+        owns in one call.
         """
         if self._exit_stack is not None:
             try:
                 await self._exit_stack.aclose()
             except Exception as e:
-                logger.debug("MCP exit_stack cleanup error for '%s': %s", self.server_id, e)
+                logger.debug("MCP cleanup error for '%s': %s", self.server_id, e)
             self._exit_stack = None
-            self._session = None
-            self._cm = None
-        else:
-            # Fallback for legacy code paths that didn't use AsyncExitStack.
-            if self._session is not None:
-                try:
-                    await self._session.__aexit__(None, None, None)
-                except Exception as e:
-                    logger.debug("MCP session cleanup error for '%s': %s", self.server_id, e)
-                self._session = None
-            if self._cm is not None:
-                try:
-                    await self._cm.__aexit__(None, None, None)
-                except Exception as e:
-                    logger.debug("MCP transport cleanup error for '%s': %s", self.server_id, e)
-                self._cm = None
+        self._session = None
+        self._cm = None
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -502,11 +461,7 @@ async def build_mcp_tools(
             logger.error("Skipping MCP server '%s': %s", server_id, e)
             if emit_fn:
                 try:
-                    result = emit_fn("mcp:error", {"serverId": server_id, "error": str(e)})
-                    if result is not None:
-                        import asyncio
-                        if asyncio.iscoroutine(result):
-                            await result
+                    emit_fn("mcp:error", {"serverId": server_id, "error": str(e)})
                 except Exception as emit_err:
                     logger.debug("Failed to emit mcp:error for '%s': %s", server_id, emit_err)
             continue
@@ -514,16 +469,12 @@ async def build_mcp_tools(
         # ── Report successful connection to the frontend ──────────────
         if emit_fn:
             try:
-                result = emit_fn("mcp:connected", {
+                emit_fn("mcp:connected", {
                     "serverId": server_id,
                     "toolCount": len(tool_defs),
                 })
-                if result is not None:
-                    import asyncio
-                    if asyncio.iscoroutine(result):
-                        await result
                 if tool_defs:
-                    result2 = emit_fn("mcp:tool_discovered", {
+                    emit_fn("mcp:tool_discovered", {
                         "serverId": server_id,
                         "tools": [
                             {
@@ -534,10 +485,6 @@ async def build_mcp_tools(
                             for t in tool_defs
                         ],
                     })
-                    if result2 is not None:
-                        import asyncio
-                        if asyncio.iscoroutine(result2):
-                            await result2
             except Exception as emit_err:
                 logger.debug("Failed to emit mcp:connected/tool_discovered for '%s': %s", server_id, emit_err)
 

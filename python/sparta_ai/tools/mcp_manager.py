@@ -9,11 +9,6 @@ This module maintains a pool of live clients keyed by (session_id, server_id).
 Connections are reused when the server config hasn't changed between turns,
 and explicitly cleaned up when a session ends or the sidecar shuts down.
 
-Includes a **circuit breaker** per server: when ``connect()`` fails, the
-failure is cached with a timestamp so that subsequent turns do NOT retry
-the broken server until a cooldown expires (default 60s) or the config
-changes.
-
 Usage::
 
     from sparta_ai.tools.mcp_manager import mcp_manager
@@ -39,9 +34,11 @@ from sparta_ai.tools.mcp_client import RealMCPClient, _make_langchain_tool
 
 logger = logging.getLogger("sparta_ai.tools.mcp_manager")
 
-# How long (seconds) to wait before retrying a server whose connection
-# previously failed.  Prevents the per-turn retry storm documented in Doc 26.
-_MCP_CIRCUIT_BREAKER_COOLDOWN = 60
+# How long a server that failed to connect stays "broken" (skipped on every
+# turn) before Sparta tries it again on its own. Editing the server's config
+# always forces an immediate retry regardless of this cooldown, since that
+# changes the config hash the breaker is keyed on.
+_BROKEN_COOLDOWN_SECONDS = 60
 
 
 def _config_hash(config: dict) -> str:
@@ -70,14 +67,26 @@ def _config_hash(config: dict) -> str:
 class _ServerSlot:
     """Internal bookkeeping for one MCP server within a session."""
 
-    __slots__ = ("client", "config_hash", "tool_defs", "langchain_tools", "broken_since")
+    __slots__ = ("client", "config_hash", "tool_defs", "langchain_tools")
 
     def __init__(self, client: RealMCPClient, config_hash: str, tool_defs: list[dict], langchain_tools: list):
         self.client = client
         self.config_hash = config_hash
         self.tool_defs = tool_defs
         self.langchain_tools = langchain_tools
-        self.broken_since: float | None = None  # timestamp when connect() last failed
+
+
+class _BrokenState:
+    """Marks a server as failed so `get_tools()` skips it for a cooldown
+    window instead of re-attempting (and re-hanging on) a broken connection
+    on every single chat turn."""
+
+    __slots__ = ("config_hash", "failed_at", "error")
+
+    def __init__(self, config_hash: str, error: str):
+        self.config_hash = config_hash
+        self.failed_at = time.monotonic()
+        self.error = error
 
 
 class MCPConnectionManager:
@@ -91,6 +100,8 @@ class MCPConnectionManager:
     def __init__(self) -> None:
         # session_id -> {server_id -> _ServerSlot}
         self._sessions: dict[str, dict[str, _ServerSlot]] = {}
+        # session_id -> {server_id -> _BrokenState}
+        self._broken: dict[str, dict[str, _BrokenState]] = {}
 
     async def get_tools(
         self,
@@ -104,19 +115,12 @@ class MCPConnectionManager:
         reconnects servers whose config actually changed.  Disabled
         servers are silently skipped (and disconnected if previously
         connected).
-
-        **Circuit breaker**: if a server's ``connect()`` failed previously
-        and less than ``_MCP_CIRCUIT_BREAKER_COOLDOWN`` seconds have passed,
-        we skip the retry entirely and emit an ``mcp:error`` event with a
-        clear message.  The breaker resets when:
-        (a) the cooldown expires,
-        (b) the server config changes (new ``config_hash``), or
-        (c) the user re-enables the server via the UI.
         """
         if not servers_config:
             return []
 
         session_slots = self._sessions.setdefault(session_id, {})
+        broken_slots = self._broken.setdefault(session_id, {})
         langchain_tools: list = []
 
         # Track which server IDs are in this turn's config so we can
@@ -132,48 +136,32 @@ class MCPConnectionManager:
                 if server_id in session_slots:
                     await self._disconnect_slot(session_slots.pop(server_id), server_id)
                     if emit_fn:
-                        await self._safe_emit(emit_fn, "mcp:disconnected", {"serverId": server_id})
+                        self._safe_emit(emit_fn, "mcp:disconnected", {"serverId": server_id})
+                broken_slots.pop(server_id, None)
                 continue
 
             new_hash = _config_hash(cfg)
             existing = session_slots.get(server_id)
 
             if existing and existing.config_hash == new_hash:
-                # ── Circuit breaker check ──────────────────────────────
-                if existing.broken_since is not None:
-                    elapsed = time.monotonic() - existing.broken_since
-                    if elapsed < _MCP_CIRCUIT_BREAKER_COOLDOWN:
-                        # Still in cooldown — skip retry.
-                        remaining = int(_MCP_CIRCUIT_BREAKER_COOLDOWN - elapsed)
-                        logger.warning(
-                            "MCP: skipping '%s' — circuit breaker active (%ds remaining)",
-                            server_id, remaining,
-                        )
-                        if emit_fn:
-                            await self._safe_emit(emit_fn, "mcp:error", {
-                                "serverId": server_id,
-                                "error": (
-                                    f"Servidor aún no disponible "
-                                    f"(reintentando en {remaining}s). "
-                                    f"Edita la configuración para reintentar ahora."
-                                ),
-                            })
-                        continue
-                    else:
-                        # Cooldown expired — reset breaker and retry.
-                        logger.info("MCP: circuit breaker reset for '%s'", server_id)
-                        existing.broken_since = None
-                        # Fall through to reconnect below — need to drop the
-                        # stale slot and reconnect, since the old client is
-                        # still broken.
-                        await self._disconnect_slot(existing, server_id)
-                        existing = None  # force reconnect
+                # Config unchanged — reuse live connection.
+                logger.debug("MCP: reusing connection for '%s' (session %s)", server_id, session_id)
+                langchain_tools.extend(existing.langchain_tools)
+                continue
 
-                else:
-                    # Config unchanged — reuse live connection.
-                    logger.debug("MCP: reusing connection for '%s' (session %s)", server_id, session_id)
-                    langchain_tools.extend(existing.langchain_tools)
+            # ── Circuit breaker: skip servers that just failed with this
+            # exact config instead of re-attempting (and possibly re-hanging
+            # on) a broken connection on every single chat turn. ──
+            broken = broken_slots.get(server_id)
+            if broken and broken.config_hash == new_hash:
+                elapsed = time.monotonic() - broken.failed_at
+                if elapsed < _BROKEN_COOLDOWN_SECONDS:
+                    logger.debug(
+                        "MCP: skipping '%s' — failed %.0fs ago, cooldown %ds remaining",
+                        server_id, elapsed, _BROKEN_COOLDOWN_SECONDS - elapsed,
+                    )
                     continue
+                logger.info("MCP: retrying '%s' after cooldown", server_id)
 
             # Config changed or first connection — disconnect old, connect new.
             if existing:
@@ -184,16 +172,13 @@ class MCPConnectionManager:
                 tool_defs = await client.connect()
             except Exception as e:
                 logger.error("MCP: failed to connect '%s': %s", server_id, e)
-
-                # ── Record the failure timestamp (circuit breaker) ────
-                # Create a broken slot so we remember the failure for next turn.
-                broken_slot = _ServerSlot(client, new_hash, [], [])
-                broken_slot.broken_since = time.monotonic()
-                session_slots[server_id] = broken_slot
-
+                broken_slots[server_id] = _BrokenState(new_hash, str(e))
                 if emit_fn:
-                    await self._safe_emit(emit_fn, "mcp:error", {"serverId": server_id, "error": str(e)})
+                    self._safe_emit(emit_fn, "mcp:error", {"serverId": server_id, "error": str(e)})
                 continue
+
+            # Connected successfully — clear any previous broken marker.
+            broken_slots.pop(server_id, None)
 
             # Build LangChain tools for this server.
             lc_tools = []
@@ -208,12 +193,12 @@ class MCPConnectionManager:
 
             # Emit connection events to the frontend.
             if emit_fn:
-                await self._safe_emit(emit_fn, "mcp:connected", {
+                self._safe_emit(emit_fn, "mcp:connected", {
                     "serverId": server_id,
                     "toolCount": len(tool_defs),
                 })
                 if tool_defs:
-                    await self._safe_emit(emit_fn, "mcp:tool_discovered", {
+                    self._safe_emit(emit_fn, "mcp:tool_discovered", {
                         "serverId": server_id,
                         "tools": [
                             {
@@ -230,7 +215,9 @@ class MCPConnectionManager:
         for server_id in orphaned:
             await self._disconnect_slot(session_slots.pop(server_id), server_id)
             if emit_fn:
-                await self._safe_emit(emit_fn, "mcp:disconnected", {"serverId": server_id})
+                self._safe_emit(emit_fn, "mcp:disconnected", {"serverId": server_id})
+        for server_id in set(broken_slots.keys()) - active_ids:
+            broken_slots.pop(server_id, None)
 
         if langchain_tools:
             logger.info(
@@ -243,6 +230,7 @@ class MCPConnectionManager:
     async def disconnect_session(self, session_id: str) -> None:
         """Disconnect all MCP clients for a session."""
         session_slots = self._sessions.pop(session_id, {})
+        self._broken.pop(session_id, None)
         for server_id, slot in session_slots.items():
             await self._disconnect_slot(slot, server_id)
         if session_slots:
@@ -256,6 +244,7 @@ class MCPConnectionManager:
             for server_id, slot in session_slots.items():
                 await self._disconnect_slot(slot, server_id)
         self._sessions.clear()
+        self._broken.clear()
         if server_count:
             logger.info("MCP: disconnected %d servers across %d sessions (shutdown)", server_count, session_count)
 
@@ -269,15 +258,9 @@ class MCPConnectionManager:
             logger.debug("MCP: error disconnecting '%s': %s", server_id, e)
 
     @staticmethod
-    async def _safe_emit(emit_fn: Callable, event: str, data: dict) -> None:
-        """Emit an event, supporting both sync and async callbacks."""
+    def _safe_emit(emit_fn: Callable, event: str, data: dict) -> None:
         try:
-            result = emit_fn(event, data)
-            if result is not None:
-                # If it's a coroutine (async callback), await it.
-                import asyncio
-                if asyncio.iscoroutine(result):
-                    await result
+            emit_fn(event, data)
         except Exception as e:
             logger.debug("MCP: failed to emit '%s': %s", event, e)
 
