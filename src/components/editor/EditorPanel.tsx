@@ -2,8 +2,6 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react'
 import type { editor as MonacoEditorNS } from 'monaco-editor'
-import * as monaco from 'monaco-editor'
-import { PanelLeft, X, FolderX, ChevronRight } from 'lucide-react'
 import { toastReplace } from '@/lib/toast-helpers'
 import { useUIStore } from '@/stores/ui.store'
 import { useProjectStore } from '@/stores/project.store'
@@ -18,6 +16,14 @@ import { DiffReviewTab } from './DiffReviewTab'
 import { InlineAskWidget } from './InlineAskWidget'
 import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog'
 import { AgentActivityPanel } from '@/components/agents/AgentActivityPanel'
+import { EditorToolbar } from './EditorToolbar'
+import { Breadcrumb } from './EditorBreadcrumb'
+import { StatusBar } from './EditorStatusBar'
+import { EmptyEditorState } from './EditorEmptyState'
+import { UnsavedChangesDialog } from './EditorDialogs'
+import { EditorSkeleton } from './EditorSkeleton'
+import { useAgentEditingTracker } from './hooks/useAgentEditingTracker'
+import { useInlineDiffDecorations } from './hooks/useInlineDiffDecorations'
 import type { FileTreeNode } from '@/types'
 
 interface OpenFile {
@@ -38,22 +44,18 @@ export function EditorPanel() {
   const [openFiles, setOpenFiles] = useState<OpenFile[]>([])
   const [activePath, setActivePath] = useState<string | undefined>()
   const [pinnedPaths, setPinnedPaths] = useState<Set<string>>(new Set())
-  // Agent editing state: toolCallId → filePath for currently-in-progress edits
-  const [agentEditing, setAgentEditing] = useState<Map<string, string>>(new Map())
-  const [agentEditingPaths, setAgentEditingPaths] = useState<Set<string>>(new Set())
   const [deleteTarget, setDeleteTarget] = useState<FileTreeNode | null>(null)
   const [closingUnsavedPath, setClosingUnsavedPath] = useState<string | null>(null)
   const [loadingPath, setLoadingPath] = useState<string | null>(null)
   const [cursorPos, setCursorPos] = useState({ line: 1, col: 1 })
   const editorRef = useRef<MonacoEditorNS.IStandaloneCodeEditor | null>(null)
   const treeKey = useRef(0)
-  // Inline ask widget state
   const [inlineAsk, setInlineAsk] = useState<{
     selection: { startLineNumber: number; startColumn: number; endLineNumber: number; endColumn: number }
     selectedText: string
   } | null>(null)
-  // Track files we just saved ourselves, to distinguish our own writes from external/agent writes
   const recentlySavedRef = useRef<Set<string>>(new Set())
+
   const handleEditorMount = useCallback((ed: MonacoEditorNS.IStandaloneCodeEditor) => {
     editorRef.current = ed
     ed.onDidChangeCursorPosition((e) => {
@@ -73,12 +75,9 @@ export function EditorPanel() {
   }, [])
 
   const activeFile = openFiles.find((f) => f.path === activePath)
-
-  // Derive diff tab presence from store
   const { activeProposal } = useDiffReviewStore()
   const hasActiveDiff = activeProposal !== null
 
-  // Active tab path — either a normal file or diff: prefix
   let activeTab: { kind: 'file'; path: string } | { kind: 'diff' }
   if (activePath && activePath.startsWith('diff:')) {
     activeTab = { kind: 'diff' }
@@ -92,8 +91,6 @@ export function EditorPanel() {
     activeTab = { kind: 'file', path: '' }
   }
 
-  // Sync open files to global store (single source of truth for the agent)
-  // Using a ref to avoid the extra render cycle from useEffect
   const openFilesRef = useRef(openFiles)
   openFilesRef.current = openFiles
   useEffect(() => {
@@ -177,7 +174,6 @@ export function EditorPanel() {
 
   const saveActiveFile = useCallback(async () => {
     if (!activeFile || !window.fs) return
-    // Mark this path as recently saved so file:changed ignores it
     recentlySavedRef.current.add(activeFile.path)
     setTimeout(() => { recentlySavedRef.current.delete(activeFile.path) }, 500)
 
@@ -259,152 +255,33 @@ export function EditorPanel() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [handleKeyDown])
 
-  // Listen for editor:open_file events (from DiffReviewTab after approving a change)
+  // Hooks for agent editing tracking and inline diff decorations
+  const { agentEditingPaths } = useAgentEditingTracker(openFile)
+  const { applyInlineDiffDecorations } = useInlineDiffDecorations(editorRef)
+
+  // Event listeners
   useEventBusListener('editor:open_file', (data: { filePath?: string } | unknown) => {
     const filePath = (data as { filePath?: string })?.filePath
     if (filePath) openFile(filePath)
   })
 
-  // Listen for editor:diff_proposed — apply inline decorations then open diff tab
   useEventBusListener('editor:diff_proposed', (data: Record<string, unknown> | unknown) => {
     const evt = data as Record<string, unknown>
     const filePath = (evt.filePath ?? evt.path ?? '') as string
     const originalContent = evt.originalContent as string | undefined
     const newContent = evt.newContent as string | undefined
-    // Apply inline decorations to the editor BEFORE switching tabs
     if (filePath && originalContent && newContent && activeFile?.path === filePath) {
       applyInlineDiffDecorations(filePath, originalContent, newContent)
     }
-    // Switch to diff tab to show the full side-by-side view
     setActivePath('diff:active')
   })
 
-  // --- Inline diff decorations (highlight changed lines in the editor) ---
-  const inlineDiffDecorationsRef = useRef<string[]>([])
-
-  const computeLineDiff = useCallback((original: string, modified: string) => {
-    const origLines = original.split('\n')
-    const modLines = modified.split('\n')
-    const changedOrigLines = new Set<number>()
-    const maxLen = Math.max(origLines.length, modLines.length)
-    for (let i = 0; i < maxLen; i++) {
-      if (origLines[i] !== modLines[i]) changedOrigLines.add(i + 1)
-    }
-    return changedOrigLines
-  }, [])
-
-  const applyInlineDiffDecorations = useCallback((filePath: string, original: string, modified: string) => {
-    const ed = editorRef.current
-    if (!ed) return
-    const model = ed.getModel()
-    if (!model || model.uri.fsPath.replace(/\\/g, '/') !== filePath.replace(/\\/g, '/')) return
-
-    // Clear previous decorations
-    inlineDiffDecorationsRef.current = ed.deltaDecorations(inlineDiffDecorationsRef.current, [])
-
-    const changedLines = computeLineDiff(original, modified)
-    if (changedLines.size === 0) return
-
-    // Find contiguous ranges of changed lines
-    const sorted = Array.from(changedLines).sort((a, b) => a - b)
-    const ranges: { start: number; end: number }[] = []
-    let rangeStart = sorted[0]
-    let rangeEnd = sorted[0]
-    for (let i = 1; i < sorted.length; i++) {
-      if (sorted[i] === rangeEnd + 1) {
-        rangeEnd = sorted[i]
-      } else {
-        ranges.push({ start: rangeStart, end: rangeEnd })
-        rangeStart = sorted[i]
-        rangeEnd = sorted[i]
-      }
-    }
-    ranges.push({ start: rangeStart, end: rangeEnd })
-
-    const newDecorations: MonacoEditorNS.IModelDeltaDecoration[] = ranges.map(({ start, end }) => ({
-      range: new monaco.Range(start, 1, end, model.getLineMaxColumn(end)),
-      options: {
-        isWholeLine: true,
-        className: 'inline-diff-highlight',
-        overviewRuler: {
-          color: 'rgba(234, 179, 8, 0.6)',
-          position: monaco.editor.OverviewRulerLane.Right,
-        },
-        glyphMarginClassName: 'inline-diff-glyph',
-      },
-    }))
-
-    inlineDiffDecorationsRef.current = ed.deltaDecorations([], newDecorations)
-  }, [computeLineDiff])
-
-  const clearInlineDiffDecorations = useCallback(() => {
-    const ed = editorRef.current
-    if (ed && inlineDiffDecorationsRef.current.length > 0) {
-      inlineDiffDecorationsRef.current = ed.deltaDecorations(inlineDiffDecorationsRef.current, [])
-    }
-  }, [])
-
-  // Clear inline decorations when diff is resolved
-  useEventBusListener('editor:diff_resolved', () => {
-    clearInlineDiffDecorations()
-  })
-
-  // Listen for tool:called / tool:result to track agent editing state
-  useEventBusListener('tool:called', (data: Record<string, unknown> | unknown) => {
-    const evt = data as Record<string, unknown>
-    const name = (evt.name ?? evt.toolName ?? '') as string
-    const id = (evt.toolCallId ?? evt.tool_call_id ?? evt.id ?? '') as string
-    if (!name || !id) return
-    // Extract file path from tool input
-    const input = evt.input as Record<string, unknown> | undefined
-    const filePath = (input?.path ?? input?.file_path ?? '') as string | undefined
-    if (!filePath) return
-
-    setAgentEditing((prev) => {
-      const next = new Map(prev)
-      next.set(id, filePath)
-      return next
-    })
-    setAgentEditingPaths((prev) => {
-      const next = new Set(prev)
-      next.add(filePath)
-      return next
-    })
-
-    // Auto-open the file being edited (read-only preview)
-    openFile(filePath)
-  })
-
-  useEventBusListener('tool:result', (data: Record<string, unknown> | unknown) => {
-    const evt = data as Record<string, unknown>
-    const id = (evt.toolCallId ?? evt.tool_call_id ?? evt.id ?? '') as string
-    if (!id) return
-
-    const filePath = agentEditing.get(id)
-    setAgentEditing((prev) => {
-      const next = new Map(prev)
-      next.delete(id)
-      return next
-    })
-    if (filePath) {
-      setAgentEditingPaths((prev) => {
-        const next = new Set(prev)
-        // Only remove if no other active edits for this path
-        const stillEditing = Array.from(agentEditing.values()).filter((p) => p === filePath && p !== id)
-        if (stillEditing.length === 0) next.delete(filePath)
-        return next
-      })
-    }
-  })
-
-  // BUG-ED1 fix: Detect external file changes for open files
   useEventBusListener('file:changed', (data: { path?: string } | unknown) => {
     const changedPath = (data as { path?: string })?.path
     if (!changedPath || !window.fs) return
     const existingOpen = openFiles.find((f) => f.path === changedPath)
 
     if (!existingOpen) {
-      // Auto-open files touched by the agent in Build/Agent mode (not read-only chat)
       const autonomy = useSettingsStore.getState().agentAutonomy
       if (autonomy !== 'autonomous_readonly') {
         openFile(changedPath)
@@ -412,26 +289,22 @@ export function EditorPanel() {
       return
     }
 
-    // Skip if WE just saved this file (not an external/agent change)
     if (recentlySavedRef.current.has(changedPath)) return
 
     window.fs.readFile(changedPath).then((result) => {
       if (!result.success || result.content === undefined) return
-      if (result.content === existingOpen.content) return // already up to date
+      if (result.content === existingOpen.content) return
 
       const hasLocalEdits = existingOpen.content !== existingOpen.originalContent
 
       if (!hasLocalEdits) {
-        // No local edits — reload silently (agent edited the file)
         updateFileContent(changedPath, result.content as string)
-        // Also update originalContent so the tab doesn't show "modified"
         setOpenFiles((prev) =>
           prev.map((f) => f.path === changedPath
             ? { ...f, content: result.content as string, originalContent: result.content as string }
             : f)
         )
       } else {
-        // User has local edits — show conflict toast
         toastReplace('info', 'file-external-change', 'Archivo modificado externamente', {
           description: `${existingOpen.name} tiene cambios locales y externos.`,
           action: {
@@ -452,11 +325,9 @@ export function EditorPanel() {
   })
 
   const tabs = [
-    // Show diff tab if there's an active proposal
     ...(hasActiveDiff
       ? [{ path: 'diff:active', name: 'Cambio propuesto', modified: false } as const]
       : []),
-    // Regular open files
     ...openFiles.map((f) => ({
       path: f.path,
       name: f.name,
@@ -514,7 +385,6 @@ export function EditorPanel() {
           onSelect={setActivePath}
           onClose={(path) => {
             if (path === 'diff:active') {
-              // Switching away from diff: resolve without action
               useDiffReviewStore.getState().next()
               setActivePath(undefined)
             } else {
@@ -588,7 +458,7 @@ export function EditorPanel() {
                     }
                   }
                 } catch (err) {
-                  // Dialog cancelled or error — silently ignore
+                  // Dialog cancelled or error
                 }
               }}
               onCloseProject={handleCloseProject}
@@ -616,388 +486,6 @@ export function EditorPanel() {
           onCancel={() => setClosingUnsavedPath(null)}
         />
       )}
-    </div>
-  )
-}
-
-function EditorToolbar({
-  explorerVisible,
-  onToggleExplorer,
-  projectName,
-  onCloseProject,
-  onCloseEditor,
-}: {
-  explorerVisible: boolean
-  onToggleExplorer: () => void
-  projectName?: string
-  onCloseProject: () => void
-  onCloseEditor: () => void
-}) {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 4,
-        padding: '4px 8px',
-        borderBottom: '1px solid var(--border-normal)',
-        background: 'var(--bg-surface)',
-        flexShrink: 0,
-      }}
-    >
-      <button
-        onClick={onToggleExplorer}
-        title="Mostrar/ocultar explorador (Ctrl+B)"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: 26,
-          height: 26,
-          border: 'none',
-          background: explorerVisible ? 'var(--bg-active)' : 'transparent',
-          borderRadius: 'var(--radius-sm)',
-          color: 'var(--text-secondary)',
-          cursor: 'pointer',
-        }}
-      >
-        <PanelLeft size={14} />
-      </button>
-
-      <div style={{ flex: 1 }} />
-
-      {projectName && (
-        <>
-          <button
-            onClick={onCloseProject}
-            title="Cerrar proyecto"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4,
-              padding: '4px 8px',
-              border: 'none',
-              background: 'transparent',
-              borderRadius: 'var(--radius-sm)',
-              color: 'var(--text-muted)',
-              fontSize: 11,
-              cursor: 'pointer',
-            }}
-          >
-            <FolderX size={12} />
-            <span>Cerrar proyecto</span>
-          </button>
-          <div style={{ width: 1, height: 16, background: 'var(--border-subtle)', margin: '0 4px' }} />
-        </>
-      )}
-
-      <button
-        onClick={onCloseEditor}
-        title="Cerrar editor"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: 26,
-          height: 26,
-          border: 'none',
-          background: 'transparent',
-          borderRadius: 'var(--radius-sm)',
-          color: 'var(--text-muted)',
-          cursor: 'pointer',
-        }}
-      >
-        <X size={14} />
-      </button>
-    </div>
-  )
-}
-
-function Breadcrumb({ path, agentEditingPaths }: { path: string; agentEditingPaths?: Set<string> }) {
-  const parts = path.replace(/\\/g, '/').split('/')
-  const isAgentEditing = agentEditingPaths?.has(path) ?? false
-  return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: 2,
-      padding: '3px 12px',
-      borderBottom: '1px solid var(--border-subtle)',
-      background: 'var(--bg-surface)',
-      fontSize: 11,
-      fontFamily: 'var(--font-mono)',
-      color: 'var(--text-muted)',
-      flexShrink: 0,
-      overflow: 'hidden',
-    }}>
-      {parts.map((part, i) => (
-        <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 2, whiteSpace: 'nowrap' }}>
-          {i > 0 && <ChevronRight size={10} style={{ color: 'var(--text-muted)', opacity: 0.5 }} />}
-          <span style={{ color: i === parts.length - 1 ? 'var(--text-primary)' : undefined }}>
-            {part}
-          </span>
-        </span>
-      ))}
-      {isAgentEditing && (
-        <span style={{
-          marginLeft: 8,
-          padding: '1px 6px',
-          borderRadius: 4,
-          background: 'rgba(234, 179, 8, 0.12)',
-          border: '1px solid rgba(234, 179, 8, 0.3)',
-          color: 'var(--status-warn)',
-          fontSize: 10,
-          fontFamily: 'var(--font-ui)',
-          fontWeight: 500,
-          whiteSpace: 'nowrap',
-          flexShrink: 0,
-        }}>
-          Agente editando…
-        </span>
-      )}
-    </div>
-  )
-}
-
-const LANG_MAP: Record<string, string> = {
-  ts: 'TypeScript', tsx: 'TypeScript React', js: 'JavaScript', jsx: 'JavaScript React',
-  py: 'Python', rb: 'Ruby', go: 'Go', rs: 'Rust', java: 'Java',
-  html: 'HTML', htm: 'HTML', css: 'CSS', scss: 'SCSS', json: 'JSON',
-  yaml: 'YAML', yml: 'YAML', md: 'Markdown', sh: 'Shell', bash: 'Shell',
-  xml: 'XML', toml: 'TOML', vue: 'Vue', svelte: 'Svelte',
-}
-
-function StatusBar({ path, line, col }: { path: string; line: number; col: number }) {
-  const ext = path.split('.').pop()?.toLowerCase() ?? ''
-  const lang = LANG_MAP[ext] ?? (ext.toUpperCase() || 'Plain text')
-  return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'flex-end',
-      gap: 12,
-      padding: '2px 12px',
-      borderTop: '1px solid var(--border-subtle)',
-      background: 'var(--bg-surface)',
-      fontSize: 10.5,
-      fontFamily: 'var(--font-mono)',
-      color: 'var(--text-muted)',
-      flexShrink: 0,
-      userSelect: 'none',
-    }}>
-      <span>Ln {line}, Col {col}</span>
-      <span>UTF-8</span>
-      <span>{lang}</span>
-    </div>
-  )
-}
-
-function EmptyEditorState({
-  projectName,
-  hasRootPath,
-  explorerVisible,
-  onShowExplorer,
-  onOpenFolder,
-  onCloseProject,
-  onClose,
-}: {
-  projectName?: string
-  hasRootPath: boolean
-  explorerVisible: boolean
-  onShowExplorer: () => void
-  onOpenFolder: () => void
-  onCloseProject: () => void
-  onClose: () => void
-}) {
-  const noProject = !hasRootPath
-
-  return (
-    <div style={{
-      position: 'absolute', inset: 0, zIndex: 10,
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 12,
-      color: 'var(--text-muted)',
-      fontSize: 12,
-      fontFamily: 'var(--font-ui)',
-      background: 'var(--bg-surface)',
-    }}>
-      <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
-        {projectName ? `Proyecto: ${projectName}` : 'Ningún proyecto seleccionado'}
-      </div>
-      <p>
-        {noProject
-          ? 'Abrí una carpeta de proyecto para empezar a trabajar con el editor y el agente.'
-          : 'Selecciona un archivo del explorador para empezar a editar.'}
-      </p>
-      <div style={{ display: 'flex', gap: 8 }}>
-        {noProject && (
-          <button
-            onClick={onOpenFolder}
-            style={{
-              padding: '6px 16px',
-              background: 'var(--accent)',
-              border: 'none',
-              borderRadius: 'var(--radius-md)',
-              color: 'white',
-              fontSize: 13,
-              fontWeight: 500,
-              cursor: 'pointer',
-            }}
-          >
-            Abrir carpeta
-          </button>
-        )}
-        {!noProject && (
-          <button
-            onClick={onCloseProject}
-            style={{
-              padding: '6px 16px',
-              background: 'var(--bg-input)',
-              border: '1px solid var(--border-normal)',
-              borderRadius: 'var(--radius-md)',
-              color: 'var(--text-secondary)',
-              fontSize: 13,
-              cursor: 'pointer',
-            }}
-          >
-            Cerrar proyecto
-          </button>
-        )}
-        {noProject && !explorerVisible && (
-          <button
-            onClick={onShowExplorer}
-            style={{
-              padding: '6px 16px',
-              background: 'var(--bg-input)',
-              border: '1px solid var(--border-normal)',
-              borderRadius: 'var(--radius-md)',
-              color: 'var(--text-secondary)',
-              fontSize: 13,
-              cursor: 'pointer',
-            }}
-          >
-            Mostrar explorador
-          </button>
-        )}
-        <button
-          onClick={onClose}
-          style={{
-            padding: '6px 16px',
-            background: 'var(--bg-input)',
-            border: '1px solid var(--border-normal)',
-            borderRadius: 'var(--radius-md)',
-            color: 'var(--text-secondary)',
-            fontSize: 13,
-            cursor: 'pointer',
-          }}
-        >
-          Cerrar editor
-        </button>
-      </div>
-    </div>
-  )
-}
-
-function UnsavedChangesDialog({
-  fileName,
-  onSave,
-  onDiscard,
-  onCancel,
-}: {
-  fileName: string
-  onSave: () => void
-  onDiscard: () => void
-  onCancel: () => void
-}) {
-  return (
-    <div
-      style={{
-        position: 'fixed', inset: 0, zIndex: 110,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: 'rgba(0,0,0,0.3)',
-      }}
-      onClick={onCancel}
-    >
-      <div
-        style={{
-          width: 420, maxWidth: '92vw',
-          background: 'var(--bg-modal)', border: '1px solid var(--border-strong)',
-          borderRadius: 'var(--radius-xl)', boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
-          display: 'flex', flexDirection: 'column', overflow: 'hidden',
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div style={{ padding: '20px 24px 12px' }}>
-          <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-ui)', margin: 0 }}>
-            Cambios sin guardar
-          </h3>
-        </div>
-        <div style={{ padding: '0 24px 20px' }}>
-          <p style={{ fontSize: 13, color: 'var(--text-secondary)', fontFamily: 'var(--font-ui)', lineHeight: 1.5, margin: 0 }}>
-            <span style={{ fontWeight: 600 }}>{fileName}</span> tiene cambios sin guardar.
-          </p>
-        </div>
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8,
-          padding: '12px 24px', borderTop: '1px solid var(--border-subtle)',
-          background: 'var(--bg-surface)', flexShrink: 0,
-        }}>
-          <button onClick={onCancel} style={{
-            padding: '5px 12px', background: 'var(--bg-input)', border: '1px solid var(--border-normal)',
-            borderRadius: 'var(--radius-md)', color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer',
-          }}>
-            Cancelar
-          </button>
-          <button onClick={onDiscard} style={{
-            padding: '5px 12px', background: 'transparent', border: '1px solid var(--border-normal)',
-            borderRadius: 'var(--radius-md)', color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer',
-          }}>
-            Descartar
-          </button>
-          <button onClick={onSave} style={{
-            padding: '5px 12px', background: 'var(--accent)', border: 'none',
-            borderRadius: 'var(--radius-md)', color: '#fff', fontSize: 12, cursor: 'pointer', fontWeight: 500,
-          }}>
-            Guardar
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function EditorSkeleton({ path }: { path: string }) {
-  const name = path.split(/[\\/]/).pop() ?? path
-  return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 2,
-        padding: '3px 12px', borderBottom: '1px solid var(--border-subtle)',
-        background: 'var(--bg-surface)', fontSize: 11,
-        fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', flexShrink: 0,
-      }}>
-        <span style={{ color: 'var(--text-secondary)' }}>{name}</span>
-        <span style={{
-          marginLeft: 8, fontSize: 10, color: 'var(--text-muted)',
-          fontFamily: 'var(--font-ui)',
-        }}>
-          Cargando…
-        </span>
-      </div>
-      <div style={{ flex: 1, padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
-        {Array.from({ length: 14 }, (_, i) => (
-          <div key={i} style={{
-            height: 13,
-            borderRadius: 3,
-            background: 'var(--bg-hover)',
-            width: `${50 + Math.sin(i * 1.7) * 30}%`,
-            opacity: 0.5,
-          }} />
-        ))}
-      </div>
     </div>
   )
 }
