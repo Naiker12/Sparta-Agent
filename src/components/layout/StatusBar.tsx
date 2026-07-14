@@ -103,15 +103,14 @@ export function StatusBar() {
 
   return (
     <>
-      <div style={{
-        height: 'var(--statusbar-h)',
-        background: 'var(--bg-sidebar)',
-        borderTop: '1px solid var(--border-subtle)',
-        display: 'flex',
-        alignItems: 'center',
-        padding: '0 12px',
-        flexShrink: 0,
-      }}>
+      <div
+        className="flex items-center shrink-0 px-3"
+        style={{
+          height: 'var(--statusbar-h)',
+          background: 'var(--bg-sidebar)',
+          borderTop: '1px solid var(--border-subtle)',
+        }}
+      >
         {IS_WEB ? (
           <SBItem>
             <Circle
@@ -151,7 +150,7 @@ export function StatusBar() {
           </SBItem>
         )}
 
-        <div style={{ flex: 1 }} />
+        <div className="flex-1" />
 
         <SBItem
           style={{ color: hasProjectRoot ? 'var(--status-ok)' : 'var(--status-warn)' }}

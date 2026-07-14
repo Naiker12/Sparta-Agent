@@ -45,6 +45,7 @@ declare module 'lucide-react' {
   export const Upload: Icon
   export const RefreshCw: Icon
   export const RefreshCcw: Icon
+  export const RotateCw: Icon
   export const AlertCircle: Icon
   export const AlertTriangle: Icon
   export const Info: Icon
@@ -397,6 +398,7 @@ declare module 'lucide-react' {
   export const FilePenLine: Icon
   export const FileEdit: Icon
   export const FilePlus: Icon
+  export const FileLock: Icon
   export const FileMinus: Icon
   export const FileX: Icon
   export const FileSearch: Icon
@@ -600,159 +602,6 @@ declare module 'lucide-react' {
   export const ShieldQuestion: Icon
   export const ShieldMinus: Icon
   export const ShieldPlus: Icon
-  export const Swords: Icon
-  export const Axe: Icon
-  export const Pickaxe: Icon
-  export const Hammer: Icon
-  export const Wrench: Icon
-  export const Screwdriver: Icon
-  export const Drill: Icon
-  export const Saw: Icon
-  export const FilePen: Icon
-  export const FilePenLine: Icon
-  export const FileEdit: Icon
-  export const FilePlus: Icon
-  export const FileMinus: Icon
-  export const FileX: Icon
-  export const FileSearch: Icon
-  export const FileCog: Icon
-  export const FileSpreadsheet: Icon
-  export const FileJson: Icon
-  export const FileType: Icon
-  export const FileCode: Icon
-  export const FileTerminal: Icon
-  export const FileImage: Icon
-  export const FileVideo: Icon
-  export const FileAudio: Icon
-  export const FileArchive: Icon
-  export const FolderPlus: Icon
-  export const FolderMinus: Icon
-  export const FolderX: Icon
-  export const FolderSearch: Icon
-  export const FolderCog: Icon
-  export const FolderTree: Icon
-  export const FolderKanban: Icon
-  export const FolderCheck: Icon
-  export const FolderClosed: Icon
-  export const FolderDot: Icon
-  export const FolderInput: Icon
-  export const FolderOutput: Icon
-  export const FolderSymlink: Icon
-  export const FolderGit: Icon
-  export const FolderGit2: Icon
-  export const Clipboard: Icon
-  export const ClipboardList: Icon
-  export const ClipboardCheck: Icon
-  export const ClipboardX: Icon
-  export const ClipboardCopy: Icon
-  export const ClipboardPaste: Icon
-  export const ClipboardPen: Icon
-  export const ClipboardPenLine: Icon
-  export const ClipboardEdit: Icon
-  export const ClipboardType: Icon
-  export const ClipboardMinus: Icon
-  export const ClipboardPlus: Icon
-  export const ClipboardSignature: Icon
-  export const Scroll: Icon
-  export const ScrollText: Icon
-  export const AudioLines: Icon
-  export const AudioWaveform: Icon
-  export const Waves: Icon
-  export const Waveform: Icon
-  export const Sigma: Icon
-  export const CaseLower: Icon
-  export const CaseUpper: Icon
-  export const CaseSensitive: Icon
-  export const MousePointerClick: Icon
-  export const MousePointerBan: Icon
-  export const MousePointer2: Icon
-  export const Pointer: Icon
-  export const Hand: Icon
-  export const Scan: Icon
-  export const ScanEye: Icon
-  export const ScanFace: Icon
-  export const ScanLine: Icon
-  export const ScanSearch: Icon
-  export const ScanText: Icon
-  export const Scanner: Icon
-  export const QrCode: Icon
-  export const Barcode: Icon
-  export const Keyboard: Icon
-  export const KeyboardMusic: Icon
-  export const Command: Icon
-  export const Slash: Icon
-  export const Ellipsis: Icon
-  export const ForkKnife: Icon
-  export const ForkKnifeCross: Icon
-  export const ChefHat: Icon
-  export const CookingPot: Icon
-  export const Soup: Icon
-  export const Utensils: Icon
-  export const UtensilsCrossed: Icon
-  export const Croissant: Icon
-  export const CakeSlice: Icon
-  export const Cookie: Icon
-  export const Candy: Icon
-  export const CandyCane: Icon
-  export const Apple: Icon
-  export const Citrus: Icon
-  export const Grape: Icon
-  export const Banana: Icon
-  export const Cherry: Icon
-  export const Strawberry: Icon
-  export const Egg: Icon
-  export const EggFried: Icon
-  export const Milk: Icon
-  export const Beer: Icon
-  export const BeerOff: Icon
-  export const Wine: Icon
-  export const WineOff: Icon
-  export const Coffee: Icon
-  export const Mocha: Icon
-  export const CupSoda: Icon
-  export const Bottle: Icon
-  export const GlassWater: Icon
-  export const Droplet: Icon
-  export const Droplets: Icon
-  export const Waves: Icon
-  export const Floodlight: Icon
-  export const Lightbulb: Icon
-  export const LightbulbOff: Icon
-  export const Lamp: Icon
-  export const LampCeiling: Icon
-  export const LampDesk: Icon
-  export const LampFloor: Icon
-  export const LampWallDown: Icon
-  export const LampWallUp: Icon
-  export const Fan: Icon
-  export const FanAuto: Icon
-  export const Refrigerator: Icon
-  export const Oven: Icon
-  export const Microwave: Icon
-  export const Toaster: Icon
-  export const WashingMachine: Icon
-  export const Dryer: Icon
-  export const AirVent: Icon
-  export const Airplay: Icon
-  export const AlarmCheck: Icon
-  export const AlarmClock: Icon
-  export const AlarmClockCheck: Icon
-  export const AlarmClockMinus: Icon
-  export const AlarmClockOff: Icon
-  export const AlarmClockPlus: Icon
-  export const AlarmSmoke: Icon
-  export const Ambulance: Icon
-  export const Shield: Icon
-  export const ShieldAlert: Icon
-  export const ShieldBan: Icon
-  export const ShieldCheck: Icon
-  export const ShieldEllipsis: Icon
-  export const ShieldHalf: Icon
-  export const ShieldMinus: Icon
-  export const ShieldOff: Icon
-  export const ShieldPlus: Icon
-  export const ShieldQuestion: Icon
-  export const ShieldX: Icon
   export const Swords: Icon
   export const Axe: Icon
   export const Pickaxe: Icon

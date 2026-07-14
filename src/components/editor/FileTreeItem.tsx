@@ -6,6 +6,7 @@ import {
   FileCode, FileJson, FileImage, FileCog, FileLock, FileType,
   ClipboardCopy, FilePlus, FolderPlus,
 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import type { FileTreeNode } from '@/types'
 
 const EXT_ICON_MAP: Record<string, typeof FileCode> = {
@@ -169,30 +170,18 @@ export function FileTreeItem({
           {node.name}
         </span>
         {hovered && (
-          <button
+          <Button
+            variant="ghost"
+            size="icon-xs"
             onClick={(e) => {
               e.stopPropagation()
               onDelete?.(node)
             }}
             title={`Eliminar ${isDirectory ? 'carpeta' : 'archivo'}`}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 18,
-              height: 18,
-              border: 'none',
-              background: 'transparent',
-              borderRadius: 'var(--radius-sm)',
-              cursor: 'pointer',
-              color: 'var(--status-err)',
-              opacity: 0.7,
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.background = 'var(--bg-hover)' }}
-            onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.7'; e.currentTarget.style.background = 'transparent' }}
+            className="text-[var(--status-err)] opacity-70 hover:opacity-100"
           >
             <Trash2 size={11} />
-          </button>
+          </Button>
         )}
       </div>
       {ctx && (

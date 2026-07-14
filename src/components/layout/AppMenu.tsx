@@ -6,6 +6,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { Button } from '@/components/ui/button'
 import { Menu } from 'lucide-react'
 
 const MENU_ITEMS = [
@@ -56,31 +57,10 @@ const MENU_ITEMS = [
 export function AppMenu() {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger
-        aria-label="Menú de aplicación"
-        style={{
-          width: 30,
-          height: 30,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'none',
-          border: 'none',
-          borderRadius: 'var(--radius-sm)',
-          color: 'var(--text-muted)',
-          cursor: 'pointer',
-          transition: 'all 0.12s',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = 'var(--bg-hover)'
-          e.currentTarget.style.color = 'var(--text-secondary)'
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = 'none'
-          e.currentTarget.style.color = 'var(--text-muted)'
-        }}
-      >
-        <Menu size={16} strokeWidth={1.5} />
+      <DropdownMenuTrigger aria-label="Menú de aplicación" className="no-drag">
+        <Button variant="ghost" size="icon-sm">
+          <Menu size={16} strokeWidth={1.5} />
+        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" sideOffset={4}>
         {MENU_ITEMS.map((group, gi) => (

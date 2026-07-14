@@ -1,4 +1,5 @@
 import { ZoomIn, ZoomOut, RotateCw, List, Share2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 interface MemoryGraphControlsProps {
   onZoomIn: () => void
@@ -25,24 +26,24 @@ export function MemoryGraphControls({
 }: MemoryGraphControlsProps) {
   return (
     <div
+      className="flex items-center justify-between shrink-0 px-4 py-2"
       style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '8px 16px', borderBottom: '1px solid var(--border-subtle)',
-        background: 'var(--bg-base)', flexShrink: 0,
+        borderBottom: '1px solid var(--border-subtle)',
+        background: 'var(--bg-base)',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div className="flex items-center gap-3">
         {isGraphView && (
           <>
-            <span style={{ fontSize: 10.5, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+            <span className="text-[10.5px] font-mono" style={{ color: 'var(--text-muted)' }}>
               {nodeCount} nodos · {edgeCount} aristas
             </span>
-            <div style={{ width: 1, height: 16, background: 'var(--border-subtle)', margin: '0 4px' }} />
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <div className="w-px h-4" style={{ background: 'var(--border-subtle)', margin: '0 4px' }} />
+            <div className="flex gap-2 items-center flex-wrap">
               {LEGEND_ITEMS.map(({ label, color }) => (
-                <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <div style={{ width: 7, height: 7, borderRadius: '50%', background: color, flexShrink: 0 }} />
-                  <span style={{ fontSize: 9.5, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)' }}>
+                <div key={label} className="flex items-center gap-1">
+                  <div className="size-[7px] rounded-full shrink-0" style={{ background: color }} />
+                  <span className="text-[9.5px]" style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-ui)' }}>
                     {label}
                   </span>
                 </div>
@@ -52,54 +53,33 @@ export function MemoryGraphControls({
         )}
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+      <div className="flex items-center gap-1">
         {isGraphView && (
           <>
-            <ControlButton onClick={onZoomIn} title="Acercar">
+            <Button variant="ghost" size="icon-xs" onClick={onZoomIn} title="Acercar">
               <ZoomIn size={13} strokeWidth={1.5} />
-            </ControlButton>
+            </Button>
             {zoomLevel != null && (
-              <span style={{
-                fontSize: 9, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)',
-                minWidth: 28, textAlign: 'center',
-              }}>
+              <span className="text-[9px] font-mono text-center min-w-[28px]" style={{ color: 'var(--text-muted)' }}>
                 {zoomLevel}%
               </span>
             )}
-            <ControlButton onClick={onZoomOut} title="Alejar">
+            <Button variant="ghost" size="icon-xs" onClick={onZoomOut} title="Alejar">
               <ZoomOut size={13} strokeWidth={1.5} />
-            </ControlButton>
-            <ControlButton onClick={onReset} title="Resetear vista">
+            </Button>
+            <Button variant="ghost" size="icon-xs" onClick={onReset} title="Resetear vista">
               <RotateCw size={13} strokeWidth={1.5} />
-            </ControlButton>
-            <div style={{ width: 1, height: 16, background: 'var(--border-subtle)', margin: '0 4px' }} />
+            </Button>
+            <div className="w-px h-4" style={{ background: 'var(--border-subtle)', margin: '0 4px' }} />
           </>
         )}
-        <ControlButton onClick={onToggleView} title={isGraphView ? 'Vista lista' : 'Vista gráfico'}>
+        <Button variant="ghost" size="icon-xs" onClick={onToggleView} title={isGraphView ? 'Vista lista' : 'Vista gráfico'}>
           {isGraphView ? <List size={13} strokeWidth={1.5} /> : <Share2 size={13} strokeWidth={1.5} />}
-        </ControlButton>
-        <span style={{ fontSize: 10.5, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)', marginLeft: 4 }}>
+        </Button>
+        <span className="text-[10.5px] ml-1" style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-ui)' }}>
           {isGraphView ? 'Vista gráfico' : 'Vista lista'}
         </span>
       </div>
     </div>
-  )
-}
-
-function ControlButton({ onClick, title, children }: { onClick: () => void; title: string; children: React.ReactNode }) {
-  return (
-    <button
-      onClick={onClick}
-      title={title}
-      style={{
-        width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: 'none', border: 'none', borderRadius: 'var(--radius-sm)',
-        color: 'var(--text-muted)', cursor: 'pointer', transition: 'all 0.12s',
-      }}
-      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; e.currentTarget.style.color = 'var(--text-primary)' }}
-      onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)' }}
-    >
-      {children}
-    </button>
   )
 }

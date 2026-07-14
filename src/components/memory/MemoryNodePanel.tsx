@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { X, ExternalLink, Tag, Calendar, MessageSquare, Trash2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import type { MemoryEntry, MemoryGraphNode } from '@/types'
 import { getGraphNodeColor } from '@/lib/graph-colors'
 import { useSessionStore } from '@/stores/session.store'
@@ -46,32 +47,13 @@ export function MemoryNodePanel({ entry, onClose }: MemoryNodePanelProps) {
             {entry.source === 'auto' ? 'Aprendido' : 'Manual'}
           </span>
         </div>
-        <div style={{ display: 'flex', gap: 2 }}>
-          <button
-            onClick={() => setConfirmOpen(true)}
-            title="Eliminar nodo"
-            style={{
-              width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: 'none', border: 'none', borderRadius: 'var(--radius-sm)',
-              color: 'var(--text-muted)', cursor: 'pointer',
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; e.currentTarget.style.color = 'var(--destructive)' }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)' }}
-          >
+        <div className="flex gap-0.5">
+          <Button variant="ghost" size="icon-xs" onClick={() => setConfirmOpen(true)} title="Eliminar nodo">
             <Trash2 size={12} strokeWidth={2} />
-          </button>
-          <button
-            onClick={onClose}
-            style={{
-              width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: 'none', border: 'none', borderRadius: 'var(--radius-sm)',
-              color: 'var(--text-muted)', cursor: 'pointer',
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; e.currentTarget.style.color = 'var(--text-primary)' }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)' }}
-          >
+          </Button>
+          <Button variant="ghost" size="icon-xs" onClick={onClose}>
             <X size={12} strokeWidth={2} />
-          </button>
+          </Button>
         </div>
       </div>
 

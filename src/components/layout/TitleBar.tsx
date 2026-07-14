@@ -4,6 +4,7 @@ import { AppMenu } from './AppMenu'
 import { Settings, PanelLeftOpen, PanelLeftClose } from 'lucide-react'
 import { SpartaIcon } from '@/components/chat/SpartaIcon'
 import { FEATURES } from '@/lib/env-adapter'
+import { Button } from '@/components/ui/button'
 import {
   Tabs,
   TabsList,
@@ -50,74 +51,34 @@ export function TitleBar() {
 
   return (
     <div
-      className="drag-region"
+      className="drag-region flex items-center gap-1 shrink-0 select-none"
       style={{
         height: 'var(--titlebar-h)',
         background: 'var(--bg-sidebar)',
         borderBottom: '1px solid var(--border-subtle)',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 4,
         padding: '0 10px',
-        flexShrink: 0,
-        userSelect: 'none',
       }}
     >
-      <button
+      <Button
+        variant="ghost"
+        size="icon"
         className="no-drag"
         onClick={toggleSidebar}
         title={sidebarOpen ? 'Colapsar sidebar' : 'Expandir sidebar'}
-        style={{
-          width: 28,
-          height: 28,
-          background: 'none',
-          border: 'none',
-          borderRadius: 'var(--radius-md)',
-          color: 'var(--text-muted)',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          transition: 'all 0.15s',
-          flexShrink: 0,
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = 'var(--bg-hover)'
-          e.currentTarget.style.color = 'var(--text-secondary)'
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = 'none'
-          e.currentTarget.style.color = 'var(--text-muted)'
-        }}
       >
         {sidebarOpen ? <PanelLeftOpen size={14} strokeWidth={1.5} /> : <PanelLeftClose size={14} strokeWidth={1.5} />}
-      </button>
+      </Button>
 
       <AppMenu />
 
-      <div
-        className="no-drag"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 6,
-          padding: '0 6px',
-        }}
-      >
+      <div className="no-drag flex items-center gap-1.5 px-1.5">
         <SpartaIcon size={18} />
-        <span
-          style={{
-            fontSize: 12,
-            fontWeight: 600,
-            color: 'var(--text-display)',
-            fontFamily: 'var(--font-ui)',
-          }}
-        >
+        <span className="text-xs font-semibold" style={{ color: 'var(--text-display)', fontFamily: 'var(--font-ui)' }}>
           Sparta
         </span>
       </div>
 
-      <div style={{ width: 1, height: 18, background: 'var(--border-normal)', margin: '0 10px' }} />
+      <div className="w-px h-[18px] mx-2.5" style={{ background: 'var(--border-normal)' }} />
 
       <Tabs value={activeValue} onValueChange={(v) => handleTabClick(v as MainView['type'])}>
         <TabsList
@@ -162,35 +123,16 @@ export function TitleBar() {
         </TabsList>
       </Tabs>
 
-      <div style={{ flex: 1 }} />
+      <div className="flex-1" />
 
-      <button
+      <Button
+        variant="ghost"
+        size="icon"
         className="no-drag"
         onClick={openSettings}
-        style={{
-          width: 28,
-          height: 28,
-          background: 'none',
-          border: 'none',
-          borderRadius: 'var(--radius-md)',
-          color: 'var(--text-muted)',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          transition: 'all 0.15s',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = 'var(--bg-hover)'
-          e.currentTarget.style.color = 'var(--text-secondary)'
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = 'none'
-          e.currentTarget.style.color = 'var(--text-muted)'
-        }}
       >
         <Settings size={14} strokeWidth={1.5} />
-      </button>
+      </Button>
     </div>
   )
 }
