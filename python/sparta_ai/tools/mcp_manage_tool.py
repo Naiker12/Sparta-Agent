@@ -17,6 +17,7 @@ from typing import Any
 
 from langchain_core.tools import tool
 
+from sparta_ai.tools.mcp_client import resolve_template_vars
 from sparta_ai.tools.permission_broker import request_permission_sync_generic
 from sparta_ai.config.security import store_key as vault_store_key_py
 
@@ -167,28 +168,19 @@ def mcp_manage_tool(
             if entry.get("type") == "stdio":
                 config["command"] = entry["command"]
                 args = list(entry.get("args", []))
-                # Resolver argumentos con plantillas ${...}
-                resolved_args: list[str] = []
-                needs_extra = False
-                for a in args:
-                    if "${DIR}" in a or "${DATABASE_URL}" in a or "${DB_PATH}" in a:
-                        if extra_args:
-                            resolved_args.append(a.replace("${DIR}", extra_args[0])
-                                                  .replace("${DATABASE_URL}", extra_args[0])
-                                                  .replace("${DB_PATH}", extra_args[0]))
-                        else:
-                            needs_extra = True
-                            resolved_args.append(a)
-                    else:
-                        resolved_args.append(a)
-                config["args"] = resolved_args
-
-                if needs_extra and not extra_args:
-                    return (
-                        f"Error: El servidor '{server_id}' requiere un argumento "
-                        f"adicional (ej: ruta de directorio, URL de base de datos). "
-                        f"Proporcionalo via el parametro extra_args."
-                    )
+                # Check if any arguments contain unresolved templates.
+                # If extra_args is provided, inject it as the project dir
+                # and use the shared resolver. Otherwise, keep the template
+                # bare so the resolver inside RealMCPClient.connect() will
+                # fill it with the cwd at connection time.
+                has_templates = any(
+                    "${DIR}" in a or "${DATABASE_URL}" in a or "${DB_PATH}" in a
+                    for a in args
+                )
+                if has_templates and extra_args:
+                    config["args"] = resolve_template_vars(args, project_dir=extra_args[0])
+                else:
+                    config["args"] = resolve_template_vars(args)
 
             elif entry.get("type") == "http":
                 config["url"] = entry["url"]

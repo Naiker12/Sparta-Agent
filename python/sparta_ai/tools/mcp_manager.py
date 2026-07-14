@@ -9,6 +9,11 @@ This module maintains a pool of live clients keyed by (session_id, server_id).
 Connections are reused when the server config hasn't changed between turns,
 and explicitly cleaned up when a session ends or the sidecar shuts down.
 
+Includes a **circuit breaker** per server: when ``connect()`` fails, the
+failure is cached with a timestamp so that subsequent turns do NOT retry
+the broken server until a cooldown expires (default 60s) or the config
+changes.
+
 Usage::
 
     from sparta_ai.tools.mcp_manager import mcp_manager
@@ -27,11 +32,16 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import time
 from typing import Any, Callable
 
 from sparta_ai.tools.mcp_client import RealMCPClient, _make_langchain_tool
 
 logger = logging.getLogger("sparta_ai.tools.mcp_manager")
+
+# How long (seconds) to wait before retrying a server whose connection
+# previously failed.  Prevents the per-turn retry storm documented in Doc 26.
+_MCP_CIRCUIT_BREAKER_COOLDOWN = 60
 
 
 def _config_hash(config: dict) -> str:
@@ -60,13 +70,14 @@ def _config_hash(config: dict) -> str:
 class _ServerSlot:
     """Internal bookkeeping for one MCP server within a session."""
 
-    __slots__ = ("client", "config_hash", "tool_defs", "langchain_tools")
+    __slots__ = ("client", "config_hash", "tool_defs", "langchain_tools", "broken_since")
 
     def __init__(self, client: RealMCPClient, config_hash: str, tool_defs: list[dict], langchain_tools: list):
         self.client = client
         self.config_hash = config_hash
         self.tool_defs = tool_defs
         self.langchain_tools = langchain_tools
+        self.broken_since: float | None = None  # timestamp when connect() last failed
 
 
 class MCPConnectionManager:
@@ -93,6 +104,14 @@ class MCPConnectionManager:
         reconnects servers whose config actually changed.  Disabled
         servers are silently skipped (and disconnected if previously
         connected).
+
+        **Circuit breaker**: if a server's ``connect()`` failed previously
+        and less than ``_MCP_CIRCUIT_BREAKER_COOLDOWN`` seconds have passed,
+        we skip the retry entirely and emit an ``mcp:error`` event with a
+        clear message.  The breaker resets when:
+        (a) the cooldown expires,
+        (b) the server config changes (new ``config_hash``), or
+        (c) the user re-enables the server via the UI.
         """
         if not servers_config:
             return []
@@ -113,17 +132,48 @@ class MCPConnectionManager:
                 if server_id in session_slots:
                     await self._disconnect_slot(session_slots.pop(server_id), server_id)
                     if emit_fn:
-                        self._safe_emit(emit_fn, "mcp:disconnected", {"serverId": server_id})
+                        await self._safe_emit(emit_fn, "mcp:disconnected", {"serverId": server_id})
                 continue
 
             new_hash = _config_hash(cfg)
             existing = session_slots.get(server_id)
 
             if existing and existing.config_hash == new_hash:
-                # Config unchanged — reuse live connection.
-                logger.debug("MCP: reusing connection for '%s' (session %s)", server_id, session_id)
-                langchain_tools.extend(existing.langchain_tools)
-                continue
+                # ── Circuit breaker check ──────────────────────────────
+                if existing.broken_since is not None:
+                    elapsed = time.monotonic() - existing.broken_since
+                    if elapsed < _MCP_CIRCUIT_BREAKER_COOLDOWN:
+                        # Still in cooldown — skip retry.
+                        remaining = int(_MCP_CIRCUIT_BREAKER_COOLDOWN - elapsed)
+                        logger.warning(
+                            "MCP: skipping '%s' — circuit breaker active (%ds remaining)",
+                            server_id, remaining,
+                        )
+                        if emit_fn:
+                            await self._safe_emit(emit_fn, "mcp:error", {
+                                "serverId": server_id,
+                                "error": (
+                                    f"Servidor aún no disponible "
+                                    f"(reintentando en {remaining}s). "
+                                    f"Edita la configuración para reintentar ahora."
+                                ),
+                            })
+                        continue
+                    else:
+                        # Cooldown expired — reset breaker and retry.
+                        logger.info("MCP: circuit breaker reset for '%s'", server_id)
+                        existing.broken_since = None
+                        # Fall through to reconnect below — need to drop the
+                        # stale slot and reconnect, since the old client is
+                        # still broken.
+                        await self._disconnect_slot(existing, server_id)
+                        existing = None  # force reconnect
+
+                else:
+                    # Config unchanged — reuse live connection.
+                    logger.debug("MCP: reusing connection for '%s' (session %s)", server_id, session_id)
+                    langchain_tools.extend(existing.langchain_tools)
+                    continue
 
             # Config changed or first connection — disconnect old, connect new.
             if existing:
@@ -134,8 +184,15 @@ class MCPConnectionManager:
                 tool_defs = await client.connect()
             except Exception as e:
                 logger.error("MCP: failed to connect '%s': %s", server_id, e)
+
+                # ── Record the failure timestamp (circuit breaker) ────
+                # Create a broken slot so we remember the failure for next turn.
+                broken_slot = _ServerSlot(client, new_hash, [], [])
+                broken_slot.broken_since = time.monotonic()
+                session_slots[server_id] = broken_slot
+
                 if emit_fn:
-                    self._safe_emit(emit_fn, "mcp:error", {"serverId": server_id, "error": str(e)})
+                    await self._safe_emit(emit_fn, "mcp:error", {"serverId": server_id, "error": str(e)})
                 continue
 
             # Build LangChain tools for this server.
@@ -151,12 +208,12 @@ class MCPConnectionManager:
 
             # Emit connection events to the frontend.
             if emit_fn:
-                self._safe_emit(emit_fn, "mcp:connected", {
+                await self._safe_emit(emit_fn, "mcp:connected", {
                     "serverId": server_id,
                     "toolCount": len(tool_defs),
                 })
                 if tool_defs:
-                    self._safe_emit(emit_fn, "mcp:tool_discovered", {
+                    await self._safe_emit(emit_fn, "mcp:tool_discovered", {
                         "serverId": server_id,
                         "tools": [
                             {
@@ -173,7 +230,7 @@ class MCPConnectionManager:
         for server_id in orphaned:
             await self._disconnect_slot(session_slots.pop(server_id), server_id)
             if emit_fn:
-                self._safe_emit(emit_fn, "mcp:disconnected", {"serverId": server_id})
+                await self._safe_emit(emit_fn, "mcp:disconnected", {"serverId": server_id})
 
         if langchain_tools:
             logger.info(
@@ -212,9 +269,15 @@ class MCPConnectionManager:
             logger.debug("MCP: error disconnecting '%s': %s", server_id, e)
 
     @staticmethod
-    def _safe_emit(emit_fn: Callable, event: str, data: dict) -> None:
+    async def _safe_emit(emit_fn: Callable, event: str, data: dict) -> None:
+        """Emit an event, supporting both sync and async callbacks."""
         try:
-            emit_fn(event, data)
+            result = emit_fn(event, data)
+            if result is not None:
+                # If it's a coroutine (async callback), await it.
+                import asyncio
+                if asyncio.iscoroutine(result):
+                    await result
         except Exception as e:
             logger.debug("MCP: failed to emit '%s': %s", event, e)
 
