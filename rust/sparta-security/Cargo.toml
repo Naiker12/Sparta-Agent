@@ -7,6 +7,10 @@ description = "Sparta Agent — Native Rust Security Layer for IPC validation & 
 [lib]
 crate-type = ["cdylib"]
 
+[features]
+default = []
+safe_mode = []
+
 [dependencies]
 napi = { version = "2", features = ["async", "serde-json", "napi6"] }
 napi-derive = "2"
@@ -18,6 +22,24 @@ once_cell = "1"
 
 [build-dependencies]
 napi-build = "2"
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+all = "warn"
+pedantic = "warn"
+nursery = "warn"
+unwrap_used = "warn"
+expect_used = "warn"
+panic = "warn"
+unreachable = "warn"
+todo = "warn"
+unimplemented = "warn"
+cast_possible_truncation = "warn"
+cast_possible_overflow = "warn"
+cast_sign_loss = "warn"
+integer_division_remainder_used = "warn"
 
 [profile.release]
 lto = true

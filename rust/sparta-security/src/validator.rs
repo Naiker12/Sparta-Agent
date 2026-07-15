@@ -168,12 +168,30 @@ pub fn validate_response(msg: &Value) -> ValidationResult {
     }
 
     let allowed_events: HashSet<&str> = [
-        "thinking_start", "thinking_token", "thinking_end",
-        "stream_token", "stream_end",
-        "tool_start", "tool_end",
+        // Thinking / reasoning
+        "thinking_start", "thinking_started", "thinking_token", "thinking_completed", "thinking_end", "thinking_status",
+        "reasoning_token", "reasoning_available",
+        // Streaming
+        "stream_token", "stream:token", "stream_end", "stream_completed", "stream_aborted", "stream_cancelled",
+        "stream_degenerate", "stream_error",
+        // Tool lifecycle
+        "tool_start", "tool_end", "tool:called", "tool_result", "tool_result", "tool:error",
+        // Subagent
         "subagent_start", "subagent_end",
+        // Usage / errors
         "usage", "error",
+        // Key manager / shutdown
         "keymanager.set", "keymanager.clear", "shutdown",
+        // Search
+        "search_progress", "search:progress", "search_completed", "search:completed",
+        // Terminal
+        "terminal:agent_command", "terminal:agent_spawn", "terminal:tool_crash",
+        "terminal:agent_output", "terminal:agent_exit",
+        // File / plan / skill / mcp
+        "file:changed",
+        "plan:created", "plan:step",
+        "skill:activated",
+        "mcp:connected", "mcp:tool_discovered", "mcp:error",
     ]
     .into();
 

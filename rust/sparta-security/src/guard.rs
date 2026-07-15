@@ -10,24 +10,57 @@ const DEFAULT_MAX_TOOL_CALLS_PER_TURN: u32 = 20;
 const DEFAULT_MAX_MESSAGE_SIZE: usize = 1_000_000; // 1MB
 const DEFAULT_MAX_PROVIDER_KEY_LENGTH: usize = 200;
 
+#[cfg(feature = "safe_mode")]
+const SAFE_RATE_LIMIT_MAX_REQUESTS: u32 = 10;
+#[cfg(feature = "safe_mode")]
+const SAFE_MAX_TOOL_CALLS_PER_TURN: u32 = 5;
+#[cfg(feature = "safe_mode")]
+const SAFE_MAX_MESSAGE_SIZE: usize = 500_000; // 500KB
+#[cfg(feature = "safe_mode")]
+const SAFE_MAX_PROVIDER_KEY_LENGTH: usize = 100;
+
 pub struct SecurityGuard {
     rate_limiter: RateLimiter,
     max_tool_calls_per_turn: u32,
     max_message_size: usize,
     max_provider_key_length: usize,
+    safe_mode: bool,
 }
 
 impl SecurityGuard {
     pub fn new() -> Self {
+        let safe_mode = cfg!(feature = "safe_mode");
+
+        let (max_requests, max_tool_calls, max_message_size, max_key_length) = if safe_mode {
+            (
+                SAFE_RATE_LIMIT_MAX_REQUESTS,
+                SAFE_MAX_TOOL_CALLS_PER_TURN,
+                SAFE_MAX_MESSAGE_SIZE,
+                SAFE_MAX_PROVIDER_KEY_LENGTH,
+            )
+        } else {
+            (
+                DEFAULT_RATE_LIMIT_MAX_REQUESTS,
+                DEFAULT_MAX_TOOL_CALLS_PER_TURN,
+                DEFAULT_MAX_MESSAGE_SIZE,
+                DEFAULT_MAX_PROVIDER_KEY_LENGTH,
+            )
+        };
+
         Self {
             rate_limiter: RateLimiter::new(
                 DEFAULT_RATE_LIMIT_WINDOW_SECS,
-                DEFAULT_RATE_LIMIT_MAX_REQUESTS,
+                max_requests,
             ),
-            max_tool_calls_per_turn: DEFAULT_MAX_TOOL_CALLS_PER_TURN,
-            max_message_size: DEFAULT_MAX_MESSAGE_SIZE,
-            max_provider_key_length: DEFAULT_MAX_PROVIDER_KEY_LENGTH,
+            max_tool_calls_per_turn: max_tool_calls,
+            max_message_size,
+            max_provider_key_length: max_key_length,
+            safe_mode,
         }
+    }
+
+    pub fn is_safe_mode(&self) -> bool {
+        self.safe_mode
     }
 
     pub fn check_rate_limit(&mut self, session_id: &str) -> GuardResult {

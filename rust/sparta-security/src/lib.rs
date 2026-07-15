@@ -1,3 +1,14 @@
+#![deny(unsafe_code)]
+#![deny(clippy::all)]
+#![warn(clippy::pedantic)]
+#![warn(clippy::nursery)]
+#![warn(clippy::unwrap_used)]
+#![warn(clippy::expect_used)]
+#![warn(clippy::panic)]
+#![warn(clippy::unreachable)]
+#![warn(clippy::todo)]
+#![warn(clippy::unimplemented)]
+
 #[macro_use]
 extern crate napi_derive;
 
@@ -117,4 +128,11 @@ pub fn audit_log_security(event_type: String, session_id: String, action: String
 #[napi]
 pub fn is_audit_enabled() -> bool {
     audit::AuditLogger::is_enabled()
+}
+
+/// Check if safe mode is enabled (compiled with `safe_mode` feature)
+#[napi]
+pub fn is_safe_mode() -> bool {
+    let guard = guard::SECURITY_GUARD.lock().unwrap();
+    guard.is_safe_mode()
 }
