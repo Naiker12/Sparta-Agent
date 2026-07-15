@@ -158,6 +158,7 @@ export const es = {
     securityNotLoaded: 'Módulo de seguridad no disponible — funciones limitadas',
     securityActive: 'Activo',
     securityUnavailable: 'No disponible',
+    securitySafeMode: 'Modo seguro activo — restricciones estrictas habilitadas',
     verifying: 'Verificando...',
     auditLog: 'Log de auditoría',
     auditLogDesc: 'Registro de llamadas a herramientas y eventos de seguridad',

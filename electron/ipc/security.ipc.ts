@@ -16,6 +16,7 @@ type SecurityModule = {
   auditLogToolCall: (sessionId: string, messageId: string, toolName: string, inputJson: string, blocked: boolean) => void
   auditLogSecurity: (eventType: string, sessionId: string, action: string, details: string) => void
   isAuditEnabled: () => boolean
+  isSafeMode: () => boolean
 }
 
 let security: SecurityModule | null = null
@@ -69,13 +70,17 @@ export function registerSecurityIPC(): void {
     // Broadcast loaded status so late subscribers start from the correct state.
     const wins = BrowserWindow.getAllWindows()
     for (const win of wins) {
-      win.webContents.send('security:status-changed', { loaded: true, auditEnabled: mod.isAuditEnabled() })
+      win.webContents.send('security:status-changed', {
+        loaded: true,
+        auditEnabled: mod.isAuditEnabled(),
+        safeMode: mod.isSafeMode()
+      })
     }
   } else {
     // Notify all windows that security module is unavailable
     const wins = BrowserWindow.getAllWindows()
     for (const win of wins) {
-      win.webContents.send('security:status-changed', { loaded: false, auditEnabled: false })
+      win.webContents.send('security:status-changed', { loaded: false, auditEnabled: false, safeMode: false })
     }
   }
 
@@ -103,6 +108,7 @@ export function registerSecurityIPC(): void {
     return {
       loaded: mod !== null,
       auditEnabled: mod?.isAuditEnabled() ?? false,
+      safeMode: mod?.isSafeMode() ?? false,
     }
   })
 

@@ -24,15 +24,15 @@ if (IS_WEB) {
 // Check security module status on startup (Electron only)
 if (!IS_WEB) {
   window.electron?.invoke('security:status').then((status: unknown) => {
-    const s = status as { loaded: boolean; auditEnabled: boolean }
-    useSecurityStore.getState().setStatus(s.loaded, s.auditEnabled)
+    const s = status as { loaded: boolean; auditEnabled: boolean; safeMode: boolean }
+    useSecurityStore.getState().setStatus(s.loaded, s.auditEnabled, s.safeMode)
   }).catch(() => {
-    useSecurityStore.getState().setStatus(false, false)
+    useSecurityStore.getState().setStatus(false, false, false)
   })
   // Listen for later changes
   window.electron?.on('security:status-changed', (payload: unknown) => {
-    const s = payload as { loaded: boolean; auditEnabled: boolean }
-    useSecurityStore.getState().setStatus(s.loaded, s.auditEnabled)
+    const s = payload as { loaded: boolean; auditEnabled: boolean; safeMode: boolean }
+    useSecurityStore.getState().setStatus(s.loaded, s.auditEnabled, s.safeMode)
   })
 }
 

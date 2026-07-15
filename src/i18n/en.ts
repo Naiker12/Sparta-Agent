@@ -158,6 +158,7 @@ export const en = {
     securityNotLoaded: 'Security module not available — limited functionality',
     securityActive: 'Active',
     securityUnavailable: 'Not available',
+    securitySafeMode: 'Safe mode active — strict restrictions enabled',
     verifying: 'Checking...',
     auditLog: 'Audit Log',
     auditLogDesc: 'Record of tool calls and security events',
