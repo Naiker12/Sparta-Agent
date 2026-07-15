@@ -26,25 +26,26 @@ async def handle_tool_start(
 
     stream_state.setdefault("_rep_guard", RepetitionGuard()).reset_boundary()
 
-    if name == "read_file_tool":
+    # LangChain 0.3+ strips "_tool" suffix, so handle both names
+    if name in ("read_file", "read_file_tool"):
         file_path = tool_input.get("path", "") if isinstance(tool_input, dict) else ""
         if file_path:
             filename = file_path.rsplit("/", 1)[-1].rsplit("\\", 1)[-1]
             emit_control_fn(*reasoning_events.thinking_status(base_payload, f"Leyendo {filename}…"))
-    elif name == "read_files_tool":
+    elif name in ("read_files", "read_files_tool"):
         file_paths = tool_input.get("paths", []) if isinstance(tool_input, dict) else []
         if file_paths:
             count = len(file_paths)
             emit_control_fn(*reasoning_events.thinking_status(base_payload, f"Leyendo {count} archivos…"))
 
-    if name in ("write_file_tool", "patch_file_tool", "delete_file_tool"):
+    if name in ("write_file", "write_file_tool", "patch_file", "patch_file_tool", "delete_file", "delete_file_tool"):
         file_path = tool_input.get("path", "") if isinstance(tool_input, dict) else ""
         if file_path:
             stream_state["_pending_file_path"] = file_path
-    if name == "terminal_execute_tool":
+    if name in ("terminal_execute", "terminal_execute_tool"):
         cmd = tool_input.get("command", "") if isinstance(tool_input, dict) else str(tool_input)
         stream_state["_pending_terminal_command"] = cmd
-    elif name == "terminal_execute_background_tool":
+    elif name in ("terminal_execute_background", "terminal_execute_background_tool"):
         cmd = tool_input.get("command", "") if isinstance(tool_input, dict) else str(tool_input)
         label = tool_input.get("label") if isinstance(tool_input, dict) else None
         proc_id = f"bg-{uuid.uuid4().hex[:8]}"
@@ -69,19 +70,19 @@ async def handle_tool_end(
 
     stream_state.setdefault("_rep_guard", RepetitionGuard()).reset_boundary()
 
-    if name in ("write_file_tool", "patch_file_tool", "delete_file_tool"):
+    if name in ("write_file", "write_file_tool", "patch_file", "patch_file_tool", "delete_file", "delete_file_tool"):
         file_path = stream_state.get("_pending_file_path", "")
         if file_path:
             emit_control_fn("file:changed", {"path": file_path})
             stream_state["_pending_file_path"] = ""
 
-    if name == "terminal_execute_tool":
+    if name in ("terminal_execute", "terminal_execute_tool"):
         cmd = stream_state.get("_pending_terminal_command", "")
         if cmd and "rechazado" not in output_str and "bloqueado" not in output_str:
             emit_control_fn("terminal:agent_command", {"command": cmd})
         stream_state["_pending_terminal_command"] = ""
 
-    if name == "terminal_execute_background_tool":
+    if name in ("terminal_execute_background", "terminal_execute_background_tool"):
         proc_info = stream_state.get("_pending_terminal_proc", {})
         if proc_info and "rechazado" not in output_str and "bloqueado" not in output_str:
             emit_control_fn("terminal:agent_spawn", proc_info)

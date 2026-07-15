@@ -26,38 +26,51 @@ from pathlib import Path
 logger = logging.getLogger("sparta_ai.security.permissions")
 
 # Built-in tool classification by scope
+# NOTE: LangChain 0.3+ strips "_tool" suffix from @tool-decorated functions.
+# We include BOTH names for backward compat until all tools are renamed.
 _READ_TOOLS = frozenset({
-    "read_file_tool", "read_files_tool", "search_files_tool",
-    "read_memory_tool",
-    "skill_view_tool", "skills_list_tool",
-    "web_search_tool", "web_search",
+    "read_file", "read_file_tool",
+    "read_files", "read_files_tool",
+    "search_files", "search_files_tool",
+    "read_memory", "read_memory_tool",
+    "skill_view", "skill_view_tool",
+    "skills_list", "skills_list_tool",
+    "web_search", "web_search_tool",
     "create_plan",
-    "get_diagnostics_tool",
-    "terminal_check_tool",
-    "get_open_files_tool",
+    "get_diagnostics", "get_diagnostics_tool",
+    "terminal_check", "terminal_check_tool",
+    "get_open_files", "get_open_files_tool",
 })
 
 # Chat mode: read/search + web + memory, no write/delete/terminal
 _CHAT_TOOLS = frozenset({
-    "read_file_tool", "read_files_tool", "search_files_tool",
-    "read_memory_tool", "write_memory_tool",
-    "skill_view_tool", "skills_list_tool",
-    "web_search_tool", "web_search", "web_fetch_tool",
-    "get_diagnostics_tool",
+    "read_file", "read_file_tool",
+    "read_files", "read_files_tool",
+    "search_files", "search_files_tool",
+    "read_memory", "read_memory_tool",
+    "write_memory", "write_memory_tool",
+    "skill_view", "skill_view_tool",
+    "skills_list", "skills_list_tool",
+    "web_search", "web_search_tool",
+    "web_fetch", "web_fetch_tool",
+    "get_diagnostics", "get_diagnostics_tool",
 })
 
 _WRITE_TOOLS = frozenset({
-    "write_file_tool", "patch_file_tool", "delete_file_tool",
-    "write_memory_tool",
-    "skill_manage_tool",
+    "write_file", "write_file_tool",
+    "patch_file", "patch_file_tool",
+    "delete_file", "delete_file_tool",
+    "write_memory", "write_memory_tool",
+    "skill_manage", "skill_manage_tool",
 })
 
 _EXECUTE_TOOLS = frozenset({
-    "terminal_execute_tool", "terminal_execute_background_tool",
+    "terminal_execute", "terminal_execute_tool",
+    "terminal_execute_background", "terminal_execute_background_tool",
 })
 
 _MANAGE_TOOLS = frozenset({
-    "mcp_manage_tool",
+    "mcp_manage", "mcp_manage_tool",
 })
 
 _ALL_TOOLS = _READ_TOOLS | _WRITE_TOOLS | _EXECUTE_TOOLS | _MANAGE_TOOLS
@@ -121,24 +134,37 @@ class PermissionPolicy:
         self._rules: list[PermissionRule] = [
             # Terminal commands default to ASK (user must confirm each time)
             PermissionRule("terminal_execute_tool", decision=PermissionDecision.ASK),
+            PermissionRule("terminal_execute", decision=PermissionDecision.ASK),
             PermissionRule("terminal_execute_background_tool", decision=PermissionDecision.ASK),
+            PermissionRule("terminal_execute_background", decision=PermissionDecision.ASK),
             # Delete operations default to ASK even inside workspace
             PermissionRule("delete_file_tool", decision=PermissionDecision.ASK),
+            PermissionRule("delete_file", decision=PermissionDecision.ASK),
             # Write/patch operations default to ALLOW inside workspace
             PermissionRule("write_file_tool", decision=PermissionDecision.ALLOW),
+            PermissionRule("write_file", decision=PermissionDecision.ALLOW),
             PermissionRule("patch_file_tool", decision=PermissionDecision.ALLOW),
+            PermissionRule("patch_file", decision=PermissionDecision.ALLOW),
             # Read/search tools default to ALLOW
             PermissionRule("read_file_tool", decision=PermissionDecision.ALLOW),
+            PermissionRule("read_file", decision=PermissionDecision.ALLOW),
             PermissionRule("search_files_tool", decision=PermissionDecision.ALLOW),
+            PermissionRule("search_files", decision=PermissionDecision.ALLOW),
             PermissionRule("skill_view_tool", decision=PermissionDecision.ALLOW),
+            PermissionRule("skill_view", decision=PermissionDecision.ALLOW),
             PermissionRule("skills_list_tool", decision=PermissionDecision.ALLOW),
+            PermissionRule("skills_list", decision=PermissionDecision.ALLOW),
             PermissionRule("web_search_tool", decision=PermissionDecision.ALLOW),
             PermissionRule("web_search", decision=PermissionDecision.ALLOW),
             PermissionRule("read_memory_tool", decision=PermissionDecision.ALLOW),
+            PermissionRule("read_memory", decision=PermissionDecision.ALLOW),
             PermissionRule("write_memory_tool", decision=PermissionDecision.ALLOW),
+            PermissionRule("write_memory", decision=PermissionDecision.ALLOW),
             PermissionRule("skill_manage_tool", decision=PermissionDecision.ALLOW),
+            PermissionRule("skill_manage", decision=PermissionDecision.ALLOW),
             # MCP management defaults to ASK (installing servers is a security-sensitive action)
             PermissionRule("mcp_manage_tool", decision=PermissionDecision.ASK),
+            PermissionRule("mcp_manage", decision=PermissionDecision.ASK),
             # Legacy wildcard: tools not explicitly listed default to ALLOW
             PermissionRule("*", decision=PermissionDecision.ALLOW),
         ]
@@ -146,16 +172,26 @@ class PermissionPolicy:
             tp.name: tp
             for tp in [
                 ToolPermission("terminal_execute_tool", requires_confirmation=True),
+                ToolPermission("terminal_execute", requires_confirmation=True),
                 ToolPermission("terminal_execute_background_tool", requires_confirmation=True),
+                ToolPermission("terminal_execute_background", requires_confirmation=True),
                 ToolPermission("write_file_tool", requires_confirmation=False),
+                ToolPermission("write_file", requires_confirmation=False),
                 ToolPermission("patch_file_tool", requires_confirmation=False),
+                ToolPermission("patch_file", requires_confirmation=False),
                 ToolPermission("delete_file_tool", requires_confirmation=False),
+                ToolPermission("delete_file", requires_confirmation=False),
                 ToolPermission("skill_manage_tool", requires_confirmation=False),
+                ToolPermission("skill_manage", requires_confirmation=False),
                 ToolPermission("read_file_tool", requires_confirmation=False),
+                ToolPermission("read_file", requires_confirmation=False),
                 ToolPermission("web_search_tool", requires_confirmation=False),
                 ToolPermission("read_memory_tool", requires_confirmation=False),
+                ToolPermission("read_memory", requires_confirmation=False),
                 ToolPermission("write_memory_tool", requires_confirmation=False),
+                ToolPermission("write_memory", requires_confirmation=False),
                 ToolPermission("skill_view_tool", requires_confirmation=False),
+                ToolPermission("skill_view", requires_confirmation=False),
             ]
         }
 
