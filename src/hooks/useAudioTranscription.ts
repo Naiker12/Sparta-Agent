@@ -8,6 +8,23 @@ function getSidecarBaseUrl(): string {
   return `http://${host}:${port}`
 }
 
+function isElectron(): boolean {
+  return typeof window !== 'undefined' && typeof window.sparta?.transcribeAudio === 'function'
+}
+
+async function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      const result = reader.result as string
+      // strip "data:...;base64," prefix
+      resolve(result.split(',')[1] || '')
+    }
+    reader.onerror = reject
+    reader.readAsDataURL(blob)
+  })
+}
+
 export interface UseAudioTranscriptionReturn {
   transcribe: (blob: Blob) => Promise<string | null>
   isTranscribing: boolean
@@ -26,8 +43,24 @@ export function useAudioTranscription(): UseAudioTranscriptionReturn {
 
     try {
       const ext = blob.type.includes('webm') ? 'webm' : blob.type.includes('ogg') ? 'ogg' : 'webm'
-      const file = new File([blob], `recording.${ext}`, { type: blob.type })
 
+      // Electron mode: use IPC via the sidecar's stdin/stdout
+      if (isElectron()) {
+        const audio = await blobToBase64(blob)
+        const result = await window.sparta!.transcribeAudio({
+          audio,
+          filename: `recording.${ext}`,
+          language: 'es',
+        })
+        if (result.error) {
+          setError(result.error)
+          return null
+        }
+        return result.text?.trim() || null
+      }
+
+      // Web mode: use HTTP endpoint on the FastAPI sidecar
+      const file = new File([blob], `recording.${ext}`, { type: blob.type })
       const formData = new FormData()
       formData.append('file', file)
 

@@ -288,3 +288,101 @@ def format_reasoning_for_provider(
             _promote_reasoning_if_present(msg)
 
     return result
+
+
+# ═════════════════════════════════════════════════════════════════════════
+#  Single-pass cleanup (Algoritmo C — replaces 3x deepcopy with 1 pass)
+# ═════════════════════════════════════════════════════════════════════════
+
+
+def single_pass_cleanup(messages: list[dict], vendor: str) -> list[dict]:
+    """Combined message cleanup in a single pass — no triple deepcopy.
+
+    Performs in one iteration what previously required three separate
+    ``copy.deepcopy()`` calls:
+      1. Drop thinking-only assistant turns + merge adjacent users
+      2. Copy/format reasoning_content for the target provider
+      3. Convert reasoning blocks to provider-native format
+
+    Each message is shallow-copied once (``dict(msg)``) instead of being
+    deep-copied three times.  Nested structures (tool_calls, content
+    blocks) are only copied when they actually need mutation.
+
+    Args:
+        messages: The original conversation messages (never mutated).
+        vendor: The target provider vendor string (e.g. "lmstudio").
+
+    Returns:
+        A new list suitable for the API call.
+    """
+    vendor_lower = vendor.lower() if vendor else ""
+    requires = vendor_lower in _REQUIRE_REASONING_CONTENT
+    rejects = vendor_lower in _REJECT_REASONING_CONTENT
+    is_anthropic = vendor_lower in _BLOCK_REASONING_VENDORS
+
+    # Pass 1: filter thinking-only turns and build cleaned list
+    result: list[dict] = []
+    for msg in messages:
+        # Shallow copy — only deep-copy if we need to mutate nested fields
+        if isinstance(msg, dict):
+            m = dict(msg)
+        else:
+            m = msg
+
+        role = m.get("role", "")
+
+        # Drop thinking-only assistant turns
+        if role == "assistant" and _is_thinking_only(m):
+            logger.debug("single_pass_cleanup: dropping thinking-only turn")
+            continue
+
+        # ── Reasoning field normalization (passes 2 & 3 combined) ──────
+        if role == "assistant":
+            if requires:
+                _ensure_reasoning_content(m)
+            elif rejects:
+                _remove_reasoning_fields(m)
+            elif is_anthropic:
+                # Convert reasoning to Anthropic-native content blocks
+                reasoning = m.get("reasoning_content") or m.get("reasoning")
+                if reasoning:
+                    content = m.get("content", "") or ""
+                    blocks: list[dict] = []
+                    if str(reasoning).strip():
+                        blocks.append({"type": "thinking", "thinking": str(reasoning)})
+                    if content:
+                        blocks.append({"type": "text", "text": str(content)})
+                    # Only deep-copy content if we're replacing it
+                    if isinstance(m.get("content"), (list, dict)):
+                        m = dict(m)  # re-copy since we may have shallow-copied already
+                    m["content"] = blocks if blocks else ""
+                    _remove_reasoning_fields(m)
+            else:
+                _promote_reasoning_if_present(m)
+
+        result.append(m)
+
+    # Pass 2: merge adjacent user messages
+    merged: list[dict] = []
+    i = 0
+    while i < len(result):
+        current = result[i]
+        if current.get("role") == "user":
+            # Look ahead for consecutive user messages
+            combined_content = current.get("content", "") or ""
+            j = i + 1
+            while j < len(result) and result[j].get("role") == "user":
+                next_content = result[j].get("content", "") or ""
+                combined_content = combined_content + "\n\n" + next_content
+                j += 1
+            merged.append({"role": "user", "content": combined_content})
+            i = j
+        else:
+            merged.append(current)
+            i += 1
+
+    logger.debug(
+        "single_pass_cleanup: %d messages -> %d (vendor=%s)",
+        len(messages), len(merged), vendor,
+    )
+    return merged

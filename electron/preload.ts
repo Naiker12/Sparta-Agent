@@ -95,6 +95,8 @@ contextBridge.exposeInMainWorld('sparta', {
   memoryEmbed: (texts: string[]) => ipcRenderer.invoke('memory:embed', { texts }) as Promise<{ ok: boolean; embeddings?: number[][]; error?: string }>,
   memoryDelete: (entryId: string) => ipcRenderer.invoke('memory:delete', entryId) as Promise<{ ok: boolean; error?: string }>,
   memoryCount: () => ipcRenderer.invoke('memory:count') as Promise<{ ok: boolean; count?: number; error?: string }>,
+  transcribeAudio: (req: { audio: string; filename: string; language?: string }) =>
+    ipcRenderer.invoke('audio:transcribe', req) as Promise<{ text?: string; error?: string }>,
 })
 
 contextBridge.exposeInMainWorld('vault', {

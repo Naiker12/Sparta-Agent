@@ -54,6 +54,7 @@ interface SpartaAPI {
   memoryEmbed: (texts: string[]) => Promise<{ ok: boolean; embeddings?: number[][]; error?: string }>
   memoryDelete: (entryId: string) => Promise<{ ok: boolean; error?: string }>
   memoryCount: () => Promise<{ ok: boolean; count?: number; error?: string }>
+  transcribeAudio: (req: { audio: string; filename: string; language?: string }) => Promise<{ text?: string; error?: string }>
 }
 
 interface VaultAPI {

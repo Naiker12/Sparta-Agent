@@ -83,9 +83,17 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       }
       rafRef.current = requestAnimationFrame(loop)
     } catch (err) {
-      const msg = err instanceof DOMException && err.name === 'NotAllowedError'
-        ? 'Permiso de micrófono denegado. Habilitalo en la configuración del navegador.'
-        : `Error al acceder al micrófono: ${err instanceof Error ? err.message : err}`
+      const name = err instanceof DOMException ? err.name : ''
+      let msg: string
+      if (name === 'NotAllowedError') {
+        msg = 'Permiso de micrófono denegado. Habilitalo en la configuración del navegador.'
+      } else if (name === 'NotFoundError' || name === 'DevicesNotFoundError') {
+        msg = 'No se encontró ningún micrófono conectado. Conectá un micrófono o verificá que esté habilitado en la configuración del sistema.'
+      } else if (name === 'NotReadableError' || name === 'TrackStartError') {
+        msg = 'El micrófono está en uso por otra aplicación. Cerrá otras apps que usen el micrófono e intentá de nuevo.'
+      } else {
+        msg = `Error al acceder al micrófono: ${err instanceof Error ? err.message : err}`
+      }
       setError(msg)
       cleanup()
     }

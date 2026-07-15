@@ -21,8 +21,16 @@ function main() {
   const target = path.join(__dirname, '..', 'rust', 'sparta-security', `sparta-security.${triple}.node`)
 
   if (!existsSync(target)) {
-    console.log(`[rust] sparta-security binary missing for ${triple}, building...`)
-    execSync('npm run rust:napi', { stdio: 'inherit', cwd: path.join(__dirname, '..') })
+    console.log(`[rust] sparta-security binary missing for ${triple}, trying to build...`)
+    try {
+      execSync('npm run rust:napi', { stdio: 'inherit', cwd: path.join(__dirname, '..') })
+      if (!existsSync(target)) {
+        console.warn(`[rust] Build completed but expected binary was not produced at ${target}; continuing without native module.`)
+      }
+    } catch (error) {
+      console.warn(`[rust] Native build skipped: ${(error).message}`)
+      console.warn('[rust] Continuing without native module; the app will run in fallback mode.')
+    }
   } else {
     console.log(`[rust] sparta-security binary already built (${triple}), skipping.`)
   }

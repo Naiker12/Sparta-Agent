@@ -25,7 +25,29 @@ Usage in the agent graph::
     # After receiving the full response:
     reasoning, visible = extract_thinking(raw_response)
 """
+import logging
 import re
+
+logger = logging.getLogger("sparta_ai.agents.emulated_reasoning")
+
+# ── Native reasoning model detection ────────────────────────────────────
+# Keywords in model IDs that indicate native thinking/reasoning capability.
+# When a model name contains any of these, we MUST NOT inject emulated
+# reasoning prompts — doing so causes the model to "think twice", doubling
+# latency without any quality benefit.
+_NATIVE_REASONING_KEYWORDS = frozenset({
+    "r1", "qwq", "o1", "o3", "o4", "gpt-5",
+    "deepseek-r", "deepseek-r1", "thinking", "reasoning",
+    "qwen.*thinking", "phi-4-reasoning",
+})
+
+# Vendors that always expose native reasoning via API fields
+_NATIVE_REASONING_VENDORS = frozenset({
+    "anthropic",
+    "deepseek",
+    "google", "google_genai", "gemini",
+    "openai",
+})
 
 # ── Prompt engineering ───────────────────────────────────────────────────
 
@@ -70,29 +92,62 @@ _CLOSE_TAG_RE = re.compile(r"</(?:think(?:ing|reasoning)?)>", re.IGNORECASE)
 
 # ── Public API ───────────────────────────────────────────────────────────
 
+def _model_has_native_reasoning(model_id: str) -> bool:
+    """Check if a model ID indicates native reasoning/thinking capability.
+
+    Matches against known keywords in model names (e.g. 'deepseek-r1',
+    'QwQ', 'o3-mini', 'Qwen2.5-32B-Thinking').
+    """
+    model_lower = model_id.lower()
+    return any(kw in model_lower for kw in _NATIVE_REASONING_KEYWORDS)
+
+
 def needs_emulated_reasoning(vendor: str | None, model_id: str) -> bool:
     """Determine if a model needs emulated reasoning via prompt engineering.
 
     Returns True for vendors/models that don't natively expose reasoning
     content through the API (i.e., the reasoning_content / thinking fields
     will always be empty).
+
+    For local providers (lmstudio, ollama, llamacpp, custom) this also
+    checks the model name for known reasoning-model suffixes to avoid
+    injecting redundant thinking prompts that would double latency.
     """
     if not vendor:
-        return True
+        return not _model_has_native_reasoning(model_id)
 
     v = vendor.lower()
 
-    # Vendors that expose native reasoning
-    if v in ("anthropic",):
-        return False  # Claude 3.7+/4.x have extended thinking
-    if v in ("openai",) and any(m in model_id.lower() for m in ("o1", "o3", "o4", "gpt-5")):
-        return False
-    if v in ("google",) and "gemini-2.5" in model_id.lower():
-        return False
-    if v in ("deepseek",) and any(m in model_id.lower() for m in ("r1", "v3")):
+    # Vendors that always expose native reasoning via API fields
+    if v in _NATIVE_REASONING_VENDORS:
+        # Even for native-reasoning vendors, check specific model IDs
+        # (e.g. OpenAI non-o1 models, Anthropic non-thinking models)
+        if v == "openai":
+            return not any(m in model_id.lower() for m in ("o1", "o3", "o4", "gpt-5"))
+        if v == "google":
+            return "gemini-2.5" not in model_id.lower()
+        if v == "deepseek":
+            return not any(m in model_id.lower() for m in ("r1", "v3"))
+        if v == "anthropic":
+            return False  # Claude 3.7+/4.x always have extended thinking
         return False
 
-    # Everything else: Ollama, LMStudio, custom, Mistral, Groq, etc.
+    # Local providers: check model name for native reasoning keywords.
+    # This prevents the critical "double thinking" bug where e.g.
+    # DeepSeek-R1 loaded in LM Studio would receive an emulated reasoning
+    # prompt, causing it to generate think tags INSIDE its native reasoning
+    # channel — doubling latency with zero quality benefit.
+    if v in ("lmstudio", "ollama", "llamacpp", "custom"):
+        has_native = _model_has_native_reasoning(model_id)
+        if has_native:
+            logger.info(
+                "Skipping emulated reasoning: model '%s' detected as native reasoning",
+                model_id,
+            )
+            return False
+        return True
+
+    # Cloud vendors without explicit reasoning support
     return True
 
 

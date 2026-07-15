@@ -137,6 +137,8 @@ class StdioServer:
             self._running = False
         elif method == "agent.task":
             await self._handle_agent_task(request_id, params)
+        elif method == "audio.transcribe":
+            await self._handle_audio_transcribe(request_id, params)
         else:
             _emit_error(request_id, "unknown_method", f"Unknown method: {method}")
             _emit(request_id, "stream_end", {})
@@ -327,3 +329,46 @@ class StdioServer:
             _emit_error(request_id, "internal_error", str(e))
         finally:
             _active_streams.pop(f"agent:{task_id}", None)
+
+    async def _handle_audio_transcribe(self, request_id: str | None, params: dict):
+        """Handle audio transcription via IPC (base64-encoded audio data)."""
+        import base64
+        import tempfile
+        import os
+
+        audio_b64 = params.get("audio", "")
+        filename = params.get("filename", "recording.webm")
+        language = params.get("language", "es")
+
+        if not audio_b64:
+            _emit_error(request_id, "invalid_params", "Missing 'audio' field (base64-encoded audio data)")
+            return
+
+        try:
+            audio_bytes = base64.b64decode(audio_b64)
+        except Exception:
+            _emit_error(request_id, "invalid_audio", "Invalid base64 audio data")
+            return
+
+        suffix = os.path.splitext(filename)[1] or ".webm"
+        tmp_path = ""
+        try:
+            from sparta_ai.audio.transcriber import transcribe
+        except ImportError:
+            _emit(request_id, "audio.transcribe:response", {
+                "error": "Transcripción no disponible. Instala el extra de audio: pip install -e '.[audio]'",
+            })
+            return
+
+        try:
+            with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
+                tmp.write(audio_bytes)
+                tmp_path = tmp.name
+            text = transcribe(tmp_path, language=language or None)
+            _emit(request_id, "audio.transcribe:response", {"text": text})
+        except Exception as e:
+            logger.exception("Audio transcription failed")
+            _emit(request_id, "audio.transcribe:response", {"error": str(e)})
+        finally:
+            if tmp_path and os.path.exists(tmp_path):
+                os.unlink(tmp_path)

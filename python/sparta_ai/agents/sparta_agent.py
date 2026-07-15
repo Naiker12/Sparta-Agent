@@ -40,6 +40,28 @@ def _os_shell_hint() -> str:
 
 MAX_TOOL_CALLS_PER_TURN = 8
 
+# Algoritmo E: Dynamic tool routing — map intents to minimal tool sets.
+# Local 7B-8B models hallucinate less and respond faster when they see
+# only the tools relevant to the current intent, not the full 19-tool set.
+_INTENT_TOOL_MAP: dict[str, list[str]] = {
+    "chat":         ["web_search_tool", "read_memory", "skill_view_tool", "skills_list_tool"],
+    "code_task":    ["read_file", "write_file", "patch_file", "apply_patch", "terminal_execute_tool",
+                     "read_files_tool", "read_directory_tool", "grep_search", "codebase_search",
+                     "delegate_code", "delegate_review", "create_plan"],
+    "research":     ["web_search_tool", "web_fetch", "delegate_research"],
+    "memory_query": ["read_memory", "write_memory", "delete_memory"],
+}
+
+
+def get_dynamic_tools(all_tools: list, intent: str) -> list:
+    """Return a filtered tool list matching the intent. Falls back to all_tools
+    if the intent has no mapping or the filtered set would be empty."""
+    allowed_names = _INTENT_TOOL_MAP.get(intent)
+    if not allowed_names:
+        return all_tools
+    filtered = [t for t in all_tools if getattr(t, "name", "") in allowed_names]
+    return filtered if filtered else all_tools
+
 
 class SpartaState(MessagesState):
     session_id: str
@@ -112,101 +134,70 @@ def build_sparta_graph(
         intent = classify_intent(last_user_msg, state.get("active_skills"), web_search_available=web_search_available)
         effective_mode = "agent" if mode == "agent" or intent != "chat" else "chat"
 
+        # Algoritmo E: Dynamic tool routing — bind only intent-relevant tools.
+        # Reduces prompt size and prevents hallucinated tool calls for small models.
+        dynamic_tools = get_dynamic_tools(all_tools, intent)
+        llm_dynamic = llm.bind_tools(dynamic_tools + delegate_tools)
+
         system_parts = [
             "# Sparta Agent",
-            "Sos el orquestador de agentes de IA integrado en Sparta, un asistente de "
-            "escritorio para desarrollo de software. Trabajás directamente sobre el "
-            "proyecto que el usuario tiene abierto en el editor: podés leer, buscar, "
-            "y — solo en modo Agente — editar, crear y borrar archivos, además de "
-            "ejecutar comandos de terminal y delegar en subagentes especializados.",
-            "",
-            "## Contexto del sistema",
-            f"- Sistema operativo: {_os_shell_hint()}",
+            "Asistente de desarrollo integrado en Sparta. Trabajás sobre el proyecto "
+            "abierto: leés, editás, creás/borrás archivos, ejecutás terminal y delegás "
+            "en subagentes especializados.",
+            f"- SO: {_os_shell_hint()}",
         ]
 
         if state.get("project_context"):
             system_parts.append(
-                f"- Proyecto abierto:\n<proyecto_actual>\n{state['project_context']}\n</proyecto_actual>"
+                f"<proyecto_actual>\n{state['project_context']}\n</proyecto_actual>"
             )
 
-        system_parts += [
-            "",
-            f"## Modo activo: {'AGENTE' if effective_mode == 'agent' else 'CHAT'}",
-        ]
+        mode_label = "AGENTE" if effective_mode == "agent" else "CHAT"
 
         if effective_mode == "agent":
-            system_parts.append(
-                "Tenés acceso completo a herramientas de lectura, escritura, borrado "
-                "y ejecución de comandos sobre el proyecto abierto. Descomponé tareas "
-                "complejas en pasos verificables; usá create_plan para tareas de más "
-                "de 2-3 pasos antes de empezar a ejecutar."
+            mode_rules = (
+                f"Modo: {mode_label}. "
+                "Herramientas completas (lectura, escritura, terminal). "
+                "Descomponé tareas complejas; usá create_plan para 2+ pasos."
             )
             if intent == "code_task":
-                system_parts.append(
-                    "Intención detectada: TAREA DE CÓDIGO. Usa read_file/write_file "
-                    "para leer/escribir archivos, y delegate_code para tareas complejas."
-                )
+                mode_rules += " TAREA DE CÓDIGO: read/write_file + delegate_code."
             elif intent == "research":
-                system_parts.append(
-                    "Intención detectada: INVESTIGACIÓN. Usa web_search/web_fetch "
-                    "o delegate_research para investigación profunda."
-                )
+                mode_rules += " INVESTIGACIÓN: web_search + delegate_research."
             elif intent == "memory_query":
-                system_parts.append(
-                    "Intención detectada: CONSULTA DE MEMORIA. Usa read_memory para "
-                    "recuperar información almacenada."
-                )
+                mode_rules += " MEMORIA: read_memory."
         else:
-            system_parts.append(
-                "Estás en modo conversacional. NO tenés herramientas de escritura, "
-                "borrado ni terminal disponibles — solo lectura, búsqueda y memoria. "
-                "Si el usuario pide un cambio en el código, respondé qué harías y sugerí "
-                "cambiar a modo Agente para ejecutarlo; no lo prometas como si ya estuviera hecho."
+            mode_rules = (
+                f"Modo: {mode_label}. Solo lectura, búsqueda y memoria. "
+                "Sin escritura/terminal — sugerí cambiar a modo Agente."
             )
             if web_search_available:
-                system_parts.append(
-                    "Tenés web_search_tool disponible: usala para preguntas sobre "
-                    "fechas, noticias, datos actuales, o cuando el usuario pida buscar algo."
-                )
+                mode_rules += " web_search disponible para datos actuales."
 
-        system_parts += [
-            "",
-            "## Reglas operativas",
-            "- Nunca inventes el resultado de una tool: si falla, reportá el error real.",
-            "- No repitas una tool con los mismos argumentos si ya falló (evitá loops).",
-            "- Para un cambio puntual usá patch_file_tool; para cambios coordinados en "
-            "2+ archivos, apply_patch_tool (atómico).",
-            "- Después de cambios no triviales, delegá en delegate_review antes de "
-            "responder que terminaste.",
-            "- Si necesitás leer varios archivos, usá read_files_tool en vez de read_file_tool repetido.",
-            "",
-            "## Datos en vivo",
-            "- Fecha/hora: usá siempre la del contexto temporal inyectado, nunca la "
-            "respondas de memoria ni la busques en la web.",
-            "- Deportes en vivo, clima, noticias, cotizaciones: usá web_search_tool "
-            "siempre — tu conocimiento no tiene esta información.",
-            "- No respondas 'no tengo información actualizada' si web_search_tool está disponible.",
-            "",
-            "## Terminal",
-            "- Generá comandos válidos para el SO indicado arriba, nunca asumas Unix.",
-            "- Si el comando falla, corrige el motivo específico (sintaxis, ruta, SO).",
-            "",
-            "## Búsqueda web",
-            "- web_search_tool da snippets; para contenido completo, usá web_fetch_tool.",
-            "- Para investigaciones complejas, delegá en delegate_research (modo 'deep').",
-            "- NUNCA repitas la lista de resultados, URLs ni snippets en tu respuesta final.",
-            "- Respondé DIRECTAMENTE la pregunta, como si ya supieras la respuesta.",
-            "- Citá fuentes brevemente ('según MDN...') sin URLs completas.",
-            "",
-            "## Planificación",
-            "- Para tareas de 2+ pasos, usá create_plan para registrar el plan.",
-            "- NUNCA incluyas JSON de planificación en tu respuesta al usuario.",
-            "",
-            "## Formato de respuesta",
-            "- Markdown solo cuando sea necesario (código, tablas, listas de pasos).",
-            "- En respuestas conversacionales cortas, texto plano.",
-            "- Listas con '-' sin líneas en blanco entre items.",
-        ]
+        system_parts.append(mode_rules)
+
+        system_parts.append(
+            "Reglas: no inventes tools; no repitas tools fallidas; "
+            "patch_file para cambios puntuales, apply_patch para 2+ archivos; "
+            "delegate_review tras cambios no triviales; read_files_tool > read_file repetido."
+        )
+
+        system_parts.append(
+            "Datos vivos: usá contexto temporal inyectado (no memoria). "
+            "web_search para clima/noticias/cotizaciones. "
+            "Terminal: comandos del SO indicado (no asumas Unix)."
+        )
+
+        system_parts.append(
+            "Búsqueda web: web_fetch para contenido completo; "
+            "delegate_research para investigación profunda. "
+            "Respondé directo, sin repetir URLs/snippets."
+        )
+
+        system_parts.append(
+            "Formato: Markdown solo cuando sea necesario; texto plano en "
+            "respuestas cortas; listas con '-' sin líneas en blanco."
+        )
 
         if state.get("memory_context"):
             system_parts.append(
@@ -310,7 +301,7 @@ def build_sparta_graph(
             elif scope == "chat":
                 response = await llm_chat.ainvoke(messages)
             else:
-                response = await llm_with_tools.ainvoke(messages)
+                response = await llm_dynamic.ainvoke(messages)
         except Exception as e:
             err_str = str(e)
             if ("tool use" in err_str.lower() or "tools" in err_str.lower()) and "not found" in err_str.lower():

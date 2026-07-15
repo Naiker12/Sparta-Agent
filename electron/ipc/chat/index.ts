@@ -12,6 +12,7 @@ import { registerMcpTestIPC } from './mcp-test.ipc'
 import { registerEditorDiffIPC } from './editor-diff.ipc'
 import { registerSidecarStatusIPC } from './sidecar-status.ipc'
 import { registerMemoryIPC } from './memory.ipc'
+import { registerAudioIPC } from './audio.ipc'
 
 export function registerChatIPC(): void {
   sidecarEvents.on(SidecarEvent.STDERR, (text: string) => {
@@ -45,6 +46,7 @@ export function registerChatIPC(): void {
   registerEditorDiffIPC()
   registerSidecarStatusIPC()
   registerMemoryIPC()
+  registerAudioIPC()
 }
 
 sidecarEvents.on(SidecarEvent.MESSAGE, (msg: Record<string, unknown>) => {

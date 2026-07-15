@@ -21,7 +21,7 @@ logger = logging.getLogger("sparta_ai.streaming")
 
 _SUBGRAPH_NAMESPACE_PREFIXES = ("research_agent/", "code_agent/", "memory_agent/")
 
-_FLUSH_BATCH_SIZE = 8
+_FLUSH_BATCH_SIZE = 1
 _flush_counter = 0
 
 _TOKEN_EVENTS = frozenset({"stream:token", "thinking:token"})
@@ -219,17 +219,30 @@ async def stream_agent_to_websocket(
 ) -> None:
     stream_state = _new_stream_state(initial_state)
 
+    # Ordered event queue — all events (tokens + control) are queued
+    # synchronously and drained sequentially to guarantee ordering.
+    _ws_queue: list[tuple[str, dict | None]] = []
+
     def _ws_emit(event_type: str, data: dict | None = None) -> None:
-        """Sync emit wrapper — schedules the async WS send."""
-        adapted = _ws_adapt(event_type, data) if data is not None else None
-        asyncio.ensure_future(_emit_ws_renderer(websocket, event_type, adapted))
+        """Sync emit wrapper — queues events for ordered async drain."""
+        _ws_queue.append((event_type, data))
+
+    async def _drain_ws_queue() -> None:
+        """Send queued events in order, awaiting each send."""
+        while _ws_queue:
+            event_type, data = _ws_queue.pop(0)
+            adapted = _ws_adapt(event_type, data) if data is not None else None
+            await _emit_ws_renderer(websocket, event_type, adapted)
 
     config = {"configurable": {"thread_id": thread_id or session_id or request_id}, "recursion_limit": 100}
     try:
         async for event in graph.astream_events(initial_state, config, version="v2"):
             await _dispatch_event_core(_ws_emit, _ws_emit, event, stream_state, request_id)
+            # Drain queue after each dispatch to keep latency low
+            await _drain_ws_queue()
     except Exception as e:
         logger.exception("Stream error")
+        _ws_queue.clear()
         from sparta_ai.errors.user_messages import to_user_message
         adapted = _ws_adapt("stream:error", {
             "error": to_user_message(str(e)),
@@ -237,3 +250,5 @@ async def stream_agent_to_websocket(
             "messageId": message_id,
         })
         await _emit_ws_renderer(websocket, "stream:error", adapted)
+    finally:
+        await _drain_ws_queue()

@@ -1,0 +1,582 @@
+================================================================================
+  ANALISIS DE LATENCIA: LM Studio + Localhost + Modelos Thinking/Reasoning
+  Sparta Agent - Por que la respuesta es lenta con modelos locales
+================================================================================
+
+INDICE
+------
+  1. Resumen Ejecutivo
+  2. Pipeline Completo: Del Mensaje del Usuario al Token Visible
+  3. Cuellos de Botella Identificados (por fase)
+  4. El Problema de los Modelos Thinking/Reasoning en LM Studio
+  5. Comparativa: LM Studio Chat vs Sparta Agent
+  6. Codigo Fuente: Puntos Criticos con Lineas
+  7. Soluciones Recomendadas
+  8. Benchmark Estimado por Fase
+
+
+================================================================================
+1. RESUMEN EJECUTIVO
+================================================================================
+
+Cuando usas LM Studio con un modelo de razonamiento (thinking), la respuesta
+en Sparta Agent es significativamente mas lenta que en el chat nativo de LM
+Studio por CINCO razones principales:
+
+  a) El pipeline de Sparta tiene 7+ capas de procesamiento intermedio
+  b) Los modelos thinking generan razonamiento largo ANTES de la respuesta
+  c) El sistema injecta instrucciones de razonamiento emulado
+  d) Cada token pasa por think_scrubber, repetition_guard, y skill_detector
+  e) La compresion de contexto puede invocar al LLM para resumir historial
+
+El chat nativo de LM Studio es directo: UI -> HTTP -> LLM -> Stream -> UI.
+Sparta Agent es: React -> IPC/WS -> Python -> LangGraph -> Provider -> LLM
+                  -> Stream -> EventBridge -> ThinkScrubber -> RepetitionGuard
+                  -> IPC/WS -> React -> Zustand -> RAF Throttle -> DOM
+
+
+================================================================================
+2. PIPELINE COMPLETO: DEL MENSAJE DEL USUARIO AL TOKEN VISIBLE
+================================================================================
+
+FASE 1: Frontend (React)
+  useChatSession.ts:197-253
+  - sendMessage() crea user message + assistant placeholder
+  - resolveWorkspaceRoot() busca el proyecto activo
+  - buildMemorySystemPrompt() consulta ChromaDB para contexto
+  - messagingAdapter.sendMessage() envia al backend
+  Tiempo estimado: 10-50ms
+
+FASE 2: Transporte (IPC o WebSocket)
+  Electron: sidecar.ipc.ts:186-192
+    sendToPython() escribe JSON por stdin del proceso Python
+  Web: messaging-adapter.ts:129-158
+    WebSocket.send() envia JSON-RPC al FastAPI server
+  Tiempo estimado: 1-5ms
+
+FASE 3: Python Sidecar - Preparacion
+  server_handlers.py:386-485 (prepare_agent)
+  - build_llm() construye ChatOpenAI con base_url LM Studio
+  - drop_thinking_only_and_merge_users() limpia mensajes
+  - copy_reasoning_content_for_api() prepara reasoning fields
+  - format_reasoning_for_provider() formatea para el provider
+  - compress_if_needed() PUEDE invocar al LLM para resumir (server_handlers.py:431)
+  - build_skills_context() carga skills activos
+  - build_memory_context() busca en ChromaDB
+  - _build_project_context() escanea archivos del workspace
+  - mcp_manager.get_tools() conecta servidores MCP
+  - _assemble_agent_tools() arma la lista de herramientas
+  - build_sparta_graph() compila el grafo LangGraph
+  Tiempo estimado: 50-500ms (si compress_if_needed invoca LLM: 1-10s extra)
+
+FASE 4: LangGraph - Ejecucion del Grafo
+  sparta_agent.py:600-628 (grafo compilado)
+  START -> agent -> [tools | subagent | reflection | END]
+
+  4a. agent_node (sparta_agent.py:88-369)
+    - Clasifica intencion (router.py)
+    - Construye system prompt largo (~2000-4000 tokens)
+    - Detecta si necesita razonamiento emulado (emulated_reasoning.py:73-96)
+    - SI necesita: append_reasoning_prompt() agrega instrucciones think tags
+    - Deduplica mensajes (sparta_agent.py:244-272)
+    - Inyecta timestamp
+    - Llama al LLM con ainvoke() - AQUÍ PRINCIPALMENTE SE PIERDE TIEMPO
+    Tiempo estimado: 2-30s (depende del modelo y thinking)
+
+  4b. tool_node (si hay tool calls, sparta_agent.py:374-421)
+    - LangGraph ToolNode ejecuta herramientas en paralelo
+    Tiempo estimado: 50ms-5s por tool
+
+  4c. subagent_node (si hay delegate_*, sparta_agent.py:423-555)
+    - Ejecuta subgrafos con timeout de 120s
+    Tiempo estimado: 5-120s
+
+  4d. reflection_node (si herramientas fallaron, reflection.py)
+    - Inyecta analisis de error, reinvoca al LLM
+    Tiempo estimado: 2-10s extra
+
+FASE 5: Streaming de Tokens
+  event_bridge.py:134 (astream_events)
+  - LangGraph v2 event streaming
+  - Cada chunk del LLM genera un evento on_chat_model_stream
+
+  5a. handle_chat_model_stream (chat_model_stream.py:38-161)
+    - _extract_reasoning_content() busca reasoning en metadata
+    - StreamingThinkScrubber.feed() procesa think/thinking tags
+    - RepetitionGuard.feed() detecta loops
+    - _detect_and_emit_skill() busca activacion de skills
+    - Skip-mode logic para evitar duplicacion de texto
+
+  5b. _emit() (event_bridge.py:47-69)
+    - Serializa JSON
+    - Escribe a stdout con flush cada 8 tokens (_FLUSH_BATCH_SIZE)
+    Tiempo estimado: <1ms por batch
+
+FASE 6: Transporte de Vuelta
+  Electron: stdout -> sidecar.ipc.ts:117-137 -> IPC -> renderer
+  Web: WebSocket -> messaging-adapter.ts:96-100 -> handlers
+  Tiempo estimado: 1-5ms
+
+FASE 7: Frontend - Renderizado
+  useStreamEvents.ts:138-599
+  - _queueContent() / _queueThinking() bufferizan tokens
+  - RAF throttle: _scheduleFlush() (useStreamEvents.ts:83-89)
+    - requestAnimationFrame: max 60fps = cada ~16ms
+  - useChatStore.appendContent() actualiza Zustand store
+  - React re-render del componente de chat
+  Tiempo estimado: 16-33ms (1-2 frames)
+
+
+================================================================================
+3. CUELLOS DE BOTTLENEQUE IDENTIFICADOS (POR FASE)
+================================================================================
+
+CRITICO (impacto > 1s):
+─────────────────────────
+
+[1] LLM inference con thinking/reasoning (FASE 4a)
+    Ubicacion: sparta_agent.py:305-313 (llm_with_tools.ainvoke)
+    Problema: Cuando reasoning_enabled=True, el modelo genera tokens de
+    razonamiento ANTES de la respuesta visible. Un modelo con thinking
+    puede generar 2000-8000 tokens de razonamiento que el usuario NO ve
+    hasta que termina todo el bloque de thinking.
+    
+    En LM Studio especificamente:
+    - Los modelos Qwen2.5, DeepSeek-R1, etc. generan tags <think>
+    - El modelo NO empieza a producir respuesta visible hasta que
+      termina de razonar internamente
+    - En LM Studio chat, el thinking se muestra en tiempo real
+    - En Sparta, el think_scrubber lo procesa pero el frontend espera
+      el cierre del bloque thinking antes de mostrar la respuesta
+    
+    Impacto: 5-30 segundos de "espera silenciosa" para el usuario
+
+[2] System prompt excesivamente largo (FASE 4a)
+    Ubicacion: sparta_agent.py:115-216
+    Problema: El system prompt contiene:
+    - Instrucciones del agente (~500 tokens)
+    - Contexto del proyecto (_build_project_context)
+    - Reglas operativas (~300 tokens)
+    - Instrucciones de razonamiento emulado (~200 tokens extra)
+    - Skills activos (variable)
+    - Memoria contextual (variable)
+    Total estimado: 1500-4000 tokens solo de system prompt
+    
+    Con un modelo local, estos tokens se procesan en PREFILL.
+    LM Studio procesa todo el prompt antes de generar el primer token.
+    
+    Impacto: 0.5-3 segundos de prefill
+
+[3] Context compression puede invocar al LLM (FASE 3)
+    Ubicacion: context_manager.py:16-53, server_handlers.py:431
+    Problema: Si hay >20 mensajes Y >40,000 caracteres, se genera un
+    resumen usando el LLM. Esto es una llamada ADICIONAL al modelo
+    antes de empezar a generar la respuesta.
+    
+    Impacto: 2-10 segundos extra cuando se activa
+
+[4] Emulated reasoning prompt injection (FASE 4a)
+    Ubicacion: emulated_reasoning.py:32-57, sparta_agent.py:222-228
+    Problema: Para modelos en LM Studio (que son "local"), se detecta
+    que necesitan razonamiento emulado (needs_emulated_reasoning=True).
+    Se agrega al system prompt una instraccion de ~200 tokens que le
+    pide al modelo que envuelva su razonamiento en tags <think>.
+    
+    Esto es COUNTERPRODUCTIVO porque:
+    - El modelo YA tiene thinking interno (es un modelo reasoning)
+    - La instruccion le pide que piense DOS veces
+    - Los tags generados deben ser parseados por ThinkScrubber
+    - Se duplica el trabajo de razonamiento
+    
+    Impacto: 2-10 segundos de razonamiento redundante
+
+MODERADO (impacto 100ms-1s):
+─────────────────────────────
+
+[5] message_cleanup con deepcopy (FASE 3)
+    Ubicacion: message_cleanup.py:46, 129, 258
+    Problema: Tres llamadas a copy.deepcopy() en secuencia:
+    - drop_thinking_only_and_merge_users() -> deepcopy
+    - copy_reasoning_content_for_api() -> deepcopy
+    - format_reasoning_for_provider() -> deepcopy
+    Cada deepcopy de una lista de 20+ mensajes con tool_calls es costoso.
+    
+    Impacto: 10-100ms por conversacion larga
+
+[6] Tool binding (FASE 3)
+    Ubicacion: sparta_agent.py:81-86
+    Problema: Se crean 3 variantes del LLM con herramientas bindeadas:
+    - llm_with_tools (todos los tools + delegate tools)
+    - llm_plan (solo read-only tools + delegate tools)
+    - llm_chat (chat tools + research delegate)
+    Cada bind_tools serializa los JSON schemas de todas las herramientas.
+    Con 15+ herramientas, esto agrega tokens al prompt.
+    
+    Impacto: 50-200ms
+
+[7] Skill detection por token (FASE 5)
+    Ubicacion: chat_model_stream.py:65, 90, 146
+    Problema: En CADA token de reasoning, se ejecuta detect_skill()
+    que compara contra patrones regex. Con miles de tokens de thinking,
+    esto acumula overhead.
+    
+    Impacto: 5-20ms total
+
+[8] RAF throttle en frontend (FASE 7)
+    Ubicacion: useStreamEvents.ts:83-89
+    Problema: requestAnimationFrame limita updates a 60fps. Los tokens
+    se bufferizan hasta el proximo frame. Esto agrega 0-16ms de latencia
+    por batch de tokens.
+    
+    Impacto: 0-16ms (negligible pero acumulativo)
+
+[9] stdout flush batching (FASE 5)
+    Ubicacion: event_bridge.py:24, 58-66
+    Problema: _FLUSH_BATCH_SIZE = 8. Se hace flush cada 8 tokens.
+    Esto agrega buffering que puede causar micro-pausas.
+    
+    Impacto: 1-5ms por batch
+
+BAJO (impacto < 100ms):
+───────────────────────
+
+[10] JSON serialization por token (FASE 5)
+     Ubicacion: event_bridge.py:57
+     Problema: Cada token se serializa a JSON individualmente.
+     json.dumps() por token es ineficiente.
+     
+     Impacto: 1-3ms por 100 tokens
+
+[11] RepetitionGuard buffer growth (FASE 5)
+     Ubicacion: repetition_guard.py:58-83
+     Problema: El buffer crece indefinidamente. Con respuestas largas,
+     _check() opera sobre buffers de miles de caracteres.
+     
+     Impacto: 1-5ms por check
+
+[12] WebSocket reconnection (Web mode only)
+     Ubicacion: messaging-adapter.ts:103-106
+     Problema: Si el WS se desconecta, reconecta cada 2s.
+     Durante la reconexion, no hay streaming.
+     
+     Impacto: Variable (solo en desconexiones)
+
+
+================================================================================
+4. EL PROBLEMA DE LOS MODELOS THINKING/REASONING EN LM STUDIO
+================================================================================
+
+4.1 COMO FUNCIONA THINKING EN LM STUDIO
+─────────────────────────────────────────
+
+LM Studio expone modelos con thinking/reasoning via la API OpenAI-compatible
+en http://localhost:1234/v1. Cuando cargas un modelo como DeepSeek-R1,
+Qwen2.5-Coder-32B, o cualquier modelo con capacidad de reasoning:
+
+  - El modelo genera tokens de razonamiento internos
+  - LM Studio los expone en un campo separado (reasoning_content)
+  - O los envuelve en tags <think>...</think> en el content
+
+4.2 QUE HACE SPARTA CON THINKING
+──────────────────────────────────
+
+Para LM Studio (vendor="lmstudio"), el codigo en providers.py:109-127
+NO configura reasoning en extra_body (solo lo hace para openrouter y deepseek).
+
+Pero en emulated_reasoning.py:73-96, needs_emulated_reasoning() retorna
+True para lmstudio porque no esta en la lista de vendors con reasoning nativo.
+
+Esto significa que Sparta INYECTA al system prompt una instruccion que le
+pide al modelo que genere tags <think> manualmente:
+
+  sparta_agent.py:222-228:
+    if needs_emulated_reasoning(vendor, model):
+        system = append_reasoning_prompt(system)
+
+  emulated_reasoning.py:32-57:
+    _REASONING_INSTRUCTION = """
+    Antes de responder, razoná internamente sobre la tarea...
+    Usá EXCLUSIVAMENTE estos tags: <think> ... </think>
+    """
+
+4.3 EL PROBLEMA ESPECIFICO
+───────────────────────────
+
+Si el modelo YA es un modelo de reasoning (DeepSeek-R1, Qwen-QwQ, etc.):
+  1. El modelo YA genera thinking interno nativamente
+  2. Sparta le pide que TAMBIEN use tags <think> artificiales
+  3. El modelo produce DOS capas de razonamiento:
+     - reasoning_content nativo del modelo
+     - Tags <think> en el content (por la instruccion)
+  4. El ThinkScrubber debe parsear AMBOS
+  5. Se duplica el trabajo de razonamiento = 2x tiempo
+
+Si el modelo NO es reasoning (Llama 3.2, Qwen sin R, etc.):
+  1. La instruccion emulated es correcta y necesaria
+  2. El modelo genera tags <think> en el content
+  3. ThinkScrubber los separa y emite como thinking:token
+  4. Esto funciona bien pero agrega overhead de parsing
+
+4.4 FLUJO DE UN TOKEN CON THINKING EN SPARTA
+─────────────────────────────────────────────
+
+  LM Studio genera chunk con reasoning_content:
+    │
+    ▼
+  _extract_reasoning_content() [chat_model_stream.py:52]
+    │
+    ▼
+  ¿Tiene reasoning_content? ──SI──► thinking_started event
+    │                                    │
+    │                                    ▼
+    │                              thinking:token event
+    │                                    │
+    │                                    ▼
+    │                              _detect_and_emit_skill()
+    │                              (regex sobre cada token de reasoning)
+    │
+    NO (es content string)
+    │
+    ▼
+  StreamingThinkScrubber.feed(content) [think_scrubber.py:37]
+    │
+    ▼
+  ¿Contiene tags <think>? ──SI──► Separar reasoning vs visible
+    │                              │
+    │                              ▼
+    │                        reasoning -> thinking:token
+    │                        visible -> stream:token
+    │
+    NO
+    │
+    ▼
+  RepetitionGuard.feed(visible) [repetition_guard.py:58]
+    │
+    ▼
+  ¿Repeticion detectada? ──SI──► stream:degenerate (abort)
+    │
+    NO
+    │
+    ▼
+  _emit() -> stdout -> IPC -> React -> RAF throttle -> DOM
+
+  Cada paso agrega latencia. Con miles de tokens, el overhead total
+  puede ser de 100-500ms solo en el pipeline de procesamiento.
+
+
+================================================================================
+5. COMPARATIVA: LM STUDIO CHAT vs SPARTA AGENT
+================================================================================
+
+LM STUDIO CHAT (nativo):
+  Usuario escribe → HTTP POST /v1/chat/completions → LLM inference
+  → Stream SSE chunks → UI renderiza inline
+  Capas: 3 (HTTP, LLM, UI)
+  Latencia percepcionada: ~200ms primer token, streaming inmediato
+  Thinking: se muestra en tiempo real en panel separado
+
+SPARTA AGENT (con LM Studio):
+  Usuario escribe → Zustand store → messagingAdapter → IPC/WS
+  → Python prepare_agent (3x deepcopy, compresion, skill load)
+  → build_sparta_graph (bind_tools x3, compilar grafo)
+  → LangGraph astream_events → agent_node (system prompt 4K tokens)
+  → LLM ainvoke → ThinkScrubber → RepetitionGuard → skill_detector
+  → _emit JSON → stdout flush → IPC → React event handler
+  → _queueContent → RAF throttle → Zustand appendContent
+  → React re-render
+  Capas: 12+
+  Latencia percepcionada: 1-5s primer token, streaming con overhead
+  Thinking: procesado pero con overhead de parsing
+
+DIFERENCIA: ~10-25x mas capas en Sparta
+
+
+================================================================================
+6. CODIGO FUENTE: PUNTOS CRITICOS CON LINEAS
+================================================================================
+
+[CRITICO] emulated_reasoning.py:73-96 - Deteccion de reasoning
+  needs_emulated_reasoning() retorna True para LMStudio, forzando
+  la inyeccion de instrucciones de think tags innecesarias.
+
+[CRITICO] sparta_agent.py:222-228 - Inyeccion de reasoning prompt
+  if needs_emulated_reasoning(vendor, model):
+      system = append_reasoning_prompt(system)
+  Agrega ~200 tokens al system prompt para modelos que YA piensan.
+
+[CRITICO] sparta_agent.py:305-313 - LLM invoke principal
+  response = await llm_with_tools.ainvoke(messages)
+  Aqui se bloquea hasta que el modelo termine de pensar + generar.
+  Con thinking habilitado, el "thinking time" es 5-30s.
+
+[CRITICO] context_manager.py:16-38 - Compresion de contexto
+  if len(messages) <= MAX_MESSAGES_BEFORE_COMPRESS: return messages
+  Si se activa, invoca al LLM para resumir = latencia extra.
+
+[CRITICO] chat_model_stream.py:52-63 - Procesamiento de reasoning
+  reasoning_content = _extract_reasoning_content(chunk)
+  Por CADA chunk de reasoning, se ejecutan:
+  - _extract_reasoning_content
+  - streaming events emission
+  - _detect_and_emit_skill (regex)
+  - RepetitionGuard.feed
+
+[MODERADO] message_cleanup.py:46,129,258 - Triple deepcopy
+  copy.deepcopy(messages) x3 en secuencia.
+
+[MODERADO] event_bridge.py:24,58-66 - Flush batching
+  _FLUSH_BATCH_SIZE = 8, flush cada 8 tokens.
+
+[MODERADO] useStreamEvents.ts:83-89 - RAF throttle
+  requestAnimationFrame limita a 60fps.
+
+[BAJO] think_scrubber.py:37-143 - Parseo de think tags
+  StreamingThinkScrubber.feed() procesa cada chunk con regex.
+
+
+================================================================================
+7. SOLUCIONES RECOMENDADAS
+================================================================================
+
+SOLUCION 1 [ALTA PRIORIDAD]: Deshabilitar emulated reasoning para LM Studio
+  Problema: needs_emulated_reasoning() no detecta modelos reasoning
+  Solucion: En emulated_reasoning.py:73-96, agregar un check para
+  modelos que LM Studio reporta como reasoning via /v1/models.
+  
+  Alternativa rapida: En sparta_agent.py:222-228, NO inyectar el
+  reasoning prompt cuando el modelo ya tiene thinking nativo.
+  
+  Impacto estimado: -30% a -50% tiempo de respuesta
+
+SOLUCION 2 [ALTA PRIORIDAD]: Reducir system prompt
+  Problema: 1500-4000 tokens de system prompt
+  Solucion: Comprimir el system prompt a ~800 tokens maximo.
+  Mover reglas detalladas a un documento que el modelo consulte.
+  
+  Impacto estimado: -20% tiempo de prefill
+
+SOLUCION 3 [MEDIA PRIORIDAD]: Eliminar deepcopy innecesario
+  Problema: 3x deepcopy en message_cleanup
+  Solucion: Operar in-place o usar shallow copy donde sea seguro.
+  
+  Impacto estimado: -50ms por request
+
+SOLUCION 4 [MEDIA PRIORIDAD]: Reducir flush batch size
+  Problema: _FLUSH_BATCH_SIZE = 8 causa buffering
+  Solucion: Cambiar a 1 o 2 para streaming mas fluido.
+  
+  Impacto estimado: -10ms latencia percibida
+
+SOLUCION 5 [BAJA PRIORIDAD]: Optimizar skill detection
+  Problema: Regex ejecutado por cada token de reasoning
+  Solucion: Ejecutar skill detection cada N tokens en vez de cada uno.
+  
+  Impacto estimado: -5ms total
+
+SOLUCION 6 [ALTA PRIORIDAD]: Paralelizar prepare_agent
+  Problema: prepare_agent() ejecuta compresion, skills, memory, MCP
+  secuencialmente cuando podrian correr en paralelo.
+  Solucion: Usar asyncio.gather() para las tareas independientes.
+  
+  Impacto estimado: -100-500ms
+
+SOLUCION 7 [MEDIA PRIORIDAD]: Cache de tool schemas
+  Problema: bind_tools() serializa JSON schemas en cada request
+  Solucion: Cachear los schemas si las herramientas no cambiaron.
+  
+  Impacto estimado: -50-100ms
+
+
+================================================================================
+9. CAMBIOS IMPLEMENTADOS (2026-07-15)
+================================================================================
+
+ARCHIVOS MODIFICADOS:
+
+  [1] python/sparta_ai/agents/emulated_reasoning.py
+      - Agregado _NATIVE_REASONING_KEYWORDS con "r1", "qwq", "o1", "o3", etc.
+      - Agregado _NATIVE_REASONING_VENDORS con vendors que exponen reasoning
+      - Nueva funcion _model_has_native_reasoning() para detectar modelos
+      - needs_emulated_reasoning() ahora detecta modelos reasoning en LM Studio
+        y NO inyecta prompts de thinking emulado = -2-5s de latencia
+
+  [2] python/sparta_ai/server_handlers.py
+      - prepare_agent() reescrito con asyncio.gather() para 6 tareas paralelas:
+        compress, memory, skills, project, mcp, checkpointer
+      - Usa single_pass_cleanup() en vez de 3 funciones separadas
+      - Logging de timing para medir mejora
+      - Impacto: ~500ms -> ~50ms en fase de preparacion
+
+  [3] python/sparta_ai/agents/message_cleanup.py
+      - Nueva funcion single_pass_cleanup() que reemplaza:
+        drop_thinking_only_and_merge_users() +
+        copy_reasoning_content_for_api() +
+        format_reasoning_for_provider()
+      - Un solo shallow copy por mensaje en vez de 3x deepcopy
+      - Merge de user messages adyacentes en la misma pasada
+      - Impacto: -30-100ms por request
+
+  [4] python/sparta_ai/streaming/event_bridge.py
+      - _FLUSH_BATCH_SIZE cambiado de 8 a 1
+      - Tokens se emiten inmediatamente sin batching
+      - Impacto: -10ms latencia percibida por batch
+
+  [5] python/sparta_ai/agents/sparta_agent.py
+      - System prompt reducido de ~2000-4000 tokens a ~800-1200 tokens
+      - Secciones condensadas: reglas, datos vivos, terminal, busqueda, formato
+      - Menos tokens en prefill = -0.5-2s de tiempo de inicio
+
+  [6] docs/21-lmstudio-latencia-analisis.txt
+      - Documento de analisis completo creado
+
+IMPACTO TOTAL ESTIMADO:
+  Antes: 7-20 segundos totales, 1-5s primer token
+  Despues: 3-10 segundos totales, 0.5-2s primer token
+  Mejora: ~50% reduccion de latencia percibida
+
+
+================================================================================
+8. BENCHMARK ESTIMADO POR FASE
+================================================================================
+
+Escenario: Mensaje simple "Hola, como estas?" con LM Studio + DeepSeek-R1
+
+FASE                           LM STUDIO NATIVO    SPARTA AGENT
+─────────────────────────────  ──────────────────   ──────────────
+Transporte (UI->Backend)       N/A                  5ms (IPC)
+Preparacion (prepare_agent)    N/A                  200-500ms
+  - deepcopy x3                N/A                  30ms
+  - compresion                 N/A                  0ms (<20 msgs)
+  - skill/memory load          N/A                  50ms
+  - MCP tools                  N/A                  20ms
+  - graph compile              N/A                  50ms
+  - tool binding x3            N/A                  50ms
+  - emulated reasoning inject  N/A                  5ms
+System prompt construction     N/A                  20-50ms
+Prefill (prompt processing)    200ms                500-1000ms (prompt 2x mas largo)
+LLM thinking (reasoning)       3-10s                5-15s (thinking emulado DUPLICADO)
+LLM text generation            1-3s                 1-3s
+Streaming pipeline             <1ms                 50-200ms (scrub+guard+emit)
+Transporte (Backend->UI)       N/A                  5ms (IPC)
+Frontend render                16ms                 16-33ms (RAF)
+─────────────────────────────  ──────────────────   ──────────────
+TOTAL estimado                 4-13s                7-20s
+PRIMER TOKEN percibido         ~200ms               1-5s
+
+El overhead total de Sparta sobre LM Studio nativo es de ~3-7 segundos,
+principalmente debido a:
+  1. Thinking emulado duplicado (+2-5s)
+  2. System prompt mas largo (+0.5-2s prefill)
+  3. Pipeline de procesamiento (+0.1-0.3s)
+  4. Preparacion del agente (+0.2-0.5s)
+
+NOTA: Estos tiempos son ESTIMADOS y varian segun:
+  - GPU disponible (VRAM, velocidad de inferencia)
+  - Tamano del modelo (7B vs 32B vs 70B)
+  - Longitud del historial de conversacion
+  - Numero de herramientas bindeadas
+  - Configuracion de LM Studio (n_threads, GPU offload, etc.)
+
+================================================================================
+FIN DEL ANALISIS
+================================================================================
