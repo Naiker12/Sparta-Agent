@@ -1,4 +1,27 @@
-packages: []
+packages:
+  - 'desktop/ia-sparta-app-shell'
+  - 'desktop/ia-sparta-ipc-bridge'
+  - 'desktop/ia-sparta-chat-ipc'
+  - 'desktop/ia-sparta-vault'
+  - 'desktop/ia-sparta-stream-events'
+  - 'desktop/ia-sparta-chat'
+  - 'desktop/ia-sparta-agents'
+  - 'desktop/ia-sparta-editor'
+  - 'desktop/ia-sparta-terminal'
+  - 'desktop/ia-sparta-mcp'
+  - 'desktop/ia-sparta-memory'
+  - 'desktop/ia-sparta-permission'
+  - 'desktop/ia-sparta-providers'
+  - 'desktop/ia-sparta-settings'
+  - 'desktop/ia-sparta-skills'
+  - 'desktop/ia-sparta-channels'
+  - 'desktop/ia-sparta-projects'
+  - 'desktop/ia-sparta-shell-layout'
+  - 'desktop/ia-sparta-design-system'
+  - 'desktop/ia-sparta-i18n'
+  - 'desktop/ia-sparta-core'
+  - 'desktop/runtime/ia-sparta-sidecar-python'
+  - 'desktop/runtime/ia-sparta-security-rust'
 
 allowBuilds:
   electron: true

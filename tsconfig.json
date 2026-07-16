@@ -20,10 +20,38 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
+    "ignoreDeprecations": "6.0",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "ia-sparta-*": ["./desktop/ia-sparta-*/src/index.ts"],
+      "ia-sparta-app-shell": ["./desktop/ia-sparta-app-shell/src/index.ts"],
+      "ia-sparta-ipc-bridge": ["./desktop/ia-sparta-ipc-bridge/src/index.ts"],
+      "ia-sparta-chat-ipc": ["./desktop/ia-sparta-chat-ipc/src/index.ts"],
+      "ia-sparta-vault": ["./desktop/ia-sparta-vault/src/index.ts"],
+      "ia-sparta-stream-events": ["./desktop/ia-sparta-stream-events/src/index.ts"],
+      "ia-sparta-chat": ["./desktop/ia-sparta-chat/src/index.ts"],
+      "ia-sparta-agents": ["./desktop/ia-sparta-agents/src/index.ts"],
+      "ia-sparta-editor": ["./desktop/ia-sparta-editor/src/index.ts"],
+      "ia-sparta-terminal": ["./desktop/ia-sparta-terminal/src/index.ts"],
+      "ia-sparta-mcp": ["./desktop/ia-sparta-mcp/src/index.ts"],
+      "ia-sparta-memory": ["./desktop/ia-sparta-memory/src/index.ts"],
+      "ia-sparta-permission": ["./desktop/ia-sparta-permission/src/index.ts"],
+      "ia-sparta-providers": ["./desktop/ia-sparta-providers/src/index.ts"],
+      "ia-sparta-settings": ["./desktop/ia-sparta-settings/src/index.ts"],
+      "ia-sparta-skills": ["./desktop/ia-sparta-skills/src/index.ts"],
+      "ia-sparta-channels": ["./desktop/ia-sparta-channels/src/index.ts"],
+      "ia-sparta-projects": ["./desktop/ia-sparta-projects/src/index.ts"],
+      "ia-sparta-shell-layout": ["./desktop/ia-sparta-shell-layout/src/index.ts"],
+      "ia-sparta-design-system": ["./desktop/ia-sparta-design-system/src/index.ts"],
+      "ia-sparta-i18n": ["./desktop/ia-sparta-i18n/src/index.ts"],
+      "ia-sparta-core": ["./desktop/ia-sparta-core/src/index.ts"]
     }
   },
-  "include": ["src", "electron"],
+  "include": [
+    "src",
+    "electron",
+    "desktop/ia-sparta-*/src",
+    "desktop/runtime/*/src"
+  ],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

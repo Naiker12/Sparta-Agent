@@ -1,0 +1,20 @@
+{
+  "name": "ia-sparta-editor",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "@monaco-editor/react": "^4.7.0",
+    "monaco-editor": "^0.55.1",
+    "lucide-react": "^1.24.0",
+    "ia-sparta-design-system": "workspace:*",
+    "ia-sparta-ipc-bridge": "workspace:*"
+  }
+}

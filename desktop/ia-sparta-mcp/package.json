@@ -1,0 +1,19 @@
+{
+  "name": "ia-sparta-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "lucide-react": "^1.24.0",
+    "sonner": "^2.0.7",
+    "ia-sparta-design-system": "workspace:*",
+    "ia-sparta-ipc-bridge": "workspace:*"
+  }
+}
