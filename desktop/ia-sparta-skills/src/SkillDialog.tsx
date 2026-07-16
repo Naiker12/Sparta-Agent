@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Zap, Trash2, X } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog'
-import type { Skill, SkillCategory } from '@/types'
-import { SKILL_CATEGORIES, normalizeCategory } from '@/types'
+import { Button } from 'ia-sparta-design-system'
+import { ConfirmDeleteDialog } from 'ia-sparta-design-system'
+import type { Skill, SkillCategory } from 'ia-sparta-core'
+import { SKILL_CATEGORIES, normalizeCategory } from 'ia-sparta-core'
 
 interface SkillDialogProps {
   open: boolean

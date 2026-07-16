@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { ChevronDown, FolderOpen, Plus } from 'lucide-react'
-import { useProjectStore } from '@/stores/project.store'
+import { useProjectStore } from 'ia-sparta-core'
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { ProjectDialog } from '@/components/projects/ProjectDialog'
-import { cn } from '@/lib/utils'
+} from 'ia-sparta-design-system'
+import { ProjectDialog } from 'ia-sparta-projects'
+import { cn } from 'ia-sparta-core'
 
 export function ProjectSwitcher() {
   const { projects, activeProjectId, switchProject, addProject } = useProjectStore()

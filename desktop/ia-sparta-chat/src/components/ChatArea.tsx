@@ -1,9 +1,9 @@
-import { useChatStore } from '@/stores/chat.store'
-import { useSessionStore } from '@/stores/session.store'
+import { useChatStore } from 'ia-sparta-core'
+import { useSessionStore } from 'ia-sparta-core'
 import { MessageList } from './MessageList'
-import { ChatInput } from '@/components/input/ChatInput'
+import { ChatInput } from './input/ChatInput'
 import { HeroScreen } from './HeroScreen'
-import { PlanWatchPane } from '@/components/agents/PlanWatchPane'
+import { PlanWatchPane } from 'ia-sparta-agents'
 
 export function ChatArea() {
   const activeSessionId = useSessionStore((s) => s.activeSessionId)

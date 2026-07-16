@@ -1,4 +1,4 @@
-import { useSessionStore } from '@/stores/session.store'
+import { useSessionStore } from 'ia-sparta-core'
 import { SessionItem } from './SessionItem'
 
 export function SessionList() {

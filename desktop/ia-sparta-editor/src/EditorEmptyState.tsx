@@ -1,9 +1,9 @@
 import { useState, useCallback } from 'react'
 import { FolderOpen, FileSearch, Command, Upload } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { useTranslation } from '@/i18n'
-import { useProjectStore } from '@/stores/project.store'
-import { toastReplace } from '@/lib/toast-helpers'
+import { Button } from 'ia-sparta-design-system'
+import { useTranslation } from 'ia-sparta-i18n'
+import { useProjectStore } from 'ia-sparta-core'
+import { toastReplace } from 'ia-sparta-core'
 
 interface EmptyEditorStateProps {
   projectName?: string

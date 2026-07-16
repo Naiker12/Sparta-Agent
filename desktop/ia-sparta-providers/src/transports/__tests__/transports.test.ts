@@ -3,7 +3,7 @@ import { AnthropicTransport } from '../anthropic.transport'
 import { ChatCompletionsTransport } from '../openai.transport'
 import { OllamaTransport } from '../ollama.transport'
 import { HTTP_STATUS_MESSAGES, isRetryable } from '../http-utils'
-import type { ChatRequest } from '@/types'
+import type { ChatRequest } from 'ia-sparta-core'
 
 const sampleReq: ChatRequest = {
   model: 'claude-3-5-sonnet-20241022',

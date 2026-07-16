@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Plus, Code, Search, Settings, Shield, Split, TestTube, Globe, Cpu, Sparkles, RotateCw } from 'lucide-react'
-import { useSettingsStore } from '@/stores/settings.store'
-import { useSessionStore } from '@/stores/session.store'
-import { useTranslation } from '@/i18n'
+import { useSettingsStore } from 'ia-sparta-core'
+import { useSessionStore } from 'ia-sparta-core'
+import { useTranslation } from 'ia-sparta-i18n'
 
 const QUICK_ACTIONS = [
   { icon: Plus,    labelKey: 'sidebar.newSession', action: 'new' as const },

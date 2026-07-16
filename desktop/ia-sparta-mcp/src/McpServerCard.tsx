@@ -1,19 +1,19 @@
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Plug, Zap, Trash2, Pencil, ChevronDown, Wifi, WifiOff, Wrench, MoreHorizontal } from 'lucide-react'
-import type { MCPServer } from '@/types'
-import { useMCPStore } from '@/stores/mcp.store'
-import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog'
-import { BrandIcon } from '@/components/ui/BrandIcon'
+import type { MCPServer } from 'ia-sparta-core'
+import { useMCPStore } from 'ia-sparta-core'
+import { ConfirmDeleteDialog } from 'ia-sparta-design-system'
+import { BrandIcon } from 'ia-sparta-design-system'
 import { McpToolItem } from './McpToolItem'
-import { useTranslation } from '@/i18n'
+import { useTranslation } from 'ia-sparta-i18n'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+} from 'ia-sparta-design-system'
 
 const MCP_BRAND_ICONS: Record<string, string> = {
   Git: 'git',

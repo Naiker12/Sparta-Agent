@@ -1,7 +1,7 @@
 import { Hash, Plus, Bot, Globe, BookOpen, Code, Terminal, Users, Bell, Star, Camera, MessageSquare } from 'lucide-react'
-import type { Channel, IntegrationProvider } from '@/types'
-import { useChannelStore } from '@/stores/channel.store'
-import { BrandIcon } from '@/components/ui/BrandIcon'
+import type { Channel, IntegrationProvider } from 'ia-sparta-core'
+import { useChannelStore } from 'ia-sparta-core'
+import { BrandIcon } from 'ia-sparta-design-system'
 import { IntegrationStatusBadge } from './IntegrationStatusBadge'
 
 const ICON_MAP: Record<string, React.ComponentType<any>> = {

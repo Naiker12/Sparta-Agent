@@ -1,5 +1,5 @@
 import { ipcMain } from 'electron'
-import { sendToPython, isSidecarRunning, waitForSidecarReady, sidecarEvents, SidecarEvent } from '../sidecar.ipc'
+import { sendToPython, isSidecarRunning, waitForSidecarReady, sidecarEvents, SidecarEvent } from 'ia-sparta-ipc-bridge'
 
 const memoryResolvers = new Map<string, (result: unknown) => void>()
 

@@ -4,22 +4,22 @@ import { motion } from 'framer-motion'
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
+} from 'ia-sparta-design-system'
+import { cn } from 'ia-sparta-core'
+import { Button } from 'ia-sparta-design-system'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog'
-import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog'
-import { useChatStore } from '@/stores/chat.store'
-import { useSessionStore } from '@/stores/session.store'
-import { useUIStore } from '@/stores/ui.store'
-import type { Session } from '@/types'
-import { useTranslation } from '@/i18n'
+} from 'ia-sparta-design-system'
+import { ConfirmDeleteDialog } from 'ia-sparta-design-system'
+import { useChatStore } from 'ia-sparta-core'
+import { useSessionStore } from 'ia-sparta-core'
+import { useUIStore } from 'ia-sparta-core'
+import type { Session } from 'ia-sparta-core'
+import { useTranslation } from 'ia-sparta-i18n'
 
 interface SessionItemProps {
   session: Session

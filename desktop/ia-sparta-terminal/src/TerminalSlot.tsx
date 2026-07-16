@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { useUIStore } from '@/stores/ui.store'
+import { useUIStore } from 'ia-sparta-core'
 
 export function TerminalSlot() {
   const ref = useRef<HTMLDivElement | null>(null)

@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react'
-import { useEventBus } from '@/stores/event-bus.store'
-import { useProjectStore } from '@/stores/project.store'
-import { useDiffReviewStore } from '@/stores/diff-review.store'
-import { useUIStore } from '@/stores/ui.store'
+import { useEventBus } from 'ia-sparta-core'
+import { useProjectStore } from 'ia-sparta-core'
+import { useDiffReviewStore } from 'ia-sparta-core'
+import { useUIStore } from 'ia-sparta-core'
 import {
   FileSearch, FilePen, FileX, Terminal, Globe, Brain,
   ChevronDown, ChevronRight, Loader2, Check, X,

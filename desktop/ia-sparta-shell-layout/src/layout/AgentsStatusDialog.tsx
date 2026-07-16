@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { X, Bot, Clock, ChevronRight } from 'lucide-react'
-import { useAgentStore } from '@/stores/agent.store'
+import { useAgentStore } from 'ia-sparta-core'
 
 interface AgentsStatusDialogProps {
   open: boolean

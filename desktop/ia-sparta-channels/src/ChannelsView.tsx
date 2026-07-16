@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import { ChannelSidebar } from '@/components/channels/ChannelSidebar'
-import { InternalChannelView } from '@/components/channels/InternalChannelView'
-import { TelegramIntegrationPanel } from '@/components/channels/TelegramIntegrationPanel'
-import { ComingSoonPanel } from '@/components/channels/ComingSoonPanel'
-import { ChannelDialog } from '@/components/channels/ChannelDialog'
-import { useChannelStore } from '@/stores/channel.store'
-import type { IntegrationProvider } from '@/types'
+import { ChannelSidebar } from './ChannelSidebar'
+import { InternalChannelView } from './InternalChannelView'
+import { TelegramIntegrationPanel } from './TelegramIntegrationPanel'
+import { ComingSoonPanel } from './ComingSoonPanel'
+import { ChannelDialog } from './ChannelDialog'
+import { useChannelStore } from 'ia-sparta-core'
+import type { IntegrationProvider } from 'ia-sparta-core'
 
 const TELEGRAM: IntegrationProvider = 'telegram'
 

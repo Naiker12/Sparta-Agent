@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react'
-import type { Message } from '@/types'
-import { useChatStore } from '@/stores/chat.store'
+import type { Message } from 'ia-sparta-core'
+import { useChatStore } from 'ia-sparta-core'
 import { MessageBubble } from './MessageBubble'
 
-import { cn } from '@/lib/utils'
+import { cn } from 'ia-sparta-core'
 
 interface MessageListProps {
   messages: Message[]

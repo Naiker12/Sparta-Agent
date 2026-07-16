@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { X, ExternalLink, Tag, Calendar, MessageSquare, Trash2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import type { MemoryEntry, MemoryGraphNode } from '@/types'
-import { getGraphNodeColor } from '@/lib/graph-colors'
-import { useSessionStore } from '@/stores/session.store'
-import { useMemoryStore } from '@/stores/memory.store'
-import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog'
+import { Button } from 'ia-sparta-design-system'
+import type { MemoryEntry, MemoryGraphNode } from 'ia-sparta-core'
+import { getGraphNodeColor } from 'ia-sparta-core'
+import { useSessionStore } from 'ia-sparta-core'
+import { useMemoryStore } from 'ia-sparta-core'
+import { ConfirmDeleteDialog } from 'ia-sparta-design-system'
 
 interface MemoryNodePanelProps {
   entry: MemoryEntry

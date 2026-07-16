@@ -5,7 +5,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { Copy, Check } from 'lucide-react'
-import { useThemeStore, isDarkTheme } from '@/stores/theme.store'
+import { useThemeStore, isDarkTheme } from 'ia-sparta-core'
 import type { Components } from 'react-markdown'
 
 interface MarkdownRendererProps {

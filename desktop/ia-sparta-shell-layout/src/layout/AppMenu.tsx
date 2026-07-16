@@ -5,8 +5,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { Button } from '@/components/ui/button'
+} from 'ia-sparta-design-system'
+import { Button } from 'ia-sparta-design-system'
 import { Menu } from 'lucide-react'
 
 const MENU_ITEMS = [

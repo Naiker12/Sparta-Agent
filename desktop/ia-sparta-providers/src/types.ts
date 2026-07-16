@@ -1,4 +1,4 @@
-import type { ProviderVendor, ProviderKind, ModelInfo, ChatRequest, ChatStreamChunk } from '@/types'
+import type { ProviderVendor, ProviderKind, ModelInfo, ChatRequest, ChatStreamChunk } from 'ia-sparta-core'
 
 export interface AIProvider {
   readonly vendor: ProviderVendor

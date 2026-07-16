@@ -13,7 +13,7 @@
  */
 
 import { ipcMain, BrowserWindow } from 'electron'
-import { sidecarEvents, sendToPython, SidecarEvent } from './sidecar.ipc'
+import { sidecarEvents, sendToPython, SidecarEvent } from './sidecar.channel'
 
 export interface PermissionRequestPayload {
   requestId: string

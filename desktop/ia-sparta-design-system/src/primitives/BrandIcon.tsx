@@ -1,5 +1,5 @@
-import { useTheme } from '@/hooks/useTheme'
-import { BRAND_ICONS, MONO_BRANDS } from '@/lib/brand-icons'
+import { useTheme } from 'ia-sparta-core'
+import { BRAND_ICONS, MONO_BRANDS } from 'ia-sparta-core'
 
 interface BrandIconProps {
   vendor: string

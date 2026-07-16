@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { Plus } from 'lucide-react'
-import { useMemoryStore } from '@/stores/memory.store'
-import { MemoryEntryItem } from '@/components/memory/MemoryEntryItem'
-import type { MemoryEntry } from '@/types'
+import { useMemoryStore } from 'ia-sparta-core'
+import { MemoryEntryItem } from './MemoryEntryItem'
+import type { MemoryEntry } from 'ia-sparta-core'
 
 interface MemoryListViewProps {
   onEntryClick?: (entry: MemoryEntry) => void

@@ -20,7 +20,7 @@
       "filter": ["**/*"]
     },
     {
-      "from": "rust/sparta-security",
+      "from": "desktop/runtime/ia-sparta-security-rust",
       "to": "rust/sparta-security",
       "filter": ["*.node", "index.js", "index.d.ts"]
     },

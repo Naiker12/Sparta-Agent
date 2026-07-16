@@ -1,5 +1,5 @@
 import { AlertTriangle, X } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button } from './button'
 import type { ReactNode } from 'react'
 
 interface ConfirmDialogShellProps {

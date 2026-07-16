@@ -1,6 +1,6 @@
 import { BrowserWindow } from 'electron'
-import { sendToPython, sidecarEvents, SidecarEvent } from '../sidecar.ipc'
-import { storeKey as vaultStoreKey } from '../../vault'
+import { sendToPython, sidecarEvents, SidecarEvent } from 'ia-sparta-ipc-bridge'
+import { storeKey as vaultStoreKey } from 'ia-sparta-vault'
 import {
   activeStreams,
   windowBySession,

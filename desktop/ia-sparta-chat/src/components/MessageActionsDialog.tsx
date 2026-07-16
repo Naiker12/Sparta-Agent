@@ -1,10 +1,10 @@
-import type { Message } from '@/types'
-import { useChatStore } from '@/stores/chat.store'
-import { useMemoryStore } from '@/stores/memory.store'
-import { useEventBus } from '@/stores/event-bus.store'
-import { useChatSession } from '@/hooks/useChatSession'
-import { deleteEntry as chromaDeleteEntry } from '@/services/memory/vector/chroma-client'
-import { ConfirmDeleteDialog, ConfirmActionDialog } from '@/components/ui/confirm-delete-dialog'
+import type { Message } from 'ia-sparta-core'
+import { useChatStore } from 'ia-sparta-core'
+import { useMemoryStore } from 'ia-sparta-core'
+import { useEventBus } from 'ia-sparta-core'
+import { useChatSession } from 'ia-sparta-core'
+import { deleteEntry as chromaDeleteEntry } from '../chroma-client'
+import { ConfirmDeleteDialog, ConfirmActionDialog } from 'ia-sparta-design-system'
 
 type DialogState =
   | { kind: 'none' }

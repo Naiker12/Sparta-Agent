@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react'
-import { useChatStore } from '@/stores/chat.store'
-import { useUsageStore } from '@/stores/usage.store'
-import { useEventBus } from '@/stores/event-bus.store'
-import { useAgentStore } from '@/stores/agent.store'
-import { usePlanStore } from '@/stores/plan.store'
-import { messagingAdapter } from '@/lib/messaging-adapter'
-import { extractMemory } from '@/services'
-import { labelForToolCall } from '@/lib/thinking-status-labels'
-import type { SpartaEvent } from '@/types'
+import { useChatStore } from 'ia-sparta-core'
+import { useUsageStore } from 'ia-sparta-core'
+import { useEventBus } from 'ia-sparta-core'
+import { useAgentStore } from 'ia-sparta-core'
+import { usePlanStore } from 'ia-sparta-core'
+import { messagingAdapter } from 'ia-sparta-core'
+import { extractMemory } from './extractor'
+import { labelForToolCall } from 'ia-sparta-core'
+import type { SpartaEvent } from 'ia-sparta-core'
 
 const SUBAGENT_TOOL_MAP: Record<string, { name: string; type: 'research' | 'coding' | 'automation' | 'project'; description: string }> = {
   delegate_research: {

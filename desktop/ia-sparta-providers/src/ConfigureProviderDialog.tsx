@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
 import { Loader2, Check, X } from 'lucide-react'
-import type { ProviderVendor, Provider } from '@/types'
-import { useProviderStore, getVendorLabel } from '@/stores/provider.store'
-import { useTranslation } from '@/i18n'
-import { fetchModelsByVendor } from '@/lib/fetch-models'
-import { storeInVault, isVaultAvailable } from '@/lib/vault-helper'
-import { Button } from '@/components/ui/button'
+import type { ProviderVendor, Provider } from 'ia-sparta-core'
+import { useProviderStore, getVendorLabel } from 'ia-sparta-core'
+import { useTranslation } from 'ia-sparta-i18n'
+import { fetchModelsByVendor } from 'ia-sparta-core'
+import { storeInVault, isVaultAvailable } from 'ia-sparta-core'
+import { Button } from 'ia-sparta-design-system'
 import {
   Combobox,
   ComboboxInput,
@@ -13,7 +13,7 @@ import {
   ComboboxEmpty,
   ComboboxList,
   ComboboxItem,
-} from '@/components/ui/combobox'
+} from 'ia-sparta-design-system'
 
 interface ConfigureProviderDialogProps {
   open: boolean

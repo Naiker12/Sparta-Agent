@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Pencil, Trash2 } from 'lucide-react'
-import type { MemoryEntry } from '@/types'
-import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog'
+import type { MemoryEntry } from 'ia-sparta-core'
+import { ConfirmDeleteDialog } from 'ia-sparta-design-system'
 
 interface MemoryEntryItemProps {
   entry: MemoryEntry

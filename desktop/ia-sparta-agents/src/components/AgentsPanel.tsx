@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { useAgentStore } from '@/stores/agent.store'
-import { useAgent } from '@/hooks/useAgent'
+import { useAgentStore } from 'ia-sparta-core'
+import { useAgent } from 'ia-sparta-core'
 import { SubagentWatchPane } from './SubagentWatchPane'
-import type { Task } from '@/types'
-import { useTranslation } from '@/i18n'
+import type { Task } from 'ia-sparta-core'
+import { useTranslation } from 'ia-sparta-i18n'
 
 const STATUS_COLORS: Record<string, string> = {
   idle: 'var(--text-muted)',

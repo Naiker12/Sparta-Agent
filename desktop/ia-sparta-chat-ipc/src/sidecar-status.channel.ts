@@ -1,5 +1,5 @@
 import { ipcMain, BrowserWindow } from 'electron'
-import { isSidecarRunning, isSidecarReady } from '../sidecar.ipc'
+import { isSidecarRunning, isSidecarReady } from 'ia-sparta-ipc-bridge'
 import { sessionReady, eventBuffer, windowBySession } from './shared'
 
 export function registerSidecarStatusIPC(): void {

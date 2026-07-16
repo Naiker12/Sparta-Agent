@@ -1,6 +1,7 @@
 /**
  * ia-sparta-core — Misceláneas
  */
+
 export function noop(): void {
   /* no-op */
 }

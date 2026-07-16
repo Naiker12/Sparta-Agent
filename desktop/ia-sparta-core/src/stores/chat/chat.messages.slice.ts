@@ -1,7 +1,7 @@
 import type { StateCreator } from 'zustand'
 import type { ChatState } from './chat.store'
-import type { Message, ToolCall, ThinkingStatus, SearchProgressItem, MessagePart } from '@/types'
-import { useSessionStore } from '@/stores/session.store'
+import type { Message, ToolCall, ThinkingStatus, SearchProgressItem, MessagePart } from '../../types'
+import { useSessionStore } from '../session.store'
 
 export interface MessagesSlice {
   messagesBySession: Record<string, Message[]>

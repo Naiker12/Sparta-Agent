@@ -5,6 +5,6 @@
  */
 import type { TextDeltaEvent } from '../event-types'
 
-export function handleTextDeltaEvent(event: TextDeltaEvent): void {
+export function handleTextDeltaEvent(_event: TextDeltaEvent): void {
   // Lógica específica para deltas de texto
 }

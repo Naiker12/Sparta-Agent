@@ -1,4 +1,4 @@
-import type { Channel } from '@/types'
+import type { Channel } from 'ia-sparta-core'
 
 interface ChannelItemProps {
   channel: Channel

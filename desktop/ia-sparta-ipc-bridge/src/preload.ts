@@ -1,5 +1,5 @@
 import { ipcRenderer, contextBridge } from 'electron'
-import type { FileTreeNode } from './ipc/filesystem.ipc'
+import type { FileTreeNode } from './channels/filesystem.channel'
 
 contextBridge.exposeInMainWorld('electronAPI', {
   minimize: () => ipcRenderer.send('win:minimize'),

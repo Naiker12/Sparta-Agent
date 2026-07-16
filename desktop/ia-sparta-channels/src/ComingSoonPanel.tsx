@@ -1,6 +1,6 @@
 import { Bell } from 'lucide-react'
-import { BrandIcon } from '@/components/ui/BrandIcon'
-import type { IntegrationProvider } from '@/types'
+import { BrandIcon } from 'ia-sparta-design-system'
+import type { IntegrationProvider } from 'ia-sparta-core'
 
 const PROVIDER_INFO: Record<IntegrationProvider, { name: string; vendor: string; desc: string }> = {
   discord: { name: 'Discord', vendor: 'discord', desc: 'Conecta tu servidor de Discord y recibe mensajes en tiempo real.' },

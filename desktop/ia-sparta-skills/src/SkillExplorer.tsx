@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Search, AlertCircle, ExternalLink } from 'lucide-react'
-import type { DownloadableSkill, SkillCategory } from '@/types'
-import { SKILL_CATEGORIES } from '@/types'
-import { useSkillStore } from '@/stores/skill.store'
+import type { DownloadableSkill, SkillCategory } from 'ia-sparta-core'
+import { SKILL_CATEGORIES } from 'ia-sparta-core'
+import { useSkillStore } from 'ia-sparta-core'
 import { SkillCard } from './SkillCard'
 
 const SKILLS_API = typeof window !== 'undefined' && (window as any).skills

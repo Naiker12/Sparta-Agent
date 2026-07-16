@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
-import { useDiffReviewStore } from '@/stores/diff-review.store'
-import { useEventBus } from '@/stores/event-bus.store'
-import type { DiffProposedEvent } from '@/types'
+import { useDiffReviewStore } from 'ia-sparta-core'
+import { useEventBus } from 'ia-sparta-core'
+import type { DiffProposedEvent } from 'ia-sparta-core'
 
 /**
  * DiffProposalDialog — bridges the backend permission_broker events into

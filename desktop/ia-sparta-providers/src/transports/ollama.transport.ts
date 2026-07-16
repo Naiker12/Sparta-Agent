@@ -1,5 +1,5 @@
 import { BaseTransport } from './base'
-import type { ProviderVendor, ModelInfo, ChatRequest, ChatStreamChunk } from '@/types'
+import type { ProviderVendor, ModelInfo, ChatRequest, ChatStreamChunk } from 'ia-sparta-core'
 import { HTTP_STATUS_MESSAGES } from './http-utils'
 
 export class OllamaTransport extends BaseTransport {

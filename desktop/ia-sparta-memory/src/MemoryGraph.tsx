@@ -1,5 +1,5 @@
 import { lazy, Suspense, forwardRef } from 'react'
-import type { MemoryEntry, MemoryGraphNode, MemoryRelation } from '@/types'
+import type { MemoryEntry, MemoryGraphNode, MemoryRelation } from 'ia-sparta-core'
 
 export interface MemoryGraphHandle {
   resetCamera: () => void

@@ -1,4 +1,4 @@
-import type { IntegrationStatus } from '@/types'
+import type { IntegrationStatus } from 'ia-sparta-core'
 
 interface IntegrationStatusBadgeProps {
   status: IntegrationStatus

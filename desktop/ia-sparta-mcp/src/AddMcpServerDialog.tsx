@@ -1,16 +1,16 @@
 import { useState, useEffect, useRef } from 'react'
-import { Button } from '@/components/ui/button'
+import { Button } from 'ia-sparta-design-system'
 import {
   Plug, Check, Loader2, Upload,
   Terminal, Globe, Copy, Info,
 } from 'lucide-react'
-import { useMCPStore } from '@/stores/mcp.store'
-import type { MCPServerConfig, MCPServerType } from '@/types'
-import { useTranslation } from '@/i18n'
+import { useMCPStore } from 'ia-sparta-core'
+import type { MCPServerConfig, MCPServerType } from 'ia-sparta-core'
+import { useTranslation } from 'ia-sparta-i18n'
 import {
   Dialog,
   DialogContent,
-} from '@/components/ui/dialog'
+} from 'ia-sparta-design-system'
 
 interface AddMcpServerDialogProps {
   open: boolean

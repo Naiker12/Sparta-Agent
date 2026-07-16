@@ -1,5 +1,5 @@
-import type { ToolCall, MCPTool } from '@/types'
-import { useEventBus } from '@/stores/event-bus.store'
+import type { ToolCall, MCPTool } from 'ia-sparta-core'
+import { useEventBus } from 'ia-sparta-core'
 
 export interface ToolResult {
   toolCallId: string

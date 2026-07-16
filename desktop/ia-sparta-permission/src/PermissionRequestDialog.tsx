@@ -11,8 +11,8 @@
  *  - Write/delete: always explicit confirm, even if reads were already allowed.
  *  - Three buttons: [Allow once] [Allow in session] [Deny]
  */
-import { usePermissionStore } from '@/stores/permission.store'
-import { usePermissionRequests } from '@/hooks/usePermissionRequests'
+import { usePermissionStore } from 'ia-sparta-core'
+import { usePermissionRequests } from 'ia-sparta-core'
 import { ShieldAlert, FolderOpen, FileEdit, Trash2, Download, Terminal, X } from 'lucide-react'
 
 const TOOL_META: Record<string, { label: string; icon: React.ReactNode; risk: 'low' | 'high' }> = {

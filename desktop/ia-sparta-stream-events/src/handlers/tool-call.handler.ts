@@ -5,6 +5,6 @@
  */
 import type { ToolCallEvent } from '../event-types'
 
-export function handleToolCallEvent(event: ToolCallEvent): void {
+export function handleToolCallEvent(_event: ToolCallEvent): void {
   // Lógica específica para tool calls
 }

@@ -1,0 +1,147 @@
+import type { SpartaEvent } from './events'
+import type { FileTreeNode, FileReadResult, FileWriteResult } from './filesystem'
+
+interface SpartaSendMessageRequest {
+  sessionId: string
+  messageId: string
+  model: string
+  messages: { role: string; content: string }[]
+  providerKey?: string
+  apiUrl?: string
+  isLocal?: boolean
+  system?: string
+  vendor?: string
+  providerId?: string
+  mode?: string
+  skills?: string[]
+  mcpServers?: unknown[]
+  semanticMemory?: boolean
+  reasoning?: { enabled: boolean; budget: number; effort?: string }
+  webSearchEnabled?: boolean
+  workspaceRoot?: string
+}
+
+interface SpartaAPI {
+  onEvent: (listener: (event: SpartaEvent) => void) => () => void
+  sendEvent: (event: unknown) => void
+  getTerminalToken: () => Promise<string | undefined>
+  sendMessage: (req: SpartaSendMessageRequest) => Promise<{ ok: boolean; error?: string; aborted?: boolean }>
+  abortMessage: (sessionId: string) => Promise<void>
+  isSidecarReady: () => Promise<{ running: boolean; ready: boolean }>
+  fetchModels?: (req: { vendor: string; apiKey?: string; serverUrl?: string }) => Promise<{ models: string[]; error?: string }>
+  testMcpConnection: (config: Record<string, unknown>) => Promise<{ ok: boolean; serverId?: string; toolCount?: number; tools?: unknown[]; error?: string }>
+  memoryIndex: (entry: Record<string, unknown>) => Promise<{ ok: boolean; id?: string | null; error?: string }>
+  memorySearch: (query: string, k?: number) => Promise<{ ok: boolean; results?: unknown[]; error?: string }>
+  memoryEmbed: (texts: string[]) => Promise<{ ok: boolean; embeddings?: number[][]; error?: string }>
+  memoryDelete: (entryId: string) => Promise<{ ok: boolean; error?: string }>
+  memoryCount: () => Promise<{ ok: boolean; count?: number; error?: string }>
+  transcribeAudio: (req: { audio: string; filename: string; language?: string }) => Promise<{ text?: string; error?: string }>
+}
+
+interface VaultAPI {
+  isAvailable: () => Promise<boolean>
+  storeKey: (keyId: string, value: string, vendor?: string) => Promise<boolean>
+  getKey: (keyId: string) => Promise<string | undefined>
+  deleteKey: (keyId: string) => Promise<boolean>
+  listKeys: () => Promise<string[]>
+  hasKey: (keyId: string) => Promise<boolean>
+}
+
+interface ElectronAPI {
+  minimize: () => void
+  maximize: () => void
+  close: () => void
+  isMaximized: () => Promise<boolean>
+  onMaximizedChange: (callback: (maximized: boolean) => void) => () => void
+  setTitleBarOverlay: (colors: { color: string; symbolColor: string }) => void
+  getVersion: () => Promise<string>
+}
+
+interface ElectronIPC {
+  on: (channel: string, listener: (...args: unknown[]) => void) => () => void
+  send: (channel: string, ...args: unknown[]) => void
+  invoke: (channel: string, ...args: unknown[]) => Promise<unknown>
+}
+
+interface FilesystemAPI {
+  openFolderDialog: () => Promise<string | null>
+  readDir: (dirPath: string) => Promise<{ nodes: FileTreeNode[]; error?: string }>
+  readFile: (filePath: string) => Promise<FileReadResult>
+  writeFile: (filePath: string, content: string) => Promise<FileWriteResult>
+  mkdir: (dirPath: string) => Promise<{ success: boolean; error?: string }>
+  deleteFile: (filePath: string) => Promise<{ success: boolean; error?: string }>
+  deleteFolder: (folderPath: string) => Promise<{ success: boolean; error?: string }>
+  startWatcher: (dirPath: string) => Promise<{ success: boolean }>
+  stopWatcher: () => Promise<{ success: boolean }>
+  setWorkspaceRoot: (root: string) => Promise<{ success: boolean; error?: string }>
+}
+
+interface TerminalAPI {
+  create: (opts: { terminalId: string; cols: number; rows: number; shell?: string }) => Promise<{ success: boolean; shell?: string; error?: string }>
+  write: (terminalId: string, data: string) => void
+  resize: (terminalId: string, cols: number, rows: number) => void
+  destroy: (terminalId: string) => Promise<{ success: boolean }>
+  onData: (terminalId: string, callback: (data: string) => void) => () => void
+  onExit: (terminalId: string, callback: (code: number) => void) => () => void
+  agentWrite: (terminalId: string, command: string) => Promise<{ success: boolean; error?: string; needsConfirmation?: boolean }>
+  agentWriteForce: (terminalId: string, command: string) => Promise<{ success: boolean; error?: string }>
+  listSessions: () => Promise<string[]>
+  agentSpawn: (procId: string, command: string, cwd?: string) => Promise<{ success: boolean; error?: string }>
+  agentKill: (procId: string) => Promise<{ success: boolean }>
+  onAgentSpawn: (callback: (payload: { procId: string; command: string }) => void) => () => void
+  onAgentOutput: (callback: (payload: { procId: string; chunk: string }) => void) => () => void
+  onAgentExit: (callback: (payload: { procId: string; code: number }) => void) => () => void
+}
+
+interface SkillsAPI {
+  list: () => Promise<unknown[]>
+  view: (skillId: string) => Promise<{ metadata: Record<string, unknown>; body: string; source_path: string }>
+  installFromUrl: (url: string) => Promise<{ success: boolean; skillId?: string; error?: string; scan?: unknown }>
+  installFromRepo: (repoUrl: string) => Promise<{ success: boolean; error?: string; info?: string }>
+  uninstall: (skillId: string) => Promise<{ success: boolean; error?: string }>
+}
+
+interface PermissionAPI {
+  onRequest: (callback: (payload: unknown) => void) => () => void
+  respond: (payload: { requestId: string; approved: boolean; remember: 'once' | 'session' }) => Promise<{ ok: boolean }>
+}
+
+interface EditorBridgeAPI {
+  respondDiff: (payload: { requestId: string; approved: boolean }) => Promise<{ ok: boolean }>
+}
+
+interface AgentTaskRequest {
+  taskId: string
+  agentId: string
+  taskDescription: string
+  systemPrompt: string
+  allowedTools: string[]
+  model: string
+  provider: string
+  vendor?: string
+  providerKey?: string
+  apiUrl?: string
+  workspaceRoot?: string
+  agentAutonomy: string
+  maxTurns?: number
+}
+
+interface AgentAPI {
+  executeTask: (req: AgentTaskRequest) => Promise<{ ok: boolean; result?: string; error?: string }>
+  onTaskEvent: (callback: (payload: { event: string; data: unknown }) => void) => () => void
+}
+
+declare global {
+  interface Window {
+    sparta?: SpartaAPI
+    vault?: VaultAPI
+    electronAPI?: ElectronAPI
+    electron?: ElectronIPC
+    fs?: FilesystemAPI
+    terminal?: TerminalAPI
+    agent?: AgentAPI
+    skills?: SkillsAPI
+    permission?: PermissionAPI
+    editorBridge?: EditorBridgeAPI
+  }
+}

@@ -6,10 +6,10 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Button } from '@/components/ui/button'
+} from 'ia-sparta-design-system'
+import { Input } from 'ia-sparta-design-system'
+import { Textarea } from 'ia-sparta-design-system'
+import { Button } from 'ia-sparta-design-system'
 
 interface ProjectDialogProps {
   open: boolean

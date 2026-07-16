@@ -1,5 +1,5 @@
-import { useThemeStore, type ThemeName } from '@/stores/theme.store'
-import { useTranslation } from '@/i18n'
+import { useThemeStore, type ThemeName } from 'ia-sparta-core'
+import { useTranslation } from 'ia-sparta-i18n'
 
 interface ThemeDef {
   name: ThemeName

@@ -1,4 +1,4 @@
-import type { ChatRequest } from '@/types'
+import type { ChatRequest } from 'ia-sparta-core'
 
 export interface ChatResponse {
   ok: boolean

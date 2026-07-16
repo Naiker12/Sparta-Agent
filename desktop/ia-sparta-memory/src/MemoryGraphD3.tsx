@@ -7,10 +7,10 @@ import {
   useImperativeHandle,
 } from 'react'
 import * as d3 from 'd3'
-import type { MemoryEntry, MemoryGraphNode, MemoryRelation } from '@/types'
+import type { MemoryEntry, MemoryGraphNode, MemoryRelation } from 'ia-sparta-core'
 import type { MemoryGraphHandle } from './MemoryGraph'
-import { useD3ForceLayout, type D3Node } from '@/hooks/useD3ForceLayout'
-import { useMemoryStore } from '@/stores/memory.store'
+import { useD3ForceLayout, type D3Node } from 'ia-sparta-core'
+import { useMemoryStore } from 'ia-sparta-core'
 
 interface Props {
   onNodeSelect: (entry: MemoryEntry | null, graphNode: MemoryGraphNode | null) => void

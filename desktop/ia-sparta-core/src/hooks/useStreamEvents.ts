@@ -1,0 +1,626 @@
+import { useEffect, useState } from 'react'
+import { useChatStore } from '../stores/chat.store'
+import { useUsageStore } from '../stores/usage.store'
+import { useEventBus } from '../stores/event-bus.store'
+import { useAgentStore } from '../stores/agent.store'
+import { usePlanStore } from '../stores/plan.store'
+import { messagingAdapter } from '../lib/messaging-adapter'
+import { extractMemory } from 'ia-sparta-core'
+import { labelForToolCall } from '../lib/thinking-status-labels'
+import type { SpartaEvent } from '../types'
+
+const SUBAGENT_TOOL_MAP: Record<string, { name: string; type: 'research' | 'coding' | 'automation' | 'project'; description: string }> = {
+  delegate_research: {
+    name: 'Investigador Delegado',
+    type: 'research',
+    description: 'Búsqueda de información y consolidación en vivo.',
+  },
+  delegate_code: {
+    name: 'Programador Delegado',
+    type: 'coding',
+    description: 'Análisis y generación de código en tiempo real.',
+  },
+  delegate_memory: {
+    name: 'Asistente de Memoria',
+    type: 'automation',
+    description: 'Recuperación de conocimientos de la memoria semántica.',
+  },
+}
+
+const _providerBySession = new Map<string, string>()
+const lastUserMessageRef = new Map<string, { text: string; userMessageId: string }>()
+
+// ── Singleton listener ──────────────────────────────────────────────
+// Only ONE WebSocket handler is ever registered, no matter how many
+// components call useStreamEvents(). This prevents token duplication.
+let _singletonUnsub: (() => void) | null = null
+let _refCount = 0
+
+function _attachSingleton() {
+  _refCount++
+  if (_singletonUnsub) return          // already attached
+  _singletonUnsub = messagingAdapter.onEvent(_handleEvent)
+  console.debug('[useStreamEvents] Singleton listener attached')
+}
+
+function _detachSingleton() {
+  _refCount = Math.max(0, _refCount - 1)
+  if (_refCount === 0 && _singletonUnsub) {
+    _singletonUnsub()
+    _singletonUnsub = null
+    console.debug('[useStreamEvents] Singleton listener detached')
+  }
+}
+
+// ── RAF-throttled flush ─────────────────────────────────────────────
+// Accumulates tokens and flushes to the store at most once per
+// animation frame (~16ms). This avoids re-render storms during fast
+// streaming without adding latency — data is received and buffered
+// immediately, only React re-renders are throttled.
+const _writeBuf: { sid: string; mid: string; text: string } = { sid: '', mid: '', text: '' }
+const _thinkBuf: { sid: string; mid: string; text: string } = { sid: '', mid: '', text: '' }
+let _flushRaf: number | null = null
+
+function _flushContent() {
+  const { sid, mid, text } = _writeBuf
+  if (!text) return
+  _writeBuf.text = ''
+  useChatStore.getState().appendContent(sid, mid, text)
+}
+
+function _flushThinking() {
+  const { sid, mid, text } = _thinkBuf
+  if (!text) return
+  _thinkBuf.text = ''
+  useChatStore.getState().appendThinking(sid, mid, text)
+}
+
+function _flushBoth() {
+  _flushContent()
+  _flushThinking()
+}
+
+function _scheduleFlush() {
+  if (_flushRaf !== null) return
+  _flushRaf = requestAnimationFrame(() => {
+    _flushRaf = null
+    _flushBoth()
+  })
+}
+
+function _queueContent(sid: string, mid: string, token: string) {
+  if (_writeBuf.sid !== sid || _writeBuf.mid !== mid) {
+    _flushContent()
+    _writeBuf.sid = sid
+    _writeBuf.mid = mid
+  }
+  _writeBuf.text += token
+  _scheduleFlush()
+}
+
+function _queueThinking(sid: string, mid: string, token: string) {
+  if (_thinkBuf.sid !== sid || _thinkBuf.mid !== mid) {
+    _flushThinking()
+    _thinkBuf.sid = sid
+    _thinkBuf.mid = mid
+  }
+  _thinkBuf.text += token
+  _scheduleFlush()
+}
+
+// ── MCP lifecycle handler ───────────────────────────────────────────
+function _handleMCPEvent(type: string, event: Record<string, unknown>) {
+  // Import lazily to avoid circular deps at module load time
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { useMCPStore } = require('@/stores/mcp.store') as typeof import('@/stores/mcp.store')
+  const store = useMCPStore.getState()
+  const serverId = (event.serverId ?? '') as string
+
+  if (type === 'mcp:connected') {
+    store.setConnected(serverId, true)
+    console.debug('[MCP] connected:', serverId, 'tools:', event.toolCount)
+  } else if (type === 'mcp:tool_discovered') {
+    const tools = (event.tools ?? []) as Array<{ name: string; description: string; inputSchema: unknown }>
+    // Reset tools list then repopulate with discovered tools
+    store.setServerTools(serverId, tools.map((t) => ({
+      name: t.name,
+      description: t.description,
+      inputSchema: t.inputSchema,
+      serverId,
+    })))
+    console.debug('[MCP] tools discovered:', serverId, tools.map((t) => t.name))
+  } else if (type === 'mcp:error') {
+    store.setConnected(serverId, false)
+    console.warn('[MCP] connection error:', serverId, event.error)
+  }
+}
+
+  // ── Central event handler (single instance) ─────────────────────────
+  function _handleEvent(rawEvent: SpartaEvent) {
+    const event = rawEvent as unknown as Record<string, unknown>
+    const { type, sessionId, messageId } = event as { type: string; sessionId: string; messageId: string }
+    const sid = sessionId ?? ''
+    const mid = messageId ?? ''
+
+    // ── file:changed events — notify editor to refresh open tabs ─────
+    if (type === 'file:changed') {
+      const fileEvent = event as { path?: string }
+      if (fileEvent.path && typeof window.fs?.readFile === 'function') {
+        console.debug('[file:changed] Agent modified:', fileEvent.path)
+        // Dispatch to event bus so editor components can react
+        useEventBus.getState().dispatch({
+          type: 'file:changed' as const,
+          path: fileEvent.path,
+          timestamp: Date.now(),
+        })
+      }
+      return
+    }
+
+    // ── Plan lifecycle events (no sessionId/messageId) ──────────────────
+    if (type === 'plan:created') {
+      const planData = event as { plan?: string[]; currentStep?: number; planComplete?: boolean }
+      const steps = planData.plan ?? []
+      if (steps.length > 0) {
+        usePlanStore.getState().setPlan(steps, planData.currentStep ?? 0, planData.planComplete ?? false)
+      }
+      return
+    }
+    if (type === 'plan:step') {
+      const planData = event as { plan?: string[]; currentStep?: number; planComplete?: boolean }
+      usePlanStore.getState().updateStep(planData.currentStep ?? 0, planData.planComplete ?? false)
+      return
+    }
+
+    // ── MCP lifecycle events (no sessionId/messageId) ───────────────────
+  if (type === 'mcp:connected' || type === 'mcp:tool_discovered' || type === 'mcp:error') {
+    _handleMCPEvent(type, event)
+    return
+  }
+
+  // ── MCP server added/removed by mcp_manage_tool ─────────────────────
+  if (type === 'mcp:server_added') {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { useMCPStore } = require('@/stores/mcp.store') as typeof import('@/stores/mcp.store')
+    const store = useMCPStore.getState()
+    const serverId = (event.serverId ?? '') as string
+    const config = event.config as Record<string, unknown> | undefined
+    if (serverId && config) {
+      store.addServer(config as unknown as Parameters<typeof store.addServer>[0])
+      console.debug('[MCP] server added via tool:', serverId)
+    }
+    return
+  }
+
+  if (type === 'mcp:server_removed') {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { useMCPStore } = require('@/stores/mcp.store') as typeof import('@/stores/mcp.store')
+    const store = useMCPStore.getState()
+    const serverId = (event.serverId ?? '') as string
+    if (serverId) {
+      store.removeServer(serverId)
+      console.debug('[MCP] server removed via tool:', serverId)
+    }
+    return
+  }
+
+  // ── Workspace confirmation toast ────────────────────────────────────
+  if (type === 'workspace:connected') {
+    const root = (event as { root?: string }).root
+    if (root) {
+      // Dynamic import to avoid circular deps
+      import('sonner').then(({ toast }) => {
+        toast.success('Workspace conectado', { description: root, duration: 3000 })
+      })
+    }
+    return
+  }
+
+  if (!sid || !mid) {
+    if (type && !type.startsWith('sidecar') && !type.startsWith('terminal') && !type.startsWith('mcp:')) {
+      console.debug('[useStreamEvents] Event sin sessionId/messageId, ignorando:', type)
+    }
+    return
+  }
+
+  const store = useChatStore.getState()
+
+  switch (type) {
+    case 'thinking:started': {
+      console.debug('[useStreamEvents] thinking:started', sid, mid)
+      store.onThinkingStart(sid, mid)
+      store.updateMessage(mid, { reasoningStartedAt: Date.now() })
+      break
+    }
+    case 'thinking:token': {
+      const thinkToken = (event as { token: string }).token ?? ''
+      const currentMsg = store.messagesBySession[sid]?.find((m) => m.id === mid)
+      if (currentMsg?.thinkingStatus === 'completed') {
+        console.warn('[useStreamEvents] thinking:token ignorado, thinking ya completó')
+        break
+      }
+      _queueThinking(sid, mid, thinkToken)
+      break
+    }
+    case 'thinking:completed': {
+      console.debug('[useStreamEvents] thinking:completed', sid, mid)
+      if (_flushRaf !== null) { cancelAnimationFrame(_flushRaf); _flushRaf = null }
+      _flushBoth()
+      const tokensUsed = (event as { tokensUsed: number }).tokensUsed ?? 0
+      store.onThinkingEnd(sid, mid, tokensUsed)
+      store.updateMessage(mid, { reasoningCompletedAt: Date.now() })
+      break
+    }
+    case 'thinking:status': {
+      const statusText = (event as { text?: string }).text
+      if (statusText) {
+        store.setThinkingStatusText(sid, mid, statusText)
+      }
+      break
+    }
+    case 'reasoning:token': {
+      const reasonToken = (event as { token: string }).token ?? ''
+      const currentMsg = store.messagesBySession[sid]?.find((m) => m.id === mid)
+      if (currentMsg?.thinkingStatus === 'completed') break
+      _queueThinking(sid, mid, reasonToken)
+      break
+    }
+    case 'reasoning:available': {
+      const reasoningText = (event as { text: string }).text ?? ''
+      console.debug('[useStreamEvents] reasoning:available', sid, mid)
+      store.onReasoningAvailable(sid, mid, reasoningText)
+      break
+    }
+    case 'search:progress': {
+      const progressEvent = event as {
+        stage: 'searching' | 'visiting' | 'reading' | 'done'
+        url?: string; title?: string; index?: number; total?: number; query?: string
+        tool_call_id?: string
+      }
+      const tcId = progressEvent.tool_call_id ?? undefined
+
+      if (progressEvent.stage === 'searching' && progressEvent.query) {
+        if (tcId) {
+          // Scoped: set searchQuery on the specific ToolCall
+          store.updateMessage(mid, (msg) => ({
+            toolCalls: (msg.toolCalls ?? []).map((tc) =>
+              tc.id === tcId ? { ...tc, searchQuery: progressEvent.query } : tc
+            ),
+          }))
+        } else {
+          // Legacy: set on message level
+          store.updateMessage(mid, { searchQuery: progressEvent.query } as Partial<import('@/types').Message>)
+        }
+      }
+
+      store.updateSearchProgress(sid, mid, (items) => {
+        if (progressEvent.stage === 'searching') {
+          // Ignore if we already have items — prevents late astream_events
+          // "searching" events from reverting progress shown by _emit_direct.
+          if (items.length > 0) return items
+          return []
+        }
+        if (progressEvent.stage === 'visiting' && progressEvent.url) {
+          const existing = items.find((i) => i.url === progressEvent.url)
+          if (existing) return items
+          return [
+            ...items,
+            { id: crypto.randomUUID(), url: progressEvent.url, title: progressEvent.title || progressEvent.url, status: 'pending' as const },
+          ]
+        }
+        if (progressEvent.stage === 'reading' && progressEvent.url) {
+          const existing = items.find((i) => i.url === progressEvent.url)
+          if (existing) {
+            return items.map((i) =>
+              i.url === progressEvent.url ? { ...i, status: 'reading' as const } : i,
+            )
+          }
+          return [
+            ...items,
+            { id: crypto.randomUUID(), url: progressEvent.url, title: progressEvent.title || `Leyendo ${progressEvent.url}`, status: 'reading' as const },
+          ]
+        }
+        if (progressEvent.stage === 'done') return items.map((i) => ({ ...i, status: 'visited' as const }))
+        return items
+      }, tcId)
+      break
+    }
+    case 'stream:token': {
+      const token = (event as { token: string }).token ?? ''
+      _queueContent(sid, mid, token)
+      break
+    }
+    case 'stream:completed': {
+      if (_flushRaf !== null) { cancelAnimationFrame(_flushRaf); _flushRaf = null }
+      _flushBoth()
+      // Clear plan tracker when stream finishes
+      usePlanStore.getState().clear()
+      // Leer el mensaje DESPUÉS del flush para tener el contenido completo
+      const currentMsg = store.messagesBySession[sid]?.find((m) => m.id === mid)
+      if (currentMsg?.thinkingStatus === 'streaming' || (currentMsg?.reasoningText && currentMsg?.thinkingStatus !== 'completed')) {
+        console.debug('[safety-net] cerrando thinking en stream:completed')
+        store.onThinkingEnd(sid, mid, currentMsg?.thinkingTokensUsed ?? 0)
+      }
+      const suggestions = (event as Record<string, unknown>).suggestions as string[] | undefined
+      if (suggestions && suggestions.length > 0) {
+        store.updateMessage(mid, { suggestions })
+      }
+      store.deduplicateReasoningFromContent(sid, mid)
+      store.onStreamEnd(sid, mid)
+      store.stopStreaming(sid)
+      const pid = _providerBySession.get(sid)
+      const pair = lastUserMessageRef.get(sid)
+      if (pid && pair?.text) {
+        const outputLen = store.messagesBySession[sid]?.find((m) => m.id === mid)?.content?.length ?? 0
+        if (outputLen > 0) {
+          useUsageStore.getState().recordTurn(sid, pid, Math.ceil(pair.text.length / 4), Math.ceil(outputLen / 4))
+        }
+      }
+      // Extracción automática de memoria en segundo plano
+      if (pair?.text && currentMsg?.content) {
+        extractMemory(pair.text, currentMsg.content, sid, mid)
+          .catch((err) => console.error('[memory:extractor] Background extraction failed:', err))
+      }
+      _providerBySession.delete(sid)
+      const pending = store.consumePendingInjections()
+      if (pending.length > 0) {
+        const text = pending.join('\n')
+        console.debug('[useStreamEvents] Enviando mensaje encolado:', text.slice(0, 40))
+        useEventBus.getState().dispatch({
+          type: 'chat:send_queued',
+          text,
+          sessionId: sid,
+          timestamp: Date.now(),
+        })
+      }
+      break
+    }
+    case 'stream:aborted': {
+      if (_flushRaf !== null) { cancelAnimationFrame(_flushRaf); _flushRaf = null }
+      _flushBoth()
+      const abortedMsg = store.messagesBySession[sid]?.find((m) => m.id === mid)
+      if (abortedMsg?.thinkingStatus === 'streaming' || (abortedMsg?.reasoningText && abortedMsg?.thinkingStatus !== 'completed')) {
+        console.debug('[safety-net] cerrando thinking en stream:aborted')
+        store.onThinkingEnd(sid, mid, abortedMsg?.thinkingTokensUsed ?? 0)
+      }
+      store.onStreamEnd(sid, mid)
+      store.stopStreaming(sid)
+      _providerBySession.delete(sid)
+      lastUserMessageRef.delete(sid)
+      break
+    }
+    case 'stream:notice': {
+      const noticeMsg = (event as { message?: string }).message ?? ''
+      store.setThinkingStatusText(sid, mid, noticeMsg)
+      console.debug('[useStreamEvents] stream:notice:', noticeMsg)
+      break
+    }
+    case 'stream:error': {
+      if (_flushRaf !== null) { cancelAnimationFrame(_flushRaf); _flushRaf = null }
+      _flushBoth()
+      store.onStreamEnd(sid, mid)
+      store.stopStreaming(sid)
+      const errorMsg = (event as { error?: string }).error ?? 'Error durante la generación'
+      // Append the error to the existing content instead of replacing it,
+      // so the text generated before the cut is preserved.
+      store.updateMessage(mid, (msg) => ({
+        content: msg.content ? `${msg.content}\n\n> **Error:** ${errorMsg}` : `Error: ${errorMsg}`,
+        isStreaming: false,
+      }))
+      useEventBus.getState().dispatch({
+        type: 'stream:error',
+        sessionId: sid, messageId: mid, error: errorMsg, timestamp: Date.now(),
+      })
+      _providerBySession.delete(sid)
+      lastUserMessageRef.delete(sid)
+      break
+    }
+    case 'tool:called': {
+      const evt = event as Record<string, unknown>
+      const name = (evt.name ?? evt.toolName ?? '') as string
+      const toolInput = evt.input
+      const id = (evt.toolCallId ?? evt.tool_call_id ?? evt.id ?? '') as string
+
+      if (name && id) {
+        store.addToolCall(sid, mid, {
+          id,
+          toolName: name,
+          input: toolInput,
+          status: 'running',
+        })
+
+        // Actualizar el status line de thinking con la acción concreta en curso
+        const inputObj = toolInput && typeof toolInput === 'object'
+          ? (toolInput as Record<string, unknown>)
+          : {}
+        store.setThinkingStatusText(sid, mid, labelForToolCall(name, inputObj))
+
+        // Conectar con useAgentStore si es un subagente delegado
+        const subagentMeta = SUBAGENT_TOOL_MAP[name]
+        if (subagentMeta) {
+          const agentStore = useAgentStore.getState()
+          const existing = agentStore.agents.find((a) => a.id === id)
+          if (!existing) {
+            agentStore.registerAgent({
+              id,
+              name: subagentMeta.name,
+              type: subagentMeta.type,
+              status: 'running',
+              model: 'Subagente',
+              createdAt: Date.now(),
+              tools: name === 'delegate_research' ? ['web_search', 'web_fetch'] : [],
+              description: subagentMeta.description,
+            })
+          } else {
+            agentStore.updateAgentStatus(id, 'running')
+          }
+
+          let taskDesc = 'Ejecutando tarea paralela'
+          if (toolInput && typeof toolInput === 'object') {
+            const inputObj = toolInput as Record<string, unknown>
+            if (inputObj.topic) taskDesc = `Investigar: ${inputObj.topic}`
+            else if (inputObj.task) taskDesc = `Desarrollar: ${inputObj.task}`
+            else if (inputObj.query) taskDesc = `Buscar: ${inputObj.query}`
+          }
+
+          agentStore.addTask(id, {
+            id,
+            agentId: id,
+            description: taskDesc,
+            status: 'running',
+            createdAt: Date.now(),
+            steps: [
+              {
+                id: `${id}-step1`,
+                name: name === 'delegate_research' ? 'Investigando en profundidad' : 'Ejecutando análisis',
+                status: 'running',
+              }
+            ]
+          })
+        }
+      }
+      break
+    }
+    case 'tool:result': {
+      const evt = event as Record<string, unknown>
+      const tcId = (evt.toolCallId ?? evt.tool_call_id ?? evt.id ?? '') as string
+      const resultOutput = (evt.output ?? '') as string
+      const tcName = evt.toolName as string | undefined
+
+      store.updateToolCallStatus(sid, mid, tcId, 'completed', resultOutput, tcName)
+      if (tcName === 'web_search' || tcName === 'web_search_tool') {
+        store.updateSearchProgress(sid, mid, (items) =>
+          items.map((i) => ({ ...i, status: 'visited' as const }))
+        )
+      }
+
+      // Si es un subagente delegado, marcar como completado
+      if (tcName && SUBAGENT_TOOL_MAP[tcName] && tcId) {
+        const agentStore = useAgentStore.getState()
+        agentStore.updateAgentStatus(tcId, 'completed')
+        agentStore.updateTask(tcId, tcId, {
+          status: 'completed',
+          completedAt: Date.now(),
+          steps: [
+            {
+              id: `${tcId}-step1`,
+              name: 'Tarea completada exitosamente',
+              status: 'completed',
+            }
+          ]
+        })
+      }
+      break
+    }
+    case 'tool:error': {
+      const evtErr = event as Record<string, unknown>
+      const tcIdErr = (evtErr.toolCallId ?? evtErr.tool_call_id ?? evtErr.id ?? '') as string
+      const errorMsg = (evtErr.error ?? 'Error al ejecutar una herramienta') as string
+      const tcNameErr = evtErr.toolName as string | undefined
+
+      store.updateToolCallStatus(sid, mid, tcIdErr, 'error', errorMsg, tcNameErr)
+      useEventBus.getState().dispatch({
+        type: 'tool:error', toolName: tcNameErr ?? '', error: errorMsg, timestamp: Date.now(),
+      })
+
+      // Si es un subagente delegado, marcar como error
+      if (tcNameErr && SUBAGENT_TOOL_MAP[tcNameErr] && tcIdErr) {
+        const agentStore = useAgentStore.getState()
+        agentStore.updateAgentStatus(tcIdErr, 'error')
+        agentStore.updateTask(tcIdErr, tcIdErr, {
+          status: 'error',
+          steps: [
+            {
+              id: `${tcIdErr}-step1`,
+              name: 'Error en la ejecución',
+              status: 'error',
+              error: errorMsg,
+            }
+          ]
+        })
+      }
+      break
+    }
+    case 'skill:activated': {
+      const skillEvt = event as Record<string, string>
+      const skillId = skillEvt.skillId ?? ''
+      const skillName = skillEvt.skillName ?? ''
+      const skillIcon = skillEvt.skillIcon ?? '\ud83d\udce6'
+      const skillCategory = skillEvt.skillCategory ?? ''
+      console.debug('[skill:activated]', skillId, skillName)
+      store.updateMessage(mid, (msg) => ({
+        pipelineSteps: [
+          ...(msg.pipelineSteps ?? []),
+          { id: `skill-${skillId}-${Date.now()}`, name: `${skillIcon} ${skillName}`, status: 'running' as const, timestamp: Date.now(), meta: skillCategory },
+        ],
+      }))
+      useEventBus.getState().dispatch({
+        type: 'skill:activated' as const, skillId, skillName, skillIcon, skillCategory, sessionId: sid, messageId: mid, timestamp: Date.now(),
+      })
+      break
+    }
+    case 'skill:completed': {
+      const compEvt = event as Record<string, string>
+      const compId = compEvt.skillId ?? ''
+      store.updateMessage(mid, (msg) => ({
+        pipelineSteps: (msg.pipelineSteps ?? []).map((step) =>
+          step.id?.startsWith(`skill-${compId}`)
+            ? { ...step, status: 'completed' as const, durationMs: Date.now() - step.timestamp }
+            : step
+        ),
+      }))
+      break
+    }
+    case 'sidecar:log': {
+      const { level, text } = event as { level?: string; text?: string }
+      if (level === 'stderr' && text) console.warn('[sidecar stderr]', text)
+      break
+    }
+    case 'terminal:agent_command': {
+      const { command } = event as { command: string }
+      if (window.terminal) {
+        window.terminal.agentWrite('default', command).then((res) => {
+          if (res.needsConfirmation) {
+            if (window.confirm(`El agente quiere ejecutar:\n\n${command}\n\n¿Permitir?`)) {
+              window.terminal.agentWriteForce('default', command)
+            }
+          }
+        })
+      }
+      break
+    }
+    case 'terminal:agent_spawn': {
+      const { procId, command } = event as { procId: string; command: string }
+      if (procId && command && window.terminal) {
+        void window.terminal.agentSpawn(procId, command)
+      }
+      break
+    }
+  }
+}
+
+// ── Hook público ────────────────────────────────────────────────────
+export function useStreamEvents() {
+  const [adapterReady, setAdapterReady] = useState(messagingAdapter.isReady())
+
+  useEffect(() => {
+    if (adapterReady) return
+    return messagingAdapter.onReady?.(() => setAdapterReady(true)) ?? (() => {})
+  }, [adapterReady])
+
+  useEffect(() => {
+    if (!adapterReady) return
+    _attachSingleton()
+    return () => { _detachSingleton() }
+  }, [adapterReady])
+
+  return {
+    adapterReady,
+    setProviderForSession: (sessionId: string, providerId: string) => {
+      _providerBySession.set(sessionId, providerId)
+    },
+    setLastUserMessage: (sessionId: string, text: string, userMessageId: string) => {
+      lastUserMessageRef.set(sessionId, { text, userMessageId })
+    },
+  }
+}

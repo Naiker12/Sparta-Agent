@@ -1,6 +1,6 @@
-import type { ToolCall, TaskStep } from '@/types'
-import { useAgentStore } from '@/stores/agent.store'
-import { useEventBus } from '@/stores/event-bus.store'
+import type { ToolCall, TaskStep } from 'ia-sparta-core'
+import { useAgentStore } from 'ia-sparta-core'
+import { useEventBus } from 'ia-sparta-core'
 import { executeTool, executeToolsParallel, areToolCallsIndependent } from './tool-executor'
 
 const MAX_LLM_TURNS = 10

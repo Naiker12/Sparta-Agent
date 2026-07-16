@@ -5,6 +5,6 @@
  */
 import type { PlanEvent } from '../event-types'
 
-export function handlePlanEvent(event: PlanEvent): void {
+export function handlePlanEvent(_event: PlanEvent): void {
   // Lógica específica para planes
 }

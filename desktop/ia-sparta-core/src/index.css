@@ -1,0 +1,128 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: var(--bg-base);
+  --color-foreground: var(--text-primary);
+  --color-primary: var(--accent);
+  --color-primary-foreground: #ffffff;
+  --color-secondary: var(--bg-elevated);
+  --color-secondary-foreground: var(--text-primary);
+  --color-muted: var(--bg-active);
+  --color-muted-foreground: var(--text-secondary);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--text-display);
+  --color-destructive: var(--status-err);
+  --color-border: var(--border-normal);
+  --color-ring: var(--accent);
+  --color-popover: var(--bg-elevated);
+  --color-popover-foreground: var(--text-primary);
+  --color-card: var(--bg-surface);
+  --color-card-foreground: var(--text-primary);
+  --color-input: var(--bg-input);
+
+  --color-sidebar: var(--sidebar-background);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --color-hover: var(--bg-hover);
+  --color-border-strong: var(--border-strong);
+  --color-border-subtle: var(--border-subtle);
+
+  --color-bg-surface: var(--bg-surface);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-status-thinking: var(--status-think);
+
+  --animate-fadeUp: fadeUp 0.4s ease forwards;
+  --animate-bounce: bounce 1.2s ease infinite;
+  --animate-scaleIn: scaleIn 0.18s ease forwards;
+  --animate-slideIn: slideIn 0.2s ease forwards;
+  --animate-pulse-dot: pulse-dot 1.2s ease infinite;
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); opacity: 0.4; }
+    50% { transform: translateY(-3px); opacity: 1; }
+  }
+
+  @keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.96); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-4px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+}
+
+@property --border-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes border-spin {
+  to { --border-angle: 360deg; }
+}
+
+.chat-input-wrapper {
+  position: relative;
+  border-radius: var(--radius-xl);
+  padding: 2px;
+  background: var(--bg-input);
+}
+
+.chat-input-wrapper::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: conic-gradient(
+    from var(--border-angle),
+    var(--accent),
+    var(--accent-glow),
+    transparent 40%,
+    var(--accent)
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+
+.chat-input-wrapper:focus-within::before {
+  opacity: 1;
+  animation: none;
+  background: var(--accent);
+}
+
+.chat-input-wrapper.is-streaming::before {
+  opacity: 1;
+  animation: border-spin 3s linear infinite;
+}
+
+.message-bubble-group {
+  position: relative;
+}
+.message-bubble-group .message-actions-btn {
+  opacity: 0;
+}
+.message-bubble-group:hover .message-actions-btn {
+  opacity: 1;
+}
+
+

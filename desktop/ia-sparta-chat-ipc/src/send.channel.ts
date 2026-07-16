@@ -1,6 +1,5 @@
 import { ipcMain, BrowserWindow } from 'electron'
-import { sendToPython, isSidecarRunning, waitForSidecarReady, startSidecar } from '../sidecar.ipc'
-import { isSecurityLoaded } from '../security.ipc'
+import { sendToPython, isSidecarRunning, waitForSidecarReady, startSidecar, isSecurityLoaded } from 'ia-sparta-ipc-bridge'
 import {
   type ChatRequest,
   activeStreams,

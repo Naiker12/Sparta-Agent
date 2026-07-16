@@ -1,14 +1,14 @@
 import { useState, useRef, useCallback, useMemo } from 'react'
 import { Brain, ChevronLeft } from 'lucide-react'
-import { useMemoryStore } from '@/stores/memory.store'
-import { useUIStore } from '@/stores/ui.store'
-import { Button } from '@/components/ui/button'
-import { computeRelations } from '@/lib/graph-layout'
-import { MemoryGraph, type MemoryGraphHandle } from '@/components/memory/MemoryGraph'
-import { MemoryGraphControls } from '@/components/memory/MemoryGraphControls'
-import { MemoryListView } from '@/components/memory/MemoryListView'
-import { MemoryNodePanel } from '@/components/memory/MemoryNodePanel'
-import type { MemoryEntry, MemoryGraphNode } from '@/types'
+import { useMemoryStore } from 'ia-sparta-core'
+import { useUIStore } from 'ia-sparta-core'
+import { Button } from 'ia-sparta-design-system'
+import { computeRelations } from 'ia-sparta-core'
+import { MemoryGraph, type MemoryGraphHandle } from './MemoryGraph'
+import { MemoryGraphControls } from './MemoryGraphControls'
+import { MemoryListView } from './MemoryListView'
+import { MemoryNodePanel } from './MemoryNodePanel'
+import type { MemoryEntry, MemoryGraphNode } from 'ia-sparta-core'
 
 export function MemoryView() {
   const { entries, relations: storedRelations } = useMemoryStore()

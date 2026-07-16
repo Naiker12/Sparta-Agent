@@ -4,8 +4,8 @@ import { useEffect, useRef, useCallback } from 'react'
 import Editor from '@monaco-editor/react'
 import type { editor } from 'monaco-editor'
 import { KeyMod, KeyCode } from 'monaco-editor'
-import { useThemeStore, isDarkTheme } from '@/stores/theme.store'
-import { getLanguageFromPath } from '@/lib/language-from-path'
+import { useThemeStore, isDarkTheme } from 'ia-sparta-core'
+import { getLanguageFromPath } from 'ia-sparta-core'
 
 interface MonacoEditorProps {
   path?: string

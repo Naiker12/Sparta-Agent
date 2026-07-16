@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { useEventBus } from '@/stores/event-bus.store'
-import type { SpartaEvent } from '@/types/events'
+import { useEventBus } from 'ia-sparta-core'
+import type { SpartaEvent } from 'ia-sparta-core'
 
 interface SubagentWatchPaneProps {
   onClose: () => void

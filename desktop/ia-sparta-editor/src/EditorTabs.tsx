@@ -2,13 +2,13 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { X, Pin, PinOff, XCircle, MinusCircle } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button } from 'ia-sparta-design-system'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+} from 'ia-sparta-design-system'
 
 interface EditorTab {
   path: string

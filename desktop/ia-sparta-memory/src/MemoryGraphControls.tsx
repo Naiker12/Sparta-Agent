@@ -1,5 +1,5 @@
 import { ZoomIn, ZoomOut, RotateCw, List, Share2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button } from 'ia-sparta-design-system'
 
 interface MemoryGraphControlsProps {
   onZoomIn: () => void

@@ -2,7 +2,7 @@ import { ipcMain, BrowserWindow, shell } from 'electron'
 import path from 'node:path'
 import { createRequire } from 'node:module'
 import { app } from 'electron'
-import { sidecarEvents, SidecarEvent } from './sidecar.ipc'
+import { sidecarEvents, SidecarEvent } from './sidecar.channel'
 
 const require = createRequire(import.meta.url)
 

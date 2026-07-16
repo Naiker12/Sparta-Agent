@@ -1,4 +1,4 @@
-import type { MemoryEntry } from '@/types'
+import type { MemoryEntry } from 'ia-sparta-core'
 import { searchByQuery } from './chroma-client'
 
 export interface SemanticSearchResult {

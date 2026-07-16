@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import type { editor } from 'monaco-editor'
 import { Send, X } from 'lucide-react'
-import { useEventBus } from '@/stores/event-bus.store'
+import { useEventBus } from 'ia-sparta-core'
 
 interface InlineAskWidgetProps {
   editor: editor.IStandaloneCodeEditor

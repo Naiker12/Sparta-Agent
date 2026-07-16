@@ -1,8 +1,8 @@
 import { Check, Download, MoreVertical, Pencil, Trash2, Copy, Star } from 'lucide-react'
 import { useState } from 'react'
-import type { Skill, DownloadableSkill } from '@/types'
-import { useSkillStore } from '@/stores/skill.store'
-import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog'
+import type { Skill, DownloadableSkill } from 'ia-sparta-core'
+import { useSkillStore } from 'ia-sparta-core'
+import { ConfirmDeleteDialog } from 'ia-sparta-design-system'
 import { SkillToggle } from './SkillToggle'
 
 interface SkillCardProps {

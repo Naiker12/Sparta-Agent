@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Hash, Send, MessageSquare } from 'lucide-react'
-import type { Channel } from '@/types'
+import type { Channel } from 'ia-sparta-core'
 
 interface InternalChannelViewProps {
   channel: Channel

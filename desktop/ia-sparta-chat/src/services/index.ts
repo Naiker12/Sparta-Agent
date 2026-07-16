@@ -1,4 +1,4 @@
-import type { Message, Session } from '@/types'
+import type { Message, Session } from 'ia-sparta-core'
 
 export interface ChatService {
   createSession(title?: string): Session

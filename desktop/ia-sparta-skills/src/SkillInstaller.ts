@@ -1,5 +1,5 @@
-import type { DownloadableSkill, SkillCategory } from '@/types'
-import { useSkillStore } from '@/stores/skill.store'
+import type { DownloadableSkill, SkillCategory } from 'ia-sparta-core'
+import { useSkillStore } from 'ia-sparta-core'
 
 interface SkillManifestEntry {
   id: string

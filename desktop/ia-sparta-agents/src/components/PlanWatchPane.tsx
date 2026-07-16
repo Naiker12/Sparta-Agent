@@ -1,4 +1,4 @@
-import { usePlanStore } from '@/stores/plan.store'
+import { usePlanStore } from 'ia-sparta-core'
 import { CheckCircle, Circle, Play } from 'lucide-react'
 
 export function PlanWatchPane() {

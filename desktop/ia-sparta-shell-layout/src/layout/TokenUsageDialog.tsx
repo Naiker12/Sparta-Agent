@@ -1,7 +1,7 @@
 import { X } from 'lucide-react'
-import { useUsageStore } from '@/stores/usage.store'
-import { useSessionStore } from '@/stores/session.store'
-import { useProviderStore, getVendorLabel } from '@/stores/provider.store'
+import { useUsageStore } from 'ia-sparta-core'
+import { useSessionStore } from 'ia-sparta-core'
+import { useProviderStore, getVendorLabel } from 'ia-sparta-core'
 
 interface TokenUsageDialogProps {
   open: boolean

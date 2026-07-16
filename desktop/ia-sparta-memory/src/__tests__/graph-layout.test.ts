@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { computeRelations } from '../graph-layout'
-import type { MemoryEntry, MemoryRelation } from '@/types'
+import type { MemoryEntry, MemoryRelation } from 'ia-sparta-core'
 
 function turn(id: string): MemoryEntry {
   return {

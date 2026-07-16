@@ -1,4 +1,4 @@
-import type { MemoryEntry, MemoryRelation } from '@/types'
+import type { MemoryEntry, MemoryRelation } from 'ia-sparta-core'
 
 export function computeRelations(
   entries: MemoryEntry[],

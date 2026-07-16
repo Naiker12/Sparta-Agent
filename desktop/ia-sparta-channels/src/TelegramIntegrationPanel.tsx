@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { Check, Loader2, Eye, EyeOff, ExternalLink, Shield } from 'lucide-react'
-import { BrandIcon } from '@/components/ui/BrandIcon'
-import { useChannelStore } from '@/stores/channel.store'
+import { BrandIcon } from 'ia-sparta-design-system'
+import { useChannelStore } from 'ia-sparta-core'
 import { IntegrationStatusBadge } from './IntegrationStatusBadge'
-import type { Channel } from '@/types'
+import type { Channel } from 'ia-sparta-core'
 
 interface TelegramIntegrationPanelProps {
   channel: Channel

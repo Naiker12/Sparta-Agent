@@ -1,5 +1,5 @@
 import type { AIProvider } from '../types'
-import type { ChatRequest } from '@/types'
+import type { ChatRequest } from 'ia-sparta-core'
 
 export abstract class BaseTransport implements AIProvider {
   abstract readonly vendor: AIProvider['vendor']

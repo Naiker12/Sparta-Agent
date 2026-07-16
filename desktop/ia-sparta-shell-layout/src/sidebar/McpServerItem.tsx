@@ -1,4 +1,4 @@
-import type { MCPServer } from '@/types'
+import type { MCPServer } from 'ia-sparta-core'
 
 interface McpServerItemProps {
   server: MCPServer

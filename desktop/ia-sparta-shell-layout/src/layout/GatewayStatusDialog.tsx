@@ -1,8 +1,8 @@
 import { X, AlertCircle, CheckCircle, XCircle } from 'lucide-react'
-import { useGatewayStore } from '@/stores/gateway.store'
-import { useProviderStore } from '@/stores/provider.store'
-import { useSettingsStore } from '@/stores/settings.store'
-import { useUIStore } from '@/stores/ui.store'
+import { useGatewayStore } from 'ia-sparta-core'
+import { useProviderStore } from 'ia-sparta-core'
+import { useSettingsStore } from 'ia-sparta-core'
+import { useUIStore } from 'ia-sparta-core'
 
 interface GatewayStatusDialogProps {
   open: boolean

@@ -5,17 +5,17 @@ import {
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
-} from '@/components/ui/sidebar'
+} from 'ia-sparta-design-system'
 import { Plus, Search, X, MessageSquare, Zap, Plug, Hash, Brain, Settings, SlidersHorizontal } from 'lucide-react'
-import { useSessionStore } from '@/stores/session.store'
-import { useSkillStore } from '@/stores/skill.store'
-import { useMCPStore } from '@/stores/mcp.store'
-import { useChannelStore } from '@/stores/channel.store'
-import { useMemoryStore } from '@/stores/memory.store'
-import { useUIStore, type MainView } from '@/stores/ui.store'
-import { useSettingsStore } from '@/stores/settings.store'
+import { useSessionStore } from 'ia-sparta-core'
+import { useSkillStore } from 'ia-sparta-core'
+import { useMCPStore } from 'ia-sparta-core'
+import { useChannelStore } from 'ia-sparta-core'
+import { useMemoryStore } from 'ia-sparta-core'
+import { useUIStore, type MainView } from 'ia-sparta-core'
+import { useSettingsStore } from 'ia-sparta-core'
 import { SessionItem } from './SessionItem'
-import { useTranslation } from '@/i18n'
+import { useTranslation } from 'ia-sparta-i18n'
 
 export function AppSidebar() {
   const { sessions, resetActiveSession }   = useSessionStore()

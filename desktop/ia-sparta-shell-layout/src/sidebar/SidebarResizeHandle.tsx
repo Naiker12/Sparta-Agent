@@ -1,5 +1,5 @@
 import { useCallback, useRef, useEffect } from 'react'
-import { useUIStore } from '@/stores/ui.store'
+import { useUIStore } from 'ia-sparta-core'
 
 export function SidebarResizeHandle() {
   const { setSidebarWidth, sidebarOpen } = useUIStore()

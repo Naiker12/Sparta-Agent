@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
-import { useUIStore } from '@/stores/ui.store'
+import { useUIStore } from 'ia-sparta-core'
 import { TerminalWorkspace } from './TerminalWorkspace'
 
 interface Rect { top: number; left: number; width: number; height: number }

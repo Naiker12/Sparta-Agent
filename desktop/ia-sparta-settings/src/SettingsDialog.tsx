@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { useSettingsStore } from '@/stores/settings.store'
-import { useTranslation } from '@/i18n'
+import { useSettingsStore } from 'ia-sparta-core'
+import { useTranslation } from 'ia-sparta-i18n'
 import { X } from 'lucide-react'
 import { GeneralTab } from './tabs/GeneralTab'
 import { AppearanceTab } from './tabs/AppearanceTab'
@@ -11,7 +11,7 @@ import { MemoryTab } from './tabs/MemoryTab'
 import { SkillsTab } from './tabs/SkillsTab'
 import { AgentsTab } from './tabs/AgentsTab'
 import { SearchTab } from './tabs/SearchTab'
-import type { SettingsTab } from '@/types'
+import type { SettingsTab } from 'ia-sparta-core'
 
 export function SettingsDialog() {
   const [activeTab, setActiveTab] = useState<SettingsTab>('general')

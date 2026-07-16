@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Wrench } from 'lucide-react'
-import type { MCPTool } from '@/types'
+import type { MCPTool } from 'ia-sparta-core'
 
 interface McpToolItemProps {
   tool: MCPTool

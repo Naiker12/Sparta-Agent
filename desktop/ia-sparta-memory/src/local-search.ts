@@ -4,7 +4,7 @@
  * Usa TF-IDF simplificado + tokenización básica para encontrar recuerdos relevantes.
  */
 
-import type { MemoryEntry } from '@/types'
+import type { MemoryEntry } from 'ia-sparta-core'
 
 // ── Tokenización ──────────────────────────────────────────────────────────────
 

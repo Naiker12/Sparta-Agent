@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { Eye, EyeOff, Pencil, Trash2, Shield } from 'lucide-react'
-import type { Provider } from '@/types'
-import { useProviderStore, getVendorLabel } from '@/stores/provider.store'
-import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog'
-import { BrandIcon } from '@/components/ui/BrandIcon'
-import { useTranslation } from '@/i18n'
-import { removeFromVault } from '@/lib/vault-helper'
+import type { Provider } from 'ia-sparta-core'
+import { useProviderStore, getVendorLabel } from 'ia-sparta-core'
+import { ConfirmDeleteDialog } from 'ia-sparta-design-system'
+import { BrandIcon } from 'ia-sparta-design-system'
+import { useTranslation } from 'ia-sparta-i18n'
+import { removeFromVault } from 'ia-sparta-core'
 
 interface ProviderCardProps {
   provider: Provider

@@ -1,8 +1,8 @@
 import { PanelLeft, PanelRight, FolderX, X } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { Separator } from '@/components/ui/separator'
-import { useTranslation } from '@/i18n'
+import { Button } from 'ia-sparta-design-system'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from 'ia-sparta-design-system'
+import { Separator } from 'ia-sparta-design-system'
+import { useTranslation } from 'ia-sparta-i18n'
 
 export function EditorToolbar({
   explorerVisible,

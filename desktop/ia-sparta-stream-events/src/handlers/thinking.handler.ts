@@ -5,7 +5,7 @@
  */
 import type { ThinkingEvent } from '../event-types'
 
-export function handleThinkingEvent(event: ThinkingEvent): void {
+export function handleThinkingEvent(_event: ThinkingEvent): void {
   // Lógica específica para eventos de thinking
   // (separada del hook principal para mantener responsabilidad única)
 }

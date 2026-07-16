@@ -1,17 +1,17 @@
-import { useUIStore, type MainView } from '@/stores/ui.store'
-import { useSettingsStore } from '@/stores/settings.store'
+import { useUIStore, type MainView } from 'ia-sparta-core'
+import { useSettingsStore } from 'ia-sparta-core'
 import { AppMenu } from './AppMenu'
 import { Settings, PanelLeftOpen, PanelLeftClose } from 'lucide-react'
-import { SpartaIcon } from '@/components/chat/SpartaIcon'
-import { FEATURES } from '@/lib/env-adapter'
-import { Button } from '@/components/ui/button'
+import { SpartaIcon } from 'ia-sparta-chat'
+import { FEATURES } from 'ia-sparta-core'
+import { Button } from 'ia-sparta-design-system'
 import {
   Tabs,
   TabsList,
   TabsHighlight,
   TabsHighlightItem,
   TabsTrigger,
-} from '@/components/animate-ui/primitives/animate/tabs'
+} from 'ia-sparta-design-system'
 
 const TABS: { type: MainView['type']; label: string }[] = [
   { type: 'chat', label: 'Chat' },

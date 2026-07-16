@@ -5,9 +5,9 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { MarkdownRenderer } from '@/components/chat/MarkdownRenderer'
-import type { Skill } from '@/types'
+} from 'ia-sparta-design-system'
+import { MarkdownRenderer } from 'ia-sparta-chat'
+import type { Skill } from 'ia-sparta-core'
 
 interface SkillMarkdownDialogProps {
   open: boolean

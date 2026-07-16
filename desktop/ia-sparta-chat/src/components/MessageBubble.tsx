@@ -1,17 +1,17 @@
 import { useState } from 'react'
 import { Copy, Check, Pencil, CheckCircle, X, RefreshCw, Trash2 } from 'lucide-react'
-import type { Message } from '@/types'
-import { useChatStore } from '@/stores/chat.store'
-import { useEventBus } from '@/stores/event-bus.store'
-import { useChatSession } from '@/hooks/useChatSession'
+import type { Message } from 'ia-sparta-core'
+import { useChatStore } from 'ia-sparta-core'
+import { useEventBus } from 'ia-sparta-core'
+import { useChatSession } from 'ia-sparta-core'
 import { TimelineBlock } from './reasoning/TimelineBlock'
 import { StreamCursor } from './reasoning/StreamCursor'
 import { PipelineTrace } from './reasoning/PipelineTrace'
 import { MessageActionsDialog } from './MessageActionsDialog'
 import { SpartaIcon } from './SpartaIcon'
-import { getMessageRenderState } from '@/lib/message-render-state'
+import { getMessageRenderState } from 'ia-sparta-core'
 import { MarkdownRenderer } from './MarkdownRenderer'
-import { useTranslation } from '@/i18n'
+import { useTranslation } from 'ia-sparta-i18n'
 
 interface MessageBubbleProps {
   message: Message

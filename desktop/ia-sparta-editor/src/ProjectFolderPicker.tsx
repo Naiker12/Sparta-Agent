@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react'
 import { FolderOpen } from 'lucide-react'
-import { useProjectStore } from '@/stores/project.store'
-import { useTranslation } from '@/i18n'
-import { toastReplace } from '@/lib/toast-helpers'
+import { useProjectStore } from 'ia-sparta-core'
+import { useTranslation } from 'ia-sparta-i18n'
+import { toastReplace } from 'ia-sparta-core'
 
 interface ProjectFolderPickerProps {
   projectId: string

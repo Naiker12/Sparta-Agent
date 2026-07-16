@@ -6,12 +6,12 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { useMemoryStore } from '@/stores/memory.store'
-import type { MemoryEntry } from '@/types'
+} from 'ia-sparta-design-system'
+import { Button } from 'ia-sparta-design-system'
+import { Textarea } from 'ia-sparta-design-system'
+import { ScrollArea } from 'ia-sparta-design-system'
+import { useMemoryStore } from 'ia-sparta-core'
+import type { MemoryEntry } from 'ia-sparta-core'
 import { MemoryEntryItem } from './MemoryEntryItem'
 
 interface MemoryDialogProps {

@@ -1,5 +1,5 @@
 import { ipcMain, BrowserWindow } from 'electron'
-import { sendToPython, isSidecarRunning, waitForSidecarReady, sidecarEvents, SidecarEvent } from '../sidecar.ipc'
+import { sendToPython, isSidecarRunning, waitForSidecarReady, sidecarEvents, SidecarEvent } from 'ia-sparta-ipc-bridge'
 
 export function registerAgentTaskIPC(): void {
   ipcMain.handle('agent:execute-task', async (_event, req: {

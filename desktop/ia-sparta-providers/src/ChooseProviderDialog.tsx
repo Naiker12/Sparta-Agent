@@ -1,8 +1,8 @@
 import { X } from 'lucide-react'
-import type { ProviderVendor } from '@/types'
-import { getVendorLabel } from '@/stores/provider.store'
-import { useTranslation } from '@/i18n'
-import { BrandIcon } from '@/components/ui/BrandIcon'
+import type { ProviderVendor } from 'ia-sparta-core'
+import { getVendorLabel } from 'ia-sparta-core'
+import { useTranslation } from 'ia-sparta-i18n'
+import { BrandIcon } from 'ia-sparta-design-system'
 
 interface ChooseProviderDialogProps {
   open: boolean

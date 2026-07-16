@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { X, Clock, Plus, Trash2, ToggleLeft, ToggleRight } from 'lucide-react'
-import { useCronStore, type CronJob, type CronFrequency } from '@/stores/cron.store'
+import { useCronStore, type CronJob, type CronFrequency } from 'ia-sparta-core'
 
 interface CronStatusDialogProps {
   open: boolean

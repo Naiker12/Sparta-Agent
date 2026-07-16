@@ -1,5 +1,5 @@
 import { ipcMain } from 'electron'
-import { sendToPython, isSidecarRunning, sidecarEvents, SidecarEvent } from '../sidecar.ipc'
+import { sendToPython, isSidecarRunning, sidecarEvents, SidecarEvent } from 'ia-sparta-ipc-bridge'
 
 const mcpTestResolvers = new Map<string, (result: unknown) => void>()
 

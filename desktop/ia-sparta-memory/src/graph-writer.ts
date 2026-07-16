@@ -1,4 +1,4 @@
-import type { MemoryEntry, MemoryRelation, ExtractedMemory } from '@/types'
+import type { MemoryEntry, MemoryRelation, ExtractedMemory } from 'ia-sparta-core'
 
 interface WriterDeps {
   getEntries: () => MemoryEntry[]
