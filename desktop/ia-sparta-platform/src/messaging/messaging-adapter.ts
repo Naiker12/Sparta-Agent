@@ -42,15 +42,15 @@ interface MessagingAdapter {
 
 class ElectronAdapter implements MessagingAdapter {
   sendMessage(request: ChatSendRequest): Promise<MessagingAdapterSendResult> | void {
-    return window.sparta.sendMessage(request) as unknown as Promise<MessagingAdapterSendResult>
+    return window.sparta?.sendMessage(request) as unknown as Promise<MessagingAdapterSendResult>
   }
 
   abortMessage(sessionId: string): void {
-    window.sparta.abortMessage(sessionId)
+    window.sparta?.abortMessage(sessionId)
   }
 
   onEvent(handler: (event: SpartaEvent) => void): () => void {
-    return window.sparta.onEvent(handler as (event: unknown) => void)
+    return window.sparta?.onEvent(handler as (event: unknown) => void) ?? (() => {})
   }
 
   isReady(): boolean {

@@ -22,7 +22,6 @@
     "baseUrl": ".",
     "ignoreDeprecations": "5.0",
     "paths": {
-      "@/*": ["./src/*"],
       "ia-sparta-*": ["./desktop/ia-sparta-*/src/index.ts"],
       "ia-sparta-app-shell": ["./desktop/ia-sparta-app-shell/src/index.ts"],
       "ia-sparta-ipc-bridge": ["./desktop/ia-sparta-ipc-bridge/src/index.ts"],

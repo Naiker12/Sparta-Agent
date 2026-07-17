@@ -112,7 +112,7 @@ function _queueThinking(sid: string, mid: string, token: string) {
 function _handleMCPEvent(type: string, event: Record<string, unknown>) {
   // Import lazily to avoid circular deps at module load time
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { useMCPStore } = require('@/stores/mcp.store') as typeof import('@/stores/mcp.store')
+  const { useMCPStore } = require('ia-sparta-core') as typeof import('ia-sparta-core')
   const store = useMCPStore.getState()
   const serverId = (event.serverId ?? '') as string
 
@@ -181,7 +181,7 @@ function _handleMCPEvent(type: string, event: Record<string, unknown>) {
   // ── MCP server added/removed by mcp_manage_tool ─────────────────────
   if (type === 'mcp:server_added') {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { useMCPStore } = require('@/stores/mcp.store') as typeof import('@/stores/mcp.store')
+    const { useMCPStore } = require('ia-sparta-core') as typeof import('ia-sparta-core')
     const store = useMCPStore.getState()
     const serverId = (event.serverId ?? '') as string
     const config = event.config as Record<string, unknown> | undefined
@@ -194,7 +194,7 @@ function _handleMCPEvent(type: string, event: Record<string, unknown>) {
 
   if (type === 'mcp:server_removed') {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { useMCPStore } = require('@/stores/mcp.store') as typeof import('@/stores/mcp.store')
+    const { useMCPStore } = require('ia-sparta-core') as typeof import('ia-sparta-core')
     const store = useMCPStore.getState()
     const serverId = (event.serverId ?? '') as string
     if (serverId) {
@@ -289,7 +289,7 @@ function _handleMCPEvent(type: string, event: Record<string, unknown>) {
           }))
         } else {
           // Legacy: set on message level
-          store.updateMessage(mid, { searchQuery: progressEvent.query } as Partial<import('@/types').Message>)
+          store.updateMessage(mid, { searchQuery: progressEvent.query } as Partial<import('ia-sparta-core').Message>)
         }
       }
 

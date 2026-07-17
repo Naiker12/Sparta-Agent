@@ -133,15 +133,15 @@ interface AgentAPI {
 
 declare global {
   interface Window {
-    sparta?: SpartaAPI
-    vault?: VaultAPI
-    electronAPI?: ElectronAPI
-    electron?: ElectronIPC
-    fs?: FilesystemAPI
-    terminal?: TerminalAPI
-    agent?: AgentAPI
-    skills?: SkillsAPI
-    permission?: PermissionAPI
-    editorBridge?: EditorBridgeAPI
+    sparta: SpartaAPI
+    vault: VaultAPI
+    electronAPI: ElectronAPI
+    electron: ElectronIPC
+    fs: FilesystemAPI
+    terminal: TerminalAPI
+    agent: AgentAPI
+    skills: SkillsAPI
+    permission: PermissionAPI
+    editorBridge: EditorBridgeAPI
   }
 }

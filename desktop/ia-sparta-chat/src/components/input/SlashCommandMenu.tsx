@@ -20,8 +20,8 @@ const COMMANDS: SlashCommand[] = [
     description: 'Limpiar la conversación actual',
     usage: '/clear',
     action: () => {
-      const { useSessionStore } = require('@/stores/session.store')
-      const { useChatStore } = require('@/stores/chat.store')
+      const { useSessionStore } = require('ia-sparta-core')
+      const { useChatStore } = require('ia-sparta-core')
       const sid = useSessionStore.getState().activeSessionId
       if (sid) {
         useSessionStore.getState().deleteSession(sid)
@@ -35,7 +35,7 @@ const COMMANDS: SlashCommand[] = [
     usage: '/model <nombre>',
     action: (args) => {
       if (!args) return
-      const { useSettingsStore } = require('@/stores/settings.store')
+      const { useSettingsStore } = require('ia-sparta-core')
       useSettingsStore.getState().setDefaultModel(args.trim())
     },
   },
@@ -44,7 +44,7 @@ const COMMANDS: SlashCommand[] = [
     description: 'Activar o desactivar memoria persistente',
     usage: '/memory on|off',
     action: (args) => {
-      const { useSettingsStore } = require('@/stores/settings.store')
+      const { useSettingsStore } = require('ia-sparta-core')
       const state = useSettingsStore.getState()
       if (args.trim() === 'on' && !state.memoryEnabled) state.toggleMemory()
       else if (args.trim() === 'off' && state.memoryEnabled) state.toggleMemory()
@@ -55,13 +55,13 @@ const COMMANDS: SlashCommand[] = [
     description: 'Controlar razonamiento: on|off|show|hide|full|none|low|medium|high',
     usage: '/reasoning <show|hide|full|clamp|on|off|none|low|medium|high|xhigh>',
     action: (args) => {
-      const { useSettingsStore } = require('@/stores/settings.store')
+      const { useSettingsStore } = require('ia-sparta-core')
       const state = useSettingsStore.getState()
       const arg = args.trim().toLowerCase()
       if (arg === 'on' && !state.reasoningEnabled) state.toggleReasoning()
       else if (arg === 'off' && state.reasoningEnabled) state.toggleReasoning()
       else if (['none', 'minimal', 'low', 'medium', 'high', 'xhigh'].includes(arg)) {
-        const { useSettingsStore } = require('@/stores/settings.store')
+        const { useSettingsStore } = require('ia-sparta-core')
         useSettingsStore.getState().setReasoningEffort(arg as 'none' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh')
         if (!state.reasoningEnabled) state.toggleReasoning()
       }
@@ -72,8 +72,8 @@ const COMMANDS: SlashCommand[] = [
     description: 'Mostrar comandos disponibles',
     usage: '/help',
     action: () => {
-      const { useSessionStore } = require('@/stores/session.store')
-      const { useChatStore } = require('@/stores/chat.store')
+      const { useSessionStore } = require('ia-sparta-core')
+      const { useChatStore } = require('ia-sparta-core')
       const sid = useSessionStore.getState().activeSessionId
       if (!sid) return
       const content = COMMANDS.map((c) => `- \`${c.usage}\` — ${c.description}`).join('\n')
@@ -94,8 +94,8 @@ const COMMANDS: SlashCommand[] = [
       const [skillId, action] = args.trim().split(/\s+/)
       if (!skillId) {
         const names = _cachedSkills.map((s) => `  \u2022 /${s.id} - ${s.name}`).join('\n')
-        const { useSessionStore } = require('@/stores/session.store')
-        const { useChatStore } = require('@/stores/chat.store')
+        const { useSessionStore } = require('ia-sparta-core')
+        const { useChatStore } = require('ia-sparta-core')
         const sid = useSessionStore.getState().activeSessionId
         if (!sid) return
         useChatStore.getState().addMessage({
@@ -103,7 +103,7 @@ const COMMANDS: SlashCommand[] = [
         })
         return
       }
-      const { useSkillStore } = require('@/stores/skill.store')
+      const { useSkillStore } = require('ia-sparta-core')
       const store = useSkillStore.getState()
       const isCurrentlyActive = store.activeSkillIds.includes(skillId)
       if (action === 'on' || (action === undefined && !isCurrentlyActive)) {
@@ -113,8 +113,8 @@ const COMMANDS: SlashCommand[] = [
       } else if (action === 'view') {
         const skill = _cachedSkills.find((s) => s.id === skillId)
         if (!skill) return
-        const { useSessionStore } = require('@/stores/session.store')
-        const { useChatStore } = require('@/stores/chat.store')
+        const { useSessionStore } = require('ia-sparta-core')
+        const { useChatStore } = require('ia-sparta-core')
         const sid = useSessionStore.getState().activeSessionId
         if (!sid) return
         useChatStore.getState().addMessage({
@@ -138,7 +138,7 @@ export function parseSlashCommand(text: string): { command: SlashCommand; args: 
     description: `Activar skill: ${skill.name}`,
     usage: `/${skill.id}`,
     action: () => {
-      const { useSkillStore } = require('@/stores/skill.store')
+      const { useSkillStore } = require('ia-sparta-core')
       const store = useSkillStore.getState()
       if (!store.activeSkillIds.includes(skill.id)) {
         store.toggleActive(skill.id)
@@ -163,7 +163,7 @@ export function getSlashSuggestions(text: string): SlashCommand[] {
     description: `Activar skill: ${skill.name}`,
     usage: `/${skill.id}`,
     action: () => {
-      const { useSkillStore } = require('@/stores/skill.store')
+      const { useSkillStore } = require('ia-sparta-core')
       const store = useSkillStore.getState()
       if (!store.activeSkillIds.includes(skill.id)) {
         store.toggleActive(skill.id)

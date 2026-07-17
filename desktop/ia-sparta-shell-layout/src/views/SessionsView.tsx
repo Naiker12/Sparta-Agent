@@ -1,5 +1,5 @@
 import { MessageSquare } from 'lucide-react'
-import { useSessionStore } from '@/stores/session.store'
+import { useSessionStore } from 'ia-sparta-core'
 
 export function SessionsView() {
   const { sessions, activeSessionId, switchSession, createSession } = useSessionStore()

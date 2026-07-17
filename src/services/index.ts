@@ -1,8 +1,0 @@
-export { createProvider } from './ai'
-export { AIGateway, aiGateway } from './ai/gateway'
-export { createChatService } from './chat'
-export type { ChatService } from './chat'
-export { writeExtractedMemory, findDuplicateEntry, updateTrustScore } from './memory/graph-writer'
-export { computeRelations } from './memory/graph-layout'
-export { configureVector, ensureVectorReady, indexInChroma, semanticSearch, buildMemoryContext, extractMemory } from './memory'
-export type { SemanticSearchResult } from './memory'

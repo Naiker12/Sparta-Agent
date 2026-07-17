@@ -3,6 +3,7 @@
  *
  * Fachada pública.
  */
+export { cn } from './utils'
 export * from './primitives/button'
 export * from './primitives/card'
 export * from './primitives/dialog'

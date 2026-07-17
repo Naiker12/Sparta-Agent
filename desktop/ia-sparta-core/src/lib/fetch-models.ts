@@ -43,7 +43,7 @@ export async function fetchModelsByVendor(
     // (browser window) is subject to CORS, and some providers such as NVIDIA do not
     // allow browser-side requests to their API. The main process has no CORS limits.
     if (canUseMainProcess()) {
-      return window.sparta.fetchModels({ vendor, apiKey, serverUrl })
+      return window.sparta.fetchModels!({ vendor, apiKey, serverUrl })
     }
 
     switch (vendor) {

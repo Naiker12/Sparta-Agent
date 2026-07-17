@@ -43,7 +43,7 @@ function createWindow() {
     },
     backgroundColor: '#0C0C10',
     show: false,
-    icon: path.join(process.env.VITE_PUBLIC, 'sparta-escritorio.png'),
+    icon: path.join(process.env.VITE_PUBLIC!, 'sparta-escritorio.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
       contextIsolation: true,
@@ -150,7 +150,7 @@ app.whenReady().then(async () => {
   }, 1000)
 
   ipcMain.handle('app:getVersion', () => {
-    const pkg = JSON.parse(fs.readFileSync(path.join(process.env.APP_ROOT, 'package.json'), 'utf-8'))
+    const pkg = JSON.parse(fs.readFileSync(path.join(process.env.APP_ROOT!, 'package.json'), 'utf-8'))
     return pkg.version || '0.0.0'
   })
 

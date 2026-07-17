@@ -22,13 +22,13 @@ import { useUIStore } from 'ia-sparta-core'
 import { useChatStore } from 'ia-sparta-core'
 import { IS_ELECTRON } from 'ia-sparta-platform'
 
-const EditorPanel = lazy(() => import('@/components/editor/EditorPanel').then(m => ({ default: m.EditorPanel })))
+const EditorPanel = lazy(() => import('ia-sparta-editor').then(m => ({ default: m.EditorPanel })))
 
-const SessionsView = lazy(() => import('@/components/views/SessionsView').then(m => ({ default: m.SessionsView })))
-const SkillsView = lazy(() => import('@/components/views/SkillsView').then(m => ({ default: m.SkillsView })))
-const McpView = lazy(() => import('@/components/views/McpView').then(m => ({ default: m.McpView })))
-const ChannelsView = lazy(() => import('@/components/views/ChannelsView').then(m => ({ default: m.ChannelsView })))
-const MemoryView = lazy(() => import('@/components/views/MemoryView').then(m => ({ default: m.MemoryView })))
+const SessionsView = lazy(() => import('../views/SessionsView').then(m => ({ default: m.SessionsView })))
+const SkillsView = lazy(() => import('ia-sparta-skills').then(m => ({ default: m.SkillsView })))
+const McpView = lazy(() => import('ia-sparta-mcp').then(m => ({ default: m.McpView })))
+const ChannelsView = lazy(() => import('ia-sparta-channels').then(m => ({ default: m.ChannelsView })))
+const MemoryView = lazy(() => import('ia-sparta-memory').then(m => ({ default: m.MemoryView })))
 
 function ViewSkeleton() {
   return (
