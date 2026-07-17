@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
-import { messagingAdapter } from '../lib/messaging-adapter'
-import { IS_WEB } from '../lib/env-adapter'
+import { messagingAdapter, IS_WEB } from 'ia-sparta-platform'
 
 export function useWebSocketStatus() {
   const [status, setStatus] = useState<'connected' | 'connecting' | 'disconnected'>(

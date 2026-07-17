@@ -11,6 +11,7 @@ export default defineConfig(({ mode }) => {
   return {
     resolve: {
       alias: {
+        '@': path.join(__dirname, 'src'),
         'ia-sparta-app-shell': path.join(__dirname, 'desktop/ia-sparta-app-shell/src/index.ts'),
         'ia-sparta-ipc-bridge': path.join(__dirname, 'desktop/ia-sparta-ipc-bridge/src/index.ts'),
         'ia-sparta-chat-ipc': path.join(__dirname, 'desktop/ia-sparta-chat-ipc/src/index.ts'),
@@ -32,6 +33,7 @@ export default defineConfig(({ mode }) => {
         'ia-sparta-design-system': path.join(__dirname, 'desktop/ia-sparta-design-system/src/index.ts'),
         'ia-sparta-i18n': path.join(__dirname, 'desktop/ia-sparta-i18n/src/index.ts'),
         'ia-sparta-core': path.join(__dirname, 'desktop/ia-sparta-core/src/index.ts'),
+        'ia-sparta-platform': path.join(__dirname, 'desktop/ia-sparta-platform/src/index.ts'),
       },
     },
     define: {

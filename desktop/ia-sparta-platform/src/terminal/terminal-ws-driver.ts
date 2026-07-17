@@ -50,10 +50,6 @@ interface TokenSources {
 }
 
 function getWsToken(): string {
-  // In web mode the token is provided by whoever starts the sidecar. It can
-  // be injected by the page host as a global or baked into the build for
-  // local development. Electron uses node-pty IPC, so this path is normally
-  // only active in the web build.
   const fromGlobal = (window as unknown as TokenSources).SPARTA_WS_TOKEN
   if (typeof fromGlobal === 'string' && fromGlobal) return fromGlobal
   const fromEnv = viteEnv.VITE_SPARTA_WS_TOKEN
@@ -112,7 +108,6 @@ async function connectTerminal(sessionId: string): Promise<SessionState> {
           return
         }
         if (!authenticated) {
-          // Any non-ready frame before auth succeeds is treated as a failure.
           cleanup()
           ws.close()
           reject(new Error('Terminal authentication failed'))

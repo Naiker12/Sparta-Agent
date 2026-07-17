@@ -13,9 +13,8 @@ import { GatewayStatusDialog } from './GatewayStatusDialog'
 import { TokenUsageDialog } from './TokenUsageDialog'
 import { AgentsStatusDialog } from './AgentsStatusDialog'
 import { CronStatusDialog } from './CronStatusDialog'
-import { IS_WEB } from 'ia-sparta-core'
+import { IS_WEB, messagingAdapter } from 'ia-sparta-platform'
 import { useWebSocketStatus } from 'ia-sparta-core'
-import { messagingAdapter } from 'ia-sparta-core'
 import { DEFAULT_SPINNER } from 'ia-sparta-core'
 
 export function StatusBar() {

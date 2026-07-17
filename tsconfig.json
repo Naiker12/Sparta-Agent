@@ -22,6 +22,7 @@
     "baseUrl": ".",
     "ignoreDeprecations": "5.0",
     "paths": {
+      "@/*": ["./src/*"],
       "ia-sparta-*": ["./desktop/ia-sparta-*/src/index.ts"],
       "ia-sparta-app-shell": ["./desktop/ia-sparta-app-shell/src/index.ts"],
       "ia-sparta-ipc-bridge": ["./desktop/ia-sparta-ipc-bridge/src/index.ts"],
@@ -43,7 +44,8 @@
       "ia-sparta-shell-layout": ["./desktop/ia-sparta-shell-layout/src/index.ts"],
       "ia-sparta-design-system": ["./desktop/ia-sparta-design-system/src/index.ts"],
       "ia-sparta-i18n": ["./desktop/ia-sparta-i18n/src/index.ts"],
-      "ia-sparta-core": ["./desktop/ia-sparta-core/src/index.ts"]
+      "ia-sparta-core": ["./desktop/ia-sparta-core/src/index.ts"],
+      "ia-sparta-platform": ["./desktop/ia-sparta-platform/src/index.ts"]
     }
   },
   "include": [

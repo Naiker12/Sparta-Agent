@@ -3,7 +3,7 @@ import { useSettingsStore } from 'ia-sparta-core'
 import { AppMenu } from './AppMenu'
 import { Settings, PanelLeftOpen, PanelLeftClose } from 'lucide-react'
 import { SpartaIcon } from 'ia-sparta-chat'
-import { FEATURES } from 'ia-sparta-core'
+import { FEATURES } from 'ia-sparta-platform'
 import { Button } from 'ia-sparta-design-system'
 import {
   Tabs,

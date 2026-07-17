@@ -5,7 +5,7 @@ import { useProviderStore, getVendorLabel } from 'ia-sparta-core'
 import { ConfirmDeleteDialog } from 'ia-sparta-design-system'
 import { BrandIcon } from 'ia-sparta-design-system'
 import { useTranslation } from 'ia-sparta-i18n'
-import { removeFromVault } from 'ia-sparta-core'
+import { removeFromVault } from 'ia-sparta-platform'
 
 interface ProviderCardProps {
   provider: Provider

@@ -20,7 +20,7 @@ import { useSidecarToasts } from 'ia-sparta-core'
 import { useSettingsStore } from 'ia-sparta-core'
 import { useUIStore } from 'ia-sparta-core'
 import { useChatStore } from 'ia-sparta-core'
-import { IS_ELECTRON } from 'ia-sparta-core'
+import { IS_ELECTRON } from 'ia-sparta-platform'
 
 const EditorPanel = lazy(() => import('@/components/editor/EditorPanel').then(m => ({ default: m.EditorPanel })))
 

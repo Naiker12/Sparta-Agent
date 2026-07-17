@@ -1,5 +1,5 @@
-import type { Provider } from '../types'
-import { IS_ELECTRON } from './env-adapter'
+import type { Provider } from 'ia-sparta-core'
+import { IS_ELECTRON } from '../env'
 import { encryptApiKey, decryptApiKey } from './web-vault'
 
 export async function getProviderKey(provider: Provider): Promise<string | undefined> {

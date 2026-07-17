@@ -4,7 +4,7 @@ import type { ProviderVendor, Provider } from 'ia-sparta-core'
 import { useProviderStore, getVendorLabel } from 'ia-sparta-core'
 import { useTranslation } from 'ia-sparta-i18n'
 import { fetchModelsByVendor } from 'ia-sparta-core'
-import { storeInVault, isVaultAvailable } from 'ia-sparta-core'
+import { storeInVault, isVaultAvailable } from 'ia-sparta-platform'
 import { Button } from 'ia-sparta-design-system'
 import {
   Combobox,

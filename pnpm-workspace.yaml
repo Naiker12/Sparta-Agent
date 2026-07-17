@@ -20,6 +20,7 @@ packages:
   - 'desktop/ia-sparta-design-system'
   - 'desktop/ia-sparta-i18n'
   - 'desktop/ia-sparta-core'
+  - 'desktop/ia-sparta-platform'
   - 'desktop/runtime/ia-sparta-sidecar-python'
   - 'desktop/runtime/ia-sparta-security-rust'
 

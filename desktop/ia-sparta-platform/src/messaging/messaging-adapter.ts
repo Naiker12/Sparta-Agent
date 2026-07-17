@@ -1,5 +1,5 @@
-import { IS_ELECTRON } from './env-adapter'
-import type { SpartaEvent } from '../types'
+import { IS_ELECTRON } from '../env'
+import type { SpartaEvent } from 'ia-sparta-core'
 
 interface ChatSendRequest {
   sessionId: string

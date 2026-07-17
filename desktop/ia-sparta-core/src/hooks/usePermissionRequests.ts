@@ -8,7 +8,7 @@
  */
 import { useEffect, useCallback } from 'react'
 import { usePermissionStore, type PermissionRequest } from '../stores/permission.store'
-import { IS_WEB } from '../lib/env-adapter'
+import { IS_WEB } from 'ia-sparta-platform'
 
 type RememberChoice = 'once' | 'session'
 
