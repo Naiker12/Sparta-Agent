@@ -1,7 +1,7 @@
 import { useChatStore } from 'ia-sparta-core'
 import { useSessionStore } from 'ia-sparta-core'
 import { MessageList } from './MessageList'
-import { ChatInput } from './input/ChatInput'
+import { ChatInput } from './ChatInput'
 import { HeroScreen } from './HeroScreen'
 import { PlanWatchPane } from 'ia-sparta-agents'
 

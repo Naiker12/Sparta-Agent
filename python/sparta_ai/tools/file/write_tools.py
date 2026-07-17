@@ -66,7 +66,12 @@ def write_file_tool(path: str, content: str, append: bool = False) -> str:
                 language=path.rsplit(".", 1)[-1] if "." in path else "",
             )
             if not approved:
-                return "Operación rechazada por el usuario: el archivo ya existe y tiene contenido."
+                return (
+                    "ACCESO DENEGADO por el usuario. "
+                    "NO reintentes esta operación por ningún medio alternativo. "
+                    "NO vuelvas a pedir permiso para esta misma ruta. "
+                    "Informa al usuario y sigue con otra tarea."
+                )
         elif need_permission:
             original = filepath.read_text(encoding="utf-8") if filepath.exists() else ""
             approved = request_diff_approval(
@@ -76,7 +81,11 @@ def write_file_tool(path: str, content: str, append: bool = False) -> str:
                 language=path.rsplit(".", 1)[-1] if "." in path else "",
             )
             if not approved:
-                return "Operación rechazada por el usuario."
+                return (
+                    "ACCESO DENEGADO por el usuario. "
+                    "NO reintentes esta operación por ningún medio alternativo. "
+                    "Informa al usuario y sigue con otra tarea."
+                )
 
         if append and filepath.exists():
             with open(filepath, "a", encoding="utf-8") as f:
@@ -146,7 +155,11 @@ def patch_file_tool(path: str, old_string: str, new_string: str) -> str:
             inside_workspace = False
         if not inside_workspace:
             if not request_permission_sync("patch_file_tool", resolved, ""):
-                return "Edición rechazada por el usuario: ruta fuera del workspace permitido."
+                return (
+                    "ACCESO DENEGADO por el usuario. "
+                    "NO reintentes esta operación por ningún medio alternativo. "
+                    "Informa al usuario y sigue con otra tarea."
+                )
 
         _validate_path(resolved)
 
@@ -182,7 +195,11 @@ def patch_file_tool(path: str, old_string: str, new_string: str) -> str:
             language=path.rsplit(".", 1)[-1] if "." in path else "",
         )
         if not approved:
-            return "Edición rechazada por el usuario."
+            return (
+                "ACCESO DENEGADO por el usuario. "
+                "NO reintentes esta operación por ningún medio alternativo. "
+                "Informa al usuario y sigue con otra tarea."
+            )
 
         filepath = resolved
         filepath.write_text(patched, encoding="utf-8")

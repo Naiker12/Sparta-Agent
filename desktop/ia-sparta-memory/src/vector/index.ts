@@ -1,4 +1,2 @@
-export { connect, isConnected, addEntry, updateEntry, deleteEntry, count as getIndexedCount, deleteAll, searchByQuery } from './chroma-client'
-export { embed, embedBatch, setActiveProvider, getActiveProvider, getEmbeddingModelLabel } from './embeddings'
-export { semanticSearch, buildMemoryContext } from './semantic-search'
-export type { SemanticSearchResult } from './semantic-search'
+// Vector internals live in ia-sparta-core — this barrel is kept for
+// backward compatibility but re-exports nothing directly.

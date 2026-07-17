@@ -32,8 +32,8 @@ async function sidecarFetch(path: string, body: unknown): Promise<unknown> {
 export async function connect(): Promise<boolean> {
   if (isElectron()) {
     try {
-      const status = await window.sparta!.isSidecarReady()
-      return status.ready
+      const status = await window.sparta?.isSidecarReady()
+      return status?.ready ?? false
     } catch {
       return false
     }
@@ -53,8 +53,8 @@ export function isConnected(): boolean {
 
 export async function addEntry(entry: MemoryEntry): Promise<boolean> {
   if (isElectron()) {
-    const result = await window.sparta!.memoryIndex(entry as unknown as Record<string, unknown>)
-    return result.ok
+    const result = await window.sparta?.memoryIndex(entry as unknown as Record<string, unknown>)
+    return result?.ok ?? false
   }
   const result = await sidecarFetch('/api/memory/index', { entry }) as { ok: boolean }
   return result.ok
@@ -78,8 +78,8 @@ export async function updateEntry(
 
 export async function deleteEntry(entryId: string): Promise<boolean> {
   if (isElectron()) {
-    const result = await window.sparta!.memoryDelete(entryId)
-    return result.ok
+    const result = await window.sparta?.memoryDelete(entryId)
+    return result?.ok ?? false
   }
   const result = await sidecarFetch('/api/memory/delete', { entry_id: entryId }) as { ok: boolean }
   return result.ok
@@ -90,8 +90,8 @@ export async function searchByQuery(
   k = 5,
 ): Promise<{ id: string; content: string; metadata: Record<string, unknown>; distance: number }[]> {
   if (isElectron()) {
-    const result = await window.sparta!.memorySearch(query, k)
-    if (!result.ok || !Array.isArray(result.results)) return []
+    const result = await window.sparta?.memorySearch(query, k)
+    if (!result?.ok || !Array.isArray(result.results)) return []
     return (result.results as Array<{ id: string; content: string; metadata?: Record<string, unknown>; score?: number; distance?: number }>)
       .map((r) => ({
         id: r.id,
@@ -115,8 +115,8 @@ export async function searchByQuery(
 
 export async function count(): Promise<number> {
   if (isElectron()) {
-    const result = await window.sparta!.memoryCount()
-    return result.ok ? (result.count ?? 0) : 0
+    const result = await window.sparta?.memoryCount()
+    return result?.ok ? (result.count ?? 0) : 0
   }
   const result = await sidecarFetch('/api/memory/count', {}) as { ok: boolean; count?: number }
   return result.ok ? (result.count ?? 0) : 0

@@ -2,12 +2,15 @@ import type { SessionMode } from './settings'
 
 export type MessageRole = 'user' | 'assistant' | 'system'
 
+export type ToolCallSubstatus = 'connecting' | 'executing' | 'waiting' | 'reading' | 'writing'
+
 export interface ToolCall {
   id: string
   toolName: string
   input: unknown
   output?: string
   status: 'running' | 'completed' | 'error'
+  substatus?: ToolCallSubstatus
   durationMs?: number
   error?: string
   startedAt?: number

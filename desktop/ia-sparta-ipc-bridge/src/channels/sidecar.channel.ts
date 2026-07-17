@@ -35,9 +35,10 @@ function getPythonCwd(): string {
 }
 
 function getWorkspaceRoot(): string {
-  // Solo devolvemos el workspace que el usuario seleccionó explícitamente.
-  // Vacío = sin workspace → el sidecar lanzará error pidiendo abrir una carpeta.
-  return process.env.SPARTA_WORKSPACE_ROOT ?? ''
+  // In dev the project root is CWD. In prod it's the directory containing
+  // the app executable.  The explicit env-var override is kept as a fallback.
+  return process.env.SPARTA_WORKSPACE_ROOT
+    ?? (app.isPackaged ? path.dirname(process.execPath) : process.cwd())
 }
 
 function getDataDir(): string {

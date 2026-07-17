@@ -463,7 +463,7 @@ async def prepare_agent(
 
     async def _mcp():
         from sparta_ai.tools.mcp_manager import mcp_manager
-        return await mcp_manager.get_tools(session_id, mcp_servers, emit_fn=emit_fn)
+        return await mcp_manager.get_tools(session_id, mcp_servers, emit_fn=emit_fn, workspace_root=workspace_root)
 
     async def _checkpointer():
         return await get_checkpointer()

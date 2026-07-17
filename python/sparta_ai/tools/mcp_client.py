@@ -31,6 +31,7 @@ import asyncio
 import json
 import logging
 import os
+import platform
 import re
 from typing import Any, Callable
 
@@ -88,10 +89,18 @@ def resolve_arg_placeholders(args: list[str], override: str | None = None) -> li
     Falls back to ``SPARTA_WORKSPACE_ROOT`` (the same env var the file tools
     use) when no explicit ``override`` is provided, so a manually-added
     server resolves to the current project root instead of staying literal.
+
+    On Windows, backslashes in resolved paths are converted to forward slashes
+    to prevent npm/npx from interpreting ``\\s``, ``\\p``, etc. as escape
+    sequences in CLI config flags.
     """
     if not args:
         return args
     workspace = override or os.environ.get("SPARTA_WORKSPACE_ROOT") or os.getcwd()
+    # On Windows, convert backslashes to forward slashes so npm/npx doesn't
+    # interpret ``\s``, ``\p``, etc. as escape sequences in CLI config flags.
+    if platform.system() == "Windows":
+        workspace = workspace.replace("\\", "/")
     resolved: list[str] = []
     for a in args:
         if any(p in a for p in _ARG_PLACEHOLDERS):
@@ -153,7 +162,7 @@ class RealMCPClient:
         self._cm: Any = None  # context manager handle (kept for backwards-compat introspection)
         self._exit_stack: Any = None
 
-    async def connect(self) -> list[dict]:
+    async def connect(self, workspace_root: str = "") -> list[dict]:
         """Connect to the server and return the list of discovered tools.
 
         Raises RuntimeError if the mcp SDK is not installed, TimeoutError if
@@ -166,7 +175,7 @@ class RealMCPClient:
         hang indefinitely and block every subsequent chat message.
         """
         try:
-            return await asyncio.wait_for(self._do_connect(), timeout=self._connect_timeout)
+            return await asyncio.wait_for(self._do_connect(workspace_root=workspace_root), timeout=self._connect_timeout)
         except asyncio.TimeoutError:
             logger.error(
                 "MCP server '%s' timed out after %ds during connect (process never finished handshake)",
@@ -182,7 +191,7 @@ class RealMCPClient:
             await self._cleanup()
             raise
 
-    async def _do_connect(self) -> list[dict]:
+    async def _do_connect(self, workspace_root: str = "") -> list[dict]:
         from contextlib import AsyncExitStack
         try:
             from mcp import ClientSession
@@ -216,11 +225,28 @@ class RealMCPClient:
         try:
             if self._server_type == "stdio":
                 command = self.config.get("command", "")
-                args = resolve_arg_placeholders(self.config.get("args", []))
+                args = resolve_arg_placeholders(self.config.get("args", []), override=workspace_root or None)
                 env = _resolve_env(self.config.get("env"))
+
+                # On Windows, npx/npm/pnpm/yarn are .cmd batch files.
+                # Windows auto-invokes cmd.exe to run them, and cmd.exe
+                # writes its prompt (e.g. "D:\path>") to stdout — which
+                # mixes with the MCP server's JSON-RPC output on the same
+                # pipe, breaking the parser.  Setting PROMPT=$E (empty
+                # escape sequence) suppresses the prompt character.
+                if platform.system() == "Windows":
+                    env["PROMPT"] = "$E"
 
                 if not command:
                     raise ValueError(f"MCP server '{self.server_id}' requires 'command' for stdio type.")
+
+                # On Windows, npx/npm/pnpm/yarn are .cmd scripts, not executables.
+                # The MCP SDK's stdio transport doesn't use a shell by default,
+                # so Windows can't find them. Append .cmd when needed.
+                if platform.system() == "Windows":
+                    base = command.rsplit("/", 1)[-1].rsplit("\\", 1)[-1]
+                    if base in ("npx", "npm", "pnpm", "yarn") and not command.endswith(".cmd"):
+                        command = command + ".cmd"
 
                 unresolved = [a for a in args if re.search(r"\$\{[A-Z_]+\}", a)]
                 if unresolved:
@@ -234,6 +260,7 @@ class RealMCPClient:
                     command=command,
                     args=args,
                     env=env,
+                    encoding_error_handler="replace",
                 )
                 self._cm = stdio_client(params)
                 read_stream, write_stream, *_ = await stack.enter_async_context(self._cm)
@@ -426,6 +453,7 @@ def _make_langchain_tool(client: RealMCPClient, tool_def: dict):
 async def build_mcp_tools(
     servers_config: list[dict],
     emit_fn: "Callable[[str, dict], None] | None" = None,
+    workspace_root: str = "",
 ) -> list:
     """Connect to all enabled MCP servers and return LangChain StructuredTools.
 
@@ -456,7 +484,7 @@ async def build_mcp_tools(
 
         client = RealMCPClient(cfg)
         try:
-            tool_defs = await client.connect()
+            tool_defs = await client.connect(workspace_root=workspace_root)
         except Exception as e:
             logger.error("Skipping MCP server '%s': %s", server_id, e)
             if emit_fn:

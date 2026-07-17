@@ -12,8 +12,8 @@ function isElectron(): boolean {
 
 async function sidecarEmbed(texts: string[]): Promise<number[][] | null> {
   if (isElectron()) {
-    const result = await window.sparta!.memoryEmbed(texts)
-    if (!result.ok || !Array.isArray(result.embeddings)) return null
+    const result = await window.sparta?.memoryEmbed(texts)
+    if (!result?.ok || !Array.isArray(result.embeddings)) return null
     return result.embeddings
   }
   try {

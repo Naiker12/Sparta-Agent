@@ -246,7 +246,7 @@ export function TimelineBlock({ message, className }: TimelineBlockProps) {
             {/* Stream stall indicator */}
             {(status === 'streaming' || status === 'starting') && (
               <div style={{ padding: '0 6px 4px' }}>
-                <StreamStallIndicator streaming={status === 'streaming'} />
+                <StreamStallIndicator streaming={status === 'streaming'} message={message} />
               </div>
             )}
           </motion.div>

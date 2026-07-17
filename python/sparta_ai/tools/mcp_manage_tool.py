@@ -516,7 +516,8 @@ async def _async_connect_and_emit(server_id: str, config: dict) -> None:
 
     client = RealMCPClient({**resolved_config, "id": server_id, "timeout": 15})
     try:
-        tools = await client.connect()
+        workspace = os.environ.get("SPARTA_WORKSPACE_ROOT", "")
+        tools = await client.connect(workspace_root=workspace)
         _emit_mcp_event("mcp:connected", {
             "serverId": server_id,
             "toolCount": len(tools),

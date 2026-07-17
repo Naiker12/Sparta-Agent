@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { FolderOpen, FileSearch, Command, Upload } from 'lucide-react'
+import { FolderOpen, FileSearch, Command, Upload, Loader2 } from 'lucide-react'
 import { Button } from 'ia-sparta-design-system'
 import { useTranslation } from 'ia-sparta-i18n'
 import { useProjectStore } from 'ia-sparta-core'
@@ -27,15 +27,26 @@ export function EmptyEditorState({
   const { t } = useTranslation()
   const noProject = !hasRootPath
   const [dragOver, setDragOver] = useState(false)
+  const [opening, setOpening] = useState(false)
+
+  const handleOpenFolderClick = useCallback(async () => {
+    setOpening(true)
+    try {
+      await onOpenFolder()
+    } finally {
+      setOpening(false)
+    }
+  }, [onOpenFolder])
 
   const handleDrop = useCallback(async (e: React.DragEvent) => {
     e.preventDefault()
     setDragOver(false)
+    setOpening(true)
     const files = e.dataTransfer.files
-    if (files.length === 0) return
+    if (files.length === 0) { setOpening(false); return }
     const file = files[0] as File & { path?: string }
     const path = file.path ?? file.webkitRelativePath
-    if (!path || !window.fs) return
+    if (!path || !window.fs) { setOpening(false); return }
     try {
       let project = useProjectStore.getState().getActiveProject()
       if (!project) {
@@ -52,8 +63,10 @@ export function EmptyEditorState({
       toastReplace('error', 'folder-picker', t('editor.folderOpenFailed'), {
         description: (err as Error).message,
       })
+    } finally {
+      setOpening(false)
     }
-  }, [t])
+  }, [t, onOpenFolder])
 
   return (
     <div
@@ -152,9 +165,9 @@ export function EmptyEditorState({
       {!dragOver && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center', width: '100%', maxWidth: 260 }}>
           {noProject && (
-            <Button onClick={onOpenFolder} className="w-full">
-              <FolderOpen size={14} />
-              {t('editor.empty.openFolder')}
+            <Button onClick={handleOpenFolderClick} className="w-full" disabled={opening}>
+              {opening ? <Loader2 size={14} className="animate-spin" /> : <FolderOpen size={14} />}
+              {opening ? t('editor.empty.opening') || 'Abriendo proyecto…' : t('editor.empty.openFolder')}
             </Button>
           )}
           <div style={{ display: 'flex', gap: 6, width: '100%' }}>

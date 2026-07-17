@@ -1,0 +1,14 @@
+{
+  "name": "sparta-security",
+  "version": "0.1.0",
+  "private": true,
+  "napi": {
+    "binaryName": "sparta-security"
+  },
+  "devDependencies": {
+    "@napi-rs/cli": "^3.0.0"
+  },
+  "scripts": {
+    "build": "napi build --platform --release"
+  }
+}

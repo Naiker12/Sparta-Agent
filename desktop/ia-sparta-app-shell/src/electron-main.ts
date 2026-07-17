@@ -2,10 +2,10 @@ import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import fs from 'node:fs'
-import { registerChatIPC } from 'ia-sparta-ipc-bridge'
 import { registerMemoryIPC } from 'ia-sparta-ipc-bridge'
 import { registerVaultIPC } from 'ia-sparta-ipc-bridge'
 import { registerKeyManagerIPC, pushAllKeys } from 'ia-sparta-ipc-bridge'
+import { registerChatSendIPC, registerOnMessageHandler, registerSidecarStatusIPC, registerMemoryIPC as registerChatMemoryIPC, registerEditorDiffIPC, registerAudioIPC, registerMcpTestIPC, registerAgentTaskIPC } from 'ia-sparta-chat-ipc'
 import { registerSecurityIPC, wireSecurityIntoPipeline } from 'ia-sparta-ipc-bridge'
 import { startSidecar, stopSidecar, waitForSidecarReady, registerSidecarIPC } from 'ia-sparta-ipc-bridge'
 import { registerTerminalIPC, sessions, agentProcs } from 'ia-sparta-ipc-bridge'
@@ -113,7 +113,16 @@ app.whenReady().then(async () => {
 
   createWindow()
 
-  registerChatIPC()
+  // Register chat IPC handlers from ia-sparta-chat-ipc (the no-op stub in
+  // ia-sparta-ipc-bridge was a leftover from the modularization).
+  registerChatSendIPC()
+  registerOnMessageHandler()
+  registerSidecarStatusIPC()
+  registerChatMemoryIPC()
+  registerEditorDiffIPC()
+  registerAudioIPC()
+  registerMcpTestIPC()
+  registerAgentTaskIPC()
   registerMemoryIPC()
   registerVaultIPC()
   registerKeyManagerIPC()

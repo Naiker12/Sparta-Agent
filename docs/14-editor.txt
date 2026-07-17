@@ -3,13 +3,14 @@
 ║  Editor de código con Monaco Editor + file tree                 ║
 ╚══════════════════════════════════════════════════════════════════╝
 
-1. COMPONENTES (src/components/editor/)
+1. COMPONENTES (src/)
 -----------------------------------------
-EditorPanel.tsx           — Panel principal (333 líneas)
+EditorPanel.tsx           — Panel principal (579 líneas)
   Monaco Editor + file tree sidebar
   Abre archivos via window.fs.readFile()
   Guarda via window.fs.writeFile()
   Drag-resize para ancho del explorador
+  Condiciona explorador a rootPath existente
 
 MonacoEditor.tsx          — Wrapper @monaco-editor/react
   Tema vs-dark + Geist Mono
@@ -18,6 +19,7 @@ MonacoEditor.tsx          — Wrapper @monaco-editor/react
 FileTreeSidebar.tsx       — Explorador de archivos
   Árbol recursivo desde window.fs.readDir()
   Excluye node_modules/.git/.venv/etc
+  Sin proyecto: solo header minimal con botón "Abrir carpeta"
 
 FileTreeItem.tsx          — Item individual (archivo/directorio)
   Botón trash en hover
@@ -26,8 +28,9 @@ FileTreeItem.tsx          — Item individual (archivo/directorio)
 EditorTabs.tsx            — Tabs de archivos abiertos
   Indicador de modified, botón cerrar
 
-ProjectFolderPicker.tsx   — Selector de carpeta raíz
-  window.fs.openFolderDialog()
+EditorEmptyState.tsx      — Estado vacío central (único CTA)
+  Drag & drop + botón "Abrir carpeta"
+  Feedback inmediato "Abriendo proyecto…" con spinner
 
 2. SOPORTE DE LENGUAJES (9)
 ------------------------------

@@ -3,7 +3,7 @@ import { useChatStore } from 'ia-sparta-core'
 import { useMemoryStore } from 'ia-sparta-core'
 import { useEventBus } from 'ia-sparta-core'
 import { useChatSession } from 'ia-sparta-core'
-import { deleteEntry as chromaDeleteEntry } from '../chroma-client'
+import { deleteEntry as chromaDeleteEntry } from 'ia-sparta-core'
 import { ConfirmDeleteDialog, ConfirmActionDialog } from 'ia-sparta-design-system'
 
 type DialogState =

@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Check, Loader2, X, AlertTriangle, FileText, SquarePen, Trash2, Search, Terminal, Globe, Pen, ChevronRight } from 'lucide-react'
 import { MarkdownRenderer } from 'ia-sparta-chat'
 import { SearchResultsList } from './SearchResultsList'
+import { inferToolSubstatus, substatusLabel } from 'ia-sparta-core'
 import type { ToolCall } from 'ia-sparta-core'
 
 interface ToolTraceRowProps {
@@ -114,10 +115,24 @@ function StatusIcon({ status, error }: { status: ToolCall['status']; error?: str
  */
 export function ToolTraceRow({ toolCall }: ToolTraceRowProps) {
   const [expanded, setExpanded] = useState(toolCall.status === 'running')
+  const [liveSubstatus, setLiveSubstatus] = useState(toolCall.substatus)
   const { icon, label, description } = getToolCallSummary(toolCall)
   const isSearch = toolCall.toolName === 'web_search' || toolCall.toolName === 'web_search_tool'
   const isFetch = toolCall.toolName === 'web_fetch' || toolCall.toolName === 'web_fetch_tool'
   const hasSearchResults = (toolCall.searchProgress && toolCall.searchProgress.length > 0) || false
+
+  // Live-update substatus while running
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  useEffect(() => {
+    if (toolCall.status !== 'running' || !toolCall.startedAt) {
+      if (intervalRef.current) clearInterval(intervalRef.current)
+      return
+    }
+    intervalRef.current = setInterval(() => {
+      setLiveSubstatus(inferToolSubstatus(toolCall.toolName, toolCall.startedAt!, toolCall.searchProgress?.length))
+    }, 2000)
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
+  }, [toolCall.status, toolCall.toolName, toolCall.startedAt])
 
   return (
     <div className="tool-trace-row">
@@ -157,6 +172,17 @@ export function ToolTraceRow({ toolCall }: ToolTraceRowProps) {
         }}>
           {label}
         </span>
+
+        {toolCall.status === 'running' && liveSubstatus && (
+          <span style={{
+            color: 'var(--text-muted)',
+            fontSize: 10,
+            fontFamily: 'var(--font-ui)',
+            fontStyle: 'italic',
+          }}>
+            {substatusLabel(liveSubstatus)}
+          </span>
+        )}
 
         {description && (
           <span style={{

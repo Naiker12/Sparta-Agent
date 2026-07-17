@@ -47,11 +47,15 @@ export function useAudioTranscription(): UseAudioTranscriptionReturn {
       // Electron mode: use IPC via the sidecar's stdin/stdout
       if (isElectron()) {
         const audio = await blobToBase64(blob)
-        const result = await window.sparta!.transcribeAudio({
+        const result = await window.sparta?.transcribeAudio({
           audio,
           filename: `recording.${ext}`,
           language: 'es',
         })
+        if (!result) {
+          setError('Transcripción no disponible')
+          return null
+        }
         if (result.error) {
           setError(result.error)
           return null

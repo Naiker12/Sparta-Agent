@@ -50,18 +50,22 @@ interface FileTreeItemProps {
   onCopyPath?: (path: string) => void
   onNewFile?: (dirPath: string) => void
   onNewFolder?: (dirPath: string) => void
+  onExpandDir?: (dirPath: string) => Promise<FileTreeNode[]>
 }
 
 export function FileTreeItem({
   node, depth = 0, activePath, onSelectFile, onDelete,
-  onCopyPath, onNewFile, onNewFolder,
+  onCopyPath, onNewFile, onNewFolder, onExpandDir,
 }: FileTreeItemProps) {
   const [expanded, setExpanded] = useState(depth < 2)
+  const [children, setChildren] = useState<FileTreeNode[] | undefined>(node.children)
+  const [loadingChildren, setLoadingChildren] = useState(false)
   const [hovered, setHovered] = useState(false)
   const [ctx, setCtx] = useState<ContextMenuState | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
   const isDirectory = node.type === 'directory'
   const isActive = node.path === activePath
+  const hasLazyChildren = isDirectory && (children === undefined || children.length === 0)
 
   useEffect(() => {
     if (!ctx) return
@@ -77,9 +81,24 @@ export function FileTreeItem({
     }
   }, [ctx])
 
-  function handleClick() {
+  async function handleClick() {
     if (isDirectory) {
-      setExpanded(!expanded)
+      const willExpand = !expanded
+      setExpanded(willExpand)
+
+      // Lazy-load children if expanding and children are not loaded yet
+      if (willExpand && hasLazyChildren && onExpandDir) {
+        setLoadingChildren(true)
+        try {
+          const loadedChildren = await onExpandDir(node.path)
+          setChildren(loadedChildren)
+          node.children = loadedChildren
+        } catch (err) {
+          console.error('[FileTreeItem] Error loading children:', err)
+        } finally {
+          setLoadingChildren(false)
+        }
+      }
     } else {
       onSelectFile(node.path)
     }
@@ -218,9 +237,9 @@ export function FileTreeItem({
           </button>
         </div>
       )}
-      {isDirectory && expanded && node.children ? (
+      {isDirectory && expanded && children && children.length > 0 ? (
         <div>
-          {node.children.map((child) => (
+          {children.map((child) => (
             <FileTreeItem
               key={child.path}
               node={child}
@@ -231,8 +250,13 @@ export function FileTreeItem({
               onCopyPath={onCopyPath}
               onNewFile={onNewFile}
               onNewFolder={onNewFolder}
+              onExpandDir={onExpandDir}
             />
           ))}
+        </div>
+      ) : isDirectory && expanded && loadingChildren ? (
+        <div style={{ paddingLeft: `${8 + (depth + 1) * 14}px`, paddingTop: 2, paddingBottom: 2 }}>
+          <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>Cargando…</span>
         </div>
       ) : null}
     </div>

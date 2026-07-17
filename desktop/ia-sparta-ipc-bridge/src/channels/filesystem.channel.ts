@@ -85,6 +85,40 @@ export function registerFilesystemIPC() {
     }
   })
 
+  ipcMain.handle('fs:readDirLevel', async (_event, dirPath: string) => {
+    if (!dirPath || typeof dirPath !== 'string') return { nodes: [], error: 'Invalid path' }
+    try {
+      let entries: fs.Dirent[] = []
+      try {
+        entries = await fsPromises.readdir(dirPath, { withFileTypes: true })
+      } catch (err) {
+        return { nodes: [], error: (err as Error).message }
+      }
+
+      const nodes: FileTreeNode[] = []
+      for (const entry of entries) {
+        if (entry.name.startsWith('.') && entry.name !== '.env') continue
+        if (entry.isDirectory() && SKIP_DIRS.has(entry.name)) continue
+
+        const fullPath = path.join(dirPath, entry.name)
+        if (entry.isDirectory()) {
+          nodes.push({ name: entry.name, path: fullPath, type: 'directory', children: [] })
+        } else if (entry.isFile()) {
+          nodes.push({ name: entry.name, path: fullPath, type: 'file' })
+        }
+      }
+
+      nodes.sort((a, b) => {
+        if (a.type === b.type) return a.name.localeCompare(b.name)
+        return a.type === 'directory' ? -1 : 1
+      })
+
+      return { nodes }
+    } catch (err) {
+      return { nodes: [], error: (err as Error).message }
+    }
+  })
+
   ipcMain.handle('fs:readFile', async (_event, filePath: string) => {
     if (!filePath || typeof filePath !== 'string') return { success: false, error: 'Invalid path' }
     if (_workspaceRoot && !isWithinRoot(filePath, _workspaceRoot)) {

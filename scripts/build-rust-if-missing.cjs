@@ -18,7 +18,7 @@ function getTargetTriple() {
 
 function main() {
   const triple = getTargetTriple()
-  const target = path.join(__dirname, '..', 'rust', 'sparta-security', `sparta-security.${triple}.node`)
+  const target = path.join(__dirname, '..', 'desktop', 'runtime', 'ia-sparta-security-rust', `sparta-security.${triple}.node`)
 
   if (!existsSync(target)) {
     console.log(`[rust] sparta-security binary missing for ${triple}, trying to build...`)

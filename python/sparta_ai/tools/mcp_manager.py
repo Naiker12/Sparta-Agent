@@ -108,6 +108,7 @@ class MCPConnectionManager:
         session_id: str,
         servers_config: list[dict],
         emit_fn: Callable[[str, dict], Any] | None = None,
+        workspace_root: str = "",
     ) -> list:
         """Return LangChain StructuredTools for the given servers.
 
@@ -169,7 +170,7 @@ class MCPConnectionManager:
 
             client = RealMCPClient(cfg)
             try:
-                tool_defs = await client.connect()
+                tool_defs = await client.connect(workspace_root=workspace_root)
             except Exception as e:
                 logger.error("MCP: failed to connect '%s': %s", server_id, e)
                 broken_slots[server_id] = _BrokenState(new_hash, str(e))

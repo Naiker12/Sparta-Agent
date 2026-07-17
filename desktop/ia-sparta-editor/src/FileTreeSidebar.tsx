@@ -21,28 +21,6 @@ const LANG_MAP: Record<string, string> = {
   sql: 'SQL', sh: 'Shell', bash: 'Shell', dockerfile: 'Docker',
 }
 
-function countFiles(nodes: FileTreeNode[]): number {
-  let count = 0
-  for (const n of nodes) {
-    if (n.type === 'file') count++
-    else if (n.children) count += countFiles(n.children)
-  }
-  return count
-}
-
-function detectLanguages(nodes: FileTreeNode[], acc: Map<string, number> = new Map()): Map<string, number> {
-  for (const n of nodes) {
-    if (n.type === 'file') {
-      const ext = n.name.split('.').pop()?.toLowerCase() ?? ''
-      const lang = LANG_MAP[ext]
-      if (lang) acc.set(lang, (acc.get(lang) ?? 0) + 1)
-    } else if (n.children) {
-      detectLanguages(n.children, acc)
-    }
-  }
-  return acc
-}
-
 interface FileTreeSidebarProps {
   activePath?: string
   onSelectFile: (path: string) => void
@@ -56,29 +34,54 @@ export function FileTreeSidebar({ activePath, onSelectFile, onDeleteFile }: File
   const [loading, setLoading] = useState(false)
   const [treeStats, setTreeStats] = useState<{ fileCount: number; languages: string[] } | null>(null)
 
+  const countTotalFiles = useCallback((nodes: FileTreeNode[]): number => {
+    let count = 0
+    for (const n of nodes) {
+      if (n.type === 'file') count++
+    }
+    return count
+  }, [])
+
+  const detectTopLanguages = useCallback((nodes: FileTreeNode[]): string[] => {
+    const langMap = new Map<string, number>()
+    for (const n of nodes) {
+      if (n.type === 'file') {
+        const ext = n.name.split('.').pop()?.toLowerCase() ?? ''
+        const lang = LANG_MAP[ext]
+        if (lang) langMap.set(lang, (langMap.get(lang) ?? 0) + 1)
+      }
+    }
+    return [...langMap.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([lang]) => lang)
+  }, [])
+
+  const loadDirChildren = useCallback(async (dirPath: string): Promise<FileTreeNode[]> => {
+    if (!window.fs?.readDirLevel) return []
+    const result = await window.fs.readDirLevel(dirPath)
+    const { nodes: n, error } = result
+    if (error) {
+      console.error(`[FileTreeSidebar] Error loading ${dirPath}: ${error}`)
+    }
+    return n ?? []
+  }, [])
+
   const loadTree = useCallback(async () => {
     if (!activeProject?.rootPath || !window.fs) return
     setLoading(true)
     setTreeStats(null)
     try {
-      const result = await window.fs.readDir(activeProject.rootPath)
-      let nodes: FileTreeNode[] = []
-      if (Array.isArray(result)) {
-        nodes = result
-      } else if (result && typeof result === 'object') {
-        const { nodes: n, error } = result as { nodes?: FileTreeNode[]; error?: string }
-        if (error) {
-          toastReplace('error', 'load-tree', `Error cargando proyecto: ${error}`)
-        }
-        nodes = n ?? []
+      // Use single-level read for the root
+      const result = await window.fs.readDirLevel(activeProject.rootPath)
+      const { nodes: n, error } = result
+      if (error) {
+        toastReplace('error', 'load-tree', `Error cargando proyecto: ${error}`)
       }
+      const nodes = n ?? []
       setTree(nodes)
-      const fileCount = countFiles(nodes)
-      const langMap = detectLanguages(nodes)
-      const languages = [...langMap.entries()]
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 3)
-        .map(([lang]) => lang)
+      const fileCount = countTotalFiles(nodes)
+      const languages = detectTopLanguages(nodes)
       setTreeStats({ fileCount, languages })
     } catch (err) {
       toastReplace('error', 'load-tree', `Error cargando archivos: ${err instanceof Error ? err.message : err}`)
@@ -87,7 +90,11 @@ export function FileTreeSidebar({ activePath, onSelectFile, onDeleteFile }: File
     } finally {
       setLoading(false)
     }
-  }, [activeProject?.rootPath])
+  }, [activeProject?.rootPath, loadDirChildren, countTotalFiles, detectTopLanguages])
+
+  const handleExpandDir = useCallback(async (dirPath: string): Promise<FileTreeNode[]> => {
+    return loadDirChildren(dirPath)
+  }, [loadDirChildren])
 
   const loadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -176,35 +183,6 @@ export function FileTreeSidebar({ activePath, onSelectFile, onDeleteFile }: File
         style={{ borderRight: '1px solid var(--border-normal)', background: 'var(--bg-sidebar)' }}
       >
         <SidebarHeader t={t} onOpenFolder={handleOpenFolder} />
-        <div className="flex flex-1 flex-col items-center justify-center p-6 text-center gap-3 animate-in fade-in duration-200">
-          <div style={{
-            width: 36,
-            height: 36,
-            borderRadius: 'var(--radius-lg)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'var(--bg-hover)',
-            color: 'var(--text-muted)',
-          }}>
-            <FolderOpen size={18} strokeWidth={1.5} />
-          </div>
-          <div className="flex flex-col gap-1">
-            <p className="text-[12px] font-semibold text-[var(--text-primary)]">
-              Sin proyecto abierto
-            </p>
-            <p className="text-[10.5px] text-[var(--text-muted)] leading-relaxed max-w-[180px] mx-auto">
-              Arrastrá una carpeta al editor o hacé clic abajo para empezar.
-            </p>
-          </div>
-          <Button
-            size="sm"
-            onClick={handleOpenFolder}
-            className="mt-2 text-[11px] font-medium h-7 px-3"
-          >
-            Abrir carpeta
-          </Button>
-        </div>
       </div>
     )
   }
@@ -248,6 +226,7 @@ export function FileTreeSidebar({ activePath, onSelectFile, onDeleteFile }: File
                   onCopyPath={handleCopyPath}
                   onNewFile={handleNewFile}
                   onNewFolder={handleNewFolder}
+                  onExpandDir={handleExpandDir}
                 />
               ))}
             </>

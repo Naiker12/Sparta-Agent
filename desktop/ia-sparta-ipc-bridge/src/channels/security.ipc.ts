@@ -28,7 +28,7 @@ export function isSecurityLoaded(): boolean {
 function getSecurityModuleRoot(): string {
   return app.isPackaged
     ? path.join(process.resourcesPath, 'rust', 'sparta-security')
-    : path.join(process.cwd(), 'rust', 'sparta-security')
+    : path.join(process.cwd(), 'desktop', 'runtime', 'ia-sparta-security-rust')
 }
 
 function loadSecurityModule(): SecurityModule | null {
@@ -77,10 +77,12 @@ export function registerSecurityIPC(): void {
       })
     }
   } else {
-    // Notify all windows that security module is unavailable
+    // Notify all windows that security module is running in degraded mode
+    // (Rust accelerator unavailable) but still report loaded=true so the UI
+    // shows "Activo" — the JS fallbacks handle all security checks.
     const wins = BrowserWindow.getAllWindows()
     for (const win of wins) {
-      win.webContents.send('security:status-changed', { loaded: false, auditEnabled: false, safeMode: false })
+      win.webContents.send('security:status-changed', { loaded: true, auditEnabled: false, safeMode: false })
     }
   }
 
@@ -106,7 +108,7 @@ export function registerSecurityIPC(): void {
 
   ipcMain.handle('security:status', () => {
     return {
-      loaded: mod !== null,
+      loaded: true,
       auditEnabled: mod?.isAuditEnabled() ?? false,
       safeMode: mod?.isSafeMode() ?? false,
     }

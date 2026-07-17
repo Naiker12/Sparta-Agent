@@ -395,7 +395,7 @@ export function EditorPanel() {
         </div>
       ) : (
         <>
-          {editorExplorerVisible && (
+          {editorExplorerVisible && !!activeProject?.rootPath && (
             <>
               <div style={{ width: editorExplorerWidth, flexShrink: 0, height: '100%', minHeight: 0 }}>
                 <FileTreeSidebar

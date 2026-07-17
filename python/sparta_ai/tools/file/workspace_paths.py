@@ -146,19 +146,23 @@ def _get_safe_path(
         if tool_name is not None and request_permission_sync(tool_name, resolved, preview):
             pass
         else:
-            guidance = (
-                f"Workspace permitido: {root}. Usa rutas relativas al workspace, "
-                "por ejemplo 'src/authController.js'. No uses rutas absolutas como /tmp/... ni C:\\..."
-            )
             raise PermissionError(
-                f"Ruta fuera del workspace permitido: {resolved}. {guidance}"
+                f"ACCESO DENEGADO por el usuario a '{resolved}'. "
+                f"Workspace permitido: {root}. "
+                f"NO reintentes esta operación por ningún medio alternativo "
+                f"(terminal, comandos, scripts, symlink, etc.). "
+                f"NO vuelvas a pedir permiso para esta misma ruta. "
+                f" informa al usuario que el acceso fue denegado y sigue con otra tarea."
             )
     elif require_permission:
         if tool_name is not None:
             allowed = request_permission_sync(tool_name, resolved, preview, force=True)
             if not allowed:
                 raise PermissionError(
-                    f"Operación rechazada por el usuario: {resolved}"
+                    f"ACCESO DENEGADO por el usuario a '{resolved}'. "
+                    f"NO reintentes esta operación por ningún medio alternativo. "
+                    f"NO vuelvas a pedir permiso para esta misma ruta. "
+                    f"Informa al usuario y sigue con otra tarea."
                 )
 
     return resolved
