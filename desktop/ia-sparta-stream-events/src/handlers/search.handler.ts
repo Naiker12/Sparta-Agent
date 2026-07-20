@@ -8,7 +8,17 @@ export function handleSearchProgress(ctx: EventHandlerCtx) {
     url?: string; title?: string; index?: number; total?: number; query?: string
     tool_call_id?: string
   }
-  const tcId = progressEvent.tool_call_id ?? undefined
+  const requestedToolCallId = progressEvent.tool_call_id ?? undefined
+  // Progress from a LangChain tool can carry the provider's tool-call id,
+  // while on_tool_start exposes the tracing run id. Prefer an exact match,
+  // then attach it to the latest running web tool in this message. This keeps
+  // the timeline live across both event formats.
+  const message = store.messagesBySession[ctx.sid]?.find((item) => item.id === ctx.mid)
+  const tcId = message?.toolCalls?.some((tc) => tc.id === requestedToolCallId)
+    ? requestedToolCallId
+    : [...(message?.toolCalls ?? [])].reverse().find(
+        (tc) => tc.status === 'running' && (tc.toolName === 'web_search' || tc.toolName === 'web_search_tool' || tc.toolName === 'web_fetch' || tc.toolName === 'web_fetch_tool'),
+      )?.id
 
   if (progressEvent.stage === 'searching' && progressEvent.query) {
     if (tcId) {

@@ -97,6 +97,7 @@ class TestEventBridge:
             events = [c[0][1] for c in mock_emit.call_args_list]
             assert "tool:called" in events
             assert "tool:result" in events
+            assert "thinking:started" in events
 
     @pytest.mark.asyncio
     async def test_stream_inline_think_tags(self):

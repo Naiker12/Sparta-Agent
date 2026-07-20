@@ -22,6 +22,11 @@ async def handle_tool_start(
 ) -> bool:
     tool_call_id = event.get("run_id", str(id(event)))
     tool_input = data.get("input", {})
+    # A tool call is observable work even when the provider does not expose
+    # private reasoning tokens. Start the lifecycle so the UI updates now.
+    if not stream_state["thinking_active"]:
+        emit_control_fn(*reasoning_events.thinking_started(base_payload))
+        stream_state["thinking_active"] = True
     emit_control_fn(*tool_events.tool_called(base_payload, name, tool_input, tool_call_id))
 
     stream_state.setdefault("_rep_guard", RepetitionGuard()).reset_boundary()
@@ -37,6 +42,15 @@ async def handle_tool_start(
         if file_paths:
             count = len(file_paths)
             emit_control_fn(*reasoning_events.thinking_status(base_payload, f"Leyendo {count} archivos…"))
+
+    if name in ("web_search", "web_search_tool"):
+        query = tool_input.get("query", "") if isinstance(tool_input, dict) else ""
+        emit_control_fn(*reasoning_events.thinking_status(
+            base_payload,
+            f'Buscando "{query}" en la web...' if query else "Buscando en la web...",
+        ))
+    elif name in ("web_fetch", "web_fetch_tool"):
+        emit_control_fn(*reasoning_events.thinking_status(base_payload, "Leyendo una fuente web..."))
 
     if name in ("write_file", "write_file_tool", "patch_file", "patch_file_tool", "delete_file", "delete_file_tool"):
         file_path = tool_input.get("path", "") if isinstance(tool_input, dict) else ""
