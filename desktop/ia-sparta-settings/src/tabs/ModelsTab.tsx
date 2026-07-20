@@ -99,7 +99,7 @@ export function ModelsTab() {
           >
             {t('general.defaultModel')}
           </label>
-          <input
+          <select
             value={defaultModel}
             onChange={(e) => setDefaultModel(e.target.value)}
             style={{
@@ -112,8 +112,27 @@ export function ModelsTab() {
               color: 'var(--text-primary)',
               fontFamily: 'var(--font-mono)',
               outline: 'none',
+              cursor: providers.length > 0 ? 'pointer' : 'not-allowed',
             }}
-          />
+            disabled={providers.length === 0}
+          >
+            {defaultModel && !providers.some((p) => (p.models ?? []).includes(defaultModel)) && (
+              <option value={defaultModel}>{defaultModel} (no disponible)</option>
+            )}
+            {providers.map((provider) => {
+              const models = provider.models?.length ? provider.models : (provider.defaultModel ? [provider.defaultModel] : [])
+              return (
+                <optgroup key={provider.id} label={provider.label}>
+                  {models.map((model) => <option key={model} value={model}>{model}</option>)}
+                </optgroup>
+              )
+            })}
+          </select>
+          {providers.length === 0 && (
+            <div style={{ marginTop: 6, fontSize: 11, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)' }}>
+              Agregá un proveedor para elegir un modelo disponible.
+            </div>
+          )}
         </div>
       </SettingGroup>
 

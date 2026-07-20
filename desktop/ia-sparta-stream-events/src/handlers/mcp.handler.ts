@@ -24,7 +24,7 @@ export function handleMCPEvent(type: string, event: Record<string, unknown>) {
     })))
     console.debug('[MCP] tools discovered:', serverId, tools.map((t) => t.name))
   } else if (type === 'mcp:error') {
-    store.setConnected(serverId, false)
+    store.setConnectionError(serverId, (event.error as string | undefined) ?? 'No se pudo conectar.')
     console.warn('[MCP] connection error:', serverId, event.error)
   }
 }

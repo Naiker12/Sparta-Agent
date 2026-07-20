@@ -11,8 +11,17 @@ interface StreamStallIndicatorProps {
 }
 
 function getStallMessage(message?: Message): string {
-  if (!message?.toolCalls?.length) return 'Pensando…'
-
+  // Some providers (including gateways that omit reasoning_content) do not
+  // expose live thought tokens. Make the fallback reflect elapsed provider
+  // wait time instead of leaving a static "thinking" label for minutes.
+  if (!message?.toolCalls?.length) {
+    const elapsed = message?.reasoningStartedAt
+      ? Math.floor((Date.now() - message.reasoningStartedAt) / 1000)
+      : 0
+    if (elapsed >= 60) return 'El proveedor está tardando mucho; podés detenerlo o cambiar de modelo.'
+    if (elapsed >= 15) return 'Esperando respuesta del modelo…'
+    return 'El modelo está razonando…'
+  }
   const running = message.toolCalls.filter((tc) => tc.status === 'running')
   if (running.length === 0) return 'Procesando…'
 

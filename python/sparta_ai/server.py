@@ -245,7 +245,9 @@ class StdioServer:
         try:
             await task
         except asyncio.CancelledError:
-            _emit(request_id, "stream_end", {"cancelled": True})
+            # Match the event understood by the renderer so it closes the
+            # thinking UI and discards any delayed provider tokens.
+            _emit(request_id, "stream:aborted", {"cancelled": True})
         except Exception as e:
             logger.error("Agent execution failed: %s", traceback.format_exc())
             _emit_error(request_id, "internal_error", str(e))

@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Provider, ProviderVendor, ProviderKind } from '../types'
+import { useUsageStore } from './usage.store'
 
 const VENDOR_LABELS: Record<ProviderVendor, string> = {
   anthropic: 'Anthropic',
@@ -71,10 +72,10 @@ export const useProviderStore = create<ProviderState>()(
           ),
         })),
 
-      removeProvider: (id) =>
-        set((s) => ({
-          providers: s.providers.filter((p) => p.id !== id),
-        })),
+      removeProvider: (id) => {
+        set((s) => ({ providers: s.providers.filter((p) => p.id !== id) }))
+        useUsageStore.getState().removeProviderUsage(id)
+      },
 
       getByVendor: (vendor) =>
         get().providers.find((p) => p.vendor === vendor),

@@ -48,11 +48,30 @@ export const createStreamingSlice: StateCreator<ChatState, [], [], StreamingSlic
         const { [sessionId]: _, ...rest } = streamingBySession
         void _
         const hasAnyStreaming = Object.values(rest).some((s) => s.isStreaming)
-        set({
+        set((state) => ({
           streamingBySession: rest,
           isStreaming: hasAnyStreaming,
           abortController: hasAnyStreaming ? Object.values(rest)[0]?.abortController ?? null : null,
-        })
+          // Closing the transport alone left the last assistant message in
+          // `thinkingStatus: streaming` until a late sidecar event arrived.
+          // End it synchronously so pressing Stop always stops the visual
+          // reasoning state as well.
+          messagesBySession: {
+            ...state.messagesBySession,
+            [sessionId]: (state.messagesBySession[sessionId] ?? []).map((message) =>
+              message.isStreaming
+                ? {
+                    ...message,
+                    isStreaming: false,
+                    thinkingStatus: message.thinkingStatus === 'starting' || message.thinkingStatus === 'streaming'
+                      ? 'completed'
+                      : message.thinkingStatus,
+                    reasoningCompletedAt: Date.now(),
+                  }
+                : message,
+            ),
+          },
+        }))
       }
     } else {
       abortController?.abort()

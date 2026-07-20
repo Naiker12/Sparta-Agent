@@ -10,6 +10,13 @@ from typing import Any
 
 logger = logging.getLogger("sparta_ai.config.providers")
 
+# Chat requests are interactive. Reserving 4096 output tokens for every
+# greeting/question increases provider queue time and time-to-first-token;
+# agent responses are instructed to be concise, so 2048 is ample while still
+# leaving room for a useful markdown answer.
+DEFAULT_CHAT_MAX_TOKENS = 2048
+DEFAULT_REQUEST_TIMEOUT_SECONDS = 75
+
 
 class ProviderTransport(ABC):
     """Abstract provider transport."""
@@ -89,6 +96,10 @@ class OpenAICompatibleTransport(ProviderTransport):
 
         requested_base_url = kwargs.pop("base_url", None) or kwargs.pop("api_url", None)
         openai_kwargs = {**kwargs, "model": model}
+        # Avoid the SDK's multi-retry exponential backoff turning a transient
+        # upstream stall into minutes of an apparently frozen chat.
+        openai_kwargs.setdefault("max_retries", 1)
+        openai_kwargs.setdefault("timeout", DEFAULT_REQUEST_TIMEOUT_SECONDS)
         if api_key:
             openai_kwargs["api_key"] = api_key
         elif self.vendor in ("lmstudio", "llamacpp", "custom"):
@@ -299,7 +310,12 @@ def build_llm(
         kwargs.setdefault("max_tokens", reasoning_budget + 4096)
     else:
         kwargs.setdefault("temperature", 0.7)
-        kwargs.setdefault("max_tokens", 4096)
+        kwargs.setdefault("max_tokens", DEFAULT_CHAT_MAX_TOKENS)
+
+    # Shared HTTP guardrails. Individual transports may override these when
+    # their SDK needs a more specific option.
+    kwargs.setdefault("timeout", DEFAULT_REQUEST_TIMEOUT_SECONDS)
+    kwargs.setdefault("max_retries", 1)
 
     transport = _get_transport(vendor)
     resolved_base_url = base_url or api_url

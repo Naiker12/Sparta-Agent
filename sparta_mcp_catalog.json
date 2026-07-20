@@ -9,6 +9,7 @@
       "type": "stdio",
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-github"],
+      "connect_timeout": 30,
       "env_required": ["GITHUB_TOKEN"],
       "env_labels": {
         "GITHUB_TOKEN": "GitHub Personal Access Token (clasico, con permisos repo)"
@@ -23,6 +24,7 @@
       "type": "stdio",
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-filesystem", "${DIR}"],
+      "connect_timeout": 30,
       "env_required": [],
       "maintained": true,
       "notes": "Requiere especificar un directorio permitido (${DIR}) que el usuario debe configurar manualmente.",
@@ -47,6 +49,7 @@
       "type": "stdio",
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-postgres", "${DATABASE_URL}"],
+      "connect_timeout": 30,
       "env_required": [],
       "maintained": false,
       "notes": "Paquete archivado por MCP. Requiere DATABASE_URL como argumento (postgresql://user:pass@host/db).",
@@ -69,6 +72,7 @@
       "type": "stdio",
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-puppeteer"],
+      "connect_timeout": 30,
       "env_required": [],
       "maintained": false,
       "notes": "Paquete archivado por MCP.",

@@ -3,7 +3,6 @@
  *
  * Fachada pública.
  */
-export * from './SettingsDialog'
 export * from './ThemePicker'
 export * from './tabs/GeneralTab'
 export * from './tabs/AppearanceTab'

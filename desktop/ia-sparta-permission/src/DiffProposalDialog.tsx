@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useDiffReviewStore } from 'ia-sparta-core'
 import { useEventBus } from 'ia-sparta-core'
+import { useUIStore } from 'ia-sparta-core'
 import type { DiffProposedEvent } from 'ia-sparta-core'
 
 /**
@@ -27,6 +28,9 @@ export function DiffProposalDialog() {
           language: e.language,
           status: 'pending',
         })
+        // The review UI is in EditorPanel. Leaving this proposal queued while
+        // Chat stays visible made a pending write look like an executed one.
+        useUIStore.getState().setMainView({ type: 'editor' })
       }
     })
     return unsub

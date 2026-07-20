@@ -1,5 +1,5 @@
 import { AlertCircle } from 'lucide-react'
-import { useSettingsStore } from 'ia-sparta-core'
+import { useSettingsStore, useModelPerformanceStore } from 'ia-sparta-core'
 import { useProviderStore } from 'ia-sparta-core'
 import { useSessionStore } from 'ia-sparta-core'
 import { BrandIcon } from 'ia-sparta-design-system'
@@ -23,6 +23,15 @@ export function ModelPicker() {
   const { activeModel, setDefaultModel } = useSettingsStore()
   const activeSessionId = useSessionStore((s) => s.activeSessionId)
   const updateSessionModel = useSessionStore((s) => s.updateSessionModel)
+  const performance = useModelPerformanceStore((s) => s.byModel)
+
+  const speedLabel = (modelId: string) => {
+    const latency = performance[modelId]?.averageLatencyMs
+    if (!latency) return 'sin datos'
+    if (latency < 10_000) return 'rápido'
+    if (latency < 30_000) return 'normal'
+    return 'puede tardar'
+  }
 
   const allModelsRaw: ModelOption[] = providers.flatMap((p) => {
     const ids = p.models?.length ? p.models : (p.defaultModel ? [p.defaultModel] : [])
@@ -129,7 +138,7 @@ export function ModelPicker() {
                       width: '100%',
                       textAlign: 'left'
                     }}>
-                      {model.providerLabel}
+                      {model.providerLabel} · {speedLabel(item)}
                     </div>
                   </div>
                 </div>

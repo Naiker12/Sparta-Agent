@@ -1,4 +1,4 @@
-import { useChatStore, useUsageStore, useEventBus, usePlanStore } from 'ia-sparta-core'
+import { useChatStore, useUsageStore, useEventBus, usePlanStore, useProviderStore, getVendorLabel } from 'ia-sparta-core'
 import { extractMemory } from '../extractor'
 import { queueContent, _cancelFlush, _flushBoth } from '../raf-buffer'
 import type { EventHandlerCtx } from './types'
@@ -39,7 +39,9 @@ export function handleStreamCompleted(
   if (pid && pair?.text) {
     const outputLen = store.messagesBySession[ctx.sid]?.find((m) => m.id === ctx.mid)?.content?.length ?? 0
     if (outputLen > 0) {
-      useUsageStore.getState().recordTurn(ctx.sid, pid, Math.ceil(pair.text.length / 4), Math.ceil(outputLen / 4))
+      const provider = useProviderStore.getState().providers.find((item) => item.id === pid)
+      const providerLabel = provider ? (provider.label || getVendorLabel(provider.vendor)) : undefined
+      useUsageStore.getState().recordTurn(ctx.sid, pid, Math.ceil(pair.text.length / 4), Math.ceil(outputLen / 4), providerLabel)
     }
   }
 

@@ -73,7 +73,7 @@ export function registerChatSendIPC(): void {
     const startTime = Date.now()
     let timedOut = false
 
-    while (!timedOut) {
+    while (Date.now() - startTime < timeout) {
       await new Promise((r) => setTimeout(r, 500))
       const state = activeStreams.get(sessionId)
 
@@ -89,6 +89,16 @@ export function registerChatSendIPC(): void {
       if (completed) break
     }
     timedOut = Date.now() - startTime >= timeout
+
+    if (timedOut) {
+      // The local timer is a last resort; make it cancel the real sidecar
+      // task too, not merely stop waiting in Electron.
+      sendToPython({
+        id: `abort:${requestId}`,
+        method: 'chat.abort',
+        params: { request_id: requestId, session_id: sessionId },
+      })
+    }
 
     activeStreams.delete(sessionId)
     streamResolvers.delete(requestId)

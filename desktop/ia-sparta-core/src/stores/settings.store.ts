@@ -52,9 +52,12 @@ export const useSettingsStore = create<SettingsStore>()(
   memoryEnabled: true,
   semanticMemoryEnabled: false,
   webSearchEnabled: false,
-  reasoningEnabled: true,
-  reasoningBudget: 8000,
-  reasoningEffort: 'medium',
+  // Extended reasoning is valuable for hard tasks but adds a long provider
+  // preamble to ordinary chat and simple file edits. Users can enable it per
+  // model when they need it.
+  reasoningEnabled: false,
+  reasoningBudget: 2048,
+  reasoningEffort: 'minimal',
   sessionMode: 'chat',
   apiKeys: {},
   language: 'es',
@@ -82,7 +85,7 @@ export const useSettingsStore = create<SettingsStore>()(
 }),
     {
       name: 'sparta-settings',
-      version: 6,
+      version: 7,
       migrate: (persisted: unknown, version: number) => {
         const state = persisted as Record<string, unknown>
         if (version < 2) {
@@ -100,6 +103,11 @@ export const useSettingsStore = create<SettingsStore>()(
         }
         if (version < 6) {
           state.sandboxMode = 'none'
+        }
+        if (version < 7) {
+          state.reasoningEnabled = false
+          state.reasoningBudget = 2048
+          state.reasoningEffort = 'minimal'
         }
         return state
       },

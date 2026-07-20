@@ -462,6 +462,11 @@ async def prepare_agent(
         return ""
 
     async def _mcp():
+        # MCP discovery can spawn `npx` and take tens of seconds on a cold
+        # machine. Chat/readonly policy will not expose MCP tools anyway, so
+        # never put that optional startup work on the path to the first token.
+        if read_only or policy_mode == "chat":
+            return []
         from sparta_ai.tools.mcp_manager import mcp_manager
         return await mcp_manager.get_tools(session_id, mcp_servers, emit_fn=emit_fn, workspace_root=workspace_root)
 

@@ -56,6 +56,7 @@ def _config_hash(config: dict) -> str:
         "url": config.get("url", ""),
         "headers": config.get("headers", {}),
         "timeout": config.get("timeout", 30),
+        "connect_timeout": config.get("connect_timeout"),
         "tools": config.get("tools", {}),
         "env_vault_refs": config.get("env_vault_refs", []),
         "headers_vault_refs": config.get("headers_vault_refs", []),

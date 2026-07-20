@@ -9,6 +9,7 @@ import { useEditorStore } from '../stores/editor.store'
 import { useMCPStore } from '../stores/mcp.store'
 import { useSkillStore } from '../stores/skill.store'
 import { useProjectStore } from '../stores/project.store'
+import { useModelPerformanceStore } from '../stores/model-performance.store'
 import { getProviderKey, messagingAdapter, IS_WEB } from 'ia-sparta-platform'
 import { useSessionLifecycle } from './useSessionLifecycle'
 import { useSessionMemory } from './useSessionMemory'
@@ -68,6 +69,7 @@ async function runAssistantTurn(
   msgs: Array<{ role: string; content: string }>,
   buildMemorySystemPrompt: (text: string, providers: Provider[]) => Promise<string | undefined>,
 ) {
+  const turnStartedAt = Date.now()
   const store = useChatStore.getState()
   const sessionStore = useSessionStore.getState()
   store.startStreaming(sid)
@@ -153,6 +155,9 @@ async function runAssistantTurn(
       activeFilePath: useEditorStore.getState().activeFilePath,
     })
     const resolved = sendResult instanceof Promise ? await sendResult : null
+    if (resolved?.ok) {
+      useModelPerformanceStore.getState().recordLatency(activeModel, Date.now() - turnStartedAt)
+    }
     if (resolved && !resolved.ok) {
       store.stopStreaming(sid)
       const SEND_ERROR_MESSAGES: Record<string, string> = {

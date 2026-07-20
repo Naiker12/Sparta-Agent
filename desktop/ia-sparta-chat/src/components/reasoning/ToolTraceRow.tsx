@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Check, Loader2, X, AlertTriangle, FileText, SquarePen, Trash2, Search, Terminal, Globe, Pen, ChevronRight } from 'lucide-react'
-import { MarkdownRenderer } from 'ia-sparta-chat'
 import { SearchResultsList } from './SearchResultsList'
 import { inferToolSubstatus, substatusLabel } from 'ia-sparta-core'
 import type { ToolCall } from 'ia-sparta-core'
@@ -32,7 +31,11 @@ function getToolCallSummary(toolCall: ToolCall): { icon: React.ReactNode; label:
         description: path ? truncate(path) : '',
       }
     case 'write_file_tool': {
-      const mode = input?.append ? 'Añadiendo a' : 'Escribiendo'
+      const mode = toolCall.status === 'running'
+        ? 'Proponiendo cambio'
+        : toolCall.status === 'completed'
+          ? (input?.append ? 'Cambio añadido' : 'Cambio aplicado')
+          : 'Cambio no aplicado'
       return {
         icon: <SquarePen size={iconSize} strokeWidth={1.5} />,
         label: mode,
@@ -270,19 +273,7 @@ export function ToolTraceRow({ toolCall }: ToolTraceRowProps) {
                   y antes se filtraba directo a la UI. La lista ya parseada
                   (SearchResultsList, arriba) es lo único que debe verse. */}
               {toolCall.output && toolCall.status !== 'error' && isFetch && !isSearch && (
-                <div>
-                  <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Contenido
-                  </div>
-                  <div style={{
-                    fontSize: 13,
-                    lineHeight: 1.5,
-                    color: 'var(--text-primary)',
-                    fontFamily: 'var(--font-ui)',
-                  }}>
-                    <MarkdownRenderer content={toolCall.output} />
-                  </div>
-                </div>
+                <DetailSection label="Contenido leído" content={toolCall.output} />
               )}
 
               {/* Output for non-search tools — technical detail */}
@@ -298,68 +289,31 @@ export function ToolTraceRow({ toolCall }: ToolTraceRowProps) {
 }
 
 function DetailSection({ label, content }: { label: string; content: string }) {
-  const [truncated, setTruncated] = useState(true)
-  const isLong = content.length > 200
-
   return (
     <div>
       <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)', marginBottom: 2, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
         {label}
       </div>
-      <div style={{
-        fontSize: 11.5,
-        color: 'var(--text-secondary)',
-        fontFamily: 'var(--font-mono)',
-        whiteSpace: 'pre-wrap',
-        wordBreak: 'break-word',
-        maxHeight: truncated && isLong ? 60 : 'none',
-        overflow: 'hidden',
-        position: 'relative',
-      }}>
+      <pre
+        aria-label={label}
+        style={{
+          margin: 0,
+          padding: '9px 10px',
+          maxHeight: 190,
+          overflow: 'auto',
+          borderRadius: 'var(--radius-sm)',
+          border: '1px solid var(--border-normal)',
+          background: 'var(--bg-input)',
+          color: 'var(--text-secondary)',
+          fontFamily: 'var(--font-mono)',
+          fontSize: 11.5,
+          lineHeight: 1.55,
+          whiteSpace: 'pre-wrap',
+          overflowWrap: 'anywhere',
+        }}
+      >
         {content}
-        {isLong && truncated && (
-          <div style={{
-            position: 'absolute',
-            bottom: 0,
-            right: 0,
-            background: 'linear-gradient(to left, var(--bg-elevated), transparent)',
-            paddingLeft: 20,
-          }}>
-            <button
-              onClick={() => setTruncated(false)}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--accent)',
-                fontSize: 11,
-                fontFamily: 'var(--font-ui)',
-                cursor: 'pointer',
-                padding: 0,
-              }}
-            >
-              ver más
-            </button>
-          </div>
-        )}
-        {isLong && !truncated && (
-          <button
-            onClick={() => setTruncated(true)}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--accent)',
-              fontSize: 11,
-              fontFamily: 'var(--font-ui)',
-              cursor: 'pointer',
-              padding: 0,
-              display: 'block',
-              marginTop: 4,
-            }}
-          >
-            ver menos
-          </button>
-        )}
-      </div>
+      </pre>
     </div>
   )
 }

@@ -28,6 +28,8 @@ export interface MCPServerConfig {
   enabled: boolean
   /** Tool call timeout in seconds (default: 30) */
   timeout?: number
+  /** Initial spawn + handshake timeout; npx servers default to 30 seconds. */
+  connect_timeout?: number
   /** Optional tool include/exclude filter */
   tools?: MCPToolFilter
   /** Whether this server package is actively maintained (false = archived/deprecated) */
@@ -47,5 +49,7 @@ export interface MCPServer {
   type: MCPServerType
   connected: boolean
   tools: MCPTool[]
+  /** Most recent connection error, shown to the user instead of a silent 0/N badge. */
+  lastError?: string
   config: MCPServerConfig
 }

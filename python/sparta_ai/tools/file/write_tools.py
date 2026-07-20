@@ -59,19 +59,9 @@ def write_file_tool(path: str, content: str, append: bool = False) -> str:
 
         file_exists = filepath.exists() and filepath.stat().st_size > 0
 
-        # BUGFIX SEGURIDAD: antes, un archivo NUEVO (que todavía no existe)
-        # se escribía directo, sin vista previa ni confirmación — solo se
-        # pedía diff al SOBRESCRIBIR un archivo existente. Eso permitía que
-        # un pedido ambiguo en el chat ("dame esto en un md") terminara
-        # creando un archivo en la raíz del proyecto sin que el usuario lo
-        # viera venir. Ahora, salvo `append` a un archivo que ya existe,
-        # SIEMPRE se muestra la vista previa (el mismo DiffEditor de Monaco
-        # que ya usa `patch_file_tool`), con original_content="" para un
-        # archivo nuevo — el usuario ve el contenido completo como "todo
-        # agregado" antes de que se cree.
-        if not need_permission and append and filepath.exists():
-            pass  # apéndice a archivo existente: no se pide preview (igual que antes)
-        elif not need_permission and not file_exists:
+        # Every mutation is reviewed.  In particular, appending to an
+        # existing file must not become an approval bypass.
+        if not file_exists:
             approved = request_diff_approval(
                 file_path=str(filepath),
                 original_content="",
@@ -85,12 +75,12 @@ def write_file_tool(path: str, content: str, append: bool = False) -> str:
                     "NO vuelvas a pedir permiso para esta misma ruta. "
                     "Informa al usuario y sigue con otra tarea."
                 )
-        elif not need_permission and file_exists:
+        else:
             original = filepath.read_text(encoding="utf-8")
             approved = request_diff_approval(
                 file_path=str(filepath),
                 original_content=original,
-                new_content=content,
+                new_content=original + content if append else content,
                 language=path.rsplit(".", 1)[-1] if "." in path else "",
             )
             if not approved:
@@ -100,21 +90,6 @@ def write_file_tool(path: str, content: str, append: bool = False) -> str:
                     "NO vuelvas a pedir permiso para esta misma ruta. "
                     "Informa al usuario y sigue con otra tarea."
                 )
-        elif need_permission:
-            original = filepath.read_text(encoding="utf-8") if filepath.exists() else ""
-            approved = request_diff_approval(
-                file_path=str(filepath),
-                original_content=original,
-                new_content=content,
-                language=path.rsplit(".", 1)[-1] if "." in path else "",
-            )
-            if not approved:
-                return (
-                    "ACCESO DENEGADO por el usuario. "
-                    "NO reintentes esta operación por ningún medio alternativo. "
-                    "Informa al usuario y sigue con otra tarea."
-                )
-
         if append and filepath.exists():
             with open(filepath, "a", encoding="utf-8") as f:
                 f.write(content)

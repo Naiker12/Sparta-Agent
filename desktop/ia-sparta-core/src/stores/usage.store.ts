@@ -4,6 +4,8 @@ import { persist } from 'zustand/middleware'
 interface ProviderUsage {
   input: number
   output: number
+  /** Last known human label, retained when a provider is renamed or deleted. */
+  label?: string
 }
 
 interface SessionUsage {
@@ -20,12 +22,14 @@ interface UsageState {
   currentTurnInput: number
   currentTurnOutput: number
 
-  recordTurn: (sessionId: string, providerId: string, input: number, output: number) => void
+  recordTurn: (sessionId: string, providerId: string, input: number, output: number, providerLabel?: string) => void
   getSessionUsage: (sessionId: string) => SessionUsage
   getTotalUsage: () => { input: number; output: number }
   getByProvider: () => Record<string, ProviderUsage>
   getCurrentTurnTokens: () => { input: number; output: number }
   setCurrentTurnTokens: (input: number, output: number) => void
+  removeProviderUsage: (providerId: string) => void
+  pruneProviderUsage: (activeProviderIds: string[]) => void
 }
 
 export const useUsageStore = create<UsageState>()(
@@ -38,7 +42,7 @@ export const useUsageStore = create<UsageState>()(
       currentTurnInput: 0,
       currentTurnOutput: 0,
 
-      recordTurn: (sessionId, providerId, input, output) => {
+      recordTurn: (sessionId, providerId, input, output, providerLabel) => {
         set((s) => {
           const session = s.bySession[sessionId] ?? { input: 0, output: 0, byProvider: {} }
           const provUsage = session.byProvider[providerId] ?? { input: 0, output: 0 }
@@ -58,6 +62,7 @@ export const useUsageStore = create<UsageState>()(
                   [providerId]: {
                     input: provUsage.input + input,
                     output: provUsage.output + output,
+                    label: providerLabel ?? provUsage.label,
                   },
                 },
               },
@@ -67,6 +72,7 @@ export const useUsageStore = create<UsageState>()(
               [providerId]: {
                 input: providerOverall.input + input,
                 output: providerOverall.output + output,
+                label: providerLabel ?? providerOverall.label,
               },
             },
           }
@@ -92,10 +98,41 @@ export const useUsageStore = create<UsageState>()(
       setCurrentTurnTokens: (input, output) => {
         set({ currentTurnInput: input, currentTurnOutput: output })
       },
+
+      removeProviderUsage: (providerId) => set((state) => {
+        const removed = state.byProvider[providerId]
+        if (!removed) return state
+        const { [providerId]: _removed, ...byProvider } = state.byProvider
+        const bySession = Object.fromEntries(
+          Object.entries(state.bySession).map(([sessionId, usage]) => {
+            const sessionRemoved = usage.byProvider[providerId]
+            const { [providerId]: _sessionProvider, ...sessionProviders } = usage.byProvider
+            return [sessionId, {
+              ...usage,
+              input: usage.input - (sessionRemoved?.input ?? 0),
+              output: usage.output - (sessionRemoved?.output ?? 0),
+              byProvider: sessionProviders,
+            }]
+          }),
+        )
+        return {
+          byProvider,
+          bySession,
+          totalInput: Math.max(0, state.totalInput - removed.input),
+          totalOutput: Math.max(0, state.totalOutput - removed.output),
+        }
+      }),
+
+      pruneProviderUsage: (activeProviderIds) => {
+        const active = new Set(activeProviderIds)
+        for (const providerId of Object.keys(get().byProvider)) {
+          if (!active.has(providerId)) get().removeProviderUsage(providerId)
+        }
+      },
     }),
     {
       name: 'sparta-usage',
-      version: 2,
+      version: 3,
       migrate: (persisted: unknown, version: number) => {
         if (version < 2) {
           const old = persisted as Record<string, unknown>

@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { X } from 'lucide-react'
 import { useUsageStore } from 'ia-sparta-core'
 import { useSessionStore } from 'ia-sparta-core'
@@ -16,11 +17,16 @@ export function TokenUsageDialog({ open, onClose }: TokenUsageDialogProps) {
   const currentTurnOutput = useUsageStore((s) => s.currentTurnOutput)
   const sessionObj = useUsageStore((s) => activeSessionId ? s.bySession[activeSessionId] : undefined)
   const byProvider = useUsageStore((s) => s.byProvider)
+  const pruneProviderUsage = useUsageStore((s) => s.pruneProviderUsage)
   const providers = useProviderStore((s) => s.providers)
 
-  function labelForProvider(providerId: string): string {
+  useEffect(() => {
+    pruneProviderUsage(providers.map((provider) => provider.id))
+  }, [providers, pruneProviderUsage])
+
+  function labelForProvider(providerId: string, savedLabel?: string): string {
     const p = providers.find((pr) => pr.id === providerId)
-    if (!p) return providerId.slice(0, 8)
+    if (!p) return savedLabel || 'Proveedor eliminado'
     return p.label || getVendorLabel(p.vendor)
   }
 
@@ -116,7 +122,7 @@ export function TokenUsageDialog({ open, onClose }: TokenUsageDialogProps) {
                     background: 'var(--bg-input)',
                   }}>
                     <span style={{ color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {labelForProvider(providerId)}
+                      {labelForProvider(providerId, usage.label)}
                     </span>
                     <span style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-muted)' }}>
                       {usage.input.toLocaleString()}
@@ -147,7 +153,7 @@ export function TokenUsageDialog({ open, onClose }: TokenUsageDialogProps) {
                     background: 'var(--bg-input)',
                   }}>
                     <span style={{ color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {labelForProvider(providerId)}
+                      {labelForProvider(providerId, usage.label)}
                     </span>
                     <span style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-muted)' }}>
                       {usage.input.toLocaleString()}

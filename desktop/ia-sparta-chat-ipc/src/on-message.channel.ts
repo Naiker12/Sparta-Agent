@@ -18,6 +18,17 @@ export function registerOnMessageHandler(): void {
     const event = msg.event as string
     const data = msg.data as Record<string, unknown> | undefined
 
+    // The renderer can stop immediately, while some provider clients need a
+    // moment to observe cancellation. Never let delayed tokens resurrect a
+    // response the user explicitly stopped.
+    const activeStream = sessionId ? activeStreams.get(sessionId) : undefined
+    const isLateStreamEvent = Boolean(
+      sessionId && messageId &&
+      (!activeStream || !activeStream.active || activeStream.messageId !== messageId) &&
+      (event.startsWith('stream:') || event.startsWith('thinking:') || event.startsWith('tool:') || event === 'search:progress'),
+    )
+    if (isLateStreamEvent) return
+
     if (event === 'vault:mcp_store') {
       const keyId = (data?.key_id ?? '') as string
       const value = (data?.value ?? '') as string
@@ -158,11 +169,18 @@ export function registerOnMessageHandler(): void {
           suggestions: data?.suggestions,
         })
         clearSeqCounters(requestId)
+        const resolveCompleted = streamResolvers.get(requestId)
+        resolveCompleted?.()
+        streamResolvers.delete(requestId)
         break
       }
       case 'stream:aborted':
         sendToRenderer({ sessionId, messageId, type: 'stream:aborted' })
         clearSeqCounters(requestId)
+        activeStreams.delete(sessionId)
+        const resolveAborted = streamResolvers.get(requestId)
+        resolveAborted?.()
+        streamResolvers.delete(requestId)
         break
       case 'terminal:agent_command':
         sendToRenderer({ sessionId, messageId, type: 'terminal:agent_command', command: data?.command })

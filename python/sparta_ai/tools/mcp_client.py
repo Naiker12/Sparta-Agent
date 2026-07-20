@@ -151,11 +151,11 @@ class RealMCPClient:
         self.server_name: str = config.get("name", self.server_id)
         self._server_type: str = config.get("type", "stdio")
         self._timeout: int = int(config.get("timeout", 30))
-        # Timeout for the *initial* handshake (process spawn + initialize +
-        # list_tools). Deliberately shorter than `_timeout` (which also
-        # bounds individual tool calls once connected): a broken server
-        # should fail fast instead of hanging every chat turn for 30s+.
-        self._connect_timeout: int = int(config.get("connect_timeout", min(self._timeout, 10)))
+        # `npx -y` can download/resolve a package on first use, especially
+        # on Windows. Give it a cold-start window; normal binaries stay fast.
+        command = str(config.get("command", "")).replace("\\", "/").rsplit("/", 1)[-1].lower()
+        default_connect_timeout = min(self._timeout, 30 if command in ("npx", "npx.cmd") else 10)
+        self._connect_timeout: int = int(config.get("connect_timeout", default_connect_timeout))
         self._tool_filter: dict = config.get("tools", {})
         self._discovered_tools: list[dict] = []
         self._session: Any = None

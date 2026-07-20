@@ -134,6 +134,14 @@ export function McpServerCard({ server, onEdit }: McpServerCardProps) {
                 </>
               )}
             </div>
+            {!isConnected && server.lastError && (
+              <div title={server.lastError} style={{
+                marginTop: 5, fontSize: 10, color: 'var(--status-warn)',
+                fontFamily: 'var(--font-ui)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              }}>
+                {server.lastError}
+              </div>
+            )}
           </div>
 
           {/* Actions */}
