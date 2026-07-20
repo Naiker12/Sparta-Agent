@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useAgentStore } from 'ia-sparta-core'
 import { useAgent } from 'ia-sparta-core'
 import { SubagentWatchPane } from './SubagentWatchPane'
-import type { Task } from 'ia-sparta-core'
+import type { Task, SubagentRun } from 'ia-sparta-core'
 import { useTranslation } from 'ia-sparta-i18n'
 
 const STATUS_COLORS: Record<string, string> = {
@@ -13,6 +13,13 @@ const STATUS_COLORS: Record<string, string> = {
   completed: 'var(--status-ok)',
 }
 
+const BUILTIN_ICONS: Record<string, string> = {
+  'builtin-research': '\ud83d\udd0d',
+  'builtin-code': '\ud83d\udcbb',
+  'builtin-memory': '\ud83e\udde0',
+  'builtin-review': '\ud83d\udccb',
+}
+
 function AgentCard({ agent }: { agent: { id: string; name: string; type: string; status: string; description: string; model: string; tools: string[] } }) {
   const { executeTask } = useAgent()
   const { t } = useTranslation()
@@ -21,6 +28,9 @@ function AgentCard({ agent }: { agent: { id: string; name: string; type: string;
   const [running, setRunning] = useState(false)
 
   const tasks = useAgentStore.getState().tasks[agent.id] ?? []
+  const subagentRuns = useAgentStore.getState().subagentRuns[agent.id] ?? []
+  const isBuiltin = agent.id.startsWith('builtin-')
+  const icon = isBuiltin ? (BUILTIN_ICONS[agent.id] ?? '\ud83e\udd16') : '\ud83e\udd16'
 
   const handleExecute = async () => {
     if (!taskInput.trim() || running) return
@@ -36,10 +46,14 @@ function AgentCard({ agent }: { agent: { id: string; name: string; type: string;
     }
   }
 
+  const handleStop = (runName: string) => {
+    useAgentStore.getState().completeSubagentRun(agent.id, runName, 'error')
+  }
+
   return (
     <div style={{
       background: 'var(--bg-elevated)',
-      border: '1px solid var(--border-subtle)',
+      border: `1px solid ${agent.status === 'running' ? 'var(--status-warn)' : 'var(--border-subtle)'}`,
       borderRadius: 'var(--radius-lg)',
       padding: 16,
       display: 'flex',
@@ -47,6 +61,25 @@ function AgentCard({ agent }: { agent: { id: string; name: string; type: string;
       gap: 10,
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{ fontSize: 16 }}>{icon}</span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-ui)' }}>
+            {agent.name}
+          </span>
+          {isBuiltin && (
+            <span style={{
+              fontSize: 9.5,
+              color: 'var(--text-muted)',
+              fontFamily: 'var(--font-mono)',
+              marginLeft: 6,
+              background: 'var(--bg-input)',
+              padding: '1px 5px',
+              borderRadius: 3,
+            }}>
+              built-in
+            </span>
+          )}
+        </div>
         <div style={{
           width: 8,
           height: 8,
@@ -54,14 +87,10 @@ function AgentCard({ agent }: { agent: { id: string; name: string; type: string;
           background: STATUS_COLORS[agent.status] ?? 'var(--text-muted)',
           flexShrink: 0,
         }} />
-        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-ui)' }}>
-          {agent.name}
-        </span>
         <span style={{
           fontSize: 10.5,
           color: STATUS_COLORS[agent.status] ?? 'var(--text-muted)',
           fontFamily: 'var(--font-ui)',
-          marginLeft: 'auto',
         }}>
           {t(`agents.${agent.status}`) || agent.status}
         </span>
@@ -75,9 +104,11 @@ function AgentCard({ agent }: { agent: { id: string; name: string; type: string;
         <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', background: 'var(--bg-input)', padding: '2px 6px', borderRadius: 4 }}>
           {agent.type}
         </span>
-        <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', background: 'var(--bg-input)', padding: '2px 6px', borderRadius: 4 }}>
-          {agent.model}
-        </span>
+        {agent.model && (
+          <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', background: 'var(--bg-input)', padding: '2px 6px', borderRadius: 4 }}>
+            {agent.model}
+          </span>
+        )}
         {agent.tools.map((t) => (
           <span key={t} style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', background: 'var(--bg-input)', padding: '2px 6px', borderRadius: 4 }}>
             {t}
@@ -85,6 +116,23 @@ function AgentCard({ agent }: { agent: { id: string; name: string; type: string;
         ))}
       </div>
 
+      {/* Subagent runs timeline */}
+      {subagentRuns.length > 0 && (
+        <div style={{
+          background: 'var(--bg-input)',
+          borderRadius: 'var(--radius-md)',
+          padding: '6px 8px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 4,
+        }}>
+          {subagentRuns.map((run) => (
+            <SubagentRunRow key={`${run.name}-${run.startedAt}`} run={run} onStop={handleStop} />
+          ))}
+        </div>
+      )}
+
+      {/* Task steps */}
       {agent.status === 'running' && tasks.length > 0 && (
         <TaskStepsList tasks={tasks} />
       )}
@@ -148,6 +196,97 @@ function AgentCard({ agent }: { agent: { id: string; name: string; type: string;
   )
 }
 
+function SubagentRunRow({ run, onStop }: { run: SubagentRun; onStop: (name: string) => void }) {
+  const icon = SUBAGENT_ICONS[run.name] ?? '\ud83e\udd16'
+  const displayName = run.name.charAt(0).toUpperCase() + run.name.slice(1)
+  const durationLabel = run.durationMs !== undefined
+    ? run.durationMs >= 1000 ? `${(run.durationMs / 1000).toFixed(1)}s` : `${run.durationMs}ms`
+    : null
+
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'flex-start',
+      gap: 6,
+      padding: '4px 6px',
+      background: run.status === 'running' ? 'var(--bg-active)' : 'transparent',
+      borderRadius: 'var(--radius-sm)',
+      borderLeft: `2px solid ${
+        run.status === 'running' ? 'var(--status-warn)' :
+        run.status === 'completed' ? 'var(--status-ok)' :
+        run.status === 'error' ? 'var(--status-err)' :
+        'var(--border-subtle)'
+      }`,
+    }}>
+      <span style={{ fontSize: 12, flexShrink: 0 }}>{icon}</span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <span style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-ui)' }}>
+            {displayName}
+          </span>
+          {run.status === 'running' && (
+            <span style={{ color: 'var(--status-warn)', fontSize: 10, fontFamily: 'var(--font-mono)' }}>
+              {run.currentStep || '...'}
+            </span>
+          )}
+        </div>
+        <div style={{
+          fontSize: 9.5, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)',
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>
+          {run.taskSummary.slice(0, 60)}
+        </div>
+        {/* Steps inline */}
+        {run.steps.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 1, marginTop: 3 }}>
+            {run.steps.map((step) => (
+              <div key={step.id} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 9.5, fontFamily: 'var(--font-mono)' }}>
+                <StepIcon status={step.status} />
+                <span style={{ color: 'var(--text-muted)' }}>{step.label}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      {run.status === 'running' ? (
+        <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+          <span style={{ color: 'var(--status-warn)', fontSize: 10 }}>...</span>
+          <button
+            onClick={() => onStop(run.name)}
+            title="Detener"
+            style={{
+              padding: '1px 5px',
+              background: 'var(--status-err)',
+              border: 'none',
+              borderRadius: 3,
+              color: 'white',
+              fontSize: 9,
+              cursor: 'pointer',
+              lineHeight: '14px',
+            }}
+          >
+            \u2715
+          </button>
+        </div>
+      ) : (
+        <span style={{ color: run.status === 'completed' ? 'var(--status-ok)' : 'var(--status-err)', fontSize: 11, flexShrink: 0 }}>
+          {run.status === 'completed' ? '\u2713' : '\u2717'}
+        </span>
+      )}
+      {durationLabel && (
+        <span style={{ color: 'var(--text-muted)', fontSize: 9, flexShrink: 0 }}>{durationLabel}</span>
+      )}
+    </div>
+  )
+}
+
+const SUBAGENT_ICONS: Record<string, string> = {
+  research: '\ud83d\udd0d',
+  code: '\ud83d\udcbb',
+  memory: '\ud83e\udde0',
+  review: '\ud83d\udccb',
+}
+
 function TaskStepsList({ tasks }: { tasks: Task[] }) {
   const latestTask = tasks[tasks.length - 1]
   if (!latestTask || latestTask.steps.length === 0) return null
@@ -183,10 +322,10 @@ function TaskStepsList({ tasks }: { tasks: Task[] }) {
 }
 
 function StepIcon({ status }: { status: string }) {
-  if (status === 'completed') return <span style={{ color: 'var(--status-ok)', fontSize: 12 }}>✓</span>
-  if (status === 'error') return <span style={{ color: 'var(--status-err)', fontSize: 12 }}>✕</span>
-  if (status === 'running') return <span style={{ color: 'var(--status-warn)', fontSize: 12 }}>◌</span>
-  return <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>○</span>
+  if (status === 'completed') return <span style={{ color: 'var(--status-ok)', fontSize: 12 }}>\u2713</span>
+  if (status === 'error') return <span style={{ color: 'var(--status-err)', fontSize: 12 }}>\u2715</span>
+  if (status === 'running') return <span style={{ color: 'var(--status-warn)', fontSize: 12 }}>\u25CC</span>
+  return <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>\u25CB</span>
 }
 
 export function AgentsPanel() {
@@ -259,7 +398,7 @@ export function AgentsPanel() {
                 cursor: 'pointer',
               }}
             >
-              {showNewForm ? t('agents.cancel') : t('agents.newAgent')}
+              {showNewForm ? t('agents.cancel') : '+ ' + t('agents.newAgent')}
             </button>
           </div>
         </div>
@@ -350,24 +489,7 @@ export function AgentsPanel() {
           </div>
         )}
 
-        {agents.length === 0 && !showWatchPane && (
-          <div style={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 12,
-            color: 'var(--text-muted)',
-            fontFamily: 'var(--font-ui)',
-          }}>
-            <div style={{ fontSize: 12 }}>{t('agents.noAgents')}</div>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', textAlign: 'center', maxWidth: 320, lineHeight: 1.5 }}>
-              Los subagentes internos (research, code, memory, review) se activan automáticamente cuando el modelo delega tareas.
-            </div>
-          </div>
-        )}
-
+        {/* Always show built-in agents + custom agents */}
         {agents.map((agent) => (
           <div key={agent.id}>
             <AgentCard agent={agent} />

@@ -96,6 +96,18 @@ async def handle_chat_model_stream(
                         logger.warning("Repetition detected in text block, aborting")
                         emit_control_fn("stream:degenerate", {**base_payload})
                         return True
+                    # BUGFIX: en este camino (content como lista de bloques,
+                    # p.ej. bloques "thinking" alternados con bloques "text")
+                    # nunca se cerraba el thinking al llegar el primer bloque
+                    # de texto visible. Por eso el panel se quedaba en
+                    # "Pensando..." corriendo durante TODA la respuesta y
+                    # solo cerraba al final por el safety-net de
+                    # stream:completed, en vez de cerrar justo cuando
+                    # arranca la respuesta real (como sí pasaba ya en el
+                    # camino de contenido como string plano, más abajo).
+                    if stream_state["thinking_active"]:
+                        emit_control_fn(*reasoning_events.thinking_completed(base_payload, stream_state.get("reasoning_tokens", 0)))
+                        stream_state["thinking_active"] = False
                     stream_state["visible_chars"] = stream_state.get("visible_chars", 0) + len(text)
                     emit_fn("stream:token", {**base_payload, "token": text})
             elif isinstance(block, dict) and block.get("type") == "tool_use":

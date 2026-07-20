@@ -1,49 +1,42 @@
 import { useEffect, useState } from 'react'
-import { useEventBus } from 'ia-sparta-core'
-import type { SpartaEvent } from 'ia-sparta-core'
+import { useEventBus, useAgentStore } from 'ia-sparta-core'
+import type { SpartaEvent, SubagentRun } from 'ia-sparta-core'
 
 interface SubagentWatchPaneProps {
   onClose: () => void
 }
 
-interface ActiveSubagent {
-  name: string
-  taskSummary: string
-  startedAt: number
-  status: 'running' | 'completed'
-  durationMs?: number
-  success?: boolean
-}
-
 export function SubagentWatchPane({ onClose }: SubagentWatchPaneProps) {
-  const [subagents, setSubagents] = useState<ActiveSubagent[]>([])
   const [events, setEvents] = useState<SpartaEvent[]>([])
+  const subagentRuns = useAgentStore((s) => s.subagentRuns)
+  const allRuns = Object.values(subagentRuns).flat()
 
   useEffect(() => {
     const unsub = useEventBus.getState().subscribe((event) => {
-      if (event.type === 'subagent:started') {
-        const e = event as { subagentName: string; taskSummary: string }
-        setSubagents((prev) => [
-          ...prev.filter((s) => s.name !== e.subagentName || s.status !== 'running'),
-          { name: e.subagentName, taskSummary: e.taskSummary, startedAt: Date.now(), status: 'running' },
-        ])
-        setEvents((prev) => [...prev.slice(-99), event])
-      } else if (event.type === 'subagent:completed') {
-        const e = event as { subagentName: string; durationMs: number; success: boolean }
-        setSubagents((prev) =>
-          prev.map((s) =>
-            s.name === e.subagentName && s.status === 'running'
-              ? { ...s, status: 'completed', durationMs: e.durationMs, success: e.success }
-              : s
-          )
-        )
-        setEvents((prev) => [...prev.slice(-99), event])
-      } else if (event.type === 'subagent:thinking') {
+      if (
+        event.type === 'subagent:started' ||
+        event.type === 'subagent:thinking' ||
+        event.type === 'subagent:step' ||
+        event.type === 'subagent:completed' ||
+        event.type === 'subagent:aborted'
+      ) {
         setEvents((prev) => [...prev.slice(-99), event])
       }
     })
     return unsub
   }, [])
+
+  const activeCount = allRuns.filter((s) => s.status === 'running').length
+
+  const handleStop = (agentId: string, runName: string) => {
+    useAgentStore.getState().completeSubagentRun(agentId, runName, 'error')
+    useEventBus.getState().dispatch({
+      type: 'subagent:aborted',
+      subagentName: runName,
+      reason: 'Detenido por el usuario',
+      timestamp: Date.now(),
+    })
+  }
 
   return (
     <div style={{
@@ -67,7 +60,7 @@ export function SubagentWatchPane({ onClose }: SubagentWatchPaneProps) {
             Subagentes en vivo
           </div>
           <div style={{ fontSize: 10.5, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)' }}>
-            {subagents.filter((s) => s.status === 'running').length} activos
+            {activeCount} activos
           </div>
         </div>
         <button
@@ -88,7 +81,7 @@ export function SubagentWatchPane({ onClose }: SubagentWatchPaneProps) {
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto', padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {subagents.length === 0 && (
+        {allRuns.length === 0 && (
           <div style={{
             flex: 1,
             display: 'flex',
@@ -102,9 +95,15 @@ export function SubagentWatchPane({ onClose }: SubagentWatchPaneProps) {
           </div>
         )}
 
-        {subagents.map((sa) => (
-          <SubagentRow key={`${sa.name}-${sa.startedAt}`} subagent={sa} />
-        ))}
+        {Object.entries(subagentRuns).map(([agentId, runs]) =>
+          runs.map((run) => (
+            <SubagentRunCard
+              key={`${run.name}-${run.startedAt}`}
+              run={run}
+              onStop={() => handleStop(agentId, run.name)}
+            />
+          ))
+        )}
 
         {events.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 8 }}>
@@ -121,45 +120,100 @@ export function SubagentWatchPane({ onClose }: SubagentWatchPaneProps) {
   )
 }
 
-function SubagentRow({ subagent }: { subagent: ActiveSubagent }) {
-  const icon = SUBAGENT_ICONS[subagent.name] ?? '\ud83e\udd16'
-  const displayName = subagent.name.charAt(0).toUpperCase() + subagent.name.slice(1)
-  const durationLabel = subagent.durationMs !== undefined
-    ? subagent.durationMs >= 1000 ? `${(subagent.durationMs / 1000).toFixed(1)}s` : `${subagent.durationMs}ms`
+function SubagentRunCard({ run, onStop }: { run: SubagentRun; onStop: () => void }) {
+  const icon = SUBAGENT_ICONS[run.name] ?? '\ud83e\udd16'
+  const displayName = run.name.charAt(0).toUpperCase() + run.name.slice(1)
+  const durationLabel = run.durationMs !== undefined
+    ? run.durationMs >= 1000 ? `${(run.durationMs / 1000).toFixed(1)}s` : `${run.durationMs}ms`
     : null
 
   return (
     <div style={{
       display: 'flex',
-      alignItems: 'center',
+      alignItems: 'flex-start',
       gap: 8,
-      padding: '6px 8px',
-      background: subagent.status === 'running' ? 'var(--bg-active)' : 'var(--bg-elevated)',
+      padding: '8px 10px',
+      background: run.status === 'running' ? 'var(--bg-active)' : 'var(--bg-elevated)',
       borderRadius: 'var(--radius-md)',
-      border: `1px solid ${subagent.status === 'running' ? 'var(--status-warn)' : 'var(--border-subtle)'}`,
+      border: `1px solid ${
+        run.status === 'running' ? 'var(--status-warn)' :
+        run.status === 'completed' ? 'var(--status-ok)' :
+        run.status === 'error' ? 'var(--status-err)' :
+        'var(--border-subtle)'
+      }`,
     }}>
-      <span style={{ fontSize: 14 }}>{icon}</span>
+      <span style={{ fontSize: 14, flexShrink: 0 }}>{icon}</span>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-ui)' }}>
-          {displayName}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-ui)' }}>
+            {displayName}
+          </span>
+          {run.status === 'running' && (
+            <span style={{
+              fontSize: 9.5,
+              color: 'var(--status-warn)',
+              fontFamily: 'var(--font-mono)',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              flex: 1,
+            }}>
+              {run.currentStep}
+            </span>
+          )}
         </div>
         <div style={{
           fontSize: 10, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)',
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }}>
-          {subagent.taskSummary.slice(0, 80)}
+          {run.taskSummary.slice(0, 80)}
         </div>
+
+        {/* Timeline de pasos */}
+        {run.steps.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 4, paddingLeft: 4, borderLeft: '1px solid var(--border-subtle)' }}>
+            {run.steps.map((step) => (
+              <div key={step.id} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 9.5, fontFamily: 'var(--font-mono)' }}>
+                {step.status === 'completed' && <span style={{ color: 'var(--status-ok)', fontSize: 10 }}>\u2713</span>}
+                {step.status === 'error' && <span style={{ color: 'var(--status-err)', fontSize: 10 }}>\u2715</span>}
+                {step.status === 'running' && <span style={{ color: 'var(--status-warn)', fontSize: 10 }}>\u25CC</span>}
+                {step.status === 'pending' && <span style={{ color: 'var(--text-muted)', fontSize: 10 }}>\u25CB</span>}
+                <span style={{ color: 'var(--text-muted)' }}>{step.label}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
-      {subagent.status === 'running' ? (
-        <span style={{ color: 'var(--status-warn)', fontSize: 11 }}>...</span>
-      ) : (
-        <span style={{ color: subagent.success !== false ? 'var(--status-ok)' : 'var(--status-err)', fontSize: 12 }}>
-          {subagent.success !== false ? '\u2713' : '\u2717'}
-        </span>
-      )}
-      {durationLabel && (
-        <span style={{ color: 'var(--text-muted)', fontSize: 10, flexShrink: 0 }}>{durationLabel}</span>
-      )}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
+        {run.status === 'running' ? (
+          <>
+            <span style={{ color: 'var(--status-warn)', fontSize: 11 }}>...</span>
+            <button
+              onClick={onStop}
+              title="Detener subagente"
+              style={{
+                padding: '2px 6px',
+                background: 'var(--status-err)',
+                border: 'none',
+                borderRadius: 3,
+                color: 'white',
+                fontSize: 9,
+                cursor: 'pointer',
+                lineHeight: '14px',
+              }}
+            >
+              \u2715
+            </button>
+          </>
+        ) : (
+          <span style={{ color: run.status === 'completed' ? 'var(--status-ok)' : 'var(--status-err)', fontSize: 12 }}>
+            {run.status === 'completed' ? '\u2713' : '\u2717'}
+          </span>
+        )}
+        {durationLabel && (
+          <span style={{ color: 'var(--text-muted)', fontSize: 9.5 }}>{durationLabel}</span>
+        )}
+      </div>
     </div>
   )
 }
@@ -181,10 +235,22 @@ function EventRow({ event }: { event: SpartaEvent }) {
       color = 'var(--status-warn)'
       break
     }
+    case 'subagent:step': {
+      const e = event as { subagentName: string; stepLabel: string; status: string }
+      label = `${e.subagentName}: ${e.stepLabel} (${e.status})`
+      color = e.status === 'completed' ? 'var(--status-ok)' : 'var(--status-warn)'
+      break
+    }
     case 'subagent:completed': {
       const e = event as { subagentName: string; success: boolean }
       label = `${e.subagentName} ${e.success ? 'completado' : 'fallido'}`
       color = e.success ? 'var(--status-ok)' : 'var(--status-err)'
+      break
+    }
+    case 'subagent:aborted': {
+      const e = event as { subagentName: string; reason?: string }
+      label = `${e.subagentName} detenido${e.reason ? `: ${e.reason}` : ''}`
+      color = 'var(--status-err)'
       break
     }
     case 'subagent:thinking': {
@@ -208,7 +274,7 @@ function EventRow({ event }: { event: SpartaEvent }) {
       fontFamily: 'var(--font-mono)',
       color: 'var(--text-muted)',
     }}>
-      <span style={{ color, flexShrink: 0, fontSize: 11 }}>●</span>
+      <span style={{ color, flexShrink: 0, fontSize: 11 }}>\u25CF</span>
       <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
         {label}
       </span>

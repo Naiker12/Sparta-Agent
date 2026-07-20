@@ -37,3 +37,23 @@ export interface TaskStep {
   durationMs?: number
   error?: string
 }
+
+export type SubagentRunStatus = 'idle' | 'running' | 'completed' | 'error'
+
+export interface SubagentStep {
+  id: string
+  label: string
+  status: 'pending' | 'running' | 'completed' | 'error'
+}
+
+export interface SubagentRun {
+  name: string
+  kind: AgentType
+  status: SubagentRunStatus
+  taskSummary: string
+  currentStep: string
+  steps: SubagentStep[]
+  startedAt: number
+  completedAt?: number
+  durationMs?: number
+}

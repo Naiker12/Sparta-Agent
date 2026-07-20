@@ -102,6 +102,19 @@ export function registerChatSendIPC(): void {
     const state = activeStreams.get(sessionId)
     if (state) {
       activeStreams.set(sessionId, { ...state, active: false })
+
+      // BUGFIX: antes solo se apagaba la bandera local `active`, que el
+      // polling de `chat:send` lee, pero el sidecar de Python nunca se
+      // enteraba. Por eso el "pensamiento" seguía corriendo en segundo
+      // plano y terminaba entregando la respuesta igual, aunque en la UI
+      // pareciera pausado. Ahora sí se le avisa a Python que cancele la
+      // tarea real (server.py -> _handle_chat_abort espera `request_id`).
+      const requestId = `${sessionId}:${state.messageId}`
+      sendToPython({
+        id: `abort:${requestId}`,
+        method: 'chat.abort',
+        params: { request_id: requestId, session_id: sessionId },
+      })
     }
   })
 }

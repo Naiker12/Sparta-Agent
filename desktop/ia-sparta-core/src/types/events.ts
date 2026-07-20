@@ -60,7 +60,9 @@ export type EventType =
   | 'terminal:tool_crash'
   | 'subagent:started'
   | 'subagent:thinking'
+  | 'subagent:step'
   | 'subagent:completed'
+  | 'subagent:aborted'
 
 export interface BaseEvent {
   type: EventType
@@ -425,6 +427,20 @@ export interface SubagentCompletedEvent extends BaseEvent {
   success: boolean
 }
 
+export interface SubagentStepEvent extends BaseEvent {
+  type: 'subagent:step'
+  subagentName: string
+  stepId: string
+  stepLabel: string
+  status: 'running' | 'completed' | 'error'
+}
+
+export interface SubagentAbortedEvent extends BaseEvent {
+  type: 'subagent:aborted'
+  subagentName: string
+  reason?: string
+}
+
 export type SpartaEvent =
   | AgentStartedEvent
   | AgentCompletedEvent
@@ -483,4 +499,6 @@ export type SpartaEvent =
   | TerminalToolCrashEvent
   | SubagentStartedEvent
   | SubagentThinkingEvent
+  | SubagentStepEvent
   | SubagentCompletedEvent
+  | SubagentAbortedEvent

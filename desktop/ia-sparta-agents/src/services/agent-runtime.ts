@@ -1,4 +1,4 @@
-import type { ToolCall, TaskStep } from 'ia-sparta-core'
+import type { ToolCall, TaskStep, SubagentRun, SubagentStep } from 'ia-sparta-core'
 import { useAgentStore } from 'ia-sparta-core'
 import { useEventBus } from 'ia-sparta-core'
 import { executeTool, executeToolsParallel, areToolCallsIndependent } from './tool-executor'
@@ -63,7 +63,45 @@ export async function runAgentTask(
   let accumulatedResult = ''
   let turnCount = 0
 
+  // Emit subagent:started
+  const store = useAgentStore.getState()
+  const agent = store.agents.find((a) => a.id === agentId)
+  const subagentName = agent?.name ?? 'unknown'
+  useEventBus.getState().dispatch({
+    type: 'subagent:started' as const,
+    subagentName,
+    taskSummary: taskDescription.slice(0, 120),
+    agentId,
+    timestamp: Date.now(),
+  })
+  const subagentRun: SubagentRun = {
+    name: subagentName,
+    kind: agent?.type ?? 'research',
+    status: 'running',
+    taskSummary: taskDescription.slice(0, 120),
+    currentStep: 'Iniciando...',
+    steps: [],
+    startedAt: Date.now(),
+  }
+  store.startSubagentRun(agentId, subagentRun)
+
   for (turnCount = 0; turnCount < MAX_LLM_TURNS; turnCount++) {
+    // Emit subagent:step per LLM turn
+    const step: SubagentStep = {
+      id: `turn-${turnCount}`,
+      label: `Turno LLM #${turnCount + 1}: pensando...`,
+      status: 'running',
+    }
+    store.updateSubagentStep(agentId, subagentName, step)
+    useEventBus.getState().dispatch({
+      type: 'subagent:step' as const,
+      subagentName,
+      stepId: step.id,
+      stepLabel: step.label,
+      status: 'running',
+      agentId,
+      timestamp: Date.now(),
+    })
     const prompt = buildPrompt(
       systemPrompt,
       messages,
@@ -95,7 +133,6 @@ export async function runAgentTask(
       tool: tc.toolName,
     }))
 
-    const store = useAgentStore.getState()
     const existingSteps = store.tasks[agentId]?.find((t) => t.id === taskId)?.steps ?? []
     store.updateTask(agentId, taskId, {
       steps: [...existingSteps, ...stepEntries],
@@ -155,16 +192,26 @@ export async function runAgentTask(
     accumulatedResult = 'Límite de turnos alcanzado. Resultado parcial:\n' + accumulatedResult
   }
 
+  const durationMs = Date.now() - subagentRun.startedAt
   useAgentStore.getState().updateAgentStatus(agentId, 'completed')
   useAgentStore.getState().updateTask(agentId, taskId, {
     status: 'completed',
     completedAt: Date.now(),
   })
+  useAgentStore.getState().completeSubagentRun(agentId, subagentName, 'completed', durationMs)
 
   useEventBus.getState().dispatch({
     type: 'agent:completed',
     agentId,
     result: accumulatedResult,
+    timestamp: Date.now(),
+  })
+  useEventBus.getState().dispatch({
+    type: 'subagent:completed' as const,
+    subagentName,
+    durationMs,
+    success: true,
+    agentId,
     timestamp: Date.now(),
   })
 

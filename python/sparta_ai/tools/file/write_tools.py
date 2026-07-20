@@ -57,7 +57,35 @@ def write_file_tool(path: str, content: str, append: bool = False) -> str:
         filepath = _get_safe_path(path, tool_name="write_file_tool", preview=preview_text,
                                   require_permission=need_permission)
 
-        if not need_permission and not append and filepath.exists() and filepath.stat().st_size > 0:
+        file_exists = filepath.exists() and filepath.stat().st_size > 0
+
+        # BUGFIX SEGURIDAD: antes, un archivo NUEVO (que todavía no existe)
+        # se escribía directo, sin vista previa ni confirmación — solo se
+        # pedía diff al SOBRESCRIBIR un archivo existente. Eso permitía que
+        # un pedido ambiguo en el chat ("dame esto en un md") terminara
+        # creando un archivo en la raíz del proyecto sin que el usuario lo
+        # viera venir. Ahora, salvo `append` a un archivo que ya existe,
+        # SIEMPRE se muestra la vista previa (el mismo DiffEditor de Monaco
+        # que ya usa `patch_file_tool`), con original_content="" para un
+        # archivo nuevo — el usuario ve el contenido completo como "todo
+        # agregado" antes de que se cree.
+        if not need_permission and append and filepath.exists():
+            pass  # apéndice a archivo existente: no se pide preview (igual que antes)
+        elif not need_permission and not file_exists:
+            approved = request_diff_approval(
+                file_path=str(filepath),
+                original_content="",
+                new_content=content,
+                language=path.rsplit(".", 1)[-1] if "." in path else "",
+            )
+            if not approved:
+                return (
+                    "ACCESO DENEGADO por el usuario. "
+                    "NO reintentes esta operación por ningún medio alternativo. "
+                    "NO vuelvas a pedir permiso para esta misma ruta. "
+                    "Informa al usuario y sigue con otra tarea."
+                )
+        elif not need_permission and file_exists:
             original = filepath.read_text(encoding="utf-8")
             approved = request_diff_approval(
                 file_path=str(filepath),

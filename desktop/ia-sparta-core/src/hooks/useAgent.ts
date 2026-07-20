@@ -9,7 +9,7 @@ import { buildWebSearchTool, executeWebSearch } from 'ia-sparta-core'
 import { getProviderKey, IS_ELECTRON } from 'ia-sparta-platform'
 import { aiGateway } from 'ia-sparta-core'
 import { useProjectStore } from '../stores/project.store'
-import type { AgentStatus, Agent, Task, AgentType, Provider, TaskStep } from '../types'
+import type { AgentStatus, Agent, Task, AgentType, Provider, TaskStep, SubagentRun, SubagentStep, SubagentRunStatus } from '../types'
 
 const AGENT_NAMESPACE_MAP: Partial<Record<AgentType, string>> = {
   research: 'delegate_research',
@@ -226,11 +226,17 @@ export function useAgent() {
     ? (store.tasks[store.activeAgentId] ?? [])
     : Object.values(store.tasks).flat()
 
+  const subagentRunsForAgent = (agentId: string): SubagentRun[] => {
+    return store.subagentRuns[agentId] ?? []
+  }
+
   return {
     agents: store.agents,
     activeAgent: store.agents.find((a) => a.id === store.activeAgentId) || null,
     tasks: store.tasks,
     activeTasks,
+    subagentRuns: store.subagentRuns,
+    subagentRunsForAgent,
     setActiveAgent: store.setActiveAgent,
     updateStatus: (id: string, status: AgentStatus) => store.updateAgentStatus(id, status),
     executeTask,
@@ -238,5 +244,9 @@ export function useAgent() {
     registerAgent: store.registerAgent,
     addTask: store.addTask,
     updateTask: store.updateTask,
+    startSubagentRun: store.startSubagentRun,
+    updateSubagentStep: store.updateSubagentStep,
+    updateSubagentRun: store.updateSubagentRun,
+    completeSubagentRun: store.completeSubagentRun,
   }
 }

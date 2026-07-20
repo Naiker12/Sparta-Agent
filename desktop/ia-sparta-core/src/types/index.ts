@@ -3,7 +3,7 @@ export { type MessageRole, type ToolCall, type ToolCallSubstatus, type PipelineS
 export { type ProviderVendor, type ProviderKind, type Provider, type ModelInfo, type AIProvider, type ConnectionTestResult } from './provider'
 export { type MCPServerType, type MCPServerConfig, type MCPTool, type MCPServer } from './mcp'
 export { type MemoryEntry, type MemoryRelation, type MemoryGraphNode, type MemoryGraph, type ExtractedMemory, type RelationType } from './memory'
-export { type AgentType, type AgentStatus, type Agent, type Task, type TaskStep } from './agent'
+export { type AgentType, type AgentStatus, type Agent, type Task, type TaskStep, type SubagentRunStatus, type SubagentStep, type SubagentRun } from './agent'
 export { type SkillCategory, type Skill, type DownloadableSkill, type InstalledSkill, type SkillViewResult, type SkillScanResult, type TrustLevel, type RiskLevel, SKILL_CATEGORIES, CATEGORY_DESCRIPTIONS, normalizeCategory, formatCategoryLabel } from './skill'
 export { type ChannelKind, type IntegrationProvider, type IntegrationStatus, type IntegrationConfig, type Channel, type ChannelMessage } from './channel'
 export { type Project } from './project'

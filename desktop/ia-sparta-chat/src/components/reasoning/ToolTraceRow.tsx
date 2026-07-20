@@ -262,8 +262,14 @@ export function ToolTraceRow({ toolCall }: ToolTraceRowProps) {
                 </div>
               )}
 
-              {/* Output for search tools — markdown rendered */}
-              {toolCall.output && toolCall.status !== 'error' && (isSearch || isFetch) && (
+              {/* Output for fetch tools — markdown rendered.
+                  NOTA: para búsquedas (isSearch) ya no volvemos a volcar
+                  `toolCall.output` aquí. Ese texto es el resultado crudo que
+                  recibe el LLM (incluye líneas tipo "IMPORTANTE: no repitas
+                  la lista de resultados" dirigidas al modelo, no al usuario)
+                  y antes se filtraba directo a la UI. La lista ya parseada
+                  (SearchResultsList, arriba) es lo único que debe verse. */}
+              {toolCall.output && toolCall.status !== 'error' && isFetch && !isSearch && (
                 <div>
                   <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     Contenido
