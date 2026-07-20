@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import {
   ChevronRight, ChevronDown, FileText, Folder, FolderOpen, Trash2,
   FileCode, FileJson, FileImage, FileCog, FileLock, FileType,
@@ -81,7 +81,7 @@ export function FileTreeItem({
     }
   }, [ctx])
 
-  async function handleClick() {
+  const handleClick = useCallback(async () => {
     if (isDirectory) {
       const willExpand = !expanded
       setExpanded(willExpand)
@@ -93,16 +93,24 @@ export function FileTreeItem({
           const loadedChildren = await onExpandDir(node.path)
           setChildren(loadedChildren)
           node.children = loadedChildren
+          // Start watching this directory for changes
+          window.fs?.expandWatcher?.(node.path)
         } catch (err) {
           console.error('[FileTreeItem] Error loading children:', err)
         } finally {
           setLoadingChildren(false)
         }
+      } else if (willExpand) {
+        // Directory already loaded, just start watching
+        window.fs?.expandWatcher?.(node.path)
+      } else {
+        // Collapsing directory, stop watching
+        window.fs?.collapseWatcher?.(node.path)
       }
     } else {
       onSelectFile(node.path)
     }
-  }
+  }, [isDirectory, expanded, hasLazyChildren, onExpandDir, node.path, onSelectFile])
 
   function handleContextMenu(e: React.MouseEvent) {
     e.preventDefault()

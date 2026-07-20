@@ -72,7 +72,9 @@ export function formatCategoryLabel(raw: string | undefined | null): string {
   return cat?.label ?? raw
 }
 
-export type SkillSource = 'builtin' | 'legacy' | 'user'
+export type SkillSource = 'builtin' | 'legacy' | 'user' | 'system'
+
+export type TrustLevel = 'builtin' | 'system' | 'installed' | 'quarantined'
 
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical'
 
@@ -118,6 +120,7 @@ export interface InstalledSkill {
   author: string
   source: string
   featured: boolean
+  trustLevel?: TrustLevel
   installedAt?: number
 }
 

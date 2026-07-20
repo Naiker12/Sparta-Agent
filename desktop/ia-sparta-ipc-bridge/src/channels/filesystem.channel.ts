@@ -2,7 +2,8 @@ import { ipcMain, dialog, shell } from 'electron'
 import fs from 'node:fs'
 import fsPromises from 'node:fs/promises'
 import path from 'node:path'
-import { startFileWatcher, stopFileWatcher } from './file-watcher'
+import { startFileWatcher, stopFileWatcher, expandWatcher, collapseWatcher } from './file-watcher'
+import { IGNORED_DIR_SET } from 'ia-sparta-core'
 
 export interface FileTreeNode {
   name: string
@@ -10,13 +11,6 @@ export interface FileTreeNode {
   type: 'file' | 'directory'
   children?: FileTreeNode[]
 }
-
-const SKIP_DIRS = new Set([
-  'node_modules', '.git', '.venv', 'venv', 'env', 'target', '.cargo',
-  '__pycache__', '.pytest_cache', 'dist', 'build', '.next', '.out', 'out', '.nuxt', '.idea', '.vscode',
-  'dist-electron', 'dist-web', 'release', '.ruff_cache', '.sparta', '.agents', 'vendor', '.tmp', 'temp', 'tmp'
-])
-const MAX_DEPTH = 8
 
 let _workspaceRoot: string | null = null
 
@@ -26,63 +20,12 @@ function isWithinRoot(filePath: string, root: string): boolean {
   return resolved === resolvedRoot || resolved.startsWith(resolvedRoot + path.sep)
 }
 
-async function buildFileTree(dirPath: string, depth = 0): Promise<FileTreeNode[]> {
-  if (depth >= MAX_DEPTH) return []
-
-  let entries: fs.Dirent[] = []
-  try {
-    entries = await fsPromises.readdir(dirPath, { withFileTypes: true })
-  } catch (err) {
-    console.error(`[fs] readDir failed for ${dirPath}:`, (err as Error).message)
-    return []
-  }
-
-  const nodes: FileTreeNode[] = []
-  for (const entry of entries) {
-    if (entry.name.startsWith('.') && entry.name !== '.env') continue
-    if (entry.isDirectory() && SKIP_DIRS.has(entry.name)) continue
-
-    const fullPath = path.join(dirPath, entry.name)
-    if (entry.isDirectory()) {
-      nodes.push({
-        name: entry.name,
-        path: fullPath,
-        type: 'directory',
-        children: await buildFileTree(fullPath, depth + 1),
-      })
-    } else if (entry.isFile()) {
-      nodes.push({
-        name: entry.name,
-        path: fullPath,
-        type: 'file',
-      })
-    }
-  }
-
-  return nodes.sort((a, b) => {
-    if (a.type === b.type) return a.name.localeCompare(b.name)
-    return a.type === 'directory' ? -1 : 1
-  })
-}
-
 export function registerFilesystemIPC() {
   ipcMain.handle('fs:openFolderDialog', async () => {
     const result = await dialog.showOpenDialog({
       properties: ['openDirectory'],
     })
     return result.canceled ? null : result.filePaths[0]
-  })
-
-  ipcMain.handle('fs:readDir', async (_event, dirPath: string) => {
-    if (!dirPath || typeof dirPath !== 'string') return { nodes: [], error: 'Invalid path' }
-    if (!_workspaceRoot) _workspaceRoot = dirPath
-    try {
-      const nodes = await buildFileTree(dirPath)
-      return { nodes }
-    } catch (err) {
-      console.error(`[fs] readDir error for ${dirPath}:`, (err as Error).message)
-      return { nodes: [], error: (err as Error).message }
-    }
   })
 
   ipcMain.handle('fs:readDirLevel', async (_event, dirPath: string) => {
@@ -98,7 +41,7 @@ export function registerFilesystemIPC() {
       const nodes: FileTreeNode[] = []
       for (const entry of entries) {
         if (entry.name.startsWith('.') && entry.name !== '.env') continue
-        if (entry.isDirectory() && SKIP_DIRS.has(entry.name)) continue
+        if (entry.isDirectory() && IGNORED_DIR_SET.has(entry.name)) continue
 
         const fullPath = path.join(dirPath, entry.name)
         if (entry.isDirectory()) {
@@ -200,6 +143,18 @@ export function registerFilesystemIPC() {
 
   ipcMain.handle('fs:stopWatcher', () => {
     stopFileWatcher()
+    return { success: true }
+  })
+
+  ipcMain.handle('fs:expandWatcher', async (_event, dirPath: string) => {
+    if (!dirPath || typeof dirPath !== 'string') return { success: false }
+    await expandWatcher(dirPath)
+    return { success: true }
+  })
+
+  ipcMain.handle('fs:collapseWatcher', async (_event, dirPath: string) => {
+    if (!dirPath || typeof dirPath !== 'string') return { success: false }
+    collapseWatcher(dirPath)
     return { success: true }
   })
 }

@@ -128,7 +128,6 @@ function spawnSidecar(): void {
           sidecarReady = true
           restartAttempts = 0
           sidecarEvents.emit(SidecarEvent.READY, msg)
-          console.log('[sidecar] Ready signal received')
           continue
         }
         sidecarEvents.emit(SidecarEvent.MESSAGE, msg)
@@ -140,12 +139,10 @@ function spawnSidecar(): void {
 
   proc.stderr?.on('data', (data: Buffer) => {
     const text = data.toString().trimEnd()
-    console.log('[Python Sidecar]', text)
     sidecarEvents.emit(SidecarEvent.STDERR, text)
   })
 
   proc.on('exit', (code: number | null, signal: string | null) => {
-    console.log(`[sidecar] Exited code=${code} signal=${signal}`)
     pythonProcess = null
     sidecarReady = false
     sidecarEvents.emit(SidecarEvent.EXIT, { code, signal })
@@ -154,7 +151,6 @@ function spawnSidecar(): void {
     if (code !== 0 && signal !== 'SIGTERM' && signal !== 'SIGKILL' && restartAttempts < MAX_RESTART_ATTEMPTS) {
       const delayMs = 1000 * (restartAttempts + 1)
       restartAttempts++
-      console.log(`[sidecar] Restarting in ${delayMs}ms (attempt ${restartAttempts}/${MAX_RESTART_ATTEMPTS})`)
       sidecarEvents.emit(SidecarEvent.CRASHED, { code, signal, attempt: restartAttempts })
       restartTimer = setTimeout(() => {
         restartTimer = null
@@ -181,7 +177,6 @@ function spawnSidecar(): void {
   })
 
   pythonProcess = proc
-  console.log(`[sidecar] Started: ${command} ${args.join(' ')} (cwd=${cwd})`)
 }
 
 export function sendToPython(msg: object): void {

@@ -3,9 +3,15 @@
 This is a first-line defense — it uses pattern matching to block obviously
 dangerous commands. It is NOT a full sandbox. For that, see Docker-based
 isolation (future work).
+
+Second layer: exec_allowlist.py provides a binary allowlist that restricts
+which binaries can execute without user confirmation, regardless of this
+sanitizer's output.
 """
 import logging
 import re
+
+from sparta_ai.security.exec_allowlist import is_command_allowed
 
 logger = logging.getLogger("sparta_ai.security.commands")
 
@@ -114,6 +120,10 @@ class CommandSanitizer:
 
         Only checks the FIRST command in a chain — chained commands with
         ``;``, ``|``, ``&&``, ``||`` are never considered safe.
+
+        Two-layer check:
+          1. Must not be in SAFE_COMMANDS (read-only, known-safe prefixes)
+          2. Must be in the exec_allowlist (binary allowlist from exec_allowlist.py)
         """
         stripped = command.strip()
         # Chained commands are never auto-approved
@@ -123,10 +133,12 @@ class CommandSanitizer:
         first = self._first_command(stripped)
         if not first:
             return False
+        # Check SAFE_COMMANDS (legacy, kept for backward compat)
         for safe_cmd in SAFE_COMMANDS:
             if first == safe_cmd or first.startswith(safe_cmd + " "):
                 return True
-        return False
+        # Check exec_allowlist (declarative binary allowlist)
+        return is_command_allowed(first)
 
     def is_dangerous(self, command: str) -> bool:
         """Check if a command matches any dangerous pattern."""

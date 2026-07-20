@@ -3,9 +3,10 @@
 Level 1 — skills_index(): lightweight manifest shown in system prompt.
 Level 2 — skill_view(): full SKILL.md body loaded on demand as a tool.
 
-Sources (searched in order):
-  1. $SPARTA_USER_SKILLS_DIR  — user-installed (runtime, persistent)
-  2. <project-root>/skills/   — builtins shipped with repo + npx skills installs
+Sources (searched in order, dedup by id — first match wins):
+  1. $SPARTA_USER_SKILLS_DIR  — user-installed (runtime, persistent, override)
+  2. ~/.sparta/skills/.system  — auto-installed from bundled bundle (fingerprint-synced)
+  3. <project-root>/skills/    — builtins shipped with repo + npx skills installs
 """
 import logging
 import os
@@ -44,6 +45,11 @@ def _user_skills_dir() -> Path | None:
         if p.is_dir():
             return p
     return None
+
+
+def _system_skills_dir() -> Path:
+    """Return ~/.sparta/skills/.system (auto-synced system skills)."""
+    return Path.home() / ".sparta" / "skills" / ".system"
 
 
 # ── Frontmatter parser (YAML preferred, regex fallback) ────────
@@ -128,7 +134,13 @@ def _scan_skills_dir(skills_dir: Path) -> list[dict[str, Any]]:
 
 
 def _build_full_index() -> list[dict[str, Any]]:
-    """Merge manifests from all sources, dedup by id (user wins)."""
+    """Merge manifests from all sources, dedup by id (user wins).
+
+    Precedence:
+      1. User-installed (override)
+      2. System-installed (auto-synced, fingerprint-verified)
+      3. Builtin + npx-installed (project root)
+    """
     seen: set[str] = set()
     result: list[dict[str, Any]] = []
 
@@ -141,6 +153,15 @@ def _build_full_index() -> list[dict[str, Any]]:
                 item["_source"] = "user"
                 seen.add(sid)
                 result.append(item)
+
+    # System-installed skills (auto-synced from bundled bundle)
+    sys_dir = _system_skills_dir()
+    for item in _scan_skills_dir(sys_dir):
+        sid = item.get("id")
+        if sid and sid not in seen:
+            item["_source"] = "system"
+            seen.add(sid)
+            result.append(item)
 
     # Builtin + npx-installed skills (project root /skills/)
     for item in _scan_skills_dir(_LIB_DIR):
@@ -174,6 +195,13 @@ def skill_view(skill_id: str) -> dict[str, Any]:
     usr = _user_skills_dir()
     if usr:
         for cat_dir in usr.iterdir():
+            if cat_dir.is_dir() and not cat_dir.name.startswith("."):
+                candidates.append(cat_dir / skill_id / "SKILL.md")
+
+    # Then system-installed skills
+    sys_dir = _system_skills_dir()
+    if sys_dir.exists():
+        for cat_dir in sys_dir.iterdir():
             if cat_dir.is_dir() and not cat_dir.name.startswith("."):
                 candidates.append(cat_dir / skill_id / "SKILL.md")
 

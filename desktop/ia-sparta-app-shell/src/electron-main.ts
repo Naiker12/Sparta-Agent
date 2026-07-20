@@ -147,9 +147,7 @@ app.whenReady().then(async () => {
           return
         }
         const result = await pushAllKeys()
-        if (result.ok) {
-          console.log('[main] Seeded', result.count, 'vault keys into sidecar')
-        } else {
+        if (!result.ok) {
           console.warn('[main] Failed to seed keys:', result.error)
         }
       } catch (err) {

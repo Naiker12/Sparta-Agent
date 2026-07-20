@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FileText, Code, Copy, Check } from 'lucide-react'
+import { FileText, Code, Copy, Check, ShieldAlert } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -13,15 +13,17 @@ interface SkillMarkdownDialogProps {
   open: boolean
   onClose: () => void
   skill: Skill | null
+  trustLevel?: string
 }
 
 const SOURCE_LABEL: Record<string, string> = {
   builtin: 'Sparta Team',
   legacy: 'Legado',
   user: 'Usuario',
+  system: 'Sistema',
 }
 
-export function SkillMarkdownDialog({ open, onClose, skill }: SkillMarkdownDialogProps) {
+export function SkillMarkdownDialog({ open, onClose, skill, trustLevel }: SkillMarkdownDialogProps) {
   const [raw, setRaw] = useState(false)
   const [copied, setCopied] = useState(false)
 
@@ -30,6 +32,7 @@ export function SkillMarkdownDialog({ open, onClose, skill }: SkillMarkdownDialo
   const body = skill.prompt || '_Esta skill no tiene contenido._'
   const sourceLabel = SOURCE_LABEL[skill.source ?? ''] ?? 'Desconocido'
   const subtitle = [skill.category ?? 'general', sourceLabel, 'SKILL.md'].filter(Boolean).join(' · ')
+  const isQuarantined = trustLevel === 'quarantined'
 
   async function handleCopy() {
     try {
@@ -57,6 +60,18 @@ export function SkillMarkdownDialog({ open, onClose, skill }: SkillMarkdownDialo
             </div>
           </DialogTitle>
         </DialogHeader>
+
+        {isQuarantined && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            margin: '0 24px', padding: '8px 12px', borderRadius: 'var(--radius-sm)',
+            background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)',
+            color: '#f59e0b', fontSize: 11, fontFamily: 'var(--font-ui)', fontWeight: 500,
+          }}>
+            <ShieldAlert size={14} />
+            <span>Esta skill está en cuarentena — el análisis de seguridad detectó patrones de riesgo. Revisa el contenido antes de activarla.</span>
+          </div>
+        )}
 
         <div style={{
           display: 'flex', gap: 6, padding: '0 24px 8px',

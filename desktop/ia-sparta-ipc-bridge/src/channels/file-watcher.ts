@@ -1,30 +1,11 @@
 import type { FSWatcher } from 'chokidar'
 import path from 'node:path'
 import { BrowserWindow } from 'electron'
+import { shouldIgnoreDirectory } from 'ia-sparta-core'
 
-let watcher: FSWatcher | null = null
+let rootWatcher: FSWatcher | null = null
 let watchedRoot: string | null = null
-
-const IGNORED_DIRS = [
-  '**/node_modules/**',
-  '**/.git/**',
-  '**/.venv/**',
-  '**/__pycache__/**',
-  '**/dist/**',
-  '**/dist-electron/**',
-  '**/dist-web/**',
-  '**/.next/**',
-  '**/.pytest_cache/**',
-  '**/build/**',
-  '**/target/**',
-  '**/release/**',
-  '**/.sparta/**',
-  '**/.agents/**',
-  '**/vendor/**',
-  '**/.tmp/**',
-  '**/tmp/**',
-  '**/temp/**',
-]
+const directoryWatchers = new Map<string, FSWatcher>()
 
 function broadcastFileChanged(filePath: string): void {
   const win = BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0]
@@ -36,18 +17,15 @@ function broadcastFileChanged(filePath: string): void {
   })
 }
 
-export async function startFileWatcher(rootPath: string): Promise<void> {
-  if (watchedRoot === rootPath && watcher) return
-  stopFileWatcher()
+async function watchDirectory(dirPath: string): Promise<void> {
+  if (directoryWatchers.has(dirPath)) return
 
   const chokidar = await import('chokidar')
-  const absRoot = path.resolve(rootPath)
-  watcher = chokidar.watch(absRoot, {
-    ignored: IGNORED_DIRS,
+  const watcher = chokidar.watch(dirPath, {
     persistent: true,
     ignoreInitial: true,
+    depth: 0,
     awaitWriteFinish: { stabilityThreshold: 300, pollInterval: 100 },
-    depth: 8,
   })
 
   watcher
@@ -55,19 +33,86 @@ export async function startFileWatcher(rootPath: string): Promise<void> {
     .on('change', (p) => broadcastFileChanged(p))
     .on('unlink', (p) => broadcastFileChanged(p))
     .on('addDir', (p) => {
-      if (p !== absRoot) broadcastFileChanged(p)
+      const dirName = path.basename(p)
+      if (!shouldIgnoreDirectory(dirName)) {
+        broadcastFileChanged(p)
+      }
     })
-    .on('unlinkDir', (p) => broadcastFileChanged(p))
+    .on('unlinkDir', (p) => {
+      broadcastFileChanged(p)
+      unwatchDirectory(p)
+    })
+
+  directoryWatchers.set(dirPath, watcher)
+}
+
+function unwatchDirectory(dirPath: string): void {
+  const watcher = directoryWatchers.get(dirPath)
+  if (watcher) {
+    watcher.close()
+    directoryWatchers.delete(dirPath)
+  }
+}
+
+export async function expandWatcher(dirPath: string): Promise<void> {
+  if (!watchedRoot) return
+  if (!dirPath.startsWith(watchedRoot)) return
+  await watchDirectory(dirPath)
+}
+
+export function collapseWatcher(dirPath: string): void {
+  unwatchDirectory(dirPath)
+  for (const [watchedPath] of directoryWatchers) {
+    if (watchedPath.startsWith(dirPath)) {
+      unwatchDirectory(watchedPath)
+    }
+  }
+}
+
+export async function startFileWatcher(rootPath: string): Promise<void> {
+  if (watchedRoot === rootPath && rootWatcher) return
+  stopFileWatcher()
+
+  const chokidar = await import('chokidar')
+  const absRoot = path.resolve(rootPath)
+
+  rootWatcher = chokidar.watch(absRoot, {
+    persistent: true,
+    ignoreInitial: true,
+    depth: 0,
+    awaitWriteFinish: { stabilityThreshold: 300, pollInterval: 100 },
+  })
+
+  rootWatcher
+    .on('add', (p) => broadcastFileChanged(p))
+    .on('change', (p) => broadcastFileChanged(p))
+    .on('unlink', (p) => broadcastFileChanged(p))
+    .on('addDir', (p) => {
+      if (p !== absRoot) {
+        const dirName = path.basename(p)
+        if (!shouldIgnoreDirectory(dirName)) {
+          broadcastFileChanged(p)
+        }
+      }
+    })
+    .on('unlinkDir', (p) => {
+      broadcastFileChanged(p)
+      unwatchDirectory(p)
+    })
 
   watchedRoot = absRoot
-  console.log(`[file-watcher] Watching: ${absRoot}`)
 }
 
 export function stopFileWatcher(): void {
-  if (watcher) {
-    watcher.close()
-    watcher = null
-    watchedRoot = null
-    console.log('[file-watcher] Stopped')
+  if (rootWatcher) {
+    rootWatcher.close()
+    rootWatcher = null
   }
+
+  for (const [, watcher] of directoryWatchers) {
+    watcher.close()
+  }
+  directoryWatchers.clear()
+
+  watchedRoot = null
 }

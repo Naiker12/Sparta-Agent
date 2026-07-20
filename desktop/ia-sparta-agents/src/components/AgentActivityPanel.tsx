@@ -1,10 +1,64 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { useEventBus, useProjectStore, useDiffReviewStore, useUIStore } from 'ia-sparta-core'
-import { ChevronDown, ChevronRight, X, Sparkles } from 'lucide-react'
+import { useEventBus, useProjectStore, useDiffReviewStore } from 'ia-sparta-core'
+import { ChevronDown, ChevronRight, Sparkles } from 'lucide-react'
 import { ActivityEntryRow } from './ActivityEntryRow'
 import { DiffReviewCard } from './DiffReviewCard'
 import { labelForTool, computeDiffStats, formatDuration } from './agent-activity-types'
 import type { ActivityEntry } from './agent-activity-types'
+
+interface VirtualizedActivityListProps {
+  entries: ActivityEntry[]
+  onOpenFile: (filePath?: string) => void
+  parentRef: React.RefObject<HTMLDivElement>
+}
+
+function VirtualizedActivityList({ entries, onOpenFile, parentRef }: VirtualizedActivityListProps) {
+  const [scrollTop, setScrollTop] = useState(0)
+  const ROW_HEIGHT = 56
+  const containerHeight = parentRef.current?.clientHeight ?? 400
+  const startIndex = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - 3)
+  const endIndex = Math.min(entries.length, Math.ceil((scrollTop + containerHeight) / ROW_HEIGHT) + 3)
+  const visibleEntries = entries.slice(startIndex, endIndex)
+
+  useEffect(() => {
+    const el = parentRef.current
+    if (!el) return
+    const handler = () => setScrollTop(el.scrollTop)
+    el.addEventListener('scroll', handler, { passive: true })
+    return () => el.removeEventListener('scroll', handler)
+  }, [parentRef])
+
+  return (
+    <div style={{ position: 'relative', height: `${entries.length * ROW_HEIGHT}px` }}>
+      <div style={{ position: 'absolute', left: 18, top: 0, bottom: 0, width: 1, background: 'var(--border-normal)', zIndex: 0 }} />
+      {visibleEntries.map((entry, vIdx) => {
+        const idx = startIndex + vIdx
+        const showTurnDivider = idx === 0 || entries[idx - 1].turnIndex < entry.turnIndex
+        return (
+          <div
+            key={entry.id}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              transform: `translateY(${idx * ROW_HEIGHT}px)`,
+            }}
+          >
+            {showTurnDivider && idx > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px 4px', position: 'relative', zIndex: 1 }}>
+                <div style={{ flex: 1, height: 1, background: 'var(--border-normal)' }} />
+                <span style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em', flexShrink: 0 }}>turno</span>
+                <div style={{ flex: 1, height: 1, background: 'var(--border-normal)' }} />
+              </div>
+            )}
+            <ActivityEntryRow entry={entry} onOpenFile={onOpenFile} />
+          </div>
+        )
+      })}
+    </div>
+  )
+}
 
 export function AgentActivityPanel() {
   const agentPanelWidth = useUIStore((s) => s.agentPanelWidth)
@@ -126,7 +180,6 @@ export function AgentActivityPanel() {
   }, [dispatch])
 
   const pendingCount = queue.filter((q) => q.status === 'pending').length
-  const toggleEditorAgentPanel = useUIStore((s) => s.toggleEditorAgentPanel)
 
   return (
     <div style={{
@@ -186,20 +239,6 @@ export function AgentActivityPanel() {
               {runningCount}
             </span>
           )}
-          <button
-            onClick={(e) => { e.stopPropagation(); toggleEditorAgentPanel() }}
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              width: 20, height: 20, border: 'none', borderRadius: 4,
-              background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer',
-              transition: 'all 0.12s',
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'var(--bg-hover)' }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent' }}
-            title="Ocultar panel"
-          >
-            <X size={12} />
-          </button>
         </div>
       </div>
 
@@ -228,24 +267,11 @@ export function AgentActivityPanel() {
           )}
 
           {recentEntries.length > 0 && (
-            <div style={{ position: 'relative' }}>
-              <div style={{ position: 'absolute', left: 18, top: 0, bottom: 0, width: 1, background: 'var(--border-normal)', zIndex: 0 }} />
-              {recentEntries.map((entry, idx) => {
-                const showTurnDivider = idx === 0 || recentEntries[idx - 1].turnIndex < entry.turnIndex
-                return (
-                  <div key={entry.id}>
-                    {showTurnDivider && idx > 0 && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px 4px', position: 'relative', zIndex: 1 }}>
-                        <div style={{ flex: 1, height: 1, background: 'var(--border-normal)' }} />
-                        <span style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em', flexShrink: 0 }}>turno</span>
-                        <div style={{ flex: 1, height: 1, background: 'var(--border-normal)' }} />
-                      </div>
-                    )}
-                    <ActivityEntryRow entry={entry} onOpenFile={handleOpenFile} />
-                  </div>
-                )
-              })}
-            </div>
+            <VirtualizedActivityList
+              entries={recentEntries}
+              onOpenFile={handleOpenFile}
+              parentRef={listRef}
+            />
           )}
         </div>
       )}

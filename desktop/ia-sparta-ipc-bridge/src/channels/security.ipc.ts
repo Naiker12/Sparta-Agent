@@ -48,7 +48,6 @@ function loadSecurityModule(): SecurityModule | null {
       `sparta-security.${ext}.node`
     )
     security = require(modulePath) as SecurityModule
-    console.log('[security] Rust native module loaded')
     return security
   } catch (err) {
     console.warn('[security] Rust module not available, running insecurely:', (err as Error).message)
@@ -65,7 +64,6 @@ export function registerSecurityIPC(): void {
       'sparta-security-audit.log'
     )
     mod.configureAuditLog(auditLogPath)
-    console.log(`[security] Audit log: ${auditLogPath}`)
 
     // Broadcast loaded status so late subscribers start from the correct state.
     const wins = BrowserWindow.getAllWindows()
@@ -161,6 +159,4 @@ export function wireSecurityIntoPipeline(): void {
     }
     return originalEmit(event, ...args)
   }
-
-  console.log('[security] Pipeline hook active')
 }

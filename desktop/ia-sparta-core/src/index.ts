@@ -43,6 +43,7 @@ export * from './lib/tool-call-substatus'
 export * from './lib/toast-helpers'
 export * from './lib/xterm-theme'
 export * from './lib/get-strict-context'
+export * from './lib/filesystem-constants'
 
 export * from './services/ai'
 export * from './services/ai/gateway'

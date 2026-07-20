@@ -10,13 +10,9 @@ const DEFAULT_MAX_TOOL_CALLS_PER_TURN: u32 = 20;
 const DEFAULT_MAX_MESSAGE_SIZE: usize = 1_000_000; // 1MB
 const DEFAULT_MAX_PROVIDER_KEY_LENGTH: usize = 200;
 
-#[cfg(feature = "safe_mode")]
 const SAFE_RATE_LIMIT_MAX_REQUESTS: u32 = 10;
-#[cfg(feature = "safe_mode")]
 const SAFE_MAX_TOOL_CALLS_PER_TURN: u32 = 5;
-#[cfg(feature = "safe_mode")]
 const SAFE_MAX_MESSAGE_SIZE: usize = 500_000; // 500KB
-#[cfg(feature = "safe_mode")]
 const SAFE_MAX_PROVIDER_KEY_LENGTH: usize = 100;
 
 pub struct SecurityGuard {

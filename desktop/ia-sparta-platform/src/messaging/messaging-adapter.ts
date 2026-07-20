@@ -185,6 +185,27 @@ class WebAdapter implements MessagingAdapter {
   }
 }
 
-export const messagingAdapter: MessagingAdapter = IS_ELECTRON
-  ? new ElectronAdapter()
-  : new WebAdapter()
+let _messagingAdapter: MessagingAdapter | null = null
+
+export function getMessagingAdapter(): MessagingAdapter {
+  if (!_messagingAdapter) {
+    _messagingAdapter = IS_ELECTRON
+      ? new ElectronAdapter()
+      : new WebAdapter()
+  }
+  return _messagingAdapter
+}
+
+/** @deprecated Use getMessagingAdapter() instead */
+export const messagingAdapter: MessagingAdapter = /* @__PURE__ */ (() => {
+  if (typeof window === 'undefined') {
+    // Main process: return a no-op adapter to avoid accessing `window`
+    return {
+      sendMessage: () => Promise.resolve({ ok: false, error: 'Not available in main process' }),
+      abortMessage: () => {},
+      onEvent: () => () => {},
+      isReady: () => false,
+    }
+  }
+  return getMessagingAdapter()
+})()

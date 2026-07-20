@@ -190,7 +190,6 @@ contextBridge.exposeInMainWorld('agent', {
 
 contextBridge.exposeInMainWorld('fs', {
   openFolderDialog: () => ipcRenderer.invoke('fs:openFolderDialog') as Promise<string | null>,
-  readDir: (dirPath: string) => ipcRenderer.invoke('fs:readDir', dirPath) as Promise<{ nodes: FileTreeNode[]; error?: string }>,
   readDirLevel: (dirPath: string) => ipcRenderer.invoke('fs:readDirLevel', dirPath) as Promise<{ nodes: FileTreeNode[]; error?: string }>,
   readFile: (filePath: string) => ipcRenderer.invoke('fs:readFile', filePath) as Promise<{ success: boolean; content?: string; error?: string }>,
   writeFile: (filePath: string, content: string) => ipcRenderer.invoke('fs:writeFile', filePath, content) as Promise<{ success: boolean; error?: string }>,
@@ -200,6 +199,8 @@ contextBridge.exposeInMainWorld('fs', {
   startWatcher: (dirPath: string) => ipcRenderer.invoke('fs:startWatcher', dirPath) as Promise<{ success: boolean }>,
   stopWatcher: () => ipcRenderer.invoke('fs:stopWatcher') as Promise<{ success: boolean }>,
   setWorkspaceRoot: (root: string) => ipcRenderer.invoke('fs:setWorkspaceRoot', root) as Promise<{ success: boolean; error?: string }>,
+  expandWatcher: (dirPath: string) => ipcRenderer.invoke('fs:expandWatcher', dirPath) as Promise<{ success: boolean }>,
+  collapseWatcher: (dirPath: string) => ipcRenderer.invoke('fs:collapseWatcher', dirPath) as Promise<{ success: boolean }>,
 })
 
 contextBridge.exposeInMainWorld('skills', {

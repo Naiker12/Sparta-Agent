@@ -45,10 +45,24 @@ class StdioServer:
         self._running = False
 
     def run(self):
+        self._bootstrap()
         self._running = True
         self._loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self._loop)
         self._loop.run_until_complete(self._read_loop())
+
+    def _bootstrap(self):
+        """One-time startup tasks: sync system skills, etc."""
+        try:
+            from pathlib import Path
+
+            from sparta_ai.skills.system_skills_installer import (
+                install_system_skills,
+            )
+            bundled = Path(__file__).resolve().parent.parent.parent / "skills"
+            install_system_skills(bundled)
+        except Exception as e:
+            logger.debug("System skills install skipped: %s", e)
 
     def shutdown(self):
         self._running = False
@@ -170,13 +184,32 @@ class StdioServer:
         sandbox_mode = params.get("sandbox_mode", "none")
         open_files = params.get("open_files", [])
 
-        from sparta_ai.tools.terminal_tools import _set_open_files, set_execute_local, set_sandbox_mode
+        from sparta_ai.tools.terminal_tools import (
+            _set_open_files,
+            set_execute_local,
+            set_sandbox_mode,
+        )
         _set_open_files(list(open_files))
         set_execute_local(bool(agent_execute_local))
         set_sandbox_mode(sandbox_mode)
 
-        read_only_mode = not security_loaded or agent_autonomy == "autonomous_readonly"
-        policy_mode = "plan" if (read_only_mode or agent_autonomy == "autonomous_readonly") else "build"
+        read_only_mode = (
+            not security_loaded
+            or agent_autonomy == "autonomous_readonly"
+        )
+        policy_mode = (
+            "plan" if read_only_mode else "build"
+        )
+
+        # Derive approval + sandbox from the session mode (Autonomy matrix)
+        from sparta_ai.security.permission_policy import (
+            MODE_PRESETS,
+            set_autonomy,
+        )
+        mode_preset = MODE_PRESETS.get(
+            mode, MODE_PRESETS.get(policy_mode, MODE_PRESETS["build"])
+        )
+        set_autonomy(approval=mode_preset[0], sandbox=mode_preset[1])
 
         async def _mcp_emit(event: str, data: dict) -> None:
             _emit(request_id, event, data)

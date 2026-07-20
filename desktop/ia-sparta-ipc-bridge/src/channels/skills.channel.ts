@@ -17,6 +17,10 @@ function getUserSkillsDir(): string {
   return path.join(app.getPath('userData'), 'sparta', 'skills')
 }
 
+function getSystemSkillsDir(): string {
+  return path.join(app.getPath('userData'), 'sparta', 'skills', '.system')
+}
+
 function findAllSkillDirs(root: string): string[] {
   const dirs: string[] = []
   if (!fs.existsSync(root)) return dirs
@@ -66,18 +70,48 @@ function scanDirForSkills(source: string, sourceLabel: string): unknown[] {
       const content = fs.readFileSync(mdPath, 'utf-8')
       const meta = parseFrontmatter(content)
       if (meta.id) {
-        skills.push({ ...meta, source: sourceLabel })
+        const trustLevel = sourceLabel === 'user' ? 'installed'
+          : sourceLabel === 'system' ? 'system'
+          : 'builtin'
+        skills.push({ ...meta, source: sourceLabel, trustLevel })
       }
     } catch { /* skip */ }
   }
   return skills
 }
 
+// ── Input validation (P0: shell injection prevention) ───────────
+// owner/repo format — no shell metacharacters can pass through
+const REPO_RE = /^[a-zA-Z0-9][a-zA-Z0-9._-]*\/[a-zA-Z0-9][a-zA-Z0-9._-]*$/
+// Skill IDs: alphanumeric, hyphens, underscores, dots
+const SKILL_ID_RE = /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/
+// Search queries: printable ASCII only, no shell metacharacters
+const QUERY_RE = /^[a-zA-Z0-9\s._\-/@]+$/
+
+function assertValidRepo(repo: string): void {
+  if (!repo || !REPO_RE.test(repo)) {
+    throw new Error(`Repositorio de skill inválido: "${repo}"`)
+  }
+}
+
+function assertValidSkillId(skill: string): void {
+  if (!skill || !SKILL_ID_RE.test(skill)) {
+    throw new Error(`ID de skill inválido: "${skill}"`)
+  }
+}
+
+function assertValidQuery(query: string): void {
+  if (!query || !QUERY_RE.test(query)) {
+    throw new Error(`Consulta inválida: "${query}"`)
+  }
+}
+
 function runNpxSkills(args: string[]): Promise<{ ok: boolean; output: string }> {
   return new Promise((resolve) => {
     const proc: any = spawn('npx', ['skills', ...args], {
       cwd: process.cwd(),
-      shell: process.platform === 'win32',
+      shell: false,
+      windowsHide: true,
     })
     let output = ''
     proc.stdout?.on('data', (d: Buffer) => (output += d.toString()))
@@ -92,9 +126,19 @@ export function registerSkillsIPC(): void {
     const seen = new Set<string>()
     const result: unknown[] = []
 
-    // User-installed skills (override)
+    // User-installed skills (highest priority override)
     const userDir = getUserSkillsDir()
     for (const skill of scanDirForSkills(userDir, 'user')) {
+      const s = skill as Record<string, unknown>
+      if (s.id && !seen.has(String(s.id))) {
+        seen.add(String(s.id))
+        result.push(s)
+      }
+    }
+
+    // System-installed skills (auto-synced from builtin bundle)
+    const systemDir = getSystemSkillsDir()
+    for (const skill of scanDirForSkills(systemDir, 'system')) {
       const s = skill as Record<string, unknown>
       if (s.id && !seen.has(String(s.id))) {
         seen.add(String(s.id))
@@ -118,7 +162,8 @@ export function registerSkillsIPC(): void {
   ipcMain.handle('skills:view', async (_event, skillId: string) => {
     const skillsDir = getSkillsDir()
     const userDir = getUserSkillsDir()
-    const searchRoots = [userDir, skillsDir]
+    const systemDir = getSystemSkillsDir()
+    const searchRoots = [userDir, systemDir, skillsDir]
 
     for (const root of searchRoots) {
       for (const dir of findAllSkillDirs(root)) {
@@ -149,6 +194,12 @@ export function registerSkillsIPC(): void {
 
   /** Install a skill from a GitHub repo using npx skills CLI */
   ipcMain.handle('skills:install', async (_event, { repo, skill }: { repo: string; skill?: string }) => {
+    try {
+      assertValidRepo(repo)
+      if (skill) assertValidSkillId(skill)
+    } catch (e: any) {
+      return { ok: false, output: e.message }
+    }
     const args = ['add', repo]
     if (skill) args.push('--skill', skill)
     else args.push('--all')
@@ -159,11 +210,21 @@ export function registerSkillsIPC(): void {
 
   /** List available skills in a repo without installing */
   ipcMain.handle('skills:repo-list', async (_event, repo: string) => {
+    try {
+      assertValidRepo(repo)
+    } catch (e: any) {
+      return { ok: false, output: e.message }
+    }
     return runNpxSkills(['add', repo, '--list'])
   })
 
   /** Search skills.sh registry for skills */
   ipcMain.handle('skills:find', async (_event, query: string) => {
+    try {
+      assertValidQuery(query)
+    } catch (e: any) {
+      return { ok: false, output: e.message }
+    }
     return runNpxSkills(['find', query])
   })
 

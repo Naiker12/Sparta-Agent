@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Bot, Clock, Sparkles, Circle, Zap, Brain, FolderOpen, FolderX } from 'lucide-react'
+import { Clock, Sparkles, Circle, Zap, Brain, FolderOpen, FolderX } from 'lucide-react'
 import { useSettingsStore } from 'ia-sparta-core'
 import { useProviderStore } from 'ia-sparta-core'
 import { useChatStore } from 'ia-sparta-core'
@@ -12,6 +12,7 @@ import { BrandIcon } from 'ia-sparta-design-system'
 import { GatewayStatusDialog } from './GatewayStatusDialog'
 import { TokenUsageDialog } from './TokenUsageDialog'
 import { AgentsStatusDialog } from './AgentsStatusDialog'
+import { AgentStatusIndicator } from './AgentStatusIndicator'
 import { CronStatusDialog } from './CronStatusDialog'
 import { IS_WEB, messagingAdapter } from 'ia-sparta-platform'
 import { useWebSocketStatus } from 'ia-sparta-core'
@@ -126,10 +127,7 @@ export function StatusBar() {
             {sidecarReady ? 'AI listo' : 'AI offline'}
           </SBItem>
         )}
-        <SBItem onClick={() => setAgentsOpen(true)} style={{ color: runningAgentCount > 0 ? 'var(--status-warn)' : undefined }}>
-          <Bot size={11} strokeWidth={1.5} />
-          Agents{runningAgentCount > 0 ? ` (${runningAgentCount})` : ''}
-        </SBItem>
+        <AgentStatusIndicator onClick={() => setAgentsOpen(true)} />
         <SBItem onClick={() => setCronOpen(true)}>
           <Clock size={11} strokeWidth={1.5} />
           Cron{cronActiveCount > 0 ? ` (${cronActiveCount})` : ''}

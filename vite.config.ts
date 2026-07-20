@@ -75,6 +75,11 @@ export default defineConfig(({ mode }) => {
                 build: {
                   rollupOptions: {
                     external: ['electron', 'node-pty'],
+                    onwarn(warning, warn) {
+                      if (warning.code === 'MODULE_LEVEL_DIRECTIVE') return
+                      if (warning.code === 'UNUSED_EXTERNAL_IMPORT') return
+                      warn(warning)
+                    },
                   },
                 },
               },
@@ -85,6 +90,11 @@ export default defineConfig(({ mode }) => {
                 build: {
                   rollupOptions: {
                     external: ['electron', 'node-pty'],
+                    onwarn(warning, warn) {
+                      if (warning.code === 'MODULE_LEVEL_DIRECTIVE') return
+                      if (warning.code === 'UNUSED_EXTERNAL_IMPORT') return
+                      warn(warning)
+                    },
                   },
                 },
               },
@@ -97,6 +107,15 @@ export default defineConfig(({ mode }) => {
     ],
     build: {
       outDir: isElectron ? 'dist' : 'dist-web',
+      rollupOptions: {
+        onwarn(warning, warn) {
+          // Silencia warnings de "use client" en librerías React (sonner, framer-motion)
+          if (warning.code === 'MODULE_LEVEL_DIRECTIVE') return
+          // Silencia warnings de imports no usados en dependencias (chokidar, etc.)
+          if (warning.code === 'UNUSED_EXTERNAL_IMPORT') return
+          warn(warning)
+        },
+      },
     },
     server: {
       port: 5173,

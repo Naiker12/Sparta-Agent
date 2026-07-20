@@ -6,6 +6,7 @@ from sparta_ai.skills.skill_loader import (
     clear_skill_cache,
 )
 from sparta_ai.skills.skills_guard import scan_skill_content, is_source_trusted
+from sparta_ai.skills.system_skills_installer import install_system_skills
 
 __all__ = [
     "skills_index",
@@ -15,4 +16,5 @@ __all__ = [
     "clear_skill_cache",
     "scan_skill_content",
     "is_source_trusted",
+    "install_system_skills",
 ]

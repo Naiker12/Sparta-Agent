@@ -12,6 +12,11 @@ The permission model supports three decision outcomes per tool+path:
   - ALLOW: operation proceeds without user confirmation.
   - ASK:   user is prompted to confirm (default for destructive ops).
   - DENY:  operation is blocked immediately.
+
+Autonomy matrix (inspired by Codex's AskForApproval x SandboxMode):
+  - ApprovalPolicy: controls WHEN we ask the human for permission
+  - SandboxScope:   controls WHAT the process can touch without asking
+  These two axes are orthogonal and combine into a 4x3 matrix.
 """
 from __future__ import annotations
 
@@ -24,6 +29,40 @@ from enum import Enum
 from pathlib import Path
 
 logger = logging.getLogger("sparta_ai.security.permissions")
+
+# ── Autonomy matrix enums ─────────────────────────────────────
+
+class ApprovalPolicy(Enum):
+    """When to ask the human for permission.
+
+    NEVER_ASK:  auto-approve all operations (dangerous, opt-in only)
+    ASK_ON_WRITE: ask before write/delete/terminal (default for agent mode)
+    ASK_ALWAYS:  ask on every sensitive tool call (chat/untrusted mode)
+    """
+    NEVER_ASK = "never"
+    ASK_ON_WRITE = "on_write"
+    ASK_ALWAYS = "always"
+
+
+class SandboxScope(Enum):
+    """What the process can touch without asking.
+
+    READ_ONLY:      no writes, no terminal (chat mode default)
+    WORKSPACE_WRITE: can write/delete inside workspace (agent mode default)
+    FULL_ACCESS:    unrestricted terminal + filesystem (advanced opt-in)
+    """
+    READ_ONLY = "read_only"
+    WORKSPACE_WRITE = "workspace_write"
+    FULL_ACCESS = "full_access"
+
+
+# Preset mappings: UI mode → (ApprovalPolicy, SandboxScope)
+MODE_PRESETS: dict[str, tuple[ApprovalPolicy, SandboxScope]] = {
+    "chat":  (ApprovalPolicy.ASK_ALWAYS,     SandboxScope.READ_ONLY),
+    "agent": (ApprovalPolicy.ASK_ON_WRITE,   SandboxScope.WORKSPACE_WRITE),
+    "build": (ApprovalPolicy.ASK_ON_WRITE,   SandboxScope.WORKSPACE_WRITE),
+    "plan":  (ApprovalPolicy.ASK_ALWAYS,     SandboxScope.READ_ONLY),
+}
 
 # Built-in tool classification by scope
 # NOTE: LangChain 0.3+ strips "_tool" suffix from @tool-decorated functions.
@@ -120,10 +159,17 @@ class ToolPermission:
 class PermissionPolicy:
     """Central policy for tool permissions and mode scoping.
 
-    Three modes:
+    Three modes (backward-compatible):
       - "build": full access — all tools available (respecting per-tool rules)
       - "plan":  read-only — only read/search tools; write/delete/terminal blocked
       - "chat":  conversational — read/search/web/memory; no write/delete/terminal
+
+    New autonomy matrix (orthogonal axes):
+      - approval: ApprovalPolicy — when to ask the human
+      - sandbox:  SandboxScope   — what the process can touch
+
+    The matrix is derived from the mode via MODE_PRESETS, but can be
+    overridden via set_autonomy() for advanced users.
 
     Permission rules are evaluated from the beginning of the list; the last
     matching rule wins.  A catch-all "*" rule at the end sets the default.
@@ -131,6 +177,10 @@ class PermissionPolicy:
 
     def __init__(self, mode: str = "build"):
         self._mode = mode
+        # Derive approval + sandbox from mode preset
+        preset = MODE_PRESETS.get(mode, MODE_PRESETS["build"])
+        self._approval = preset[0]
+        self._sandbox = preset[1]
         self._rules: list[PermissionRule] = [
             # Terminal commands default to ASK (user must confirm each time)
             PermissionRule("terminal_execute_tool", decision=PermissionDecision.ASK),
@@ -201,9 +251,39 @@ class PermissionPolicy:
 
     @mode.setter
     def mode(self, value: str) -> None:
-        if value not in ("build", "plan", "chat"):
+        # "agent" is a UI alias for "build" — both grant full tool access
+        normalized = "build" if value == "agent" else value
+        if normalized not in ("build", "plan", "chat"):
             raise ValueError(f"Unknown policy mode: {value}")
-        self._mode = value
+        self._mode = normalized
+        # Re-derive approval + sandbox from preset (use original value for lookup)
+        preset = MODE_PRESETS.get(value, MODE_PRESETS.get(normalized, MODE_PRESETS["build"]))
+        self._approval = preset[0]
+        self._sandbox = preset[1]
+
+    @property
+    def approval(self) -> ApprovalPolicy:
+        return self._approval
+
+    @property
+    def sandbox(self) -> SandboxScope:
+        return self._sandbox
+
+    def set_autonomy(
+        self,
+        approval: ApprovalPolicy | None = None,
+        sandbox: SandboxScope | None = None,
+    ) -> None:
+        """Override approval/sandbox axes independently (for advanced users)."""
+        if approval is not None:
+            self._approval = approval
+        if sandbox is not None:
+            self._sandbox = sandbox
+        logger.info(
+            "Autonomy updated: approval=%s, sandbox=%s",
+            self._approval.value,
+            self._sandbox.value,
+        )
 
     def get_decision(self, tool_name: str, resolved_path: Path | None = None) -> PermissionDecision:
         """Evaluate permission rules for the given tool and optional path.
@@ -259,3 +339,11 @@ def get_policy() -> PermissionPolicy:
 def set_policy_mode(mode: str) -> None:
     get_policy().mode = mode
     logger.info("Permission policy set to '%s' mode", mode)
+
+
+def set_autonomy(
+    approval: ApprovalPolicy | None = None,
+    sandbox: SandboxScope | None = None,
+) -> None:
+    """Override approval/sandbox axes on the global policy."""
+    get_policy().set_autonomy(approval, sandbox)
