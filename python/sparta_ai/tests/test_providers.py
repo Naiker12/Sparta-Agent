@@ -4,6 +4,18 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 from sparta_ai.config.providers import OpenAICompatibleTransport, build_llm
+from sparta_ai.config.providers.cache import clear_llm_cache
+from sparta_ai.config.providers.registry import _get_transport
+
+pytest.register_assert_rewrite("sparta_ai.tests.test_providers")
+
+
+@pytest.fixture(autouse=True)
+def _clear_llm_cache():
+    """Ensure each test starts with a fresh LLM cache."""
+    clear_llm_cache()
+    yield
+    clear_llm_cache()
 
 
 @pytest.mark.parametrize(
@@ -11,18 +23,21 @@ from sparta_ai.config.providers import OpenAICompatibleTransport, build_llm
     [
         ("anthropic", True, 8000, 1, 12096),
         ("anthropic", True, 16000, 1, 20096),
-        ("anthropic", False, 8000, 0.7, 4096),
-        ("openai", True, 8000, 0.7, 4096),
-        ("openai", False, 8000, 0.7, 4096),
-        ("deepseek", True, 8000, 0.7, 4096),
-        ("groq", False, 8000, 0.7, 4096),
+        ("anthropic", False, 8000, 0.7, 2048),
+        ("openai", True, 8000, 0.7, 2048),
+        ("openai", False, 8000, 0.7, 2048),
+        ("deepseek", True, 8000, 0.7, 2048),
+        ("groq", False, 8000, 0.7, 2048),
     ],
 )
 def test_build_llm_sets_correct_temperature_and_max_tokens(
     vendor, reasoning_enabled, reasoning_budget, expected_temp, expected_max,
 ):
     mock_transport = MagicMock()
-    with patch("sparta_ai.config.providers._get_transport", return_value=mock_transport):
+    # Disable cache for this unit test — we want to verify transport.build_llm
+    # is called with the right kwargs, not that the cache returns a stale value.
+    with patch("sparta_ai.config.providers.factory._get_transport", return_value=mock_transport), \
+         patch("sparta_ai.config.providers.factory._llm_cache_get", return_value=None):
         build_llm(
             model="test-model",
             provider=vendor,

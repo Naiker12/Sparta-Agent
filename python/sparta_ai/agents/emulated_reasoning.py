@@ -147,7 +147,20 @@ def needs_emulated_reasoning(vendor: str | None, model_id: str) -> bool:
             return False
         return True
 
-    # Cloud vendors without explicit reasoning support
+    # Cloud vendors without explicit reasoning support (OpenAI-compatible).
+    # Check the model name for native reasoning keywords before assuming
+    # emulated reasoning is needed.  This prevents the "double thinking"
+    # bug when switching from a native-reasoning model (e.g. o1, R1) to
+    # a generic OpenAI-compatible vendor that also supports a reasoning
+    # model — the emulated prompt would otherwise be injected on top of
+    # the model's own native reasoning, doubling latency.
+    has_native = _model_has_native_reasoning(model_id)
+    if has_native:
+        logger.info(
+            "Skipping emulated reasoning for vendor '%s': model '%s' detected as native reasoning",
+            v, model_id,
+        )
+        return False
     return True
 
 

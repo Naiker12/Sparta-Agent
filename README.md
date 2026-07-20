@@ -1,6 +1,7 @@
 <div align="center">
   <img src="public/sparta-icon.png" alt="Sparta Agent Logo" width="120" />
   <h1>Sparta Agent</h1>
+  <img src="public/post.png" alt="Sparta Agent Banner" width="800" />
   <p><strong>Plataforma de Desarrollo Agéntica Local-First para Equipos de Ingeniería de Alto Rendimiento</strong></p>
   <p>
     <img src="https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white" alt="React 18" />
