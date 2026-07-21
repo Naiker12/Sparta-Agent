@@ -294,27 +294,6 @@ importers:
         specifier: ^3.6.0
         version: 3.6.0
 
-  desktop/ia-sparta-editor:
-    dependencies:
-      '@monaco-editor/react':
-        specifier: ^4.7.0
-        version: 4.7.0(monaco-editor@0.55.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      ia-sparta-design-system:
-        specifier: workspace:*
-        version: link:../ia-sparta-design-system
-      ia-sparta-ipc-bridge:
-        specifier: workspace:*
-        version: link:../ia-sparta-ipc-bridge
-      lucide-react:
-        specifier: ^1.24.0
-        version: 1.24.0(react@18.3.1)
-      monaco-editor:
-        specifier: ^0.55.1
-        version: 0.55.1
-      react:
-        specifier: ^18.2.0
-        version: 18.3.1
-
   desktop/ia-sparta-i18n: {}
 
   desktop/ia-sparta-ipc-bridge:
@@ -429,6 +408,9 @@ importers:
       ia-sparta-i18n:
         specifier: workspace:*
         version: link:../ia-sparta-i18n
+      ia-sparta-tabs:
+        specifier: workspace:*
+        version: link:../ia-sparta-tabs
       lucide-react:
         specifier: ^1.24.0
         version: 1.24.0(react@18.3.1)
@@ -459,6 +441,24 @@ importers:
       zustand:
         specifier: ^5.0.14
         version: 5.0.14(@types/react@18.3.31)(react@18.3.1)(use-sync-external-store@1.6.0(react@18.3.1))
+
+  desktop/ia-sparta-tabs:
+    dependencies:
+      framer-motion:
+        specifier: ^12.41.0
+        version: 12.42.2(@emotion/is-prop-valid@1.4.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      ia-sparta-core:
+        specifier: workspace:*
+        version: link:../ia-sparta-core
+      ia-sparta-design-system:
+        specifier: workspace:*
+        version: link:../ia-sparta-design-system
+      lucide-react:
+        specifier: ^1.24.0
+        version: 1.24.0(react@18.3.1)
+      react:
+        specifier: ^18.2.0
+        version: 18.3.1
 
   desktop/ia-sparta-terminal:
     dependencies:

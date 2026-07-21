@@ -32,6 +32,7 @@ export default defineConfig(({ mode }) => {
         'ia-sparta-i18n': path.join(__dirname, 'desktop/ia-sparta-i18n/src/index.ts'),
         'ia-sparta-core': path.join(__dirname, 'desktop/ia-sparta-core/src/index.ts'),
         'ia-sparta-platform': path.join(__dirname, 'desktop/ia-sparta-platform/src/index.ts'),
+        'ia-sparta-tabs': path.join(__dirname, 'desktop/ia-sparta-tabs/src/index.ts'),
       },
     },
     define: {
@@ -68,6 +69,7 @@ export default defineConfig(({ mode }) => {
                     'ia-sparta-core': path.join(__dirname, 'desktop/ia-sparta-core/src/index.ts'),
                     'ia-sparta-platform': path.join(__dirname, 'desktop/ia-sparta-platform/src/index.ts'),
                     'ia-sparta-app-shell': path.join(__dirname, 'desktop/ia-sparta-app-shell/src/index.ts'),
+                    'ia-sparta-tabs': path.join(__dirname, 'desktop/ia-sparta-tabs/src/index.ts'),
                   },
                 },
                 build: {

@@ -31,7 +31,7 @@ export const useSessionTabsStore = create<SessionTabsState>()((set, get) => ({
       const next = [...s.openTabs, sessionId]
       return { openTabs: next, focusedTabId: sessionId }
     })
-    useSessionStore().switchSession(sessionId)
+    useSessionStore.getState().switchSession(sessionId)
   },
 
   focusTab: (sessionId: string) => {
@@ -41,7 +41,7 @@ export const useSessionTabsStore = create<SessionTabsState>()((set, get) => ({
       next.push(sessionId)
       return { openTabs: next, focusedTabId: sessionId }
     })
-    useSessionStore().switchSession(sessionId)
+    useSessionStore.getState().switchSession(sessionId)
   },
 
   closeTab: (sessionId: string) => {
@@ -55,15 +55,15 @@ export const useSessionTabsStore = create<SessionTabsState>()((set, get) => ({
     })
     const state = get()
     if (state.focusedTabId) {
-      useSessionStore().switchSession(state.focusedTabId)
+      useSessionStore.getState().switchSession(state.focusedTabId)
     } else {
-      useSessionStore().resetActiveSession()
+      useSessionStore.getState().resetActiveSession()
     }
   },
 
   closeOtherTabs: (sessionId: string) => {
     set({ openTabs: [sessionId], focusedTabId: sessionId })
-    useSessionStore().switchSession(sessionId)
+    useSessionStore.getState().switchSession(sessionId)
   },
 
   closeTabsToRight: (sessionId: string) => {
@@ -78,7 +78,7 @@ export const useSessionTabsStore = create<SessionTabsState>()((set, get) => ({
     })
     const state = get()
     if (state.focusedTabId) {
-      useSessionStore().switchSession(state.focusedTabId)
+      useSessionStore.getState().switchSession(state.focusedTabId)
     }
   },
 
