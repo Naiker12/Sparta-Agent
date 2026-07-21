@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { useChatStore } from '../stores/chat.store'
 import { useSessionStore } from '../stores/session.store'
+import { useSessionTabsStore } from '../stores/session-tabs.store'
 import { useProviderStore } from '../stores/provider.store'
 import { useSettingsStore } from '../stores/settings.store'
 import { useEventBus } from '../stores/event-bus.store'
 import { useSecurityStore } from '../stores/security.store'
-import { useEditorStore } from '../stores/editor.store'
 import { useMCPStore } from '../stores/mcp.store'
 import { useSkillStore } from '../stores/skill.store'
 import { useProjectStore } from '../stores/project.store'
+import { useFolderStore } from '../stores/folder.store'
 import { useModelPerformanceStore } from '../stores/model-performance.store'
 import { getProviderKey, messagingAdapter, IS_WEB } from 'ia-sparta-platform'
 import { useSessionLifecycle } from './useSessionLifecycle'
@@ -36,29 +37,7 @@ function resolveWorkspaceRoot(): string | undefined {
     return projectWithRoot.rootPath
   }
 
-  // Fallback: infer from currently open files in the editor.
-  const openFiles = useEditorStore.getState().openFiles
-  if (openFiles && openFiles.length > 0) {
-    const dirs = openFiles
-      .filter((f) => f.length > 0)
-      .map((f) => f.replace(/\\/g, '/').split('/').slice(0, -1).join('/'))
-      .filter((d) => d.length > 0)
-    if (dirs.length > 0) {
-      const common = dirs.reduce((acc, dir) => {
-        if (!acc) return dir
-        const a = acc.split('/')
-        const b = dir.split('/')
-        const commonParts: string[] = []
-        for (let i = 0; i < Math.min(a.length, b.length); i++) {
-          if (a[i] === b[i]) commonParts.push(a[i])
-          else break
-        }
-        return commonParts.join('/')
-      }, dirs[0])
-      if (common) return common.replace(/\//g, '\\')
-    }
-  }
-
+  // Fallback: no workspace root available without a connected project.
   return undefined
 }
 
@@ -128,6 +107,7 @@ async function runAssistantTurn(
       tools: s.tools ?? [],
     }))
     const workspaceRoot = resolveWorkspaceRoot()
+    const connectedFolder = useFolderStore.getState().connectedPath || undefined
 
     const sendResult = messagingAdapter.sendMessage({
       sessionId: sid,
@@ -147,12 +127,11 @@ async function runAssistantTurn(
       reasoning: { enabled: reasoningEnabled ?? false, budget: reasoningBudget ?? 8000, effort: reasoningEffort ?? 'medium' },
       webSearchEnabled,
       workspaceRoot,
+      connectedFolder,
       agentAutonomy,
       agentExecuteLocal,
       securityLoaded,
       sandboxMode,
-      openFiles: useEditorStore.getState().openFiles,
-      activeFilePath: useEditorStore.getState().activeFilePath,
     })
     const resolved = sendResult instanceof Promise ? await sendResult : null
     if (resolved?.ok) {
@@ -181,21 +160,23 @@ async function runAssistantTurn(
   }
 }
 
-export function useChatSession() {
+export function useChatSession(sessionId?: string) {
   const { sessions, activeSessionId, createSession, switchSession, deleteSession } = useSessionLifecycle()
   const { buildMemorySystemPrompt } = useSessionMemory()
   const { adapterReady, setProviderForSession, setLastUserMessage } = useStreamEvents()
 
+  const resolvedSessionId = sessionId ?? activeSessionId
+
   const messagesBySession = useChatStore((s) => s.messagesBySession)
-  const messages = activeSessionId ? (messagesBySession[activeSessionId] ?? []) : []
-  const isStreaming = useChatStore((s) => s.isStreaming)
+  const messages = resolvedSessionId ? (messagesBySession[resolvedSessionId] ?? []) : []
+  const isStreaming = useChatStore((s) => resolvedSessionId ? (s.streamingBySession[resolvedSessionId]?.isStreaming ?? false) : s.isStreaming)
   const streamingBySession = useChatStore((s) => s.streamingBySession)
   const addMessage = useChatStore((s) => s.addMessage)
   const updateMessage = useChatStore((s) => s.updateMessage)
   const stopStreamingFn = useChatStore((s) => s.stopStreaming)
 
-  const activeIdRef = useRef(activeSessionId)
-  activeIdRef.current = activeSessionId
+  const activeIdRef = useRef(resolvedSessionId)
+  activeIdRef.current = resolvedSessionId
 
   const sendMessage = useCallback(
     async (text: string) => {
@@ -205,7 +186,12 @@ export function useChatSession() {
         console.warn('[useChatSession] sendMessage ignorado: sesión ya está stremeando', existingSid)
         return { sessionId: existingSid!, assistantId: '', userMessageId: '' }
       }
+      // Clear auto-suggested skills from previous turn
+      useSkillStore.getState().setSuggestedSkillIds([])
       const sid = activeIdRef.current ?? createSession()
+      if (!activeIdRef.current) {
+        useSessionTabsStore.getState().openTab(sid)
+      }
       const userMessageId = crypto.randomUUID()
       addMessage({
         id: userMessageId,

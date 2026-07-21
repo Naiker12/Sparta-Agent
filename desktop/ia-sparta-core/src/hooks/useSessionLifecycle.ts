@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
 import { useSessionStore } from '../stores/session.store'
+import { useSessionTabsStore } from '../stores/session-tabs.store'
 import { useChatStore } from '../stores/chat.store'
 
 export function useSessionLifecycle() {
@@ -11,6 +12,7 @@ export function useSessionLifecycle() {
   const deleteSessionMessages = useChatStore((s) => s.deleteSessionMessages)
 
   const deleteSession = useCallback((id: string) => {
+    useSessionTabsStore.getState().closeTab(id)
     _deleteSession(id)
     deleteSessionMessages(id)
   }, [_deleteSession, deleteSessionMessages])
