@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { cn } from 'ia-sparta-core'
-import { ChevronRight, Check } from 'lucide-react'
+import { ChevronRight, Check, Sparkles } from 'lucide-react'
 import { getRandomSpinner, type SpinnerSet } from 'ia-sparta-core'
 import { ShimmerText } from './ShimmerText'
 import { SlidingNumber } from 'ia-sparta-design-system'
-import type { ThinkingStatus } from 'ia-sparta-core'
+import type { ThinkingStatus, ReasoningOrigin } from 'ia-sparta-core'
 import { useTranslation } from 'ia-sparta-i18n'
+import { thinkingLabel } from './thinking-utils'
 
 interface ThinkingPillProps {
   status: ThinkingStatus
@@ -14,12 +15,13 @@ interface ThinkingPillProps {
   isExpanded: boolean
   elapsed: number
   lastSkillName?: string | null
+  origin?: ReasoningOrigin
   className?: string
 }
 
 const spinner = getRandomSpinner()
 
-export function ThinkingPill({ status, tokensUsed, isExpanded, elapsed, lastSkillName, className }: ThinkingPillProps) {
+export function ThinkingPill({ status, tokensUsed, isExpanded, elapsed, lastSkillName, origin = 'native', className }: ThinkingPillProps) {
   const { t } = useTranslation()
   const [frame, setFrame] = useState(0)
   const spinnerRef = useRef<SpinnerSet>(spinner)
@@ -33,6 +35,8 @@ export function ThinkingPill({ status, tokensUsed, isExpanded, elapsed, lastSkil
   }, [status])
 
   const isActive = status === 'starting' || status === 'streaming'
+  const label = thinkingLabel(status, t('chat.thinking'), t('chat.thinking'))
+  const isEmulated = origin === 'emulated'
 
   return (
     <motion.div
@@ -58,20 +62,24 @@ export function ThinkingPill({ status, tokensUsed, isExpanded, elapsed, lastSkil
             <span>s</span>
           </span>
           <ShimmerText
-            text={t('chat.thinking')}
+            text={label}
             active
             className="text-[10px] font-medium"
           />
         </>
       ) : (
         <>
-          <Check size={12} strokeWidth={2.5} style={{ flexShrink: 0 }} />
+          {isEmulated ? (
+            <Sparkles size={12} strokeWidth={2} style={{ flexShrink: 0 }} />
+          ) : (
+            <Check size={12} strokeWidth={2.5} style={{ flexShrink: 0 }} />
+          )}
           <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', opacity: 0.8, display: 'inline-flex', alignItems: 'center' }}>
             <SlidingNumber number={elapsed} decimalPlaces={1} transition={{ stiffness: 200, damping: 25, mass: 0.3 }} />
             <span>s</span>
           </span>
           <span style={{ fontSize: 10, fontWeight: 500 }}>
-            {t('chat.thinking')}
+            {label}
           </span>
           {lastSkillName && (
             <span style={{ fontSize: 9, opacity: 0.6, fontFamily: 'var(--font-mono)', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginLeft: 2 }}>

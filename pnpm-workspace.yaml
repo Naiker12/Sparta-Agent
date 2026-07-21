@@ -6,7 +6,6 @@ packages:
   - 'desktop/ia-sparta-stream-events'
   - 'desktop/ia-sparta-chat'
   - 'desktop/ia-sparta-agents'
-  - 'desktop/ia-sparta-editor'
   - 'desktop/ia-sparta-terminal'
   - 'desktop/ia-sparta-mcp'
   - 'desktop/ia-sparta-memory'

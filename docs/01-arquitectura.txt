@@ -23,7 +23,7 @@ Arquitectura en 4 capas:
 -------------------------------------------
 Entry point: src/main.tsx → renderiza <AppShell>
 Routing: No hay router — navegación por estado MainView (ui.store.ts)
-  Tipos: 'chat' | 'editor' | 'terminal' | 'agents' | 'sessions'
+  Tipos: 'chat' | 'terminal' | 'agents' | 'sessions'
          | 'skills' | 'mcp' | 'channels' | 'memory'
 Estado global: 15 stores Zustand (11 persistidas, 4 en memoria)
 Estilo: Tailwind CSS v4 + shadcn/ui + 13 temas (8 oscuros + 5 claros)
@@ -91,6 +91,9 @@ Usuario escribe mensaje
       → chat.store: appendContent/addToolCall/onStreamEnd
       → event-bus.store.dispatch() (pub/sub cross-store)
     ← React re-renders MessageList
+  → Folder Connect: useFolderStore.connectedPath
+    → Chip visible en composer muestra carpeta activa
+    → Indexación ChromaDB (sparta_folder_context) inyecta system context
 
 7. ARCHIVOS CLAVE
 -------------------

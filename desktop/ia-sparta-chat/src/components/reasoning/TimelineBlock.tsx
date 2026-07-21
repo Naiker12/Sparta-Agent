@@ -16,6 +16,8 @@ interface TimelineBlockProps {
   className?: string
 }
 
+const TAIL_PREVIEW_MAX_LINES = 5
+
 function loadCollapseState(messageId?: string): boolean | null {
   if (!messageId) return null
   try {
@@ -32,17 +34,24 @@ function saveCollapseState(messageId: string, expanded: boolean) {
 }
 
 /**
+ * Returns true if the user currently has a text selection inside `container`.
+ * This prevents a click-to-toggle from firing after a drag-to-select ends.
+ */
+function hasSelectionInside(container: HTMLElement | null): boolean {
+  if (!container) return false
+  const sel = window.getSelection()
+  if (!sel || sel.isCollapsed || sel.rangeCount === 0) return false
+  const range = sel.getRangeAt(0)
+  return container.contains(range.commonAncestorContainer)
+}
+
+/**
  * TimelineBlock — unified timeline of reasoning + tool calls.
  *
- * Renders a single disclosure (using ThinkingPill as trigger) whose body
- * iterates over message.parts in chronological order.
- *
- * Each part is either:
- *   - reasoning → rendered as ThinkingLines (same visual as before)
- *   - tool → rendered as ToolTraceRow (inline, no box/border in collapsed state)
- *
- * This matches the Hermes pattern where consecutive reasoning parts are grouped
- * into a single disclosure, and tool calls appear as inline rows between them.
+ * Three render modes based on (status, expanded):
+ *   streaming + collapsed → tail preview (last N lines with top fade)
+ *   streaming/completed + expanded → full trace with rail
+ *   completed + collapsed → single-line pill with duration
  */
 export function TimelineBlock({ message, className }: TimelineBlockProps) {
   const savedState = useMemo(() => loadCollapseState(message.id), [message.id])
@@ -54,6 +63,8 @@ export function TimelineBlock({ message, className }: TimelineBlockProps) {
   const startedAt = useRef(message.reasoningStartedAt ?? Date.now())
   const userToggled = useRef(savedState !== null)
   const [isHovered, setIsHovered] = useState(false)
+  const blockRef = useRef<HTMLDivElement>(null)
+  const tailScrollRef = useRef<HTMLDivElement>(null)
 
   const parts = message.parts ?? []
   const hasParts = parts.length > 0
@@ -73,6 +84,24 @@ export function TimelineBlock({ message, className }: TimelineBlockProps) {
     const completed = skillBadges.filter((s) => s.status === 'completed')
     return completed.length > 0 ? completed[completed.length - 1].name : null
   }, [skillBadges])
+
+  // Compute reasoning text for tail preview
+  const reasoningText = useMemo(() => {
+    if (hasParts) {
+      return parts
+        .filter((p) => p.kind === 'reasoning')
+        .map((p) => p.text)
+        .join('\n')
+    }
+    return message.reasoningText ?? ''
+  }, [parts, hasParts, message.reasoningText])
+
+  // Tail preview lines (last N lines of reasoning text)
+  const tailLines = useMemo(() => {
+    if (!reasoningText) return []
+    const allLines = reasoningText.split('\n').filter(Boolean)
+    return allLines.slice(-TAIL_PREVIEW_MAX_LINES)
+  }, [reasoningText])
 
   useEffect(() => {
     if (status === 'starting' || status === 'streaming') {
@@ -100,6 +129,14 @@ export function TimelineBlock({ message, className }: TimelineBlockProps) {
     if (userToggled.current && message.id) saveCollapseState(message.id, isExpanded)
   }, [isExpanded, message.id])
 
+  // Auto-pin tail preview to bottom during streaming
+  useEffect(() => {
+    if (isExpanded || status !== 'streaming') return
+    const el = tailScrollRef.current
+    if (!el) return
+    el.scrollTop = el.scrollHeight
+  }, [tailLines.length, isExpanded, status])
+
   const handleToggle = useCallback((e: React.MouseEvent) => {
     if (e.shiftKey) {
       document.querySelectorAll('[data-timeline-block]').forEach((el) => {
@@ -108,6 +145,8 @@ export function TimelineBlock({ message, className }: TimelineBlockProps) {
       })
       return
     }
+    // Don't collapse if the user just finished selecting text
+    if (hasSelectionInside(blockRef.current)) return
     userToggled.current = true
     setIsExpanded((v) => !v)
   }, [])
@@ -123,9 +162,12 @@ export function TimelineBlock({ message, className }: TimelineBlockProps) {
     && (message.reasoningText?.length ?? 0) < 40
   if (isTrivial) return null
 
+  const isStreamingCollapsed = !isExpanded && (status === 'streaming' || status === 'starting') && tailLines.length > 0
+
   return (
     <motion.div
       layout
+      ref={blockRef}
       className={cn('timeline-block', className)}
       data-timeline-block={message.id}
       onMouseEnter={() => setIsHovered(true)}
@@ -152,8 +194,36 @@ export function TimelineBlock({ message, className }: TimelineBlockProps) {
           isExpanded={isExpanded}
           elapsed={elapsed}
           lastSkillName={lastSkillName}
+          origin={message.reasoningOrigin ?? 'native'}
         />
       </button>
+
+      {/* Tail preview: streaming + collapsed */}
+      {isStreamingCollapsed && (
+        <div
+          ref={tailScrollRef}
+          style={{
+            maxHeight: '7.5rem',
+            overflow: 'hidden',
+            position: 'relative',
+            margin: '2px 6px 4px',
+            borderRadius: 'var(--radius-sm)',
+            background: 'var(--bg-subtle)',
+            borderLeft: '2px solid var(--status-think)',
+            maskImage: 'linear-gradient(to bottom, transparent 0%, black 1.5rem)',
+            WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 1.5rem)',
+          }}
+        >
+          <div style={{ padding: '6px 8px', fontSize: 11, lineHeight: '1.5', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
+            {tailLines.map((line, i) => (
+              <div key={i} style={{ opacity: 0.85, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                {line}
+              </div>
+            ))}
+            <div style={{ display: 'inline-block', width: 6, height: 12, background: 'var(--status-think)', borderRadius: 1, animation: 'blink 1s step-end infinite', marginLeft: 1, verticalAlign: 'text-bottom' }} />
+          </div>
+        </div>
+      )}
 
       <AnimatePresence initial={false}>
         {isExpanded && (

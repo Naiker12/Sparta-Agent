@@ -28,6 +28,7 @@ async def run_agent_stream(
     web_search_enabled: bool,
     read_only: bool,
     policy_mode: str,
+    connected_folder: Optional[str] = None,
     open_files: list[str] = None,
     agent_autonomy: str = "ask_risky",
     agent_execute_local: bool = True,
@@ -67,6 +68,7 @@ async def run_agent_stream(
         web_search_enabled=web_search_enabled,
         read_only=read_only,
         policy_mode=policy_mode,
+        connected_folder=connected_folder,
         emit_fn=emit_fn,
     )
 

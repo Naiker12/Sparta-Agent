@@ -260,4 +260,9 @@ def list_available_skills() -> list[dict[str, Any]]:
 
 def clear_skill_cache() -> None:
     skills_index.cache_clear()
+    try:
+        from sparta_ai.skills.skill_router import invalidate_cache
+        invalidate_cache()
+    except ImportError:
+        pass
     logger.info("Skill cache cleared")

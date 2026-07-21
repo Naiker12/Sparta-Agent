@@ -149,12 +149,12 @@ async def handle_chat_model_stream(
         if reasoning and not reasoning_from_metadata:
             if not stream_state["thinking_active"]:
                 logger.debug("Emitting thinking:started for request %s", request_id)
-                emit_control_fn(*reasoning_events.thinking_started(base_payload))
+                emit_control_fn(*reasoning_events.thinking_started(base_payload, origin="emulated"))
                 stream_state["thinking_active"] = True
             stream_state["reasoning_tokens"] = stream_state.get("reasoning_tokens", 0) + len(reasoning.split())
             stream_state["reasoning_chars"] = stream_state.get("reasoning_chars", 0) + len(reasoning)
             logger.debug("Emitting thinking:token (inline think tag) for request %s", request_id)
-            emit_fn(*reasoning_events.thinking_token(base_payload, reasoning))
+            emit_fn(*reasoning_events.thinking_token(base_payload, reasoning, origin="emulated"))
             _detect_and_emit_skill(emit_control_fn, reasoning, stream_state, base_payload)
 
         if visible:

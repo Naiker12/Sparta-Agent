@@ -1,0 +1,66 @@
+# Gitleaks configuration
+# https://github.com/gitleaks/gitleaks
+
+[allowlist]
+  description = "Global allowlist"
+  paths = [
+    '''pnpm-lock\.yaml$''',
+    '''package-lock\.json$''',
+    '''\.pyc$''',
+    '''dist/''',
+    '''dist-electron/''',
+    '''dist-web/''',
+    '''node_modules/''',
+    '''\.env\.web$''',
+  ]
+
+# Allow test fixtures that contain dummy secrets
+[[rules]]
+  id = "test-fixture-allowlist"
+  description = "Allow test fixture files"
+  path = '''tests/|__tests__|\.test\.|\.spec\.'''
+  [rules.allowlist]
+    description = "Test fixtures with dummy values"
+    regex = '''(test|fake|dummy|example|placeholder)'''
+
+[[rules]]
+  id = "generic-api-key"
+  description = "Generic API Key"
+  regex = '''(?i)(api[_-]?key|apikey)\s*[:=]\s*['"]([a-zA-Z0-9\-_]{20,})['"]'''
+  entropy = 3.5
+
+[[rules]]
+  id = "generic-secret"
+  description = "Generic Secret"
+  regex = '''(?i)(secret|token|password|passwd|pwd)\s*[:=]\s*['"]([^'"]{10,})['"]'''
+  entropy = 3.5
+
+[[rules]]
+  id = "github-pat"
+  description = "GitHub Personal Access Token"
+  regex = '''ghp_[a-zA-Z0-9]{36}'''
+  entropy = 0
+
+[[rules]]
+  id = "github-fine-grained-pat"
+  description = "GitHub Fine-Grained Personal Access Token"
+  regex = '''github_pat_[a-zA-Z0-9_]{82}'''
+  entropy = 0
+
+[[rules]]
+  id = "github-oauth"
+  description = "GitHub OAuth Access Token"
+  regex = '''gho_[a-zA-Z0-9]{36}'''
+  entropy = 0
+
+[[rules]]
+  id = "github-app-token"
+  description = "GitHub App Token"
+  regex = '''(ghu|ghs)_[a-zA-Z0-9]{36}'''
+  entropy = 0
+
+[[rules]]
+  id = "private-key"
+  description = "Private Key"
+  regex = '''-----BEGIN (RSA |EC |DSA )?PRIVATE KEY-----'''
+  entropy = 0

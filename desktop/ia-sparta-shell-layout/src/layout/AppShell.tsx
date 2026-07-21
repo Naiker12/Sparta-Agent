@@ -22,8 +22,6 @@ import { useUIStore } from 'ia-sparta-core'
 import { useChatStore } from 'ia-sparta-core'
 import { IS_ELECTRON } from 'ia-sparta-platform'
 
-const EditorPanel = lazy(() => import('ia-sparta-editor').then(m => ({ default: m.EditorPanel })))
-
 const SessionsView = lazy(() => import('../views/SessionsView').then(m => ({ default: m.SessionsView })))
 const SkillsView = lazy(() => import('ia-sparta-skills').then(m => ({ default: m.SkillsView })))
 const McpView = lazy(() => import('ia-sparta-mcp').then(m => ({ default: m.McpView })))
@@ -36,56 +34,6 @@ function ViewSkeleton() {
       <div className="flex flex-col items-center gap-3">
         <div className="size-5 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
         <span className="text-xs text-[var(--text-muted)]">Cargando...</span>
-      </div>
-    </div>
-  )
-}
-
-function EditorSplitView({ containerRef }: { containerRef: React.RefObject<HTMLDivElement> }) {
-  const { editorSplitWidth, setEditorSplitWidth } = useUIStore()
-
-  return (
-    <div className="flex flex-1 min-h-0 w-full h-full relative">
-      <div style={{ flex: 1, minWidth: 0, height: '100%', display: 'flex', flexDirection: 'column' }}>
-        <ChatErrorBoundary>
-          <ChatArea />
-        </ChatErrorBoundary>
-      </div>
-      <div
-        onMouseDown={(e) => {
-          e.preventDefault()
-          e.stopPropagation()
-          const container = containerRef.current
-          if (!container) return
-          const rect = container.getBoundingClientRect()
-          const totalW = rect.width
-          const startX = e.clientX
-          const startPercent = editorSplitWidth
-          
-          document.body.classList.add('is-resizing')
-          
-          function onMove(ev: MouseEvent) {
-            const deltaX = ev.clientX - startX
-            const deltaPercent = (deltaX / totalW) * 100
-            const newPercent = startPercent - deltaPercent
-            setEditorSplitWidth(newPercent)
-          }
-          
-          function onUp() {
-            document.removeEventListener('mousemove', onMove)
-            document.removeEventListener('mouseup', onUp)
-            document.body.classList.remove('is-resizing')
-          }
-          
-          document.addEventListener('mousemove', onMove)
-          document.addEventListener('mouseup', onUp)
-        }}
-        className="pane-resizer"
-      />
-      <div style={{ width: `${editorSplitWidth}%`, minWidth: '15%', maxWidth: '85%', height: '100%' }}>
-        <Suspense fallback={<ViewSkeleton />}>
-          <EditorPanel />
-        </Suspense>
       </div>
     </div>
   )
@@ -180,11 +128,7 @@ export function AppShell() {
                 className="flex flex-1 min-h-0"
                 style={{ animation: 'viewFadeIn 0.18s ease-out' }}
               >
-                {effectiveView === 'editor' ? (
-                  <EditorSplitView containerRef={containerRef} />
-                ) : (
-                  FULL_VIEWS[effectiveView]
-                )}
+                {FULL_VIEWS[effectiveView]}
               </div>
             ) : (
               <>

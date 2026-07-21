@@ -1,68 +1,26 @@
 ╔══════════════════════════════════════════════════════════════════╗
-║  14 - EDITOR (MONACO)                                           ║
-║  Editor de código con Monaco Editor + file tree                 ║
+║  14 - EDITOR (MONACO) — [DEPRECATED]                             ║
+║  Eliminado en sprint #25. Diff review se mantiene en             ║
+║  AgentActivityPanel + DiffProposalDialog + editor-diff.channel   ║
 ╚══════════════════════════════════════════════════════════════════╝
 
-1. COMPONENTES (src/)
------------------------------------------
-EditorPanel.tsx           — Panel principal (579 líneas)
-  Monaco Editor + file tree sidebar
-  Abre archivos via window.fs.readFile()
-  Guarda via window.fs.writeFile()
-  Drag-resize para ancho del explorador
-  Condiciona explorador a rootPath existente
+ESTADO: El paquete ia-sparta-editor fue eliminado del workspace.
+La funcionalidad de diff review (proponer/aprobar/rechazar cambios
+del agente) se mantiene en:
 
-MonacoEditor.tsx          — Wrapper @monaco-editor/react
-  Tema vs-dark + Geist Mono
-  Theme-aware (mapea Sparta themes → Monaco)
+  - ia-sparta-core/stores/diff-review.store.ts   (cola FIFO de propuestas)
+  - ia-sparta-permission/DiffProposalDialog.tsx   (event → store bridge)
+  - ia-sparta-agents/AgentActivityPanel.tsx       (UI de diff review)
+  - ia-sparta-chat-ipc/editor-diff.channel.ts     (IPC handler)
+  - ia-sparta-ipc-bridge/preload.ts               (editorBridge API)
 
-FileTreeSidebar.tsx       — Explorador de archivos
-  Árbol recursivo desde window.fs.readDir()
-  Excluye node_modules/.git/.venv/etc
-  Sin proyecto: solo header minimal con botón "Abrir carpeta"
+Monaco se sigue usando para el diff view inline, pero ya no como
+"modo editor" con panel persistente, file tree, ni tabs.
 
-FileTreeItem.tsx          — Item individual (archivo/directorio)
-  Botón trash en hover
-  Usa ConfirmDeleteDialog
-
-EditorTabs.tsx            — Tabs de archivos abiertos
-  Indicador de modified, botón cerrar
-
-EditorEmptyState.tsx      — Estado vacío central (único CTA)
-  Drag & drop + botón "Abrir carpeta"
-  Feedback inmediato "Abriendo proyecto…" con spinner
-
-2. SOPORTE DE LENGUAJES (9)
-------------------------------
-JavaScript, TypeScript, Python, Rust, Go,
-HTML, CSS, JSON, Markdown
-
-3. INTEGRACIÓN FILESYSTEM
----------------------------
-window.fs (preload.ts):
-  openFolderDialog() → diálogo nativo
-  readDir(path)      → lista directorio
-  readFile(path)     → lee archivo
-  writeFile(path, content) → escribe archivo
-  deleteFile(path)   → papelera (shell.trashItem())
-  deleteFolder(path) → papelera
-
-filesystem.ipc.ts (electron/ipc/):
-  fs:openFolderDialog
-  fs:readDir, fs:readFile, fs:writeFile
-  fs:deleteFile, fs:deleteFolder
-
-4. FUNCIONALIDADES
---------------------
-Ctrl+S / Cmd+S → guarda archivo activo
-Ctrl+B          → toggle explorador
-Minimap: deshabilitado
-Lazy-loaded: @monaco-editor/react (no bloquea bundle)
-Al eliminar archivo: cierra tab si estaba abierto
-Al cerrar proyecto: limpia rootPath sin tocar disco
-
-5. ESTADOS UI
---------------
-ui.store.ts:
-  editorExplorerVisible (persistido, toggle Ctrl+B)
-  EditorPanel visible según MainView.type === 'editor'
+Los siguientes fueron eliminados:
+  - Paquete desktop/ia-sparta-editor/ (9 archivos)
+  - editor.store.ts (Zustand)
+  - MainView 'editor' del ui.store
+  - Keybinding Ctrl+2 (switch-editor)
+  - i18n keys editor.*
+  - CSS comment EditorPanel en layout.css

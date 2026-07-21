@@ -4,7 +4,6 @@ import { useSettingsStore } from 'ia-sparta-core'
 import { useProviderStore } from 'ia-sparta-core'
 import { modelSupportsThinking } from 'ia-sparta-core'
 import { ConnectorsSubmenu } from './ConnectorsSubmenu'
-import { ModeSwitch } from './ModeSwitch'
 
 interface AttachMenuProps {
   onClose: () => void
@@ -207,16 +206,6 @@ export function AttachMenu({ onClose }: AttachMenuProps) {
       />
 
       <ConnectorsSubmenu />
-
-      <div
-        style={{
-          marginTop: 4,
-          paddingTop: 5,
-          borderTop: '1px solid var(--border-subtle)',
-        }}
-      >
-        <ModeSwitch />
-      </div>
     </div>
   )
 }

@@ -9,12 +9,12 @@ Constructs payloads for thinking lifecycle events:
 from typing import Any
 
 
-def thinking_started(base_payload: dict[str, Any]) -> tuple[str, dict[str, Any]]:
-    return ("thinking:started", {**base_payload})
+def thinking_started(base_payload: dict[str, Any], origin: str = "native") -> tuple[str, dict[str, Any]]:
+    return ("thinking:started", {**base_payload, "origin": origin})
 
 
-def thinking_token(base_payload: dict[str, Any], token: str) -> tuple[str, dict[str, Any]]:
-    return ("thinking:token", {**base_payload, "token": token})
+def thinking_token(base_payload: dict[str, Any], token: str, origin: str = "native") -> tuple[str, dict[str, Any]]:
+    return ("thinking:token", {**base_payload, "token": token, "origin": origin})
 
 
 def thinking_completed(base_payload: dict[str, Any], tokens_used: int) -> tuple[str, dict[str, Any]]:

@@ -50,8 +50,10 @@ export interface ReasoningDetail {
  * A single "part" in the message timeline.
  * Parts are rendered in order to create a unified timeline of reasoning + tool calls.
  */
+export type ReasoningOrigin = 'native' | 'emulated'
+
 export type MessagePart =
-  | { kind: 'reasoning'; id: string; text: string; startedAt: number; completedAt?: number }
+  | { kind: 'reasoning'; id: string; text: string; origin: ReasoningOrigin; startedAt: number; completedAt?: number }
   | { kind: 'tool'; id: string; toolCallId: string; startedAt: number }
   | { kind: 'subagent'; id: string; subagentName: string; taskSummary: string; startedAt: number; completedAt?: number; durationMs?: number; success?: boolean }
 
@@ -66,6 +68,7 @@ export interface Message {
   thinkingStatus?: ThinkingStatus
   thinkingStatusText?: string
   thinkingTokensUsed?: number
+  reasoningOrigin?: ReasoningOrigin
   reasoningContent?: string
   reasoningDetails?: ReasoningDetail[]
   codexReasoningItems?: unknown[]

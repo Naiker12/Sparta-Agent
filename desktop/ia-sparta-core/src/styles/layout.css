@@ -108,7 +108,7 @@ body.is-dragging-sidebar [data-slot="sidebar-wrapper"] {
   background: var(--accent);
 }
 
-/* Helper when dragging any pane resizer in EditorPanel */
+/* Helper when dragging any pane resizer */
 body.is-resizing,
 body.is-resizing * {
   user-select: none !important;

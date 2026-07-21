@@ -39,7 +39,6 @@ web/
 │       └── services/
 │
 ├── ia-sparta-agents/                 # Igual que desktop
-├── ia-sparta-editor/                 # Igual que desktop
 ├── ia-sparta-terminal/               # Sin node-pty, usa xterm + WebSocket
 ├── ia-sparta-mcp/                    # Igual que desktop
 ├── ia-sparta-memory/                 # Igual que desktop
@@ -83,7 +82,7 @@ web/
 
 1. **Crear estructura base** `web/` con package.json raíz
 2. **Migrar módulos UI puros** (design-system, i18n, core) — sin cambios
-3. **Migrar módulos con lógica** (chat, agents, editor, etc.) — adaptar servicios
+3. **Migrar módulos con lógica** (chat, agents, etc.) — adaptar servicios
 4. **Crear API server** `runtime/ia-sparta-api-server/`
 5. **Reemplazar IPC por fetch/WebSocket** en servicios
 6. **Configurar Vite para SPA** con routing

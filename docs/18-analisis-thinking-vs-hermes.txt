@@ -78,7 +78,7 @@ HERMES AGENT (ThinkingDisclosure + ReasoningAccordionGroup):
   • Self-gating: no renderiza si no hay contenido (evita bloques vacíos)
   • StreamStallIndicator: detecta silencio >2s y muestra indicador
 
-SPARTA AGENT (ThinkingBlock.tsx):
+SPARTA AGENT (TimelineBlock.tsx):
   • Auto-open durante streaming
   • Auto-close tras 600ms al completar
   • User override: trackea con userToggled ref pero NO persiste
@@ -226,7 +226,7 @@ HERMES AGENT:
 
 SPARTA AGENT:
   • StreamCursor `▍` parpadeante 530ms
-  • ThinkingBlock con animación framer-motion (expand/collapse)
+  • TimelineBlock con animación framer-motion (expand/collapse)
   • ThinkingPill con Loader2 spinner de lucide-react
   ✗ NO hay spinners variados para thinking
   ✗ NO hay status bar animada
@@ -289,7 +289,7 @@ CAMBIOS NECESARIOS:
   python/.../streaming/event_dispatcher.py — Misma mejora de dedup
   python/.../config/providers.py — Reasoning effort mapping (OpenRouter/DeepSeek)
   electron/ipc/chat.ipc.ts       — reasoning:available forwarding
-  src/components/chat/reasoning/ThinkingBlock.tsx — Self-gating, persist collapse, toggle siempre
+  src/components/chat/reasoning/TimelineBlock.tsx — Self-gating, persist collapse, toggle siempre
   src/components/input/SlashCommandMenu.tsx — /reasoning expandido con effort levels
   src/stores/settings.store.ts   — reasoningEffort + migrate v4
   src/stores/session.store.ts    — reasoningTokens + addReasoningTokens()
@@ -306,9 +306,9 @@ CAMBIOS NECESARIOS:
   python/.../server.py/web.py — integrado message_cleanup en pipeline
   src/components/settings/tabs/GeneralTab.tsx — Slider reasoningEffort + budget en Settings
   src/components/chat/reasoning/StreamCursor.tsx — Blink rate 420ms
-  src/components/chat/reasoning/ThinkingBlock.tsx — Preview mode (max-h-40 + fade CSS)
-  src/components/chat/reasoning/ThinkingBlock.tsx — StreamStallIndicator (timer 2s)
-  src/components/chat/reasoning/ThinkingBlock.tsx — Shift+click expand all sections
+  src/components/chat/reasoning/TimelineBlock.tsx — Preview mode (max-h-40 + fade CSS)
+  src/components/chat/reasoning/TimelineBlock.tsx — StreamStallIndicator (timer 2s)
+  src/components/chat/reasoning/TimelineBlock.tsx — Shift+click expand all sections
   src/components/chat/reasoning/StreamStallIndicator.tsx — Nuevo componente
   src/components/chat/reasoning/ReasoningAccordionGroup.tsx — Nuevo componente
   python/.../streaming/event_bridge.py — _skip_mode dedup + _emitted_text accumulator

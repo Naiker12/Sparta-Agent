@@ -1,10 +1,12 @@
 import { useChatStore } from 'ia-sparta-core'
+import type { ReasoningOrigin } from 'ia-sparta-core'
 import { queueThinking, _cancelFlush, _flushBoth } from '../raf-buffer'
 import type { EventHandlerCtx } from './types'
 
 export function handleThinkingStarted(ctx: EventHandlerCtx) {
   const store = useChatStore.getState()
-  store.onThinkingStart(ctx.sid, ctx.mid)
+  const origin = (ctx.event.origin as ReasoningOrigin) ?? 'native'
+  store.onThinkingStart(ctx.sid, ctx.mid, origin)
   store.updateMessage(ctx.mid, { reasoningStartedAt: Date.now() })
 }
 

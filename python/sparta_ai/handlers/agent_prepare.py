@@ -28,6 +28,7 @@ async def prepare_agent(
     web_search_enabled: bool,
     read_only: bool,
     policy_mode: str = "build",
+    connected_folder: Optional[str] = None,
     emit_fn: Optional[Callable[[str, dict], Coroutine]] = None,
 ) -> tuple:
     """Build LLM, tools, graph and initial state. Returns (graph, initial_state).
@@ -39,6 +40,7 @@ async def prepare_agent(
     ~50ms when the I/O tasks dominate.
     """
     from sparta_ai.skills.skill_loader import build_skills_context
+    from sparta_ai.skills.skill_router import select_relevant_skills
     from sparta_ai.memory.chroma_store import build_memory_context
     from sparta_ai.memory.context_manager import compress_if_needed_non_blocking
     from sparta_ai.config.providers import build_llm
@@ -92,8 +94,19 @@ async def prepare_agent(
             return await build_memory_context(last_user_msg)
         return ""
 
-    def _skills():
-        return build_skills_context(skills) if skills else ""
+    async def _folder():
+        if connected_folder:
+            from sparta_ai.memory.chroma_store import build_folder_context
+            return await build_folder_context(connected_folder, last_user_msg)
+        return ""
+
+    async def _skills():
+        pinned, suggested = await select_relevant_skills(
+            last_user_msg, pinned_skill_ids=skills or [],
+        )
+        all_ids = pinned + suggested
+        ctx = build_skills_context(all_ids) if all_ids else ""
+        return ctx, suggested
 
     def _project():
         if workspace_root:
@@ -114,18 +127,23 @@ async def prepare_agent(
     (
         compressed_messages,
         memory_context,
-        skill_context,
+        folder_context,
+        skill_result,
         project_context,
         mcp_tools,
         checkpointer,
     ) = await asyncio.gather(
         _compress(),
         _memory(),
-        asyncio.to_thread(_skills),
+        _folder(),
+        _skills(),
         asyncio.to_thread(_project),
         _mcp(),
         _checkpointer(),
     )
+
+    skill_context = skill_result[0] if skill_result else ""
+    suggested_skill_ids = skill_result[1] if skill_result else []
 
     t_prep = (_time.perf_counter() - t0) * 1000
     logger.info(
@@ -164,9 +182,19 @@ async def prepare_agent(
     )
 
     initial_state = _build_initial_state(
-        compressed_messages, session_id, mode, skills, memory_context,
+        compressed_messages, session_id, mode,
+        (skills or []) + suggested_skill_ids,
+        memory_context,
         project_context=project_context,
+        folder_context=folder_context,
     )
+
+    # Notify frontend about auto-suggested skills
+    if suggested_skill_ids and emit_fn:
+        await emit_fn("skill:auto-suggested", {
+            "skillIds": suggested_skill_ids,
+            "timestamp": _time.time(),
+        })
 
     # ── 8. Emit cold-start notice for local providers ──────────────────
     if emit_fn and (vendor or provider) in ("lmstudio", "ollama", "llamacpp", "custom"):

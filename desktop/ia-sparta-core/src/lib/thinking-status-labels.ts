@@ -66,3 +66,10 @@ export function labelForToolCall(name: string, args?: Record<string, unknown>): 
     .replace(/\b\w/g, (c) => c.toUpperCase())
   return `${readable}...`
 }
+
+export function thinkingLabel(status: 'idle' | 'starting' | 'streaming' | 'completed' | 'collapsed', durationMs: number | null): string {
+  if (status === 'streaming' || status === 'starting') return 'Pensando'
+  if (durationMs === null) return 'Pensó'
+  const s = Math.max(1, Math.round(durationMs / 1000))
+  return `Pensó durante ${s}s`
+}

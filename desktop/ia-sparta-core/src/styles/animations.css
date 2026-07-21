@@ -64,6 +64,11 @@
   100% { background-position: -200% 0; }
 }
 
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
 .shimmer-text {
   background-image: linear-gradient(90deg,
     color-mix(in srgb, var(--text-on-accent) 55%, transparent) 0%,
@@ -99,6 +104,10 @@
   }
   .animate-spin {
     animation: none;
+  }
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 1; }
   }
 }
 

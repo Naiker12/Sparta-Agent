@@ -3,11 +3,11 @@ import { messagingAdapter } from 'ia-sparta-platform'
 import type { SpartaEvent } from 'ia-sparta-core'
 
 import { handleThinkingStarted, handleThinkingToken, handleThinkingCompleted, handleThinkingStatus, handleReasoningToken, handleReasoningAvailable } from './handlers/thinking.handler'
-import { handleStreamToken, handleStreamCompleted, handleStreamAborted, handleStreamNotice, handleStreamError } from './handlers/stream.handler'
+import { handleStreamToken, handleStreamCompleted, handleStreamAborted, handleStreamCancelled, handleStreamNotice, handleStreamError } from './handlers/stream.handler'
 import { handleToolCalled, handleToolResult, handleToolError } from './handlers/tool.handler'
 import { handleMCPEvent, handleMCPServerAdded, handleMCPServerRemoved } from './handlers/mcp.handler'
 import { handleSearchProgress } from './handlers/search.handler'
-import { handleSkillActivated, handleSkillCompleted } from './handlers/skill.handler'
+import { handleSkillActivated, handleSkillCompleted, handleSkillAutoSuggested } from './handlers/skill.handler'
 import { handlePlanCreated, handlePlanStep, handleFileChanged, handleWorkspaceConnected, handleSidecarLog, handleTerminalAgentCommand, handleTerminalAgentSpawn } from './handlers/plan-etc.handler'
 import type { EventHandlerCtx } from './handlers/types'
 
@@ -108,6 +108,7 @@ function _handleEvent(rawEvent: SpartaEvent) {
     case 'stream:token': handleStreamToken(ctx); break
     case 'stream:completed': handleStreamCompleted(ctx, _providerBySession, _lastUserMessage); break
     case 'stream:aborted': handleStreamAborted(ctx, _providerBySession, _lastUserMessage); break
+    case 'stream:cancelled': handleStreamCancelled(ctx, _providerBySession, _lastUserMessage); break
     case 'stream:notice': handleStreamNotice(ctx); break
     case 'stream:error': handleStreamError(ctx, _providerBySession, _lastUserMessage); break
 
@@ -122,6 +123,7 @@ function _handleEvent(rawEvent: SpartaEvent) {
     // Skills
     case 'skill:activated': handleSkillActivated(ctx); break
     case 'skill:completed': handleSkillCompleted(ctx); break
+    case 'skill:auto-suggested': handleSkillAutoSuggested(ctx); break
   }
 }
 

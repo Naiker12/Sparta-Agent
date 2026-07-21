@@ -130,10 +130,10 @@ export function registerOnMessageHandler(): void {
 
     switch (event) {
       case 'thinking:started':
-        sendToRenderer({ sessionId, messageId, type: 'thinking:started' })
+        sendToRenderer({ sessionId, messageId, type: 'thinking:started', origin: data?.origin ?? 'native' })
         break
       case 'thinking:token':
-        sendToRenderer({ sessionId, messageId, type: 'thinking:token', token: data?.token, chunkSeq: data?.chunkSeq ?? getNextSeq(requestId, 'think') })
+        sendToRenderer({ sessionId, messageId, type: 'thinking:token', token: data?.token, chunkSeq: data?.chunkSeq ?? getNextSeq(requestId, 'think'), origin: data?.origin ?? 'native' })
         break
       case 'thinking:completed':
         sendToRenderer({ sessionId, messageId, type: 'thinking:completed', tokensUsed: data?.tokens_used ?? data?.tokensUsed ?? 0 })

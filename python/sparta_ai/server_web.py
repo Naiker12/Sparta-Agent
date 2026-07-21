@@ -158,6 +158,7 @@ async def handle_chat_stream(ws: WebSocket, params: dict):
     session_id = params.get("sessionId") or params.get("session_id", "")
     message_id = params.get("messageId") or params.get("message_id", "")
     workspace_root = params.get("workspace_root") or params.get("workspaceRoot")
+    connected_folder = params.get("connected_folder") or params.get("connectedFolder")
 
     if workspace_root:
         from sparta_ai.server_handlers import set_session_workspace
@@ -204,6 +205,7 @@ async def handle_chat_stream(ws: WebSocket, params: dict):
             semantic_memory=semantic_memory,
             reasoning=reasoning,
             web_search_enabled=web_search_enabled,
+            connected_folder=connected_folder,
             emit_fn=_mcp_emit,
         )
     )
@@ -253,6 +255,7 @@ async def _execute_agent_ws(
     semantic_memory: bool,
     reasoning: dict,
     web_search_enabled: bool = True,
+    connected_folder: Optional[str] = None,
     emit_fn=None,
 ) -> None:
     async def _stream(graph, initial_state):
@@ -278,6 +281,7 @@ async def _execute_agent_ws(
         web_search_enabled=web_search_enabled,
         read_only=False,
         policy_mode="build",
+        connected_folder=connected_folder,
         emit_fn=emit_fn,
         stream_fn=_stream,
     )

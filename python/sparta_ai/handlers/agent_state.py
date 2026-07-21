@@ -9,6 +9,7 @@ def _build_initial_state(
     skills: list[str],
     memory_context: str,
     project_context: str = "",
+    folder_context: str = "",
 ) -> SpartaState:
     return {
         "messages": compressed_messages,
@@ -17,6 +18,7 @@ def _build_initial_state(
         "active_skills": skills,
         "memory_context": memory_context,
         "project_context": project_context,
+        "folder_context": folder_context,
         "thinking_tokens": 0,
         "tool_calls_this_turn": 0,
         "subagent_results": [],

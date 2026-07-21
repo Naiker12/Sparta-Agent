@@ -5,7 +5,6 @@ import type { SettingsTab } from '../types'
 
 export type MainView =
   | { type: 'chat'; sessionId?: string }
-  | { type: 'editor' }
   | { type: 'terminal' }
   | { type: 'agents' }
   | { type: 'sessions' }
@@ -25,12 +24,8 @@ interface UIState {
 
   terminalOpen: boolean
   terminalHeight: number
-  editorExplorerVisible: boolean
-  editorExplorerWidth: number
   agentPanelWidth: number
-  editorAgentPanelVisible: boolean
   terminalSlotEl: HTMLDivElement | null
-  editorSplitWidth: number
 
   toggleSidebar: () => void
   setSidebarWidth: (width: number) => void
@@ -42,12 +37,8 @@ interface UIState {
 
   toggleTerminal: () => void
   setTerminalHeight: (height: number) => void
-  toggleEditorExplorer: () => void
-  setEditorExplorerWidth: (width: number) => void
   setAgentPanelWidth: (width: number) => void
-  toggleEditorAgentPanel: () => void
   setTerminalSlotEl: (el: HTMLDivElement | null) => void
-  setEditorSplitWidth: (width: number) => void
 }
 
 export const useUIStore = create<UIState>()(
@@ -64,12 +55,8 @@ export const useUIStore = create<UIState>()(
 
   terminalOpen: false,
   terminalHeight: 220,
-  editorExplorerVisible: true,
-  editorExplorerWidth: 260,
   agentPanelWidth: 280,
-  editorAgentPanelVisible: true,
   terminalSlotEl: null,
-  editorSplitWidth: 50,
 
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
   toggleContextPanel: () => set((s) => ({ contextPanelOpen: !s.contextPanelOpen })),
@@ -101,12 +88,8 @@ export const useUIStore = create<UIState>()(
     set((s) => ({ terminalOpen: !s.terminalOpen }))
   },
   setTerminalHeight: (height) => set({ terminalHeight: Math.min(500, Math.max(100, height)) }),
-  toggleEditorExplorer: () => set((s) => ({ editorExplorerVisible: !s.editorExplorerVisible })),
-  setEditorExplorerWidth: (width) => set({ editorExplorerWidth: Math.min(600, Math.max(180, width)) }),
   setAgentPanelWidth: (width) => set({ agentPanelWidth: Math.min(500, Math.max(200, width)) }),
-  toggleEditorAgentPanel: () => set((s) => ({ editorAgentPanelVisible: !s.editorAgentPanelVisible })),
   setTerminalSlotEl: (el) => set({ terminalSlotEl: el }),
-  setEditorSplitWidth: (width) => set({ editorSplitWidth: Math.min(85, Math.max(15, width)) }),
 }),
     {
       name: 'sparta-ui',
@@ -118,11 +101,7 @@ export const useUIStore = create<UIState>()(
 
         terminalOpen: state.terminalOpen,
         terminalHeight: state.terminalHeight,
-        editorExplorerVisible: state.editorExplorerVisible,
-        editorExplorerWidth: state.editorExplorerWidth,
         agentPanelWidth: state.agentPanelWidth,
-        editorAgentPanelVisible: state.editorAgentPanelVisible,
-        editorSplitWidth: state.editorSplitWidth,
       }),
     }
   )

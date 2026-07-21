@@ -1,0 +1,67 @@
+================================================================================
+  AUDITORÍA DE PROFESIONALIZACIÓN — EJECUCIÓN COMPLETADA
+  Fecha: 2026-07-21
+  Benchmark: traycerai/traycer (MIT, repo público)
+================================================================================
+
+RESUMEN DE CAMBIOS APLICADOS
+================================================================================
+
+1. LICENSE MIT agregado en raíz del repo
+   - Archivo: /LICENSE
+   - El badge del README ya decía MIT; ahora el repo lo respalda
+
+2. Metadata de package.json completada
+   - Campos agregados: description, author, license, repository, homepage
+   - Antes: todos null/ausentes
+
+3. Archivo muerto eliminado
+   - /desktop/ia-sparta-design-system/src/primitives/effects/highlight.tsx
+     (640 líneas, duplicado byte-a-byte de animate-ui/highlight.tsx)
+   - Verificación: grep "effects/highlight" en *.ts* = 0 resultados
+
+4. CI workflow mínimo creado
+   - Archivo: /.github/workflows/ci.yml
+   - Jobs: lint (pnpm lint) + test (pnpm test)
+   - Trigger: PR contra main + push a main
+   - Anti-regresión: nothing blocks a broken PR today → ahora sí
+
+5. SECURITY.md creado
+   - Canal de reporte: email (placeholder [your-email@domain.com])
+   - Scope: API keys, filesystem access, terminal execution
+   - Disclosure policy: coordinated disclosure
+
+6. .gitleaks.toml creado
+   - Reglas: API keys, GitHub PATs, generic secrets, private keys
+   - Allowlist: lockfiles, dist/, .env.web, test fixtures
+   - Previene repetición del incidente documentado de secretos en texto plano
+
+DECISIÓN DE PRODUCTO
+================================================================================
+
+Canales "Coming Soon" (Discord, Slack, WhatsApp):
+→ DECIDIDO: Mantener como roadmap visible
+→ El panel ComingSoonPanel.tsx está bien diseñado (opacity 0.5, badge claro)
+→ No se ocultan; se mantiene la función de roadmap en la UI
+
+ARCHIVOS CANDIDATOS A SPLIT (>500 líneas)
+================================================================================
+
+| Archivo | Líneas | Nota |
+|---|---|---|
+| sidebar-component.tsx | 684 | Sidebar completo de la app — separar en subcomponentes |
+| AddMcpServerDialog.tsx | 564 | Diálogo MCP — mezcla validación + UI + conexión |
+| sparta_agent.py | 556 | Agente principal — split grafo/nodos/helpers |
+| AgentsPanel.tsx | 480 | Panel de agentes (cerca del umbral) |
+| server_web.py | 450 | Servidor web — priorizar al cerrar brecha WS↔Electron |
+
+Criterio: >500 líneas + mezcla de responsabilidades = candidato a split
+Mismo patrón que se aplicó a useChatSession.ts (576→4 hooks) y event_bridge.py (607→3 archivos)
+
+PENDIENTE (no urgente, documentado)
+================================================================================
+
+- .pre-commit config con husky (Node) o pre-commit (Python)
+  → complementa .gitleaks.toml para ejecutar en cada commit local
+- CONTRIBUTING.md / CODE_OF_CONDUCT.md / SUPPORT.md
+  → bajo prioridad si es proyecto individual hoy

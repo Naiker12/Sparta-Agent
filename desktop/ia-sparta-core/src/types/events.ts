@@ -35,6 +35,7 @@ export type EventType =
   | 'skill:invoked'
   | 'skill:activated'
   | 'skill:completed'
+  | 'skill:auto-suggested'
   | 'channel:created'
   | 'channel:message'
   | 'channel:deleted'
@@ -295,6 +296,12 @@ export interface SkillCompletedEvent extends BaseEvent {
   skillId: string
   sessionId: string
   messageId: string
+}
+
+export interface SkillAutoSuggestedEvent extends BaseEvent {
+  type: 'skill:auto-suggested'
+  skillIds: string[]
+  timestamp: number
 }
 
 export interface ChannelCreatedEvent extends BaseEvent {

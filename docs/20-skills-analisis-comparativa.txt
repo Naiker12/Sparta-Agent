@@ -188,7 +188,7 @@ MODIFICAR (alta prioridad):
   python/sparta_ai/skills/skill_loader.py        — Platform gating, cache mejorado
   python/sparta_ai/agents/sparta_agent.py        — skills_list/skill_manage tools
   python/sparta_ai/server.py                     — Inyectar nuevas tools
-  src/components/input/SlashCommandMenu.tsx       — /skill-name auto-carga
+  src/components/SlashCommandMenu.tsx              — /skill-name auto-carga
 
 MODIFICAR (media prioridad):
   src/types/skill.ts                              — Añadir platform, env, bundle

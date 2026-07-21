@@ -1,9 +1,9 @@
 import type { StateCreator } from 'zustand'
 import type { ChatState } from './chat.store'
-import type { ThinkingStatus, MessagePart } from '../../types'
+import type { ThinkingStatus, MessagePart, ReasoningOrigin } from '../../types'
 
 export interface MessagesThinkingSlice {
-  onThinkingStart: (sessionId: string, messageId: string) => void
+  onThinkingStart: (sessionId: string, messageId: string, origin?: ReasoningOrigin) => void
   onThinkingEnd: (sessionId: string, messageId: string, tokensUsed: number) => void
   setThinkingStatusText: (sessionId: string, messageId: string, text: string) => void
   onReasoningAvailable: (sessionId: string, messageId: string, text: string) => void
@@ -11,7 +11,7 @@ export interface MessagesThinkingSlice {
 }
 
 export const createMessagesThinkingSlice: StateCreator<ChatState, [], [], MessagesThinkingSlice> = (set) => ({
-  onThinkingStart: (sessionId, messageId) =>
+  onThinkingStart: (sessionId, messageId, origin = 'native') =>
     set((s) => {
       const sessionMessages = s.messagesBySession[sessionId]
       if (!sessionMessages) {
@@ -27,7 +27,7 @@ export const createMessagesThinkingSlice: StateCreator<ChatState, [], [], Messag
         messagesBySession: {
           ...s.messagesBySession,
           [sessionId]: sessionMessages.map((msg) =>
-            msg.id === messageId ? { ...msg, thinkingStatus: 'starting' as ThinkingStatus } : msg
+            msg.id === messageId ? { ...msg, thinkingStatus: 'starting' as ThinkingStatus, reasoningOrigin: origin } : msg
           ),
         },
       }
@@ -106,7 +106,7 @@ export const createMessagesThinkingSlice: StateCreator<ChatState, [], [], Messag
               if (!text) return msg
               return {
                 ...msg,
-                parts: [{ kind: 'reasoning', id: `reasoning-${Date.now()}`, text, startedAt: msg.reasoningStartedAt ?? Date.now(), completedAt: Date.now() } as MessagePart],
+                parts: [{ kind: 'reasoning', id: `reasoning-${Date.now()}`, text, origin: msg.reasoningOrigin ?? 'native', startedAt: msg.reasoningStartedAt ?? Date.now(), completedAt: Date.now() } as MessagePart],
               }
             }
             const lastPart = parts[parts.length - 1]

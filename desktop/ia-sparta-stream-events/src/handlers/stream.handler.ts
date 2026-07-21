@@ -86,6 +86,27 @@ export function handleStreamAborted(
   lastUserMessage.delete(ctx.sid)
 }
 
+export function handleStreamCancelled(
+  ctx: EventHandlerCtx,
+  providerBySession: MapStore<string, string>,
+  lastUserMessage: MapStore<string, { text: string; userMessageId: string }>,
+) {
+  _cancelFlush()
+  _flushBoth()
+
+  const store = useChatStore.getState()
+  const msg = store.messagesBySession[ctx.sid]?.find((m) => m.id === ctx.mid)
+  if (msg?.thinkingStatus === 'streaming' || (msg?.reasoningText && msg?.thinkingStatus !== 'completed')) {
+    console.debug('[safety-net] cerrando thinking en stream:cancelled')
+    store.onThinkingEnd(ctx.sid, ctx.mid, msg?.thinkingTokensUsed ?? 0)
+  }
+
+  store.onStreamEnd(ctx.sid, ctx.mid)
+  store.stopStreaming(ctx.sid)
+  providerBySession.delete(ctx.sid)
+  lastUserMessage.delete(ctx.sid)
+}
+
 export function handleStreamNotice(ctx: EventHandlerCtx) {
   const noticeMsg = (ctx.event.message as string) ?? ''
   useChatStore.getState().setThinkingStatusText(ctx.sid, ctx.mid, noticeMsg)

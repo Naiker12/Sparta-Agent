@@ -19,6 +19,7 @@ interface ChatSendRequest {
   reasoning?: { enabled: boolean; budget: number; effort?: string }
   webSearchEnabled?: boolean
   workspaceRoot?: string
+  connectedFolder?: string
   agentAutonomy?: string
   agentExecuteLocal?: boolean
   securityLoaded?: boolean
@@ -79,8 +80,24 @@ class WebAdapter implements MessagingAdapter {
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null
   private destroyed = false
 
+  // ── Parity with Electron IPC: seq counters + late-event guard ─────
+  private chunkSeqCounters = new Map<string, { streamSeq: number; thinkSeq: number }>()
+  private activeStreams = new Map<string, { active: boolean; messageId: string }>()
+
   constructor() {
     this.connect()
+  }
+
+  private getNextSeq(requestId: string, kind: 'stream' | 'think'): number {
+    const entry = this.chunkSeqCounters.get(requestId) ?? { streamSeq: 0, thinkSeq: 0 }
+    if (kind === 'stream') entry.streamSeq++
+    else entry.thinkSeq++
+    this.chunkSeqCounters.set(requestId, entry)
+    return kind === 'stream' ? entry.streamSeq : entry.thinkSeq
+  }
+
+  private clearSeqCounters(requestId: string): void {
+    this.chunkSeqCounters.delete(requestId)
   }
 
   private connect() {
@@ -95,8 +112,11 @@ class WebAdapter implements MessagingAdapter {
 
     this.ws.onmessage = (msg) => {
       try {
-        const event: SpartaEvent = JSON.parse(msg.data)
-        this.handlers.forEach(h => h(event))
+        const raw: Record<string, unknown> = JSON.parse(msg.data)
+        const forwarded = this.normalizeAndFilter(raw)
+        if (forwarded) {
+          this.handlers.forEach(h => h(forwarded as unknown as SpartaEvent))
+        }
       } catch { /* ignore malformed */ }
     }
 
@@ -107,6 +127,83 @@ class WebAdapter implements MessagingAdapter {
 
     this.ws.onerror = () => {
       this.ws?.close()
+    }
+  }
+
+  /**
+   * Normalizes raw WS events from Python to match the shape the renderer
+   * expects (parity with Electron IPC's on-message.channel.ts).
+   * Returns null if the event should be dropped.
+   */
+  private normalizeAndFilter(raw: Record<string, unknown>): Record<string, unknown> | null {
+    const type = raw.type as string | undefined
+    if (!type) return null
+
+    const sessionId = (raw.session_id ?? raw.sessionId ?? '') as string
+    const messageId = (raw.message_id ?? raw.messageId ?? '') as string
+    const requestId = sessionId && messageId ? `${sessionId}:${messageId}` : ''
+
+    // ── Late-event guard (parity with Electron isLateStreamEvent) ───
+    if (requestId && sessionId) {
+      const activeStream = this.activeStreams.get(sessionId)
+      const isStreamLike = type.startsWith('stream:') || type.startsWith('thinking:') ||
+        type.startsWith('tool:') || type === 'search:progress'
+      if (isStreamLike && (!activeStream || !activeStream.active || activeStream.messageId !== messageId)) {
+        return null
+      }
+    }
+
+    // ── Track active streams ────────────────────────────────────────
+    if (sessionId && messageId) {
+      if (type === 'stream:token' || type === 'thinking:started') {
+        if (!this.activeStreams.has(sessionId)) {
+          this.activeStreams.set(sessionId, { active: true, messageId })
+        }
+      }
+      if (type === 'stream:completed' || type === 'stream:aborted' || type === 'stream:error') {
+        this.activeStreams.delete(sessionId)
+        if (requestId) this.clearSeqCounters(requestId)
+      }
+    }
+
+    // ── Remap stream:degenerate → stream:error (parity with Electron) ─
+    if (type === 'stream:degenerate') {
+      if (requestId) this.clearSeqCounters(requestId)
+      this.activeStreams.delete(sessionId)
+      return {
+        type: 'stream:error',
+        sessionId,
+        messageId,
+        error: 'La respuesta se cortó por repetición detectada. El texto generado hasta el corte se conserva. Probá con otro modelo o reintentá.',
+      }
+    }
+
+    // ── stream:cancelled (parity with Electron) ─────────────────────
+    if (type === 'stream:cancelled') {
+      if (requestId) this.clearSeqCounters(requestId)
+      return { type: 'stream:cancelled', sessionId, messageId }
+    }
+
+    // ── Inject chunkSeq for token events (parity with Electron) ─────
+    if (requestId) {
+      if (type === 'thinking:token') {
+        return { ...raw, sessionId, messageId, chunkSeq: raw.chunkSeq ?? this.getNextSeq(requestId, 'think') }
+      }
+      if (type === 'stream:token') {
+        return { ...raw, sessionId, messageId, chunkSeq: raw.chunkSeq ?? this.getNextSeq(requestId, 'stream') }
+      }
+    }
+
+    // ── Normalize snake_case fields to camelCase (parity with Electron) ─
+    return {
+      ...raw,
+      sessionId,
+      messageId,
+      tokensUsed: raw.tokensUsed ?? raw.tokens_used,
+      toolCallId: raw.toolCallId ?? raw.tool_call_id,
+      currentStep: raw.currentStep ?? raw.current_step,
+      planComplete: raw.planComplete ?? raw.plan_complete,
+      origin: raw.origin ?? 'native',
     }
   }
 
@@ -147,6 +244,7 @@ class WebAdapter implements MessagingAdapter {
           reasoning: request.reasoning,
           web_search_enabled: request.webSearchEnabled ?? true,
           workspace_root: request.workspaceRoot,
+          connected_folder: request.connectedFolder,
           agent_autonomy: request.agentAutonomy,
           agent_execute_local: request.agentExecuteLocal,
           sandbox_mode: request.sandboxMode,

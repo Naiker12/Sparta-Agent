@@ -29,13 +29,14 @@ F) settings.store.ts — sparta-settings (v3)
 
 G) ui.store.ts — sparta-ui
    MainView, previousMainView, goBack(),
-   sidebarWidth, editorExplorerVisible
+   sidebarWidth
 
 H) theme.store.ts — sparta-theme
    Tema activo (default: midnight)
 
-I) project.store.ts — sparta-projects
-   projects[], activeProject, rootPath
+I) folder.store.ts — sparta-folder (en memoria)
+   connectedPath, folderName, recentPaths[],
+   connectFolder(), disconnectFolder()
 
 J) channel.store.ts — sparta-channels
    7 canales default: general, agentes, telegram, discord, etc.

@@ -8,6 +8,7 @@ const SKILLS_API = typeof window !== 'undefined' && (window as any).skills
 interface SkillState {
   skills: Skill[]
   activeSkillIds: string[]
+  suggestedSkillIds: string[]
   installedSkills: InstalledSkill[]
   loading: boolean
 
@@ -16,6 +17,9 @@ interface SkillState {
   deleteSkill: (id: string) => void
   toggleActive: (id: string) => void
   isActive: (id: string) => boolean
+  setSuggestedSkillIds: (ids: string[]) => void
+  confirmSuggestion: (id: string) => void
+  dismissSuggestion: (id: string) => void
 
   loadInstalledSkills: () => Promise<void>
   installFromUrl: (url: string) => Promise<{ success: boolean; skillId?: string; error?: string }>
@@ -27,6 +31,7 @@ export const useSkillStore = create<SkillState>()(
     (set, get) => ({
       skills: [],
       activeSkillIds: [],
+      suggestedSkillIds: [],
       installedSkills: [],
       loading: false,
 
@@ -65,6 +70,21 @@ export const useSkillStore = create<SkillState>()(
       },
 
       isActive: (id) => get().activeSkillIds.includes(id),
+
+      setSuggestedSkillIds: (ids) => set({ suggestedSkillIds: ids }),
+
+      confirmSuggestion: (id) => {
+        set((s) => ({
+          activeSkillIds: s.activeSkillIds.includes(id) ? s.activeSkillIds : [...s.activeSkillIds, id],
+          suggestedSkillIds: s.suggestedSkillIds.filter((sid) => sid !== id),
+        }))
+      },
+
+      dismissSuggestion: (id) => {
+        set((s) => ({
+          suggestedSkillIds: s.suggestedSkillIds.filter((sid) => sid !== id),
+        }))
+      },
 
       loadInstalledSkills: async () => {
         if (!SKILLS_API) return

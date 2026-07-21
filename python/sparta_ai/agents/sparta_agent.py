@@ -44,7 +44,7 @@ MAX_TOOL_CALLS_PER_TURN = 8
 # Local 7B-8B models hallucinate less and respond faster when they see
 # only the tools relevant to the current intent, not the full 19-tool set.
 _INTENT_TOOL_MAP: dict[str, list[str]] = {
-    "chat":         ["web_search_tool", "read_memory", "skill_view_tool", "skills_list_tool"],
+    "chat":         ["web_search_tool", "read_memory"],
     "code_task":    ["read_file", "write_file", "patch_file", "apply_patch", "terminal_execute_tool",
                      "read_files_tool", "read_directory_tool", "grep_search", "codebase_search",
                      "delegate_code", "delegate_review", "create_plan"],
@@ -52,15 +52,28 @@ _INTENT_TOOL_MAP: dict[str, list[str]] = {
     "memory_query": ["read_memory", "write_memory", "delete_memory"],
 }
 
+# Skill discovery tools are always available regardless of intent.
+# They are read-only (list/view) and let the LLM discover and load
+# skills on demand — critical for code_task and research intents
+# where the most relevant skills live.
+_ALWAYS_AVAILABLE_TOOLS = {"skill_view_tool", "skills_list_tool"}
+
 
 def get_dynamic_tools(all_tools: list, intent: str) -> list:
-    """Return a filtered tool list matching the intent. Falls back to all_tools
+    """Return a filtered tool list matching the intent, plus skill
+    discovery tools which are always available. Falls back to all_tools
     if the intent has no mapping or the filtered set would be empty."""
     allowed_names = _INTENT_TOOL_MAP.get(intent)
     if not allowed_names:
         return all_tools
     filtered = [t for t in all_tools if getattr(t, "name", "") in allowed_names]
-    return filtered if filtered else all_tools
+    if not filtered:
+        return all_tools
+    # Always include skill discovery tools (read-only, no harm)
+    for t in all_tools:
+        if getattr(t, "name", "") in _ALWAYS_AVAILABLE_TOOLS and t not in filtered:
+            filtered.append(t)
+    return filtered
 
 
 class SpartaState(MessagesState):
@@ -69,6 +82,7 @@ class SpartaState(MessagesState):
     active_skills: list[str]
     memory_context: str
     project_context: str
+    folder_context: str
     thinking_tokens: int
     tool_calls_this_turn: int
     subagent_results: Annotated[list, operator.add]
@@ -204,6 +218,11 @@ def build_sparta_graph(
                 f"\n<memoria_relevante>\n{state['memory_context']}\n</memoria_relevante>"
             )
 
+        if state.get("folder_context"):
+            system_parts.append(
+                f"\n<carpeta_conectada>\n{state['folder_context']}\n</carpeta_conectada>"
+            )
+
         system = "\n\n".join(system_parts)
 
         # For models without native reasoning, inject the emulated thinking
@@ -223,14 +242,21 @@ def build_sparta_graph(
             {"role": "system", "content": system},
         ]
 
-        # Inject active skills as a user message (preserves system prompt prefix cache)
+        # Inject skill context as a user message (preserves system prompt prefix cache).
+        # Always include the discovery nudge so the LLM knows the skill catalog exists,
+        # even when no skills are pinned or auto-suggested yet.
+        skill_parts = []
         if skill_context:
-            messages.append({
-                "role": "user",
-                "content": f"[Active skills loaded]\n\n{skill_context}\n\n"
-                           f"Follow the active skills listed above. Use skills_list_tool to explore "
-                           f"more skills, and skill_view_tool to load their full content.",
-            })
+            skill_parts.append(skill_context)
+            skill_parts.append("Follow the active skills listed above.")
+        skill_parts.append(
+            "Use skills_list_tool to explore the full skill catalog, "
+            "and skill_view_tool to load any skill's full content on demand."
+        )
+        messages.append({
+            "role": "user",
+            "content": "[Skill context]\n\n" + "\n".join(skill_parts),
+        })
 
         # Deduplicate messages: only replace consecutive exact-duplicate
         # assistant responses so the LLM retains real multi-turn context.

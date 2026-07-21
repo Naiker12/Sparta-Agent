@@ -89,6 +89,7 @@ export const createMessagesStreamingSlice: StateCreator<ChatState, [], [], Messa
         kind: 'reasoning',
         id: `reasoning-${now}`,
         text: delta,
+        origin: target.reasoningOrigin ?? 'native',
         startedAt: now,
       }
       return {

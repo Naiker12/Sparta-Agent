@@ -34,6 +34,7 @@ export interface ChatRequest {
   reasoning?: { enabled: boolean; budget: number }
   webSearchEnabled?: boolean
   workspaceRoot?: string
+  connectedFolder?: string
   agentAutonomy?: string
   agentExecuteLocal?: boolean
   securityLoaded?: boolean

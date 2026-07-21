@@ -15,7 +15,6 @@ const KEYBINDS: Keybind[] = [
   { id: 'toggle-explorer', labelKey: 'keybinds.toggleExplorer', combo: 'Ctrl + B' },
   { id: 'toggle-terminal', labelKey: 'keybinds.toggleTerminal', combo: 'Ctrl + `' },
   { id: 'switch-chat', labelKey: 'keybinds.switchChat', combo: 'Ctrl + 1' },
-  { id: 'switch-editor', labelKey: 'keybinds.switchEditor', combo: 'Ctrl + 2' },
   { id: 'switch-terminal', labelKey: 'keybinds.switchTerminal', combo: 'Ctrl + 3' },
   { id: 'switch-agents', labelKey: 'keybinds.switchAgents', combo: 'Ctrl + 4' },
   { id: 'send-message', labelKey: 'keybinds.sendMessage', combo: 'Enter' },

@@ -61,6 +61,7 @@ export function registerChatSendIPC(): void {
         reasoning: req.reasoning,
         web_search_enabled: req.webSearchEnabled,
         workspace_root: req.workspaceRoot,
+        connected_folder: req.connectedFolder,
         agent_autonomy: req.agentAutonomy,
         agent_execute_local: req.agentExecuteLocal,
         security_loaded: req.securityLoaded,

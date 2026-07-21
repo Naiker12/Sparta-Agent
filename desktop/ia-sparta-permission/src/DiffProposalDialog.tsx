@@ -1,17 +1,12 @@
 import { useEffect } from 'react'
 import { useDiffReviewStore } from 'ia-sparta-core'
 import { useEventBus } from 'ia-sparta-core'
-import { useUIStore } from 'ia-sparta-core'
 import type { DiffProposedEvent } from 'ia-sparta-core'
 
 /**
  * DiffProposalDialog — bridges the backend permission_broker events into
- * the diff-review store queue. No longer renders a modal directly; instead
- * it enqueues proposals into useDiffReviewStore, which DiffReviewTab
- * (mounted inside EditorPanel) displays as an inline Monaco DiffEditor tab.
- *
- * This fixes bug 1.1 (parallel tool calls overwriting each other) because
- * the store uses a queue instead of a single useState slot.
+ * the diff-review store queue. Enqueues proposals into useDiffReviewStore,
+ * which AgentActivityPanel displays for user review.
  */
 export function DiffProposalDialog() {
   const enqueue = useDiffReviewStore((s) => s.enqueue)
@@ -28,14 +23,10 @@ export function DiffProposalDialog() {
           language: e.language,
           status: 'pending',
         })
-        // The review UI is in EditorPanel. Leaving this proposal queued while
-        // Chat stays visible made a pending write look like an executed one.
-        useUIStore.getState().setMainView({ type: 'editor' })
       }
     })
     return unsub
   }, [enqueue])
 
-  // No DOM rendered — the actual UI is in DiffReviewTab
   return null
 }

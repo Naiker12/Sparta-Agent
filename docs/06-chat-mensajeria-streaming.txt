@@ -86,21 +86,32 @@ SpartaIcon.tsx        — SVG icono Sparta
 EventTimeline.tsx     — Timeline de eventos
 
 Reasoning (src/components/chat/reasoning/):
-  ThinkingBlock.tsx   — Colapso animado (framer-motion)
-  ThinkingPill.tsx    — Indicador con contador tokens
-  PipelineTrace.tsx   — Timeline de herramientas
-  ToolCallSummary.tsx — Tool call expandible
-  ToolCallDiffView.tsx — Diff visual (+/-) para edición archivos
-  StreamCursor.tsx    — Cursor parpadeante durante streaming
+  TimelineBlock.tsx     — Timeline unificado de reasoning + tool calls (326 líneas)
+  ThinkingPill.tsx      — Badge compacto con spinner/tokens/origin
+  ThinkingLines.tsx     — Líneas de razonamiento con íconos semánticos
+  ToolTraceRow.tsx      — Tool call inline con expand/collapse
+  SubagentActivationBadge.tsx — Badge de subagente activo
+  SkillActivationBadge.tsx — Badge de skill activada
+  PipelineTrace.tsx     — Timeline de herramientas
+  StreamStallIndicator.tsx — Indicador de silencio >2s
+  StreamCursor.tsx      — Cursor parpadeante durante streaming
+  ShimmerText.tsx       — Efecto shimmer para label de thinking
+  SearchResultsList.tsx — Lista inline de resultados de búsqueda web
+  thinking-utils.ts     — Función pura thinkingLabel() consolidada
 
-7. INPUT (src/components/input/)
+7. INPUT (src/components/)
 ----------------------------------
 ChatInput.tsx           — Textarea con slash commands + interrupt-and-redirect
-ModelPicker.tsx         — Selector de modelo
-AttachMenu.tsx          — Menú adjuntos
+                         + chip row: carpeta conectada + ModeSwitch (Chat/Agente)
+ModelPicker.tsx         — Selector de modelo con speed labels
+AttachMenu.tsx          — Menú adjuntos (archivo, web search, reasoning, MCP)
 ConnectorsSubmenu.tsx   — Submenú MCP
-ModeSwitch.tsx          — Toggle Chat/Agente
 SlashCommandMenu.tsx    — Autocomplete /clear, /model, /memory, /reasoning, /help
+
+Folder Connect:
+  useFolderStore        — Store Zustand (connectedPath, folderName, recentPaths)
+  ProjectDialog.tsx     — Diálogo de selección de carpeta (ia-sparta-projects)
+  Chip visible          — Debajo del composer, muestra carpeta activa + botón ×
 
 8. FLUJO DE INTERRUPT-AND-REDIRECT
 -------------------------------------

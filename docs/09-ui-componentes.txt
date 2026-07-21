@@ -15,7 +15,6 @@ AppShell.tsx — Shell raíz
 
 Paneles activos (ui.store MainView.type):
   chat      → ChatArea.tsx
-  editor    → EditorPanel.tsx (Monaco)
   terminal  → TerminalPanel.tsx (xterm.js)
   agents    → AgentsPanel.tsx
   sessions  → SessionsView.tsx (lazy)
@@ -30,9 +29,8 @@ src/components/
   layout/      8 — AppShell, TitleBar, AppMenu, StatusBar, dialogs
   sidebar/     8 — AppSidebar, SessionList, SessionItem, etc.
   chat/        8 — ChatArea, MessageList, MessageBubble, etc.
-  chat/reasoning/ 6 — ThinkingBlock, ThinkingPill, PipelineTrace, etc.
-  input/       6 — ChatInput, ModelPicker, AttachMenu, etc.
-  editor/      6 — EditorPanel, MonacoEditor, FileTree*, etc.
+  chat/reasoning/ 13 — TimelineBlock, ThinkingPill, ThinkingLines, ToolTraceRow, etc.
+  chat/input/  1 — ModeSwitch (Chat/Agente toggle)
   terminal/    1 — TerminalPanel (xterm.js)
   memory/      7 — MemoryGraph, MemoryGraphD3, MemoryListView, etc.
   skills/      7 — SkillCard, SkillExplorer, SkillCreator, etc.
@@ -42,9 +40,9 @@ src/components/
   settings/   12 — SettingsDialog, ThemePicker, 9 tabs
   providers/   3 — ProviderCard, ChooseProviderDialog, etc.
   views/       5 — SessionsView, SkillsView, McpView, etc.
-  projects/    1 — ProjectDialog
+  projects/    1 — ProjectDialog (diálogo Folder Connect)
   ui/         16 — button, dialog, sidebar, combobox, tooltip, etc.
-  Total: ~101 componentes
+  Total: ~95 componentes
 
 3. SISTEMA DE TEMAS (13 temas)
 --------------------------------

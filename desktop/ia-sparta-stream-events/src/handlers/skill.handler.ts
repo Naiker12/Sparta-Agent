@@ -1,4 +1,4 @@
-import { useChatStore, useEventBus } from 'ia-sparta-core'
+import { useChatStore, useEventBus, useSkillStore } from 'ia-sparta-core'
 import type { EventHandlerCtx } from './types'
 
 export function handleSkillActivated(ctx: EventHandlerCtx) {
@@ -29,4 +29,12 @@ export function handleSkillCompleted(ctx: EventHandlerCtx) {
         : step
     ),
   }))
+}
+
+export function handleSkillAutoSuggested(ctx: EventHandlerCtx) {
+  const skillIds = (ctx.event.skillIds as string[]) ?? []
+  if (skillIds.length > 0) {
+    useSkillStore.getState().setSuggestedSkillIds(skillIds)
+    console.debug('[skill:auto-suggested]', skillIds)
+  }
 }
