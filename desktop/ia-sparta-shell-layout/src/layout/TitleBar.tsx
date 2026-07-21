@@ -12,10 +12,10 @@ import {
   TabsHighlightItem,
   TabsTrigger,
 } from 'ia-sparta-design-system'
+import { TabStrip } from 'ia-sparta-tabs'
 
 const TABS: { type: MainView['type']; label: string }[] = [
   { type: 'chat', label: 'Chat' },
-  { type: 'editor', label: 'Editor' },
   ...(FEATURES.terminal ? [{ type: 'terminal' as const, label: 'Terminal' }] : []),
   { type: 'agents', label: 'Agents' },
 ]
@@ -26,19 +26,14 @@ export function TitleBar() {
 
   const activeValue = (() => {
     if (mainView.type === 'agents') return 'agents'
-    if (mainView.type === 'editor') return 'editor'
     if (terminalOpen) return 'terminal'
     return 'chat'
   })()
 
   function handleTabClick(type: MainView['type']) {
-    if (type === 'editor') {
-      setMainView({ type: 'editor' })
-      return
-    }
     if (type === 'terminal') {
       toggleTerminal()
-      if (mainView.type === 'agents' || mainView.type === 'sessions' || mainView.type === 'skills' || mainView.type === 'mcp' || mainView.type === 'channels' || mainView.type === 'memory' || mainView.type === 'editor') {
+      if (mainView.type === 'agents' || mainView.type === 'sessions' || mainView.type === 'skills' || mainView.type === 'mcp' || mainView.type === 'channels' || mainView.type === 'memory') {
         setMainView({ type: 'chat' })
       }
       return
@@ -123,6 +118,8 @@ export function TitleBar() {
           </TabsHighlight>
         </TabsList>
       </Tabs>
+
+      <TabStrip />
 
       <div className="flex-1" />
 

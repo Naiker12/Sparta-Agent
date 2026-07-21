@@ -1,8 +1,15 @@
 import { MessageSquare } from 'lucide-react'
 import { useSessionStore } from 'ia-sparta-core'
+import { useSessionTabsStore } from 'ia-sparta-core'
 
 export function SessionsView() {
-  const { sessions, activeSessionId, switchSession, createSession } = useSessionStore()
+  const { sessions, activeSessionId, createSession } = useSessionStore()
+  const openTab = useSessionTabsStore((s) => s.openTab)
+
+  function handleNewSession() {
+    const id = createSession()
+    openTab(id)
+  }
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -13,7 +20,7 @@ export function SessionsView() {
         <h2 style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-ui)', margin: 0 }}>
           Sesiones
         </h2>
-        <button onClick={() => createSession()} style={{
+        <button onClick={handleNewSession} style={{
           padding: '5px 12px', background: 'var(--accent)', border: 'none',
           borderRadius: 'var(--radius-md)', color: 'white', fontSize: 11,
           fontFamily: 'var(--font-ui)', cursor: 'pointer',
@@ -26,7 +33,7 @@ export function SessionsView() {
         {sessions.map((s) => (
           <div
             key={s.id}
-            onClick={() => switchSession(s.id)}
+            onClick={() => openTab(s.id)}
             style={{
               display: 'flex', alignItems: 'center', gap: 10,
               padding: '10px 12px', cursor: 'pointer',

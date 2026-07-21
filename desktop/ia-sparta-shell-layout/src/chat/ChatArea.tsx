@@ -1,26 +1,54 @@
-import { useChatStore } from 'ia-sparta-core'
-import { useSessionStore } from 'ia-sparta-core'
-import { MessageList } from 'ia-sparta-chat'
-import { ChatInput } from 'ia-sparta-chat'
+import { useSessionTabsStore, useChatStore } from 'ia-sparta-core'
 import { HeroScreen } from 'ia-sparta-chat'
-import { PlanWatchPane } from 'ia-sparta-agents'
+import { ChatPane } from './ChatPane'
+
+const MAX_LIVE_TABS = 4
 
 export function ChatArea() {
-  const activeSessionId = useSessionStore((s) => s.activeSessionId)
-  const messagesBySession = useChatStore((s) => s.messagesBySession)
-  const messages = activeSessionId ? (messagesBySession[activeSessionId] ?? []) : []
+  const openTabs = useSessionTabsStore((s) => s.openTabs)
+  const focusedTabId = useSessionTabsStore((s) => s.focusedTabId)
+  const streamingBySession = useChatStore((s) => s.streamingBySession)
+
+  if (openTabs.length === 0) {
+    return (
+      <div className="flex h-full flex-col overflow-hidden">
+        <HeroScreen />
+      </div>
+    )
+  }
+
+  const liveSessionIds: string[] = []
+  for (const id of openTabs) {
+    if (streamingBySession[id]?.isStreaming) {
+      liveSessionIds.push(id)
+    } else if (liveSessionIds.length < MAX_LIVE_TABS) {
+      liveSessionIds.push(id)
+    }
+  }
 
   return (
-    <div className="flex h-full flex-col overflow-hidden">
-      {messages.length > 0 ? (
-        <MessageList className="flex-1 min-h-0 overflow-y-auto" messages={messages} />
-      ) : (
-        <HeroScreen />
-      )}
-      <div style={{ padding: '0 16px 6px' }}>
-        <PlanWatchPane />
-      </div>
-      <ChatInput className="shrink-0 px-4 py-3" />
+    <div className="flex h-full flex-col overflow-hidden relative">
+      {openTabs.map((sid) => {
+        const isLive = liveSessionIds.includes(sid)
+        const isFocused = sid === focusedTabId
+        return (
+          <div
+            key={sid}
+            className="absolute inset-0 flex flex-col"
+            style={{ display: isFocused ? 'flex' : 'none' }}
+          >
+            {isLive ? (
+              <ChatPane sessionId={sid} />
+            ) : (
+              <div className="flex-1 flex items-center justify-center">
+                <span className="text-xs" style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-ui)' }}>
+                  Pestaña inactiva — haz clic para reactivar
+                </span>
+              </div>
+            )}
+          </div>
+        )
+      })}
     </div>
   )
 }

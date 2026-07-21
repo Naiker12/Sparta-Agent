@@ -14,6 +14,7 @@
     "lucide-react": "^1.24.0",
     "framer-motion": "^12.41.0",
     "ia-sparta-design-system": "workspace:*",
-    "ia-sparta-i18n": "workspace:*"
+    "ia-sparta-i18n": "workspace:*",
+    "ia-sparta-tabs": "workspace:*"
   }
 }

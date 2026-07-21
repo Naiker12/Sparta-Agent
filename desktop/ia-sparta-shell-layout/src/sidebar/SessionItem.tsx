@@ -17,6 +17,7 @@ import {
 import { ConfirmDeleteDialog } from 'ia-sparta-design-system'
 import { useChatStore } from 'ia-sparta-core'
 import { useSessionStore } from 'ia-sparta-core'
+import { useSessionTabsStore } from 'ia-sparta-core'
 import { useUIStore } from 'ia-sparta-core'
 import type { Session } from 'ia-sparta-core'
 import { useTranslation } from 'ia-sparta-i18n'
@@ -27,6 +28,8 @@ interface SessionItemProps {
 
 export function SessionItem({ session }: SessionItemProps) {
   const { activeSessionId, switchSession, pinSession, deleteSession, renameSession } = useSessionStore()
+  const openTab = useSessionTabsStore((s) => s.openTab)
+  const closeTab = useSessionTabsStore((s) => s.closeTab)
   const { deleteSessionMessages, streamingBySession } = useChatStore()
   const { setMainView } = useUIStore()
   const { t } = useTranslation()
@@ -61,7 +64,7 @@ export function SessionItem({ session }: SessionItemProps) {
     <>
       <div
         className={cn('session-item-card', isActive && 'active', isStreamingThis && 'streaming')}
-        onClick={() => { switchSession(session.id); setMainView({ type: 'chat', sessionId: session.id }) }}
+        onClick={() => { openTab(session.id); setMainView({ type: 'chat', sessionId: session.id }) }}
       >
         {/* Icon + streaming indicator */}
         <div style={{ position: 'relative', display: 'flex' }}>
@@ -190,6 +193,7 @@ export function SessionItem({ session }: SessionItemProps) {
         onOpenChange={setConfirmOpen}
         itemLabel={title}
         onConfirm={() => {
+          closeTab(session.id)
           deleteSession(session.id)
           deleteSessionMessages(session.id)
           if (isActive) setMainView({ type: 'chat' })
