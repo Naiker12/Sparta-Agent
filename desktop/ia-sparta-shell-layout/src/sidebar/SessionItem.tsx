@@ -27,7 +27,7 @@ interface SessionItemProps {
 }
 
 export function SessionItem({ session }: SessionItemProps) {
-  const { activeSessionId, switchSession, pinSession, deleteSession, renameSession } = useSessionStore()
+  const { activeSessionId, pinSession, deleteSession, renameSession } = useSessionStore()
   const openTab = useSessionTabsStore((s) => s.openTab)
   const closeTab = useSessionTabsStore((s) => s.closeTab)
   const { deleteSessionMessages, streamingBySession } = useChatStore()

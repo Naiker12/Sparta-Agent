@@ -5,7 +5,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from 'ia-sparta-design-system'
-import { X, Copy, XCircle, ArrowRight } from 'lucide-react'
+import { X, XCircle, ArrowRight } from 'lucide-react'
 
 interface TabContextMenuProps {
   children: React.ReactNode
@@ -24,7 +24,7 @@ export function TabContextMenu({
 }: TabContextMenuProps) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
+      <DropdownMenuTrigger>{children}</DropdownMenuTrigger>
       <DropdownMenuContent align="start" sideOffset={4} className="min-w-[160px] p-1">
         <DropdownMenuItem
           className="px-2 py-1.5 text-xs gap-2 cursor-pointer rounded-sm"

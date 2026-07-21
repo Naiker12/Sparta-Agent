@@ -3,7 +3,6 @@ import { X, ExternalLink, Tag, Calendar, MessageSquare, Trash2 } from 'lucide-re
 import { Button } from 'ia-sparta-design-system'
 import type { MemoryEntry, MemoryGraphNode } from 'ia-sparta-core'
 import { getGraphNodeColor } from 'ia-sparta-core'
-import { useSessionStore } from 'ia-sparta-core'
 import { useSessionTabsStore } from 'ia-sparta-core'
 import { useMemoryStore } from 'ia-sparta-core'
 import { ConfirmDeleteDialog } from 'ia-sparta-design-system'

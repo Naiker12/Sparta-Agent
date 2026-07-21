@@ -24,7 +24,6 @@ export function TabItem({ sessionId, isActive, onfocus, onClose, onCloseOthers, 
   const session = useSessionStore((s) => s.sessions.find((sess) => sess.id === sessionId))
   const isStreaming = useChatStore((s) => s.streamingBySession[sessionId]?.isStreaming ?? false)
   const [hovered, setHovered] = useState(false)
-  const [menuOpen, setMenuOpen] = useState(false)
 
   const title = session?.title || 'Nueva conversación'
 
@@ -61,17 +60,14 @@ export function TabItem({ sessionId, isActive, onfocus, onClose, onCloseOthers, 
       )}
       <span className="truncate flex-1 min-w-0">{title}</span>
 
-      {(hovered || isActive || menuOpen) && (
+      {(hovered || isActive) && (
         <div className="flex items-center gap-0.5 flex-shrink-0">
-          <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-            <DropdownMenuTrigger asChild>
-              <button
-                className="flex items-center justify-center rounded-sm hover:bg-[var(--bg-active)]"
-                style={{ width: 16, height: 16, color: 'var(--text-muted)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <MoreHorizontal size={10} strokeWidth={2} />
-              </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              style={{ width: 16, height: 16, color: 'var(--text-muted)', background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 4 }}
+              onClick={(e: React.MouseEvent) => e.stopPropagation()}
+            >
+              <MoreHorizontal size={10} strokeWidth={2} />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" sideOffset={4} className="min-w-[160px] p-1">
               <DropdownMenuItem
