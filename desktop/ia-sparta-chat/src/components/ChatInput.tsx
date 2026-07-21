@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react'
-import { Plus, ArrowUp, Square, AlertCircle } from 'lucide-react'
+import { Plus, ArrowUp, Square, AlertCircle, FolderOpen, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { useSettingsStore } from 'ia-sparta-core'
 import { useChatStore } from 'ia-sparta-core'
@@ -7,32 +7,40 @@ import { useSessionStore } from 'ia-sparta-core'
 import { useProviderStore } from 'ia-sparta-core'
 import { useChatSession } from 'ia-sparta-core'
 import { useLocalSkillsLoader } from 'ia-sparta-core'
+import { useFolderStore } from 'ia-sparta-core'
 import { cn } from 'ia-sparta-core'
 import { messagingAdapter } from 'ia-sparta-platform'
 import { ModelPicker } from './ModelPicker'
 import { AttachMenu } from './AttachMenu'
 import { VoiceRecordButton } from './VoiceRecordButton'
+import { ModeSwitch } from './input/ModeSwitch'
+import { SkillSuggestionChip } from './input/SkillSuggestionChip'
 import { SlashCommandMenu, executeSlashCommand, type SlashCommand, setSlashSkillCache } from './SlashCommandMenu'
+import { ProjectDialog } from 'ia-sparta-projects'
 import { useTranslation } from 'ia-sparta-i18n'
 
 interface ChatInputProps {
+  sessionId?: string
   className?: string
 }
 
-export function ChatInput({ className }: ChatInputProps) {
+export function ChatInput({ sessionId, className }: ChatInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [focused, setFocused] = useState(false)
   const [showAttach, setShowAttach] = useState(false)
   const [showSlash, setShowSlash] = useState(false)
+  const [showFolderDialog, setShowFolderDialog] = useState(false)
   const { input, setInput } = useSettingsStore()
-  const isStreaming = useChatStore((s) => s.isStreaming)
   const activeSessionId = useSessionStore((s) => s.activeSessionId)
+  const resolvedSessionId = sessionId ?? activeSessionId
+  const isStreaming = useChatStore((s) => resolvedSessionId ? (s.streamingBySession[resolvedSessionId]?.isStreaming ?? false) : s.isStreaming)
   const providers = useProviderStore((s) => s.providers)
   const hasProvider = providers.some((p) => p.kind === 'local' || p.apiKey || p.hasVaultKey)
   const stopStreaming = useChatStore((s) => s.stopStreaming)
   const injectWhileStreaming = useChatStore((s) => s.injectWhileStreaming)
-  const { sendMessage } = useChatSession()
+  const { sendMessage } = useChatSession(resolvedSessionId ?? undefined)
   const { t, lang } = useTranslation()
+  const { connectedPath, folderName, disconnectFolder } = useFolderStore()
 
   const { skills: localSkills } = useLocalSkillsLoader()
 
@@ -76,7 +84,7 @@ export function ChatInput({ className }: ChatInputProps) {
   }
 
   function handleStop() {
-    const sid = activeSessionId
+    const sid = resolvedSessionId
     if (sid) {
       stopStreaming(sid)
       messagingAdapter.abortMessage(sid)
@@ -345,6 +353,58 @@ export function ChatInput({ className }: ChatInputProps) {
             </div>
           </div>
         </div>
+
+        {/* Folder chip row */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          marginTop: 6,
+          paddingLeft: 4,
+        }}>
+          <SkillSuggestionChip />
+          <button
+            onClick={() => setShowFolderDialog(true)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 5,
+              padding: '3px 8px',
+              borderRadius: 'var(--radius-md)',
+              border: '1px solid var(--border-normal)',
+              background: connectedPath ? 'color-mix(in srgb, var(--accent) 8%, transparent)' : 'var(--bg-subtle)',
+              color: connectedPath ? 'var(--accent)' : 'var(--text-muted)',
+              cursor: 'pointer',
+              fontSize: 11,
+              fontFamily: 'var(--font-ui)',
+              transition: 'all 0.15s',
+              maxWidth: 200,
+            }}
+          >
+            <FolderOpen size={11} strokeWidth={1.5} />
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {folderName ?? 'Sin carpeta'}
+            </span>
+          </button>
+          {connectedPath && (
+            <button
+              onClick={disconnectFolder}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: 16, height: 16, borderRadius: 'var(--radius-sm)',
+                background: 'none', border: 'none', cursor: 'pointer',
+                color: 'var(--text-muted)', padding: 0,
+              }}
+              title="Desconectar carpeta"
+            >
+              <X size={10} />
+            </button>
+          )}
+          <div style={{ flex: 1 }} />
+          <ModeSwitch />
+        </div>
+
+        <ProjectDialog open={showFolderDialog} onClose={() => setShowFolderDialog(false)} />
       </div>
     </div>
   )

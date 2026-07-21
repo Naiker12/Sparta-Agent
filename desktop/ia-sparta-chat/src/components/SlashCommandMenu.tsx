@@ -22,8 +22,10 @@ const COMMANDS: SlashCommand[] = [
     action: () => {
       const { useSessionStore } = require('ia-sparta-core')
       const { useChatStore } = require('ia-sparta-core')
+      const { useSessionTabsStore } = require('ia-sparta-core')
       const sid = useSessionStore.getState().activeSessionId
       if (sid) {
+        useSessionTabsStore.getState().closeTab(sid)
         useSessionStore.getState().deleteSession(sid)
         useChatStore.getState().deleteSessionMessages(sid)
       }
