@@ -4,6 +4,7 @@ import { Button } from 'ia-sparta-design-system'
 import type { MemoryEntry, MemoryGraphNode } from 'ia-sparta-core'
 import { getGraphNodeColor } from 'ia-sparta-core'
 import { useSessionStore } from 'ia-sparta-core'
+import { useSessionTabsStore } from 'ia-sparta-core'
 import { useMemoryStore } from 'ia-sparta-core'
 import { ConfirmDeleteDialog } from 'ia-sparta-design-system'
 
@@ -107,7 +108,7 @@ export function MemoryNodePanel({ entry, onClose }: MemoryNodePanelProps) {
           {entry.sourceMessageId && (
             <button
               onClick={() => {
-                useSessionStore.getState().switchSession(entry.sourceSessionId!)
+                useSessionTabsStore.getState().openTab(entry.sourceSessionId!)
               }}
               style={{
                 fontSize: 10, color: 'var(--accent)', background: 'none', border: 'none',

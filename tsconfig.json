@@ -30,7 +30,6 @@
       "ia-sparta-stream-events": ["./desktop/ia-sparta-stream-events/src/index.ts"],
       "ia-sparta-chat": ["./desktop/ia-sparta-chat/src/index.ts"],
       "ia-sparta-agents": ["./desktop/ia-sparta-agents/src/index.ts"],
-      "ia-sparta-editor": ["./desktop/ia-sparta-editor/src/index.ts"],
       "ia-sparta-terminal": ["./desktop/ia-sparta-terminal/src/index.ts"],
       "ia-sparta-mcp": ["./desktop/ia-sparta-mcp/src/index.ts"],
       "ia-sparta-memory": ["./desktop/ia-sparta-memory/src/index.ts"],
@@ -44,7 +43,8 @@
       "ia-sparta-design-system": ["./desktop/ia-sparta-design-system/src/index.ts"],
       "ia-sparta-i18n": ["./desktop/ia-sparta-i18n/src/index.ts"],
       "ia-sparta-core": ["./desktop/ia-sparta-core/src/index.ts"],
-      "ia-sparta-platform": ["./desktop/ia-sparta-platform/src/index.ts"]
+      "ia-sparta-platform": ["./desktop/ia-sparta-platform/src/index.ts"],
+      "ia-sparta-tabs": ["./desktop/ia-sparta-tabs/src/index.ts"]
     }
   },
   "include": [
