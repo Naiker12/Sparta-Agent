@@ -3,25 +3,36 @@ import { useChatStore } from 'ia-sparta-core'
 // RAF-throttled flush — accumulates tokens and flushes to the store at most
 // once per animation frame (~16ms). Avoids re-render storms during fast
 // streaming without adding latency.
+//
+// Each buffer is keyed by "sid:mid" so that tokens from multiple concurrent
+// sessions are grouped independently without cross-contamination.
 
 interface Buf { sid: string; mid: string; text: string }
 
-export const _writeBuf: Buf = { sid: '', mid: '', text: '' }
-export const _thinkBuf: Buf = { sid: '', mid: '', text: '' }
+const _writeBufs = new Map<string, Buf>()
+const _thinkBufs = new Map<string, Buf>()
 export let _flushRaf: number | null = null
 
+function _bufKey(sid: string, mid: string): string {
+  return `${sid}:${mid}`
+}
+
 export function _flushContent() {
-  const { sid, mid, text } = _writeBuf
-  if (!text) return
-  _writeBuf.text = ''
-  useChatStore.getState().appendContent(sid, mid, text)
+  for (const [key, buf] of _writeBufs) {
+    if (!buf.text) { _writeBufs.delete(key); continue }
+    const text = buf.text
+    buf.text = ''
+    useChatStore.getState().appendContent(buf.sid, buf.mid, text)
+  }
 }
 
 export function _flushThinking() {
-  const { sid, mid, text } = _thinkBuf
-  if (!text) return
-  _thinkBuf.text = ''
-  useChatStore.getState().appendThinking(sid, mid, text)
+  for (const [key, buf] of _thinkBufs) {
+    if (!buf.text) { _thinkBufs.delete(key); continue }
+    const text = buf.text
+    buf.text = ''
+    useChatStore.getState().appendThinking(buf.sid, buf.mid, text)
+  }
 }
 
 export function _flushBoth() {
@@ -42,21 +53,23 @@ export function _cancelFlush() {
 }
 
 export function queueContent(sid: string, mid: string, token: string) {
-  if (_writeBuf.sid !== sid || _writeBuf.mid !== mid) {
-    _flushContent()
-    _writeBuf.sid = sid
-    _writeBuf.mid = mid
+  const key = _bufKey(sid, mid)
+  let buf = _writeBufs.get(key)
+  if (!buf) {
+    buf = { sid, mid, text: '' }
+    _writeBufs.set(key, buf)
   }
-  _writeBuf.text += token
+  buf.text += token
   _scheduleFlush()
 }
 
 export function queueThinking(sid: string, mid: string, token: string) {
-  if (_thinkBuf.sid !== sid || _thinkBuf.mid !== mid) {
-    _flushThinking()
-    _thinkBuf.sid = sid
-    _thinkBuf.mid = mid
+  const key = _bufKey(sid, mid)
+  let buf = _thinkBufs.get(key)
+  if (!buf) {
+    buf = { sid, mid, text: '' }
+    _thinkBufs.set(key, buf)
   }
-  _thinkBuf.text += token
+  buf.text += token
   _scheduleFlush()
 }
