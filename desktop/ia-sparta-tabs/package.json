@@ -1,0 +1,19 @@
+{
+  "name": "ia-sparta-tabs",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "lucide-react": "^1.24.0",
+    "framer-motion": "^12.41.0",
+    "ia-sparta-core": "workspace:*",
+    "ia-sparta-design-system": "workspace:*"
+  }
+}
