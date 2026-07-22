@@ -174,20 +174,7 @@ export function MessageBubble({ message, isLastUser = false, isLastAssistant = f
             </div>
           ) : null}
 
-          {/* Unified Timeline */}
-          {!isUser && (
-            <div style={{ marginTop: 8, marginBottom: 8 }}>
-              <TimelineBlock message={message} />
-            </div>
-          )}
-
-          {/* Pipeline trace (kept separate as it's not part of the reasoning/tool timeline) */}
-          {message.pipelineSteps && message.pipelineSteps.length > 0 && (
-            <div style={{ marginTop: 8 }}>
-              <PipelineTrace steps={message.pipelineSteps} message={message} />
-            </div>
-          )}
-
+          {/* Response text FIRST (Claude-style: respuesta arriba) */}
           {renderState.kind === 'generating' || renderState.kind === 'responding' || renderState.kind === 'done' ? (
             <>
               {isUser ? (
@@ -222,6 +209,20 @@ export function MessageBubble({ message, isLastUser = false, isLastAssistant = f
               {!isUser && (renderState.kind === 'responding' || renderState.kind === 'generating') && <StreamCursor visible />}
             </>
           ) : null}
+
+          {/* Unified Timeline BELOW the response (Claude-style: razonamiento colapsable debajo) */}
+          {!isUser && (
+            <div style={{ marginTop: 12, marginBottom: 8 }}>
+              <TimelineBlock message={message} />
+            </div>
+          )}
+
+          {/* Pipeline trace (kept separate as it's not part of the reasoning/tool timeline) */}
+          {message.pipelineSteps && message.pipelineSteps.length > 0 && (
+            <div style={{ marginTop: 8 }}>
+              <PipelineTrace steps={message.pipelineSteps} message={message} />
+            </div>
+          )}
 
           {isLastAssistant && !message.isStreaming && suggestions.length > 0 && (
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 12, marginBottom: 4 }}>

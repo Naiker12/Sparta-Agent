@@ -50,7 +50,7 @@ function getDataDir(): string {
     : path.join(process.cwd(), '.sparta')
 }
 
-function getPythonCommand(): { command: string; args: string[]; cwd: string } {
+function getPythonCommand(): { command: string; args: string[]; cwd: string; env: Record<string, string> } {
   const cwd = getPythonCwd()
 
   // En dev preferimos el venv creado por sidecar:setup si existe.
@@ -67,15 +67,37 @@ function getPythonCommand(): { command: string; args: string[]; cwd: string } {
       )
     : ''
 
+  // Build PYTHONPATH: in dev, add all py-sparta-*/src dirs so imports resolve
+  // without requiring `uv sync`. In prod the packages are installed in the
+  // bundled Python venv so this is not needed.
+  const extraPythonPath: string[] = []
+  if (!app.isPackaged) {
+    const pythonDir = path.join(process.cwd(), 'python')
+    try {
+      for (const entry of fs.readdirSync(pythonDir)) {
+        if (entry.startsWith('py-sparta-')) {
+          const srcDir = path.join(pythonDir, entry, 'src')
+          if (fs.existsSync(srcDir)) extraPythonPath.push(srcDir)
+        }
+      }
+    } catch { /* ignore */ }
+  }
+
+  const pythonPathEnv = extraPythonPath.length > 0
+    ? extraPythonPath.join(process.platform === 'win32' ? ';' : ':')
+    : undefined
+
+  const base = { command: 'python', args: ['-m', 'sparta_mcp.main'], cwd }
+
   if (app.isPackaged && bundledPython && fs.existsSync(bundledPython)) {
-    return { command: bundledPython, args: ['-m', 'sparta_ai.main'], cwd }
+    return { ...base, command: bundledPython, env: pythonPathEnv ? { PYTHONPATH: pythonPathEnv } : {} }
   }
 
   if (!app.isPackaged && fs.existsSync(venvPython)) {
-    return { command: venvPython, args: ['-m', 'sparta_ai.main'], cwd }
+    return { ...base, command: venvPython, env: pythonPathEnv ? { PYTHONPATH: pythonPathEnv } : {} }
   }
 
-  return { command: 'python', args: ['-m', 'sparta_ai.main'], cwd }
+  return { ...base, env: pythonPathEnv ? { PYTHONPATH: pythonPathEnv } : {} }
 }
 
 export function startSidecar(): void {
@@ -86,7 +108,7 @@ export function startSidecar(): void {
 function spawnSidecar(): void {
   if (pythonProcess) return
 
-  const { command, args, cwd } = getPythonCommand()
+  const { command, args, cwd, env: extraEnv } = getPythonCommand()
 
   sidecarReady = false
   sidecarWsToken = randomUUID()
@@ -100,6 +122,7 @@ function spawnSidecar(): void {
     stdio: ['pipe', 'pipe', 'pipe'],
     env: {
       ...process.env,
+      ...extraEnv,
       SPARTA_ENV: 'electron',
       SPARTA_ELECTRON: '1',
       SPARTA_WORKSPACE_ROOT: workspaceRoot,
@@ -108,7 +131,6 @@ function spawnSidecar(): void {
       PYTHONUNBUFFERED: '1',
       PYTHONIOENCODING: 'utf-8',
       PYTHONUTF8: '1',
-      PYTHONPATH: cwd,
     },
   })
 

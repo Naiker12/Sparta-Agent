@@ -10,18 +10,19 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
+    "framer-motion": "^12.41.0",
+    "ia-sparta-design-system": "workspace:*",
+    "ia-sparta-i18n": "workspace:*",
+    "ia-sparta-ipc-bridge": "workspace:*",
+    "ia-sparta-stream-events": "workspace:*",
+    "lucide-react": "^1.24.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "zustand": "^5.0.14",
-    "lucide-react": "^1.24.0",
-    "framer-motion": "^12.41.0",
     "react-markdown": "^10.1.0",
     "react-syntax-highlighter": "^16.1.1",
     "remark-gfm": "^4.0.1",
     "sonner": "^2.0.7",
-    "ia-sparta-stream-events": "workspace:*",
-    "ia-sparta-ipc-bridge": "workspace:*",
-    "ia-sparta-design-system": "workspace:*",
-    "ia-sparta-i18n": "workspace:*"
+    "thinking-orbs": "^0.1.1",
+    "zustand": "^5.0.14"
   }
 }

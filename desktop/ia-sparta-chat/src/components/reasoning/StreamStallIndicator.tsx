@@ -1,9 +1,8 @@
 import { useEffect, useState, useRef } from 'react'
-import { getRandomSpinner } from 'ia-sparta-core'
+import { ThinkingOrb } from 'thinking-orbs'
 import type { Message } from 'ia-sparta-core'
 
 const STALL_TIMEOUT_MS = 2000
-const stallSpinner = getRandomSpinner()
 
 interface StreamStallIndicatorProps {
   streaming: boolean
@@ -49,7 +48,6 @@ function getStallMessage(message?: Message): string {
 
 export function StreamStallIndicator({ streaming, message }: StreamStallIndicatorProps) {
   const [stalled, setStalled] = useState(false)
-  const [spinner, setSpinner] = useState(0)
   const [stallMessage, setStallMessage] = useState('')
   const stallTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const msgTimer = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -82,14 +80,6 @@ export function StreamStallIndicator({ streaming, message }: StreamStallIndicato
     return () => { if (msgTimer.current) clearInterval(msgTimer.current) }
   }, [stalled, message])
 
-  useEffect(() => {
-    if (!stalled) return
-    const interval = setInterval(() => {
-      setSpinner((s) => (s + 1) % stallSpinner.frames.length)
-    }, stallSpinner.interval)
-    return () => clearInterval(interval)
-  }, [stalled])
-
   if (!stalled) return null
 
   return (
@@ -106,7 +96,7 @@ export function StreamStallIndicator({ streaming, message }: StreamStallIndicato
         marginTop: 4,
       }}
     >
-      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>{stallSpinner.frames[spinner]}</span>
+      <ThinkingOrb state="working" size={20} />
       {stallMessage}
     </div>
   )

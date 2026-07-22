@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { ThinkingOrb } from 'thinking-orbs'
 
 const SUBAGENT_ICONS: Record<string, string> = {
   research: '\ud83d\udd0d',
@@ -60,11 +61,15 @@ export function SubagentActivationBadge({
         {taskSummary.slice(0, 60)}
       </span>
       {status === 'running' ? (
-        <motion.span
-          animate={{ opacity: [0.4, 1, 0.4] }}
-          transition={{ duration: 1, repeat: Infinity }}
-          style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--status-warn)', flexShrink: 0 }}
-        />
+        subagentName === 'memory' ? (
+          <ThinkingOrb state="listening" size={20} />
+        ) : (
+          <motion.span
+            animate={{ opacity: [0.4, 1, 0.4] }}
+            transition={{ duration: 1, repeat: Infinity }}
+            style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--status-warn)', flexShrink: 0 }}
+          />
+        )
       ) : (
         <span style={{ color: success !== false ? 'var(--status-ok)' : 'var(--status-err)', fontSize: 12 }}>
           {success !== false ? '\u2713' : '\u2717'}

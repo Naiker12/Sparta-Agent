@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { cn } from 'ia-sparta-core'
 import { ChevronRight, Check, Sparkles } from 'lucide-react'
-import { getRandomSpinner, type SpinnerSet } from 'ia-sparta-core'
+import { ThinkingOrb } from 'thinking-orbs'
 import { ShimmerText } from './ShimmerText'
 import { SlidingNumber } from 'ia-sparta-design-system'
+import { resolveOrbState, type OrbState } from './thinking-orbs-map'
 import type { ThinkingStatus, ReasoningOrigin } from 'ia-sparta-core'
 import { useTranslation } from 'ia-sparta-i18n'
 import { thinkingLabel } from './thinking-utils'
@@ -15,28 +15,29 @@ interface ThinkingPillProps {
   isExpanded: boolean
   elapsed: number
   lastSkillName?: string | null
+  /** Name of the currently running tool, if any (for dynamic orb state) */
+  activeToolName?: string | null
+  /** Name of the currently running skill, if any (for dynamic orb state) */
+  activeSkillName?: string | null
+  /** Name of the currently running subagent, if any (for dynamic orb state) */
+  activeSubagentName?: string | null
   origin?: ReasoningOrigin
   className?: string
 }
 
-const spinner = getRandomSpinner()
-
-export function ThinkingPill({ status, tokensUsed, isExpanded, elapsed, lastSkillName, origin = 'native', className }: ThinkingPillProps) {
+export function ThinkingPill({ status, tokensUsed, isExpanded, elapsed, lastSkillName, activeToolName, activeSkillName, activeSubagentName, origin = 'native', className }: ThinkingPillProps) {
   const { t } = useTranslation()
-  const [frame, setFrame] = useState(0)
-  const spinnerRef = useRef<SpinnerSet>(spinner)
-
-  useEffect(() => {
-    if (status !== 'starting' && status !== 'streaming') return
-    const interval = setInterval(() => {
-      setFrame((f) => (f + 1) % spinnerRef.current.frames.length)
-    }, spinnerRef.current.interval)
-    return () => clearInterval(interval)
-  }, [status])
 
   const isActive = status === 'starting' || status === 'streaming'
   const label = thinkingLabel(status, t('chat.thinking'), t('chat.thinking'))
   const isEmulated = origin === 'emulated'
+
+  const orbState: OrbState = resolveOrbState({
+    status,
+    activeTool: activeToolName,
+    activeSkill: activeSkillName,
+    activeSubagent: activeSubagentName,
+  })
 
   return (
     <motion.div
@@ -54,9 +55,7 @@ export function ThinkingPill({ status, tokensUsed, isExpanded, elapsed, lastSkil
     >
       {isActive ? (
         <>
-          <span style={{ width: 10, textAlign: 'center', fontSize: 11, fontFamily: 'var(--font-mono)' }}>
-            {spinnerRef.current.frames[frame]}
-          </span>
+          <ThinkingOrb state={orbState} size={20} paused={!isActive} />
           <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', opacity: 0.8, display: 'inline-flex', alignItems: 'center' }}>
             <SlidingNumber number={elapsed} decimalPlaces={1} transition={{ stiffness: 200, damping: 25, mass: 0.3 }} />
             <span>s</span>

@@ -85,6 +85,26 @@ export function TimelineBlock({ message, className }: TimelineBlockProps) {
     return completed.length > 0 ? completed[completed.length - 1].name : null
   }, [skillBadges])
 
+  // Derive the currently running tool name (for dynamic orb state mapping)
+  const activeToolName = useMemo(() => {
+    if (!message.toolCalls) return null
+    const running = message.toolCalls.find((tc) => tc.status === 'running')
+    return running?.toolName ?? null
+  }, [message.toolCalls])
+
+  // Derive the currently running skill name (for dynamic orb state mapping)
+  const activeSkillName = useMemo(() => {
+    const running = message.pipelineSteps?.find((s) => s.status === 'running')
+    return running?.name ?? null
+  }, [message.pipelineSteps])
+
+  // Derive the currently running subagent name (for dynamic orb state mapping)
+  const activeSubagentName = useMemo(() => {
+    if (!message.parts) return null
+    const runningSubagent = message.parts.find((p) => p.kind === 'subagent' && !p.completedAt)
+    return runningSubagent && 'subagentName' in runningSubagent ? (runningSubagent as { subagentName: string }).subagentName : null
+  }, [message.parts])
+
   // Compute reasoning text for tail preview
   const reasoningText = useMemo(() => {
     if (hasParts) {
@@ -194,6 +214,9 @@ export function TimelineBlock({ message, className }: TimelineBlockProps) {
           isExpanded={isExpanded}
           elapsed={elapsed}
           lastSkillName={lastSkillName}
+          activeToolName={activeToolName}
+          activeSkillName={activeSkillName}
+          activeSubagentName={activeSubagentName}
           origin={message.reasoningOrigin ?? 'native'}
         />
       </button>
