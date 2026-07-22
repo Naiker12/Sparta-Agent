@@ -47,7 +47,7 @@ rust/**/*.rs.bk
 
 # Python AI Sidecar
 python/.venv/
-python/**/__pycache__/
+__pycache__/
 python/**/*.pyc
 python/.pytest_cache/
 python/.ruff_cache/
