@@ -1,0 +1,35 @@
+[project]
+name = "sparta-streaming"
+version = "0.1.0"
+description = "Sparta Agent — Sparta Streaming"
+requires-python = ">=3.11"
+dependencies = [
+    "sparta-errors",
+    "sparta-providers",
+    "pydantic>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest-mock>=3.14.0",
+    "ruff>=0.5.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv.sources]
+sparta-errors = { workspace = true }
+sparta-providers = { workspace = true }
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.pytest.ini_options]
+asyncio_mode = 'auto'
+testpaths = ["tests"]

@@ -1,38 +1,58 @@
 [project]
-name = "sparta-ai"
+name = "sparta-agent-workspace"
 version = "0.1.0"
-description = "Sparta Agent — Python AI Sidecar with LangGraph"
+description = "Sparta Agent monorepo workspace"
 requires-python = ">=3.11"
 dependencies = [
-    "langgraph>=0.2.0",
-    "langchain>=0.3.0",
-    "langchain-anthropic>=0.3.0",
-    "langchain-google-genai>=2.0.0",
-    "langchain-openai>=0.2.0",
-    "langchain-community>=0.3.0",
-    "chromadb>=0.5.0",
-    "pydantic>=2.0.0",
-    "httpx>=0.27.0",
-    "python-dotenv>=1.0.0",
-    "selectolax>=0.3.21",
+    "sparta-errors",
+    "sparta-config",
+    "sparta-security",
+    "sparta-providers",
+    "sparta-audio",
+    "sparta-persistence",
+    "sparta-hooks",
+    "sparta-memory",
+    "sparta-streaming",
+    "sparta-tools",
+    "sparta-skills",
+    "sparta-agents",
+    "sparta-handlers",
+    "sparta-mcp",
 ]
 
-[project.optional-dependencies]
-audio = [
-    "faster-whisper>=1.0.0",
-]
-dev = [
-    "pytest>=8.0.0",
-    "pytest-asyncio>=0.24.0",
-    "pytest-mock>=3.14.0",
-    "black>=24.0.0",
-    "mypy>=1.10.0",
-    "ruff>=0.5.0",
-]
+[tool.uv.sources]
+sparta-errors = { workspace = true }
+sparta-config = { workspace = true }
+sparta-security = { workspace = true }
+sparta-providers = { workspace = true }
+sparta-audio = { workspace = true }
+sparta-persistence = { workspace = true }
+sparta-hooks = { workspace = true }
+sparta-memory = { workspace = true }
+sparta-streaming = { workspace = true }
+sparta-tools = { workspace = true }
+sparta-skills = { workspace = true }
+sparta-agents = { workspace = true }
+sparta-handlers = { workspace = true }
+sparta-mcp = { workspace = true }
 
-[tool.black]
-line-length = 100
-target-version = ["py311"]
+[tool.uv.workspace]
+members = [
+    "py-sparta-errors",
+    "py-sparta-config",
+    "py-sparta-security",
+    "py-sparta-providers",
+    "py-sparta-audio",
+    "py-sparta-persistence",
+    "py-sparta-hooks",
+    "py-sparta-memory",
+    "py-sparta-streaming",
+    "py-sparta-tools",
+    "py-sparta-skills",
+    "py-sparta-agents",
+    "py-sparta-handlers",
+    "py-sparta-mcp",
+]
 
 [tool.ruff]
 line-length = 100
@@ -41,4 +61,3 @@ select = ["E", "F", "I", "N", "W", "UP"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-testpaths = ["sparta_ai/tests"]

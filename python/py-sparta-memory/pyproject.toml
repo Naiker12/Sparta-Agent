@@ -1,0 +1,39 @@
+[project]
+name = "sparta-memory"
+version = "0.1.0"
+description = "Sparta Agent — Sparta Memory"
+requires-python = ">=3.11"
+dependencies = [
+    "sparta-errors",
+    "sparta-config",
+    "sparta-persistence",
+    "chromadb>=0.5.0",
+    "sentence-transformers>=3.0.0",
+    "pydantic>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest-mock>=3.14.0",
+    "ruff>=0.5.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv.sources]
+sparta-errors = { workspace = true }
+sparta-config = { workspace = true }
+sparta-persistence = { workspace = true }
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.pytest.ini_options]
+asyncio_mode = 'auto'
+testpaths = ["tests"]

@@ -1,0 +1,1 @@
+"""Sparta Agent — Sparta Mcp"""

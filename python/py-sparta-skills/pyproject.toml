@@ -1,0 +1,39 @@
+[project]
+name = "sparta-skills"
+version = "0.1.0"
+description = "Sparta Agent — Sparta Skills"
+requires-python = ">=3.11"
+dependencies = [
+    "sparta-errors",
+    "sparta-config",
+    "sparta-security",
+    "sparta-tools",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest-mock>=3.14.0",
+    "ruff>=0.5.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv.sources]
+sparta-errors = { workspace = true }
+sparta-config = { workspace = true }
+sparta-security = { workspace = true }
+sparta-tools = { workspace = true }
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.pytest.ini_options]
+asyncio_mode = 'auto'
+testpaths = ["tests"]

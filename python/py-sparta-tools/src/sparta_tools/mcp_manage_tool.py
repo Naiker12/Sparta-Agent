@@ -1,0 +1,370 @@
+"""Tool de agente para gestionar servidores MCP (instalar, listar, remover).
+
+Sigue el mismo patron que skill_manage_tool: el agente puede sugerir
+instalaciones pero siempre requiere confirmacion del usuario via dialogo.
+
+El agente SOLO puede instalar servidores listados en sparta_mcp_catalog.json
+(el catalogo curado). No puede inventar comandos arbitrarios.
+"""
+from __future__ import annotations
+
+import json
+import logging
+import os
+import shutil
+from pathlib import Path
+from typing import Any
+
+from langchain_core.tools import tool
+
+from sparta_config.security import store_key as vault_store_key_py
+
+logger = logging.getLogger("sparta_ai.tools.mcp")
+
+_CATALOG_PATH = Path(__file__).resolve().parent.parent.parent.parent.parent / "sparta_mcp_catalog.json"
+_MCP_CONFIG_PATH = Path(os.environ.get("SPARTA_WORKSPACE_ROOT", Path.cwd())) / "sparta.mcp.json"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Internal helpers
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _load_catalog() -> dict:
+    """Load the curated MCP catalog."""
+    if not _CATALOG_PATH.exists():
+        return {}
+    try:
+        raw = json.loads(_CATALOG_PATH.read_text(encoding="utf-8"))
+        return raw.get("servers", {})
+    except (json.JSONDecodeError, OSError) as e:
+        logger.error("Failed to load MCP catalog: %s", e)
+        return {}
+
+
+def _load_configured() -> dict:
+    """Load the user's sparta.mcp.json config."""
+    if not _MCP_CONFIG_PATH.exists():
+        return {}
+    try:
+        raw = json.loads(_MCP_CONFIG_PATH.read_text(encoding="utf-8"))
+        return raw.get("mcpServers", {})
+    except (json.JSONDecodeError, OSError) as e:
+        logger.error("Failed to load MCP config: %s", e)
+        return {}
+
+
+def _save_configured(servers: dict) -> None:
+    """Write the user's sparta.mcp.json config."""
+    _MCP_CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
+    content = json.dumps({"mcpServers": servers}, indent=2, ensure_ascii=False)
+    _MCP_CONFIG_PATH.write_text(content, encoding="utf-8")
+
+
+def _format_catalog_for_llm(catalog: dict) -> str:
+    """Format the catalog as a readable string for the LLM."""
+    if not catalog:
+        return "No hay servidores disponibles en el catalogo."
+    lines = ["Servidores MCP disponibles en el catalogo:\n"]
+    for sid, entry in sorted(catalog.items()):
+        env_needed = entry.get("env_required", [])
+        env_str = f"  Requiere env: {', '.join(env_needed)}" if env_needed else ""
+        lines.append(f"  \u2022 {sid} ({entry.get('name', sid)}): {entry.get('description', '')}")
+        if env_str:
+            lines.append(env_str)
+        if entry.get("notes"):
+            lines.append(f"    Nota: {entry['notes']}")
+    return "\n".join(lines)
+
+
+def _format_configured_for_llm(configured: dict) -> str:
+    """Format the configured servers as a readable string for the LLM."""
+    if not configured:
+        return "No hay servidores MCP configurados actualmente."
+    lines = ["Servidores MCP configurados:\n"]
+    for sid, cfg in sorted(configured.items()):
+        enabled = "activado" if cfg.get("enabled", True) else "desactivado"
+        svr_type = cfg.get("type", "stdio")
+        lines.append(f"  \u2022 {sid} ({svr_type}) — {enabled}")
+        if cfg.get("command"):
+            lines.append(f"    Comando: {cfg['command']} {' '.join(cfg.get('args', []))}")
+        if cfg.get("url"):
+            lines.append(f"    URL: {cfg['url']}")
+    return "\n".join(lines)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# mcp_manage_tool
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+@tool
+def mcp_manage_tool(
+    action: str,
+    server_id: str = "",
+    env: dict[str, str] | None = None,
+    extra_args: list[str] | None = None,
+) -> str:
+    """Gestiona servidores MCP: instalar, listar, configurar.
+
+    actions:
+      - list_catalog:   Muestra los servidores disponibles en el catalogo curado
+                        (los unicos que se pueden instalar via tool).
+      - list_configured: Muestra los servidores ya configurados en sparta.mcp.json.
+      - install:        Instala un servidor del catalogo. REQUIERE permiso del
+                        usuario (dialogo). Solo acepta server_id del catalogo.
+                        Proporciona env vars requeridas via el parametro env.
+      - remove:         Elimina un servidor de sparta.mcp.json.
+      - enable:         Activa un servidor existente sin borrar su config.
+      - disable:        Desactiva un servidor sin borrar su config.
+
+    Args:
+        action:     Accion a ejecutar (list_catalog | list_configured | install |
+                    remove | enable | disable).
+        server_id:  Identificador del servidor (requerido para install/remove/enable/disable).
+        env:        Dict de variables de entorno para el servidor (solo install).
+        extra_args: Argumentos adicionales para servidores que los requieran
+                    (ej: filesystem necesita un directorio).
+
+    Returns:
+        Mensaje descriptivo del resultado.
+    """
+    try:
+        action = action.lower().strip()
+
+        # ── LIST CATALOG ────────────────────────────────────────────────
+        if action == "list_catalog":
+            catalog = _load_catalog()
+            return _format_catalog_for_llm(catalog)
+
+        # ── LIST CONFIGURED ─────────────────────────────────────────────
+        if action == "list_configured":
+            configured = _load_configured()
+            return _format_configured_for_llm(configured)
+
+        # ── INSTALL ─────────────────────────────────────────────────────
+        if action == "install":
+            if not server_id:
+                return "Error: server_id es requerido para install."
+            from sparta_tools.manage_add import handle_install
+            return handle_install(server_id, env=env, extra_args=extra_args)
+
+        # ── REMOVE ──────────────────────────────────────────────────────
+        if action == "remove":
+            if not server_id:
+                return "Error: server_id es requerido para remove."
+
+            configured = _load_configured()
+            if server_id not in configured:
+                return f"Error: '{server_id}' no esta configurado."
+
+            del configured[server_id]
+            _save_configured(configured)
+
+            _emit_mcp_event("mcp:server_removed", {"serverId": server_id})
+            return f"Servidor '{server_id}' eliminado de sparta.mcp.json."
+
+        # ── ENABLE / DISABLE ───────────────────────────────────────────
+        if action in ("enable", "disable"):
+            if not server_id:
+                return f"Error: server_id es requerido para {action}."
+
+            configured = _load_configured()
+            if server_id not in configured:
+                return f"Error: '{server_id}' no esta configurado."
+
+            configured[server_id]["enabled"] = (action == "enable")
+            _save_configured(configured)
+
+            _emit_mcp_event(
+                "mcp:connected" if action == "enable" else "mcp:disconnected",
+                {"serverId": server_id},
+            )
+            return f"Servidor '{server_id}' {action}d."
+
+        return (
+            f"Error: Accion '{action}' no reconocida. "
+            f"Acciones validas: list_catalog, list_configured, install, remove, enable, disable."
+        )
+
+    except Exception as e:
+        logger.error("mcp_manage_tool failed: %s", e)
+        return f"Error al gestionar servidor MCP: {e}"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Connect + emit helpers
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Vault helpers — MCP secrets stored encrypted, never in plaintext JSON
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _mcp_vault_key(server_id: str, var_name: str) -> str:
+    """Return the vault key for an MCP secret.
+    
+    Convention:  mcp:{serverId}:{VarName}
+    Example:     mcp:github:GITHUB_TOKEN
+    """
+    return f"mcp:{server_id}:{var_name}"
+
+
+def _store_mcp_secret(server_id: str, var_name: str, value: str) -> None:
+    """Store an MCP secret in both:
+      1. Electron vault (encrypted via safeStorage), by emitting an event
+      2. Python in-memory cache (for immediate use in this session)
+
+    The vault key follows the convention ``mcp:{serverId}:{VarName}``
+    so ``pushAllKeys()`` at startup will push it to Python automatically.
+    """
+    vault_key = _mcp_vault_key(server_id, var_name)
+
+    # 1. Tell Electron to store in the encrypted vault
+    _emit_mcp_event("vault:mcp_store", {
+        "key_id": vault_key,
+        "value": value,
+    })
+
+    # 2. Cache locally for immediate use (same process)
+    vault_store_key_py(vault_key, value)
+
+
+def _resolve_vault_refs(server_id: str, refs: list[str]) -> dict[str, str]:
+    """Resolve vault references to actual values from Python in-memory cache.
+
+    These were seeded into Python by ``pushAllKeys()`` at startup
+    (or stored directly by ``_store_mcp_secret`` during install).
+    """
+    from sparta_config.security import get_key
+    resolved = {}
+    for ref in refs:
+        val = get_key(_mcp_vault_key(server_id, ref))
+        if val:
+            resolved[ref] = val
+    return resolved
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Migration — one-time scan of existing sparta.mcp.json
+# ─────────────────────────────────────────────────────────────────────────────
+
+def migrate_existing_config() -> int:
+    """Scan ``sparta.mcp.json`` for secrets stored in plaintext and move
+    them to the vault.  Rewrites the file with ``env_vault_refs`` ``/
+    ``headers_vault_refs`` instead of raw values.
+
+    Returns the number of entries migrated (0 if none or already migrated).
+    """
+    configured = _load_configured()
+    if not configured:
+        return 0
+
+    migrated_count = 0
+    changed = False
+
+    for server_id, cfg in configured.items():
+        # Migrate stdio env vars
+        env = cfg.get("env")
+        if isinstance(env, dict) and len(env) > 0:
+            # Check if already migrated (contains vault refs only)
+            if cfg.get("env_vault_refs"):
+                continue
+            for var_name, value in env.items():
+                if isinstance(value, str) and value:
+                    _store_mcp_secret(server_id, var_name, value)
+            cfg["env_vault_refs"] = list(env.keys())
+            cfg.pop("env", None)
+            changed = True
+            migrated_count += 1
+
+        # Migrate HTTP headers
+        headers = cfg.get("headers")
+        if isinstance(headers, dict) and len(headers) > 0:
+            if cfg.get("headers_vault_refs"):
+                continue
+            for hdr_name, value in headers.items():
+                if isinstance(value, str) and value:
+                    _store_mcp_secret(server_id, hdr_name, value)
+            cfg["headers_vault_refs"] = list(headers.keys())
+            cfg.pop("headers", None)
+            changed = True
+            migrated_count += 1
+
+    if changed:
+        _save_configured(configured)
+
+    return migrated_count
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Event emission helper
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _emit_mcp_event(event: str, data: dict) -> None:
+    """Emit an MCP event on stdout (same channel as streaming tokens).
+
+    The Electron main process (chat.ipc.ts) catches these and forwards
+    them to the renderer so the frontend store can update.
+    """
+    import sys
+    msg = json.dumps({"event": event, "data": data}, ensure_ascii=False)
+    try:
+        sys.stdout.write(msg + "\n")
+        sys.stdout.flush()
+    except (BrokenPipeError, OSError):
+        pass
+
+
+def _connect_and_emit(server_id: str, config: dict) -> None:
+    """Connect to the MCP server and emit discovery events.
+
+    This is called synchronously from the sync @tool, so we use
+    asyncio.run() since this runs in a ToolNode executor thread (no
+    conflicting event loop).
+    """
+    import asyncio
+    asyncio.run(_async_connect_and_emit(server_id, config))
+
+
+# ── One-time migration at import time ───────────────────────────────────
+_migrated = migrate_existing_config()
+if _migrated:
+    logger.info("MCP config migration: %d entries moved to vault", _migrated)
+
+
+async def _async_connect_and_emit(server_id: str, config: dict) -> None:
+    """Async implementation of MCP connection with event emission."""
+    from sparta_tools.mcp_client import RealMCPClient
+
+    # Resolve vault refs into plain env/headers before connecting
+    resolved_config = {**config}
+    env_refs = resolved_config.pop("env_vault_refs", [])
+    if env_refs:
+        resolved_config["env"] = _resolve_vault_refs(server_id, env_refs)
+    hdr_refs = resolved_config.pop("headers_vault_refs", [])
+    if hdr_refs:
+        resolved_config["headers"] = _resolve_vault_refs(server_id, hdr_refs)
+
+    client = RealMCPClient({**resolved_config, "id": server_id, "timeout": 15})
+    try:
+        workspace = os.environ.get("SPARTA_WORKSPACE_ROOT", "")
+        tools = await client.connect(workspace_root=workspace)
+        _emit_mcp_event("mcp:connected", {
+            "serverId": server_id,
+            "toolCount": len(tools),
+        })
+        if tools:
+            _emit_mcp_event("mcp:tool_discovered", {
+                "serverId": server_id,
+                "tools": [
+                    {"name": t["name"], "description": t.get("description", ""), "inputSchema": t.get("inputSchema", {})}
+                    for t in tools
+                ],
+            })
+    except Exception as e:
+        _emit_mcp_event("mcp:error", {
+            "serverId": server_id,
+            "error": str(e),
+        })
+        raise
+    finally:
+        await client.disconnect()
