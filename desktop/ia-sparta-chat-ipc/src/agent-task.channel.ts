@@ -31,7 +31,7 @@ export function registerAgentTaskIPC(): void {
     const onMessage = (msg: Record<string, unknown>) => {
       if (msg.id !== requestId) return
       const event = msg.event as string
-      if (event === 'agent:step' || event === 'agent:completed') {
+      if (event === 'agent:step' || event === 'agent:completed' || event === 'agent:error') {
         if (win && !win.isDestroyed()) {
           win.webContents.send('agent:task-event', { event, data: msg.data })
         }
@@ -41,18 +41,29 @@ export function registerAgentTaskIPC(): void {
     const result = await new Promise<{ ok: boolean; result?: string; error?: string }>((resolve) => {
       sidecarEvents.on(SidecarEvent.MESSAGE, onMessage)
 
-      const timeout = setTimeout(() => {
+      const cleanup = () => {
         sidecarEvents.removeListener(SidecarEvent.MESSAGE, onMessage)
+        sidecarEvents.removeListener(SidecarEvent.MESSAGE, onDone)
+      }
+
+      const timeout = setTimeout(() => {
+        cleanup()
         resolve({ ok: false, error: 'Timeout esperando resultado del agente' })
       }, 120_000)
 
       const onDone = (msg: Record<string, unknown>) => {
-        if (msg.id !== requestId || msg.event !== 'agent:completed') return
+        if (msg.id !== requestId) return
+        const event = msg.event as string
+        if (event !== 'agent:completed' && event !== 'agent:error') return
         clearTimeout(timeout)
-        sidecarEvents.removeListener(SidecarEvent.MESSAGE, onMessage)
-        sidecarEvents.removeListener(SidecarEvent.MESSAGE, onDone)
-        const data = msg.data as Record<string, unknown> | undefined
-        resolve({ ok: true, result: (data?.result as string) ?? '' })
+        cleanup()
+        if (event === 'agent:error') {
+          const data = msg.data as Record<string, unknown> | undefined
+          resolve({ ok: false, error: (data?.error as string) ?? 'Error desconocido del agente' })
+        } else {
+          const data = msg.data as Record<string, unknown> | undefined
+          resolve({ ok: true, result: (data?.result as string) ?? '' })
+        }
       }
       sidecarEvents.on(SidecarEvent.MESSAGE, onDone)
 

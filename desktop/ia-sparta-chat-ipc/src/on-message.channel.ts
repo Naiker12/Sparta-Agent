@@ -27,7 +27,11 @@ export function registerOnMessageHandler(): void {
       (!activeStream || !activeStream.active || activeStream.messageId !== messageId) &&
       (event.startsWith('stream:') || event.startsWith('thinking:') || event.startsWith('tool:') || event === 'search:progress'),
     )
-    if (isLateStreamEvent) return
+    const isTerminalStreamEvent =
+      event === 'stream:completed' || event === 'stream:error' ||
+      event === 'stream:aborted' || event === 'stream:degenerate' ||
+      event === 'error' || event === 'stream_end'
+    if (isLateStreamEvent && !isTerminalStreamEvent) return
 
     if (event === 'vault:mcp_store') {
       const keyId = (data?.key_id ?? '') as string
@@ -151,11 +155,13 @@ export function registerOnMessageHandler(): void {
         sendToRenderer({ sessionId, messageId, type: 'stream:token', token: data?.token, chunkSeq: data?.chunkSeq ?? getNextSeq(requestId, 'stream') })
         break
       case 'stream:degenerate': {
-        sendToRenderer({
-          sessionId, messageId,
-          type: 'stream:error',
-          error: 'La respuesta se cortó por repetición detectada. El texto generado hasta el corte se conserva. Probá con otro modelo o reintentá.',
-        })
+        if (!isLateStreamEvent) {
+          sendToRenderer({
+            sessionId, messageId,
+            type: 'stream:error',
+            error: 'La respuesta se cortó por repetición detectada. El texto generado hasta el corte se conserva. Probá con otro modelo o reintentá.',
+          })
+        }
         clearSeqCounters(requestId)
         const resolveDeg = streamResolvers.get(requestId)
         resolveDeg?.()
@@ -163,25 +169,30 @@ export function registerOnMessageHandler(): void {
         break
       }
       case 'stream:completed': {
-        sendToRenderer({
-          sessionId, messageId, type: 'stream:completed',
-          usage: data?.usage,
-          suggestions: data?.suggestions,
-        })
+        if (!isLateStreamEvent) {
+          sendToRenderer({
+            sessionId, messageId, type: 'stream:completed',
+            usage: data?.usage,
+            suggestions: data?.suggestions,
+          })
+        }
         clearSeqCounters(requestId)
         const resolveCompleted = streamResolvers.get(requestId)
         resolveCompleted?.()
         streamResolvers.delete(requestId)
         break
       }
-      case 'stream:aborted':
-        sendToRenderer({ sessionId, messageId, type: 'stream:aborted' })
+      case 'stream:aborted': {
+        if (!isLateStreamEvent) {
+          sendToRenderer({ sessionId, messageId, type: 'stream:aborted' })
+          activeStreams.delete(sessionId)
+        }
         clearSeqCounters(requestId)
-        activeStreams.delete(sessionId)
         const resolveAborted = streamResolvers.get(requestId)
         resolveAborted?.()
         streamResolvers.delete(requestId)
         break
+      }
       case 'terminal:agent_command':
         sendToRenderer({ sessionId, messageId, type: 'terminal:agent_command', command: data?.command })
         break
@@ -220,14 +231,40 @@ export function registerOnMessageHandler(): void {
         clearSeqCounters(requestId)
         break
       case 'stream:error': {
-        const errorMsg = typeof data?.error === 'string'
-          ? data.error
-          : (data?.error as Record<string, unknown>)?.message
-            ?? 'Error desconocido del sidecar'
-        sendToRenderer({ sessionId, messageId, type: 'stream:error', error: errorMsg })
+        if (!isLateStreamEvent) {
+          const errorMsg = typeof data?.error === 'string'
+            ? data.error
+            : (data?.error as Record<string, unknown>)?.message
+              ?? 'Error desconocido del sidecar'
+          sendToRenderer({ sessionId, messageId, type: 'stream:error', error: errorMsg })
+        }
         clearSeqCounters(requestId)
         const resolveErr = streamResolvers.get(requestId)
         resolveErr?.()
+        streamResolvers.delete(requestId)
+        break
+      }
+      case 'error': {
+        if (!isLateStreamEvent) {
+          const errorMsg = typeof data?.message === 'string'
+            ? data.message
+            : (data?.error as Record<string, unknown>)?.message
+              ?? 'Error desconocido del sidecar'
+          sendToRenderer({ sessionId, messageId, type: 'stream:error', error: errorMsg })
+        }
+        clearSeqCounters(requestId)
+        const resolvePyErr = streamResolvers.get(requestId)
+        resolvePyErr?.()
+        streamResolvers.delete(requestId)
+        break
+      }
+      case 'stream_end': {
+        if (!isLateStreamEvent) {
+          sendToRenderer({ sessionId, messageId, type: 'stream:completed' })
+        }
+        clearSeqCounters(requestId)
+        const resolveEnd = streamResolvers.get(requestId)
+        resolveEnd?.()
         streamResolvers.delete(requestId)
         break
       }
@@ -238,4 +275,20 @@ export function registerOnMessageHandler(): void {
   }
 
   sidecarEvents.on(SidecarEvent.MESSAGE, onMessage)
+
+  sidecarEvents.on(SidecarEvent.EXIT, () => {
+    for (const [sid, stream] of activeStreams.entries()) {
+      if (stream.active) {
+        const rid = `${sid}:${stream.messageId}`
+        const resolve = streamResolvers.get(rid)
+        if (resolve) {
+          resolve()
+          streamResolvers.delete(rid)
+        }
+        clearSeqCounters(rid)
+        sendToRenderer({ sessionId: sid, messageId: stream.messageId, type: 'stream:error', error: 'El sidecar de Python se desconectó inesperadamente.' })
+      }
+    }
+    activeStreams.clear()
+  })
 }

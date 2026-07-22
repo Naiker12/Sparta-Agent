@@ -8,6 +8,7 @@ import {
 } from 'ia-sparta-design-system'
 import { Plus, Search, X, MessageSquare, Zap, Plug, Hash, Brain, Settings, SlidersHorizontal } from 'lucide-react'
 import { useSessionStore } from 'ia-sparta-core'
+import { useSessionTabsStore } from 'ia-sparta-core'
 import { useSkillStore } from 'ia-sparta-core'
 import { useMCPStore } from 'ia-sparta-core'
 import { useChannelStore } from 'ia-sparta-core'
@@ -70,7 +71,14 @@ export function AppSidebar() {
           <button
             type="button"
             className="sidebar-new-session-btn"
-            onClick={() => { resetActiveSession(); setMainView({ type: 'chat' }) }}
+            onClick={() => {
+              const tabs = useSessionTabsStore.getState().openTabs
+              for (const id of [...tabs]) {
+                useSessionTabsStore.getState().closeTab(id)
+              }
+              resetActiveSession()
+              setMainView({ type: 'chat' })
+            }}
           >
             <Plus size={16} strokeWidth={2.5} className="btn-icon" />
             <span className="btn-label" style={{ flex: 1, textAlign: 'left' }}>{t('sidebar.newSession')}</span>

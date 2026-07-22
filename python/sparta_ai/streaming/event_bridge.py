@@ -28,7 +28,7 @@ _TOKEN_EVENTS = frozenset({"stream:token", "thinking:token"})
 
 _CONTROL_EVENTS = frozenset({
     "stream:completed", "stream:aborted", "stream:error", "stream:degenerate",
-    "stream:end",
+    "stream:end", "stream_end", "error",
     "thinking:started", "thinking:completed", "thinking:status",
     "tool:called", "tool:result", "tool:error",
     "terminal:agent_command", "terminal:agent_spawn",
@@ -138,8 +138,8 @@ async def _run_single_stream(
     except Exception as e:
         logger.exception("Stream error")
         from sparta_ai.errors.user_messages import to_user_message
-        _emit(request_id, "error", {"code": "stream_error", "message": to_user_message(str(e))})
-        _emit(request_id, "stream_end", {"error": to_user_message(str(e))})
+        _emit(request_id, "stream:error", {"error": to_user_message(str(e))})
+        _emit(request_id, "stream:completed", {})
         return None
     return stream_state
 
@@ -184,10 +184,9 @@ async def stream_agent_to_electron(
         logger.error("Empty response after %d retries for request %s", max_empty_retries, request_id)
         _emit(
             request_id,
-            "error",
+            "stream:error",
             {
-                "code": "empty_response",
-                "message": (
+                "error": (
                     "El modelo no devolvió contenido visible. "
                     "Causas comunes: (1) el modelo no existe para este proveedor, "
                     "(2) la API key es inválida o no tiene acceso al modelo, "
@@ -197,7 +196,7 @@ async def stream_agent_to_electron(
                 ),
             },
         )
-        _emit(request_id, "stream_end", {"error": "empty_response"})
+        _emit(request_id, "stream:completed", {})
         stream_state["_stream_completed"] = True
         return last_result
 

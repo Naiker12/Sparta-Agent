@@ -1,5 +1,5 @@
 import { useSessionTabsStore, useChatStore } from 'ia-sparta-core'
-import { HeroScreen } from 'ia-sparta-chat'
+import { HeroScreen, ChatInput } from 'ia-sparta-chat'
 import { ChatPane } from './ChatPane'
 
 const MAX_LIVE_TABS = 4
@@ -13,6 +13,7 @@ export function ChatArea() {
     return (
       <div className="flex h-full flex-col overflow-hidden">
         <HeroScreen />
+        <ChatInput className="shrink-0 px-4 py-3" />
       </div>
     )
   }

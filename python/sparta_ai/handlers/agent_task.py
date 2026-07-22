@@ -147,6 +147,14 @@ async def run_agent_task(
             "result": accumulated,
         })
 
+    except Exception as e:
+        logger.exception("Agent task failed for %s", task_id)
+        emit_fn(request_id, "agent:error", {
+            "task_id": task_id,
+            "agent_id": agent_id,
+            "error": str(e),
+        })
+
     finally:
         if workspace_root:
             _session_workspaces.pop(task_id, None)

@@ -140,7 +140,7 @@ async function runAssistantTurn(
     if (resolved && !resolved.ok) {
       store.stopStreaming(sid)
       const SEND_ERROR_MESSAGES: Record<string, string> = {
-        'Sidecar not ready': 'El asistente de Python no respondió a tiempo. Probá de nuevo o reiniciá la app.',
+        'Sidecar no listo': 'El asistente de Python no respondió a tiempo. Probá de nuevo o reiniciá la app.',
         'Concurrent stream not allowed for same session': 'Ya hay una respuesta en curso en esta sesión. Esperá a que termine antes de enviar otro mensaje.',
         'Timeout': 'La solicitud tardó demasiado y se canceló. Probá de nuevo.',
       }

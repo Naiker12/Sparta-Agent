@@ -36,7 +36,7 @@ def _emit(request_id: str, event: str, data: dict | None = None):
 
 
 def _emit_error(request_id: str | None, code: str, message: str):
-    _emit(request_id, "error", {"code": code, "message": message})
+    _emit(request_id, "stream:error", {"error": message})
 
 
 class StdioServer:
@@ -155,7 +155,7 @@ class StdioServer:
             await self._handle_audio_transcribe(request_id, params)
         else:
             _emit_error(request_id, "unknown_method", f"Unknown method: {method}")
-            _emit(request_id, "stream_end", {})
+            _emit(request_id, "stream:completed", {})
 
     async def _handle_chat_stream(self, request_id: str, params: dict):
         messages = params.get("messages", [])
@@ -251,7 +251,7 @@ class StdioServer:
         except Exception as e:
             logger.error("Agent execution failed: %s", traceback.format_exc())
             _emit_error(request_id, "internal_error", str(e))
-            _emit(request_id, "stream_end", {"error": str(e)})
+            _emit(request_id, "stream:completed", {})
         finally:
             _active_streams.pop(request_id, None)
 

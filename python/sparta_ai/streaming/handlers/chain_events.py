@@ -84,8 +84,8 @@ async def handle_chain_end(
         stream_state["thinking_active"] = False
     if stream_state.get("visible_chars", 0) == 0:
         emit_control_fn(
-            "error",
-            {"code": "empty_response", "message": "El modelo no devolvió contenido visible."},
+            "stream:error",
+            {"error": "El modelo no devolvió contenido visible."},
         )
         stream_state["_stream_completed"] = True
         return False

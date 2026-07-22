@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { Plus, Code, Search, Settings, Shield, Split, TestTube, Globe, Cpu, Sparkles, RotateCw } from 'lucide-react'
 import { useSettingsStore } from 'ia-sparta-core'
 import { useSessionStore } from 'ia-sparta-core'
+import { useSessionTabsStore } from 'ia-sparta-core'
 import { useTranslation } from 'ia-sparta-i18n'
 
 const QUICK_ACTIONS = [
@@ -40,7 +41,11 @@ export function HeroScreen() {
 
   function handleAction(action: string) {
     if (action === 'settings') { openSettings(); return }
-    if (action === 'new') { createSession(); return }
+    if (action === 'new') {
+      const id = createSession()
+      useSessionTabsStore.getState().openTab(id)
+      return
+    }
     const promptsConfig: Record<string, string> = {
       coding:   t('chat.activeSkills') === 'Código' ? 'Ayúdame a refactorizar este código: ' : 'Help me refactor this code: ',
       research: t('chat.activeSkills') === 'Código' ? 'Investiga en profundidad sobre: ' : 'Research in depth about: ',
