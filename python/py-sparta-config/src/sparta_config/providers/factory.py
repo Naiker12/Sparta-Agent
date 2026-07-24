@@ -33,7 +33,7 @@ def build_llm(
 
     # ── Cache lookup ───────────────────────────────────────────────────
     from sparta_config.providers.cache import _llm_cache_key
-    cache_key = _llm_cache_key(vendor, model, api_key, resolved_base_url)
+    cache_key = _llm_cache_key(vendor, model, api_key, resolved_base_url, reasoning_enabled, reasoning_budget)
     cached = _llm_cache_get(cache_key)
     if cached is not None:
         logger.debug("Reusing cached LLM client: vendor=%s model=%s", vendor, model)

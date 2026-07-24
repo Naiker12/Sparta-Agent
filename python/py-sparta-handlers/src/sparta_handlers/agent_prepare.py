@@ -86,6 +86,15 @@ async def prepare_agent(
     # ── 4. Parallel preparation (Algoritmo B) ──────────────────────────
     last_user_msg = messages[-1].get("content", "") if messages else ""
 
+    import sys
+
+    async def _timed(name, coro):
+        t = _time.perf_counter()
+        result = await coro
+        elapsed = (_time.perf_counter() - t) * 1000
+        sys.stderr.write(f"[PERF_TRACE]   {name}: {elapsed:.1f}ms\n")
+        return result
+
     async def _compress():
         return await compress_if_needed_non_blocking(api_messages, llm, session_id)
 
@@ -133,21 +142,24 @@ async def prepare_agent(
         mcp_tools,
         checkpointer,
     ) = await asyncio.gather(
-        _compress(),
-        _memory(),
-        _folder(),
-        _skills(),
-        asyncio.to_thread(_project),
-        _mcp(),
-        _checkpointer(),
+        _timed("compress", _compress()),
+        _timed("memory", _memory()),
+        _timed("folder", _folder()),
+        _timed("skills", _skills()),
+        _timed("project", asyncio.to_thread(_project)),
+        _timed("mcp", _mcp()),
+        _timed("checkpointer", _checkpointer()),
     )
 
     skill_context = skill_result[0] if skill_result else ""
     suggested_skill_ids = skill_result[1] if skill_result else []
 
     t_prep = (_time.perf_counter() - t0) * 1000
+    sys.stderr.write(
+        f"[PERF_TRACE] Agent preparation complete in {t_prep:.1f}ms | vendor={vendor or provider} | model={model} | health={health_ms:.1f}ms | build_llm={build_ms:.1f}ms\n"
+    )
     logger.info(
-        "prepare_agent parallel phase: %.1fms [vendor=%s model=%s health=%.1fms build=%.1fms]",
+        "[PERF_TRACE] prepare_agent parallel phase: %.1fms [vendor=%s model=%s health=%.1fms build=%.1fms]",
         t_prep, vendor or provider, model, health_ms, build_ms,
     )
 

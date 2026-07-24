@@ -146,11 +146,24 @@ async def _run_single_stream(
     thread_id: str,
     stream_state: dict,
 ) -> dict | None:
+    import time
+    import sys
+    t0 = time.perf_counter()
+    first_token_logged = False
+    sys.stderr.write(f"[PERF_TRACE] Executing graph.astream_events for request {request_id}\n")
+
     config = {"configurable": {"thread_id": thread_id or request_id}, "recursion_limit": 100}
     stop_heartbeat = asyncio.Event()
     heartbeat_task = asyncio.create_task(_heartbeat_loop(request_id, stop_heartbeat))
     try:
         async for event in graph.astream_events(initial_state, config, version="v2"):
+            if not first_token_logged:
+                kind = event.get("event", "")
+                if kind == "on_chat_model_stream":
+                    ttft = (time.perf_counter() - t0) * 1000
+                    sys.stderr.write(f"[PERF_TRACE] Time to first LLM token: {ttft:.1f}ms for request {request_id}\n")
+                    first_token_logged = True
+
             abort = await _dispatch_event(request_id, event, stream_state)
             if abort:
                 return None
@@ -161,6 +174,8 @@ async def _run_single_stream(
         _emit(request_id, "stream:completed", {})
         return None
     finally:
+        total_time = (time.perf_counter() - t0) * 1000
+        sys.stderr.write(f"[PERF_TRACE] Stream completed in {total_time:.1f}ms for request {request_id}\n")
         stop_heartbeat.set()
         heartbeat_task.cancel()
         try:

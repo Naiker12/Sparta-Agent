@@ -161,6 +161,7 @@ function spawnSidecar(): void {
 
   proc.stderr?.on('data', (data: Buffer) => {
     const text = data.toString().trimEnd()
+    if (text) console.warn('[sidecar:stderr]', text)
     sidecarEvents.emit(SidecarEvent.STDERR, text)
   })
 

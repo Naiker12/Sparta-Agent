@@ -1,6 +1,6 @@
 """LLM client cache — reuses ChatOpenAI/ChatAnthropic/etc. instances across turns.
 
-Keyed by (vendor, model, api_key_hash, base_url) to avoid redundant DNS resolution,
+Keyed by (vendor, model, api_key_hash, base_url, reasoning_params) to avoid redundant DNS resolution,
 TLS handshakes, and SDK object construction on every user message.
 
 Uses an OrderedDict for O(1) LRU eviction (most-recently-used moves to end).
@@ -18,6 +18,8 @@ def _llm_cache_key(
     model: str,
     api_key: str | None,
     base_url: str | None,
+    reasoning_enabled: bool = False,
+    reasoning_budget: int = 0,
 ) -> str:
     """Deterministic cache key for an LLM client instance."""
     key_parts = [vendor, model]
@@ -25,6 +27,8 @@ def _llm_cache_key(
         key_parts.append(hashlib.sha256(api_key.encode()).hexdigest()[:16])
     if base_url:
         key_parts.append(base_url.rstrip("/"))
+    if reasoning_enabled:
+        key_parts.append(f"think:{reasoning_budget}")
     return ":".join(key_parts)
 
 

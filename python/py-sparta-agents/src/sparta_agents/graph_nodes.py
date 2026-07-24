@@ -79,6 +79,8 @@ async def agent_node(state: SpartaState, *, llm: Any, tools: list, all_tools: li
             ),
         })
 
+    import sys
+    sys.stderr.write(f"[PERF_TRACE] agent_node: invoking LLM scope={scope} mode={effective_mode} model={model}\n")
     try:
         if is_forced_summary:
             response = await llm.ainvoke(messages)
@@ -88,8 +90,10 @@ async def agent_node(state: SpartaState, *, llm: Any, tools: list, all_tools: li
             response = await llm_chat.ainvoke(messages)
         else:
             response = await llm_dynamic.ainvoke(messages)
+        sys.stderr.write(f"[PERF_TRACE] agent_node: LLM responded, content_len={len(getattr(response, 'content', '') or '')}\n")
     except Exception as e:
         err_str = str(e)
+        sys.stderr.write(f"[PERF_TRACE] agent_node: LLM EXCEPTION: {err_str[:500]}\n")
         if ("tool use" in err_str.lower() or "tools" in err_str.lower()) and "not found" in err_str.lower():
             error_msg = (
                 "Error: El modelo seleccionado no soporta herramientas (tool use). "

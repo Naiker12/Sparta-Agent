@@ -20,6 +20,13 @@ class GoogleTransport(ProviderTransport):
 
         kwargs.pop("reasoning_effort", None)
         clean_model = model.replace("google/", "").replace("gemini/", "")
+        _MODEL_MAP = {
+            "gemini-3.6-flash": "gemini-2.0-flash",
+            "gemini-3.5-flash": "gemini-2.0-flash",
+            "gemini-3.0-flash": "gemini-2.0-flash",
+            "gemini-3-flash": "gemini-2.0-flash",
+        }
+        clean_model = _MODEL_MAP.get(clean_model, clean_model)
         google_kwargs = {**kwargs, "model": clean_model}
         if api_key:
             google_kwargs["google_api_key"] = api_key

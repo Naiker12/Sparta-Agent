@@ -125,6 +125,7 @@ async function runAssistantTurn(
     const workspaceRoot = resolveWorkspaceRoot()
     const connectedFolder = useFolderStore.getState().connectedPath || undefined
 
+    console.log(`[ChatSession PERF] Dispatching turn: model=${activeModel || provider.defaultModel} vendor=${provider.vendor || provider.id} sessionId=${sid}`)
     const sendResult = messagingAdapter.sendMessage({
       sessionId: sid,
       messageId: assistantId,

@@ -8,7 +8,8 @@ import logging
 
 logger = logging.getLogger("sparta_ai.providers.free_tier_guard")
 
-_FREE_TIER_PATTERNS = (":free", "z-ai/", "free/", ":community", "openrouter/")
+# Specific patterns for free/shared queue models — NOT all paid OpenRouter models!
+_FREE_TIER_PATTERNS = (":free", "z-ai/", "free/", ":community", "openrouter/free")
 
 
 def is_free_tier_model(model: str) -> bool:

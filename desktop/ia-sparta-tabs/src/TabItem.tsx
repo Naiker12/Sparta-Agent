@@ -109,14 +109,14 @@ export function TabItem({ sessionId, isActive, onfocus, onClose }: TabItemProps)
         )}
 
         {(hovered || isActive) && !isEditing && (
-          <button
+          <span
+            role="button"
+            tabIndex={0}
             className="flex items-center justify-center rounded-sm hover:bg-[var(--bg-active)] flex-shrink-0 opacity-70 hover:opacity-100 transition-opacity"
             style={{
               width: 16,
               height: 16,
               color: 'var(--text-muted)',
-              background: 'none',
-              border: 'none',
               padding: 0,
               cursor: 'pointer',
             }}
@@ -124,10 +124,16 @@ export function TabItem({ sessionId, isActive, onfocus, onClose }: TabItemProps)
               e.stopPropagation()
               onClose(sessionId)
             }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.stopPropagation()
+                onClose(sessionId)
+              }
+            }}
             title="Cerrar pestaña"
           >
             <X size={11} strokeWidth={2} />
-          </button>
+          </span>
         )}
       </div>
     </TabContextMenu>

@@ -155,11 +155,17 @@ class WebAdapter implements MessagingAdapter {
     const requestId = sessionId && messageId ? `${sessionId}:${messageId}` : ''
 
     // ── Late-event guard (parity with Electron isLateStreamEvent) ───
+    const TERMINAL_TYPES = new Set([
+      'stream:completed', 'stream:error', 'stream:aborted',
+      'stream:degenerate', 'error', 'stream_end',
+    ])
+
     if (requestId && sessionId) {
       const activeStream = this.activeStreams.get(sessionId)
       const isStreamLike = type.startsWith('stream:') || type.startsWith('thinking:') ||
         type.startsWith('tool:') || type === 'search:progress'
-      if (isStreamLike && (!activeStream || !activeStream.active || activeStream.messageId !== messageId)) {
+      const isLate = !activeStream || !activeStream.active || activeStream.messageId !== messageId
+      if (isStreamLike && isLate && !TERMINAL_TYPES.has(type)) {
         return null
       }
     }

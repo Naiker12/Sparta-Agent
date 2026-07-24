@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig, createLogger } from 'vite'
 import path from 'node:path'
 import electron from 'vite-plugin-electron/simple'
 import react from '@vitejs/plugin-react'
@@ -128,5 +128,17 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
+    css: {
+      devSourcemap: false,
+    },
+    customLogger: (() => {
+      const logger = createLogger()
+      const originalWarn = logger.warn.bind(logger)
+      logger.warn = (msg, options) => {
+        if (msg.includes("Can't resolve original location of error")) return
+        originalWarn(msg, options)
+      }
+      return logger
+    })(),
   }
 })

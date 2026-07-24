@@ -44,7 +44,16 @@ async def _scope_check_ws(websocket, method, params=None):
 def register_ws(app: FastAPI, *, check_origin, check_ws_token, require_auth_frame, connections):
     @app.websocket("/ws")
     async def websocket_endpoint(websocket: WebSocket):
+        if not check_origin(websocket):
+            await websocket.close(code=4403)
+            return
+
         await websocket.accept()
+
+        if not check_ws_token(websocket) and not await require_auth_frame(websocket):
+            await websocket.close(code=4403)
+            return
+
         connection_id = str(id(websocket))
         connections[connection_id] = websocket
 
