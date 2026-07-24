@@ -18,7 +18,23 @@ import { useStreamEvents } from 'ia-sparta-stream-events'
 import type { Provider } from '../types'
 
 function getActiveProvider(providers: Provider[], activeModel: string): Provider | null {
-  return providers.find((p) => p.defaultModel === activeModel || p.models?.includes(activeModel)) ?? providers[0] ?? null
+  if (providers.length === 0) return null
+
+  // 1. Direct match by defaultModel or models list
+  const match = providers.find((p) => p.defaultModel === activeModel || p.models?.includes(activeModel))
+  if (match) return match
+
+  // 2. Vendor match if model name contains vendor prefix (e.g. "openrouter/", "anthropic/", "z-ai/", "google/", "ollama/")
+  const lowerModel = activeModel.toLowerCase()
+  const vendorMatch = providers.find((p) => {
+    const v = p.vendor.toLowerCase()
+    return lowerModel.includes(v) || (v === 'openrouter' && (lowerModel.includes('z-ai/') || lowerModel.includes('free/') || lowerModel.includes('openrouter/')))
+  })
+  if (vendorMatch) return vendorMatch
+
+  // 3. Fallback to first configured provider with an API key / local server
+  const configured = providers.find((p) => p.kind === 'local' || p.apiKey || p.hasVaultKey)
+  return configured ?? providers[0] ?? null
 }
 
 function resolveWorkspaceRoot(): string | undefined {
@@ -118,8 +134,9 @@ async function runAssistantTurn(
       apiUrl,
       isLocal: provider.kind === 'local',
       system,
-      vendor: provider.vendor,
+      vendor: provider.vendor || provider.id || provider.kind || 'openai',
       providerId: provider.id,
+      provider: provider.vendor || provider.id || provider.kind || 'openai',
       mode: sessionMode ?? 'chat',
       skills,
       mcpServers,
@@ -143,6 +160,7 @@ async function runAssistantTurn(
         'Sidecar no listo': 'El asistente de Python no respondió a tiempo. Probá de nuevo o reiniciá la app.',
         'Concurrent stream not allowed for same session': 'Ya hay una respuesta en curso en esta sesión. Esperá a que termine antes de enviar otro mensaje.',
         'Timeout': 'La solicitud tardó demasiado y se canceló. Probá de nuevo.',
+        'Sidecar no disponible — no se pudo enviar el mensaje.': 'El asistente de Python no está disponible. Reiniciá la app.',
       }
       const friendly = resolved.error ? (SEND_ERROR_MESSAGES[resolved.error] ?? resolved.error) : undefined
       store.updateMessage(assistantId, {

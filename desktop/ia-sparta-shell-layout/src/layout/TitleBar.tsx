@@ -17,8 +17,8 @@ import { TabStrip } from 'ia-sparta-tabs'
 const TABS: { type: MainView['type']; label: string }[] = [
   { type: 'chat', label: 'Chat' },
   ...(FEATURES.terminal ? [{ type: 'terminal' as const, label: 'Terminal' }] : []),
-  { type: 'agents', label: 'Agents' },
 ]
+
 
 export function TitleBar() {
   const { mainView, setMainView, sidebarOpen, toggleSidebar, terminalOpen, toggleTerminal } = useUIStore()

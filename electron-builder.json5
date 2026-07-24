@@ -17,18 +17,39 @@
     {
       "from": "python",
       "to": "python",
-      "filter": ["**/*"]
+      "filter": [
+        "**/*",
+        "!**/.venv/**",
+        "!**/__pycache__/**",
+        "!**/*.pyc",
+        "!**/*.pyo",
+        "!**/.pytest_cache/**",
+        "!**/.ruff_cache/**",
+        "!**/.mypy_cache/**",
+        "!**/build/**",
+        "!**/*.dist-info/**",
+        "!**/*.egg-info/**",
+        "!**/*.log"
+      ]
     },
     {
       "from": "desktop/runtime/ia-sparta-security-rust",
       "to": "rust/sparta-security",
       "filter": ["*.node", "index.js", "index.d.ts"]
     },
-    // Python embebido para distribución (sin depender del Python del sistema)
     {
       "from": "vendor/python-win32-x64",
       "to": "python-runtime",
-      "filter": ["**/*"]
+      "filter": [
+        "**/*",
+        "!**/tcl/**",
+        "!**/tkinter/**",
+        "!**/test/**",
+        "!**/tests/**",
+        "!**/idlelib/**",
+        "!**/*.pyc",
+        "!**/__pycache__/**"
+      ]
     }
   ],
   "icon": "public/sparta-escritorio.png",

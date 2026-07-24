@@ -9,3 +9,4 @@ export { type ChannelKind, type IntegrationProvider, type IntegrationStatus, typ
 export { type Project } from './project'
 export { type SettingsTab, type SessionMode, type Language, type SettingsState } from './settings'
 export { type FileTreeNode, type FileReadResult, type FileWriteResult, type FilesystemAPI } from './filesystem'
+export * from './permission.types'

@@ -4,7 +4,6 @@ import { useSettingsStore } from 'ia-sparta-core'
 import { useProviderStore } from 'ia-sparta-core'
 import { useChatStore } from 'ia-sparta-core'
 import { useSessionStore } from 'ia-sparta-core'
-import { useAgentStore } from 'ia-sparta-core'
 import { useCronStore } from 'ia-sparta-core'
 import { useUsageStore } from 'ia-sparta-core'
 import { useProjectStore } from 'ia-sparta-core'
@@ -26,7 +25,6 @@ export function StatusBar() {
   const streamingBySession = useChatStore((s) => s.streamingBySession)
   const messagesBySession = useChatStore((s) => s.messagesBySession)
   const activeSessionId = useSessionStore((s) => s.activeSessionId)
-  const agents = useAgentStore((s) => s.agents)
   const cronJobs = useCronStore((s) => s.jobs)
   const totalInput = useUsageStore((s) => s.totalInput)
   const totalOutput = useUsageStore((s) => s.totalOutput)
@@ -75,7 +73,6 @@ export function StatusBar() {
   const bgStreamingCount = Object.entries(streamingBySession)
     .filter(([sid, state]) => state.isStreaming && sid !== activeSessionId)
     .length
-  const runningAgentCount = agents.filter((a) => a.status === 'running' || a.status === 'thinking').length
   const cronActiveCount = cronJobs.filter((j) => j.enabled).length
   const totalTokens = totalInput + totalOutput
 

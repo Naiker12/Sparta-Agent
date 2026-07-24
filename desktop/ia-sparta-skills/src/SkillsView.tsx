@@ -1,3 +1,4 @@
+import { cn } from 'ia-sparta-design-system'
 import { useState, useMemo, useEffect } from 'react'
 import { Search, Layers, Compass, Plus } from 'lucide-react'
 import { useSkillStore } from 'ia-sparta-core'
@@ -27,30 +28,17 @@ function getCategoryIcon(category: string): string {
 
 function CategorySection({ category, count, activeCount, children }: { category: string; count: number; activeCount?: number; children: React.ReactNode }) {
   return (
-    <div style={{ marginBottom: 20 }}>
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8,
-        paddingTop: 12,
-      }}>
-        <span style={{ fontSize: 13 }}>{getCategoryIcon(category)}</span>
-        <span style={{
-          fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
-          letterSpacing: '0.06em', color: 'var(--text-secondary)',
-          fontFamily: 'var(--font-mono)',
-        }}>
+    <div className="mb-5">
+      <div className="flex items-center gap-1.5 mb-2 pt-3">
+        <span className="text-xs">{getCategoryIcon(category)}</span>
+        <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground font-mono">
           {category}
         </span>
-        <span style={{
-          fontSize: 10, color: 'var(--text-muted)', background: 'var(--bg-active)',
-          padding: '0px 5px', borderRadius: 2, fontFamily: 'var(--font-mono)',
-        }}>
+        <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded font-mono">
           {count}
         </span>
         {activeCount !== undefined && activeCount > 0 && (
-          <span style={{
-            fontSize: 10, color: 'var(--accent)', background: 'color-mix(in srgb, var(--accent) 12%, transparent)',
-            padding: '0px 5px', borderRadius: 2, fontFamily: 'var(--font-mono)',
-          }}>
+          <span className="text-[10px] text-primary bg-primary/10 px-1.5 py-0.5 rounded font-mono">
             {activeCount} activas
           </span>
         )}
@@ -66,20 +54,18 @@ function ExploreSkillCard({ skill, isActive, onToggle }: {
   onToggle: () => void
 }) {
   return (
-    <div style={{
-      background: 'var(--bg-input)', border: '1px solid var(--border-subtle)',
-      borderRadius: 'var(--radius-md)', padding: '10px 12px',
-      borderLeft: isActive ? '3px solid var(--accent)' : '3px solid transparent',
-      transition: 'all 0.15s',
-    }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 4 }}>
-        <span style={{ fontSize: 16, flexShrink: 0 }}>{skill.icon || '\ud83d\udce6'}</span>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-ui)' }}>
+    <div className={cn(
+      "bg-card/70 border border-border/60 rounded-lg p-3 border-l-4 transition-all duration-150",
+      isActive ? "border-l-primary" : "border-l-transparent"
+    )}>
+      <div className="flex items-start gap-2 mb-1">
+        <span className="text-base shrink-0">{skill.icon || '📦'}</span>
+        <div className="flex-1 min-w-0">
+          <div className="text-xs font-semibold text-foreground">
             {skill.name}
           </div>
-          <div style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)' }}>
-            {skill.author || 'Sparta Team'} {skill.version ? `\u00b7 v${skill.version}` : ''}
+          <div className="text-[10px] text-muted-foreground">
+            {skill.author || 'Sparta Team'} {skill.version ? `· v${skill.version}` : ''}
           </div>
         </div>
         <SkillToggle
@@ -89,20 +75,15 @@ function ExploreSkillCard({ skill, isActive, onToggle }: {
           ariaLabel={`${isActive ? 'Desactivar' : 'Activar'} ${skill.name}`}
         />
       </div>
-      <p style={{
-        fontSize: 11.5, color: 'var(--text-secondary)', lineHeight: 1.5,
-        margin: '4px 0 6px', fontFamily: 'var(--font-ui)',
-      }}>
+      <p className="text-xs text-muted-foreground leading-relaxed my-1.5">
         {skill.description}
       </p>
       {skill.tags?.length > 0 && (
-        <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+        <div className="flex gap-1 flex-wrap mt-2">
           {skill.tags.slice(0, 4).map((tag) => (
-            <span key={tag} style={{
-              fontSize: 9.5, padding: '1px 5px', borderRadius: 2,
-              background: 'var(--bg-active)', color: 'var(--text-muted)',
-              fontFamily: 'var(--font-mono)',
-            }}>{tag}</span>
+            <span key={tag} className="text-[9.5px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-mono">
+              {tag}
+            </span>
           ))}
         </div>
       )}
@@ -112,27 +93,22 @@ function ExploreSkillCard({ skill, isActive, onToggle }: {
 
 function EmptyState({ message }: { message: string }) {
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      flexDirection: 'column', gap: 8, padding: '48px 24px', color: 'var(--text-muted)',
-    }}>
+    <div className="flex items-center justify-center flex-col gap-2 py-12 px-6 text-muted-foreground">
       <Layers size={28} strokeWidth={1} />
-      <span style={{ fontSize: 12, fontFamily: 'var(--font-ui)' }}>{message}</span>
+      <span className="text-xs">{message}</span>
     </div>
   )
 }
 
 function SkeletonLoader() {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingTop: 12 }}>
+    <div className="flex flex-col gap-4 pt-3">
       {[1, 2, 3].map((i) => (
         <div key={i}>
-          <div style={{ width: 80, height: 10, background: 'var(--bg-active)', borderRadius: 3, marginBottom: 8 }} />
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 8 }}>
+          <div className="w-20 h-2.5 bg-muted rounded mb-2 animate-pulse" />
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-2">
             {[1, 2, 3].map((j) => (
-              <div key={j} style={{
-                height: 80, background: 'var(--bg-active)', borderRadius: 'var(--radius-md)',
-              }} />
+              <div key={j} className="h-20 bg-muted/60 rounded-md animate-pulse" />
             ))}
           </div>
         </div>

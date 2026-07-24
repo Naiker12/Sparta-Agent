@@ -62,7 +62,7 @@ export function ChannelDialog({ open, onClose, onSubmit }: ChannelDialogProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <form id="channel-form" onSubmit={handleSubmit} className="px-6 pb-2 flex flex-col gap-4">
+        <form id="channel-form" onSubmit={handleSubmit} className="py-1 flex flex-col gap-3.5">
           <div>
             <label style={{
               display: 'block', fontSize: 11, color: 'var(--text-secondary)',

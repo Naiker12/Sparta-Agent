@@ -11,6 +11,8 @@ export default defineConfig(({ mode }) => {
   return {
     resolve: {
       alias: {
+        '@': path.join(__dirname, '.'),
+        '@/components': path.join(__dirname, 'components'),
         'ia-sparta-app-shell': path.join(__dirname, 'desktop/ia-sparta-app-shell/src/index.ts'),
         'ia-sparta-ipc-bridge': path.join(__dirname, 'desktop/ia-sparta-ipc-bridge/src/index.ts'),
         'ia-sparta-chat-ipc': path.join(__dirname, 'desktop/ia-sparta-chat-ipc/src/index.ts'),

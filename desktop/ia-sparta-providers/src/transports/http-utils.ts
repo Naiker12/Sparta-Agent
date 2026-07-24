@@ -18,9 +18,11 @@ export async function fetchWithRetry(
   url: string,
   options: RequestInit,
   retries = 1,
+  timeoutMs = 60_000,
 ): Promise<Response> {
   for (let i = 0; i <= retries; i++) {
-    const response = await fetch(url, { ...options })
+    const signal = options.signal ?? AbortSignal.timeout(timeoutMs)
+    const response = await fetch(url, { ...options, signal })
     if (!isRetryable(response.status) || i >= retries) return response
     const delay = Math.min(1000 * Math.pow(2, i), 8000)
     await new Promise((r) => setTimeout(r, delay))

@@ -8,6 +8,8 @@ import {
   clearSeqCounters,
   sendToRenderer,
   streamResolvers,
+  lastActivity,
+  sessionReady,
 } from './shared'
 
 export function registerOnMessageHandler(): void {
@@ -130,6 +132,12 @@ export function registerOnMessageHandler(): void {
       return
     }
 
+    if (sessionId) {
+      lastActivity.set(sessionId, Date.now())
+    }
+
+    if (event === 'stream:heartbeat') return
+
     if (!sessionId || !messageId) return
 
     switch (event) {
@@ -177,6 +185,7 @@ export function registerOnMessageHandler(): void {
           })
         }
         clearSeqCounters(requestId)
+        sessionReady.delete(sessionId)
         const resolveCompleted = streamResolvers.get(requestId)
         resolveCompleted?.()
         streamResolvers.delete(requestId)
@@ -188,6 +197,7 @@ export function registerOnMessageHandler(): void {
           activeStreams.delete(sessionId)
         }
         clearSeqCounters(requestId)
+        sessionReady.delete(sessionId)
         const resolveAborted = streamResolvers.get(requestId)
         resolveAborted?.()
         streamResolvers.delete(requestId)
@@ -239,6 +249,7 @@ export function registerOnMessageHandler(): void {
           sendToRenderer({ sessionId, messageId, type: 'stream:error', error: errorMsg })
         }
         clearSeqCounters(requestId)
+        sessionReady.delete(sessionId)
         const resolveErr = streamResolvers.get(requestId)
         resolveErr?.()
         streamResolvers.delete(requestId)
@@ -253,6 +264,7 @@ export function registerOnMessageHandler(): void {
           sendToRenderer({ sessionId, messageId, type: 'stream:error', error: errorMsg })
         }
         clearSeqCounters(requestId)
+        sessionReady.delete(sessionId)
         const resolvePyErr = streamResolvers.get(requestId)
         resolvePyErr?.()
         streamResolvers.delete(requestId)
@@ -263,6 +275,7 @@ export function registerOnMessageHandler(): void {
           sendToRenderer({ sessionId, messageId, type: 'stream:completed' })
         }
         clearSeqCounters(requestId)
+        sessionReady.delete(sessionId)
         const resolveEnd = streamResolvers.get(requestId)
         resolveEnd?.()
         streamResolvers.delete(requestId)
@@ -286,6 +299,7 @@ export function registerOnMessageHandler(): void {
           streamResolvers.delete(rid)
         }
         clearSeqCounters(rid)
+        sessionReady.delete(sid)
         sendToRenderer({ sessionId: sid, messageId: stream.messageId, type: 'stream:error', error: 'El sidecar de Python se desconectó inesperadamente.' })
       }
     }

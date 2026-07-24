@@ -64,7 +64,7 @@ interface AgentState {
   completeSubagentRun: (agentId: string, runName: string, status: SubagentRunStatus, durationMs?: number) => void
 }
 
-function seedBuiltInAgents(set: (fn: (s: AgentState) => Partial<AgentState>) => void): Agent[] {
+function seedBuiltInAgents(): Agent[] {
   const agents: Agent[] = []
   for (const a of BUILT_IN_AGENTS) {
     agents.push({ ...a, createdAt: Date.now() })
@@ -73,7 +73,7 @@ function seedBuiltInAgents(set: (fn: (s: AgentState) => Partial<AgentState>) => 
 }
 
 export const useAgentStore = create<AgentState>((set) => {
-  const builtInAgents = seedBuiltInAgents(set)
+  const builtInAgents = seedBuiltInAgents()
 
   return {
     agents: builtInAgents,

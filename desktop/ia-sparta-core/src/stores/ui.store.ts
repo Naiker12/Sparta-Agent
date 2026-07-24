@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { toast } from 'sonner'
+import { toast } from 'ia-sparta-design-system'
 import type { SettingsTab } from '../types'
 
 export type MainView =

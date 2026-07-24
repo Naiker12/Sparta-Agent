@@ -229,7 +229,7 @@ async def subagent_node(state: SpartaState, *, llm: Any) -> dict:
             graph = builder(llm=llm)
             result = await asyncio.wait_for(
                 graph.ainvoke({"messages": [HumanMessage(content=json.dumps(args))]}),
-                timeout=120,
+                timeout=200,
             )
             output = result.get("output") if isinstance(result, dict) else str(result)
             duration_ms = int((time.monotonic() - t0) * 1000)
@@ -242,13 +242,13 @@ async def subagent_node(state: SpartaState, *, llm: Any) -> dict:
             )
         except asyncio.TimeoutError:
             duration_ms = int((time.monotonic() - t0) * 1000)
-            logger.warning("Subagent %s timed out after 120s", tc["name"])
+            logger.warning("Subagent %s timed out after 200s", tc["name"])
             await adispatch_custom_event("subagent:completed", {
                 "subagentName": subagent_name, "durationMs": duration_ms, "success": False,
             })
             return (
-                {"subagent": tc["name"], "error": "Timeout after 120s"},
-                ToolMessage(content="Error: El subagente excedió el tiempo de espera (120s).", tool_call_id=tc.get("id", ""), name=tc["name"], status="error"),
+                {"subagent": tc["name"], "error": "Timeout after 200s"},
+                ToolMessage(content="Error: El subagente excedió el tiempo de espera (200s).", tool_call_id=tc.get("id", ""), name=tc["name"], status="error"),
             )
         except Exception as e:
             duration_ms = int((time.monotonic() - t0) * 1000)

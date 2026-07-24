@@ -314,8 +314,8 @@ export function TerminalWorkspace() {
   }
 
   return (
-    <div className="flex flex-col h-full" style={{ background: '#0C0C10' }}>
-      <div className="flex items-center justify-between shrink-0" style={{ height: 30, background: '#0f0f14', borderBottom: '1px solid #ffffff12', padding: '0 8px' }}>
+    <div className="flex flex-col h-full bg-background">
+      <div className="flex items-center justify-between shrink-0 h-[30px] bg-sidebar border-b border-border px-2">
         <div className="flex items-center gap-0.5 overflow-x-auto min-w-0" style={{ height: '100%' }}>
           {tabs.map((tab) => {
             const info = renderTabInfo(tab.id)

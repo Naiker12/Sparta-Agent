@@ -19,7 +19,8 @@ class GoogleTransport(ProviderTransport):
         from langchain_google_genai import ChatGoogleGenerativeAI
 
         kwargs.pop("reasoning_effort", None)
-        google_kwargs = {**kwargs, "model": model}
+        clean_model = model.replace("google/", "").replace("gemini/", "")
+        google_kwargs = {**kwargs, "model": clean_model}
         if api_key:
             google_kwargs["google_api_key"] = api_key
         if reasoning_enabled:

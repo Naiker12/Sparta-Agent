@@ -1,4 +1,4 @@
-import { toast } from 'sonner'
+import { toast } from 'ia-sparta-design-system'
 
 /**
  * Toast con id fijo por categoría — reemplaza en vez de apilar.

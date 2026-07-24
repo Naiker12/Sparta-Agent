@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from 'react'
 import { Plus, ArrowUp, Square, AlertCircle, FolderOpen, X } from 'lucide-react'
-import { toast } from 'sonner'
+import { toast } from 'ia-sparta-design-system'
 import { useSettingsStore } from 'ia-sparta-core'
 import { useChatStore } from 'ia-sparta-core'
 import { useSessionStore } from 'ia-sparta-core'
@@ -364,40 +364,28 @@ export function ChatInput({ sessionId, className }: ChatInputProps) {
         }}>
           <SkillSuggestionChip />
           <button
+            type="button"
             onClick={() => setShowFolderDialog(true)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 5,
-              padding: '3px 8px',
-              borderRadius: 'var(--radius-md)',
-              border: '1px solid var(--border-normal)',
-              background: connectedPath ? 'color-mix(in srgb, var(--accent) 8%, transparent)' : 'var(--bg-subtle)',
-              color: connectedPath ? 'var(--accent)' : 'var(--text-muted)',
-              cursor: 'pointer',
-              fontSize: 11,
-              fontFamily: 'var(--font-ui)',
-              transition: 'all 0.15s',
-              maxWidth: 200,
-            }}
+            className={cn(
+              "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-[11px] font-medium transition-colors max-w-[200px] cursor-pointer select-none",
+              connectedPath
+                ? "bg-indigo-500/10 border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/20"
+                : "bg-white/5 border-white/10 text-muted-foreground hover:bg-white/10 hover:text-foreground"
+            )}
           >
-            <FolderOpen size={11} strokeWidth={1.5} />
-            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <FolderOpen className="size-3 shrink-0" />
+            <span className="truncate">
               {folderName ?? 'Sin carpeta'}
             </span>
           </button>
           {connectedPath && (
             <button
+              type="button"
               onClick={disconnectFolder}
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                width: 16, height: 16, borderRadius: 'var(--radius-sm)',
-                background: 'none', border: 'none', cursor: 'pointer',
-                color: 'var(--text-muted)', padding: 0,
-              }}
+              className="inline-flex items-center justify-center size-4 rounded bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
               title="Desconectar carpeta"
             >
-              <X size={10} />
+              <X className="size-2.5" />
             </button>
           )}
           <div style={{ flex: 1 }} />

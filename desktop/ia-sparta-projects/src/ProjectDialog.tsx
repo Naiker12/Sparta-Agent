@@ -6,8 +6,8 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from 'ia-sparta-design-system'
-import { Button } from 'ia-sparta-design-system'
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
 import { useFolderStore } from 'ia-sparta-core'
 import { FolderOpen, X, Clock } from 'lucide-react'
 
@@ -20,7 +20,6 @@ async function pickFolder(): Promise<string | null> {
   if (typeof window !== 'undefined' && window.fs?.openFolderDialog) {
     return window.fs.openFolderDialog()
   }
-  // Web fallback: prompt for path
   const path = prompt('Ruta de la carpeta:')
   return path?.trim() || null
 }
@@ -66,33 +65,20 @@ export function ProjectDialog({ open, onClose }: ProjectDialogProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="px-6 pb-2 flex flex-col gap-3">
+        <div className="flex flex-col gap-3.5 py-2">
           {connectedPath && (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '8px 12px',
-              borderRadius: 'var(--radius-md)',
-              border: '1px solid var(--border-normal)',
-              background: 'var(--bg-subtle)',
-              fontSize: 12,
-              fontFamily: 'var(--font-mono)',
-              color: 'var(--text-primary)',
-            }}>
-              <FolderOpen size={14} style={{ flexShrink: 0, color: 'var(--accent)' }} />
-              <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {connectedPath}
-              </span>
+            <div className="flex items-center justify-between gap-3 p-3 rounded-lg border border-border bg-input text-xs font-mono text-foreground">
+              <div className="flex items-center gap-2 min-w-0">
+                <FolderOpen className="size-4 shrink-0 text-primary" />
+                <span className="truncate">{connectedPath}</span>
+              </div>
               <button
+                type="button"
                 onClick={handleDisconnect}
-                style={{
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  color: 'var(--text-muted)', padding: 2, display: 'flex',
-                }}
+                className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-hover transition-colors cursor-pointer"
                 title="Desconectar carpeta"
               >
-                <X size={12} />
+                <X className="size-3.5" />
               </button>
             </div>
           )}
@@ -101,42 +87,42 @@ export function ProjectDialog({ open, onClose }: ProjectDialogProps) {
             variant="outline"
             onClick={handlePick}
             disabled={isPicking}
-            style={{ justifyContent: 'flex-start', gap: 8, fontFamily: 'var(--font-ui)' }}
+            className="w-full justify-start gap-3 h-10 px-3.5 text-sm font-normal text-foreground"
           >
-            <FolderOpen size={14} />
-            {isPicking ? 'Seleccionando...' : connectedPath ? 'Cambiar carpeta' : 'Seleccionar carpeta...'}
+            <FolderOpen className="size-4 text-muted-foreground shrink-0" />
+            <span>{isPicking ? 'Seleccionando...' : connectedPath ? 'Cambiar carpeta' : 'Seleccionar carpeta...'}</span>
           </Button>
 
           {recentPaths.length > 0 && (
-            <div style={{ marginTop: 4 }}>
-              <div style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <div className="mt-2 space-y-2">
+              <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider px-1 font-mono">
                 Recientes
               </div>
-              {recentPaths.map((p) => (
-                <button
-                  key={p}
-                  onClick={() => handleRecentPick(p)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 6,
-                    width: '100%', padding: '5px 8px', background: 'none',
-                    border: 'none', borderRadius: 'var(--radius-sm)',
-                    cursor: 'pointer', textAlign: 'left', fontSize: 11,
-                    fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)',
-                    transition: 'background 0.1s',
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-hover)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
-                >
-                  <Clock size={10} style={{ flexShrink: 0, opacity: 0.5 }} />
-                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p}</span>
-                </button>
-              ))}
+              <div className="space-y-1 max-h-40 overflow-y-auto pr-1">
+                {recentPaths.map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => handleRecentPick(p)}
+                    className="flex items-center gap-2.5 w-full px-3 py-2 text-xs font-mono text-muted-foreground hover:text-foreground hover:bg-hover rounded-lg transition-colors text-left cursor-pointer"
+                  >
+                    <Clock className="size-3.5 shrink-0 text-muted-foreground/60" />
+                    <span className="truncate">{p}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </div>
 
         <DialogFooter>
-          <Button variant="ghost" onClick={onClose}>Cerrar</Button>
+          <Button
+            variant="secondary"
+            onClick={onClose}
+            className="h-9 px-4 text-sm font-medium"
+          >
+            Cerrar
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

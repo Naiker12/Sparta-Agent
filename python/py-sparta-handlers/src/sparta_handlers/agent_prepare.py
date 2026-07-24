@@ -52,12 +52,12 @@ async def prepare_agent(
 
     # ── 0. Health check for local providers (fast-fail) ────────────────
     from sparta_config.providers import check_provider_health as _check_health
-    health_warning = _check_health(provider, vendor=vendor)
+    health_warning = _check_health(provider, vendor=vendor, api_url=api_url)
     if health_warning:
-        logger.warning("Provider health check failed: %s", health_warning)
-        raise RuntimeError(
-            f"El proveedor no responde. {health_warning}"
-        )
+        logger.warning("Provider health check warning: %s", health_warning)
+        if (vendor or provider).lower() in ("ollama", "lmstudio", "llamacpp", "local"):
+            raise RuntimeError(f"El servidor local no responde: {health_warning}")
+
     health_ms = (_time.perf_counter() - t_phase) * 1000
 
     t_phase = _time.perf_counter()

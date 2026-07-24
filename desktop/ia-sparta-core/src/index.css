@@ -14,7 +14,7 @@
   --color-destructive: var(--status-err);
   --color-border: var(--border-normal);
   --color-ring: var(--accent);
-  --color-popover: var(--bg-elevated);
+  --color-popover: var(--bg-modal);
   --color-popover-foreground: var(--text-primary);
   --color-card: var(--bg-surface);
   --color-card-foreground: var(--text-primary);

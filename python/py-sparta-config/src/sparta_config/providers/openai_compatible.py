@@ -33,7 +33,7 @@ class OpenAICompatibleTransport(ProviderTransport):
 
     def _normalize_base_url(self, base_url: str) -> str:
         base_url = base_url.rstrip("/")
-        if base_url.endswith("/v1"):
+        if "/v1" in base_url:
             return base_url
         return f"{base_url}/v1"
 

@@ -25,10 +25,13 @@ def build_llm(
     vendor = (vendor or provider).lower()
     resolved_base_url = base_url or api_url
 
+    # Auto-detect OpenRouter keys or explicit OpenRouter models
+    if (api_key and api_key.startswith("sk-or-")) or model.startswith("openrouter/") or "z-ai/" in model:
+        vendor = "openrouter"
+        if not resolved_base_url:
+            resolved_base_url = "https://openrouter.ai/api/v1"
+
     # ── Cache lookup ───────────────────────────────────────────────────
-    # Reuse the LLM client when the configuration hasn't changed since the
-    # last turn.  This avoids redundant DNS/TLS handshakes and SDK object
-    # construction — especially valuable when switching between providers.
     from sparta_config.providers.cache import _llm_cache_key
     cache_key = _llm_cache_key(vendor, model, api_key, resolved_base_url)
     cached = _llm_cache_get(cache_key)
@@ -45,19 +48,21 @@ def build_llm(
         kwargs.setdefault("temperature", 0.7)
         kwargs.setdefault("max_tokens", DEFAULT_CHAT_MAX_TOKENS)
 
-    # Shared HTTP guardrails. Individual transports may override these when
-    # their SDK needs a more specific option.
     kwargs.setdefault("timeout", DEFAULT_REQUEST_TIMEOUT_SECONDS)
     kwargs.setdefault("max_retries", 1)
 
-    # Free-tier models need longer timeouts — they share queues and are slower.
     from sparta_providers.free_tier_guard import get_free_tier_timeout
     free_timeout = get_free_tier_timeout(model)
     if free_timeout is not None:
         kwargs["timeout"] = free_timeout
         logger.info("Free-tier timeout override: %.0fs for %s", free_timeout, model)
 
-    transport = _get_transport(vendor)
+    if resolved_base_url and vendor in ("google", "google_genai", "gemini", "anthropic"):
+        from sparta_config.providers.openai_compatible import OpenAICompatibleTransport
+        transport = OpenAICompatibleTransport(vendor)
+    else:
+        transport = _get_transport(vendor)
+
     if resolved_base_url:
         kwargs["base_url"] = resolved_base_url
     instance = transport.build_llm(

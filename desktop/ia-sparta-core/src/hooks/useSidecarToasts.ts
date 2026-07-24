@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { toast } from 'sonner'
+import { toast } from 'ia-sparta-design-system'
 import { useEventBus } from '../stores/event-bus.store'
 import type { SpartaEvent } from '../types'
 

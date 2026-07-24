@@ -9,7 +9,7 @@ import { buildWebSearchTool, executeWebSearch } from 'ia-sparta-core'
 import { getProviderKey, IS_ELECTRON } from 'ia-sparta-platform'
 import { aiGateway } from 'ia-sparta-core'
 import { useProjectStore } from '../stores/project.store'
-import type { AgentStatus, Agent, Task, AgentType, Provider, TaskStep, SubagentRun, SubagentStep, SubagentRunStatus } from '../types'
+import type { AgentStatus, Agent, Task, AgentType, Provider, TaskStep, SubagentRun } from '../types'
 
 const AGENT_NAMESPACE_MAP: Partial<Record<AgentType, string>> = {
   research: 'delegate_research',

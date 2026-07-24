@@ -49,7 +49,7 @@ export function registerAgentTaskIPC(): void {
       const timeout = setTimeout(() => {
         cleanup()
         resolve({ ok: false, error: 'Timeout esperando resultado del agente' })
-      }, 120_000)
+      }, 240_000)
 
       const onDone = (msg: Record<string, unknown>) => {
         if (msg.id !== requestId) return

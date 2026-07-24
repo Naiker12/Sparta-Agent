@@ -27,6 +27,14 @@ class StdioServer:
         self._loop: asyncio.AbstractEventLoop | None = None
         self._running = False
 
+    @staticmethod
+    def _emit(request_id: str, event: str, data: dict | None = None):
+        _emit(request_id, event, data)
+
+    @staticmethod
+    def _emit_error(request_id: str | None, code: str, message: str):
+        _emit_error(request_id, code, message)
+
     def run(self):
         self._bootstrap()
         self._running = True

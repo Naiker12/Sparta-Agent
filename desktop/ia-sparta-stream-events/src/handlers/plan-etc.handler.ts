@@ -23,8 +23,8 @@ export function handleFileChanged(ctx: EventHandlerCtx) {
 export function handleWorkspaceConnected(ctx: EventHandlerCtx) {
   const root = ctx.event.root as string | undefined
   if (root) {
-    import('sonner').then(({ toast }) => {
-      toast.success('Workspace conectado', { description: root, duration: 3000 })
+    import('ia-sparta-design-system').then(({ toast }) => {
+      toast.success('Workspace conectado', { description: root })
     })
   }
 }

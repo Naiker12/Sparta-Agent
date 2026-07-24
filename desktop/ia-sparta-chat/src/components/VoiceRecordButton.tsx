@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from 'react'
 import { Mic, Square, Loader2 } from 'lucide-react'
-import { toast } from 'sonner'
+import { toast } from 'ia-sparta-design-system'
 import { useAudioRecorder } from 'ia-sparta-core'
 import { useAudioTranscription } from 'ia-sparta-core'
 import { AudioWaveform } from './AudioWaveform'

@@ -5,6 +5,7 @@ import {
   activeStreams,
   windowBySession,
   streamResolvers,
+  lastActivity,
 } from './shared'
 
 export function registerChatSendIPC(): void {
@@ -40,7 +41,7 @@ export function registerChatSendIPC(): void {
       streamResolvers.set(requestId, markDone)
     })
 
-    sendToPython({
+    const sent = sendToPython({
       id: requestId,
       method: 'chat.stream',
       params: {
@@ -70,17 +71,30 @@ export function registerChatSendIPC(): void {
       },
     })
 
-    const timeout = 120_000
-    const startTime = Date.now()
+    if (!sent) {
+      activeStreams.delete(sessionId)
+      streamResolvers.delete(requestId)
+      return { ok: false, error: 'Sidecar no disponible — no se pudo enviar el mensaje.' }
+    }
+
+    const timeout = 240_000
+    let lastActivityTime = Date.now()
     let timedOut = false
 
-    while (Date.now() - startTime < timeout) {
+    while (Date.now() - lastActivityTime < timeout) {
       await new Promise((r) => setTimeout(r, 500))
       const state = activeStreams.get(sessionId)
 
       if (!state?.active) {
         streamResolvers.delete(requestId)
+        lastActivity.delete(sessionId)
         return { ok: true, aborted: true }
+      }
+
+      // Reset timeout if sidecar sent any activity (heartbeat, tokens, etc.)
+      const activity = lastActivity.get(sessionId)
+      if (activity && activity > lastActivityTime) {
+        lastActivityTime = activity
       }
 
       const completed = await Promise.race([
@@ -89,7 +103,8 @@ export function registerChatSendIPC(): void {
       ])
       if (completed) break
     }
-    timedOut = Date.now() - startTime >= timeout
+    timedOut = Date.now() - lastActivityTime >= timeout
+    lastActivity.delete(sessionId)
 
     if (timedOut) {
       // The local timer is a last resort; make it cancel the real sidecar

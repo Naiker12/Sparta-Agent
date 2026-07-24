@@ -165,12 +165,17 @@ function spawnSidecar(): void {
   })
 
   proc.on('exit', (code: number | null, signal: string | null) => {
+    const wasRunning = pythonProcess !== null
     pythonProcess = null
     sidecarReady = false
     sidecarEvents.emit(SidecarEvent.EXIT, { code, signal })
 
     // Auto-restart on unexpected exit unless we intentionally shut it down.
-    if (code !== 0 && signal !== 'SIGTERM' && signal !== 'SIGKILL' && restartAttempts < MAX_RESTART_ATTEMPTS) {
+    // Also restart on code 0 if the sidecar was previously running (BrokenPipeError scenario).
+    const shouldRestart = wasRunning
+      && signal !== 'SIGTERM' && signal !== 'SIGKILL'
+      && restartAttempts < MAX_RESTART_ATTEMPTS
+    if (shouldRestart) {
       const delayMs = 1000 * (restartAttempts + 1)
       restartAttempts++
       sidecarEvents.emit(SidecarEvent.CRASHED, { code, signal, attempt: restartAttempts })
@@ -201,12 +206,17 @@ function spawnSidecar(): void {
   pythonProcess = proc
 }
 
-export function sendToPython(msg: object): void {
+export function sendToPython(msg: object): boolean {
   if (!pythonProcess?.stdin?.writable) {
     console.warn('[sidecar] Not running, cannot send')
-    return
+    return false
   }
-  pythonProcess.stdin.write(JSON.stringify(msg) + '\n')
+  try {
+    return pythonProcess.stdin.write(JSON.stringify(msg) + '\n')
+  } catch (err) {
+    console.error('[sidecar] stdin write failed:', (err as Error).message)
+    return false
+  }
 }
 
 export function stopSidecar(): void {

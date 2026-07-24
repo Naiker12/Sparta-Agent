@@ -26,6 +26,8 @@ _flush_counter = 0
 
 _TOKEN_EVENTS = frozenset({"stream:token", "thinking:token"})
 
+_HEARTBEAT_INTERVAL = 30  # seconds
+
 _CONTROL_EVENTS = frozenset({
     "stream:completed", "stream:aborted", "stream:error", "stream:degenerate",
     "stream:end", "stream_end", "error",
@@ -122,6 +124,21 @@ async def _dispatch_event_core(
 #  Public API — Electron stdout
 # ═══════════════════════════════════════════════════════════════════════
 
+async def _heartbeat_loop(request_id: str, stop_event: asyncio.Event) -> None:
+    """Emit heartbeat events and status updates until stream receives tokens."""
+    try:
+        seconds_waiting = 0
+        while not stop_event.is_set():
+            await asyncio.sleep(10)
+            seconds_waiting += 10
+            if not stop_event.is_set():
+                _emit(request_id, "stream:heartbeat", {})
+                if seconds_waiting >= 12:
+                    _emit(request_id, "thinking:status", {"text": "Conectando con el servidor del modelo..."})
+    except asyncio.CancelledError:
+        pass
+
+
 async def _run_single_stream(
     graph: Any,
     initial_state: dict,
@@ -130,6 +147,8 @@ async def _run_single_stream(
     stream_state: dict,
 ) -> dict | None:
     config = {"configurable": {"thread_id": thread_id or request_id}, "recursion_limit": 100}
+    stop_heartbeat = asyncio.Event()
+    heartbeat_task = asyncio.create_task(_heartbeat_loop(request_id, stop_heartbeat))
     try:
         async for event in graph.astream_events(initial_state, config, version="v2"):
             abort = await _dispatch_event(request_id, event, stream_state)
@@ -141,6 +160,13 @@ async def _run_single_stream(
         _emit(request_id, "stream:error", {"error": to_user_message(str(e))})
         _emit(request_id, "stream:completed", {})
         return None
+    finally:
+        stop_heartbeat.set()
+        heartbeat_task.cancel()
+        try:
+            await heartbeat_task
+        except asyncio.CancelledError:
+            pass
     return stream_state
 
 

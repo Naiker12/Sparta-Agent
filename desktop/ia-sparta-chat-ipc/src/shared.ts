@@ -48,6 +48,7 @@ export const windowBySession = new Map<string, BrowserWindow>()
 export const sessionReady = new Map<string, boolean>()
 export const eventBuffer = new Map<string, Record<string, unknown>[]>()
 export const streamResolvers = new Map<string, () => void>()
+export const lastActivity = new Map<string, number>()
 
 export function getNextSeq(requestId: string, kind: 'stream' | 'think'): number {
   const entry = chunkSeqCounters.get(requestId) ?? { streamSeq: 0, thinkSeq: 0 }

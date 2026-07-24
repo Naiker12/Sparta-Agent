@@ -12,6 +12,7 @@ interface ChatSendRequest {
   system?: string
   vendor?: string
   providerId?: string
+  provider?: string
   mode?: string
   skills?: string[]
   mcpServers?: unknown[]
@@ -83,6 +84,7 @@ class WebAdapter implements MessagingAdapter {
   // ── Parity with Electron IPC: seq counters + late-event guard ─────
   private chunkSeqCounters = new Map<string, { streamSeq: number; thinkSeq: number }>()
   private activeStreams = new Map<string, { active: boolean; messageId: string }>()
+  private doneResolvers = new Map<string, { resolve: (v: boolean) => void; timer: ReturnType<typeof setTimeout> }>()
 
   constructor() {
     this.connect()
@@ -98,6 +100,15 @@ class WebAdapter implements MessagingAdapter {
 
   private clearSeqCounters(requestId: string): void {
     this.chunkSeqCounters.delete(requestId)
+  }
+
+  private resolveDone(sessionId: string): void {
+    const entry = this.doneResolvers.get(sessionId)
+    if (entry) {
+      clearTimeout(entry.timer)
+      entry.resolve(true)
+      this.doneResolvers.delete(sessionId)
+    }
   }
 
   private connect() {
@@ -163,6 +174,7 @@ class WebAdapter implements MessagingAdapter {
       if (type === 'stream:completed' || type === 'stream:aborted' || type === 'stream:error') {
         this.activeStreams.delete(sessionId)
         if (requestId) this.clearSeqCounters(requestId)
+        this.resolveDone(sessionId)
       }
     }
 
@@ -170,6 +182,7 @@ class WebAdapter implements MessagingAdapter {
     if (type === 'stream:degenerate') {
       if (requestId) this.clearSeqCounters(requestId)
       this.activeStreams.delete(sessionId)
+      this.resolveDone(sessionId)
       return {
         type: 'stream:error',
         sessionId,
@@ -252,7 +265,28 @@ class WebAdapter implements MessagingAdapter {
           active_file_path: request.activeFilePath,
         },
       }))
-      return Promise.resolve({ ok: true })
+
+      // Wait for terminal event or timeout (parity with Electron IPC)
+      const timeout = 240_000
+      return new Promise<MessagingAdapterSendResult>((resolve) => {
+        const timer = setTimeout(() => {
+          this.doneResolvers.delete(request.sessionId)
+          this.abortMessage(request.sessionId)
+          resolve({ ok: false, error: 'Timeout' })
+        }, timeout)
+        this.doneResolvers.set(request.sessionId, {
+          resolve: (completed: boolean) => {
+            clearTimeout(timer)
+            this.doneResolvers.delete(request.sessionId)
+            if (completed) {
+              resolve({ ok: true })
+            } else {
+              resolve({ ok: false, error: 'Stream ended unexpectedly' })
+            }
+          },
+          timer,
+        })
+      })
     }
     return Promise.resolve({ ok: false, error: 'WebSocket not connected' })
   }

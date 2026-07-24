@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { useEventBus, useProjectStore, useDiffReviewStore } from 'ia-sparta-core'
+import { useEventBus, useProjectStore, useDiffReviewStore, useUIStore } from 'ia-sparta-core'
 import { ChevronDown, ChevronRight, Sparkles } from 'lucide-react'
 import { ActivityEntryRow } from './ActivityEntryRow'
 import { DiffReviewCard } from './DiffReviewCard'

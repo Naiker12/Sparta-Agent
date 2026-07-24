@@ -79,12 +79,22 @@ def _wrap_tools_with_hooks(tools: list, workspace_root: str) -> list:
     return wrapped
 
 
+_project_context_cache: dict[str, tuple[float, str]] = {}
+
+
 def _build_project_context(workspace_root: str) -> str:
     """Build a brief project context string from the workspace root.
 
     Detects the stack by checking for common config files and counts
     files by extension.  Returns a 10-15 line summary for the system prompt.
+    Caches result for 60 seconds per workspace.
     """
+    import time
+    now = time.time()
+    cached = _project_context_cache.get(workspace_root)
+    if cached and (now - cached[0] < 60.0):
+        return cached[1]
+
     from pathlib import Path
 
     root = Path(workspace_root)
@@ -152,9 +162,9 @@ def _build_project_context(workspace_root: str) -> str:
     top_exts = sorted(ext_counts.items(), key=lambda x: -x[1])[:5]
     if top_exts:
         ext_str = ", ".join(f"{ext}({cnt})" for ext, cnt in top_exts)
-        lines.append(f"Tipos: {ext_str}")
-
-    return "\n".join(lines)
+    res = "\n".join(lines)
+    _project_context_cache[workspace_root] = (now, res)
+    return res
 
 
 def _assemble_agent_tools(

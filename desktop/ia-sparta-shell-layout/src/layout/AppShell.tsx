@@ -10,8 +10,8 @@ import { ChatArea } from '../chat/ChatArea'
 import { SettingsDialog } from '../settings/SettingsDialog'
 import { TerminalSlot } from 'ia-sparta-terminal'
 import { PersistentTerminal } from 'ia-sparta-terminal'
-import { AgentsPanel } from 'ia-sparta-agents'
 import { ChatErrorBoundary } from 'ia-sparta-core'
+
 import { PermissionRequestDialog } from 'ia-sparta-permission'
 import { DiffProposalDialog } from 'ia-sparta-permission'
 import { initTheme } from 'ia-sparta-core'
@@ -40,8 +40,8 @@ function ViewSkeleton() {
 }
 
 const FULL_VIEWS: Record<string, React.ReactNode> = {
-  agents: <AgentsPanel />,
   sessions: <Suspense fallback={<ViewSkeleton />}><SessionsView /></Suspense>,
+
   skills: <Suspense fallback={<ViewSkeleton />}><SkillsView /></Suspense>,
   mcp: <Suspense fallback={<ViewSkeleton />}><McpView /></Suspense>,
   channels: <Suspense fallback={<ViewSkeleton />}><ChannelsView /></Suspense>,
