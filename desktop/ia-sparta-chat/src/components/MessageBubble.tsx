@@ -174,7 +174,14 @@ export function MessageBubble({ message, isLastUser = false, isLastAssistant = f
             </div>
           ) : null}
 
-          {/* Response text FIRST (Claude-style: respuesta arriba) */}
+          {/* Unified Timeline ABOVE the response (thinking first, answer below) */}
+          {!isUser && (
+            <div style={{ marginBottom: 8 }}>
+              <TimelineBlock message={message} />
+            </div>
+          )}
+
+          {/* Response text BELOW thinking block */}
           {renderState.kind === 'generating' || renderState.kind === 'responding' || renderState.kind === 'done' ? (
             <>
               {isUser ? (
@@ -209,13 +216,6 @@ export function MessageBubble({ message, isLastUser = false, isLastAssistant = f
               {!isUser && (renderState.kind === 'responding' || renderState.kind === 'generating') && <StreamCursor visible />}
             </>
           ) : null}
-
-          {/* Unified Timeline BELOW the response (Claude-style: razonamiento colapsable debajo) */}
-          {!isUser && (
-            <div style={{ marginTop: 12, marginBottom: 8 }}>
-              <TimelineBlock message={message} />
-            </div>
-          )}
 
           {/* Pipeline trace (kept separate as it's not part of the reasoning/tool timeline) */}
           {message.pipelineSteps && message.pipelineSteps.length > 0 && (

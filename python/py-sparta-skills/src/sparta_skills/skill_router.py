@@ -71,7 +71,7 @@ def sync_skills_index() -> int:
                 pass
 
         # Upsert all current skills
-        skills_to_index = [s for s in index if s["id"] not in _indexed_ids or True]
+        skills_to_index = [s for s in index if s["id"] not in _indexed_ids]
         if not skills_to_index:
             _indexed_ids = current_ids
             return len(current_ids)

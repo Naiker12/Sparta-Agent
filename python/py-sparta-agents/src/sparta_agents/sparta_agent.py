@@ -51,17 +51,17 @@ def build_sparta_graph(
         vendor=vendor, model=model,
     )
 
-    def _agent(state: SpartaState):
-        return agent_node(state, **_kwargs)
+    async def _agent(state: SpartaState):
+        return await agent_node(state, **_kwargs)
 
-    def _tools(state: SpartaState):
-        return tool_node(state, tools=tools)
+    async def _tools(state: SpartaState):
+        return await tool_node(state, tools=tools)
 
-    def _subagent(state: SpartaState):
-        return subagent_node(state, llm=llm)
+    async def _subagent(state: SpartaState):
+        return await subagent_node(state, llm=llm)
 
-    def _reflection(state: SpartaState):
-        return reflection_node_wrapped(state)
+    async def _reflection(state: SpartaState):
+        return await reflection_node_wrapped(state)
 
     graph = StateGraph(SpartaState)
     graph.add_node("agent", _agent)

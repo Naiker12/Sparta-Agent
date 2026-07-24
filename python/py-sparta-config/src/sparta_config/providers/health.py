@@ -39,9 +39,11 @@ def _perform_health_check(v: str, api_url: str | None) -> str | None:
     }
     base_url = api_url.rstrip("/") if api_url else local_urls.get(v)
     if base_url:
+        # Strip trailing /v1 for path check loop if present
+        clean_base = base_url[:-3] if base_url.endswith("/v1") else base_url
         for path in ("/v1/models", "/api/tags", "/"):
             try:
-                urllib.request.urlopen(f"{base_url}{path}", timeout=1.5)
+                urllib.request.urlopen(f"{clean_base}{path}", timeout=3.5)
                 return None
             except urllib.error.HTTPError as e:
                 if e.code in (400, 401, 403, 404, 405):

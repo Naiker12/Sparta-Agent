@@ -55,7 +55,7 @@ class OpenAICompatibleTransport(ProviderTransport):
         openai_kwargs.setdefault("timeout", DEFAULT_REQUEST_TIMEOUT_SECONDS)
         if api_key:
             openai_kwargs["api_key"] = api_key
-        elif self.vendor in ("lmstudio", "llamacpp", "custom"):
+        elif self.vendor in ("lmstudio", "llamacpp", "custom", "ollama", "local"):
             # ChatOpenAI requires a key client-side even when local servers ignore auth.
             openai_kwargs["api_key"] = "not-needed"
 

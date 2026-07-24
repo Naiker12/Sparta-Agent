@@ -94,14 +94,26 @@ async def agent_node(state: SpartaState, *, llm: Any, tools: list, all_tools: li
     except Exception as e:
         err_str = str(e)
         sys.stderr.write(f"[PERF_TRACE] agent_node: LLM EXCEPTION: {err_str[:500]}\n")
-        if ("tool use" in err_str.lower() or "tools" in err_str.lower()) and "not found" in err_str.lower():
+        
+        # Local models fallback: if tool-bound call failed, retry with plain LLM
+        if (vendor or "").lower() in ("ollama", "lmstudio", "llamacpp", "custom", "local"):
+            logger.warning("Local model tool invocation failed (%s). Retrying with direct LLM...", err_str[:150])
+            try:
+                response = await llm.ainvoke(messages)
+                sys.stderr.write(f"[PERF_TRACE] agent_node: Local fallback LLM responded, content_len={len(getattr(response, 'content', '') or '')}\n")
+            except Exception as fallback_err:
+                error_msg = f"Error del modelo local ({vendor}): {str(fallback_err)[:300]}"
+                return {"messages": [{"role": "assistant", "content": error_msg}], "force_summary": False}
+        elif ("tool use" in err_str.lower() or "tools" in err_str.lower()) and "not found" in err_str.lower():
             error_msg = (
                 "Error: El modelo seleccionado no soporta herramientas (tool use). "
                 "Cambiá a un modelo que sí las soporte (Claude, GPT-4, Gemini Pro, etc.) "
                 "en Configuración > Modelos."
             )
+            return {"messages": [{"role": "assistant", "content": error_msg}], "force_summary": False}
         elif "404" in err_str:
             error_msg = f"Error 404 del proveedor: {err_str[:200]}. Probablemente el modelo no existe o no soporta esta API."
+            return {"messages": [{"role": "assistant", "content": error_msg}], "force_summary": False}
         elif any(kw in err_str.lower() for kw in ("429", "too many requests", "resource_exhausted", "quota exceeded", "rate_limit")):
             error_msg = (
                 "⚠️ ** Cuota de API agotada **\n\n"
@@ -112,9 +124,10 @@ async def agent_node(state: SpartaState, *, llm: Any, tools: list, all_tools: li
                 "3. Usa un modelo local (Ollama/LM Studio) para no depender de APIs externas"
             )
             logger.warning("API quota exhausted for provider: %s", err_str[:200])
+            return {"messages": [{"role": "assistant", "content": error_msg}], "force_summary": False}
         else:
             error_msg = f"Error del modelo: {err_str[:300]}"
-        return {"messages": [{"role": "assistant", "content": error_msg}], "force_summary": False}
+            return {"messages": [{"role": "assistant", "content": error_msg}], "force_summary": False}
 
     result: dict[str, Any] = {"messages": [response]}
     response_content = getattr(response, "content", "")
