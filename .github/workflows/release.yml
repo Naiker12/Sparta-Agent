@@ -53,6 +53,8 @@ jobs:
       # Embedded Python for the sidecar (no system Python needed)
       - name: Fetch embedded Python
         run: node scripts/fetch-embedded-python.cjs --platform ${{ matrix.platform }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install Python deps into embedded runtime
         run: node scripts/setup-embedded-python.cjs --platform ${{ matrix.platform }}

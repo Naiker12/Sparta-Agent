@@ -75,7 +75,12 @@ function vendorDirName(platformOverride) {
 // ── GitHub API helpers ───────────────────────────────────────────────
 function httpGet(url) {
   return new Promise((resolve, reject) => {
-    const req = https.get(url, { headers: { 'User-Agent': 'sparta-agent' } }, (res) => {
+    const headers = { 'User-Agent': 'sparta-agent' };
+    const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
+    if (token) {
+      headers['Authorization'] = `token ${token}`;
+    }
+    const req = https.get(url, { headers }, (res) => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
         return httpGet(res.headers.location).then(resolve, reject)
       }
@@ -187,6 +192,12 @@ async function findAssetWithFallback(target, preferredVersion) {
   const releases = await httpGetJson(
     'https://api.github.com/repos/astral-sh/python-build-standalone/releases?per_page=5'
   )
+  if (!Array.isArray(releases)) {
+    const errorMsg = releases && typeof releases === 'object' && releases.message
+      ? `GitHub API Error: ${releases.message}`
+      : `Expected array of releases, got: ${typeof releases}`;
+    throw new Error(`${errorMsg}\nCheck your GitHub API rate limits or pass GITHUB_TOKEN.`);
+  }
   for (const rel of releases) {
     for (const version of versionsToTry) {
       try {
