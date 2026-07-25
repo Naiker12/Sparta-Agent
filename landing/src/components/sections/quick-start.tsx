@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Card } from '../ui/card';
-import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Terminal, Copy, Check, ArrowRight } from 'lucide-react';
 import { GithubIcon } from '../icons/github-icon';

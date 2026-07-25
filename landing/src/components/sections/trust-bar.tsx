@@ -1,4 +1,4 @@
-import { Cpu, Shield, Code, Server, Layers, Wrench, Terminal, Database } from 'lucide-react';
+import { Cpu, Shield, Code, Server, Layers, Wrench } from 'lucide-react';
 
 export function TrustBar() {
   const techStack = [

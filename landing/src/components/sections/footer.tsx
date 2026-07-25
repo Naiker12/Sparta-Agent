@@ -1,4 +1,4 @@
-import { Shield, FileText, Heart } from 'lucide-react';
+import { Shield, Heart } from 'lucide-react';
 import { GithubIcon } from '../icons/github-icon';
 import { useTheme } from 'next-themes';
 import { useState, useEffect } from 'react';

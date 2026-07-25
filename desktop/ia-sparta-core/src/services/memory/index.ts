@@ -22,7 +22,6 @@ export function isVectorEnabled(): boolean {
   return _vectorConfig.enabled && isConnected()
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function tryAutoConfigure(_providers: { vendor: string; apiKey?: string; serverUrl?: string }[]): boolean {
   if (_vectorConfig.enabled) return true
   // The sidecar computes embeddings locally; we just need the user to have

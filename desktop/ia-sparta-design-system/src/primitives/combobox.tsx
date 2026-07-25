@@ -211,7 +211,6 @@ function ComboboxEmpty({ children }: { children?: React.ReactNode }) {
 }
 ComboboxEmpty.displayName = 'ComboboxEmpty'
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function ComboboxList(_props: { children: (item: string, index: number) => React.ReactNode }): null {
   return null
 }

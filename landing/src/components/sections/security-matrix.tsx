@@ -1,6 +1,6 @@
 import { Card } from '../ui/card';
 import { Badge } from '../ui/badge';
-import { ShieldCheck, ShieldAlert, Lock, AlertTriangle, Eye, Edit3, Slash } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, Lock, Eye, Edit3, Slash } from 'lucide-react';
 
 export function SecurityMatrix() {
   return (

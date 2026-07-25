@@ -20,7 +20,7 @@ interface SkillDisplay {
 
 
 function getSkillIcon(skill: SkillDisplay): string {
-  if (skill.icon && skill.icon !== '\U0001f4e6' && skill.icon.length <= 5) return skill.icon
+  if (skill.icon && skill.icon !== '\u{1F4E6}' && skill.icon.length <= 5) return skill.icon
   const lower = skill.name.toLowerCase()
   if (lower.includes('github')) return '\ud83d\udc19'
   if (lower.includes('email')) return '\ud83d\udce7'

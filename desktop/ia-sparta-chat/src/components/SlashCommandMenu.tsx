@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 import { useEffect, useRef, useState, useCallback } from 'react'
 import type { Skill } from 'ia-sparta-core'
 

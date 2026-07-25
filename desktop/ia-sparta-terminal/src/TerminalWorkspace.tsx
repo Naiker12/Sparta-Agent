@@ -53,8 +53,6 @@ function XIcon(props: { className?: string }) {
 }
 
 export function TerminalWorkspace() {
-  if (!FEATURES.terminal) return null
-
   const toggleTerminal = useUIStore((s) => s.toggleTerminal)
   const tabs = useTerminalStore((s) => s.tabs)
   const activeTabId = useTerminalStore((s) => s.activeTabId)
@@ -147,7 +145,7 @@ export function TerminalWorkspace() {
     fitTimerRef.current = window.setTimeout(() => {
       fitTimerRef.current = 0
       for (const inst of instancesRef.current.values()) {
-        try { inst.fitAddon.fit() } catch {}
+        try { inst.fitAddon.fit() } catch { /* ignore */ }
       }
     }, 80)
   }
@@ -312,6 +310,8 @@ export function TerminalWorkspace() {
       />
     )
   }
+
+  if (!FEATURES.terminal) return null
 
   return (
     <div className="flex flex-col h-full bg-background">

@@ -55,7 +55,7 @@ function parseFrontmatter(text: string): Record<string, unknown> {
     if (val === 'true') val = true
     else if (val === 'false') val = false
     if (key === 'tags' && typeof val === 'string' && val.startsWith('[')) {
-      val = val.replace(/[\[\]]/g, '').split(',').map(t => t.trim().replace(/['"]/g, '')).filter(Boolean)
+      val = val.replace(/[[\]]/g, '').split(',').map(t => t.trim().replace(/['"]/g, '')).filter(Boolean)
     }
     meta[key] = val
   }

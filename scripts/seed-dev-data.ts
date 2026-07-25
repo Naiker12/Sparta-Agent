@@ -7,7 +7,7 @@
  */
 
 // Provider de ejemplo para desarrollo
-const DEV_PROVIDER = {
+export const DEV_PROVIDER = {
   vendor: 'openai',
   kind: 'cloud',
   label: 'Mi OpenAI Dev',
@@ -16,7 +16,7 @@ const DEV_PROVIDER = {
 }
 
 // Skills de ejemplo
-const DEV_SKILLS = [
+export const DEV_SKILLS = [
   {
     name: 'Code Review',
     description: 'Revisa código y sugiere mejoras',
@@ -32,7 +32,7 @@ const DEV_SKILLS = [
 ]
 
 // Proyecto default
-const DEV_PROJECT = {
+export const DEV_PROJECT = {
   name: 'sparta-agent',
   description: 'Proyecto principal',
 }

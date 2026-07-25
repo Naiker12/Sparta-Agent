@@ -43,7 +43,6 @@ export async function embedBatch(texts: string[]): Promise<(number[] | null)[]> 
   return result
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function setActiveProvider(_provider: unknown): void {
   // Deprecated: embeddings are now computed exclusively by the Python sidecar
   // using a single model (all-MiniLM-L6-v2). This function is kept for API

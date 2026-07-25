@@ -103,7 +103,7 @@ function shellCommand(profile?: string) {
     if (pwsh) return { shell: pwsh, args: ['-NoLogo'] }
     const systemRoot = process.env.SystemRoot || 'C:\\Windows'
     const winPs = `${systemRoot}\\System32\\WindowsPowerShell\\v1.0\\powershell.exe`
-    try { accessSync(winPs); return { shell: winPs, args: ['-NoLogo'] } } catch {}
+    try { accessSync(winPs); return { shell: winPs, args: ['-NoLogo'] } } catch { /* ignore */ }
     return { shell: process.env.COMSPEC || 'cmd.exe', args: [] }
   }
   if (profile === 'zsh') return { shell: '/bin/zsh', args: ['-l'] }

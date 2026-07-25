@@ -8,7 +8,7 @@ export function detectEnvironment(): RuntimeEnvironment {
     // Vite define reemplaza __IS_ELECTRON__ con true/false en build-time
     // @ts-expect-error - global definido por vite.config.ts define
     if (__IS_ELECTRON__) return 'electron'
-  } catch {}
+  } catch { /* ignore */ }
   return 'web'
 }
 

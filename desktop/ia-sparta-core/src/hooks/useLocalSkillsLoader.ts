@@ -24,7 +24,7 @@ function parseFrontmatter(text: string): Record<string, unknown> {
     const idx = line.indexOf(':')
     if (idx === -1) continue
     const key = line.slice(0, idx).trim()
-    let val: unknown = line.slice(idx + 1).trim()
+    const val: unknown = line.slice(idx + 1).trim()
     let processedVal: string | boolean | string[] = val as string
     if (typeof val === 'string') {
       const cleaned = val.replace(/^["']\s*|\s*["']$/g, '')

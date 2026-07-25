@@ -102,7 +102,7 @@ export class AnthropicTransport extends BaseTransport {
         const trimmed = line.trim()
         if (!trimmed || !trimmed.startsWith('data:')) continue
         const json = trimmed.slice(5).trim()
-        if (json === '[DONE]') { if (!doneEmitted) { doneEmitted = true; yield { type: 'done' } }; continue }
+        if (json === '[DONE]') { if (!doneEmitted) { doneEmitted = true; yield { type: 'done' } } continue }
         try {
           const parsed = JSON.parse(json)
           switch (parsed.type) {

@@ -132,7 +132,7 @@ async function connectTerminal(sessionId: string): Promise<SessionState> {
           state.exitCode = msg.code
           state.onExit.forEach((cb) => cb(msg.code))
         }
-      } catch { }
+      } catch { /* ignore */ }
     }
 
     ws.onerror = () => {

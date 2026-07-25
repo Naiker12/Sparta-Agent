@@ -179,6 +179,7 @@ declare module 'lucide-react' {
   export const QrCode: Icon
   export const Barcode: Icon
   export const Sigma: Icon
+  // eslint-disable-next-line no-shadow-restricted-names
   export const Infinity: Icon
   export const Pi: Icon
   export const Circle: Icon

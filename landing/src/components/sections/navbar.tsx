@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ThemeToggle } from '../theme-toggle';
 import { Button } from '../ui/button';
-import { Menu, X, Terminal, Shield, Cpu, Sparkles } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { GithubIcon } from '../icons/github-icon';
 import { useTheme } from 'next-themes';
 

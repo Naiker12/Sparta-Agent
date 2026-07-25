@@ -36,6 +36,7 @@ function splitStableMarkdown(content: string): { stable: string; pending: string
   // table or list. This prevents tables/lists from being rendered as plain
   // text while the model is still adding rows/items.
   let searchFrom = content.length
+  // eslint-disable-next-line no-constant-condition
   while (true) {
     const boundary = content.lastIndexOf('\n\n', searchFrom - 1)
     if (boundary === -1) return { stable: '', pending: content }

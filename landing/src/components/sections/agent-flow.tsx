@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { Card } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
@@ -7,15 +6,11 @@ import {
   User,
   FileText,
   Bot,
-  Wrench,
   RotateCcw,
   CheckCircle,
   Play,
-  RotateCw,
-  Sliders,
   ShieldAlert,
-  Clock,
-  Terminal
+  Clock
 } from 'lucide-react';
 
 export function AgentFlow() {

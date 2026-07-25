@@ -1,6 +1,6 @@
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../ui/card';
+import { Card } from '../ui/card';
 import { Badge } from '../ui/badge';
-import { FileText, ShieldAlert, Stethoscope, Plug, Terminal, Code2, Lock, Cpu } from 'lucide-react';
+import { FileText, ShieldAlert, Stethoscope, Plug } from 'lucide-react';
 
 export function FeaturesGrid() {
   const features = [
