@@ -1,4 +1,5 @@
 packages:
+  - 'landing'
   - 'desktop/ia-sparta-app-shell'
   - 'desktop/ia-sparta-ipc-bridge'
   - 'desktop/ia-sparta-chat-ipc'

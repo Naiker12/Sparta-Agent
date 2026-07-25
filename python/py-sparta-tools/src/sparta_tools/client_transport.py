@@ -45,7 +45,11 @@ def _resolve_env(raw_env: dict[str, str] | None) -> dict[str, str]:
         k: v for k, v in os.environ.items()
         if k in {"PATH", "HOME", "USER", "USERNAME", "TEMP", "TMP", "SHELL", "COMSPEC", "TERM", "LANG"}
     }
-    merged = {**safe_vars}
+    merged = {
+        **safe_vars,
+        "npm_config_loglevel": "silent",
+        "NO_COLOR": "1",
+    }
     if raw_env:
         merged.update(raw_env)
     return merged
@@ -59,9 +63,6 @@ def create_stdio_transport(
     command = config.get("command", "")
     args = resolve_arg_placeholders(config.get("args", []), override=workspace_root or None)
     env = _resolve_env(config.get("env"))
-
-    if platform.system() == "Windows":
-        env["PROMPT"] = "$E"
 
     if not command:
         raise ValueError(f"MCP server '{server_id}' requires 'command' for stdio type.")

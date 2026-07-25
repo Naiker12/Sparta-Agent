@@ -51,7 +51,10 @@ class RealMCPClient:
         self._server_type: str = config.get("type", "stdio")
         self._timeout: int = int(config.get("timeout", 30))
         command = str(config.get("command", "")).replace("\\", "/").rsplit("/", 1)[-1].lower()
-        default_connect_timeout = min(self._timeout, 5)
+        if self._server_type == "stdio" or any(cmd in command for cmd in ("npx", "npm", "pnpm", "yarn", "node")):
+            default_connect_timeout = min(self._timeout, 15)
+        else:
+            default_connect_timeout = min(self._timeout, 5)
         self._connect_timeout: int = int(config.get("connect_timeout", default_connect_timeout))
         self._tool_filter: dict = config.get("tools", {})
         self._discovered_tools: list[dict] = []

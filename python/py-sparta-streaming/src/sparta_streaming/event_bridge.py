@@ -125,16 +125,20 @@ async def _dispatch_event_core(
 # ═══════════════════════════════════════════════════════════════════════
 
 async def _heartbeat_loop(request_id: str, stop_event: asyncio.Event) -> None:
-    """Emit heartbeat events and status updates until stream receives tokens."""
+    """Emit heartbeat events and progressive status updates until stream receives tokens."""
     try:
         seconds_waiting = 0
         while not stop_event.is_set():
-            await asyncio.sleep(10)
-            seconds_waiting += 10
+            await asyncio.sleep(3)
+            seconds_waiting += 3
             if not stop_event.is_set():
                 _emit(request_id, "stream:heartbeat", {})
-                if seconds_waiting >= 12:
-                    _emit(request_id, "thinking:status", {"text": "Conectando con el servidor del modelo..."})
+                if seconds_waiting == 3:
+                    _emit(request_id, "thinking:status", {"text": "Conectando con el modelo..."})
+                elif seconds_waiting == 6:
+                    _emit(request_id, "thinking:status", {"text": "Procesando contexto del prompt..."})
+                elif seconds_waiting >= 10 and seconds_waiting % 5 == 0:
+                    _emit(request_id, "thinking:status", {"text": f"Generando respuesta ({seconds_waiting}s)..."})
     except asyncio.CancelledError:
         pass
 
@@ -169,6 +173,12 @@ async def _run_single_stream(
                 return None
     except Exception as e:
         logger.exception("Stream error")
+        # Close the thinking lifecycle if it was active when the exception fired,
+        # otherwise the frontend "Pensando..." indicator runs forever.
+        if stream_state.get("thinking_active"):
+            from sparta_streaming.emitters import reasoning_events
+            _emit(request_id, *reasoning_events.thinking_completed({}, stream_state.get("reasoning_tokens", 0)))
+            stream_state["thinking_active"] = False
         from sparta_errors.user_messages import to_user_message
         _emit(request_id, "stream:error", {"error": to_user_message(str(e))})
         _emit(request_id, "stream:completed", {})
@@ -283,6 +293,12 @@ async def stream_agent_to_websocket(
     except Exception as e:
         logger.exception("Stream error")
         _ws_queue.clear()
+        # Close thinking lifecycle if active when the exception fired
+        if stream_state.get("thinking_active"):
+            from sparta_streaming.emitters import reasoning_events
+            _ws_emit(*reasoning_events.thinking_completed({}, stream_state.get("reasoning_tokens", 0)))
+            stream_state["thinking_active"] = False
+            await _drain_ws_queue()
         from sparta_errors.user_messages import to_user_message
         adapted = _ws_adapt("stream:error", {
             "error": to_user_message(str(e)),

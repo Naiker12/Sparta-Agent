@@ -9,7 +9,7 @@ from typing import Any, Literal
 
 # Import lazily to avoid circular dependency (sparta_agent → reflection → sparta_agent)
 def _get_max_tool_calls() -> int:
-    from sparta_agents.sparta_agent import MAX_TOOL_CALLS_PER_TURN
+    from sparta_agents.graph_helpers import MAX_TOOL_CALLS_PER_TURN
     return MAX_TOOL_CALLS_PER_TURN
 
 logger = logging.getLogger("sparta_ai.agents.reflection")

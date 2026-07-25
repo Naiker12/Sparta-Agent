@@ -38,10 +38,6 @@ class GoogleTransport(ProviderTransport):
         # Reduce retries and backoff for 429/RESOURCE_EXHAUSTED so the user
         # gets a clear message in seconds instead of ~90s of silent retries.
         google_kwargs.setdefault("max_retries", 1)
-        # Disable the default exponential backoff for 429s by setting a
-        # very short retry delay. The SDK's built-in retry will still try
-        # once, but won't loop for a minute.
-        google_kwargs.setdefault("request_retries", 1)
 
         logger.info("Building Google LLM: model=%s reasoning=%s", model, reasoning_enabled)
         return ChatGoogleGenerativeAI(**google_kwargs)

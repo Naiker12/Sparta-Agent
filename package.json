@@ -20,6 +20,8 @@
     "prebuild": "npm run rust:napi",
     "dev": "vite",
     "dev:web": "vite --mode web",
+    "landing:dev": "pnpm --filter landing dev",
+    "landing:build": "pnpm --filter landing build",
     "build": "tsc && vite build && electron-builder",
     "build:web": "vite build --mode web",
     "preview:web": "vite preview --outDir dist-web",

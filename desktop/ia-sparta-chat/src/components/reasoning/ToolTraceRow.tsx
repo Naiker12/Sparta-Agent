@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Check, Loader2, X, AlertTriangle, FileText, SquarePen, Trash2, Search, Terminal, Globe, Pen, ChevronRight } from 'lucide-react'
+import { Check, Loader2, X, AlertTriangle, FileText, SquarePen, Trash2, Search, Terminal, Globe, Pen, ChevronRight, Sparkles, FolderTree } from 'lucide-react'
 import { SearchResultsList } from './SearchResultsList'
 import { inferToolSubstatus, substatusLabel } from 'ia-sparta-core'
 import type { ToolCall } from 'ia-sparta-core'
@@ -11,12 +11,14 @@ interface ToolTraceRowProps {
 
 function getToolCallSummary(toolCall: ToolCall): { icon: React.ReactNode; label: string; description: string } {
   const input = toolCall.input as Record<string, unknown> | undefined
-  const path = (input?.path ?? input?.file_path ?? '') as string | undefined
-  const query = (input?.query ?? '') as string | undefined
+  const path = (input?.path ?? input?.file_path ?? input?.directory ?? '') as string | undefined
+  const query = (input?.query ?? input?.q ?? '') as string | undefined
   const command = (input?.command ?? '') as string | undefined
   const pattern = (input?.pattern ?? '') as string | undefined
   const searchContent = (input?.content ?? '') as string | undefined
   const url = (input?.url ?? '') as string | undefined
+  const skillId = (input?.id ?? input?.skill_id ?? input?.name ?? '') as string | undefined
+  const action = (input?.action ?? '') as string | undefined
 
   const truncate = (s: string, max = 50) =>
     s.length > max ? s.slice(0, max) + '…' : s
@@ -24,6 +26,41 @@ function getToolCallSummary(toolCall: ToolCall): { icon: React.ReactNode; label:
   const iconSize = 12
 
   switch (toolCall.toolName) {
+    case 'skills_list':
+    case 'skills_list_tool':
+      return {
+        icon: <Sparkles size={iconSize} strokeWidth={1.5} />,
+        label: 'Consultando catálogo de skills',
+        description: '',
+      }
+    case 'skill_view':
+    case 'skill_view_tool':
+      return {
+        icon: <Sparkles size={iconSize} strokeWidth={1.5} />,
+        label: 'Leyendo skill',
+        description: skillId ? truncate(skillId) : '',
+      }
+    case 'skill_manage':
+    case 'skill_manage_tool':
+      return {
+        icon: <Sparkles size={iconSize} strokeWidth={1.5} />,
+        label: action ? `Skill: ${action}` : 'Gestionando skill',
+        description: skillId ? truncate(skillId) : '',
+      }
+    case 'read_directory_tool':
+    case 'list_directory_tool':
+      return {
+        icon: <FolderTree size={iconSize} strokeWidth={1.5} />,
+        label: 'Explorando directorio',
+        description: path ? truncate(path) : '.',
+      }
+    case 'grep_search':
+    case 'grep_search_tool':
+      return {
+        icon: <Search size={iconSize} strokeWidth={1.5} />,
+        label: 'Buscando en el código',
+        description: query ? `«${truncate(query)}»` : '',
+      }
     case 'read_file_tool':
       return {
         icon: <FileText size={iconSize} strokeWidth={1.5} />,
@@ -36,56 +73,6 @@ function getToolCallSummary(toolCall: ToolCall): { icon: React.ReactNode; label:
         : toolCall.status === 'completed'
           ? (input?.append ? 'Cambio añadido' : 'Cambio aplicado')
           : 'Cambio no aplicado'
-      return {
-        icon: <SquarePen size={iconSize} strokeWidth={1.5} />,
-        label: mode,
-        description: path ? truncate(path) : '',
-      }
-    }
-    case 'delete_file_tool':
-      return {
-        icon: <Trash2 size={iconSize} strokeWidth={1.5} />,
-        label: 'Eliminando',
-        description: path ? truncate(path) : '',
-      }
-    case 'patch_file_tool':
-      return {
-        icon: <Pen size={iconSize} strokeWidth={1.5} />,
-        label: 'Editando archivo',
-        description: path ? truncate(path) : '',
-      }
-    case 'search_files_tool':
-      return {
-        icon: <Search size={iconSize} strokeWidth={1.5} />,
-        label: 'Buscando archivos',
-        description: pattern ? `*${truncate(pattern)}*` : searchContent ? `«${truncate(searchContent)}»` : '',
-      }
-    case 'terminal_execute_tool':
-    case 'terminal_execute_background_tool':
-      return {
-        icon: <Terminal size={iconSize} strokeWidth={1.5} />,
-        label: 'Ejecutando comando',
-        description: command ? truncate(command, 40) : '',
-      }
-    case 'web_search':
-    case 'web_search_tool':
-      return {
-        icon: <Globe size={iconSize} strokeWidth={1.5} />,
-        label: 'Buscando en la web',
-        description: query ? truncate(query, 40) : '',
-      }
-    case 'web_fetch':
-    case 'web_fetch_tool':
-      return {
-        icon: <Globe size={iconSize} strokeWidth={1.5} />,
-        label: 'Leyendo página',
-        description: url ? truncate(url, 40) : '',
-      }
-    default:
-      return {
-        icon: null,
-        label: toolCall.toolName.replace(/_tool$/, '').replace(/_/g, ' '),
-        description: '',
       }
   }
 }

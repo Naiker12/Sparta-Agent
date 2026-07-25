@@ -123,6 +123,15 @@ def _build_system_prompt(state: SpartaState, effective_mode: str, intent: str,
         "respuestas cortas; listas con '-' sin líneas en blanco."
     )
 
+    system_parts.append(
+        "BOUNDARY Y CREACIÓN DE ARCHIVOS:\n"
+        "- Si el usuario solicita crear un ejemplo de código, calculadora, mini-app (HTML/CSS/JS) o plantilla, "
+        "NO crees ni modifiques archivos directamente en la raíz del proyecto fuente Sparta Agent.\n"
+        "- Muestra el código completo y estructurado directamente en tu respuesta usando bloques Markdown (.md).\n"
+        "- Si existe una carpeta conectada (<carpeta_conectada>), únicamente en ese directorio puedes escribir los archivos generados.\n"
+        "- Si la tarea no requiere modificar el código fuente de Sparta Agent, responde directamente con el código sin invocar subagentes innecesarios."
+    )
+
     if state.get("memory_context"):
         system_parts.append(
             f"\n<memoria_relevante>\n{state['memory_context']}\n</memoria_relevante>"

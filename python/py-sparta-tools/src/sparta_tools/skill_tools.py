@@ -220,7 +220,7 @@ def skill_manage_tool(action: str, name: str, description: str = "", body: str =
         if body:
             # Replace body between frontmatter and end
             import re as _re
-            pat = _re.compile(r"^(---\s*\n.*?\n---\s*\n)", re.DOTALL)
+            pat = _re.compile(r"^(---\s*\n.*?\n---\s*\n)", _re.DOTALL)
             m = pat.match(existing_text)
             if m:
                 new_text = m.group(1) + body.strip() + "\n"

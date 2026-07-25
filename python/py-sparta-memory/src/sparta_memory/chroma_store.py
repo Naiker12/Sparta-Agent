@@ -19,6 +19,15 @@ def is_available() -> bool:
     if _chromadb_available is not None:
         return _chromadb_available
 
+    import socket
+    try:
+        with socket.create_connection(("localhost", 8000), timeout=0.2):
+            pass
+    except (OSError, TimeoutError):
+        _chromadb_available = False
+        logger.info("ChromaDB port 8000 closed — semantic memory disabled (fast-check)")
+        return False
+
     try:
         client = chromadb.HttpClient(
             host="localhost",

@@ -45,8 +45,8 @@ export function SkillExplorer() {
     loadInstalledSkills()
   }, [loadInstalledSkills])
 
-  // Flatten all repo skills into a single list for filtering
-  const allSkills: (DownloadableSkill & { repo: string })[] = REPOS.flatMap((r) =>
+  // Combine repo skills and local workspace installed skills into a single list
+  const repoSkills: (DownloadableSkill & { repo: string })[] = REPOS.flatMap((r) =>
     r.skills.map((s) => ({
       ...s,
       repo: r.repo,
@@ -57,6 +57,28 @@ export function SkillExplorer() {
         || useSkillStore.getState().skills.some((sk) => sk.id === s.id),
     }))
   )
+
+  const localInstalledSkills: (DownloadableSkill & { repo: string })[] = installedSkills.map((is) => ({
+    id: is.id,
+    name: is.name,
+    description: is.description,
+    category: (is.category as SkillCategory) || 'Coding',
+    tags: is.tags || [],
+    icon: '⚡',
+    featured: false,
+    repo: 'Local Workspace',
+    version: is.version || '1.0.0',
+    author: is.author || 'Local',
+    prompt: is.description,
+    installed: true,
+  }))
+
+  // Merge and deduplicate by id
+  const existingIds = new Set(repoSkills.map((s) => s.id))
+  const allSkills = [
+    ...repoSkills,
+    ...localInstalledSkills.filter((s) => !existingIds.has(s.id)),
+  ]
 
   const filtered = allSkills.filter((s) => {
     if (category !== 'all' && s.category !== category) return false
@@ -140,24 +162,25 @@ export function SkillExplorer() {
         </div>
       ) : (
         <div className="space-y-4">
-          {REPOS.map((repo) => {
-            const repoSkills = filtered.filter((s) => s.repo === repo.repo)
-            if (repoSkills.length === 0) return null
+          {Array.from(new Set(filtered.map((s) => s.repo))).map((repoKey) => {
+            const groupSkills = filtered.filter((s) => s.repo === repoKey)
+            if (groupSkills.length === 0) return null
+            const label = REPOS.find((r) => r.repo === repoKey)?.label || repoKey
             return (
-              <div key={repo.repo}>
+              <div key={repoKey}>
                 <div className="flex items-center gap-1.5 mb-2 px-0.5">
                   <ExternalLink size={11} className="text-muted-foreground" />
                   <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground font-ui">
-                    {repo.label}
+                    {label}
                   </span>
                 </div>
                 <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-2.5">
-                  {repoSkills.map((skill) => (
+                  {groupSkills.map((skill) => (
                     <div key={skill.id} className="relative">
                       <SkillCard
                         skill={skill}
                         installed={skill.installed}
-                        isDownloadable
+                        isDownloadable={!skill.installed}
                         onInstall={() => handleInstall(skill)}
                       />
                       {installing === skill.id && (

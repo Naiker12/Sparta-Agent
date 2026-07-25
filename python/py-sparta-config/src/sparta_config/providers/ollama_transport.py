@@ -39,9 +39,12 @@ class OllamaTransport(ProviderTransport):
         if max_toks:
             ollama_kwargs["num_predict"] = max_toks
 
+        is_streaming = kwargs.pop("streaming", True)
+        ollama_kwargs["streaming"] = is_streaming
+
         # Pass any remaining client kwargs
         for k, v in kwargs.items():
-            if k not in ("streaming", "timeout", "max_retries"):
+            if k not in ("timeout", "max_retries"):
                 ollama_kwargs[k] = v
 
         logger.info("Building Ollama LLM: model=%s base_url=%s", model, base_url or "http://localhost:11434")

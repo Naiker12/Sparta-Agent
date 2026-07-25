@@ -6,7 +6,7 @@ async def handle_mcp_test(params: dict) -> dict:
     server_id = config.get("id", config.get("name", "unknown"))
     timeout = int(config.get("timeout", 10))
     from sparta_tools.mcp_client import RealMCPClient
-    client = RealMCPClient({**config, "timeout": min(timeout, 15)})
+    client = RealMCPClient({**config, "timeout": min(timeout, 15), "connect_timeout": 15})
     try:
         tools = await client.connect()
         return {
