@@ -49,7 +49,7 @@ impl AuditLogger {
     }
 
     pub fn log(entry: AuditEntry) {
-        let mut logger = AUDIT_LOGGER.lock().unwrap();
+        let logger = AUDIT_LOGGER.lock().unwrap();
         if !logger.enabled {
             return;
         }
@@ -88,6 +88,7 @@ impl AuditLogger {
         Self::log(entry);
     }
 
+    #[allow(dead_code)]
     pub fn log_message(session_id: &str, message_id: &str, direction: &str, action: &str, result: &str, details: &str) {
         let entry = AuditEntry {
             timestamp: Utc::now().to_rfc3339(),

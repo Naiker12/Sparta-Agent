@@ -9,6 +9,7 @@ use regex::Regex;
 use serde_json::{json, Value};
 use std::collections::HashSet;
 
+#[allow(dead_code)]
 const ALLOWED_WEB_SEARCH_DOMAINS: &[&str] = &[];
 const BLOCKED_FILE_PATTERNS: &[&str] = &[
     r"\.env$",
@@ -59,7 +60,7 @@ fn contains_blocked_pattern(path: &str) -> Option<String> {
 /// Este código se conserva para referencia pero no se invoca desde
 /// ningún punto del flujo activo.
 #[deprecated(note = "Reemplazado por _get_safe_path() en Python")]
-pub fn sanitize_file_tool_call(tool_name: &str, input: &Value) -> SanitizedToolCall {
+pub fn sanitize_file_tool_call(_tool_name: &str, input: &Value) -> SanitizedToolCall {
     let path = input
         .get("path")
         .and_then(|v| v.as_str())
@@ -130,7 +131,7 @@ pub fn sanitize_web_search_call(input: &Value) -> SanitizedToolCall {
     }
 }
 
-pub fn sanitize_memory_tool_call(tool_name: &str, input: &Value) -> SanitizedToolCall {
+pub fn sanitize_memory_tool_call(_tool_name: &str, input: &Value) -> SanitizedToolCall {
     if let Some(content) = input.get("content").and_then(|v| v.as_str()) {
         if content.len() > 50_000 {
             return SanitizedToolCall {
@@ -170,6 +171,7 @@ pub fn sanitize_memory_tool_call(tool_name: &str, input: &Value) -> SanitizedToo
 
 /// DEPRECATED — ver `sanitize_file_tool_call`.
 #[deprecated(note = "Reemplazado por sanitización en Python")]
+#[allow(deprecated)]
 pub fn sanitize_tool_call(tool_name: &str, input: &Value) -> SanitizedToolCall {
     let dangerous_tools: HashSet<&str> = [
         "exec_command", "shell_exec", "run_terminal",
@@ -232,6 +234,7 @@ pub fn sanitize_tool_call(tool_name: &str, input: &Value) -> SanitizedToolCall {
     }
 }
 
+#[allow(deprecated)]
 pub fn sanitize_tool_calls(tool_calls: &Value) -> Vec<SanitizedToolCall> {
     let calls = match tool_calls.as_array() {
         Some(c) => c,

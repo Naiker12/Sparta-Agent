@@ -18,6 +18,7 @@ pub struct ValidationResult {
     pub error: Option<String>,
 }
 
+#[allow(dead_code)]
 pub enum MessageDirection {
     ElectronToPython,
     PythonToElectron,

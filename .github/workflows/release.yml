@@ -13,6 +13,9 @@ on:
           - minor
           - patch
 
+env:
+  NODE_OPTIONS: "--max-old-space-size=4096"
+
 jobs:
   build:
     strategy:

@@ -15,6 +15,7 @@ const SAFE_MAX_TOOL_CALLS_PER_TURN: u32 = 5;
 const SAFE_MAX_MESSAGE_SIZE: usize = 500_000; // 500KB
 const SAFE_MAX_PROVIDER_KEY_LENGTH: usize = 100;
 
+#[allow(dead_code)]
 pub struct SecurityGuard {
     rate_limiter: RateLimiter,
     max_tool_calls_per_turn: u32,
@@ -73,6 +74,7 @@ impl SecurityGuard {
         GuardResult::Allowed
     }
 
+    #[allow(dead_code)]
     pub fn validate_message_size(&self, size: usize) -> GuardResult {
         if size > self.max_message_size {
             return GuardResult::Blocked(format!(
@@ -83,6 +85,7 @@ impl SecurityGuard {
         GuardResult::Allowed
     }
 
+    #[allow(dead_code)]
     pub fn validate_provider_key(&self, key: &str) -> GuardResult {
         if key.len() > self.max_provider_key_length {
             return GuardResult::Blocked("Provider key exceeds maximum length".into());

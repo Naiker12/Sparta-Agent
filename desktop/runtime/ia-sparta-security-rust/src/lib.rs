@@ -40,6 +40,7 @@ pub fn validate_message(line: String) -> Result<String> {
 /// avoid breaking existing code; it is NOT called from the active flow.
 /// See `python/sparta_ai/tools/file_tools.py:BLOCKED_FILE_PATTERNS`.
 #[napi]
+#[allow(deprecated)]
 pub fn sanitize_tool_call(tool_name: String, input_json: String) -> Result<String> {
     let input: Value = serde_json::from_str(&input_json)
         .map_err(|e| Error::from_reason(format!("Invalid input JSON: {}", e)))?;
@@ -56,6 +57,7 @@ pub fn sanitize_tool_call(tool_name: String, input_json: String) -> Result<Strin
 
 /// Sanitize multiple tool calls at once
 #[napi]
+#[allow(deprecated)]
 pub fn sanitize_tool_calls(tool_calls_json: String) -> Result<String> {
     let tool_calls: Value = serde_json::from_str(&tool_calls_json)
         .map_err(|e| Error::from_reason(format!("Invalid tool calls JSON: {}", e)))?;
