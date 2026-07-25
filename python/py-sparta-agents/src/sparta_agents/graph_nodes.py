@@ -66,8 +66,19 @@ async def agent_node(state: SpartaState, *, llm: Any, tools: list, all_tools: li
     elif intent in ("research", "memory_query"):
         scope = "readonly"
 
-    is_forced_summary = state.get("force_summary", False) or current_tool_calls >= MAX_TOOL_CALLS_PER_TURN
-    if is_forced_summary:
+    is_loop_detected = state.get("loop_detected", False)
+    is_forced_summary = state.get("force_summary", False) or current_tool_calls >= MAX_TOOL_CALLS_PER_TURN or is_loop_detected
+
+    if is_loop_detected:
+        messages.append({
+            "role": "system",
+            "content": (
+                "ATENCIÓN: Se detectó un bucle repetitivo de herramientas con los mismos argumentos. "
+                "NO repitas la misma acción o llamada a herramienta. Si la acción anterior no dio "
+                "el resultado esperado, cambia de estrategia o explica la situación al usuario."
+            ),
+        })
+    elif is_forced_summary:
         messages.append({
             "role": "system",
             "content": (
@@ -79,8 +90,7 @@ async def agent_node(state: SpartaState, *, llm: Any, tools: list, all_tools: li
             ),
         })
 
-    import sys
-    sys.stderr.write(f"[PERF_TRACE] agent_node: invoking LLM scope={scope} mode={effective_mode} model={model}\n")
+    logger.debug("[PERF_TRACE] agent_node: invoking LLM scope=%s mode=%s model=%s", scope, effective_mode, model)
     try:
         if is_forced_summary:
             response = await llm.ainvoke(messages)
@@ -90,10 +100,10 @@ async def agent_node(state: SpartaState, *, llm: Any, tools: list, all_tools: li
             response = await llm_chat.ainvoke(messages)
         else:
             response = await llm_dynamic.ainvoke(messages)
-        sys.stderr.write(f"[PERF_TRACE] agent_node: LLM responded, content_len={len(getattr(response, 'content', '') or '')}\n")
+        logger.debug("[PERF_TRACE] agent_node: LLM responded, content_len=%d", len(getattr(response, 'content', '') or ''))
     except Exception as e:
         err_str = str(e)
-        sys.stderr.write(f"[PERF_TRACE] agent_node: LLM EXCEPTION: {err_str[:500]}\n")
+        logger.debug("[PERF_TRACE] agent_node: LLM EXCEPTION: %s", err_str[:500])
         
         # Local models fallback: if tool-bound call failed, retry with plain LLM
         if (vendor or "").lower() in ("ollama", "lmstudio", "llamacpp", "custom", "local"):

@@ -4,6 +4,7 @@
   "asar": true,
   "asarUnpack": ["python/**", "node_modules/node-pty/**/*"],
   "productName": "Sparta Agent",
+  "npmRebuild": false,
   "directories": {
     "output": "release/${version}"
   },

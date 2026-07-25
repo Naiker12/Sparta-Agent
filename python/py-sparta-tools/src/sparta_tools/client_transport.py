@@ -43,12 +43,21 @@ def resolve_arg_placeholders(args: list[str], override: str | None = None) -> li
 def _resolve_env(raw_env: dict[str, str] | None) -> dict[str, str]:
     safe_vars = {
         k: v for k, v in os.environ.items()
-        if k in {"PATH", "HOME", "USER", "USERNAME", "TEMP", "TMP", "SHELL", "COMSPEC", "TERM", "LANG"}
+        if k in {
+            "PATH", "HOME", "USER", "USERNAME", "TEMP", "TMP", "SHELL",
+            "COMSPEC", "ComSpec", "TERM", "LANG", "SYSTEMROOT", "WINDIR",
+            "PATHEXT", "SystemDrive", "LOCALAPPDATA", "APPDATA", "PROGRAMDATA"
+        }
     }
     merged = {
         **safe_vars,
         "npm_config_loglevel": "silent",
+        "npm_config_yes": "true",
+        "npm_config_update_notifier": "false",
+        "npm_config_fund": "false",
+        "npm_config_audit": "false",
         "NO_COLOR": "1",
+        "FORCE_COLOR": "0",
     }
     if raw_env:
         merged.update(raw_env)
@@ -67,10 +76,13 @@ def create_stdio_transport(
     if not command:
         raise ValueError(f"MCP server '{server_id}' requires 'command' for stdio type.")
 
+    base = command.rsplit("/", 1)[-1].rsplit("\\", 1)[-1].lower()
     if platform.system() == "Windows":
-        base = command.rsplit("/", 1)[-1].rsplit("\\", 1)[-1]
         if base in ("npx", "npm", "pnpm", "yarn") and not command.endswith(".cmd"):
             command = command + ".cmd"
+
+    if base in ("npx", "npx.cmd") and not any(a in ("-y", "--yes") for a in args):
+        args = ["-y", *args]
 
     unresolved = [a for a in args if re.search(r"\$\{[A-Z_]+\}", a)]
     if unresolved:

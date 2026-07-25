@@ -40,7 +40,9 @@ sparta-vault.json
 
 # Rust Security Layer
 rust/sparta-security/target/
-rust/sparta-security/*.node
+rust/sparta-security/*.node*
+desktop/runtime/**/*.node*
+*.node*
 rust/sparta-security/index.js
 rust/sparta-security/index.d.ts
 rust/**/*.rs.bk

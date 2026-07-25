@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Check, Loader2, X, AlertTriangle, FileText, SquarePen, Trash2, Search, Terminal, Globe, Pen, ChevronRight, Sparkles, FolderTree } from 'lucide-react'
+import { Check, Loader2, X, AlertTriangle, FileText, Search, ChevronRight, Sparkles, FolderTree } from 'lucide-react'
 import { SearchResultsList } from './SearchResultsList'
 import { inferToolSubstatus, substatusLabel } from 'ia-sparta-core'
 import type { ToolCall } from 'ia-sparta-core'
@@ -13,10 +13,6 @@ function getToolCallSummary(toolCall: ToolCall): { icon: React.ReactNode; label:
   const input = toolCall.input as Record<string, unknown> | undefined
   const path = (input?.path ?? input?.file_path ?? input?.directory ?? '') as string | undefined
   const query = (input?.query ?? input?.q ?? '') as string | undefined
-  const command = (input?.command ?? '') as string | undefined
-  const pattern = (input?.pattern ?? '') as string | undefined
-  const searchContent = (input?.content ?? '') as string | undefined
-  const url = (input?.url ?? '') as string | undefined
   const skillId = (input?.id ?? input?.skill_id ?? input?.name ?? '') as string | undefined
   const action = (input?.action ?? '') as string | undefined
 
@@ -68,11 +64,22 @@ function getToolCallSummary(toolCall: ToolCall): { icon: React.ReactNode; label:
         description: path ? truncate(path) : '',
       }
     case 'write_file_tool': {
-      const mode = toolCall.status === 'running'
+      const modeLabel = toolCall.status === 'running'
         ? 'Proponiendo cambio'
         : toolCall.status === 'completed'
           ? (input?.append ? 'Cambio añadido' : 'Cambio aplicado')
           : 'Cambio no aplicado'
+      return {
+        icon: <FileText size={iconSize} strokeWidth={1.5} />,
+        label: modeLabel,
+        description: path ? truncate(path) : '',
+      }
+    }
+    default:
+      return {
+        icon: <FileText size={iconSize} strokeWidth={1.5} />,
+        label: toolCall.toolName,
+        description: path ? truncate(path) : '',
       }
   }
 }

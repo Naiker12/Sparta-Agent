@@ -6,15 +6,16 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 function Badge({ className, variant = 'default', ...props }: BadgeProps) {
-  const baseStyles = 'inline-flex items-center rounded-full px-3 py-0.5 text-xs font-mono font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2';
+  const baseStyles = 'inline-flex items-center rounded-[6px] px-2.5 py-0.5 text-[12px] font-mono font-medium tracking-wide transition-all focus:outline-none';
 
   const variants = {
-    default: 'bg-indigo-600 text-white dark:bg-indigo-500 dark:text-white shadow-xs',
-    secondary: 'bg-zinc-200 text-zinc-900 border border-zinc-300 dark:bg-zinc-800/90 dark:text-zinc-100 dark:border-zinc-700 font-medium',
-    outline: 'text-zinc-900 dark:text-zinc-100 border border-zinc-300 dark:border-zinc-700 bg-white/80 dark:bg-zinc-900/80 font-medium',
-    success: 'bg-emerald-100 text-emerald-950 border border-emerald-300 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/40 font-semibold',
-    warning: 'bg-amber-100 text-amber-950 border border-amber-300 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/40 font-semibold',
-    accent: 'bg-indigo-100 text-indigo-950 border border-indigo-300 dark:bg-indigo-500/20 dark:text-indigo-200 dark:border-indigo-500/50 font-bold shadow-xs',
+    // AuthKit Luminous Fill: rgba(199,211,234,0.12) fill, #d1e4fa text, hairline border
+    default: 'bg-[rgba(199,211,234,0.12)] text-[#d1e4fa] border border-[rgba(186,215,247,0.12)]',
+    secondary: 'bg-[rgba(47,52,62,0.6)] text-[#c7d3ea] border border-[rgba(186,215,247,0.12)]',
+    outline: 'bg-transparent text-[#d1e4fa] border border-[rgba(186,215,247,0.12)]',
+    success: 'bg-[rgba(16,185,129,0.15)] text-[#34d399] border border-[rgba(16,185,129,0.3)] font-semibold',
+    warning: 'bg-[rgba(245,158,11,0.15)] text-[#fbbf24] border border-[rgba(245,158,11,0.3)] font-semibold',
+    accent: 'bg-[rgba(102,58,243,0.2)] text-[#d1e4fa] border border-[rgba(102,58,243,0.4)] font-semibold shadow-xs',
   };
 
   return (

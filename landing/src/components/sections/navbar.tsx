@@ -28,9 +28,8 @@ export function Navbar() {
     { name: 'Pilares', href: '#pilares' },
     { name: 'Flujo Agéntico', href: '#flujo-agentico' },
     { name: 'Arquitectura', href: '#arquitectura' },
-    { name: 'Seguridad', href: '#seguridad' },
     { name: 'Skills', href: '#skills' },
-    { name: 'Roadmap', href: '#roadmap' },
+    { name: 'Descargas', href: '#descargas' },
     { name: 'Quick Start', href: '#quick-start' },
   ];
 
@@ -55,11 +54,8 @@ export function Navbar() {
                 (e.target as HTMLElement).style.display = 'none';
               }}
             />
-            <span className="font-display font-bold text-lg tracking-tight flex items-center gap-2 text-[var(--text-display)]">
+            <span className="font-display font-bold text-lg tracking-tight text-[var(--text-display)]">
               Sparta Agent
-              <span className="text-[10px] uppercase font-mono tracking-wider px-2 py-0.5 rounded bg-[var(--accent-muted)] text-[var(--accent)] border border-[var(--accent)]/30">
-                v0.1 Local
-              </span>
             </span>
           </a>
 

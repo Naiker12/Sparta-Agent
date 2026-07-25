@@ -233,6 +233,7 @@ def should_continue(state: SpartaState) -> Literal["tools", "subagent", "agent",
         return "agent"
 
     if _detect_loop(state):
+        state["loop_detected"] = True
         return "agent"
 
     last_message = state["messages"][-1]

@@ -3962,6 +3962,11 @@ dependencies = [
     { name = "sparta-tools" },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "pytest-asyncio" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "sparta-agents", editable = "py-sparta-agents" },
@@ -3979,6 +3984,9 @@ requires-dist = [
     { name = "sparta-streaming", editable = "py-sparta-streaming" },
     { name = "sparta-tools", editable = "py-sparta-tools" },
 ]
+
+[package.metadata.requires-dev]
+dev = [{ name = "pytest-asyncio" }]
 
 [[package]]
 name = "sparta-agents"

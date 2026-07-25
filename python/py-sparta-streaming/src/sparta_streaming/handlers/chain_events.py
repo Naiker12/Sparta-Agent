@@ -82,6 +82,15 @@ async def handle_chain_end(
     if stream_state["thinking_active"]:
         emit_control_fn(*reasoning_events.thinking_completed(base_payload, 0))
         stream_state["thinking_active"] = False
+
+    if stream_state.get("visible_chars", 0) == 0 and last_output_msg:
+        msg_text = getattr(last_output_msg, "content", "") or ""
+        if isinstance(msg_text, list):
+            msg_text = "".join(b.get("text", "") for b in msg_text if isinstance(b, dict))
+        if isinstance(msg_text, str) and msg_text.strip():
+            emit_fn("stream:token", {**base_payload, "token": msg_text})
+            stream_state["visible_chars"] += len(msg_text)
+
     if stream_state.get("visible_chars", 0) == 0:
         emit_control_fn(
             "stream:error",
