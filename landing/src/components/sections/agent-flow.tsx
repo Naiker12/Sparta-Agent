@@ -12,8 +12,6 @@ import {
   Play,
   ShieldAlert,
   Clock,
-  ArrowRight,
-  Database,
   Terminal,
   Activity,
   Workflow

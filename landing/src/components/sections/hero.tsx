@@ -5,13 +5,8 @@ import {
   Play, 
   ArrowRight, 
   Lock, 
-  Zap, 
   Terminal, 
-  ShieldCheck,
-  Code2,
-  FolderOpen,
   Cpu,
-  Eye,
   CheckCircle2,
   Wrench
 } from 'lucide-react';

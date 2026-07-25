@@ -14,7 +14,7 @@ import {
   CheckCircle2,
   FolderOpen
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+
 
 export function CustomizationShowcase() {
   // Theme & State Options for the mockup
