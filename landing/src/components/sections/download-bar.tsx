@@ -209,8 +209,8 @@ export function DownloadBar() {
   };
 
   return (
-    <section id="descargas" className="py-24 md:py-32 relative bg-[#05060f] border-t border-[rgba(186,215,247,0.12)]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="descargas" className="py-24 md:py-32 relative bg-transparent border-t border-[rgba(186,215,247,0.12)]">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">

@@ -11,16 +11,16 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const baseStyles = 'inline-flex items-center justify-center font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#663af3] disabled:pointer-events-none disabled:opacity-50 cursor-pointer';
 
     const variants = {
-      // Primary CTA: Void Violet #663af3 solid fill
-      default: 'bg-[#663af3] hover:bg-[#5b31e0] text-white rounded-full font-medium shadow-lg shadow-[#663af3]/25 active:scale-[0.98]',
-      // Secondary Ghost Pill: faint frost wash rgba(186,214,247,0.06), 1px inset border rgba(186,215,247,0.12)
-      ghost: 'bg-[rgba(186,214,247,0.06)] hover:bg-[rgba(186,214,247,0.12)] text-white rounded-full border border-[rgba(186,215,247,0.12)] active:scale-[0.98]',
-      // Outlined Pill: transparent fill, text #d1e4fa, 1px inset border rgba(186,215,247,0.12)
-      outline: 'bg-transparent hover:bg-[rgba(186,214,247,0.08)] text-[#d1e4fa] hover:text-white rounded-full border border-[rgba(186,215,247,0.12)] active:scale-[0.98]',
+      // Primary Ghost Pill using CSS theme variables
+      default: 'bg-[var(--btn-default-bg)] hover:bg-[var(--btn-default-hover)] text-[var(--btn-default-text)] rounded-full border border-[var(--btn-default-border)] active:scale-[0.98]',
+      // Secondary Ghost Pill using CSS theme variables
+      ghost: 'bg-[var(--btn-default-bg)] hover:bg-[var(--btn-default-hover)] text-[var(--btn-default-text)] rounded-full border border-[var(--btn-default-border)] active:scale-[0.98]',
+      // Outlined Pill using CSS theme variables
+      outline: 'bg-[var(--btn-outline-bg)] hover:bg-[var(--btn-outline-hover-bg)] text-[var(--btn-outline-text)] hover:text-[var(--btn-outline-hover-text)] rounded-full border border-[var(--btn-outline-border)] active:scale-[0.98]',
       // Secondary Steel Plate fill
       secondary: 'bg-[#2f343e] hover:bg-[#3b414d] text-white rounded-full border border-[rgba(186,215,247,0.12)] active:scale-[0.98]',
-      // Explicit Violet CTA
-      violet: 'bg-[#663af3] hover:bg-[#5b31e0] text-white rounded-full font-medium shadow-md shadow-[#663af3]/30 active:scale-[0.98]',
+      // Explicit Violet CTA: ONLY inside auth-forms, 6px radius
+      violet: 'bg-[#663af3] hover:bg-[#5b31e0] text-white rounded-[6px] font-medium shadow-md shadow-[#663af3]/30 active:scale-[0.98]',
     };
 
     const sizes = {

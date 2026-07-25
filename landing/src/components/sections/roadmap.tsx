@@ -1,5 +1,6 @@
 import { Card } from '../ui/card';
 import { Badge } from '../ui/badge';
+import { SectionHeader } from '../ui/section-header';
 import { CheckCircle2, Clock } from 'lucide-react';
 
 export function Roadmap() {
@@ -21,36 +22,32 @@ export function Roadmap() {
   ];
 
   return (
-    <section id="roadmap" className="py-20 md:py-28 relative bg-[var(--bg-surface)]/30 border-y border-[var(--border-normal)]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
-          <Badge variant="accent" className="text-xs uppercase font-mono tracking-wider">
-            Roadmap del Proyecto
-          </Badge>
-          <h2 className="text-3xl sm:text-5xl font-bold font-display tracking-tight text-[var(--text-display)]">
-            Estado de Desarrollo y Hoja de Ruta
-          </h2>
-          <p className="text-base sm:text-lg text-[var(--text-secondary)]">
-            Progreso público transparente tomado 1:1 de nuestro repositorio oficial.
-          </p>
-        </div>
+    <section id="roadmap" className="py-24 md:py-32 relative bg-[#05060f] border-t border-[rgba(186,215,247,0.12)]">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        {/* Unified Section Header */}
+        <SectionHeader
+          eyebrow="ROADMAP DEL PROYECTO"
+          title="Estado de Desarrollo y Hoja de Ruta"
+          description="Progreso público transparente tomado 1:1 de nuestro repositorio oficial."
+        />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Completed Features */}
-          <Card className="border-emerald-500/30 bg-[var(--bg-elevated)] p-8 space-y-6">
-            <div className="flex items-center justify-between pb-4 border-b border-[var(--border-subtle)]">
+          <Card className="border-[rgba(186,215,247,0.12)] bg-[rgba(186,214,247,0.02)] p-8 space-y-6 hover:border-emerald-500/20 transition-all duration-300">
+            <div className="flex items-center justify-between pb-4 border-b border-[rgba(186,215,247,0.06)]">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400">
+                <div className="p-2 rounded-lg bg-emerald-500/5 text-emerald-400 border border-emerald-500/10">
                   <CheckCircle2 className="w-5 h-5" />
                 </div>
-                <h3 className="text-xl font-bold font-display text-[var(--text-display)]">
+                <h3 className="text-xl font-bold font-display text-[#d8ecf8]">
                   Logrado (v0.1)
                 </h3>
               </div>
               <Badge variant="success">Completado</Badge>
             </div>
 
-            <ul className="space-y-3 font-mono text-xs text-[var(--text-primary)]">
+            <ul className="space-y-3 font-mono text-xs text-[#d1e4fa]">
               {completed.map((item, idx) => (
                 <li key={idx} className="flex items-start gap-3">
                   <span className="text-emerald-400 font-bold">✓</span>
@@ -61,20 +58,20 @@ export function Roadmap() {
           </Card>
 
           {/* In Progress Features */}
-          <Card className="border-amber-500/30 bg-[var(--bg-elevated)] p-8 space-y-6">
-            <div className="flex items-center justify-between pb-4 border-b border-[var(--border-subtle)]">
+          <Card className="border-[rgba(186,215,247,0.12)] bg-[rgba(186,214,247,0.02)] p-8 space-y-6 hover:border-amber-500/20 transition-all duration-300">
+            <div className="flex items-center justify-between pb-4 border-b border-[rgba(186,215,247,0.06)]">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-amber-500/10 text-amber-400">
+                <div className="p-2 rounded-lg bg-amber-500/5 text-amber-400 border border-amber-500/10">
                   <Clock className="w-5 h-5 animate-pulse" />
                 </div>
-                <h3 className="text-xl font-bold font-display text-[var(--text-display)]">
+                <h3 className="text-xl font-bold font-display text-[#d8ecf8]">
                   En Desarrollo / Siguiente
                 </h3>
               </div>
               <Badge variant="warning">En Progreso</Badge>
             </div>
 
-            <ul className="space-y-3 font-mono text-xs text-[var(--text-secondary)]">
+            <ul className="space-y-3 font-mono text-xs text-[#c7d3ea]">
               {inProgress.map((item, idx) => (
                 <li key={idx} className="flex items-start gap-3">
                   <span className="text-amber-400 font-bold">⏳</span>

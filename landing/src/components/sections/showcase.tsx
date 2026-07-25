@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Card } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
+import { SectionHeader } from '../ui/section-header';
 import { Monitor, Sparkles } from 'lucide-react';
 import { getPublicUrl } from '../../lib/utils';
 
@@ -42,22 +43,18 @@ export function Showcase() {
   const current = screenshots[selectedShot];
 
   return (
-    <section className="py-20 md:py-28 relative">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-3xl mx-auto space-y-4 mb-14">
-          <Badge variant="accent" className="px-3.5 py-1 text-xs uppercase font-mono tracking-wider">
-            Demostración Visual
-          </Badge>
-          <h2 className="text-3xl sm:text-5xl font-bold font-display tracking-tight text-[var(--text-display)]">
-            Interfaz de Grado IDE Profesional
-          </h2>
-          <p className="text-base sm:text-lg text-[var(--text-secondary)]">
-            Una experiencia nativa construida con Electron y React 18, diseñada para máxima productividad.
-          </p>
-        </div>
+    <section id="galeria" className="py-24 md:py-32 relative bg-transparent border-t border-[rgba(186,215,247,0.12)]">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        {/* Unified Section Header */}
+        <SectionHeader
+          eyebrow="DEMOSTRACIÓN VISUAL"
+          title="Interfaz de Grado IDE Profesional"
+          description="Una experiencia nativa construida con Electron y React 18, diseñada para máxima productividad."
+        />
 
         {/* Tab Controls with high contrast */}
-        <div className="flex flex-wrap items-center justify-center gap-2.5 mb-8">
+        <div className="flex flex-wrap items-center justify-center gap-3 mb-10 max-w-4xl mx-auto">
           {screenshots.map((shot, idx) => (
             <Button
               key={shot.id}
@@ -73,15 +70,15 @@ export function Showcase() {
         </div>
 
         {/* Image Showcase Frame */}
-        <Card className="border-[var(--border-strong)] bg-[var(--bg-surface)] overflow-hidden shadow-2xl p-3 sm:p-5">
-          <div className="rounded-xl border border-[var(--border-normal)] overflow-hidden bg-[#0C0C10]">
-            <div className="bg-[#0F0F14] px-4 py-3 border-b border-zinc-800 flex items-center justify-between">
-              <span className="text-xs font-mono text-zinc-300 flex items-center gap-2">
+        <Card className="border-[rgba(186,215,247,0.12)] bg-[rgba(186,214,247,0.02)] overflow-hidden shadow-2xl p-3 sm:p-5 max-w-5xl mx-auto">
+          <div className="rounded-xl border border-[rgba(186,215,247,0.12)] overflow-hidden bg-[#0C0C10]">
+            <div className="bg-[#080914] px-4 py-3 border-b border-[rgba(186,215,247,0.08)] flex items-center justify-between">
+              <span className="text-xs font-mono text-[#d8ecf8] flex items-center gap-2">
                 <Sparkles className="w-3.5 h-3.5 text-indigo-400" /> {current.title} — {current.badge}
               </span>
               <Badge variant="success" className="text-[10px]">Verificado</Badge>
             </div>
-            <div className="relative aspect-[16/9] overflow-hidden bg-[#0C0C10] flex items-center justify-center p-2">
+            <div className="relative aspect-[16/9] overflow-hidden bg-[#05060f] flex items-center justify-center p-2">
               <img
                 src={current.src}
                 alt={current.title}
@@ -90,8 +87,8 @@ export function Showcase() {
               />
             </div>
           </div>
-          <div className="p-4 text-center">
-            <p className="text-sm text-[var(--text-primary)] font-medium">{current.desc}</p>
+          <div className="p-4 text-center mt-2">
+            <p className="text-sm text-[#c7d3ea] font-medium">{current.desc}</p>
           </div>
         </Card>
       </div>

@@ -28,11 +28,12 @@ export function Navbar() {
 
   const navLinks = [
     { name: 'Pilares', href: '#pilares' },
-    { name: 'Flujo Agéntico', href: '#flujo-agentico' },
+    { name: 'Flujo', href: '#flujo-agentico' },
     { name: 'Arquitectura', href: '#arquitectura' },
+    { name: 'Personalizar', href: '#personalizar' },
     { name: 'Skills', href: '#skills' },
     { name: 'Descargas', href: '#descargas' },
-    { name: 'Quick Start', href: '#quick-start' },
+    { name: 'Setup', href: '#quick-start' },
   ];
 
   return (
@@ -43,14 +44,14 @@ export function Navbar() {
           : 'bg-transparent py-5'
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
           {/* Brand Logo */}
-          <a href="#" className="flex items-center gap-3 group">
+          <a href="#" className="flex items-center gap-3 group select-none">
             <img
               src={logoSrc}
               alt="Sparta Agent Logo"
-              className="h-8 w-auto object-contain transition-transform group-hover:scale-105"
+              className="h-8 w-auto object-contain transition-transform group-hover:scale-105 animate-pulse-slow"
               onError={(e) => {
                 // Fallback to title text if image asset isn't ready
                 (e.target as HTMLElement).style.display = 'none';
@@ -62,7 +63,7 @@ export function Navbar() {
           </a>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-1 bg-[var(--bg-surface)]/60 p-1.5 rounded-full border border-[var(--border-subtle)] backdrop-blur-sm">
+          <nav className="hidden xl:flex items-center gap-0.5 bg-[var(--bg-surface)]/60 p-1.5 rounded-full border border-[var(--border-subtle)] backdrop-blur-sm">
             {navLinks.map((link) => (
               <a
                 key={link.name}
@@ -82,6 +83,7 @@ export function Navbar() {
               target="_blank"
               rel="noopener noreferrer"
             >
+              {/* Outlined Pill button for secondary Github link */}
               <Button variant="outline" size="sm" className="gap-2 text-xs font-medium">
                 <GithubIcon className="w-4 h-4" />
                 <span>Ver en GitHub</span>
@@ -90,7 +92,7 @@ export function Navbar() {
           </div>
 
           {/* Mobile menu button */}
-          <div className="flex sm:hidden items-center gap-2">
+          <div className="flex xl:hidden items-center gap-2">
             <ThemeToggle />
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -104,7 +106,7 @@ export function Navbar() {
 
         {/* Mobile menu dropdown */}
         {mobileMenuOpen && (
-          <div className="sm:hidden mt-4 p-4 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-strong)] shadow-2xl flex flex-col gap-3">
+          <div className="xl:hidden mt-4 p-4 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-strong)] shadow-2xl flex flex-col gap-3">
             {navLinks.map((link) => (
               <a
                 key={link.name}
@@ -122,7 +124,7 @@ export function Navbar() {
                 rel="noopener noreferrer"
               >
                 <Button className="w-full gap-2 text-xs">
-                  <GithubIcon className="w-4 h-4" />
+                  <GithubIcon className="w-4 h-4 text-white" />
                   <span>Ver en GitHub</span>
                 </Button>
               </a>

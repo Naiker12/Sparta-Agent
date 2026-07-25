@@ -36,7 +36,7 @@ export function FeaturesGrid() {
 
   return (
     <section className="py-20 md:py-28 relative bg-[var(--bg-surface)]/40 border-y border-[var(--border-normal)]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
           <Badge variant="accent" className="text-xs uppercase font-mono tracking-wider">
             Capacidades Clave
