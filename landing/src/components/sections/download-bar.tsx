@@ -12,8 +12,7 @@ import {
   ArrowRight, 
   HardDrive, 
   Loader2, 
-  X, 
-  Play 
+  X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -97,13 +96,17 @@ export function DownloadBar() {
         
         let receivedLength = 0;
         const chunks = [];
-        let startTime = Date.now();
+        const startTime = Date.now();
         let lastUpdateTime = startTime;
         let lastReceivedLength = 0;
 
-        while (true) {
+        let downloading = true;
+        while (downloading) {
           const { done, value } = await reader.read();
-          if (done) break;
+          if (done) {
+            downloading = false;
+            break;
+          }
 
           chunks.push(value);
           receivedLength += value.length;

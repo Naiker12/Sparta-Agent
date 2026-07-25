@@ -279,14 +279,16 @@ async function main() {
   }
 
   // 5. The archive extracts into a subdirectory; flatten if needed
-  // python-build-standalone extracts to cpython-{ver}+{ts}-{target}/ inside the archive
-  const extractedDirs = fs.readdirSync(destDir).filter((d) => d.startsWith('cpython'))
-  if (extractedDirs.length === 1) {
-    const inner = path.join(destDir, extractedDirs[0])
+  // python-build-standalone extracts to cpython-{ver}+{ts}-{target}/ or python/ inside the archive.
+  // We flatten any single subdirectory to make this future-proof.
+  const entries = fs.readdirSync(destDir);
+  if (entries.length === 1 && fs.statSync(path.join(destDir, entries[0])).isDirectory()) {
+    const inner = path.join(destDir, entries[0]);
+    console.log(`[fetch-python] Flattening single subdirectory: ${entries[0]}`);
     for (const entry of fs.readdirSync(inner)) {
-      fs.renameSync(path.join(inner, entry), path.join(destDir, entry))
+      fs.renameSync(path.join(inner, entry), path.join(destDir, entry));
     }
-    fs.rmSync(inner, { recursive: true, force: true })
+    fs.rmSync(inner, { recursive: true, force: true });
   }
 
   // 6. Cleanup archive
