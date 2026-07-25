@@ -22,7 +22,7 @@
     "dev:web": "vite --mode web",
     "landing:dev": "pnpm --filter landing dev",
     "landing:build": "pnpm --filter landing build",
-    "build": "tsc && vite build && electron-builder",
+    "build": "tsc && vite build && electron-builder --config electron-builder.config.cjs",
     "build:web": "vite build --mode web",
     "preview:web": "vite preview --outDir dist-web",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives",
