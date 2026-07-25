@@ -93,7 +93,7 @@ export function HeroScreen() {
         }}
       >
         <img
-          src="/sparta-icon.png"
+          src="./sparta-icon.png"
           alt="Sparta"
           style={{
             position: 'absolute',

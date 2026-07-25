@@ -59,7 +59,7 @@ export function AppSidebar() {
 
         {/* Logo */}
         <div className="sidebar-logo">
-          <img src="/sparta-icon.png" alt="Sparta" />
+          <img src="./sparta-icon.png" alt="Sparta" />
           <div className="sidebar-logo-text">
             <span className="sidebar-logo-title">SPARTA</span>
             <span className="sidebar-logo-subtitle">AGENT</span>

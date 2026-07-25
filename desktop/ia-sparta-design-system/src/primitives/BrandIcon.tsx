@@ -13,7 +13,8 @@ export function BrandIcon({ vendor, size = 16, className }: BrandIconProps) {
 
   if (!entry) return null
 
-  const src = isDark ? entry.dark : entry.light
+  const rawSrc = isDark ? entry.dark : entry.light
+  const src = rawSrc.startsWith('/') ? `.${rawSrc}` : rawSrc
   const isMono = MONO_BRANDS.includes(vendor)
 
   return (
