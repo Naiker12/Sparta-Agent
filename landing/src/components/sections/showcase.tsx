@@ -3,6 +3,7 @@ import { Card } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Monitor, Sparkles } from 'lucide-react';
+import { getPublicUrl } from '../../lib/utils';
 
 export function Showcase() {
   const [selectedShot, setSelectedShot] = useState(0);
@@ -12,28 +13,28 @@ export function Showcase() {
       id: 'post',
       title: 'Pantalla Principal de Sparta Agent',
       desc: 'Panel de control con logo Spartan, barra de búsqueda de tareas, sugerencias rápidas y selector de modelos (Ollama, Claude 3.5, Gemini).',
-      src: '/post.png',
+      src: getPublicUrl('post.png'),
       badge: 'Main Interface',
     },
     {
       id: 'sparta-escritorio',
       title: 'Icono & Branding Oficial Dark',
       desc: 'Emblema Spartan oficial en alta resolución para el entorno de escritorio.',
-      src: '/sparta-escritorio.png',
+      src: getPublicUrl('sparta-escritorio.png'),
       badge: 'Dark Branding',
     },
     {
       id: 'readmin',
       title: 'Vista de Sesión & Chat Agéntico',
       desc: 'Historial de conversaciones, sesiones activas y configuración de herramientas MCP.',
-      src: '/readmin.png',
+      src: getPublicUrl('readmin.png'),
       badge: 'Session View',
     },
     {
       id: 'escritorio',
       title: 'Icono & Branding Oficial Light',
       desc: 'Emblema Spartan oficial en alta resolución adaptado para modo claro.',
-      src: '/escritorio.png',
+      src: getPublicUrl('escritorio.png'),
       badge: 'Light Branding',
     },
   ];

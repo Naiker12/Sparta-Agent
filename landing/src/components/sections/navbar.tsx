@@ -5,6 +5,8 @@ import { Menu, X } from 'lucide-react';
 import { GithubIcon } from '../icons/github-icon';
 import { useTheme } from 'next-themes';
 
+import { getPublicUrl } from '../../lib/utils';
+
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -21,8 +23,8 @@ export function Navbar() {
   }, []);
 
   const logoSrc = mounted && resolvedTheme === 'light'
-    ? '/negro/Sparta Agent.png'
-    : '/blanco/Sparta Agent.png';
+    ? getPublicUrl('negro/Sparta Agent.png')
+    : getPublicUrl('blanco/Sparta Agent.png');
 
   const navLinks = [
     { name: 'Pilares', href: '#pilares' },

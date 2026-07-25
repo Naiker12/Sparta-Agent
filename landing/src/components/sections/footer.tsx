@@ -3,6 +3,8 @@ import { GithubIcon } from '../icons/github-icon';
 import { useTheme } from 'next-themes';
 import { useState, useEffect } from 'react';
 
+import { getPublicUrl } from '../../lib/utils';
+
 export function Footer() {
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -12,8 +14,8 @@ export function Footer() {
   }, []);
 
   const logoSrc = mounted && resolvedTheme === 'light'
-    ? '/negro/Sparta Agent.png'
-    : '/blanco/Sparta Agent.png';
+    ? getPublicUrl('negro/Sparta Agent.png')
+    : getPublicUrl('blanco/Sparta Agent.png');
 
   return (
     <footer className="bg-[var(--bg-surface)] border-t border-[var(--border-normal)] py-14 text-xs text-[var(--text-secondary)]">

@@ -4,6 +4,7 @@ import { Badge } from '../ui/badge';
 import { Play, ArrowRight, Lock, Zap, Terminal, ShieldCheck } from 'lucide-react';
 import { GithubIcon } from '../icons/github-icon';
 import { motion } from 'framer-motion';
+import { getPublicUrl } from '../../lib/utils';
 
 export function Hero() {
   const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash');
@@ -151,7 +152,7 @@ export function Hero() {
             {/* Interface Image Container */}
             <div className="relative aspect-[16/9] bg-[#05060f] overflow-hidden flex items-center justify-center p-2 sm:p-4">
               <img
-                src="/post.png"
+                src={getPublicUrl('post.png')}
                 alt="Sparta Agent Real Interface"
                 className="w-full h-full object-contain rounded-xl shadow-2xl"
                 loading="eager"
