@@ -19,7 +19,7 @@ export function Hero() {
 
   const stats = [
     { value: '100%', label: 'Privacidad Local', subtext: 'GDPR / CCPA / Air-Gapped' },
-    { value: '< 15ms', label: 'Broker Rust', subtext: 'Sanitizer & PathGuard' },
+    { value: '< 15ms', label: 'Security Broker', subtext: 'Sanitizer & PathGuard' },
     { value: '-70%', label: 'Ahorro TCO', subtext: 'Ollama Local + Cloud' },
     { value: '3x', label: 'Auto-Reflexión', subtext: 'Linters & Traceback' },
   ];
@@ -79,9 +79,9 @@ export function Hero() {
             className="text-base sm:text-lg text-[var(--text-secondary)] leading-relaxed max-w-2xl mx-auto font-normal"
           >
             Sin que tu código abandone tu máquina. Impulsado por{' '}
-            <strong className="text-[var(--text-display)] font-semibold">Electron + React</strong>,{' '}
-            <strong className="text-[var(--text-display)] font-semibold">LangGraph</strong> en Python para razonamiento autónomo y un{' '}
-            <strong className="text-[var(--text-display)] font-semibold">Broker de Seguridad</strong> nativo en Rust.
+            <strong className="text-[var(--text-display)] font-semibold">Electron + React + Base UI</strong>,{' '}
+            <strong className="text-[var(--text-display)] font-semibold">Runtime Agéntico Nativo</strong> en TypeScript para razonamiento autónomo y un{' '}
+            <strong className="text-[var(--text-display)] font-semibold">Broker de Seguridad</strong> local.
           </motion.p>
 
           {/* Primary Ghost Pill Action CTA & Outlined Pill Button */}
@@ -135,7 +135,7 @@ export function Hero() {
                 <div className="w-2 h-2 rounded-full bg-emerald-500/80 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
               </div>
               <p className="text-xs text-[#9da7ba] leading-normal">
-                El broker nativo en Rust intercepta accesos a terminales e I/O en tiempo real.
+                El broker de seguridad intercepta accesos a terminales e I/O en tiempo real.
               </p>
               
               {/* Permission Matrix Toggles */}
@@ -267,7 +267,7 @@ export function Hero() {
 
             <div className="text-[10px] font-mono text-[#9da7ba] flex items-center gap-1.5 pt-3 border-t border-[rgba(186,215,247,0.06)]">
               <Terminal className="w-3.5 h-3.5 text-indigo-400" />
-              <span>LangGraph Traceback: OK</span>
+              <span>Agent Runtime Traceback: OK</span>
             </div>
           </motion.div>
 

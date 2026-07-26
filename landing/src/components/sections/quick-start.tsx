@@ -8,15 +8,12 @@ import { GithubIcon } from '../icons/github-icon';
 export function QuickStart() {
   const [copied, setCopied] = useState(false);
 
-  const commandText = `# 1. Clonar e instalar dependencias y el entorno Python sidecar
+  const commandText = `# 1. Clonar e instalar dependencias del monorepo
 git clone https://github.com/Naiker12/Sparta-Agent.git
 cd Sparta-Agent
-pnpm install && pnpm sidecar:setup
+pnpm install
 
-# 2. Compilar el broker de seguridad nativo en Rust
-pnpm rust:napi
-
-# 3. Iniciar el IDE en modo desarrollo
+# 2. Iniciar el IDE en modo desarrollo
 pnpm dev`;
 
   const copyToClipboard = () => {
@@ -62,7 +59,7 @@ pnpm dev`;
           </pre>
 
           <div className="mt-6 pt-4 border-t border-[rgba(186,215,247,0.06)] flex flex-wrap items-center justify-between text-xs text-[#9da7ba] font-mono gap-3">
-            <span>Requisitos: Node.js 18+ · pnpm 10+ · Python 3.11+ · Rust toolchain</span>
+            <span>Requisitos: Node.js 18+ · pnpm 10+</span>
             <a
               href="https://github.com/Naiker12/Sparta-Agent#readme"
               target="_blank"

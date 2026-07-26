@@ -123,12 +123,11 @@ export function handleStreamError(
 
   const store = useChatStore.getState()
 
-  // Safety-net: close thinking if still active when an error arrives
+  // Safety-net: unconditionally close thinking when an error arrives
   const errorMsg2 = store.messagesBySession[ctx.sid]?.find((m) => m.id === ctx.mid)
-  if (errorMsg2?.thinkingStatus === 'streaming' || (errorMsg2?.reasoningText && errorMsg2?.thinkingStatus !== 'completed')) {
-    console.debug('[safety-net] cerrando thinking en stream:error')
-    store.onThinkingEnd(ctx.sid, ctx.mid, errorMsg2?.thinkingTokensUsed ?? 0)
-  }
+  console.debug('[safety-net] cerrando thinking en stream:error')
+  store.onThinkingEnd(ctx.sid, ctx.mid, errorMsg2?.thinkingTokensUsed ?? 0)
+  store.setThinkingStatusText(ctx.sid, ctx.mid, '')
 
   store.onStreamEnd(ctx.sid, ctx.mid)
   store.stopStreaming(ctx.sid)
@@ -137,6 +136,8 @@ export function handleStreamError(
   store.updateMessage(ctx.mid, (msg) => ({
     content: msg.content ? `${msg.content}\n\n> **Error:** ${errorMsg}` : `Error: ${errorMsg}`,
     isStreaming: false,
+    thinkingStatus: 'completed' as const,
+    thinkingStatusText: undefined,
   }))
 
   useEventBus.getState().dispatch({

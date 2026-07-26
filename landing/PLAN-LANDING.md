@@ -8,7 +8,7 @@
 
 Cloné y revisé `https://github.com/Naiker12/Sparta-Agent.git` a fondo: `README.md`, `package.json`, `components.json`, `docs/*.txt`, el design system (`desktop/ia-sparta-core/src/styles/base.css`) y los assets de `public/`. Esto es lo que importa para la landing:
 
-**Qué es Sparta Agent.** Un IDE agéntico *local-first*: Electron + React + TypeScript en el frontend, un sidecar en Python con LangGraph como motor de razonamiento, y un broker de seguridad nativo en Rust. No es un autocompletado — es un agente que planifica, ejecuta y se corrige a sí mismo.
+**Qué es Sparta Agent.** Un IDE agéntico *local-first*: Electron + React 18 + Base UI + TypeScript en el frontend, y un motor agéntico nativo en TypeScript ejecutable en Node.js. No es un autocompletado — es un agente que planifica, ejecuta y se corrige a sí mismo.
 
 **Los 3 argumentos de venta reales (no inventados, están en el README):**
 1. **Privacidad/Compliance** — el código nunca sale del perímetro corporativo; procesamiento local-first, cumple GDPR/CCPA.
@@ -18,8 +18,8 @@ Cloné y revisé `https://github.com/Naiker12/Sparta-Agent.git` a fondo: `README
 **Arquitectura (3 capas, ya documentada en el README):**
 ```mermaid
 flowchart TB
-    A["Capa de Presentación<br/>React · Monaco Editor · xterm.js"] -->|IPC / WebSockets| B["Capa de Orquestación<br/>Electron Main · FastAPI<br/>Broker de permisos · Vault cifrado"]
-    B -->|JSON-RPC| C["Núcleo de Inteligencia<br/>Python · LangGraph<br/>Plan → Act → Reflect · Memoria vectorial"]
+    A["Capa de Presentación<br/>React 18 · Monaco Editor · Base UI · xterm.js"] -->|IPC / WebSockets| B["Capa de Orquestación<br/>Electron Main · Node IPC Bridge<br/>PermissionPolicy · Vault cifrado"]
+    B -->|In-Memory Event Stream| C["Núcleo Agéntico Nativo<br/>TypeScript Agent Runtime<br/>Plan → Act → Reflect · Multi-Model LLM"]
 ```
 
 **El flujo del agente (de `docs/05-agentes.txt`, este es el corazón de la landing):**

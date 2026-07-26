@@ -369,11 +369,11 @@ export function ChatInput({ sessionId, className }: ChatInputProps) {
             className={cn(
               "inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-mono transition-all max-w-[220px] cursor-pointer select-none shadow-sm",
               connectedPath
-                ? "bg-indigo-950/50 border-indigo-500/40 text-indigo-300 hover:bg-indigo-900/50 hover:border-indigo-400/70"
-                : "bg-white/[0.04] border-white/10 text-neutral-400 hover:bg-white/[0.08] hover:text-white"
+                ? "bg-accent/10 border-accent/30 text-accent hover:bg-accent/15 hover:border-accent/50"
+                : "bg-muted border-border-subtle text-muted-foreground hover:bg-hover hover:text-foreground"
             )}
           >
-            <FolderOpen className="size-3.5 shrink-0 text-indigo-400" />
+            <FolderOpen className="size-3.5 shrink-0 text-accent" />
             <span className="truncate">
               {folderName ?? 'Sin carpeta'}
             </span>

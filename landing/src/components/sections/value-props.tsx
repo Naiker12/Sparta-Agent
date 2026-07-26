@@ -37,7 +37,7 @@ export function ValueProps() {
                 1. Privacidad y Compliance Total por Diseño
               </h3>
               <p className="text-sm text-[#9da7ba] leading-relaxed">
-                El broker de seguridad en Rust intercepta todas las llamadas I/O del sistema operativo. Tu código jamás abandona la máquina ni el perímetro corporativo sin tu autorización explícita.
+                El broker de seguridad intercepta todas las llamadas I/O del sistema operativo. Tu código jamás abandona la máquina ni el perímetro corporativo sin tu autorización explícita.
               </p>
 
               {/* Interactive Permission Policy Switcher: 999px toggles */}
@@ -151,7 +151,7 @@ export function ValueProps() {
                   <div className="p-3 rounded-full bg-[rgba(168,85,247,0.06)] text-indigo-400 border border-[rgba(186,215,247,0.12)]">
                     <BrainCircuit className="w-5.5 h-5.5 text-indigo-400" />
                   </div>
-                  <Badge variant="accent">LangGraph Reasoning</Badge>
+                  <Badge variant="accent">Agent Runtime Reasoning</Badge>
                 </div>
 
                 <h3 className="text-2xl sm:text-3xl font-bold font-display text-[#d8ecf8]">

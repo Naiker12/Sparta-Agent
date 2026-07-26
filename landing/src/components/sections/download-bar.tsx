@@ -224,7 +224,7 @@ export function DownloadBar() {
             Descarga Sparta Agent para tu Sistema Operativo
           </h2>
           <p className="text-base sm:text-lg text-[#c7d3ea]">
-            Binarios compilados listos para ejecutar. Incluye el broker en Rust nativo y el runtime de Electron.
+            Binarios compilados listos para ejecutar. Incluye el motor agéntico nativo y el runtime de Electron.
           </p>
         </div>
 
@@ -315,7 +315,7 @@ export function DownloadBar() {
             <Terminal className="w-5 h-5 text-[#663af3]" />
             <div>
               <div className="text-[#d8ecf8] font-bold">¿Prefieres compilar desde el código fuente?</div>
-              <div className="text-[#9da7ba] text-[11px]">Requisitos: Node.js 18+, Python 3.11+, Rust Toolchain</div>
+              <div className="text-[#9da7ba] text-[11px]">Requisitos: Node.js 18+, pnpm 10+</div>
             </div>
           </div>
           <a

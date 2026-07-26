@@ -49,9 +49,14 @@ export function storeKey(keyId: string, value: string, vendor?: string): boolean
   if (!safeStorage.isEncryptionAvailable()) return false
   const encrypted = safeStorage.encryptString(value)
   const data = loadVault()
-  data.keys[keyId] = {
+  const payload = {
     encrypted: encrypted.toString('base64'),
     vendor,
+  }
+  data.keys[keyId] = payload
+  if (vendor) {
+    data.keys[`api_key_${vendor}`] = payload
+    data.keys[vendor] = payload
   }
   _cache = data
   saveVault()
@@ -60,7 +65,19 @@ export function storeKey(keyId: string, value: string, vendor?: string): boolean
 
 export function getKey(keyId: string): string | null {
   const data = loadVault()
-  const entry = data.keys[keyId]
+  let entry = data.keys[keyId]
+  if (!entry) {
+    const cleanVendor = keyId.replace(/^api_key_/, '')
+    const foundKey = Object.keys(data.keys).find(
+      (k) =>
+        k === keyId ||
+        k === `api_key_${keyId}` ||
+        k === cleanVendor ||
+        data.keys[k]?.vendor === keyId ||
+        data.keys[k]?.vendor === cleanVendor
+    )
+    if (foundKey) entry = data.keys[foundKey]
+  }
   if (!entry) return null
   if (!safeStorage.isEncryptionAvailable()) return null
   try {

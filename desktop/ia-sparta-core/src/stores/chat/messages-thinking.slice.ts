@@ -52,7 +52,7 @@ export const createMessagesThinkingSlice: StateCreator<ChatState, [], [], Messag
                 completedAt: Date.now(),
               } as MessagePart
             }
-            return { ...msg, thinkingStatus: 'completed' as ThinkingStatus, thinkingTokensUsed: tokensUsed, parts: updatedParts }
+            return { ...msg, thinkingStatus: 'completed' as ThinkingStatus, thinkingTokensUsed: tokensUsed, thinkingStatusText: undefined, parts: updatedParts }
           }),
         },
       }

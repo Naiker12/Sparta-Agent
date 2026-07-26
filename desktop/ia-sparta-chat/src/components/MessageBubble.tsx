@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { Copy, Check, Pencil, CheckCircle, X, RefreshCw, Trash2 } from 'lucide-react'
+import { Copy, Check, Pencil, CheckCircle, X, RefreshCw, Trash2, AlertCircle, Settings } from 'lucide-react'
 import type { Message } from 'ia-sparta-core'
-import { useChatStore } from 'ia-sparta-core'
+import { useChatStore, useSettingsStore } from 'ia-sparta-core'
 import { useEventBus } from 'ia-sparta-core'
 import { useChatSession } from 'ia-sparta-core'
 import { TimelineBlock } from './reasoning/TimelineBlock'
@@ -30,7 +30,7 @@ export function MessageBubble({ message, isLastUser = false, isLastAssistant = f
   const { sendMessage } = useChatSession()
   const dispatch = useEventBus((s) => s.dispatch)
   const { t } = useTranslation()
-  const isErrorMessage = !isUser && message.content.startsWith('Error:')
+  const isErrorMessage = !isUser && (message.content.startsWith('Error:') || message.content.toLowerCase().includes('api key'))
   const suggestions = !isUser && !isErrorMessage ? (message.suggestions ?? []) : []
 
   function handleCopy() {
@@ -207,10 +207,65 @@ export function MessageBubble({ message, isLastUser = false, isLastAssistant = f
                     wordBreak: 'break-word',
                   }}
                 >
-                  <MarkdownRenderer
-                    content={renderState.content}
-                    isStreaming={renderState.kind === 'responding' || renderState.kind === 'generating'}
-                  />
+                  {isErrorMessage ? (
+                    <div
+                      style={{
+                        padding: '12px 14px',
+                        borderRadius: 'var(--radius-md)',
+                        background: 'rgba(239, 68, 68, 0.08)',
+                        border: '1px solid rgba(239, 68, 68, 0.25)',
+                        color: 'var(--text-primary)',
+                        fontSize: 13,
+                        lineHeight: 1.5,
+                        fontFamily: 'var(--font-ui)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 10,
+                        marginTop: 4,
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#ef4444', fontWeight: 600, fontSize: 13 }}>
+                        <AlertCircle size={16} />
+                        <span>Error del Proveedor de IA</span>
+                      </div>
+                      <div style={{ color: 'var(--text-secondary)', fontSize: 12.5 }}>
+                        {renderState.content.replace(/^Error:\s*/i, '')}
+                      </div>
+                      {(renderState.content.toLowerCase().includes('api key') ||
+                        renderState.content.toLowerCase().includes('expirada') ||
+                        renderState.content.toLowerCase().includes('inválida') ||
+                        renderState.content.toLowerCase().includes('configura')) && (
+                        <div style={{ paddingTop: 2 }}>
+                          <button
+                            type="button"
+                            onClick={() => useSettingsStore.getState().openSettings()}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 6,
+                              padding: '6px 12px',
+                              borderRadius: 'var(--radius-sm)',
+                              background: 'var(--accent)',
+                              color: 'white',
+                              fontSize: 11.5,
+                              fontWeight: 500,
+                              border: 'none',
+                              cursor: 'pointer',
+                              fontFamily: 'var(--font-ui)',
+                            }}
+                          >
+                            <Settings size={13} />
+                            Configurar API Key en Ajustes ⚙️
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <MarkdownRenderer
+                      content={renderState.content}
+                      isStreaming={renderState.kind === 'responding' || renderState.kind === 'generating'}
+                    />
+                  )}
                 </div>
               )}
               {!isUser && (renderState.kind === 'responding' || renderState.kind === 'generating') && <StreamCursor visible />}

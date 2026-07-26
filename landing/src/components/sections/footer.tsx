@@ -40,7 +40,7 @@ export function Footer() {
               </span>
             </div>
             <p className="text-xs text-[#9da7ba] leading-relaxed max-w-sm">
-              IDE agéntico local-first impulsado por Electron, LangGraph y Rust. Inteligencia autónoma sin comprometer la privacidad del código.
+              IDE agéntico local-first impulsado por Electron, React, Base UI y TypeScript. Inteligencia autónoma sin comprometer la privacidad del código.
             </p>
           </div>
 
@@ -148,11 +148,11 @@ export function Footer() {
               </div>
               <div className="flex justify-between gap-2">
                 <span className="text-[#c7d3ea]/50">ENGINE</span>
-                <span className="text-white font-medium truncate">LangGraph</span>
+                <span className="text-white font-medium truncate">TypeScript Agent</span>
               </div>
               <div className="flex justify-between gap-2">
                 <span className="text-[#c7d3ea]/50">SECURITY</span>
-                <span className="text-emerald-400 font-medium truncate">Rust NAPI</span>
+                <span className="text-emerald-400 font-medium truncate">Security Broker</span>
               </div>
             </div>
           </div>

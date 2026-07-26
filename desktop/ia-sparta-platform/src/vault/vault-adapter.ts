@@ -5,7 +5,13 @@ import { encryptApiKey, decryptApiKey } from './web-vault'
 export async function getProviderKey(provider: Provider): Promise<string | undefined> {
   if (IS_ELECTRON) {
     if (provider.hasVaultKey && window.vault) {
-      const key = await window.vault.getKey(provider.id)
+      let key = await window.vault.getKey(provider.id)
+      if (!key && provider.vendor) {
+        key = await window.vault.getKey(`api_key_${provider.vendor}`)
+      }
+      if (!key && provider.vendor) {
+        key = await window.vault.getKey(provider.vendor)
+      }
       if (key) return key
     }
 

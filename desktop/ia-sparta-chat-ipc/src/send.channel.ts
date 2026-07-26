@@ -1,24 +1,17 @@
 import { ipcMain, BrowserWindow } from 'electron'
-import { sendToPython, isSidecarRunning, waitForSidecarReady, startSidecar, isSecurityLoaded } from 'ia-sparta-ipc-bridge'
 import {
   type ChatRequest,
   activeStreams,
   windowBySession,
   streamResolvers,
   lastActivity,
+  sendToRenderer,
 } from './shared'
+import { getKey as vaultGetKey } from 'ia-sparta-vault'
+import { ChatCompletionsTransport } from 'ia-sparta-providers'
 
 export function registerChatSendIPC(): void {
   ipcMain.handle('chat:send', async (_event, req: ChatRequest) => {
-    if (!isSidecarRunning()) {
-      await startSidecar()
-    }
-
-    const ready = await waitForSidecarReady(15_000)
-    if (!ready) {
-      return { ok: false, error: 'Sidecar no listo' }
-    }
-
     const { sessionId, messageId } = req
     const requestId = `${sessionId}:${messageId}`
 
@@ -29,98 +22,135 @@ export function registerChatSendIPC(): void {
       windowBySession.set(sessionId, win)
     }
 
-    if (!isSecurityLoaded()) {
-      req.securityLoaded = false
-    }
+    lastActivity.set(sessionId, Date.now())
 
-    const donePromise = new Promise<boolean>((resolve) => {
-      const markDone = () => {
-        streamResolvers.delete(requestId)
-        resolve(true)
-      }
-      streamResolvers.set(requestId, markDone)
+    // Emit thinking started & completion events natively
+    sendToRenderer({
+      sessionId,
+      messageId,
+      type: 'thinking:started',
+      origin: 'native',
     })
 
-    const sent = sendToPython({
-      id: requestId,
-      method: 'chat.stream',
-      params: {
-        session_id: sessionId,
-        message_id: messageId,
-        model: req.model,
-        messages: req.messages,
-        provider_key: req.providerKey,
-        api_url: req.apiUrl,
-        is_local: req.isLocal,
-        system: req.system,
-        vendor: req.vendor,
-        provider_id: req.providerId,
-        mode: req.mode,
-        skills: req.skills,
-        mcp_servers: req.mcpServers,
-        semantic_memory: req.semanticMemory,
-        reasoning: req.reasoning,
-        web_search_enabled: req.webSearchEnabled,
-        workspace_root: req.workspaceRoot,
-        connected_folder: req.connectedFolder,
-        agent_autonomy: req.agentAutonomy,
-        agent_execute_local: req.agentExecuteLocal,
-        security_loaded: req.securityLoaded,
-        sandbox_mode: req.sandboxMode,
-        open_files: req.openFiles,
-      },
-    })
+    // Try to get provider key from vault with vendor & provider ID fallbacks
+    const vendor = req.vendor || req.providerId || 'openai'
+    const providerId = req.providerId || ''
+    const apiKey =
+      req.providerKey ||
+      (providerId ? vaultGetKey(providerId) : null) ||
+      vaultGetKey(`api_key_${vendor}`) ||
+      vaultGetKey(vendor) ||
+      vaultGetKey('api_key_openai') ||
+      vaultGetKey('openai') ||
+      process.env.OPENAI_API_KEY ||
+      ''
 
-    if (!sent) {
-      activeStreams.delete(sessionId)
-      streamResolvers.delete(requestId)
-      return { ok: false, error: 'Sidecar no disponible — no se pudo enviar el mensaje.' }
-    }
+    const isLocalProvider = req.isLocal || vendor === 'ollama' || vendor === 'lmstudio' || vendor === 'llamacpp'
 
-    const timeout = 240_000
-    let lastActivityTime = Date.now()
-    let timedOut = false
+    if (apiKey || isLocalProvider || req.apiUrl) {
+      try {
+        const effectiveKey = apiKey || (isLocalProvider ? 'local' : '')
+        const transport = new ChatCompletionsTransport(vendor as any, effectiveKey, req.apiUrl)
+        const systemPrompt = req.system || 'Sos Sparta Agent, un asistente de ingeniería de software de alto rendimiento.'
+        const formattedMessages = (req.messages || []).map(m => ({ role: m.role as any, content: m.content }))
 
-    while (Date.now() - lastActivityTime < timeout) {
-      await new Promise((r) => setTimeout(r, 500))
-      const state = activeStreams.get(sessionId)
+        sendToRenderer({
+          sessionId,
+          messageId,
+          type: 'thinking:status',
+          text: 'Conectando con el modelo...',
+        })
 
-      if (!state?.active) {
-        streamResolvers.delete(requestId)
-        lastActivity.delete(sessionId)
-        return { ok: true, aborted: true }
+        let hasTokens = false
+        for await (const chunk of transport.streamChat({ model: req.model, messages: formattedMessages, system: systemPrompt })) {
+          const activeState = activeStreams.get(sessionId)
+          if (!activeState?.active) break
+
+          if (chunk.type === 'content_token' && chunk.delta) {
+            hasTokens = true
+            sendToRenderer({
+              sessionId,
+              messageId,
+              type: 'stream:token',
+              token: chunk.delta,
+            })
+          } else if (chunk.type === 'thinking_token' && chunk.delta) {
+            sendToRenderer({
+              sessionId,
+              messageId,
+              type: 'thinking:token',
+              token: chunk.delta,
+            })
+          } else if (chunk.type === 'error' && chunk.error) {
+            sendToRenderer({
+              sessionId,
+              messageId,
+              type: 'thinking:completed',
+            })
+            sendToRenderer({
+              sessionId,
+              messageId,
+              type: 'stream:error',
+              error: chunk.error,
+            })
+            break
+          }
+        }
+
+        if (!hasTokens) {
+          sendToRenderer({
+            sessionId,
+            messageId,
+            type: 'stream:completed',
+          })
+        } else {
+          sendToRenderer({
+            sessionId,
+            messageId,
+            type: 'stream:completed',
+          })
+        }
+      } catch (err) {
+        sendToRenderer({
+          sessionId,
+          messageId,
+          type: 'thinking:completed',
+        })
+        sendToRenderer({
+          sessionId,
+          messageId,
+          type: 'stream:error',
+          error: (err as Error).message || 'Error en la llamada al modelo',
+        })
       }
-
-      // Reset timeout if sidecar sent any activity (heartbeat, tokens, etc.)
-      const activity = lastActivity.get(sessionId)
-      if (activity && activity > lastActivityTime) {
-        lastActivityTime = activity
-      }
-
-      const completed = await Promise.race([
-        donePromise,
-        new Promise<boolean>((r) => setTimeout(() => r(false), 100)),
-      ])
-      if (completed) break
-    }
-    timedOut = Date.now() - lastActivityTime >= timeout
-    lastActivity.delete(sessionId)
-
-    if (timedOut) {
-      // The local timer is a last resort; make it cancel the real sidecar
-      // task too, not merely stop waiting in Electron.
-      sendToPython({
-        id: `abort:${requestId}`,
-        method: 'chat.abort',
-        params: { request_id: requestId, session_id: sessionId },
+    } else {
+      // Direct native fallback when no API key is configured yet
+      sendToRenderer({
+        sessionId,
+        messageId,
+        type: 'thinking:completed',
+      })
+      sendToRenderer({
+        sessionId,
+        messageId,
+        type: 'stream:token',
+        token: `¡Hola! Soy **Sparta Agent**. Para recibir respuestas en tiempo real de modelos de IA, configura tu clave API (OpenAI, Anthropic, Gemini, Groq u Ollama) en el panel de **Ajustes** ⚙️.`,
+      })
+      sendToRenderer({
+        sessionId,
+        messageId,
+        type: 'stream:completed',
       })
     }
 
     activeStreams.delete(sessionId)
-    streamResolvers.delete(requestId)
-    if (timedOut) {
-      return { ok: false, error: 'Timeout' }
+    lastActivity.delete(sessionId)
+    const resolveStream = streamResolvers.get(requestId)
+    if (resolveStream) {
+      resolveStream()
+      streamResolvers.delete(requestId)
     }
+
     return { ok: true }
   })
 
@@ -128,19 +158,12 @@ export function registerChatSendIPC(): void {
     const state = activeStreams.get(sessionId)
     if (state) {
       activeStreams.set(sessionId, { ...state, active: false })
-
-      // BUGFIX: antes solo se apagaba la bandera local `active`, que el
-      // polling de `chat:send` lee, pero el sidecar de Python nunca se
-      // enteraba. Por eso el "pensamiento" seguía corriendo en segundo
-      // plano y terminaba entregando la respuesta igual, aunque en la UI
-      // pareciera pausado. Ahora sí se le avisa a Python que cancele la
-      // tarea real (server.py -> _handle_chat_abort espera `request_id`).
-      const requestId = `${sessionId}:${state.messageId}`
-      sendToPython({
-        id: `abort:${requestId}`,
-        method: 'chat.abort',
-        params: { request_id: requestId, session_id: sessionId },
+      sendToRenderer({
+        sessionId,
+        messageId: state.messageId,
+        type: 'stream:aborted',
       })
+      activeStreams.delete(sessionId)
     }
   })
 }

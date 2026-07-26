@@ -5,9 +5,9 @@ import { CheckCircle2, Clock } from 'lucide-react';
 
 export function Roadmap() {
   const completed = [
-    'Agente básico en Python con LangGraph (Plan → Act → Reflect)',
-    'Integración de Monaco Editor + xterm.js en Electron 30',
-    'Broker de seguridad nativo en Rust (CommandSanitizer + PathGuard)',
+    'Runtime agéntico nativo en TypeScript (Plan → Act → Reflect)',
+    'Integración de Monaco Editor + Base UI + xterm.js en Electron 30',
+    'Broker de seguridad local (CommandSanitizer + PathGuard)',
     'Soporte multi-modelo (Ollama, Llama 3, Anthropic Claude, Gemini, OpenAI)',
     'Generación de planes de ejecución en tiempo real (create_plan)',
     'Ecosistema de skills modular (.agents/skills/)',

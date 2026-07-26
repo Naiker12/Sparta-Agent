@@ -27,6 +27,17 @@ export function TrustBar() {
       )
     },
     {
+      name: 'Base UI',
+      role: 'UI Primitives',
+      color: 'text-indigo-400',
+      icon: (props: any) => (
+        <svg viewBox="0 0 100 100" className={props.className} fill="none" stroke="currentColor" strokeWidth="6">
+          <rect x="15" y="15" width="70" height="70" rx="16" />
+          <path d="M30 45 L50 65 L70 35" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      )
+    },
+    {
       name: 'Electron 30',
       role: 'Desktop Runtime',
       color: 'text-cyan-300',
@@ -40,44 +51,23 @@ export function TrustBar() {
       )
     },
     {
-      name: 'Python 3.11',
-      role: 'LangGraph Sidecar',
-      color: 'text-amber-400',
+      name: 'Tailwind v4',
+      role: 'Styling Engine',
+      color: 'text-teal-300',
       icon: (props: any) => (
-        <svg viewBox="0 0 110 110" className={props.className} fill="currentColor">
-          <path d="M55 2C30.7 2 32.5 12.4 32.5 12.4l.1 10.3h22.7v3.2H22.4S2 25.8 2 50.3c0 24.5 17.8 23.6 17.8 23.6h10.6v-15c0-10 8.2-18.7 18.2-18.7h23.7V25.2S73 2 55 2zm-12.8 9c2.8 0 5 2.2 5 5s-2.2 5-5 5-5-2.2-5-5 2.2-5 5-5z" fill="#3776ab" />
-          <path d="M55 108c24.3 0 22.5-10.4 22.5-10.4l-.1-10.3H54.7v-3.2h32.9S108 84.2 108 59.7c0-24.5-17.8-23.6-17.8-23.6H79.6v15c0 10-8.2 18.7-18.2 18.7H37.7v15.1S37 108 55 108zm6.8-9c2.8 0 5 2.2 5 5s-2.2 5-5 5-5-2.2-5-5 2.2-5 5-5z" fill="#ffd343" />
+        <svg viewBox="0 0 100 100" className={props.className} fill="currentColor">
+          <path d="M20 40 C30 20, 50 20, 60 35 C65 42.5, 70 45, 80 45 C70 65, 50 65, 40 50 C35 42.5, 30 40, 20 40 Z" />
         </svg>
       )
     },
     {
-      name: 'Rust 1.85',
+      name: 'Node IPC',
       role: 'Security Broker',
-      color: 'text-orange-400',
+      color: 'text-emerald-400',
       icon: (props: any) => (
         <svg viewBox="0 0 100 100" className={props.className} fill="none" stroke="currentColor" strokeWidth="6" strokeLinecap="round">
-          <circle cx="50" cy="50" r="32" />
-          <circle cx="50" cy="50" r="22" strokeDasharray="6,6" />
-          <path d="M50 10 L50 22 M50 78 L50 90 M10 50 L22 50 M78 50 L90 50 M22 22 L31 31 M69 69 L78 78 M78 22 L69 31 M31 69 L22 78" />
-          <text x="50" y="57" textAnchor="middle" fontSize="20" fontFamily="sans-serif" fontWeight="bold" fill="currentColor" stroke="none">R</text>
-        </svg>
-      )
-    },
-    {
-      name: 'LangGraph',
-      role: 'Reasoning Engine',
-      color: 'text-indigo-400',
-      icon: (props: any) => (
-        <svg viewBox="0 0 100 100" className={props.className} fill="none" stroke="currentColor" strokeWidth="5.5">
-          <circle cx="25" cy="50" r="8" fill="currentColor" />
-          <circle cx="50" cy="25" r="8" fill="currentColor" />
-          <circle cx="50" cy="75" r="8" fill="currentColor" />
-          <circle cx="75" cy="50" r="8" fill="currentColor" />
-          <line x1="33" y1="46" x2="42" y2="29" />
-          <line x1="33" y1="54" x2="42" y2="71" />
-          <line x1="58" y1="29" x2="67" y2="46" />
-          <line x1="58" y1="71" x2="67" y2="54" />
-          <line x1="50" y1="33" x2="50" y2="67" />
+          <rect x="20" y="20" width="60" height="60" rx="12" />
+          <path d="M35 50 L65 50 M50 35 L50 65" />
         </svg>
       )
     },

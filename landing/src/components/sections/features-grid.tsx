@@ -13,9 +13,9 @@ export function FeaturesGrid() {
     },
     {
       icon: ShieldAlert,
-      title: 'Sandbox + Broker de Permisos NAPI',
-      desc: 'Un broker escrito en Rust intercepta los comandos de la terminal y bloquea activamente scripts destructivos, eliminaciones accidentales y accesos fuera del workspace autorizados.',
-      badge: 'Rust Security',
+      title: 'Sandbox + Broker de Permisos Local',
+      desc: 'Un broker de seguridad integrado intercepta los comandos de la terminal y bloquea activamente scripts destructivos, eliminaciones accidentales y accesos fuera del workspace autorizados.',
+      badge: 'Security Sandbox',
       color: 'text-rose-400 bg-rose-500/10',
     },
     {

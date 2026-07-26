@@ -44,7 +44,7 @@ export function SkillsEcosystem() {
       name: 'UI Components & shadcn',
       icon: Sparkles,
       badge: 'skills/shadcn',
-      skills: ['shadcn/ui', 'base-nova preset', 'Tailwind v4', 'Aesthetic Polish', 'Carousels'],
+      skills: ['Base UI', 'shadcn/ui', 'base-nova preset', 'Tailwind v4', 'Aesthetic Polish'],
       color: 'text-rose-400 bg-rose-500/5 border-rose-500/15',
     },
   ];

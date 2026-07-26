@@ -8,29 +8,29 @@ export function Architecture() {
     {
       step: 'CAPA 1',
       title: 'Capa de Presentación (Frontend IDE)',
-      stack: 'React 18 · Monaco Editor · xterm.js · Tailwind v4',
+      stack: 'React 18 · Monaco Editor · Base UI · xterm.js · Tailwind v4',
       icon: Layout,
       color: 'border-sky-500/15 text-sky-400 bg-sky-500/5',
-      desc: 'Interfaz de usuario ultrarrápida que proporciona un editor Monaco completo, paneles de chat agéntico, terminales interactivas xterm.js y visualización de planes en tiempo real.',
-      features: ['Renderizado fluído a 60fps', 'Terminal integrada xterm.js', 'Modo Claro / Oscuro nativo con tokens base.css'],
+      desc: 'Interfaz de usuario ultrarrápida con editor Monaco completo, paneles de chat agéntico, terminales interactivas xterm.js, componentes accesibles Base UI y soporte de temas dinámicos.',
+      features: ['Renderizado fluido a 60fps', 'Componentes accesibles Base UI', 'Modo Claro / Oscuro dinámico con tokens base.css'],
     },
     {
       step: 'CAPA 2',
       title: 'Capa de Orquestación (IPC & Security)',
-      stack: 'Electron Main · FastAPI · Broker NAPI Rust · Vault Cifrado',
+      stack: 'Electron Main · Node IPC Bridge · PermissionPolicy · Secure Vault',
       icon: Server,
       color: 'border-indigo-500/15 text-indigo-400 bg-indigo-500/5',
-      desc: 'Puente IPC seguro y ligero. El broker en Rust intercepta todas las llamadas I/O del SO, valida el sanitizer de comandos y cifra los secretos en el Vault del SO.',
-      features: ['CommandSanitizer en Rust native', 'PathGuard & Denylist activo', 'Vault cifrado AES-256 local'],
+      desc: 'Puente IPC seguro y ligero en TypeScript. El broker de seguridad intercepta todas las llamadas I/O del sistema operativo, valida el sanitizer de comandos y almacena credenciales en el Vault cifrado.',
+      features: ['CommandSanitizer activo', 'PathGuard & Denylist estricto', 'Vault cifrado AES-256 local'],
     },
     {
       step: 'CAPA 3',
-      title: 'Núcleo de Inteligencia (LangGraph Sidecar)',
-      stack: 'Python 3.11 · LangGraph · ChromaDB Vector Memory · MCP Engine',
+      title: 'Núcleo Agéntico Nativo (TypeScript Runtime)',
+      stack: 'TypeScript Native Engine · Multi-Agent Runtime · Multi-Model LLM',
       icon: Cpu,
       color: 'border-purple-500/15 text-purple-400 bg-purple-500/5',
-      desc: 'El cerebro agéntico autónomo. Corre como un proceso sidecar aislado ejecutando grafos de estados deterministas para planificar, invocar tools y reflexionar.',
-      features: ['Bucle Plan → Act → Reflect', 'Coordinación de subagentes', 'Memoria vectorial ChromaDB integrada'],
+      desc: 'Motor agéntico 100% nativo en TypeScript que se ejecuta en el proceso principal. Maneja ciclos deterministas de planificación, invocación paralela de herramientas y auto-reflexión.',
+      features: ['Bucle Plan → Act → Reflect', 'Ejecución paralela de tools', 'Coordinación nativa de subagentes'],
     },
   ];
 
@@ -42,7 +42,7 @@ export function Architecture() {
         <SectionHeader
           eyebrow="Arquitectura Interna // Decoupled"
           title="Estructura Decoupled de 3 Capas"
-          description="Sin bloqueos en el hilo principal de la UI. Separación limpia de responsabilidades entre presentación, orquestación nativa y razonamiento Python."
+          description="Sin bloqueos en el hilo principal de la UI. Separación limpia de responsabilidades entre presentación, orquestación nativa y razonamiento en TypeScript."
         />
 
         <div className="max-w-4xl mx-auto space-y-6 relative">

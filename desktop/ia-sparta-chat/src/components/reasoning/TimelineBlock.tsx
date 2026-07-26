@@ -72,8 +72,10 @@ export function TimelineBlock({ message, className }: TimelineBlockProps) {
   const hasToolCalls = (message.toolCalls?.length ?? 0) > 0
   const hasContent = hasParts || hasReasoningText || hasToolCalls
 
-  // Derive thinking status from message state
-  const status: ThinkingStatus = message.thinkingStatus ?? (message.isStreaming ? 'streaming' : 'completed')
+  // Derive thinking status from message state (if message is no longer streaming, status is always completed)
+  const status: ThinkingStatus = !message.isStreaming
+    ? 'completed'
+    : (message.thinkingStatus ?? 'streaming')
 
   const skillBadges = useMemo(
     () => message.pipelineSteps?.filter((s) => s.id?.startsWith('skill-')) ?? [],

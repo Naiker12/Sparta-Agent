@@ -12,7 +12,7 @@ export function SecurityMatrix() {
         <SectionHeader
           eyebrow="MATRIZ DE SEGURIDAD NATIVA"
           title="Cero Sorpresas. Control de Permisos por Diseño."
-          description="El broker de seguridad escrito en Rust intercepta todas las operaciones I/O en la capa del sistema operativo antes de su ejecución."
+          description="El broker de seguridad integrado intercepta todas las operaciones I/O en la capa del sistema operativo antes de su ejecución."
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -55,10 +55,10 @@ export function SecurityMatrix() {
                 <ShieldAlert className="w-5.5 h-5.5" />
               </div>
               <h3 className="text-xl font-bold font-display text-[#d8ecf8]">
-                2. CommandSanitizer (Rust)
+                2. CommandSanitizer
               </h3>
               <p className="text-sm text-[#9da7ba] leading-relaxed">
-                Filtro sintáctico en Rust que evalúa cada comando de terminal antes de invocar el subproceso.
+                Filtro sintáctico que evalúa cada comando de terminal antes de invocar el subproceso.
               </p>
               <div className="space-y-2 pt-2 font-mono text-xs">
                 <div className="p-2.5 rounded-[6px] bg-rose-500/5 text-rose-300 border border-rose-500/10 flex items-center gap-2">
@@ -73,7 +73,7 @@ export function SecurityMatrix() {
               </div>
             </div>
             <div className="text-[11px] font-mono text-[#9da7ba] pt-4 border-t border-[rgba(186,215,247,0.06)]">
-              Status: Rust NAPI Broker active (0ms overhead)
+              Status: Security Broker active (&lt; 1ms overhead)
             </div>
           </Card>
 

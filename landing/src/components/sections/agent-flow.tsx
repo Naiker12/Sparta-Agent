@@ -34,7 +34,7 @@ export function AgentFlow() {
       badgeVariant: 'outline' as const,
       icon: User,
       logs: [
-        'Connecting to local Electron IPC broker...',
+        'Connecting to local IPC bridge...',
         'Payload: "Implementa autenticación JWT con FastAPI..."',
         'State initialized: { status: "INIT", depth: 0 }'
       ]
@@ -73,16 +73,16 @@ export function AgentFlow() {
     },
     {
       id: 'sandbox',
-      title: 'Broker de Seguridad Rust',
+      title: 'Broker de Seguridad Local',
       actor: 'security_broker',
       node: 'CommandSanitizer',
       stepNum: '04',
-      desc: 'El broker nativo escrito en Rust intercepta la acción. Comprueba el sanitizer de comandos y valida el PathGuard en microsegundos.',
+      desc: 'El broker de seguridad integrado intercepta la acción. Comprueba el sanitizer de comandos y valida el PathGuard en microsegundos.',
       badge: 'Security Shield',
       badgeVariant: 'warning' as const,
       icon: ShieldAlert,
       logs: [
-        'Rust NAPI Interceptor: Hooked write_file context.',
+        'Security Interceptor: Hooked write_file context.',
         'PathGuard: Target path inside workspace boundary. ALLOWED.',
         'CommandSanitizer: 0 policy violations detected.'
       ]
@@ -270,7 +270,7 @@ export function AgentFlow() {
                           ? 'bg-[#663af3] border-[#663af3] text-white font-bold shadow-md shadow-[#663af3]/20 scale-105' 
                           : 'bg-black/30 border-[rgba(186,215,247,0.08)] text-[#9da7ba]'
                       }`}>
-                        ➔ Rust Security Sandbox
+                        ➔ Security Sandbox
                       </div>
 
                       {/* Node: Reflection Loop */}
@@ -296,8 +296,8 @@ export function AgentFlow() {
                   </div>
 
                   <div className="text-[9px] font-mono text-[#9da7ba] flex items-center justify-between border-t border-[rgba(186,215,247,0.06)] pt-2.5">
-                    <span className="flex items-center gap-1"><Activity className="w-3 h-3 text-[#34d399] animate-pulse" /> sidecar active</span>
-                    <span>Ollama / LangGraph</span>
+                    <span className="flex items-center gap-1"><Activity className="w-3 h-3 text-[#34d399] animate-pulse" /> native agent active</span>
+                    <span>Ollama / Local Provider</span>
                   </div>
                 </div>
 

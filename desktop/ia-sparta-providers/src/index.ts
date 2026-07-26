@@ -6,3 +6,5 @@
 export * from './ConfigureProviderDialog'
 export * from './ChooseProviderDialog'
 export * from './ProviderCard'
+export * from './gateway'
+export * from './transports'
