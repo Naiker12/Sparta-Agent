@@ -61,44 +61,45 @@ export function ThinkingPill({
         role="status"
         variant="default"
         className={cn(
-          'cursor-pointer select-none transition-all duration-200 border border-border/50 shadow-xs hover:border-accent/40 bg-muted/40 text-foreground hover:bg-muted/60',
+          'cursor-pointer select-none transition-all duration-200 py-1.5 px-3 rounded-full border border-border/80 shadow-xs hover:border-accent/60 bg-[var(--bg-surface)] text-foreground hover:bg-[var(--bg-hover)] font-semibold',
           className
         )}
       >
-        <MarkerIcon>
+        <MarkerIcon className="shrink-0">
           {isActive ? (
             <ThinkingOrb state={orbState} size={20} paused={!isActive} />
           ) : isEmulated ? (
-            <Sparkles size={13} className="text-amber-500 shrink-0" />
+            <Sparkles size={15} strokeWidth={2.2} className="text-amber-500 shrink-0" />
           ) : (
-            <Check size={13} className="text-emerald-500 shrink-0" />
+            <Check size={15} strokeWidth={2.5} className="text-emerald-600 shrink-0" />
           )}
         </MarkerIcon>
 
-        <MarkerContent shimmer={isActive} className="flex items-center gap-1.5 text-[11px] text-foreground">
-          <span className="font-sans font-medium">{label}</span>
+        <MarkerContent shimmer={isActive} className="flex items-center gap-2 text-[12px] font-semibold text-foreground">
+          <span className="font-sans font-bold text-foreground">{label}</span>
 
           {/* Seconds elapsed display */}
-          <span className="font-mono text-[10.5px] font-semibold opacity-90 text-foreground/80">
+          <span className="font-mono text-[11px] font-bold text-foreground/90">
             ({formattedSeconds})
           </span>
 
           {lastSkillName && (
-            <span className="text-[9.5px] opacity-65 truncate max-w-[120px] font-mono">
+            <span className="text-[10px] font-semibold opacity-75 truncate max-w-[120px] font-mono">
               &middot; {lastSkillName.replace(/^[^\s]+\s/, '')}
             </span>
           )}
 
           {tokensUsed > 0 && (
-            <span className="text-[9.5px] opacity-65 font-mono">
+            <span className="text-[10px] font-semibold opacity-75 font-mono">
               &middot; {tokensUsed.toLocaleString()} {t('chat.tokensUnit')}
             </span>
           )}
         </MarkerContent>
 
         <ChevronRight
-          size={12}
-          className={cn('ml-1 shrink-0 transition-transform duration-200 opacity-70', isExpanded && 'rotate-90')}
+          size={14}
+          strokeWidth={2.2}
+          className={cn('ml-1 shrink-0 transition-transform duration-200 opacity-80', isExpanded && 'rotate-90')}
         />
       </Marker>
     </motion.div>

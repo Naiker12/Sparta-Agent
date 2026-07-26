@@ -5,6 +5,7 @@ import { SidebarProvider } from 'ia-sparta-design-system'
 import { AppSidebar } from '../sidebar/AppSidebar'
 import { SidebarResizeHandle } from '../sidebar/SidebarResizeHandle'
 import { StatusBar } from './StatusBar'
+import { LowerDock } from './LowerDock'
 import { Toaster } from 'ia-sparta-design-system'
 import { ChatArea } from '../chat/ChatArea'
 import { SettingsDialog } from '../settings/SettingsDialog'
@@ -122,7 +123,39 @@ export function AppShell() {
             <SidebarResizeHandle />
           </div>
           <div className="relative flex flex-1 min-h-0 overflow-hidden">
-            {isFullView ? (
+            {/* Chat Area & Terminal Slot — Always mounted (Keep-Alive), hidden when isFullView is true */}
+            <div
+              className="flex flex-1 min-h-0 flex-col"
+              style={{ display: isFullView ? 'none' : 'flex' }}
+            >
+              <div className="flex-1 min-h-0 overflow-hidden">
+                <ChatErrorBoundary>
+                  <ChatArea />
+                </ChatErrorBoundary>
+              </div>
+              {IS_ELECTRON && (
+                <div className="relative" style={{ flexShrink: 0 }}>
+                  {terminalOpen && <div className="border-t border-[var(--border-normal)]" />}
+                  <motion.div
+                    initial={false}
+                    animate={{ height: terminalOpen ? terminalHeight : 0 }}
+                    transition={{ duration: isDraggingTerminal ? 0 : 0.12, ease: 'easeOut' }}
+                    style={{ overflow: 'hidden', position: 'relative', display: 'flex', flexDirection: 'column' }}
+                  >
+                    <TerminalSlot />
+                  </motion.div>
+                  {terminalOpen && (
+                    <PanelDragHandle
+                      className="terminal-resize-handle"
+                      onMouseDown={handleTerminalResize}
+                    />
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Full Views (Skills, MCP, Channels, Memory, Sessions) */}
+            {isFullView && (
               <div
                 key={effectiveView}
                 className="flex flex-1 min-h-0"
@@ -130,40 +163,12 @@ export function AppShell() {
               >
                 {FULL_VIEWS[effectiveView]}
               </div>
-            ) : (
-              <>
-                <div className="flex flex-1 min-h-0 flex-col">
-                  <div className="flex-1 min-h-0 overflow-hidden">
-                    <ChatErrorBoundary>
-                      <ChatArea />
-                    </ChatErrorBoundary>
-                  </div>
-                  {IS_ELECTRON && (
-                    <div className="relative" style={{ flexShrink: 0 }}>
-                      {terminalOpen && <div className="border-t border-[var(--border-normal)]" />}
-                      <motion.div
-                        initial={false}
-                        animate={{ height: terminalOpen ? terminalHeight : 0 }}
-                        transition={{ duration: isDraggingTerminal ? 0 : 0.12, ease: 'easeOut' }}
-                        style={{ overflow: 'hidden', position: 'relative', display: 'flex', flexDirection: 'column' }}
-                      >
-                        <TerminalSlot />
-                      </motion.div>
-                      {terminalOpen && (
-                        <PanelDragHandle
-                          className="terminal-resize-handle"
-                          onMouseDown={handleTerminalResize}
-                        />
-                      )}
-                    </div>
-                  )}
-                </div>
-              </>
             )}
           </div>
         </SidebarProvider>
       </div>
       <SidebarResizeHandle />
+      <LowerDock />
       <StatusBar />
       {settingsOpen && <SettingsDialog />}
       {isDraggingTerminal && (

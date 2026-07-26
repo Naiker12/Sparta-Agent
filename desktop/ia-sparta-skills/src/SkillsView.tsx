@@ -1,6 +1,6 @@
 import { cn } from 'ia-sparta-design-system'
 import { useState, useMemo, useEffect } from 'react'
-import { Search, Layers, Compass, Plus } from 'lucide-react'
+import { Search, Layers, Plus } from 'lucide-react'
 import { useSkillStore } from 'ia-sparta-core'
 import { useLocalSkillsLoader } from 'ia-sparta-core'
 import { SkillCard } from './SkillCard'
@@ -12,18 +12,18 @@ import type { Skill } from 'ia-sparta-core'
 type Tab = 'mine' | 'explore' | 'create'
 
 const CATEGORY_ICONS: Record<string, string> = {
-  'Analysis': '\ud83d\udcca', 'Apple': '\ud83c\udf4e', 'Automation': '\u26a1',
-  'Autonomous AI Agents': '\ud83e\udd16', 'Coding': '\ud83d\udcbb',
-  'Creative': '\ud83c\udfa8', 'Data Science': '\ud83d\udd2c', 'Email': '\ud83d\udce7',
-  'GitHub': '\ud83d\udc19', 'Media': '\ud83c\udfac', 'MLOps': '\ud83e\udde0',
-  'Note Taking': '\ud83d\udcdd', 'Productivity': '\ud83d\udcc2',
-  'Research': '\ud83d\udd0d', 'Smart Home': '\ud83c\udfe0',
-  'Social Media': '\ud83d\udcf1', 'Software Development': '\ud83d\udee0\ufe0f',
-  'Writing': '\u270d\ufe0f',
+  'Analysis': '📊', 'Apple': '🍎', 'Automation': '⚡',
+  'Autonomous AI Agents': '🤖', 'Coding': '💻',
+  'Creative': '🎨', 'Data Science': '🔬', 'Email': '📧',
+  'GitHub': '🐙', 'Media': '🎬', 'MLOps': '🧠',
+  'Note Taking': '📝', 'Productivity': '📂',
+  'Research': '🔍', 'Smart Home': '🏠',
+  'Social Media': '📱', 'Software Development': '🛠️',
+  'Writing': '✍️',
 }
 
 function getCategoryIcon(category: string): string {
-  return CATEGORY_ICONS[category] ?? CATEGORY_ICONS[category.replace(/-/g, ' ')] ?? '\ud83d\udce6'
+  return CATEGORY_ICONS[category] ?? CATEGORY_ICONS[category.replace(/-/g, ' ')] ?? '📦'
 }
 
 function CategorySection({ category, count, activeCount, children }: { category: string; count: number; activeCount?: number; children: React.ReactNode }) {
@@ -91,46 +91,19 @@ function ExploreSkillCard({ skill, isActive, onToggle }: {
   )
 }
 
-function EmptyState({ message }: { message: string }) {
-  return (
-    <div className="flex items-center justify-center flex-col gap-2 py-12 px-6 text-muted-foreground">
-      <Layers size={28} strokeWidth={1} />
-      <span className="text-xs">{message}</span>
-    </div>
-  )
-}
-
-function SkeletonLoader() {
-  return (
-    <div className="flex flex-col gap-4 pt-3">
-      {[1, 2, 3].map((i) => (
-        <div key={i}>
-          <div className="w-20 h-2.5 bg-muted rounded mb-2 animate-pulse" />
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-2">
-            {[1, 2, 3].map((j) => (
-              <div key={j} className="h-20 bg-muted/60 rounded-md animate-pulse" />
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
 export function SkillsView() {
   const { skills: userSkills, activeSkillIds, toggleActive, addSkill, updateSkill, deleteSkill, loadInstalledSkills } = useSkillStore()
-  const { skills: localSkills, byCategory, loading } = useLocalSkillsLoader()
+  const { skills: localSkills, byCategory } = useLocalSkillsLoader()
   const [tab, setTab] = useState<Tab>('mine')
   const [search, setSearch] = useState('')
-  const [activeTag, setActiveTag] = useState<string | null>(null)
-  const [editId, setEditId] = useState<string | null>(null)
+  const [editSkill, setEditSkill] = useState<Skill | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
 
   useEffect(() => {
     loadInstalledSkills()
   }, [loadInstalledSkills])
 
-  const mySkills = useMemo(() => {
+  const mySkills: Skill[] = useMemo(() => {
     const builtins = localSkills.filter((s) => s.source === 'builtin')
     const userIds = new Set(userSkills.map((s) => s.id))
     return [
@@ -141,231 +114,173 @@ export function SkillsView() {
         description: s.description,
         prompt: s.description,
         tags: s.tags as string[],
-        category: s.category,
+        category: (s.category as any) || 'Productivity',
         icon: s.icon,
         version: s.version,
         author: s.author,
         source: s.source as Skill['source'],
         featured: s.featured,
         createdAt: Date.now(),
-      } as Skill)),
+      })),
     ]
   }, [userSkills, localSkills])
 
-  const allTags = useMemo(
-    () => [...new Set(mySkills.flatMap((s) => s.tags ?? []))].sort(),
-    [mySkills]
-  )
-
   const filteredMine = useMemo(() => {
-    return mySkills.filter((s) => {
-      if (activeTag && !(s.tags ?? []).includes(activeTag)) return false
-      if (search.trim()) {
-        const q = search.toLowerCase()
-        return s.name.toLowerCase().includes(q) || s.description.toLowerCase().includes(q)
-      }
-      return true
-    })
-  }, [mySkills, search, activeTag])
-
-  const mineByCategory = useMemo(() => {
-    return filteredMine.reduce<Record<string, typeof filteredMine>>((acc, s) => {
-      const cat = (s.category as string) || 'General'
-      if (!acc[cat]) acc[cat] = []
-      acc[cat].push(s)
-      return acc
-    }, {})
-  }, [filteredMine])
-
-  const filteredExplore = useMemo(() => {
-    if (!search.trim() && !activeTag) return byCategory
-    return Object.entries(byCategory).reduce<Record<string, typeof localSkills>>((acc, [cat, skills]) => {
-      const filtered = skills.filter((s) => {
-        if (activeTag && !s.tags.includes(activeTag)) return false
-        if (search.trim()) {
-          const q = search.toLowerCase()
-          return s.name.toLowerCase().includes(q) || s.description.toLowerCase().includes(q)
-        }
-        return true
-      })
-      if (filtered.length > 0) acc[cat] = filtered
-      return acc
-    }, {})
-  }, [byCategory, search, activeTag])
-
-  const exploreTags = useMemo(
-    () => [...new Set(localSkills.flatMap((s) => s.tags))].sort(),
-    [localSkills]
-  )
-
-  const totalActive = activeSkillIds.length
+    let list = mySkills
+    if (search.trim()) {
+      const q = search.toLowerCase()
+      list = list.filter((s) => s.name.toLowerCase().includes(q) || s.description.toLowerCase().includes(q))
+    }
+    return list
+  }, [mySkills, search])
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', fontFamily: 'var(--font-ui)', background: 'var(--bg-base)' }}>
+      {/* ── Header ────────────────────────────────────────── */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '12px 20px', borderBottom: '1px solid var(--border-subtle)', flexShrink: 0,
+        padding: '10px 20px', borderBottom: '1px solid var(--border-normal)', flexShrink: 0,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <h2 style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Skills</h2>
-          <span style={{
-            fontSize: 10, color: 'var(--text-muted)', background: 'var(--bg-active)',
-            padding: '1px 6px', borderRadius: 3, fontFamily: 'var(--font-mono)',
+          <div style={{
+            height: 30, width: 30, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            borderRadius: 8, background: 'color-mix(in srgb, var(--accent) 12%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--accent) 25%, transparent)',
+            color: 'var(--accent)',
           }}>
-            {mySkills.length}
-          </span>
-          {totalActive > 0 && (
-            <span style={{
-              fontSize: 10, color: 'var(--accent)', background: 'color-mix(in srgb, var(--accent) 12%, transparent)',
-              padding: '1px 6px', borderRadius: 3, fontFamily: 'var(--font-mono)',
-            }}>
-              {totalActive} activas
-            </span>
-          )}
+            <Layers size={15} strokeWidth={1.8} />
+          </div>
+          <div>
+            <h2 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', margin: 0, lineHeight: 1 }}>
+              Catálogo de Skills
+            </h2>
+            <p style={{ fontSize: 10, color: 'var(--text-muted)', margin: '3px 0 0', fontFamily: 'var(--font-mono)' }}>
+              {activeSkillIds.length} activas · {mySkills.length} instaladas
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setTab('create')}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px',
+            borderRadius: 6, background: 'var(--accent)', color: 'white', border: 'none',
+            fontSize: 11, fontWeight: 600, fontFamily: 'var(--font-ui)', cursor: 'pointer',
+          }}
+        >
+          <Plus size={12} strokeWidth={2.5} />
+          <span>Nueva Skill</span>
+        </button>
+      </div>
+
+      {/* ── Controls Bar ─────────────────────────────────── */}
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '6px 20px', borderBottom: '1px solid var(--border-normal)', background: 'var(--bg-surface)', flexShrink: 0,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button
+            type="button"
+            onClick={() => setTab('mine')}
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer', fontSize: 11,
+              fontWeight: tab === 'mine' ? 600 : 400,
+              color: tab === 'mine' ? 'var(--accent)' : 'var(--text-secondary)',
+              borderBottom: tab === 'mine' ? '2px solid var(--accent)' : '2px solid transparent',
+              paddingBottom: 4,
+            }}
+          >
+            Mis Skills ({mySkills.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab('explore')}
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer', fontSize: 11,
+              fontWeight: tab === 'explore' ? 600 : 400,
+              color: tab === 'explore' ? 'var(--accent)' : 'var(--text-secondary)',
+              borderBottom: tab === 'explore' ? '2px solid var(--accent)' : '2px solid transparent',
+              paddingBottom: 4,
+            }}
+          >
+            Explorar ({localSkills.length})
+          </button>
+        </div>
+
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+          <Search size={12} style={{ position: 'absolute', left: 8, color: 'var(--text-muted)' }} />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar..."
+            style={{
+              padding: '3px 8px 3px 26px', fontSize: 11, borderRadius: 6,
+              background: 'var(--bg-input)', border: '1px solid var(--border-subtle)',
+              color: 'var(--text-primary)', outline: 'none', width: 160,
+            }}
+          />
         </div>
       </div>
 
-      <div style={{ display: 'flex', borderBottom: '1px solid var(--border-subtle)', padding: '0 16px', flexShrink: 0 }}>
-        {([
-          { key: 'mine' as Tab, label: 'Mis Skills', icon: <Layers size={11} /> },
-          { key: 'explore' as Tab, label: 'Explorar', icon: <Compass size={11} /> },
-          { key: 'create' as Tab, label: 'Crear', icon: <Plus size={11} /> },
-        ]).map((t) => (
-          <button key={t.key} onClick={() => setTab(t.key)} style={{
-            display: 'flex', alignItems: 'center', gap: 5,
-            padding: '8px 16px', background: 'none', border: 'none',
-            borderBottom: tab === t.key ? '2px solid var(--accent)' : '2px solid transparent',
-            color: tab === t.key ? 'var(--accent)' : 'var(--text-muted)',
-            fontSize: 11, fontFamily: 'var(--font-ui)', fontWeight: 500, cursor: 'pointer',
-          }}>
-            {t.icon} {t.label}
-          </button>
-        ))}
-      </div>
-
-      {tab !== 'create' && (
-        <div style={{ padding: '10px 16px 0', flexShrink: 0 }}>
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 8,
-            background: 'var(--bg-input)', border: '1px solid var(--border-subtle)',
-            borderRadius: 'var(--radius-md)', padding: '6px 10px', marginBottom: 8,
-          }}>
-            <Search size={12} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder={tab === 'mine' ? 'Buscar en mis skills...' : 'Buscar skills...'}
-              style={{
-                flex: 1, background: 'none', border: 'none', outline: 'none',
-                color: 'var(--text-primary)', fontSize: 12, fontFamily: 'var(--font-ui)',
-              }}
-            />
-          </div>
-          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', paddingBottom: 8 }}>
-            {(tab === 'mine' ? allTags : exploreTags).slice(0, 20).map((tag) => (
-              <button
-                key={tag}
-                onClick={() => setActiveTag(activeTag === tag ? null : tag)}
-                style={{
-                  fontSize: 10, padding: '2px 7px', borderRadius: 3,
-                  border: `1px solid ${activeTag === tag ? 'var(--accent)' : 'var(--border-subtle)'}`,
-                  background: activeTag === tag ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : 'transparent',
-                  color: activeTag === tag ? 'var(--accent)' : 'var(--text-muted)',
-                  cursor: 'pointer', fontFamily: 'var(--font-ui)',
-                }}
-              >
-                {tag}
-              </button>
+      {/* ── Content Grid ─────────────────────────────────── */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
+        {tab === 'mine' && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
+            {filteredMine.map((skill) => (
+              <SkillCard
+                key={skill.id}
+                skill={skill}
+                installed
+                onActivate={() => toggleActive(skill.id)}
+                onEdit={() => { setEditSkill(skill); setDialogOpen(true) }}
+                onDelete={() => deleteSkill(skill.id)}
+              />
             ))}
           </div>
-        </div>
-      )}
-
-      <div style={{ flex: 1, overflowY: 'auto', padding: '4px 16px 20px' }}>
-        {tab === 'mine' && (
-          <>
-            {filteredMine.length === 0 ? (
-              <EmptyState message="No hay skills instaladas a\u00fan. Explora el cat\u00e1logo para agregar." />
-            ) : (
-              Object.entries(mineByCategory).map(([cat, catSkills]) => (
-                <CategorySection key={cat} category={cat} count={catSkills.length}>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 8 }}>
-                    {catSkills.map((skill) => (
-                      <SkillCard
-                        key={skill.id}
-                        skill={skill}
-                        onActivate={() => toggleActive(skill.id)}
-                        onEdit={() => { setEditId(skill.id); setDialogOpen(true) }}
-                        onDelete={() => deleteSkill(skill.id)}
-                        onExport={() => {
-                          const blob = new Blob([JSON.stringify(skill, null, 2)], { type: 'application/json' })
-                          const url = URL.createObjectURL(blob)
-                          const a = document.createElement('a')
-                          a.href = url; a.download = `${skill.id}.skill.md`; a.click()
-                          URL.revokeObjectURL(url)
-                        }}
-                      />
-                    ))}
-                  </div>
-                </CategorySection>
-              ))
-            )}
-          </>
         )}
 
         {tab === 'explore' && (
-          <>
-            {loading ? (
-              <SkeletonLoader />
-            ) : Object.keys(filteredExplore).length === 0 ? (
-              <EmptyState message="No se encontraron skills con ese filtro." />
-            ) : (
-              Object.entries(filteredExplore).sort(([a], [b]) => a.localeCompare(b)).map(([cat, catSkills]) => (
-                <CategorySection
-                  key={cat}
-                  category={cat}
-                  count={catSkills.length}
-                  activeCount={catSkills.filter((s) => activeSkillIds.includes(s.id)).length}
-                >
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 8 }}>
-                    {catSkills.map((skill) => (
-                      <ExploreSkillCard
-                        key={skill.id}
-                        skill={skill}
-                        isActive={activeSkillIds.includes(skill.id)}
-                        onToggle={() => toggleActive(skill.id)}
-                      />
-                    ))}
-                  </div>
-                </CategorySection>
-              ))
-            )}
-            {!loading && (
-              <div style={{ padding: '12px 4px', fontSize: 11, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)' }}>
-                {localSkills.length} skills disponibles &middot; {activeSkillIds.length} instaladas
-              </div>
-            )}
-          </>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {Object.entries(byCategory).map(([cat, items]) => (
+              <CategorySection key={cat} category={cat} count={items.length}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
+                  {items.map((item) => (
+                    <ExploreSkillCard
+                      key={item.id}
+                      skill={item}
+                      isActive={activeSkillIds.includes(item.id)}
+                      onToggle={() => toggleActive(item.id)}
+                    />
+                  ))}
+                </div>
+              </CategorySection>
+            ))}
+          </div>
         )}
 
-        {tab === 'create' && <SkillCreator />}
+        {tab === 'create' && (
+          <div style={{ maxWidth: 600, margin: '0 auto' }}>
+            <SkillCreator />
+          </div>
+        )}
       </div>
 
-      {dialogOpen && editId && (
+      {dialogOpen && (
         <SkillDialog
           open={dialogOpen}
-          onClose={() => { setDialogOpen(false); setEditId(null) }}
-          onSubmit={(n, d, p, t, c) => {
-            if (editId) {
-              updateSkill(editId, { name: n, description: d, prompt: p, tags: t, category: c as any })
+          onClose={() => { setDialogOpen(false); setEditSkill(null) }}
+          initial={editSkill}
+          onSubmit={(name, description, prompt, tags, category) => {
+            if (editSkill) {
+              updateSkill(editSkill.id, { name, description, prompt, tags, category })
             } else {
-              addSkill(n, d, p, t, c)
+              addSkill(name, description, prompt, tags, category)
             }
             setDialogOpen(false)
-            setEditId(null)
+            setEditSkill(null)
           }}
-          onDelete={editId ? () => { deleteSkill(editId); setDialogOpen(false); setEditId(null) } : undefined}
-          initial={editId ? userSkills.find(s => s.id === editId) ?? null : null}
         />
       )}
     </div>

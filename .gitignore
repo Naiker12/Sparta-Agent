@@ -43,25 +43,6 @@ sparta-vault.json
 # App data directory
 .sparta/
 
-# Rust Security Layer
-rust/sparta-security/target/
-rust/sparta-security/*.node*
-desktop/runtime/**/*.node*
-*.node*
-rust/sparta-security/index.js
-rust/sparta-security/index.d.ts
-rust/**/*.rs.bk
-
-# Python AI Sidecar
-python/.venv/
-__pycache__/
-python/**/*.pyc
-python/.pytest_cache/
-python/.ruff_cache/
-python/*.egg-info/
-python/.mypy_cache/
-python/dist/
-
 
 dist-web/
 

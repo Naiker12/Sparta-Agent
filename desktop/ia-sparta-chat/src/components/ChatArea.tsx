@@ -1,5 +1,6 @@
 import { useChatStore } from 'ia-sparta-core'
 import { useSessionStore } from 'ia-sparta-core'
+import { TabStrip } from 'ia-sparta-tabs'
 import { MessageList } from './MessageList'
 import { ChatInput } from './ChatInput'
 import { HeroScreen } from './HeroScreen'
@@ -12,6 +13,10 @@ export function ChatArea() {
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
+      {/* Panel Superior de Pestañas (Keep-Alive Multi-Tab) */}
+      <div className="px-3 py-1.5 border-b border-[var(--border-subtle)] bg-[var(--bg-sidebar)] shrink-0">
+        <TabStrip />
+      </div>
       {messages.length > 0 ? (
         <MessageList className="flex-1 min-h-0 overflow-y-auto" messages={messages} />
       ) : (

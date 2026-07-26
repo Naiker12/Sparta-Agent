@@ -1,7 +1,7 @@
 {
   "anthropic":  { "label": "Anthropic",         "kind": "cloud", "env": "ANTHROPIC_API_KEY",  "base_url": null,                         "docs": "https://docs.anthropic.com" },
   "openai":     { "label": "OpenAI",             "kind": "cloud", "env": "OPENAI_API_KEY",     "base_url": null,                         "docs": "https://platform.openai.com/docs" },
-  "google":     { "label": "Google",             "kind": "cloud", "env": "GOOGLE_API_KEY",     "base_url": null,                         "docs": "https://ai.google.dev" },
+  "google":     { "label": "Google",             "kind": "cloud", "env": "GOOGLE_API_KEY",     "base_url": null,                         "docs": "https://ai.google.dev", "models": ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-pro"] },
   "groq":       { "label": "Groq",               "kind": "cloud", "env": "GROQ_API_KEY",       "base_url": "https://api.groq.com/openai/v1",               "docs": "https://console.groq.com" },
   "mistral":    { "label": "Mistral",            "kind": "cloud", "env": "MISTRAL_API_KEY",    "base_url": "https://api.mistral.ai/v1",                   "docs": "https://docs.mistral.ai" },
   "azure":      { "label": "Azure OpenAI",       "kind": "cloud", "env": "AZURE_OPENAI_API_KEY", "base_url": null,                         "docs": "https://learn.microsoft.com/azure/ai-services/openai" },

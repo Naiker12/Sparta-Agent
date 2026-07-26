@@ -104,7 +104,7 @@ app.on('activate', () => {
 })
 
 app.whenReady().then(async () => {
-  // Start Python AI sidecar before creating window
+  // Start native TypeScript EventBridge before creating window
   startSidecar()
 
   // Register security IPC early so the renderer gets the real module status
@@ -113,8 +113,7 @@ app.whenReady().then(async () => {
 
   createWindow()
 
-  // Register chat IPC handlers from ia-sparta-chat-ipc (the no-op stub in
-  // ia-sparta-ipc-bridge was a leftover from the modularization).
+  // Register chat IPC handlers from ia-sparta-chat-ipc
   registerChatSendIPC()
   registerOnMessageHandler()
   registerSidecarStatusIPC()
@@ -133,7 +132,7 @@ app.whenReady().then(async () => {
   registerPermissionIPC()
   registerModelsIPC()
 
-  // Wire Rust security layer into the IPC pipeline
+  // Wire native TypeScript security layer into the IPC pipeline
   wireSecurityIntoPipeline()
 
   // Seed vault keys into Python sidecar cache once it is ready.

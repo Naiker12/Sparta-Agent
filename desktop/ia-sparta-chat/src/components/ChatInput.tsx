@@ -367,13 +367,13 @@ export function ChatInput({ sessionId, className }: ChatInputProps) {
             type="button"
             onClick={() => setShowFolderDialog(true)}
             className={cn(
-              "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-[11px] font-medium transition-colors max-w-[200px] cursor-pointer select-none",
+              "inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-mono transition-all max-w-[220px] cursor-pointer select-none shadow-sm",
               connectedPath
-                ? "bg-indigo-500/10 border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/20"
-                : "bg-white/5 border-white/10 text-muted-foreground hover:bg-white/10 hover:text-foreground"
+                ? "bg-indigo-950/50 border-indigo-500/40 text-indigo-300 hover:bg-indigo-900/50 hover:border-indigo-400/70"
+                : "bg-white/[0.04] border-white/10 text-neutral-400 hover:bg-white/[0.08] hover:text-white"
             )}
           >
-            <FolderOpen className="size-3 shrink-0" />
+            <FolderOpen className="size-3.5 shrink-0 text-indigo-400" />
             <span className="truncate">
               {folderName ?? 'Sin carpeta'}
             </span>
@@ -382,10 +382,10 @@ export function ChatInput({ sessionId, className }: ChatInputProps) {
             <button
               type="button"
               onClick={disconnectFolder}
-              className="inline-flex items-center justify-center size-4 rounded bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              className="inline-flex items-center justify-center size-5 rounded-full bg-white/10 hover:bg-rose-500/20 text-neutral-400 hover:text-rose-300 transition-colors cursor-pointer border border-white/10 hover:border-rose-500/30"
               title="Desconectar carpeta"
             >
-              <X className="size-2.5" />
+              <X className="size-3" />
             </button>
           )}
           <div style={{ flex: 1 }} />

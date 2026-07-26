@@ -92,6 +92,15 @@ export function HeroScreen() {
           position: 'relative',
         }}
       >
+        {/* Glow de acento de marca Detrás del Logo */}
+        <div style={{
+          position: 'absolute',
+          width: 140,
+          height: 140,
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, var(--accent-glow) 0%, transparent 70%)',
+          pointerEvents: 'none',
+        }} />
         <img
           src="./sparta-icon.png"
           alt="Sparta"
@@ -163,39 +172,51 @@ export function HeroScreen() {
         transition={{ duration: 0.35, delay: 0.18 }}
         style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}
       >
-        {QUICK_ACTIONS.map(({ icon: Icon, labelKey, action, fallbackLabel }) => (
-          <button
-            key={action}
-            onClick={() => handleAction(action)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '5px 14px',
-              background: 'none',
-              border: '1px solid var(--border-normal)',
-              borderRadius: 20,
-              color: 'var(--text-secondary)',
-              fontSize: 12,
-              fontFamily: 'var(--font-ui)',
-              cursor: 'pointer',
-              transition: 'all 0.15s',
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.borderColor = 'var(--accent)'
-              e.currentTarget.style.color = 'var(--accent)'
-              e.currentTarget.style.background = 'var(--accent-muted)'
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.borderColor = 'var(--border-normal)'
-              e.currentTarget.style.color = 'var(--text-secondary)'
-              e.currentTarget.style.background = 'none'
-            }}
-          >
-            <Icon size={12} strokeWidth={1.8} />
-            {t(labelKey) || fallbackLabel}
-          </button>
-        ))}
+        {QUICK_ACTIONS.map(({ icon: Icon, labelKey, action, fallbackLabel }, index) => {
+          const isPrimary = index === 0
+          return (
+            <button
+              key={action}
+              onClick={() => handleAction(action)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '6px 14px',
+                background: isPrimary ? 'var(--accent)' : 'none',
+                border: isPrimary ? '1px solid var(--accent)' : '1px solid var(--border-normal)',
+                borderRadius: 20,
+                color: isPrimary ? '#ffffff' : 'var(--text-secondary)',
+                fontWeight: isPrimary ? 600 : 400,
+                fontSize: 12,
+                fontFamily: 'var(--font-ui)',
+                cursor: 'pointer',
+                transition: 'all 0.15s',
+              }}
+              onMouseEnter={e => {
+                if (!isPrimary) {
+                  e.currentTarget.style.borderColor = 'var(--accent)'
+                  e.currentTarget.style.color = 'var(--accent)'
+                  e.currentTarget.style.background = 'var(--accent-muted)'
+                } else {
+                  e.currentTarget.style.opacity = '0.9'
+                }
+              }}
+              onMouseLeave={e => {
+                if (!isPrimary) {
+                  e.currentTarget.style.borderColor = 'var(--border-normal)'
+                  e.currentTarget.style.color = 'var(--text-secondary)'
+                  e.currentTarget.style.background = 'none'
+                } else {
+                  e.currentTarget.style.opacity = '1'
+                }
+              }}
+            >
+              <Icon size={12} strokeWidth={1.8} />
+              {t(labelKey) || fallbackLabel}
+            </button>
+          )
+        })}
       </motion.div>
 
       <motion.div

@@ -131,17 +131,23 @@ export function StatusBar() {
         </SBItem>
 
         {bgStreamingCount > 0 && (
-          <SBItem style={{ color: 'var(--status-think)' }}>
-            <Sparkles size={11} strokeWidth={1.5} />
-            {bgStreamingCount} generando en background
-          </SBItem>
+          <>
+            <div style={{ width: 1, height: 10, background: 'var(--border-subtle)', margin: '0 4px' }} />
+            <SBItem style={{ color: 'var(--accent)', fontWeight: 600 }}>
+              <Sparkles size={11} strokeWidth={1.5} />
+              {bgStreamingCount} generando en background
+            </SBItem>
+          </>
         )}
 
         {isThinking && (
-          <SBItem style={{ color: 'var(--accent)', fontVariantNumeric: 'tabular-nums' }}>
-            <Brain size={11} strokeWidth={1.5} style={{ marginRight: 2 }} />
-            {sbSpinner.frames[spinnerFrame]}
-          </SBItem>
+          <>
+            <div style={{ width: 1, height: 10, background: 'var(--border-subtle)', margin: '0 4px' }} />
+            <SBItem style={{ color: 'var(--accent)', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
+              <Brain size={11} strokeWidth={1.5} style={{ marginRight: 2 }} />
+              {sbSpinner.frames[spinnerFrame]}
+            </SBItem>
+          </>
         )}
 
         <div className="flex-1" />

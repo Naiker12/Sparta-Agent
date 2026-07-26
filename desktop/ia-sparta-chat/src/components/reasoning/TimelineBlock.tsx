@@ -7,7 +7,7 @@ import { ToolTraceRow } from './ToolTraceRow'
 import { ThinkingSkeletonRows } from './ThinkingSkeletonRows'
 import { ThinkingStatusLine } from './ThinkingStatusLine'
 import { SkillActivationBadge } from './SkillActivationBadge'
-import { SubagentActivationBadge } from './SubagentActivationBadge'
+import { SubagentExecutionCard } from './SubagentExecutionCard'
 import { StreamStallIndicator } from './StreamStallIndicator'
 import type { Message, ThinkingStatus } from 'ia-sparta-core'
 
@@ -302,11 +302,11 @@ export function TimelineBlock({ message, className }: TimelineBlockProps) {
                   }
                   if (part.kind === 'subagent') {
                     return (
-                      <SubagentActivationBadge
+                      <SubagentExecutionCard
                         key={part.id}
                         subagentName={part.subagentName}
                         taskSummary={part.taskSummary}
-                        status={part.completedAt ? 'completed' : 'running'}
+                        status={part.completedAt ? (part.success === false ? 'failed' : 'completed') : 'running'}
                         durationMs={part.durationMs}
                         success={part.success}
                       />

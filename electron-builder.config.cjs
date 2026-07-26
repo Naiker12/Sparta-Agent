@@ -15,7 +15,7 @@ module.exports = {
   $schema: 'https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json',
   appId: 'com.sparta.agent',
   asar: true,
-  asarUnpack: ['python/**', 'node_modules/node-pty/**/*'],
+  asarUnpack: ['node_modules/node-pty/**/*'],
   productName: 'Sparta Agent',
   npmRebuild: false,
   directories: {
@@ -25,47 +25,13 @@ module.exports = {
     'dist',
     'dist-electron',
     'node_modules/node-pty/**/*',
-    'public/**/*'
+    'public/**/*',
+    '!public/negro/**',
+    '!public/escritorio.png',
+    '!public/post.png',
+    '!public/readmin.png'
   ],
-  extraResources: [
-    {
-      from: 'python',
-      to: 'python',
-      filter: [
-        '**/*',
-        '!**/.venv/**',
-        '!**/__pycache__/**',
-        '!**/*.pyc',
-        '!**/*.pyo',
-        '!**/.pytest_cache/**',
-        '!**/.ruff_cache/**',
-        '!**/.mypy_cache/**',
-        '!**/build/**',
-        '!**/*.dist-info/**',
-        '!**/*.egg-info/**',
-        '!**/*.log'
-      ]
-    },
-    {
-      from: 'desktop/runtime/ia-sparta-security-rust',
-      to: 'rust/sparta-security',
-      filter: ['*.node', 'index.js', 'index.d.ts']
-    },
-    {
-      from: `vendor/python-${targetPlatform}`,
-      to: 'python-runtime',
-      filter: [
-        '**/*',
-        '!**/tcl/**',
-        '!**/tkinter/**',
-        '!**/test/**',
-        '!**/tests/**',
-        '!**/idlelib/**',
-        '!**/*.pyc',
-        '!**/__pycache__/**'
-      ]
-    }
-  ],
+  extraResources: [],
   icon: 'public/sparta-escritorio.png',
   mac: {
     target: ['dmg'],

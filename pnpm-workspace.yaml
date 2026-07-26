@@ -22,8 +22,6 @@ packages:
   - 'desktop/ia-sparta-core'
   - 'desktop/ia-sparta-platform'
   - 'desktop/ia-sparta-tabs'
-  - 'desktop/runtime/ia-sparta-sidecar-python'
-  - 'desktop/runtime/ia-sparta-security-rust'
 
 allowBuilds:
   electron: true

@@ -42,12 +42,24 @@ const CATEGORY_STYLE: Record<string, { bg: string; color: string }> = {
   Other:        { bg: 'var(--bg-active)',        color: 'var(--text-muted)' },
 }
 
+function StatPill({ label, value, accent = false, icon }: { label: string; value: number; accent?: boolean; icon?: React.ReactNode }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, fontFamily: 'var(--font-mono)' }}>
+      {icon}
+      <span style={{ color: 'var(--text-muted)' }}>{label}:</span>
+      <span style={{ fontWeight: 600, color: accent ? 'var(--status-ok)' : 'var(--text-primary)' }}>
+        {value}
+      </span>
+    </div>
+  )
+}
+
 export function McpView() {
   const { servers } = useMCPStore()
   const { t, lang } = useTranslation()
   const [tab, setTab] = useState<Tab>('connected')
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [editServer, setEditServer] = useState<MCPServer | MCPServerConfig | null>(null)
+  const [editServer, setEditServer] = useState<MCPServerConfig | null>(null)
 
   const connectedCount = servers.filter((s) => s.connected).length
   const totalCount = servers.length
@@ -58,7 +70,7 @@ export function McpView() {
     { key: 'marketplace', label: t('mcp.marketplace'), icon: <Globe size={12} strokeWidth={1.8} /> },
   ]
 
-  function handleEdit(server: MCPServer) { setEditServer(server); setDialogOpen(true) }
+  function handleEdit(server: MCPServer) { setEditServer(server.config); setDialogOpen(true) }
   function handleMarketplaceInstall(item: MarketplaceItem) {
     setEditServer(marketItemToConfig(item)); setDialogOpen(true)
   }
@@ -130,7 +142,7 @@ export function McpView() {
               display: 'flex', alignItems: 'center', gap: 5,
               padding: '8px 12px', fontSize: 11, fontWeight: tab === tabItem.key ? 600 : 500,
               fontFamily: 'var(--font-ui)', cursor: 'pointer', border: 'none', background: 'transparent',
-              borderBottom: `2px solid ${tab === tabItem.key ? 'var(--accent)' : 'transparent'}',`,
+              borderBottom: `2px solid ${tab === tabItem.key ? 'var(--accent)' : 'transparent'}`,
               color: tab === tabItem.key ? 'var(--accent)' : 'var(--text-secondary)',
               transition: 'all 0.15s', marginBottom: -1,
               outline: 'none',
@@ -152,53 +164,120 @@ export function McpView() {
         ))}
       </div>
 
-      {/* ── Content ─────────────────────────────────────────────── */}
-      <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
-
-        {/* Tab: Connected */}
+      {/* ── Content Area ────────────────────────────────────────── */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
         {tab === 'connected' && (
-          servers.length === 0 ? (
-            <EmptyMcpState
-              onAdd={() => { setEditServer(null); setDialogOpen(true) }}
-              addLabel={t('mcp.addFirstServer')}
-              title={t('mcp.noServers')}
-              description={t('mcp.noServersDesc')}
-            />
-          ) : (
-            <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {servers.map((server) => (
-                <McpServerCard key={server.id} server={server} onEdit={handleEdit} />
-              ))}
-            </div>
-          )
+          <div>
+            {servers.length === 0 ? (
+              <div style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                padding: '60px 20px', textAlign: 'center', gap: 12, color: 'var(--text-muted)',
+              }}>
+                <div style={{
+                  height: 48, width: 48, borderRadius: 12, background: 'var(--bg-surface)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  border: '1px solid var(--border-normal)', color: 'var(--text-muted)',
+                }}>
+                  <Plug size={22} strokeWidth={1.5} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
+                    {t('mcp.noServersTitle')}
+                  </h3>
+                  <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '4px 0 0', maxWidth: 360, lineHeight: 1.5 }}>
+                    {t('mcp.noServersDesc')}
+                  </p>
+                </div>
+                <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                  <Button onClick={() => setTab('marketplace')} size="sm" variant="secondary" style={{ fontSize: 11 }}>
+                    <Globe size={11} style={{ marginRight: 4 }} />
+                    {t('mcp.browseMarketplace')}
+                  </Button>
+                  <Button onClick={() => { setEditServer(null); setDialogOpen(true) }} size="sm" style={{ fontSize: 11 }}>
+                    <Plus size={11} style={{ marginRight: 4 }} />
+                    {t('mcp.addServer')}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 12 }}>
+                {servers.map((server) => (
+                  <McpServerCard key={server.id} server={server} onEdit={handleEdit} />
+                ))}
+              </div>
+            )}
+          </div>
         )}
 
-        {/* Tab: Marketplace */}
         {tab === 'marketplace' && (
-          <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 20 }}>
-            <div>
-              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>
-                {t('mcp.popularServers')}
-              </div>
-              <div style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.5, maxWidth: 520 }}>
-                {t('mcp.popularServersDesc')}
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 10 }}>
+          <div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
               {CATALOG_ITEMS.map((item) => {
-                const installed = servers.some((s) => s.id === item.id || s.name === item.name)
+                const installed = servers.some((s) => s.id === item.id)
+                const catStyle = CATEGORY_STYLE[item.category] ?? CATEGORY_STYLE.Other
+                const brandVendor = item.vendor
                 return (
-                  <MarketplaceCard
+                  <div
                     key={item.id}
-                    item={item}
-                    desc={item.description}
-                    installed={installed}
-                    onInstall={() => handleMarketplaceInstall(item)}
-                    installLabel={t('mcp.install')}
-                    installedLabel={t('mcp.installed')}
-                    lang={lang}
-                  />
+                    style={{
+                      borderRadius: 10, border: '1px solid var(--border-normal)',
+                      background: 'var(--bg-surface)', padding: '12px 14px',
+                      display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 10,
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                          {brandVendor
+                            ? <BrandIcon vendor={brandVendor} size={15} />
+                            : <Plug size={13} style={{ color: 'var(--text-muted)' }} />
+                          }
+                          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-ui)' }}>
+                            {item.name}
+                          </span>
+                        </div>
+                        <span style={{
+                          fontSize: 9, fontWeight: 700, padding: '1px 6px', borderRadius: 4,
+                          fontFamily: 'var(--font-mono)', background: catStyle.bg, color: catStyle.color,
+                        }}>
+                          {item.category}
+                        </span>
+                      </div>
+
+                      <p style={{ fontSize: 11, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.45, fontFamily: 'var(--font-ui)' }}>
+                        {item.description}
+                      </p>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 8, borderTop: '1px solid var(--border-subtle)' }}>
+                      <span style={{ fontSize: 9.5, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+                        Cmd: {item.cmd.split(' ')[0]}
+                      </span>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        {item.docs_url && (
+                          <a
+                            href={item.docs_url} target="_blank" rel="noopener noreferrer"
+                            style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', padding: 3 }}
+                            title="Ver documentación"
+                          >
+                            <ExternalLink size={11} />
+                          </a>
+                        )}
+
+                        <Button
+                          onClick={() => handleMarketplaceInstall(item)}
+                          disabled={installed}
+                          size="xs"
+                          variant={installed ? 'ghost' : 'secondary'}
+                          style={{ fontSize: 10, fontWeight: 600, height: 24, gap: 4 }}
+                        >
+                          {installed ? <Check size={10} style={{ color: 'var(--status-ok)' }} /> : <Plus size={10} />}
+                          {installed ? t('mcp.installed') : t('mcp.install')}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
                 )
               })}
             </div>
@@ -208,262 +287,9 @@ export function McpView() {
 
       <AddMcpServerDialog
         open={dialogOpen}
-        onClose={() => { setDialogOpen(false); setEditServer(null) }}
-        editServer={editServer && 'config' in editServer ? editServer.config as MCPServerConfig : (editServer as MCPServerConfig | null)}
+        onClose={() => setDialogOpen(false)}
+        editServer={editServer}
       />
-    </div>
-  )
-}
-
-/* ─── Sub-components ──────────────────────────────────────────────────── */
-
-function StatPill({ label, value, accent = false, icon }: {
-  label: string; value: number; accent?: boolean; icon?: React.ReactNode
-}) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-      {icon}
-      <span style={{
-        fontSize: 12, fontWeight: 700, fontFamily: 'var(--font-mono)',
-        color: accent ? 'var(--status-ok)' : 'var(--text-primary)',
-      }}>
-        {value}
-      </span>
-      <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)' }}>
-        {label}
-      </span>
-    </div>
-  )
-}
-
-function EmptyMcpState({ onAdd, addLabel, title, description }: {
-  onAdd: () => void; addLabel: string; title: string; description: string
-}) {
-  return (
-    <div style={{
-      flex: 1, display: 'flex', flexDirection: 'column',
-      alignItems: 'center', justifyContent: 'center',
-      padding: '60px 40px', textAlign: 'center', gap: 0,
-    }}>
-      {/* Icon */}
-      <div style={{
-        width: 64, height: 64, borderRadius: 16, marginBottom: 16,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        border: '2px dashed var(--border-strong)',
-        background: 'var(--bg-surface)',
-        color: 'var(--text-muted)', position: 'relative',
-      }}>
-        <Plug size={26} strokeWidth={1.4} />
-        {/* Pulse dot */}
-        <span style={{
-          position: 'absolute', top: -5, right: -5,
-          width: 12, height: 12, borderRadius: '50%',
-          background: 'var(--bg-active)', border: '2px solid var(--bg-base)',
-        }} />
-      </div>
-
-      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 8 }}>
-        {title}
-      </div>
-      <div style={{
-        fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.6,
-        maxWidth: 300, marginBottom: 20,
-      }}>
-        {description}
-      </div>
-
-      <Button onClick={onAdd} size="sm" style={{ fontSize: 11, fontWeight: 600, gap: 6 }}>
-        <Plus size={12} strokeWidth={2.5} />
-        {addLabel}
-      </Button>
-
-      {/* Quick tips */}
-      <div style={{
-        display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8,
-        marginTop: 28, width: '100%', maxWidth: 300,
-      }}>
-        {[
-          { icon: '🔌', label: 'Stdio' },
-          { icon: '🌐', label: 'HTTP / SSE' },
-          { icon: '📦', label: 'Marketplace' },
-        ].map((tip) => (
-          <div key={tip.label} style={{
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
-            padding: '10px 8px', borderRadius: 10,
-            background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)',
-          }}>
-            <span style={{ fontSize: 16 }}>{tip.icon}</span>
-            <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)' }}>
-              {tip.label}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function _catalogIcon(item: MarketplaceItem): string {
-  const name = item.name.toLowerCase()
-  if (name.includes('github')) return '\u2764\uFE0F'  // heart for gh
-  if (name.includes('filesystem')) return '\uD83D\uDCC1'  // folder
-  if (name.includes('notion')) return '\uD83D\uDCDD'  // memo
-  if (name.includes('postgres')) return '\uD83D\uDDC4'  // database
-  if (name.includes('sqlite')) return '\uD83D\uDCC4'  // scroll
-  if (name.includes('puppeteer')) return '\uD83E\uDD16'  // robot
-  return '\uD83D\uDD0C'  // plug
-}
-
-function MarketplaceCard({ item, desc, installed, onInstall, installLabel, installedLabel, lang }: {
-  item: MarketplaceItem; desc: string; installed: boolean; lang?: string
-  onInstall: () => void; installLabel: string; installedLabel: string
-}) {
-  const cat = CATEGORY_STYLE[item.category] ?? { bg: 'var(--bg-active)', color: 'var(--text-muted)' }
-
-  return (
-    <div style={{
-      display: 'flex', flexDirection: 'column', borderRadius: 12,
-      border: installed ? '1px solid rgba(34,197,94,0.25)' : '1px solid var(--border-normal)',
-      background: installed ? 'color-mix(in srgb, #22c55e 4%, var(--bg-surface))' : 'var(--bg-surface)',
-      overflow: 'hidden', position: 'relative', transition: 'border-color 0.15s, box-shadow 0.15s',
-    }}
-      onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = installed ? 'rgba(34,197,94,0.45)' : 'var(--border-strong)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 2px 8px rgba(0,0,0,0.25)' }}
-      onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = installed ? 'rgba(34,197,94,0.25)' : 'var(--border-normal)'; (e.currentTarget as HTMLDivElement).style.boxShadow = 'none' }}
-    >
-      {/* Installed badge */}
-      {installed && (
-        <div style={{
-          position: 'absolute', top: 10, right: 10,
-          display: 'flex', alignItems: 'center', gap: 4,
-          fontSize: 9, fontWeight: 700, textTransform: 'uppercase',
-          color: '#4ade80', background: 'rgba(34,197,94,0.12)',
-          border: '1px solid rgba(34,197,94,0.25)',
-          padding: '2px 6px', borderRadius: 6, fontFamily: 'var(--font-mono)',
-        }}>
-          <Check size={8} strokeWidth={3} />
-          {installedLabel}
-        </div>
-      )}
-
-      <div style={{ padding: '14px 14px 10px', display: 'flex', flexDirection: 'column', gap: 10, flex: 1 }}>
-        {/* Icon + name row */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{
-            width: 38, height: 38, borderRadius: 10, flexShrink: 0,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: 'var(--bg-elevated)', border: '1px solid var(--border-normal)',
-          }}>
-            {item.vendor
-              ? <BrandIcon vendor={item.vendor} size={20} />
-              : <span style={{ fontSize: 18 }}>{_catalogIcon(item)}</span>
-            }
-          </div>
-          <div style={{ minWidth: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>
-                {item.name}
-              </span>
-              <span style={{
-                fontSize: 9, fontWeight: 700, textTransform: 'uppercase',
-                padding: '1px 5px', borderRadius: 4, fontFamily: 'var(--font-mono)',
-                background: cat.bg, color: cat.color,
-              }}>
-                {item.category}
-              </span>
-            </div>
-            <span style={{
-              display: 'inline-block', marginTop: 2,
-              fontSize: 9, fontWeight: 700, textTransform: 'uppercase',
-              color: 'var(--text-muted)', letterSpacing: '0.05em',
-              fontFamily: 'var(--font-mono)',
-            }}>
-              {item.type}
-            </span>
-          </div>
-        </div>
-
-        {/* Description */}
-        <p style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0 }}>
-          {desc}
-        </p>
-
-        {/* Command */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 6,
-          padding: '6px 10px', borderRadius: 7,
-          background: 'var(--bg-input)', border: '1px solid var(--border-subtle)',
-          fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-secondary)',
-          overflow: 'hidden',
-        }}>
-          <span style={{ color: 'var(--text-muted)', flexShrink: 0 }}>$</span>
-          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
-            {item.cmd}
-          </span>
-        </div>
-
-        {/* Env requirements */}
-        {item.env_required.length > 0 && (
-          <div style={{ fontSize: 10, color: 'var(--status-warn)', fontFamily: 'var(--font-mono)', lineHeight: 1.5 }}>
-            {lang === 'es' ? 'Requiere' : 'Requires'}: {item.env_required.join(', ')}
-          </div>
-        )}
-        {item.headers_required.length > 0 && (
-          <div style={{ fontSize: 10, color: 'var(--status-warn)', fontFamily: 'var(--font-mono)', lineHeight: 1.5 }}>
-            Headers: {item.headers_required.join(', ')}
-          </div>
-        )}
-
-        {/* Notes */}
-        {item.notes && (
-          <div style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', lineHeight: 1.4, fontStyle: 'italic' }}>
-            {item.notes}
-          </div>
-        )}
-
-        {/* Docs link */}
-        {item.docs_url && (
-          <a
-            href={item.docs_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              fontSize: 10, color: 'var(--accent)', fontFamily: 'var(--font-ui)',
-              display: 'inline-flex', alignItems: 'center', gap: 4,
-              textDecoration: 'none', marginTop: -4,
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <ExternalLink size={10} />
-            Docs
-          </a>
-        )}
-      </div>
-
-      {/* Footer */}
-      <div style={{ padding: '0 14px 14px' }}>
-        {installed ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#4ade80', fontWeight: 500 }}>
-            <Check size={12} strokeWidth={2.5} />
-            {installedLabel}
-          </div>
-        ) : (
-          <button
-            onClick={onInstall}
-            style={{
-              width: '100%', height: 30, borderRadius: 7, border: '1px solid var(--border-normal)',
-              background: 'var(--bg-elevated)', color: 'var(--text-primary)',
-              fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-ui)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-              transition: 'background 0.12s, border-color 0.12s',
-            }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--accent)'; (e.currentTarget as HTMLButtonElement).style.color = '#fff'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--accent)' }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--bg-elevated)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-primary)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border-normal)' }}
-          >
-            <Plus size={12} strokeWidth={2.5} />
-            {installLabel}
-          </button>
-        )}
-      </div>
     </div>
   )
 }

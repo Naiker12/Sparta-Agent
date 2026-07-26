@@ -1,1 +1,0 @@
-"""Sparta Agent — Sparta Handlers"""

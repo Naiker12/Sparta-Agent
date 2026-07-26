@@ -17,7 +17,9 @@ export function registerOnMessageHandler(): void {
     const requestId = (msg.id as string) ?? ''
     const [sessionId, messageId] = requestId.split(':')
 
-    const event = msg.event as string
+    const event = (msg.event ?? msg.method ?? '') as string
+    if (!event || typeof event !== 'string') return
+
     const data = msg.data as Record<string, unknown> | undefined
 
     // The renderer can stop immediately, while some provider clients need a
@@ -300,7 +302,7 @@ export function registerOnMessageHandler(): void {
         }
         clearSeqCounters(rid)
         sessionReady.delete(sid)
-        sendToRenderer({ sessionId: sid, messageId: stream.messageId, type: 'stream:error', error: 'El sidecar de Python se desconectó inesperadamente.' })
+        sendToRenderer({ sessionId: sid, messageId: stream.messageId, type: 'stream:error', error: 'El canal de eventos se desconectó inesperadamente.' })
       }
     }
     activeStreams.clear()

@@ -173,6 +173,7 @@
   --text-secondary: #5A4E40; --text-muted: #8A7E6E;
   --accent: #C46A4A; --accent-dim: #B05A3A;
   --accent-muted: rgba(196,106,74,0.08); --accent-glow: rgba(196,106,74,0.12);
+  --accent-line: linear-gradient(90deg, transparent, #C46A4A 20%, #C46A4A 80%, transparent);
   --border-subtle: rgba(0,0,0,0.08); --border-normal: rgba(0,0,0,0.12);
   --border-strong: rgba(0,0,0,0.18); --border-focus: rgba(196,106,74,0.30);
   --bubble-user-bg: #C46A4A;

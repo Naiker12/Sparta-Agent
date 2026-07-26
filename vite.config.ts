@@ -75,11 +75,14 @@ export default defineConfig(({ mode }) => {
                   },
                 },
                 build: {
+                  sourcemap: false,
+                  minify: 'esbuild',
                   rollupOptions: {
                     external: ['electron', 'node-pty'],
                     onwarn(warning, warn) {
                       if (warning.code === 'MODULE_LEVEL_DIRECTIVE') return
                       if (warning.code === 'UNUSED_EXTERNAL_IMPORT') return
+                      if (warning.message?.includes("Can't resolve original location of error")) return
                       warn(warning)
                     },
                   },
@@ -90,11 +93,14 @@ export default defineConfig(({ mode }) => {
               input: path.join(__dirname, 'desktop/ia-sparta-ipc-bridge/src/preload.ts'),
               vite: {
                 build: {
+                  sourcemap: false,
+                  minify: 'esbuild',
                   rollupOptions: {
                     external: ['electron', 'node-pty'],
                     onwarn(warning, warn) {
                       if (warning.code === 'MODULE_LEVEL_DIRECTIVE') return
                       if (warning.code === 'UNUSED_EXTERNAL_IMPORT') return
+                      if (warning.message?.includes("Can't resolve original location of error")) return
                       warn(warning)
                     },
                   },
@@ -109,12 +115,16 @@ export default defineConfig(({ mode }) => {
     ],
     build: {
       outDir: isElectron ? 'dist' : 'dist-web',
+      sourcemap: false,
+      minify: 'esbuild',
+      chunkSizeWarningLimit: 2000,
       rollupOptions: {
         onwarn(warning, warn) {
           // Silencia warnings de "use client" en librerías React (sonner, framer-motion)
           if (warning.code === 'MODULE_LEVEL_DIRECTIVE') return
           // Silencia warnings de imports no usados en dependencias (chokidar, etc.)
           if (warning.code === 'UNUSED_EXTERNAL_IMPORT') return
+          if (warning.message?.includes("Can't resolve original location of error")) return
           warn(warning)
         },
       },
@@ -134,9 +144,16 @@ export default defineConfig(({ mode }) => {
     customLogger: (() => {
       const logger = createLogger()
       const originalWarn = logger.warn.bind(logger)
+      const originalError = logger.error.bind(logger)
       logger.warn = (msg, options) => {
         if (msg.includes("Can't resolve original location of error")) return
+        if (msg.includes("sourcemap")) return
         originalWarn(msg, options)
+      }
+      logger.error = (msg, options) => {
+        if (msg.includes("Can't resolve original location of error")) return
+        if (msg.includes("sourcemap")) return
+        originalError(msg, options)
       }
       return logger
     })(),

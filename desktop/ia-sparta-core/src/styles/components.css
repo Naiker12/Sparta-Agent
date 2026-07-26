@@ -215,9 +215,14 @@
   color: var(--text-secondary);
   transition: all 0.15s;
 }
+.sidebar-nav-badge.active,
 .sidebar-nav-btn.active .sidebar-nav-badge {
   background: var(--accent);
   color: #fff;
+}
+.sidebar-nav-badge[data-warn="true"] {
+  background: var(--accent-muted);
+  color: var(--accent-dim);
 }
 
 /* SEPARATOR */
