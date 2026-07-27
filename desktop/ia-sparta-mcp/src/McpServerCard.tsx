@@ -44,15 +44,16 @@ export function McpServerCard({ server, onEdit }: McpServerCardProps) {
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         style={{
-          borderRadius: 10,
-          border: isConnected
-            ? '1px solid rgba(34,197,94,0.3)'
-            : '1px solid var(--border-normal)',
+          borderRadius: 18,
+          border: '1px solid var(--border-normal)',
+          borderLeftWidth: isConnected ? 4 : 1,
+          borderLeftColor: isConnected ? 'var(--status-ok)' : 'var(--border-normal)',
+          borderLeftStyle: 'solid',
           background: 'var(--bg-surface)',
-          opacity: !isEnabled ? 0.6 : 1,
-          transition: 'all 0.15s',
-          boxShadow: hovered ? '0 2px 8px rgba(0,0,0,0.2)' : 'none',
-          ...(hovered && { borderColor: isConnected ? 'rgba(34,197,94,0.5)' : 'var(--border-strong)' }),
+          opacity: !isEnabled ? 0.76 : 1,
+          transition: 'transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease',
+          boxShadow: hovered ? '0 18px 40px rgba(0,0,0,0.08)' : '0 10px 25px rgba(0,0,0,0.05)',
+          transform: hovered ? 'translateY(-1px)' : 'none',
         }}
       >
         {/* ── Main row ─────────────────────────────────────────── */}

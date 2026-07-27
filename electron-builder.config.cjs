@@ -24,6 +24,7 @@ module.exports = {
   files: [
     'dist',
     'dist-electron',
+    'skills/**/*',
     'node_modules/node-pty/**/*',
     'public/**/*',
     '!public/negro/**',

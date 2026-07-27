@@ -10,6 +10,10 @@ import { useTranslation } from 'ia-sparta-i18n'
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from 'ia-sparta-design-system'
 
 interface AddMcpServerDialogProps {
@@ -222,29 +226,32 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
   return (
     <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) { reset(); onClose() } }}>
       <DialogContent
+        className="max-w-[520px] w-full overflow-hidden"
         style={{
           background: 'var(--bg-modal)',
           border: '1px solid var(--border-normal)',
-          borderRadius: 14,
+          borderRadius: 22,
           padding: 0,
-          maxWidth: 500,
+          maxWidth: 520,
           width: '100%',
           overflow: 'hidden',
           fontFamily: 'var(--font-ui)',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+          boxShadow: '0 30px 70px rgba(0,0,0,0.14)',
         }}
       >
         {/* ── Header ────────────────────────────────────────── */}
         <div style={{
-          padding: '18px 20px 14px',
+          padding: '20px 20px 14px',
           borderBottom: '1px solid var(--border-subtle)',
         }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>
-            {isEditing ? t('mcp.editServer') : t('mcp.addServerTitle')}
-          </div>
-          <div style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-            {t('mcp.addServerDesc')}
-          </div>
+          <DialogHeader>
+            <DialogTitle style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+              {isEditing ? t('mcp.editServer') : t('mcp.addServerTitle')}
+            </DialogTitle>
+            <DialogDescription style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+              {t('mcp.addServerDesc')}
+            </DialogDescription>
+          </DialogHeader>
 
           {/* Mode tabs */}
           <div style={{

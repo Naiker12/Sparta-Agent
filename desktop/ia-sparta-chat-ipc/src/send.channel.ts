@@ -9,6 +9,50 @@ import {
 } from './shared'
 import { getKey as vaultGetKey } from 'ia-sparta-vault'
 import { ChatCompletionsTransport, AnthropicTransport, OllamaTransport } from 'ia-sparta-providers'
+import { loadSkillDocuments } from 'ia-sparta-ipc-bridge'
+
+const MAX_SKILL_CONTEXT_CHARS = 16_000
+const MAX_SKILL_DOCUMENTS_PER_TURN = 4
+
+function getSearchTerms(text: string): string[] {
+  return [...new Set(text.toLowerCase().match(/[a-z0-9_-]{3,}/g) ?? [])]
+}
+
+function buildSkillContext(activeSkillIds: string[] | undefined, userText: string): string {
+  if (!activeSkillIds?.length) return ''
+
+  const activeIds = new Set(activeSkillIds)
+  const skills = loadSkillDocuments().filter((skill) => activeIds.has(skill.id))
+  if (skills.length === 0) return ''
+
+  const manifest = skills
+    .map((skill) => `- ${skill.id} | ${skill.category} | ${skill.name}: ${skill.description.slice(0, 180)}`)
+    .join('\n')
+  const terms = getSearchTerms(userText)
+  const relevant = skills
+    .map((skill) => {
+      const haystack = `${skill.id} ${skill.name} ${skill.description} ${skill.tags.join(' ')} ${skill.category}`.toLowerCase()
+      return { skill, score: terms.reduce((total, term) => total + (haystack.includes(term) ? 1 : 0), 0) }
+    })
+    .filter(({ score }) => score > 0)
+    .sort((a, b) => b.score - a.score || a.skill.name.localeCompare(b.skill.name))
+    .slice(0, MAX_SKILL_DOCUMENTS_PER_TURN)
+
+  let remaining = Math.max(0, MAX_SKILL_CONTEXT_CHARS - manifest.length)
+  const documents = relevant.flatMap(({ skill }) => {
+    if (remaining <= 0) return []
+    const body = skill.body.slice(0, remaining)
+    remaining -= body.length
+    return [`\n## Skill: ${skill.name} (${skill.id})\n${body}`]
+  })
+
+  return [
+    '## Skills disponibles',
+    'Estas habilidades estan activas. Usa las instrucciones detalladas solo cuando sean relevantes para la solicitud actual.',
+    manifest,
+    ...documents,
+  ].join('\n')
+}
 
 export function registerChatSendIPC(): void {
   ipcMain.handle('chat:send', async (_event, req: ChatRequest) => {
@@ -31,6 +75,16 @@ export function registerChatSendIPC(): void {
       type: 'thinking:started',
       origin: 'native',
     })
+    let thinkingCompleted = false
+    const completeThinking = () => {
+      if (thinkingCompleted) return
+      thinkingCompleted = true
+      const activeStream = activeStreams.get(sessionId)
+      if (activeStream) {
+        activeStreams.set(sessionId, { ...activeStream, thinkingCompleted: true })
+      }
+      sendToRenderer({ sessionId, messageId, type: 'thinking:completed' })
+    }
 
     // Try to get provider key from vault with vendor & provider ID fallbacks
     const vendor = req.vendor || req.providerId || 'openai'
@@ -56,7 +110,12 @@ export function registerChatSendIPC(): void {
             : vendor === 'ollama'
             ? new OllamaTransport(req.apiUrl || 'http://localhost:11434')
             : new ChatCompletionsTransport(vendor as any, effectiveKey, req.apiUrl)
-        const systemPrompt = req.system || 'Sos Sparta Agent, un asistente de ingeniería de software de alto rendimiento.'
+        const userText = [...(req.messages || [])].reverse().find((message) => message.role === 'user')?.content ?? ''
+        const skillContext = buildSkillContext(req.skills, userText)
+        const systemPrompt = [
+          req.system || 'Sos Sparta Agent, un asistente de ingeniería de software de alto rendimiento.',
+          skillContext,
+        ].filter(Boolean).join('\n\n')
         const formattedMessages = (req.messages || []).map(m => ({ role: m.role as any, content: m.content }))
 
         sendToRenderer({
@@ -66,13 +125,24 @@ export function registerChatSendIPC(): void {
           text: 'Conectando con el modelo...',
         })
 
-        let hasTokens = false
-        for await (const chunk of transport.streamChat({ model: req.model, messages: formattedMessages, system: systemPrompt })) {
+        let streamFailed = false
+        let streamAborted = false
+        for await (const chunk of transport.streamChat({
+          model: req.model,
+          messages: formattedMessages,
+          system: systemPrompt,
+          thinkingEnabled: req.reasoning?.enabled,
+          thinkingBudget: req.reasoning?.budget,
+          reasoningEffort: req.reasoning?.effort as 'none' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh' | undefined,
+        })) {
           const activeState = activeStreams.get(sessionId)
-          if (!activeState?.active) break
+          if (!activeState?.active) {
+            streamAborted = true
+            break
+          }
 
           if (chunk.type === 'content_token' && chunk.delta) {
-            hasTokens = true
+            completeThinking()
             sendToRenderer({
               sessionId,
               messageId,
@@ -87,11 +157,8 @@ export function registerChatSendIPC(): void {
               token: chunk.delta,
             })
           } else if (chunk.type === 'error' && chunk.error) {
-            sendToRenderer({
-              sessionId,
-              messageId,
-              type: 'thinking:completed',
-            })
+            streamFailed = true
+            completeThinking()
             sendToRenderer({
               sessionId,
               messageId,
@@ -102,13 +169,10 @@ export function registerChatSendIPC(): void {
           }
         }
 
-        if (!hasTokens) {
-          sendToRenderer({
-            sessionId,
-            messageId,
-            type: 'stream:completed',
-          })
-        } else {
+        if (!streamFailed && !streamAborted) {
+          // Every started thinking phase has exactly one terminal event. This
+          // keeps the renderer timeline coherent for providers that only emit text.
+          completeThinking()
           sendToRenderer({
             sessionId,
             messageId,
@@ -116,11 +180,7 @@ export function registerChatSendIPC(): void {
           })
         }
       } catch (err) {
-        sendToRenderer({
-          sessionId,
-          messageId,
-          type: 'thinking:completed',
-        })
+        completeThinking()
         sendToRenderer({
           sessionId,
           messageId,
@@ -163,6 +223,13 @@ export function registerChatSendIPC(): void {
     const state = activeStreams.get(sessionId)
     if (state) {
       activeStreams.set(sessionId, { ...state, active: false })
+      if (!state.thinkingCompleted) {
+        sendToRenderer({
+          sessionId,
+          messageId: state.messageId,
+          type: 'thinking:completed',
+        })
+      }
       sendToRenderer({
         sessionId,
         messageId: state.messageId,

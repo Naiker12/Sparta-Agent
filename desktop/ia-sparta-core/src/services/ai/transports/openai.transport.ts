@@ -41,7 +41,7 @@ export class ChatCompletionsTransport extends BaseTransport {
   }
 
   buildBody(req: ChatRequest): Record<string, unknown> {
-    return {
+    const body: Record<string, unknown> = {
       model: req.model,
       messages: [
         ...(req.system ? [{ role: 'system' as const, content: req.system }] : []),
@@ -51,6 +51,10 @@ export class ChatCompletionsTransport extends BaseTransport {
       max_tokens: req.maxTokens ?? 4096,
       temperature: req.temperature ?? 0.7,
     }
+    if (this.vendor === 'openai' && req.thinkingEnabled && req.reasoningEffort && req.reasoningEffort !== 'none') {
+      body.reasoning_effort = req.reasoningEffort
+    }
+    return body
   }
 
   async listModels(): Promise<ModelInfo[]> {

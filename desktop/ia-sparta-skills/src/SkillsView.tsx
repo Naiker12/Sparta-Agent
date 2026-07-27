@@ -7,7 +7,8 @@ import { SkillCard } from './SkillCard'
 import { SkillToggle } from './SkillToggle'
 import { SkillCreator } from './SkillCreator'
 import { SkillDialog } from './SkillDialog'
-import type { Skill } from 'ia-sparta-core'
+import { SkillMarkdownDialog } from './SkillMarkdownDialog'
+import type { Skill, InstalledSkill } from 'ia-sparta-core'
 
 type Tab = 'mine' | 'explore' | 'create'
 
@@ -48,40 +49,59 @@ function CategorySection({ category, count, activeCount, children }: { category:
   )
 }
 
-function ExploreSkillCard({ skill, isActive, onToggle }: {
+function ExploreSkillCard({ skill, isActive, onToggle, onOpen }: {
   skill: { id: string; name: string; description: string; icon: string; tags: string[]; author?: string; version?: string }
   isActive: boolean
   onToggle: () => void
+  onOpen: () => void
 }) {
   return (
-    <div className={cn(
-      "bg-card/70 border border-border/60 rounded-lg p-3 border-l-4 transition-all duration-150",
-      isActive ? "border-l-primary" : "border-l-transparent"
-    )}>
-      <div className="flex items-start gap-2 mb-1">
-        <span className="text-base shrink-0">{skill.icon || '📦'}</span>
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onOpen() } }}
+      style={{
+        minHeight: 192,
+        padding: 18,
+        borderRadius: 18,
+        border: isActive ? '1px solid var(--accent)' : '1px solid var(--border-normal)',
+        borderLeft: isActive ? '4px solid var(--accent)' : '4px solid transparent',
+        background: 'var(--bg-surface)',
+        boxShadow: '0 12px 30px rgba(0,0,0,0.05)',
+        cursor: 'pointer',
+        transition: 'transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease',
+      }}
+      onMouseEnter={(event) => {
+        event.currentTarget.style.transform = 'translateY(-1px)'
+        event.currentTarget.style.boxShadow = '0 18px 36px rgba(0,0,0,0.08)'
+      }}
+      onMouseLeave={(event) => {
+        event.currentTarget.style.transform = 'none'
+        event.currentTarget.style.boxShadow = '0 12px 30px rgba(0,0,0,0.05)'
+      }}
+    >
+      <div className="flex items-start gap-2.5 mb-2">
+        <span className="text-base shrink-0 flex size-8 items-center justify-center rounded bg-muted">{skill.icon || '📦'}</span>
         <div className="flex-1 min-w-0">
-          <div className="text-xs font-semibold text-foreground">
+          <div className="text-xs font-semibold text-foreground truncate">
             {skill.name}
           </div>
           <div className="text-[10px] text-muted-foreground">
             {skill.author || 'Sparta Team'} {skill.version ? `· v${skill.version}` : ''}
           </div>
         </div>
-        <SkillToggle
-          active={isActive}
-          onChange={() => onToggle()}
-          size={28}
-          ariaLabel={`${isActive ? 'Desactivar' : 'Activar'} ${skill.name}`}
-        />
+        <div onClick={(event) => event.stopPropagation()}>
+          <SkillToggle active={isActive} onChange={() => onToggle()} size={28} ariaLabel={`${isActive ? 'Desactivar' : 'Activar'} ${skill.name}`} />
+        </div>
       </div>
-      <p className="text-xs text-muted-foreground leading-relaxed my-1.5">
+      <p className="text-[11px] text-muted-foreground leading-5 mt-3 line-clamp-2">
         {skill.description}
       </p>
       {skill.tags?.length > 0 && (
-        <div className="flex gap-1 flex-wrap mt-2">
-          {skill.tags.slice(0, 4).map((tag) => (
-            <span key={tag} className="text-[9.5px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-mono">
+        <div className="flex gap-1 flex-wrap mt-3">
+          {skill.tags.slice(0, 3).map((tag) => (
+            <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-mono">
               {tag}
             </span>
           ))}
@@ -92,19 +112,30 @@ function ExploreSkillCard({ skill, isActive, onToggle }: {
 }
 
 export function SkillsView() {
-  const { skills: userSkills, activeSkillIds, toggleActive, addSkill, updateSkill, deleteSkill, loadInstalledSkills } = useSkillStore()
-  const { skills: localSkills, byCategory } = useLocalSkillsLoader()
-  const [tab, setTab] = useState<Tab>('mine')
+  const { skills: userSkills, installedSkills, activeSkillIds, toggleActive, addSkill, updateSkill, deleteSkill, loadInstalledSkills } = useSkillStore()
+  const { skills: localSkills } = useLocalSkillsLoader()
+  const [tab, setTab] = useState<Tab>('explore')
   const [search, setSearch] = useState('')
   const [editSkill, setEditSkill] = useState<Skill | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [previewSkill, setPreviewSkill] = useState<Skill | InstalledSkill | null>(null)
 
   useEffect(() => {
-    loadInstalledSkills()
+    void loadInstalledSkills()
   }, [loadInstalledSkills])
 
+  // Electron reads the bundled skills from disk through IPC. The Vite index is
+  // only a fallback for the browser build, where Electron IPC is unavailable.
+  const catalogSkills = installedSkills.length > 0 ? installedSkills : localSkills
+  const byCategory = useMemo(() => catalogSkills.reduce<Record<string, InstalledSkill[]>>((groups, skill) => {
+    const category = skill.category || 'Other'
+    if (!groups[category]) groups[category] = []
+    groups[category].push(skill as InstalledSkill)
+    return groups
+  }, {}), [catalogSkills])
+
   const mySkills: Skill[] = useMemo(() => {
-    const builtins = localSkills.filter((s) => s.source === 'builtin')
+    const builtins = catalogSkills.filter((s) => s.source === 'builtin')
     const userIds = new Set(userSkills.map((s) => s.id))
     return [
       ...userSkills,
@@ -123,7 +154,7 @@ export function SkillsView() {
         createdAt: Date.now(),
       })),
     ]
-  }, [userSkills, localSkills])
+  }, [userSkills, catalogSkills])
 
   const filteredMine = useMemo(() => {
     let list = mySkills
@@ -204,7 +235,7 @@ export function SkillsView() {
               paddingBottom: 4,
             }}
           >
-            Explorar ({localSkills.length})
+            Explorar ({catalogSkills.length})
           </button>
         </div>
 
@@ -236,6 +267,7 @@ export function SkillsView() {
                 onActivate={() => toggleActive(skill.id)}
                 onEdit={() => { setEditSkill(skill); setDialogOpen(true) }}
                 onDelete={() => deleteSkill(skill.id)}
+                onOpen={() => setPreviewSkill(skill)}
               />
             ))}
           </div>
@@ -243,20 +275,27 @@ export function SkillsView() {
 
         {tab === 'explore' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {Object.entries(byCategory).map(([cat, items]) => (
-              <CategorySection key={cat} category={cat} count={items.length}>
+            {Object.entries(byCategory).sort(([a], [b]) => a.localeCompare(b)).map(([cat, items]) => {
+              const matchingItems = search.trim()
+                ? items.filter((item) => `${item.name} ${item.description} ${item.tags.join(' ')}`.toLowerCase().includes(search.toLowerCase()))
+                : items
+              if (matchingItems.length === 0) return null
+              return (
+              <CategorySection key={cat} category={cat} count={matchingItems.length} activeCount={matchingItems.filter((item) => activeSkillIds.includes(item.id)).length}>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
-                  {items.map((item) => (
+                  {matchingItems.map((item) => (
                     <ExploreSkillCard
                       key={item.id}
                       skill={item}
                       isActive={activeSkillIds.includes(item.id)}
                       onToggle={() => toggleActive(item.id)}
+                      onOpen={() => setPreviewSkill(item)}
                     />
                   ))}
                 </div>
               </CategorySection>
-            ))}
+              )
+            })}
           </div>
         )}
 
@@ -283,6 +322,12 @@ export function SkillsView() {
           }}
         />
       )}
+      <SkillMarkdownDialog
+        open={previewSkill !== null}
+        skill={previewSkill}
+        onClose={() => setPreviewSkill(null)}
+        trustLevel={previewSkill && 'trustLevel' in previewSkill ? previewSkill.trustLevel : undefined}
+      />
     </div>
   )
 }

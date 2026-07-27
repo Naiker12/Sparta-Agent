@@ -16,6 +16,7 @@ interface SkillState {
   updateSkill: (id: string, partial: Partial<Skill>) => void
   deleteSkill: (id: string) => void
   toggleActive: (id: string) => void
+  activateSkills: (ids: string[]) => void
   isActive: (id: string) => boolean
   setSuggestedSkillIds: (ids: string[]) => void
   confirmSuggestion: (id: string) => void
@@ -67,6 +68,11 @@ export const useSkillStore = create<SkillState>()(
             ? s.activeSkillIds.filter((aid) => aid !== id)
             : [...s.activeSkillIds, id],
         }))
+      },
+
+      activateSkills: (ids) => {
+        if (ids.length === 0) return
+        set((s) => ({ activeSkillIds: [...new Set([...s.activeSkillIds, ...ids])] }))
       },
 
       isActive: (id) => get().activeSkillIds.includes(id),

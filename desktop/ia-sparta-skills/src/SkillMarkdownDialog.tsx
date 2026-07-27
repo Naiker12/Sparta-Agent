@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { FileText, Code, Copy, Check, ShieldAlert } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { FileText, Code, Copy, Check, Loader2, ShieldAlert } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -7,12 +7,12 @@ import {
   DialogTitle,
 } from 'ia-sparta-design-system'
 import { MarkdownRenderer } from 'ia-sparta-chat'
-import type { Skill } from 'ia-sparta-core'
+import type { InstalledSkill, Skill } from 'ia-sparta-core'
 
 interface SkillMarkdownDialogProps {
   open: boolean
   onClose: () => void
-  skill: Skill | null
+  skill: (Skill | InstalledSkill) | null
   trustLevel?: string
 }
 
@@ -26,17 +26,32 @@ const SOURCE_LABEL: Record<string, string> = {
 export function SkillMarkdownDialog({ open, onClose, skill, trustLevel }: SkillMarkdownDialogProps) {
   const [raw, setRaw] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [body, setBody] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (!open || !skill) return
+    let cancelled = false
+    const fallback = 'prompt' in skill ? skill.prompt || '' : ''
+    setBody(fallback)
+    setLoading(true)
+    void window.skills?.view(skill.id)
+      .then((result) => { if (!cancelled) setBody(result.body || fallback) })
+      .catch(() => { if (!cancelled) setBody(fallback) })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [open, skill])
 
   if (!skill) return null
 
-  const body = skill.prompt || '_Esta skill no tiene contenido._'
+  const content = body || '_Esta skill no tiene contenido._'
   const sourceLabel = SOURCE_LABEL[skill.source ?? ''] ?? 'Desconocido'
   const subtitle = [skill.category ?? 'general', sourceLabel, 'SKILL.md'].filter(Boolean).join(' · ')
   const isQuarantined = trustLevel === 'quarantined'
 
   async function handleCopy() {
     try {
-      await navigator.clipboard.writeText(body)
+      await navigator.clipboard.writeText(content)
       setCopied(true)
       setTimeout(() => setCopied(false), 1500)
     } catch {
@@ -84,17 +99,22 @@ export function SkillMarkdownDialog({ open, onClose, skill, trustLevel }: SkillM
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 pb-4" style={raw ? { padding: 0 } : {}}>
-          {raw ? (
+          {loading ? (
+            <div className="h-40 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+              <Loader2 size={14} className="animate-spin" />
+              Cargando SKILL.md...
+            </div>
+          ) : raw ? (
             <pre style={{
               margin: 0, padding: 16, fontSize: 11.5, lineHeight: 1.6,
               fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)',
               whiteSpace: 'pre-wrap', wordBreak: 'break-word',
             }}>
-              {body}
+              {content}
             </pre>
           ) : (
             <div style={{ padding: '16px 0' }}>
-              <MarkdownRenderer content={body} />
+              <MarkdownRenderer content={content} />
             </div>
           )}
         </div>

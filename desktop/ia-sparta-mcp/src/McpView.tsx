@@ -220,9 +220,12 @@ export function McpView() {
                   <div
                     key={item.id}
                     style={{
-                      borderRadius: 10, border: '1px solid var(--border-normal)',
-                      background: 'var(--bg-surface)', padding: '12px 14px',
-                      display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 10,
+                      display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+                      minHeight: 210, padding: 18, gap: 14,
+                      borderRadius: 18, border: '1px solid var(--border-normal)',
+                      background: 'var(--bg-surface)',
+                      boxShadow: '0 14px 32px rgba(0,0,0,0.06)',
+                      transition: 'transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease',
                     }}
                   >
                     <div>

@@ -31,7 +31,7 @@ export interface ChatRequest {
   skills?: string[]
   mcpServers?: MCPServerConfig[]
   semanticMemory?: boolean
-  reasoning?: { enabled: boolean; budget: number }
+  reasoning?: { enabled: boolean; budget: number; effort?: string }
   webSearchEnabled?: boolean
   workspaceRoot?: string
   connectedFolder?: string
@@ -42,7 +42,7 @@ export interface ChatRequest {
   openFiles?: string[]
 }
 
-export const activeStreams = new Map<string, { active: boolean; messageId: string }>()
+export const activeStreams = new Map<string, { active: boolean; messageId: string; thinkingCompleted?: boolean }>()
 export const chunkSeqCounters = new Map<string, { streamSeq: number; thinkSeq: number }>()
 export const windowBySession = new Map<string, BrowserWindow>()
 export const sessionReady = new Map<string, boolean>()

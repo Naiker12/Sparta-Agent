@@ -13,6 +13,7 @@ interface SkillCardProps {
   onEdit?: () => void
   onDelete?: () => void
   onExport?: () => void
+  onOpen?: () => void
   isDownloadable?: boolean
 }
 
@@ -24,12 +25,14 @@ export function SkillCard({
   onEdit,
   onDelete,
   onExport,
+  onOpen,
   isDownloadable,
 }: SkillCardProps) {
   const { activeSkillIds } = useSkillStore()
   const [menuOpen, setMenuOpen] = useState(false)
   const [expanded, setExpanded] = useState(false)
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
+  const [hovered, setHovered] = useState(false)
 
   const isInstalled = installed ?? false
   const isDownloadableSkill = isDownloadable ?? false
@@ -45,45 +48,30 @@ export function SkillCard({
 
   return (
     <div
+      role={onOpen ? 'button' : undefined}
+      tabIndex={onOpen ? 0 : undefined}
+      onClick={onOpen}
+      onKeyDown={(event) => {
+        if (onOpen && (event.key === 'Enter' || event.key === ' ')) {
+          event.preventDefault()
+          onOpen()
+        }
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       style={{
-        background: 'var(--bg-input)',
-        border: '1px solid var(--border-subtle)',
-        borderRadius: 'var(--radius-md)',
-        transition: 'all 0.15s',
+        background: hovered ? 'var(--bg-surface)' : 'var(--bg-input)',
+        border: '1px solid var(--border-normal)',
+        borderRadius: 18,
+        transition: 'transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background-color 0.18s ease',
         position: 'relative',
         overflow: 'hidden',
-        borderLeft: isActive ? '3px solid var(--accent)' : '3px solid transparent',
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = isActive ? 'var(--accent)' : 'var(--border-strong)'
-        e.currentTarget.style.background = 'var(--bg-elevated)'
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = isActive ? 'var(--accent)' : 'var(--border-subtle)'
-        e.currentTarget.style.background = 'var(--bg-input)'
+        borderLeft: isActive ? '4px solid var(--accent)' : '4px solid transparent',
+        boxShadow: hovered ? '0 20px 40px rgba(0,0,0,0.08)' : '0 12px 28px rgba(0,0,0,0.04)',
+        transform: hovered ? 'translateY(-1px)' : 'none',
+        cursor: onOpen ? 'pointer' : 'default',
       }}
     >
-      {isActive && !isDownloadableSkill && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 8,
-            right: 8,
-            fontSize: 8,
-            padding: '1px 6px',
-            borderRadius: 3,
-            background: 'var(--accent)',
-            color: 'white',
-            fontFamily: 'var(--font-ui)',
-            fontWeight: 600,
-            letterSpacing: '0.05em',
-            textTransform: 'uppercase',
-          }}
-        >
-          Activa
-        </div>
-      )}
-
       <div style={{ padding: '12px 14px' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
@@ -236,7 +224,15 @@ export function SkillCard({
         )}
       </div>
 
-      <div style={{ padding: '8px 14px', borderTop: '1px solid var(--border-subtle)', display: 'flex', gap: 6, alignItems: 'center' }}>
+      <div style={{
+        padding: '10px 16px',
+        borderTop: '1px solid var(--border-subtle)',
+        display: 'flex',
+        gap: 8,
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        background: 'var(--bg-surface)',
+      }}>
         {isDownloadableSkill ? (
           isInstalled ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10.5, color: 'var(--status-ok)', fontFamily: 'var(--font-ui)' }}>

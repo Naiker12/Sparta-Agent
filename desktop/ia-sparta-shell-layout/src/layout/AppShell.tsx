@@ -21,6 +21,8 @@ import { useSidecarToasts } from 'ia-sparta-core'
 import { useSettingsStore } from 'ia-sparta-core'
 import { useUIStore } from 'ia-sparta-core'
 import { useChatStore } from 'ia-sparta-core'
+import { useSkillStore } from 'ia-sparta-core'
+import { useLocalSkillsLoader } from 'ia-sparta-core'
 import { IS_ELECTRON } from 'ia-sparta-platform'
 
 const SessionsView = lazy(() => import('../views/SessionsView').then(m => ({ default: m.SessionsView })))
@@ -62,11 +64,23 @@ function PanelDragHandle({ onMouseDown, className }: { onMouseDown: (e: React.Mo
 export function AppShell() {
   useCronEngine()
   useSidecarToasts()
+  const { skills: builtinSkills } = useLocalSkillsLoader()
+  const activateSkills = useSkillStore((state) => state.activateSkills)
+  const installedSkills = useSkillStore((state) => state.installedSkills)
+  const loadInstalledSkills = useSkillStore((state) => state.loadInstalledSkills)
 
   useEffect(() => {
     initTheme()
     useChatStore.getState().cleanupStaleStreams()
-  }, [])
+    void loadInstalledSkills()
+  }, [loadInstalledSkills])
+
+  useEffect(() => {
+    const availableIds = installedSkills.length > 0
+      ? installedSkills.map((skill) => skill.id)
+      : builtinSkills.map((skill) => skill.id)
+    activateSkills(availableIds)
+  }, [activateSkills, builtinSkills, installedSkills])
 
   const { settingsOpen } = useSettingsStore()
   const { mainView, sidebarOpen, sidebarWidth, terminalOpen, terminalHeight } = useUIStore()

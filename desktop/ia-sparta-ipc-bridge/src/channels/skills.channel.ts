@@ -7,9 +7,7 @@ import { spawn } from 'node:child_process'
 const SKILLS_DIR_REL = 'skills'
 
 function getSkillsDir(): string {
-  const base = app.isPackaged
-    ? path.join(process.resourcesPath, 'python', '..')
-    : process.cwd()
+  const base = app.isPackaged ? app.getAppPath() : process.cwd()
   return path.resolve(base, SKILLS_DIR_REL)
 }
 
@@ -23,23 +21,17 @@ function getSystemSkillsDir(): string {
 
 function findAllSkillDirs(root: string): string[] {
   const dirs: string[] = []
-  if (!fs.existsSync(root)) return dirs
-  for (const entry of fs.readdirSync(root, { withFileTypes: true })) {
-    if (!entry.isDirectory() || entry.name.startsWith('.')) continue
-    const full = path.join(root, entry.name)
-    if (fs.existsSync(path.join(full, 'SKILL.md'))) {
-      dirs.push(full)
-    } else {
-      for (const sub of fs.readdirSync(full, { withFileTypes: true })) {
-        if (sub.isDirectory() && !sub.name.startsWith('.')) {
-          const subFull = path.join(full, sub.name)
-          if (fs.existsSync(path.join(subFull, 'SKILL.md'))) {
-            dirs.push(subFull)
-          }
-        }
-      }
+  const visit = (dir: string) => {
+    if (!fs.existsSync(dir)) return
+    if (fs.existsSync(path.join(dir, 'SKILL.md'))) {
+      dirs.push(dir)
+      return
+    }
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (entry.isDirectory() && !entry.name.startsWith('.')) visit(path.join(dir, entry.name))
     }
   }
+  visit(root)
   return dirs
 }
 
@@ -62,6 +54,43 @@ function parseFrontmatter(text: string): Record<string, unknown> {
   return meta
 }
 
+export interface SkillDocument {
+  id: string
+  name: string
+  description: string
+  category: string
+  tags: string[]
+  body: string
+}
+
+export function loadSkillDocuments(): SkillDocument[] {
+  const documents: SkillDocument[] = []
+  const seen = new Set<string>()
+  const roots = [getUserSkillsDir(), getSystemSkillsDir(), getSkillsDir()]
+
+  for (const root of roots) {
+    for (const skillDir of findAllSkillDirs(root)) {
+      try {
+        const content = fs.readFileSync(path.join(skillDir, 'SKILL.md'), 'utf-8')
+        const meta = parseFrontmatter(content)
+        const id = String(meta.id || path.basename(skillDir))
+        if (seen.has(id)) continue
+        seen.add(id)
+        const relative = path.relative(root, skillDir).split(path.sep)
+        documents.push({
+          id,
+          name: String(meta.name || id),
+          description: String(meta.description || ''),
+          category: String(meta.category || relative[0] || 'Other'),
+          tags: Array.isArray(meta.tags) ? meta.tags.filter((tag): tag is string => typeof tag === 'string') : [],
+          body: content.replace(/^---[\s\S]*?---\n*/, '').trim(),
+        })
+      } catch { /* skip unreadable skill */ }
+    }
+  }
+  return documents
+}
+
 function scanDirForSkills(source: string, sourceLabel: string): unknown[] {
   const skills: unknown[] = []
   for (const skillDir of findAllSkillDirs(source)) {
@@ -69,12 +98,25 @@ function scanDirForSkills(source: string, sourceLabel: string): unknown[] {
     try {
       const content = fs.readFileSync(mdPath, 'utf-8')
       const meta = parseFrontmatter(content)
-      if (meta.id) {
-        const trustLevel = sourceLabel === 'user' ? 'installed'
-          : sourceLabel === 'system' ? 'system'
-          : 'builtin'
-        skills.push({ ...meta, source: sourceLabel, trustLevel })
-      }
+      const relative = path.relative(source, skillDir).split(path.sep)
+      const id = String(meta.id || path.basename(skillDir))
+      const trustLevel = sourceLabel === 'user' ? 'installed'
+        : sourceLabel === 'system' ? 'system'
+        : 'builtin'
+      skills.push({
+        ...meta,
+        id,
+        name: String(meta.name || id),
+        description: String(meta.description || ''),
+        category: String(meta.category || relative[0] || 'Other'),
+        tags: Array.isArray(meta.tags) ? meta.tags : [],
+        icon: String(meta.icon || ''),
+        version: String(meta.version || '1.0.0'),
+        author: String(meta.author || 'Sparta Team'),
+        featured: meta.featured === true,
+        source: sourceLabel,
+        trustLevel,
+      })
     } catch { /* skip */ }
   }
   return skills

@@ -92,6 +92,7 @@ export interface ThinkingStartedEvent extends BaseEvent {
   type: 'thinking:started'
   sessionId: string
   messageId: string
+  origin?: 'native' | 'emulated'
 }
 
 export interface ThinkingTokenEvent extends BaseEvent {

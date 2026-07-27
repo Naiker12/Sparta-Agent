@@ -41,7 +41,7 @@ function parseFrontmatter(text: string): Record<string, unknown> {
   return meta
 }
 
-const skillModules = import.meta.glob('../../skills/**/SKILL.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>
+const skillModules = import.meta.glob('../../../skills/**/SKILL.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>
 
 function formatSkillName(raw: string): string {
   if (!raw.includes('-') && !raw.includes('_')) {
@@ -80,16 +80,17 @@ function loadAllSkills(): LocalSkill[] {
     const meta = parseFrontmatter(content)
     const parts = filepath.replace(/\\/g, '/').split('/')
     const dirName = parts[parts.length - 2]
-    const parentDir = parts.length >= 4 ? parts[parts.length - 3] : 'skills'
+    const skillsIndex = parts.lastIndexOf('skills')
+    const categoryDir = skillsIndex >= 0 ? parts[skillsIndex + 1] : dirName
 
     const categoryMap: Record<string, string> = {
       analysis: 'Analysis', apple: 'Apple', automation: 'Automation',
-      'autonomous-ai-agents': 'Autonomous AI Agents', coding: 'Coding',
+      'autonomous-ai-agents': 'Autonomous AI Agents', coding: 'Coding', 'computer-use': 'Computer Use',
       creative: 'Creative', 'data-science': 'Data Science', dogfood: 'Dogfood',
       email: 'Email', github: 'GitHub', media: 'Media',
       mlops: 'MLOps', 'note-taking': 'Note Taking', productivity: 'Productivity',
       research: 'Research', 'smart-home': 'Smart Home', 'social-media': 'Social Media',
-      'software-development': 'Software Development', writing: 'Writing',
+      'software-development': 'Software Development', writing: 'Writing', yuanbao: 'Yuanbao',
       evaluation: 'MLOps', inference: 'MLOps', models: 'MLOps',
     }
 
@@ -104,7 +105,7 @@ function loadAllSkills(): LocalSkill[] {
       'software-development': '\ud83d\udee0\ufe0f', writing: '\u270d\ufe0f',
     }
 
-    const rawCategory = (meta.category as string) || categoryMap[parentDir] || parentDir.charAt(0).toUpperCase() + parentDir.slice(1)
+    const rawCategory = (meta.category as string) || categoryMap[categoryDir] || categoryDir.charAt(0).toUpperCase() + categoryDir.slice(1)
     const rawTags = meta.tags as string[] | undefined
     const category = rawCategory
 
@@ -119,7 +120,7 @@ function loadAllSkills(): LocalSkill[] {
       description: (meta.description as string) || '',
       category,
       tags: Array.isArray(rawTags) ? rawTags : [category.replace(/\s+/g, '')],
-      icon: cleanIcon || iconMap[parentDir] || '\ud83d\udce6',
+      icon: cleanIcon || iconMap[categoryDir] || '\ud83d\udce6',
       version: (meta.version as string) || '1.0.0',
       author: (meta.author as string) || 'Sparta Team',
       source: (meta.source as string) || 'builtin',
