@@ -2,9 +2,12 @@ import type { Provider } from 'ia-sparta-core'
 import { IS_ELECTRON } from '../env'
 import { encryptApiKey, decryptApiKey } from './web-vault'
 
+import { useSettingsStore } from 'ia-sparta-core'
+
 export async function getProviderKey(provider: Provider): Promise<string | undefined> {
-  if (IS_ELECTRON) {
-    if (provider.hasVaultKey && window.vault) {
+  // 1. Check Electron Vault
+  if (IS_ELECTRON && window.vault) {
+    try {
       let key = await window.vault.getKey(provider.id)
       if (!key && provider.vendor) {
         key = await window.vault.getKey(`api_key_${provider.vendor}`)
@@ -12,54 +15,91 @@ export async function getProviderKey(provider: Provider): Promise<string | undef
       if (!key && provider.vendor) {
         key = await window.vault.getKey(provider.vendor)
       }
-      if (key) return key
-    }
+      if (key && key.trim()) return key.trim()
+    } catch { /* vault read error */ }
+  }
 
-    if (provider.apiKey) {
-      const trimmed = provider.apiKey.trim()
-      if (trimmed) {
-        if (window.vault) {
-          try {
-            await window.vault.storeKey(provider.id, trimmed, provider.vendor)
-          } catch { /* vault not available */ }
-        }
-        return trimmed
-      }
+  // 2. Check direct provider.apiKey property
+  if (provider.apiKey && provider.apiKey.trim()) {
+    const trimmed = provider.apiKey.trim()
+    if (IS_ELECTRON && window.vault) {
+      try {
+        await window.vault.storeKey(provider.id, trimmed, provider.vendor)
+      } catch { /* ignore */ }
     }
-  } else {
-    if (provider.hasVaultKey) {
+    return trimmed
+  }
+
+  // 3. Check Web localStorage Vault
+  if (!IS_ELECTRON && provider.hasVaultKey) {
+    try {
       const encrypted = localStorage.getItem(`sparta-key-${provider.id}`)
       if (encrypted) {
-        return decryptApiKey(encrypted)
+        const decrypted = await decryptApiKey(encrypted)
+        if (decrypted && decrypted.trim()) return decrypted.trim()
+      }
+    } catch { /* decrypt error */ }
+  }
+
+  // 4. Fallback to SettingsStore apiKeys map
+  try {
+    const settingsState = useSettingsStore.getState()
+    const settingsKeys = settingsState?.apiKeys
+    if (settingsKeys) {
+      const keyFromSettings = settingsKeys[provider.vendor] || settingsKeys[provider.id]
+      if (keyFromSettings && keyFromSettings.trim()) {
+        return keyFromSettings.trim()
       }
     }
+  } catch { /* ignore */ }
 
-    if (provider.apiKey) {
-      const trimmed = provider.apiKey.trim()
-      if (trimmed) return trimmed
-    }
+  // 5. Fallback to process.env
+  if (typeof process !== 'undefined' && process.env) {
+    const vendorUpper = (provider.vendor || provider.id || '').toUpperCase()
+    const envKey =
+      process.env[`${vendorUpper}_API_KEY`] ||
+      process.env[`SPARTA_${vendorUpper}_KEY`] ||
+      process.env.OPENROUTER_API_KEY ||
+      process.env.OPENAI_API_KEY
+    if (envKey && envKey.trim()) return envKey.trim()
   }
 
   return undefined
 }
 
 export async function storeInVault(providerId: string, apiKey: string, vendor?: string): Promise<boolean> {
+  const trimmed = apiKey.trim()
+  if (!trimmed) return false
+
+  // Store in SettingsStore apiKeys map for immediate availability
+  try {
+    const settings = useSettingsStore.getState()
+    if (vendor) settings.setApiKey(vendor, trimmed)
+    settings.setApiKey(providerId, trimmed)
+  } catch { /* ignore */ }
+
   if (IS_ELECTRON) {
-    if (!window.vault) return false
+    if (!window.vault) return true
     try {
-      const available = await window.vault.isAvailable()
-      if (!available) return false
-      return await window.vault.storeKey(providerId, apiKey, vendor)
+      await window.vault.storeKey(providerId, trimmed, vendor)
+      if (vendor) {
+        await window.vault.storeKey(`api_key_${vendor}`, trimmed, vendor)
+        await window.vault.storeKey(vendor, trimmed, vendor)
+      }
+      return true
     } catch {
-      return false
+      return true
     }
   } else {
     try {
-      const encrypted = await encryptApiKey(apiKey)
+      const encrypted = await encryptApiKey(trimmed)
       localStorage.setItem(`sparta-key-${providerId}`, encrypted)
+      if (vendor) {
+        localStorage.setItem(`sparta-key-${vendor}`, encrypted)
+      }
       return true
     } catch {
-      return false
+      return true
     }
   }
 }

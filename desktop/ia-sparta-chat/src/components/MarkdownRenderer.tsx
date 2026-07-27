@@ -1,4 +1,4 @@
-import { useState, memo } from 'react'
+import { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
@@ -11,53 +11,6 @@ import type { Components } from 'react-markdown'
 interface MarkdownRendererProps {
   content: string
   isStreaming?: boolean
-}
-
-function looksLikeOpenTableOrList(tail: string): boolean {
-  const lines = tail.split('\n')
-  if (lines.length === 0) return false
-  // Table: at least one line with pipe-delimited cells.
-  const hasTableRow = lines.some((l) => /^\s*\|.*\|\s*$/.test(l))
-  // List: at least one line starting with a bullet or ordered marker.
-  const listLineRe = /^\s*([-*]|\d+\.)\s+/
-  const hasListLine = lines.some((l) => listLineRe.test(l))
-  return hasTableRow || hasListLine
-}
-
-function splitStableMarkdown(content: string): { stable: string; pending: string } {
-  // Do not split while we are inside an open code block; otherwise the trailing
-  // backticks remain visible as raw text until the block closes.
-  const codeBlockCount = (content.match(/```/g) || []).length
-  if (codeBlockCount % 2 !== 0) {
-    return { stable: '', pending: content }
-  }
-
-  // Walk paragraph boundaries backwards until the tail is not an open
-  // table or list. This prevents tables/lists from being rendered as plain
-  // text while the model is still adding rows/items.
-  let searchFrom = content.length
-  // eslint-disable-next-line no-constant-condition
-  while (true) {
-    const boundary = content.lastIndexOf('\n\n', searchFrom - 1)
-    if (boundary === -1) return { stable: '', pending: content }
-    const tail = content.slice(boundary + 2)
-    if (!looksLikeOpenTableOrList(tail)) {
-      return { stable: content.slice(0, boundary), pending: tail }
-    }
-    searchFrom = boundary
-  }
-}
-
-function splitPendingFence(content: string): { before: string; language: string; code: string } | null {
-  const fences = [...content.matchAll(/^```([A-Za-z0-9_-]*)[^\n]*\n?/gm)]
-  if (fences.length % 2 === 0) return null
-  const opening = fences[fences.length - 1]
-  if (opening.index === undefined) return null
-  return {
-    before: content.slice(0, opening.index),
-    language: opening[1] || 'text',
-    code: content.slice(opening.index + opening[0].length),
-  }
 }
 
 function handleLinkClick(e: React.MouseEvent<HTMLAnchorElement>, href: string) {
@@ -194,9 +147,7 @@ function makeMarkdownComponents(syntaxStyle: any): Components {
   }
 }
 
-const StableMarkdown = memo(function StableMarkdown({ content, components }: { content: string; components: Components }) {
-  return <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>{content}</ReactMarkdown>
-}, (prev, next) => prev.content === next.content)
+
 
 export function MarkdownRenderer({ content, isStreaming }: MarkdownRendererProps) {
   const { theme } = useThemeStore()
@@ -204,48 +155,16 @@ export function MarkdownRenderer({ content, isStreaming }: MarkdownRendererProps
   const syntaxStyle = cleanSyntaxStyle(rawStyle)
   const components = makeMarkdownComponents(syntaxStyle)
 
-  const { stable, pending } = isStreaming ? splitStableMarkdown(content) : { stable: content, pending: '' }
-  const pendingFence = isStreaming ? splitPendingFence(pending) : null
-  const pendingAsMarkdown = isStreaming && pending && !pendingFence && looksLikeOpenTableOrList(pending)
+  // Si se está stremeando y hay un bloque de código sin cerrar, cerramos virtualmente la valla
+  const renderContent = isStreaming && (content.match(/```/g) || []).length % 2 !== 0
+    ? content + '\n```'
+    : content
 
   return (
     <div className="markdown-body">
-      {stable && <StableMarkdown content={stable} components={components} />}
-      {isStreaming && pendingFence && (
-        <>
-          {pendingFence.before && (
-            <span style={{ whiteSpace: 'pre-wrap' }}>{pendingFence.before}</span>
-          )}
-          <div className="md-code-block">
-            <div className="md-code-header">
-              <span className="md-code-lang">{pendingFence.language}</span>
-              <CopyCodeButton code={pendingFence.code} />
-            </div>
-            <pre
-              style={{
-                margin: 0,
-                fontFamily: 'var(--font-mono)',
-                fontSize: '12.5px',
-                lineHeight: 1.55,
-                whiteSpace: 'pre-wrap',
-                wordBreak: 'break-word',
-                color: 'var(--text-primary)',
-              }}
-            >
-              {pendingFence.code}
-            </pre>
-          </div>
-        </>
-      )}
-      {pendingAsMarkdown ? (
-        <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
-          {pending}
-        </ReactMarkdown>
-      ) : (
-        isStreaming && pending && !pendingFence && (
-          <span style={{ whiteSpace: 'pre-wrap' }}>{pending}</span>
-        )
-      )}
+      <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
+        {renderContent}
+      </ReactMarkdown>
     </div>
   )
 }

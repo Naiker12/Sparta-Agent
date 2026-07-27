@@ -1,107 +1,78 @@
 import { motion } from 'framer-motion'
 import { cn } from 'ia-sparta-core'
-import { ChevronRight, Check, Sparkles } from 'lucide-react'
-import { ThinkingOrb } from 'thinking-orbs'
-import { Marker, MarkerIcon, MarkerContent } from '@/components/ui/marker'
-import { resolveOrbState, type OrbState } from './thinking-orbs-map'
-import type { ThinkingStatus, ReasoningOrigin } from 'ia-sparta-core'
-import { useTranslation } from 'ia-sparta-i18n'
-import { thinkingLabel } from './thinking-utils'
+import { Brain, ChevronRight } from 'lucide-react'
+import type { ThinkingStatus } from 'ia-sparta-core'
 
 interface ThinkingPillProps {
   status: ThinkingStatus
-  tokensUsed: number
   isExpanded: boolean
   elapsed: number
   lastSkillName?: string | null
-  activeToolName?: string | null
-  activeSkillName?: string | null
-  activeSubagentName?: string | null
-  origin?: ReasoningOrigin
   className?: string
+}
+
+function formatThoughtDuration(seconds: number): string {
+  if (seconds <= 0 || !Number.isFinite(seconds)) return '1s'
+  const rounded = Math.max(1, Math.round(seconds))
+  if (rounded < 60) return `${rounded}s`
+  const mins = Math.floor(rounded / 60)
+  const secs = rounded % 60
+  return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`
 }
 
 export function ThinkingPill({
   status,
-  tokensUsed,
   isExpanded,
   elapsed,
   lastSkillName,
-  activeToolName,
-  activeSkillName,
-  activeSubagentName,
-  origin = 'native',
   className,
 }: ThinkingPillProps) {
-  const { t } = useTranslation()
-
   const isActive = status === 'starting' || status === 'streaming'
-  const label = thinkingLabel(status, t('chat.thinking'), t('chat.thinking'))
-  const isEmulated = origin === 'emulated'
 
-  const orbState: OrbState = resolveOrbState({
-    status,
-    activeTool: activeToolName,
-    activeSkill: activeSkillName,
-    activeSubagent: activeSubagentName,
-  })
-
-  // Format seconds elapsed with 1 decimal place
-  const formattedSeconds = `${elapsed > 0 ? elapsed.toFixed(1) : '0.0'}s`
+  const formattedElapsed = formatThoughtDuration(elapsed)
+  const label = isActive
+    ? 'Thinking'
+    : `Thought for ${formattedElapsed}`
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      transition={{ duration: 0.15 }}
-      className="inline-flex"
+      initial={{ opacity: 0, y: 1 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.12 }}
+      className={cn('inline-flex items-center gap-1.5 text-xs text-muted-foreground select-none', className)}
     >
-      <Marker
-        role="status"
-        variant="default"
+      <div
         className={cn(
-          'cursor-pointer select-none transition-all duration-200 py-1.5 px-3 rounded-full border border-border/80 shadow-xs hover:border-accent/60 bg-[var(--bg-surface)] text-foreground hover:bg-[var(--bg-hover)] font-semibold',
-          className
+          'group/reasoning flex items-center gap-2 rounded-md py-1 pr-1 text-left text-xs font-medium text-[var(--text-secondary)] transition-colors',
+          'hover:text-[var(--text-primary)] cursor-pointer'
         )}
       >
-        <MarkerIcon className="shrink-0">
-          {isActive ? (
-            <ThinkingOrb state={orbState} size={20} paused={!isActive} />
-          ) : isEmulated ? (
-            <Sparkles size={15} strokeWidth={2.2} className="text-amber-500 shrink-0" />
-          ) : (
-            <Check size={15} strokeWidth={2.5} className="text-emerald-600 shrink-0" />
-          )}
-        </MarkerIcon>
+        <Brain className="size-3.5 shrink-0 text-[var(--text-muted)]" />
 
-        <MarkerContent shimmer={isActive} className="flex items-center gap-2 text-[12px] font-semibold text-foreground">
-          <span className="font-sans font-bold text-foreground">{label}</span>
-
-          {/* Seconds elapsed display */}
-          <span className="font-mono text-[11px] font-bold text-foreground/90">
-            ({formattedSeconds})
+        {isActive ? (
+          <span className="inline-flex items-center gap-1.5 font-medium text-[var(--text-primary)]">
+            <span className="animate-pulse">{label}</span>
+            <span className="text-[11px] font-mono text-[var(--text-muted)]">
+              ({elapsed > 0 ? `${elapsed.toFixed(0)}s` : '0s'})
+            </span>
           </span>
+        ) : (
+          <span className="font-medium text-[var(--text-secondary)]">
+            {label}
+          </span>
+        )}
 
-          {lastSkillName && (
-            <span className="text-[10px] font-semibold opacity-75 truncate max-w-[120px] font-mono">
-              &middot; {lastSkillName.replace(/^[^\s]+\s/, '')}
-            </span>
-          )}
-
-          {tokensUsed > 0 && (
-            <span className="text-[10px] font-semibold opacity-75 font-mono">
-              &middot; {tokensUsed.toLocaleString()} {t('chat.tokensUnit')}
-            </span>
-          )}
-        </MarkerContent>
+        {lastSkillName && (
+          <span className="text-[10px] opacity-75 font-mono text-[var(--text-muted)]">
+            · {lastSkillName.replace(/^[^\s]+\s/, '')}
+          </span>
+        )}
 
         <ChevronRight
-          size={14}
-          strokeWidth={2.2}
-          className={cn('ml-1 shrink-0 transition-transform duration-200 opacity-80', isExpanded && 'rotate-90')}
+          size={13}
+          className={cn('shrink-0 text-[var(--text-muted)] transition-transform duration-200', isExpanded && 'rotate-90 text-[var(--text-primary)]')}
         />
-      </Marker>
+      </div>
     </motion.div>
   )
 }

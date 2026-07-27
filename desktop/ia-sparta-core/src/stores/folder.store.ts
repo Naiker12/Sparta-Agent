@@ -7,7 +7,7 @@ interface FolderState {
   recentPaths: string[]
   connectFolder: (path: string) => void
   disconnectFolder: () => void
-  addRecentPath: (path: string) => void
+  removeRecentPath: (path: string) => void
 }
 
 function nameFromPath(p: string): string {
@@ -37,6 +37,14 @@ export const useFolderStore = create<FolderState>()(
       addRecentPath: (path: string) => {
         set((s) => ({
           recentPaths: [path, ...s.recentPaths.filter((p) => p !== path)].slice(0, 8),
+        }))
+      },
+
+      removeRecentPath: (path: string) => {
+        set((s) => ({
+          recentPaths: s.recentPaths.filter((p) => p !== path),
+          connectedPath: s.connectedPath === path ? null : s.connectedPath,
+          folderName: s.connectedPath === path ? null : s.folderName,
         }))
       },
     }),

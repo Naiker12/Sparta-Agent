@@ -8,7 +8,7 @@ import {
   sendToRenderer,
 } from './shared'
 import { getKey as vaultGetKey } from 'ia-sparta-vault'
-import { ChatCompletionsTransport } from 'ia-sparta-providers'
+import { ChatCompletionsTransport, AnthropicTransport, OllamaTransport } from 'ia-sparta-providers'
 
 export function registerChatSendIPC(): void {
   ipcMain.handle('chat:send', async (_event, req: ChatRequest) => {
@@ -50,7 +50,12 @@ export function registerChatSendIPC(): void {
     if (apiKey || isLocalProvider || req.apiUrl) {
       try {
         const effectiveKey = apiKey || (isLocalProvider ? 'local' : '')
-        const transport = new ChatCompletionsTransport(vendor as any, effectiveKey, req.apiUrl)
+        const transport =
+          vendor === 'anthropic'
+            ? new AnthropicTransport(effectiveKey)
+            : vendor === 'ollama'
+            ? new OllamaTransport(req.apiUrl || 'http://localhost:11434')
+            : new ChatCompletionsTransport(vendor as any, effectiveKey, req.apiUrl)
         const systemPrompt = req.system || 'Sos Sparta Agent, un asistente de ingeniería de software de alto rendimiento.'
         const formattedMessages = (req.messages || []).map(m => ({ role: m.role as any, content: m.content }))
 

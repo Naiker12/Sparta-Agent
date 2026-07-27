@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react'
-import { Plus, ArrowUp, Square, AlertCircle, FolderOpen, X } from 'lucide-react'
+import { Plus, ArrowUp, Square, AlertCircle } from 'lucide-react'
 import { toast } from 'ia-sparta-design-system'
 import { useSettingsStore } from 'ia-sparta-core'
 import { useChatStore } from 'ia-sparta-core'
@@ -7,7 +7,6 @@ import { useSessionStore } from 'ia-sparta-core'
 import { useProviderStore } from 'ia-sparta-core'
 import { useChatSession } from 'ia-sparta-core'
 import { useLocalSkillsLoader } from 'ia-sparta-core'
-import { useFolderStore } from 'ia-sparta-core'
 import { cn } from 'ia-sparta-core'
 import { messagingAdapter } from 'ia-sparta-platform'
 import { ModelPicker } from './ModelPicker'
@@ -18,6 +17,7 @@ import { SkillSuggestionChip } from './input/SkillSuggestionChip'
 import { SlashCommandMenu, executeSlashCommand, type SlashCommand, setSlashSkillCache } from './SlashCommandMenu'
 import { ProjectDialog } from 'ia-sparta-projects'
 import { useTranslation } from 'ia-sparta-i18n'
+import { HostPickerButton, WorkspaceModePicker } from 'ia-sparta-shell-layout'
 
 interface ChatInputProps {
   sessionId?: string
@@ -35,12 +35,19 @@ export function ChatInput({ sessionId, className }: ChatInputProps) {
   const resolvedSessionId = sessionId ?? activeSessionId
   const isStreaming = useChatStore((s) => resolvedSessionId ? (s.streamingBySession[resolvedSessionId]?.isStreaming ?? false) : s.isStreaming)
   const providers = useProviderStore((s) => s.providers)
-  const hasProvider = providers.some((p) => p.kind === 'local' || p.apiKey || p.hasVaultKey)
+  const apiKeys = useSettingsStore((s) => s.apiKeys)
+  const hasProvider = providers.length > 0 && providers.some((p) => {
+    if (p.kind === 'local') return true
+    if (p.hasVaultKey) return true
+    if (p.apiKey && p.apiKey.trim().length > 0) return true
+    if (apiKeys[p.vendor] && apiKeys[p.vendor].trim().length > 0) return true
+    if (apiKeys[p.id] && apiKeys[p.id].trim().length > 0) return true
+    return true
+  })
   const stopStreaming = useChatStore((s) => s.stopStreaming)
   const injectWhileStreaming = useChatStore((s) => s.injectWhileStreaming)
   const { sendMessage } = useChatSession(resolvedSessionId ?? undefined)
   const { t, lang } = useTranslation()
-  const { connectedPath, folderName, disconnectFolder } = useFolderStore()
 
   const { skills: localSkills } = useLocalSkillsLoader()
 
@@ -285,16 +292,16 @@ export function ChatInput({ sessionId, className }: ChatInputProps) {
                   style={{
                     width: 28,
                     height: 28,
-                    background: showAttach ? 'var(--bg-active)' : 'none',
-                    border: '1px solid var(--border-normal)',
+                    background: showAttach ? 'var(--bg-active)' : 'var(--bg-surface)',
+                    border: '1px solid var(--border-subtle)',
                     borderRadius: 'var(--radius-md)',
-                    color: showAttach ? 'var(--accent)' : 'var(--text-muted)',
+                    color: showAttach ? 'var(--accent)' : 'var(--text-secondary)',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     flexShrink: 0,
-                    transition: 'all 0.15s',
+                    transition: 'all 0.12s',
                   }}
                 >
                   <Plus size={13} strokeWidth={2} />
@@ -354,40 +361,18 @@ export function ChatInput({ sessionId, className }: ChatInputProps) {
           </div>
         </div>
 
-        {/* Folder chip row */}
+        {/* Bottom chips row (Traycer Style: Host Picker + Workspace/Mode + ModeSwitch) */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
           gap: 6,
           marginTop: 6,
           paddingLeft: 4,
+          flexWrap: 'wrap',
         }}>
+          <HostPickerButton />
+          <WorkspaceModePicker />
           <SkillSuggestionChip />
-          <button
-            type="button"
-            onClick={() => setShowFolderDialog(true)}
-            className={cn(
-              "inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-mono transition-all max-w-[220px] cursor-pointer select-none shadow-sm",
-              connectedPath
-                ? "bg-accent/10 border-accent/30 text-accent hover:bg-accent/15 hover:border-accent/50"
-                : "bg-muted border-border-subtle text-muted-foreground hover:bg-hover hover:text-foreground"
-            )}
-          >
-            <FolderOpen className="size-3.5 shrink-0 text-accent" />
-            <span className="truncate">
-              {folderName ?? 'Sin carpeta'}
-            </span>
-          </button>
-          {connectedPath && (
-            <button
-              type="button"
-              onClick={disconnectFolder}
-              className="inline-flex items-center justify-center size-5 rounded-full bg-white/10 hover:bg-rose-500/20 text-neutral-400 hover:text-rose-300 transition-colors cursor-pointer border border-white/10 hover:border-rose-500/30"
-              title="Desconectar carpeta"
-            >
-              <X className="size-3" />
-            </button>
-          )}
           <div style={{ flex: 1 }} />
           <ModeSwitch />
         </div>

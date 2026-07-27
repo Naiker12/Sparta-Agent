@@ -38,7 +38,7 @@ function loadVault(): VaultData {
 function saveVault(): void {
   if (!_cache) return
   const vaultPath = getVaultPath()
-  fs.writeFileSync(vaultPath, JSON.stringify(_cache, null, 2), 'utf-8')
+  fs.writeFileSync(vaultPath, JSON.stringify(_cache, null, 2), { encoding: 'utf-8', mode: 0o600 })
 }
 
 export function isEncryptionAvailable(): boolean {
@@ -60,7 +60,10 @@ export function storeKey(keyId: string, value: string, vendor?: string): boolean
   }
   _cache = data
   saveVault()
-  return true
+
+  // Read-after-write verification (Traycer WAL pattern)
+  const verified = getKey(keyId)
+  return verified === value
 }
 
 export function getKey(keyId: string): string | null {

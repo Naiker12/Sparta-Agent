@@ -23,6 +23,9 @@ interface SettingsStore {
   agentAutonomy: AgentAutonomyLevel
   agentExecuteLocal: boolean
   sandboxMode: SandboxMode
+  shellProgram: string
+  shellFlags: string[]
+  envOverrides: Record<string, string>
 
   openSettings: () => void
   closeSettings: () => void
@@ -40,6 +43,9 @@ interface SettingsStore {
   setAgentAutonomy: (level: AgentAutonomyLevel) => void
   setAgentExecuteLocal: (val: boolean) => void
   setSandboxMode: (mode: SandboxMode) => void
+  setShellProgram: (program: string) => void
+  setShellFlags: (flags: string[]) => void
+  setEnvOverrides: (overrides: Record<string, string>) => void
 }
 
 export const useSettingsStore = create<SettingsStore>()(
@@ -51,7 +57,7 @@ export const useSettingsStore = create<SettingsStore>()(
   activeModel: 'claude-sonnet-4-6',
   memoryEnabled: true,
   semanticMemoryEnabled: false,
-  webSearchEnabled: false,
+  webSearchEnabled: true,
   // Extended reasoning is valuable for hard tasks but adds a long provider
   // preamble to ordinary chat and simple file edits. Users can enable it per
   // model when they need it.
@@ -64,6 +70,9 @@ export const useSettingsStore = create<SettingsStore>()(
   agentAutonomy: 'ask_risky',
   agentExecuteLocal: true,
   sandboxMode: 'none',
+  shellProgram: typeof process !== 'undefined' && process.env?.ComSpec ? process.env.ComSpec : 'C:\\WINDOWS\\system32\\cmd.exe',
+  shellFlags: [],
+  envOverrides: {},
 
   openSettings: () => set({ settingsOpen: true }),
   closeSettings: () => set({ settingsOpen: false }),
@@ -82,6 +91,9 @@ export const useSettingsStore = create<SettingsStore>()(
   setAgentAutonomy: (level) => set({ agentAutonomy: level }),
   setAgentExecuteLocal: (val) => set({ agentExecuteLocal: val }),
   setSandboxMode: (mode) => set({ sandboxMode: mode }),
+  setShellProgram: (program) => set({ shellProgram: program }),
+  setShellFlags: (flags) => set({ shellFlags: flags }),
+  setEnvOverrides: (overrides) => set({ envOverrides: overrides }),
 }),
     {
       name: 'sparta-settings',

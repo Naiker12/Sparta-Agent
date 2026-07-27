@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
-import { Loader2, Check, X } from 'lucide-react'
+import { Loader2, Check, X, Eye, EyeOff } from 'lucide-react'
 import type { ProviderVendor, Provider } from 'ia-sparta-core'
-import { useProviderStore, getVendorLabel } from 'ia-sparta-core'
+import { useProviderStore, useSettingsStore, getVendorLabel } from 'ia-sparta-core'
 import { useTranslation } from 'ia-sparta-i18n'
 import { fetchModelsByVendor } from 'ia-sparta-core'
-import { storeInVault, isVaultAvailable } from 'ia-sparta-platform'
+import { storeInVault, getProviderKey } from 'ia-sparta-platform'
 import { Button } from 'ia-sparta-design-system'
 import {
   Combobox,
@@ -60,13 +60,16 @@ export function ConfigureProviderDialog({
   const [testing, setTesting] = useState(false)
   const [testError, setTestError] = useState('')
   const [fetchedModels, setFetchedModels] = useState<string[]>([])
+  const [revealed, setRevealed] = useState(false)
 
   useEffect(() => {
     if (editProvider) {
       setLabel(editProvider.label)
-      setApiKey(editProvider.apiKey || '')
       setServerUrl(editProvider.serverUrl || '')
       setDefaultModel(editProvider.defaultModel || '')
+      getProviderKey(editProvider).then((k) => {
+        setApiKey(k || editProvider.apiKey || '')
+      })
     } else if (vendor) {
       const defaults = VENDOR_DEFAULTS[vendor]
       setLabel(getVendorLabel(vendor))
@@ -97,7 +100,13 @@ export function ConfigureProviderDialog({
     setTestError('')
     setFetchedModels([])
 
-    const result = await fetchModelsByVendor(vendor, apiKey.trim(), serverUrl)
+    let keyToTest = apiKey.trim()
+    if (!keyToTest && editProvider) {
+      const resolvedKey = await getProviderKey(editProvider)
+      if (resolvedKey) keyToTest = resolvedKey
+    }
+
+    const result = await fetchModelsByVendor(vendor, keyToTest, serverUrl)
     setTesting(false)
 
     if (result.error) {
@@ -128,17 +137,15 @@ export function ConfigureProviderDialog({
     const cleanKey = apiKey.trim() || undefined
     const cleanUrl = serverUrl.trim() || undefined
     const cleanLabel = label.trim()
-
-    const vaultOk = cleanKey ? await isVaultAvailable() : false
-
     const models = fetchedModels.length > 0 ? fetchedModels : undefined
 
     if (editProvider) {
-      if (cleanKey && vaultOk) {
+      if (cleanKey) {
         await storeInVault(editProvider.id, cleanKey, editProvider.vendor)
+        useSettingsStore.getState().setApiKey(editProvider.vendor, cleanKey)
         updateProvider(editProvider.id, {
           label: cleanLabel,
-          apiKey: undefined,
+          apiKey: cleanKey,
           hasVaultKey: true,
           serverUrl: cleanUrl,
           defaultModel: defaultModel || undefined,
@@ -147,8 +154,6 @@ export function ConfigureProviderDialog({
       } else {
         updateProvider(editProvider.id, {
           label: cleanLabel,
-          apiKey: cleanKey,
-          hasVaultKey: false,
           serverUrl: cleanUrl,
           defaultModel: defaultModel || undefined,
           models,
@@ -159,7 +164,7 @@ export function ConfigureProviderDialog({
         vendor: currentVendor,
         kind: isLocal ? 'local' : 'cloud',
         label: cleanLabel,
-        apiKey: vaultOk ? undefined : cleanKey,
+        apiKey: cleanKey,
         serverUrl: cleanUrl,
         defaultModel: defaultModel || undefined,
       })
@@ -168,9 +173,13 @@ export function ConfigureProviderDialog({
         updateProvider(id, { models: fetchedModels })
       }
 
-      if (cleanKey && vaultOk) {
+      if (cleanKey) {
         await storeInVault(id, cleanKey, currentVendor)
-        updateProvider(id, { hasVaultKey: true })
+        useSettingsStore.getState().setApiKey(currentVendor, cleanKey)
+        updateProvider(id, {
+          hasVaultKey: true,
+          apiKey: cleanKey,
+        })
       }
     }
     onSave()
@@ -241,15 +250,34 @@ export function ConfigureProviderDialog({
 
           {!isLocal && (
             <div>
-              <label style={{ fontSize: 11, color: 'var(--text-secondary)', fontFamily: 'var(--font-ui)', display: 'block', marginBottom: 4 }}>
-                {t('models.apiKey')}
-              </label>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                <label style={{ fontSize: 11, color: 'var(--text-secondary)', fontFamily: 'var(--font-ui)' }}>
+                  {t('models.apiKey')}
+                </label>
+                {editProvider?.hasVaultKey && (
+                  <span style={{
+                    fontSize: 10,
+                    padding: '2px 6px',
+                    borderRadius: 4,
+                    background: 'rgba(34, 197, 94, 0.1)',
+                    color: '#22c55e',
+                    border: '1px solid rgba(34, 197, 94, 0.2)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    fontFamily: 'var(--font-ui)',
+                  }}>
+                    <Check size={10} /> Cifrado en Vault
+                  </span>
+                )}
+              </div>
               <div style={{ display: 'flex', gap: 6 }}>
                 <input
-                  type="password"
+                  type={revealed ? 'text' : 'password'}
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
-                  placeholder={t('models.apiKeyPlaceholder')}
+                  onFocus={(e) => e.target.select()}
+                  placeholder={editProvider?.hasVaultKey ? 'Ingresa una nueva API Key...' : t('models.apiKeyPlaceholder')}
                   style={{
                     flex: 1, padding: '7px 10px', fontSize: 12,
                     background: 'var(--bg-input)', border: '1px solid var(--border-normal)',
@@ -257,16 +285,45 @@ export function ConfigureProviderDialog({
                     fontFamily: 'var(--font-mono)', outline: 'none',
                   }}
                 />
+                {apiKey && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setRevealed(!revealed)}
+                      title={revealed ? 'Ocultar clave' : 'Mostrar clave'}
+                      style={{
+                        padding: '7px 10px', background: 'var(--bg-input)',
+                        border: '1px solid var(--border-normal)', borderRadius: 'var(--radius-md)',
+                        color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center',
+                      }}
+                    >
+                      {revealed ? <EyeOff size={14} /> : <Eye size={14} />}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setApiKey('')}
+                      title="Limpiar para ingresar nueva clave"
+                      style={{
+                        padding: '7px 10px', background: 'var(--bg-input)',
+                        border: '1px solid var(--border-normal)', borderRadius: 'var(--radius-md)',
+                        color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center',
+                      }}
+                    >
+                      <X size={14} />
+                    </button>
+                  </>
+                )}
                 <button
+                  type="button"
                   onClick={handleTest}
-                  disabled={testing || !apiKey.trim()}
+                  disabled={testing || (!apiKey.trim() && !editProvider?.hasVaultKey && !editProvider?.apiKey)}
                   style={{
                     padding: '7px 12px',
                     background: testing ? 'var(--bg-active)' : 'var(--accent)',
                     border: 'none', borderRadius: 'var(--radius-md)', color: 'white',
                     fontSize: 11, fontFamily: 'var(--font-ui)', fontWeight: 500,
-                    cursor: testing || !apiKey.trim() ? 'default' : 'pointer',
-                    opacity: testing || !apiKey.trim() ? 0.6 : 1,
+                    cursor: testing || (!apiKey.trim() && !editProvider?.hasVaultKey && !editProvider?.apiKey) ? 'default' : 'pointer',
+                    opacity: testing || (!apiKey.trim() && !editProvider?.hasVaultKey && !editProvider?.apiKey) ? 0.6 : 1,
                     display: 'flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap',
                   }}
                 >
@@ -315,15 +372,32 @@ export function ConfigureProviderDialog({
           )}
 
           {testError && (
-            <div style={{ fontSize: 11, color: 'var(--destructive)', fontFamily: 'var(--font-ui)', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontWeight: 600 }}>{t('models.testError')}</span>
-              {testError}
+            <div style={{
+              padding: '10px 12px',
+              borderRadius: 'var(--radius-md)',
+              background: 'rgba(239, 68, 68, 0.08)',
+              border: '1px solid rgba(239, 68, 68, 0.2)',
+              fontSize: 11, color: 'var(--destructive)', fontFamily: 'var(--font-ui)',
+              display: 'flex', flexDirection: 'column', gap: 4
+            }}>
+              <span style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <X size={13} /> {t('models.testError')}
+              </span>
+              <span style={{ lineHeight: '1.4', opacity: 0.9 }}>{testError}</span>
             </div>
           )}
 
           {!testError && fetchedModels.length > 0 && (
-            <div style={{ fontSize: 11, color: 'var(--status-ok)', fontFamily: 'var(--font-ui)' }}>
-              {t('models.testSuccess')} ({fetchedModels.length})
+            <div style={{
+              padding: '8px 12px',
+              borderRadius: 'var(--radius-md)',
+              background: 'rgba(34, 197, 94, 0.08)',
+              border: '1px solid rgba(34, 197, 94, 0.2)',
+              fontSize: 11, color: '#22c55e', fontFamily: 'var(--font-ui)',
+              display: 'flex', alignItems: 'center', gap: 6
+            }}>
+              <Check size={13} />
+              <span>{t('models.testSuccess')} ({fetchedModels.length} modelos detectados)</span>
             </div>
           )}
 

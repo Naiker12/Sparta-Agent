@@ -77,36 +77,40 @@ export function ModelPicker() {
         if (activeSessionId) updateSessionModel(activeSessionId, v)
       }}
     >
-      <ComboboxInput
-        placeholder="Buscar modelo..."
-        style={{
-          paddingLeft: activeVendor ? 28 : 10,
-          paddingRight: 24,
-          paddingTop: 0,
-          paddingBottom: 0,
-          minWidth: 140,
-          maxWidth: 200,
-          fontSize: 11.5,
-          fontFamily: 'var(--font-mono)',
-          height: 28,
-          borderRadius: 'var(--radius-md)',
-          border: '1px solid var(--border-normal)',
-          background: 'none',
-          cursor: 'pointer',
-        }}
-      />
-      {activeVendor && (
-        <div
+      <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+        <ComboboxInput
+          placeholder="Buscar modelo..."
           style={{
-            position: 'absolute', left: 8,
-            top: '50%', transform: 'translateY(-50%)',
-            zIndex: 1, pointerEvents: 'none',
-            display: 'flex', alignItems: 'center',
+            paddingLeft: activeVendor ? 28 : 10,
+            paddingRight: 24,
+            paddingTop: 0,
+            paddingBottom: 0,
+            minWidth: 140,
+            maxWidth: 220,
+            fontSize: 11.5,
+            fontFamily: 'var(--font-mono)',
+            height: 28,
+            borderRadius: 'var(--radius-md)',
+            border: '1px solid var(--border-subtle)',
+            background: 'var(--bg-surface)',
+            color: 'var(--text-primary)',
+            cursor: 'pointer',
+            transition: 'all 0.12s',
           }}
-        >
-          <BrandIcon vendor={activeVendor as any} size={14} />
-        </div>
-      )}
+        />
+        {activeVendor && (
+          <div
+            style={{
+              position: 'absolute', left: 8,
+              top: '50%', transform: 'translateY(-50%)',
+              zIndex: 1, pointerEvents: 'none',
+              display: 'flex', alignItems: 'center',
+            }}
+          >
+            <BrandIcon vendor={activeVendor as any} size={14} />
+          </div>
+        )}
+      </div>
       <ComboboxContent>
         <ComboboxEmpty>No se encontraron modelos</ComboboxEmpty>
         <ComboboxList>

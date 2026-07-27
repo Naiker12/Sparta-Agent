@@ -8,6 +8,7 @@ export type SettingsTab =
   | 'skills'
   | 'agents'
   | 'search'
+  | 'shell'
 
 export type SessionMode = 'chat' | 'agent'
 

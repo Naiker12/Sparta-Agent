@@ -9,6 +9,7 @@ import { ThinkingStatusLine } from './ThinkingStatusLine'
 import { SkillActivationBadge } from './SkillActivationBadge'
 import { SubagentExecutionCard } from './SubagentExecutionCard'
 import { StreamStallIndicator } from './StreamStallIndicator'
+import { Copy, Check, Eye } from 'lucide-react'
 import type { Message, ThinkingStatus } from 'ia-sparta-core'
 
 interface TimelineBlockProps {
@@ -16,7 +17,46 @@ interface TimelineBlockProps {
   className?: string
 }
 
-const TAIL_PREVIEW_MAX_LINES = 5
+const ELAPSED_VERBS = [
+  'Cogitated',
+  'Pondered',
+  'Crunched',
+  'Brewed',
+  'Noodled',
+  'Mulled',
+  'Schemed',
+  'Hatched',
+  'Tinkered',
+  'Conjured',
+  'Distilled',
+  'Wrangled',
+  'Marinated',
+  'Riffed',
+  'Sleuthed',
+  'Plotted',
+  'Stewed',
+  'Forged',
+  'Spelunked',
+  'Channeled',
+]
+
+function pickElapsedVerb(seed: string): string {
+  let hash = 5381
+  for (let i = 0; i < seed.length; i++) {
+    hash = ((hash << 5) + hash + seed.charCodeAt(i)) | 0
+  }
+  const index = Math.abs(hash) % ELAPSED_VERBS.length
+  return ELAPSED_VERBS[index] ?? 'Thought'
+}
+
+function formatDuration(seconds: number): string {
+  if (seconds <= 0 || !Number.isFinite(seconds)) return '<1s'
+  const rounded = Math.round(seconds)
+  if (rounded < 60) return `${rounded}s`
+  const mins = Math.floor(rounded / 60)
+  const secs = rounded % 60
+  return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`
+}
 
 function loadCollapseState(messageId?: string): boolean | null {
   if (!messageId) return null
@@ -33,10 +73,6 @@ function saveCollapseState(messageId: string, expanded: boolean) {
   } catch { /* ignore */ }
 }
 
-/**
- * Returns true if the user currently has a text selection inside `container`.
- * This prevents a click-to-toggle from firing after a drag-to-select ends.
- */
 function hasSelectionInside(container: HTMLElement | null): boolean {
   if (!container) return false
   const sel = window.getSelection()
@@ -45,37 +81,29 @@ function hasSelectionInside(container: HTMLElement | null): boolean {
   return container.contains(range.commonAncestorContainer)
 }
 
-/**
- * TimelineBlock — unified timeline of reasoning + tool calls.
- *
- * Three render modes based on (status, expanded):
- *   streaming + collapsed → tail preview (last N lines with top fade)
- *   streaming/completed + expanded → full trace with rail
- *   completed + collapsed → single-line pill with duration
- */
 export function TimelineBlock({ message, className }: TimelineBlockProps) {
   const savedState = useMemo(() => loadCollapseState(message.id), [message.id])
+  const status: ThinkingStatus = !message.isStreaming
+    ? 'completed'
+    : (message.thinkingStatus ?? 'streaming')
+
+  // Auto-expand during live streaming like Traycer AI
+  const isStreamingActive = status === 'streaming' || status === 'starting'
   const [isExpanded, setIsExpanded] = useState(
-    savedState !== null ? savedState : (message.isStreaming || message.thinkingStatus === 'starting' || message.thinkingStatus === 'streaming')
+    savedState !== null ? savedState : isStreamingActive
   )
-  const [showFullContent, setShowFullContent] = useState(false)
   const [elapsed, setElapsed] = useState(0)
+  const [copied, setCopied] = useState(false)
   const startedAt = useRef(message.reasoningStartedAt ?? Date.now())
   const userToggled = useRef(savedState !== null)
-  const [isHovered, setIsHovered] = useState(false)
   const blockRef = useRef<HTMLDivElement>(null)
-  const tailScrollRef = useRef<HTMLDivElement>(null)
 
   const parts = message.parts ?? []
   const hasParts = parts.length > 0
   const hasReasoningText = (message.reasoningText?.trim().length ?? 0) > 0
   const hasToolCalls = (message.toolCalls?.length ?? 0) > 0
-  const hasContent = hasParts || hasReasoningText || hasToolCalls
 
-  // Derive thinking status from message state (if message is no longer streaming, status is always completed)
-  const status: ThinkingStatus = !message.isStreaming
-    ? 'completed'
-    : (message.thinkingStatus ?? 'streaming')
+  const verb = useMemo(() => pickElapsedVerb(message.id), [message.id])
 
   const skillBadges = useMemo(
     () => message.pipelineSteps?.filter((s) => s.id?.startsWith('skill-')) ?? [],
@@ -87,63 +115,18 @@ export function TimelineBlock({ message, className }: TimelineBlockProps) {
     return completed.length > 0 ? completed[completed.length - 1].name : null
   }, [skillBadges])
 
-  // Derive the currently running tool name (for dynamic orb state mapping)
-  const activeToolName = useMemo(() => {
-    if (!message.toolCalls) return null
-    const running = message.toolCalls.find((tc) => tc.status === 'running')
-    return running?.toolName ?? null
-  }, [message.toolCalls])
-
-  // Derive the currently running skill name (for dynamic orb state mapping)
-  const activeSkillName = useMemo(() => {
-    const running = message.pipelineSteps?.find((s) => s.status === 'running')
-    return running?.name ?? null
-  }, [message.pipelineSteps])
-
-  // Derive the currently running subagent name (for dynamic orb state mapping)
-  const activeSubagentName = useMemo(() => {
-    if (!message.parts) return null
-    const runningSubagent = message.parts.find((p) => p.kind === 'subagent' && !p.completedAt)
-    return runningSubagent && 'subagentName' in runningSubagent ? (runningSubagent as { subagentName: string }).subagentName : null
-  }, [message.parts])
-
-  // Compute reasoning text for tail preview
-  const reasoningText = useMemo(() => {
-    if (hasParts) {
-      return parts
-        .filter((p) => p.kind === 'reasoning')
-        .map((p) => p.text)
-        .join('\n')
-    }
-    return message.reasoningText ?? ''
-  }, [parts, hasParts, message.reasoningText])
-
-  // Tail preview lines (last N lines of reasoning text)
-  const tailLines = useMemo(() => {
-    if (!reasoningText) return []
-    const allLines = reasoningText.split('\n').filter(Boolean)
-    return allLines.slice(-TAIL_PREVIEW_MAX_LINES)
-  }, [reasoningText])
-
   useEffect(() => {
     if (status === 'starting' || status === 'streaming') {
-      if (!userToggled.current) setIsExpanded(true)
       startedAt.current = message.reasoningStartedAt ?? Date.now()
       setElapsed(0)
     }
   }, [status, message.reasoningStartedAt])
 
-  // Auto-collapse when thinking completes (like Claude.ai behavior).
-  // Respects manual user toggles — if the user opened it, keep it open.
-  useEffect(() => {
-    if (status === 'completed' && !userToggled.current) {
-      setIsExpanded(false)
-    }
-  }, [status])
-
   useEffect(() => {
     if (status !== 'streaming' && status !== 'starting') return
-    const interval = setInterval(() => setElapsed(Math.floor((Date.now() - startedAt.current) / 100) / 10), 100)
+    const interval = setInterval(() => {
+      setElapsed((Date.now() - startedAt.current) / 1000)
+    }, 200)
     return () => clearInterval(interval)
   }, [status])
 
@@ -151,105 +134,48 @@ export function TimelineBlock({ message, className }: TimelineBlockProps) {
     if (userToggled.current && message.id) saveCollapseState(message.id, isExpanded)
   }, [isExpanded, message.id])
 
-  // Auto-pin tail preview to bottom during streaming
-  useEffect(() => {
-    if (isExpanded || status !== 'streaming') return
-    const el = tailScrollRef.current
-    if (!el) return
-    el.scrollTop = el.scrollHeight
-  }, [tailLines.length, isExpanded, status])
-
-  const handleToggle = useCallback((e: React.MouseEvent) => {
-    if (e.shiftKey) {
-      document.querySelectorAll('[data-timeline-block]').forEach((el) => {
-        const btn = el.querySelector('button')
-        if (btn) btn.click()
-      })
-      return
-    }
-    // Don't collapse if the user just finished selecting text
+  const handleToggle = useCallback(() => {
     if (hasSelectionInside(blockRef.current)) return
     userToggled.current = true
     setIsExpanded((v) => !v)
   }, [])
 
-  // If no parts, no reasoning text, and no tool calls, render nothing
-  if (!hasContent && status === 'completed') return null
+  function handleCopyReply() {
+    navigator.clipboard.writeText(message.content)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1600)
+  }
 
-  // Hide trivial thinking: fast response (< 1s), no tool calls, short text.
-  // Prevents the pill from flashing when the model barely thinks.
-  const isTrivial = status === 'completed'
-    && elapsed < 1
-    && !hasToolCalls
-    && (message.reasoningText?.length ?? 0) < 40
-  if (isTrivial) return null
-
-  const isStreamingCollapsed = !isExpanded && (status === 'streaming' || status === 'starting') && tailLines.length > 0
+  // Always show the thinking pill above every assistant response so the user can inspect duration & execution.
 
   return (
-    <motion.div
-      layout
+    <div
       ref={blockRef}
-      className={cn('timeline-block', className)}
+      className={cn('timeline-block flex flex-col gap-1', className)}
       data-timeline-block={message.id}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
+      {/* Reasoning Header Button (🧠 Thought for 1s / Thinking) */}
       <button
         onClick={handleToggle}
-        className="timeline-block-trigger"
         style={{
-          background: isHovered && !isExpanded ? 'var(--bg-hover)' : 'transparent',
-          borderRadius: 'var(--radius-md)',
-          padding: '4px 6px',
-          transition: 'background 0.15s',
-          width: '100%',
+          background: 'none',
           border: 'none',
+          padding: 0,
           cursor: 'pointer',
-          fontFamily: 'inherit',
           textAlign: 'left',
+          display: 'flex',
+          alignItems: 'center',
         }}
       >
         <ThinkingPill
           status={status}
-          tokensUsed={message.thinkingTokensUsed ?? 0}
           isExpanded={isExpanded}
           elapsed={elapsed}
           lastSkillName={lastSkillName}
-          activeToolName={activeToolName}
-          activeSkillName={activeSkillName}
-          activeSubagentName={activeSubagentName}
-          origin={message.reasoningOrigin ?? 'native'}
         />
       </button>
 
-      {/* Tail preview: streaming + collapsed */}
-      {isStreamingCollapsed && (
-        <div
-          ref={tailScrollRef}
-          style={{
-            maxHeight: '7.5rem',
-            overflow: 'hidden',
-            position: 'relative',
-            margin: '2px 6px 4px',
-            borderRadius: 'var(--radius-sm)',
-            background: 'var(--bg-subtle)',
-            borderLeft: '2px solid var(--status-think)',
-            maskImage: 'linear-gradient(to bottom, transparent 0%, black 1.5rem)',
-            WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 1.5rem)',
-          }}
-        >
-          <div style={{ padding: '6px 8px', fontSize: 11, lineHeight: '1.5', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
-            {tailLines.map((line, i) => (
-              <div key={i} style={{ opacity: 0.85, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                {line}
-              </div>
-            ))}
-            <div style={{ display: 'inline-block', width: 6, height: 12, background: 'var(--status-think)', borderRadius: 1, animation: 'blink 1s step-end infinite', marginLeft: 1, verticalAlign: 'text-bottom' }} />
-          </div>
-        </div>
-      )}
-
+      {/* Full Reasoning Trace Body (Left Rail Layout) */}
       <AnimatePresence initial={false}>
         {isExpanded && (
           <motion.div
@@ -257,11 +183,20 @@ export function TimelineBlock({ message, className }: TimelineBlockProps) {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
             style={{ overflow: 'hidden' }}
           >
-            <div className="timeline-body">
-              {/* Skeleton/status while starting */}
+            <div
+              style={{
+                marginLeft: 20,
+                paddingLeft: 12,
+                borderLeft: '1px solid var(--border-subtle)',
+                marginTop: 2,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8,
+              }}
+            >
               {(status === 'starting' || status === 'streaming') && !hasReasoningText && !hasParts && (
                 <>
                   {message.thinkingStatusText ? (
@@ -272,18 +207,16 @@ export function TimelineBlock({ message, className }: TimelineBlockProps) {
                 </>
               )}
 
-              {/* Skill activation badges */}
               {skillBadges.map((step) => (
                 <SkillActivationBadge
                   key={step.id}
                   skillName={(step.name ?? '').replace(/^[^\s]+\s/, '')}
-                  skillIcon={(step.name ?? '').split(' ')[0] || '\ud83d\udce6'}
+                  skillIcon={(step.name ?? '').split(' ')[0] || '📦'}
                   skillCategory={step.meta ?? ''}
                   status={step.status === 'completed' ? 'completed' : 'running'}
                 />
               ))}
 
-              {/* Render parts in chronological order */}
               {hasParts ? (
                 parts.map((part) => {
                   if (part.kind === 'reasoning') {
@@ -292,8 +225,6 @@ export function TimelineBlock({ message, className }: TimelineBlockProps) {
                         key={part.id}
                         text={part.text}
                         isStreaming={status === 'streaming' && !part.completedAt}
-                        showFullContent={showFullContent}
-                        onToggleShowFull={() => setShowFullContent((v) => !v)}
                       />
                     )
                   }
@@ -316,19 +247,17 @@ export function TimelineBlock({ message, className }: TimelineBlockProps) {
                   }
                   return null
                 })
+              ) : hasReasoningText ? (
+                <ThinkingLines
+                  text={message.reasoningText ?? ''}
+                  isStreaming={status === 'streaming'}
+                />
               ) : (
-                /* Fallback: render reasoning text directly if no parts but has reasoningText */
-                hasReasoningText && (
-                  <ThinkingLines
-                    text={message.reasoningText ?? ''}
-                    isStreaming={status === 'streaming'}
-                    showFullContent={showFullContent}
-                    onToggleShowFull={() => setShowFullContent((v) => !v)}
-                  />
-                )
+                <div style={{ fontSize: 11.5, color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', padding: '2px 0' }}>
+                  ✓ Proceso de generación e inferencia completado en {formatDuration(elapsed || 1)}.
+                </div>
               )}
 
-              {/* Fallback: render tool calls that aren't in parts (legacy data) */}
               {!hasParts && hasToolCalls && (
                 <div style={{ marginTop: 4 }}>
                   {message.toolCalls!.map((tc) => (
@@ -338,15 +267,53 @@ export function TimelineBlock({ message, className }: TimelineBlockProps) {
               )}
             </div>
 
-            {/* Stream stall indicator */}
             {(status === 'streaming' || status === 'starting') && (
-              <div style={{ padding: '0 6px 4px' }}>
+              <div style={{ padding: '4px 0 0 20px' }}>
                 <StreamStallIndicator streaming={status === 'streaming'} message={message} />
               </div>
             )}
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.div>
+
+      {/* Completed Turn Activity Summary Footer (Traycer AI Event Loop Badge at the bottom) */}
+      {status === 'completed' && elapsed > 0 && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            marginTop: 4,
+            fontSize: 11,
+            color: 'var(--text-muted)',
+            fontFamily: 'var(--font-ui)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Eye size={12} style={{ color: 'var(--text-muted)' }} />
+            <span>{verb} for {formatDuration(elapsed)}</span>
+          </div>
+
+          <button
+            onClick={handleCopyReply}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--text-muted)',
+              cursor: 'pointer',
+              padding: 2,
+              display: 'flex',
+              alignItems: 'center',
+              borderRadius: 3,
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text-primary)')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
+            title="Copiar respuesta"
+          >
+            {copied ? <Check size={12} style={{ color: '#22c55e' }} /> : <Copy size={12} />}
+          </button>
+        </div>
+      )}
+    </div>
   )
 }

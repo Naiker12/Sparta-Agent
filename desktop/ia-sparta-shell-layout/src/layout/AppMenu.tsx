@@ -2,7 +2,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from 'ia-sparta-design-system'
@@ -68,7 +67,9 @@ export function AppMenu() {
         {MENU_ITEMS.map((group, gi) => (
           <div key={group.label}>
             {gi > 0 && <DropdownMenuSeparator />}
-            <DropdownMenuLabel>{group.label}</DropdownMenuLabel>
+            <div style={{ padding: '6px 8px 2px', fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+              {group.label}
+            </div>
             {group.items.map((item) => (
               <DropdownMenuItem key={item.label}>
                 <span style={{ flex: 1 }}>{item.label}</span>

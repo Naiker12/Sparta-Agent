@@ -120,9 +120,11 @@ export async function fetchModelsByVendor(
       }
 
       case 'openrouter': {
-        const res = await fetch(`${API_BASE.openrouter}/v1/models`, {
-          headers: { Authorization: `Bearer ${apiKey}` },
-        })
+        const headers: Record<string, string> = {}
+        if (apiKey && apiKey.trim()) {
+          headers.Authorization = `Bearer ${apiKey.trim()}`
+        }
+        const res = await fetch(`${API_BASE.openrouter}/v1/models`, { headers })
         if (!res.ok) return { models: [], error: `HTTP ${res.status}: ${res.statusText}` }
         const data = await res.json()
         const models = (data.data || []).map((m: { id: string }) => m.id)

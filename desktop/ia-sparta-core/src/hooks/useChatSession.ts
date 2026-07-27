@@ -19,20 +19,31 @@ import type { Provider } from '../types'
 
 function getActiveProvider(providers: Provider[], activeModel: string): Provider | null {
   if (providers.length === 0) return null
+  const lowerModel = activeModel.toLowerCase()
 
   // 1. Direct match by defaultModel or models list
   const match = providers.find((p) => p.defaultModel === activeModel || p.models?.includes(activeModel))
   if (match) return match
 
-  // 2. Vendor match if model name contains vendor prefix (e.g. "openrouter/", "anthropic/", "z-ai/", "google/", "ollama/")
-  const lowerModel = activeModel.toLowerCase()
+  // 2. OpenRouter models (z-ai/, openrouter/, free/, glm, etc.)
+  if (
+    lowerModel.includes('openrouter/') ||
+    lowerModel.includes('z-ai/') ||
+    lowerModel.includes('free/') ||
+    lowerModel.includes('glm')
+  ) {
+    const openrouter = providers.find((p) => p.vendor === 'openrouter' || p.id === 'openrouter')
+    if (openrouter) return openrouter
+  }
+
+  // 3. Vendor match by model prefix
   const vendorMatch = providers.find((p) => {
     const v = p.vendor.toLowerCase()
-    return lowerModel.includes(v) || (v === 'openrouter' && (lowerModel.includes('z-ai/') || lowerModel.includes('free/') || lowerModel.includes('openrouter/')))
+    return v.length > 2 && lowerModel.includes(v)
   })
   if (vendorMatch) return vendorMatch
 
-  // 3. Fallback to first configured provider with an API key / local server
+  // 4. Fallback to first configured provider with an API key / local server
   const configured = providers.find((p) => p.kind === 'local' || p.apiKey || p.hasVaultKey)
   return configured ?? providers[0] ?? null
 }
@@ -99,17 +110,17 @@ async function runAssistantTurn(
       })
       return
     }
-    if (provider.kind === 'cloud' && !provider.apiKey && !provider.hasVaultKey) {
+    const apiUrl = provider.serverUrl || undefined
+    const providerKey = await getProviderKey(provider)
+
+    if (provider.kind === 'cloud' && !providerKey) {
       store.stopStreaming(sid)
       store.updateMessage(assistantId, {
         isStreaming: false,
-        content: `El proveedor "${provider.label}" no tiene API key configurada. Edítalo en Ajustes.`,
+        content: `El proveedor "${provider.label}" requiere una API Key para procesar este modelo (${activeModel}). Por favor, agrégala en Ajustes ⚙️ > Modelos.`,
       })
       return
     }
-
-    const apiUrl = provider.serverUrl || undefined
-    const providerKey = await getProviderKey(provider)
     const system = await buildMemorySystemPrompt(text, freshProviders)
 
     const settingsState = useSettingsStore.getState()

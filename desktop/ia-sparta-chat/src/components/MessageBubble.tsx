@@ -13,6 +13,18 @@ import { getMessageRenderState } from 'ia-sparta-core'
 import { MarkdownRenderer } from './MarkdownRenderer'
 import { useTranslation } from 'ia-sparta-i18n'
 
+function cleanDisplayContent(text: string): string {
+  if (!text) return ''
+  let cleaned = text.replace(/<think>[\s\S]*?<\/think>/gi, '').trim()
+  if (cleaned.startsWith('El usuario') && (cleaned.includes('¡') || cleaned.includes('Hola') || cleaned.includes('\n\n'))) {
+    const match = /(¡[\s\S]*|Hola[\s\S]*|\n\n[\s\S]*)/.exec(cleaned)
+    if (match && match[1].trim().length > 0) {
+      cleaned = match[1].trim()
+    }
+  }
+  return cleaned
+}
+
 interface MessageBubbleProps {
   message: Message
   isLastUser?: boolean
@@ -262,7 +274,7 @@ export function MessageBubble({ message, isLastUser = false, isLastAssistant = f
                     </div>
                   ) : (
                     <MarkdownRenderer
-                      content={renderState.content}
+                      content={cleanDisplayContent(renderState.content)}
                       isStreaming={renderState.kind === 'responding' || renderState.kind === 'generating'}
                     />
                   )}

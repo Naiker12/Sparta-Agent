@@ -23,7 +23,7 @@ function prepareOptions(options: ToastOptions): ToastManagerAddOptions<any> {
   const { duration, timeout, ...rest } = options
   return {
     ...rest,
-    timeout: timeout ?? duration,
+    timeout: timeout ?? duration ?? 3500,
   }
 }
 
@@ -66,7 +66,7 @@ export interface ToasterProps extends React.ComponentPropsWithoutRef<typeof Toas
   closeButton?: boolean
 }
 
-export function Toaster({ position = "top-center", ...props }: ToasterProps) {
+export function Toaster({ position = "bottom-right", ...props }: ToasterProps) {
   return (
     <Toast.Provider toastManager={toastManager} {...props}>
       <ToasterViewport position={position} />
@@ -81,17 +81,17 @@ function ToasterViewport({ position }: { position: string }) {
     "top-left": "top-5 left-5 items-start",
     "top-center": "top-5 left-1/2 -translate-x-1/2 items-center",
     "top-right": "top-5 right-5 items-end",
-    "bottom-left": "bottom-5 left-5 items-start",
-    "bottom-center": "bottom-5 left-1/2 -translate-x-1/2 items-center",
-    "bottom-right": "bottom-5 right-5 items-end",
+    "bottom-left": "bottom-6 left-6 items-start",
+    "bottom-center": "bottom-6 left-1/2 -translate-x-1/2 items-center",
+    "bottom-right": "bottom-6 right-6 items-end",
   }
 
   return (
     <Toast.Portal>
       <Toast.Viewport
         className={cn(
-          "fixed z-[9999] flex flex-col gap-2.5 max-w-[400px] w-full p-4 pointer-events-none transition-all duration-200",
-          positionClasses[position] || positionClasses["top-center"]
+          "fixed z-[99999] flex flex-col gap-2 max-w-[360px] w-full p-2 pointer-events-none transition-all duration-200",
+          positionClasses[position] || positionClasses["bottom-right"]
         )}
       >
         {toasts.map((t: any) => (
@@ -99,47 +99,47 @@ function ToasterViewport({ position }: { position: string }) {
             key={t.id}
             toast={t}
             className={cn(
-              "pointer-events-auto flex items-start gap-3 w-full border text-popover-foreground transition-all duration-200 backdrop-blur-xl p-4 shadow-2xl",
+              "pointer-events-auto flex items-center gap-3 w-full border text-popover-foreground transition-all duration-200 backdrop-blur-xl px-3.5 py-3 shadow-2xl group",
               "data-[starting]:opacity-0 data-[starting]:scale-95 data-[starting]:translate-y-2",
               "data-[ending]:opacity-0 data-[ending]:scale-95 data-[ending]:translate-y-1"
             )}
             style={{
-              background: 'var(--bg-modal)',
-              borderColor: 'var(--border-strong)',
-              borderRadius: 'var(--radius-lg)',
-              boxShadow: '0 16px 48px rgba(0,0,0,0.5)',
+              background: 'var(--bg-modal, #141919)',
+              borderColor: 'var(--border-strong, rgba(255,255,255,0.12))',
+              borderRadius: 'var(--radius-lg, 10px)',
+              boxShadow: '0 12px 36px rgba(0,0,0,0.6)',
             }}
           >
-            {/* Built-in Status Icons */}
+            {/* Built-in Status Icons (Traycer Styled) */}
             {t.type === "success" && (
-              <CheckCircle className="size-4.5 text-emerald-500 shrink-0 mt-0.5" />
+              <CheckCircle className="size-4 text-emerald-500 shrink-0" />
             )}
             {t.type === "info" && (
-              <Info className="size-4.5 text-indigo-400 shrink-0 mt-0.5" />
+              <Info className="size-4 text-teal-400 shrink-0" />
             )}
             {t.type === "warning" && (
-              <AlertTriangle className="size-4.5 text-amber-500 shrink-0 mt-0.5" />
+              <AlertTriangle className="size-4 text-amber-500 shrink-0" />
             )}
             {t.type === "error" && (
-              <XCircle className="size-4.5 text-rose-500 shrink-0 mt-0.5" />
+              <XCircle className="size-4 text-rose-500 shrink-0" />
             )}
             {t.type === "loading" && (
-              <Loader2 className="size-4.5 text-indigo-400 animate-spin shrink-0 mt-0.5" />
+              <Loader2 className="size-4 text-teal-400 animate-spin shrink-0" />
             )}
 
-            <div className="flex-1 space-y-1 overflow-hidden">
+            <div className="flex-1 min-w-0 overflow-hidden">
               {t.title && (
                 <Toast.Title
-                  className="text-sm font-semibold tracking-tight leading-snug"
-                  style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-ui)' }}
+                  className="text-xs font-semibold tracking-tight leading-snug truncate"
+                  style={{ color: 'var(--text-primary, #f3f4f6)', fontFamily: 'var(--font-ui)' }}
                 >
                   {t.title}
                 </Toast.Title>
               )}
               {t.description && (
                 <Toast.Description
-                  className="text-xs leading-normal"
-                  style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-ui)' }}
+                  className="text-[11px] leading-normal truncate opacity-80"
+                  style={{ color: 'var(--text-secondary, #9ca3af)', fontFamily: 'var(--font-mono)' }}
                 >
                   {t.description}
                 </Toast.Description>
@@ -149,7 +149,7 @@ function ToasterViewport({ position }: { position: string }) {
             {t.actionProps && (
               <Toast.Action
                 {...t.actionProps}
-                className="inline-flex items-center justify-center rounded-md text-xs font-medium h-8 px-3 transition-colors shrink-0 cursor-pointer shadow-xs"
+                className="inline-flex items-center justify-center rounded-md text-xs font-medium h-7 px-2.5 transition-colors shrink-0 cursor-pointer shadow-xs"
                 style={{
                   background: 'var(--accent)',
                   color: '#ffffff',
@@ -158,12 +158,12 @@ function ToasterViewport({ position }: { position: string }) {
             )}
 
             <Toast.Close
-              className="rounded-md p-1 transition-colors focus:outline-none shrink-0 cursor-pointer"
-              style={{ color: 'var(--text-muted)' }}
+              className="rounded-md p-1 transition-all focus:outline-none shrink-0 cursor-pointer opacity-60 hover:opacity-100"
+              style={{ color: 'var(--text-muted, #9ca3af)' }}
               onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-hover)')}
               onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
             >
-              <X className="size-4" />
+              <X className="size-3.5" />
             </Toast.Close>
           </Toast.Root>
         ))}

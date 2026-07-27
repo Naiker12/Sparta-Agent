@@ -5,6 +5,7 @@ import { Settings, PanelLeftOpen, PanelLeftClose } from 'lucide-react'
 import { SpartaIcon } from 'ia-sparta-chat'
 import { FEATURES } from 'ia-sparta-platform'
 import { Button } from 'ia-sparta-design-system'
+import { ResourceMonitorPopover } from './ResourceMonitorPopover'
 import {
   Tabs,
   TabsList,
@@ -18,7 +19,6 @@ const TABS: { type: MainView['type']; label: string }[] = [
   { type: 'chat', label: 'Chat' },
   ...(FEATURES.terminal ? [{ type: 'terminal' as const, label: 'Terminal' }] : []),
 ]
-
 
 export function TitleBar() {
   const { mainView, setMainView, sidebarOpen, toggleSidebar, terminalOpen, toggleTerminal } = useUIStore()
@@ -122,6 +122,8 @@ export function TitleBar() {
       <TabStrip />
 
       <div className="flex-1" />
+
+      <ResourceMonitorPopover />
 
       <Button
         variant="ghost"

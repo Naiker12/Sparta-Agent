@@ -174,7 +174,7 @@ export function AppShell() {
       {isDraggingTerminal && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 9999, cursor: 'row-resize', background: 'transparent' }} />
       )}
-      <Toaster position="top-center" richColors closeButton />
+      <Toaster position="bottom-right" richColors closeButton />
       <PermissionRequestDialog />
       <DiffProposalDialog />
     </div>

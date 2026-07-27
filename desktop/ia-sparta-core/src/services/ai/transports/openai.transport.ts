@@ -13,6 +13,7 @@ const API_BASE: Record<string, string> = {
   cohere: 'https://api.cohere.ai',
   perplexity: 'https://api.perplexity.ai',
   xai: 'https://api.x.ai',
+  nvidia: 'https://integrate.api.nvidia.com',
 }
 
 export class ChatCompletionsTransport extends BaseTransport {
@@ -27,10 +28,16 @@ export class ChatCompletionsTransport extends BaseTransport {
   }
 
   buildHeaders(): Record<string, string> {
-    return {
-      Authorization: `Bearer ${this.apiKey}`,
+    const cleanKey = (this.apiKey || '').trim().replace(/^["']|["']$/g, '')
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${cleanKey}`,
       'content-type': 'application/json',
     }
+    if (this.vendor === 'openrouter' || this.baseUrl.includes('openrouter')) {
+      headers['HTTP-Referer'] = 'https://github.com/Naiker12/Sparta-Agent'
+      headers['X-Title'] = 'Sparta Agent'
+    }
+    return headers
   }
 
   buildBody(req: ChatRequest): Record<string, unknown> {
@@ -48,7 +55,7 @@ export class ChatCompletionsTransport extends BaseTransport {
 
   async listModels(): Promise<ModelInfo[]> {
     const res = await fetch(`${this.baseUrl}/v1/models`, {
-      headers: { Authorization: `Bearer ${this.apiKey}` },
+      headers: this.buildHeaders(),
     })
     if (!res.ok) throw new Error(HTTP_STATUS_MESSAGES[res.status] ?? `HTTP ${res.status}`)
     const data = await res.json()
@@ -81,10 +88,17 @@ export class ChatCompletionsTransport extends BaseTransport {
     })
 
     if (!res.ok) {
-      const msg = HTTP_STATUS_MESSAGES[res.status] ?? `HTTP ${res.status}`
-      yield { type: 'error', error: msg }
+      let errorMsg = HTTP_STATUS_MESSAGES[res.status] ?? `HTTP ${res.status}`
+      try {
+        const errData = await res.json()
+        if (errData?.error?.message) {
+          errorMsg = `${errorMsg}: ${errData.error.message}`
+        }
+      } catch { /* ignore */ }
+
+      yield { type: 'error', error: errorMsg }
       if (isRetryable(res.status)) {
-        yield { type: 'error', error: `${msg} — se agotaron los reintentos.` }
+        yield { type: 'error', error: `${errorMsg} — se agotaron los reintentos.` }
       }
       return
     }
