@@ -22,10 +22,23 @@ export async function fetchWithRetry(
 ): Promise<Response> {
   for (let i = 0; i <= retries; i++) {
     const signal = options.signal ?? AbortSignal.timeout(timeoutMs)
-    const response = await fetch(url, { ...options, signal })
-    if (!isRetryable(response.status) || i >= retries) return response
-    const delay = Math.min(1000 * Math.pow(2, i), 8000)
-    await new Promise((r) => setTimeout(r, delay))
+    try {
+      const response = await fetch(url, { ...options, signal })
+      if (!isRetryable(response.status) || i >= retries) return response
+      const delay = Math.min(1000 * Math.pow(2, i), 8000)
+      await new Promise((r) => setTimeout(r, delay))
+      continue
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Error de red desconocido'
+      if (signal.aborted || message === 'The operation was aborted.' || message === 'The operation was aborted due to timeout.') {
+        throw new Error('La solicitud al proveedor tardó demasiado y se canceló. Revisa tu conexión o intenta de nuevo.')
+      }
+      if (i >= retries) {
+        throw new Error(`Error de red al conectar con el proveedor: ${message}`)
+      }
+      const delay = Math.min(1000 * Math.pow(2, i), 8000)
+      await new Promise((r) => setTimeout(r, delay))
+    }
   }
-  throw new Error('unreachable')
+  throw new Error('Error de red al conectar con el proveedor')
 }

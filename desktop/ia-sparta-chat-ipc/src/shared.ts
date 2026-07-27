@@ -33,6 +33,7 @@ export interface ChatRequest {
   semanticMemory?: boolean
   reasoning?: { enabled: boolean; budget: number; effort?: string }
   webSearchEnabled?: boolean
+  tools?: unknown[]
   workspaceRoot?: string
   connectedFolder?: string
   agentAutonomy?: string

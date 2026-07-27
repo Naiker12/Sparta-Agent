@@ -62,6 +62,10 @@ export class ChatCompletionsTransport extends BaseTransport {
     }
     // OpenAI's Chat Completions API is the only vendor in this transport
     // family that reliably accepts this parameter across supported models.
+    if (Array.isArray(req.tools) && req.tools.length > 0) {
+      body.tools = req.tools
+      body.function_call = 'auto'
+    }
     if (this.vendor === 'openai' && req.thinkingEnabled && req.reasoningEffort && req.reasoningEffort !== 'none') {
       body.reasoning_effort = req.reasoningEffort
     }

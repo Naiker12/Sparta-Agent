@@ -113,6 +113,7 @@ export interface ChatRequest {
   thinkingEnabled?: boolean
   thinkingBudget?: number
   reasoningEffort?: ReasoningEffort
+  tools?: unknown[]
 }
 
 export interface ChatStreamChunk {

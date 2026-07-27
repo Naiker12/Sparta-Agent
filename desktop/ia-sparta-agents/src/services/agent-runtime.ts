@@ -37,7 +37,7 @@ function extractFinalResult(text: string): string {
   const resultMatch = /<result>([\s\S]*?)<\/result>/.exec(text)
   if (resultMatch) return resultMatch[1].trim()
 
-  const thinkMatch = /<thinking>[\s\S]*?<\/thinking>/gs
+  const thinkMatch = /<t(?:hinking|hink)>[\s\S]*?<\/t(?:hinking|hink)>/gs
   const clean = text.replace(thinkMatch, '').trim()
   return clean || text
 }

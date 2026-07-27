@@ -1,4 +1,3 @@
-import { cn } from 'ia-sparta-design-system'
 import { useState, useMemo, useEffect } from 'react'
 import { Search, Layers, Plus } from 'lucide-react'
 import { useSkillStore } from 'ia-sparta-core'

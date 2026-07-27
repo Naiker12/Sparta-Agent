@@ -15,6 +15,7 @@ interface SpartaSendMessageRequest {
   mode?: string
   skills?: string[]
   mcpServers?: unknown[]
+  tools?: unknown[]
   semanticMemory?: boolean
   reasoning?: { enabled: boolean; budget: number; effort?: string }
   webSearchEnabled?: boolean

@@ -16,6 +16,7 @@ interface ChatSendRequest {
   mode?: string
   skills?: string[]
   mcpServers?: unknown[]
+  tools?: unknown[]
   semanticMemory?: boolean
   reasoning?: { enabled: boolean; budget: number; effort?: string }
   webSearchEnabled?: boolean
@@ -242,6 +243,10 @@ class WebAdapter implements MessagingAdapter {
     return `${protocol}//${host}:${port}/ws`
   }
 
+  private isConnecting(): boolean {
+    return this.ws?.readyState === WebSocket.CONNECTING
+  }
+
   sendMessage(request: ChatSendRequest): Promise<MessagingAdapterSendResult> | void {
     if (this.ws?.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify({
@@ -259,6 +264,7 @@ class WebAdapter implements MessagingAdapter {
           mode: request.mode,
           skills: request.skills,
           mcp_servers: request.mcpServers,
+          tools: request.tools,
           semantic_memory: request.semanticMemory,
           reasoning: request.reasoning,
           web_search_enabled: request.webSearchEnabled ?? true,
@@ -294,6 +300,24 @@ class WebAdapter implements MessagingAdapter {
         })
       })
     }
+
+    if (this.isConnecting()) {
+      return new Promise<MessagingAdapterSendResult>((resolve) => {
+        const timeout = setTimeout(() => {
+          resolve({ ok: false, error: 'WebSocket not connected' })
+        }, 10_000)
+        const unsub = this.onReady(() => {
+          clearTimeout(timeout)
+          unsub()
+          resolve(this.sendMessage(request) as Promise<MessagingAdapterSendResult>)
+        })
+      })
+    }
+
+    if (!this.ws || this.ws.readyState === WebSocket.CLOSED || this.ws.readyState === WebSocket.CLOSING) {
+      this.connect()
+    }
+
     return Promise.resolve({ ok: false, error: 'WebSocket not connected' })
   }
 

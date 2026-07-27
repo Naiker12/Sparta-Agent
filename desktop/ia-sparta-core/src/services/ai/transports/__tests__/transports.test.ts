@@ -61,6 +61,15 @@ describe('ChatCompletionsTransport', () => {
     expect(body.temperature).toBe(0.7)
   })
 
+  it('buildBody includes tool definitions and auto function calling when tools are provided', () => {
+    const body = transport.buildBody({
+      ...sampleReq,
+      tools: [{ name: 'current_time', description: 'Get current time' }],
+    })
+    expect(body.tools).toEqual([{ name: 'current_time', description: 'Get current time' }])
+    expect(body.function_call).toBe('auto')
+  })
+
   it('buildBody omits system message when not set', () => {
     const body = transport.buildBody({ ...sampleReq, system: undefined })
     expect((body.messages as { role: string; content: string }[])).toHaveLength(1)

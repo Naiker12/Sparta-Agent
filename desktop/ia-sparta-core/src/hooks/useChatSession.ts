@@ -68,12 +68,20 @@ function resolveWorkspaceRoot(): string | undefined {
   return undefined
 }
 
+function getCurrentTimeSystemPrompt(): string {
+  const now = new Date()
+  const local = now.toLocaleString()
+  const iso = now.toISOString()
+  return `La fecha y hora actual son ${local} (UTC ${iso}).`
+}
+
 async function runAssistantTurn(
   sid: string,
   assistantId: string,
   text: string,
   msgs: Array<{ role: string; content: string }>,
   buildMemorySystemPrompt: (text: string, providers: Provider[]) => Promise<string | undefined>,
+  setProviderForSession: (sessionId: string, providerId: string) => void,
 ) {
   const turnStartedAt = Date.now()
   const store = useChatStore.getState()
@@ -100,6 +108,20 @@ async function runAssistantTurn(
       })
       return
     }
+    setProviderForSession(sid, provider.id)
+    if (!messagingAdapter.isReady()) {
+      if (IS_WEB && messagingAdapter.onReady) {
+        await new Promise<void>((resolve) => {
+          const timeout = setTimeout(resolve, 8000)
+          const unsub = messagingAdapter.onReady?.(() => {
+            clearTimeout(timeout)
+            unsub?.()
+            resolve()
+          })
+        })
+      }
+    }
+
     if (!messagingAdapter.isReady()) {
       store.stopStreaming(sid)
       store.updateMessage(assistantId, {
@@ -121,7 +143,9 @@ async function runAssistantTurn(
       })
       return
     }
-    const system = await buildMemorySystemPrompt(text, freshProviders)
+    const systemMemory = await buildMemorySystemPrompt(text, freshProviders)
+    const currentTimePrompt = getCurrentTimeSystemPrompt()
+    const system = [currentTimePrompt, systemMemory].filter(Boolean).join('\n\n')
 
     const settingsState = useSettingsStore.getState()
     const { semanticMemoryEnabled, webSearchEnabled, reasoningEnabled, reasoningBudget, reasoningEffort, agentAutonomy, agentExecuteLocal, sandboxMode } = settingsState
@@ -133,6 +157,13 @@ async function runAssistantTurn(
       ...s.config,
       tools: s.tools ?? [],
     }))
+    const tools = useMCPStore.getState().servers.flatMap((server) =>
+      (server.tools ?? []).map((tool) => ({
+        name: tool.name,
+        description: tool.description,
+        input_schema: tool.inputSchema,
+      }))
+    )
     const workspaceRoot = resolveWorkspaceRoot()
     const connectedFolder = useFolderStore.getState().connectedPath || undefined
 
@@ -156,6 +187,7 @@ async function runAssistantTurn(
       reasoning: { enabled: reasoningEnabled ?? false, budget: reasoningBudget ?? 8000, effort: reasoningEffort ?? 'medium' },
       webSearchEnabled,
       workspaceRoot,
+      tools: tools.length > 0 ? tools : undefined,
       connectedFolder,
       agentAutonomy,
       agentExecuteLocal,
@@ -172,6 +204,7 @@ async function runAssistantTurn(
         'Sidecar no listo': 'El asistente de Python no respondió a tiempo. Probá de nuevo o reiniciá la app.',
         'Concurrent stream not allowed for same session': 'Ya hay una respuesta en curso en esta sesión. Esperá a que termine antes de enviar otro mensaje.',
         'Timeout': 'La solicitud tardó demasiado y se canceló. Probá de nuevo.',
+        'WebSocket not connected': 'No se pudo conectar con el sidecar web. Verificá que el servidor Python esté encendido y que la conexión de red esté disponible.',
         'Sidecar no disponible — no se pudo enviar el mensaje.': 'El asistente de Python no está disponible. Reiniciá la app.',
       }
       const friendly = resolved.error ? (SEND_ERROR_MESSAGES[resolved.error] ?? resolved.error) : undefined
@@ -258,13 +291,7 @@ export function useChatSession(sessionId?: string) {
         window.electron.send('chat:ready', { sessionId: sid })
       }
 
-      const freshProviders = useProviderStore.getState().providers
-      const provider = getActiveProvider(freshProviders, useSettingsStore.getState().activeModel)
-      if (provider) {
-        setProviderForSession(sid, provider.id)
-      }
-
-      await runAssistantTurn(sid, assistantId, text, msgs, buildMemorySystemPrompt)
+      await runAssistantTurn(sid, assistantId, text, msgs, buildMemorySystemPrompt, setProviderForSession)
 
       return { sessionId: sid, assistantId, userMessageId }
     },
@@ -306,7 +333,7 @@ export function useChatSession(sessionId?: string) {
           }
           return base
         })
-      await runAssistantTurn(sid, assistantId, prevUser.content, msgs, buildMemorySystemPrompt)
+      await runAssistantTurn(sid, assistantId, prevUser.content, msgs, buildMemorySystemPrompt, setProviderForSession)
 
       return { sessionId: sid, assistantId }
     },

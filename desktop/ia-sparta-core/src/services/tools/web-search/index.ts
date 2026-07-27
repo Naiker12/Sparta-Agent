@@ -80,8 +80,13 @@ function resolveDdgUrl(url: string): string {
 }
 
 export async function executeWebSearch(query: string, count = 5): Promise<string> {
-  const results = await duckduckgoSearch(query)
-  if (!results) return 'No se encontraron resultados en la búsqueda web.'
-  const limited = results.split('\n\n').slice(0, count).join('\n\n')
-  return ['Información obtenida de búsqueda web:', limited].join('\n')
+  try {
+    const results = await duckduckgoSearch(query)
+    if (!results) return 'No se encontraron resultados en la búsqueda web.'
+    const limited = results.split('\n\n').slice(0, count).join('\n\n')
+    return ['Información obtenida de búsqueda web:', limited].join('\n')
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    return `Error de búsqueda web: ${message}`
+  }
 }

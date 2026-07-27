@@ -131,6 +131,7 @@ export function registerChatSendIPC(): void {
           model: req.model,
           messages: formattedMessages,
           system: systemPrompt,
+          tools: req.tools,
           thinkingEnabled: req.reasoning?.enabled,
           thinkingBudget: req.reasoning?.budget,
           reasoningEffort: req.reasoning?.effort as 'none' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh' | undefined,

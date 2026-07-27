@@ -51,6 +51,10 @@ export class ChatCompletionsTransport extends BaseTransport {
       max_tokens: req.maxTokens ?? 4096,
       temperature: req.temperature ?? 0.7,
     }
+    if (Array.isArray(req.tools) && req.tools.length > 0) {
+      body.tools = req.tools
+      body.function_call = 'auto'
+    }
     if (this.vendor === 'openai' && req.thinkingEnabled && req.reasoningEffort && req.reasoningEffort !== 'none') {
       body.reasoning_effort = req.reasoningEffort
     }
