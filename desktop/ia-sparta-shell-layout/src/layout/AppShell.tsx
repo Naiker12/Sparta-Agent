@@ -15,6 +15,7 @@ import { ChatErrorBoundary } from 'ia-sparta-core'
 
 import { PermissionRequestDialog } from 'ia-sparta-permission'
 import { DiffProposalDialog } from 'ia-sparta-permission'
+import { useWorkspaceSync } from 'ia-sparta-core'
 import { initTheme } from 'ia-sparta-core'
 import { useCronEngine } from 'ia-sparta-core'
 import { useSidecarToasts } from 'ia-sparta-core'
@@ -64,6 +65,7 @@ function PanelDragHandle({ onMouseDown, className }: { onMouseDown: (e: React.Mo
 export function AppShell() {
   useCronEngine()
   useSidecarToasts()
+  useWorkspaceSync()
   const { skills: builtinSkills } = useLocalSkillsLoader()
   const activateSkills = useSkillStore((state) => state.activateSkills)
   const installedSkills = useSkillStore((state) => state.installedSkills)

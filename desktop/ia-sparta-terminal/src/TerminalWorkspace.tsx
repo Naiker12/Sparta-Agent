@@ -10,6 +10,8 @@ import { Plus, ChevronDown, Terminal as TerminalIcon, MessageSquarePlus, Bot, Co
 import { useUIStore } from 'ia-sparta-core'
 import { useChatStore } from 'ia-sparta-core'
 import { useTerminalStore } from 'ia-sparta-core'
+import { useSettingsStore } from 'ia-sparta-core'
+import { useFolderStore } from 'ia-sparta-core'
 import { registerAgentTerminalWriter, seedAgentTerminalCommand, writeAgentTerminalChunk, clearAgentTerminal } from './agent-terminal-stream'
 import '@xterm/xterm/css/xterm.css'
 
@@ -74,7 +76,8 @@ export function TerminalWorkspace() {
   const [searchVisible, setSearchVisible] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const [splitMode, setSplitMode] = useState<'none' | 'horizontal' | 'vertical'>('none')
-  const [selectedProfile, setSelectedProfile] = useState<string>('')
+  const settingsShell = useSettingsStore((s) => s.shellProgram)
+  const [selectedProfile, setSelectedProfile] = useState<string>(settingsShell || '')
   const [showProfileMenu, setShowProfileMenu] = useState(false)
 
   const activeInstance = instancesRef.current.get(activeTabId ?? '')
@@ -101,7 +104,18 @@ export function TerminalWorkspace() {
     const unsubData = window.terminal.onData(inst.ptyId, (data: string) => terminal.write(data))
     inst.cleanups.push(unsubData)
 
-    window.terminal.create({ terminalId: inst.ptyId, cols, rows, shell: shellProfile }).then((result) => {
+    const settings = useSettingsStore.getState()
+    const folderPath = useFolderStore.getState().connectedPath
+
+    window.terminal.create({
+      terminalId: inst.ptyId,
+      cols,
+      rows,
+      shell: shellProfile || settings.shellProgram || undefined,
+      shellFlags: settings.shellFlags,
+      envOverrides: settings.envOverrides,
+      cwd: folderPath || undefined,
+    }).then((result) => {
       if (!result.success) {
         terminal.writeln('\r\n\x1b[31mError al iniciar shell\x1b[0m')
         if (result.error) terminal.writeln(`\x1b[90m${result.error}\x1b[0m`)

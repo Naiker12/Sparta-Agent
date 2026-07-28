@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { useEventBus } from './event-bus.store'
 
 interface FolderState {
   connectedPath: string | null
@@ -28,10 +29,12 @@ export const useFolderStore = create<FolderState>()(
           const recent = [path, ...s.recentPaths.filter((p) => p !== path)].slice(0, 8)
           return { connectedPath: path, folderName: name, recentPaths: recent }
         })
+        useEventBus.getState().dispatch({ type: 'folder:connected', path, timestamp: Date.now() })
       },
 
       disconnectFolder: () => {
         set({ connectedPath: null, folderName: null })
+        useEventBus.getState().dispatch({ type: 'folder:disconnected', timestamp: Date.now() })
       },
 
       addRecentPath: (path: string) => {

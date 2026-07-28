@@ -1,18 +1,115 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Check, Loader2, X, AlertTriangle, FileText, Search, ChevronRight, Sparkles, FolderTree } from 'lucide-react'
+import { Check, Loader2, X, AlertTriangle, FileText, Search, ChevronRight, Sparkles, FolderTree, Globe, Terminal as TerminalIcon, Pencil, Trash2 } from 'lucide-react'
 import { SearchResultsList } from './SearchResultsList'
+import { RunningCommandBlock } from './RunningCommandBlock'
 import { inferToolSubstatus, substatusLabel } from 'ia-sparta-core'
-import type { ToolCall } from 'ia-sparta-core'
+import type { ToolCall, SearchProgressItem } from 'ia-sparta-core'
 
 interface ToolTraceRowProps {
   toolCall: ToolCall
 }
 
+function parseSearchResultsFromToolCall(toolCall: ToolCall): SearchProgressItem[] {
+  if (toolCall.searchProgress && toolCall.searchProgress.length > 0) {
+    return toolCall.searchProgress
+  }
+
+  const output = toolCall.output
+  if (!output || typeof output !== 'string' || !output.trim()) {
+    return []
+  }
+
+  const items: SearchProgressItem[] = []
+
+  // 1. Try parsing JSON array or JSON object
+  try {
+    const parsed = JSON.parse(output)
+    const array = Array.isArray(parsed)
+      ? parsed
+      : Array.isArray(parsed.results)
+      ? parsed.results
+      : Array.isArray(parsed.organic_results)
+      ? parsed.organic_results
+      : Array.isArray(parsed.sources)
+      ? parsed.sources
+      : null
+
+    if (array && array.length > 0) {
+      for (const item of array) {
+        if (typeof item === 'object' && item !== null) {
+          const url = (item.url || item.link || item.href || '') as string
+          const title = (item.title || item.name || item.snippet || url) as string
+          if (url && url.startsWith('http')) {
+            items.push({
+              id: `parsed-${items.length}-${url}`,
+              url,
+              title: title.replace(/<[^>]+>/g, '').trim(),
+              status: 'visited',
+            })
+          }
+        }
+      }
+      if (items.length > 0) return items
+    }
+  } catch {
+    // Not JSON
+  }
+
+  // 2. Parse numbered text lists ("1. Title\n URL: https://...")
+  const blockRegex = /(?:^|\n)(\d+)\.\s+([^\n]+)(?:\n\s*URL:\s*(https?:\/\/[^\s\n]+))?/gi
+  let match: RegExpExecArray | null
+  while ((match = blockRegex.exec(output)) !== null) {
+    const title = match[2]?.trim()
+    const url = match[3]?.trim()
+    if (url) {
+      items.push({
+        id: `parsed-ddg-${items.length}`,
+        title: title || url,
+        url,
+        status: 'visited',
+      })
+    }
+  }
+  if (items.length > 0) return items
+
+  // 3. Fallback: Parse markdown links [Title](URL) or plain URLs in text
+  const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^\s\)]+)\)/gi
+  while ((match = linkRegex.exec(output)) !== null) {
+    const title = match[1]?.trim()
+    const url = match[2]?.trim()
+    if (url && !items.some(i => i.url === url)) {
+      items.push({
+        id: `parsed-md-${items.length}`,
+        title: title || url,
+        url,
+        status: 'visited',
+      })
+    }
+  }
+  if (items.length > 0) return items
+
+  // 4. Standalone URL regex fallback (e.g. "URL: https://...")
+  const standaloneUrlRegex = /https?:\/\/[^\s\n"'>\)]+/gi
+  const foundUrls = output.match(standaloneUrlRegex) || []
+  for (const url of foundUrls) {
+    if (!items.some(i => i.url === url)) {
+      items.push({
+        id: `parsed-url-${items.length}`,
+        title: url,
+        url,
+        status: 'visited',
+      })
+    }
+  }
+
+  return items
+}
+
 function getToolCallSummary(toolCall: ToolCall): { icon: React.ReactNode; label: string; description: string } {
   const input = toolCall.input as Record<string, unknown> | undefined
   const path = (input?.path ?? input?.file_path ?? input?.directory ?? '') as string | undefined
-  const query = (input?.query ?? input?.q ?? '') as string | undefined
+  const query = (input?.query ?? input?.q ?? toolCall.searchQuery ?? '') as string | undefined
   const skillId = (input?.id ?? input?.skill_id ?? input?.name ?? '') as string | undefined
   const action = (input?.action ?? '') as string | undefined
 
@@ -22,6 +119,20 @@ function getToolCallSummary(toolCall: ToolCall): { icon: React.ReactNode; label:
   const iconSize = 12
 
   switch (toolCall.toolName) {
+    case 'web_search':
+    case 'web_search_tool':
+      return {
+        icon: <Globe size={iconSize} strokeWidth={1.5} />,
+        label: 'Buscando en la web',
+        description: query ? `«${truncate(query)}»` : (toolCall.searchQuery ? `«${truncate(toolCall.searchQuery)}»` : ''),
+      }
+    case 'web_fetch':
+    case 'web_fetch_tool':
+      return {
+        icon: <Globe size={iconSize} strokeWidth={1.5} />,
+        label: 'Leyendo sitio web',
+        description: (path || input?.url) ? truncate((path || input?.url) as string) : '',
+      }
     case 'skills_list':
     case 'skills_list_tool':
       return {
@@ -75,6 +186,42 @@ function getToolCallSummary(toolCall: ToolCall): { icon: React.ReactNode; label:
         description: path ? truncate(path) : '',
       }
     }
+    case 'read_file':
+      return {
+        icon: <FileText size={iconSize} strokeWidth={1.5} />,
+        label: 'Leyendo archivo',
+        description: path ? truncate(path) : '',
+      }
+    case 'write_file':
+      return {
+        icon: <FileText size={iconSize} strokeWidth={1.5} />,
+        label: 'Escribiendo archivo',
+        description: path ? truncate(path) : '',
+      }
+    case 'edit_file':
+      return {
+        icon: <Pencil size={iconSize} strokeWidth={1.5} />,
+        label: 'Editando archivo',
+        description: path ? truncate(path) : '',
+      }
+    case 'delete_file':
+      return {
+        icon: <Trash2 size={iconSize} strokeWidth={1.5} />,
+        label: 'Eliminando archivo',
+        description: path ? truncate(path) : '',
+      }
+    case 'list_directory':
+      return {
+        icon: <FolderTree size={iconSize} strokeWidth={1.5} />,
+        label: 'Listando directorio',
+        description: path ? truncate(path) : '.',
+      }
+    case 'run_command':
+      return {
+        icon: <TerminalIcon size={iconSize} strokeWidth={1.5} />,
+        label: 'Ejecutando comando',
+        description: input?.command ? truncate(String(input.command)) : '',
+      }
     default:
       return {
         icon: <FileText size={iconSize} strokeWidth={1.5} />,
@@ -111,12 +258,22 @@ function StatusIcon({ status, error }: { status: ToolCall['status']; error?: str
  * No box/border in collapsed state. Expands to show details.
  */
 export function ToolTraceRow({ toolCall }: ToolTraceRowProps) {
+  // Delegate run_command to specialized RunningCommandBlock
+  if (toolCall.toolName === 'run_command') {
+    return <RunningCommandBlock toolCall={toolCall} />
+  }
+
   const [expanded, setExpanded] = useState(toolCall.status === 'running')
   const [liveSubstatus, setLiveSubstatus] = useState(toolCall.substatus)
   const { icon, label, description } = getToolCallSummary(toolCall)
   const isSearch = toolCall.toolName === 'web_search' || toolCall.toolName === 'web_search_tool'
   const isFetch = toolCall.toolName === 'web_fetch' || toolCall.toolName === 'web_fetch_tool'
-  const hasSearchResults = (toolCall.searchProgress && toolCall.searchProgress.length > 0) || false
+
+  const searchItems = useMemo(() => {
+    if (!isSearch) return []
+    return parseSearchResultsFromToolCall(toolCall)
+  }, [isSearch, toolCall.searchProgress, toolCall.output])
+  const hasSearchResults = searchItems.length > 0
 
   // Live-update substatus while running
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -195,6 +352,22 @@ export function ToolTraceRow({ toolCall }: ToolTraceRowProps) {
           </span>
         )}
 
+        {isSearch && hasSearchResults && (
+          <span style={{
+            color: 'var(--text-muted)',
+            fontSize: 10,
+            fontFamily: 'var(--font-ui)',
+            background: 'var(--bg-input)',
+            border: '1px solid var(--border-subtle)',
+            padding: '1px 6px',
+            borderRadius: '10px',
+            fontWeight: 500,
+            flexShrink: 0,
+          }}>
+            {searchItems.length} resultados
+          </span>
+        )}
+
         {toolCall.durationMs !== undefined && (
           <span style={{ color: 'var(--text-muted)', fontSize: 10, flexShrink: 0 }}>
             {toolCall.durationMs >= 1000
@@ -224,18 +397,47 @@ export function ToolTraceRow({ toolCall }: ToolTraceRowProps) {
             style={{ overflow: 'hidden' }}
           >
             <div style={{
-              padding: '4px 10px 8px 28px',
+              padding: '6px 10px 8px 28px',
               display: 'flex',
               flexDirection: 'column',
               gap: 6,
             }}>
-              {/* Search results — inline, no card */}
+              {/* Search results card */}
               {hasSearchResults && (
-                <div>
-                  <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Resultados de búsqueda
+                <div className="rounded-md border border-[var(--border-subtle)] bg-[var(--bg-card)]/50 p-2 my-1">
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    fontSize: 10,
+                    fontWeight: 600,
+                    color: 'var(--text-muted)',
+                    fontFamily: 'var(--font-ui)',
+                    marginBottom: 6,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                  }}>
+                    <span>Resultados de búsqueda</span>
+                    <span style={{ fontWeight: 500, opacity: 0.8, textTransform: 'none' }}>
+                      {searchItems.length} fuentes encontradas
+                    </span>
                   </div>
-                  <SearchResultsList items={toolCall.searchProgress!} />
+                  <SearchResultsList items={searchItems} />
+                  {toolCall.status === 'completed' && (
+                    <div style={{
+                      marginTop: 6,
+                      paddingTop: 4,
+                      borderTop: '1px solid var(--border-subtle)',
+                      fontSize: 10,
+                      color: 'var(--text-muted)',
+                      fontFamily: 'var(--font-mono)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4,
+                    }}>
+                      <span>✓ Se extrajeron y analizaron {searchItems.length} fuentes de la web</span>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -259,18 +461,17 @@ export function ToolTraceRow({ toolCall }: ToolTraceRowProps) {
                 </div>
               )}
 
-              {/* Output for fetch tools — markdown rendered.
-                  NOTA: para búsquedas (isSearch) ya no volvemos a volcar
-                  `toolCall.output` aquí. Ese texto es el resultado crudo que
-                  recibe el LLM (incluye líneas tipo "IMPORTANTE: no repitas
-                  la lista de resultados" dirigidas al modelo, no al usuario)
-                  y antes se filtraba directo a la UI. La lista ya parseada
-                  (SearchResultsList, arriba) es lo único que debe verse. */}
+              {/* Output fallback if no search items parsed */}
+              {toolCall.output && toolCall.status !== 'error' && isSearch && !hasSearchResults && (
+                <DetailSection label="Resultado de búsqueda" content={toolCall.output} />
+              )}
+
+              {/* Output for fetch tools */}
               {toolCall.output && toolCall.status !== 'error' && isFetch && !isSearch && (
                 <DetailSection label="Contenido leído" content={toolCall.output} />
               )}
 
-              {/* Output for non-search tools — technical detail */}
+              {/* Output for non-search tools */}
               {toolCall.output && toolCall.status !== 'error' && !isSearch && !isFetch && (
                 <DetailSection label="Output" content={toolCall.output} />
               )}

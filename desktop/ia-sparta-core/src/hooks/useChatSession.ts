@@ -15,6 +15,7 @@ import { getProviderKey, messagingAdapter, IS_WEB } from 'ia-sparta-platform'
 import { useSessionLifecycle } from './useSessionLifecycle'
 import { useSessionMemory } from './useSessionMemory'
 import { useStreamEvents } from 'ia-sparta-stream-events'
+import { buildToolDefinitions } from '../services/agents/tool-executor'
 import type { Provider } from '../types'
 
 function getActiveProvider(providers: Provider[], activeModel: string): Provider | null {
@@ -49,6 +50,11 @@ function getActiveProvider(providers: Provider[], activeModel: string): Provider
 }
 
 function resolveWorkspaceRoot(): string | undefined {
+  const connectedFolder = useFolderStore.getState().connectedPath
+  if (connectedFolder) {
+    return connectedFolder
+  }
+
   const projectStore = useProjectStore.getState()
   const activeProject = projectStore.getActiveProject()
   if (activeProject?.rootPath) {
@@ -178,13 +184,8 @@ async function runAssistantTurn(
       ...s.config,
       tools: s.tools ?? [],
     }))
-    const tools = useMCPStore.getState().servers.flatMap((server) =>
-      (server.tools ?? []).map((tool) => ({
-        name: tool.name,
-        description: tool.description,
-        input_schema: tool.inputSchema,
-      }))
-    )
+    const allMcpTools = useMCPStore.getState().servers.flatMap((server) => server.tools ?? [])
+    const tools = buildToolDefinitions(allMcpTools)
     const workspaceRoot = resolveWorkspaceRoot()
     const connectedFolder = useFolderStore.getState().connectedPath || undefined
 

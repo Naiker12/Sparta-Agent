@@ -65,6 +65,9 @@ export type EventType =
   | 'subagent:completed'
   | 'subagent:aborted'
 
+  | 'folder:connected'
+  | 'folder:disconnected'
+
 export interface BaseEvent {
   type: EventType
   timestamp: number
@@ -449,6 +452,15 @@ export interface SubagentAbortedEvent extends BaseEvent {
   reason?: string
 }
 
+export interface FolderConnectedEvent extends BaseEvent {
+  type: 'folder:connected'
+  path: string
+}
+
+export interface FolderDisconnectedEvent extends BaseEvent {
+  type: 'folder:disconnected'
+}
+
 export type SpartaEvent =
   | AgentStartedEvent
   | AgentCompletedEvent
@@ -510,3 +522,6 @@ export type SpartaEvent =
   | SubagentStepEvent
   | SubagentCompletedEvent
   | SubagentAbortedEvent
+  | FolderConnectedEvent
+  | FolderDisconnectedEvent
+

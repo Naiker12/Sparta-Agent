@@ -1,5 +1,16 @@
 import type { ToolCall, MCPTool } from 'ia-sparta-core'
 import { useEventBus } from 'ia-sparta-core'
+import {
+  getNativeFileToolDefinitions,
+  isNativeFileTool,
+  executeNativeFileTool,
+  type NativeFileToolName,
+} from '../tools/native-file-tools'
+import {
+  getNativeShellToolDefinition,
+  isNativeShellTool,
+  executeNativeShellTool,
+} from '../tools/native-shell-tool'
 
 export interface ToolResult {
   toolCallId: string
@@ -75,9 +86,43 @@ export async function executeToolsParallel(
 }
 
 export function buildToolDefinitions(mcpTools: MCPTool[]): unknown[] {
-  return mcpTools.map((t) => ({
+  const mcpDefs = mcpTools.map((t) => ({
     name: t.name,
     description: t.description,
     input_schema: t.inputSchema,
   }))
+
+  // Concatenate native tool definitions (file + shell) with MCP tools.
+  // Native tools take priority — if MCP has a tool with the same name, the MCP
+  // version is filtered out so the native implementation is used instead.
+  const nativeFileDefs = getNativeFileToolDefinitions()
+  const nativeShellDef = getNativeShellToolDefinition()
+  const nativeDefs = [...nativeFileDefs, nativeShellDef]
+  const nativeNames = new Set(nativeDefs.map((d) => d.name))
+
+  const filteredMcp = mcpDefs.filter((d) => !nativeNames.has(d.name))
+
+  return [...nativeDefs, ...filteredMcp]
 }
+
+/**
+ * Ejecuta una herramienta nativa si el nombre coincide.
+ * Devuelve el resultado como string, o null si no es una herramienta nativa.
+ */
+export async function tryExecuteNativeTool(
+  name: string,
+  args: unknown,
+): Promise<string | null> {
+  const argsObj = (typeof args === 'object' && args !== null ? args : {}) as Record<string, unknown>
+
+  if (isNativeFileTool(name)) {
+    return await executeNativeFileTool(name as NativeFileToolName, argsObj)
+  }
+
+  if (isNativeShellTool(name)) {
+    return await executeNativeShellTool(argsObj)
+  }
+
+  return null
+}
+

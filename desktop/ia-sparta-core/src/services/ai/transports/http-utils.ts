@@ -30,8 +30,9 @@ export async function fetchWithRetry(
       continue
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Error de red desconocido'
-      if (signal.aborted || message === 'The operation was aborted.' || message === 'The operation was aborted due to timeout.') {
-        throw new Error('La solicitud al proveedor tardó demasiado y se canceló. Revisa tu conexión o intenta de nuevo.')
+      const isTimeoutErr = signal.aborted || /aborted/i.test(message) || /timeout/i.test(message)
+      if (isTimeoutErr) {
+        throw new Error('La conexión al proveedor tardó demasiado tiempo y se canceló por tiempo de espera (timeout). Por favor reintenta o verifica tu red.')
       }
       if (i >= retries) {
         throw new Error(`Error de red al conectar con el proveedor: ${message}`)

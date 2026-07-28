@@ -85,39 +85,62 @@ function getWin(event: IpcMainInvokeEvent | IpcMainEvent): BrowserWindow {
   return BrowserWindow.fromWebContents(event.sender)!
 }
 
-function shellCommand(profile?: string) {
+import { getWorkspaceRoot } from './filesystem.channel'
+
+function shellCommand(profile?: string, customFlags?: string[]) {
+  if (profile && (profile.includes('\\') || profile.includes('/') || profile.endsWith('.exe'))) {
+    return { shell: profile, args: customFlags && customFlags.length > 0 ? customFlags : [] }
+  }
   if (os.platform() === 'win32') {
-    if (profile === 'pwsh') {
+    if (profile === 'pwsh' || profile?.includes('pwsh')) {
       const pwsh = (() => {
         try { return execSync('where pwsh.exe 2>nul').toString().trim().split('\n')[0]?.trim() || '' } catch { return '' }
       })()
-      if (pwsh) return { shell: pwsh, args: ['-NoLogo'] }
+      if (pwsh) return { shell: pwsh, args: customFlags && customFlags.length > 0 ? customFlags : ['-NoLogo'] }
     }
-    if (profile === 'cmd') {
-      return { shell: process.env.COMSPEC || 'cmd.exe', args: [] }
+    if (profile === 'cmd' || profile?.includes('cmd')) {
+      return { shell: process.env.COMSPEC || 'cmd.exe', args: customFlags && customFlags.length > 0 ? customFlags : [] }
     }
     // Default: try pwsh first, then powershell, then cmd
     const pwsh = (() => {
       try { return execSync('where pwsh.exe 2>nul').toString().trim().split('\n')[0]?.trim() || '' } catch { return '' }
     })()
-    if (pwsh) return { shell: pwsh, args: ['-NoLogo'] }
+    if (pwsh) return { shell: pwsh, args: customFlags && customFlags.length > 0 ? customFlags : ['-NoLogo'] }
     const systemRoot = process.env.SystemRoot || 'C:\\Windows'
     const winPs = `${systemRoot}\\System32\\WindowsPowerShell\\v1.0\\powershell.exe`
-    try { accessSync(winPs); return { shell: winPs, args: ['-NoLogo'] } } catch { /* ignore */ }
-    return { shell: process.env.COMSPEC || 'cmd.exe', args: [] }
+    try { accessSync(winPs); return { shell: winPs, args: customFlags && customFlags.length > 0 ? customFlags : ['-NoLogo'] } } catch { /* ignore */ }
+    return { shell: process.env.COMSPEC || 'cmd.exe', args: customFlags && customFlags.length > 0 ? customFlags : [] }
   }
-  if (profile === 'zsh') return { shell: '/bin/zsh', args: ['-l'] }
-  if (profile === 'bash') return { shell: '/bin/bash', args: ['-l'] }
+  if (profile === 'zsh' || profile?.includes('zsh')) return { shell: '/bin/zsh', args: customFlags && customFlags.length > 0 ? customFlags : ['-l'] }
+  if (profile === 'bash' || profile?.includes('bash')) return { shell: '/bin/bash', args: customFlags && customFlags.length > 0 ? customFlags : ['-l'] }
   const shell = process.env.SHELL || '/bin/bash'
-  return { shell, args: ['-l'] }
+  return { shell, args: customFlags && customFlags.length > 0 ? customFlags : ['-l'] }
 }
 
 export function registerTerminalIPC() {
   ipcMain.handle('terminal:create', (
     event: IpcMainInvokeEvent,
-    { terminalId, cols, rows, shell: shellProfile }: { terminalId: string; cols: number; rows: number; shell?: string }
+    {
+      terminalId,
+      cols,
+      rows,
+      shell: shellProfile,
+      cwd,
+      shellFlags,
+      envOverrides,
+    }: {
+      terminalId: string
+      cols: number
+      rows: number
+      shell?: string
+      cwd?: string
+      shellFlags?: string[]
+      envOverrides?: Record<string, string>
+    }
   ) => {
-    const { shell, args: shellArgs } = shellCommand(shellProfile)
+    const { shell, args: shellArgs } = shellCommand(shellProfile, shellFlags)
+
+    const workingDir = cwd || getWorkspaceRoot() || process.env.HOME || process.cwd()
 
     let ptyProcess: pty.IPty
     try {
@@ -125,9 +148,10 @@ export function registerTerminalIPC() {
         name: 'xterm-256color',
         cols: cols ?? 80,
         rows: rows ?? 24,
-        cwd: process.env.HOME ?? process.cwd(),
+        cwd: workingDir,
         env: {
           ...process.env,
+          ...(envOverrides || {}),
           SPARTA_TERMINAL: '1',
           TERM_PROGRAM: 'SpartaAgent',
         },
@@ -287,13 +311,15 @@ export function registerTerminalIPC() {
     const { shell, args: shellArgs } = shellCommand()
     const win = getWin(event)
 
+    const workingDir = cwd || getWorkspaceRoot() || process.env.HOME || process.cwd()
+
     let ptyProcess: pty.IPty
     try {
       ptyProcess = pty.spawn(shell, shellArgs, {
         name: 'xterm-256color',
         cols: 120,
         rows: 30,
-        cwd: cwd || process.env.HOME || process.cwd(),
+        cwd: workingDir,
         env: { ...process.env, SPARTA_TERMINAL: '1', SPARTA_AGENT_BG: '1' },
       })
     } catch (err) {

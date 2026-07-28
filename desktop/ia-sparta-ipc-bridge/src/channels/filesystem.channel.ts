@@ -14,6 +14,10 @@ export interface FileTreeNode {
 
 let _workspaceRoot: string | null = null
 
+export function getWorkspaceRoot(): string | null {
+  return _workspaceRoot
+}
+
 function isWithinRoot(filePath: string, root: string): boolean {
   const resolved = fs.realpathSync(path.resolve(filePath))
   const resolvedRoot = fs.realpathSync(path.resolve(root))

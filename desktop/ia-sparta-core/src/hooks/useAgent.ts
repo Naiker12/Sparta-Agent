@@ -4,7 +4,7 @@ import { useProviderStore } from '../stores/provider.store'
 import { useMCPStore } from '../stores/mcp.store'
 import { useSettingsStore } from '../stores/settings.store'
 import { useEventBus } from '../stores/event-bus.store'
-import { runAgentTask, buildToolDefinitions } from 'ia-sparta-core'
+import { runAgentTask, buildToolDefinitions, tryExecuteNativeTool } from 'ia-sparta-core'
 import { buildWebSearchTool, executeWebSearch } from 'ia-sparta-core'
 import { getProviderKey, IS_ELECTRON } from 'ia-sparta-platform'
 import { aiGateway } from 'ia-sparta-core'
@@ -152,11 +152,28 @@ export function useAgent() {
         const count = typeof rawCount === 'number' ? rawCount : 5
         return await executeWebSearch(query, count)
       }
+
+      // Try native tools first (file operations, shell commands)
+      const nativeResult = await tryExecuteNativeTool(name, args)
+      if (nativeResult !== null) return nativeResult
+
+      // Fallback to MCP server tool invocation
       const server = mcpServers.find((s) =>
         s.tools.some((t) => t.name === name),
       )
-      if (!server) throw new Error(`Tool ${name} no encontrada en ningún servidor MCP`)
-      return null
+      if (!server) throw new Error(`Tool ${name} no encontrada en ningún servidor MCP ni como herramienta nativa`)
+
+      // Invoke the MCP tool via the server's IPC/transport
+      if (typeof window !== 'undefined' && window.electron?.invoke) {
+        const result = await window.electron.invoke('mcp:call-tool', {
+          serverId: server.id,
+          toolName: name,
+          args,
+        })
+        return result
+      }
+
+      throw new Error(`No se pudo invocar la herramienta "${name}" del servidor MCP "${server.name}"`)
     }
 
     const llmCall = async (prompt: string): Promise<string> => {

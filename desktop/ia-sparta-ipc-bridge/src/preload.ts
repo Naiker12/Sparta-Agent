@@ -110,8 +110,15 @@ contextBridge.exposeInMainWorld('vault', {
 })
 
 contextBridge.exposeInMainWorld('terminal', {
-  create: (opts: { terminalId: string; cols: number; rows: number }) =>
-    ipcRenderer.invoke('terminal:create', opts),
+  create: (opts: {
+    terminalId: string
+    cols: number
+    rows: number
+    shell?: string
+    cwd?: string
+    shellFlags?: string[]
+    envOverrides?: Record<string, string>
+  }) => ipcRenderer.invoke('terminal:create', opts),
 
   write: (terminalId: string, data: string) =>
     ipcRenderer.send('terminal:write', { terminalId, data }),

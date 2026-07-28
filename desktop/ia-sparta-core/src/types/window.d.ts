@@ -80,7 +80,15 @@ interface FilesystemAPI {
 }
 
 interface TerminalAPI {
-  create: (opts: { terminalId: string; cols: number; rows: number; shell?: string }) => Promise<{ success: boolean; shell?: string; error?: string }>
+  create: (opts: {
+    terminalId: string
+    cols: number
+    rows: number
+    shell?: string
+    cwd?: string
+    shellFlags?: string[]
+    envOverrides?: Record<string, string>
+  }) => Promise<{ success: boolean; shell?: string; error?: string }>
   write: (terminalId: string, data: string) => void
   resize: (terminalId: string, cols: number, rows: number) => void
   destroy: (terminalId: string) => Promise<{ success: boolean }>

@@ -26,6 +26,7 @@ export function buildWebSearchTool(): ToolDefinition {
 }
 
 async function duckduckgoSearch(query: string): Promise<string> {
+  const signal = AbortSignal.timeout(15_000)
   const resp = await fetch('https://html.duckduckgo.com/html/', {
     method: 'POST',
     headers: {
@@ -33,6 +34,7 @@ async function duckduckgoSearch(query: string): Promise<string> {
       'User-Agent': 'Mozilla/5.0 (compatible; SpartaAgent/1.0)',
     },
     body: `q=${encodeURIComponent(query)}`,
+    signal,
   })
   if (!resp.ok) throw new Error(`DuckDuckGo error HTTP ${resp.status}`)
   const html = await resp.text()
@@ -87,6 +89,9 @@ export async function executeWebSearch(query: string, count = 5): Promise<string
     return ['Información obtenida de búsqueda web:', limited].join('\n')
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
+    if (/aborted/i.test(message) || /timeout/i.test(message)) {
+      return 'Error de búsqueda web: La consulta tardó demasiado en responder (timeout de 15s). Por favor reintenta o simplifica los términos de búsqueda.'
+    }
     return `Error de búsqueda web: ${message}`
   }
 }

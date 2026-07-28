@@ -78,3 +78,7 @@ export * from './hooks/useSkills'
 export * from './hooks/useTheme'
 export * from './hooks/useThrottledStream'
 export * from './hooks/useWebSocketStatus'
+export * from './hooks/useWorkspaceSync'
+export * from './services/workspace/workspace-bridge'
+
+
