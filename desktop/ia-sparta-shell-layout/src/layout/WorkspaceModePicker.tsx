@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Pin, Folder, Copy, Laptop, FolderGit2, Settings, Trash2, FolderPlus, Check, ChevronDown } from 'lucide-react'
 import { useFolderStore, useProjectStore, useSettingsStore } from 'ia-sparta-core'
 import { toast } from 'ia-sparta-design-system'
@@ -28,12 +28,26 @@ async function triggerNativeFolderPicker(): Promise<string | null> {
 export function WorkspaceModePicker() {
   const [open, setOpen] = useState(false)
   const [copiedPath, setCopiedPath] = useState<string | null>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   const { connectedPath, folderName, recentPaths, connectFolder, disconnectFolder, removeRecentPath } = useFolderStore()
   const { getActiveProject, closeProject, activeProjectId } = useProjectStore()
   const { sessionMode, setSessionMode } = useSettingsStore()
 
   const [executionHost, setExecutionHost] = useState<'Local' | 'Sidecar' | 'Remote'>('Local')
+
+  useEffect(() => {
+    if (!open) return
+    function handleClickOutside(event: MouseEvent | TouchEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('pointerdown', handleClickOutside)
+    return () => {
+      document.removeEventListener('pointerdown', handleClickOutside)
+    }
+  }, [open])
 
   const activeProject = getActiveProject()
   const displayFolderName = folderName || (connectedPath ? connectedPath.split(/[/\\]/).filter(Boolean).pop() : null) || activeProject?.name || 'Sin carpeta'
@@ -70,7 +84,7 @@ export function WorkspaceModePicker() {
   }
 
   return (
-    <div style={{ position: 'relative' }} className="no-drag">
+    <div ref={containerRef} style={{ position: 'relative' }} className="no-drag">
       <button
         onClick={() => setOpen(!open)}
         style={{

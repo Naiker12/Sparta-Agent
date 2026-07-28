@@ -38,6 +38,16 @@ describe('AnthropicTransport', () => {
     const body = transport.buildBody({ ...sampleReq, system: undefined })
     expect(body.system).toBeUndefined()
   })
+
+  it('buildBody formats tools for Anthropic correctly', () => {
+    const body = transport.buildBody({
+      ...sampleReq,
+      tools: [{ name: 'web_search', description: 'Busca en la web', inputSchema: { type: 'object' } }],
+    })
+    expect(body.tools).toEqual([
+      { name: 'web_search', description: 'Busca en la web', input_schema: { type: 'object' } },
+    ])
+  })
 })
 
 describe('ChatCompletionsTransport', () => {
@@ -59,6 +69,24 @@ describe('ChatCompletionsTransport', () => {
     expect(body.stream).toBe(true)
     expect(body.max_tokens).toBe(4096)
     expect(body.temperature).toBe(0.7)
+  })
+
+  it('buildBody formats tools for OpenAI function calling schema', () => {
+    const body = transport.buildBody({
+      ...sampleReq,
+      tools: [{ name: 'web_search', description: 'Busca en la web', inputSchema: { type: 'object' } }],
+    })
+    expect(body.tools).toEqual([
+      {
+        type: 'function',
+        function: {
+          name: 'web_search',
+          description: 'Busca en la web',
+          parameters: { type: 'object' },
+        },
+      },
+    ])
+    expect(body.tool_choice).toBe('auto')
   })
 
   it('buildBody omits system message when not set', () => {

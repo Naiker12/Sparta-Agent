@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { ChevronDown, Monitor, Check } from 'lucide-react'
 
 export function HostPickerButton() {
   const [open, setOpen] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
   const hostname = typeof process !== 'undefined' && process.env?.COMPUTERNAME 
     ? process.env.COMPUTERNAME 
     : 'DESKTOP-SPARTA'
@@ -13,8 +14,21 @@ export function HostPickerButton() {
     { id: 'sparta-sidecar-1', name: 'Sparta Python Sidecar', type: 'LangGraph Daemon', active: false },
   ]
 
+  useEffect(() => {
+    if (!open) return
+    function handleClickOutside(event: MouseEvent | TouchEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('pointerdown', handleClickOutside)
+    return () => {
+      document.removeEventListener('pointerdown', handleClickOutside)
+    }
+  }, [open])
+
   return (
-    <div style={{ position: 'relative' }} className="no-drag">
+    <div ref={containerRef} style={{ position: 'relative' }} className="no-drag">
       <button
         onClick={() => setOpen(!open)}
         style={{

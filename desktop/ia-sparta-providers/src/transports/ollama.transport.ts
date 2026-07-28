@@ -15,11 +15,22 @@ export class OllamaTransport extends BaseTransport {
   }
 
   buildBody(req: ChatRequest): Record<string, unknown> {
-    return {
+    const body: Record<string, unknown> = {
       model: req.model,
       messages: req.messages,
       stream: true,
     }
+    if (Array.isArray(req.tools) && req.tools.length > 0) {
+      body.tools = req.tools.map((t: any) => ({
+        type: 'function',
+        function: {
+          name: t.name || t.function?.name || 'tool',
+          description: t.description || t.function?.description || '',
+          parameters: t.parameters || t.input_schema || t.inputSchema || t.function?.parameters || { type: 'object', properties: {} },
+        },
+      }))
+    }
+    return body
   }
 
   async listModels(): Promise<ModelInfo[]> {
@@ -83,6 +94,19 @@ export class OllamaTransport extends BaseTransport {
           if (parsed.message?.content) {
             yield { type: 'content_token', delta: parsed.message.content }
           }
+          // Ollama returns tool_calls in the message object when the model decides to call a tool
+          if (Array.isArray(parsed.message?.tool_calls)) {
+            for (const tc of parsed.message.tool_calls) {
+              yield {
+                type: 'tool_call',
+                toolCall: {
+                  id: `ollama_call_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+                  toolName: tc.function?.name || 'web_search',
+                  input: tc.function?.arguments || {},
+                },
+              }
+            }
+          }
           if (parsed.done) {
             yield { type: 'done' }
           }
@@ -92,3 +116,4 @@ export class OllamaTransport extends BaseTransport {
     yield { type: 'done' }
   }
 }
+

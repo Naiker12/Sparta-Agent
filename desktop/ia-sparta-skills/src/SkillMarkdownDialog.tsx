@@ -60,109 +60,110 @@ export function SkillMarkdownDialog({ open, onClose, skill, trustLevel }: SkillM
   }
 
   return (
-    <Dialog open={open} onOpenChange={(open) => { if (!open) onClose() }}>
-      <DialogContent className="sm:max-w-2xl max-h-[80vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 min-w-0">
-            <FileText size={14} style={{ color: 'var(--accent)', flexShrink: 0 }} strokeWidth={1.5} />
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}>
-                {skill.name}
-              </div>
-              <div style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
-                {subtitle}
-              </div>
-            </div>
-          </DialogTitle>
-        </DialogHeader>
+    <Dialog open={open} onOpenChange={(next) => { if (!next) onClose() }}>
+      <DialogContent className="sm:max-w-2xl max-h-[85vh] flex flex-col p-0 overflow-hidden rounded-2xl border border-[var(--border-normal)] bg-[var(--bg-modal)] shadow-2xl">
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '16px 20px', borderBottom: '1px solid var(--border-normal)', background: 'var(--bg-surface)' }}>
+          <div style={{
+            height: 32, width: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'color-mix(in srgb, var(--accent) 12%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--accent) 25%, transparent)',
+            color: 'var(--accent)', flexShrink: 0,
+          }}>
+            <FileText size={16} strokeWidth={1.8} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', margin: 0, fontFamily: 'var(--font-ui)' }}>
+              {skill.name}
+            </h3>
+            <p style={{ fontSize: 10, color: 'var(--text-muted)', margin: '2px 0 0', fontFamily: 'var(--font-mono)' }}>
+              {subtitle}
+            </p>
+          </div>
+        </div>
 
         {isQuarantined && (
           <div style={{
-            display: 'flex', alignItems: 'center', gap: 8,
-            margin: '0 24px', padding: '8px 12px', borderRadius: 'var(--radius-sm)',
-            background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)',
+            display: 'flex', alignItems: 'center', gap: 8, margin: '12px 20px 0', padding: '8px 12px', borderRadius: 6,
+            background: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.3)',
             color: '#f59e0b', fontSize: 11, fontFamily: 'var(--font-ui)', fontWeight: 500,
           }}>
-            <ShieldAlert size={14} />
+            <ShieldAlert size={14} style={{ flexShrink: 0 }} />
             <span>Esta skill está en cuarentena — el análisis de seguridad detectó patrones de riesgo. Revisa el contenido antes de activarla.</span>
           </div>
         )}
 
-        <div style={{
-          display: 'flex', gap: 6, padding: '0 24px 8px',
-          borderBottom: '1px solid var(--border-subtle)', flexShrink: 0,
-        }}>
-          <ViewToggleButton active={!raw} onClick={() => setRaw(false)} icon={<FileText size={11} strokeWidth={1.5} />} label="Renderizado" />
-          <ViewToggleButton active={raw} onClick={() => setRaw(true)} icon={<Code size={11} strokeWidth={1.5} />} label="Markdown crudo" />
+        {/* Toolbar */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 20px', borderBottom: '1px solid var(--border-subtle)', background: 'var(--bg-surface)' }}>
+          <button
+            type="button"
+            onClick={() => setRaw(false)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', fontSize: 11,
+              fontFamily: 'var(--font-ui)', fontWeight: !raw ? 600 : 400, borderRadius: 6,
+              border: '1px solid ' + (!raw ? 'var(--accent)' : 'var(--border-subtle)'),
+              background: !raw ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : 'transparent',
+              color: !raw ? 'var(--accent)' : 'var(--text-secondary)',
+              cursor: 'pointer', outline: 'none', transition: 'all 0.12s',
+            }}
+          >
+            <FileText size={12} strokeWidth={1.8} />
+            Renderizado
+          </button>
+          <button
+            type="button"
+            onClick={() => setRaw(true)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', fontSize: 11,
+              fontFamily: 'var(--font-ui)', fontWeight: raw ? 600 : 400, borderRadius: 6,
+              border: '1px solid ' + (raw ? 'var(--accent)' : 'var(--border-subtle)'),
+              background: raw ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : 'transparent',
+              color: raw ? 'var(--accent)' : 'var(--text-secondary)',
+              cursor: 'pointer', outline: 'none', transition: 'all 0.12s',
+            }}
+          >
+            <Code size={12} strokeWidth={1.8} />
+            Markdown crudo
+          </button>
           <div style={{ flex: 1 }} />
-          <ToolbarButton onClick={handleCopy} icon={copied ? <Check size={11} strokeWidth={1.5} /> : <Copy size={11} strokeWidth={1.5} />} label={copied ? 'Copiado' : 'Copiar'} />
+          <button
+            type="button"
+            onClick={handleCopy}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', fontSize: 11,
+              fontFamily: 'var(--font-ui)', fontWeight: 500, borderRadius: 6,
+              border: '1px solid var(--border-normal)', background: 'var(--bg-elevated)',
+              color: 'var(--text-secondary)', cursor: 'pointer', outline: 'none', transition: 'all 0.12s',
+            }}
+          >
+            {copied ? <Check size={12} strokeWidth={2} style={{ color: 'var(--status-ok)' }} /> : <Copy size={12} strokeWidth={1.8} />}
+            {copied ? 'Copiado' : 'Copiar'}
+          </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6 pb-4" style={raw ? { padding: 0 } : {}}>
+        {/* Content body */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
           {loading ? (
-            <div className="h-40 flex items-center justify-center gap-2 text-xs text-muted-foreground">
-              <Loader2 size={14} className="animate-spin" />
+            <div style={{ height: 160, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 12, color: 'var(--text-muted)' }}>
+              <Loader2 size={15} className="animate-spin" />
               Cargando SKILL.md...
             </div>
           ) : raw ? (
             <pre style={{
               margin: 0, padding: 16, fontSize: 11.5, lineHeight: 1.6,
-              fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)',
-              whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+              fontFamily: 'var(--font-mono)', color: 'var(--text-primary)',
+              background: 'var(--bg-input)', border: '1px solid var(--border-subtle)',
+              borderRadius: 8, whiteSpace: 'pre-wrap', wordBreak: 'break-word',
             }}>
               {content}
             </pre>
           ) : (
-            <div style={{ padding: '16px 0' }}>
+            <div style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-ui)', fontSize: 12, lineHeight: 1.6 }}>
               <MarkdownRenderer content={content} />
             </div>
           )}
         </div>
       </DialogContent>
     </Dialog>
-  )
-}
-
-function ViewToggleButton({ active, onClick, icon, label }: { active: boolean; onClick: () => void; icon: React.ReactNode; label: string }) {
-  const [hover, setHover] = useState(false)
-  return (
-    <button
-      onClick={onClick}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      style={{
-        display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px',
-        fontSize: 10.5, fontFamily: 'var(--font-ui)', borderRadius: 'var(--radius-sm)',
-        border: 'none', cursor: 'pointer',
-        background: active ? 'var(--bg-active)' : hover ? 'var(--bg-hover)' : 'transparent',
-        color: active || hover ? 'var(--text-primary)' : 'var(--text-muted)',
-        transition: 'background 0.1s ease',
-      }}
-    >
-      {icon}
-      {label}
-    </button>
-  )
-}
-
-function ToolbarButton({ onClick, icon, label }: { onClick: () => void; icon: React.ReactNode; label: string }) {
-  const [hover, setHover] = useState(false)
-  return (
-    <button
-      onClick={onClick}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      style={{
-        display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px',
-        fontSize: 10.5, fontFamily: 'var(--font-ui)', borderRadius: 'var(--radius-sm)',
-        border: '1px solid var(--border-normal)', cursor: 'pointer',
-        background: hover ? 'var(--bg-hover)' : 'transparent',
-        color: 'var(--text-secondary)',
-        transition: 'background 0.1s ease',
-      }}
-    >
-      {icon}
-      {label}
-    </button>
   )
 }

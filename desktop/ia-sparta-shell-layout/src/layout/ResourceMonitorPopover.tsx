@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Cpu, X, SlidersHorizontal, Laptop } from 'lucide-react'
 
 interface ProcessGroup {
@@ -12,6 +12,20 @@ export function ResourceMonitorPopover() {
   const [cpuPercent, setCpuPercent] = useState<number>(4.7)
   const [memoryMb, setMemoryMb] = useState<number>(616)
   const [ramSharePercent, setRamSharePercent] = useState<number>(2.4)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    function handleClickOutside(event: MouseEvent | TouchEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('pointerdown', handleClickOutside)
+    return () => {
+      document.removeEventListener('pointerdown', handleClickOutside)
+    }
+  }, [open])
 
   const [processes, setProcesses] = useState<ProcessGroup[]>([
     { name: 'Main', cpu: 1.5, memoryMb: 170 },
@@ -49,7 +63,7 @@ export function ResourceMonitorPopover() {
   }, [open])
 
   return (
-    <div style={{ position: 'relative' }} className="no-drag">
+    <div ref={containerRef} style={{ position: 'relative' }} className="no-drag">
       <button
         onClick={() => setOpen(!open)}
         style={{

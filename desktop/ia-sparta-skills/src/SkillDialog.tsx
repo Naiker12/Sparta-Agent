@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react'
-import { Zap, Trash2, X } from 'lucide-react'
-import { Button } from 'ia-sparta-design-system'
-import { ConfirmDeleteDialog } from 'ia-sparta-design-system'
+import { Zap, Trash2 } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  Button,
+  ConfirmDeleteDialog,
+} from 'ia-sparta-design-system'
 import type { Skill, SkillCategory } from 'ia-sparta-core'
 import { SKILL_CATEGORIES, normalizeCategory } from 'ia-sparta-core'
 
@@ -11,6 +15,21 @@ interface SkillDialogProps {
   onSubmit: (name: string, description: string, prompt: string, tags: string[], category: SkillCategory) => void
   onDelete?: () => void
   initial?: Skill | null
+}
+
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  height: 34,
+  padding: '0 10px',
+  borderRadius: 7,
+  border: '1px solid var(--border-normal)',
+  background: 'var(--bg-input)',
+  color: 'var(--text-primary)',
+  fontSize: 11,
+  fontFamily: 'var(--font-ui)',
+  outline: 'none',
+  boxSizing: 'border-box',
+  transition: 'border-color 0.12s',
 }
 
 export function SkillDialog({ open, onClose, onSubmit, onDelete, initial }: SkillDialogProps) {
@@ -34,81 +53,39 @@ export function SkillDialog({ open, onClose, onSubmit, onDelete, initial }: Skil
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!name.trim() || !prompt.trim()) return
-    const tags = tagsInput.split(',').map(t => t.trim()).filter(Boolean)
+    const tags = tagsInput.split(',').map((t) => t.trim()).filter(Boolean)
     onSubmit(name.trim(), description.trim(), prompt.trim(), tags, category)
   }
 
   const isEditing = !!initial
 
-  if (!open) return null
-
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 100,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'rgba(0,0,0,0.3)',
-      }}
-      onClick={onClose}
-    >
-      <div
-        style={{
-          width: 520,
-          maxWidth: '92vw',
-          maxHeight: '85vh',
-          background: 'var(--bg-modal)',
-          border: '1px solid var(--border-strong)',
-          borderRadius: 'var(--radius-xl)',
-          boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
+    <Dialog open={open} onOpenChange={(next) => { if (!next) onClose() }}>
+      <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col p-0 overflow-hidden rounded-2xl border border-[var(--border-normal)] bg-[var(--bg-modal)] shadow-2xl">
         {/* Header */}
-        <div style={{
-          display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12,
-          padding: '20px 24px 0', flexShrink: 0,
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              width: 28, height: 28, borderRadius: 'var(--radius-md)',
-              background: 'var(--accent-muted)', color: 'var(--accent)', flexShrink: 0,
-            }}>
-              <Zap size={14} strokeWidth={2.25} />
-            </span>
-            <div>
-              <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-ui)', margin: 0 }}>
-                {isEditing ? 'Editar skill' : 'Nueva skill'}
-              </h3>
-              <p style={{ fontSize: 11.5, color: 'var(--text-secondary)', fontFamily: 'var(--font-ui)', margin: '2px 0 0' }}>
-                {isEditing
-                  ? 'Modifica los campos de la skill existente.'
-                  : 'Define una nueva skill para personalizar el comportamiento del agente.'}
-              </p>
-            </div>
-          </div>
-          <button onClick={onClose} style={{
-            width: 24, height: 24, background: 'none', border: 'none',
-            borderRadius: 'var(--radius-sm)', color: 'var(--text-muted)',
-            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            flexShrink: 0, marginTop: -2,
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '16px 20px', borderBottom: '1px solid var(--border-normal)', background: 'var(--bg-surface)' }}>
+          <div style={{
+            height: 32, width: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'color-mix(in srgb, var(--accent) 12%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--accent) 25%, transparent)',
+            color: 'var(--accent)', flexShrink: 0,
           }}>
-            <X size={14} />
-          </button>
+            <Zap size={16} strokeWidth={2} />
+          </div>
+          <div>
+            <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', margin: 0, fontFamily: 'var(--font-ui)' }}>
+              {isEditing ? 'Editar skill' : 'Nueva skill'}
+            </h3>
+            <p style={{ fontSize: 10, color: 'var(--text-muted)', margin: '2px 0 0', fontFamily: 'var(--font-mono)' }}>
+              {isEditing
+                ? 'Modifica los campos de la skill existente.'
+                : 'Define una nueva skill para personalizar el comportamiento del agente.'}
+            </p>
+          </div>
         </div>
 
-        {/* Form */}
-        <form id="skill-form" onSubmit={handleSubmit} style={{
-          flex: 1, overflowY: 'auto', overflowX: 'hidden',
-          padding: '16px 24px', display: 'flex', flexDirection: 'column', gap: 16,
-        }}>
+        {/* Form Body */}
+        <form id="skill-form" onSubmit={handleSubmit} style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
           <Field label="Nombre">
             <input
               autoFocus
@@ -136,10 +113,12 @@ export function SkillDialog({ open, onClose, onSubmit, onDelete, initial }: Skil
               rows={5}
               style={{
                 ...inputStyle,
-                minHeight: 80,
-                resize: 'vertical',
+                height: 'auto',
+                minHeight: 90,
+                padding: '8px 10px',
                 fontFamily: 'var(--font-mono)',
-                lineHeight: 1.6,
+                lineHeight: 1.5,
+                resize: 'vertical',
               }}
             />
           </Field>
@@ -156,48 +135,40 @@ export function SkillDialog({ open, onClose, onSubmit, onDelete, initial }: Skil
             </select>
           </Field>
 
-          <Field label="Tags">
+          <Field label="Tags" hint="Separados por coma">
             <input
               value={tagsInput}
               onChange={(e) => setTagsInput(e.target.value)}
               placeholder="code, review, análisis"
               style={inputStyle}
             />
-            <span style={{ fontSize: 10.5, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)', marginTop: 4 }}>
-              Separados por coma
-            </span>
           </Field>
         </form>
 
         {/* Footer */}
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8,
-          padding: '12px 24px', borderTop: '1px solid var(--border-subtle)',
-          background: 'var(--bg-surface)', flexShrink: 0,
-        }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, padding: '12px 20px', borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-surface)' }}>
           {onDelete && (
-            <Button
-              variant="ghost"
+            <button
+              type="button"
               onClick={() => setConfirmDeleteOpen(true)}
-              style={{ marginRight: 'auto', color: 'var(--destructive)', gap: 6 }}
+              style={{
+                marginRight: 'auto', display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px',
+                borderRadius: 6, border: 'none', background: 'transparent', color: 'var(--destructive)',
+                fontSize: 11, fontWeight: 500, fontFamily: 'var(--font-ui)', cursor: 'pointer',
+              }}
             >
               <Trash2 size={13} />
               Eliminar
-            </Button>
+            </button>
           )}
-          <Button variant="ghost" onClick={onClose} style={{ minWidth: 90 }}>
+          <Button type="button" variant="ghost" onClick={onClose} style={{ fontSize: 11, height: 30 }}>
             Cancelar
           </Button>
-          <Button
-            form="skill-form"
-            type="submit"
-            disabled={!name.trim() || !prompt.trim()}
-            style={{ minWidth: 120 }}
-          >
+          <Button form="skill-form" type="submit" disabled={!name.trim() || !prompt.trim()} style={{ fontSize: 11, height: 30, fontWeight: 600 }}>
             {isEditing ? 'Guardar cambios' : 'Crear skill'}
           </Button>
         </div>
-      </div>
+      </DialogContent>
 
       {onDelete && (
         <ConfirmDeleteDialog
@@ -208,32 +179,18 @@ export function SkillDialog({ open, onClose, onSubmit, onDelete, initial }: Skil
           onConfirm={() => { onDelete(); setConfirmDeleteOpen(false) }}
         />
       )}
-    </div>
+    </Dialog>
   )
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-      <label style={{
-        fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
-        letterSpacing: '0.07em', color: 'var(--text-secondary)', fontFamily: 'var(--font-ui)',
-      }}>
+      <label style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
         {label}
       </label>
       {children}
+      {hint && <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)' }}>{hint}</span>}
     </div>
   )
-}
-
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '7px 10px',
-  fontSize: 12,
-  background: 'var(--bg-input)',
-  border: '1px solid var(--border-normal)',
-  borderRadius: 'var(--radius-md)',
-  color: 'var(--text-primary)',
-  fontFamily: 'var(--font-ui)',
-  outline: 'none',
 }

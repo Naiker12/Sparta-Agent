@@ -1,25 +1,16 @@
-import { Check, Download, MoreVertical, Pencil, Trash2, Copy, Star } from 'lucide-react'
 import { useState } from 'react'
+import { Check, Download, MoreHorizontal, Pencil, Trash2, Copy, Star, Zap } from 'lucide-react'
 import type { Skill, DownloadableSkill } from 'ia-sparta-core'
 import { useSkillStore } from 'ia-sparta-core'
 import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardAction,
-  CardContent,
-  CardFooter,
-  Badge,
-  Button,
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   ConfirmDeleteDialog,
   SkillCategoryIcon,
 } from 'ia-sparta-design-system'
-import { SkillToggle } from './SkillToggle'
 
 interface SkillCardProps {
   skill: Skill | DownloadableSkill
@@ -47,6 +38,7 @@ export function SkillCard({
   const { activeSkillIds } = useSkillStore()
   const [expanded, setExpanded] = useState(false)
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
+  const [hovered, setHovered] = useState(false)
 
   const isInstalled = installed ?? false
   const isDownloadableSkill = isDownloadable ?? false
@@ -56,163 +48,243 @@ export function SkillCard({
   const isDownloadableType = 'version' in skill && 'category' in skill
   const downloadable = isDownloadableType ? (skill as DownloadableSkill) : null
 
-  function handleActivate() {
-    onActivate?.()
-  }
-
   return (
-    <Card
-      size="sm"
-      role={onOpen ? 'button' : undefined}
-      tabIndex={onOpen ? 0 : undefined}
-      onClick={onOpen}
-      onKeyDown={(event) => {
-        if (onOpen && (event.key === 'Enter' || event.key === ' ')) {
-          event.preventDefault()
-          onOpen()
-        }
-      }}
-      className={`relative h-full flex flex-col justify-between transition-all duration-150 hover:shadow-md hover:border-primary/40 ${
-        isActive ? 'border-l-4 border-l-primary ring-1 ring-primary/20' : ''
-      } ${onOpen ? 'cursor-pointer' : 'cursor-default'}`}
-    >
-      <CardHeader>
-        <div className="flex items-center gap-2 min-w-0">
-          {skill.category ? (
-            <div className="p-1 rounded bg-muted text-foreground shrink-0">
-              <SkillCategoryIcon category={skill.category} size={16} />
+    <>
+      <div
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        onClick={onOpen}
+        style={{
+          borderRadius: 18,
+          border: '1px solid var(--border-normal)',
+          borderLeftWidth: isActive ? 4 : 1,
+          borderLeftColor: isActive ? 'var(--accent)' : 'var(--border-normal)',
+          borderLeftStyle: 'solid',
+          background: 'var(--bg-surface)',
+          opacity: !isActive && !isDownloadableSkill ? 0.85 : 1,
+          transition: 'transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease',
+          boxShadow: hovered ? '0 18px 40px rgba(0,0,0,0.08)' : '0 10px 25px rgba(0,0,0,0.05)',
+          transform: hovered ? 'translateY(-1px)' : 'none',
+          cursor: onOpen ? 'pointer' : 'default',
+          display: 'flex',
+          flexDirection: 'column',
+          justify: 'space-between',
+          padding: 14,
+          gap: 10,
+        }}
+      >
+        {/* Main row */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+          {/* Category Icon */}
+          <div
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 9,
+              flexShrink: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: isActive
+                ? 'color-mix(in srgb, var(--accent) 12%, transparent)'
+                : 'var(--bg-elevated)',
+              border: isActive
+                ? '1px solid color-mix(in srgb, var(--accent) 25%, transparent)'
+                : '1px solid var(--border-normal)',
+              color: isActive ? 'var(--accent)' : 'var(--text-muted)',
+            }}
+          >
+            {skill.category ? (
+              <SkillCategoryIcon category={skill.category} size={17} strokeWidth={2} />
+            ) : (
+              <span style={{ fontSize: 14, lineHeight: 1 }}>{icon}</span>
+            )}
+          </div>
+
+          {/* Title & Metadata */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-ui)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {skill.name}
+              </span>
+              {skill.category && (
+                <span
+                  style={{
+                    fontSize: 9,
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    padding: '1px 5px',
+                    borderRadius: 4,
+                    fontFamily: 'var(--font-mono)',
+                    background: 'color-mix(in srgb, var(--accent) 12%, transparent)',
+                    color: 'var(--accent)',
+                    flexShrink: 0,
+                  }}
+                >
+                  {skill.category}
+                </span>
+              )}
             </div>
-          ) : (
-            <span className="text-base shrink-0 leading-none">{icon}</span>
-          )}
-          <div className="min-w-0 flex-1">
-            <CardTitle className="text-xs font-semibold text-foreground truncate font-sans">
-              {skill.name}
-            </CardTitle>
+
             {downloadable && (
-              <CardDescription className="text-[10px] text-muted-foreground truncate">
+              <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)' }}>
                 by {downloadable.author}
-              </CardDescription>
+              </span>
+            )}
+          </div>
+
+          {/* Action power button & Dropdown menu */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }} onClick={(e) => e.stopPropagation()}>
+            {!isDownloadableSkill && onActivate && (
+              <button
+                type="button"
+                onClick={onActivate}
+                title={isActive ? 'Desactivar skill' : 'Activar skill'}
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: 7,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: isActive
+                    ? '1px solid color-mix(in srgb, var(--accent) 30%, transparent)'
+                    : '1px solid var(--border-subtle)',
+                  background: isActive
+                    ? 'color-mix(in srgb, var(--accent) 15%, transparent)'
+                    : 'var(--bg-elevated)',
+                  color: isActive ? 'var(--accent)' : 'var(--text-muted)',
+                  transition: 'all 0.12s',
+                  outline: 'none',
+                }}
+              >
+                <Zap size={11} strokeWidth={2} />
+              </button>
+            )}
+
+            {!isDownloadableSkill && (onEdit || onExport || onDelete) && (
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: 7,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: '1px solid transparent',
+                    background: 'transparent',
+                    color: 'var(--text-muted)',
+                    transition: 'all 0.12s',
+                    outline: 'none',
+                  }}
+                >
+                  <MoreHorizontal size={13} strokeWidth={2} />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-36 text-xs">
+                  {onEdit && (
+                    <DropdownMenuItem onClick={onEdit} className="gap-2 text-xs cursor-pointer">
+                      <Pencil size={12} />
+                      Editar
+                    </DropdownMenuItem>
+                  )}
+                  {onExport && (
+                    <DropdownMenuItem onClick={onExport} className="gap-2 text-xs cursor-pointer">
+                      <Copy size={12} />
+                      Exportar
+                    </DropdownMenuItem>
+                  )}
+                  {onDelete && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => setConfirmDeleteOpen(true)}
+                        className="gap-2 text-xs text-destructive focus:text-destructive cursor-pointer"
+                      >
+                        <Trash2 size={12} />
+                        Eliminar
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           </div>
         </div>
 
-        {!isDownloadableSkill && (onEdit || onExport || onDelete) && (
-          <CardAction onClick={(e) => e.stopPropagation()}>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-foreground">
-                  <MoreVertical size={12} strokeWidth={1.5} />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-32">
-                {onEdit && (
-                  <DropdownMenuItem onClick={onEdit} className="gap-2 text-xs cursor-pointer">
-                    <Pencil size={12} />
-                    <span>Editar</span>
-                  </DropdownMenuItem>
-                )}
-                {onExport && (
-                  <DropdownMenuItem onClick={onExport} className="gap-2 text-xs cursor-pointer">
-                    <Copy size={12} />
-                    <span>Exportar</span>
-                  </DropdownMenuItem>
-                )}
-                {onDelete && (
-                  <DropdownMenuItem
-                    onClick={() => setConfirmDeleteOpen(true)}
-                    className="gap-2 text-xs cursor-pointer text-destructive focus:text-destructive"
-                  >
-                    <Trash2 size={12} />
-                    <span>Eliminar</span>
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </CardAction>
-        )}
-      </CardHeader>
-
-      <CardContent className="flex-1 space-y-2 py-1">
-        <p className={`text-xs text-muted-foreground leading-relaxed m-0 ${expanded ? '' : 'line-clamp-2'}`}>
+        {/* Description */}
+        <p
+          style={{
+            fontSize: 11,
+            color: 'var(--text-secondary)',
+            margin: 0,
+            lineHeight: 1.45,
+            fontFamily: 'var(--font-ui)',
+            display: '-webkit-box',
+            WebkitLineClamp: expanded ? 'unset' : 2,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+          }}
+        >
           {skill.description}
         </p>
 
-        {skill.description.length > 80 && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              setExpanded(!expanded)
-            }}
-            className="text-[10px] text-primary font-medium hover:underline p-0 border-0 bg-transparent cursor-pointer"
-          >
-            {expanded ? 'Ver menos' : 'Ver más'}
-          </button>
-        )}
-
-        {isDownloadableSkill && downloadable && (
-          <div className="flex items-center gap-1 pt-1">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <Star
-                key={star}
-                size={10}
-                strokeWidth={1.5}
-                className={star <= 4 ? 'text-amber-500 fill-amber-500' : 'text-border'}
-              />
-            ))}
-            <span className="text-[10px] text-muted-foreground ml-1 font-mono">
-              ({downloadable.featured ? 'Destacado' : 'Popular'})
-            </span>
-          </div>
-        )}
-
-        {(tags.length > 0 || skill.category || (skill.source && skill.source !== 'builtin')) && (
-          <div className="flex flex-wrap gap-1 pt-1">
-            {skill.category && (
-              <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 font-mono uppercase tracking-wider text-primary border-primary/30">
-                {skill.category}
-              </Badge>
-            )}
-            {tags.map((t) => (
-              <Badge key={t} variant="secondary" className="text-[9px] px-1.5 py-0 h-4 font-mono font-normal">
+        {/* Footer Tags & Installation button */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 2, paddingTop: 6, borderTop: '1px solid var(--border-subtle)' }}>
+          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+            {tags.slice(0, 3).map((t) => (
+              <span
+                key={t}
+                style={{
+                  fontSize: 9,
+                  fontWeight: 600,
+                  padding: '1px 5px',
+                  borderRadius: 4,
+                  fontFamily: 'var(--font-mono)',
+                  background: 'var(--bg-active)',
+                  color: 'var(--text-muted)',
+                }}
+              >
                 {t}
-              </Badge>
+              </span>
             ))}
-            {skill.source && skill.source !== 'builtin' && (
-              <Badge variant="secondary" className="text-[9px] px-1.5 py-0 h-4 font-mono text-muted-foreground">
-                {skill.source}
-              </Badge>
-            )}
           </div>
-        )}
-      </CardContent>
 
-      <CardFooter className="flex items-center justify-between border-t border-border/40">
-        {isDownloadableSkill ? (
-          isInstalled ? (
-            <div className="flex items-center gap-1.5 text-[11px] font-medium text-emerald-500">
-              <Check size={12} strokeWidth={2} />
-              Instalada
-            </div>
-          ) : (
-            <Button size="sm" onClick={onInstall} className="h-7 text-xs gap-1.5 px-3">
-              <Download size={12} strokeWidth={2} />
-              Instalar
-            </Button>
-          )
-        ) : (
-          <div className="flex items-center justify-between w-full" onClick={(e) => e.stopPropagation()}>
-            <span className="text-[10px] font-mono font-medium text-muted-foreground uppercase tracking-wider">
-              {isActive ? 'Activa' : 'Inactiva'}
-            </span>
-            <SkillToggle
-              active={isActive}
-              onChange={() => handleActivate()}
-              ariaLabel={`${isActive ? 'Desactivar' : 'Activar'} skill ${skill.name}`}
-            />
-          </div>
-        )}
-      </CardFooter>
+          {isDownloadableSkill && (
+            isInstalled ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, fontWeight: 600, color: 'var(--status-ok)', fontFamily: 'var(--font-ui)' }}>
+                <Check size={11} strokeWidth={2} />
+                Instalada
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onInstall?.() }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  padding: '4px 10px',
+                  borderRadius: 6,
+                  background: 'var(--accent)',
+                  color: 'white',
+                  border: 'none',
+                  fontSize: 10,
+                  fontWeight: 600,
+                  fontFamily: 'var(--font-ui)',
+                  cursor: 'pointer',
+                }}
+              >
+                <Download size={11} strokeWidth={2} />
+                Instalar
+              </button>
+            )
+          )}
+        </div>
+      </div>
 
       {onDelete && (
         <ConfirmDeleteDialog
@@ -222,6 +294,6 @@ export function SkillCard({
           onConfirm={onDelete}
         />
       )}
-    </Card>
+    </>
   )
 }

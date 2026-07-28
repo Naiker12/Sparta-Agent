@@ -10,6 +10,7 @@ import {
 import { getKey as vaultGetKey } from 'ia-sparta-vault'
 import { ChatCompletionsTransport, AnthropicTransport, OllamaTransport } from 'ia-sparta-providers'
 import { loadSkillDocuments } from 'ia-sparta-ipc-bridge'
+import { buildWebSearchTool, executeWebSearch } from 'ia-sparta-core'
 
 const MAX_SKILL_CONTEXT_CHARS = 16_000
 const MAX_SKILL_DOCUMENTS_PER_TURN = 4
@@ -116,7 +117,19 @@ export function registerChatSendIPC(): void {
           req.system || 'Sos Sparta Agent, un asistente de ingeniería de software de alto rendimiento.',
           skillContext,
         ].filter(Boolean).join('\n\n')
+
         const formattedMessages = (req.messages || []).map(m => ({ role: m.role as any, content: m.content }))
+
+        // Prepare tools list and inject web_search tool if webSearchEnabled is true
+        const tools: unknown[] = req.tools ? [...req.tools] : []
+        if (req.webSearchEnabled) {
+          const hasWebSearch = tools.some((t: any) =>
+            t.name === 'web_search' || t.function?.name === 'web_search'
+          )
+          if (!hasWebSearch) {
+            tools.push(buildWebSearchTool())
+          }
+        }
 
         sendToRenderer({
           sessionId,
@@ -125,59 +138,171 @@ export function registerChatSendIPC(): void {
           text: 'Conectando con el modelo...',
         })
 
+        let loopCount = 0
+        const MAX_LOOPS = 5
         let streamFailed = false
         let streamAborted = false
-        for await (const chunk of transport.streamChat({
-          model: req.model,
-          messages: formattedMessages,
-          system: systemPrompt,
-          tools: req.tools,
-          thinkingEnabled: req.reasoning?.enabled,
-          thinkingBudget: req.reasoning?.budget,
-          reasoningEffort: req.reasoning?.effort as 'none' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh' | undefined,
-        })) {
-          const activeState = activeStreams.get(sessionId)
-          if (!activeState?.active) {
-            streamAborted = true
+
+        while (loopCount < MAX_LOOPS) {
+          loopCount++
+          let turnContent = ''
+          let pendingToolCall: { id: string; toolName: string; input: Record<string, unknown> } | null = null
+
+          for await (const chunk of transport.streamChat({
+            model: req.model,
+            messages: formattedMessages,
+            system: systemPrompt,
+            tools: tools.length > 0 ? tools : undefined,
+            thinkingEnabled: req.reasoning?.enabled,
+            thinkingBudget: req.reasoning?.budget,
+            reasoningEffort: req.reasoning?.effort as 'none' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh' | undefined,
+          })) {
+            const activeState = activeStreams.get(sessionId)
+            if (!activeState?.active) {
+              streamAborted = true
+              break
+            }
+
+            if (chunk.type === 'content_token' && chunk.delta) {
+              completeThinking()
+              turnContent += chunk.delta
+              sendToRenderer({
+                sessionId,
+                messageId,
+                type: 'stream:token',
+                token: chunk.delta,
+              })
+            } else if (chunk.type === 'thinking_token' && chunk.delta) {
+              sendToRenderer({
+                sessionId,
+                messageId,
+                type: 'thinking:token',
+                token: chunk.delta,
+              })
+            } else if (chunk.type === 'tool_call' && chunk.toolCall) {
+              pendingToolCall = {
+                id: chunk.toolCall.id || `call_${Date.now()}`,
+                toolName: chunk.toolCall.toolName || 'web_search',
+                input: (chunk.toolCall.input as Record<string, unknown>) || {},
+              }
+            } else if (chunk.type === 'error' && chunk.error) {
+              streamFailed = true
+              completeThinking()
+              sendToRenderer({
+                sessionId,
+                messageId,
+                type: 'stream:error',
+                error: chunk.error,
+              })
+              break
+            }
+          }
+
+          if (streamFailed || streamAborted) {
             break
           }
 
-          if (chunk.type === 'content_token' && chunk.delta) {
+          // If no tool call was requested by the model, execution is complete
+          if (!pendingToolCall) {
             completeThinking()
             sendToRenderer({
               sessionId,
               messageId,
-              type: 'stream:token',
-              token: chunk.delta,
-            })
-          } else if (chunk.type === 'thinking_token' && chunk.delta) {
-            sendToRenderer({
-              sessionId,
-              messageId,
-              type: 'thinking:token',
-              token: chunk.delta,
-            })
-          } else if (chunk.type === 'error' && chunk.error) {
-            streamFailed = true
-            completeThinking()
-            sendToRenderer({
-              sessionId,
-              messageId,
-              type: 'stream:error',
-              error: chunk.error,
+              type: 'stream:completed',
             })
             break
           }
-        }
 
-        if (!streamFailed && !streamAborted) {
-          // Every started thinking phase has exactly one terminal event. This
-          // keeps the renderer timeline coherent for providers that only emit text.
-          completeThinking()
+          // Handle tool call execution
+          const toolCallId = pendingToolCall.id
+          const toolName = pendingToolCall.toolName
+          const toolInput = pendingToolCall.input
+
+          // 1. Notify renderer that a tool was called
           sendToRenderer({
             sessionId,
             messageId,
-            type: 'stream:completed',
+            type: 'tool:called',
+            toolCallId,
+            toolName,
+            name: toolName,
+            input: toolInput,
+          })
+
+          let toolOutput = ''
+
+          if (toolName === 'web_search') {
+            const query = typeof toolInput.query === 'string' ? toolInput.query : JSON.stringify(toolInput)
+
+            // 2. Emit search:progress event for searching stage
+            sendToRenderer({
+              sessionId,
+              messageId,
+              type: 'search:progress',
+              stage: 'searching',
+              query,
+              tool_call_id: toolCallId,
+            })
+
+            sendToRenderer({
+              sessionId,
+              messageId,
+              type: 'thinking:status',
+              text: `Buscando en la web: "${query}"...`,
+            })
+
+            // 3. Execute real search
+            toolOutput = await executeWebSearch(query)
+
+            // 4. Emit search:progress event for done stage
+            sendToRenderer({
+              sessionId,
+              messageId,
+              type: 'search:progress',
+              stage: 'done',
+              tool_call_id: toolCallId,
+            })
+          } else {
+            toolOutput = `Herramienta ${toolName} ejecutada.`
+          }
+
+          // 5. Notify renderer of tool output
+          sendToRenderer({
+            sessionId,
+            messageId,
+            type: 'tool:result',
+            toolCallId,
+            toolName,
+            output: toolOutput,
+          })
+
+          // 6. Update formattedMessages to append assistant tool_call & tool response for next turn
+          formattedMessages.push({
+            role: 'assistant' as any,
+            content: turnContent || null,
+            tool_calls: [
+              {
+                id: toolCallId,
+                type: 'function',
+                function: {
+                  name: toolName,
+                  arguments: JSON.stringify(toolInput),
+                },
+              },
+            ],
+          } as any)
+
+          formattedMessages.push({
+            role: 'tool' as any,
+            tool_call_id: toolCallId,
+            content: toolOutput,
+          } as any)
+
+          sendToRenderer({
+            sessionId,
+            messageId,
+            type: 'thinking:status',
+            text: 'Sintetizando respuesta con datos obtenidos...',
           })
         }
       } catch (err) {

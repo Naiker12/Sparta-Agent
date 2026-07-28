@@ -60,11 +60,20 @@ export class ChatCompletionsTransport extends BaseTransport {
       max_tokens: req.maxTokens ?? 4096,
       temperature: req.temperature ?? 0.7,
     }
-    // OpenAI's Chat Completions API is the only vendor in this transport
-    // family that reliably accepts this parameter across supported models.
+    // OpenAI's Chat Completions API accepts formatted function tools
     if (Array.isArray(req.tools) && req.tools.length > 0) {
-      body.tools = req.tools
-      body.function_call = 'auto'
+      body.tools = req.tools.map((t: any) => {
+        if (t.type === 'function' && t.function) return t
+        return {
+          type: 'function',
+          function: {
+            name: t.name || t.function?.name || 'tool',
+            description: t.description || t.function?.description || '',
+            parameters: t.parameters || t.input_schema || t.inputSchema || t.function?.parameters || { type: 'object', properties: {} },
+          },
+        }
+      })
+      body.tool_choice = 'auto'
     }
     if (this.vendor === 'openai' && req.thinkingEnabled && req.reasoningEffort && req.reasoningEffort !== 'none') {
       body.reasoning_effort = req.reasoningEffort
@@ -134,6 +143,8 @@ export class ChatCompletionsTransport extends BaseTransport {
 
     const decoder = new TextDecoder()
     let buffer = ''
+    const pendingToolCalls = new Map<number, { id: string; name: string; arguments: string }>()
+
     while (true) {
       const { done, value } = await reader.read()
       if (done) break
@@ -163,11 +174,58 @@ export class ChatCompletionsTransport extends BaseTransport {
               yield { type: 'thinking_token', delta: details }
             }
           }
-          if (choice?.finish_reason === 'stop' || choice?.finish_reason === 'end_turn') {
+          if (Array.isArray(choice?.delta?.tool_calls)) {
+            for (const tc of choice.delta.tool_calls) {
+              const index = tc.index ?? 0
+              const existing = pendingToolCalls.get(index) ?? { id: '', name: '', arguments: '' }
+              if (tc.id) existing.id = tc.id
+              if (tc.function?.name) existing.name = tc.function.name
+              if (tc.function?.arguments) existing.arguments += tc.function.arguments
+              pendingToolCalls.set(index, existing)
+            }
+          }
+          if (choice?.finish_reason === 'tool_calls' || choice?.finish_reason === 'stop' || choice?.finish_reason === 'end_turn') {
+            for (const [, callData] of pendingToolCalls) {
+              let parsedInput: Record<string, unknown> = {}
+              try {
+                parsedInput = JSON.parse(callData.arguments || '{}')
+              } catch {
+                parsedInput = { query: callData.arguments }
+              }
+              yield {
+                type: 'tool_call',
+                toolCall: {
+                  id: callData.id || `call_${Date.now()}`,
+                  toolName: callData.name || 'web_search',
+                  input: parsedInput,
+                },
+              }
+            }
+            pendingToolCalls.clear()
             yield { type: 'done' }
           }
         } catch { /* skip parse errors */ }
       }
+    }
+
+    if (pendingToolCalls.size > 0) {
+      for (const [, callData] of pendingToolCalls) {
+        let parsedInput: Record<string, unknown> = {}
+        try {
+          parsedInput = JSON.parse(callData.arguments || '{}')
+        } catch {
+          parsedInput = { query: callData.arguments }
+        }
+        yield {
+          type: 'tool_call',
+          toolCall: {
+            id: callData.id || `call_${Date.now()}`,
+            toolName: callData.name || 'web_search',
+            input: parsedInput,
+          },
+        }
+      }
+      pendingToolCalls.clear()
     }
     yield { type: 'done' }
   }

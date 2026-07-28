@@ -3,34 +3,16 @@ export interface CategoryIconPaths {
   dark: string
 }
 
+/**
+ * SVG icon registry for skill categories that have a recognizable brand logo.
+ * Keys MUST match the normalized category name (lowercase, spaces→hyphens).
+ * Categories without a brand logo (Analysis, Coding, etc.) fall through to
+ * the Lucide fallback map in SkillCategoryIcon.tsx — that's intentional.
+ */
 export const SKILL_CATEGORY_ICONS: Record<string, CategoryIconPaths> = {
   github: {
     light: '/icons/brands/github.svg',
     dark: '/icons/brands/github.svg',
-  },
-  notion: {
-    light: '/icons/brands/notion.svg',
-    dark: '/icons/brands/notion.svg',
-  },
-  slack: {
-    light: '/icons/brands/slack.svg',
-    dark: '/icons/brands/slack.svg',
-  },
-  discord: {
-    light: '/icons/brands/discord.svg',
-    dark: '/icons/brands/discord.svg',
-  },
-  git: {
-    light: '/icons/brands/git.svg',
-    dark: '/icons/brands/git.svg',
-  },
-  filesystem: {
-    light: '/icons/brands/filesystem.svg',
-    dark: '/icons/brands/filesystem.svg',
-  },
-  database: {
-    light: '/icons/brands/postgresql.svg',
-    dark: '/icons/brands/postgresql.svg',
   },
 }
 
