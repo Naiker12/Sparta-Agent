@@ -70,9 +70,30 @@ function resolveWorkspaceRoot(): string | undefined {
 
 function getCurrentTimeSystemPrompt(): string {
   const now = new Date()
-  const local = now.toLocaleString()
-  const iso = now.toISOString()
-  return `La fecha y hora actual son ${local} (UTC ${iso}).`
+  let timeZone = 'local'
+  try {
+    timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'local'
+  } catch { /* ignore */ }
+
+  const options: Intl.DateTimeFormatOptions = {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true,
+  }
+
+  let formattedLocal = now.toLocaleString('es-ES', options)
+  if (formattedLocal.length > 0) {
+    formattedLocal = formattedLocal.charAt(0).toUpperCase() + formattedLocal.slice(1)
+  }
+
+  return `[INFORMACIÓN DEL SISTEMA]
+La fecha y hora local actual del usuario es: ${formattedLocal} (Zona horaria: ${timeZone}).
+Responde siempre las preguntas sobre la fecha u hora utilizando la hora local del usuario.`
 }
 
 async function runAssistantTurn(

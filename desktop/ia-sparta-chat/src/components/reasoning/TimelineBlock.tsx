@@ -134,6 +134,21 @@ export function TimelineBlock({ message, className }: TimelineBlockProps) {
     if (userToggled.current && message.id) saveCollapseState(message.id, isExpanded)
   }, [isExpanded, message.id])
 
+  // Sync userToggled ref when message changes
+  useEffect(() => {
+    userToggled.current = savedState !== null
+  }, [message.id, savedState])
+
+  // Auto-expand during live streaming and auto-collapse when finished, unless user manually toggled it
+  useEffect(() => {
+    if (userToggled.current) return
+    if (isStreamingActive) {
+      setIsExpanded(true)
+    } else {
+      setIsExpanded(false)
+    }
+  }, [isStreamingActive])
+
   const handleToggle = useCallback(() => {
     if (hasSelectionInside(blockRef.current)) return
     userToggled.current = true
@@ -275,45 +290,42 @@ export function TimelineBlock({ message, className }: TimelineBlockProps) {
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
+  )
+}
 
-      {/* Completed Turn Activity Summary Footer (Traycer AI Event Loop Badge at the bottom) */}
-      {status === 'completed' && elapsed > 0 && (
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            marginTop: 4,
-            fontSize: 11,
-            color: 'var(--text-muted)',
-            fontFamily: 'var(--font-ui)',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <Eye size={12} style={{ color: 'var(--text-muted)' }} />
-            <span>{verb} for {formatDuration(elapsed)}</span>
-          </div>
+export function TurnActivityBadge({ message }: { message: Message }) {
+  const verb = useMemo(() => pickElapsedVerb(message.id), [message.id])
+  const elapsed = useMemo(() => {
+    if (message.reasoningStartedAt && message.reasoningCompletedAt) {
+      return Math.max(1, (message.reasoningCompletedAt - message.reasoningStartedAt) / 1000)
+    }
+    if (message.reasoningStartedAt) {
+      return Math.max(1, (Date.now() - message.reasoningStartedAt) / 1000)
+    }
+    return 0
+  }, [message.reasoningStartedAt, message.reasoningCompletedAt])
 
-          <button
-            onClick={handleCopyReply}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--text-muted)',
-              cursor: 'pointer',
-              padding: 2,
-              display: 'flex',
-              alignItems: 'center',
-              borderRadius: 3,
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text-primary)')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
-            title="Copiar respuesta"
-          >
-            {copied ? <Check size={12} style={{ color: '#22c55e' }} /> : <Copy size={12} />}
-          </button>
-        </div>
-      )}
+  const hasReasoning = Boolean(message.reasoningText?.trim() || message.toolCalls?.length || message.reasoningStartedAt)
+  if (!hasReasoning) return null
+
+  const displayElapsed = elapsed > 0 ? elapsed : 1
+
+  return (
+    <div
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 4,
+        fontSize: 11,
+        color: 'var(--text-muted)',
+        fontFamily: 'var(--font-ui)',
+        marginRight: 6,
+        userSelect: 'none',
+      }}
+    >
+      <Eye size={12} style={{ color: 'var(--text-muted)' }} />
+      <span>{verb} for {formatDuration(displayElapsed)}</span>
     </div>
   )
 }

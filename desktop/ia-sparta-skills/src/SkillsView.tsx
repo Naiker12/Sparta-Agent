@@ -9,29 +9,23 @@ import { SkillDialog } from './SkillDialog'
 import { SkillMarkdownDialog } from './SkillMarkdownDialog'
 import type { Skill, InstalledSkill } from 'ia-sparta-core'
 
-type Tab = 'mine' | 'explore' | 'create'
-
-const CATEGORY_ICONS: Record<string, string> = {
-  'Analysis': '📊', 'Apple': '🍎', 'Automation': '⚡',
-  'Autonomous AI Agents': '🤖', 'Coding': '💻',
-  'Creative': '🎨', 'Data Science': '🔬', 'Email': '📧',
-  'GitHub': '🐙', 'Media': '🎬', 'MLOps': '🧠',
-  'Note Taking': '📝', 'Productivity': '📂',
-  'Research': '🔍', 'Smart Home': '🏠',
-  'Social Media': '📱', 'Software Development': '🛠️',
-  'Writing': '✍️',
-}
-
-function getCategoryIcon(category: string): string {
-  return CATEGORY_ICONS[category] ?? CATEGORY_ICONS[category.replace(/-/g, ' ')] ?? '📦'
-}
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardAction,
+  CardContent,
+  Badge,
+  SkillCategoryIcon,
+} from 'ia-sparta-design-system'
 
 function CategorySection({ category, count, activeCount, children }: { category: string; count: number; activeCount?: number; children: React.ReactNode }) {
   return (
     <div className="mb-5">
-      <div className="flex items-center gap-1.5 mb-2 pt-3">
-        <span className="text-xs">{getCategoryIcon(category)}</span>
-        <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground font-mono">
+      <div className="flex items-center gap-2 mb-2 pt-3">
+        <SkillCategoryIcon category={category} size={15} />
+        <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground font-mono">
           {category}
         </span>
         <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded font-mono">
@@ -49,64 +43,61 @@ function CategorySection({ category, count, activeCount, children }: { category:
 }
 
 function ExploreSkillCard({ skill, isActive, onToggle, onOpen }: {
-  skill: { id: string; name: string; description: string; icon: string; tags: string[]; author?: string; version?: string }
+  skill: { id: string; name: string; description: string; icon: string; tags: string[]; author?: string; version?: string; category?: string }
   isActive: boolean
   onToggle: () => void
   onOpen: () => void
 }) {
   return (
-    <div
+    <Card
+      size="sm"
       role="button"
       tabIndex={0}
       onClick={onOpen}
       onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onOpen() } }}
-      style={{
-        minHeight: 192,
-        padding: 18,
-        borderRadius: 18,
-        border: isActive ? '1px solid var(--accent)' : '1px solid var(--border-normal)',
-        borderLeft: isActive ? '4px solid var(--accent)' : '4px solid transparent',
-        background: 'var(--bg-surface)',
-        boxShadow: '0 12px 30px rgba(0,0,0,0.05)',
-        cursor: 'pointer',
-        transition: 'transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease',
-      }}
-      onMouseEnter={(event) => {
-        event.currentTarget.style.transform = 'translateY(-1px)'
-        event.currentTarget.style.boxShadow = '0 18px 36px rgba(0,0,0,0.08)'
-      }}
-      onMouseLeave={(event) => {
-        event.currentTarget.style.transform = 'none'
-        event.currentTarget.style.boxShadow = '0 12px 30px rgba(0,0,0,0.05)'
-      }}
+      className={`min-h-[170px] cursor-pointer relative overflow-hidden flex flex-col justify-between transition-all duration-150 hover:shadow-md hover:border-primary/40 ${
+        isActive ? 'border-l-4 border-l-primary ring-1 ring-primary/20' : ''
+      }`}
     >
-      <div className="flex items-start gap-2.5 mb-2">
-        <span className="text-base shrink-0 flex size-8 items-center justify-center rounded bg-muted">{skill.icon || '📦'}</span>
-        <div className="flex-1 min-w-0">
-          <div className="text-xs font-semibold text-foreground truncate">
-            {skill.name}
+      <CardHeader>
+        <div className="flex items-center gap-2 min-w-0">
+          {skill.category ? (
+            <div className="p-1 rounded bg-muted text-foreground shrink-0">
+              <SkillCategoryIcon category={skill.category} size={16} />
+            </div>
+          ) : (
+            <span className="text-base shrink-0 leading-none">{skill.icon || '⚡'}</span>
+          )}
+          <div className="min-w-0 flex-1">
+            <CardTitle className="text-xs font-semibold text-foreground truncate font-sans">
+              {skill.name}
+            </CardTitle>
+            <CardDescription className="text-[10px] text-muted-foreground truncate font-sans">
+              {skill.author || 'Sparta Team'} {skill.version ? `· v${skill.version}` : ''}
+            </CardDescription>
           </div>
-          <div className="text-[10px] text-muted-foreground">
-            {skill.author || 'Sparta Team'} {skill.version ? `· v${skill.version}` : ''}
+        </div>
+        <CardAction onClick={(event) => event.stopPropagation()}>
+          <SkillToggle active={isActive} onChange={() => onToggle()} ariaLabel={`${isActive ? 'Desactivar' : 'Activar'} ${skill.name}`} />
+        </CardAction>
+      </CardHeader>
+
+      <CardContent className="flex-1 space-y-2 py-1">
+        <p className="text-xs text-muted-foreground leading-relaxed m-0 line-clamp-2">
+          {skill.description}
+        </p>
+
+        {skill.tags?.length > 0 && (
+          <div className="flex gap-1 flex-wrap pt-1">
+            {skill.tags.slice(0, 3).map((tag) => (
+              <Badge key={tag} variant="secondary" className="text-[9px] px-1.5 py-0 h-4 font-mono font-normal">
+                {tag}
+              </Badge>
+            ))}
           </div>
-        </div>
-        <div onClick={(event) => event.stopPropagation()}>
-          <SkillToggle active={isActive} onChange={() => onToggle()} size={28} ariaLabel={`${isActive ? 'Desactivar' : 'Activar'} ${skill.name}`} />
-        </div>
-      </div>
-      <p className="text-[11px] text-muted-foreground leading-5 mt-3 line-clamp-2">
-        {skill.description}
-      </p>
-      {skill.tags?.length > 0 && (
-        <div className="flex gap-1 flex-wrap mt-3">
-          {skill.tags.slice(0, 3).map((tag) => (
-            <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-mono">
-              {tag}
-            </span>
-          ))}
-        </div>
-      )}
-    </div>
+        )}
+      </CardContent>
+    </Card>
   )
 }
 

@@ -4,7 +4,7 @@ import type { Message } from 'ia-sparta-core'
 import { useChatStore, useSettingsStore } from 'ia-sparta-core'
 import { useEventBus } from 'ia-sparta-core'
 import { useChatSession } from 'ia-sparta-core'
-import { TimelineBlock } from './reasoning/TimelineBlock'
+import { TimelineBlock, TurnActivityBadge } from './reasoning/TimelineBlock'
 import { StreamCursor } from './reasoning/StreamCursor'
 import { PipelineTrace } from './reasoning/PipelineTrace'
 import { MessageActionsDialog } from './MessageActionsDialog'
@@ -358,6 +358,7 @@ export function MessageBubble({ message, isLastUser = false, isLastAssistant = f
                 marginTop: 6,
               }}
             >
+              {!isUser && <TurnActivityBadge message={message} />}
               <IconButton icon={copied ? <Check size={11} /> : <Copy size={11} />} onClick={handleCopy} title={t('chat.copy')} />
               {isUser && isLastUser && <IconButton icon={<Pencil size={11} />} onClick={() => { setEditValue(message.content); setEditing(true) }} title={t('chat.edit')} />}
               {isUser && isLastUser && <IconButton icon={<RefreshCw size={11} />} onClick={() => sendMessage(message.content)} title={t('chat.resend')} />}
