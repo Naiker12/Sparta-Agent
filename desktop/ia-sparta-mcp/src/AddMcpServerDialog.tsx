@@ -5,8 +5,10 @@ import {
   Terminal, Globe, Copy, Info,
 } from 'lucide-react'
 import { useMCPStore } from 'ia-sparta-core'
-import type { MCPServerConfig, MCPServerType } from 'ia-sparta-core'
+import type { MCPServerConfig, MCPServerType, MCPAuthType } from 'ia-sparta-core'
 import { useTranslation } from 'ia-sparta-i18n'
+import { getVendorForServer, getAuthTypeForServer } from './data/mcp-catalog'
+import { OAuthConnectDialog } from './OAuthConnectDialog'
 import {
   Dialog,
   DialogContent,
@@ -49,6 +51,8 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
   const [testResult, setTestResult] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [authType, setAuthType] = useState<MCPAuthType>('none')
+  const [oauthDialogOpen, setOauthDialogOpen] = useState(false)
 
   useEffect(() => {
     if (open) {
@@ -61,6 +65,7 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
       setConfigJson('')
       setInputMode('manual')
       setTestResult(null)
+      setAuthType(editServer?.auth_type ?? getAuthTypeForServer(editServer?.id ?? '') ?? 'none')
     }
   }, [open, editServer])
 
@@ -118,6 +123,7 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
           const id = serverName.toLowerCase().replace(/\s+/g, '-')
           const baseCfg: MCPServerConfig = {
             id, name: serverName, type: cfg.command ? 'stdio' : 'http', enabled: true,
+            auth_type: 'none',
             ...(cfg.command
               ? { command: cfg.command as string, args: (cfg.args as string[]) ?? [] }
               : { url: (cfg.url as string) ?? '' }),
@@ -135,10 +141,49 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
     if (type === 'stdio' && !command.trim()) return
     if (type === 'http' && !url.trim()) return
 
+    if (authType === 'oauth2') {
+      const authorizeUrl = getOAuthAuthorizeUrl(editServer?.id ?? name.toLowerCase().replace(/\s+/g, '-'))
+      if (authorizeUrl) {
+        setOauthDialogOpen(true)
+        return
+      }
+    }
+
     const safe = await storeSecretsInVault(buildConfig())
     if (isEditing && editServer.id && editServer.id !== safe.id) removeServer(editServer.id)
     addServer(safe)
     reset(); onClose()
+  }
+
+  function getOAuthAuthorizeUrl(serverId: string): string | undefined {
+    const urls: Record<string, string> = {
+      supabase: 'https://mcp.supabase.com/mcp/auth',
+      'google-drive': 'https://accounts.google.com/o/oauth2/v2/auth',
+      onedrive: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
+      gmail: 'https://accounts.google.com/o/oauth2/v2/auth',
+      'google-calendar': 'https://accounts.google.com/o/oauth2/v2/auth',
+      notion: 'https://api.notion.com/v1/oauth/authorize',
+      slack: 'https://slack.com/oauth/v2/authorize',
+      figma: 'https://www.figma.com/oauth',
+      sentry: 'https://sentry.dev/oauth/authorize',
+    }
+    return urls[serverId]
+  }
+
+  async function handleOAuthConnected(accountLabel?: string) {
+    const config = buildConfig()
+    config.auth_type = 'oauth2'
+    config.oauth = {
+      provider_authorize_url: getOAuthAuthorizeUrl(config.id) ?? '',
+      connected_at: new Date().toISOString(),
+      account_label: accountLabel,
+    }
+    const safe = await storeSecretsInVault(config)
+    if (isEditing && editServer.id && editServer.id !== safe.id) removeServer(editServer.id)
+    addServer(safe)
+    reset()
+    setOauthDialogOpen(false)
+    onClose()
   }
 
   function buildConfig(): MCPServerConfig {
@@ -166,6 +211,7 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
           )
         : undefined,
       enabled: true,
+      auth_type: authType,
     }
   }
 
@@ -217,12 +263,14 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
     setName(''); setType('stdio'); setCommand(''); setArgs('')
     setUrl(''); setEnvVars(''); setConfigJson('')
     setInputMode('manual'); setTestResult(null)
+    setAuthType('none'); setOauthDialogOpen(false)
   }
 
   const canSubmitManual = name.trim() && (type === 'stdio' ? command.trim() : url.trim())
   const canSubmitConfig = configJson.trim().length > 2
 
   return (
+    <>
     <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) { reset(); onClose() } }}>
       <DialogContent
         className="max-w-[520px] w-full overflow-hidden"
@@ -296,6 +344,36 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
                     autoFocus
                   />
                 </FieldRow>
+
+                {/* Auth type — show badge or selector */}
+                {editServer && getAuthTypeForServer(editServer.id) && (
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    padding: '8px 12px', borderRadius: 8,
+                    background: 'var(--bg-surface)',
+                    border: '1px solid var(--border-subtle)',
+                  }}>
+                    <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Auth
+                    </span>
+                    <span style={{
+                      fontSize: 10, fontWeight: 700, fontFamily: 'var(--font-mono)',
+                      padding: '2px 8px', borderRadius: 4,
+                      background: authType === 'oauth2'
+                        ? 'rgba(59,130,246,0.12)'
+                        : authType === 'api_key'
+                          ? 'rgba(234,179,8,0.12)'
+                          : 'rgba(107,114,128,0.12)',
+                      color: authType === 'oauth2'
+                        ? '#60a5fa'
+                        : authType === 'api_key'
+                          ? '#eab308'
+                          : '#9ca3af',
+                    }}>
+                      {authType === 'oauth2' ? 'OAuth 2.0' : authType === 'api_key' ? 'API Key' : 'Sin auth'}
+                    </span>
+                  </div>
+                )}
 
                 {/* Connection type */}
                 <FieldRow label={t('mcp.connectionType')}>
@@ -509,6 +587,17 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
         </form>
       </DialogContent>
     </Dialog>
+
+      <OAuthConnectDialog
+        open={oauthDialogOpen}
+        onClose={() => setOauthDialogOpen(false)}
+        serverId={editServer?.id ?? name.toLowerCase().replace(/\s+/g, '-')}
+        serverName={(name.trim() || editServer?.name) ?? ''}
+        vendor={getVendorForServer(editServer?.id ?? '')}
+        authorizeUrl={getOAuthAuthorizeUrl(editServer?.id ?? name.toLowerCase().replace(/\s+/g, '-')) ?? ''}
+        onConnected={handleOAuthConnected}
+      />
+    </>
   )
 }
 

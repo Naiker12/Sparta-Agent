@@ -124,6 +124,54 @@ export const BRAND_ICONS: Record<string, BrandIconPaths> = {
     light: '/icons/brands/filesystem.svg',
     dark: '/icons/brands/filesystem.svg',
   },
+  supabase: {
+    light: '/icons/brands/supabase.svg',
+    dark: '/icons/brands/supabase.svg',
+  },
+  microsoft: {
+    light: '/icons/brands/microsoft.svg',
+    dark: '/icons/brands/microsoft.svg',
+  },
+  figma: {
+    light: '/icons/brands/figma.svg',
+    dark: '/icons/brands/figma.svg',
+  },
+  stripe: {
+    light: '/icons/brands/stripe.svg',
+    dark: '/icons/brands/stripe.svg',
+  },
+  sentry: {
+    light: '/icons/brands/sentry.svg',
+    dark: '/icons/brands/sentry.svg',
+  },
+  mongodb: {
+    light: '/icons/brands/mongodb.svg',
+    dark: '/icons/brands/mongodb.svg',
+  },
+  playwright: {
+    light: '/icons/brands/playwright.svg',
+    dark: '/icons/brands/playwright.svg',
+  },
+  chrome: {
+    light: '/icons/brands/chrome.svg',
+    dark: '/icons/brands/chrome.svg',
+  },
+  database: {
+    light: '/icons/brands/database.svg',
+    dark: '/icons/brands/database.svg',
+  },
+  fetch: {
+    light: '/icons/brands/fetch.svg',
+    dark: '/icons/brands/fetch.svg',
+  },
+  memory: {
+    light: '/icons/brands/memory.svg',
+    dark: '/icons/brands/memory.svg',
+  },
+  time: {
+    light: '/icons/brands/time.svg',
+    dark: '/icons/brands/time.svg',
+  },
 }
 
 export const MONO_BRANDS = ['anthropic', 'openai']

@@ -1,10 +1,20 @@
 export type MCPServerType = 'stdio' | 'http'
+export type MCPAuthType = 'none' | 'api_key' | 'oauth2'
 
 export interface MCPToolFilter {
   /** Whitelist — if present, only these tools are exposed. Takes precedence over exclude. */
   include?: string[]
   /** Blacklist — ignored if include is set. */
   exclude?: string[]
+}
+
+export interface MCPOAuthSession {
+  /** URL de autorización oficial del proveedor */
+  provider_authorize_url: string
+  connected_at?: string
+  expires_at?: string
+  /** Label para mostrar al usuario (ej. "tú@gmail.com"). No es un secreto. */
+  account_label?: string
 }
 
 export interface MCPServerConfig {
@@ -34,6 +44,8 @@ export interface MCPServerConfig {
   tools?: MCPToolFilter
   /** Whether this server package is actively maintained (false = archived/deprecated) */
   maintained?: boolean
+  auth_type: MCPAuthType
+  oauth?: MCPOAuthSession
 }
 
 export interface MCPTool {

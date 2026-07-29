@@ -6,6 +6,7 @@ import { useMCPStore } from 'ia-sparta-core'
 import { ConfirmDeleteDialog } from 'ia-sparta-design-system'
 import { BrandIcon } from 'ia-sparta-design-system'
 import { McpToolItem } from './McpToolItem'
+import { getVendorForServer } from './data/mcp-catalog'
 import { useTranslation } from 'ia-sparta-i18n'
 import {
   DropdownMenu,
@@ -14,12 +15,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from 'ia-sparta-design-system'
-
-const MCP_BRAND_ICONS: Record<string, string> = {
-  Git: 'git',
-  SQLite: 'sqlite',
-  PostgreSQL: 'postgresql',
-}
 
 interface McpServerCardProps {
   server: MCPServer
@@ -36,7 +31,7 @@ export function McpServerCard({ server, onEdit }: McpServerCardProps) {
   const isConnected = server.connected
   const isEnabled = server.config.enabled
   const hasTools = server.tools.length > 0
-  const brandVendor = MCP_BRAND_ICONS[server.name]
+  const brandVendor = getVendorForServer(server.id)
 
   return (
     <>

@@ -1,18 +1,16 @@
-import { useState } from 'react'
 import { useMCPStore } from 'ia-sparta-core'
 import { SettingGroup } from './primitives'
-import { Plus, Zap, Trash2 } from 'lucide-react'
+import { Server, Wifi, Wrench, ArrowRight } from 'lucide-react'
 import { useTranslation } from 'ia-sparta-i18n'
-import { AddMcpServerDialog } from 'ia-sparta-mcp'
-import { ConfirmDeleteDialog } from 'ia-sparta-design-system'
+import { Button } from 'ia-sparta-design-system'
 
 export function McpTab() {
-  const { servers, removeServer, toggleServer } = useMCPStore()
+  const { servers } = useMCPStore()
   const { t } = useTranslation()
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [serverToDelete, setServerToDelete] = useState<string | null>(null)
 
-  const serverToDeleteName = servers.find((s) => s.id === serverToDelete)?.name ?? ''
+  const connectedCount = servers.filter((s) => s.connected).length
+  const totalCount = servers.length
+  const totalTools = servers.reduce((acc, s) => acc + s.tools.length, 0)
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -20,107 +18,58 @@ export function McpTab() {
         title={t('mcp.title')}
         description={t('mcp.desc')}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', paddingTop: 4 }}>
-          {servers.map((server) => (
-            <div
-              key={server.id}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                padding: '10px 12px',
-                background: 'var(--bg-input)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: 'var(--radius-md)',
-                marginBottom: 6,
-              }}
-            >
-              <span
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: '50%',
-                  background: server.connected ? 'var(--status-ok)' : 'var(--text-muted)',
-                  flexShrink: 0,
-                }}
-              />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 12.5, color: 'var(--text-primary)', fontFamily: 'var(--font-ui)', fontWeight: 500 }}>
-                  {server.name}
-                </div>
-                <div style={{ fontSize: 10.5, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', marginTop: 2 }}>
-                  {server.type} · {server.tools.length} {t('mcp.tools')}
-                </div>
-              </div>
-              <button
-                onClick={() => toggleServer(server.id)}
-                title={server.config.enabled ? t('mcp.disable') : t('mcp.enable')}
-                style={{
-                  width: 26, height: 26,
-                  background: 'none', border: 'none',
-                  borderRadius: 'var(--radius-sm)',
-                  color: server.config.enabled ? 'var(--status-ok)' : 'var(--text-muted)',
-                  cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-hover)' }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
-              >
-                <Zap size={12} strokeWidth={1.5} />
-              </button>
-              <button
-                onClick={() => setServerToDelete(server.id)}
-                title={t('mcp.delete')}
-                style={{
-                  width: 26, height: 26,
-                  background: 'none', border: 'none',
-                  borderRadius: 'var(--radius-sm)',
-                  color: 'var(--text-muted)',
-                  cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.color = 'var(--destructive)'; e.currentTarget.style.background = 'var(--bg-hover)' }}
-                onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'none' }}
-              >
-                <Trash2 size={12} strokeWidth={1.5} />
-              </button>
+        <div style={{
+          display: 'flex', flexDirection: 'column', gap: 12,
+          padding: '12px 16px', background: 'var(--bg-input)',
+          border: '1px solid var(--border-subtle)',
+          borderRadius: 'var(--radius-md)', marginTop: 4,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: 9,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'var(--bg-elevated)', border: '1px solid var(--border-normal)',
+              color: 'var(--text-muted)',
+            }}>
+              <Server size={16} strokeWidth={1.5} />
             </div>
-          ))}
+            <div style={{ flex: 1 }}>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 16, fontSize: 11,
+                fontFamily: 'var(--font-ui)',
+              }}>
+                <span style={{ color: 'var(--text-secondary)' }}>
+                  <Wifi size={10} style={{ color: 'var(--status-ok)', marginRight: 4 }} />
+                  {connectedCount}/{totalCount} {t('mcp.connected')?.toLowerCase() ?? 'conectados'}
+                </span>
+                <span style={{ color: 'var(--text-secondary)' }}>
+                  <Wrench size={10} style={{ marginRight: 4 }} />
+                  {totalTools} tools
+                </span>
+              </div>
+            </div>
+            <Button
+              onClick={() => {
+                // Dispatch event to open MCP view in main panel
+                window.dispatchEvent(new CustomEvent('sparta:open-mcp-view'))
+              }}
+              size="sm"
+              variant="secondary"
+              style={{ fontSize: 10, fontWeight: 600, gap: 4, height: 28 }}
+            >
+              {t('mcp.manageServers') || 'Gestionar'}
+              <ArrowRight size={10} />
+            </Button>
+          </div>
         </div>
 
-        <button
-          onClick={() => setDialogOpen(true)}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            padding: '8px 12px', marginTop: 4,
-            background: 'none', border: '1px dashed var(--border-normal)',
-            borderRadius: 'var(--radius-md)', color: 'var(--text-muted)',
-            fontSize: 11.5, fontFamily: 'var(--font-ui)', cursor: 'pointer',
-            transition: 'all 0.12s',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)' }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-normal)'; e.currentTarget.style.color = 'var(--text-muted)' }}
-        >
-          <Plus size={13} strokeWidth={1.5} />
-          {t('mcp.addServer')}
-        </button>
+        <p style={{
+          fontSize: 10.5, color: 'var(--text-muted)', margin: '8px 0 0', lineHeight: 1.5,
+          fontFamily: 'var(--font-ui)',
+        }}>
+          {t('mcp.settingsHint') || 'Abre la vista MCP completa para añadir, configurar y monitorizar servidores.'}
+        </p>
       </SettingGroup>
-
-      <AddMcpServerDialog
-        open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
-      />
-
-      <ConfirmDeleteDialog
-        open={serverToDelete !== null}
-        onOpenChange={(open) => !open && setServerToDelete(null)}
-        title={t('mcp.delete')}
-        itemLabel={serverToDeleteName}
-        onConfirm={() => {
-          if (serverToDelete) removeServer(serverToDelete)
-          setServerToDelete(null)
-        }}
-      />
     </div>
   )
 }

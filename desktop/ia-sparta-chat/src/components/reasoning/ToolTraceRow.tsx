@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Check, Loader2, X, AlertTriangle, FileText, Search, ChevronRight, Sparkles, FolderTree, Globe, Terminal as TerminalIcon, Pencil, Trash2 } from 'lucide-react'
+import { Check, Loader2, X, AlertTriangle, FileText, Search, ChevronRight, Sparkles, FolderTree, Globe, Terminal as TerminalIcon, Pencil, Trash2, Wrench } from 'lucide-react'
 import { SearchResultsList } from './SearchResultsList'
 import { RunningCommandBlock } from './RunningCommandBlock'
-import { inferToolSubstatus, substatusLabel } from 'ia-sparta-core'
+import { inferToolSubstatus, substatusLabel, useMCPStore, getVendorForServer } from 'ia-sparta-core'
+import { BrandIcon } from 'ia-sparta-design-system'
 import type { ToolCall, SearchProgressItem } from 'ia-sparta-core'
 
 interface ToolTraceRowProps {
@@ -222,12 +223,27 @@ function getToolCallSummary(toolCall: ToolCall): { icon: React.ReactNode; label:
         label: 'Ejecutando comando',
         description: input?.command ? truncate(String(input.command)) : '',
       }
-    default:
+    default: {
+      // Try to resolve as an MCP server tool — show brand icon if found
+      const server = useMCPStore.getState().servers.find(s =>
+        s.tools.some(t => t.name === toolCall.toolName)
+      )
+      if (server) {
+        const vendor = getVendorForServer(server.id)
+        return {
+          icon: vendor
+            ? <BrandIcon vendor={vendor} size={iconSize} />
+            : <Wrench size={iconSize} strokeWidth={1.5} />,
+          label: `Usando ${server.name}`,
+          description: toolCall.toolName,
+        }
+      }
       return {
         icon: <FileText size={iconSize} strokeWidth={1.5} />,
         label: toolCall.toolName,
         description: path ? truncate(path) : '',
       }
+    }
   }
 }
 

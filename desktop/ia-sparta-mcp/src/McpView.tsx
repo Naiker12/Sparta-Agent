@@ -5,7 +5,7 @@ import { useMCPStore } from 'ia-sparta-core'
 import { McpServerCard } from './McpServerCard'
 import { AddMcpServerDialog } from './AddMcpServerDialog'
 import { Button } from 'ia-sparta-design-system'
-import type { MCPServer, MCPServerConfig } from 'ia-sparta-core'
+import type { MCPServer, MCPServerConfig, MCPAuthType } from 'ia-sparta-core'
 import { useTranslation } from 'ia-sparta-i18n'
 import { catalogToMarketplaceItems } from './data/mcp-catalog'
 
@@ -23,23 +23,64 @@ interface MarketplaceItem {
   notes?: string
   docs_url?: string
   vendor?: string
+  maintained?: boolean
+  auth_type: string
 }
 
 const CATALOG_ITEMS = catalogToMarketplaceItems()
 
 function marketItemToConfig(item: MarketplaceItem): MCPServerConfig {
+  if (item.type === 'http') {
+    return {
+      id: item.id,
+      name: item.name,
+      type: 'http',
+      url: item.cmd,
+      enabled: true,
+      auth_type: item.auth_type as MCPAuthType,
+    }
+  }
   const parts = item.cmd.split(' ')
-  return { id: item.id, name: item.name, type: item.type, command: parts[0], args: parts.slice(1), enabled: true }
+  return {
+    id: item.id,
+    name: item.name,
+    type: 'stdio',
+    command: parts[0],
+    args: parts.slice(1),
+    enabled: true,
+    auth_type: item.auth_type as MCPAuthType,
+  }
+}
+
+const AUTH_LABELS: Record<string, string> = {
+  none: 'Sin auth',
+  api_key: 'API Key',
+  oauth2: 'OAuth 2.0',
+}
+
+const AUTH_STYLES: Record<string, { bg: string; color: string }> = {
+  none:    { bg: 'rgba(107,114,128,0.12)', color: '#9ca3af' },
+  api_key: { bg: 'rgba(234,179,8,0.12)',   color: '#eab308' },
+  oauth2:  { bg: 'rgba(59,130,246,0.12)',  color: '#60a5fa' },
 }
 
 /* ── Category accent colors (CSS-var safe) ─────────────────── */
 const CATEGORY_STYLE: Record<string, { bg: string; color: string }> = {
-  Storage:      { bg: 'rgba(59,130,246,0.12)',  color: '#60a5fa' },
-  DevTools:     { bg: 'rgba(249,115,22,0.12)',  color: '#fb923c' },
-  Database:     { bg: 'rgba(168,85,247,0.12)',  color: '#c084fc' },
-  Web:          { bg: 'rgba(34,197,94,0.12)',   color: '#4ade80' },
-  Productivity: { bg: 'rgba(236,72,153,0.12)',  color: '#f472b6' },
-  Other:        { bg: 'var(--bg-active)',        color: 'var(--text-muted)' },
+  Storage:       { bg: 'rgba(59,130,246,0.12)',  color: '#60a5fa' },
+  DevTools:      { bg: 'rgba(249,115,22,0.12)',  color: '#fb923c' },
+  Database:      { bg: 'rgba(168,85,247,0.12)',  color: '#c084fc' },
+  Web:           { bg: 'rgba(34,197,94,0.12)',   color: '#4ade80' },
+  Productivity:  { bg: 'rgba(236,72,153,0.12)',  color: '#f472b6' },
+  Conocimiento:  { bg: 'rgba(236,72,153,0.12)',  color: '#f472b6' },
+  Knowledge:     { bg: 'rgba(236,72,153,0.12)',  color: '#f472b6' },
+  Utility:       { bg: 'rgba(107,114,128,0.12)', color: '#9ca3af' },
+  Comunicación:  { bg: 'rgba(34,197,94,0.12)',   color: '#4ade80' },
+  Comunicacion:  { bg: 'rgba(34,197,94,0.12)',   color: '#4ade80' },
+  Diseño:        { bg: 'rgba(249,115,22,0.12)',  color: '#fb923c' },
+  Diseno:        { bg: 'rgba(249,115,22,0.12)',  color: '#fb923c' },
+  Pagos:         { bg: 'rgba(16,185,129,0.12)',  color: '#10b981' },
+  Monitoreo:     { bg: 'rgba(239,68,68,0.12)',   color: '#ef4444' },
+  Other:         { bg: 'var(--bg-active)',        color: 'var(--text-muted)' },
 }
 
 function StatPill({ label, value, accent = false, icon }: { label: string; value: number; accent?: boolean; icon?: React.ReactNode }) {
@@ -231,20 +272,34 @@ export function McpView() {
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                          {brandVendor
-                            ? <BrandIcon vendor={brandVendor} size={15} />
-                            : <Plug size={13} style={{ color: 'var(--text-muted)' }} />
-                          }
+                          <BrandIcon vendor={brandVendor ?? 'filesystem'} size={15} />
                           <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-ui)' }}>
                             {item.name}
                           </span>
+                          {item.maintained === false && (
+                            <span style={{
+                              fontSize: 9, fontWeight: 600, letterSpacing: '0.03em',
+                              padding: '1px 5px', borderRadius: 4, fontFamily: 'var(--font-ui)',
+                              background: 'rgba(234,179,8,0.12)', color: 'rgb(234,179,8)',
+                            }}>
+                              Archivado
+                            </span>
+                          )}
                         </div>
-                        <span style={{
-                          fontSize: 9, fontWeight: 700, padding: '1px 6px', borderRadius: 4,
-                          fontFamily: 'var(--font-mono)', background: catStyle.bg, color: catStyle.color,
-                        }}>
-                          {item.category}
-                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <span style={{
+                            fontSize: 9, fontWeight: 700, padding: '1px 6px', borderRadius: 4,
+                            fontFamily: 'var(--font-mono)', ...AUTH_STYLES[item.auth_type] ?? AUTH_STYLES.none,
+                          }}>
+                            {AUTH_LABELS[item.auth_type] ?? item.auth_type}
+                          </span>
+                          <span style={{
+                            fontSize: 9, fontWeight: 700, padding: '1px 6px', borderRadius: 4,
+                            fontFamily: 'var(--font-mono)', background: catStyle.bg, color: catStyle.color,
+                          }}>
+                            {item.category}
+                          </span>
+                        </div>
                       </div>
 
                       <p style={{ fontSize: 11, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.45, fontFamily: 'var(--font-ui)' }}>

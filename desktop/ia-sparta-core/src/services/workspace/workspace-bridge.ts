@@ -29,6 +29,7 @@ export async function activateWorkspace(path: string): Promise<void> {
       command: 'npx',
       args: ['-y', '@modelcontextprotocol/server-filesystem', path],
       enabled: true,
+      auth_type: 'none',
     })
   } catch (err) {
     console.warn('[workspace-bridge] Could not auto-configure filesystem MCP server:', err)

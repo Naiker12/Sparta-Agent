@@ -1,7 +1,7 @@
 export * from './events'
 export { type MessageRole, type ToolCall, type ToolCallSubstatus, type PipelineStep, type Message, type Session, type ChatRequest, type ChatStreamChunk, type ThinkingStatus, type SearchProgressItem, type ReasoningEffort, type ReasoningDetail, type MessagePart, type ReasoningOrigin } from './chat'
 export { type ProviderVendor, type ProviderKind, type Provider, type ModelInfo, type AIProvider, type ConnectionTestResult } from './provider'
-export { type MCPServerType, type MCPServerConfig, type MCPTool, type MCPServer } from './mcp'
+export { type MCPServerType, type MCPAuthType, type MCPServerConfig, type MCPTool, type MCPServer } from './mcp'
 export { type MemoryEntry, type MemoryRelation, type MemoryGraphNode, type MemoryGraph, type ExtractedMemory, type RelationType } from './memory'
 export { type AgentType, type AgentStatus, type Agent, type Task, type TaskStep, type SubagentRunStatus, type SubagentStep, type SubagentRun } from './agent'
 export { type SkillCategory, type Skill, type DownloadableSkill, type InstalledSkill, type SkillViewResult, type SkillScanResult, type TrustLevel, type RiskLevel, SKILL_CATEGORIES, CATEGORY_DESCRIPTIONS, normalizeCategory, formatCategoryLabel } from './skill'

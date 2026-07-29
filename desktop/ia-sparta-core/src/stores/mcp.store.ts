@@ -2,6 +2,21 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { MCPServer, MCPServerConfig, MCPTool } from '../types'
 
+async function clearVaultSecrets(serverId: string): Promise<void> {
+  if (typeof window === 'undefined' || !window.vault?.isAvailable) return
+  try {
+    const keys = await window.vault.listKeys()
+    const serverPrefix = `mcp:${serverId}:`
+    for (const key of keys) {
+      if (key.startsWith(serverPrefix)) {
+        await window.vault.deleteKey(key)
+      }
+    }
+  } catch {
+    // Vault not available — skip cleanup
+  }
+}
+
 interface MCPState {
   servers: MCPServer[]
   addServer: (config: MCPServerConfig) => void
@@ -39,8 +54,10 @@ export const useMCPStore = create<MCPState>()(
       }
     }),
 
-  removeServer: (id) =>
-    set((s) => ({ servers: s.servers.filter((sv) => sv.id !== id) })),
+  removeServer: (id) => {
+    clearVaultSecrets(id)
+    set((s) => ({ servers: s.servers.filter((sv) => sv.id !== id) }))
+  },
 
   setConnected: (id, connected) =>
     set((s) => ({
