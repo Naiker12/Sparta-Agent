@@ -4,6 +4,7 @@ import fsPromises from 'node:fs/promises'
 import path from 'node:path'
 import { startFileWatcher, stopFileWatcher, expandWatcher, collapseWatcher } from './file-watcher'
 import { IGNORED_DIR_SET } from 'ia-sparta-core'
+import { isWithinRoot } from '../tools/main-process-file-tools'
 
 export interface FileTreeNode {
   name: string
@@ -16,12 +17,6 @@ let _workspaceRoot: string | null = null
 
 export function getWorkspaceRoot(): string | null {
   return _workspaceRoot
-}
-
-function isWithinRoot(filePath: string, root: string): boolean {
-  const resolved = fs.realpathSync(path.resolve(filePath))
-  const resolvedRoot = fs.realpathSync(path.resolve(root))
-  return resolved === resolvedRoot || resolved.startsWith(resolvedRoot + path.sep)
 }
 
 export function registerFilesystemIPC() {

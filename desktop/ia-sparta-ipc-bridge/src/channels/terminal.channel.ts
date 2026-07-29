@@ -3,6 +3,7 @@ import * as pty from 'node-pty'
 import { execSync } from 'node:child_process'
 import { accessSync } from 'node:fs'
 import os from 'os'
+import { runCommandForAgent } from '../tools/main-process-shell-tool'
 
 // Canonical source of truth: python/sparta_ai/security/command_sanitizer.py
 // This list MUST stay in sync with DANGEROUS_PATTERNS in that file.
@@ -298,49 +299,16 @@ export function registerTerminalIPC() {
     return Array.from(sessions.keys())
   })
 
-  ipcMain.handle('terminal:agent-spawn', (
-    event: IpcMainInvokeEvent,
+  ipcMain.handle('terminal:agent-spawn', async (
+    _event: IpcMainInvokeEvent,
     { procId, command, cwd }: { procId: string; command: string; cwd?: string }
   ) => {
-    const sanitizedCmd = command.trim()
-    const isDangerous = DESTRUCTIVE_PATTERNS.some((p) => p.test(sanitizedCmd))
-    if (isDangerous) {
-      return { success: false, error: 'Comando bloqueado para procesos de fondo.' }
-    }
-
-    const { shell, args: shellArgs } = shellCommand()
-    const win = getWin(event)
-
-    const workingDir = cwd || getWorkspaceRoot() || process.env.HOME || process.cwd()
-
-    let ptyProcess: pty.IPty
     try {
-      ptyProcess = pty.spawn(shell, shellArgs, {
-        name: 'xterm-256color',
-        cols: 120,
-        rows: 30,
-        cwd: workingDir,
-        env: { ...process.env, SPARTA_TERMINAL: '1', SPARTA_AGENT_BG: '1' },
-      })
+      const res = await runCommandForAgent(procId, command, cwd)
+      return { success: res.success, error: res.error }
     } catch (err) {
       return { success: false, error: err instanceof Error ? err.message : String(err) }
     }
-
-    agentProcs.set(procId, { pty: ptyProcess, win })
-
-    ptyProcess.onData((data: string) => {
-      if (!win.isDestroyed()) win.webContents.send('terminal:agent-output', { procId, chunk: data })
-    })
-
-    ptyProcess.onExit(({ exitCode }: { exitCode: number }) => {
-      agentProcs.delete(procId)
-      if (!win.isDestroyed()) win.webContents.send('terminal:agent-exit', { procId, code: exitCode })
-    })
-
-    win.webContents.send('terminal:agent-spawn', { procId, command: sanitizedCmd })
-    ptyProcess.write(sanitizedCmd + '\r')
-
-    return { success: true }
   })
 
   ipcMain.handle('terminal:agent-kill', (_event, { procId }: { procId: string }) => {

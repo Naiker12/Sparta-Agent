@@ -54,6 +54,7 @@ export type ReasoningOrigin = 'native' | 'emulated'
 
 export type MessagePart =
   | { kind: 'reasoning'; id: string; text: string; origin: ReasoningOrigin; startedAt: number; completedAt?: number }
+  | { kind: 'text'; id: string; content: string; startedAt: number }
   | { kind: 'tool'; id: string; toolCallId: string; startedAt: number }
   | { kind: 'subagent'; id: string; subagentName: string; taskSummary: string; startedAt: number; completedAt?: number; durationMs?: number; success?: boolean }
 

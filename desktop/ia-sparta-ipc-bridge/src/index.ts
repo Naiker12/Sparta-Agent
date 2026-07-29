@@ -20,3 +20,6 @@ export * from './channels/sidecar.channel.ts'
 export * from './channels/skills.channel.ts'
 export * from './channels/terminal.channel.ts'
 export * from './channels/vault.ipc.ts'
+export * from './tools/main-process-file-tools'
+export * from './tools/main-process-shell-tool'
+

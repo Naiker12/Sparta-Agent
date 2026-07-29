@@ -1,15 +1,22 @@
-import { useState } from 'react'
-import { Copy, Check, Pencil, CheckCircle, X, RefreshCw, Trash2, AlertCircle, Settings } from 'lucide-react'
-import type { Message } from 'ia-sparta-core'
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import type { ThinkingStatus } from 'ia-sparta-core'
+import { Copy, Check, Pencil, CheckCircle, X, RefreshCw, Trash2, AlertCircle, Settings, ChevronDown } from 'lucide-react'
+import type { Message, MessagePart, ToolCall } from 'ia-sparta-core'
 import { useChatStore, useSettingsStore } from 'ia-sparta-core'
 import { useEventBus } from 'ia-sparta-core'
 import { useChatSession } from 'ia-sparta-core'
 import { TimelineBlock, TurnActivityBadge } from './reasoning/TimelineBlock'
+import { ThinkingPill } from './reasoning/ThinkingPill'
+import { ThinkingLines } from './reasoning/ThinkingLines'
 import { StreamCursor } from './reasoning/StreamCursor'
+import { ToolTraceRow } from './reasoning/ToolTraceRow'
+import { SubagentExecutionCard } from './reasoning/SubagentExecutionCard'
 import { PipelineTrace } from './reasoning/PipelineTrace'
 import { MessageActionsDialog } from './MessageActionsDialog'
 import { SpartaIcon } from './SpartaIcon'
-import { getMessageRenderState } from 'ia-sparta-core'
+import { getMessageRenderState, getAssistantRenderGroups, splitTurnAtAnswer, shouldCollapseSteps, pickElapsedVerb, formatDuration } from 'ia-sparta-core'
+import type { AssistantRenderGroup, ReasoningGroup } from 'ia-sparta-core'
 import { MarkdownRenderer } from './MarkdownRenderer'
 import { useTranslation } from 'ia-sparta-i18n'
 
@@ -42,6 +49,11 @@ export function MessageBubble({ message, isLastUser = false, isLastAssistant = f
   const { sendMessage } = useChatSession()
   const dispatch = useEventBus((s) => s.dispatch)
   const { t } = useTranslation()
+  const hasInterleavedTextParts = message.parts?.some(p => p.kind === 'text')
+  const splitTurn = useMemo(() => {
+    if (!hasInterleavedTextParts || message.isStreaming || !message.parts) return null
+    return splitTurnAtAnswer(message.parts, false)
+  }, [hasInterleavedTextParts, message.isStreaming, message.parts])
   const isErrorMessage = !isUser && (message.content.startsWith('Error:') || message.content.toLowerCase().includes('api key'))
   const suggestions = !isUser && !isErrorMessage ? (message.suggestions ?? []) : []
 
@@ -186,103 +198,109 @@ export function MessageBubble({ message, isLastUser = false, isLastAssistant = f
             </div>
           ) : null}
 
-          {/* Unified Timeline ABOVE the response (thinking first, answer below) */}
-          {!isUser && (
-            <div style={{ marginBottom: 8 }}>
-              <TimelineBlock message={message} />
-            </div>
-          )}
-
-          {/* Response text BELOW thinking block */}
-          {renderState.kind === 'generating' || renderState.kind === 'responding' || renderState.kind === 'done' ? (
+          {/* Interleaved parts: render reasoning + text in chronological order — with merged reasoning groups */}
+          {!isUser && hasInterleavedTextParts && message.parts ? (
+            <InterleavedRenderer
+              parts={message.parts}
+              isStreaming={message.isStreaming ?? false}
+              toolCalls={message.toolCalls ?? []}
+              reasoningStartedAt={message.reasoningStartedAt}
+              reasoningCompletedAt={message.reasoningCompletedAt}
+              messageId={message.id}
+            />
+          ) : (
             <>
-              {isUser ? (
-                <div
-                  style={{
-                    fontSize: 13.5,
-                    lineHeight: 1.6,
-                    color: 'var(--text-primary)',
-                    fontFamily: 'var(--font-ui)',
-                    whiteSpace: 'pre-wrap',
-                    wordBreak: 'break-word',
-                  }}
-                >
-                  {renderState.content}
-                </div>
-              ) : (
-                <div
-                  style={{
-                    fontSize: 13.5,
-                    lineHeight: 1.6,
-                    color: 'var(--text-primary)',
-                    fontFamily: 'var(--font-ui)',
-                    wordBreak: 'break-word',
-                  }}
-                >
-                  {isErrorMessage ? (
-                    <div
-                      style={{
-                        padding: '12px 14px',
-                        borderRadius: 'var(--radius-md)',
-                        background: 'rgba(239, 68, 68, 0.08)',
-                        border: '1px solid rgba(239, 68, 68, 0.25)',
-                        color: 'var(--text-primary)',
-                        fontSize: 13,
-                        lineHeight: 1.5,
-                        fontFamily: 'var(--font-ui)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: 10,
-                        marginTop: 4,
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#ef4444', fontWeight: 600, fontSize: 13 }}>
-                        <AlertCircle size={16} />
-                        <span>Error del Proveedor de IA</span>
-                      </div>
-                      <div style={{ color: 'var(--text-secondary)', fontSize: 12.5 }}>
-                        {renderState.content.replace(/^Error:\s*/i, '')}
-                      </div>
-                      {(renderState.content.toLowerCase().includes('api key') ||
-                        renderState.content.toLowerCase().includes('expirada') ||
-                        renderState.content.toLowerCase().includes('inválida') ||
-                        renderState.content.toLowerCase().includes('configura')) && (
-                        <div style={{ paddingTop: 2 }}>
-                          <button
-                            type="button"
-                            onClick={() => useSettingsStore.getState().openSettings()}
-                            style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: 6,
-                              padding: '6px 12px',
-                              borderRadius: 'var(--radius-sm)',
-                              background: 'var(--accent)',
-                              color: 'white',
-                              fontSize: 11.5,
-                              fontWeight: 500,
-                              border: 'none',
-                              cursor: 'pointer',
-                              fontFamily: 'var(--font-ui)',
-                            }}
-                          >
-                            <Settings size={13} />
-                            Configurar API Key en Ajustes ⚙️
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <MarkdownRenderer
-                      content={cleanDisplayContent(renderState.content)}
-                      isStreaming={renderState.kind === 'responding' || renderState.kind === 'generating'}
-                    />
-                  )}
+              {/* Unified Timeline ABOVE the response (thinking first, answer below) — legacy fallback */}
+              {!isUser && (
+                <div style={{ marginBottom: 8 }}>
+                  <TimelineBlock message={message} />
                 </div>
               )}
-              {!isUser && (renderState.kind === 'responding' || renderState.kind === 'generating') && <StreamCursor visible />}
+
+              {/* Response text BELOW thinking block — legacy fallback */}
+              {renderState.kind === 'generating' || renderState.kind === 'responding' || renderState.kind === 'done' ? (
+                <>
+                  {isUser ? (
+                    <MarkdownRenderer
+                      content={renderState.content}
+                      isStreaming={false}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        fontSize: 13.5,
+                        lineHeight: 1.6,
+                        color: 'var(--text-primary)',
+                        fontFamily: 'var(--font-ui)',
+                        wordBreak: 'break-word',
+                      }}
+                    >
+                      {isErrorMessage ? (
+                        <div
+                          style={{
+                            padding: '12px 14px',
+                            borderRadius: 'var(--radius-md)',
+                            background: 'rgba(239, 68, 68, 0.08)',
+                            border: '1px solid rgba(239, 68, 68, 0.25)',
+                            color: 'var(--text-primary)',
+                            fontSize: 13,
+                            lineHeight: 1.5,
+                            fontFamily: 'var(--font-ui)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 10,
+                            marginTop: 4,
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#ef4444', fontWeight: 600, fontSize: 13 }}>
+                            <AlertCircle size={16} />
+                            <span>Error del Proveedor de IA</span>
+                          </div>
+                          <div style={{ color: 'var(--text-secondary)', fontSize: 12.5 }}>
+                            {renderState.content.replace(/^Error:\s*/i, '')}
+                          </div>
+                          {(renderState.content.toLowerCase().includes('api key') ||
+                            renderState.content.toLowerCase().includes('expirada') ||
+                            renderState.content.toLowerCase().includes('inválida') ||
+                            renderState.content.toLowerCase().includes('configura')) && (
+                            <div style={{ paddingTop: 2 }}>
+                              <button
+                                type="button"
+                                onClick={() => useSettingsStore.getState().openSettings()}
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: 6,
+                                  padding: '6px 12px',
+                                  borderRadius: 'var(--radius-sm)',
+                                  background: 'var(--accent)',
+                                  color: 'white',
+                                  fontSize: 11.5,
+                                  fontWeight: 500,
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                  fontFamily: 'var(--font-ui)',
+                                }}
+                              >
+                                <Settings size={13} />
+                                Configurar API Key en Ajustes ⚙️
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <MarkdownRenderer
+                          content={cleanDisplayContent(renderState.content)}
+                          isStreaming={renderState.kind === 'responding' || renderState.kind === 'generating'}
+                        />
+                      )}
+                    </div>
+                  )}
+                  {!isUser && (renderState.kind === 'responding' || renderState.kind === 'generating') && <StreamCursor visible />}
+                </>
+              ) : null}
             </>
-          ) : null}
+          )}
 
           {/* Pipeline trace (kept separate as it's not part of the reasoning/tool timeline) */}
           {message.pipelineSteps && message.pipelineSteps.length > 0 && (
@@ -358,7 +376,7 @@ export function MessageBubble({ message, isLastUser = false, isLastAssistant = f
                 marginTop: 6,
               }}
             >
-              {!isUser && <TurnActivityBadge message={message} />}
+              {!isUser && !splitTurn && <TurnActivityBadge message={message} />}
               <IconButton icon={copied ? <Check size={11} /> : <Copy size={11} />} onClick={handleCopy} title={t('chat.copy')} />
               {isUser && isLastUser && <IconButton icon={<Pencil size={11} />} onClick={() => { setEditValue(message.content); setEditing(true) }} title={t('chat.edit')} />}
               {isUser && isLastUser && <IconButton icon={<RefreshCw size={11} />} onClick={() => sendMessage(message.content)} title={t('chat.resend')} />}
@@ -375,6 +393,293 @@ export function MessageBubble({ message, isLastUser = false, isLastAssistant = f
         />
       </div>
     </>
+  )
+}
+
+function InterleavedRenderer({ parts, isStreaming, toolCalls, reasoningStartedAt, reasoningCompletedAt, messageId }: {
+  parts: MessagePart[]
+  isStreaming: boolean
+  toolCalls: ToolCall[]
+  reasoningStartedAt?: number
+  reasoningCompletedAt?: number
+  messageId: string
+}) {
+  const split = useMemo(
+    () => splitTurnAtAnswer(parts, isStreaming),
+    [parts, isStreaming]
+  )
+
+  const groups = useMemo(
+    () => getAssistantRenderGroups(parts, isStreaming),
+    [parts, isStreaming]
+  )
+
+  if (split) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <StepRunSummary
+          steps={split.steps}
+          toolCalls={toolCalls}
+          reasoningStartedAt={reasoningStartedAt}
+          reasoningCompletedAt={reasoningCompletedAt}
+          messageId={messageId}
+        />
+        {split.answer.map((group) => (
+          <GroupRenderer key={group.id} group={group} isStreaming={false} toolCalls={toolCalls} />
+        ))}
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {groups.map((group) => (
+        <GroupRenderer key={group.id} group={group} isStreaming={isStreaming} toolCalls={toolCalls} />
+      ))}
+      {isStreaming && <StreamCursor visible />}
+    </div>
+  )
+}
+
+function GroupRenderer({ group, isStreaming, toolCalls }: {
+  group: AssistantRenderGroup
+  isStreaming: boolean
+  toolCalls: ToolCall[]
+}) {
+  if (group.kind === 'reasoning') {
+    return <ReasoningGroupBlock group={group} />
+  }
+  if (group.kind === 'text') {
+    return (
+      <MarkdownRenderer
+        content={cleanDisplayContent(group.content)}
+        isStreaming={isStreaming}
+      />
+    )
+  }
+  if (group.kind === 'tool') {
+    const tc = toolCalls.find((t) => t.id === group.toolCallId)
+    if (!tc) return null
+    return <ToolTraceRow toolCall={tc} />
+  }
+  if (group.kind === 'subagent') {
+    return (
+      <SubagentExecutionCard
+        subagentName={group.subagentName}
+        taskSummary={group.taskSummary}
+        status={group.completedAt ? (group.success === false ? 'failed' : 'completed') : 'running'}
+        durationMs={group.durationMs}
+        success={group.success}
+      />
+    )
+  }
+  return null
+}
+
+function ReasoningGroupBlock({ group }: { group: ReasoningGroup }) {
+  const isActive = group.isStreaming
+  const status: ThinkingStatus = isActive ? 'streaming' : 'completed'
+
+  const savedState = useMemo(() => {
+    try {
+      const stored = localStorage.getItem(`sparta:reasoning:${group.id}`)
+      if (stored !== null) return JSON.parse(stored)
+    } catch { /* ignore */ }
+    return null
+  }, [group.id])
+
+  const [isExpanded, setIsExpanded] = useState(savedState !== null ? savedState : isActive)
+  const [elapsed, setElapsed] = useState(0)
+  const userToggled = useRef(savedState !== null)
+  const startedAtRef = useRef(group.startedAt)
+
+  useEffect(() => {
+    if (isActive) {
+      startedAtRef.current = group.startedAt
+      setElapsed(0)
+    }
+  }, [isActive, group.startedAt])
+
+  useEffect(() => {
+    if (!isActive) return
+    const interval = setInterval(() => {
+      setElapsed((Date.now() - startedAtRef.current) / 1000)
+    }, 200)
+    return () => clearInterval(interval)
+  }, [isActive])
+
+  useEffect(() => {
+    if (userToggled.current && group.id) {
+      try { localStorage.setItem(`sparta:reasoning:${group.id}`, JSON.stringify(isExpanded)) } catch { /* ignore */ }
+    }
+  }, [isExpanded, group.id])
+
+  useEffect(() => {
+    if (userToggled.current) return
+    if (isActive) {
+      setIsExpanded(true)
+    } else {
+      setIsExpanded(false)
+    }
+  }, [isActive])
+
+  const handleToggle = useCallback(() => {
+    userToggled.current = true
+    setIsExpanded((v: boolean) => !v)
+  }, [])
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+      <button
+        onClick={handleToggle}
+        style={{
+          background: 'none',
+          border: 'none',
+          padding: 0,
+          cursor: 'pointer',
+          textAlign: 'left',
+          display: 'flex',
+          alignItems: 'center',
+        }}
+      >
+        <ThinkingPill status={status} isExpanded={isExpanded} elapsed={elapsed} lastSkillName={null} />
+      </button>
+      <AnimatePresence initial={false}>
+        {isExpanded && (
+          <motion.div
+            key="reasoning-content"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            style={{ overflow: 'hidden' }}
+          >
+            <div
+              style={{
+                marginLeft: 20,
+                paddingLeft: 12,
+                borderLeft: '1px solid var(--border-subtle)',
+                marginTop: 2,
+              }}
+            >
+              <ThinkingLines text={group.text} isStreaming={isActive} />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
+function StepRunSummary({ steps, toolCalls, reasoningStartedAt, reasoningCompletedAt, messageId }: {
+  steps: AssistantRenderGroup[]
+  toolCalls: ToolCall[]
+  reasoningStartedAt?: number
+  reasoningCompletedAt?: number
+  messageId: string
+}) {
+  const verb = useMemo(() => pickElapsedVerb(messageId), [messageId])
+
+  const elapsed = useMemo(() => {
+    if (reasoningStartedAt !== undefined && reasoningCompletedAt !== undefined && reasoningCompletedAt > reasoningStartedAt) {
+      return (reasoningCompletedAt - reasoningStartedAt) / 1000
+    }
+    return null
+  }, [reasoningStartedAt, reasoningCompletedAt])
+
+  const label = useMemo(() => {
+    if (elapsed !== null) return `${verb} for ${formatDuration(elapsed)}`
+    const stepRowCount = steps.filter(g => g.kind !== 'text').length
+    return stepRowCount === 1 ? '1 step' : `${stepRowCount} steps`
+  }, [verb, elapsed, steps])
+
+  const collapse = useMemo(() => shouldCollapseSteps(steps), [steps])
+
+  const savedState = useMemo(() => {
+    try {
+      const stored = localStorage.getItem(`sparta:step-summary:${messageId}`)
+      if (stored !== null) return JSON.parse(stored)
+    } catch { /* ignore */ }
+    return null
+  }, [messageId])
+
+  const [isExpanded, setIsExpanded] = useState(savedState === true)
+
+  const handleToggle = useCallback(() => {
+    setIsExpanded((v) => {
+      const next = !v
+      try { localStorage.setItem(`sparta:step-summary:${messageId}`, JSON.stringify(next)) } catch { /* ignore */ }
+      return next
+    })
+  }, [messageId])
+
+  if (!collapse) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {steps.map((group) => (
+          <GroupRenderer key={group.id} group={group} isStreaming={false} toolCalls={toolCalls} />
+        ))}
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+      <button
+        onClick={handleToggle}
+        style={{
+          background: 'none',
+          border: 'none',
+          padding: 0,
+          cursor: 'pointer',
+          textAlign: 'left',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 6,
+          fontSize: 12,
+          color: 'var(--text-secondary)',
+          fontFamily: 'var(--font-ui)',
+        }}
+      >
+        <span className="font-medium">{label}</span>
+        <ChevronDown
+          size={13}
+          style={{
+            color: 'var(--text-muted)',
+            transition: 'transform 0.2s',
+            transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+          }}
+        />
+      </button>
+      <AnimatePresence initial={false}>
+        {isExpanded && (
+          <motion.div
+            key="step-run-content"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            style={{ overflow: 'hidden' }}
+          >
+            <div
+              style={{
+                marginLeft: 20,
+                paddingLeft: 12,
+                borderLeft: '1px solid var(--border-subtle)',
+                marginTop: 2,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 6,
+              }}
+            >
+              {steps.map((group) => (
+                <GroupRenderer key={group.id} group={group} isStreaming={false} toolCalls={toolCalls} />
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   )
 }
 

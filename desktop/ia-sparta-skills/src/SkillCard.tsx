@@ -68,7 +68,7 @@ export function SkillCard({
           cursor: onOpen ? 'pointer' : 'default',
           display: 'flex',
           flexDirection: 'column',
-          justify: 'space-between',
+          justifyContent: 'space-between',
           padding: 14,
           gap: 10,
         }}

@@ -9,8 +9,8 @@ import {
 } from './shared'
 import { getKey as vaultGetKey } from 'ia-sparta-vault'
 import { ChatCompletionsTransport, AnthropicTransport, OllamaTransport } from 'ia-sparta-providers'
-import { loadSkillDocuments } from 'ia-sparta-ipc-bridge'
-import { buildWebSearchTool, executeWebSearch } from 'ia-sparta-core'
+import { loadSkillDocuments, isMainProcessFileTool, executeMainProcessFileTool, runCommandForAgent } from 'ia-sparta-ipc-bridge'
+import { buildWebSearchTool, executeWebSearch, buildWebFetchTool, executeWebFetch } from 'ia-sparta-core'
 
 const MAX_SKILL_CONTEXT_CHARS = 16_000
 const MAX_SKILL_DOCUMENTS_PER_TURN = 4
@@ -113,14 +113,20 @@ export function registerChatSendIPC(): void {
             : new ChatCompletionsTransport(vendor as any, effectiveKey, req.apiUrl)
         const userText = [...(req.messages || [])].reverse().find((message) => message.role === 'user')?.content ?? ''
         const skillContext = buildSkillContext(req.skills, userText)
+        const folderPath = req.connectedFolder || req.workspaceRoot
+        const workspaceContext = folderPath
+          ? `[INFORMACIÓN DEL WORKSPACE]\nLa carpeta de trabajo conectada es: "${folderPath}".\nUsá esta ruta absoluta como base para list_directory, read_file, write_file, edit_file, delete_file y run_command a menos que el usuario indique explícitamente otra.`
+          : ''
+
         const systemPrompt = [
           req.system || 'Sos Sparta Agent, un asistente de ingeniería de software de alto rendimiento.',
+          workspaceContext,
           skillContext,
         ].filter(Boolean).join('\n\n')
 
         const formattedMessages = (req.messages || []).map(m => ({ role: m.role as any, content: m.content }))
 
-        // Prepare tools list and inject web_search tool if webSearchEnabled is true
+        // Prepare tools list and inject web_search + web_fetch tools if webSearchEnabled is true
         const tools: unknown[] = req.tools ? [...req.tools] : []
         if (req.webSearchEnabled) {
           const hasWebSearch = tools.some((t: any) =>
@@ -128,6 +134,12 @@ export function registerChatSendIPC(): void {
           )
           if (!hasWebSearch) {
             tools.push(buildWebSearchTool())
+          }
+          const hasWebFetch = tools.some((t: any) =>
+            t.name === 'web_fetch' || t.function?.name === 'web_fetch'
+          )
+          if (!hasWebFetch) {
+            tools.push(buildWebFetchTool())
           }
         }
 
@@ -262,6 +274,68 @@ export function registerChatSendIPC(): void {
               stage: 'done',
               tool_call_id: toolCallId,
             })
+          } else if (toolName === 'web_fetch') {
+            const url = typeof toolInput.url === 'string' ? toolInput.url.trim() : ''
+
+            sendToRenderer({
+              sessionId,
+              messageId,
+              type: 'thinking:status',
+              text: url ? `Obteniendo ${url}...` : 'Obteniendo página web...',
+            })
+
+            sendToRenderer({
+              sessionId,
+              messageId,
+              type: 'search:progress',
+              stage: 'searching',
+              query: url,
+              tool_call_id: toolCallId,
+            })
+
+            toolOutput = await executeWebFetch(url)
+
+            sendToRenderer({
+              sessionId,
+              messageId,
+              type: 'search:progress',
+              stage: 'done',
+              tool_call_id: toolCallId,
+            })
+          } else if (isMainProcessFileTool(toolName)) {
+            sendToRenderer({
+              sessionId,
+              messageId,
+              type: 'thinking:status',
+              text: `Ejecutando ${toolName}...`,
+            })
+            try {
+              toolOutput = await executeMainProcessFileTool(
+                toolName,
+                toolInput as Record<string, unknown>,
+                req.connectedFolder || req.workspaceRoot,
+              )
+            } catch (err) {
+              toolOutput = `Error ejecutando ${toolName}: ${err instanceof Error ? err.message : String(err)}`
+            }
+          } else if (toolName === 'run_command') {
+            const command = typeof toolInput.command === 'string' ? toolInput.command : JSON.stringify(toolInput)
+            sendToRenderer({
+              sessionId,
+              messageId,
+              type: 'thinking:status',
+              text: `Ejecutando comando: ${command}...`,
+            })
+            try {
+              const res = await runCommandForAgent(
+                toolCallId,
+                command,
+                (toolInput.cwd as string) || req.connectedFolder || req.workspaceRoot,
+              )
+              toolOutput = res.output
+            } catch (err) {
+              toolOutput = `Error ejecutando comando: ${err instanceof Error ? err.message : String(err)}`
+            }
           } else {
             toolOutput = `Herramienta ${toolName} ejecutada.`
           }

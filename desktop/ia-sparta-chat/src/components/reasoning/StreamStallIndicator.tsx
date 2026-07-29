@@ -9,6 +9,7 @@ interface StreamStallIndicatorProps {
   message?: Message
 }
 
+
 function getStallMessage(message?: Message): string {
   // Some providers (including gateways that omit reasoning_content) do not
   // expose live thought tokens. Make the fallback reflect elapsed provider
