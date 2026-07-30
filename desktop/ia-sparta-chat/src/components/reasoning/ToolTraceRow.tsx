@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Check, Loader2, X, AlertTriangle, FileText, Search, ChevronRight, Sparkles, FolderTree, Globe, Terminal as TerminalIcon, Pencil, Trash2, Wrench } from 'lucide-react'
 import { SearchResultsList } from './SearchResultsList'
 import { RunningCommandBlock } from './RunningCommandBlock'
-import { inferToolSubstatus, substatusLabel, useMCPStore, getVendorForServer } from 'ia-sparta-core'
+import { inferToolSubstatus, substatusLabel, useMCPStore, getVendorForServer, useArtifactStore } from 'ia-sparta-core'
 import { BrandIcon } from 'ia-sparta-design-system'
 import type { ToolCall, SearchProgressItem } from 'ia-sparta-core'
 
@@ -282,6 +282,11 @@ export function ToolTraceRow({ toolCall }: ToolTraceRowProps) {
   const [expanded, setExpanded] = useState(toolCall.status === 'running')
   const [liveSubstatus, setLiveSubstatus] = useState(toolCall.substatus)
   const { icon, label, description } = getToolCallSummary(toolCall)
+  const writeFilePath = useMemo(() => {
+    if (toolCall.toolName !== 'write_file_tool' && toolCall.toolName !== 'write_file') return null
+    const input = toolCall.input as Record<string, unknown> | undefined
+    return (input?.path ?? input?.file_path ?? input?.directory ?? null) as string | null
+  }, [toolCall.toolName, toolCall.input])
   const isSearch = toolCall.toolName === 'web_search' || toolCall.toolName === 'web_search_tool'
   const isFetch = toolCall.toolName === 'web_fetch' || toolCall.toolName === 'web_fetch_tool'
 
@@ -390,6 +395,21 @@ export function ToolTraceRow({ toolCall }: ToolTraceRowProps) {
               ? `${(toolCall.durationMs / 1000).toFixed(1)}s`
               : `${toolCall.durationMs}ms`}
           </span>
+        )}
+
+        {writeFilePath && toolCall.status === 'completed' && (
+          <button
+            onClick={(e) => { e.stopPropagation(); useArtifactStore.getState().open(writeFilePath) }}
+            style={{
+              background: 'none', border: '1px solid var(--border-subtle)',
+              borderRadius: 4, padding: '1px 6px', cursor: 'pointer',
+              color: 'var(--text-muted)', fontSize: 10, fontFamily: 'var(--font-ui)',
+              flexShrink: 0, whiteSpace: 'nowrap',
+            }}
+            title="Ver vista previa"
+          >
+            Vista previa
+          </button>
         )}
 
         <ChevronRight

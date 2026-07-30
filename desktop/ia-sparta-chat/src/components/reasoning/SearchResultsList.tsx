@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import { BookOpen, Check, Globe, ExternalLink } from 'lucide-react'
-import { cn } from 'ia-sparta-core'
+import { cn, openExternal } from 'ia-sparta-core'
 import type { SearchProgressItem } from 'ia-sparta-core'
 
 interface SearchResultsListProps {
@@ -33,21 +33,12 @@ export function SearchResultsList({ items }: SearchResultsListProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: rowDelay(idx), duration: 0.18, ease: 'easeOut' }}
           >
-            <a
-              href={item.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 py-1.5 px-2 rounded-md transition-colors duration-150 bg-[var(--bg-input)]/40 hover:bg-[var(--bg-hover)] border border-[var(--border-subtle)]/50 group"
-              title={item.title || item.url}
-              onClick={(e) => {
-                e.preventDefault()
-                if (window.electron?.send)
-                  window.electron.send('shell:open-external', item.url)
-                else
-                  window.open(item.url, '_blank', 'noopener')
-              }}
-              style={{ textDecoration: 'none' }}
-            >
+              <button
+                  className="flex items-center gap-2 py-1.5 px-2 rounded-md transition-colors duration-150 bg-[var(--bg-input)]/40 hover:bg-[var(--bg-hover)] border border-[var(--border-subtle)]/50 group w-full text-left"
+                  title={item.title || item.url}
+                  onClick={() => openExternal(item.url)}
+                  style={{ textDecoration: 'none', cursor: 'pointer' }}
+                >
               {/* Status icon badge */}
               <div className="flex items-center justify-center shrink-0">
                 {item.status === 'visited' ? (
@@ -103,7 +94,7 @@ export function SearchResultsList({ items }: SearchResultsListProps) {
                 </span>
                 <ExternalLink className="size-2.5 text-[var(--text-muted)] group-hover:text-[var(--text-secondary)] transition-colors duration-200" />
               </div>
-            </a>
+              </button>
           </motion.div>
         )
       })}

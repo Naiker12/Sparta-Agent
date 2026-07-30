@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Plug, Zap, Trash2, Pencil, ChevronDown, Wifi, WifiOff, Wrench, MoreHorizontal } from 'lucide-react'
+import { Plug, Zap, Trash2, Pencil, ChevronDown, Wifi, WifiOff, Wrench, MoreHorizontal, Shield } from 'lucide-react'
 import type { MCPServer } from 'ia-sparta-core'
 import { useMCPStore } from 'ia-sparta-core'
 import { ConfirmDeleteDialog } from 'ia-sparta-design-system'
@@ -19,9 +19,10 @@ import {
 interface McpServerCardProps {
   server: MCPServer
   onEdit: (server: MCPServer) => void
+  onViewCapabilities?: () => void
 }
 
-export function McpServerCard({ server, onEdit }: McpServerCardProps) {
+export function McpServerCard({ server, onEdit, onViewCapabilities }: McpServerCardProps) {
   const { removeServer, toggleServer } = useMCPStore()
   const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
@@ -38,6 +39,7 @@ export function McpServerCard({ server, onEdit }: McpServerCardProps) {
       <div
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
+        onClick={() => onViewCapabilities?.()}
         style={{
           borderRadius: 18,
           border: '1px solid var(--border-normal)',
@@ -49,6 +51,7 @@ export function McpServerCard({ server, onEdit }: McpServerCardProps) {
           transition: 'transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease',
           boxShadow: hovered ? '0 18px 40px rgba(0,0,0,0.08)' : '0 10px 25px rgba(0,0,0,0.05)',
           transform: hovered ? 'translateY(-1px)' : 'none',
+          cursor: onViewCapabilities ? 'pointer' : undefined,
         }}
       >
         {/* ── Main row ─────────────────────────────────────────── */}
@@ -112,7 +115,7 @@ export function McpServerCard({ server, onEdit }: McpServerCardProps) {
                 <>
                   <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>·</span>
                   <button
-                    onClick={() => setExpanded(!expanded)}
+                    onClick={(e) => { e.stopPropagation(); setExpanded(!expanded) }}
                     style={{
                       display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer',
                       background: 'none', border: 'none', padding: 0, fontFamily: 'var(--font-ui)',
@@ -138,13 +141,23 @@ export function McpServerCard({ server, onEdit }: McpServerCardProps) {
                 {server.lastError}
               </div>
             )}
+            {!isConnected && !server.lastError && server.config.auth_type === 'oauth2' && (
+              <div style={{
+                marginTop: 5, fontSize: 10, fontWeight: 600,
+                color: 'var(--status-warn)', fontFamily: 'var(--font-ui)',
+                display: 'flex', alignItems: 'center', gap: 4,
+              }}>
+                <Shield size={9} strokeWidth={2} />
+                {t('mcp.needsAuth') ?? 'Requiere autenticación'}
+              </div>
+            )}
           </div>
 
           {/* Actions */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             {/* Power toggle */}
             <button
-              onClick={() => toggleServer(server.id)}
+              onClick={(e) => { e.stopPropagation(); toggleServer(server.id) }}
               title={isEnabled ? t('mcp.deactivate') : t('mcp.activate')}
               style={{
                 width: 28, height: 28, borderRadius: 7, cursor: 'pointer',

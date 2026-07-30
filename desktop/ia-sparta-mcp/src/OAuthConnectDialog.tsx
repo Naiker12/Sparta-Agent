@@ -10,6 +10,12 @@ import {
   DialogTitle,
 } from 'ia-sparta-design-system'
 
+interface OAuthConnectedResult {
+  accountLabel?: string
+  accessToken?: string
+  refreshToken?: string
+}
+
 interface OAuthConnectDialogProps {
   open: boolean
   onClose: () => void
@@ -17,7 +23,9 @@ interface OAuthConnectDialogProps {
   serverName: string
   vendor?: string
   authorizeUrl: string
-  onConnected: (accountLabel?: string) => void
+  tokenEndpoint?: string
+  clientId?: string
+  onConnected: (result: OAuthConnectedResult) => void
 }
 
 type OAuthStatus = 'waiting' | 'success' | 'error' | 'timeout'
@@ -31,6 +39,8 @@ export function OAuthConnectDialog({
   serverName,
   vendor,
   authorizeUrl,
+  tokenEndpoint,
+  clientId,
   onConnected,
 }: OAuthConnectDialogProps) {
   const { t } = useTranslation()
@@ -89,14 +99,20 @@ export function OAuthConnectDialog({
         const result = await win.electron.invoke('mcp:oauth:start', {
           serverId,
           authorizeUrl,
-        }) as { ok: boolean; account_label?: string; error?: string }
+          tokenEndpoint,
+          clientId,
+        }) as { ok: boolean; account_label?: string; access_token?: string; refresh_token?: string; error?: string }
 
         if (result.ok) {
           isWaitingRef.current = false
           setStatus('success')
           setAccountLabel(result.account_label)
           setTimeout(() => {
-            onConnected(result.account_label)
+            onConnected({
+              accountLabel: result.account_label,
+              accessToken: result.access_token,
+              refreshToken: result.refresh_token,
+            })
             onClose()
           }, 1500)
         } else {
@@ -105,7 +121,6 @@ export function OAuthConnectDialog({
           setErrorMsg(result.error ?? 'Error de autenticación')
         }
       } else if (typeof window !== 'undefined' && (window as unknown as { sparta: { testMcpConnection: (config: Record<string, unknown>) => Promise<unknown> } }).sparta) {
-        // Web fallback: try sparta API
         isWaitingRef.current = false
         setStatus('timeout')
         setErrorMsg('OAuth no disponible en modo web')

@@ -4,10 +4,12 @@ import { BrandIcon } from 'ia-sparta-design-system'
 import { useMCPStore } from 'ia-sparta-core'
 import { McpServerCard } from './McpServerCard'
 import { AddMcpServerDialog } from './AddMcpServerDialog'
+import { McpCapabilitiesDialog } from './McpCapabilitiesDialog'
 import { Button } from 'ia-sparta-design-system'
-import type { MCPServer, MCPServerConfig, MCPAuthType } from 'ia-sparta-core'
+import type { MCPServer, MCPServerConfig, MCPAuthType, MCPTool } from 'ia-sparta-core'
+import { openExternal } from 'ia-sparta-core'
 import { useTranslation } from 'ia-sparta-i18n'
-import { catalogToMarketplaceItems } from './data/mcp-catalog'
+import { catalogToMarketplaceItems, getVendorForServer } from './data/mcp-catalog'
 
 type Tab = 'connected' | 'marketplace'
 
@@ -102,6 +104,9 @@ export function McpView() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editServer, setEditServer] = useState<MCPServerConfig | null>(null)
 
+  const [capDialog, setCapDialog] = useState<{ item: MarketplaceItem } | { server: MCPServer } | null>(null)
+  const [toolsCache, setToolsCache] = useState<Record<string, MCPTool[]>>({})
+
   const connectedCount = servers.filter((s) => s.connected).length
   const totalCount = servers.length
   const totalTools = servers.reduce((acc, s) => acc + s.tools.length, 0)
@@ -114,6 +119,12 @@ export function McpView() {
   function handleEdit(server: MCPServer) { setEditServer(server.config); setDialogOpen(true) }
   function handleMarketplaceInstall(item: MarketplaceItem) {
     setEditServer(marketItemToConfig(item)); setDialogOpen(true)
+  }
+  function handleCapInstall(item: MarketplaceItem) {
+    setCapDialog(null); handleMarketplaceInstall(item)
+  }
+  function handleToolsDiscovered(itemId: string, tools: MCPTool[]) {
+    setToolsCache((prev) => ({ ...prev, [itemId]: tools }))
   }
 
   return (
@@ -243,7 +254,7 @@ export function McpView() {
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 12 }}>
                 {servers.map((server) => (
-                  <McpServerCard key={server.id} server={server} onEdit={handleEdit} />
+                  <McpServerCard key={server.id} server={server} onEdit={handleEdit} onViewCapabilities={() => setCapDialog({ server })} />
                 ))}
               </div>
             )}
@@ -260,6 +271,7 @@ export function McpView() {
                 return (
                   <div
                     key={item.id}
+                    onClick={() => setCapDialog({ item })}
                     style={{
                       display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
                       minHeight: 210, padding: 18, gap: 14,
@@ -267,6 +279,7 @@ export function McpView() {
                       background: 'var(--bg-surface)',
                       boxShadow: '0 14px 32px rgba(0,0,0,0.06)',
                       transition: 'transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease',
+                      cursor: 'pointer',
                     }}
                   >
                     <div>
@@ -314,25 +327,24 @@ export function McpView() {
 
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         {item.docs_url && (
-                          <a
-                            href={item.docs_url} target="_blank" rel="noopener noreferrer"
-                            style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', padding: 3 }}
+                          <button
+                            onClick={() => openExternal(item.docs_url!)}
+                            style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', padding: 3, background: 'none', border: 'none', cursor: 'pointer', borderRadius: 4 }}
                             title="Ver documentación"
                           >
                             <ExternalLink size={11} />
-                          </a>
+                          </button>
                         )}
 
-                        <Button
-                          onClick={() => handleMarketplaceInstall(item)}
-                          disabled={installed}
-                          size="xs"
-                          variant={installed ? 'ghost' : 'secondary'}
-                          style={{ fontSize: 10, fontWeight: 600, height: 24, gap: 4 }}
-                        >
-                          {installed ? <Check size={10} style={{ color: 'var(--status-ok)' }} /> : <Plus size={10} />}
-                          {installed ? t('mcp.installed') : t('mcp.install')}
-                        </Button>
+                        <span style={{
+                          fontSize: 9, fontWeight: 600, padding: '2px 8px', borderRadius: 6,
+                          fontFamily: 'var(--font-ui)',
+                          background: installed ? 'rgba(34,197,94,0.12)' : 'var(--bg-active)',
+                          color: installed ? 'var(--status-ok)' : 'var(--text-muted)',
+                        }}>
+                          {installed ? <Check size={10} style={{ verticalAlign: 'middle', marginRight: 2 }} /> : null}
+                          {installed ? t('mcp.installed') : 'Ver capacidades'}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -347,7 +359,28 @@ export function McpView() {
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
         editServer={editServer}
+        initialTools={editServer ? toolsCache[editServer.id] : undefined}
       />
+
+      {capDialog && ('item' in capDialog ? (
+        <McpCapabilitiesDialog
+          open={true}
+          onClose={() => setCapDialog(null)}
+          server={{ id: capDialog.item.id, name: capDialog.item.name, vendor: capDialog.item.vendor }}
+          mode="probe"
+          authType={capDialog.item.auth_type as MCPAuthType}
+          config={marketItemToConfig(capDialog.item)}
+          onInstall={() => handleCapInstall(capDialog.item)}
+          onToolsDiscovered={(tools) => handleToolsDiscovered(capDialog.item.id, tools)}
+        />
+      ) : (
+        <McpCapabilitiesDialog
+          open={true}
+          onClose={() => setCapDialog(null)}
+          server={{ id: capDialog.server.id, name: capDialog.server.name, vendor: getVendorForServer(capDialog.server.id) }}
+          mode="known"
+        />
+      ))}
     </div>
   )
 }

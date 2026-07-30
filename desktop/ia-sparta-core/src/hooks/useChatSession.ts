@@ -172,7 +172,24 @@ async function runAssistantTurn(
     }
     const systemMemory = await buildMemorySystemPrompt(text, freshProviders)
     const currentTimePrompt = getCurrentTimeSystemPrompt()
-    const system = [currentTimePrompt, systemMemory].filter(Boolean).join('\n\n')
+
+    const mcpServers = useMCPStore.getState().servers.map((s) => ({
+      ...s.config,
+      tools: s.tools ?? [],
+    }))
+    const mcpInfoPrompt = mcpServers.length > 0
+      ? `[SERVIDORES MCP ACTIVOS]\n${mcpServers
+          .filter((s) => s.enabled)
+          .map((s) => {
+            const toolList = (s.tools as Array<{ name: string; description: string }> ?? [])
+              .map((t) => `  - ${t.name}: ${t.description}`)
+              .join('\n')
+            const typeLabel = s.type === 'http' ? `(HTTP: ${s.url})` : `(STDIO: ${s.command})`
+            return `- ${s.name} ${typeLabel}${toolList ? '\n' + toolList : ''}`
+          })
+          .join('\n')}`
+      : ''
+    const system = [currentTimePrompt, systemMemory, mcpInfoPrompt].filter(Boolean).join('\n\n')
 
     const settingsState = useSettingsStore.getState()
     const { semanticMemoryEnabled, webSearchEnabled, reasoningEnabled, reasoningBudget, reasoningEffort, agentAutonomy, agentExecuteLocal, sandboxMode } = settingsState
@@ -180,10 +197,6 @@ async function runAssistantTurn(
     const sessionMode = session?.sessionMode ?? settingsState.sessionMode
     const securityLoaded = useSecurityStore.getState().loaded
     const skills = useSkillStore.getState().activeSkillIds ?? []
-    const mcpServers = useMCPStore.getState().servers.map((s) => ({
-      ...s.config,
-      tools: s.tools ?? [],
-    }))
     const allMcpTools = useMCPStore.getState().servers.flatMap((server) => server.tools ?? [])
     const tools = buildToolDefinitions(allMcpTools)
     const workspaceRoot = resolveWorkspaceRoot()

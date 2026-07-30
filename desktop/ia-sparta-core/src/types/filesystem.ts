@@ -20,7 +20,7 @@ export interface FilesystemAPI {
   openFolderDialog: () => Promise<string | null>
   readDir: (dirPath: string) => Promise<{ nodes: FileTreeNode[]; error?: string }>
   readDirLevel: (dirPath: string) => Promise<{ nodes: FileTreeNode[]; error?: string }>
-  readFile: (filePath: string) => Promise<FileReadResult>
+  readFile: (filePath: string, encoding?: string) => Promise<FileReadResult & { encoding?: string }>
   writeFile: (filePath: string, content: string) => Promise<FileWriteResult>
   mkdir: (dirPath: string) => Promise<{ success: boolean; error?: string }>
   deleteFile: (filePath: string) => Promise<{ success: boolean; error?: string }>

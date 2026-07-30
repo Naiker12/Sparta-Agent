@@ -50,6 +50,8 @@ export * from './lib/filesystem-constants'
 export * from './lib/assistant-render-groups'
 export * from './lib/elapsed-verbs'
 export * from './lib/mcp-vendors'
+export * from './lib/open-external'
+export * from './stores/artifact.store'
 
 export * from './services/ai'
 export * from './services/ai/gateway'

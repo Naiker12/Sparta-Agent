@@ -5,7 +5,7 @@ import {
   Terminal, Globe, Copy, Info,
 } from 'lucide-react'
 import { useMCPStore } from 'ia-sparta-core'
-import type { MCPServerConfig, MCPServerType, MCPAuthType } from 'ia-sparta-core'
+import type { MCPServerConfig, MCPServerType, MCPAuthType, MCPTool } from 'ia-sparta-core'
 import { useTranslation } from 'ia-sparta-i18n'
 import { getVendorForServer, getAuthTypeForServer } from './data/mcp-catalog'
 import { OAuthConnectDialog } from './OAuthConnectDialog'
@@ -21,6 +21,7 @@ interface AddMcpServerDialogProps {
   open: boolean
   onClose: () => void
   editServer?: MCPServerConfig | null
+  initialTools?: MCPTool[]
 }
 
 type InputMode = 'manual' | 'config'
@@ -35,7 +36,7 @@ const inputStyle: React.CSSProperties = {
   transition: 'border-color 0.12s',
 }
 
-export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDialogProps) {
+export function AddMcpServerDialog({ open, onClose, editServer, initialTools }: AddMcpServerDialogProps) {
   const { addServer, removeServer } = useMCPStore()
   const { t } = useTranslation()
 
@@ -53,6 +54,9 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [authType, setAuthType] = useState<MCPAuthType>('none')
   const [oauthDialogOpen, setOauthDialogOpen] = useState(false)
+  const [oauthAuthorizeUrl, setOauthAuthorizeUrl] = useState<string | undefined>()
+  const [oauthTokenEndpoint, setOauthTokenEndpoint] = useState<string | undefined>()
+  const [oauthClientId, setOauthClientId] = useState<string | undefined>()
 
   useEffect(() => {
     if (open) {
@@ -142,8 +146,31 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
     if (type === 'http' && !url.trim()) return
 
     if (authType === 'oauth2') {
-      const authorizeUrl = getOAuthAuthorizeUrl(editServer?.id ?? name.toLowerCase().replace(/\s+/g, '-'))
-      if (authorizeUrl) {
+      const serverUrl = getOAuthServerUrl(editServer?.id ?? name.toLowerCase().replace(/\s+/g, '-'))
+      if (serverUrl) {
+        try {
+          const win = window as unknown as { electron: { invoke: (channel: string, ...args: unknown[]) => Promise<unknown> } }
+          const discovery = await win.electron.invoke('mcp:oauth:discover', { serverUrl }) as {
+            ok: boolean
+            authorization_endpoint?: string
+            token_endpoint?: string
+            client_id?: string
+            error?: string
+          }
+          if (discovery.ok && discovery.authorization_endpoint) {
+            setOauthAuthorizeUrl(discovery.authorization_endpoint)
+            setOauthTokenEndpoint(discovery.token_endpoint)
+            setOauthClientId(discovery.client_id)
+            setOauthDialogOpen(true)
+            return
+          }
+        } catch {
+          // Discovery failed — fall back to catalog URL
+        }
+      }
+      const fallbackUrl = getOAuthFallbackUrl(editServer?.id ?? name.toLowerCase().replace(/\s+/g, '-'))
+      if (fallbackUrl) {
+        setOauthAuthorizeUrl(fallbackUrl)
         setOauthDialogOpen(true)
         return
       }
@@ -152,10 +179,27 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
     const safe = await storeSecretsInVault(buildConfig())
     if (isEditing && editServer.id && editServer.id !== safe.id) removeServer(editServer.id)
     addServer(safe)
+    if (initialTools) {
+      useMCPStore.getState().setServerTools(safe.id, initialTools)
+    }
     reset(); onClose()
   }
 
-  function getOAuthAuthorizeUrl(serverId: string): string | undefined {
+  function getOAuthServerUrl(serverId: string): string | undefined {
+    const urls: Record<string, string> = {
+      supabase: 'https://mcp.supabase.com/mcp',
+      'google-drive': 'https://workspace-mcp.googleapis.com/mcp',
+      gmail: 'https://gmail-mcp.googleapis.com/mcp',
+      'google-calendar': 'https://calendar-mcp.googleapis.com/mcp',
+      notion: 'https://mcp.notion.com/mcp',
+      slack: 'https://mcp.slack.com/mcp',
+      figma: 'https://mcp.figma.com/mcp',
+      sentry: 'https://mcp.sentry.dev/mcp',
+    }
+    return urls[serverId]
+  }
+
+  function getOAuthFallbackUrl(serverId: string): string | undefined {
     const urls: Record<string, string> = {
       supabase: 'https://mcp.supabase.com/mcp/auth',
       'google-drive': 'https://accounts.google.com/o/oauth2/v2/auth',
@@ -170,17 +214,33 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
     return urls[serverId]
   }
 
-  async function handleOAuthConnected(accountLabel?: string) {
+  async function handleOAuthConnected(result: { accountLabel?: string; accessToken?: string; refreshToken?: string }) {
     const config = buildConfig()
     config.auth_type = 'oauth2'
     config.oauth = {
-      provider_authorize_url: getOAuthAuthorizeUrl(config.id) ?? '',
+      provider_authorize_url: oauthAuthorizeUrl ?? getOAuthFallbackUrl(config.id) ?? '',
       connected_at: new Date().toISOString(),
-      account_label: accountLabel,
+      account_label: result.accountLabel,
+      token_endpoint: oauthTokenEndpoint,
+      client_id: oauthClientId,
     }
-    const safe = await storeSecretsInVault(config)
+    let safe = { ...config } as MCPServerConfig
+    if (result.accessToken && typeof window !== 'undefined' && await window.vault?.isAvailable()) {
+      const vaultKey = `mcp:${config.id}:oauth_token`
+      await window.vault.storeKey(vaultKey, result.accessToken, 'mcp')
+      safe.oauth = { ...safe.oauth!, token_vault_ref: vaultKey }
+      if (result.refreshToken) {
+        const refreshVaultKey = `mcp:${config.id}:oauth_refresh_token`
+        await window.vault.storeKey(refreshVaultKey, result.refreshToken, 'mcp')
+        safe.oauth = { ...safe.oauth!, refresh_token_vault_ref: refreshVaultKey }
+      }
+    }
+    safe = await storeSecretsInVault(safe)
     if (isEditing && editServer.id && editServer.id !== safe.id) removeServer(editServer.id)
     addServer(safe)
+    if (initialTools) {
+      useMCPStore.getState().setServerTools(safe.id, initialTools)
+    }
     reset()
     setOauthDialogOpen(false)
     onClose()
@@ -219,24 +279,25 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
     setTesting(true); setTestResult(null)
     const config = buildConfig()
     try {
+      let result: { ok: boolean; tools?: Array<{ name: string; description: string; inputSchema: unknown }>; toolCount?: number; error?: string }
       if (typeof window !== 'undefined' && (window as unknown as Record<string, unknown>).electron) {
         const win = window as unknown as { electron: { invoke: (channel: string, ...args: unknown[]) => Promise<unknown> } }
-        const result = await win.electron.invoke('mcp:test', config) as { ok: boolean; toolCount?: number; error?: string }
-        if (result.ok) {
-          setTestResult(`Conectado — ${result.toolCount ?? 0} ${t('mcp.toolsDiscovered')}`)
-        } else {
-          setTestResult(`Error: ${result.error ?? 'Conexión fallida'}`)
-        }
+        result = await win.electron.invoke('mcp:test', config) as typeof result
       } else if (typeof window !== 'undefined' && (window as unknown as Record<string, unknown>).sparta) {
-        const win = window as unknown as { sparta: { testMcpConnection: (config: Record<string, unknown>) => Promise<{ ok: boolean; toolCount?: number; error?: string }> } }
-        const result = await win.sparta.testMcpConnection(config as unknown as Record<string, unknown>)
-        if (result.ok) {
-          setTestResult(`Conectado — ${result.toolCount ?? 0} ${t('mcp.toolsDiscovered')}`)
-        } else {
-          setTestResult(`Error: ${result.error ?? 'Conexión fallida'}`)
+        const win = window as unknown as { sparta: { testMcpConnection: (config: Record<string, unknown>) => Promise<typeof result> } }
+        result = await win.sparta.testMcpConnection(config as unknown as Record<string, unknown>)
+      } else {
+        setTestResult('Modo web: no disponible'); setTesting(false); return
+      }
+      if (result.ok) {
+        setTestResult(`Conectado — ${result.toolCount ?? 0} ${t('mcp.toolsDiscovered')}`)
+        if (result.tools) {
+          const store = useMCPStore.getState()
+          store.setServerTools(config.id, result.tools.map((t) => ({ ...t, serverId: config.id })))
+          store.setConnected(config.id, true)
         }
       } else {
-        setTestResult('Modo web: no disponible')
+        setTestResult(`Error: ${result.error ?? 'Conexión fallida'}`)
       }
     } catch (err) {
       setTestResult(`Error: ${(err as Error).message ?? 'Error desconocido'}`)
@@ -264,6 +325,7 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
     setUrl(''); setEnvVars(''); setConfigJson('')
     setInputMode('manual'); setTestResult(null)
     setAuthType('none'); setOauthDialogOpen(false)
+    setOauthAuthorizeUrl(undefined); setOauthTokenEndpoint(undefined); setOauthClientId(undefined)
   }
 
   const canSubmitManual = name.trim() && (type === 'stdio' ? command.trim() : url.trim())
@@ -594,7 +656,9 @@ export function AddMcpServerDialog({ open, onClose, editServer }: AddMcpServerDi
         serverId={editServer?.id ?? name.toLowerCase().replace(/\s+/g, '-')}
         serverName={(name.trim() || editServer?.name) ?? ''}
         vendor={getVendorForServer(editServer?.id ?? '')}
-        authorizeUrl={getOAuthAuthorizeUrl(editServer?.id ?? name.toLowerCase().replace(/\s+/g, '-')) ?? ''}
+        authorizeUrl={oauthAuthorizeUrl ?? ''}
+        tokenEndpoint={oauthTokenEndpoint}
+        clientId={oauthClientId}
         onConnected={handleOAuthConnected}
       />
     </>

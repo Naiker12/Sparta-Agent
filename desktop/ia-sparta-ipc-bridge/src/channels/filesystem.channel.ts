@@ -61,14 +61,15 @@ export function registerFilesystemIPC() {
     }
   })
 
-  ipcMain.handle('fs:readFile', async (_event, filePath: string) => {
+  ipcMain.handle('fs:readFile', async (_event, filePath: string, encoding?: string) => {
     if (!filePath || typeof filePath !== 'string') return { success: false, error: 'Invalid path' }
     if (_workspaceRoot && !isWithinRoot(filePath, _workspaceRoot)) {
       return { success: false, error: 'Path is outside workspace root' }
     }
     try {
-      const content = fs.readFileSync(filePath, 'utf-8')
-      return { success: true, content }
+      const enc: 'utf-8' | 'base64' = encoding === 'base64' ? 'base64' : 'utf-8'
+      const content = fs.readFileSync(filePath, enc)
+      return { success: true, content, encoding: enc }
     } catch (err) {
       return { success: false, error: (err as Error).message }
     }

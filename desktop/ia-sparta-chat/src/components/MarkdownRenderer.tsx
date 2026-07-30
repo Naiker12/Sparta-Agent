@@ -5,7 +5,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { Copy, Check } from 'lucide-react'
-import { useThemeStore, isDarkTheme } from 'ia-sparta-core'
+import { useThemeStore, isDarkTheme, openExternal } from 'ia-sparta-core'
 import type { Components } from 'react-markdown'
 
 interface MarkdownRendererProps {
@@ -16,11 +16,7 @@ interface MarkdownRendererProps {
 function handleLinkClick(e: React.MouseEvent<HTMLAnchorElement>, href: string) {
   if (/^https?:\/\//.test(href)) {
     e.preventDefault()
-    if (window.electron?.send) {
-      window.electron.send('shell:open-external', href)
-    } else {
-      window.open(href, '_blank', 'noopener')
-    }
+    openExternal(href)
   }
 }
 
@@ -144,6 +140,17 @@ function makeMarkdownComponents(syntaxStyle: any): Components {
     td: ({ children }) => <td className="md-td">{children}</td>,
     hr: () => <hr className="md-hr" />,
     del: ({ children }) => <del className="md-del">{children}</del>,
+    img: ({ src, alt }) => {
+      if (!src) return null
+      return (
+        <img
+          src={src}
+          alt={alt ?? ''}
+          style={{ maxWidth: '100%', height: 'auto', borderRadius: 8, margin: '8px 0' }}
+          loading="lazy"
+        />
+      )
+    },
   }
 }
 

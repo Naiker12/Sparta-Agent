@@ -15,6 +15,16 @@ export interface MCPOAuthSession {
   expires_at?: string
   /** Label para mostrar al usuario (ej. "tú@gmail.com"). No es un secreto. */
   account_label?: string
+  /** Ref to access_token stored in encrypted vault */
+  token_vault_ref?: string
+  /** Ref to refresh_token stored in encrypted vault */
+  refresh_token_vault_ref?: string
+  /** client_id obtained via DCR or catalog */
+  client_id?: string
+  /** OAuth discovery — real endpoints resolved via well-known */
+  authorization_endpoint?: string
+  token_endpoint?: string
+  registration_endpoint?: string
 }
 
 export interface MCPServerConfig {
