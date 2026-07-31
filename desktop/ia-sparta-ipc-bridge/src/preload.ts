@@ -27,6 +27,10 @@ const ALLOWED_INVOKE_CHANNELS = new Set([
   'app:getVersion',
   'security:status',
   'mcp:test',
+  'mcp:call-tool',
+  'mcp:sync-all',
+  'mcp:oauth:start',
+  'mcp:oauth:discover',
   'fs:readFile',
 ])
 

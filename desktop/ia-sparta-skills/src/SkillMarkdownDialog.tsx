@@ -3,8 +3,6 @@ import { FileText, Code, Copy, Check, Loader2, ShieldAlert } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
 } from 'ia-sparta-design-system'
 import { MarkdownRenderer } from 'ia-sparta-chat'
 import type { InstalledSkill, Skill } from 'ia-sparta-core'

@@ -5,7 +5,7 @@ import fs from 'node:fs'
 import { registerMemoryIPC } from 'ia-sparta-ipc-bridge'
 import { registerVaultIPC } from 'ia-sparta-ipc-bridge'
 import { registerKeyManagerIPC, pushAllKeys } from 'ia-sparta-ipc-bridge'
-import { registerChatSendIPC, registerOnMessageHandler, registerSidecarStatusIPC, registerMemoryIPC as registerChatMemoryIPC, registerEditorDiffIPC, registerAudioIPC, registerMcpTestIPC, registerMcpOAuthIPC, registerAgentTaskIPC } from 'ia-sparta-chat-ipc'
+import { registerChatSendIPC, registerOnMessageHandler, registerSidecarStatusIPC, registerMemoryIPC as registerChatMemoryIPC, registerEditorDiffIPC, registerAudioIPC, registerMcpTestIPC, registerMcpOAuthIPC, registerAgentTaskIPC, registerMcpCallToolIPC, registerMcpSyncIPC, getEnhancedEnv } from 'ia-sparta-chat-ipc'
 import { registerSecurityIPC, wireSecurityIntoPipeline } from 'ia-sparta-ipc-bridge'
 import { startSidecar, stopSidecar, waitForSidecarReady, registerSidecarIPC } from 'ia-sparta-ipc-bridge'
 import { registerTerminalIPC, sessions, agentProcs } from 'ia-sparta-ipc-bridge'
@@ -104,6 +104,11 @@ app.on('activate', () => {
 })
 
 app.whenReady().then(async () => {
+  // Enrich process.env.PATH to fix ENOENT when launching binaries like npx, uvx or node
+  const env = getEnhancedEnv()
+  process.env.PATH = env.PATH
+  process.env.Path = env.Path
+
   // Start native TypeScript EventBridge before creating window
   startSidecar()
 
@@ -122,6 +127,8 @@ app.whenReady().then(async () => {
   registerAudioIPC()
   registerMcpTestIPC()
   registerMcpOAuthIPC()
+  registerMcpCallToolIPC()
+  registerMcpSyncIPC()
   registerAgentTaskIPC()
   registerMemoryIPC()
   registerVaultIPC()

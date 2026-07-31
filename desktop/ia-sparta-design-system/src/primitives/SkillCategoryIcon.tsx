@@ -2,7 +2,6 @@ import React from 'react'
 import { useTheme } from 'ia-sparta-core'
 import { getSkillCategoryIconPath } from 'ia-sparta-core'
 import {
-  Apple,
   Code,
   Brain,
   Bot,
@@ -10,9 +9,7 @@ import {
   BarChart3,
   Search,
   PenTool,
-  Home,
   Palette,
-  Mail,
   Film,
   Share2,
   Folder,
@@ -33,22 +30,22 @@ export interface SkillCategoryIconProps {
  * Lucide fallback icons for skill categories that don't have a brand SVG.
  * Keys are normalized: lowercase, spaces->hyphens, non-alphanumeric stripped.
  */
-const FALLBACK_CATEGORY_LUCIDE_ICONS: Record<string, React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>> = {
+const FALLBACK_CATEGORY_LUCIDE_ICONS: Record<string, React.ComponentType<any>> = {
   'analysis': BarChart3,
-  'apple': Apple,
+  'apple': Folder,
   'automation': Zap,
   'autonomous-ai-agents': Bot,
   'coding': Code,
   'creative': Palette,
   'data-science': Brain,
   'desktop': Monitor,
-  'email': Mail,
+  'email': Folder,
   'media': Film,
   'mlops': Sparkles,
   'note-taking': PenTool,
   'productivity': Folder,
   'research': Search,
-  'smart-home': Home,
+  'smart-home': Folder,
   'social-media': Share2,
   'software-development': Wrench,
   'writing': PenTool,

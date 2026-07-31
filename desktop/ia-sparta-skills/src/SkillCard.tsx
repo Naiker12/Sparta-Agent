@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Check, Download, MoreHorizontal, Pencil, Trash2, Copy, Star, Zap } from 'lucide-react'
+import { Check, Download, MoreHorizontal, Pencil, Trash2, Copy, Zap } from 'lucide-react'
 import type { Skill, DownloadableSkill } from 'ia-sparta-core'
 import { useSkillStore } from 'ia-sparta-core'
 import {
