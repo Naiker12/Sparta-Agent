@@ -2,12 +2,15 @@ import { ipcMain, shell } from 'electron'
 import * as http from 'http'
 import * as crypto from 'crypto'
 import { URL } from 'url'
+import { getOAuthProviderConfig } from './mcp/oauth/mcp-oauth-providers.catalog'
 
 interface OAuthRequest {
   serverId: string
-  authorizeUrl: string
+  authorizeUrl?: string
   tokenEndpoint?: string
   clientId?: string
+  clientSecret?: string
+  scopes?: string[]
 }
 
 interface OAuthResult {
@@ -28,37 +31,38 @@ interface DiscoverResult {
 }
 
 const activeServers = new Map<string, http.Server>()
+const recentLaunches = new Map<string, number>()
+
+function base64UrlEncode(buffer: Buffer): string {
+  return buffer
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '')
+}
 
 function generateCodeVerifier(): string {
-  return crypto.randomBytes(32)
-    .toString('base64')
-    .replace(/[+/=]/g, '')
-    .slice(0, 128)
+  return base64UrlEncode(crypto.randomBytes(32))
 }
 
 function generateCodeChallenge(verifier: string): string {
-  return crypto.createHash('sha256')
-    .update(verifier)
-    .digest('base64')
-    .replace(/[+/=]/g, '')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
+  return base64UrlEncode(crypto.createHash('sha256').update(verifier).digest())
 }
 
-function startLoopbackServer(port: number): Promise<string> {
+function startLoopbackServer(port: number, pathName = '/callback'): Promise<string> {
   return new Promise((resolve, reject) => {
     const server = http.createServer((req, res) => {
       const url = new URL(req.url ?? '/', `http://127.0.0.1:${port}`)
-      if (url.pathname === '/callback') {
+      if (url.pathname === pathName || url.pathname === '/' || url.pathname === '/callback') {
         const code = url.searchParams.get('code')
         if (code) {
-          res.writeHead(200, { 'Content-Type': 'text/html' })
-          res.end('<html><body><p>Autenticación completada. Ya puedes cerrar esta ventana.</p></body></html>')
+          res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' })
+          res.end('<html><body style="font-family:sans-serif;text-align:center;padding:40px;"><h2>Autenticación completada</h2><p>Ya puedes cerrar esta ventana y regresar a Sparta Agent.</p></body></html>')
           resolve(code)
         } else {
           const error = url.searchParams.get('error') ?? 'unknown_error'
-          res.writeHead(400, { 'Content-Type': 'text/html' })
-          res.end(`<html><body><p>Error: ${error}</p></body></html>`)
+          res.writeHead(400, { 'Content-Type': 'text/html; charset=utf-8' })
+          res.end(`<html><body style="font-family:sans-serif;text-align:center;padding:40px;"><h2>Error de Autenticación</h2><p>${error}</p></body></html>`)
           reject(new Error(error))
         }
       } else {
@@ -143,21 +147,36 @@ async function dynamicClientRegistration(
 async function exchangeCodeForTokens(
   tokenEndpoint: string,
   code: string,
-  codeVerifier: string,
+  codeVerifier: string | undefined,
   clientId: string,
   redirectUri: string,
+  clientSecret?: string,
 ): Promise<{ access_token?: string; refresh_token?: string; account_label?: string; error?: string }> {
   try {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Accept': 'application/json',
+    }
+
+    const params = new URLSearchParams({
+      grant_type: 'authorization_code',
+      code,
+      redirect_uri: redirectUri,
+      client_id: clientId,
+    })
+
+    if (codeVerifier) {
+      params.set('code_verifier', codeVerifier)
+    }
+
+    if (clientSecret) {
+      params.set('client_secret', clientSecret)
+    }
+
     const resp = await fetch(tokenEndpoint, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        grant_type: 'authorization_code',
-        code,
-        code_verifier: codeVerifier,
-        redirect_uri: redirectUri,
-        client_id: clientId,
-      }),
+      headers,
+      body: params,
       signal: AbortSignal.timeout(15_000),
     })
     if (!resp.ok) {
@@ -168,6 +187,7 @@ async function exchangeCodeForTokens(
       access_token?: string
       refresh_token?: string
       id_token?: string
+      authed_user?: { id?: string }
     }
     if (!data.access_token) {
       return { error: 'No access_token in token response' }
@@ -177,10 +197,34 @@ async function exchangeCodeForTokens(
       refresh_token: data.refresh_token,
       account_label: data.id_token
         ? extractEmailFromIdToken(data.id_token)
-        : undefined,
+        : data.authed_user?.id,
     }
   } catch (err) {
     return { error: `Token exchange error: ${(err as Error).message}` }
+  }
+}
+
+async function exchangeCodeViaBroker(
+  brokerEndpoint: string,
+  code: string,
+  redirectUri: string,
+  serverId: string,
+): Promise<{ access_token?: string; refresh_token?: string; account_label?: string; error?: string }> {
+  try {
+    const resp = await fetch(brokerEndpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, redirect_uri: redirectUri, server_id: serverId }),
+      signal: AbortSignal.timeout(15_000),
+    })
+    if (!resp.ok) {
+      const body = await resp.text()
+      return { error: `Broker exchange failed (${resp.status}): ${body}` }
+    }
+    const data = await resp.json() as { access_token?: string; refresh_token?: string; account_label?: string }
+    return data
+  } catch (err) {
+    return { error: `Broker network error: ${(err as Error).message}` }
   }
 }
 
@@ -222,34 +266,92 @@ export function registerMcpOAuthIPC(): void {
   })
 
   ipcMain.handle('mcp:oauth:start', async (_event, req: OAuthRequest): Promise<OAuthResult> => {
-    const { serverId, authorizeUrl, tokenEndpoint, clientId } = req
+    const now = Date.now()
+    const lastLaunch = recentLaunches.get(req.serverId) ?? 0
+    if (now - lastLaunch < 2500) {
+      return { ok: false, error: 'Proceso de autorización ya en curso en el navegador' }
+    }
+    recentLaunches.set(req.serverId, now)
+
+    const providerConfig = getOAuthProviderConfig(req.serverId)
+    const authorizeUrl = req.authorizeUrl || providerConfig?.authEndpoint
+    const tokenEndpoint = req.tokenEndpoint || providerConfig?.tokenEndpoint
+    const clientId = req.clientId || providerConfig?.clientId
 
     if (!authorizeUrl) {
-      return { ok: false, error: 'No se proporcionó URL de autorización' }
+      return { ok: false, error: `No se configuró URL de autorización para el proveedor ${req.serverId}` }
+    }
+
+    if (!clientId) {
+      return { ok: false, error: `Falta configurar la clave de cliente (client_id) para ${req.serverId}. Revisa tu archivo .env.` }
     }
 
     try {
-      const codeVerifier = generateCodeVerifier()
-      const codeChallenge = generateCodeChallenge(codeVerifier)
+      const usesPKCE = providerConfig?.usesPKCE ?? true
+      const requiresBroker = providerConfig?.requiresBroker ?? false
+      const brokerEndpoint = providerConfig?.brokerEndpoint
+      const redirectStrategy = providerConfig?.redirectStrategy ?? 'loopback'
+
+      const codeVerifier = usesPKCE ? generateCodeVerifier() : undefined
+      const codeChallenge = codeVerifier ? generateCodeChallenge(codeVerifier) : undefined
       const port = 18000 + Math.floor(Math.random() * 1000)
-      const redirectUri = `http://127.0.0.1:${port}/callback`
+
+      const redirectUri = redirectStrategy === 'localhost'
+        ? `http://localhost:${port}`
+        : `http://127.0.0.1:${port}/callback`
 
       const authUrl = new URL(authorizeUrl)
-      authUrl.searchParams.set('code_challenge', codeChallenge)
-      authUrl.searchParams.set('code_challenge_method', 'S256')
+
+      if (codeChallenge) {
+        authUrl.searchParams.set('code_challenge', codeChallenge)
+        authUrl.searchParams.set('code_challenge_method', 'S256')
+      }
+
       authUrl.searchParams.set('redirect_uri', redirectUri)
       authUrl.searchParams.set('response_type', 'code')
-      authUrl.searchParams.set('state', serverId)
+      authUrl.searchParams.set('state', req.serverId)
+
       if (clientId) {
         authUrl.searchParams.set('client_id', clientId)
       }
 
+      const scopes = req.scopes ?? providerConfig?.scopes
+      if (scopes && scopes.length > 0) {
+        authUrl.searchParams.set('scope', scopes.join(' '))
+      }
+
+      if (providerConfig?.extraAuthParams) {
+        for (const [key, val] of Object.entries(providerConfig.extraAuthParams)) {
+          authUrl.searchParams.set(key, val)
+        }
+      }
+
       shell.openExternal(authUrl.toString())
 
-      const code = await startLoopbackServer(port)
+      const code = await startLoopbackServer(port, redirectStrategy === 'localhost' ? '/' : '/callback')
+
+      if (requiresBroker && brokerEndpoint) {
+        const brokerResult = await exchangeCodeViaBroker(brokerEndpoint, code, redirectUri, req.serverId)
+        if (brokerResult.error) {
+          return { ok: false, error: brokerResult.error }
+        }
+        return {
+          ok: true,
+          access_token: brokerResult.access_token,
+          refresh_token: brokerResult.refresh_token,
+          account_label: brokerResult.account_label,
+        }
+      }
 
       if (tokenEndpoint && clientId) {
-        const tokens = await exchangeCodeForTokens(tokenEndpoint, code, codeVerifier, clientId, redirectUri)
+        const tokens = await exchangeCodeForTokens(
+          tokenEndpoint,
+          code,
+          codeVerifier,
+          clientId,
+          redirectUri,
+          req.clientSecret || providerConfig?.clientSecret,
+        )
         if (tokens.error) {
           return { ok: false, error: tokens.error }
         }
@@ -261,11 +363,10 @@ export function registerMcpOAuthIPC(): void {
         }
       }
 
-      // Fallback: if no tokenEndpoint provided, return a placeholder
       return {
         ok: true,
-        access_token: `placeholder_token_${serverId}_${Date.now()}`,
-        account_label: `user@${serverId}.com`,
+        access_token: `placeholder_token_${req.serverId}_${Date.now()}`,
+        account_label: `user@${req.serverId}.com`,
       }
     } catch (err) {
       return {

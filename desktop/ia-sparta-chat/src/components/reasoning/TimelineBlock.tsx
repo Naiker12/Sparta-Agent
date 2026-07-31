@@ -53,7 +53,6 @@ export function TimelineBlock({ message, className }: TimelineBlockProps) {
     savedState !== null ? savedState : isStreamingActive
   )
   const [elapsed, setElapsed] = useState(0)
-  const [copied, setCopied] = useState(false)
   const startedAt = useRef(message.reasoningStartedAt ?? Date.now())
   const userToggled = useRef(savedState !== null)
   const blockRef = useRef<HTMLDivElement>(null)
@@ -62,8 +61,6 @@ export function TimelineBlock({ message, className }: TimelineBlockProps) {
   const hasParts = parts.length > 0
   const hasReasoningText = (message.reasoningText?.trim().length ?? 0) > 0
   const hasToolCalls = (message.toolCalls?.length ?? 0) > 0
-
-  const verb = useMemo(() => pickElapsedVerb(message.id), [message.id])
 
   const skillBadges = useMemo(
     () => message.pipelineSteps?.filter((s) => s.id?.startsWith('skill-')) ?? [],
@@ -75,20 +72,23 @@ export function TimelineBlock({ message, className }: TimelineBlockProps) {
     return completed.length > 0 ? completed[completed.length - 1].name : null
   }, [skillBadges])
 
+  // Timer loop for elapsed seconds
   useEffect(() => {
-    if (status === 'starting' || status === 'streaming') {
-      startedAt.current = message.reasoningStartedAt ?? Date.now()
-      setElapsed(0)
+    const rawMsg = (message as unknown) as Record<string, unknown>
+    const durationMs = typeof rawMsg.reasoningDurationMs === 'number' ? rawMsg.reasoningDurationMs : 0
+    if (status !== 'streaming' && status !== 'starting') {
+      if (durationMs > 0) setElapsed(durationMs / 1000)
+      return
     }
-  }, [status, message.reasoningStartedAt])
 
-  useEffect(() => {
-    if (status !== 'streaming' && status !== 'starting') return
     const interval = setInterval(() => {
-      setElapsed((Date.now() - startedAt.current) / 1000)
+      const now = Date.now()
+      const diffSec = Math.max(0, (now - startedAt.current) / 1000)
+      setElapsed(diffSec)
     }, 200)
+
     return () => clearInterval(interval)
-  }, [status])
+  }, [status, message])
 
   useEffect(() => {
     if (userToggled.current && message.id) saveCollapseState(message.id, isExpanded)
@@ -99,14 +99,10 @@ export function TimelineBlock({ message, className }: TimelineBlockProps) {
     userToggled.current = savedState !== null
   }, [message.id, savedState])
 
-  // Auto-expand during live streaming and auto-collapse when finished, unless user manually toggled it
+  // Auto-expand when streaming starts, auto-collapse on finish (unless user manually toggled)
   useEffect(() => {
     if (userToggled.current) return
-    if (isStreamingActive) {
-      setIsExpanded(true)
-    } else {
-      setIsExpanded(false)
-    }
+    setIsExpanded(isStreamingActive)
   }, [isStreamingActive])
 
   const handleToggle = useCallback(() => {
@@ -114,12 +110,6 @@ export function TimelineBlock({ message, className }: TimelineBlockProps) {
     userToggled.current = true
     setIsExpanded((v) => !v)
   }, [])
-
-  function handleCopyReply() {
-    navigator.clipboard.writeText(message.content)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 1600)
-  }
 
   // Always show the thinking pill above every assistant response so the user can inspect duration & execution.
 

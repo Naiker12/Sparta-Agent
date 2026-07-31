@@ -131,6 +131,7 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       port: 5173,
+      strictPort: true,
       proxy: isElectron ? undefined : {
         '/api': {
           target: 'http://localhost:8765',

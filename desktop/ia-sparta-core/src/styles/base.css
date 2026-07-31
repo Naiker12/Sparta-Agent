@@ -266,3 +266,50 @@ button, input, textarea, select {
   background: var(--accent-muted);
   color: var(--text-display);
 }
+
+/* ── Artifact Panel Resize Handle & Pill Grip ───────────── */
+.artifact-resize-handle {
+  position: absolute;
+  top: 0;
+  left: -4px;
+  bottom: 0;
+  width: 8px;
+  cursor: col-resize;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.artifact-resize-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 3px;
+  width: 1px;
+  background: var(--border-subtle);
+  transition: background 0.15s ease, width 0.15s ease;
+}
+
+.artifact-resize-pill {
+  position: relative;
+  z-index: 2;
+  width: 6px;
+  height: 32px;
+  border-radius: 9999px;
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border-normal);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.artifact-resize-handle:hover .artifact-resize-line {
+  width: 2px;
+  background: var(--accent);
+}
+
+.artifact-resize-handle:hover .artifact-resize-pill {
+  background: var(--accent);
+  border-color: var(--accent);
+  transform: scaleX(1.2);
+}

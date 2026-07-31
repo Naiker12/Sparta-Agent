@@ -5,6 +5,7 @@ import { useMCPStore } from 'ia-sparta-core'
 import { McpServerCard } from './McpServerCard'
 import { AddMcpServerDialog } from './AddMcpServerDialog'
 import { McpCapabilitiesDialog } from './McpCapabilitiesDialog'
+import { OAuthConnectDialog } from './OAuthConnectDialog'
 import { Button } from 'ia-sparta-design-system'
 import type { MCPServer, MCPServerConfig, MCPAuthType, MCPTool } from 'ia-sparta-core'
 import { openExternal } from 'ia-sparta-core'
@@ -106,22 +107,33 @@ export function McpView() {
 
   const [capDialog, setCapDialog] = useState<{ item: MarketplaceItem } | { server: MCPServer } | null>(null)
   const [toolsCache, setToolsCache] = useState<Record<string, MCPTool[]>>({})
+  const [directOAuthItem, setDirectOAuthItem] = useState<MarketplaceItem | null>(null)
 
   const connectedCount = servers.filter((s) => s.connected).length
   const totalCount = servers.length
-  const totalTools = servers.reduce((acc, s) => acc + s.tools.length, 0)
+  const totalTools = Object.values(toolsCache).reduce((sum, list) => sum + list.length, 0)
 
-  const TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
+  const TABS: Array<{ key: Tab; label: string; icon: React.ReactNode }> = [
     { key: 'connected', label: t('mcp.connected'), icon: <Wifi size={12} strokeWidth={1.8} /> },
     { key: 'marketplace', label: t('mcp.marketplace'), icon: <Globe size={12} strokeWidth={1.8} /> },
   ]
 
   function handleEdit(server: MCPServer) { setEditServer(server.config); setDialogOpen(true) }
   function handleMarketplaceInstall(item: MarketplaceItem) {
-    setEditServer(marketItemToConfig(item)); setDialogOpen(true)
+    if (item.auth_type === 'oauth2') {
+      setDirectOAuthItem(item)
+      return
+    }
+    if (item.auth_type === 'none' && (!item.env_required || item.env_required.length === 0)) {
+      useMCPStore.getState().addServer(marketItemToConfig(item))
+      return
+    }
+    setEditServer(marketItemToConfig(item))
+    setDialogOpen(true)
   }
   function handleCapInstall(item: MarketplaceItem) {
-    setCapDialog(null); handleMarketplaceInstall(item)
+    setCapDialog(null)
+    handleMarketplaceInstall(item)
   }
   function handleToolsDiscovered(itemId: string, tools: MCPTool[]) {
     setToolsCache((prev) => ({ ...prev, [itemId]: tools }))
@@ -381,6 +393,38 @@ export function McpView() {
           mode="known"
         />
       ))}
+
+      {directOAuthItem && (
+        <OAuthConnectDialog
+          open={true}
+          onClose={() => setDirectOAuthItem(null)}
+          serverId={directOAuthItem.id}
+          serverName={directOAuthItem.name}
+          vendor={directOAuthItem.vendor}
+          authorizeUrl=""
+          onConnected={async (result) => {
+            const config = marketItemToConfig(directOAuthItem)
+            config.auth_type = 'oauth2'
+            config.oauth = {
+              provider_authorize_url: '',
+              connected_at: new Date().toISOString(),
+              account_label: result.accountLabel,
+            }
+            if (result.accessToken && typeof window !== 'undefined' && await window.vault?.isAvailable()) {
+              const vaultKey = `mcp:${config.id}:oauth_token`
+              await window.vault.storeKey(vaultKey, result.accessToken, 'mcp')
+              config.oauth.token_vault_ref = vaultKey
+              if (result.refreshToken) {
+                const refreshVaultKey = `mcp:${config.id}:oauth_refresh_token`
+                await window.vault.storeKey(refreshVaultKey, result.refreshToken, 'mcp')
+                config.oauth.refresh_token_vault_ref = refreshVaultKey
+              }
+            }
+            useMCPStore.getState().addServer(config)
+            setDirectOAuthItem(null)
+          }}
+        />
+      )}
     </div>
   )
 }

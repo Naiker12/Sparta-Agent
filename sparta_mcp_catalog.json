@@ -50,7 +50,7 @@
       "env_required": [],
       "maintained": true,
       "auth_type": "oauth2",
-      "vendor": "google",
+      "vendor": "google-drive",
       "category": "Storage",
       "docs_url": "https://developers.google.com/workspace/guides/configure-mcp-servers"
     },
@@ -127,7 +127,7 @@
       "env_required": [],
       "maintained": true,
       "auth_type": "oauth2",
-      "vendor": "google",
+      "vendor": "gmail",
       "category": "Productivity",
       "docs_url": "https://developers.google.com/workspace/gmail/api/guides/configure-mcp-server"
     },
@@ -139,7 +139,7 @@
       "env_required": [],
       "maintained": true,
       "auth_type": "oauth2",
-      "vendor": "google",
+      "vendor": "google-calendar",
       "category": "Productivity",
       "docs_url": "https://developers.google.com/workspace/guides/configure-mcp-servers"
     },
@@ -185,11 +185,13 @@
       "description": "Consulta de issues, errores y rendimiento en Sentry",
       "type": "http",
       "url": "https://mcp.sentry.dev/mcp",
-      "env_required": [],
+      "env_required": ["SENTRY_AUTH_TOKEN"],
+      "headers_required": ["Authorization"],
       "maintained": true,
-      "auth_type": "oauth2",
+      "auth_type": "api_key",
       "vendor": "sentry",
       "category": "Monitoreo",
+      "notes": "Requiere un token de Integracion Interna de Sentry (SENTRY_AUTH_TOKEN).",
       "docs_url": "https://docs.sentry.io/mcp/"
     },
     "fetch": {

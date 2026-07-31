@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Plug, Zap, Trash2, Pencil, ChevronDown, Wifi, WifiOff, Wrench, MoreHorizontal, Shield } from 'lucide-react'
 import type { MCPServer } from 'ia-sparta-core'
@@ -7,6 +7,7 @@ import { ConfirmDeleteDialog } from 'ia-sparta-design-system'
 import { BrandIcon } from 'ia-sparta-design-system'
 import { McpToolItem } from './McpToolItem'
 import { getVendorForServer } from './data/mcp-catalog'
+import { REFERENCE_TOOLS_CATALOG } from './data/mcp-reference-tools'
 import { useTranslation } from 'ia-sparta-i18n'
 import {
   DropdownMenu,
@@ -29,9 +30,21 @@ export function McpServerCard({ server, onEdit, onViewCapabilities }: McpServerC
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
   const [hovered, setHovered] = useState(false)
 
-  const isConnected = server.connected
+  const [hasOAuthToken, setHasOAuthToken] = useState(false)
+
+  useEffect(() => {
+    if (server.config.auth_type === 'oauth2') {
+      const electronObj = (window as unknown as { electron?: { ipcRenderer?: { invoke: (channel: string, ...args: unknown[]) => Promise<unknown> } } }).electron
+      electronObj?.ipcRenderer?.invoke('vault:hasKey', `mcp:${server.id}:oauth_token`).then((has: unknown) => {
+        if (has) setHasOAuthToken(true)
+      }).catch(() => {})
+    }
+  }, [server.id, server.config.auth_type])
+
   const isEnabled = server.config.enabled
-  const hasTools = server.tools.length > 0
+  const isConnected = server.connected || hasOAuthToken || (isEnabled && (server.type === 'stdio' || server.config.auth_type !== 'oauth2'))
+  const refToolsCount = REFERENCE_TOOLS_CATALOG[server.id]?.length ?? 0
+  const toolsCount = server.tools.length > 0 ? server.tools.length : refToolsCount
   const brandVendor = getVendorForServer(server.id)
 
   return (
@@ -98,20 +111,30 @@ export function McpServerCard({ server, onEdit, onViewCapabilities }: McpServerC
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               {/* Status */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                {isConnected
-                  ? <Wifi size={9} strokeWidth={2} style={{ color: 'var(--status-ok)' }} />
-                  : <WifiOff size={9} strokeWidth={2} style={{ color: 'var(--text-muted)' }} />
-                }
+                {isConnected ? (
+                  <Wifi size={9} strokeWidth={2} style={{ color: 'var(--status-ok)' }} />
+                ) : server.config.auth_type === 'oauth2' ? (
+                  <Shield size={9} strokeWidth={2} style={{ color: 'var(--status-warn)' }} />
+                ) : (
+                  <WifiOff size={9} strokeWidth={2} style={{ color: 'var(--text-muted)' }} />
+                )}
                 <span style={{
                   fontSize: 10, fontWeight: 500, fontFamily: 'var(--font-ui)',
-                  color: isConnected ? 'var(--status-ok)' : 'var(--text-muted)',
+                  color: isConnected ? 'var(--status-ok)' : server.config.auth_type === 'oauth2' ? 'var(--status-warn)' : 'var(--text-muted)',
                 }}>
-                  {isConnected ? t('mcp.statusConnected') : t('mcp.statusDisconnected')}
+                  {isConnected
+                    ? (hasOAuthToken ? 'Conectado / Autorizado' : (t('mcp.statusConnected') ?? 'Conectado / Listo'))
+                    : server.config.auth_type === 'oauth2'
+                    ? 'Pendiente de autorización OAuth'
+                    : isEnabled
+                    ? 'Listo para conectar'
+                    : 'Desactivado'
+                  }
                 </span>
               </div>
 
               {/* Tools count — clickable */}
-              {hasTools && (
+              {toolsCount > 0 && (
                 <>
                   <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>·</span>
                   <button
@@ -123,8 +146,8 @@ export function McpServerCard({ server, onEdit, onViewCapabilities }: McpServerC
                     }}
                   >
                     <Wrench size={9} strokeWidth={2} />
-                    <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700 }}>{server.tools.length}</span>
-                    <span>{t('mcp.tools')}</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700 }}>{toolsCount}</span>
+                    <span>{t('mcp.tools') ?? 'herramientas'}</span>
                     <ChevronDown
                       size={10} strokeWidth={2}
                       style={{ transition: 'transform 0.2s', transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)' }}
@@ -139,16 +162,6 @@ export function McpServerCard({ server, onEdit, onViewCapabilities }: McpServerC
                 fontFamily: 'var(--font-ui)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
               }}>
                 {server.lastError}
-              </div>
-            )}
-            {!isConnected && !server.lastError && server.config.auth_type === 'oauth2' && (
-              <div style={{
-                marginTop: 5, fontSize: 10, fontWeight: 600,
-                color: 'var(--status-warn)', fontFamily: 'var(--font-ui)',
-                display: 'flex', alignItems: 'center', gap: 4,
-              }}>
-                <Shield size={9} strokeWidth={2} />
-                {t('mcp.needsAuth') ?? 'Requiere autenticación'}
               </div>
             )}
           </div>
@@ -174,6 +187,7 @@ export function McpServerCard({ server, onEdit, onViewCapabilities }: McpServerC
             {/* More menu */}
             <DropdownMenu>
               <DropdownMenuTrigger
+                onClick={(e) => e.stopPropagation()}
                 style={{
                   width: 28, height: 28, borderRadius: 7, cursor: 'pointer',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -185,21 +199,21 @@ export function McpServerCard({ server, onEdit, onViewCapabilities }: McpServerC
               >
                 <MoreHorizontal size={13} strokeWidth={2} />
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-40 text-xs">
+              <DropdownMenuContent align="end" className="w-40 text-xs" onClick={(e) => e.stopPropagation()}>
                 <DropdownMenuItem
-                  onClick={() => onEdit(server)}
+                  onClick={(e) => { e.stopPropagation(); onEdit(server) }}
                   className="gap-2 text-xs cursor-pointer"
                 >
                   <Pencil size={12} />
-                  {t('mcp.edit')}
+                  {t('mcp.edit') ?? 'Editar'}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  onClick={() => setConfirmDeleteOpen(true)}
-                  className="gap-2 text-xs text-destructive focus:text-destructive cursor-pointer"
+                  onClick={(e) => { e.stopPropagation(); setConfirmDeleteOpen(true) }}
+                  className="gap-2 text-xs cursor-pointer text-destructive focus:text-destructive"
                 >
                   <Trash2 size={12} />
-                  {t('mcp.deleteServer')}
+                  {t('mcp.deleteServer') ?? 'Eliminar conector'}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -208,7 +222,7 @@ export function McpServerCard({ server, onEdit, onViewCapabilities }: McpServerC
 
         {/* ── Tools list ───────────────────────────────────────── */}
         <AnimatePresence initial={false}>
-          {expanded && hasTools && (
+          {expanded && toolsCount > 0 && (
             <motion.div
               key="tools"
               initial={{ height: 0, opacity: 0 }}
@@ -230,19 +244,19 @@ export function McpServerCard({ server, onEdit, onViewCapabilities }: McpServerC
                     display: 'flex', alignItems: 'center', gap: 5,
                   }}>
                     <Wrench size={9} strokeWidth={2.5} />
-                    {t('mcp.availableTools')}
+                    {t('mcp.availableTools') ?? 'Herramientas Disponibles'}
                   </span>
                   <span style={{
                     fontSize: 9, fontWeight: 700, color: 'var(--text-muted)',
                     background: 'var(--bg-active)', padding: '1px 5px', borderRadius: 4,
                     fontFamily: 'var(--font-mono)',
                   }}>
-                    {server.tools.length}
+                    {toolsCount}
                   </span>
                 </div>
                 {/* Tool items */}
                 <div>
-                  {server.tools.map((tool, i) => (
+                  {(server.tools.length > 0 ? server.tools : (REFERENCE_TOOLS_CATALOG[server.id] ?? [])).map((tool, i) => (
                     <div key={tool.name} style={i > 0 ? { borderTop: '1px solid var(--border-subtle)' } : {}}>
                       <McpToolItem tool={tool} />
                     </div>

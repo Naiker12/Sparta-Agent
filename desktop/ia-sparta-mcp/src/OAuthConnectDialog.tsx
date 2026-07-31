@@ -52,6 +52,7 @@ export function OAuthConnectDialog({
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const startedRef = useRef<number>(0)
   const isWaitingRef = useRef(false)
+  const hasStartedRef = useRef(false)
 
   useEffect(() => {
     if (!open) {
@@ -60,10 +61,14 @@ export function OAuthConnectDialog({
       setErrorMsg(undefined)
       setElapsed(0)
       isWaitingRef.current = false
+      hasStartedRef.current = false
       if (elapsedRef.current) clearInterval(elapsedRef.current)
       if (timeoutRef.current) clearTimeout(timeoutRef.current)
       return
     }
+
+    if (hasStartedRef.current) return
+    hasStartedRef.current = true
 
     startedRef.current = Date.now()
     isWaitingRef.current = true

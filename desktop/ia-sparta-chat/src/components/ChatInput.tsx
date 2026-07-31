@@ -15,6 +15,9 @@ import { VoiceRecordButton } from './VoiceRecordButton'
 import { ModeSwitch } from './input/ModeSwitch'
 import { SkillSuggestionChip } from './input/SkillSuggestionChip'
 import { SlashCommandMenu, executeSlashCommand, type SlashCommand, setSlashSkillCache } from './SlashCommandMenu'
+import { McpMentionMenu, type MentionItem } from './McpMentionMenu'
+import { BrandIcon } from 'ia-sparta-design-system'
+import { X } from 'lucide-react'
 import { ProjectDialog } from 'ia-sparta-projects'
 import { useTranslation } from 'ia-sparta-i18n'
 import { HostPickerButton, WorkspaceModePicker } from 'ia-sparta-shell-layout'
@@ -29,6 +32,9 @@ export function ChatInput({ sessionId, className }: ChatInputProps) {
   const [focused, setFocused] = useState(false)
   const [showAttach, setShowAttach] = useState(false)
   const [showSlash, setShowSlash] = useState(false)
+  const [showMention, setShowMention] = useState(false)
+  const [mentionQuery, setMentionQuery] = useState('')
+  const [activeMentions, setActiveMentions] = useState<MentionItem[]>([])
   const [showFolderDialog, setShowFolderDialog] = useState(false)
   const { input, setInput } = useSettingsStore()
   const activeSessionId = useSessionStore((s) => s.activeSessionId)
@@ -69,25 +75,61 @@ export function ChatInput({ sessionId, className }: ChatInputProps) {
     el.style.height = Math.min(el.scrollHeight, 120) + 'px'
   }
 
+  function handleInputChange(val: string) {
+    setInput(val)
+    autoResize()
+
+    const lastAtPos = val.lastIndexOf('@')
+    if (lastAtPos !== -1 && (lastAtPos === 0 || val[lastAtPos - 1] === ' ')) {
+      const q = val.substring(lastAtPos + 1)
+      if (!q.includes(' ')) {
+        setMentionQuery(q)
+        setShowMention(true)
+        return
+      }
+    }
+    setShowMention(false)
+  }
+
+  function handleMentionSelect(item: MentionItem) {
+    if (!activeMentions.some((m) => m.id === item.id)) {
+      setActiveMentions((prev) => [...prev, item])
+    }
+    const lastAtPos = input.lastIndexOf('@')
+    if (lastAtPos !== -1) {
+      setInput(input.substring(0, lastAtPos))
+    }
+    setShowMention(false)
+    textareaRef.current?.focus()
+  }
+
   function handleSend() {
-    const text = input.trim()
+    let text = input.trim()
     if (!text) return
     if (!hasProvider) return
 
+    if (activeMentions.length > 0) {
+      const mentionHeader = activeMentions.map((m) => `@${m.name}`).join(' ')
+      text = `${mentionHeader} ${text}`
+    }
+
     if (executeSlashCommand(text)) {
       setInput('')
+      setActiveMentions([])
       return
     }
 
     if (isStreaming) {
       injectWhileStreaming(text)
       setInput('')
+      setActiveMentions([])
       toast.info(t('chat.messageQueued'))
       return
     }
 
     sendMessage(text)
     setInput('')
+    setActiveMentions([])
   }
 
   function handleStop() {
@@ -101,6 +143,19 @@ export function ChatInput({ sessionId, className }: ChatInputProps) {
   }
 
   function handleKey(e: React.KeyboardEvent) {
+    if (showMention || showSlash) {
+      if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault()
+        return
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        setShowMention(false)
+        setShowSlash(false)
+        return
+      }
+    }
+
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       if (hasProvider) {
@@ -238,12 +293,56 @@ export function ChatInput({ sessionId, className }: ChatInputProps) {
               transition: 'box-shadow 0.15s',
             }}
           >
+            {activeMentions.length > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px 2px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 9.5, fontWeight: 700, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}>
+                  MCP CONECTORES:
+                </span>
+                {activeMentions.map((m) => (
+                  <span
+                    key={m.id}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 5,
+                      padding: '2px 8px',
+                      borderRadius: 12,
+                      background: 'color-mix(in srgb, var(--accent) 14%, transparent)',
+                      border: '1px solid color-mix(in srgb, var(--accent) 30%, transparent)',
+                      color: 'var(--accent)',
+                      fontSize: 11,
+                      fontWeight: 600,
+                      fontFamily: 'var(--font-ui)',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                    }}
+                  >
+                    <BrandIcon vendor={m.vendor || 'mcp'} size={12} />
+                    {m.name}
+                    <button
+                      type="button"
+                      onClick={() => setActiveMentions((prev) => prev.filter((item) => item.id !== m.id))}
+                      style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', padding: '0 2px', fontSize: 13, lineHeight: 1 }}
+                    >
+                      <X size={10} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+
             <div style={{
               display: 'flex',
               alignItems: 'flex-start',
               padding: '10px 14px 8px',
             }}>
               <div style={{ flex: 1, position: 'relative' }}>
+                {showMention && (
+                  <McpMentionMenu
+                    query={mentionQuery}
+                    onSelect={handleMentionSelect}
+                    onClose={() => setShowMention(false)}
+                  />
+                )}
                 {showSlash && (
                   <SlashCommandMenu
                     text={input}
@@ -255,7 +354,7 @@ export function ChatInput({ sessionId, className }: ChatInputProps) {
                 <textarea
                   ref={textareaRef}
                   value={input}
-                  onChange={e => { setInput(e.target.value); autoResize() }}
+                  onChange={e => handleInputChange(e.target.value)}
                   onKeyDown={handleKey}
                   onFocus={() => setFocused(true)}
                   onBlur={() => setFocused(false)}

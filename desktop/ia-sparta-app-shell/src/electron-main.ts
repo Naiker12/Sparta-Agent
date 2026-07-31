@@ -1,7 +1,6 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
-import fs from 'node:fs'
 import { registerMemoryIPC } from 'ia-sparta-ipc-bridge'
 import { registerVaultIPC } from 'ia-sparta-ipc-bridge'
 import { registerKeyManagerIPC, pushAllKeys } from 'ia-sparta-ipc-bridge'
@@ -14,6 +13,12 @@ import { registerSkillsIPC } from 'ia-sparta-ipc-bridge'
 import { registerPermissionIPC, setPermissionWindow } from 'ia-sparta-ipc-bridge'
 import { registerModelsIPC } from 'ia-sparta-ipc-bridge'
 import { stopFileWatcher } from 'ia-sparta-ipc-bridge'
+
+// Suppress noisy Chromium GPU/cache errors on Windows dev hot-reloads
+app.commandLine.appendSwitch('disable-gpu-shader-disk-cache')
+app.commandLine.appendSwitch('disable-software-rasterizer')
+app.commandLine.appendSwitch('log-level', '3')
+process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -62,32 +67,50 @@ function createWindow() {
   })
 
   win.on('closed', () => {
-    for (const [id, session] of sessions) {
-      if (session.win.isDestroyed() || session.win === win) {
-        session.pty.kill()
-        sessions.delete(id)
+    for (const [, session] of sessions) {
+      if (session && typeof (session as any).destroy === 'function') {
+        (session as any).destroy()
       }
     }
-    for (const [id, proc] of agentProcs) {
-      if (proc.win.isDestroyed() || proc.win === win) {
-        proc.pty.kill()
-        agentProcs.delete(id)
-      }
-    }
-  })
+    sessions.clear()
 
-  ipcMain.on('win:minimize', () => win?.minimize())
-  ipcMain.on('win:maximize', () => {
-    if (win?.isMaximized()) { win.unmaximize() } else { win?.maximize() }
+    for (const [, proc] of agentProcs) {
+      try {
+        if (proc && typeof (proc as any).kill === 'function') {
+          (proc as any).kill()
+        }
+      } catch {
+        // ignore
+      }
+    }
+    agentProcs.clear()
+
+    stopFileWatcher()
+    stopSidecar()
+
+    win = null
   })
-  ipcMain.on('win:close', () => win?.close())
-  ipcMain.handle('win:isMaximized', () => win?.isMaximized())
 
   if (VITE_DEV_SERVER_URL) {
+    // Retry loading Vite dev server URL if it fails (common during hot-reload rebuilds)
+    win.webContents.on('did-fail-load', (_event, _code, _desc, url) => {
+      if (url === VITE_DEV_SERVER_URL) {
+        setTimeout(() => {
+          win?.loadURL(VITE_DEV_SERVER_URL!)
+        }, 1000)
+      }
+    })
     win.loadURL(VITE_DEV_SERVER_URL)
   } else {
     win.loadFile(path.join(RENDERER_DIST, 'index.html'))
   }
+
+  win.webContents.setWindowOpenHandler((details) => {
+    if (details.url.startsWith('https:') || details.url.startsWith('http:')) {
+      shell.openExternal(details.url)
+    }
+    return { action: 'deny' }
+  })
 }
 
 app.on('window-all-closed', () => {
@@ -118,6 +141,10 @@ app.whenReady().then(async () => {
 
   createWindow()
 
+  // App metadata IPC handlers
+  ipcMain.handle('app:getVersion', () => app.getVersion() || '0.1.1')
+  ipcMain.handle('app:getName', () => app.getName() || 'Sparta Agent')
+
   // Register chat IPC handlers from ia-sparta-chat-ipc
   registerChatSendIPC()
   registerOnMessageHandler()
@@ -133,71 +160,22 @@ app.whenReady().then(async () => {
   registerMemoryIPC()
   registerVaultIPC()
   registerKeyManagerIPC()
+
+  // Register remaining IPC modules
   registerTerminalIPC()
   registerFilesystemIPC()
   registerSkillsIPC()
-  registerSidecarIPC()
   registerPermissionIPC()
   registerModelsIPC()
+  registerSidecarIPC()
 
-  // Wire native TypeScript security layer into the IPC pipeline
+  // Push all stored API keys to Sidecar and wire security module into pipeline
+  await waitForSidecarReady()
   wireSecurityIntoPipeline()
 
-  // Seed vault keys into Python sidecar cache once it is ready.
-  // Wrapped in an IIFE so we can await the sidecar handshake without blocking app startup.
-  setTimeout(() => {
-    void (async () => {
-      try {
-        const ready = await waitForSidecarReady(30_000)
-        if (!ready) {
-          console.warn('[main] Sidecar did not become ready; skipping key seed')
-          return
-        }
-        const result = await pushAllKeys()
-        if (!result.ok) {
-          console.warn('[main] Failed to seed keys:', result.error)
-        }
-      } catch (err) {
-        console.warn('[main] Failed to seed keys:', (err as Error).message)
-      }
-    })()
-  }, 1000)
-
-  ipcMain.handle('app:getVersion', () => {
-    const pkg = JSON.parse(fs.readFileSync(path.join(process.env.APP_ROOT!, 'package.json'), 'utf-8'))
-    return pkg.version || '0.0.0'
-  })
-
-  ipcMain.on('shell:open-external', (_event, url: string) => {
-    if (typeof url === 'string' && /^https?:\/\//.test(url)) {
-      shell.openExternal(url)
-    }
-  })
-
-  ipcMain.on('titlebar:set-overlay', (_event, colors: { color: string; symbolColor: string }) => {
-    if (win) {
-      win.setTitleBarOverlay({
-        color: colors.color,
-        symbolColor: colors.symbolColor,
-        height: 38,
-      })
-    }
-  })
-})
-
-// Graceful shutdown: stop sidecar and file watcher when app quits
-app.on('before-quit', () => {
-  try { stopFileWatcher() } catch { /* ignore */ }
-  try { stopSidecar() } catch { /* ignore */ }
-  // Kill all terminal PTY sessions to prevent orphan processes
   try {
-    for (const [id, session] of sessions) {
-      try { session.pty.kill() } catch { /* ignore */ }
-      sessions.delete(id)
-    }
-    for (const [id, proc] of agentProcs) {
-      try { proc.pty.kill() } catch { /* ignore */ }
-      agentProcs.delete(id)
-    }
-  } catch { /* ignore */ }
+    await pushAllKeys()
+  } catch (err) {
+    console.warn('[main] Could not push keys to sidecar:', err)
+  }
 })

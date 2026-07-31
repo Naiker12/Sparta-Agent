@@ -36,7 +36,7 @@ export function SkillCard({
   isDownloadable,
 }: SkillCardProps) {
   const { activeSkillIds } = useSkillStore()
-  const [expanded, setExpanded] = useState(false)
+  const [expanded] = useState(false)
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
   const [hovered, setHovered] = useState(false)
 

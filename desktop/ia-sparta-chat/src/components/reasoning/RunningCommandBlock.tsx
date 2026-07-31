@@ -11,6 +11,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Terminal, Check, X, Loader2, ChevronRight, Copy } from 'lucide-react'
 import type { ToolCall } from 'ia-sparta-core'
+import { useChatStore, useSessionStore } from 'ia-sparta-core'
 
 interface RunningCommandBlockProps {
   toolCall: ToolCall
@@ -48,11 +49,15 @@ export function RunningCommandBlock({ toolCall }: RunningCommandBlockProps) {
   const [copied, setCopied] = useState(false)
   const outputRef = useRef<HTMLPreElement>(null)
 
+  const activeSessionId = useSessionStore((s) => s.activeSessionId)
+  const isStreaming = useChatStore((s) => activeSessionId ? (s.streamingBySession[activeSessionId]?.isStreaming ?? false) : s.isStreaming)
+
   const input = toolCall.input as Record<string, unknown> | undefined
   const commandText = String(input?.command ?? '').trim()
   const cwdText = input?.cwd ? String(input.cwd) : undefined
 
-  const isRunning = toolCall.status === 'running'
+  const isActuallyRunning = toolCall.status === 'running' && isStreaming
+  const isAborted = toolCall.status === 'running' && !isStreaming
   const isCompleted = toolCall.status === 'completed'
   const isError = toolCall.status === 'error'
 
@@ -65,7 +70,7 @@ export function RunningCommandBlock({ toolCall }: RunningCommandBlockProps) {
 
   // Listen for live streaming output from terminal:agent-output
   useEffect(() => {
-    if (!isRunning) return
+    if (!isActuallyRunning) return
     if (typeof window === 'undefined' || !window.terminal?.onAgentOutput) return
 
     const unsub = window.terminal.onAgentOutput((payload) => {
@@ -74,11 +79,11 @@ export function RunningCommandBlock({ toolCall }: RunningCommandBlockProps) {
     })
 
     return () => unsub()
-  }, [isRunning])
+  }, [isActuallyRunning])
 
   // Listen for exit code
   useEffect(() => {
-    if (!isRunning) return
+    if (!isActuallyRunning) return
     if (typeof window === 'undefined' || !window.terminal?.onAgentExit) return
 
     const unsub = window.terminal.onAgentExit((payload) => {
@@ -86,7 +91,7 @@ export function RunningCommandBlock({ toolCall }: RunningCommandBlockProps) {
     })
 
     return () => unsub()
-  }, [isRunning])
+  }, [isActuallyRunning])
 
   // Auto-scroll output
   useEffect(() => {
@@ -147,12 +152,14 @@ export function RunningCommandBlock({ toolCall }: RunningCommandBlockProps) {
         }}
       >
         {/* Status icon */}
-        {isRunning && !showExitCode ? (
+        {isActuallyRunning && !showExitCode ? (
           <Loader2
             size={14}
             style={{ color: 'var(--accent, #a78bfa)', flexShrink: 0 }}
             className="animate-spin"
           />
+        ) : isAborted ? (
+          <X size={14} style={{ color: 'var(--status-warn, #eab308)', flexShrink: 0 }} />
         ) : showExitCode ? (
           isSuccess ? (
             <Check size={14} style={{ color: '#22c55e', flexShrink: 0 }} />
@@ -192,7 +199,7 @@ export function RunningCommandBlock({ toolCall }: RunningCommandBlockProps) {
           </span>
         )}
 
-        {isRunning && !showExitCode && (
+        {isActuallyRunning && !showExitCode && (
           <span
             style={{
               fontSize: 10,
@@ -201,6 +208,19 @@ export function RunningCommandBlock({ toolCall }: RunningCommandBlockProps) {
             }}
           >
             ejecutando…
+          </span>
+        )}
+
+        {isAborted && !showExitCode && (
+          <span
+            style={{
+              fontSize: 10,
+              color: 'var(--status-warn, #eab308)',
+              flexShrink: 0,
+              fontWeight: 600,
+            }}
+          >
+            detenido
           </span>
         )}
 
@@ -279,8 +299,8 @@ export function RunningCommandBlock({ toolCall }: RunningCommandBlockProps) {
                   wordBreak: 'break-all',
                 }}
               >
-                {displayOutput || (isRunning ? 'Esperando salida...' : '(sin salida)')}
-                {isRunning && !showExitCode && (
+                {displayOutput || (isActuallyRunning ? 'Esperando salida...' : isAborted ? '[Proceso detenido por el usuario]' : '(sin salida)')}
+                {isActuallyRunning && !showExitCode && (
                   <span
                     style={{
                       display: 'inline-block',

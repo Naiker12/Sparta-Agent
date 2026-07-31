@@ -31,8 +31,8 @@ export function ThinkingPill({
 
   const formattedElapsed = formatThoughtDuration(elapsed)
   const label = isActive
-    ? 'Thinking'
-    : `Thought for ${formattedElapsed}`
+    ? 'Pensando...'
+    : `Pensó durante ${formattedElapsed}`
 
   return (
     <motion.div
@@ -43,11 +43,11 @@ export function ThinkingPill({
     >
       <div
         className={cn(
-          'group/reasoning flex items-center gap-2 rounded-md py-1 pr-1 text-left text-xs font-medium text-[var(--text-secondary)] transition-colors',
+          'group/reasoning flex items-center gap-1.5 py-1 pr-1 text-left text-xs font-medium text-[var(--text-secondary)] transition-colors',
           'hover:text-[var(--text-primary)] cursor-pointer'
         )}
       >
-        <Brain className="size-3.5 shrink-0 text-[var(--text-muted)]" />
+        <Brain className="size-3.5 shrink-0 text-[var(--text-muted)] group-hover/reasoning:text-[var(--text-primary)] transition-colors" />
 
         {isActive ? (
           <span className="inline-flex items-center gap-1.5 font-medium text-[var(--text-primary)]">
@@ -57,7 +57,7 @@ export function ThinkingPill({
             </span>
           </span>
         ) : (
-          <span className="font-medium text-[var(--text-secondary)]">
+          <span className="font-medium text-[var(--text-secondary)] group-hover/reasoning:text-[var(--text-primary)] transition-colors">
             {label}
           </span>
         )}
