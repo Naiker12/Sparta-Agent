@@ -4,7 +4,6 @@ import {
   Folder,
   Zap,
 } from 'lucide-react';
-import { motion } from 'framer-motion';
 import {
   NotionIcon,
   OneDriveIcon,

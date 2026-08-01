@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Card } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { SectionHeader } from '../ui/section-header';
-import { ShieldCheck, DollarSign, BrainCircuit, CheckCircle2, Sparkles, Terminal, Eye, Edit3 } from 'lucide-react';
+import { ShieldCheck, DollarSign, Eye, Edit3 } from 'lucide-react';
 
 export function ValueProps() {
   const [policyMode, setPolicyMode] = useState<'PLAN' | 'BUILD'>('BUILD');

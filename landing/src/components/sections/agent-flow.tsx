@@ -1,25 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { SectionHeader } from '../ui/section-header';
 import {
-  User,
-  FileText,
-  Bot,
-  RotateCcw,
-  CheckCircle,
   ShieldAlert,
   Terminal,
   Activity,
   Workflow,
-  Sparkles,
   GitBranch,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   NotionIcon,
   OneDriveIcon,
-  GoogleDriveIcon,
-  GmailIcon,
-  SlackIcon,
   SupabaseIcon,
 } from '../icons/mcp-brand-icons';
 

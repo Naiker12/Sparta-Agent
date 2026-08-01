@@ -27,7 +27,7 @@ export const createMessagesStreamingSlice: StateCreator<ChatState, [], [], Messa
         return s
       }
       const parts = target.parts ?? []
-      let updatedParts = parts.slice()
+      const updatedParts = parts.slice()
       const lastPart = parts.length > 0 ? parts[parts.length - 1] : null
 
       if (lastPart && lastPart.kind === 'reasoning' && !lastPart.completedAt) {
@@ -81,7 +81,7 @@ export const createMessagesStreamingSlice: StateCreator<ChatState, [], [], Messa
       const newText = (target.reasoningText ?? '') + delta
       const parts = target.parts ?? []
       const lastPart = parts.length > 0 ? parts[parts.length - 1] : null
-      let updatedParts = parts.slice()
+      const updatedParts = parts.slice()
 
       if (lastPart && lastPart.kind === 'reasoning' && !lastPart.completedAt) {
         const lp = updatedParts[updatedParts.length - 1] as MessagePart & { text?: string }

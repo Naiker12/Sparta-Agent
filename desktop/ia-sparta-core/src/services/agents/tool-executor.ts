@@ -247,7 +247,7 @@ async function executeNativeShellToolInline(
       if (!settled) {
         settled = true; unsubOutput(); unsubExit()
         window.terminal.agentKill(procId).catch(() => {})
-        const partial = outputChunks.join('').replace(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, '')
+        const partial = outputChunks.join('').replace(/\u001B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/gu, '')
         resolve(`Timeout (5min)\n\n$ ${command}\n${partial.trim() || '(sin salida)'}`)
       }
     }, 5 * 60 * 1000)

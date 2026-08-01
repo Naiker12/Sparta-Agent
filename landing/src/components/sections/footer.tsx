@@ -13,13 +13,6 @@ import {
 } from '../icons/mcp-brand-icons';
 
 export function Footer() {
-  const { resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   const faviconSrc = getPublicUrl('favicon.svg');
 
   return (

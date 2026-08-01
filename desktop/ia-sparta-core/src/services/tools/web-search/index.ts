@@ -183,6 +183,7 @@ function resolveDdgUrl(url: string): string {
       const uddg = parsed.searchParams.get('uddg')
       if (uddg) return decodeURIComponent(uddg)
     } catch {
+      // Fall through if URL parsing fails
     }
   }
   return url

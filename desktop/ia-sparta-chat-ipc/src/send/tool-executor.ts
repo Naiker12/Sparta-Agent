@@ -231,7 +231,7 @@ function resolveGoogleApiCall(serverId: string, toolName: string, input: Record<
       case 'upload_file': {
         const rawName = String(input.filename || input.name || 'new_file.txt').trim()
         const filename = rawName.replace(/^\/+/, '')
-        let folderId = String(input.folderId || input.parentFolderId || '').trim()
+        const folderId = String(input.folderId || input.parentFolderId || '').trim()
 
         let url = ''
         if (!folderId || folderId.toLowerCase() === 'root' || folderId === '/' || folderId === '\\') {

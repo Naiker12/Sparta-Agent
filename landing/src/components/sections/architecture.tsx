@@ -1,25 +1,18 @@
 import React, { useState } from 'react';
 import { SectionHeader } from '../ui/section-header';
 import {
-  Layout,
-  Server,
-  Cpu,
   ShieldCheck,
   Zap,
   Clock,
   ArrowRight,
   Terminal,
   Layers,
-  Database,
-  CheckCircle2,
-  Lock,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   NotionIcon,
   OneDriveIcon,
   GoogleDriveIcon,
-  GmailIcon,
   SupabaseIcon,
 } from '../icons/mcp-brand-icons';
 

@@ -11,7 +11,6 @@ import {
   Lock,
   Sparkles,
   ShieldCheck,
-  Paperclip,
   ArrowUpRight,
   Bot,
 } from 'lucide-react';

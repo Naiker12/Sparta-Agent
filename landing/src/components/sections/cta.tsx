@@ -1,4 +1,3 @@
-import { Button } from '../ui/button';
 import { ArrowRight, Sparkles, Terminal } from 'lucide-react';
 import { GithubIcon } from '../icons/github-icon';
 
