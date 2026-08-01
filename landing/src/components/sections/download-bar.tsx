@@ -1,18 +1,15 @@
 import { useState } from 'react';
-import { Card } from '../ui/card';
-import { Badge } from '../ui/badge';
-import { Button } from '../ui/button';
-import { 
-  Download, 
-  Monitor, 
-  Apple, 
-  Terminal, 
-  CheckCircle2, 
-  ShieldCheck, 
-  ArrowRight, 
-  HardDrive, 
-  Loader2, 
-  X
+import { SectionHeader } from '../ui/section-header';
+import {
+  Download,
+  Monitor,
+  Apple,
+  Terminal,
+  CheckCircle2,
+  ArrowRight,
+  HardDrive,
+  Loader2,
+  X,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -79,107 +76,17 @@ export function DownloadBar() {
       os: rel.os,
     });
 
-    const localUrl = `./${rel.filename}`;
-
-    try {
-      // Intenta hacer un HEAD request para ver si el binario local está disponible en el servidor web
-      const res = await fetch(localUrl, { method: 'HEAD' });
-      if (res.ok) {
-        // El archivo está disponible de forma local. Hacemos descarga con progreso real.
-        setDownloadState(prev => ({ ...prev, status: 'downloading', speed: 'Calculando...' }));
-        
-        const downloadRes = await fetch(localUrl);
-        if (!downloadRes.ok || !downloadRes.body) throw new Error('Local fetch failed');
-
-        const reader = downloadRes.body.getReader();
-        const contentLength = Number(downloadRes.headers.get('Content-Length')) || 386839460;
-        
-        let receivedLength = 0;
-        const chunks = [];
-        const startTime = Date.now();
-        let lastUpdateTime = startTime;
-        let lastReceivedLength = 0;
-
-        let downloading = true;
-        while (downloading) {
-          const { done, value } = await reader.read();
-          if (done) {
-            downloading = false;
-            break;
-          }
-
-          chunks.push(value);
-          receivedLength += value.length;
-
-          const now = Date.now();
-          if (now - lastUpdateTime > 100) {
-            const progress = Math.min(Math.round((receivedLength / contentLength) * 100), 99);
-            const timePassed = (now - lastUpdateTime) / 1000;
-            const bytesSinceLast = receivedLength - lastReceivedLength;
-            const speedMbps = ((bytesSinceLast / timePassed) / (1024 * 1024)).toFixed(1);
-            
-            setDownloadState(prev => ({
-              ...prev,
-              progress,
-              speed: `${speedMbps} MB/s`,
-              loaded: `${(receivedLength / (1024 * 1024)).toFixed(1)} MB`,
-              total: `${(contentLength / (1024 * 1024)).toFixed(1)} MB`,
-            }));
-
-            lastUpdateTime = now;
-            lastReceivedLength = receivedLength;
-          }
-        }
-
-        // Crear y descargar blob
-        const allChunks = new Uint8Array(receivedLength);
-        let position = 0;
-        for (const chunk of chunks) {
-          allChunks.set(chunk, position);
-          position += chunk.length;
-        }
-
-        const blob = new Blob([allChunks], { type: 'application/octet-stream' });
-        const blobUrl = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = blobUrl;
-        link.download = rel.filename;
-        link.click();
-        URL.revokeObjectURL(blobUrl);
-
-        setDownloadState(prev => ({
-          ...prev,
-          progress: 100,
-          status: 'completed',
-          speed: 'Terminado',
-          loaded: prev.total,
-        }));
-      } else {
-        // Si no está disponible localmente, hacemos fallback simulando el progreso
-        // y abriendo el enlace oficial de GitHub Releases
-        triggerRemoteFallback(rel);
-      }
-    } catch (err) {
-      console.warn('Real download error, using simulated remote fallback instead:', err);
-      triggerRemoteFallback(rel);
-    }
-  };
-
-  const triggerRemoteFallback = (rel: typeof releases[0]) => {
-    // Abrimos la descarga nativa inmediatamente
     window.open(rel.url, '_blank');
 
-    setDownloadState(prev => ({
+    setDownloadState((prev) => ({
       ...prev,
       status: 'downloading',
       loaded: '0 MB',
       total: rel.size,
     }));
 
-    // Simula una barra de progreso que dura 3.5 segundos para mostrar
-    // que la conexión y descarga se están gestionando
-    const duration = 3500;
-    const intervalTime = 50;
+    const duration = 2500;
+    const intervalTime = 40;
     const steps = duration / intervalTime;
     let currentStep = 0;
     const totalSizeVal = parseFloat(rel.size);
@@ -188,9 +95,9 @@ export function DownloadBar() {
       currentStep++;
       const progress = Math.min(Math.round((currentStep / steps) * 100), 100);
       const loadedVal = ((progress / 100) * totalSizeVal).toFixed(1);
-      const simulatedSpeed = (35 + Math.random() * 25).toFixed(1); // 35-60 MB/s
+      const simulatedSpeed = (35 + Math.random() * 25).toFixed(1);
 
-      setDownloadState(prev => ({
+      setDownloadState((prev) => ({
         ...prev,
         progress,
         speed: `${simulatedSpeed} MB/s`,
@@ -199,7 +106,7 @@ export function DownloadBar() {
 
       if (progress >= 100) {
         clearInterval(timer);
-        setDownloadState(prev => ({
+        setDownloadState((prev) => ({
           ...prev,
           status: 'completed',
           speed: 'Terminado',
@@ -209,205 +116,124 @@ export function DownloadBar() {
   };
 
   return (
-    <section id="descargas" className="py-24 md:py-32 relative bg-transparent border-t border-[rgba(186,215,247,0.12)]">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        {/* Header */}
-        <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
-          <div className="flex items-center justify-center gap-4 text-[#c7d3ea] font-mono text-[13px] tracking-[0.10em] uppercase">
-            <div className="h-[1px] w-16 sm:w-24 bg-gradient-to-r from-transparent via-[rgba(186,215,247,0.2)] to-transparent" />
-            <span>DESCARGAS & INSTALADORES OFICIALES</span>
-            <div className="h-[1px] w-16 sm:w-24 bg-gradient-to-r from-transparent via-[rgba(186,215,247,0.2)] to-transparent" />
-          </div>
-          
-          <h2 className="text-3xl sm:text-5xl font-bold font-display tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-[#d8ecf8] to-[#98c0ef]">
-            Descarga Sparta Agent para tu Sistema Operativo
-          </h2>
-          <p className="text-base sm:text-lg text-[#c7d3ea]">
-            Binarios compilados listos para ejecutar. Incluye el motor agéntico nativo y el runtime de Electron.
-          </p>
-        </div>
+    <section id="descargas" className="py-12 relative bg-slate-50/85 dark:bg-[#07050d]/85 backdrop-blur-md text-slate-900 dark:text-white border-y border-slate-200 dark:border-white/10 font-sans transition-colors duration-300">
+      {/* Background Ambient Glow */}
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[700px] h-[300px] bg-[#663af3]/10 blur-[140px] pointer-events-none" />
 
-        {/* Downloads Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+      {/* UNIFIED CONTINUOUS GRID CONTAINER MAX-W-7XL BORDER-X */}
+      <div className="mx-auto max-w-7xl border-x border-slate-200 dark:border-white/10 px-4 sm:px-6 lg:px-8 relative z-10">
+        {/* Section Header */}
+        <SectionHeader
+          eyebrow="DESCARGAS & INSTALADORES OFICIALES"
+          title="Descarga Sparta Agent para tu Sistema Operativo"
+          description="Binarios compilados listos para ejecutar en Windows, macOS y Linux. Incluye el motor agéntico nativo y el runtime de Electron."
+        />
+
+        {/* 3 HIGH-DENSITY COMPACT DOWNLOAD CARDS */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8 max-w-5xl mx-auto">
           {releases.map((rel) => {
             const Icon = rel.icon;
             const isThisOSDownloading = showWidget && downloadState.filename === rel.filename;
-            
+
             return (
               <motion.div
                 key={rel.os}
-                whileHover={{ y: -4 }}
+                whileHover={{ y: -3 }}
                 transition={{ duration: 0.2 }}
-              >
-                <Card className={`p-7 space-y-6 relative overflow-hidden flex flex-col justify-between h-full border ${
+                className={`p-5 rounded-xl border flex flex-col justify-between h-full relative overflow-hidden backdrop-blur-xl transition-all duration-300 ${
                   rel.recommended
-                    ? 'border-[#663af3] bg-[rgba(102,58,243,0.06)] shadow-xl shadow-[#663af3]/20'
-                    : 'border-[rgba(186,215,247,0.12)] bg-[rgba(186,214,247,0.03)]'
-                }`}>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className={`p-3 rounded-full ${
-                        rel.recommended
-                          ? 'bg-[#663af3] text-white shadow-md shadow-[#663af3]/40'
-                          : 'bg-[rgba(186,214,247,0.06)] text-[#d1e4fa]'
-                      }`}>
-                        <Icon className="w-6 h-6" />
-                      </div>
-                      {rel.recommended && (
-                        <Badge variant="accent">Recomendado</Badge>
-                      )}
+                    ? 'bg-[#663af3]/15 border-[#663af3] shadow-lg shadow-[#663af3]/20'
+                    : 'bg-white dark:bg-[#0e0b16]/80 border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/25 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
+                }`}
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
+                      rel.recommended ? 'bg-[#663af3] text-white' : 'bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-gray-300'
+                    }`}>
+                      <Icon className="w-4 h-4" />
                     </div>
 
-                    <div>
-                      <h3 className="text-xl font-bold font-display text-[#d8ecf8]">
-                        {rel.os}
-                      </h3>
-                      <span className="text-xs font-mono text-[#9da7ba] block mt-1">
-                        {rel.badge} · {rel.size}
+                    {rel.recommended ? (
+                      <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-[#663af3] text-white shadow-md shadow-[#663af3]/40">
+                        🔥 Recomendado
                       </span>
-                    </div>
-
-                    <div className="p-3 rounded-[8px] bg-[#05060f] border border-[rgba(186,215,247,0.1)] font-mono text-[11px] text-[#b6d9fc] flex items-center justify-between">
-                      <span className="truncate">{rel.filename}</span>
-                      <HardDrive className="w-3.5 h-3.5 text-[#34d399] shrink-0 ml-2" />
-                    </div>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded-full text-[9px] font-mono bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-500 dark:text-gray-400">
+                        {rel.badge}
+                      </span>
+                    )}
                   </div>
 
-                  <div className="pt-4 space-y-3">
-                    <Button
-                      onClick={() => handleDownloadClick(rel)}
-                      disabled={isThisOSDownloading && downloadState.status !== 'completed'}
-                      size="lg"
-                      className={`w-full gap-2 font-medium transition-all duration-300 ${
-                        rel.recommended
-                          ? 'bg-[#663af3] hover:bg-[#5b31e0] text-white shadow-lg shadow-[#663af3]/30'
-                          : 'bg-[rgba(186,214,247,0.06)] hover:bg-[rgba(186,214,247,0.12)] text-white border border-[rgba(186,215,247,0.12)]'
-                      }`}
-                    >
-                      {isThisOSDownloading && downloadState.status !== 'completed' ? (
-                        <>
-                          <Loader2 className="w-4 h-4 text-white animate-spin" />
-                          <span>{downloadState.status === 'checking' ? 'Conectando...' : 'Descargando...'}</span>
-                        </>
-                      ) : (
-                        <>
-                          <Download className="w-4 h-4" />
-                          <span>Descargar v0.1.1</span>
-                        </>
-                      )}
-                    </Button>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-0.5">{rel.os}</h3>
+                  <p className="text-[11px] font-mono text-purple-700 dark:text-purple-300 truncate mb-3">{rel.filename}</p>
 
-                    <div className="text-[11px] text-center font-mono text-[#9da7ba] flex items-center justify-center gap-1">
-                      <ShieldCheck className="w-3.5 h-3.5 text-[#34d399]" />
-                      <span>Firma SHA-256 verificada</span>
-                    </div>
+                  <div className="flex items-center gap-1.5 text-[10px] font-mono text-slate-600 dark:text-gray-400 mb-4">
+                    <HardDrive className="w-3 h-3 text-[#a855f7]" />
+                    <span>Tamaño: <strong className="text-slate-900 dark:text-white">{rel.size}</strong></span>
                   </div>
-                </Card>
+                </div>
+
+                <button
+                  onClick={() => handleDownloadClick(rel)}
+                  className={`w-full py-2 px-3 rounded-lg font-mono text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md ${
+                    rel.recommended
+                      ? 'bg-[#663af3] hover:bg-[#7c4dff] text-white shadow-[#663af3]/40 border border-[#663af3]'
+                      : 'bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:hover:bg-white/20 text-slate-900 dark:text-white border border-slate-300 dark:border-white/10'
+                  }`}
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>{isThisOSDownloading ? 'Descargando...' : 'Descargar Binario'}</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
               </motion.div>
             );
           })}
         </div>
 
-        {/* Source Clone Strip */}
-        <div className="mt-12 max-w-5xl mx-auto p-6 rounded-[16px] bg-[rgba(5,6,15,0.97)] border border-[rgba(186,215,247,0.12)] flex flex-col md:flex-row items-center justify-between gap-4 font-mono text-xs text-[#c7d3ea]">
-          <div className="flex items-center gap-3">
-            <Terminal className="w-5 h-5 text-[#663af3]" />
-            <div>
-              <div className="text-[#d8ecf8] font-bold">¿Prefieres compilar desde el código fuente?</div>
-              <div className="text-[#9da7ba] text-[11px]">Requisitos: Node.js 18+, pnpm 10+</div>
-            </div>
-          </div>
-          <a
-            href="https://github.com/Naiker12/Sparta-Agent"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full md:w-auto"
-          >
-            <Button variant="outline" size="sm" className="w-full md:w-auto gap-2 font-mono">
-              <span>git clone github.com/Naiker12/Sparta-Agent</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Button>
-          </a>
-        </div>
-      </div>
-
-      {/* Floating Download Manager Widget */}
-      <AnimatePresence>
-        {showWidget && (
-          <motion.div
-            initial={{ opacity: 0, y: 50, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 50, scale: 0.95 }}
-            className="fixed bottom-6 right-6 z-50 w-80 rounded-xl border border-[rgba(186,215,247,0.15)] bg-[rgba(12,12,20,0.92)] shadow-2xl backdrop-blur-xl p-5"
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-[rgba(102,58,243,0.12)] text-[#9e80f8]">
-                  <Download className="w-4 h-4 animate-bounce" />
+        {/* DOWNLOAD PROGRESS FLOATING MODAL WIDGET */}
+        <AnimatePresence>
+          {showWidget && (
+            <motion.div
+              initial={{ opacity: 0, y: 15, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 15, scale: 0.95 }}
+              className="mt-6 max-w-lg mx-auto bg-white dark:bg-[#080512] border border-[#663af3]/50 rounded-xl p-4 shadow-lg dark:shadow-2xl backdrop-blur-2xl relative"
+            >
+              <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-200 dark:border-white/10 font-mono text-xs">
+                <div className="flex items-center gap-2 text-slate-900 dark:text-white font-bold truncate">
+                  {downloadState.status === 'completed' ? (
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  ) : (
+                    <Loader2 className="w-3.5 h-3.5 text-[#a855f7] animate-spin shrink-0" />
+                  )}
+                  <span className="truncate">{downloadState.filename}</span>
                 </div>
-                <span className="text-xs font-semibold text-[#d8ecf8] tracking-wide font-sans">
-                  {downloadState.status === 'completed' ? 'Descarga Completada' : 'Descargando Sparta'}
-                </span>
-              </div>
-              <button 
-                onClick={() => setShowWidget(false)}
-                className="text-[#9da7ba] hover:text-[#d8ecf8] transition-colors p-1 rounded-md hover:bg-[rgba(255,255,255,0.05)]"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* File Info */}
-            <div className="space-y-3">
-              <div className="flex flex-col">
-                <span className="text-xs font-mono font-bold text-[#b6d9fc] truncate">
-                  {downloadState.filename}
-                </span>
-                <span className="text-[10px] font-mono text-[#9da7ba] mt-0.5">
-                  {downloadState.os}
-                </span>
-              </div>
-
-              {/* Progress Bar */}
-              <div className="space-y-1.5">
-                <div className="h-1.5 w-full bg-[rgba(186,215,247,0.06)] rounded-full overflow-hidden">
-                  <motion.div 
-                    initial={{ width: 0 }}
-                    animate={{ width: `${downloadState.progress}%` }}
-                    transition={{ duration: 0.1 }}
-                    className="h-full bg-gradient-to-r from-[#663af3] to-[#98c0ef] rounded-full"
-                  />
-                </div>
-                
-                {/* Stats */}
-                <div className="flex items-center justify-between text-[10px] font-mono text-[#c7d3ea]">
-                  <span>{downloadState.progress}%</span>
-                  <span>
-                    {downloadState.loaded} / {downloadState.total}
-                  </span>
-                  <span className="text-[#34d399] font-bold">
-                    {downloadState.speed}
-                  </span>
-                </div>
-              </div>
-
-              {/* Status Actions */}
-              {downloadState.status === 'completed' && (
-                <motion.div 
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="flex items-center justify-center gap-1.5 pt-2 border-t border-[rgba(186,215,247,0.08)] text-[11px] text-[#34d399] font-sans font-medium"
+                <button
+                  onClick={() => setShowWidget(false)}
+                  className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors ml-2"
                 >
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span>Listo para instalar</span>
-                </motion.div>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {/* Progress Line */}
+              <div className="w-full h-1.5 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden mb-2">
+                <motion.div
+                  className="h-full bg-gradient-to-r from-[#f66e60] via-[#663af3] to-emerald-400 rounded-full"
+                  style={{ width: `${downloadState.progress}%` }}
+                />
+              </div>
+
+              <div className="flex items-center justify-between text-[10px] font-mono text-slate-600 dark:text-gray-300">
+                <span>Progreso: <strong className="text-slate-900 dark:text-white">{downloadState.progress}%</strong></span>
+                <span>Velocidad: <strong className="text-emerald-600 dark:text-emerald-400">{downloadState.speed}</strong></span>
+                <span>Cargado: <strong className="text-slate-900 dark:text-white">{downloadState.loaded} / {downloadState.total}</strong></span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </section>
   );
 }

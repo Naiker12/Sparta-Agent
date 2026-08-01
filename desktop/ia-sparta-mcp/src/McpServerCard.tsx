@@ -1,10 +1,9 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Plug, Zap, Trash2, Pencil, ChevronDown, Wifi, WifiOff, Wrench, MoreHorizontal, Shield } from 'lucide-react'
+import { Plug, Zap, Trash2, Pencil, ChevronDown, Wifi, WifiOff, Wrench, MoreHorizontal, Shield, Unplug } from 'lucide-react'
 import type { MCPServer } from 'ia-sparta-core'
 import { useMCPStore } from 'ia-sparta-core'
-import { ConfirmDeleteDialog } from 'ia-sparta-design-system'
-import { BrandIcon } from 'ia-sparta-design-system'
+import { ConfirmDeleteDialog, BrandIcon, toast } from 'ia-sparta-design-system'
 import { McpToolItem } from './McpToolItem'
 import { getVendorForServer } from './data/mcp-catalog'
 import { REFERENCE_TOOLS_CATALOG } from './data/mcp-reference-tools'
@@ -35,9 +34,22 @@ export function McpServerCard({ server, onEdit, onViewCapabilities }: McpServerC
   useEffect(() => {
     if (server.config.auth_type === 'oauth2') {
       const electronObj = (window as unknown as { electron?: { ipcRenderer?: { invoke: (channel: string, ...args: unknown[]) => Promise<unknown> } } }).electron
-      electronObj?.ipcRenderer?.invoke('vault:hasKey', `mcp:${server.id}:oauth_token`).then((has: unknown) => {
-        if (has) setHasOAuthToken(true)
-      }).catch(() => {})
+      const checkToken = async () => {
+        try {
+          const has = await electronObj?.ipcRenderer?.invoke('vault:hasKey', `mcp:${server.id}:oauth_token`)
+          if (has) {
+            setHasOAuthToken(true)
+            return
+          }
+        } catch { /* ignore */ }
+        try {
+          if (typeof window !== 'undefined' && (window as any).spartaVault?.get) {
+            const tok = (window as any).spartaVault.get(`mcp:${server.id}:oauth_token`)
+            if (tok) setHasOAuthToken(true)
+          }
+        } catch { /* ignore */ }
+      }
+      checkToken()
     }
   }, [server.id, server.config.auth_type])
 
@@ -46,6 +58,26 @@ export function McpServerCard({ server, onEdit, onViewCapabilities }: McpServerC
   const refToolsCount = REFERENCE_TOOLS_CATALOG[server.id]?.length ?? 0
   const toolsCount = server.tools.length > 0 ? server.tools.length : refToolsCount
   const brandVendor = getVendorForServer(server.id)
+
+  async function handleDisconnect(e: React.MouseEvent) {
+    e.stopPropagation()
+    try {
+      if (typeof window !== 'undefined') {
+        const win = window as any
+        if (win.electron?.ipcRenderer?.invoke) {
+          await win.electron.ipcRenderer.invoke('vault:deleteKey', `mcp:${server.id}:oauth_token`)
+        } else if (win.electronAPI?.invoke) {
+          await win.electronAPI.invoke('vault:deleteKey', `mcp:${server.id}:oauth_token`)
+        }
+        if (win.spartaVault?.delete) {
+          win.spartaVault.delete(`mcp:${server.id}:oauth_token`)
+        }
+      }
+    } catch { /* ignore */ }
+    setHasOAuthToken(false)
+    try { (useMCPStore.getState() as any).setConnected?.(server.id, false) } catch { /* ignore */ }
+    toast.info(`Conector ${server.name} desconectado.`)
+  }
 
   return (
     <>
@@ -199,7 +231,19 @@ export function McpServerCard({ server, onEdit, onViewCapabilities }: McpServerC
               >
                 <MoreHorizontal size={13} strokeWidth={2} />
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-40 text-xs" onClick={(e) => e.stopPropagation()}>
+              <DropdownMenuContent align="end" className="w-44 text-xs" onClick={(e) => e.stopPropagation()}>
+                {isConnected && (
+                  <>
+                    <DropdownMenuItem
+                      onClick={handleDisconnect}
+                      className="gap-2 text-xs cursor-pointer text-amber-500 focus:text-amber-500"
+                    >
+                      <Unplug size={12} />
+                      {t('mcp.disconnect') ?? 'Desconectar'}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
                 <DropdownMenuItem
                   onClick={(e) => { e.stopPropagation(); onEdit(server) }}
                   className="gap-2 text-xs cursor-pointer"

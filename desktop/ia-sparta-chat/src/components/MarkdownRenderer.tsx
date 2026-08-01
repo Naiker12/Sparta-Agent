@@ -69,12 +69,56 @@ const cleanSyntaxStyle = (style: any) => {
   return cleaned
 }
 
+const MENTION_REGEX = /(@(?:OneDrive \/ SharePoint|Google Drive|Filesystem|Gmail|Google Calendar|Supabase|DBHub|MongoDB|Notion|Slack|Figma|Stripe|Sentry|Playwright|Chrome DevTools|Memory|Fetch|git|github|\w+))/gi
+
+function highlightMentions(text: string): React.ReactNode {
+  if (typeof text !== 'string' || !text.includes('@')) return text
+  const parts = text.split(MENTION_REGEX)
+  if (parts.length <= 1) return text
+  return parts.map((part, i) => {
+    if (part.startsWith('@')) {
+      return (
+        <span
+          key={i}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 3,
+            padding: '1px 7px',
+            borderRadius: 10,
+            background: 'color-mix(in srgb, var(--accent) 15%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--accent) 35%, transparent)',
+            color: 'var(--accent)',
+            fontSize: '0.92em',
+            fontWeight: 600,
+            fontFamily: 'var(--font-ui)',
+            margin: '0 2px',
+            verticalAlign: 'baseline',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {part}
+        </span>
+      )
+    }
+    return part
+  })
+}
+
+function processChildren(children: React.ReactNode): React.ReactNode {
+  if (typeof children === 'string') return highlightMentions(children)
+  if (Array.isArray(children)) {
+    return children.map((child, i) => (typeof child === 'string' ? <span key={i}>{highlightMentions(child)}</span> : child))
+  }
+  return children
+}
+
 function makeMarkdownComponents(syntaxStyle: any): Components {
   return {
-    p: ({ children }) => <p className="md-p">{children}</p>,
+    p: ({ children }) => <p className="md-p">{processChildren(children)}</p>,
     ul: ({ children }) => <ul className="md-ul">{children}</ul>,
     ol: ({ children }) => <ol className="md-ol">{children}</ol>,
-    li: ({ children }) => <li className="md-li">{children}</li>,
+    li: ({ children }) => <li className="md-li">{processChildren(children)}</li>,
     strong: ({ children }) => <strong className="md-strong">{children}</strong>,
     em: ({ children }) => <em className="md-em">{children}</em>,
     a: ({ href, children }) => (

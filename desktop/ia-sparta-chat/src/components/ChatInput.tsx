@@ -29,6 +29,7 @@ interface ChatInputProps {
 
 export function ChatInput({ sessionId, className }: ChatInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const justSelectedRef = useRef(false)
   const [focused, setFocused] = useState(false)
   const [showAttach, setShowAttach] = useState(false)
   const [showSlash, setShowSlash] = useState(false)
@@ -104,6 +105,7 @@ export function ChatInput({ sessionId, className }: ChatInputProps) {
   }
 
   function handleSend() {
+    if (justSelectedRef.current) return
     let text = input.trim()
     if (!text) return
     if (!hasProvider) return
@@ -146,6 +148,9 @@ export function ChatInput({ sessionId, className }: ChatInputProps) {
     if (showMention || showSlash) {
       if (e.key === 'Enter' || e.key === 'Tab') {
         e.preventDefault()
+        e.stopPropagation()
+        justSelectedRef.current = true
+        setTimeout(() => { justSelectedRef.current = false }, 300)
         return
       }
       if (e.key === 'Escape') {
@@ -165,9 +170,20 @@ export function ChatInput({ sessionId, className }: ChatInputProps) {
   }
 
   function handleSlashSelect(cmd: SlashCommand) {
-    setInput(cmd.usage)
+    justSelectedRef.current = true
     setShowSlash(false)
-    textareaRef.current?.focus()
+    const baseCmd = `/${cmd.name}`
+    if (cmd.usage.trim() === baseCmd) {
+      cmd.action('')
+      setInput('')
+    } else {
+      const prefix = cmd.usage.split(' ')[0] || baseCmd
+      setInput(`${prefix} `)
+    }
+    setTimeout(() => {
+      justSelectedRef.current = false
+      textareaRef.current?.focus()
+    }, 300)
   }
 
   const [isRedirectMode, setIsRedirectMode] = useState(false)

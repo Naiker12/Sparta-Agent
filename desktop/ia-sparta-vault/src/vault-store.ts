@@ -109,8 +109,7 @@ export function listKeys(): { keyId: string; vendor?: string }[] {
 }
 
 export function hasKey(keyId: string): boolean {
-  const data = loadVault()
-  return keyId in data.keys
+  return getKey(keyId) !== null
 }
 
 export function clearVault(): void {

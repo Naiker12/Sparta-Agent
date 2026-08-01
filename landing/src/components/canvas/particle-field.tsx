@@ -237,7 +237,7 @@ export function ParticleField() {
   return (
     <div
       ref={containerRef}
-      className="absolute inset-0 pointer-events-none z-0 overflow-hidden opacity-60"
+      className="fixed inset-0 pointer-events-none z-0 overflow-hidden opacity-70"
     />
   );
 }

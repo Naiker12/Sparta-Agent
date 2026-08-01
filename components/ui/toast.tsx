@@ -11,7 +11,7 @@ function cn(...inputs: ClassValue[]) {
 
 export const toastManager = Toast.createToastManager()
 
-export interface ToastOptions extends Omit<ToastManagerAddOptions<any>, "title" | "description"> {
+export interface ToastOptions extends Omit<ToastManagerAddOptions<object>, "title" | "description"> {
   title?: React.ReactNode
   description?: React.ReactNode
   type?: "success" | "info" | "warning" | "error" | "loading" | string
@@ -19,7 +19,7 @@ export interface ToastOptions extends Omit<ToastManagerAddOptions<any>, "title" 
   actionProps?: React.ComponentPropsWithoutRef<"button">
 }
 
-function prepareOptions(options: ToastOptions): ToastManagerAddOptions<any> {
+function prepareOptions(options: ToastOptions): ToastManagerAddOptions<object> {
   const { duration, timeout, ...rest } = options
   return {
     ...rest,

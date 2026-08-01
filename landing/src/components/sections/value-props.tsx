@@ -9,8 +9,8 @@ export function ValueProps() {
   const [selectedModel, setSelectedModel] = useState<'Ollama' | 'Claude' | 'Gemini'>('Ollama');
 
   return (
-    <section id="pilares" className="py-24 md:py-32 relative bg-transparent">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="pilares" className="py-20 relative bg-[#07050d] border-y border-white/10">
+      <div className="mx-auto max-w-7xl border-x border-white/10 px-4 sm:px-6 lg:px-8">
         
         {/* Unified Section Header */}
         <SectionHeader
@@ -20,176 +20,111 @@ export function ValueProps() {
         />
 
         {/* Bento Grid Layout (2x2 Asymmetric) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-12">
           
           {/* Box 1: Local-First Security Engine (Col 7) */}
-          <Card className="lg:col-span-7 p-8 space-y-6 flex flex-col justify-between relative overflow-hidden group hover:border-[#663af3]/40 transition-all duration-300">
+          <Card className="lg:col-span-7 p-8 space-y-6 flex flex-col justify-between relative overflow-hidden group hover:border-[#663af3]/40 transition-all duration-300 bg-[#0e0b16]/90 border-white/10">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                {/* Icon Container: circular (9999px radius), frosted background */}
-                <div className="p-3 rounded-full bg-[rgba(52,211,153,0.06)] text-[#34d399] border border-[rgba(52,211,153,0.15)] shadow-sm">
-                  <ShieldCheck className="w-5.5 h-5.5" />
+                <div className="p-3 rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-sm">
+                  <ShieldCheck className="w-6 h-6" />
                 </div>
                 <Badge variant="success">Local-First Sandbox</Badge>
               </div>
 
-              <h3 className="text-2xl font-bold font-display text-[#d8ecf8]">
+              <h3 className="text-2xl font-bold font-display text-white">
                 1. Privacidad y Compliance Total por Diseño
               </h3>
-              <p className="text-sm text-[#9da7ba] leading-relaxed">
+              <p className="text-sm text-gray-300 leading-relaxed">
                 El broker de seguridad intercepta todas las llamadas I/O del sistema operativo. Tu código jamás abandona la máquina ni el perímetro corporativo sin tu autorización explícita.
               </p>
 
-              {/* Interactive Permission Policy Switcher: 999px toggles */}
-              <div className="p-4 rounded-[12px] bg-[#080914] border border-[rgba(186,215,247,0.08)] space-y-3 font-mono text-xs">
-                <div className="flex items-center justify-between text-[#c7d3ea] pb-2 border-b border-[rgba(186,215,247,0.05)]">
+              {/* Interactive Permission Policy Switcher */}
+              <div className="p-4 rounded-2xl bg-[#040208] border border-white/10 space-y-3 font-mono text-xs">
+                <div className="flex items-center justify-between text-gray-300 pb-2 border-b border-white/10">
                   <span>SELECCIONAR MODO DE PERMISO</span>
-                  <span className="text-[#34d399] font-semibold">ACTIVO</span>
+                  <span className="text-emerald-400 font-semibold">ACTIVO</span>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={() => setPolicyMode('PLAN')}
-                    className={`p-3 rounded-full border text-left flex items-center justify-between transition-all cursor-pointer ${
+                    className={`py-2 px-3 rounded-xl border flex items-center justify-center gap-2 cursor-pointer transition-all ${
                       policyMode === 'PLAN'
-                        ? 'bg-[rgba(56,189,248,0.1)] border-[#38bdf8]/40 text-[#38bdf8] font-bold shadow-[0_0_12px_rgba(56,189,248,0.15)]'
-                        : 'bg-[#05060f] border-[rgba(186,215,247,0.06)] text-[#9da7ba] hover:text-[#d1e4fa]'
+                        ? 'bg-[#663af3] border-[#663af3] text-white font-bold shadow-lg shadow-[#663af3]/30'
+                        : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
                     }`}
                   >
-                    <span className="flex items-center gap-2">
-                      <Eye className="w-4 h-4 text-[#38bdf8]" /> PLAN Mode
-                    </span>
-                    <span className="text-[9px] uppercase">Solo Lectura</span>
+                    <Eye className="w-3.5 h-3.5" />
+                    <span>Modo Chat (Lectura)</span>
                   </button>
 
                   <button
                     onClick={() => setPolicyMode('BUILD')}
-                    className={`p-3 rounded-full border text-left flex items-center justify-between transition-all cursor-pointer ${
+                    className={`py-2 px-3 rounded-xl border flex items-center justify-center gap-2 cursor-pointer transition-all ${
                       policyMode === 'BUILD'
-                        ? 'bg-[#663af3] border-[#663af3] text-white font-bold shadow-md shadow-[#663af3]/30'
-                        : 'bg-[#05060f] border-[rgba(186,215,247,0.06)] text-[#9da7ba] hover:text-[#d1e4fa]'
+                        ? 'bg-[#663af3] border-[#663af3] text-white font-bold shadow-lg shadow-[#663af3]/30'
+                        : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
                     }`}
                   >
-                    <span className="flex items-center gap-2">
-                      <Edit3 className="w-4 h-4 text-white" /> BUILD Mode
-                    </span>
-                    <span className="text-[9px] uppercase">Escritura OK</span>
+                    <Edit3 className="w-3.5 h-3.5" />
+                    <span>Modo Agente (Escritura)</span>
                   </button>
                 </div>
 
-                <div className="text-[10px] text-[#9da7ba] pt-2 flex items-center justify-between border-t border-[rgba(186,215,247,0.04)]">
-                  <span>CommandSanitizer: <strong className="text-[#34d399]">rm -rf / BLOQUEADO</strong></span>
-                  <span>PathGuard: <strong className="text-[#34d399]">.env PROTEGIDO</strong></span>
+                <div className="text-[11px] text-gray-400 bg-white/[0.02] p-2.5 rounded-xl border border-white/5">
+                  {policyMode === 'PLAN'
+                    ? '🔍 MODO CHAT: Solo lectura y consultas (`list`, `search`, `get`). Creaciones o ediciones bloqueadas por seguridad.'
+                    : '⚡ MODO AGENTE: Modificación activa con confirmación previa vía Diálogo Modal de Permisos.'}
                 </div>
               </div>
-            </div>
-
-            <div className="flex items-center gap-2 text-xs font-mono text-[#34d399] pt-2">
-              <CheckCircle2 className="w-4 h-4" />
-              <span>Cumplimiento estricto GDPR / CCPA / HIPAA / Air-Gapped</span>
             </div>
           </Card>
 
-          {/* Box 2: TCO & Multi-Model Flexibility (Col 5) */}
-          <Card className="lg:col-span-5 p-8 space-y-6 flex flex-col justify-between relative overflow-hidden group hover:border-[#663af3]/40 transition-all duration-300">
+          {/* Box 2: TCO Savings (Col 5) */}
+          <Card className="lg:col-span-5 p-8 space-y-6 flex flex-col justify-between relative overflow-hidden group hover:border-[#a855f7]/40 transition-all duration-300 bg-[#0e0b16]/90 border-white/10">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <div className="p-3 rounded-full bg-[rgba(102,58,243,0.06)] text-[#b6d9fc] border border-[rgba(186,215,247,0.12)]">
-                  <DollarSign className="w-5.5 h-5.5 text-indigo-400" />
+                <div className="p-3 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/20 shadow-sm">
+                  <DollarSign className="w-6 h-6" />
                 </div>
-                <Badge variant="accent">TCO -70%</Badge>
+                <span className="px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-mono font-semibold">
+                  Ahorro TCO -70%
+                </span>
               </div>
 
-              <h3 className="text-2xl font-bold font-display text-[#d8ecf8]">
-                2. Costo y Flexibilidad Multi-Modelo
+              <h3 className="text-2xl font-bold font-display text-white">
+                2. Modelo Híbrido: Cero Cuotas Innecesarias
               </h3>
-              <p className="text-sm text-[#9da7ba] leading-relaxed">
-                Orquesta automáticamente entre modelos locales ultrarrápidos (Ollama / Llama 3) para tareas de sintaxis y modelos Cloud premium para decisiones complejas.
+              <p className="text-sm text-gray-300 leading-relaxed">
+                Utiliza Ollama o modelos locales para tareas pesadas de indexado y reserva APIs en la nube solo para razonamiento complejo.
               </p>
 
-              {/* Model Switcher Pill Selector: 999px toggles */}
-              <div className="p-4 rounded-[12px] bg-[#080914] border border-[rgba(186,215,247,0.08)] space-y-3 font-mono text-xs">
-                <div className="flex items-center justify-between text-[#c7d3ea]">
-                  <span>PROVEEDOR ACTIVO</span>
-                  <span className="text-[#b6d9fc] font-semibold">LATENCIA</span>
+              {/* Model Provider Simulator */}
+              <div className="p-4 rounded-2xl bg-[#040208] border border-white/10 space-y-3 font-mono text-xs">
+                <div className="flex items-center justify-between text-gray-300 pb-2 border-b border-white/10">
+                  <span>PROVEEDOR SELECCIONADO</span>
+                  <span className="text-amber-400 font-semibold">{selectedModel}</span>
                 </div>
-
                 <div className="flex gap-2">
                   {(['Ollama', 'Claude', 'Gemini'] as const).map((m) => (
                     <button
                       key={m}
                       onClick={() => setSelectedModel(m)}
-                      className={`flex-1 p-2 rounded-full border text-center transition-all cursor-pointer ${
+                      className={`flex-1 py-1.5 rounded-xl border text-[11px] cursor-pointer transition-all ${
                         selectedModel === m
-                          ? 'bg-[rgba(186,214,247,0.12)] text-white border-[rgba(186,215,247,0.15)] font-bold shadow-sm'
-                          : 'bg-[#05060f] text-[#9da7ba] border-[rgba(186,215,247,0.06)] hover:text-white'
+                          ? 'bg-[#a855f7] border-[#a855f7] text-white font-bold'
+                          : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
                       }`}
                     >
                       {m}
                     </button>
                   ))}
                 </div>
-
-                <div className="p-2.5 rounded-[8px] bg-[#05060f] text-[#d1e4fa] flex items-center justify-between border border-[rgba(186,215,247,0.04)]">
-                  <span>{selectedModel === 'Ollama' ? 'Ollama Llama 3 (Local)' : selectedModel === 'Claude' ? 'Claude 3.5 Sonnet (Cloud)' : 'Gemini 1.5 Pro (Cloud)'}</span>
-                  <span className="text-[#34d399] font-bold">{selectedModel === 'Ollama' ? '$0 / 12ms' : selectedModel === 'Claude' ? '$0.003 / 450ms' : '$0.001 / 320ms'}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 text-xs font-mono text-[#b6d9fc] pt-2">
-              <Sparkles className="w-4 h-4 text-indigo-400" />
-              <span>Conmutación dinámica inteligente por complejidad</span>
-            </div>
-          </Card>
-
-          {/* Box 3: Auto-Reflection & Continuous Linters (Col 12 - Full Width) */}
-          <Card className="lg:col-span-12 p-8 md:p-10 space-y-6 relative overflow-hidden group hover:border-[#663af3]/40 transition-all duration-300">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-              <div className="lg:col-span-7 space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 rounded-full bg-[rgba(168,85,247,0.06)] text-indigo-400 border border-[rgba(186,215,247,0.12)]">
-                    <BrainCircuit className="w-5.5 h-5.5 text-indigo-400" />
-                  </div>
-                  <Badge variant="accent">Agent Runtime Reasoning</Badge>
-                </div>
-
-                <h3 className="text-2xl sm:text-3xl font-bold font-display text-[#d8ecf8]">
-                  3. Autonomía Real con Auto-Corrección Continua
-                </h3>
-                <p className="text-base text-[#c7d3ea] leading-relaxed">
-                  No es un autocompletado pasivo. Sparta Agent ejecuta el compilador y linter real del proyecto (<code className="font-mono text-xs text-[#b6d9fc]">tsc</code>, <code className="font-mono text-xs text-[#b6d9fc]">eslint</code>, <code className="font-mono text-xs text-[#b6d9fc]">ruff</code>, <code className="font-mono text-xs text-[#b6d9fc]">cargo</code>) tras cada edición. Si detecta un fallo, analiza el traceback y se auto-corrige.
-                </p>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 font-mono text-xs pt-2">
-                  <div className="p-3 rounded-[8px] bg-[#080914] border border-[rgba(186,215,247,0.08)] flex items-center gap-2 text-[#d1e4fa]">
-                    <CheckCircle2 className="w-4 h-4 text-[#34d399] shrink-0" /> Generación de planes en Markdown
-                  </div>
-                  <div className="p-3 rounded-[8px] bg-[#080914] border border-[rgba(186,215,247,0.08)] flex items-center gap-2 text-[#d1e4fa]">
-                    <CheckCircle2 className="w-4 h-4 text-[#34d399] shrink-0" /> Reintentos de reflexión (hasta 3x)
-                  </div>
-                </div>
-              </div>
-
-              {/* Diagnostic Terminal Stream Box */}
-              <div className="lg:col-span-5 bg-[#05060f] p-5 rounded-[12px] border border-[rgba(186,215,247,0.08)] font-mono text-xs space-y-3 shadow-inner">
-                <div className="flex items-center justify-between pb-2 border-b border-[rgba(186,215,247,0.05)] text-[#9da7ba]">
-                  <span className="flex items-center gap-2">
-                    <Terminal className="w-4 h-4 text-indigo-400" /> AUTO-DIAGNOSTIC STREAM
-                  </span>
-                  <span className="text-[#34d399] font-semibold">REFLECT LOOP</span>
-                </div>
-                
-                <div className="space-y-1.5 text-[#c7d3ea]">
-                  <div className="text-[#fbbf24]">&gt; running tsc --noEmit</div>
-                  <div className="text-[#f87171]">✖ Property &apos;user_id&apos; does not exist on type &apos;TokenData&apos;</div>
-                  <div className="text-[#c084fc]">&gt; reflection_node: Analyzing traceback error...</div>
-                  <div className="text-[#34d399]">✓ Patch generated: updated interface TokenData</div>
-                  <div className="text-[#34d399]">✓ tsc check passed on retry 1/3</div>
-                </div>
               </div>
             </div>
           </Card>
+
         </div>
       </div>
     </section>

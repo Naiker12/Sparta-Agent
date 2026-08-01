@@ -1,3 +1,5 @@
+import { loadDotEnv } from '../core/mcp-path-fix'
+
 export interface OAuthProviderConfig {
   serverId: string
   name: string
@@ -10,6 +12,8 @@ export interface OAuthProviderConfig {
   requiresBroker: boolean
   brokerEndpoint?: string
   redirectStrategy: 'loopback' | 'localhost'
+  fixedPort?: number
+  customRedirectUri?: string
   extraAuthParams?: Record<string, string>
 }
 
@@ -17,8 +21,8 @@ export const OAUTH_PROVIDERS_CATALOG: Record<string, OAuthProviderConfig> = {
   'google-drive': {
     serverId: 'google-drive',
     name: 'Google Drive',
-    clientId: process.env.GOOGLE_OAUTH_CLIENT_ID || 'YOUR_GOOGLE_OAUTH_CLIENT_ID',
-    clientSecret: process.env.GOOGLE_OAUTH_CLIENT_SECRET || 'YOUR_GOOGLE_OAUTH_CLIENT_SECRET',
+    get clientId() { loadDotEnv(); return process.env.GOOGLE_OAUTH_CLIENT_ID ?? '' },
+    get clientSecret() { loadDotEnv(); return process.env.GOOGLE_OAUTH_CLIENT_SECRET ?? '' },
     authEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
     tokenEndpoint: 'https://oauth2.googleapis.com/token',
     scopes: ['https://www.googleapis.com/auth/drive.readonly'],
@@ -33,8 +37,8 @@ export const OAUTH_PROVIDERS_CATALOG: Record<string, OAuthProviderConfig> = {
   gmail: {
     serverId: 'gmail',
     name: 'Gmail',
-    clientId: process.env.GOOGLE_OAUTH_CLIENT_ID || 'YOUR_GOOGLE_OAUTH_CLIENT_ID',
-    clientSecret: process.env.GOOGLE_OAUTH_CLIENT_SECRET || 'YOUR_GOOGLE_OAUTH_CLIENT_SECRET',
+    get clientId() { loadDotEnv(); return process.env.GOOGLE_OAUTH_CLIENT_ID ?? '' },
+    get clientSecret() { loadDotEnv(); return process.env.GOOGLE_OAUTH_CLIENT_SECRET ?? '' },
     authEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
     tokenEndpoint: 'https://oauth2.googleapis.com/token',
     scopes: ['https://www.googleapis.com/auth/gmail.readonly', 'https://www.googleapis.com/auth/gmail.send'],
@@ -49,8 +53,8 @@ export const OAUTH_PROVIDERS_CATALOG: Record<string, OAuthProviderConfig> = {
   'google-calendar': {
     serverId: 'google-calendar',
     name: 'Google Calendar',
-    clientId: process.env.GOOGLE_OAUTH_CLIENT_ID || 'YOUR_GOOGLE_OAUTH_CLIENT_ID',
-    clientSecret: process.env.GOOGLE_OAUTH_CLIENT_SECRET || 'YOUR_GOOGLE_OAUTH_CLIENT_SECRET',
+    get clientId() { loadDotEnv(); return process.env.GOOGLE_OAUTH_CLIENT_ID ?? '' },
+    get clientSecret() { loadDotEnv(); return process.env.GOOGLE_OAUTH_CLIENT_SECRET ?? '' },
     authEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
     tokenEndpoint: 'https://oauth2.googleapis.com/token',
     scopes: ['https://www.googleapis.com/auth/calendar.readonly', 'https://www.googleapis.com/auth/calendar.events'],
@@ -65,28 +69,33 @@ export const OAUTH_PROVIDERS_CATALOG: Record<string, OAuthProviderConfig> = {
   onedrive: {
     serverId: 'onedrive',
     name: 'OneDrive / SharePoint',
-    get clientId() { return process.env.MICROSOFT_OAUTH_CLIENT_ID ?? '' },
-    get clientSecret() { return process.env.MICROSOFT_OAUTH_CLIENT_SECRET ?? '' },
+    get clientId() { loadDotEnv(); return process.env.MICROSOFT_OAUTH_CLIENT_ID ?? '' },
+    get clientSecret() { loadDotEnv(); return process.env.MICROSOFT_OAUTH_CLIENT_SECRET ?? '' },
+    get customRedirectUri() { loadDotEnv(); return process.env.MICROSOFT_OAUTH_REDIRECT_URI || 'http://127.0.0.1:8484/callback' },
     authEndpoint: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
     tokenEndpoint: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
-    scopes: ['Files.Read.All', 'Sites.Read.All', 'offline_access', 'User.Read'],
+    scopes: ['Files.ReadWrite.All', 'Files.Read.All', 'Sites.ReadWrite.All', 'Sites.Read.All', 'offline_access', 'User.Read'],
     usesPKCE: true,
     requiresBroker: false,
     redirectStrategy: 'loopback',
+    fixedPort: 8484,
   },
   notion: {
     serverId: 'notion',
     name: 'Notion',
-    clientId: process.env.NOTION_OAUTH_CLIENT_ID ?? '',
+    get clientId() { loadDotEnv(); return process.env.NOTION_OAUTH_CLIENT_ID ?? '' },
+    get clientSecret() { loadDotEnv(); return process.env.NOTION_OAUTH_CLIENT_SECRET ?? '' },
+    get customRedirectUri() { loadDotEnv(); return process.env.NOTION_OAUTH_REDIRECT_URI || 'http://localhost:8484/callback' },
     authEndpoint: 'https://api.notion.com/v1/oauth/authorize',
     tokenEndpoint: 'https://api.notion.com/v1/oauth/token',
     scopes: [],
     usesPKCE: false,
-    requiresBroker: true,
-    brokerEndpoint: process.env.SPARTA_OAUTH_BROKER_URL ?? 'http://127.0.0.1:3000/api/oauth/notion/exchange',
+    requiresBroker: false,
     redirectStrategy: 'loopback',
+    fixedPort: 8484,
     extraAuthParams: {
       owner: 'user',
+      response_type: 'code',
     },
   },
   slack: {

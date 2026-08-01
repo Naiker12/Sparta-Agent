@@ -3,6 +3,7 @@ import * as http from 'http'
 import * as crypto from 'crypto'
 import { URL } from 'url'
 import { getOAuthProviderConfig } from './mcp/oauth/mcp-oauth-providers.catalog'
+import { storeKey as vaultStoreKey } from 'ia-sparta-vault'
 
 interface OAuthRequest {
   serverId: string
@@ -153,6 +154,35 @@ async function exchangeCodeForTokens(
   clientSecret?: string,
 ): Promise<{ access_token?: string; refresh_token?: string; account_label?: string; error?: string }> {
   try {
+    if (tokenEndpoint.includes('api.notion.com')) {
+      const authHeader = Buffer.from(`${clientId}:${clientSecret || ''}`).toString('base64')
+      const notionHeaders = {
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${authHeader}`,
+        'Notion-Version': '2022-06-28',
+      }
+      const notionBody = JSON.stringify({
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: redirectUri,
+      })
+      const resp = await fetch(tokenEndpoint, {
+        method: 'POST',
+        headers: notionHeaders,
+        body: notionBody,
+        signal: AbortSignal.timeout(15_000),
+      })
+      if (!resp.ok) {
+        const body = await resp.text()
+        return { error: `Token exchange failed (${resp.status}): ${body}` }
+      }
+      const data = await resp.json() as any
+      return {
+        access_token: data.access_token,
+        account_label: data.workspace_name || data.workspace_icon || data.owner?.user?.name,
+      }
+    }
+
     const headers: Record<string, string> = {
       'Content-Type': 'application/x-www-form-urlencoded',
       'Accept': 'application/json',
@@ -294,11 +324,25 @@ export function registerMcpOAuthIPC(): void {
 
       const codeVerifier = usesPKCE ? generateCodeVerifier() : undefined
       const codeChallenge = codeVerifier ? generateCodeChallenge(codeVerifier) : undefined
-      const port = 18000 + Math.floor(Math.random() * 1000)
 
-      const redirectUri = redirectStrategy === 'localhost'
-        ? `http://localhost:${port}`
-        : `http://127.0.0.1:${port}/callback`
+      let redirectUri: string
+      let port = providerConfig?.fixedPort ?? (18000 + Math.floor(Math.random() * 1000))
+      let callbackPath = redirectStrategy === 'localhost' ? '/' : '/callback'
+
+      if (providerConfig?.customRedirectUri) {
+        redirectUri = providerConfig.customRedirectUri
+        try {
+          const parsed = new URL(redirectUri)
+          if (parsed.port) port = parseInt(parsed.port, 10)
+          callbackPath = parsed.pathname || '/callback'
+        } catch {
+          /* fallback */
+        }
+      } else {
+        redirectUri = redirectStrategy === 'localhost'
+          ? `http://localhost:${port}`
+          : `http://127.0.0.1:${port}/callback`
+      }
 
       const authUrl = new URL(authorizeUrl)
 
@@ -328,12 +372,20 @@ export function registerMcpOAuthIPC(): void {
 
       shell.openExternal(authUrl.toString())
 
-      const code = await startLoopbackServer(port, redirectStrategy === 'localhost' ? '/' : '/callback')
+      const code = await startLoopbackServer(port, callbackPath)
 
       if (requiresBroker && brokerEndpoint) {
         const brokerResult = await exchangeCodeViaBroker(brokerEndpoint, code, redirectUri, req.serverId)
         if (brokerResult.error) {
           return { ok: false, error: brokerResult.error }
+        }
+        if (brokerResult.access_token) {
+          try {
+            vaultStoreKey(`mcp:${req.serverId}:oauth_token`, brokerResult.access_token)
+            if (brokerResult.refresh_token) {
+              vaultStoreKey(`mcp:${req.serverId}:oauth_refresh_token`, brokerResult.refresh_token)
+            }
+          } catch { /* ignore */ }
         }
         return {
           ok: true,
@@ -354,6 +406,14 @@ export function registerMcpOAuthIPC(): void {
         )
         if (tokens.error) {
           return { ok: false, error: tokens.error }
+        }
+        if (tokens.access_token) {
+          try {
+            vaultStoreKey(`mcp:${req.serverId}:oauth_token`, tokens.access_token)
+            if (tokens.refresh_token) {
+              vaultStoreKey(`mcp:${req.serverId}:oauth_refresh_token`, tokens.refresh_token)
+            }
+          } catch { /* ignore */ }
         }
         return {
           ok: true,

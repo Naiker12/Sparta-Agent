@@ -1,105 +1,73 @@
+import React from 'react';
+import { motion } from 'framer-motion';
+import { Folder, GitBranch, Globe } from 'lucide-react';
+import {
+  NotionIcon,
+  OneDriveIcon,
+  GoogleDriveIcon,
+  GmailIcon,
+  GoogleCalendarIcon,
+  SlackIcon,
+  SupabaseIcon,
+} from '../icons/mcp-brand-icons';
+
 export function TrustBar() {
-  const techStack = [
-    {
-      name: 'React 18',
-      role: 'UI Presentation',
-      color: 'text-sky-400',
-      icon: (props: any) => (
-        <svg viewBox="-11.5 -10.23174 23 20.46348" className={props.className} fill="none" stroke="currentColor" strokeWidth="1.2">
-          <circle cx="0" cy="0" r="2.05" fill="currentColor"/>
-          <g stroke="currentColor">
-            <ellipse rx="11" ry="4.2"/>
-            <ellipse rx="11" ry="4.2" transform="rotate(60)"/>
-            <ellipse rx="11" ry="4.2" transform="rotate(120)"/>
-          </g>
-        </svg>
-      )
-    },
-    {
-      name: 'TypeScript 5',
-      role: 'Type Safety',
-      color: 'text-[#3178c6]',
-      icon: (props: any) => (
-        <svg viewBox="0 0 100 100" className={props.className} fill="currentColor">
-          <rect width="100" height="100" rx="12" fill="#3178c6"/>
-          <text x="33" y="74" fill="white" fontSize="42" fontFamily="sans-serif" fontWeight="bold">TS</text>
-        </svg>
-      )
-    },
-    {
-      name: 'Base UI',
-      role: 'UI Primitives',
-      color: 'text-indigo-400',
-      icon: (props: any) => (
-        <svg viewBox="0 0 100 100" className={props.className} fill="none" stroke="currentColor" strokeWidth="6">
-          <rect x="15" y="15" width="70" height="70" rx="16" />
-          <path d="M30 45 L50 65 L70 35" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      )
-    },
-    {
-      name: 'Electron 30',
-      role: 'Desktop Runtime',
-      color: 'text-cyan-300',
-      icon: (props: any) => (
-        <svg viewBox="0 0 100 100" className={props.className} fill="none" stroke="currentColor" strokeWidth="5">
-          <ellipse cx="50" cy="50" rx="42" ry="16" transform="rotate(30, 50, 50)" />
-          <ellipse cx="50" cy="50" rx="42" ry="16" transform="rotate(90, 50, 50)" />
-          <ellipse cx="50" cy="50" rx="42" ry="16" transform="rotate(150, 50, 50)" />
-          <circle cx="50" cy="50" r="8" fill="currentColor" stroke="none" />
-        </svg>
-      )
-    },
-    {
-      name: 'Tailwind v4',
-      role: 'Styling Engine',
-      color: 'text-teal-300',
-      icon: (props: any) => (
-        <svg viewBox="0 0 100 100" className={props.className} fill="currentColor">
-          <path d="M20 40 C30 20, 50 20, 60 35 C65 42.5, 70 45, 80 45 C70 65, 50 65, 40 50 C35 42.5, 30 40, 20 40 Z" />
-        </svg>
-      )
-    },
-    {
-      name: 'Node IPC',
-      role: 'Security Broker',
-      color: 'text-emerald-400',
-      icon: (props: any) => (
-        <svg viewBox="0 0 100 100" className={props.className} fill="none" stroke="currentColor" strokeWidth="6" strokeLinecap="round">
-          <rect x="20" y="20" width="60" height="60" rx="12" />
-          <path d="M35 50 L65 50 M50 35 L50 65" />
-        </svg>
-      )
-    },
+  const integrations = [
+    { name: 'Notion', icon: NotionIcon, color: '#a855f7', tools: '7 Herramientas' },
+    { name: 'OneDrive', icon: OneDriveIcon, color: '#0078d4', tools: '5 Herramientas' },
+    { name: 'Google Drive', icon: GoogleDriveIcon, color: '#34a853', tools: '3 Herramientas' },
+    { name: 'Gmail', icon: GmailIcon, color: '#ea4335', tools: '11 Herramientas' },
+    { name: 'Google Calendar', icon: GoogleCalendarIcon, color: '#4285f4', tools: '3 Herramientas' },
+    { name: 'Filesystem', icon: Folder, color: '#10b981', tools: '5 Herramientas' },
+    { name: 'GitHub', icon: GitBranch, color: '#ec4899', tools: '4 Herramientas' },
+    { name: 'Slack', icon: SlackIcon, color: '#e01e5a', tools: '3 Herramientas' },
+    { name: 'Supabase', icon: SupabaseIcon, color: '#3ecf8e', tools: '2 Herramientas' },
+    { name: 'Playwright', icon: Globe, color: '#06b6d4', tools: '3 Herramientas' },
   ];
 
+  const marqueeIntegrations = [...integrations, ...integrations];
+
   return (
-    <section className="py-10 border-y border-[var(--border-normal)] bg-[var(--bg-surface)]/50 backdrop-blur-sm">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <p className="text-center text-xs font-mono uppercase tracking-widest text-[var(--text-muted)] mb-6">
-          ARQUITECTURA DE PRODUCCIÓN PROBADA · NATIVA Y SIN DEPENDENCIAS CLOUD OBLIGATORIAS
+    <div className="border-y border-slate-200 dark:border-white/10 bg-slate-50/85 dark:bg-[#07050d]/85 backdrop-blur-md py-8 overflow-hidden font-sans transition-colors duration-300">
+      <div className="mx-auto max-w-7xl border-x border-slate-200 dark:border-white/10 px-4 sm:px-6 lg:px-8">
+        <p className="text-center text-xs font-mono uppercase tracking-widest text-slate-500 dark:text-gray-400 mb-6 font-bold">
+          Integración Nativa con Conectores MCP (Standard SVGL)
         </p>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {techStack.map((tech) => {
-            const Icon = tech.icon;
-            return (
-              <div
-                key={tech.name}
-                className="flex items-center gap-3 p-3 rounded-xl bg-[rgba(186,214,247,0.02)] border border-[rgba(186,215,247,0.12)] hover:border-[#663af3]/40 transition-all duration-300 group"
-              >
-                <div className={`p-2 rounded-lg bg-[rgba(199,211,234,0.04)] w-9 h-9 flex items-center justify-center ${tech.color} group-hover:scale-110 transition-transform`}>
-                  <Icon className="w-5 h-5" />
+        {/* Infinite Marquee Loop Carousel */}
+        <div className="relative overflow-hidden w-full [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
+          <motion.div
+            animate={{ x: ['0%', '-50%'] }}
+            transition={{
+              repeat: Infinity,
+              repeatType: 'loop',
+              duration: 25,
+              ease: 'linear',
+            }}
+            className="flex items-center gap-4 w-max"
+          >
+            {marqueeIntegrations.map((item, idx) => {
+              const Icon = item.icon;
+              return (
+                <div
+                  key={`${item.name}-${idx}`}
+                  className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 rounded-2xl p-3.5 flex items-center gap-3 backdrop-blur-md hover:border-slate-300 dark:hover:border-white/25 hover:bg-slate-50 dark:hover:bg-white/[0.05] transition-all duration-200 shrink-0 w-52 shadow-sm"
+                >
+                  <div className="p-2.5 rounded-xl border border-slate-200 dark:border-white/10 flex items-center justify-center shrink-0 bg-slate-50 dark:bg-white/[0.03]">
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <div className="overflow-hidden">
+                    <h4 className="text-xs font-bold text-slate-900 dark:text-white truncate">{item.name}</h4>
+                    <span className="text-[10px] text-slate-500 dark:text-gray-400 font-mono block truncate font-medium">
+                      {item.tools}
+                    </span>
+                  </div>
                 </div>
-                <div>
-                  <div className="text-xs font-bold text-[#d8ecf8] font-mono">{tech.name}</div>
-                  <div className="text-[10px] text-[#9da7ba]">{tech.role}</div>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </motion.div>
         </div>
       </div>
-    </section>
+    </div>
   );
 }

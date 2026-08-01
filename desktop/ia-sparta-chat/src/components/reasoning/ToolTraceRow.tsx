@@ -75,7 +75,7 @@ function parseSearchResultsFromToolCall(toolCall: ToolCall): SearchProgressItem[
   if (items.length > 0) return items
 
   // 3. Fallback: Parse markdown links [Title](URL) or plain URLs in text
-  const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^\s\)]+)\)/gi
+  const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/gi
   while ((match = linkRegex.exec(output)) !== null) {
     const title = match[1]?.trim()
     const url = match[2]?.trim()
@@ -91,7 +91,7 @@ function parseSearchResultsFromToolCall(toolCall: ToolCall): SearchProgressItem[
   if (items.length > 0) return items
 
   // 4. Standalone URL regex fallback (e.g. "URL: https://...")
-  const standaloneUrlRegex = /https?:\/\/[^\s\n"'>\)]+/gi
+  const standaloneUrlRegex = /https?:\/\/[^\s\n"'>]+/gi
   const foundUrls = output.match(standaloneUrlRegex) || []
   for (const url of foundUrls) {
     if (!items.some(i => i.url === url)) {
@@ -273,12 +273,14 @@ function StatusIcon({ status, error }: { status: ToolCall['status']; error?: str
  * ToolTraceRow — inline tool call trace that looks like a thinking-line.
  * No box/border in collapsed state. Expands to show details.
  */
-export function ToolTraceRow({ toolCall }: ToolTraceRowProps) {
-  // Delegate run_command to specialized RunningCommandBlock
-  if (toolCall.toolName === 'run_command') {
-    return <RunningCommandBlock toolCall={toolCall} />
+export function ToolTraceRow(props: ToolTraceRowProps) {
+  if (props.toolCall.toolName === 'run_command') {
+    return <RunningCommandBlock toolCall={props.toolCall} />
   }
+  return <ToolTraceRowContent {...props} />
+}
 
+function ToolTraceRowContent({ toolCall }: ToolTraceRowProps) {
   const [expanded, setExpanded] = useState(toolCall.status === 'running')
   const [liveSubstatus, setLiveSubstatus] = useState(toolCall.substatus)
   const { icon, label, description } = getToolCallSummary(toolCall)

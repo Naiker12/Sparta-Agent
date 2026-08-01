@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import { Card } from '../ui/card';
-import { Button } from '../ui/button';
 import { SectionHeader } from '../ui/section-header';
 import { Terminal, Copy, Check, ArrowRight } from 'lucide-react';
 import { GithubIcon } from '../icons/github-icon';
+import { motion } from 'framer-motion';
 
 export function QuickStart() {
   const [copied, setCopied] = useState(false);
@@ -23,69 +22,69 @@ pnpm dev`;
   };
 
   return (
-    <section id="quick-start" className="py-24 md:py-32 relative bg-transparent border-t border-[rgba(186,215,247,0.12)]">
-      {/* Background Spotlight */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-[#663af3]/5 blur-[140px] rounded-full pointer-events-none -z-10" />
+    <section id="quick-start" className="py-12 relative bg-white/85 dark:bg-[#07050d]/85 backdrop-blur-md text-slate-900 dark:text-white border-y border-slate-200 dark:border-white/10 font-sans transition-colors duration-300">
+      {/* Background Glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[250px] bg-[#663af3]/10 blur-[130px] pointer-events-none" />
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
-        
-        {/* Unified Section Header */}
+      {/* UNIFIED CONTINUOUS GRID CONTAINER MAX-W-7XL BORDER-X */}
+      <div className="mx-auto max-w-7xl border-x border-slate-200 dark:border-white/10 px-4 sm:px-6 lg:px-8 relative z-10">
+        {/* Section Header */}
         <SectionHeader
           eyebrow="QUICK START // DESARROLLADORES"
           title="Mira al agente planificar y ejecutar su primera tarea en tu propia máquina."
           description="Sparta Agent es de código abierto. Sin suscripciones forzadas, sin filtración de datos y con control total sobre tus modelos de lenguaje."
         />
 
-        {/* Terminal Box Container */}
-        <Card className="max-w-4xl mx-auto border border-[rgba(186,215,247,0.12)] bg-[rgba(5,6,15,0.97)] p-6 md:p-8 shadow-2xl relative">
-          <div className="flex items-center justify-between pb-4 mb-4 border-b border-[rgba(186,215,247,0.08)]">
+        {/* COMPACT & SLEEK TERMINAL BOX (ORION STYLE) */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.3 }}
+          className="bg-white dark:bg-[#030206] border border-slate-200 dark:border-white/15 rounded-2xl p-5 backdrop-blur-xl shadow-lg dark:shadow-2xl relative max-w-4xl mx-auto mt-8"
+        >
+          {/* Terminal Header Bar */}
+          <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-200 dark:border-white/10">
             <div className="flex items-center gap-2">
-              <Terminal className="w-4 h-4 text-[#b6d9fc]" />
-              <span className="text-xs font-mono text-[#c7d3ea] font-medium">bash — local setup guide</span>
+              <div className="flex items-center gap-1.5 mr-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-rose-500/80" />
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
+              </div>
+              <Terminal className="w-3.5 h-3.5 text-[#a855f7]" />
+              <span className="text-xs font-mono font-bold text-slate-900 dark:text-white">bash — local setup guide</span>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
+
+            <button
               onClick={copyToClipboard}
-              className="gap-2 text-xs font-mono font-medium"
+              className="px-3 py-1.5 rounded-xl bg-[#663af3]/20 border border-[#663af3]/40 text-[#a855f7] hover:bg-[#663af3] hover:text-white transition-all text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer shadow-md shadow-[#663af3]/20"
             >
-              {copied ? <Check className="w-3.5 h-3.5 text-[#34d399]" /> : <Copy className="w-3.5 h-3.5 text-[#d1e4fa]" />}
-              <span>{copied ? 'Copiado!' : 'Copiar comandos'}</span>
-            </Button>
+              {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+              <span>{copied ? '¡Copiado!' : 'Copiar comandos'}</span>
+            </button>
           </div>
 
-          <pre className="font-mono text-xs md:text-sm text-[#b6d9fc] overflow-x-auto p-5 rounded-[12px] bg-[#05060f] leading-relaxed border border-[rgba(186,215,247,0.08)] shadow-inner">
+          {/* Terminal Code Block */}
+          <pre className="font-mono text-xs text-purple-600 dark:text-purple-300 overflow-x-auto p-4 rounded-xl bg-slate-50 dark:bg-[#080512] leading-relaxed border border-slate-200 dark:border-white/10 shadow-inner">
             <code>{commandText}</code>
           </pre>
 
-          <div className="mt-6 pt-4 border-t border-[rgba(186,215,247,0.06)] flex flex-wrap items-center justify-between text-xs text-[#9da7ba] font-mono gap-3">
-            <span>Requisitos: Node.js 18+ · pnpm 10+</span>
-            <a
-              href="https://github.com/Naiker12/Sparta-Agent#readme"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[#b6d9fc] hover:text-white font-medium underline-offset-4 hover:underline flex items-center gap-1"
-            >
-              Ver guía de instalación <ArrowRight className="w-3.5 h-3.5" />
-            </a>
-          </div>
-
-          {/* Primary Action Button (Primary Ghost variant / default variant) */}
-          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+          {/* Requirements & Action Buttons Bar */}
+          <div className="mt-4 pt-3 border-t border-slate-200 dark:border-white/10 flex flex-wrap items-center justify-between text-xs text-slate-500 dark:text-gray-400 font-mono gap-3">
+            <span className="text-[11px]">Requisitos: <strong className="text-slate-900 dark:text-white">Node.js 18+ · pnpm 10+</strong></span>
+            
             <a
               href="https://github.com/Naiker12/Sparta-Agent"
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full sm:w-auto"
+              className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-[#663af3] hover:bg-[#7c4dff] text-white font-mono font-bold text-xs shadow-lg shadow-[#663af3]/40 transition-all cursor-pointer border border-[#663af3]"
             >
-              <Button size="lg" className="w-full sm:w-auto gap-3 px-8">
-                <GithubIcon className="w-5 h-5 text-white" />
-                <span>Ver y Clonar en GitHub</span>
-                <ArrowRight className="w-4 h-4 text-white/70" />
-              </Button>
+              <GithubIcon className="w-4 h-4 text-white" />
+              <span>Ver y Clonar en GitHub</span>
+              <ArrowRight className="w-3.5 h-3.5 text-white/80" />
             </a>
           </div>
-        </Card>
+        </motion.div>
       </div>
     </section>
   );

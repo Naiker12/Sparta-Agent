@@ -95,7 +95,7 @@ export class McpProcessManager {
 
         this.sessions.set(serverId, session)
 
-        let initTimer: NodeJS.Timeout | undefined = setTimeout(() => {
+        const initTimer: NodeJS.Timeout | undefined = setTimeout(() => {
           this.disconnect(serverId)
           resolve({ ok: false, tools: [], error: `Timeout al conectar con el servidor MCP "${serverId}" (60s)` })
         }, 60_000)

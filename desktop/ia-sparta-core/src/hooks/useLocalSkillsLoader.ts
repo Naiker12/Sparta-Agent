@@ -41,7 +41,10 @@ function parseFrontmatter(text: string): Record<string, unknown> {
   return meta
 }
 
-const skillModules = import.meta.glob('../../../skills/**/SKILL.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>
+const skillModules = {
+  ...import.meta.glob('../../../skills/**/SKILL.md', { query: '?raw', import: 'default', eager: true }),
+  ...import.meta.glob('../../../../.agents/skills/**/SKILL.md', { query: '?raw', import: 'default', eager: true }),
+} as Record<string, string>
 
 function formatSkillName(raw: string): string {
   if (!raw.includes('-') && !raw.includes('_')) {

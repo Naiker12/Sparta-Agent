@@ -14,10 +14,13 @@ import { registerPermissionIPC, setPermissionWindow } from 'ia-sparta-ipc-bridge
 import { registerModelsIPC } from 'ia-sparta-ipc-bridge'
 import { stopFileWatcher } from 'ia-sparta-ipc-bridge'
 
-// Suppress noisy Chromium GPU/cache errors on Windows dev hot-reloads
+// Suppress noisy Chromium GPU/cache errors on Windows dev hot-reloads and optimize performance & RAM usage
 app.commandLine.appendSwitch('disable-gpu-shader-disk-cache')
 app.commandLine.appendSwitch('disable-software-rasterizer')
 app.commandLine.appendSwitch('log-level', '3')
+app.commandLine.appendSwitch('enable-gpu-rasterization')
+app.commandLine.appendSwitch('enable-zero-copy')
+app.commandLine.appendSwitch('js-flags', '--max-old-space-size=4096')
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))

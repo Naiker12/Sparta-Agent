@@ -27,6 +27,7 @@ const googleApiBaseUrls: Record<string, string> = {
   'google-drive': 'https://www.googleapis.com/drive/v3',
   'google-calendar': 'https://www.googleapis.com/calendar/v3',
   onedrive: 'https://graph.microsoft.com/v1.0/me/drive',
+  notion: 'https://api.notion.com/v1',
 }
 
 /** Resuelve un campo buscando en múltiples alias */
@@ -38,8 +39,92 @@ function resolveField(input: Record<string, unknown>, ...aliases: string[]): str
   return ''
 }
 
-/** Mapeo de herramientas MCP a endpoints REST de Google */
-function resolveGoogleApiCall(serverId: string, toolName: string, input: Record<string, unknown>): { url: string; method: string; body?: unknown } | null {
+/** Convierte texto Markdown plano en objetos rich_text con anotaciones de Notion */
+function markdownToRichText(text: string): Array<{ type: 'text'; text: { content: string }; annotations?: { bold?: boolean; italic?: boolean; code?: boolean } }> {
+  const parts: Array<{ type: 'text'; text: { content: string }; annotations?: { bold?: boolean; italic?: boolean; code?: boolean } }> = []
+  const regex = /(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`|[^*`]+)/g
+  const matches = text.match(regex) || [text]
+
+  for (const m of matches) {
+    if (m.startsWith('**') && m.endsWith('**')) {
+      parts.push({ type: 'text', text: { content: m.slice(2, -2) }, annotations: { bold: true } })
+    } else if (m.startsWith('*') && m.endsWith('*')) {
+      parts.push({ type: 'text', text: { content: m.slice(1, -1) }, annotations: { italic: true } })
+    } else if (m.startsWith('`') && m.endsWith('`')) {
+      parts.push({ type: 'text', text: { content: m.slice(1, -1) }, annotations: { code: true } })
+    } else {
+      parts.push({ type: 'text', text: { content: m } })
+    }
+  }
+  return parts.length > 0 ? parts : [{ type: 'text', text: { content: text } }]
+}
+
+/** Convierte una cadena de texto Markdown en bloques nativos de Notion */
+function markdownToNotionBlocks(text: string): any[] {
+  const lines = text.split('\n')
+  const blocks: any[] = []
+
+  for (const line of lines) {
+    const trimmed = line.trim()
+    if (!trimmed) continue
+
+    if (trimmed.startsWith('# ')) {
+      blocks.push({
+        object: 'block',
+        type: 'heading_1',
+        heading_1: { rich_text: markdownToRichText(trimmed.slice(2)) },
+      })
+    } else if (trimmed.startsWith('## ')) {
+      blocks.push({
+        object: 'block',
+        type: 'heading_2',
+        heading_2: { rich_text: markdownToRichText(trimmed.slice(3)) },
+      })
+    } else if (trimmed.startsWith('### ')) {
+      blocks.push({
+        object: 'block',
+        type: 'heading_3',
+        heading_3: { rich_text: markdownToRichText(trimmed.slice(4)) },
+      })
+    } else if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+      blocks.push({
+        object: 'block',
+        type: 'bulleted_list_item',
+        bulleted_list_item: { rich_text: markdownToRichText(trimmed.slice(2)) },
+      })
+    } else if (/^\d+\.\s/.test(trimmed)) {
+      const content = trimmed.replace(/^\d+\.\s/, '')
+      blocks.push({
+        object: 'block',
+        type: 'numbered_list_item',
+        numbered_list_item: { rich_text: markdownToRichText(content) },
+      })
+    } else if (trimmed.startsWith('> ')) {
+      blocks.push({
+        object: 'block',
+        type: 'quote',
+        quote: { rich_text: markdownToRichText(trimmed.slice(2)) },
+      })
+    } else {
+      blocks.push({
+        object: 'block',
+        type: 'paragraph',
+        paragraph: { rich_text: markdownToRichText(trimmed) },
+      })
+    }
+  }
+
+  return blocks.length > 0 ? blocks : [
+    {
+      object: 'block',
+      type: 'paragraph',
+      paragraph: { rich_text: [{ type: 'text', text: { content: text } }] },
+    },
+  ]
+}
+
+/** Mapeo de herramientas MCP a endpoints REST de Google y Microsoft Graph */
+function resolveGoogleApiCall(serverId: string, toolName: string, input: Record<string, unknown>): { url: string; method: string; body?: unknown; contentType?: string; rawBody?: string } | null {
   const baseUrl = googleApiBaseUrls[serverId]
   if (!baseUrl) return null
 
@@ -114,20 +199,111 @@ function resolveGoogleApiCall(serverId: string, toolName: string, input: Record<
   if (serverId === 'onedrive') {
     switch (toolName) {
       case 'search_files': {
-        const q = input.query || input.q || ''
-        return { url: `${baseUrl}/root/search(q='${encodeURIComponent(String(q))}')`, method: 'GET' }
+        const q = String(input.query || input.q || '').trim()
+        if (!q) {
+          return { url: `${baseUrl}/root/children`, method: 'GET' }
+        }
+        return { url: `${baseUrl}/root/search(q='${encodeURIComponent(q)}')`, method: 'GET' }
       }
       case 'list_files': {
-        const folderId = input.folderId || input.id
+        let folderId = String(input.folderId || input.id || '').trim()
+        if (folderId.toLowerCase() === 'root' || folderId === '/') {
+          folderId = ''
+        }
         return { url: folderId ? `${baseUrl}/items/${folderId}/children` : `${baseUrl}/root/children`, method: 'GET' }
       }
       case 'download_file': {
-        const fileId = input.fileId || input.id
-        return { url: `${baseUrl}/items/${fileId}/content`, method: 'GET' }
+        const fileId = String(input.fileId || input.id || input.filename || '').trim()
+        const isPath = fileId.includes('/') || fileId.includes('.')
+        const url = isPath
+          ? `${baseUrl}/root:/${encodeURIComponent(fileId.replace(/^\//, ''))}:/content`
+          : `${baseUrl}/items/${fileId}/content`
+        return { url, method: 'GET' }
       }
       case 'get_file_metadata': {
-        const fileId = input.fileId || input.id
-        return { url: `${baseUrl}/items/${fileId}`, method: 'GET' }
+        const fileId = String(input.fileId || input.id || input.filename || '').trim()
+        const isPath = fileId.includes('/') || fileId.includes('.')
+        const url = isPath
+          ? `${baseUrl}/root:/${encodeURIComponent(fileId.replace(/^\//, ''))}`
+          : `${baseUrl}/items/${fileId}`
+        return { url, method: 'GET' }
+      }
+      case 'upload_file': {
+        const rawName = String(input.filename || input.name || 'new_file.txt').trim()
+        const filename = rawName.replace(/^\/+/, '')
+        let folderId = String(input.folderId || input.parentFolderId || '').trim()
+
+        let url = ''
+        if (!folderId || folderId.toLowerCase() === 'root' || folderId === '/' || folderId === '\\') {
+          url = `${baseUrl}/root:/${encodeURIComponent(filename)}:/content`
+        } else if (folderId.includes('!') || folderId.length > 20) {
+          url = `${baseUrl}/items/${encodeURIComponent(folderId)}:/${encodeURIComponent(filename)}:/content`
+        } else {
+          const folderPath = folderId.replace(/^\/+/, '').replace(/\/+$/, '')
+          url = `${baseUrl}/root:/${encodeURIComponent(folderPath)}/${encodeURIComponent(filename)}:/content`
+        }
+
+        const contentStr = String(input.content || input.contentText || '')
+        return {
+          url,
+          method: 'PUT',
+          contentType: 'text/plain; charset=utf-8',
+          rawBody: contentStr,
+        }
+      }
+      default:
+        return null
+    }
+  }
+
+  if (serverId === 'notion') {
+    switch (toolName) {
+      case 'search': {
+        const query = String(input.query || input.q || '').trim()
+        return { url: `${baseUrl}/search`, method: 'POST', body: query ? { query } : {} }
+      }
+      case 'get_page': {
+        const pageId = String(input.page_id || input.id || '').trim()
+        return { url: `${baseUrl}/pages/${pageId}`, method: 'GET' }
+      }
+      case 'get_database': {
+        const dbId = String(input.database_id || input.id || '').trim()
+        return { url: `${baseUrl}/databases/${dbId}`, method: 'GET' }
+      }
+      case 'query_database': {
+        const dbId = String(input.database_id || input.id || '').trim()
+        return { url: `${baseUrl}/databases/${dbId}/query`, method: 'POST', body: input.filter ? { filter: input.filter } : {} }
+      }
+      case 'create_page': {
+        const parentId = String(input.parent_id || input.database_id || input.page_id || '').trim()
+        const title = String(input.title || input.name || 'Nueva Página').trim()
+        const isPage = input.parent_type === 'page' || input.parent_type === 'page_id' || Boolean(input.page_id)
+        
+        let props = input.properties as Record<string, unknown> | undefined
+        if (!props) {
+          props = isPage
+            ? { title: { title: [{ text: { content: title } }] } }
+            : { title: { title: [{ text: { content: title } }] } }
+        }
+        
+        return {
+          url: `${baseUrl}/pages`,
+          method: 'POST',
+          body: {
+            parent: isPage ? { page_id: parentId } : { database_id: parentId },
+            properties: props,
+          },
+        }
+      }
+      case 'append_block': {
+        const blockId = String(input.block_id || input.page_id || input.id || '').trim()
+        const content = String(input.content || input.text || '').trim()
+        const children = (input.children as any[]) || markdownToNotionBlocks(content)
+        return {
+          url: `${baseUrl}/blocks/${blockId}/children`,
+          method: 'PATCH',
+          body: { children },
+        }
       }
       default:
         return null
@@ -155,9 +331,13 @@ async function executeGoogleApiCall(serverId: string, toolName: string, input: R
   }
 
   try {
+    const contentType = apiCall.contentType || 'application/json'
     const headers: Record<string, string> = {
       Authorization: `Bearer ${oauthToken}`,
-      'Content-Type': 'application/json',
+      'Content-Type': contentType,
+    }
+    if (serverId === 'notion') {
+      headers['Notion-Version'] = '2022-06-28'
     }
 
     const fetchOpts: RequestInit = {
@@ -166,8 +346,12 @@ async function executeGoogleApiCall(serverId: string, toolName: string, input: R
       signal: AbortSignal.timeout(30_000),
     }
 
-    if (apiCall.body && apiCall.method !== 'GET') {
-      fetchOpts.body = JSON.stringify(apiCall.body)
+    if (apiCall.method !== 'GET') {
+      if (apiCall.rawBody !== undefined) {
+        fetchOpts.body = apiCall.rawBody
+      } else if (apiCall.body !== undefined) {
+        fetchOpts.body = contentType === 'application/json' ? JSON.stringify(apiCall.body) : String(apiCall.body)
+      }
     }
 
     const resp = await fetch(apiCall.url, fetchOpts)

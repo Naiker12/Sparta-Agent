@@ -11,6 +11,7 @@ import type { MCPServer, MCPServerConfig, MCPAuthType, MCPTool } from 'ia-sparta
 import { openExternal } from 'ia-sparta-core'
 import { useTranslation } from 'ia-sparta-i18n'
 import { catalogToMarketplaceItems, getVendorForServer } from './data/mcp-catalog'
+import { REFERENCE_TOOLS_CATALOG } from './data/mcp-reference-tools'
 
 type Tab = 'connected' | 'marketplace'
 
@@ -109,9 +110,25 @@ export function McpView() {
   const [toolsCache, setToolsCache] = useState<Record<string, MCPTool[]>>({})
   const [directOAuthItem, setDirectOAuthItem] = useState<MarketplaceItem | null>(null)
 
-  const connectedCount = servers.filter((s) => s.connected).length
+  const connectedCount = servers.filter((s) => {
+    let hasOAuthToken = false
+    try {
+      if (typeof window !== 'undefined' && (window as any).spartaVault) {
+        hasOAuthToken = !!(window as any).spartaVault.get(`mcp:${s.id}:oauth_token`)
+      }
+    } catch { /* ignore */ }
+    const isEnabled = s.config?.enabled !== false
+    const authType = s.config?.auth_type
+    return s.connected || hasOAuthToken || (isEnabled && (s.type === 'stdio' || authType !== 'oauth2'))
+  }).length
   const totalCount = servers.length
-  const totalTools = Object.values(toolsCache).reduce((sum, list) => sum + list.length, 0)
+  const totalTools = servers.reduce((sum, s) => {
+    const cached = toolsCache[s.id]
+    if (cached && cached.length > 0) return sum + cached.length
+    const cleanId = s.id.replace(/-auto$/, '')
+    const refTools = REFERENCE_TOOLS_CATALOG[cleanId] || REFERENCE_TOOLS_CATALOG[s.id] || []
+    return sum + refTools.length
+  }, 0)
 
   const TABS: Array<{ key: Tab; label: string; icon: React.ReactNode }> = [
     { key: 'connected', label: t('mcp.connected'), icon: <Wifi size={12} strokeWidth={1.8} /> },

@@ -226,7 +226,7 @@ async function executeNativeShellToolInline(
       settled = true
       unsubOutput()
       unsubExit()
-      const clean = outputChunks.join('').replace(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, '')
+      const clean = outputChunks.join('').replace(/\u001B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/gu, '')
       resolve(
         `Comando ${payload.code === 0 ? 'exitoso' : 'finalizado'} (exit code: ${payload.code})\n\n$ ${command}\n${clean.trim() || '(sin salida)'}`,
       )

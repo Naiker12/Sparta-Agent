@@ -55,21 +55,37 @@ export function AIRain() {
       });
     }
 
+    let scrollBoost = 0;
+    let lastScrollY = window.scrollY;
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const delta = Math.abs(currentScrollY - lastScrollY);
+      scrollBoost = Math.min(scrollBoost + delta * 0.1, 4);
+      lastScrollY = currentScrollY;
+    };
+
     const handleResize = () => {
       width = canvas.width = window.innerWidth;
       height = canvas.height = window.innerHeight;
     };
 
     window.addEventListener('resize', handleResize);
+    window.addEventListener('scroll', handleScroll, { passive: true });
 
     const render = () => {
+      // Gradually decay scroll boost back to 0
+      if (scrollBoost > 0) {
+        scrollBoost *= 0.92;
+      }
+
       // Clear canvas with theme-specific background color to make trails match the active theme
       const isLight = resolvedTheme === 'light';
-      ctx.fillStyle = isLight ? 'rgba(255, 255, 255, 0.08)' : 'rgba(5, 6, 15, 0.08)';
+      ctx.fillStyle = isLight ? 'rgba(248, 250, 252, 0.12)' : 'rgba(7, 5, 13, 0.12)';
       ctx.fillRect(0, 0, width, height);
 
       // Set font settings
-      ctx.font = '9px monospace';
+      ctx.font = 'bold 10px monospace';
       ctx.textBaseline = 'top';
 
       drops.forEach((drop) => {
@@ -86,51 +102,42 @@ export function AIRain() {
           if (charY > 0 && charY < height) {
             let color = '';
             if (isLight) {
-              // Light theme colors: slightly darker, legible blue/purple shades
+              // Light theme colors: rich deep indigo/purple shades
               if (index === 0) {
-                color = `rgba(2, 125, 234, ${drop.opacity * 1.2})`; // Head: deep blue
+                color = `rgba(88, 28, 235, ${Math.min(drop.opacity * 2.2, 0.95)})`; // Head: rich deep violet
               } else if (index < 3) {
-                color = `rgba(102, 58, 243, ${drop.opacity * 0.85})`; // Upper body: void violet
+                color = `rgba(67, 56, 202, ${Math.min(drop.opacity * 1.8, 0.8)})`; // Upper body: indigo
               } else {
-                color = `rgba(102, 58, 243, ${drop.opacity * (1 - index / drop.chars.length) * 0.35})`; // Fading tail
+                color = `rgba(88, 28, 235, ${drop.opacity * (1 - index / drop.chars.length) * 0.65})`; // Fading tail
               }
             } else {
               // Dark theme colors: neon colors
               if (index === 0) {
-                color = `rgba(182, 217, 252, ${drop.opacity * 1.3})`; // Head: bright skywash blue
+                color = `rgba(182, 217, 252, ${drop.opacity * 1.5})`; // Head: bright skywash blue
               } else if (index < 3) {
-                color = `rgba(102, 90, 243, ${drop.opacity * 0.85})`; // Upper body: bright purple
+                color = `rgba(168, 85, 247, ${drop.opacity * 1.1})`; // Upper body: bright purple
               } else {
-                color = `rgba(102, 58, 243, ${drop.opacity * (1 - index / drop.chars.length) * 0.4})`; // Fading tail
+                color = `rgba(102, 58, 243, ${drop.opacity * (1 - index / drop.chars.length) * 0.6})`; // Fading tail
               }
             }
 
             ctx.fillStyle = color;
             ctx.fillText(char, drop.x, charY);
-
-            // Add a subtle glowing effect to the head character (only in dark mode for screen contrast)
-            if (!isLight && index === 0 && Math.random() > 0.8) {
-              ctx.shadowColor = '#b6d9fc';
-              ctx.shadowBlur = 6;
-              ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-              ctx.fillText(char, drop.x, charY);
-              ctx.shadowBlur = 0; // reset
-            }
           }
         });
 
-        // Move the drop down
-        drop.y += drop.speed;
+        // Move drop downwards with scroll speed boost
+        drop.y += drop.speed + scrollBoost;
 
-        // Reset drop to the top when the tail fully passes the screen height
+        // Reset drop when past bottom of screen
         if (drop.y - drop.chars.length * fontSize > height) {
+          drop.y = Math.random() * -100 - 50;
           const word = aiTokens[Math.floor(Math.random() * aiTokens.length)];
-          drop.y = Math.random() * -200 - 50;
           drop.text = word;
           drop.chars = word.split('');
           drop.speed = 0.8 + Math.random() * 1.5;
-          drop.opacity = isLight ? 0.12 + Math.random() * 0.2 : 0.15 + Math.random() * 0.35;
-          drop.delay = Math.random() * 100;
+          drop.opacity = isLight ? 0.25 + Math.random() * 0.25 : 0.2 + Math.random() * 0.35;
+          drop.delay = Math.random() * 80;
         }
       });
 
@@ -141,6 +148,7 @@ export function AIRain() {
 
     return () => {
       window.removeEventListener('resize', handleResize);
+      window.removeEventListener('scroll', handleScroll);
       cancelAnimationFrame(animationFrameId);
     };
   }, [resolvedTheme]);
@@ -148,10 +156,10 @@ export function AIRain() {
   return (
     <canvas
       ref={canvasRef}
-      className={`fixed inset-0 pointer-events-none z-0 mix-blend-normal transition-opacity duration-500 ${
-        resolvedTheme === 'light' ? 'opacity-25' : 'opacity-40'
+      className={`fixed inset-0 pointer-events-none z-0 transition-opacity duration-500 ${
+        resolvedTheme === 'light' ? 'opacity-35' : 'opacity-45'
       }`}
-      style={{ filter: 'blur(0.3px)' }}
+      style={{ filter: 'blur(0.2px)' }}
     />
   );
 }

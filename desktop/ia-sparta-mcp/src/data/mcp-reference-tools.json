@@ -61,9 +61,13 @@
     { "name": "list_collections", "description": "Listar colecciones disponibles en la base de datos", "inputSchema": {} }
   ],
   "notion": [
-    { "name": "search", "description": "Buscar páginas y bases de datos en el workspace de Notion", "inputSchema": {} },
-    { "name": "get_page", "description": "Obtener el contenido estructurado de una página de Notion", "inputSchema": {} },
-    { "name": "append_block", "description": "Añadir nuevo contenido o bloques a una página", "inputSchema": {} }
+    { "name": "search", "description": "Buscar páginas, bases de datos y bloques en el workspace de Notion", "inputSchema": {} },
+    { "name": "get_page", "description": "Obtener el contenido estructurado y propiedades de una página de Notion", "inputSchema": {} },
+    { "name": "create_page", "description": "Crear una nueva página en una base de datos o subpágina", "inputSchema": {} },
+    { "name": "update_page_properties", "description": "Actualizar propiedades (título, estado, etiquetas) de una página o registro", "inputSchema": {} },
+    { "name": "get_database", "description": "Obtener la estructura, esquema y propiedades de una base de datos", "inputSchema": {} },
+    { "name": "query_database", "description": "Consultar, filtrar y ordenar registros de una base de datos", "inputSchema": {} },
+    { "name": "append_block", "description": "Añadir nuevos bloques de texto, listas o código a una página", "inputSchema": {} }
   ],
   "slack": [
     { "name": "list_channels", "description": "Listar canales públicos y privados del workspace de Slack", "inputSchema": {} },

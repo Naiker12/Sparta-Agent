@@ -1,7 +1,4 @@
-import { useState, useEffect } from 'react';
-import { Card } from '../ui/card';
-import { Badge } from '../ui/badge';
-import { Button } from '../ui/button';
+import React, { useState, useEffect } from 'react';
 import { SectionHeader } from '../ui/section-header';
 import {
   User,
@@ -9,352 +6,347 @@ import {
   Bot,
   RotateCcw,
   CheckCircle,
-  Play,
   ShieldAlert,
-  Clock,
   Terminal,
   Activity,
-  Workflow
+  Workflow,
+  Sparkles,
+  GitBranch,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import {
+  NotionIcon,
+  OneDriveIcon,
+  GoogleDriveIcon,
+  GmailIcon,
+  SlackIcon,
+  SupabaseIcon,
+} from '../icons/mcp-brand-icons';
 
 export function AgentFlow() {
   const [activeStepIndex, setActiveStepIndex] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(true);
 
   const steps = [
     {
       id: 'input',
-      title: 'Tarea del Usuario',
+      title: 'Tarea Usuario',
       actor: 'user_prompt',
       node: 'User Input',
       stepNum: '01',
-      desc: 'El usuario solicita una tarea en lenguaje natural en el IDE local ("Implementa autenticación JWT con FastAPI y prueba los endpoints").',
-      badge: 'Entrada del Usuario',
-      badgeVariant: 'outline' as const,
-      icon: User,
+      desc: 'El usuario ingresa la solicitud en lenguaje natural en el IDE ("Implementa autenticación JWT con FastAPI...").',
+      badge: 'Entrada Usuario',
+      badgeColor: 'border-sky-500/30 text-sky-400 bg-sky-500/10',
+      icon: NotionIcon,
       logs: [
-        'Connecting to local IPC bridge...',
-        'Payload: "Implementa autenticación JWT con FastAPI..."',
-        'State initialized: { status: "INIT", depth: 0 }'
-      ]
+        'Connecting to local IPC bridge: channel "chat:send-message"...',
+        'Payload: { prompt: "Implementa autenticación JWT...", mode: "AGENT" }',
+        'State initialized: { status: "INIT", depth: 0, retries: 0 }',
+      ],
+      stateVars: {
+        status: 'USER_INPUT',
+        current_node: 'user_prompt',
+        active_tools: ['read_file', 'grep_search'],
+        permission: 'AGENT_MODE',
+      },
     },
     {
       id: 'planner',
-      title: 'Planificación Dinámica',
+      title: 'Plan Dinámico',
       actor: 'planner_node',
       node: 'create_plan',
       stepNum: '02',
-      desc: 'El agente analiza el espacio de trabajo local y genera un plan atómico en Markdown (`task.md`). Nada se ejecuta a ciegas.',
+      desc: 'El agente inspecciona el workspace y genera un plan estructurado en Markdown (`task.md`).',
       badge: 'Plan Estructurado',
-      badgeVariant: 'accent' as const,
-      icon: FileText,
+      badgeColor: 'border-purple-500/30 text-purple-400 bg-purple-500/10',
+      icon: NotionIcon,
       logs: [
-        'Reading local repository files (14 matches)...',
+        'Inspecting local repository files (14 matches found)...',
         'Writing plan draft to workspace task.md...',
-        'Plan generated. Awaiting local workspace execution check.'
-      ]
+        'Plan generated successfully. Awaiting execution approval.',
+      ],
+      stateVars: {
+        status: 'PLANNING',
+        current_node: 'planner_node',
+        plan_created: true,
+        permission: 'PLAN_MODE',
+      },
     },
     {
       id: 'llm',
-      title: 'Razonamiento Autónomo',
+      title: 'Razonamiento',
       actor: 'agent_node',
       node: 'LLM Invocation',
       stepNum: '03',
-      desc: 'El orquestador invoca el modelo seleccionado (Ollama local o Cloud). El agente decide qué herramientas utilizar y lee de ChromaDB.',
+      desc: 'El orquestador invoca el modelo configurado (z-ai/glm-5.2). Decide herramientas usando RAG local.',
       badge: 'Razonamiento Local',
-      badgeVariant: 'default' as const,
-      icon: Bot,
+      badgeColor: 'border-blue-500/30 text-blue-400 bg-blue-500/10',
+      icon: SupabaseIcon,
       logs: [
-        'Querying ChromaDB local vector store...',
-        'Invoking Llama 3 (Ollama local) via JSON-RPC...',
-        'Model decided tool_call: write_file("src/auth.py", ...)'
-      ]
+        'Querying ChromaDB local vector store for auth patterns...',
+        'Invoking model via JSON-RPC stream...',
+        'Model decided tool_call: write_to_file("src/auth.py", ...)',
+      ],
+      stateVars: {
+        status: 'THINKING',
+        current_node: 'agent_node',
+        vector_hits: 8,
+        selected_model: 'z-ai/glm-5.2',
+      },
     },
     {
       id: 'sandbox',
-      title: 'Broker de Seguridad Local',
+      title: 'Broker Seguridad',
       actor: 'security_broker',
       node: 'CommandSanitizer',
       stepNum: '04',
-      desc: 'El broker de seguridad integrado intercepta la acción. Comprueba el sanitizer de comandos y valida el PathGuard en microsegundos.',
+      desc: 'El broker de seguridad intercepta la llamada I/O. Valida el Sanitizer y los límites del PathGuard.',
       badge: 'Security Shield',
-      badgeVariant: 'warning' as const,
+      badgeColor: 'border-amber-500/30 text-amber-400 bg-amber-500/10',
       icon: ShieldAlert,
       logs: [
-        'Security Interceptor: Hooked write_file context.',
+        'Security Interceptor: Intercepted write_file() payload.',
         'PathGuard: Target path inside workspace boundary. ALLOWED.',
-        'CommandSanitizer: 0 policy violations detected.'
-      ]
+        'CommandSanitizer: 0 policy violations detected.',
+      ],
+      stateVars: {
+        status: 'SECURITY_CHECK',
+        current_node: 'security_broker',
+        path_guard: 'PASSED',
+        sanitizer_violations: 0,
+      },
     },
     {
       id: 'reflection',
-      title: 'Auto-Corrección y Linters',
+      title: 'Auto-Corrección',
       actor: 'reflection_node',
       node: 'Auto-Reflection',
       stepNum: '05',
-      desc: 'Ejecuta tsc/pytest/ruff en la máquina. Si el linter falla, el agente analiza el linter traceback y corrige el archivo.',
+      desc: 'Ejecuta tsc/pytest/ruff. Si el linter falla, el agente analiza el traceback y auto-corrige el código.',
       badge: 'Self-Healing Loop',
-      badgeVariant: 'secondary' as const,
-      icon: RotateCcw,
+      badgeColor: 'border-rose-500/30 text-rose-400 bg-rose-500/10',
+      icon: GitBranch,
       logs: [
         'Executing local test harness: pytest tests/auth...',
         'Linter Alert: 1 compilation error caught (tsc / ruff).',
-        'Auto-Reflection: Analyzing traceback... Patching error (Retry 1/3).'
-      ]
+        'Auto-Reflection: Analyzing traceback... Patching error (Retry 1/3).',
+      ],
+      stateVars: {
+        status: 'REFLECTING',
+        current_node: 'reflection_node',
+        linter_errors: 1,
+        auto_healed: true,
+      },
     },
     {
       id: 'completion',
-      title: 'Finalización Verificada',
+      title: 'Éxito Verificado',
       actor: 'END',
       node: 'Completion',
       stepNum: '06',
-      desc: 'Una vez completadas todas las sub-tareas del plan sin errores ni lints, el agente termina y muestra un resumen detallado.',
+      desc: 'Una vez validadas todas las tareas sin errores, el agente termina y entrega el reporte con resumen.',
       badge: 'Éxito Verificado',
-      badgeVariant: 'success' as const,
-      icon: CheckCircle,
+      badgeColor: 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10',
+      icon: OneDriveIcon,
       logs: [
-        'Rerunning tests: all checks passed (100% OK).',
-        'Writing walkthrough.md verification log...',
-        'Graph execution completed successfully in [BUILD MODE].'
-      ]
+        'Re-running tests: 14/14 checks passed (100% OK).',
+        'Writing walkthrough.md verification report...',
+        'Graph execution completed successfully in [AGENT MODE].',
+      ],
+      stateVars: {
+        status: 'FINISHED',
+        current_node: 'END',
+        tests_passed: '14/14',
+        walkthrough_saved: true,
+      },
     },
   ];
 
+  // Automatic continuous simulation loop
   useEffect(() => {
-    if (!isPlaying) return;
     const interval = setInterval(() => {
       setActiveStepIndex((prev) => (prev + 1) % steps.length);
-    }, 4200);
+    }, 3000);
     return () => clearInterval(interval);
-  }, [isPlaying, steps.length]);
+  }, [steps.length]);
 
   const currentStep = steps[activeStepIndex];
+  const StepIcon = currentStep.icon;
 
   return (
-    <section id="flujo-agentico" className="py-24 md:py-32 relative bg-transparent border-y border-[rgba(186,215,247,0.12)]">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        {/* Unified Section Header */}
+    <section id="flujo-agentico" className="py-16 relative bg-white dark:bg-[#07050d] text-slate-900 dark:text-white border-y border-slate-200 dark:border-white/10 font-sans transition-colors duration-300">
+      {/* Background Glow */}
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-[#663af3]/10 blur-[140px] pointer-events-none" />
+
+      <div className="mx-auto max-w-7xl border-x border-slate-200 dark:border-white/10 px-4 sm:px-6 lg:px-8 relative z-10">
+        {/* Section Header */}
         <SectionHeader
           eyebrow="LANGGRAPH ENGINE // GRAFO AUTÓNOMO"
           title="Cómo Piensa y Opera el Agente en Vivo"
-          description="A diferencia de los asistentes de una sola pasada, Sparta Agent ejecuta un grafo de estados determinista. Todo el razonamiento y los planes son 100% transparentes."
+          description="A diferencia de los asistentes convencionales, Sparta Agent ejecuta un grafo de estados determinista con auditoría en tiempo real."
         />
 
-        {/* Premium Segmented Card Stepper (No loose connecting lines) */}
-        <div className="relative mb-12 max-w-5xl mx-auto">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 relative z-10">
-            {steps.map((st, idx) => {
-              const IconComp = st.icon;
-              const isActive = idx === activeStepIndex;
-              const isCompleted = idx < activeStepIndex;
-              
-              return (
-                <div
-                  key={st.id}
-                  onClick={() => {
-                    setActiveStepIndex(idx);
-                    setIsPlaying(false);
-                  }}
-                  className={`relative p-4 rounded-xl border transition-all duration-300 cursor-pointer flex flex-col justify-between select-none h-[100px] ${
+        {/* THIN ULTRA-SLEEK STEPPER TAB BAR (6 STEP NODES - HIGH DENSITY HORIZONTAL SLIM) */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 mt-10 mb-6">
+          {steps.map((step, idx) => {
+            const isActive = activeStepIndex === idx;
+            const Icon = step.icon;
+            return (
+              <motion.div
+                key={step.id}
+                onClick={() => setActiveStepIndex(idx)}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className={`px-3 py-2.5 rounded-xl border transition-all duration-300 cursor-pointer flex items-center justify-between relative overflow-hidden ${
+                  isActive
+                    ? 'bg-gradient-to-r from-[#663af3] to-[#7c4dff] border-[#663af3] text-white shadow-lg shadow-[#663af3]/30 scale-[1.03]'
+                    : 'bg-white dark:bg-[#0e0b16]/70 border-slate-200 dark:border-white/10 hover:border-[#663af3]/40 hover:bg-purple-50/40 dark:hover:bg-white/[0.04]'
+                }`}
+              >
+                {/* Active Step Top Progress Line */}
+                {isActive && (
+                  <motion.div
+                    initial={{ width: '0%' }}
+                    animate={{ width: '100%' }}
+                    transition={{ duration: 3, ease: 'linear' }}
+                    className="absolute top-0 left-0 h-[2px] bg-gradient-to-r from-[#f66e60] to-emerald-400"
+                  />
+                )}
+
+                <div className="flex items-center gap-2.5 overflow-hidden">
+                  <span className={`text-[9px] font-mono font-extrabold px-1.5 py-0.5 rounded-md shrink-0 ${
                     isActive
-                      ? 'bg-[rgba(102,58,243,0.05)] border-[#663af3] shadow-[0_8px_24px_rgba(102,58,243,0.12)] scale-[1.02]'
-                      : isCompleted
-                      ? 'bg-[rgba(186,214,247,0.03)] border-[rgba(186,215,247,0.12)] opacity-85 hover:opacity-100 hover:border-[rgba(186,215,247,0.24)]'
-                      : 'bg-[rgba(186,214,247,0.01)] border-[rgba(186,215,247,0.06)] opacity-60 hover:opacity-100 hover:border-[rgba(186,215,247,0.15)]'
-                  }`}
-                >
-                  <div className="flex items-center justify-between w-full">
-                    <span className={`text-[10px] font-mono tracking-wider ${
-                      isActive ? 'text-[#b6d9fc] font-bold' : 'text-[#9da7ba]'
+                      ? 'bg-white/20 text-white'
+                      : 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-gray-300'
+                  }`}>
+                    {step.stepNum}
+                  </span>
+                  <div className="overflow-hidden">
+                    <h4 className={`text-[11px] font-bold truncate leading-none ${
+                      isActive ? 'text-white' : 'text-slate-900 dark:text-white'
+                    }`}>{step.title}</h4>
+                    <span className={`text-[9px] font-mono block truncate mt-0.5 ${
+                      isActive ? 'text-purple-200' : 'text-slate-500 dark:text-gray-400'
                     }`}>
-                      0{idx + 1}
+                      {step.actor}
                     </span>
-                    <IconComp className={`w-4 h-4 transition-transform duration-300 ${
-                      isActive ? 'text-[#b6d9fc] scale-110' : isCompleted ? 'text-indigo-400/80' : 'text-[#9da7ba]'
-                    }`} />
-                  </div>
-
-                  <div className="space-y-1 mt-auto">
-                    <div className={`text-xs font-mono truncate ${
-                      isActive ? 'text-white font-bold' : 'text-[#c7d3ea]'
-                    }`}>
-                      {st.node}
-                    </div>
-                    <div className="text-[9px] font-mono text-[#9da7ba] truncate">
-                      {st.title}
-                    </div>
-                  </div>
-
-                  {/* Active bottom loading bar */}
-                  <div className="absolute bottom-0 left-0 right-0 h-[2px] rounded-b-xl overflow-hidden bg-transparent">
-                    {isActive ? (
-                      <motion.div 
-                        className="h-full bg-gradient-to-r from-[#663af3] via-[#b6d9fc] to-[#663af3]"
-                        layoutId="activeTimelineBar"
-                        transition={{ duration: 0.3 }}
-                      />
-                    ) : isCompleted ? (
-                      <div className="h-full bg-[#663af3]/45" />
-                    ) : null}
                   </div>
                 </div>
-              );
-            })}
-          </div>
+
+                <div className="shrink-0 ml-1">
+                  <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-white animate-pulse' : 'text-slate-400 dark:text-gray-400'}`} />
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
 
-        {/* Interactive Masterpiece Inspection Panel (Asymmetric 2-Column Grid) */}
-        <div className="max-w-5xl mx-auto relative">
-          
+        {/* MAIN DUAL DISPLAY PANELS - HIGH DENSITY COMPACT BALANCED (Min Height 310px) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          {/* Left Panel: Step Details & Explanation (6 Cols) */}
           <AnimatePresence mode="wait">
             <motion.div
-              key={activeStepIndex}
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
+              key={currentStep.id}
+              initial={{ opacity: 0, x: -15 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 15 }}
               transition={{ duration: 0.25 }}
+              className="lg:col-span-6 bg-white dark:bg-[#0e0b16]/90 border border-slate-200 dark:border-white/10 rounded-2xl p-5 backdrop-blur-xl flex flex-col justify-between relative overflow-hidden min-h-[310px] shadow-sm dark:shadow-none"
             >
-              <Card className="border border-[rgba(186,215,247,0.12)] bg-[rgba(5,6,15,0.97)] p-6 sm:p-8 shadow-2xl relative overflow-hidden backdrop-blur-2xl grid grid-cols-1 md:grid-cols-12 gap-8 items-stretch">
-                
-                {/* COLUMN 1: Visual State Machine Graph Inspector (Col 5) */}
-                <div className="md:col-span-5 bg-black/40 rounded-[12px] p-6 border border-[rgba(186,215,247,0.06)] flex flex-col justify-between relative min-h-[300px] overflow-hidden select-none">
-                  
-                  {/* Subtle decorative grid lines */}
-                  <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-[#663af3]/20 border border-[#663af3]/40 flex items-center justify-center shrink-0">
+                      <StepIcon className="w-5 h-5 text-[#a855f7]" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-mono text-[#a855f7] block font-semibold">
+                        NODO DE GRAFO #{currentStep.stepNum}
+                      </span>
+                      <h3 className="text-xl font-extrabold text-slate-900 dark:text-white leading-tight">{currentStep.title}</h3>
+                    </div>
+                  </div>
+                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono border ${currentStep.badgeColor}`}>
+                    {currentStep.badge}
+                  </span>
+                </div>
 
-                  <div className="flex items-center justify-between z-10 pb-2 border-b border-[rgba(186,215,247,0.06)]">
-                    <span className="text-[10px] font-mono text-[#b6d9fc] tracking-wider uppercase flex items-center gap-1.5">
-                      <Workflow className="w-3.5 h-3.5 text-indigo-400" /> Graph Visualizer
+                <p className="text-xs text-slate-600 dark:text-gray-300 leading-relaxed mb-4">
+                  {currentStep.desc}
+                </p>
+
+                {/* Compact State Variables Inspection Box */}
+                <div className="bg-slate-50 dark:bg-[#05030a] border border-slate-200 dark:border-white/10 rounded-xl p-3 font-mono text-xs space-y-1.5 mb-2">
+                  <div className="flex items-center justify-between text-slate-500 dark:text-gray-400 pb-1.5 border-b border-slate-200 dark:border-white/10 text-[11px]">
+                    <span className="flex items-center gap-1.5 text-slate-900 dark:text-white font-semibold">
+                      <Activity className="w-3 h-3 text-[#a855f7]" />
+                      Estado del Grafo (State Object)
                     </span>
-                    <span className="text-[9px] font-mono text-[#9da7ba]">active: {currentStep.id}</span>
+                    <span className="text-emerald-600 dark:text-emerald-400 font-bold text-[10px]">MEMORY_ACTIVE</span>
                   </div>
 
-                  {/* Flow Diagram Rendering */}
-                  <div className="flex-1 flex flex-col justify-center items-center gap-4 py-6 relative z-10 font-mono text-[10px]">
-                    
-                    {/* Visual representation of nodes */}
-                    <div className="flex flex-col gap-3 w-full max-w-[200px]">
-                      
-                      {/* Node: User Input */}
-                      <div className={`p-2 rounded-[6px] border text-center transition-all ${
-                        activeStepIndex === 0 
-                          ? 'bg-[#663af3] border-[#663af3] text-white font-bold shadow-md shadow-[#663af3]/20 scale-105' 
-                          : 'bg-black/30 border-[rgba(186,215,247,0.08)] text-[#9da7ba]'
-                      }`}>
-                        ➔ User Input
+                  <div className="grid grid-cols-2 gap-1.5 pt-1 text-[10px]">
+                    {Object.entries(currentStep.stateVars).map(([key, val]) => (
+                      <div key={key} className="bg-white dark:bg-white/[0.03] p-1.5 rounded-lg border border-slate-200 dark:border-white/5 truncate">
+                        <span className="text-slate-500 dark:text-gray-400 block text-[9px]">{key}</span>
+                        <span className="text-slate-900 dark:text-white font-bold truncate block">{String(val)}</span>
                       </div>
-
-                      {/* Node: Planner */}
-                      <div className={`p-2 rounded-[6px] border text-center transition-all ${
-                        activeStepIndex === 1 
-                          ? 'bg-[#663af3] border-[#663af3] text-white font-bold shadow-md shadow-[#663af3]/20 scale-105' 
-                          : 'bg-black/30 border-[rgba(186,215,247,0.08)] text-[#9da7ba]'
-                      }`}>
-                        ➔ create_plan (Markdown)
-                      </div>
-
-                      {/* Node: LLM Reasoning */}
-                      <div className={`p-2 rounded-[6px] border text-center transition-all ${
-                        activeStepIndex === 2 
-                          ? 'bg-[#663af3] border-[#663af3] text-white font-bold shadow-md shadow-[#663af3]/20 scale-105' 
-                          : 'bg-black/30 border-[rgba(186,215,247,0.08)] text-[#9da7ba]'
-                      }`}>
-                        ➔ LLM Agent Reasoning
-                      </div>
-
-                      {/* Node: Security Broker */}
-                      <div className={`p-2 rounded-[6px] border text-center transition-all ${
-                        activeStepIndex === 3 
-                          ? 'bg-[#663af3] border-[#663af3] text-white font-bold shadow-md shadow-[#663af3]/20 scale-105' 
-                          : 'bg-black/30 border-[rgba(186,215,247,0.08)] text-[#9da7ba]'
-                      }`}>
-                        ➔ Security Sandbox
-                      </div>
-
-                      {/* Node: Reflection Loop */}
-                      <div className={`p-2 rounded-[6px] border text-center transition-all ${
-                        activeStepIndex === 4 
-                          ? 'bg-[#663af3] border-[#663af3] text-white font-bold shadow-md shadow-[#663af3]/20 scale-105' 
-                          : 'bg-black/30 border-[rgba(186,215,247,0.08)] text-[#9da7ba]'
-                      }`}>
-                        ➔ Linter Auto-Reflection
-                      </div>
-
-                      {/* Node: Done */}
-                      <div className={`p-2 rounded-[6px] border text-center transition-all ${
-                        activeStepIndex === 5 
-                          ? 'bg-[#663af3] border-[#663af3] text-white font-bold shadow-md shadow-[#663af3]/20 scale-105' 
-                          : 'bg-black/30 border-[rgba(186,215,247,0.08)] text-[#9da7ba]'
-                      }`}>
-                        ➔ END (Task Completed)
-                      </div>
-
-                    </div>
-
-                  </div>
-
-                  <div className="text-[9px] font-mono text-[#9da7ba] flex items-center justify-between border-t border-[rgba(186,215,247,0.06)] pt-2.5">
-                    <span className="flex items-center gap-1"><Activity className="w-3 h-3 text-[#34d399] animate-pulse" /> native agent active</span>
-                    <span>Ollama / Local Provider</span>
+                    ))}
                   </div>
                 </div>
+              </div>
 
-                {/* COLUMN 2: Node Detail Info & Live Log Streaming (Col 7) */}
-                <div className="md:col-span-7 flex flex-col justify-between space-y-6">
-                  
-                  {/* Top: Metadata & Play/Pause Controls */}
-                  <div className="flex items-center justify-between pb-3 border-b border-[rgba(186,215,247,0.08)]">
-                    <div className="flex items-center gap-3">
-                      <Badge variant={currentStep.badgeVariant} className="px-2.5 py-0.5 rounded-[4px]">{currentStep.badge}</Badge>
-                      <span className="font-mono text-[10px] text-[#9da7ba]">node: {currentStep.actor}</span>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setIsPlaying(!isPlaying)}
-                      className="h-8 gap-2 text-[10px] font-mono rounded-full border-[rgba(186,215,247,0.12)] hover:bg-[rgba(186,214,247,0.08)]"
-                    >
-                      {isPlaying ? <Clock className="w-3.5 h-3.5 text-indigo-400" /> : <Play className="w-3.5 h-3.5 text-indigo-400" />}
-                      <span>{isPlaying ? 'Pausar' : 'Reanudar'}</span>
-                    </Button>
-                  </div>
-
-                  {/* Middle: Title & Explanation */}
-                  <div className="space-y-3">
-                    <div className="text-[11px] font-mono text-[#b6d9fc] tracking-widest uppercase">Paso {currentStep.stepNum} del Flujo</div>
-                    <h3 className="text-xl sm:text-2xl font-bold font-display text-[#d8ecf8] tracking-tight">
-                      {currentStep.title}
-                    </h3>
-                    <p className="text-sm text-[#c7d3ea] leading-relaxed">
-                      {currentStep.desc}
-                    </p>
-                  </div>
-
-                  {/* Bottom: Simulated Live Terminal Log Stream */}
-                  <div className="p-4 rounded-[12px] bg-[#05060f] border border-[rgba(186,215,247,0.08)] font-mono text-xs space-y-2.5 shadow-inner">
-                    <div className="text-emerald-400 font-semibold flex items-center justify-between pb-1 border-b border-[rgba(255,255,255,0.03)]">
-                      <span className="flex items-center gap-1.5"><Terminal className="w-3.5 h-3.5" /> Terminal Execution Log</span>
-                      <span className="text-[#9da7ba] text-[10px]">step {activeStepIndex + 1}/6</span>
-                    </div>
-                    <div className="space-y-1 text-[#9da7ba] text-[11px] leading-relaxed">
-                      {currentStep.logs.map((log, lIdx) => (
-                        <div key={lIdx} className="flex items-start gap-1.5">
-                          <span className="text-indigo-400/80 select-none">&gt;</span>
-                          <span className="truncate">{log}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                </div>
-
-              </Card>
+              <div className="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-white/10 text-[11px] text-slate-500 dark:text-gray-400 font-mono">
+                <span>Actor: <strong className="text-slate-900 dark:text-white">{currentStep.actor}</strong></span>
+                <span>Proceso: <strong className="text-[#a855f7]">IPC TypeScript Native</strong></span>
+              </div>
             </motion.div>
           </AnimatePresence>
-        </div>
 
+          {/* Right Panel: Live Sleek Terminal Console Stream (6 Cols) */}
+          <div className="lg:col-span-6 bg-[#030206] border border-white/15 rounded-2xl p-5 backdrop-blur-xl flex flex-col justify-between shadow-2xl relative min-h-[310px]">
+            <div>
+              {/* Console Header */}
+              <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/10 font-mono text-xs">
+                <div className="flex items-center gap-2">
+                  <Terminal className="w-3.5 h-3.5 text-[#a855f7]" />
+                  <span className="text-white font-bold text-[11px]">SPARTA ENGINE CONSOLE v0.1.1</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                  <span className="text-emerald-400 text-[10px] font-bold">STREAMING LOGS</span>
+                </div>
+              </div>
+
+              {/* Single Continuous Sleek IDE Terminal Window */}
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentStep.id}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.2 }}
+                  className="bg-[#080512] border border-white/10 rounded-xl p-3.5 font-mono text-xs space-y-2 mb-4"
+                >
+                  {currentStep.logs.map((log, i) => (
+                    <div key={i} className="flex items-start gap-2 text-gray-300 leading-relaxed text-[11px]">
+                      <span className="text-[#a855f7] font-bold select-none shrink-0">sparta@engine:~$</span>
+                      <span className="break-all">{log}</span>
+                    </div>
+                  ))}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+
+            {/* Terminal Footer Status Bar */}
+            <div className="bg-[#07050d] border border-white/10 rounded-xl p-3 font-mono text-[11px] flex items-center justify-between text-gray-300">
+              <span className="flex items-center gap-2">
+                <Workflow className="w-3.5 h-3.5 text-[#3b82f6]" />
+                Nodo Activo: <span className="text-white font-bold">{currentStep.node}</span>
+              </span>
+              <span className="text-[#10b981] font-bold">0 ERRORES</span>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   );

@@ -21,7 +21,7 @@ const markerVariants = cva(
 export interface MarkerProps
   extends React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof markerVariants> {
-  render?: React.ReactElement | ((props: any) => React.ReactElement)
+  render?: React.ReactElement | ((props: Record<string, unknown>) => React.ReactElement)
 }
 
 export const Marker = React.forwardRef<HTMLDivElement, MarkerProps>(
@@ -30,12 +30,12 @@ export const Marker = React.forwardRef<HTMLDivElement, MarkerProps>(
 
     if (render) {
       if (React.isValidElement(render)) {
-        return React.cloneElement(render, {
+        return React.cloneElement(render as React.ReactElement<Record<string, unknown>>, {
           ref,
-          className: cn(combinedClassName, (render.props as any)?.className),
+          className: cn(combinedClassName, (render.props as Record<string, unknown>)?.className as string),
           ...props,
-          children: children ?? (render.props as any)?.children,
-        } as any)
+          children: children ?? (render.props as Record<string, unknown>)?.children as React.ReactNode,
+        })
       }
       if (typeof render === 'function') {
         return render({ ref, className: combinedClassName, children, ...props })

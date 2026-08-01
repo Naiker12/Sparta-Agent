@@ -6,8 +6,44 @@
 
 import path from 'node:path'
 import os from 'node:os'
+import fs from 'node:fs'
+
+export function loadDotEnv(): void {
+  try {
+    const envPaths = [
+      path.resolve(process.cwd(), '.env'),
+      path.resolve(os.homedir(), '.sparta', '.env'),
+    ]
+    for (const envPath of envPaths) {
+      if (fs.existsSync(envPath)) {
+        const content = fs.readFileSync(envPath, 'utf8')
+        for (const line of content.split(/\r?\n/)) {
+          const trimmed = line.trim()
+          if (!trimmed || trimmed.startsWith('#')) continue
+          const eqIdx = trimmed.indexOf('=')
+          if (eqIdx > 0) {
+            const key = trimmed.slice(0, eqIdx).trim()
+            let val = trimmed.slice(eqIdx + 1).trim()
+            if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+              val = val.slice(1, -1)
+            }
+            if (!process.env[key] || process.env[key] === '') {
+              process.env[key] = val
+            }
+          }
+        }
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
+// Load .env automatically
+loadDotEnv()
 
 export function getEnhancedEnv(customEnv?: Record<string, string>): Record<string, string> {
+  loadDotEnv()
   const currentPath = process.env.PATH ?? process.env.Path ?? ''
   const extraPaths: string[] = []
 

@@ -149,6 +149,19 @@ export const mcpCatalogReferenceTools: Record<string, Array<{ name: string; desc
         required: ['fileId'],
       },
     },
+    {
+      name: 'upload_file',
+      description: 'Subir un nuevo archivo a OneDrive.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          filename: { type: 'string', description: 'Nombre del archivo a subir' },
+          content: { type: 'string', description: 'Contenido del archivo a subir' },
+          folderId: { type: 'string', description: 'ID de la carpeta destino (opcional)' },
+        },
+        required: ['filename'],
+      },
+    },
   ],
   github: [
     {
@@ -187,6 +200,54 @@ export const mcpCatalogReferenceTools: Record<string, Array<{ name: string; desc
           body: { type: 'string', description: 'Descripción de la issue' },
         },
         required: ['owner', 'repo', 'title'],
+      },
+    },
+  ],
+  notion: [
+    {
+      name: 'search',
+      description: 'Buscar páginas y bases de datos en Notion por consulta.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          query: { type: 'string', description: 'Término a buscar en Notion' },
+        },
+      },
+    },
+    {
+      name: 'get_page',
+      description: 'Obtener el contenido estructurado y propiedades de una página de Notion.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          page_id: { type: 'string', description: 'ID de la página de Notion' },
+        },
+        required: ['page_id'],
+      },
+    },
+    {
+      name: 'create_page',
+      description: 'Crear una nueva página en una base de datos o subpágina en Notion.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          parent_id: { type: 'string', description: 'ID de la base de datos o página padre' },
+          title: { type: 'string', description: 'Título de la nueva página' },
+          content: { type: 'string', description: 'Contenido inicial de la página' },
+        },
+        required: ['parent_id', 'title'],
+      },
+    },
+    {
+      name: 'append_block',
+      description: 'Añadir nuevo contenido o bloques a una página de Notion.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          block_id: { type: 'string', description: 'ID de la página o bloque objetivo' },
+          content: { type: 'string', description: 'Texto o bloque a añadir' },
+        },
+        required: ['block_id', 'content'],
       },
     },
   ],

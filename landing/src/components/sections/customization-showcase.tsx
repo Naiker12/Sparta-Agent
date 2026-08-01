@@ -34,12 +34,11 @@ export function CustomizationShowcase() {
   ];
 
   return (
-    <section id="personalizar" className="py-24 md:py-32 relative bg-transparent border-t border-[rgba(186,215,247,0.12)]">
-      {/* Background radial spotlight */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-[#663af3]/5 blur-[150px] rounded-full pointer-events-none -z-10" />
+    <section id="personalizar" className="py-20 relative bg-[#07050d] border-y border-white/10">
+      <div className="mx-auto max-w-7xl border-x border-white/10 px-4 sm:px-6 lg:px-8 space-y-16">
+        {/* Background radial spotlight */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-[#663af3]/5 blur-[150px] rounded-full pointer-events-none -z-10" />
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
-        
         {/* Unified Section Header */}
         <SectionHeader
           eyebrow="BRANDING & STYLE // CUSTOMIZATION"
