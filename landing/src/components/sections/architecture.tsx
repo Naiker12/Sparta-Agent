@@ -97,9 +97,9 @@ export function Architecture() {
   const currentTab = archTabs.find((t) => t.id === activeTab) || archTabs[0];
 
   return (
-    <section id="arquitectura" className="py-16 relative bg-slate-50 dark:bg-[#07050d] text-slate-900 dark:text-white border-y border-slate-200 dark:border-white/10 font-sans transition-colors duration-300">
+    <section id="arquitectura" className="py-16 relative overflow-hidden max-w-full bg-slate-50 dark:bg-[#07050d] text-slate-900 dark:text-white border-y border-slate-200 dark:border-white/10 font-sans transition-colors duration-300">
       {/* Background Ambient Glow */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] h-[250px] bg-[#663af3]/10 blur-[130px] pointer-events-none" />
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] max-w-[100vw] h-[250px] bg-[#663af3]/10 blur-[130px] pointer-events-none" />
 
       {/* UNIFIED CONTINUOUS GRID CONTAINER MAX-W-7XL BORDER-X */}
       <div className="mx-auto max-w-7xl border-x border-slate-200 dark:border-white/10 px-4 sm:px-6 lg:px-8 relative z-10">
@@ -118,7 +118,7 @@ export function Architecture() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 min-w-[130px] py-1.5 px-3 rounded-lg text-[11px] font-bold font-mono transition-all duration-300 cursor-pointer flex items-center justify-center gap-1.5 ${
+                className={`flex-1 min-w-[100px] sm:min-w-[130px] py-1.5 px-3 rounded-lg text-[11px] font-bold font-mono transition-all duration-300 cursor-pointer flex items-center justify-center gap-1.5 ${
                   isActive
                     ? 'bg-[#663af3] text-white shadow-md shadow-[#663af3]/40'
                     : 'bg-transparent text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04]'

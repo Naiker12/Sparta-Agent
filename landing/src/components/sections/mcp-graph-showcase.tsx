@@ -82,9 +82,9 @@ export function McpGraphShowcase() {
   ];
 
   return (
-    <section id="mcp" className="py-24 relative overflow-hidden bg-slate-50/85 dark:bg-[#07050d]/85 backdrop-blur-md text-slate-900 dark:text-white border-y border-slate-200 dark:border-white/10 font-sans transition-colors duration-300">
+    <section id="mcp" className="py-24 relative overflow-hidden max-w-full bg-slate-50/85 dark:bg-[#07050d]/85 backdrop-blur-md text-slate-900 dark:text-white border-y border-slate-200 dark:border-white/10 font-sans transition-colors duration-300">
       {/* Subtle Background Glow Gradients */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-gradient-to-r from-[#663af3]/5 dark:from-[#663af3]/15 via-[#f66e60]/5 dark:via-[#f66e60]/10 to-[#3b82f6]/5 dark:to-[#3b82f6]/15 blur-[160px] pointer-events-none" />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[1000px] max-w-[100vw] h-[500px] bg-gradient-to-r from-[#663af3]/5 dark:from-[#663af3]/15 via-[#f66e60]/5 dark:via-[#f66e60]/10 to-[#3b82f6]/5 dark:to-[#3b82f6]/15 blur-[160px] pointer-events-none" />
 
       <div className="max-w-7xl mx-auto border-x border-slate-200 dark:border-white/10 px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Section Header */}

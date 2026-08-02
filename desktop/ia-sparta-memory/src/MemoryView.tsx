@@ -11,7 +11,7 @@ import { MemoryNodePanel } from './MemoryNodePanel'
 import type { MemoryEntry, MemoryGraphNode } from 'ia-sparta-core'
 
 export function MemoryView() {
-  const { entries, relations: storedRelations } = useMemoryStore()
+  const { entries, relations: storedRelations, clearAllEntries } = useMemoryStore()
   const { goBack } = useUIStore()
   const [graphView, setGraphView] = useState(true)
   const [selectedEntry, setSelectedEntry] = useState<MemoryEntry | null>(null)
@@ -54,6 +54,14 @@ export function MemoryView() {
     }, 100)
   }
 
+  function handleClearAll() {
+    if (window.confirm('¿Estás seguro de que deseas eliminar todos los recuerdos guardados de la memoria? Esta acción dejará el grafo totalmente limpio y no se puede deshacer.')) {
+      clearAllEntries()
+      setSelectedEntry(null)
+      setSelectedGraphNode(null)
+    }
+  }
+
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <div
@@ -93,6 +101,7 @@ export function MemoryView() {
         onZoomOut={() => graphRef.current?.zoomOut()}
         onReset={() => graphRef.current?.resetCamera()}
         onToggleView={() => setGraphView((v) => !v)}
+        onClearAll={handleClearAll}
         isGraphView={graphView}
         nodeCount={entries.length}
         edgeCount={relations.length}

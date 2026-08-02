@@ -1,19 +1,14 @@
-/**
- * extractor.ts
- *
- * Automatic memory capture for completed chat turns.
- *
- * One completed assistant response becomes one memory node. The graph then
- * links that node to the previous response from the same session. This keeps
- * memory useful without exploding into one node per token/entity/keyword.
- */
-
 import { useSettingsStore } from '../../stores/settings.store'
 import { useMemoryStore } from '../../stores/memory.store'
 import type { MemoryEntry } from '../../types'
 
-const TURN_CATEGORY = 'conversation_turn'
-const MIN_TURN_LENGTH = 80
+const MIN_USER_LENGTH = 12
+const MIN_COMBINED_LENGTH = 90
+
+const TRIVIAL_PATTERNS = [
+  /^(hola|chao|adios|gracias|ok|dale|listo|entendido|de nada|perfecto|si|no)$/i,
+  /^(tu puedes|me lo|xq t|que comando|de que|mira|miren|busca aca|ahora mandale)$/i,
+]
 
 function cleanText(text: string): string {
   return text
@@ -27,24 +22,38 @@ function shouldStoreTurn(userText: string, assistantText: string): boolean {
   const user = cleanText(userText)
   const assistant = cleanText(assistantText)
   if (!user || !assistant) return false
-  if (assistant.startsWith('Error:')) return false
-  return `${user}\n${assistant}`.length >= MIN_TURN_LENGTH
+  if (user.length < MIN_USER_LENGTH) return false
+  if (assistant.startsWith('Error:') || assistant.startsWith('Conexión Web:')) return false
+  if (TRIVIAL_PATTERNS.some((pattern) => pattern.test(user))) return false
+  return `${user}\n${assistant}`.length >= MIN_COMBINED_LENGTH
+}
+
+function detectCategory(userText: string, assistantText: string): string {
+  const combined = `${userText} ${assistantText}`.toLowerCase()
+  if (combined.includes('```') || combined.includes('import ') || combined.includes('function') || combined.includes('const ') || combined.includes('error:')) {
+    return 'código'
+  }
+  if (combined.includes('prefiera') || combined.includes('configur') || combined.includes('ajuste') || combined.includes('regla')) {
+    return 'pref.'
+  }
+  if (combined.includes('mcp') || combined.includes('gmail') || combined.includes('onedrive') || combined.includes('notion') || combined.includes('fetch')) {
+    return 'entidad'
+  }
+  if (combined.includes('proyecto') || combined.includes('workspace') || combined.includes('archivo') || combined.includes('d:\\')) {
+    return 'proyecto'
+  }
+  return 'entidad'
 }
 
 function buildTurnContent(userText: string, assistantText: string): string {
-  return [
-    'Usuario:',
-    cleanText(userText),
-    '',
-    'Respuesta:',
-    cleanText(assistantText),
-  ].join('\n')
+  const cleanUser = cleanText(userText)
+  const cleanAssistant = cleanText(assistantText).split('\n').slice(0, 5).join('\n')
+  return `${cleanUser}\n→ ${cleanAssistant}`.trim()
 }
 
 function findPreviousTurn(entries: MemoryEntry[], sessionId: string, messageId: string): MemoryEntry | undefined {
   return entries
     .filter((entry) =>
-      entry.category === TURN_CATEGORY &&
       entry.source === 'auto' &&
       entry.sourceSessionId === sessionId &&
       entry.sourceMessageId !== messageId
@@ -65,13 +74,14 @@ export async function extractMemory(
     const store = useMemoryStore.getState()
     const existing = store.entries
 
-    if (existing.some((entry) => entry.sourceMessageId === messageId && entry.category === TURN_CATEGORY)) {
+    if (existing.some((entry) => entry.sourceMessageId === messageId)) {
       return
     }
 
     const previousTurn = findPreviousTurn(existing, sessionId, messageId)
+    const category = detectCategory(userText, assistantText)
     const content = buildTurnContent(userText, assistantText)
-    const entryId = store.addEntry(content, 'auto', TURN_CATEGORY, undefined, sessionId, messageId)
+    const entryId = store.addEntry(content, 'auto', category, undefined, sessionId, messageId)
 
     if (previousTurn) {
       store.addRelation({
@@ -84,7 +94,7 @@ export async function extractMemory(
     }
 
     store.rebuildGraph()
-    console.debug(`[memory:extractor] stored completed turn as one node id=${entryId.slice(0, 8)}`)
+    console.debug(`[memory:extractor] stored high-value turn id=${entryId.slice(0, 8)} category=${category}`)
 
     import('./index').then(({ isVectorEnabled, indexInChroma }) => {
       if (!isVectorEnabled()) return

@@ -41,7 +41,7 @@ export function Hero() {
   const currentCase = useCases.find((c) => c.id === activeTab) || useCases[0];
 
   return (
-    <section className="relative pt-12 pb-20 md:pt-20 md:pb-28 overflow-hidden bg-transparent font-sans">
+    <section className="relative pt-12 pb-20 md:pt-20 md:pb-28 overflow-hidden max-w-full bg-transparent font-sans">
       {/* Orion-style Border Grid Aligners */}
       <div className="mx-auto max-w-7xl border-x border-slate-200 dark:border-white/10 px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center gap-8 text-center py-8 sm:py-16">
@@ -50,12 +50,12 @@ export function Hero() {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="inline-flex items-center justify-center overflow-hidden rounded-full border border-slate-300 dark:border-white/15 bg-slate-100/90 dark:bg-white/[0.04] px-4 py-1.5 text-xs text-slate-800 dark:text-gray-300 backdrop-blur-md relative group shadow-sm"
+            className="inline-flex items-center justify-center overflow-hidden rounded-full border border-slate-300 dark:border-white/15 bg-slate-100/90 dark:bg-white/[0.04] px-4 py-1.5 text-xs text-slate-800 dark:text-gray-300 backdrop-blur-md relative group shadow-sm max-w-full"
           >
-            <span className="bg-[#663af3] text-white flex h-5 items-center rounded-full px-2 text-[10px] font-bold uppercase mr-2.5 shadow-sm">
+            <span className="bg-[#663af3] text-white flex h-5 items-center rounded-full px-2 text-[10px] font-bold uppercase mr-2.5 shadow-sm shrink-0">
               🔥 Nuevo
             </span>
-            <span className="font-mono font-bold text-slate-800 dark:text-gray-200">
+            <span className="font-mono font-bold text-slate-800 dark:text-gray-200 truncate sm:whitespace-normal">
               Conectores MCP &amp; Ejecución IPC Nativa en TypeScript
             </span>
           </motion.div>
@@ -65,7 +65,7 @@ export function Hero() {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.15] text-slate-900 dark:text-white max-w-4xl"
+            className="text-3xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.15] text-slate-900 dark:text-white max-w-4xl break-words"
           >
             Trabaja con un Agente IA que{' '}
             <span className="bg-gradient-to-r from-[#f66e60] via-[#a855f7] to-[#3b82f6] bg-clip-text text-transparent">

@@ -41,6 +41,15 @@ export function handleToolCalled(ctx: EventHandlerCtx) {
   const inputObj = toolInput && typeof toolInput === 'object' ? (toolInput as Record<string, unknown>) : {}
   store.setThinkingStatusText(ctx.sid, ctx.mid, labelForToolCall(name, inputObj))
 
+  const agentStore = useAgentStore.getState()
+  if (name.includes('search') || name.includes('fetch') || name.includes('url')) {
+    agentStore.updateAgentStatus('builtin-research', 'running')
+  } else if (name.includes('file') || name.includes('command') || name.includes('code') || name.includes('replace') || name.includes('write')) {
+    agentStore.updateAgentStatus('builtin-code', 'running')
+  } else if (name.includes('memory')) {
+    agentStore.updateAgentStatus('builtin-memory', 'running')
+  }
+
   const subagentMeta = SUBAGENT_TOOL_MAP[name]
   if (subagentMeta) {
     const agentStore = useAgentStore.getState()
@@ -88,6 +97,13 @@ export function handleToolResult(ctx: EventHandlerCtx) {
   const tcName = ctx.event.toolName as string | undefined
 
   store.updateToolCallStatus(ctx.sid, ctx.mid, tcId, 'completed', resultOutput, tcName)
+
+  setTimeout(() => {
+    const agentStore = useAgentStore.getState()
+    agentStore.updateAgentStatus('builtin-research', 'idle')
+    agentStore.updateAgentStatus('builtin-code', 'idle')
+    agentStore.updateAgentStatus('builtin-memory', 'idle')
+  }, 2500)
 
   if (tcName === 'web_search' || tcName === 'web_search_tool') {
     store.updateSearchProgress(ctx.sid, ctx.mid, (items) =>

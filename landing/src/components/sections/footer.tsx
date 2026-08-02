@@ -16,9 +16,9 @@ export function Footer() {
   const faviconSrc = getPublicUrl('favicon.svg');
 
   return (
-    <footer className="bg-white dark:bg-[#040208] border-t border-slate-200 dark:border-white/10 py-12 text-xs text-slate-500 dark:text-gray-400 relative overflow-hidden select-none font-sans transition-colors duration-300">
+    <footer className="bg-white dark:bg-[#040208] border-t border-slate-200 dark:border-white/10 py-12 text-xs text-slate-500 dark:text-gray-400 relative overflow-hidden max-w-full select-none font-sans transition-colors duration-300">
       {/* Background Ambient Glow */}
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[700px] h-[160px] bg-[#663af3]/10 blur-[140px] pointer-events-none -z-10" />
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[700px] max-w-[100vw] h-[160px] bg-[#663af3]/10 blur-[140px] pointer-events-none -z-10" />
 
       {/* UNIFIED CONTINUOUS GRID CONTAINER MAX-W-7XL BORDER-X */}
       <div className="mx-auto max-w-7xl border-x border-slate-200 dark:border-white/10 px-4 sm:px-6 lg:px-8 relative z-10">

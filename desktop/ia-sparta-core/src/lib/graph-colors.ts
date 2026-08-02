@@ -17,19 +17,51 @@ export function getCSSVarAsHex(name: string): string {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  entity:    '#7c9ef8',
-  fact:      '#6bd49a',
-  relation:  '#f8c77c',
-  project:   '#c47cf8',
-  preference:'#f87c9e',
-  code:      '#7cf8f0',
-  manual:    '#f8f87c',
-  auto:      '#c4c4d4',
+  // Entidades y Usuarios
+  entity:      '#3b82f6', // Electric Blue
+  entidad:     '#3b82f6',
+  user:        '#3b82f6',
+  usuario:     '#3b82f6',
+
+  // Hechos y Datos
+  fact:        '#10b981', // Emerald Green
+  hecho:       '#10b981',
+  dato:        '#10b981',
+
+  // Preferencias
+  preference:  '#ec4899', // Hot Pink
+  preferencia: '#ec4899',
+  'pref.':     '#ec4899',
+  pref:        '#ec4899',
+
+  // Proyectos y Tareas
+  project:     '#8b5cf6', // Violet Purple
+  proyecto:    '#8b5cf6',
+  tarea:       '#8b5cf6',
+
+  // Código y Tecnología
+  code:        '#06b6d4', // Bright Cyan
+  código:      '#06b6d4',
+  codigo:      '#06b6d4',
+  tech:        '#06b6d4',
+
+  // Relaciones y Sistema
+  relation:    '#f59e0b', // Amber Orange
+  relación:    '#f59e0b',
+  relacion:    '#f59e0b',
+  mcp:         '#f59e0b',
+
+  // Fuentes
+  manual:      '#eab308', // Gold
+  auto:        '#6366f1', // Indigo Glow
 }
 
 export function getGraphNodeColor(source: 'auto' | 'manual', category?: string): string {
-  if (category && CATEGORY_COLORS[category.toLowerCase()]) {
-    return CATEGORY_COLORS[category.toLowerCase()]
+  if (category) {
+    const key = category.toLowerCase().trim()
+    if (CATEGORY_COLORS[key]) {
+      return CATEGORY_COLORS[key]
+    }
   }
   return source === 'manual' ? CATEGORY_COLORS.manual : CATEGORY_COLORS.auto
 }

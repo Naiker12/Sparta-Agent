@@ -10,6 +10,7 @@ interface SessionState {
   switchSession: (id: string) => void
   resetActiveSession: () => void
   deleteSession: (id: string) => void
+  deleteAllSessions: () => void
   pinSession: (id: string) => void
   archiveSession: (id: string) => void
   renameSession: (id: string, newTitle: string) => void
@@ -55,6 +56,8 @@ export const useSessionStore = create<SessionState>()(
           }
         }),
 
+      deleteAllSessions: () => set({ sessions: [], activeSessionId: null }),
+
       pinSession: (id) =>
         set((s) => ({
           sessions: s.sessions.map((sess) =>
@@ -89,6 +92,7 @@ export const useSessionStore = create<SessionState>()(
             sess.id === id ? { ...sess, ...updater, updatedAt: Date.now() } : sess
           ),
         })),
+
       addReasoningTokens: (id, tokens) =>
         set((s) => ({
           sessions: s.sessions.map((sess) =>

@@ -164,9 +164,9 @@ export function AgentFlow() {
   const StepIcon = currentStep.icon;
 
   return (
-    <section id="flujo-agentico" className="py-16 relative bg-white dark:bg-[#07050d] text-slate-900 dark:text-white border-y border-slate-200 dark:border-white/10 font-sans transition-colors duration-300">
+    <section id="flujo-agentico" className="py-16 relative overflow-hidden max-w-full bg-white dark:bg-[#07050d] text-slate-900 dark:text-white border-y border-slate-200 dark:border-white/10 font-sans transition-colors duration-300">
       {/* Background Glow */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-[#663af3]/10 blur-[140px] pointer-events-none" />
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[700px] max-w-[100vw] h-[350px] bg-[#663af3]/10 blur-[140px] pointer-events-none" />
 
       <div className="mx-auto max-w-7xl border-x border-slate-200 dark:border-white/10 px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Section Header */}

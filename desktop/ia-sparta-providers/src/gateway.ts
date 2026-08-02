@@ -1,4 +1,4 @@
-import { createProvider } from 'ia-sparta-core'
+import { createProvider } from '../../ia-sparta-core/src/services/ai'
 import type { Provider, ChatRequest, ChatStreamChunk, Message } from 'ia-sparta-core'
 
 export class AIGateway {

@@ -42,7 +42,8 @@ function parseFrontmatter(text: string): Record<string, unknown> {
 }
 
 const skillModules = {
-  ...import.meta.glob('../../../skills/**/SKILL.md', { query: '?raw', import: 'default', eager: true }),
+  ...import.meta.glob('../../../../skills/**/SKILL.md', { query: '?raw', import: 'default', eager: true }),
+  ...import.meta.glob('../../../../skills/**/*.md', { query: '?raw', import: 'default', eager: true }),
   ...import.meta.glob('../../../../.agents/skills/**/SKILL.md', { query: '?raw', import: 'default', eager: true }),
 } as Record<string, string>
 
@@ -77,14 +78,26 @@ function formatSkillName(raw: string): string {
 }
 
 function loadAllSkills(): LocalSkill[] {
-  const skills: LocalSkill[] = []
+  const skillsMap = new Map<string, LocalSkill>()
 
   for (const [filepath, content] of Object.entries(skillModules)) {
+    const normPath = filepath.replace(/\\/g, '/')
+    if (normPath.includes('/references/') || normPath.includes('/docs/')) continue
+
+    const isMainDoc = normPath.endsWith('SKILL.md') || normPath.endsWith('README.md') || normPath.endsWith('editing.md')
+    if (!isMainDoc && !content.startsWith('---')) continue
+
     const meta = parseFrontmatter(content)
-    const parts = filepath.replace(/\\/g, '/').split('/')
+    const parts = normPath.split('/')
     const dirName = parts[parts.length - 2]
     const skillsIndex = parts.lastIndexOf('skills')
-    const categoryDir = skillsIndex >= 0 ? parts[skillsIndex + 1] : dirName
+    const categoryDir = (skillsIndex >= 0 && parts[skillsIndex + 1] !== dirName) ? parts[skillsIndex + 1] : 'productivity'
+
+    const rawName = (meta.name as string) || dirName
+    if (!rawName || rawName === 'skills' || rawName === 'references') continue
+
+    const id = (meta.id as string) || rawName.toLowerCase().replace(/\s+/g, '-')
+    if (skillsMap.has(id)) continue
 
     const categoryMap: Record<string, string> = {
       analysis: 'Analysis', apple: 'Apple', automation: 'Automation',
@@ -94,44 +107,28 @@ function loadAllSkills(): LocalSkill[] {
       mlops: 'MLOps', 'note-taking': 'Note Taking', productivity: 'Productivity',
       research: 'Research', 'smart-home': 'Smart Home', 'social-media': 'Social Media',
       'software-development': 'Software Development', writing: 'Writing', yuanbao: 'Yuanbao',
-      evaluation: 'MLOps', inference: 'MLOps', models: 'MLOps',
-    }
-
-    const iconMap: Record<string, string> = {
-      analysis: '\ud83d\udcca', apple: '\ud83c\udf4e', automation: '\u26a1',
-      'autonomous-ai-agents': '\ud83e\udd16', coding: '\ud83d\udcbb',
-      creative: '\ud83c\udfa8', 'data-science': '\ud83d\udd2c', dogfood: '\ud83d\udc3e',
-      email: '\ud83d\udce7', github: '\ud83d\udc19', media: '\ud83c\udfac',
-      mlops: '\ud83e\udde0', evaluation: '\ud83e\udde0', inference: '\ud83e\udde0',
-      models: '\ud83e\udde0', 'note-taking': '\ud83d\udcdd', productivity: '\ud83d\udcc2',
-      research: '\ud83d\udd0d', 'smart-home': '\ud83c\udfe0', 'social-media': '\ud83d\udcf1',
-      'software-development': '\ud83d\udee0\ufe0f', writing: '\u270d\ufe0f',
     }
 
     const rawCategory = (meta.category as string) || categoryMap[categoryDir] || categoryDir.charAt(0).toUpperCase() + categoryDir.slice(1)
-    const rawTags = meta.tags as string[] | undefined
-    const category = rawCategory
-
-    const rawName = (meta.name as string) || dirName
 
     const rawIcon = (meta.icon as string) || ''
     const cleanIcon = (rawIcon === '??' || rawIcon.length > 5) ? '' : rawIcon
 
-    skills.push({
-      id: (meta.id as string) || dirName,
+    skillsMap.set(id, {
+      id,
       name: formatSkillName(rawName),
-      description: (meta.description as string) || '',
-      category,
-      tags: Array.isArray(rawTags) ? rawTags : [category.replace(/\s+/g, '')],
-      icon: cleanIcon || iconMap[categoryDir] || '\ud83d\udce6',
+      description: (meta.description as string) || `Capacidad de ${rawCategory} para agentes de IA.`,
+      category: rawCategory,
+      tags: Array.isArray(meta.tags) ? (meta.tags as string[]) : [categoryDir],
+      icon: cleanIcon,
       version: (meta.version as string) || '1.0.0',
       author: (meta.author as string) || 'Sparta Team',
-      source: (meta.source as string) || 'builtin',
-      featured: (meta.featured as boolean) || false,
+      source: normPath.includes('.agents') ? 'workspace' : 'builtin',
+      featured: Boolean(meta.featured),
     })
   }
 
-  return skills.sort((a, b) => a.name.localeCompare(b.name))
+  return Array.from(skillsMap.values()).sort((a, b) => a.name.localeCompare(b.name))
 }
 
 let _cached: LocalSkill[] = []

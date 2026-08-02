@@ -21,12 +21,21 @@ interface Props {
 }
 
 const EDGE_COLOR: Record<string, string> = {
+  same_session: 'rgba(59, 130, 246, 0.4)',
+  shared_entity: 'rgba(16, 185, 129, 0.4)',
   same_category: 'rgba(139, 92, 246, 0.35)',
-  same_project: 'rgba(34, 197, 94, 0.35)',
+  same_project: 'rgba(236, 72, 153, 0.35)',
   default: 'rgba(148, 163, 184, 0.2)',
 }
 
-let dashOffset = 0
+function cleanLabel(rawContent: string): string {
+  let cleaned = rawContent.trim()
+  cleaned = cleaned.replace(/^(usuario|user|assistant|system|\/\s*respuesta)\s*:\s*/i, '')
+  if (!cleaned) cleaned = rawContent.trim()
+  const words = cleaned.split(/\s+/).slice(0, 3)
+  const label = words.join(' ')
+  return label.length > 22 ? label.substring(0, 20) + '…' : label
+}
 
 export const MemoryGraphD3 = forwardRef<MemoryGraphHandle, Props>(
   function MemoryGraphD3(
@@ -57,8 +66,10 @@ export const MemoryGraphD3 = forwardRef<MemoryGraphHandle, Props>(
       ctx.translate(transform.x, transform.y)
       ctx.scale(transform.k, transform.k)
 
-      dashOffset = (dashOffset - 0.4) % 20
       const links = linksRef.current
+      const nodes = nodesRef.current
+
+      // 1. Draw Planetary Constellation Edges
       for (const link of links) {
         const src = link.source as D3Node
         const tgt = link.target as D3Node
@@ -69,59 +80,91 @@ export const MemoryGraphD3 = forwardRef<MemoryGraphHandle, Props>(
         ctx.moveTo(src.x, src.y)
         ctx.lineTo(tgt.x, tgt.y)
         ctx.strokeStyle = EDGE_COLOR[edgeType] ?? EDGE_COLOR.default
-        ctx.lineWidth = 1 / transform.k
-        ctx.setLineDash([6, 6])
-        ctx.lineDashOffset = dashOffset
+        ctx.lineWidth = Math.max(0.8, 1.2 / transform.k)
         ctx.stroke()
-        ctx.setLineDash([])
       }
 
-      const nodes = nodesRef.current
+      // 2. Draw Planets (Nodes)
       for (const node of nodes) {
         if (node.x === undefined || node.y === undefined) continue
         const isSelected = node.id === selectedNodeId
         const r = node.radius
 
-        if (isSelected) {
+        // Delicate Orbital Ring for larger nodes
+        if (r > 12) {
           ctx.beginPath()
           ctx.arc(node.x, node.y, r + 6, 0, Math.PI * 2)
-          const glow = ctx.createRadialGradient(node.x, node.y, r, node.x, node.y, r + 10)
-          glow.addColorStop(0, 'rgba(251, 191, 36, 0.5)')
-          glow.addColorStop(1, 'rgba(251, 191, 36, 0)')
-          ctx.fillStyle = glow
-          ctx.fill()
+          ctx.strokeStyle = node.color + '30'
+          ctx.lineWidth = 1 / transform.k
+          ctx.stroke()
         }
 
+        // Glowing Atmosphere Aura
+        ctx.beginPath()
+        ctx.arc(node.x, node.y, r + 7, 0, Math.PI * 2)
+        const aura = ctx.createRadialGradient(node.x, node.y, r, node.x, node.y, r + 9)
+        if (isSelected) {
+          aura.addColorStop(0, 'rgba(251, 191, 36, 0.65)')
+          aura.addColorStop(1, 'rgba(251, 191, 36, 0)')
+        } else {
+          aura.addColorStop(0, node.color + '45')
+          aura.addColorStop(1, node.color + '00')
+        }
+        ctx.fillStyle = aura
+        ctx.fill()
+
+        // Core Planet Surface
         ctx.beginPath()
         ctx.arc(node.x, node.y, r, 0, Math.PI * 2)
         ctx.fillStyle = node.color
-        ctx.globalAlpha = isSelected ? 1 : 0.85
+        ctx.globalAlpha = isSelected ? 1 : 0.95
         ctx.fill()
         ctx.globalAlpha = 1
 
-        ctx.strokeStyle = isSelected ? '#fbbf24' : 'rgba(255,255,255,0.15)'
-        ctx.lineWidth = isSelected ? 2 / transform.k : 1 / transform.k
+        // Rim Light Ring
+        ctx.strokeStyle = isSelected ? '#fbbf24' : 'rgba(255, 255, 255, 0.4)'
+        ctx.lineWidth = isSelected ? 2.5 / transform.k : 1.2 / transform.k
         ctx.stroke()
 
+        // Specular Core Reflection
+        ctx.beginPath()
+        ctx.arc(node.x - r * 0.25, node.y - r * 0.25, r * 0.28, 0, Math.PI * 2)
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.35)'
+        ctx.fill()
+
+        // 3. Draw Selective Floating Badge Label
         const screenRadius = r * transform.k
-        if (screenRadius > 8 || transform.k > 0.8) {
-          const label = node.entry.content.trim().split(/\s+/).slice(0, 3).join(' ')
-          const fontSize = Math.max(9, Math.min(13, r * 1.1))
-          ctx.font = `500 ${fontSize}px -apple-system, "Inter", sans-serif`
+        const shouldShowLabel = isSelected || screenRadius > 9.5 || transform.k > 0.8
+        if (shouldShowLabel) {
+          const label = cleanLabel(node.entry.content)
+          const fontSize = Math.max(9.5, Math.min(12, r * 1.0))
+          ctx.font = `600 ${fontSize}px -apple-system, "Inter", "Segoe UI", sans-serif`
           ctx.textAlign = 'center'
           ctx.textBaseline = 'top'
 
-          const textWidth = ctx.measureText(label).width
-          const padX = 5
+          const textMetrics = ctx.measureText(label)
+          const textWidth = textMetrics.width
+          const padX = 6
           const padY = 3
           const lx = node.x - textWidth / 2 - padX
-          const ly = node.y + r + 4
-          ctx.fillStyle = 'rgba(0, 0, 0, 0.6)'
-          ctx.beginPath()
-          ctx.roundRect(lx, ly, textWidth + padX * 2, fontSize + padY * 2, 4)
-          ctx.fill()
+          const ly = node.y + r + 5
 
-          ctx.fillStyle = isSelected ? '#fbbf24' : 'rgba(255, 255, 255, 0.9)'
+          // Glass Badge
+          ctx.fillStyle = isSelected ? 'rgba(15, 23, 42, 0.95)' : 'rgba(15, 23, 42, 0.82)'
+          ctx.strokeStyle = isSelected ? '#fbbf24' : node.color + '55'
+          ctx.lineWidth = 1 / transform.k
+
+          ctx.beginPath()
+          if (typeof ctx.roundRect === 'function') {
+            ctx.roundRect(lx, ly, textWidth + padX * 2, fontSize + padY * 2, 5)
+          } else {
+            ctx.rect(lx, ly, textWidth + padX * 2, fontSize + padY * 2)
+          }
+          ctx.fill()
+          ctx.stroke()
+
+          // Text
+          ctx.fillStyle = isSelected ? '#fbbf24' : '#f8fafc'
           ctx.fillText(label, node.x, ly + padY)
         }
       }
@@ -214,7 +257,7 @@ export const MemoryGraphD3 = forwardRef<MemoryGraphHandle, Props>(
           const dx = wx - node.x
           const dy = wy - node.y
           const dist = Math.sqrt(dx * dx + dy * dy)
-          if (dist < node.radius + 4 && dist < minDist) {
+          if (dist < node.radius + 6 && dist < minDist) {
             minDist = dist
             closest = node
           }
@@ -326,7 +369,13 @@ export const MemoryGraphD3 = forwardRef<MemoryGraphHandle, Props>(
     return (
       <div
         ref={containerRef}
-        style={{ width: '100%', height: '100%', overflow: 'hidden', cursor: 'grab' }}
+        style={{
+          width: '100%',
+          height: '100%',
+          overflow: 'hidden',
+          cursor: 'grab',
+          background: 'radial-gradient(circle at 50% 50%, rgba(30, 41, 59, 0.45) 0%, rgba(15, 23, 42, 0.9) 100%)',
+        }}
       >
         {size.width > 0 && (
           <canvas

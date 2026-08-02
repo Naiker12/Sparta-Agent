@@ -20,9 +20,9 @@ export function SecurityMatrix() {
   const [activePolicy, setActivePolicy] = useState<'CHAT' | 'AGENT'>('AGENT');
 
   return (
-    <section id="seguridad" className="py-20 relative bg-white dark:bg-[#07050d] text-slate-900 dark:text-white border-y border-slate-200 dark:border-white/10 font-sans transition-colors duration-300">
+    <section id="seguridad" className="py-20 relative overflow-hidden max-w-full bg-white dark:bg-[#07050d] text-slate-900 dark:text-white border-y border-slate-200 dark:border-white/10 font-sans transition-colors duration-300">
       {/* Background Ambient Glow */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[350px] bg-gradient-to-r from-[#f66e60]/10 via-[#663af3]/15 to-[#10b981]/10 blur-[150px] pointer-events-none" />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] max-w-[100vw] h-[350px] bg-gradient-to-r from-[#f66e60]/10 via-[#663af3]/15 to-[#10b981]/10 blur-[150px] pointer-events-none" />
 
       <div className="mx-auto max-w-7xl border-x border-slate-200 dark:border-white/10 px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Section Header */}

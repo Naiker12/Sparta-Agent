@@ -3,7 +3,7 @@ import fs from 'node:fs'
 import fsPromises from 'node:fs/promises'
 import path from 'node:path'
 import { startFileWatcher, stopFileWatcher, expandWatcher, collapseWatcher } from './file-watcher'
-import { IGNORED_DIR_SET } from 'ia-sparta-core'
+import { IGNORED_DIR_SET } from '../../../ia-sparta-core/src/lib/filesystem-constants'
 import { isWithinRoot } from '../tools/main-process-file-tools'
 
 export interface FileTreeNode {

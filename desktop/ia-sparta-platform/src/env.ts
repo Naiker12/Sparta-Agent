@@ -1,14 +1,22 @@
 export type RuntimeEnvironment = 'electron' | 'web'
 
 export function detectEnvironment(): RuntimeEnvironment {
-  if (typeof window !== 'undefined' && (window.sparta || window.electronAPI)) {
+  if (typeof window === 'undefined') return 'electron'
+
+  // Presencia real del preámbulo o APIs de Electron en la ventana del navegador
+  const hasElectronAPIs = !!(
+    (window as any).sparta?.sendMessage ||
+    (window as any).electron?.invoke ||
+    (window as any).electronAPI ||
+    (window as any).terminal?.create ||
+    navigator.userAgent.includes('Electron')
+  )
+
+  if (hasElectronAPIs) {
     return 'electron'
   }
-  try {
-    // Vite define reemplaza __IS_ELECTRON__ con true/false en build-time
-    // @ts-expect-error - global definido por vite.config.ts define
-    if (__IS_ELECTRON__) return 'electron'
-  } catch { /* ignore */ }
+
+  // Si se abre directamente en un navegador Web (e.g. Chrome, Edge en http://localhost:5173), el entorno es 'web'
   return 'web'
 }
 

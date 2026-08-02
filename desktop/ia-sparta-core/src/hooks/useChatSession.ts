@@ -154,8 +154,8 @@ async function runAssistantTurn(
       store.updateMessage(assistantId, {
         isStreaming: false,
         content: IS_WEB
-          ? 'Error de conexión: el sidecar web no está disponible. Asegúrate de que el servidor Python esté corriendo.'
-          : 'Error de conexión: esta función requiere la aplicación de escritorio.',
+          ? 'Conexión Web: El servidor backend WebSocket (sidecar) no está conectado en port 8765. Inicia el servidor backend Python o ejecuta la aplicación de escritorio en Electron.'
+          : 'Error de comunicación IPC: No se pudo establecer la conexión con el proceso nativo de Electron.',
       })
       return
     }

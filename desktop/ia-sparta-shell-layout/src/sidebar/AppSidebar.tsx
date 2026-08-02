@@ -6,9 +6,10 @@ import {
   SidebarHeader,
   SidebarRail,
 } from 'ia-sparta-design-system'
-import { Plus, Search, X, MessageSquare, Zap, Plug, Hash, Brain, Settings, SlidersHorizontal } from 'lucide-react'
+import { Plus, Search, X, MessageSquare, Zap, Plug, Hash, Brain, Settings, SlidersHorizontal, Trash2 } from 'lucide-react'
 import { useSessionStore } from 'ia-sparta-core'
 import { useSessionTabsStore } from 'ia-sparta-core'
+import { useChatStore } from 'ia-sparta-core'
 import { useSkillStore } from 'ia-sparta-core'
 import { useMCPStore } from 'ia-sparta-core'
 import { useChannelStore } from 'ia-sparta-core'
@@ -19,7 +20,7 @@ import { SessionItem } from './SessionItem'
 import { useTranslation } from 'ia-sparta-i18n'
 
 export function AppSidebar() {
-  const { sessions, resetActiveSession }   = useSessionStore()
+  const { sessions, resetActiveSession, deleteAllSessions } = useSessionStore()
   const { activeSkillIds }            = useSkillStore()
   const { servers }                   = useMCPStore()
   const { channels }                  = useChannelStore()
@@ -50,6 +51,18 @@ export function AppSidebar() {
   )
   const pinned    = filtered.filter(s => s.pinned)
   const unpinned  = filtered.filter(s => !s.pinned)
+
+  function handleDeleteAllSessions() {
+    if (window.confirm('¿Estás seguro de que deseas eliminar todas las conversaciones de chat? Se borrará todo el historial y no se podrá recuperar.')) {
+      deleteAllSessions()
+      useChatStore.getState().deleteAllMessages()
+      const tabs = useSessionTabsStore.getState().openTabs
+      for (const id of [...tabs]) {
+        useSessionTabsStore.getState().closeTab(id)
+      }
+      resetActiveSession()
+    }
+  }
 
   return (
     <Sidebar collapsible="icon">
@@ -151,7 +164,38 @@ export function AppSidebar() {
 
         {/* Recientes Section */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-          <div className="sidebar-section-label">{t('sidebar.pin') === 'Fijar' ? 'Recientes' : 'Recent'}</div>
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            paddingRight: 12,
+          }}>
+            <div className="sidebar-section-label">{t('sidebar.pin') === 'Fijar' ? 'Recientes' : 'Recent'}</div>
+            {sessions.length > 0 && (
+              <button
+                type="button"
+                onClick={handleDeleteAllSessions}
+                title="Vaciar todos los chats e historial de sesiones"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                  padding: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 3,
+                  fontSize: 10,
+                  fontFamily: 'var(--font-ui)',
+                  transition: 'color 0.12s',
+                }}
+                onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
+                onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+              >
+                <Trash2 size={11} strokeWidth={2} />
+                <span>Vaciar</span>
+              </button>
+            )}
+          </div>
+
           {unpinned.length === 0 && pinned.length === 0 ? (
             <div className="sidebar-empty-state">
               <p>{t('sidebar.emptyState')}</p>

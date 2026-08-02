@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import { X, Bot, Clock, ChevronRight } from 'lucide-react'
-import { useAgentStore } from 'ia-sparta-core'
+import { X, Bot, Clock, ChevronRight, Sparkles } from 'lucide-react'
+import { useAgentStore, useChatStore, useSettingsStore, useSessionStore } from 'ia-sparta-core'
+import { useTranslation } from 'ia-sparta-i18n'
 
 interface AgentsStatusDialogProps {
   open: boolean
@@ -16,8 +17,18 @@ function formatElapsed(startedAt: number): string {
 }
 
 export function AgentsStatusDialog({ open, onClose, onFocusAgent }: AgentsStatusDialogProps) {
+  const { t } = useTranslation()
   const agents = useAgentStore((s) => s.agents)
   const tasksByAgent = useAgentStore((s) => s.tasks)
+  const activeAgentId = useAgentStore((s) => s.activeAgentId)
+  const isStreaming = useChatStore((s) => s.isStreaming)
+  const activeSessionId = useSessionStore((s) => s.activeSessionId)
+  const sessions = useSessionStore((s) => s.sessions)
+  const activeSession = activeSessionId ? sessions.find((s) => s.id === activeSessionId) : null
+  const agentAutonomy = useSettingsStore((s) => s.agentAutonomy)
+  const sessionMode = useSettingsStore((s) => s.sessionMode)
+  const isAgentMode = sessionMode === 'agent' || agentAutonomy === 'ask_risky'
+
   const [tick, setTick] = useState(0)
 
   useEffect(() => {
@@ -28,7 +39,12 @@ export function AgentsStatusDialog({ open, onClose, onFocusAgent }: AgentsStatus
     return () => clearInterval(timer)
   }, [open])
 
-  const runningAgents = agents.filter((a) => a.status === 'running' || a.status === 'thinking')
+  const runningAgents = agents.filter((a) => {
+    if (a.status === 'running' || a.status === 'thinking') return true
+    if (isStreaming && (a.id === 'builtin-code' || a.id === activeAgentId)) return true
+    if (isAgentMode && (a.id === 'builtin-code' || a.id === activeAgentId)) return true
+    return false
+  })
 
   if (!open) return null
 
@@ -37,7 +53,7 @@ export function AgentsStatusDialog({ open, onClose, onFocusAgent }: AgentsStatus
       style={{
         position: 'fixed', inset: 0, zIndex: 100,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: 'rgba(0,0,0,0.3)',
+        background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)',
       }}
       onClick={onClose}
     >
@@ -53,76 +69,89 @@ export function AgentsStatusDialog({ open, onClose, onFocusAgent }: AgentsStatus
       >
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '16px 20px 0', flexShrink: 0,
+          padding: '16px 20px', flexShrink: 0, borderBottom: '1px solid var(--border-subtle)',
         }}>
-          <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-ui)', margin: 0 }}>
-            Agentes en vivo
-          </h3>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Sparkles size={16} className="text-[var(--accent)]" />
+            <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-ui)', margin: 0 }}>
+              {t('chat.liveAgents') || 'Agentes en vivo'}
+            </h3>
+          </div>
           <button onClick={onClose} style={{
-            width: 24, height: 24, background: 'none', border: 'none',
+            width: 26, height: 26, background: 'none', border: 'none',
             borderRadius: 'var(--radius-sm)', color: 'var(--text-muted)',
             cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            <X size={14} />
+            <X size={15} />
           </button>
         </div>
 
         <div style={{
-          flex: 1, overflowY: 'auto', padding: '12px 20px 16px',
-          display: 'flex', flexDirection: 'column', gap: 10,
+          flex: 1, overflowY: 'auto', padding: '16px 20px',
+          display: 'flex', flexDirection: 'column', gap: 12,
         }}>
           {runningAgents.length === 0 ? (
             <div style={{
-              padding: '24px 0', textAlign: 'center', fontSize: 12,
+              padding: '32px 0', textAlign: 'center', fontSize: 12,
               color: 'var(--text-secondary)', fontFamily: 'var(--font-ui)',
             }}>
-              <Bot size={24} style={{ color: 'var(--text-muted)', opacity: 0.3, marginBottom: 8 }} />
-              <div>No hay agentes trabajando en este momento.</div>
+              <Bot size={28} style={{ color: 'var(--text-muted)', opacity: 0.4, marginBottom: 10 }} />
+              <div>{t('chat.noLiveAgents') || 'No hay agentes trabajando en este momento.'}</div>
             </div>
           ) : (
             runningAgents.map((agent) => {
               const tasks = tasksByAgent[agent.id] ?? []
               const latestTask = tasks[tasks.length - 1]
-              const elapsed = latestTask ? formatElapsed(latestTask.createdAt) : '\u2014'
+              const elapsed = latestTask ? formatElapsed(latestTask.createdAt) : formatElapsed(activeSession?.createdAt ?? Date.now())
               const steps = latestTask?.steps ?? []
               const currentStep = steps.filter((s) => s.status === 'running')[0] ?? steps[steps.length - 1]
+
+              const agentStatusText = isStreaming
+                ? (t('agents.running') || 'Ejecutando en vivo')
+                : (agent.status === 'thinking' ? (t('agents.thinking') || 'Pensando') : (t('agents.active') || 'Activo'))
+
+              const taskDescription = latestTask?.description || (isStreaming ? 'Procesando tareas e instrucciones...' : 'Agente activo listo para ejecutar herramientas autónomas.')
 
               return (
                 <div
                   key={agent.id}
                   style={{
-                    padding: '12px 14px', borderRadius: 'var(--radius-lg)',
+                    padding: '14px 16px', borderRadius: 'var(--radius-lg)',
                     background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)',
                     cursor: onFocusAgent ? 'pointer' : 'default',
+                    transition: 'all 0.15s ease',
                   }}
                   onClick={() => { if (onFocusAgent) { onFocusAgent(agent.id); onClose() } }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                     <div style={{
                       width: 8, height: 8, borderRadius: '50%',
-                      background: agent.status === 'thinking' ? 'var(--status-think)' : 'var(--status-warn)',
+                      background: 'var(--status-ok, #10b981)',
+                      boxShadow: '0 0 8px var(--status-ok, #10b981)',
                       flexShrink: 0,
                     }} />
                     <span style={{
                       fontSize: 13, fontWeight: 600, color: 'var(--text-primary)',
                       fontFamily: 'var(--font-ui)', flex: 1,
                     }}>{agent.name}</span>
-                    <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)' }}>
-                      {agent.status === 'thinking' ? 'Pensando' : 'Ejecutando'}
+                    <span style={{
+                      fontSize: 10, fontWeight: 600, color: 'var(--status-ok, #10b981)',
+                      background: 'rgba(16,185,129,0.12)', padding: '2px 8px', borderRadius: 10,
+                      fontFamily: 'var(--font-ui)',
+                    }}>
+                      {agentStatusText}
                     </span>
                     {onFocusAgent && <ChevronRight size={14} style={{ color: 'var(--text-muted)' }} />}
                   </div>
-                  {latestTask && (
-                    <div style={{
-                      fontSize: 11, color: 'var(--text-secondary)',
-                      fontFamily: 'var(--font-ui)', marginBottom: 6, lineHeight: 1.4,
-                    }}>
-                      {latestTask.description}
-                    </div>
-                  )}
+                  <div style={{
+                    fontSize: 11, color: 'var(--text-secondary)',
+                    fontFamily: 'var(--font-ui)', marginBottom: 8, lineHeight: 1.4,
+                  }}>
+                    {taskDescription}
+                  </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <Clock size={10} style={{ color: 'var(--text-muted)' }} />
+                      <Clock size={11} style={{ color: 'var(--text-muted)' }} />
                       <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>{elapsed}</span>
                     </div>
                     {currentStep && (
@@ -130,24 +159,7 @@ export function AgentsStatusDialog({ open, onClose, onFocusAgent }: AgentsStatus
                         Paso: {currentStep.name}
                       </div>
                     )}
-                    {steps.length > 0 && (
-                      <div style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', marginLeft: 'auto' }}>
-                        {steps.filter((s) => s.status === 'completed').length}/{steps.length} pasos
-                      </div>
-                    )}
                   </div>
-                  {steps.length > 0 && (
-                    <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
-                      {steps.map((step) => (
-                        <div key={step.id} style={{
-                          flex: 1, height: 3, borderRadius: 2,
-                          background: step.status === 'completed' ? 'var(--status-ok)' :
-                            step.status === 'running' ? 'var(--status-warn)' :
-                            step.status === 'error' ? 'var(--status-err)' : 'var(--bg-active)',
-                        }} />
-                      ))}
-                    </div>
-                  )}
                 </div>
               )
             })

@@ -3,7 +3,6 @@ export type SettingsTab =
   | 'appearance'
   | 'keybinds'
   | 'models'
-  | 'mcp'
   | 'memory'
   | 'skills'
   | 'agents'

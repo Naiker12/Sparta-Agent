@@ -3,7 +3,8 @@
  * Inyección de herramientas (web_search, web_fetch, MCP reference tools) en el array de tools.
  */
 
-import { buildWebSearchTool, buildWebFetchTool } from 'ia-sparta-core'
+import { buildWebSearchTool } from '../../../ia-sparta-core/src/services/tools/web-search'
+import { buildWebFetchTool } from '../../../ia-sparta-core/src/services/tools/web-fetch'
 
 /** Catálogo de referencia de herramientas MCP conocidas con schemas explícitos */
 export const mcpCatalogReferenceTools: Record<string, Array<{ name: string; description: string; inputSchema?: Record<string, unknown> }>> = {

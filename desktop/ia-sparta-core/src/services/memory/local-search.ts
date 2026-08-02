@@ -105,16 +105,17 @@ export function localSearch(
 export function buildLocalMemoryContext(
   query: string,
   entries: MemoryEntry[],
-  k = 6,
+  k = 5,
 ): string {
   const results = localSearch(query, entries, k)
   if (results.length === 0) return ''
 
-  const blocks = results.map((r, i) => {
-    const meta = r.entry.category ? `[${r.entry.category}]` : ''
-    const relevance = r.score > 0.7 ? '(alta relevancia)' : r.score > 0.35 ? '(relevante)' : ''
-    return `#${i + 1} ${relevance} ${meta}\n${r.entry.content}`.trim()
+  const blocks = results.map((r) => {
+    const category = r.entry.category ? `[${r.entry.category}]` : '[memoria]'
+    const lines = r.entry.content.split('\n').map(l => l.trim()).filter(Boolean)
+    const summary = lines.slice(0, 3).join(' ').substring(0, 200)
+    return `- ${category} ${summary}`
   })
 
-  return `<memoria_relevante>\n${blocks.join('\n\n')}\n</memoria_relevante>`
+  return `<memoria_relevante_contexto>\n${blocks.join('\n')}\n</memoria_relevante_contexto>`
 }

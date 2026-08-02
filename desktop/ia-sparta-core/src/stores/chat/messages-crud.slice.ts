@@ -4,6 +4,7 @@ import { useSessionStore } from '../session.store'
 
 export interface MessagesCRUDSlice {
   deleteSessionMessages: (sessionId: string) => void
+  deleteAllMessages: () => void
   deleteMessage: (sessionId: string, messageId: string) => void
   addMessage: (message: import('../../types').Message) => void
   updateMessage: (id: string, updater: Partial<import('../../types').Message> | ((msg: import('../../types').Message) => Partial<import('../../types').Message>)) => void
@@ -24,6 +25,17 @@ export const createMessagesCRUDSlice: StateCreator<ChatState, [], [], MessagesCR
         streamingBySession: restStreaming,
         isStreaming: hasAnyStreaming,
         abortController: hasAnyStreaming ? Object.values(restStreaming)[0]?.abortController ?? null : null,
+      }
+    }),
+
+  deleteAllMessages: () =>
+    set((s) => {
+      Object.values(s.streamingBySession).forEach((st) => st.abortController.abort())
+      return {
+        messagesBySession: {},
+        streamingBySession: {},
+        isStreaming: false,
+        abortController: null,
       }
     }),
 

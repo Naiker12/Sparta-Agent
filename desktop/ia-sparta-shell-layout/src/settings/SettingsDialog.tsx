@@ -6,7 +6,6 @@ import { GeneralTab } from 'ia-sparta-settings'
 import { AppearanceTab } from 'ia-sparta-settings'
 import { KeybindsTab } from 'ia-sparta-settings'
 import { ModelsTab } from 'ia-sparta-settings'
-import { McpTab } from 'ia-sparta-settings'
 import { MemoryTab } from 'ia-sparta-settings'
 import { SkillsTab } from 'ia-sparta-settings'
 import { AgentsTab } from 'ia-sparta-settings'
@@ -25,7 +24,6 @@ export function SettingsDialog() {
     { id: 'keybinds', label: t('settings.keybinds') },
     { id: 'models', label: t('settings.models') },
     { id: 'shell', label: 'Shell' },
-    { id: 'mcp', label: t('settings.mcp') },
     { id: 'memory', label: t('settings.memory') },
     { id: 'skills', label: t('settings.skills') },
     { id: 'agents', label: t('settings.agents') },
@@ -38,7 +36,6 @@ export function SettingsDialog() {
     keybinds: <KeybindsTab />,
     models: <ModelsTab />,
     shell: <ShellTab />,
-    mcp: <McpTab />,
     memory: <MemoryTab />,
     skills: <SkillsTab />,
     agents: <AgentsTab />,

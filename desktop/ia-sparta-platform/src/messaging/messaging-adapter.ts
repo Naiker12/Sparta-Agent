@@ -45,19 +45,32 @@ interface MessagingAdapter {
 
 class ElectronAdapter implements MessagingAdapter {
   sendMessage(request: ChatSendRequest): Promise<MessagingAdapterSendResult> | void {
-    return window.sparta?.sendMessage(request) as unknown as Promise<MessagingAdapterSendResult>
+    if (window.sparta?.sendMessage) {
+      return window.sparta.sendMessage(request) as unknown as Promise<MessagingAdapterSendResult>
+    }
+    if (window.electron?.invoke) {
+      return window.electron.invoke('chat:send', request) as unknown as Promise<MessagingAdapterSendResult>
+    }
   }
 
   abortMessage(sessionId: string): void {
-    window.sparta?.abortMessage(sessionId)
+    if (window.sparta?.abortMessage) {
+      window.sparta.abortMessage(sessionId)
+    }
   }
 
   onEvent(handler: (event: SpartaEvent) => void): () => void {
-    return window.sparta?.onEvent(handler as (event: unknown) => void) ?? (() => {})
+    if (window.sparta?.onEvent) {
+      return window.sparta.onEvent(handler as (event: unknown) => void)
+    }
+    if (window.electron?.on) {
+      return window.electron.on('sparta:event', handler as (...args: unknown[]) => void)
+    }
+    return () => {}
   }
 
   isReady(): boolean {
-    return !!window.sparta?.sendMessage
+    return typeof window !== 'undefined' && !!(window.sparta?.sendMessage || window.electron?.invoke)
   }
 
   onReady(callback: () => void): () => void {
@@ -70,7 +83,7 @@ class ElectronAdapter implements MessagingAdapter {
         clearInterval(timer)
         callback()
       }
-    }, 300)
+    }, 150)
     return () => clearInterval(timer)
   }
 }

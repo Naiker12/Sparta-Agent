@@ -1,7 +1,7 @@
 import type { FSWatcher } from 'chokidar'
 import path from 'node:path'
 import { BrowserWindow } from 'electron'
-import { shouldIgnoreDirectory } from 'ia-sparta-core'
+import { shouldIgnoreDirectory } from '../../../ia-sparta-core/src/lib/filesystem-constants'
 
 let rootWatcher: FSWatcher | null = null
 let watchedRoot: string | null = null

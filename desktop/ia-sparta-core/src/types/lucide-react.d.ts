@@ -165,7 +165,13 @@ declare module 'lucide-react' {
   export const Repeat: Icon
   export const Repeat1: Icon
   export const Undo: Icon
+  export const Undo2: Icon
   export const Redo: Icon
+  export const Redo2: Icon
+  export const LogIn: Icon
+  export const LogOut: Icon
+  export const Minus: Icon
+  export const SquareMinus: Icon
   export const Ellipsis: Icon
   export const Slash: Icon
   export const Command: Icon

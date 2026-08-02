@@ -1,5 +1,6 @@
 import { defineConfig, createLogger } from 'vite'
 import path from 'node:path'
+import { builtinModules } from 'node:module'
 import electron from 'vite-plugin-electron/simple'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
@@ -7,6 +8,44 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig(({ mode }) => {
   // Default: Electron. Web mode via --mode web (pnpm dev:web)
   const isElectron = mode !== 'web'
+
+  // List of Node native built-in modules and heavy native binaries to externalize
+  const externalNodeModules = [
+    'electron',
+    'node-pty',
+    'fsevents',
+    ...builtinModules,
+    ...builtinModules.map((m) => `node:${m}`),
+  ]
+
+  // Renderer-only packages that must NEVER be bundled into electron-main.js
+  const rendererOnlyPackages = [
+    'react', 'react-dom', 'react/jsx-runtime', 'react/jsx-dev-runtime',
+    'd3', /^d3-/,
+    'zustand', 'zustand/middleware',
+    'framer-motion',
+    'lucide-react',
+    'mermaid',
+    'monaco-editor', '@monaco-editor/react',
+    '@fontsource-variable/geist', '@fontsource/inter', '@fontsource/space-grotesk',
+    'class-variance-authority', 'clsx', 'tailwind-merge',
+    'tailwindcss', '@tailwindcss/vite', 'tw-animate-css',
+    'next-themes', 'sonner',
+    'react-markdown', 'remark-gfm',
+    'react-syntax-highlighter',
+    'react-use-measure', 'react-virtuoso',
+    '@dnd-kit/core', '@dnd-kit/sortable', '@dnd-kit/utilities',
+    '@floating-ui/dom',
+    '@tiptap/react', '@tiptap/starter-kit',
+    '@uiw/react-codemirror',
+    '@xterm/xterm', '@xterm/addon-fit', '@xterm/addon-search',
+    '@xterm/addon-serialize', '@xterm/addon-unicode11',
+    '@xterm/addon-web-links', '@xterm/addon-webgl',
+    '@tanstack/react-query',
+    '@base-ui/react',
+    '@pierre/diffs', '@pierre/trees',
+    'thinking-orbs', 'shadcn',
+  ]
 
   return {
     resolve: {
@@ -75,10 +114,11 @@ export default defineConfig(({ mode }) => {
                   },
                 },
                 build: {
+                  target: 'node20',
                   sourcemap: false,
                   minify: 'esbuild',
                   rollupOptions: {
-                    external: ['electron', 'node-pty'],
+                    external: [...externalNodeModules, ...rendererOnlyPackages],
                     onwarn(warning, warn) {
                       if (warning.code === 'MODULE_LEVEL_DIRECTIVE') return
                       if (warning.code === 'UNUSED_EXTERNAL_IMPORT') return
@@ -93,10 +133,11 @@ export default defineConfig(({ mode }) => {
               input: path.join(__dirname, 'desktop/ia-sparta-ipc-bridge/src/preload.ts'),
               vite: {
                 build: {
+                  target: 'node20',
                   sourcemap: false,
                   minify: 'esbuild',
                   rollupOptions: {
-                    external: ['electron', 'node-pty'],
+                    external: externalNodeModules,
                     onwarn(warning, warn) {
                       if (warning.code === 'MODULE_LEVEL_DIRECTIVE') return
                       if (warning.code === 'UNUSED_EXTERNAL_IMPORT') return

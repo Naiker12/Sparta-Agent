@@ -3,139 +3,231 @@
   <h1>Sparta Agent</h1>
   <img src="docs/assets/post.png" alt="Sparta Agent Banner" width="800" />
   <p><strong>Plataforma de Desarrollo Agéntica Local-First para Equipos de Ingeniería de Alto Rendimiento</strong></p>
+
   <p>
-    <img src="https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white" alt="React 18" />
-    <img src="https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white" alt="TypeScript 5" />
-    <img src="https://img.shields.io/badge/Electron-30-47848F?logo=electron&logoColor=white" alt="Electron 30" />
-    <img src="https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white" alt="Python 3.11" />
-    <img src="https://img.shields.io/badge/Rust-1.85-000000?logo=rust&logoColor=white" alt="Rust 1.85" />
-    <img src="https://img.shields.io/badge/LangGraph-StateGraph-FF6F00?logo=langchain&logoColor=white" alt="LangGraph" />
-    <img src="https://img.shields.io/badge/License-MIT-green" alt="License MIT" />
+    <a href="https://github.com/Naiker12/Sparta-Agent"><img src="https://img.shields.io/badge/Versi%C3%B3n-v0.1.1-blue.svg?style=flat-square" alt="Version 0.1.1" /></a>
+    <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=white" alt="React 18" />
+    <img src="https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript 5" />
+    <img src="https://img.shields.io/badge/Electron-30-47848F?style=flat-square&logo=electron&logoColor=white" alt="Electron 30" />
+    <img src="https://img.shields.io/badge/Python-3.11-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.11" />
+    <img src="https://img.shields.io/badge/Rust-1.85-000000?style=flat-square&logo=rust&logoColor=white" alt="Rust 1.85" />
+    <img src="https://img.shields.io/badge/MCP-Standard-purple?style=flat-square&logo=protocol&logoColor=white" alt="MCP Standard" />
+    <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="License MIT" />
   </p>
 </div>
 
 ---
 
-## 🏢 Propuesta de Valor y Caso de Negocio
-
-En la era de la inteligencia artificial, la productividad de los equipos de desarrollo está limitada por las herramientas de autocompletado pasivo. **Sparta Agent** redefine este paradigma al ofrecer un **IDE agéntico autónomo y local-first**. 
-
-Nuestra filosofía de diseño resuelve los tres desafíos fundamentales que enfrentan los CTOs y directores de tecnología al adoptar asistentes de codificación basados en IA:
-
-### 1. Protección de Propiedad Intelectual y Cumplimiento (Compliance)
-La mayoría de las herramientas comerciales transmiten código fuente confidencial a nubes de terceros sin garantías robustas de privacidad. Sparta Agent procesa la estructura del espacio de trabajo y ejecuta el análisis de código de manera **local-first**. Los datos confidenciales permanecen dentro del perímetro de seguridad corporativo, cumpliendo con regulaciones estrictas como GDPR, CCPA y normativas bancarias.
-
-### 2. Eficiencia de Costos y Flexibilidad de Modelos
-El uso indiscriminado de APIs comerciales de gran tamaño genera una facturación de tokens impredecible. Mediante nuestra capa de abstracción de proveedores, Sparta Agent permite alternar dinámicamente entre modelos locales de código abierto (como Llama 3 u Ollama) para tareas rutinarias, y modelos cloud premium (como Anthropic o Gemini) para resolver problemas arquitectónicos complejos, reduciendo el Costo Total de Propiedad (TCO) hasta en un 70%.
-
-### 3. Autonomía Real frente a Copilotos Pasivos
-A diferencia de las extensiones tradicionales de autocompletado que sugieren código línea por línea, Sparta Agent opera como un **miembro de equipo autónomo**. Utiliza ciclos estructurados de planificación, ejecución y reflexión. Al recibir un objetivo de negocio o una descripción de tarea, el agente elabora un plan estructurado, verifica errores mediante diagnósticos nativos, ejecuta comandos en entornos aislados y entrega soluciones listas para producción.
+## 📌 Tabla de Contenidos
+- [🏢 Propuesta de Valor y Caso de Negocio](#-propuesta-de-valor-y-caso-de-negocio)
+- [⚡ Características Principales](#-características-principales)
+- [⚙️ Arquitectura Conceptual del Sistema](#️-arquitectura-conceptual-del-sistema)
+- [🛡️ Matriz de Seguridad y Privacidad](#️-matriz-de-seguridad-y-privacidad)
+- [🔌 Catálogo de Integraciones MCP Nativas](#-catálogo-de-integraciones-mcp-nativas)
+- [🤖 Proveedores de IA Compatibles](#-proveedores-de-ia-compatibles)
+- [🛠️ Requisitos e Instalación](#️-requisitos-e-instalación)
+- [💻 Uso de la CLI Sparta](#-uso-de-la-cli-sparta)
+- [📂 Estructura del Proyecto](#-estructura-del-proyecto)
+- [📈 Hoja de Ruta (Roadmap)](#-hoja-de-ruta-roadmap)
+- [📄 Licencia](#-licencia)
 
 ---
 
-## 🛠️ Pilares Fundamentales del Producto
+## 🏢 Propuesta de Valor y Caso de Negocio
 
-### 📋 Planificación Transparente (`create_plan`)
-El agente no opera "a ciegas". Cada ejecución inicia con la llamada a la herramienta `create_plan`. Esto obliga al modelo de lenguaje a definir una secuencia lógica de pasos antes de modificar código. El usuario visualiza este plan en tiempo real y puede intervenir en el flujo de ejecución en cualquier momento.
+En la era de la Inteligencia Artificial aplicada al desarrollo de software, la productividad real de los equipos de ingeniería se ve obstaculizada por herramientas de autocompletado pasivo que sugieren fragmentos aislados sin comprensión holística del código.
 
-### 🔒 Sandbox de Ejecución y Broker de Permisos
-Toda acción potencialmente destructiva (como la eliminación de archivos, ejecución de comandos fuera del espacio de trabajo o instalación de dependencias externas) es interceptada por un broker de seguridad nativo escrito en Rust. Dependiendo de la política de autonomía configurada (`Siempre preguntar` o `Autónomo`), el sistema bloquea, solicita aprobación explícita al desarrollador o ejecuta comandos en entornos aislados (Docker).
+**Sparta Agent** redefine este paradigma al ofrecer un **IDE agéntico autónomo y local-first**. Diseñado para empresas y desarrolladores exigentes, resuelve los tres principales desafíos técnicos y corporativos:
 
-### 🚀 Diagnósticos e Inspección Continua
-El agente integra herramientas de diagnóstico nativo que auditan automáticamente el código tras realizar cambios. Detecta errores sintácticos y de tipado ejecutando herramientas estándar de la industria (`tsc`, `eslint`, `ruff`, `mypy`, `cargo`, `go vet`) antes de proponer cambios al usuario. Esto previene la introducción de bugs en ramas de producción.
+### 1. 🔒 Protección de Propiedad Intelectual y Cumplimiento (Compliance)
+Las soluciones cloud convencionales transmiten código fuente sensible a servidores de terceros. Sparta Agent opera bajo un enfoque **Local-First**, ejecutando el análisis de archivos, la indexación del espacio de trabajo y el control de flujos dentro del perímetro de seguridad local. Cumple estrictamente con normativas **GDPR, CCPA, HIPAA** y estándares bancarios de confidencialidad.
 
-### 📂 Ecosistema MCP (Model Context Protocol)
-Gracias a la integración del estándar MCP oficial, el agente puede expandir sus capacidades conectándose a bases de datos corporativas, sistemas de tickets, herramientas de comunicación y servicios en la nube a través de conectores stdio e HTTP preconfigurados o personalizados.
+### 2. 💰 Optimización de Costos (TCO) y Flexibilidad de Modelos
+El consumo masivo de APIs comerciales genera costos de tokens impredecibles. Sparta Agent incluye una capa de abstracción multi-proveedor que permite alternar dinámicamente entre modelos locales de código abierto (Ollama, LM Studio, llama.cpp) para tareas de rutina, y modelos cloud avanzados (Gemini 2.5 Flash, Anthropic, OpenAI, DeepSeek) para tareas arquitectónicas complejas, reduciendo el Costo Total de Propiedad (TCO) hasta en un **70%**.
+
+### 3. 🤖 Autonomía Real vs Copilotos Pasivos
+A diferencia de las extensiones tradicionales, Sparta Agent funciona como un miembro sintético autónomo del equipo. Ejecuta ciclos estructurados de **Planificación (`create_plan`), Ejecución, Diagnóstico y Reflexión**. Analiza proyectos completos, ejecuta comandos en entornos seguros, valida cambios mediante linters/compiladores locales y entrega soluciones probadas y listas para producción.
+
+---
+
+## ⚡ Características Principales
+
+*   **📋 Planificación Transparente e Interactiva (`create_plan`)**: Cada tarea se desglosa en un plan de ejecución visual en tiempo real. El desarrollador puede inspeccionar, pausar o guiar el plan en cualquier momento.
+*   **💻 Editor de Código Monaco & Diferenciales Inteligentes**: Integración directa con Monaco Editor y un motor de diffs ultra dinámico impulsado por `@pierre/diffs` y `@pierre/trees` para revisión precisa de cambios.
+*   **🖥️ Terminal Emulado Nativo (`xterm.js` + `node-pty`)**: Shell multi-instancia totalmente interactivo integrado en el entorno de desarrollo para compilar, ejecutar pruebas y gestores de paquetes.
+*   **🌐 Protocolo MCP (Model Context Protocol)**: Conectividad nativa estándar con decenas de servidores MCP (GitHub, bases de datos, productividad, navegadores y herramientas de monitoreo).
+*   **🧠 Árboles de Razonamiento Visual ("Thinking Orbs")**: Visualización interactiva de estados de pensamiento y subagentes en ejecución en tiempo real.
+*   **🛡️ Broker de Seguridad y Permisos (Rust Core)**: Intercepción nativa de comandos peligrosos (`CommandSanitizer`), protección de rutas sensibles (`PathGuard`) y diálogos modales de autorización previa.
 
 ---
 
 ## ⚙️ Arquitectura Conceptual del Sistema
 
-Sparta Agent está estructurado bajo una **arquitectura desacoplada de tres capas**, garantizando alta disponibilidad, escalabilidad horizontal y facilidad de integración con infraestructura existente:
+Sparta Agent está estructurado bajo una **arquitectura desacoplada de tres capas**, garantizando alto rendimiento, baja latencia y modularidad:
 
+```text
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 1. CAPA DE PRESENTACIÓN (React 18 / Monaco Editor / xterm.js)            │
+│ Interfaz de usuario rica con visualización de planes, diffs interactivos,│
+│ consolas múltiples, gestión de MCPs y renderizado de componentes UI.    │
+└────────────────────────────┬────────────────────────────────────────────┘
+                             │ Comunicación IPC Segura (Electron ContextBridge)
+┌────────────────────────────┴────────────────────────────────────────────┐
+│ 2. CAPA DE ORQUESTACIÓN (Electron Main / Node.js Engine)                 │
+│ Puente de control de procesos, broker de permisos nativo, vault cifrado │
+│ AES-256-GCM para llaves API y gestión del ciclo de vida de terminales. │
+└────────────────────────────┬────────────────────────────────────────────┘
+                             │ Protocolo de Comunicación JSON-RPC / Stdio
+┌────────────────────────────┴────────────────────────────────────────────┐
+│ 3. NÚCLEO DE INTELIGENCIA (Python Sidecar & LangGraph Core + Rust Broker)│
+│ Motor de razonamiento basado en grafos de estado. Ejecuta bucles        │
+│ Plan-Reflect-Act, memoria contextual y validación de seguridad nativa.  │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│ 1. CAPA DE PRESENTACIÓN (React / Monaco Editor / xterm.js)         │
-│ Interfaz de usuario interactiva y optimizada para la visualización   │
-│ de planes de ejecución, diffs de código y consola en vivo.          │
-└───────────────────────────┬─────────────────────────────────────────┘
-                            │ Comunicación IPC (Desktop) / WebSockets (Cloud)
-┌───────────────────────────┴─────────────────────────────────────────┐
-│ 2. CAPA DE ORQUESTACIÓN (Electron Main / FastAPI)                  │
-│ Puente de comunicación seguro que implementa el broker de permisos, │
-│ el vault cifrado de API keys y la gestión de procesos nativos.      │
-└───────────────────────────┬─────────────────────────────────────────┘
-                            │ Protocolo de Comunicación JSON-RPC
-┌───────────────────────────┴─────────────────────────────────────────┐
-│ 3. NÚCLEO DE INTELIGENCIA (Python Engine & LangGraph Core)          │
-│ Motor de razonamiento basado en grafos de estado. Gestiona el ciclo │
-│ de Plan-Reflect-Act, memoria vectorial y ejecución de herramientas. │
-└─────────────────────────────────────────────────────────────────────┘
-```
 
 ---
 
-## 🛡️ Seguridad por Diseño (Security Matrix)
+## 🛡️ Matriz de Seguridad y Privacidad
 
-La seguridad no es una característica opcional; es el núcleo sobre el cual está construido Sparta Agent. El sistema implementa controles estrictos organizados en múltiples niveles de defensa:
+La seguridad es el pilar central de Sparta Agent:
 
-*   **PermissionPolicy (Modos PLAN y BUILD)**: En modo `PLAN`, el agente está restringido a operaciones de solo lectura (búsqueda, lectura de archivos, diagnósticos). Solo transiciona a modo `BUILD` cuando se requiere escribir código, garantizando que la fase de investigación previa no modifique archivos sensibles.
-*   **CommandSanitizer**: Un motor de saneamiento de comandos valida en milisegundos que los scripts invocados por el agente no contengan secuencias maliciosas o destructivas (`rm -rf /`, `dd`, descargas no verificadas, etc.).
-*   **PathGuard & Denylist**: Protege el acceso al sistema operativo anfitrión. El agente tiene prohibido interactuar con rutas fuera de la raíz del espacio de trabajo de desarrollo (`..`, archivos `.env`, llaves privadas `.pem` e información de perfil del sistema).
-
----
-
-## 🛠️ Requisitos de Infraestructura
-
-Para el despliegue local o corporativo de Sparta Agent, se requiere la siguiente infraestructura base:
-
-*   **Motor de Ejecución**: Node.js LTS y administrador de paquetes `pnpm`.
-*   **Inteligencia de Herramientas**: Python 3.11 o superior.
-*   **Validación de Seguridad**: Compilador de Rust (opcional, requerido para optimizaciones del broker nativo).
-*   **Aislamiento**: Docker (opcional, para entornos de sandbox robustos).
+| Componente | Función de Seguridad | Descripción |
+| :--- | :--- | :--- |
+| **Permission Policy** | Modos `PLAN` y `BUILD` | En modo `PLAN`, la herramienta está restringida a solo lectura. El modo `BUILD` requiere autorización explícita para modificar archivos o ejecutar comandos. |
+| **CommandSanitizer** | Inspección de Comandos | Filtro de seguridad en tiempo real para evitar ejecución de scripts destructivos (`rm -rf`, alteración de registros del sistema, etc.). |
+| **PathGuard** | Restricción de Rutas | Aislamiento del sistema de archivos dentro de la raíz del workspace actual (`.env`, llaves `.pem` y datos privados protegidos). |
+| **Vault Cifrado** | Credenciales Locales | Almacenamiento seguro de claves de API en local mediante cifrado simétrico AES-256-GCM. |
 
 ---
 
-## 🚀 Inicio Rápido para Desarrollo
+## 🔌 Catálogo de Integraciones MCP Nativas
 
-### 1. Instalación de Dependencias e Inicialización del Entorno
-Instale el gestor de paquetes y configure el motor de razonamiento secundario (Python sidecar):
+Sparta Agent incorpora compatibilidad lista para usar con el estándar **Model Context Protocol (MCP)**:
+
+| Categoría | Servidores MCP Soportados |
+| :--- | :--- |
+| **DevTools & VCS** | GitHub (HTTP oficial), Git (stdio estructurado) |
+| **Storage & Docs** | Filesystem Local, Google Drive, OneDrive / SharePoint Online |
+| **Bases de Datos** | Supabase, DBHub (PostgreSQL / MySQL / SQLite), MongoDB |
+| **Productividad** | Notion, Gmail, Google Calendar |
+| **Comunicación & Diseño**| Slack, Figma |
+| **Pagos y Monitoreo** | Stripe, Sentry |
+| **Navegación & Web** | Playwright MCP, Chrome DevTools MCP, Fetch (RAG Markdown) |
+| **Conocimiento & Utilidades**| Memory (Graph Knowledge), Time Zone System |
+
+---
+
+## 🤖 Proveedores de IA Compatibles
+
+Sparta Agent ofrece soporte omnicanal para los motores de IA más potentes del mercado:
+
+*   **Locales (Privacidad 100% Offline)**: Ollama, LM Studio, llama.cpp, Servidores Custom OpenAI-compatible.
+*   **Cloud (Alto Rendimiento)**: Google Gemini (2.5 Flash, 2.0 Flash, 1.5 Pro), Anthropic Claude, OpenAI, DeepSeek, Groq, Mistral, Azure OpenAI, OpenRouter, Cohere, Perplexity, xAI, Together AI, Fireworks AI, NVIDIA NIM.
+
+---
+
+## 🛠️ Requisitos e Instalación
+
+### Requisitos Previos
+*   **Node.js**: `v18.0.0` o superior (Recomendado LTS)
+*   **Gestor de paquetes**: `pnpm v10+`
+*   **Python**: `v3.11+` (requerido para el sidecar de inteligencia)
+*   **Rust**: `v1.85+` (opcional, para aceleración nativa del broker de seguridad)
+
+### Pasos de Instalación
+
+1. **Clonar el repositorio**:
+   ```bash
+   git clone https://github.com/Naiker12/Sparta-Agent.git
+   cd Sparta-Agent
+   ```
+
+2. **Instalar dependencias globales del proyecto**:
+   ```bash
+   pnpm install
+   ```
+
+3. **Inicializar entorno Python Sidecar**:
+   ```bash
+   npx sparta install
+   ```
+
+4. **Iniciar el entorno de desarrollo desktop**:
+   ```bash
+   pnpm dev
+   ```
+
+---
+
+## 💻 Uso de la CLI Sparta
+
+El proyecto incluye la herramienta CLI `sparta` para facilitar el mantenimiento y desarrollo:
+
 ```bash
-git clone <url-del-repositorio>
-cd sparta-agent
-pnpm install
-pnpm sidecar:setup
-```
+# Instalación completa de dependencias (Node + Python venv + Rust)
+npx sparta install
 
-### 2. Configuración del Módulo de Seguridad Nativo
-Compile e integre las librerías nativas de validación y control de flujo del broker de seguridad:
-```bash
-pnpm rust:napi
-```
+# Iniciar servidor de desarrollo (Desktop App)
+npx sparta dev
 
-### 3. Lanzamiento de la Aplicación en Modo Local (Desktop)
-Inicie el entorno integrado de desarrollo con recarga en caliente:
-```bash
-pnpm dev
+# Compilar proyecto y generar binario ejecutable
+npx sparta build
+
+# Ejecutar suite de pruebas completa (JS + Rust + Python)
+npx sparta test
+
+# Lanzar subcomandos del Python Sidecar
+npx sparta sidecar run    # Ejecuta el motor principal en Python
+npx sparta sidecar web    # Inicia el servidor web secundario
+npx sparta sidecar test   # Ejecuta pruebas unitarias pytest
 ```
 
 ---
 
-## 📈 Plan de Lanzamiento e Integraciones (Roadmap)
+## 📂 Estructura del Proyecto
 
-### Fase de Maduración de Producto (Hitos Logrados)
-*   [x] Grafo de estados estructurado con LangGraph para control de bucle agéntico.
-*   [x] Soporte multi-proveedor integrado con Vault local cifrado mediante algoritmos AES-256-GCM.
-*   [x] Sincronización bidireccional en tiempo real entre el estado del Workspace y el Editor Monaco.
-*   [x] Sistema de diagnósticos automáticos post-edición integrado en el ciclo de reflexión del agente.
+```text
+Sparta-Agent/
+├── bin/                    # Scripts ejecutables CLI (sparta.mjs)
+├── components/             # Componentes UI compartidos (Shadcn UI, Monaco, Terminal)
+├── desktop/                # Código fuente de Electron Main, Preload e IPC Bridges
+├── docs/                   # Documentación técnica, capturas de pantalla y activos
+├── landing/                # Landing page promocional del producto (Vite + React)
+├── public/                 # Iconos, imágenes y manifiestos estáticos
+├── python/                 # Motor de inteligencia agéntica en Python (LangGraph)
+├── rust/                   # Módulo nativo de seguridad y validaciones (Cargo)
+├── skills/                 # Catálogo de habilidades extensibles para el agente
+├── sparta_mcp_catalog.json # Fuente de verdad oficial para servidores MCP
+├── sparta-vault.json       # Gestor cifrado de credenciales de proveedores
+├── package.json            # Configuración de scripts y dependencias
+└── vite.config.ts          # Configuración principal de empaquetado Vite
+```
 
-### Fase de Expansión de Negocio (En Desarrollo)
-*   [ ] **Diff interactivo integrado**: Visualización y edición en vivo de propuestas de código en el panel Monaco antes de autorizar su escritura física en disco.
-*   [ ] **Integraciones Empresariales**: Conectores nativos para Slack, Discord, Microsoft Teams y plataformas de CI/CD (GitHub Actions, GitLab CI) para permitir que el agente colabore en tareas de resolución de incidencias de forma remota.
-*   [ ] **Memoria Colaborativa Compartida**: Sincronización segura de grafos de conocimiento y recuerdos de proyectos entre diferentes miembros de un mismo equipo de desarrollo para acelerar el onboarding en proyectos existentes.
+---
+
+## 📈 Hoja de Ruta (Roadmap)
+
+### 🎯 Hitos Completados (v0.1.1)
+- [x] Grafo de estados estructurado con LangGraph para control de bucle agéntico.
+- [x] Soporte multi-proveedor integrado con Vault local cifrado AES-256-GCM.
+- [x] Integración de Monaco Editor con visualización interactiva de diffs (`@pierre/diffs`).
+- [x] Sistema de diagnósticos automáticos post-edición (`tsc`, `eslint`, `pytest`, `cargo`).
+- [x] Integración nativa del estándar MCP (Model Context Protocol) con 20+ conectores.
+
+### 🚀 En Desarrollo y Próximos Lanzamientos
+- [ ] **Diff Interactivo en Vivo**: Previsualización y edición directamente sobre el panel de Monaco antes de escribir en disco.
+- [ ] **Integraciones Remotas Empresariales**: Conectores de notificación en tiempo real para Slack, Microsoft Teams y GitHub Actions.
+- [ ] **Memoria Colaborativa Compartida**: Sincronización segura de grafos de conocimiento entre miembros de un mismo equipo de desarrollo.
+- [ ] **Modo Headless / CLI Autónomo**: Ejecución de agentes desde pipelines de CI/CD para automatización de refactorización masiva.
+
+---
+
+## 📄 Licencia
+
+Este proyecto está bajo la Licencia **MIT**. Consulta el archivo [LICENSE](LICENSE) para obtener más detalles.
 
 ---
 
 <div align="center">
-  <sub>Diseñado bajo los más altos estándares de ingeniería y seguridad corporativa.</sub>
+  <sub>Construido con ❤️ para la comunidad global de ingeniería. Diseñado bajo los más altos estándares de seguridad corporativa.</sub>
 </div>

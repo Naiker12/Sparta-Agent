@@ -101,8 +101,14 @@ export function TerminalWorkspace() {
     const terminal = inst.terminal
     const { cols, rows } = terminal
 
+    if (typeof window === 'undefined' || !window.terminal || !window.terminal.onData) {
+      terminal.writeln('\r\n\x1b[33mModo Web / Vista Previa: PTY nativo no disponible en esta ventana\x1b[0m')
+      terminal.writeln('\x1b[90mAbre la aplicación de escritorio en Electron para usar la consola PTY nativa.\x1b[0m')
+      return
+    }
+
     const unsubData = window.terminal.onData(inst.ptyId, (data: string) => terminal.write(data))
-    inst.cleanups.push(unsubData)
+    if (unsubData) inst.cleanups.push(unsubData)
 
     const settings = useSettingsStore.getState()
     const folderPath = useFolderStore.getState().connectedPath
@@ -126,22 +132,18 @@ export function TerminalWorkspace() {
       inst.shellName = result.shell ?? ''
       store.getState().reportShell(inst.tabId, result.shell ?? '')
 
-      const unsubExit = window.terminal.onExit(inst.ptyId, (code: number) => {
+      const unsubExit = window.terminal?.onExit?.(inst.ptyId, (code: number) => {
         inst.connected = false
         terminal.writeln(`\r\n\x1b[33mProceso terminado (código: ${code})\x1b[0m`)
       })
-      inst.cleanups.push(unsubExit)
+      if (unsubExit) inst.cleanups.push(unsubExit)
 
       terminal.onData((data: string) => {
-        // In web mode the Python sidecar uses a pipe-based shell without a
-        // real PTY, so the backend cannot echo typed characters. Enable local
-        // echo to keep the terminal usable. Electron uses node-pty, which
-        // handles echo on its own.
         if (IS_WEB) terminal.write(data)
-        window.terminal.write(inst.ptyId, data)
+        window.terminal?.write?.(inst.ptyId, data)
       })
-      terminal.onResize(({ cols, rows }: { cols: number; rows: number }) => window.terminal.resize(inst.ptyId, cols, rows))
-      window.electron.send('terminal:ready', { terminalId: inst.ptyId })
+      terminal.onResize(({ cols, rows }: { cols: number; rows: number }) => window.terminal?.resize?.(inst.ptyId, cols, rows))
+      window.electron?.send?.('terminal:ready', { terminalId: inst.ptyId })
     }).catch((err: Error) => {
       terminal.writeln('\r\n\x1b[31mError de conexión\x1b[0m')
       terminal.writeln(`\x1b[90m${err.message}\x1b[0m`)
@@ -228,6 +230,8 @@ export function TerminalWorkspace() {
   }, [])
 
   useEffect(() => {
+    if (typeof window === 'undefined' || !window.terminal) return
+
     const unsubSpawn = window.terminal.onAgentSpawn?.(({ procId, command }: { procId: string; command: string }) => {
       store.getState().ensureAgentTab(procId, command)
       seedAgentTerminalCommand(procId, command)

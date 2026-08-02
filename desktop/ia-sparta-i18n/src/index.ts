@@ -23,7 +23,17 @@ export function useTranslation() {
   const lang = useSettingsStore((s) => s.language)
   const dict = dicts[lang] || es
   return {
-    t: (path: string): string => getNestedValue(dict as unknown as Record<string, unknown>, path),
+    t: (path: string, params?: Record<string, string | number>): string => {
+      let val = getNestedValue(dict as unknown as Record<string, unknown>, path)
+      if (params) {
+        Object.entries(params).forEach(([k, v]) => {
+          val = val.replace(new RegExp(`{{\\s*${k}\\s*}}`, 'g'), String(v))
+          val = val.replace(new RegExp(`{\\s*${k}\\s*}`, 'g'), String(v))
+        })
+      }
+      return val
+    },
     lang,
+    language: lang,
   }
 }

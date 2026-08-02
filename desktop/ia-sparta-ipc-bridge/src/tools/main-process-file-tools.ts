@@ -9,7 +9,7 @@ import fs from 'node:fs'
 import fsPromises from 'node:fs/promises'
 import path from 'node:path'
 import { getWorkspaceRoot } from '../channels/filesystem.channel'
-import { IGNORED_DIR_SET } from 'ia-sparta-core'
+import { IGNORED_DIR_SET } from '../../../ia-sparta-core/src/lib/filesystem-constants'
 
 export function isWithinRoot(filePath: string, root: string): boolean {
   try {

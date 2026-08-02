@@ -4,6 +4,7 @@ import {
   useSecurityStore,
   useAgentStore,
   usePermissionStore,
+  useChatStore,
   type AgentAutonomyLevel,
   type SandboxMode,
   type QueuedMessagePolicy,
@@ -749,12 +750,22 @@ export function AgentsTab() {
       {/* ── 7. Registered Agents Overview List ───────────────────────── */}
       <SettingGroup
         title={t('agents.title') || 'Registered Agents'}
-        description={t('agents.desc') || 'Agentes de IA activos y configurados.'}
+        description={t('agents.desc') || 'Agentes de IA activos y configurados. Selecciona uno para establecerlo como activo.'}
       >
         <div style={{ display: 'flex', flexDirection: 'column', paddingTop: 4 }}>
           {agents.map((agent) => {
-            const statusInfo = STATUS_MAP[agent.status] ?? STATUS_MAP.idle
-            const isActive = agent.id === activeAgentId
+            const isStreaming = useChatStore.getState().isStreaming
+            const sessionMode = useSettingsStore.getState().sessionMode
+            const isAgentMode = sessionMode === 'agent' || agentAutonomy === 'ask_risky'
+
+            const isActive = agent.id === activeAgentId || (agent.id === 'builtin-code' && isAgentMode)
+            const isExecuting = isStreaming && (agent.id === 'builtin-code' || agent.status === 'running')
+
+            const effectiveStatus = isExecuting
+              ? 'running'
+              : (agent.status !== 'idle' ? agent.status : (isActive ? 'running' : 'idle'))
+
+            const statusInfo = STATUS_MAP[effectiveStatus] ?? STATUS_MAP.idle
 
             return (
               <button
@@ -788,17 +799,27 @@ export function AgentsTab() {
                     }}>
                       {agent.type}
                     </span>
+                    {isActive && (
+                      <span style={{
+                        fontSize: 9, fontWeight: 600, textTransform: 'uppercase',
+                        color: 'var(--status-ok, #10b981)', background: 'rgba(16,185,129,0.15)',
+                        padding: '1px 6px', borderRadius: 10,
+                      }}>
+                        {t('agents.active') || 'Activo'}
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span
                     style={{
-                      width: 6, height: 6, borderRadius: '50%',
+                      width: 7, height: 7, borderRadius: '50%',
                       background: statusInfo.color, flexShrink: 0,
+                      boxShadow: effectiveStatus === 'running' ? '0 0 6px var(--status-ok, #10b981)' : 'none',
                     }}
                   />
-                  <span style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>
-                    {t(statusInfo.labelKey)}
+                  <span style={{ fontSize: 10.5, color: effectiveStatus === 'running' ? 'var(--status-ok, #10b981)' : 'var(--text-muted)', fontWeight: effectiveStatus === 'running' ? 600 : 400 }}>
+                    {effectiveStatus === 'running' ? (t('agents.running') || 'Ejecutando') : t(statusInfo.labelKey)}
                   </span>
                 </div>
               </button>
