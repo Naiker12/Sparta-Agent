@@ -42,8 +42,8 @@ export function DownloadBar() {
       icon: Monitor,
       recommended: true,
       badge: 'Instalador NSIS .exe',
-      url: 'https://github.com/Naiker12/Sparta-Agent/releases/download/v0.1.1/Sparta-Agent-Windows-0.1.1-Setup.exe',
-      fallbackUrl: 'https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.1.1',
+      url: 'https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Windows-0.1.1-Setup.exe',
+      fallbackUrl: 'https://github.com/Naiker12/Sparta-Agent/releases/latest',
     },
     {
       os: 'macOS (Apple Silicon & Intel)',
@@ -52,8 +52,8 @@ export function DownloadBar() {
       icon: Apple,
       recommended: false,
       badge: 'Universal .dmg',
-      url: 'https://github.com/Naiker12/Sparta-Agent/releases/download/v0.1.1/Sparta-Agent-Mac-0.1.1-Installer.dmg',
-      fallbackUrl: 'https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.1.1',
+      url: 'https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Mac-0.1.1-Installer.dmg',
+      fallbackUrl: 'https://github.com/Naiker12/Sparta-Agent/releases/latest',
     },
     {
       os: 'Linux (AppImage & deb)',
@@ -62,8 +62,8 @@ export function DownloadBar() {
       icon: Terminal,
       recommended: false,
       badge: 'Binario AppImage',
-      url: 'https://github.com/Naiker12/Sparta-Agent/releases/download/v0.1.1/Sparta-Agent-Linux-0.1.1.AppImage',
-      fallbackUrl: 'https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.1.1',
+      url: 'https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Linux-0.1.1.AppImage',
+      fallbackUrl: 'https://github.com/Naiker12/Sparta-Agent/releases/latest',
     },
   ];
 
@@ -197,12 +197,12 @@ export function DownloadBar() {
         {/* GitHub Releases Direct Link Sub-Bar */}
         <div className="mt-6 text-center">
           <a
-            href="https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.1.1"
+            href="https://github.com/Naiker12/Sparta-Agent/releases/latest"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-mono text-xs font-semibold bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-purple-600 dark:text-purple-300 hover:text-purple-700 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-white/10 transition-all shadow-sm"
           >
-            <span>Ver Release v0.1.1 y notas de la versión en GitHub Releases</span>
+            <span>Ver Release Oficial y notas de la versión en GitHub Releases</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </a>
         </div>
