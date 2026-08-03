@@ -194,6 +194,19 @@ export function DownloadBar() {
           })}
         </div>
 
+        {/* GitHub Releases Direct Link Sub-Bar */}
+        <div className="mt-6 text-center">
+          <a
+            href="https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.1.1"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-mono text-xs font-semibold bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-purple-600 dark:text-purple-300 hover:text-purple-700 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-white/10 transition-all shadow-sm"
+          >
+            <span>Ver Release v0.1.1 y notas de la versión en GitHub Releases</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </a>
+        </div>
+
         {/* DOWNLOAD PROGRESS FLOATING MODAL WIDGET */}
         <AnimatePresence>
           {showWidget && (
