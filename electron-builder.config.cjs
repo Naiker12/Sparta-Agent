@@ -22,11 +22,12 @@ module.exports = {
     output: `release/\${version}`
   },
   files: [
-    'dist',
-    'dist-electron',
+    'dist/**/*',
+    'dist-electron/**/*',
     'skills/**/*',
-    'node_modules/node-pty/**/*',
     'public/**/*',
+    '!node_modules/**',
+    'node_modules/node-pty/**/*',
     '!public/negro/**',
     '!public/escritorio.png',
     '!public/post.png',
