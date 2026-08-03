@@ -66,7 +66,7 @@ function handleZoom(delta: number) {
       electron.webFrame.setZoomFactor(currentZoomFactor)
       return
     }
-  } catch {}
+  } catch { /* ignore */ }
 
   // 2. CSS Zoom fallback with viewport height compensation to eliminate bottom whitespace gaps
   const docEl = document.documentElement
@@ -191,7 +191,8 @@ export function AppMenu() {
           destructive: true,
           onClick: () => {
             if ((window as any).electron?.ipcRenderer) {
-              ;(window as any).electron.ipcRenderer.send('window:close')
+              const winEnv = window as unknown as Record<string, { ipcRenderer: { send: (ch: string) => void } }>
+              winEnv.electron.ipcRenderer.send('window:close')
             } else {
               window.close()
             }
@@ -285,7 +286,8 @@ export function AppMenu() {
           icon: SquareMinus,
           onClick: () => {
             if ((window as any).electron?.ipcRenderer) {
-              ;(window as any).electron.ipcRenderer.send('window:minimize')
+              const winEnv = window as unknown as Record<string, { ipcRenderer: { send: (ch: string) => void } }>
+              winEnv.electron.ipcRenderer.send('window:minimize')
             }
           },
         },

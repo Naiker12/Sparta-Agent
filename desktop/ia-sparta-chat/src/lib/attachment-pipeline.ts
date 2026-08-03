@@ -97,7 +97,7 @@ export function parseUserMessageAttachments(content: string): {
   let cleanText = content
 
   // Match [Archivo binario adjunto: filename (size) - .ext]
-  const binaryRegex = /\[Archivo binario adjunto:\s*([^\(]+)\s*\(([^)]+)\)\s*-\s*\.([^\]]+)\]/g
+  const binaryRegex = /\[Archivo binario adjunto:\s*([^()].+?)\s*\(([^)]+)\)\s*-\s*\.([^\]]+)\]/g
   let match: RegExpExecArray | null
   while ((match = binaryRegex.exec(content)) !== null) {
     const fileName = match[1].trim()
@@ -114,7 +114,7 @@ export function parseUserMessageAttachments(content: string): {
   cleanText = cleanText.replace(binaryRegex, '').trim()
 
   // Match [Imagen adjunta: filename (size)]
-  const imageRegex = /\[Imagen adjunta:\s*([^\(]+)\s*\(([^)]+)\)\]/g
+  const imageRegex = /\[Imagen adjunta:\s*([^()].+?)\s*\(([^)]+)\)\]/g
   while ((match = imageRegex.exec(content)) !== null) {
     const fileName = match[1].trim()
     const sizeStr = match[2].trim()

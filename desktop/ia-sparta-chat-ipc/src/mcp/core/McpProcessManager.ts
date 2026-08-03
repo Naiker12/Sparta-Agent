@@ -68,7 +68,7 @@ export class McpProcessManager {
 
   private connectStdio(serverId: string, config: Record<string, unknown>): Promise<{ ok: boolean; tools: MCPToolSchema[]; error?: string }> {
     const command = config.command as string
-    let args = (config.args as string[]) ?? []
+    const args = [...((config.args as string[]) ?? [])]
 
     if (serverId === 'filesystem' || args.some((a) => a.includes('server-filesystem'))) {
       const homeDir = os.homedir()

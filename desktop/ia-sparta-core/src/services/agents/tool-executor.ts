@@ -226,6 +226,7 @@ async function executeNativeShellToolInline(
       settled = true
       unsubOutput()
       unsubExit()
+      // eslint-disable-next-line no-control-regex
       const clean = outputChunks.join('').replace(/\u001B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/gu, '')
       resolve(
         `Comando ${payload.code === 0 ? 'exitoso' : 'finalizado'} (exit code: ${payload.code})\n\n$ ${command}\n${clean.trim() || '(sin salida)'}`,
@@ -247,6 +248,7 @@ async function executeNativeShellToolInline(
       if (!settled) {
         settled = true; unsubOutput(); unsubExit()
         window.terminal.agentKill(procId).catch(() => {})
+        // eslint-disable-next-line no-control-regex
         const partial = outputChunks.join('').replace(/\u001B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/gu, '')
         resolve(`Timeout (5min)\n\n$ ${command}\n${partial.trim() || '(sin salida)'}`)
       }
