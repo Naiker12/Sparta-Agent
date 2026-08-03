@@ -4,9 +4,11 @@ import { useSettingsStore } from 'ia-sparta-core'
 import { useProviderStore } from 'ia-sparta-core'
 import { modelSupportsThinking } from 'ia-sparta-core'
 import { ConnectorsSubmenu } from './ConnectorsSubmenu'
+import { processFile, type ProcessedAttachment } from '../lib/attachment-pipeline'
 
 interface AttachMenuProps {
   onClose: () => void
+  onAttach?: (attachment: ProcessedAttachment) => void
 }
 
 const btnStyle: Record<string, string | number> = {
@@ -117,7 +119,7 @@ function AttachMenuToggle({
   )
 }
 
-export function AttachMenu({ onClose }: AttachMenuProps) {
+export function AttachMenu({ onClose, onAttach }: AttachMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { defaultModel, webSearchEnabled, reasoningEnabled, toggleWebSearch, toggleReasoning } = useSettingsStore()
@@ -162,26 +164,29 @@ export function AttachMenu({ onClose }: AttachMenuProps) {
         gap: '2px',
       }}
     >
+
       <input
         ref={fileInputRef}
         type="file"
-        accept=".txt,.md,.py,.ts,.js,.json,.csv,.pdf"
+        accept=".txt,.md,.py,.ts,.js,.json,.csv,.pdf,.docx,.doc,.xlsx,.xls,.png,.jpg,.jpeg,.gif,.webp"
         style={{ display: 'none' }}
-        onChange={(e) => {
+        onChange={async (e) => {
           const file = e.target.files?.[0]
           if (!file) return
-          const reader = new FileReader()
-          reader.onload = (ev) => {
-            const content = ev.target?.result as string
-            const preview = content.slice(0, 3000)
-            const truncated = content.length > 3000 ? '\n_(contenido truncado)_' : ''
-            const fileBlock = `[Archivo: ${file.name}]\n\`\`\`\n${preview}\n\`\`\`${truncated}`
-            const current = useSettingsStore.getState().input
-            useSettingsStore.getState().setInput(current ? `${current}\n\n${fileBlock}` : fileBlock)
+          try {
+            const processed = await processFile(file)
+            if (onAttach) {
+              onAttach(processed)
+            } else {
+              const current = useSettingsStore.getState().input
+              useSettingsStore.getState().setInput(current ? `${current}\n\n${processed.previewText}` : processed.previewText)
+            }
+          } catch (err) {
+            console.error('Error processing attached file:', err)
+          } finally {
+            onClose()
+            e.target.value = ''
           }
-          reader.readAsText(file)
-          onClose()
-          e.target.value = ''
         }}
       />
 

@@ -5,6 +5,7 @@
  */
 
 import { spawn, type ChildProcess } from 'node:child_process'
+import os from 'node:os'
 import { JsonRpcStreamParser, type JsonRpcMessage } from './JsonRpcStreamParser'
 import { getEnhancedEnv } from './mcp-path-fix'
 
@@ -67,7 +68,19 @@ export class McpProcessManager {
 
   private connectStdio(serverId: string, config: Record<string, unknown>): Promise<{ ok: boolean; tools: MCPToolSchema[]; error?: string }> {
     const command = config.command as string
-    const args = (config.args as string[]) ?? []
+    let args = (config.args as string[]) ?? []
+
+    if (serverId === 'filesystem' || args.some((a) => a.includes('server-filesystem'))) {
+      const homeDir = os.homedir()
+      const userProfile = process.env.USERPROFILE || homeDir
+      const pathsToAdd = [homeDir, userProfile, process.cwd()].filter(Boolean)
+      const existingPaths = args.filter((a) => !a.startsWith('-'))
+      for (const p of pathsToAdd) {
+        if (!existingPaths.includes(p)) {
+          args.push(p)
+        }
+      }
+    }
 
     if (!command) {
       return Promise.resolve({ ok: false, tools: [], error: 'El servidor STDIO no especifica un comando ejecutable' })
@@ -76,10 +89,16 @@ export class McpProcessManager {
     return new Promise((resolve) => {
       try {
         const env = getEnhancedEnv(config.env as Record<string, string>)
-        const proc = spawn(command, args, {
+        const isWin = process.platform === 'win32'
+        const commandToSpawn = isWin && ['npx', 'npm', 'pnpm', 'uvx', 'yarn'].includes(command.toLowerCase())
+          ? `${command}.cmd`
+          : command
+
+        const proc = spawn(commandToSpawn, args, {
           stdio: ['pipe', 'pipe', 'pipe'] as const,
           env: env as NodeJS.ProcessEnv,
           windowsHide: true,
+          shell: isWin,
         })
 
         const parser = new JsonRpcStreamParser()

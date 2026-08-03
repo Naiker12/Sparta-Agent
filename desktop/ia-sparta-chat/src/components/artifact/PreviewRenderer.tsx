@@ -4,6 +4,8 @@ import { SafeSvg } from './SafeSvg'
 import { PdfViewer } from './PdfViewer'
 import { SheetPreview } from './SheetPreview'
 import { HtmlPreview } from './HtmlPreview'
+import { XlsxPreview } from './XlsxPreview'
+import { DocxPreview } from './DocxPreview'
 
 interface PreviewRendererProps {
   filePath: string
@@ -12,7 +14,7 @@ interface PreviewRendererProps {
   viewMode?: 'preview' | 'code'
 }
 
-const EXT_PREVIEW: Record<string, 'md' | 'code' | 'svg' | 'pdf' | 'sheet' | 'image' | 'html'> = {
+const EXT_PREVIEW: Record<string, 'md' | 'code' | 'svg' | 'pdf' | 'sheet' | 'xlsx' | 'docx' | 'image' | 'html'> = {
   md: 'md', markdown: 'md',
   html: 'html', htm: 'html',
   ts: 'code', tsx: 'code', js: 'code', jsx: 'code', json: 'code', py: 'code',
@@ -21,7 +23,9 @@ const EXT_PREVIEW: Record<string, 'md' | 'code' | 'svg' | 'pdf' | 'sheet' | 'ima
   toml: 'code', sh: 'code', bash: 'code', sql: 'code', graphql: 'code',
   svg: 'svg',
   pdf: 'pdf',
-  xlsx: 'sheet', xls: 'sheet', csv: 'sheet',
+  csv: 'sheet',
+  xlsx: 'xlsx', xls: 'xlsx',
+  docx: 'docx', doc: 'docx',
   png: 'image', jpg: 'image', jpeg: 'image', gif: 'image', webp: 'image', bmp: 'image',
 }
 
@@ -35,7 +39,7 @@ export function PreviewRenderer({ filePath, content, base64, viewMode = 'preview
   const ext = getExtension(filePath)
   const type = EXT_PREVIEW[ext] ?? 'code'
 
-  if (viewMode === 'code' && type !== 'pdf' && type !== 'image' && type !== 'sheet') {
+  if (viewMode === 'code' && type !== 'pdf' && type !== 'image' && type !== 'sheet' && type !== 'xlsx' && type !== 'docx') {
     return <SyntaxHighlighterPreview code={content} fileName={filePath} />
   }
 
@@ -60,6 +64,10 @@ export function PreviewRenderer({ filePath, content, base64, viewMode = 'preview
       return <PdfViewer base64={base64 ?? ''} fileName={filePath} />
     case 'sheet':
       return <SheetPreview base64={base64 ?? ''} fileName={filePath} />
+    case 'xlsx':
+      return <XlsxPreview base64={base64 ?? ''} fileName={filePath} />
+    case 'docx':
+      return <DocxPreview base64={base64 ?? ''} fileName={filePath} />
     case 'image':
       return (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', padding: 20 }}>

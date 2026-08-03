@@ -4,13 +4,28 @@ import type { Provider, ChatRequest, ChatStreamChunk, Message } from 'ia-sparta-
 export class AIGateway {
   async sendMessage(
     provider: Provider,
-    messages: Pick<Message, 'role' | 'content'>[],
+    messages: Pick<Message, 'role' | 'content' | 'attachments'>[],
     options?: { system?: string; stream?: boolean }
   ): Promise<AsyncIterable<ChatStreamChunk>> {
     const transport = createProvider(provider)
     const req: ChatRequest = {
       model: provider.defaultModel ?? 'gpt-4',
-      messages: messages.map(m => ({ role: m.role, content: m.content })),
+      messages: messages.map(m => {
+        const imageAttachments = m.attachments?.filter(a => a.kind === 'image' && a.base64Data) ?? []
+        if (imageAttachments.length > 0) {
+          const contentParts = [
+            { type: 'text' as const, text: m.content },
+            ...imageAttachments.map(img => ({
+              type: 'image_url' as const,
+              image_url: {
+                url: `data:${img.mimeType};base64,${img.base64Data}`,
+              },
+            })),
+          ]
+          return { role: m.role, content: contentParts }
+        }
+        return { role: m.role, content: m.content }
+      }),
       system: options?.system,
       stream: options?.stream ?? true,
     }

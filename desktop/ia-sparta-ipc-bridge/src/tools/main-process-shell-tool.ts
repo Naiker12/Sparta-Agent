@@ -78,13 +78,45 @@ function getShellCommand(profile?: string) {
   return { shell, args: ['-l'] }
 }
 
+function normalizeCommandForPlatform(cmd: string): string {
+  if (os.platform() !== 'win32') return cmd
+
+  let normalized = cmd.trim()
+
+  // Replace Linux 'which <cmd>' with Windows 'where.exe'
+  if (/^which\s+/i.test(normalized)) {
+    const target = normalized.replace(/^which\s+/i, '').trim()
+    if (target === 'python3' || target === 'python') {
+      return 'where.exe python 2>$null; if (-not $?) { where.exe python3 2>$null }'
+    }
+    return `where.exe ${target}`
+  }
+
+  // Replace bash 2>/dev/null or 2> /dev/null with PowerShell 2>$null
+  normalized = normalized.replace(/\s*2>\s*\/dev\/null/gi, ' 2>$null')
+
+  // Replace bash || echo "MSG" with PowerShell fallback
+  normalized = normalized.replace(/\s*\|\|\s*echo\s+(["']?)(.*?)\1/gi, '; if (-not $?) { Write-Output "$2" }')
+
+  // Replace generic bash || with PowerShell semicolon
+  normalized = normalized.replace(/\s*\|\|\s*/g, '; if (-not $?) { ')
+
+  // Replace bash ls -la / ls -l with PowerShell Get-ChildItem
+  normalized = normalized.replace(/^ls\s+-l[aA]?\b/gi, 'Get-ChildItem -Force')
+
+  // Replace bash export VAR=val with PowerShell $env:VAR="val"
+  normalized = normalized.replace(/^export\s+([a-zA-Z0-9_]+)=(.*)$/gi, '$env:$1="$2"')
+
+  return normalized
+}
+
 export function runCommandForAgent(
   procId: string,
   command: string,
   cwd?: string,
   onChunk?: (chunk: string) => void,
 ): Promise<{ success: boolean; output: string; exitCode: number; error?: string }> {
-  const sanitizedCmd = command.trim()
+  let sanitizedCmd = command.trim()
   const isDangerous = DESTRUCTIVE_PATTERNS.some((p) => p.test(sanitizedCmd))
   if (isDangerous) {
     return Promise.resolve({
@@ -94,6 +126,8 @@ export function runCommandForAgent(
       error: 'Comando potencialmente destructivo bloqueado por seguridad.',
     })
   }
+
+  sanitizedCmd = normalizeCommandForPlatform(sanitizedCmd)
 
   const { shell, args: shellArgs } = getShellCommand()
   const workingDir = cwd || getWorkspaceRoot() || process.env.HOME || process.cwd()
@@ -118,6 +152,17 @@ export function runCommandForAgent(
     }
 
     const outputChunks: string[] = []
+    let totalLength = 0
+    const MAX_BUFFER = 500 * 1024 // 500 KB limit to prevent RAM bloat
+
+    // Emergency safety timeout (60s) to prevent hanging PTY processes
+    const killTimeout = setTimeout(() => {
+      try {
+        ptyProcess.kill()
+      } catch {
+        /* ignore */
+      }
+    }, 60_000)
 
     // Broadcast to renderer windows if active
     const windows = BrowserWindow.getAllWindows()
@@ -129,7 +174,10 @@ export function runCommandForAgent(
     })
 
     ptyProcess.onData((data: string) => {
-      outputChunks.push(data)
+      if (totalLength < MAX_BUFFER) {
+        outputChunks.push(data)
+        totalLength += data.length
+      }
       if (onChunk) onChunk(data)
       windows.forEach((win) => {
         if (!win.isDestroyed()) {
@@ -139,6 +187,7 @@ export function runCommandForAgent(
     })
 
     ptyProcess.onExit(({ exitCode }: { exitCode: number }) => {
+      clearTimeout(killTimeout)
       windows.forEach((win) => {
         if (!win.isDestroyed()) {
           win.webContents.send('terminal:agent-exit', { procId, code: exitCode })
@@ -160,6 +209,12 @@ export function runCommandForAgent(
       })
     })
 
-    ptyProcess.write(sanitizedCmd + '\r')
+    // Write command with explicit exit to close PTY once command completes
+    const isWin = os.platform() === 'win32'
+    const execWithExit = isWin
+      ? `${sanitizedCmd}; exit\r\n`
+      : `${sanitizedCmd}\nexit\n`
+
+    ptyProcess.write(execWithExit)
   })
 }

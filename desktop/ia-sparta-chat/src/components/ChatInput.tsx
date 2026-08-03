@@ -21,6 +21,10 @@ import { X } from 'lucide-react'
 import { ProjectDialog } from 'ia-sparta-projects'
 import { useTranslation } from 'ia-sparta-i18n'
 import { HostPickerButton, WorkspaceModePicker } from 'ia-sparta-shell-layout'
+import { useFileDrop } from '../hooks/useFileDrop'
+import { DropOverlay } from './DropOverlay'
+import { processFile, type ProcessedAttachment } from '../lib/attachment-pipeline'
+import { AttachmentCard } from './input/AttachmentCard'
 
 interface ChatInputProps {
   sessionId?: string
@@ -28,6 +32,10 @@ interface ChatInputProps {
 }
 
 export function ChatInput({ sessionId, className }: ChatInputProps) {
+  const [attachments, setAttachments] = useState<ProcessedAttachment[]>([])
+  const { isDragging, dropProps } = useFileDrop((newAtts) => {
+    setAttachments((prev) => [...prev, ...newAtts])
+  })
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const justSelectedRef = useRef(false)
   const [focused, setFocused] = useState(false)
@@ -40,6 +48,26 @@ export function ChatInput({ sessionId, className }: ChatInputProps) {
   const { input, setInput } = useSettingsStore()
   const activeSessionId = useSessionStore((s) => s.activeSessionId)
   const resolvedSessionId = sessionId ?? activeSessionId
+
+  async function handlePaste(e: React.ClipboardEvent<HTMLTextAreaElement>) {
+    const files = Array.from(e.clipboardData.files)
+    if (files.length === 0) return
+
+    e.preventDefault()
+    try {
+      const list: ProcessedAttachment[] = []
+      for (const file of files) {
+        const processed = await processFile(file)
+        list.push(processed)
+      }
+
+      if (list.length > 0) {
+        setAttachments((prev) => [...prev, ...list])
+      }
+    } catch (err) {
+      console.error('Error handling pasted files:', err)
+    }
+  }
   const isStreaming = useChatStore((s) => resolvedSessionId ? (s.streamingBySession[resolvedSessionId]?.isStreaming ?? false) : s.isStreaming)
   const providers = useProviderStore((s) => s.providers)
   const apiKeys = useSettingsStore((s) => s.apiKeys)
@@ -107,30 +135,36 @@ export function ChatInput({ sessionId, className }: ChatInputProps) {
   function handleSend() {
     if (justSelectedRef.current) return
     let text = input.trim()
-    if (!text) return
+    if (!text && attachments.length === 0) return
     if (!hasProvider) return
 
     if (activeMentions.length > 0) {
       const mentionHeader = activeMentions.map((m) => `@${m.name}`).join(' ')
-      text = `${mentionHeader} ${text}`
+      text = text ? `${mentionHeader} ${text}` : mentionHeader
     }
 
-    if (executeSlashCommand(text)) {
+    const attachmentPrompts = attachments.map((a) => a.previewText).join('\n\n')
+    const fullText = attachmentPrompts ? (text ? `${attachmentPrompts}\n\n${text}` : attachmentPrompts) : text
+
+    if (executeSlashCommand(fullText)) {
       setInput('')
+      setAttachments([])
       setActiveMentions([])
       return
     }
 
     if (isStreaming) {
-      injectWhileStreaming(text)
+      injectWhileStreaming(fullText)
       setInput('')
+      setAttachments([])
       setActiveMentions([])
       toast.info(t('chat.messageQueued'))
       return
     }
 
-    sendMessage(text)
+    sendMessage(fullText)
     setInput('')
+    setAttachments([])
     setActiveMentions([])
   }
 
@@ -256,10 +290,11 @@ export function ChatInput({ sessionId, className }: ChatInputProps) {
         ? t('chat.placeholderStreaming')
         : typedText || t('chat.placeholderDefault')
 
-  const canSend = input.trim().length > 0 && hasProvider
+  const canSend = (input.trim().length > 0 || attachments.length > 0) && hasProvider
 
   return (
-    <div className={className} style={{ position: 'relative', paddingBottom: 16 }}>
+    <div className={className} style={{ position: 'relative', paddingBottom: 16 }} {...dropProps}>
+      <DropOverlay isVisible={isDragging} />
       <div style={{ maxWidth: 680, margin: '0 auto' }}>
         {!hasProvider && (
           <div style={{
@@ -346,6 +381,18 @@ export function ChatInput({ sessionId, className }: ChatInputProps) {
               </div>
             )}
 
+            {attachments.length > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px 4px', flexWrap: 'wrap' }}>
+                {attachments.map((att) => (
+                  <AttachmentCard
+                    key={att.id}
+                    attachment={att}
+                    onRemove={() => setAttachments((prev) => prev.filter((a) => a.id !== att.id))}
+                  />
+                ))}
+              </div>
+            )}
+
             <div style={{
               display: 'flex',
               alignItems: 'flex-start',
@@ -372,6 +419,7 @@ export function ChatInput({ sessionId, className }: ChatInputProps) {
                   value={input}
                   onChange={e => handleInputChange(e.target.value)}
                   onKeyDown={handleKey}
+                  onPaste={handlePaste}
                   onFocus={() => setFocused(true)}
                   onBlur={() => setFocused(false)}
                   placeholder={placeholder}
@@ -421,7 +469,12 @@ export function ChatInput({ sessionId, className }: ChatInputProps) {
                 >
                   <Plus size={13} strokeWidth={2} />
                 </button>
-                {showAttach && <AttachMenu onClose={() => setShowAttach(false)} />}
+                {showAttach && (
+                  <AttachMenu
+                    onClose={() => setShowAttach(false)}
+                    onAttach={(att) => setAttachments((prev) => [...prev, att])}
+                  />
+                )}
               </div>
 
               <ModelPicker />

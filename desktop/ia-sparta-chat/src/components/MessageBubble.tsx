@@ -19,6 +19,8 @@ import { getMessageRenderState, getAssistantRenderGroups, splitTurnAtAnswer, sho
 import type { AssistantRenderGroup, ReasoningGroup } from 'ia-sparta-core'
 import { MarkdownRenderer } from './MarkdownRenderer'
 import { useTranslation } from 'ia-sparta-i18n'
+import { parseUserMessageAttachments } from '../lib/attachment-pipeline'
+import { AttachmentCard } from './input/AttachmentCard'
 
 function cleanDisplayContent(text: string): string {
   if (!text) return ''
@@ -55,6 +57,11 @@ export function MessageBubble({ message, isLastUser = false, isLastAssistant = f
     return splitTurnAtAnswer(message.parts, false)
   }, [hasInterleavedTextParts, message.isStreaming, message.parts])
   const isErrorMessage = !isUser && (message.content.startsWith('Error:') || message.content.toLowerCase().includes('api key'))
+  const userParsed = useMemo(() => {
+    if (!isUser) return { cleanText: message.content, attachments: [] }
+    return parseUserMessageAttachments(message.content)
+  }, [isUser, message.content])
+
   const suggestions = !isUser && !isErrorMessage ? (message.suggestions ?? []) : []
 
   function handleCopy() {
@@ -221,10 +228,21 @@ export function MessageBubble({ message, isLastUser = false, isLastAssistant = f
               {renderState.kind === 'generating' || renderState.kind === 'responding' || renderState.kind === 'done' ? (
                 <>
                   {isUser ? (
-                    <MarkdownRenderer
-                      content={renderState.content}
-                      isStreaming={false}
-                    />
+                    <div>
+                      {userParsed.attachments.length > 0 && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
+                          {userParsed.attachments.map((att) => (
+                            <AttachmentCard key={att.id} attachment={att} readOnly />
+                          ))}
+                        </div>
+                      )}
+                      {userParsed.cleanText && (
+                        <MarkdownRenderer
+                          content={userParsed.cleanText}
+                          isStreaming={false}
+                        />
+                      )}
+                    </div>
                   ) : (
                     <div
                       style={{

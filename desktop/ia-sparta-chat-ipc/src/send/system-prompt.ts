@@ -33,12 +33,18 @@ Cuando el usuario solicite información reciente, partidos en vivo, noticias, fe
 2. Si un sitio específico contiene los detalles (ej. FotMob, ESPN, MDN, GitHub), usá 'web_fetch' para extraer el contenido directo.
 3. Presentá SIEMPRE los resultados de forma premium: con tablas Markdown estructuradas, fechas traducidas y horarios ajustados a la zona horaria del usuario (ej. UTC-5 Colombia).`
 
+  const fileCreationDirective = `[REGLA ESTRICTA DE CREACIÓN DE ARCHIVOS EN DISCO]
+- NUNCA crees o escribas archivos en disco (ej. D:\\, C:\\, carpetas arbitrarias) si el usuario solo hace una pregunta, aprueba una propuesta ("sí", "ok") o no ha especificado explícitamente una ruta de archivo.
+- Si el usuario aprueba una propuesta de datos u hoja de cálculo (ej. "sí"), muestra primero la estructura o tabla formateada dentro del chat en Markdown.
+- Únicamente usá 'write_file' o 'filesystem__write_file' si el usuario te pidió explícitamente guardar un archivo en una ruta concreta o si aceptó de forma inequívoca una ruta declarada.`
+
   return [
     req.system || 'Sos Sparta Agent, un asistente de ingeniería de software de alto rendimiento.',
     workspaceContext,
     skillContext,
     mcpContext,
     summaryDirective,
+    fileCreationDirective,
     realTimeWebDirective,
   ].filter(Boolean).join('\n\n')
 }

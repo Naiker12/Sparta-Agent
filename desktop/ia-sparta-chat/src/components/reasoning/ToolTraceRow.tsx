@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Check, Loader2, X, AlertTriangle, FileText, Search, ChevronRight, Sparkles, FolderTree, Globe, Terminal as TerminalIcon, Pencil, Trash2, Wrench } from 'lucide-react'
 import { SearchResultsList } from './SearchResultsList'
 import { RunningCommandBlock } from './RunningCommandBlock'
-import { inferToolSubstatus, substatusLabel, useMCPStore, getVendorForServer, useArtifactStore } from 'ia-sparta-core'
+import { inferToolSubstatus, substatusLabel, useMCPStore, getVendorForServer, useArtifactStore, useSessionStore } from 'ia-sparta-core'
 import { BrandIcon } from 'ia-sparta-design-system'
 import type { ToolCall, SearchProgressItem } from 'ia-sparta-core'
 
@@ -399,18 +399,24 @@ function ToolTraceRowContent({ toolCall }: ToolTraceRowProps) {
           </span>
         )}
 
-        {writeFilePath && toolCall.status === 'completed' && (
+        {writeFilePath && (toolCall.status === 'completed' || toolCall.status === 'running') && (
           <button
-            onClick={(e) => { e.stopPropagation(); useArtifactStore.getState().open(writeFilePath) }}
+            onClick={(e) => {
+              e.stopPropagation()
+              const activeSid = useSessionStore.getState().activeSessionId
+              useArtifactStore.getState().open(writeFilePath, activeSid ?? undefined)
+              useArtifactStore.getState().bump()
+            }}
             style={{
               background: 'none', border: '1px solid var(--border-subtle)',
               borderRadius: 4, padding: '1px 6px', cursor: 'pointer',
-              color: 'var(--text-muted)', fontSize: 10, fontFamily: 'var(--font-ui)',
+              color: toolCall.status === 'running' ? 'var(--accent)' : 'var(--text-muted)',
+              fontSize: 10, fontFamily: 'var(--font-ui)',
               flexShrink: 0, whiteSpace: 'nowrap',
             }}
             title="Ver vista previa"
           >
-            Vista previa
+            {toolCall.status === 'running' ? 'En vivo' : 'Vista previa'}
           </button>
         )}
 

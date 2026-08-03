@@ -20,9 +20,32 @@ export class AnthropicTransport extends BaseTransport {
   }
 
   buildBody(req: ChatRequest): Record<string, unknown> {
+    const formattedMessages = req.messages.map(m => {
+      if (Array.isArray(m.content)) {
+        const anthropicParts = m.content.map(part => {
+          if (part.type === 'image_url' && part.image_url?.url) {
+            const match = part.image_url.url.match(/^data:(image\/[a-zA-Z0-9-+.]+);base64,(.+)$/)
+            if (match) {
+              return {
+                type: 'image',
+                source: {
+                  type: 'base64',
+                  media_type: match[1],
+                  data: match[2],
+                },
+              }
+            }
+          }
+          return { type: 'text', text: part.text ?? '' }
+        })
+        return { role: m.role, content: anthropicParts }
+      }
+      return m
+    })
+
     const body: Record<string, unknown> = {
       model: req.model,
-      messages: req.messages,
+      messages: formattedMessages,
       system: req.system,
       max_tokens: req.maxTokens ?? 4096,
       stream: true,

@@ -20,10 +20,13 @@ interface ModelOption {
 
 export function ModelPicker() {
   const providers = useProviderStore((s) => s.providers)
-  const { activeModel, setDefaultModel } = useSettingsStore()
+  const { activeModel: globalDefaultModel, setDefaultModel } = useSettingsStore()
   const activeSessionId = useSessionStore((s) => s.activeSessionId)
+  const activeSession = useSessionStore((s) => s.sessions.find((sess) => sess.id === s.activeSessionId))
   const updateSessionModel = useSessionStore((s) => s.updateSessionModel)
   const performance = useModelPerformanceStore((s) => s.byModel)
+
+  const currentModel = activeSession?.model || globalDefaultModel
 
   const speedLabel = (modelId: string) => {
     const latency = performance[modelId]?.averageLatencyMs
@@ -48,7 +51,7 @@ export function ModelPicker() {
   }
 
   const modelIds = allModels.map((m) => m.id)
-  const activeVendor = allModels.find((m) => m.id === activeModel)?.vendor
+  const activeVendor = allModels.find((m) => m.id === currentModel)?.vendor
 
   if (allModels.length === 0) {
     return (
@@ -71,10 +74,12 @@ export function ModelPicker() {
   return (
     <Combobox
       items={modelIds}
-      value={activeModel}
+      value={currentModel}
       onValueChange={(v) => {
+        if (activeSessionId) {
+          updateSessionModel(activeSessionId, v)
+        }
         setDefaultModel(v)
-        if (activeSessionId) updateSessionModel(activeSessionId, v)
       }}
     >
       <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>

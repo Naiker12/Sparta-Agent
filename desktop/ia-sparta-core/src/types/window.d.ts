@@ -5,7 +5,7 @@ interface SpartaSendMessageRequest {
   sessionId: string
   messageId: string
   model: string
-  messages: { role: string; content: string }[]
+  messages: { role: string; content: string | import('./chat').MultimodalContentPart[] }[]
   providerKey?: string
   apiUrl?: string
   isLocal?: boolean

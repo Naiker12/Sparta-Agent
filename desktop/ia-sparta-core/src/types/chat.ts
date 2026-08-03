@@ -50,6 +50,16 @@ export interface ReasoningDetail {
  * A single "part" in the message timeline.
  * Parts are rendered in order to create a unified timeline of reasoning + tool calls.
  */
+export interface MessageAttachment {
+  id: string
+  fileName: string
+  mimeType: string
+  size: number
+  kind: 'image' | 'binary' | 'text'
+  base64Data?: string
+  url?: string
+}
+
 export type ReasoningOrigin = 'native' | 'emulated'
 
 export type MessagePart =
@@ -57,6 +67,7 @@ export type MessagePart =
   | { kind: 'text'; id: string; content: string; startedAt: number }
   | { kind: 'tool'; id: string; toolCallId: string; startedAt: number }
   | { kind: 'subagent'; id: string; subagentName: string; taskSummary: string; startedAt: number; completedAt?: number; durationMs?: number; success?: boolean }
+  | { kind: 'attachment'; id: string; attachment: MessageAttachment }
 
 export interface Message {
   id: string
@@ -65,6 +76,7 @@ export interface Message {
   timestamp: number
   sessionId: string
   agentId?: string
+  attachments?: MessageAttachment[]
   reasoningText?: string
   thinkingStatus?: ThinkingStatus
   thinkingStatusText?: string
@@ -104,9 +116,17 @@ export interface Session {
   sessionMode?: SessionMode
 }
 
+export interface MultimodalContentPart {
+  type: 'text' | 'image_url'
+  text?: string
+  image_url?: {
+    url: string
+  }
+}
+
 export interface ChatRequest {
   model: string
-  messages: { role: MessageRole; content: string; reasoning_content?: string; reasoning?: string }[]
+  messages: { role: MessageRole; content: string | MultimodalContentPart[]; reasoning_content?: string; reasoning?: string }[]
   system?: string
   stream?: boolean
   maxTokens?: number

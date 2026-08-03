@@ -81,10 +81,17 @@ const ComboboxInput = React.forwardRef<HTMLInputElement, React.ComponentPropsWit
       <div ref={ctx.triggerRef as React.RefObject<HTMLDivElement>} style={{ position: "relative" }}>
         <input
           ref={setRef}
-          readOnly={!ctx.open}
           value={ctx.open ? ctx.search : ctx.selectedValue}
-          onChange={(e) => { if (ctx.open) ctx.setSearch(e.target.value) }}
-          onClick={() => ctx.setOpen(!ctx.open)}
+          onChange={(e) => {
+            if (!ctx.open) ctx.setOpen(true)
+            ctx.setSearch(e.target.value)
+          }}
+          onFocus={() => {
+            if (!ctx.open) ctx.setOpen(true)
+          }}
+          onClick={() => {
+            if (!ctx.open) ctx.setOpen(true)
+          }}
           onKeyDown={(e) => {
             if (e.key === "Escape") ctx.setOpen(false)
             if (e.key === "Enter") { e.preventDefault(); ctx.setOpen(!ctx.open) }

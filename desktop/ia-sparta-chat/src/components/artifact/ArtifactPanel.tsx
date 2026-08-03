@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useRef, useCallback } from 'react'
 import { X, FileText, Download, Copy, Check, Eye, Code } from 'lucide-react'
-import { useArtifactStore } from 'ia-sparta-core'
+import { useArtifactStore, useSessionStore } from 'ia-sparta-core'
 import { PreviewRenderer } from './PreviewRenderer'
 
 interface FileData {
@@ -10,12 +10,16 @@ interface FileData {
 }
 
 export function ArtifactPanel() {
-  const { openPath, close } = useArtifactStore()
+  const { openPath, openSessionId, refreshToken, close } = useArtifactStore()
+  const activeSessionId = useSessionStore((s) => s.activeSessionId)
   const [fileData, setFileData] = useState<FileData | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview')
   const [copied, setCopied] = useState(false)
+
+  const isCurrentSessionArtifact = !openSessionId || !activeSessionId || openSessionId === activeSessionId
+  const effectiveOpenPath = isCurrentSessionArtifact ? openPath : null
 
   // Resizable panel state & iframe blocker
   const [panelWidth, setPanelWidth] = useState(540)
@@ -26,28 +30,27 @@ export function ArtifactPanel() {
   const rafIdRef = useRef<number | null>(null)
 
   const fileName = useMemo(() => {
-    if (!openPath) return ''
-    const parts = openPath.replace(/\\/g, '/').split('/')
+    if (!effectiveOpenPath) return ''
+    const parts = effectiveOpenPath.replace(/\\/g, '/').split('/')
     return parts[parts.length - 1] || ''
-  }, [openPath])
+  }, [effectiveOpenPath])
 
   const isPreviewable = useMemo(() => {
-    if (!openPath) return false
-    const ext = openPath.split('.').pop()?.toLowerCase() ?? ''
-    return ['html', 'htm', 'md', 'markdown', 'svg'].includes(ext)
-  }, [openPath])
+    if (!effectiveOpenPath) return false
+    const ext = effectiveOpenPath.split('.').pop()?.toLowerCase() ?? ''
+    return ['html', 'htm', 'md', 'markdown', 'svg', 'pdf', 'xlsx', 'xls', 'docx', 'doc', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'csv'].includes(ext)
+  }, [effectiveOpenPath])
 
   useEffect(() => {
-    if (!openPath) {
+    if (!effectiveOpenPath) {
       setFileData(null)
       setError(null)
       return
     }
-    const path: string = openPath
-    setLoading(true)
+    const path: string = effectiveOpenPath
     setError(null)
     const ext = path.split('.').pop()?.toLowerCase()
-    const binaryExts = ['pdf', 'xlsx', 'xls', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp']
+    const binaryExts = ['pdf', 'xlsx', 'xls', 'docx', 'doc', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp']
     const needsBinary = binaryExts.includes(ext ?? '')
 
     async function load() {
@@ -67,12 +70,12 @@ export function ArtifactPanel() {
       }
     }
     load()
-  }, [openPath])
+  }, [effectiveOpenPath, refreshToken])
 
   const handleDownload = async () => {
-    if (!openPath) return
+    if (!effectiveOpenPath) return
     if (window.electron?.send) {
-      window.electron.send('shell:open-external', `file://${openPath}`)
+      window.electron.send('shell:open-external', `file://${effectiveOpenPath}`)
     }
   }
 
@@ -117,7 +120,7 @@ export function ArtifactPanel() {
     window.addEventListener('mouseup', handleMouseUp)
   }, [panelWidth])
 
-  if (!openPath) return null
+  if (!effectiveOpenPath) return null
 
   return (
     <>
@@ -145,6 +148,7 @@ export function ArtifactPanel() {
           height: '100%',
           overflow: 'hidden',
           boxShadow: '-4px 0 16px rgba(0,0,0,0.06)',
+          transition: isResizing ? 'none' : 'width 0.22s cubic-bezier(0.16, 1, 0.3, 1), transform 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
         }}
       >
         {/* ── Resizable Drag Handle & Centered Pill Grip ─────────────── */}
@@ -305,7 +309,7 @@ export function ArtifactPanel() {
           {loading && <div style={{ color: 'var(--text-muted)', padding: 16 }}>Cargando vista previa…</div>}
           {error && <div style={{ color: 'var(--status-err)', padding: 16 }}>Error: {error}</div>}
           {!loading && !error && fileData && (
-            <PreviewRenderer filePath={openPath} content={fileData.content} base64={fileData.base64} viewMode={viewMode} />
+            <PreviewRenderer filePath={effectiveOpenPath} content={fileData.content} base64={fileData.base64} viewMode={viewMode} />
           )}
         </div>
       </div>
