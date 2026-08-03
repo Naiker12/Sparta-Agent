@@ -65,6 +65,9 @@ jobs:
       # Publish artifacts to GitHub Release
       - uses: softprops/action-gh-release@v2
         with:
-          files: release/**/*.{exe,dmg,AppImage}
+          files: |
+            release/*/*.exe
+            release/*/*.dmg
+            release/*/*.AppImage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
