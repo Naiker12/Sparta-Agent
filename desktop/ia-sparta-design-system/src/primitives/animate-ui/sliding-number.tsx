@@ -11,7 +11,7 @@ import {
   type HTMLMotionProps,
 } from 'framer-motion'
 import useMeasure from 'react-use-measure'
-import { useIsInView, type UseIsInViewOptions } from 'ia-sparta-core'
+import { useIsInView, type UseIsInViewOptions } from './use-is-in-view'
 
 type SlidingNumberRollerProps = {
   prevValue: number
@@ -199,7 +199,7 @@ function SlidingNumber({
 
       const factor = Math.pow(10, inferredDecimals)
 
-      const unsubscribe = springVal.on('change', (latest: number) => {
+      const unsubscribe = springVal.on('change', (latest: any) => {
         const newValue =
           inferredDecimals > 0
             ? Math.round(latest * factor) / factor

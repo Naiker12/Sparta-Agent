@@ -62,7 +62,6 @@ export * from './services/tools/web-search'
 export { buildWebFetchTool, executeWebFetch } from './services/tools/web-fetch'
 
 export * from './hooks/use-mobile'
-export * from './hooks/use-is-in-view'
 export * from './hooks/useAgent'
 export * from './hooks/useAudioRecorder'
 export * from './hooks/useAudioTranscription'
