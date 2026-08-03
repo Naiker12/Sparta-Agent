@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { SectionHeader } from '../ui/section-header';
 import {
   Download,
@@ -33,6 +33,33 @@ export function DownloadBar() {
   });
 
   const [showWidget, setShowWidget] = useState(false);
+  const [dynamicSizes, setDynamicSizes] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    fetch('https://api.github.com/repos/Naiker12/Sparta-Agent/releases/latest')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && Array.isArray(data.assets)) {
+          const sizes: Record<string, string> = {};
+          for (const asset of data.assets) {
+            if (typeof asset.size === 'number') {
+              const formattedSize = `${(asset.size / (1024 * 1024)).toFixed(1)} MB`;
+              if (asset.name.endsWith('.exe') && asset.name.includes('Setup')) {
+                sizes['Windows (x64)'] = formattedSize;
+              } else if (asset.name.endsWith('.dmg')) {
+                sizes['macOS (Apple Silicon & Intel)'] = formattedSize;
+              } else if (asset.name.endsWith('.AppImage')) {
+                sizes['Linux (AppImage & deb)'] = formattedSize;
+              }
+            }
+          }
+          if (Object.keys(sizes).length > 0) {
+            setDynamicSizes(sizes);
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const releases = [
     {
@@ -68,13 +95,14 @@ export function DownloadBar() {
   ];
 
   const handleDownloadClick = async (rel: typeof releases[0]) => {
+    const actualSize = dynamicSizes[rel.os] || rel.size;
     setShowWidget(true);
     setDownloadState({
       filename: rel.filename,
       progress: 0,
       speed: 'Conectando...',
       loaded: '0 MB',
-      total: rel.size,
+      total: actualSize,
       status: 'checking',
       os: rel.os,
     });
@@ -85,14 +113,14 @@ export function DownloadBar() {
       ...prev,
       status: 'downloading',
       loaded: '0 MB',
-      total: rel.size,
+      total: actualSize,
     }));
 
     const duration = 2500;
     const intervalTime = 40;
     const steps = duration / intervalTime;
     let currentStep = 0;
-    const totalSizeVal = parseFloat(rel.size);
+    const totalSizeVal = parseFloat(actualSize);
 
     const timer = setInterval(() => {
       currentStep++;
@@ -173,7 +201,7 @@ export function DownloadBar() {
 
                   <div className="flex items-center gap-1.5 text-[10px] font-mono text-slate-600 dark:text-gray-400 mb-4">
                     <HardDrive className="w-3 h-3 text-[#a855f7]" />
-                    <span>Tamaño: <strong className="text-slate-900 dark:text-white">{rel.size}</strong></span>
+                    <span>Tamaño: <strong className="text-slate-900 dark:text-white">{dynamicSizes[rel.os] || rel.size}</strong></span>
                   </div>
                 </div>
 
