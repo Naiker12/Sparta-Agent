@@ -161,13 +161,13 @@ export class McpProcessManager {
 
         proc.stderr?.on('data', () => {})
 
-        proc.on('error', (err: Error) => {
+        ;(proc as any).on('error', (err: Error) => {
           if (initTimer) clearTimeout(initTimer)
           this.disconnect(serverId)
           resolve({ ok: false, tools: [], error: `Error de spawn: ${err.message}` })
         })
 
-        proc.on('exit', (code: number | null) => {
+        ;(proc as any).on('exit', (code: number | null) => {
           if (!session.connected) {
             if (initTimer) clearTimeout(initTimer)
             resolve({ ok: false, tools: [], error: `El proceso MCP terminó con código ${code}` })
