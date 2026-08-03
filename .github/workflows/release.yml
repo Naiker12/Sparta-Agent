@@ -13,6 +13,9 @@ on:
           - minor
           - patch
 
+permissions:
+  contents: write
+
 env:
   NODE_OPTIONS: "--max-old-space-size=8192"
 
