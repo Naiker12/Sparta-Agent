@@ -33,28 +33,30 @@ export function DownloadBar() {
   });
 
   const [showWidget, setShowWidget] = useState(false);
-  const [dynamicSizes, setDynamicSizes] = useState<Record<string, string>>({});
+  const [dynamicInfo, setDynamicInfo] = useState<Record<string, { size?: string; filename?: string; url?: string }>>({});
 
   useEffect(() => {
     fetch('https://api.github.com/repos/Naiker12/Sparta-Agent/releases/latest')
       .then((res) => res.json())
       .then((data) => {
         if (data && Array.isArray(data.assets)) {
-          const sizes: Record<string, string> = {};
+          const info: Record<string, { size?: string; filename?: string; url?: string }> = {};
           for (const asset of data.assets) {
-            if (typeof asset.size === 'number') {
+            if (typeof asset.size === 'number' && asset.name) {
               const formattedSize = `${(asset.size / (1024 * 1024)).toFixed(1)} MB`;
+              const downloadUrl = asset.browser_download_url || `https://github.com/Naiker12/Sparta-Agent/releases/latest/download/${asset.name}`;
+
               if (asset.name.endsWith('.exe') && asset.name.includes('Setup')) {
-                sizes['Windows (x64)'] = formattedSize;
+                info['Windows (x64)'] = { size: formattedSize, filename: asset.name, url: downloadUrl };
               } else if (asset.name.endsWith('.dmg')) {
-                sizes['macOS (Apple Silicon & Intel)'] = formattedSize;
+                info['macOS (Apple Silicon & Intel)'] = { size: formattedSize, filename: asset.name, url: downloadUrl };
               } else if (asset.name.endsWith('.AppImage')) {
-                sizes['Linux (AppImage & deb)'] = formattedSize;
+                info['Linux (AppImage & deb)'] = { size: formattedSize, filename: asset.name, url: downloadUrl };
               }
             }
           }
-          if (Object.keys(sizes).length > 0) {
-            setDynamicSizes(sizes);
+          if (Object.keys(info).length > 0) {
+            setDynamicInfo(info);
           }
         }
       })
@@ -95,10 +97,14 @@ export function DownloadBar() {
   ];
 
   const handleDownloadClick = async (rel: typeof releases[0]) => {
-    const actualSize = dynamicSizes[rel.os] || rel.size;
+    const currentInfo = dynamicInfo[rel.os];
+    const actualFilename = currentInfo?.filename || rel.filename;
+    const actualSize = currentInfo?.size || rel.size;
+    const targetUrl = currentInfo?.url || rel.url;
+
     setShowWidget(true);
     setDownloadState({
-      filename: rel.filename,
+      filename: actualFilename,
       progress: 0,
       speed: 'Conectando...',
       loaded: '0 MB',
@@ -107,7 +113,7 @@ export function DownloadBar() {
       os: rel.os,
     });
 
-    window.open(rel.url, '_blank');
+    window.open(targetUrl, '_blank');
 
     setDownloadState((prev) => ({
       ...prev,
@@ -164,7 +170,10 @@ export function DownloadBar() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8 max-w-5xl mx-auto">
           {releases.map((rel) => {
             const Icon = rel.icon;
-            const isThisOSDownloading = showWidget && downloadState.filename === rel.filename;
+            const currentInfo = dynamicInfo[rel.os];
+            const displayFilename = currentInfo?.filename || rel.filename;
+            const displaySize = currentInfo?.size || rel.size;
+            const isThisOSDownloading = showWidget && downloadState.filename === displayFilename;
 
             return (
               <motion.div
@@ -197,11 +206,11 @@ export function DownloadBar() {
                   </div>
 
                   <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-0.5">{rel.os}</h3>
-                  <p className="text-[11px] font-mono text-purple-700 dark:text-purple-300 truncate mb-3">{rel.filename}</p>
+                  <p className="text-[11px] font-mono text-purple-700 dark:text-purple-300 truncate mb-3">{displayFilename}</p>
 
                   <div className="flex items-center gap-1.5 text-[10px] font-mono text-slate-600 dark:text-gray-400 mb-4">
                     <HardDrive className="w-3 h-3 text-[#a855f7]" />
-                    <span>Tamaño: <strong className="text-slate-900 dark:text-white">{dynamicSizes[rel.os] || rel.size}</strong></span>
+                    <span>Tamaño: <strong className="text-slate-900 dark:text-white">{displaySize}</strong></span>
                   </div>
                 </div>
 
