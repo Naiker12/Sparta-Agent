@@ -14,7 +14,7 @@ import {
   sendToRenderer,
 } from './shared'
 import { getKey as vaultGetKey } from 'ia-sparta-vault'
-import { ChatCompletionsTransport, AnthropicTransport, OllamaTransport } from 'ia-sparta-providers'
+import { ChatCompletionsTransport, AnthropicTransport, OllamaTransport } from '../../ia-sparta-providers/src/transports'
 import { buildSystemPrompt } from './send/system-prompt'
 import { buildToolsList } from './send/tool-injector'
 import { executeToolCall } from './send/tool-executor'
