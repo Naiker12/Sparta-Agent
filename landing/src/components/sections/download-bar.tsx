@@ -71,8 +71,8 @@ export function DownloadBar() {
       icon: Monitor,
       recommended: true,
       badge: 'Instalador NSIS .exe',
-      url: 'https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Windows-0.1.3-Setup.exe',
-      fallbackUrl: 'https://github.com/Naiker12/Sparta-Agent/releases/latest',
+      url: 'https://github.com/Naiker12/Sparta-Agent/releases/download/v0.1.3/Sparta-Agent-Windows-0.1.3-Setup.exe',
+      fallbackUrl: 'https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.1.3',
     },
     {
       os: 'macOS (Apple Silicon & Intel)',
@@ -81,8 +81,8 @@ export function DownloadBar() {
       icon: Apple,
       recommended: false,
       badge: 'Universal .dmg',
-      url: 'https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Mac-0.1.3-Installer.dmg',
-      fallbackUrl: 'https://github.com/Naiker12/Sparta-Agent/releases/latest',
+      url: 'https://github.com/Naiker12/Sparta-Agent/releases/download/v0.1.3/Sparta-Agent-Mac-0.1.3-Installer.dmg',
+      fallbackUrl: 'https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.1.3',
     },
     {
       os: 'Linux (AppImage & deb)',
@@ -91,8 +91,8 @@ export function DownloadBar() {
       icon: Terminal,
       recommended: false,
       badge: 'Binario AppImage',
-      url: 'https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Linux-0.1.3.AppImage',
-      fallbackUrl: 'https://github.com/Naiker12/Sparta-Agent/releases/latest',
+      url: 'https://github.com/Naiker12/Sparta-Agent/releases/download/v0.1.3/Sparta-Agent-Linux-0.1.3.AppImage',
+      fallbackUrl: 'https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.1.3',
     },
   ];
 

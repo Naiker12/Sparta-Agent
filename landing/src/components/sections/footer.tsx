@@ -87,12 +87,12 @@ export function Footer() {
               </li>
               <li>
                 <a 
-                  href="https://github.com/Naiker12/Sparta-Agent/blob/main/docs/05-agentes.txt" 
+                  href="https://github.com/Naiker12/Sparta-Agent/blob/main/docs/25-reglas-de-imports.md" 
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className="hover:text-white transition-all flex items-center gap-1 group text-[11px]"
                 >
-                  <span>Flujo Agéntico (05-agentes)</span>
+                  <span>Reglas de Importaciones (25-reglas)</span>
                   <ArrowUpRight className="w-3 h-3 text-gray-400 group-hover:text-white shrink-0" />
                 </a>
               </li>
