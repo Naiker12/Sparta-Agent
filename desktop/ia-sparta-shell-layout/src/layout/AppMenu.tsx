@@ -34,6 +34,7 @@ import {
   useSettingsStore,
 } from 'ia-sparta-core'
 import { useTranslation } from 'ia-sparta-i18n'
+import { IS_ELECTRON } from 'ia-sparta-platform'
 
 interface MenuItemData {
   key: string
@@ -252,13 +253,13 @@ export function AppMenu() {
           icon: PanelLeft,
           onClick: () => useUIStore.getState().toggleSidebar(),
         },
-        {
+        ...(IS_ELECTRON ? [{
           key: 'toggleTerminal',
           label: t('menu.toggleTerminal'),
           shortcut: 'Ctrl+`',
           icon: Terminal,
           onClick: () => useUIStore.getState().toggleTerminal(),
-        },
+        }] : []),
         {
           key: 'zoomIn',
           label: t('menu.zoomIn'),

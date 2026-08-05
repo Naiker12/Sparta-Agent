@@ -61,12 +61,21 @@ describe('ChatCompletionsTransport', () => {
     expect(body.temperature).toBe(0.7)
   })
 
-  it('buildBody includes tool definitions and auto function calling when tools are provided', () => {
+  it('buildBody includes function definitions and auto function calling when tools are provided', () => {
     const body = transport.buildBody({
       ...sampleReq,
       tools: [{ name: 'current_time', description: 'Get current time' }],
     })
-    expect(body.tools).toEqual([{ name: 'current_time', description: 'Get current time' }])
+    expect(body.functions).toEqual([
+      {
+        type: 'function',
+        function: {
+          name: 'current_time',
+          description: 'Get current time',
+          parameters: { type: 'object', properties: {} },
+        },
+      },
+    ])
     expect(body.function_call).toBe('auto')
   })
 

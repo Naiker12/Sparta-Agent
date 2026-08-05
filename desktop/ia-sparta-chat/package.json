@@ -16,6 +16,7 @@
     "ia-sparta-ipc-bridge": "workspace:*",
     "ia-sparta-stream-events": "workspace:*",
     "lucide-react": "^1.24.0",
+    "mammoth": "^1.12.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-markdown": "^10.1.0",
@@ -23,6 +24,7 @@
     "remark-gfm": "^4.0.1",
     "sonner": "^2.0.7",
     "thinking-orbs": "^0.1.1",
+    "xlsx": "^0.18.5",
     "zustand": "^5.0.14"
   }
 }

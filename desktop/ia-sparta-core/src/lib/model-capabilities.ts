@@ -25,8 +25,8 @@ export function modelSupportsThinking(modelId: string, vendor?: ProviderVendor):
     return true
   }
 
-  // OpenAI: o1, o3, o4, gpt-5 support reasoning
-  if (/^(o1|o3|o4|gpt-5)/.test(id)) {
+  // OpenAI reasoning models, including the open-weight gpt-oss family.
+  if (/^(o1|o3|o4|gpt-5)/.test(id) || id.includes('gpt-oss')) {
     return true
   }
 
@@ -75,7 +75,7 @@ export function modelNeedsEmulatedReasoning(modelId: string, vendor?: ProviderVe
   if (vendor === 'anthropic' && (id.includes('claude-3-7') || id.includes('claude-sonnet-4') || id.includes('claude-opus-4'))) {
     return false
   }
-  if (vendor === 'openai' && /^(o1|o3|o4|gpt-5)/.test(id)) {
+  if ((vendor === 'openai' && /^(o1|o3|o4|gpt-5)/.test(id)) || id.includes('gpt-oss')) {
     return false
   }
   if (vendor === 'google' && (id.includes('gemini-2.5') || id.includes('gemini-3'))) {

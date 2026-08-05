@@ -144,6 +144,13 @@ app.whenReady().then(async () => {
 
   createWindow()
 
+  // Keep the native Windows caption buttons visually aligned with the active app theme.
+  // The renderer owns theme selection; the main process owns the title bar overlay.
+  ipcMain.on('titlebar:set-overlay', (_event, colors: { color?: string; symbolColor?: string }) => {
+    if (!win || !/^#[0-9a-f]{6}$/i.test(colors?.color ?? '') || !/^#[0-9a-f]{6}$/i.test(colors?.symbolColor ?? '')) return
+    win.setTitleBarOverlay({ color: colors.color!, symbolColor: colors.symbolColor!, height: 38 })
+  })
+
   // App metadata IPC handlers
   ipcMain.handle('app:getVersion', () => app.getVersion() || '0.1.1')
   ipcMain.handle('app:getName', () => app.getName() || 'Sparta Agent')

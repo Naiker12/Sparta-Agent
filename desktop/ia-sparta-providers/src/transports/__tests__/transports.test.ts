@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { AnthropicTransport } from '../anthropic.transport'
 import { ChatCompletionsTransport } from '../openai.transport'
 import { OllamaTransport } from '../ollama.transport'
@@ -76,7 +76,7 @@ describe('ChatCompletionsTransport', () => {
       ...sampleReq,
       tools: [{ name: 'web_search', description: 'Busca en la web', inputSchema: { type: 'object' } }],
     })
-    expect(body.tools).toEqual([
+    expect(body.functions).toEqual([
       {
         type: 'function',
         function: {
@@ -86,7 +86,7 @@ describe('ChatCompletionsTransport', () => {
         },
       },
     ])
-    expect(body.tool_choice).toBe('auto')
+    expect(body.function_call).toBe('auto')
   })
 
   it('buildBody omits system message when not set', () => {
@@ -102,6 +102,32 @@ describe('ChatCompletionsTransport with serverUrl override', () => {
   it('buildHeaders still returns Bearer auth', () => {
     const headers = transport.buildHeaders()
     expect(headers['Authorization']).toBe('Bearer sk-test')
+  })
+})
+
+describe('OpenRouter reasoning controls', () => {
+  it('passes the selected reasoning effort for compatible models', () => {
+    const transport = new ChatCompletionsTransport('openrouter', 'sk-or-test')
+    const body = transport.buildBody({ ...sampleReq, thinkingEnabled: true, reasoningEffort: 'high' })
+
+    expect(body.reasoning).toEqual({ effort: 'high' })
+  })
+})
+
+describe('Gemini OpenAI-compatible transport', () => {
+  const transport = new ChatCompletionsTransport('google', 'AIza-test')
+
+  it('uses the Gemini compatibility endpoint instead of OpenAI', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response('data: [DONE]\n\n', { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    for await (const _chunk of transport.streamChat(sampleReq)) { /* exhaust stream */ }
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+      expect.objectContaining({ headers: expect.objectContaining({ Authorization: 'Bearer AIza-test' }) }),
+    )
+    vi.unstubAllGlobals()
   })
 })
 

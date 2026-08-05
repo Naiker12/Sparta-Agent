@@ -11,7 +11,7 @@ import { SubagentExecutionCard } from './SubagentExecutionCard'
 import { StreamStallIndicator } from './StreamStallIndicator'
 import { Eye } from 'lucide-react'
 import type { Message, ThinkingStatus } from 'ia-sparta-core'
-import { pickElapsedVerb, formatDuration } from 'ia-sparta-core'
+import { formatDuration } from 'ia-sparta-core'
 
 interface TimelineBlockProps {
   message: Message
@@ -245,7 +245,6 @@ export function TimelineBlock({ message, className }: TimelineBlockProps) {
 }
 
 export function TurnActivityBadge({ message }: { message: Message }) {
-  const verb = useMemo(() => pickElapsedVerb(message.id), [message.id])
   const elapsed = useMemo(() => {
     if (message.reasoningStartedAt && message.reasoningCompletedAt) {
       return Math.max(1, (message.reasoningCompletedAt - message.reasoningStartedAt) / 1000)
@@ -275,7 +274,7 @@ export function TurnActivityBadge({ message }: { message: Message }) {
       }}
     >
       <Eye size={12} style={{ color: 'var(--text-muted)' }} />
-      <span>{verb} for {formatDuration(displayElapsed)}</span>
+      <span>Razonó durante {formatDuration(displayElapsed)}</span>
     </div>
   )
 }

@@ -51,7 +51,8 @@ export function registerChatSendIPC(): void {
       sendToRenderer({ sessionId, messageId, type: 'thinking:completed' })
     }
 
-    // Try to get provider key from vault with vendor & provider ID fallbacks
+    // Resolve keys only within the selected provider.  Falling back to OpenAI
+    // here can send a Gemini (or another vendor) key to api.openai.com.
     const vendor = req.vendor || req.providerId || 'openai'
     const providerId = req.providerId || ''
     const apiKey =
@@ -59,16 +60,14 @@ export function registerChatSendIPC(): void {
       (providerId ? vaultGetKey(providerId) : null) ||
       vaultGetKey(`api_key_${vendor}`) ||
       vaultGetKey(vendor) ||
-      vaultGetKey('api_key_openai') ||
-      vaultGetKey('openai') ||
-      process.env.OPENAI_API_KEY ||
+      process.env[`${vendor.toUpperCase()}_API_KEY`] ||
       ''
 
     const isLocalProvider = req.isLocal || vendor === 'ollama' || vendor === 'lmstudio' || vendor === 'llamacpp'
 
     if (apiKey || isLocalProvider || req.apiUrl) {
       try {
-        const effectiveKey = apiKey || (isLocalProvider ? 'local' : '')
+        const effectiveKey = apiKey || ''
         const transport =
           vendor === 'anthropic'
             ? new AnthropicTransport(effectiveKey)

@@ -302,8 +302,10 @@ export const mcpCatalogReferenceTools: Record<string, Array<{ name: string; desc
 }
 
 /**
- * Construye la lista completa de tools a partir de las tools del request,
- * inyectando web_search, web_fetch y herramientas MCP de referencia.
+ * Construye la lista de herramientas para el turno actual. Los conectores MCP
+ * solo deben llegar desde el renderer cuando están habilitados; inyectar el
+ * catálogo de referencia completo vuelve innecesariamente grande la petición
+ * y ofrece funciones que el usuario no conectó.
  */
 export function buildToolsList(requestTools: unknown[] | undefined, webSearchEnabled?: boolean): unknown[] {
   const tools: unknown[] = requestTools ? [...requestTools] : []
@@ -322,26 +324,6 @@ export function buildToolsList(requestTools: unknown[] | undefined, webSearchEna
       tools.push(buildWebFetchTool())
     }
   }
-
-  // Inject registered MCP reference tools into tools array
-  Object.entries(mcpCatalogReferenceTools).forEach(([serverId, catTools]) => {
-    catTools.forEach((ct) => {
-      const toolFnName = `${serverId}__${ct.name}`
-      if (!tools.some((t: any) => t.name === toolFnName || t.function?.name === toolFnName)) {
-        tools.push({
-          type: 'function',
-          function: {
-            name: toolFnName,
-            description: `[Conector MCP ${serverId}] ${ct.description}`,
-            parameters: ct.inputSchema || {
-              type: 'object',
-              properties: {},
-            },
-          },
-        })
-      }
-    })
-  })
 
   return tools
 }

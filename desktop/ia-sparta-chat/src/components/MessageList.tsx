@@ -48,9 +48,9 @@ export function MessageList({ messages, className }: MessageListProps) {
 
   return (
     <div ref={scrollRef} onScroll={handleScroll} className={cn('min-h-0', className)} style={{
-      padding: '12px max(20px, calc(50% - 320px))',
+      padding: '16px max(24px, calc(50% - 440px))',
     }}>
-      <div style={{ padding: '12px 0', display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div style={{ padding: '20px 0 40px', display: 'flex', flexDirection: 'column', gap: 28 }}>
         {messages.map((msg) => (
           <MessageBubble
             key={msg.id}

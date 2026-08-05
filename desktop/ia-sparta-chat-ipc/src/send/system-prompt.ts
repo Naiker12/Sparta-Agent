@@ -74,9 +74,23 @@ export const PROVIDERS_PROMPT = `## Proveedores de IA (ia-sparta-providers)
 export const FORMATTING_PROMPT = `## Formato de respuesta
 
 - Responde en el idioma en que escribe el usuario.
+- Empieza con la respuesta directa; no repitas la pregunta ni uses frases de relleno.
+- Para explicaciones técnicas, usa Markdown con una jerarquía clara: conclusión, evidencia o comparación, y recomendación cuando aplique.
+- Usa tablas solo para comparar dos o más casos, opciones o valores; nombra las columnas de forma concreta y mantén las celdas concisas.
+- Usa encabezados solo cuando la respuesta tenga varias secciones. Para una respuesta corta, prioriza uno o dos párrafos precisos.
 - Código siempre en bloques especificados; muestra diffs en modificaciones.
-- Respuestas técnicas directas, sin frases de relleno.
+- Usa notación técnica consistente: por ejemplo, \`O(n log n)\`, \`O(n²)\` y \`O(log n)\`.
+- Respuestas técnicas directas, sin frases de relleno ni conclusiones vagas.
 - Anuncia las acciones con efectos secundarios ANTES de ejecutarlas.`
+
+export const ANALYSIS_DEPTH_PROMPT = `## Profundidad de análisis
+
+- Por defecto, entrega respuestas completas y trabajadas; responde de forma breve solo si el usuario lo pide explícitamente.
+- Para preguntas técnicas, explica el porqué además del resultado: supuestos, mecanismo, casos relevantes, límites y consecuencias prácticas.
+- Cuando corresponda, organiza la respuesta como: respuesta corta, análisis, comparación o ejemplo, y recomendación final.
+- En algoritmos, incluye mejor/promedio/peor caso, complejidad espacial, la intuición de la derivación y cómo evitar casos desfavorables.
+- En código, explica decisiones, riesgos, alternativas y cómo verificar el resultado.
+- No inventes datos ni alargues la respuesta con repeticiones: la profundidad debe aportar evidencia, contexto o una decisión útil.`
 
 export const ERRORS_PROMPT = `## Manejo de errores y fallos de herramientas
 
@@ -129,6 +143,7 @@ Cuando el usuario solicite información reciente, partidos en vivo, noticias, fe
     terminalSection,
     PROVIDERS_PROMPT,
     FORMATTING_PROMPT,
+    ANALYSIS_DEPTH_PROMPT,
     ERRORS_PROMPT,
     workspaceContext,
     skillContext,

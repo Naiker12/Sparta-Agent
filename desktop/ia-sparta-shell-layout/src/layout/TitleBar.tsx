@@ -3,7 +3,7 @@ import { useSettingsStore } from 'ia-sparta-core'
 import { AppMenu } from './AppMenu'
 import { Settings, PanelLeftOpen, PanelLeftClose } from 'lucide-react'
 import { SpartaIcon } from 'ia-sparta-chat'
-import { FEATURES } from 'ia-sparta-platform'
+import { FEATURES, IS_ELECTRON } from 'ia-sparta-platform'
 import { Button } from 'ia-sparta-design-system'
 import { ResourceMonitorPopover } from './ResourceMonitorPopover'
 import {
@@ -49,7 +49,7 @@ export function TitleBar() {
         background: 'var(--bg-sidebar)',
         borderBottom: '1px solid var(--border-subtle)',
         padding: '0 16px',
-        paddingRight: (window as any).__ELECTRON__ ? 140 : 16,
+        paddingRight: IS_ELECTRON ? 140 : 16,
         gap: 12,
       }}
     >

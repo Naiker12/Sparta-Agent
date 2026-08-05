@@ -78,9 +78,12 @@ export const useUIStore = create<UIState>()(
   setActiveSettingsTab: (tab) => set({ activeSettingsTab: tab }),
 
   toggleTerminal: () => {
-    if (typeof window !== 'undefined' && !(window as any).__ELECTRON__) {
-      toast.info('Terminal disponible solo en app de escritorio', {
-        description: 'Descarga Sparta Agent para acceder a la terminal.',
+    const hasDesktopRuntime = typeof window !== 'undefined' && Boolean(
+      window.sparta?.sendMessage || window.electron?.invoke || window.electronAPI || window.terminal?.create,
+    )
+    if (!hasDesktopRuntime) {
+      toast.info('Terminal no disponible en esta sesión web', {
+        description: 'Abrí Sparta desde la aplicación de escritorio para usar la terminal local.',
         duration: 4000,
       })
       return

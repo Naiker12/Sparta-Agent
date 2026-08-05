@@ -6,7 +6,7 @@ import { SearchAddon } from '@xterm/addon-search'
 import { FEATURES, IS_WEB } from 'ia-sparta-platform'
 import { generateId, cn } from 'ia-sparta-core'
 import { getXtermTheme } from 'ia-sparta-core'
-import { Plus, ChevronDown, Terminal as TerminalIcon, MessageSquarePlus, Bot, Columns2, Shell } from 'lucide-react'
+import { Plus, ChevronDown, RotateCw, MessageSquarePlus, Bot, Terminal as TerminalIcon } from 'lucide-react'
 import { useUIStore } from 'ia-sparta-core'
 import { useChatStore } from 'ia-sparta-core'
 import { useTerminalStore } from 'ia-sparta-core'
@@ -75,7 +75,6 @@ export function TerminalWorkspace() {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchVisible, setSearchVisible] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
-  const [splitMode, setSplitMode] = useState<'none' | 'horizontal' | 'vertical'>('none')
   const settingsShell = useSettingsStore((s) => s.shellProgram)
   const [selectedProfile, setSelectedProfile] = useState<string>(settingsShell || '')
   const [showProfileMenu, setShowProfileMenu] = useState(false)
@@ -333,58 +332,68 @@ export function TerminalWorkspace() {
 
   return (
     <div className="flex flex-col h-full bg-background">
-      <div className="flex items-center justify-between shrink-0 h-[30px] bg-sidebar border-b border-border px-2">
-        <div className="flex items-center gap-0.5 overflow-x-auto min-w-0" style={{ height: '100%' }}>
+      <div className="flex items-center justify-between shrink-0 h-10 bg-[#15151d] border-b border-[#ffffff12] px-2.5 shadow-[0_1px_0_rgba(255,255,255,0.025)]">
+        <div className="flex items-center gap-1 overflow-x-auto min-w-0 h-full">
+          <div className="hidden sm:flex items-center gap-1.5 px-2 text-[10px] font-semibold uppercase tracking-[0.09em] text-[#8d8da3] shrink-0">
+            <TerminalIcon className="w-3.5 h-3.5 text-[#a78bfa]" />
+            Terminal
+          </div>
+          <div className="h-4 w-px bg-[#ffffff12] shrink-0" />
           {tabs.map((tab) => {
             const info = renderTabInfo(tab.id)
             return (
               <button key={tab.id} onClick={() => store.getState().selectTab(tab.id)}
                 className={cn(
-                  'flex items-center gap-1.5 px-2.5 text-[11px] font-[450] rounded-t border-b-[1.5px] transition-colors shrink-0 max-w-[150px] whitespace-nowrap',
-                  tab.id === activeTabId ? 'text-[#e0e0ec] border-[#6366F1]' : 'text-[#6b6b80] border-transparent hover:text-[#a0a0b8]'
+                  'group flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-medium rounded-md border transition-all shrink-0 max-w-[170px] whitespace-nowrap',
+                  tab.id === activeTabId ? 'text-[#f0f0f7] bg-[#ffffff0c] border-[#ffffff14] shadow-[inset_0_-1px_0_#8b5cf6]' : 'text-[#88889d] border-transparent hover:text-[#d4d4e0] hover:bg-[#ffffff08]'
                 )}
-                style={{ height: '100%' }}>
+                aria-current={tab.id === activeTabId ? 'page' : undefined}>
                 {info.kind === 'agent'
                   ? <Bot className="w-3 h-3 text-[#a78bfa] shrink-0" />
-                  : <span className={cn('inline-block w-1.5 h-1.5 rounded-full shrink-0', info.connected ? 'bg-[#48bb78]' : 'bg-[#6b6b80]')} />}
+                  : <span className={cn('inline-block w-1.5 h-1.5 rounded-full shrink-0 ring-2 ring-[#15151d]', info.connected ? 'bg-[#48bb78]' : 'bg-[#6b6b80]')} />}
                 <span className="truncate">{info.shell}</span>
                 <span onClick={(e) => closeTab(tab.id, e)}
-                  className="inline-flex items-center justify-center w-3.5 h-3.5 rounded hover:bg-[#ffffff14] ml-0.5 shrink-0">
+                  className="inline-flex items-center justify-center w-4 h-4 rounded text-[#77778b] opacity-0 group-hover:opacity-100 hover:bg-[#ffffff14] hover:text-[#e6e6ef] ml-0.5 shrink-0 transition-opacity"
+                  aria-label={`Cerrar ${info.shell}`}>
                   <XIcon className="w-2.5 h-2.5" />
                 </span>
               </button>
             )
           })}
           <button onClick={addTab}
-            className="inline-flex items-center justify-center w-5 h-5 rounded text-[#6b6b80] hover:text-[#e0e0ec] hover:bg-[#ffffff0a] shrink-0 ml-1"
+            className="inline-flex items-center justify-center w-6 h-6 rounded-md text-[#9898aa] hover:text-white hover:bg-[#ffffff0e] shrink-0 ml-0.5 transition-colors"
             title="Nueva terminal">
             <Plus className="w-3 h-3" />
           </button>
         </div>
 
-        <div className="flex items-center gap-1 shrink-0" style={{ height: '100%' }}>
+        <div className="flex items-center gap-1 shrink-0 h-full">
           {activeInstance && renderTabInfo(activeTabId ?? '').kind === 'user' && (
             <>
               <button onClick={() => handleNewSession(activeTabId!)}
-                className="flex items-center gap-1 px-2 py-0.5 text-[10px] text-[#6b6b80] hover:text-[#a0a0b8] rounded hover:bg-[#ffffff08]"
-                title="Reiniciar sesión">
-                <TerminalIcon className="w-3 h-3" />
+                className="inline-flex items-center justify-center w-7 h-7 text-[#9898aa] hover:text-white rounded-md hover:bg-[#ffffff0e] transition-colors"
+                title="Reiniciar sesión"
+                aria-label="Reiniciar sesión">
+                <RotateCw className="w-3.5 h-3.5" />
               </button>
               <div className="relative">
                 <button onClick={() => setShowProfileMenu((v) => !v)}
-                  className="flex items-center gap-1 px-2 py-0.5 text-[10px] text-[#6b6b80] hover:text-[#a0a0b8] rounded hover:bg-[#ffffff08]"
-                  title="Shell profile">
-                  <Shell className="w-3 h-3" />
+                  className="flex items-center gap-1.5 h-7 px-2 text-[11px] font-medium text-[#b8b8c8] hover:text-white rounded-md hover:bg-[#ffffff0e] transition-colors"
+                  title="Cambiar intérprete"
+                  aria-expanded={showProfileMenu}>
+                  <span className="max-w-16 truncate">{selectedProfile || 'Predeterminado'}</span>
+                  <ChevronDown className="w-3 h-3" />
                 </button>
                 {showProfileMenu && (
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setShowProfileMenu(false)} />
-                    <div className="absolute right-0 top-full mt-1 z-50 w-36 py-1 rounded-lg shadow-lg"
-                      style={{ background: '#1e1e2e', border: '1px solid #313244' }}>
+                    <div className="absolute right-0 top-full mt-1.5 z-50 w-40 py-1.5 rounded-lg shadow-2xl"
+                      style={{ background: '#20202b', border: '1px solid #3a3a4a' }}>
+                      <p className="px-3 pb-1.5 text-[10px] font-medium uppercase tracking-wider text-[#8c8ca0]">Intérprete</p>
                       {['', 'cmd', 'pwsh', 'bash', 'zsh'].map((p) => (
                         <button key={p} onClick={() => { setSelectedProfile(p); setShowProfileMenu(false); handleNewSession(activeTabId!) }}
-                          className="w-full text-left px-3 py-1.5 text-[11px] hover:bg-[#313244] text-[#cdd6f4]">
-                          {p || 'Default'}
+                          className={cn('w-full text-left px-3 py-1.5 text-[11px] transition-colors hover:bg-[#ffffff0d]', selectedProfile === p ? 'text-[#ddd6fe]' : 'text-[#d2d2df]')}>
+                          {p || 'Predeterminado'}
                         </button>
                       ))}
                     </div>
@@ -393,22 +402,16 @@ export function TerminalWorkspace() {
               </div>
             </>
           )}
-          <button onClick={() => setSplitMode((m) => m === 'none' ? 'horizontal' : 'none')}
-            className={cn('flex items-center gap-1 px-2 py-0.5 text-[10px] rounded hover:bg-[#ffffff08]',
-              splitMode !== 'none' ? 'text-[#6366F1]' : 'text-[#6b6b80] hover:text-[#a0a0b8]')}
-            title="Dividir terminal">
-            <Columns2 className="w-3 h-3" />
-          </button>
           <button onClick={toggleTerminal}
-            className="flex items-center gap-1 px-2 py-0.5 text-[10px] text-[#6b6b80] hover:text-[#e0e0ec] rounded hover:bg-[#ffffff0a]"
-            title="Cerrar terminal">
-            <ChevronDown className="w-3 h-3" />
+            className="inline-flex items-center justify-center w-7 h-7 text-[#9898aa] hover:text-white rounded-md hover:bg-[#ffffff0e] transition-colors"
+            title="Ocultar terminal"
+            aria-label="Ocultar terminal">
+            <ChevronDown className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
 
-      <div className={cn('relative flex min-h-0', splitMode === 'horizontal' ? 'flex-row' : 'flex-col')} style={{ background: '#0C0C10', flex: 1 }}>
-        <div className={cn('relative min-h-0', splitMode === 'horizontal' ? 'flex-1' : 'flex-1')}>
+      <div className="relative min-h-0" style={{ background: '#0C0C10', flex: 1 }}>
           {tabs.map((tab) => (
             <div key={tab.id} ref={containerRefCallback(tab.id)}
               className={cn('absolute inset-0', tab.id === activeTabId ? 'visible' : 'invisible pointer-events-none')} />
@@ -462,14 +465,6 @@ export function TerminalWorkspace() {
                 style={{ background: 'transparent', border: 'none', color: '#6c7086', cursor: 'pointer', fontSize: 11, marginLeft: 2 }}>✕</button>
             </div>
           )}
-        </div>
-        {splitMode !== 'none' && (
-          <div className={cn('relative min-h-0', splitMode === 'horizontal' ? 'flex-1 border-l border-[#ffffff12]' : 'flex-1 border-t border-[#ffffff12]')}>
-            <div className="absolute inset-0 flex items-center justify-center text-[11px] text-[#6b6b80]">
-              Click + to add a terminal, then drag tabs to split
-            </div>
-          </div>
-        )}
       </div>
 
       {renderSelectionPopup()}

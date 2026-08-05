@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Pin, Folder, Copy, Laptop, FolderGit2, Settings, Trash2, FolderPlus, Check, ChevronDown } from 'lucide-react'
+import { Pin, Folder, Copy, FolderGit2, Settings, Trash2, FolderPlus, Check, ChevronDown } from 'lucide-react'
 import { useFolderStore, useProjectStore, useSettingsStore } from 'ia-sparta-core'
 import { toast } from 'ia-sparta-design-system'
 
@@ -33,8 +33,6 @@ export function WorkspaceModePicker() {
   const { connectedPath, folderName, recentPaths, connectFolder, disconnectFolder, removeRecentPath } = useFolderStore()
   const { getActiveProject, closeProject, activeProjectId } = useProjectStore()
   const { sessionMode, setSessionMode } = useSettingsStore()
-
-  const [executionHost, setExecutionHost] = useState<'Local' | 'Sidecar' | 'Remote'>('Local')
 
   useEffect(() => {
     if (!open) return
@@ -110,12 +108,10 @@ export function WorkspaceModePicker() {
           if (!open) e.currentTarget.style.background = 'transparent'
           e.currentTarget.style.color = 'var(--text-secondary)'
         }}
-        title="Selector de Workspace y Modo de Ejecución Real"
+        title="Selector de carpeta de trabajo y modo de conversación"
       >
-        <Laptop size={13} style={{ color: isConnected ? 'var(--accent)' : 'var(--text-muted)' }} />
+        <Folder size={13} style={{ color: isConnected ? 'var(--accent)' : 'var(--text-muted)' }} />
         <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{displayFolderName}</span>
-        <span style={{ color: 'var(--text-muted)' }}>·</span>
-        <span style={{ color: 'var(--text-secondary)', fontSize: 11 }}>{executionHost}</span>
         <ChevronDown size={12} style={{ opacity: 0.7 }} />
       </button>
 
@@ -206,30 +202,8 @@ export function WorkspaceModePicker() {
               )}
             </div>
 
-            {/* Controls: Host Mode Switch, Mode Agent/Chat, Settings, Disconnect */}
+            {/* Controls: conversation mode, settings, disconnect */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  padding: '3px 8px',
-                  background: 'var(--bg-input)',
-                  border: '1px solid var(--border-subtle)',
-                  borderRadius: 'var(--radius-sm)',
-                  fontSize: 11,
-                  color: 'var(--text-primary)',
-                  fontFamily: 'var(--font-ui)',
-                  cursor: 'pointer',
-                }}
-                onClick={() => setExecutionHost(executionHost === 'Local' ? 'Sidecar' : 'Local')}
-                title="Cambiar Host de Ejecución (Local vs Sidecar Daemon)"
-              >
-                <Laptop size={12} style={{ color: 'var(--text-secondary)' }} />
-                <span>{executionHost}</span>
-                <ChevronDown size={10} style={{ color: 'var(--text-muted)' }} />
-              </div>
-
               <div
                 style={{
                   display: 'flex',

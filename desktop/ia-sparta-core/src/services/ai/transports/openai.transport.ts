@@ -4,6 +4,7 @@ import { HTTP_STATUS_MESSAGES, isRetryable, fetchWithRetry } from './http-utils'
 
 const API_BASE: Record<string, string> = {
   openai: 'https://api.openai.com',
+  google: 'https://generativelanguage.googleapis.com/v1beta/openai',
   groq: 'https://api.groq.com/openai',
   mistral: 'https://api.mistral.ai',
   deepseek: 'https://api.deepseek.com',
@@ -27,11 +28,19 @@ export class ChatCompletionsTransport extends BaseTransport {
     this.baseUrl = serverUrl || API_BASE[vendor] || 'https://api.openai.com'
   }
 
+  private getChatCompletionsUrl(): string {
+    return this.vendor === 'google'
+      ? `${this.baseUrl}/chat/completions`
+      : `${this.baseUrl}/v1/chat/completions`
+  }
+
   buildHeaders(): Record<string, string> {
     const cleanKey = (this.apiKey || '').trim().replace(/^["']|["']$/g, '')
     const headers: Record<string, string> = {
-      Authorization: `Bearer ${cleanKey}`,
       'content-type': 'application/json',
+    }
+    if (cleanKey) {
+      headers.Authorization = `Bearer ${cleanKey}`
     }
     if (this.vendor === 'openrouter' || this.baseUrl.includes('openrouter')) {
       headers['HTTP-Referer'] = 'https://github.com/Naiker12/Sparta-Agent'
@@ -52,11 +61,24 @@ export class ChatCompletionsTransport extends BaseTransport {
       temperature: req.temperature ?? 0.7,
     }
     if (Array.isArray(req.tools) && req.tools.length > 0) {
-      body.tools = req.tools
+      body.functions = req.tools.map((t: any) => {
+        if (t.type === 'function' && t.function) return t
+        return {
+          type: 'function',
+          function: {
+            name: t.name || t.function?.name || 'tool',
+            description: t.description || t.function?.description || '',
+            parameters: t.parameters || t.input_schema || t.inputSchema || t.function?.parameters || { type: 'object', properties: {} },
+          },
+        }
+      })
       body.function_call = 'auto'
     }
     if (this.vendor === 'openai' && req.thinkingEnabled && req.reasoningEffort && req.reasoningEffort !== 'none') {
       body.reasoning_effort = req.reasoningEffort
+    }
+    if (this.vendor === 'openrouter' && req.thinkingEnabled && req.reasoningEffort && req.reasoningEffort !== 'none') {
+      body.reasoning = { effort: req.reasoningEffort }
     }
     return body
   }
@@ -85,7 +107,7 @@ export class ChatCompletionsTransport extends BaseTransport {
   }
 
   async *streamChat(req: ChatRequest): AsyncIterable<ChatStreamChunk> {
-    const url = `${this.baseUrl}/v1/chat/completions`
+    const url = this.getChatCompletionsUrl()
     const headers = this.buildHeaders()
     const body = JSON.stringify(this.buildBody(req))
 
@@ -99,8 +121,11 @@ export class ChatCompletionsTransport extends BaseTransport {
       let errorMsg = HTTP_STATUS_MESSAGES[res.status] ?? `HTTP ${res.status}`
       try {
         const errData = await res.json()
-        if (errData?.error?.message) {
-          errorMsg = `${errorMsg}: ${errData.error.message}`
+        const providerMessage = errData?.error?.message ?? errData?.message ?? errData?.detail
+        if (typeof providerMessage === 'string' && providerMessage.trim()) {
+          errorMsg = `${errorMsg}: ${providerMessage}`
+        } else if (errData?.error?.status) {
+          errorMsg = `${errorMsg}: ${errData.error.status}`
         }
       } catch { /* ignore */ }
 

@@ -197,7 +197,9 @@ async function runAssistantTurn(
     const sessionMode = session?.sessionMode ?? settingsState.sessionMode
     const securityLoaded = useSecurityStore.getState().loaded
     const skills = useSkillStore.getState().activeSkillIds ?? []
-    const allMcpTools = useMCPStore.getState().servers.flatMap((server) => server.tools ?? [])
+    const allMcpTools = useMCPStore.getState().servers
+      .filter((server) => server.connected && server.config.enabled)
+      .flatMap((server) => server.tools ?? [])
     const tools = buildToolDefinitions(allMcpTools)
     const workspaceRoot = resolveWorkspaceRoot()
     const connectedFolder = useFolderStore.getState().connectedPath || undefined

@@ -15,7 +15,7 @@ import { SubagentExecutionCard } from './reasoning/SubagentExecutionCard'
 import { PipelineTrace } from './reasoning/PipelineTrace'
 import { MessageActionsDialog } from './MessageActionsDialog'
 import { SpartaIcon } from './SpartaIcon'
-import { getMessageRenderState, getAssistantRenderGroups, splitTurnAtAnswer, shouldCollapseSteps, pickElapsedVerb, formatDuration } from 'ia-sparta-core'
+import { getMessageRenderState, getAssistantRenderGroups, splitTurnAtAnswer, shouldCollapseSteps, formatDuration } from 'ia-sparta-core'
 import type { AssistantRenderGroup, ReasoningGroup } from 'ia-sparta-core'
 import { MarkdownRenderer } from './MarkdownRenderer'
 import { useTranslation } from 'ia-sparta-i18n'
@@ -95,7 +95,7 @@ export function MessageBubble({ message, isLastUser = false, isLastAssistant = f
       >
         <div
           style={{
-            maxWidth: isUser ? 480 : 600,
+            maxWidth: isUser ? 560 : 860,
             width: isUser ? undefined : '100%',
           }}
         >
@@ -596,8 +596,6 @@ function StepRunSummary({ steps, toolCalls, reasoningStartedAt, reasoningComplet
   reasoningCompletedAt?: number
   messageId: string
 }) {
-  const verb = useMemo(() => pickElapsedVerb(messageId), [messageId])
-
   const elapsed = useMemo(() => {
     if (reasoningStartedAt !== undefined && reasoningCompletedAt !== undefined && reasoningCompletedAt > reasoningStartedAt) {
       return (reasoningCompletedAt - reasoningStartedAt) / 1000
@@ -606,10 +604,10 @@ function StepRunSummary({ steps, toolCalls, reasoningStartedAt, reasoningComplet
   }, [reasoningStartedAt, reasoningCompletedAt])
 
   const label = useMemo(() => {
-    if (elapsed !== null) return `${verb} for ${formatDuration(elapsed)}`
+    if (elapsed !== null) return `Razonó durante ${formatDuration(elapsed)}`
     const stepRowCount = steps.filter(g => g.kind !== 'text').length
     return stepRowCount === 1 ? '1 step' : `${stepRowCount} steps`
-  }, [verb, elapsed, steps])
+  }, [elapsed, steps])
 
   const collapse = useMemo(() => shouldCollapseSteps(steps), [steps])
 
