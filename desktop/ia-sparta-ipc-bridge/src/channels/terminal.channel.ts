@@ -227,7 +227,9 @@ export function registerTerminalIPC() {
   ) => {
     const state = sessions.get(terminalId)
     if (state) {
-      state.pty.kill()
+      try {
+        state.pty.kill()
+      } catch { /* ignore ConPTY cleanup assertion on Windows */ }
       sessions.delete(terminalId)
     }
     return { success: true }
