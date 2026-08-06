@@ -5,6 +5,7 @@ import path from 'node:path'
 import { startFileWatcher, stopFileWatcher, expandWatcher, collapseWatcher } from './file-watcher'
 import { IGNORED_DIR_SET } from '../../../ia-sparta-core/src/lib/filesystem-constants'
 import { isWithinRoot } from '../tools/main-process-file-tools'
+import { isDocumentConvertible, convertDocumentToMarkdown, getCachedAttachmentContent } from './document.channel'
 
 export interface FileTreeNode {
   name: string
@@ -63,6 +64,23 @@ export function registerFilesystemIPC() {
 
   ipcMain.handle('fs:readFile', async (_event, filePath: string, encoding?: string) => {
     if (!filePath || typeof filePath !== 'string') return { success: false, error: 'Invalid path' }
+
+    //  Check chat attachment cache first (e.g. for uploaded PDFs, DOCX, XLSX)
+    const cached = getCachedAttachmentContent(filePath)
+    if (cached && cached.trim()) {
+      return { success: true, content: cached, encoding: 'utf-8' }
+    }
+
+    //  Convert document if PDF, DOCX, XLSX, etc.
+    if (isDocumentConvertible(filePath)) {
+      try {
+        const conv = await convertDocumentToMarkdown({ filePath })
+        if (conv && conv.markdown) {
+          return { success: true, content: conv.markdown, encoding: 'utf-8' }
+        }
+      } catch { /* ignore fallback to fs */ }
+    }
+
     if (_workspaceRoot && !isWithinRoot(filePath, _workspaceRoot)) {
       return { success: false, error: 'Path is outside workspace root' }
     }

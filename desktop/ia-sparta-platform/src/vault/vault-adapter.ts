@@ -79,10 +79,26 @@ export async function storeInVault(providerId: string, apiKey: string, vendor?: 
   return true
 }
 
-export async function removeFromVault(providerId: string): Promise<boolean> {
+export async function removeFromVault(providerId: string, vendor?: string): Promise<boolean> {
+  // 1. Remove from SettingsStore apiKeys map
+  try {
+    const settings = useSettingsStore.getState()
+    settings.removeApiKey(providerId)
+    if (vendor) {
+      settings.removeApiKey(vendor)
+      settings.removeApiKey(`api_key_${vendor}`)
+    }
+  } catch { /* ignore */ }
+
+  // 2. Remove from native Electron Vault IPC
   if (typeof window !== 'undefined' && window.vault) {
     try {
-      return await window.vault.deleteKey(providerId)
+      await window.vault.deleteKey(providerId)
+      if (vendor) {
+        await window.vault.deleteKey(`api_key_${vendor}`)
+        await window.vault.deleteKey(vendor)
+      }
+      return true
     } catch {
       return false
     }

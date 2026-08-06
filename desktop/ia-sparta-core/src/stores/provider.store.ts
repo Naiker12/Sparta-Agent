@@ -73,8 +73,17 @@ export const useProviderStore = create<ProviderState>()(
         })),
 
       removeProvider: (id) => {
+        const provider = get().providers.find((p) => p.id === id)
+        const vendor = provider?.vendor
         set((s) => ({ providers: s.providers.filter((p) => p.id !== id) }))
         useUsageStore.getState().removeProviderUsage(id)
+        if (typeof window !== 'undefined' && window.vault) {
+          window.vault.deleteKey(id).catch(() => {})
+          if (vendor) {
+            window.vault.deleteKey(`api_key_${vendor}`).catch(() => {})
+            window.vault.deleteKey(vendor).catch(() => {})
+          }
+        }
       },
 
       getByVendor: (vendor) =>

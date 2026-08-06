@@ -129,10 +129,8 @@ export function ProviderCard({ provider, onEdit }: ProviderCardProps) {
         onOpenChange={setConfirmDeleteOpen}
         itemLabel={getVendorLabel(provider.vendor)}
         onConfirm={async () => {
+          await removeFromVault(provider.id, provider.vendor)
           removeProvider(provider.id)
-          if (provider.hasVaultKey) {
-            await removeFromVault(provider.id)
-          }
         }}
       />
 

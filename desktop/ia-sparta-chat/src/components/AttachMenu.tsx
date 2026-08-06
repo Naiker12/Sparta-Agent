@@ -139,7 +139,6 @@ export function AttachMenu({ onClose, onAttach }: AttachMenuProps) {
 
   function handleFileClick() {
     fileInputRef.current?.click()
-    onClose()
   }
 
   return (
@@ -168,11 +167,14 @@ export function AttachMenu({ onClose, onAttach }: AttachMenuProps) {
       <input
         ref={fileInputRef}
         type="file"
-        accept=".txt,.md,.py,.ts,.js,.json,.csv,.pdf,.docx,.doc,.xlsx,.xls,.png,.jpg,.jpeg,.gif,.webp"
+        accept=".txt,.md,.py,.ts,.js,.jsx,.tsx,.json,.csv,.pdf,.docx,.doc,.docm,.xlsx,.xls,.xlsm,.xlsb,.pptx,.ppt,.pptm,.ppsx,.odt,.ods,.odp,.rtf,.epub,.png,.jpg,.jpeg,.gif,.webp,.bmp,.svg"
         style={{ display: 'none' }}
         onChange={async (e) => {
           const file = e.target.files?.[0]
-          if (!file) return
+          if (!file) {
+            onClose()
+            return
+          }
           try {
             const processed = await processFile(file)
             if (onAttach) {

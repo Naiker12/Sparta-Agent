@@ -13,6 +13,7 @@ import { registerSkillsIPC } from 'ia-sparta-ipc-bridge'
 import { registerPermissionIPC, setPermissionWindow } from 'ia-sparta-ipc-bridge'
 import { registerModelsIPC } from 'ia-sparta-ipc-bridge'
 import { convertDocumentToMarkdown } from 'ia-sparta-ipc-bridge'
+import { getSystemMetrics } from 'ia-sparta-ipc-bridge'
 import { stopFileWatcher } from 'ia-sparta-ipc-bridge'
 
 // Suppress noisy Chromium GPU/cache errors on Windows dev hot-reloads and optimize performance & RAM usage
@@ -155,7 +156,14 @@ app.whenReady().then(async () => {
   // App metadata IPC handlers
   ipcMain.handle('app:getVersion', () => app.getVersion() || '0.1.1')
   ipcMain.handle('app:getName', () => app.getName() || 'Sparta Agent')
-  ipcMain.handle('document:convert-to-markdown', (_event, req) => convertDocumentToMarkdown(req))
+  ipcMain.handle('document:convert-to-markdown', async (_event, req) => {
+    try {
+      return await convertDocumentToMarkdown(req)
+    } catch (err: any) {
+      return { ok: false, markdown: `[Error: ${err?.message || String(err)}]`, images: [], error: String(err) }
+    }
+  })
+  ipcMain.handle('system:get-metrics', () => getSystemMetrics())
 
   // Register chat IPC handlers from ia-sparta-chat-ipc
   registerChatSendIPC()

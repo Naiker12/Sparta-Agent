@@ -33,6 +33,7 @@ const ALLOWED_INVOKE_CHANNELS = new Set([
   'mcp:oauth:discover',
   'fs:readFile',
   'document:convert-to-markdown',
+  'system:get-metrics',
 ])
 
 contextBridge.exposeInMainWorld('electron', {

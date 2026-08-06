@@ -66,7 +66,7 @@ describe('ChatCompletionsTransport', () => {
       ...sampleReq,
       tools: [{ name: 'current_time', description: 'Get current time' }],
     })
-    expect(body.functions).toEqual([
+    expect(body.tools).toEqual([
       {
         type: 'function',
         function: {
@@ -76,7 +76,7 @@ describe('ChatCompletionsTransport', () => {
         },
       },
     ])
-    expect(body.function_call).toBe('auto')
+    expect(body.tool_choice).toBe('auto')
   })
 
   it('buildBody omits system message when not set', () => {

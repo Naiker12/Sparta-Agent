@@ -1,8 +1,8 @@
-import { useEffect, useRef } from 'react'
+import { useRef } from 'react'
+import { Virtuoso, type VirtuosoHandle } from 'react-virtuoso'
 import type { Message } from 'ia-sparta-core'
 import { useChatStore } from 'ia-sparta-core'
 import { MessageBubble } from './MessageBubble'
-
 import { cn } from 'ia-sparta-core'
 
 interface MessageListProps {
@@ -11,26 +11,8 @@ interface MessageListProps {
 }
 
 export function MessageList({ messages, className }: MessageListProps) {
-  const scrollRef = useRef<HTMLDivElement>(null)
+  const virtuosoRef = useRef<VirtuosoHandle>(null)
   const isStreaming = useChatStore((s) => s.isStreaming)
-  const userScrolledUp = useRef(false)
-
-  function handleScroll() {
-    const el = scrollRef.current
-    if (!el) return
-    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 80
-    userScrolledUp.current = !atBottom
-  }
-
-  useEffect(() => {
-    if (userScrolledUp.current) return
-    const el = scrollRef.current
-    if (!el) return
-    const raf = requestAnimationFrame(() => {
-      el.scrollTop = el.scrollHeight
-    })
-    return () => cancelAnimationFrame(raf)
-  }, [messages, isStreaming])
 
   const lastUserMsgId = (() => {
     for (let i = messages.length - 1; i >= 0; i--) {
@@ -47,19 +29,33 @@ export function MessageList({ messages, className }: MessageListProps) {
   })()
 
   return (
-    <div ref={scrollRef} onScroll={handleScroll} className={cn('min-h-0', className)} style={{
-      padding: '16px max(24px, calc(50% - 440px))',
-    }}>
-      <div style={{ padding: '20px 0 40px', display: 'flex', flexDirection: 'column', gap: 28 }}>
-        {messages.map((msg) => (
-          <MessageBubble
-            key={msg.id}
-            message={msg}
-            isLastUser={msg.role === 'user' && msg.id === lastUserMsgId}
-            isLastAssistant={msg.role === 'assistant' && msg.id === lastAssistantMsgId}
-          />
-        ))}
-      </div>
+    <div className={cn('min-h-0 h-full w-full', className)}>
+      <Virtuoso
+        ref={virtuosoRef}
+        data={messages}
+        initialTopMostItemIndex={messages.length > 0 ? messages.length - 1 : 0}
+        followOutput={(isAtBottom) => (isStreaming ? 'smooth' : isAtBottom ? 'auto' : false)}
+        alignToBottom
+        style={{ height: '100%', width: '100%' }}
+        components={{
+          Header: () => <div style={{ height: 20 }} />,
+          Footer: () => <div style={{ height: 40 }} />,
+        }}
+        itemContent={(_index, msg) => (
+          <div
+            style={{
+              padding: '14px max(24px, calc(50% - 440px))',
+            }}
+          >
+            <MessageBubble
+              key={msg.id}
+              message={msg}
+              isLastUser={msg.role === 'user' && msg.id === lastUserMsgId}
+              isLastAssistant={msg.role === 'assistant' && msg.id === lastAssistantMsgId}
+            />
+          </div>
+        )}
+      />
     </div>
   )
 }

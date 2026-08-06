@@ -59,10 +59,21 @@ export function processFile(file: File): Promise<ProcessedAttachment> {
       const reader = new FileReader()
       reader.onload = async (ev) => {
         const buffer = ev.target?.result as ArrayBuffer
+        const uint8 = new Uint8Array(buffer)
+        let binary = ''
+        const len = uint8.byteLength
+        for (let i = 0; i < len; i++) {
+          binary += String.fromCharCode(uint8[i])
+        }
+        const base64Str = btoa(binary)
+        const absolutePath = (file as any).path || undefined
+
         if (typeof window !== 'undefined' && window.electron?.invoke) {
           try {
             const conv = await window.electron.invoke('document:convert-to-markdown', {
-              buffer,
+              base64: base64Str,
+              buffer: Array.from(uint8),
+              filePath: absolutePath,
               fileName: file.name,
             }) as { ok: boolean; markdown: string; images: { mediaType: string; base64: string }[]; error?: string }
 
@@ -184,20 +195,22 @@ export function parseUserMessageAttachments(content: string): {
   }
   cleanText = cleanText.replace(imageRegex, '').trim()
 
-  // Match [Archivo: filename]
-  const codeFileRegex = /\[Archivo:\s*([^\]]+)\]\n```[a-zA-Z0-9_-]*\n[\s\S]*?```(?:\n_\(contenido truncado\)_)?/g
-  while ((match = codeFileRegex.exec(content)) !== null) {
+  // Match [Documento: filename] or [Archivo: filename] with code block
+  const docFileRegex = /\[(?:Documento|Archivo):\s*([^\]]+)\]\n```[a-zA-Z0-9_-]*\n([\s\S]*?)```(?:\n_\(contenido truncado\)_)?/g
+  while ((match = docFileRegex.exec(content)) !== null) {
     const fileName = match[1].trim()
+    const extractedText = match[2] || ''
+    const ext = fileName.split('.').pop()?.toLowerCase() ?? ''
     attachments.push({
       id: crypto.randomUUID(),
       fileName,
-      mimeType: 'text/plain',
-      size: 1024,
+      mimeType: ext === 'pdf' ? 'application/pdf' : 'text/plain',
+      size: extractedText.length || 1024,
       kind: 'text',
       previewText: match[0],
     })
   }
-  cleanText = cleanText.replace(codeFileRegex, '').trim()
+  cleanText = cleanText.replace(docFileRegex, '').trim()
 
   return { cleanText, attachments }
 }

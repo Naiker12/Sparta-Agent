@@ -46,6 +46,7 @@ export function MessageBubble({ message, isLastUser = false, isLastAssistant = f
   const [copied, setCopied] = useState(false)
   const [editing, setEditing] = useState(false)
   const [editValue, setEditValue] = useState(message.content)
+  const [previewAttachment, setPreviewAttachment] = useState<import('../lib/attachment-pipeline').ProcessedAttachment | null>(null)
   const [dialog, setDialog] = useState<{ kind: 'none' } | { kind: 'delete' } | { kind: 'regenerate' }>({ kind: 'none' })
   const { updateMessage } = useChatStore()
   const { sendMessage } = useChatSession()
@@ -232,7 +233,12 @@ export function MessageBubble({ message, isLastUser = false, isLastAssistant = f
                       {userParsed.attachments.length > 0 && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
                           {userParsed.attachments.map((att) => (
-                            <AttachmentCard key={att.id} attachment={att} readOnly />
+                            <AttachmentCard
+                              key={att.id}
+                              attachment={att}
+                              readOnly
+                              onClick={() => setPreviewAttachment(att)}
+                            />
                           ))}
                         </div>
                       )}
@@ -409,6 +415,106 @@ export function MessageBubble({ message, isLastUser = false, isLastAssistant = f
           state={dialog}
           onClose={() => setDialog({ kind: 'none' })}
         />
+
+        {previewAttachment && (
+          <div
+            onClick={() => setPreviewAttachment(null)}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 9999,
+              background: 'rgba(0,0,0,0.65)',
+              backdropFilter: 'blur(8px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 24,
+            }}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                width: '100%',
+                maxWidth: 760,
+                maxHeight: '82vh',
+                background: 'var(--bg-modal, #18181b)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: 'var(--radius-lg, 12px)',
+                boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '14px 18px',
+                  borderBottom: '1px solid var(--border-subtle)',
+                  background: 'var(--bg-surface)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, overflow: 'hidden' }}>
+                  <span
+                    style={{
+                      fontSize: 13.5,
+                      fontWeight: 600,
+                      color: 'var(--text-primary)',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      fontFamily: 'var(--font-ui)',
+                    }}
+                  >
+                    📄 {previewAttachment.fileName}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setPreviewAttachment(null)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--text-muted)',
+                    cursor: 'pointer',
+                    padding: 4,
+                    borderRadius: 6,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div
+                style={{
+                  padding: 18,
+                  overflowY: 'auto',
+                  flex: 1,
+                  fontSize: 13,
+                  fontFamily: 'var(--font-ui)',
+                  lineHeight: 1.6,
+                  color: 'var(--text-primary)',
+                  background: 'var(--bg-elevated)',
+                }}
+              >
+                <MarkdownRenderer
+                  content={(() => {
+                    const text = previewAttachment.previewText || ''
+                    let cleaned = text.replace(/^\[(?:Documento|Archivo):\s*[^\]]+\]\n```[a-zA-Z0-9_-]*\n/i, '')
+                    cleaned = cleaned.replace(/\n```(?:\n_\(contenido truncado\)_)?$/i, '')
+                    return cleaned.trim() || text
+                  })()}
+                  isStreaming={false}
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   )

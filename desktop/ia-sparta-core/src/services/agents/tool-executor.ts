@@ -152,8 +152,12 @@ async function executeNativeFileToolInline(
       const filePath = String(args.path ?? '')
       if (!filePath) throw new Error('read_file requiere "path".')
       const result = await window.fs.readFile(filePath)
-      if (!result.success) throw new Error(result.error ?? 'Error leyendo archivo.')
-      return result.content ?? ''
+      if (!result || !result.success) throw new Error(result?.error ?? 'Error leyendo archivo.')
+      let content = result.content
+      if (typeof content !== 'string') {
+        content = content ? String(content) : ''
+      }
+      return content
     }
     case 'write_file': {
       const filePath = String(args.path ?? '')

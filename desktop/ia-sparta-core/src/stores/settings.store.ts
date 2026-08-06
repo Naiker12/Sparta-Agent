@@ -32,6 +32,7 @@ interface SettingsStore {
   setInput: (val: string) => void
   setDefaultModel: (model: string) => void
   setApiKey: (provider: string, key: string) => void
+  removeApiKey: (provider: string) => void
   toggleMemory: () => void
   toggleSemanticMemory: () => void
   toggleWebSearch: () => void
@@ -79,6 +80,12 @@ export const useSettingsStore = create<SettingsStore>()(
   setDefaultModel: (model) => set({ defaultModel: model, activeModel: model }),
   setApiKey: (provider, key) =>
     set((s) => ({ apiKeys: { ...s.apiKeys, [provider]: key } })),
+  removeApiKey: (provider) =>
+    set((s) => {
+      const updated = { ...s.apiKeys }
+      delete updated[provider]
+      return { apiKeys: updated }
+    }),
   toggleMemory: () => set((s) => ({ memoryEnabled: !s.memoryEnabled })),
   toggleSemanticMemory: () => set((s) => ({ semanticMemoryEnabled: !s.semanticMemoryEnabled })),
   toggleWebSearch: () => set((s) => ({ webSearchEnabled: !s.webSearchEnabled })),

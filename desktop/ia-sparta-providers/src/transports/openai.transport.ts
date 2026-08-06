@@ -70,9 +70,9 @@ export class ChatCompletionsTransport extends BaseTransport {
       max_tokens: req.maxTokens ?? 4096,
       temperature: req.temperature ?? 0.7,
     }
-    // OpenAI-compatible providers use the standard functions schema for tool definitions.
+    // OpenAI-compatible providers use the standard tools schema for tool definitions.
     if (Array.isArray(req.tools) && req.tools.length > 0) {
-      body.functions = req.tools.map((t: any) => {
+      body.tools = req.tools.map((t: any) => {
         if (t.type === 'function' && t.function) return t
         return {
           type: 'function',
@@ -83,7 +83,7 @@ export class ChatCompletionsTransport extends BaseTransport {
           },
         }
       })
-      body.function_call = 'auto'
+      body.tool_choice = 'auto'
     }
     if (this.vendor === 'openai' && req.thinkingEnabled && req.reasoningEffort && req.reasoningEffort !== 'none') {
       body.reasoning_effort = req.reasoningEffort

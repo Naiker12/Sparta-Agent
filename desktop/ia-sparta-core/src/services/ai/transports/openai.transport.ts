@@ -61,7 +61,7 @@ export class ChatCompletionsTransport extends BaseTransport {
       temperature: req.temperature ?? 0.7,
     }
     if (Array.isArray(req.tools) && req.tools.length > 0) {
-      body.functions = req.tools.map((t: any) => {
+      body.tools = req.tools.map((t: any) => {
         if (t.type === 'function' && t.function) return t
         return {
           type: 'function',
@@ -72,7 +72,7 @@ export class ChatCompletionsTransport extends BaseTransport {
           },
         }
       })
-      body.function_call = 'auto'
+      body.tool_choice = 'auto'
     }
     if (this.vendor === 'openai' && req.thinkingEnabled && req.reasoningEffort && req.reasoningEffort !== 'none') {
       body.reasoning_effort = req.reasoningEffort

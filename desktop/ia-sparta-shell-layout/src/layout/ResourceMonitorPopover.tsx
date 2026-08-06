@@ -35,33 +35,38 @@ export function ResourceMonitorPopover() {
     { name: 'Other', cpu: 1.0, memoryMb: 215 },
   ])
 
-  // Live sampling simulation / performance API integration
+  // Real process telemetry sampling from Electron Main
   useEffect(() => {
     if (!open) return
 
-    const interval = setInterval(() => {
-      // Memory usage from performance API if available
-      const perf = (performance as any).memory
-      const baseMemory = perf?.usedJSHeapSize ? Math.round(perf.usedJSHeapSize / (1024 * 1024)) + 380 : 616
+    let cancelled = false
 
-      // Small natural jitter simulation for CPU %
-      const randomCpu = +(3.2 + Math.random() * 2.8).toFixed(1)
-      const mainCpu = +(randomCpu * 0.35).toFixed(1)
-      const renderCpu = +(randomCpu * 0.45).toFixed(1)
-      const otherCpu = +(randomCpu - mainCpu - renderCpu).toFixed(1)
+    async function fetchRealMetrics() {
+      if (typeof window !== 'undefined' && window.electron?.invoke) {
+        try {
+          const data = await window.electron.invoke('system:get-metrics') as {
+            cpuPercent: number
+            memoryMb: number
+            ramSharePercent: number
+            processes: ProcessGroup[]
+          }
+          if (data && !cancelled) {
+            setCpuPercent(data.cpuPercent ?? 0)
+            setMemoryMb(data.memoryMb ?? 0)
+            setRamSharePercent(data.ramSharePercent ?? 0)
+            if (data.processes) setProcesses(data.processes)
+          }
+        } catch { /* ignore fallback */ }
+      }
+    }
 
-      setCpuPercent(randomCpu)
-      setMemoryMb(baseMemory)
-      setRamSharePercent(+((baseMemory / 16384) * 100).toFixed(1))
+    fetchRealMetrics()
+    const interval = setInterval(fetchRealMetrics, 2000)
 
-      setProcesses([
-        { name: 'Main', cpu: mainCpu, memoryMb: Math.round(baseMemory * 0.28) },
-        { name: 'Renderer', cpu: renderCpu, memoryMb: Math.round(baseMemory * 0.38) },
-        { name: 'Other', cpu: Math.max(0.1, otherCpu), memoryMb: Math.round(baseMemory * 0.34) },
-      ])
-    }, 1500)
-
-    return () => clearInterval(interval)
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+    }
   }, [open])
 
   return (

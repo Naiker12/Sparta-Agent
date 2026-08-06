@@ -615,8 +615,9 @@ export function ModelsTab() {
         itemLabel={selectedProvider?.label || ''}
         onConfirm={async () => {
           if (confirmDeleteId) {
+            const p = providers.find((pr) => pr.id === confirmDeleteId)
+            await removeFromVault(confirmDeleteId, p?.vendor)
             removeProvider(confirmDeleteId)
-            await removeFromVault(confirmDeleteId)
             setSelectedProviderId(null)
             setConfirmDeleteId(null)
           }

@@ -76,7 +76,7 @@ describe('ChatCompletionsTransport', () => {
       ...sampleReq,
       tools: [{ name: 'web_search', description: 'Busca en la web', inputSchema: { type: 'object' } }],
     })
-    expect(body.functions).toEqual([
+    expect(body.tools).toEqual([
       {
         type: 'function',
         function: {
@@ -86,7 +86,7 @@ describe('ChatCompletionsTransport', () => {
         },
       },
     ])
-    expect(body.function_call).toBe('auto')
+    expect(body.tool_choice).toBe('auto')
   })
 
   it('buildBody omits system message when not set', () => {

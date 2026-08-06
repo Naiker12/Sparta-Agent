@@ -5,9 +5,10 @@ interface AttachmentCardProps {
   attachment: ProcessedAttachment
   onRemove?: () => void
   readOnly?: boolean
+  onClick?: () => void
 }
 
-export function AttachmentCard({ attachment, onRemove, readOnly = false }: AttachmentCardProps) {
+export function AttachmentCard({ attachment, onRemove, readOnly = false, onClick }: AttachmentCardProps) {
   const ext = attachment.fileName.split('.').pop()?.toUpperCase() ?? 'FILE'
   const isImage = attachment.kind === 'image' && attachment.base64Data
   const hasExtractedImage = attachment.extractedImages && attachment.extractedImages.length > 0
@@ -93,6 +94,7 @@ export function AttachmentCard({ attachment, onRemove, readOnly = false }: Attac
 
   return (
     <div
+      onClick={onClick}
       style={{
         display: 'inline-flex',
         alignItems: 'center',
@@ -105,7 +107,20 @@ export function AttachmentCard({ attachment, onRemove, readOnly = false }: Attac
         maxWidth: 240,
         position: 'relative',
         userSelect: 'none',
+        cursor: onClick ? 'pointer' : 'default',
         transition: 'all 0.15s ease',
+      }}
+      onMouseEnter={(e) => {
+        if (onClick) {
+          e.currentTarget.style.borderColor = 'var(--accent)'
+          e.currentTarget.style.transform = 'translateY(-1px)'
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (onClick) {
+          e.currentTarget.style.borderColor = 'var(--border-subtle)'
+          e.currentTarget.style.transform = 'none'
+        }
       }}
     >
       {renderIcon()}
