@@ -9,6 +9,7 @@ import fs from 'node:fs'
 import fsPromises from 'node:fs/promises'
 import path from 'node:path'
 import { getWorkspaceRoot } from '../channels/filesystem.channel'
+import { isDocumentConvertible, convertDocumentToMarkdown } from '../channels/document.channel'
 import { IGNORED_DIR_SET } from '../../../ia-sparta-core/src/lib/filesystem-constants'
 
 export function isWithinRoot(filePath: string, root: string): boolean {
@@ -42,6 +43,10 @@ export async function executeMainProcessFileTool(
       if (!filePath) throw new Error('read_file requiere "path"')
       if (root && !isWithinRoot(filePath, root)) {
         throw new Error('La ruta está fuera de la carpeta conectada / workspace root.')
+      }
+      if (isDocumentConvertible(filePath)) {
+        const conv = await convertDocumentToMarkdown({ filePath })
+        return conv.markdown
       }
       const content = await fsPromises.readFile(filePath, 'utf-8')
       return content

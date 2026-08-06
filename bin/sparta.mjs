@@ -60,7 +60,6 @@ const commands = {
     const sub = process.argv[3] || 'run'
     const subcommands = {
       run() { run(`${python} -m sparta_ai.main`, { cwd: join(ROOT, 'python') }) },
-      web() { run(`${python} -m sparta_ai.server_web`, { cwd: join(ROOT, 'python') }) },
       test() { run(`${python} -m pytest sparta_ai/tests/ -v`, { cwd: join(ROOT, 'python') }) },
     }
     const fn = subcommands[sub]

@@ -4,12 +4,9 @@ import { useProviderStore } from '../stores/provider.store'
 import { useMCPStore } from '../stores/mcp.store'
 import { useSettingsStore } from '../stores/settings.store'
 import { useEventBus } from '../stores/event-bus.store'
-import { runAgentTask, buildToolDefinitions, tryExecuteNativeTool } from 'ia-sparta-core'
-import { buildWebSearchTool, executeWebSearch } from 'ia-sparta-core'
-import { getProviderKey, IS_ELECTRON } from 'ia-sparta-platform'
-import { aiGateway } from 'ia-sparta-core'
+import { getProviderKey } from 'ia-sparta-platform'
 import { useProjectStore } from '../stores/project.store'
-import type { AgentStatus, Agent, Task, AgentType, Provider, TaskStep, SubagentRun } from '../types'
+import type { AgentStatus, Agent, Task, AgentType, TaskStep, SubagentRun } from '../types'
 
 const AGENT_NAMESPACE_MAP: Partial<Record<AgentType, string>> = {
   research: 'delegate_research',
@@ -21,7 +18,7 @@ export function useAgent() {
 
   // Listen for server-side agent task events (Electron mode)
   useEffect(() => {
-    if (!IS_ELECTRON || !window.agent?.onTaskEvent) return
+    if (!window.agent?.onTaskEvent) return
     const unsub = window.agent.onTaskEvent(({ event, data }) => {
       const d = data as Record<string, unknown>
       const taskId = d.task_id as string
@@ -103,112 +100,28 @@ export function useAgent() {
       `IMPORTANTE: Responde SIEMPRE en español.`
     )
 
-    // Electron mode: delegate LLM loop to Python server
-    if (IS_ELECTRON && window.agent?.executeTask) {
-      try {
-        const resolvedKey = provider ? await getProviderKey(provider) : undefined
-        const result = await window.agent.executeTask({
-          taskId: task.id,
-          agentId,
-          taskDescription,
-          systemPrompt: defaultSystem,
-          allowedTools,
-          model: agent.model,
-          provider: provider?.vendor ?? 'openai',
-          vendor: provider?.vendor,
-          providerKey: resolvedKey,
-          workspaceRoot: useProjectStore.getState().getActiveProject()?.rootPath ?? '',
-          agentAutonomy: useSettingsStore.getState().agentAutonomy,
-        })
-        if (!result.ok) {
-          store.updateAgentStatus(agentId, 'error')
-          store.updateTask(agentId, task.id, { status: 'error' })
-          throw new Error(result.error ?? 'Agent task failed')
-        }
-        return result.result ?? ''
-      } catch (err) {
-        store.updateAgentStatus(agentId, 'error')
-        store.updateTask(agentId, task.id, { status: 'error' })
-        throw err
-      }
-    }
-
-    // Web mode fallback: run LLM loop on frontend (legacy agent-runtime.ts)
-    const toolDefs = buildToolDefinitions(
-      allMcpTools.filter((t) => allowedTools.includes(t.name)),
-    )
-    if (webSearchEnabled) {
-      toolDefs.push(buildWebSearchTool() as unknown as Record<string, unknown>)
-    }
-
-    const toolRunner = async (name: string, args: unknown): Promise<unknown> => {
-      if (name === 'web_search') {
-        const query = typeof args === 'object' && args !== null && 'query' in args
-          ? String((args as Record<string, unknown>).query)
-          : String(args)
-        const rawCount = typeof args === 'object' && args !== null && 'count' in args
-          ? (args as Record<string, unknown>).count
-          : 5
-        const count = typeof rawCount === 'number' ? rawCount : 5
-        return await executeWebSearch(query, count)
-      }
-
-      // Try native tools first (file operations, shell commands)
-      const nativeResult = await tryExecuteNativeTool(name, args)
-      if (nativeResult !== null) return nativeResult
-
-      // Fallback to MCP server tool invocation
-      const server = mcpServers.find((s) =>
-        s.tools.some((t) => t.name === name),
-      )
-      if (!server) throw new Error(`Tool ${name} no encontrada en ningún servidor MCP ni como herramienta nativa`)
-
-      // Invoke the MCP tool via the server's IPC/transport
-      if (typeof window !== 'undefined' && window.electron?.invoke) {
-        const result = await window.electron.invoke('mcp:call-tool', {
-          serverId: server.id,
-          toolName: name,
-          args,
-        })
-        return result
-      }
-
-      throw new Error(`No se pudo invocar la herramienta "${name}" del servidor MCP "${server.name}"`)
-    }
-
-    const llmCall = async (prompt: string): Promise<string> => {
-      if (!provider) return 'Error: No hay proveedor configurado.'
-      const resolvedKey = await getProviderKey(provider)
-      if (!resolvedKey) return 'Error: No hay API key configurada para el proveedor.'
-      const providerWithKey: Provider = { ...provider, apiKey: resolvedKey, hasVaultKey: false }
-      try {
-        const stream = await aiGateway.sendMessage(
-          providerWithKey,
-          [{ role: 'user', content: prompt }],
-          { stream: true },
-        )
-        const parts: string[] = []
-        for await (const chunk of stream) {
-          if (chunk.type === 'content_token' && chunk.delta) parts.push(chunk.delta)
-        }
-        return parts.join('') || 'Sin respuesta'
-      } catch (err) {
-        return `Error: ${err instanceof Error ? err.message : String(err)}`
-      }
-    }
-
+    // Desktop Electron execution
     try {
-      const result = await runAgentTask(
-        task.id,
+      const resolvedKey = provider ? await getProviderKey(provider) : undefined
+      const result = await window.agent.executeTask({
+        taskId: task.id,
         agentId,
         taskDescription,
-        defaultSystem,
+        systemPrompt: defaultSystem,
         allowedTools,
-        toolDefs,
-        toolRunner,
-        llmCall,
-      )
-      return result
+        model: agent.model,
+        provider: provider?.vendor ?? 'openai',
+        vendor: provider?.vendor,
+        providerKey: resolvedKey,
+        workspaceRoot: useProjectStore.getState().getActiveProject()?.rootPath ?? '',
+        agentAutonomy: useSettingsStore.getState().agentAutonomy,
+      })
+      if (!result.ok) {
+        store.updateAgentStatus(agentId, 'error')
+        store.updateTask(agentId, task.id, { status: 'error' })
+        throw new Error(result.error ?? 'Agent task failed')
+      }
+      return result.result ?? ''
     } catch (err) {
       store.updateAgentStatus(agentId, 'error')
       store.updateTask(agentId, task.id, { status: 'error' })

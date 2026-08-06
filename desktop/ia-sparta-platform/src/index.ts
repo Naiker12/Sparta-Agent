@@ -7,5 +7,3 @@
 export * from './env'
 export * from './messaging/messaging-adapter'
 export * from './vault/vault-adapter'
-export * from './vault/web-vault'
-export * from './terminal/terminal-ws-driver'

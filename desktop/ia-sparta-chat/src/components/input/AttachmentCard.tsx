@@ -10,6 +10,7 @@ interface AttachmentCardProps {
 export function AttachmentCard({ attachment, onRemove, readOnly = false }: AttachmentCardProps) {
   const ext = attachment.fileName.split('.').pop()?.toUpperCase() ?? 'FILE'
   const isImage = attachment.kind === 'image' && attachment.base64Data
+  const hasExtractedImage = attachment.extractedImages && attachment.extractedImages.length > 0
 
   function renderIcon() {
     if (isImage) {
@@ -23,6 +24,24 @@ export function AttachmentCard({ attachment, onRemove, readOnly = false }: Attac
             objectFit: 'cover',
             borderRadius: 6,
             flexShrink: 0,
+          }}
+        />
+      )
+    }
+
+    if (hasExtractedImage) {
+      const firstImg = attachment.extractedImages![0]
+      return (
+        <img
+          src={`data:${firstImg.mediaType};base64,${firstImg.base64}`}
+          alt={attachment.fileName}
+          style={{
+            width: 36,
+            height: 36,
+            objectFit: 'cover',
+            borderRadius: 6,
+            flexShrink: 0,
+            border: '1px solid var(--accent)',
           }}
         />
       )

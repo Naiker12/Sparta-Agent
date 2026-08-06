@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Cpu, X, SlidersHorizontal, Laptop } from 'lucide-react'
+import { useTranslation } from 'ia-sparta-i18n'
 
 interface ProcessGroup {
   name: string
@@ -8,6 +9,7 @@ interface ProcessGroup {
 }
 
 export function ResourceMonitorPopover() {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const [cpuPercent, setCpuPercent] = useState<number>(4.7)
   const [memoryMb, setMemoryMb] = useState<number>(616)
@@ -91,7 +93,7 @@ export function ResourceMonitorPopover() {
             e.currentTarget.style.color = 'var(--text-muted)'
           }
         }}
-        title="Resources (Monitoreo de CPU y Memoria RAM)"
+        title={t('resources.tooltip')}
       >
         <Cpu size={14} />
       </button>
@@ -126,7 +128,7 @@ export function ResourceMonitorPopover() {
             }}
           >
             <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
-              Resources
+              {t('resources.title')}
             </span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <button
@@ -169,7 +171,7 @@ export function ResourceMonitorPopover() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
               <div>
                 <span style={{ fontSize: 9.5, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                  CPU
+                  {t('resources.cpu')}
                 </span>
                 <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', marginTop: 2 }}>
                   {cpuPercent}%
@@ -178,7 +180,7 @@ export function ResourceMonitorPopover() {
 
               <div>
                 <span style={{ fontSize: 9.5, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                  MEMORY
+                  {t('resources.memory')}
                 </span>
                 <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', marginTop: 2 }}>
                   {memoryMb} MB
@@ -187,7 +189,7 @@ export function ResourceMonitorPopover() {
 
               <div>
                 <span style={{ fontSize: 9.5, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                  RAM SHARE
+                  {t('resources.ramShare')}
                 </span>
                 <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', marginTop: 2 }}>
                   {ramSharePercent}%
@@ -224,7 +226,7 @@ export function ResourceMonitorPopover() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <Laptop size={13} style={{ color: 'var(--accent)' }} />
                 <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>
-                  Sparta Desktop
+                  {t('resources.spartaDesktop')}
                 </span>
               </div>
               <div style={{ display: 'flex', gap: 12, fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
@@ -257,7 +259,7 @@ export function ResourceMonitorPopover() {
 
           {/* Tasks & Process Trees */}
           <div style={{ padding: '14px', textAlign: 'center', fontSize: 11, color: 'var(--text-muted)' }}>
-            No active task process trees.
+            {t('resources.noActiveTasks')}
           </div>
         </div>
       )}

@@ -1,11 +1,13 @@
+import { lazy, Suspense } from 'react'
 import { MarkdownRenderer } from '../MarkdownRenderer'
 import { SyntaxHighlighterPreview } from './SyntaxHighlighterPreview'
 import { SafeSvg } from './SafeSvg'
 import { PdfViewer } from './PdfViewer'
 import { SheetPreview } from './SheetPreview'
 import { HtmlPreview } from './HtmlPreview'
-import { XlsxPreview } from './XlsxPreview'
-import { DocxPreview } from './DocxPreview'
+
+const XlsxPreview = lazy(() => import('./XlsxPreview').then(m => ({ default: m.XlsxPreview })))
+const DocxPreview = lazy(() => import('./DocxPreview').then(m => ({ default: m.DocxPreview })))
 
 interface PreviewRendererProps {
   filePath: string
@@ -65,9 +67,17 @@ export function PreviewRenderer({ filePath, content, base64, viewMode = 'preview
     case 'sheet':
       return <SheetPreview base64={base64 ?? ''} fileName={filePath} />
     case 'xlsx':
-      return <XlsxPreview base64={base64 ?? ''} fileName={filePath} />
+      return (
+        <Suspense fallback={<div style={{ padding: 20 }}>Cargando visor Excel...</div>}>
+          <XlsxPreview base64={base64 ?? ''} fileName={filePath} />
+        </Suspense>
+      )
     case 'docx':
-      return <DocxPreview base64={base64 ?? ''} fileName={filePath} />
+      return (
+        <Suspense fallback={<div style={{ padding: 20 }}>Cargando visor Word...</div>}>
+          <DocxPreview base64={base64 ?? ''} fileName={filePath} />
+        </Suspense>
+      )
     case 'image':
       return (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', padding: 20 }}>

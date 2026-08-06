@@ -378,4 +378,13 @@ export const es = {
     catalogDesc: 'Servidores integrados disponibles para conectar.',
     retry: 'Reintentar',
   },
+  resources: {
+    title: 'Recursos',
+    cpu: 'CPU',
+    memory: 'MEMORIA',
+    ramShare: 'USO DE RAM',
+    spartaDesktop: 'Sparta Desktop',
+    noActiveTasks: 'Sin árboles de procesos de tareas activas.',
+    tooltip: 'Monitoreo de CPU y Memoria RAM',
+  },
 }

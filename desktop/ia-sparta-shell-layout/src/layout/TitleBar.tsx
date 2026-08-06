@@ -1,7 +1,6 @@
 import { useUIStore, type MainView } from 'ia-sparta-core'
-import { useSettingsStore } from 'ia-sparta-core'
 import { AppMenu } from './AppMenu'
-import { Settings, PanelLeftOpen, PanelLeftClose } from 'lucide-react'
+import { PanelLeftOpen, PanelLeftClose } from 'lucide-react'
 import { SpartaIcon } from 'ia-sparta-chat'
 import { FEATURES, IS_ELECTRON } from 'ia-sparta-platform'
 import { Button } from 'ia-sparta-design-system'
@@ -22,7 +21,6 @@ const TABS: { type: MainView['type']; label: string }[] = [
 
 export function TitleBar() {
   const { mainView, setMainView, sidebarOpen, toggleSidebar, terminalOpen, toggleTerminal } = useUIStore()
-  const { openSettings } = useSettingsStore()
 
   const activeValue = (() => {
     if (mainView.type === 'agents') return 'agents'
@@ -125,14 +123,6 @@ export function TitleBar() {
 
       <ResourceMonitorPopover />
 
-      <Button
-        variant="ghost"
-        size="icon"
-        className="no-drag"
-        onClick={openSettings}
-      >
-        <Settings size={14} strokeWidth={1.5} />
-      </Button>
     </div>
   )
 }

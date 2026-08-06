@@ -378,4 +378,13 @@ export const en = {
     catalogDesc: 'Built-in MCP servers available to connect.',
     retry: 'Retry',
   },
+  resources: {
+    title: 'Resources',
+    cpu: 'CPU',
+    memory: 'MEMORY',
+    ramShare: 'RAM SHARE',
+    spartaDesktop: 'Sparta Desktop',
+    noActiveTasks: 'No active task process trees.',
+    tooltip: 'CPU and RAM Memory Monitoring',
+  },
 }

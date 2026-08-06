@@ -6,6 +6,7 @@ export interface ProcessedAttachment {
   kind: 'text' | 'image' | 'binary'
   previewText: string
   base64Data?: string
+  extractedImages?: { mediaType: string; base64: string }[]
 }
 
 export function formatFileSize(bytes: number): string {
@@ -14,6 +15,14 @@ export function formatFileSize(bytes: number): string {
   return `${(size => (size / (1024 * 1024)).toFixed(1))(bytes)} MB`
 }
 
+const ANYDOC_EXTS = new Set([
+  'pdf', 'docx', 'doc', 'docm',
+  'pptx', 'ppt', 'pptm', 'pps', 'ppsx', 'pot', 'ppsm',
+  'xlsx', 'xls', 'xlsm', 'xlsb',
+  'odt', 'ods', 'odp',
+  'rtf', 'epub', 'csv',
+])
+
 export function processFile(file: File): Promise<ProcessedAttachment> {
   return new Promise((resolve, reject) => {
     const ext = file.name.split('.').pop()?.toLowerCase() ?? ''
@@ -21,7 +30,8 @@ export function processFile(file: File): Promise<ProcessedAttachment> {
     const id = crypto.randomUUID()
 
     const isImage = file.type.startsWith('image/') || ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg'].includes(ext)
-    const isBinaryDoc = ['pdf', 'docx', 'doc', 'xlsx', 'xls', 'zip', 'tar', 'gz', 'mp3', 'wav'].includes(ext)
+    const isDocument = ANYDOC_EXTS.has(ext)
+    const isOtherBinary = ['zip', 'tar', 'gz', 'mp3', 'wav', '7z', 'rar', 'exe', 'dll'].includes(ext)
 
     if (isImage) {
       const reader = new FileReader()
@@ -45,7 +55,52 @@ export function processFile(file: File): Promise<ProcessedAttachment> {
       return
     }
 
-    if (isBinaryDoc) {
+    if (isDocument) {
+      const reader = new FileReader()
+      reader.onload = async (ev) => {
+        const buffer = ev.target?.result as ArrayBuffer
+        if (typeof window !== 'undefined' && window.electron?.invoke) {
+          try {
+            const conv = await window.electron.invoke('document:convert-to-markdown', {
+              buffer,
+              fileName: file.name,
+            }) as { ok: boolean; markdown: string; images: { mediaType: string; base64: string }[]; error?: string }
+
+            if (conv && conv.markdown) {
+              const maxLen = 8000
+              const preview = conv.markdown.slice(0, maxLen)
+              const truncated = conv.markdown.length > maxLen ? '\n_(contenido truncado)_' : ''
+              const fileBlock = `[Documento: ${file.name}]\n\`\`\`markdown\n${preview}\n\`\`\`${truncated}`
+
+              resolve({
+                id,
+                fileName: file.name,
+                mimeType: file.type || 'application/octet-stream',
+                size: file.size,
+                kind: 'text',
+                previewText: fileBlock,
+                extractedImages: conv.images ?? [],
+              })
+              return
+            }
+          } catch { /* fallback to default binary */ }
+        }
+
+        resolve({
+          id,
+          fileName: file.name,
+          mimeType: file.type || 'application/octet-stream',
+          size: file.size,
+          kind: 'binary',
+          previewText: `[Documento adjunto: ${file.name} (${sizeStr}) - .${ext}]`,
+        })
+      }
+      reader.onerror = (err) => reject(err)
+      reader.readAsArrayBuffer(file)
+      return
+    }
+
+    if (isOtherBinary) {
       resolve({
         id,
         fileName: file.name,

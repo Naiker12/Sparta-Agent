@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Clock, Sparkles, Circle, Zap, Brain, FolderOpen, FolderX } from 'lucide-react'
+import { Clock, Sparkles, Zap, Brain, FolderOpen, FolderX } from 'lucide-react'
 import { useSettingsStore } from 'ia-sparta-core'
 import { useProviderStore } from 'ia-sparta-core'
 import { useChatStore } from 'ia-sparta-core'
@@ -13,8 +13,7 @@ import { TokenUsageDialog } from './TokenUsageDialog'
 import { AgentsStatusDialog } from './AgentsStatusDialog'
 import { AgentStatusIndicator } from './AgentStatusIndicator'
 import { CronStatusDialog } from './CronStatusDialog'
-import { IS_WEB, messagingAdapter } from 'ia-sparta-platform'
-import { useWebSocketStatus } from 'ia-sparta-core'
+import { messagingAdapter } from 'ia-sparta-platform'
 import { DEFAULT_SPINNER } from 'ia-sparta-core'
 
 export function StatusBar() {
@@ -37,10 +36,8 @@ export function StatusBar() {
   const [agentsOpen, setAgentsOpen] = useState(false)
   const [cronOpen, setCronOpen] = useState(false)
   const [spinnerFrame, setSpinnerFrame] = useState(0)
-  const sbSpinner = DEFAULT_SPINNER
-
-  const wsStatus = useWebSocketStatus()
   const [sidecarReady, setSidecarReady] = useState(false)
+  const sbSpinner = DEFAULT_SPINNER
 
   const isThinking = Object.values(messagesBySession).some((msgs) =>
     msgs.some((m) => m.thinkingStatus === 'streaming' || m.thinkingStatus === 'starting')
@@ -56,7 +53,6 @@ export function StatusBar() {
   }, [isThinking, sbSpinner])
 
   useEffect(() => {
-    if (IS_WEB) return
     const check = async () => {
       try {
         const ready = messagingAdapter.isReady()
@@ -86,18 +82,6 @@ export function StatusBar() {
       .catch(() => setAppVersion('0.0.0'))
   }, [])
 
-  const wsColors: Record<string, string> = {
-    connected: 'var(--status-ok)',
-    connecting: 'var(--status-warn)',
-    disconnected: 'var(--destructive)',
-  }
-
-  const wsLabels: Record<string, string> = {
-    connected: 'Sidecar conectado',
-    connecting: 'Conectando...',
-    disconnected: 'Sidecar desconectado',
-  }
-
   return (
     <>
       <div
@@ -108,22 +92,10 @@ export function StatusBar() {
           borderTop: '1px solid var(--border-subtle)',
         }}
       >
-        {IS_WEB ? (
-          <SBItem>
-            <Circle
-              size={6}
-              strokeWidth={3}
-              fill={wsColors[wsStatus]}
-              style={{ color: wsColors[wsStatus] }}
-            />
-            {wsLabels[wsStatus]}
-          </SBItem>
-        ) : (
-          <SBItem onClick={() => setGatewayOpen(true)} style={{ color: sidecarReady ? 'var(--status-ok)' : 'var(--destructive)' }}>
-            <Zap size={11} strokeWidth={1.5} />
-            {sidecarReady ? 'AI listo' : 'AI offline'}
-          </SBItem>
-        )}
+        <SBItem onClick={() => setGatewayOpen(true)} style={{ color: sidecarReady ? 'var(--status-ok)' : 'var(--destructive)' }}>
+          <Zap size={11} strokeWidth={1.5} />
+          {sidecarReady ? 'AI listo' : 'AI offline'}
+        </SBItem>
         <AgentStatusIndicator onClick={() => setAgentsOpen(true)} />
         <SBItem onClick={() => setCronOpen(true)}>
           <Clock size={11} strokeWidth={1.5} />
