@@ -181,6 +181,10 @@ function toSafeString(val: unknown): string {
   if (typeof val === 'string') return val
   if (Buffer.isBuffer(val)) return val.toString('utf-8')
   if (val instanceof Uint8Array) return Buffer.from(val).toString('utf-8')
+  if (val instanceof Promise || (typeof val === 'object' && val !== null && typeof (val as any).then === 'function')) {
+    console.warn('[toSafeString] Warning: received un-awaited Promise object')
+    return ''
+  }
   if (val != null) return String(val)
   return ''
 }
@@ -264,7 +268,7 @@ export async function convertDocumentToMarkdown(
       }
     }
 
-    // 1. Primary Engine: @firecrawl/anydoc
+    // 1. Primary Engine: @firecrawl/anydoc (Async Rust NAPI bindings)
     try {
       const anydocPkg = ['@firecrawl', 'anydoc'].join('/')
       let anydoc: any
@@ -277,15 +281,15 @@ export async function convertDocumentToMarkdown(
       if (anydoc) {
         if (typeof anydoc.formatFromBytes === 'function') {
           try {
-            const fmt = anydoc.formatFromBytes(buf)
+            const fmt = await anydoc.formatFromBytes(buf)
             if (fmt) detectedFormat = String(fmt).toLowerCase()
           } catch { /* ignore */ }
         }
 
-        // PDF requires toMarkdownBytes in @firecrawl/anydoc (which returns Uint8Array)
+        // PDF requires toMarkdownBytes in @firecrawl/anydoc (which returns Promise<Uint8Array | string>)
         if ((ext === 'pdf' || detectedFormat === 'pdf') && typeof anydoc.toMarkdownBytes === 'function') {
           try {
-            const rawBytes = anydoc.toMarkdownBytes(buf)
+            const rawBytes = await anydoc.toMarkdownBytes(buf)
             markdown = toSafeString(rawBytes)
           } catch (pdfErr) {
             console.warn('[document.channel] anydoc toMarkdownBytes pdf warning:', pdfErr)
@@ -294,10 +298,10 @@ export async function convertDocumentToMarkdown(
 
         if (!markdown && typeof anydoc.toDocument === 'function') {
           try {
-            const doc = anydoc.toDocument(buf)
+            const doc = await anydoc.toDocument(buf)
             if (doc) {
               if (typeof doc.toMarkdown === 'function') {
-                markdown = toSafeString(doc.toMarkdown())
+                markdown = toSafeString(await doc.toMarkdown())
               } else if (doc.blocks && Array.isArray(doc.blocks)) {
                 markdown = doc.blocks.map((b: any) => toSafeString(b.text || b.content)).filter(Boolean).join('\n\n')
               }
@@ -323,7 +327,7 @@ export async function convertDocumentToMarkdown(
           }
         } else if (!markdown && typeof anydoc.toMarkdownBytes === 'function') {
           try {
-            markdown = toSafeString(anydoc.toMarkdownBytes(buf))
+            markdown = toSafeString(await anydoc.toMarkdownBytes(buf))
           } catch { /* ignore */ }
         }
       }
