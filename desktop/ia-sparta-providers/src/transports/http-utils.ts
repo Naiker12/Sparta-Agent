@@ -18,7 +18,7 @@ export async function fetchWithRetry(
   url: string,
   options: RequestInit,
   retries = 1,
-  timeoutMs = 60_000,
+  timeoutMs = 120_000,
 ): Promise<Response> {
   for (let i = 0; i <= retries; i++) {
     const signal = options.signal ?? AbortSignal.timeout(timeoutMs)

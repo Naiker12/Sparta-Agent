@@ -78,7 +78,7 @@ export function registerChatSendIPC(): void {
         const userText = [...(req.messages || [])].reverse().find((message) => message.role === 'user')?.content ?? ''
         const systemPrompt = buildSystemPrompt(req, userText)
         const formattedMessages = (req.messages || []).map(m => ({ role: m.role as any, content: m.content }))
-        const tools = buildToolsList(req.tools, req.webSearchEnabled)
+        const tools = buildToolsList(req.tools, req.webSearchEnabled, req.mode as 'chat' | 'agent')
 
         sendToRenderer({
           sessionId,
@@ -95,7 +95,7 @@ export function registerChatSendIPC(): void {
         while (loopCount < MAX_LOOPS) {
           loopCount++
           let turnContent = ''
-          let pendingToolCall: { id: string; toolName: string; input: Record<string, unknown> } | null = null
+          const pendingToolCalls: Array<{ id: string; toolName: string; input: Record<string, unknown> }> = []
 
           for await (const chunk of transport.streamChat({
             model: req.model,
@@ -129,11 +129,11 @@ export function registerChatSendIPC(): void {
                 token: chunk.delta,
               })
             } else if (chunk.type === 'tool_call' && chunk.toolCall) {
-              pendingToolCall = {
-                id: chunk.toolCall.id || `call_${Date.now()}`,
+              pendingToolCalls.push({
+                id: chunk.toolCall.id || `call_${Date.now()}_${pendingToolCalls.length}`,
                 toolName: chunk.toolCall.toolName || 'web_search',
                 input: (chunk.toolCall.input as Record<string, unknown>) || {},
-              }
+              })
             } else if (chunk.type === 'error' && chunk.error) {
               streamFailed = true
               completeThinking()
@@ -147,87 +147,101 @@ export function registerChatSendIPC(): void {
             }
           }
 
-          if (streamFailed || streamAborted) {
-            break
+          if (streamAborted || streamFailed) break
+
+          // If assistant gave text content, append it to messages history
+          if (turnContent) {
+            formattedMessages.push({ role: 'assistant', content: turnContent } as any)
           }
 
-          // If no tool call was requested by the model, execution is complete
-          if (!pendingToolCall) {
+          if (pendingToolCalls.length > 0) {
             completeThinking()
+
+            for (const toolCall of pendingToolCalls) {
+              const { id: toolCallId, toolName, input: toolInput } = toolCall
+
+              sendToRenderer({
+                sessionId,
+                messageId,
+                type: 'tool:called',
+                toolCallId,
+                toolName,
+                name: toolName,
+                input: toolInput,
+              })
+
+              const toolOutput = await executeToolCall({
+                sessionId,
+                messageId,
+                toolCallId,
+                toolName,
+                toolInput,
+                mcpServers: req.mcpServers,
+                connectedFolder: req.connectedFolder,
+                workspaceRoot: req.workspaceRoot,
+              })
+
+              sendToRenderer({
+                sessionId,
+                messageId,
+                type: 'tool:result',
+                toolCallId,
+                toolName,
+                output: toolOutput,
+              })
+
+              // Append assistant tool_call message if not already present
+              const lastMsg = formattedMessages[formattedMessages.length - 1] as any
+              if (!lastMsg || lastMsg.role !== 'assistant') {
+                formattedMessages.push({
+                  role: 'assistant',
+                  content: '',
+                  tool_calls: [
+                    {
+                      id: toolCallId,
+                      type: 'function',
+                      function: {
+                        name: toolName,
+                        arguments: JSON.stringify(toolInput),
+                      },
+                    },
+                  ],
+                } as any)
+              } else {
+                if (!lastMsg.tool_calls) lastMsg.tool_calls = []
+                lastMsg.tool_calls.push({
+                  id: toolCallId,
+                  type: 'function',
+                  function: {
+                    name: toolName,
+                    arguments: JSON.stringify(toolInput),
+                  },
+                })
+              }
+
+              formattedMessages.push({
+                role: 'tool',
+                tool_call_id: toolCallId,
+                content: typeof toolOutput === 'string' ? toolOutput : JSON.stringify(toolOutput),
+              } as any)
+            }
+
+            // Continue loop to get assistant's response to tool output
             sendToRenderer({
               sessionId,
               messageId,
-              type: 'stream:completed',
+              type: 'thinking:status',
+              text: 'Sintetizando respuesta con datos obtenidos...',
             })
-            break
+            continue
           }
 
-          // Handle tool call execution
-          const toolCallId = pendingToolCall.id
-          const toolName = pendingToolCall.toolName
-          const toolInput = pendingToolCall.input
-
-          // Notify renderer that a tool was called
           sendToRenderer({
             sessionId,
             messageId,
-            type: 'tool:called',
-            toolCallId,
-            toolName,
-            name: toolName,
-            input: toolInput,
+            type: 'stream:completed',
           })
-
-          // Execute the tool via the centralized executor
-          const toolOutput = await executeToolCall({
-            sessionId,
-            messageId,
-            toolCallId,
-            toolName,
-            toolInput,
-            mcpServers: req.mcpServers,
-            connectedFolder: req.connectedFolder,
-            workspaceRoot: req.workspaceRoot,
-          })
-
-          // Notify renderer of tool output
-          sendToRenderer({
-            sessionId,
-            messageId,
-            type: 'tool:result',
-            toolCallId,
-            toolName,
-            output: toolOutput,
-          })
-
-          // Update formattedMessages to append assistant tool_call & tool response for next turn
-          formattedMessages.push({
-            role: 'assistant' as any,
-            content: turnContent || null,
-            tool_calls: [
-              {
-                id: toolCallId,
-                type: 'function',
-                function: {
-                  name: toolName,
-                  arguments: JSON.stringify(toolInput),
-                },
-              },
-            ],
-          } as any)
-
-          formattedMessages.push({
-            role: 'tool' as any,
-            tool_call_id: toolCallId,
-            content: toolOutput,
-          } as any)
-
-          sendToRenderer({
-            sessionId,
-            messageId,
-            type: 'thinking:status',
-            text: 'Sintetizando respuesta con datos obtenidos...',
-          })
+          break
         }
       } catch (err) {
         completeThinking()

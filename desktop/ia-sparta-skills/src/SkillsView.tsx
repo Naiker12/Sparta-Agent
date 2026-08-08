@@ -231,6 +231,7 @@ export function SkillsView() {
         description: s.description,
         prompt: s.description,
         tags: s.tags as string[],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         category: (s.category as any) || 'Productivity',
         icon: s.icon,
         version: s.version,

@@ -48,7 +48,7 @@ export function cacheAttachmentContent(fileName: string, markdown: string) {
 
 export function getCachedAttachmentContent(fileNameOrPath: string): string | null {
   if (!fileNameOrPath) return null
-  let raw = String(fileNameOrPath).trim().toLowerCase()
+  const raw = String(fileNameOrPath).trim().toLowerCase()
 
   // 1. Direct match
   if (ATTACHMENT_CACHE.has(raw)) {

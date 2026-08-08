@@ -16,6 +16,8 @@ export type { ToolCallContext } from './types'
 /**
  * Ejecuta una herramienta y retorna su output como string.
  */
+import { executeGenerateChart } from './chart-generator'
+
 export async function executeToolCall(ctx: ToolCallContext): Promise<string> {
   const { sessionId, messageId, toolCallId, toolName, toolInput } = ctx
 
@@ -103,6 +105,16 @@ export async function executeToolCall(ctx: ToolCallContext): Promise<string> {
     }
   }
 
+  // ── generate_chart ──
+  if (toolName === 'generate_chart') {
+    sendToRenderer({ sessionId, messageId, type: 'thinking:status', text: 'Generando gráfica interactiva...' })
+    try {
+      return await executeGenerateChart(toolInput, ctx.connectedFolder || ctx.workspaceRoot || process.cwd())
+    } catch (err) {
+      return `Error generando gráfica: ${err instanceof Error ? err.message : String(err)}`
+    }
+  }
+
   // ── Fallback ──
-  return `Herramienta ${toolName} ejecutada.`
+  return `Error: La herramienta '${toolName}' no está registrada o implementada en el sistema.`
 }

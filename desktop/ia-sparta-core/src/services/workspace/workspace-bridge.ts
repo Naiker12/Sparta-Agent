@@ -11,11 +11,25 @@ export async function activateWorkspace(path: string): Promise<void> {
   projectStore.setProjectRootPath(activeId, path)
 
   // 2. Notificar al proceso principal de Electron (seguridad y watcher de filesystem)
-  if (typeof window !== 'undefined' && window.fs?.setWorkspaceRoot) {
+  if (typeof window !== 'undefined' && window.fs) {
     try {
-      await window.fs.setWorkspaceRoot(path)
+      if (window.fs.readDirLevel) {
+        const res = await window.fs.readDirLevel(path)
+        if (res.error) {
+          console.warn('[workspace-bridge] Path no existe o inaccesible, desconectando:', path)
+          const { useFolderStore } = await import('../../stores/folder.store')
+          useFolderStore.getState().disconnectFolder()
+          return
+        }
+      }
+      if (window.fs.setWorkspaceRoot) {
+        await window.fs.setWorkspaceRoot(path)
+      }
     } catch (err) {
       console.warn('[workspace-bridge] Error setting workspace root in electron main:', err)
+      const { useFolderStore } = await import('../../stores/folder.store')
+      useFolderStore.getState().disconnectFolder()
+      return
     }
   }
 

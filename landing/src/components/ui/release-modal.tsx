@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, X, Download, FileText, CheckCircle2, ShieldCheck, Cpu, ArrowRight } from 'lucide-react';
+import { Sparkles, X, Download, FileText, ShieldCheck, Cpu, ArrowRight } from 'lucide-react';
 
 export function ReleaseModal() {
   const [isOpen, setIsOpen] = useState(false);

@@ -103,9 +103,18 @@ export function buildSystemPrompt(
   userText: string
 ): string {
   const folderPath = req.connectedFolder || req.workspaceRoot
+
+  const modeNotice = req.mode === 'chat'
+    ? `[MODO CHAT ACTIVADO (SOLO LECTURA / CONSULTA)]
+Estás operando en Modo Chat. En este modo SOLO podés listar, buscar, consultar y leer información (archivos, web, etc.). Queda estrictamente PROHIBIDO crear, modificar, editar o borrar archivos o recursos. Si el usuario te pide crear, editar o borrar algún recurso, avísale explícitamente: "Debes activar el Modo Agente en el selector de modo para crear, editar o borrar recursos."`
+    : `[MODO AGENTE ACTIVADO (MODIFICACIÓN AUTORIZADA)]
+Estás operando en Modo Agente. Tenés autorización para crear, modificar, actualizar y eliminar recursos según lo solicite el usuario. Cada acción de modificación desplegará una solicitud de permiso para aprobación del usuario.`
+
   const workspaceContext = folderPath
-    ? `[INFORMACIÓN DEL WORKSPACE]\nLa carpeta de trabajo conectada es: "${folderPath}".\nUsá esta ruta absoluta como base para list_directory, read_file, write_file, edit_file, delete_file y run_command a menos que el usuario indique explícitamente otra.`
-    : ''
+    ? `[INFORMACIÓN DEL WORKSPACE]
+La carpeta de trabajo conectada es: "${folderPath}". Esta información la recibes en CADA mensaje. Queda estrictamente PROHIBIDO volver a preguntar al usuario por la carpeta o la ruta; ya la tienes. Usala como base para todas tus operaciones a menos que el usuario indique explícitamente otra ruta.`
+    : `[INFORMACIÓN DEL WORKSPACE]
+No hay ninguna carpeta conectada actualmente. Si el usuario te pide leer, crear o modificar archivos de un proyecto o repositorio, decile explícitamente: "Debes conectar una carpeta de trabajo usando el botón de conectar carpeta en la barra de herramientas." NUNCA asumas ni inventes rutas.`
 
   const skillContext = buildSkillContext(req.skills, userText)
 
@@ -133,12 +142,24 @@ Cuando el usuario solicite información reciente, partidos en vivo, noticias, fe
 - Si el usuario aprueba una propuesta de datos u hoja de cálculo (ej. "sí"), muestra primero la estructura o tabla formateada dentro del chat en Markdown.
 - Únicamente usá 'write_file' o 'filesystem__write_file' si el usuario te pidió explícitamente guardar un archivo en una ruta concreta o si aceptó de forma inequívoca una ruta declarada.`
 
+  const chartGenerationDirective = `[REGLA ESTRICTA DE GENERACIÓN DE GRÁFICAS]
+Usá 'generate_chart' cuando se cumpla lo siguiente:
+1. El usuario solicitó explícitamente ver una gráfica/chart/visualización (ej: "muéstrame una gráfica de barras..."), O el propio análisis numérico se entiende mucho mejor con una comparación visual.
+2. Si el usuario pide una gráfica pero no especifica números exactos (ej: "muestra una gráfica de ventas Q1 a Q4"), podés generar una gráfica de ejemplo con datos representativos razonables y aclararle al usuario los valores usados.
+3. Si estás analizando un archivo o datos reales concretos, usá siempre los datos exactos extraídos.
+
+NO uses 'generate_chart':
+- Para diagramas de flujo, arquitectura, mapas mentales o ilustraciones (eso no es una gráfica de datos; usá Mermaid o código).
+- Como reacción automática si el usuario no pidió visualización y una tabla Markdown alcanza.
+- Más de una vez por turno salvo que el usuario haya pedido explícitamente comparar varias vistas.`
+
   const basePrompt = req.isSubagent ? SUBAGENT_PROMPT : (req.system || MAIN_AGENT_PROMPT)
   const skillsCategorySection = req.skills && req.skills.length > 0 ? SKILLS_CATEGORY_PROMPT : ''
   const terminalSection = req.hasTerminalActive || req.isSubagent ? TERMINAL_PROMPT : ''
 
   return [
     basePrompt,
+    modeNotice,
     skillsCategorySection,
     terminalSection,
     PROVIDERS_PROMPT,
@@ -151,5 +172,6 @@ Cuando el usuario solicite información reciente, partidos en vivo, noticias, fe
     summaryDirective,
     fileCreationDirective,
     realTimeWebDirective,
+    chartGenerationDirective,
   ].filter(Boolean).join('\n\n')
 }

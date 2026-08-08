@@ -17,6 +17,7 @@ let _usingRaf = false
 let _lastFlushAt = 0
 const MIN_FLUSH_MS = 50 // minimum ms between flushes
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const PROFILE = typeof globalThis !== 'undefined' && !!(globalThis as any).__SPARTA_PROFILE_STREAMS__
 let _flushCount = 0
 let _totalCharsFlushed = 0

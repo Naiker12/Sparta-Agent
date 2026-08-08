@@ -5,6 +5,7 @@
 
 import { buildWebSearchTool } from '../../../ia-sparta-core/src/services/tools/web-search'
 import { buildWebFetchTool } from '../../../ia-sparta-core/src/services/tools/web-fetch'
+import { buildGenerateChartTool } from '../../../ia-sparta-core/src/services/tools/generate-chart'
 
 /** Catálogo de referencia de herramientas MCP conocidas con schemas explícitos */
 export const mcpCatalogReferenceTools: Record<string, Array<{ name: string; description: string; inputSchema?: Record<string, unknown> }>> = {
@@ -307,8 +308,42 @@ export const mcpCatalogReferenceTools: Record<string, Array<{ name: string; desc
  * catálogo de referencia completo vuelve innecesariamente grande la petición
  * y ofrece funciones que el usuario no conectó.
  */
-export function buildToolsList(requestTools: unknown[] | undefined, webSearchEnabled?: boolean): unknown[] {
-  const tools: unknown[] = requestTools ? [...requestTools] : []
+const MUTATION_TOOL_NAMES = new Set([
+  'write_file',
+  'edit_file',
+  'delete_file',
+  'run_command',
+  'generate_chart',
+  'filesystem__write_file',
+  'filesystem__delete_file',
+])
+
+export function buildToolsList(
+  requestTools: unknown[] | undefined,
+  webSearchEnabled?: boolean,
+  mode: 'chat' | 'agent' = 'agent',
+): unknown[] {
+  let tools: unknown[] = requestTools ? [...requestTools] : []
+
+  if (mode === 'chat') {
+    // In Chat Mode (read-only), remove any mutation tools
+    tools = tools.filter((t: any) => {
+      const name = t.name || t.function?.name
+      if (MUTATION_TOOL_NAMES.has(name)) return false
+      if (typeof name === 'string' && (name.startsWith('create_') || name.startsWith('update_') || name.startsWith('delete_') || name.startsWith('send_'))) {
+        return false
+      }
+      return true
+    })
+  } else {
+    // In Agent Mode, generate_chart is available
+    const hasGenerateChart = tools.some((t: any) =>
+      t.name === 'generate_chart' || t.function?.name === 'generate_chart'
+    )
+    if (!hasGenerateChart) {
+      tools.push(buildGenerateChartTool())
+    }
+  }
 
   if (webSearchEnabled) {
     const hasWebSearch = tools.some((t: any) =>
