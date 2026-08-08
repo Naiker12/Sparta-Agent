@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { CommandSanitizer } from '../desktop/ia-sparta-ipc-bridge/src/tools/security-sanitizer'
-import { PathGuard } from '../desktop/ia-sparta-ipc-bridge/src/tools/main-process-file-tools'
+import { PathGuard } from '../desktop/ia-sparta-ipc-bridge/src/tools/path-guard'
 
 describe('CommandSanitizer', () => {
   it('debe bloquear comandos destructivos peligrosos', () => {

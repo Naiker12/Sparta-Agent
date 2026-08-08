@@ -11,24 +11,9 @@ import path from 'node:path'
 import { getWorkspaceRoot } from '../channels/filesystem.channel'
 import { isDocumentConvertible, convertDocumentToMarkdown, getCachedAttachmentContent } from '../channels/document.channel'
 import { IGNORED_DIR_SET } from '../../../ia-sparta-core/src/lib/filesystem-constants'
+import { isWithinRoot, PathGuard } from './path-guard'
 
-export function isWithinRoot(filePath: string, root: string): boolean {
-  try {
-    const resolved = fs.realpathSync(path.resolve(filePath))
-    const resolvedRoot = fs.realpathSync(path.resolve(root))
-    return resolved === resolvedRoot || resolved.startsWith(resolvedRoot + path.sep)
-  } catch {
-    const resolved = path.resolve(filePath)
-    const resolvedRoot = path.resolve(root)
-    return resolved === resolvedRoot || resolved.startsWith(resolvedRoot + path.sep)
-  }
-}
-
-export class PathGuard {
-  public static isWithinRoot(filePath: string, root: string): boolean {
-    return isWithinRoot(filePath, root)
-  }
-}
+export { isWithinRoot, PathGuard }
 
 export const MAIN_FILE_TOOLS = ['read_file', 'write_file', 'edit_file', 'delete_file', 'list_directory'] as const
 
