@@ -5,7 +5,6 @@
  * usando fs/fsPromises directo y respetando la guarda de seguridad isWithinRoot.
  */
 
-import fs from 'node:fs'
 import fsPromises from 'node:fs/promises'
 import path from 'node:path'
 import { getWorkspaceRoot } from '../channels/filesystem.channel'
