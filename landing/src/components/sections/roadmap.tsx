@@ -6,6 +6,10 @@ import { CheckCircle2, Clock } from 'lucide-react';
 export function Roadmap() {
   const completed = [
     'Runtime agéntico nativo en TypeScript (Plan → Act → Reflect)',
+    'Motor de Gráficas V2 (8 tipos, 5 temas visuales, exportación HD)',
+    'Subagentes delegados paralelos (delegate_research, delegate_code)',
+    'Trazado visual de búsqueda web estilo Claude Code con auto-colapso',
+    'Instalación local asInvoker (NSIS) sin elevación de UAC',
     'Integración de Monaco Editor + Base UI + xterm.js en Electron 30',
     'Broker de seguridad local (CommandSanitizer + PathGuard)',
     'Soporte multi-modelo (Ollama, Llama 3, Anthropic Claude, Gemini, OpenAI)',
@@ -18,7 +22,7 @@ export function Roadmap() {
     'Soporte parcial para extensiones de VS Code',
     'Memoria a largo plazo persistente con ChromaDB vectorial',
     'Sincronización P2P encriptada para equipos de ingeniería',
-    'Subagentes paralelos masivos con balanceo dinámico de cuotas',
+    'Balanceo dinámico de cuotas multi-proveedor en tiempo real',
   ];
 
   return (
@@ -41,7 +45,7 @@ export function Roadmap() {
                   <CheckCircle2 className="w-5 h-5" />
                 </div>
                 <h3 className="text-xl font-bold font-display text-[#d8ecf8]">
-                  Logrado (v0.1.4)
+                  Logrado (v0.1.5)
                 </h3>
               </div>
               <Badge variant="success">Completado</Badge>

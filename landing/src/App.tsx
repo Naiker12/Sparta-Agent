@@ -19,7 +19,7 @@ export default function App() {
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
       <div className="min-h-screen max-w-full overflow-x-hidden bg-[var(--bg-base)] text-[var(--text-primary)] flex flex-col font-sans selection:bg-[#663af3]/30 selection:text-white relative transition-colors duration-300">
-        {/* Release v0.1.4 Announcement Modal */}
+        {/* Release v0.1.5 Announcement Modal */}
         <ReleaseModal />
 
         {/* Professional Custom Cursor */}

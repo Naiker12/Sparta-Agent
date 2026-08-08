@@ -6,8 +6,8 @@ export function ReleaseModal() {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    // Show modal if user hasn't dismissed version 0.1.4 announcement
-    const hasSeen = localStorage.getItem('sparta_release_v0.1.4_seen');
+    // Show modal if user hasn't dismissed version 0.1.5 announcement
+    const hasSeen = localStorage.getItem('sparta_release_v0.1.5_seen');
     if (!hasSeen) {
       const timer = setTimeout(() => setIsOpen(true), 600);
       return () => clearTimeout(timer);
@@ -15,7 +15,7 @@ export function ReleaseModal() {
   }, []);
 
   const handleClose = () => {
-    localStorage.setItem('sparta_release_v0.1.4_seen', 'true');
+    localStorage.setItem('sparta_release_v0.1.5_seen', 'true');
     setIsOpen(false);
   };
 
