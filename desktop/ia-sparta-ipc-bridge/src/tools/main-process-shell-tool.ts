@@ -11,55 +11,9 @@ import { execSync } from 'node:child_process'
 import { accessSync } from 'node:fs'
 import { BrowserWindow } from 'electron'
 import { getWorkspaceRoot } from '../channels/filesystem.channel'
+import { CommandSanitizer, DESTRUCTIVE_PATTERNS } from './security-sanitizer'
 
-const DESTRUCTIVE_PATTERNS = [
-  /^rm\s+(-rf?\s+)?(\/|[~]\/|\.\.)/,
-  /^rmdir\s+\//,
-  /^dd\s+if=/,
-  /^mkfs\./,
-  /^fdisk\s+/,
-  /^format\s+/,
-  /^mkswap\b/,
-  /gpg\s+--symmetric\s+--passphrase/,
-  /openssl\s+enc\s+-aes-256-cbc/,
-  /find\s+\/.*-exec\s+rm/,
-  /find\s+\/.*-delete/,
-  /\bshred\s+/,
-  /\bwipe\s+/,
-  /\bsrm\s+/,
-  /(wget|curl)\s+.*[|;]/,
-  /(wget|curl)\s+.*\|\s*(ba|z)?sh/,
-  /\bbash\s+<(wget|curl)/,
-  /\bsudo\s+(rm|dd|mkfs)/,
-  /\bsu\s+-/,
-  /\bchmod\s+(4777|777)\s+/,
-  /\bchown\s/,
-  /\bpasswd\b/,
-  /\bvipw\b/,
-  /\bvisudo\b/,
-  /\bnmap\s+/,
-  /\bmasscan\s+/,
-  /\bnc\s+-[lv]/,
-  /\bsocat\s+/,
-  /\bssh\s+.*-[LRD]\s+/,
-  /\bproxychains\s+/,
-  /^del\s+\/f\s+\/s/i,
-  /^rd\s+\/s\s+\/q/i,
-  /^cipher\s+\/w:/i,
-  /^>.*(sparta-vault\.json|\.env)$/,
-  />\s*(sparta-vault\.json|\.env|id_rsa|id_ed25519)/,
-  /\bformat\s+\/[qQ]/,
-  /\bdiskpart\b/,
-]
-
-export class CommandSanitizer {
-  private static readonly DESTRUCTIVE_PATTERNS = DESTRUCTIVE_PATTERNS
-
-  public static isForbidden(command: string): boolean {
-    const trimmed = command.trim()
-    return CommandSanitizer.DESTRUCTIVE_PATTERNS.some((pattern) => pattern.test(trimmed))
-  }
-}
+export { CommandSanitizer, DESTRUCTIVE_PATTERNS }
 
 function getShellCommand(profile?: string) {
   if (os.platform() === 'win32') {
