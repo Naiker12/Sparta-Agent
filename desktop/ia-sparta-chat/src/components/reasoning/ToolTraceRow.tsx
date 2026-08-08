@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Check, Loader2, X, AlertTriangle, FileText, Search, ChevronRight, Sparkles, FolderTree, Globe, Terminal as TerminalIcon, Pencil, Trash2, Wrench } from 'lucide-react'
+import { Check, Loader2, X, AlertTriangle, FileText, Search, ChevronRight, Sparkles, FolderTree, Globe, Terminal as TerminalIcon, Pencil, Trash2, Wrench, BarChart3 } from 'lucide-react'
 import { SearchResultsList } from './SearchResultsList'
 import { RunningCommandBlock } from './RunningCommandBlock'
 import { inferToolSubstatus, substatusLabel, useMCPStore, getVendorForServer, useArtifactStore, useSessionStore } from 'ia-sparta-core'
@@ -223,6 +223,12 @@ function getToolCallSummary(toolCall: ToolCall): { icon: React.ReactNode; label:
         label: 'Ejecutando comando',
         description: input?.command ? truncate(String(input.command)) : '',
       }
+    case 'generate_chart':
+      return {
+        icon: <BarChart3 size={iconSize} strokeWidth={1.5} />,
+        label: 'Generando gráfica interactiva',
+        description: input?.title ? truncate(String(input.title)) : '',
+      }
     default: {
       // Try to resolve as an MCP server tool — show brand icon if found
       const server = useMCPStore.getState().servers.find(s =>
@@ -285,10 +291,15 @@ function ToolTraceRowContent({ toolCall }: ToolTraceRowProps) {
   const [liveSubstatus, setLiveSubstatus] = useState(toolCall.substatus)
   const { icon, label, description } = getToolCallSummary(toolCall)
   const writeFilePath = useMemo(() => {
+    if (toolCall.toolName === 'generate_chart') {
+      const output = typeof toolCall.output === 'string' ? toolCall.output : ''
+      const match = output.match(/Guardada en[^:]*:\s*([^\s\r\n]+)/) || output.match(/([a-zA-Z]:\\[^\s\r\n]+\.html)/)
+      return match ? match[1] : null
+    }
     if (toolCall.toolName !== 'write_file_tool' && toolCall.toolName !== 'write_file') return null
     const input = toolCall.input as Record<string, unknown> | undefined
     return (input?.path ?? input?.file_path ?? input?.directory ?? null) as string | null
-  }, [toolCall.toolName, toolCall.input])
+  }, [toolCall.toolName, toolCall.input, toolCall.output])
   const isSearch = toolCall.toolName === 'web_search' || toolCall.toolName === 'web_search_tool'
   const isFetch = toolCall.toolName === 'web_fetch' || toolCall.toolName === 'web_fetch_tool'
 

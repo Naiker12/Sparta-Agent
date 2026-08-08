@@ -9,7 +9,7 @@ export interface ChartSeries {
 }
 
 export interface GenerateChartInput {
-  type: 'bar' | 'line' | 'pie' | 'doughnut' | 'area' | 'scatter' | 'radar'
+  type: 'bar' | 'line' | 'pie' | 'doughnut' | 'area'
   title: string
   labels: string[]
   series: ChartSeries[]
@@ -21,13 +21,13 @@ export function buildGenerateChartTool() {
   return {
     name: 'generate_chart',
     description:
-      'Genera una gráfica de datos profesional (barras, líneas, pastel, área, dispersión, radar) a partir de datos numéricos reales que ya tenés en la conversación o que acabás de leer/calcular. NO la uses para ilustraciones, diagramas de flujo ni arte — solo para visualizar datos.',
+      'Genera una gráfica de datos profesional (barras, líneas, pastel, área) a partir de datos numéricos reales que ya tenés en la conversación o que acabás de leer/calcular. NO la uses para ilustraciones, diagramas de flujo ni arte — solo para visualizar datos.',
     input_schema: {
       type: 'object',
       properties: {
         type: {
           type: 'string',
-          enum: ['bar', 'line', 'pie', 'doughnut', 'area', 'scatter', 'radar'],
+          enum: ['bar', 'line', 'pie', 'doughnut', 'area'],
           description: 'Tipo de gráfica a visualizar',
         },
         title: {

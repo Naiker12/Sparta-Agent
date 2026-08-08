@@ -313,7 +313,6 @@ const MUTATION_TOOL_NAMES = new Set([
   'edit_file',
   'delete_file',
   'run_command',
-  'generate_chart',
   'filesystem__write_file',
   'filesystem__delete_file',
 ])
@@ -335,14 +334,14 @@ export function buildToolsList(
       }
       return true
     })
-  } else {
-    // In Agent Mode, generate_chart is available
-    const hasGenerateChart = tools.some((t: any) =>
-      t.name === 'generate_chart' || t.function?.name === 'generate_chart'
-    )
-    if (!hasGenerateChart) {
-      tools.push(buildGenerateChartTool())
-    }
+  }
+
+  // generate_chart is a read-only visualizer available in both modes
+  const hasGenerateChart = tools.some((t: any) =>
+    t.name === 'generate_chart' || t.function?.name === 'generate_chart'
+  )
+  if (!hasGenerateChart) {
+    tools.push(buildGenerateChartTool())
   }
 
   if (webSearchEnabled) {

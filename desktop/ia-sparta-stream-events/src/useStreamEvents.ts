@@ -4,7 +4,7 @@ import type { SpartaEvent } from 'ia-sparta-core'
 
 import { handleThinkingStarted, handleThinkingToken, handleThinkingCompleted, handleThinkingStatus, handleReasoningToken, handleReasoningAvailable } from './handlers/thinking.handler'
 import { handleStreamToken, handleStreamCompleted, handleStreamAborted, handleStreamCancelled, handleStreamNotice, handleStreamError } from './handlers/stream.handler'
-import { handleToolCalled, handleToolResult, handleToolError } from './handlers/tool.handler'
+import { handleToolCalled, handleToolResult, handleToolError, handleChartGenerated } from './handlers/tool.handler'
 import { handleMCPEvent, handleMCPServerAdded, handleMCPServerRemoved } from './handlers/mcp.handler'
 import { handleSearchProgress } from './handlers/search.handler'
 import { handleSkillActivated, handleSkillCompleted, handleSkillAutoSuggested } from './handlers/skill.handler'
@@ -116,6 +116,7 @@ function _handleEvent(rawEvent: SpartaEvent) {
     case 'tool:called': handleToolCalled(ctx); break
     case 'tool:result': handleToolResult(ctx); break
     case 'tool:error': handleToolError(ctx); break
+    case 'chart:generated': handleChartGenerated(ctx); break
 
     // Search
     case 'search:progress': handleSearchProgress(ctx); break

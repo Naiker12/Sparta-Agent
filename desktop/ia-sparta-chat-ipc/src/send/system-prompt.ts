@@ -143,15 +143,12 @@ Cuando el usuario solicite información reciente, partidos en vivo, noticias, fe
 - Únicamente usá 'write_file' o 'filesystem__write_file' si el usuario te pidió explícitamente guardar un archivo en una ruta concreta o si aceptó de forma inequívoca una ruta declarada.`
 
   const chartGenerationDirective = `[REGLA ESTRICTA DE GENERACIÓN DE GRÁFICAS]
-Usá 'generate_chart' cuando se cumpla lo siguiente:
-1. El usuario solicitó explícitamente ver una gráfica/chart/visualización (ej: "muéstrame una gráfica de barras..."), O el propio análisis numérico se entiende mucho mejor con una comparación visual.
-2. Si el usuario pide una gráfica pero no especifica números exactos (ej: "muestra una gráfica de ventas Q1 a Q4"), podés generar una gráfica de ejemplo con datos representativos razonables y aclararle al usuario los valores usados.
-3. Si estás analizando un archivo o datos reales concretos, usá siempre los datos exactos extraídos.
-
-NO uses 'generate_chart':
-- Para diagramas de flujo, arquitectura, mapas mentales o ilustraciones (eso no es una gráfica de datos; usá Mermaid o código).
-- Como reacción automática si el usuario no pidió visualización y una tabla Markdown alcanza.
-- Más de una vez por turno salvo que el usuario haya pedido explícitamente comparar varias vistas.`
+Usá 'generate_chart' cuando el usuario solicite una gráfica interactiva de vista previa (Artifact):
+1. 'generate_chart' genera un Artifact HTML interactivo que se abre automáticamente en el panel lateral derecho de vista previa.
+2. Si el usuario pide explícitamente ver una gráfica (ej: "muestra una gráfica de barras..."), invocá 'generate_chart'.
+3. SIEMPRE escribe primero un texto breve en el chat explicando los datos mostrados, y luego invocá 'generate_chart'.
+4. Si el usuario no especificó números exactos, usá cifras representativas razonables de ejemplo (ej. Q1: $45k, Q2: $58k, Q3: $52k, Q4: $71k).
+5. NUNCA ejecutes 'web_search' para buscar datos de ejemplo de una gráfica genérica.`
 
   const basePrompt = req.isSubagent ? SUBAGENT_PROMPT : (req.system || MAIN_AGENT_PROMPT)
   const skillsCategorySection = req.skills && req.skills.length > 0 ? SKILLS_CATEGORY_PROMPT : ''

@@ -109,7 +109,16 @@ export async function executeToolCall(ctx: ToolCallContext): Promise<string> {
   if (toolName === 'generate_chart') {
     sendToRenderer({ sessionId, messageId, type: 'thinking:status', text: 'Generando gráfica interactiva...' })
     try {
-      return await executeGenerateChart(toolInput, ctx.connectedFolder || ctx.workspaceRoot || process.cwd())
+      const res = await executeGenerateChart(toolInput)
+      sendToRenderer({
+        sessionId,
+        messageId,
+        type: 'chart:generated',
+        toolCallId,
+        filePath: res.filePath,
+        title: res.title,
+      })
+      return res.output
     } catch (err) {
       return `Error generando gráfica: ${err instanceof Error ? err.message : String(err)}`
     }

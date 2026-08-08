@@ -189,8 +189,26 @@ function resolveDdgUrl(url: string): string {
   return url
 }
 
+async function wikipediaSearch(query: string): Promise<string> {
+  const signal = AbortSignal.timeout(10_000)
+  const url = `https://es.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&format=json&origin=*`
+  const resp = await fetch(url, { signal })
+  if (!resp.ok) return ''
+  const data = await resp.json()
+  const searchResults = data?.query?.search || []
+  if (searchResults.length === 0) return ''
+
+  return searchResults
+    .slice(0, 5)
+    .map((r: { title: string; pageid: number; snippet: string }, i: number) => {
+      const cleanSnippet = r.snippet.replace(/<[^>]+>/g, '').trim()
+      return `${i + 1}. ${r.title}\n   URL: https://es.wikipedia.org/wiki?curid=${r.pageid}\n   ${cleanSnippet}`
+    })
+    .join('\n\n')
+}
+
 export async function executeWebSearch(query: string, count = 5): Promise<string> {
-  const engines = [duckduckgoSearch, fallbackSearch]
+  const engines = [duckduckgoSearch, fallbackSearch, wikipediaSearch]
 
   for (const engine of engines) {
     try {

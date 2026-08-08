@@ -1,6 +1,13 @@
-import { useChatStore, useAgentStore, useEventBus, labelForToolCall } from 'ia-sparta-core'
+import { useChatStore, useAgentStore, useEventBus, labelForToolCall, useArtifactStore } from 'ia-sparta-core'
 import { inferToolSubstatus } from 'ia-sparta-core'
 import type { EventHandlerCtx } from './types'
+
+export function handleChartGenerated(ctx: EventHandlerCtx) {
+  const filePath = (ctx.event.filePath as string) || ''
+  if (filePath) {
+    useArtifactStore.getState().open(filePath, ctx.sid)
+  }
+}
 
 export const SUBAGENT_TOOL_MAP: Record<string, { name: string; type: 'research' | 'coding' | 'automation' | 'project'; description: string }> = {
   delegate_research: {

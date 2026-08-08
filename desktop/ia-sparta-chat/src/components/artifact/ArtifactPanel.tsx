@@ -179,9 +179,11 @@ export function ArtifactPanel() {
               <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {fileName}
               </span>
-              <span style={{ fontSize: 11, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {openPath}
-              </span>
+              {openPath && !openPath.includes('sparta\\charts') && !openPath.includes('sparta/charts') && (
+                <span style={{ fontSize: 11, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {openPath}
+                </span>
+              )}
             </div>
           </div>
 
