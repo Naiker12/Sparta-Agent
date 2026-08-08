@@ -91,7 +91,7 @@ export function AppMenu() {
 
   useEffect(() => {
     if ((window as any).electronAPI?.getVersion) {
-      ;(window as any).electronAPI.getVersion().then((v: string) => {
+      (window as any).electronAPI.getVersion().then((v: string) => {
         if (v) setAppVersion(`v${v.replace(/^v/, '')}`)
       }).catch(() => {})
     }

@@ -73,8 +73,8 @@ function createWindow() {
 
   win.on('closed', () => {
     for (const [, session] of sessions) {
-      if (session && typeof (session as any).destroy === 'function') {
-        (session as any).destroy()
+      if (session && 'destroy' in session && typeof (session as { destroy?: () => void }).destroy === 'function') {
+        (session as { destroy: () => void }).destroy()
       }
     }
     sessions.clear()
