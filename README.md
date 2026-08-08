@@ -79,14 +79,14 @@ A diferencia de las extensiones tradicionales, Sparta Agent funciona como un mie
 
 ## Características Principales
 
-*   ** Planificación Transparente e Interactiva (`create_plan`)**: Cada tarea se desglosa en un plan de ejecución visual en tiempo real. El desarrollador puede inspeccionar, pausar o guiar el plan en cualquier momento.
-*   ** Previsualizaciones Nativas de Documentos**: Visores nativos para archivos de **Excel (`.xlsx`, `.xls`)**, **Word (`.docx`)**, PDF, imágenes y código fuente directamente dentro del panel de artefactos.
-*   ** Adjuntos Flotantes e Imágenes Multimodales**: Soporte para Drag & Drop y pegado de imágenes (`Ctrl+V`) con tarjetas visuales (*chips*) tipo ChatGPT/Claude y soporte de visión por IA.
-*   ** Editor de Código Monaco & Diferenciales Inteligentes**: Integración directa con Monaco Editor y un motor de diffs ultra dinámico impulsado por `@pierre/diffs` y `@pierre/trees` para revisión precisa de cambios.
-*   ** Terminal Emulado Nativo (`xterm.js` + `node-pty`)**: Shell multi-instancia totalmente interactivo integrado en el entorno de desarrollo para compilar, ejecutar pruebas y gestores de paquetes.
-*   ** Protocolo MCP (Model Context Protocol)**: Conectividad nativa estándar con decenas de servidores MCP (GitHub, bases de datos, productividad, navegadores y herramientas de monitoreo).
-*   ** Árboles de Razonamiento Visual ("Thinking Orbs")**: Visualización interactiva de estados de pensamiento y subagentes en ejecución en tiempo real.
-*   ** Broker de Seguridad y Permisos (Rust Core)**: Intercepción nativa de comandos peligrosos (`CommandSanitizer`), protección de rutas sensibles (`PathGuard`) y diálogos modales de autorización previa.
+*    Planificación Transparente e Interactiva (`create_plan`)**: Cada tarea se desglosa en un plan de ejecución visual en tiempo real. El desarrollador puede inspeccionar, pausar o guiar el plan en cualquier momento.
+*    Previsualizaciones Nativas de Documentos**: Visores nativos para archivos de **Excel (`.xlsx`, `.xls`)**, **Word (`.docx`)**, PDF, imágenes y código fuente directamente dentro del panel de artefactos.
+*    Adjuntos Flotantes e Imágenes Multimodales**: Soporte para Drag & Drop y pegado de imágenes (`Ctrl+V`) con tarjetas visuales (*chips*) tipo ChatGPT/Claude y soporte de visión por IA.
+*    Editor de Código Monaco & Diferenciales Inteligentes**: Integración directa con Monaco Editor y un motor de diffs ultra dinámico impulsado por `@pierre/diffs` y `@pierre/trees` para revisión precisa de cambios.
+*    Terminal Emulado Nativo (`xterm.js` + `node-pty`)**: Shell multi-instancia totalmente interactivo integrado en el entorno de desarrollo para compilar, ejecutar pruebas y gestores de paquetes.
+*    Protocolo MCP (Model Context Protocol)**: Conectividad nativa estándar con decenas de servidores MCP (GitHub, bases de datos, productividad, navegadores y herramientas de monitoreo).
+*    Árboles de Razonamiento Visual ("Thinking Orbs")**: Visualización interactiva de estados de pensamiento y subagentes en ejecución en tiempo real.
+*    Broker de Seguridad y Permisos (Rust Core)**: Intercepción nativa de comandos peligrosos (`CommandSanitizer`), protección de rutas sensibles (`PathGuard`) y diálogos modales de autorización previa.
 
 ---
 
