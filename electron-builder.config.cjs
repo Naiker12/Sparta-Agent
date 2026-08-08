@@ -49,6 +49,7 @@ module.exports = {
     artifactName: 'Sparta-Agent-Mac-\${version}-Installer.\${ext}'
   },
   win: {
+    requestedExecutionLevel: 'asInvoker',
     target: [
       {
         target: 'nsis',
@@ -60,7 +61,6 @@ module.exports = {
   nsis: {
     oneClick: false,
     perMachine: false,
-    requestedExecutionLevel: 'asInvoker',
     allowToChangeInstallationDirectory: true,
     deleteAppDataOnUninstall: false
   },
