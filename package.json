@@ -17,8 +17,8 @@
   },
   "scripts": {
     "dev": "vite",
-    "landing:dev": "pnpm --filter landing dev",
-    "landing:build": "pnpm --filter landing build",
+    "landing:dev": "pnpm --filter ./landing dev",
+    "landing:build": "pnpm --filter ./landing build",
     "build": "tsc && vite build && node scripts/check-main-bundle.js && electron-builder --config electron-builder.config.cjs",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives",
     "preview": "vite preview",

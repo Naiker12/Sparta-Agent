@@ -33,7 +33,7 @@ jobs:
         run: pnpm install --no-frozen-lockfile
 
       - name: Build Static Site
-        run: pnpm --filter landing build:gh
+        run: pnpm --filter ./landing build:gh
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
