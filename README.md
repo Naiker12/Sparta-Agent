@@ -17,24 +17,6 @@
   </p>
 </div>
 
----
-
-##  Tabla de Contenidos
-- [ Galería del Sistema](#-galería-del-sistema)
-- [ Propuesta de Valor y Caso de Negocio](#-propuesta-de-valor-y-caso-de-negocio)
-- [ Características Principales](#-características-principales)
-- [ Arquitectura Conceptual del Sistema](#️-arquitectura-conceptual-del-sistema)
-- [ Matriz de Seguridad y Privacidad](#️-matriz-de-seguridad-y-privacidad)
-- [ Catálogo de Integraciones MCP Nativas](#-catálogo-de-integraciones-mcp-nativas)
-- [ Proveedores de IA Compatibles](#-proveedores-de-ia-compatibles)
-- [ Requisitos e Instalación](#️-requisitos-e-instalación)
-- [ Uso de la CLI Sparta](#-uso-de-la-cli-sparta)
-- [ Estructura del Proyecto](#-estructura-del-proyecto)
-- [ Hoja de Ruta (Roadmap)](#-hoja-de-ruta-roadmap)
-- [ Licencia](#-licencia)
-
----
-
 ##  Galería del Sistema
 
 <div align="center">
