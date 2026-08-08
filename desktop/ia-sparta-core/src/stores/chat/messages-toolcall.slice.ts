@@ -7,6 +7,7 @@ export interface MessagesToolCallSlice {
   updateToolCallStatus: (sessionId: string, messageId: string, toolCallId: string, status: ToolCall['status'], result?: string, toolName?: string) => void
   closeStaleToolCalls: (sessionId: string, messageId: string) => void
   updateSearchProgress: (sessionId: string, messageId: string, updater: (items: SearchProgressItem[]) => SearchProgressItem[], toolCallId?: string) => void
+  setToolCallArtifactPath: (sessionId: string, messageId: string, toolCallId: string, artifactPath: string) => void
 }
 
 export const createMessagesToolCallSlice: StateCreator<ChatState, [], [], MessagesToolCallSlice> = (set) => ({
@@ -116,6 +117,29 @@ export const createMessagesToolCallSlice: StateCreator<ChatState, [], [], Messag
                     ),
                   }
                 : { ...msg, searchProgress: updater(msg.searchProgress ?? []) }
+              : msg
+          ),
+        },
+      }
+    }),
+
+  setToolCallArtifactPath: (sessionId, messageId, toolCallId, artifactPath) =>
+    set((s) => {
+      const sessionMessages = s.messagesBySession[sessionId]
+      if (!sessionMessages) return s
+      return {
+        messagesBySession: {
+          ...s.messagesBySession,
+          [sessionId]: sessionMessages.map((msg) =>
+            msg.id === messageId
+              ? {
+                  ...msg,
+                  toolCalls: (msg.toolCalls ?? []).map((tc) =>
+                    tc.id === toolCallId
+                      ? { ...tc, artifactPath }
+                      : tc
+                  ),
+                }
               : msg
           ),
         },

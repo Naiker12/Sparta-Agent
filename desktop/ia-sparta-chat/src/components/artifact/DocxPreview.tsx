@@ -38,7 +38,15 @@ export function DocxPreview({ base64, fileName }: DocxPreviewProps) {
         const arrayBuffer = base64ToArrayBuffer(base64)
         const result = await mammoth.convertToHtml({ arrayBuffer })
         if (isMounted) {
-          setHtmlContent(result.value)
+          // Sanitize mammoth output to strip potentially dangerous elements
+          let html = result.value
+          html = html.replace(/<script[\s\S]*?<\/script>/gi, '')
+          html = html.replace(/<iframe[\s\S]*?<\/iframe>/gi, '')
+          html = html.replace(/<object[\s\S]*?<\/object>/gi, '')
+          html = html.replace(/<embed[^>]*>/gi, '')
+          html = html.replace(/\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi, '')
+          html = html.replace(/(href\s*=\s*["'])javascript:[^"']*(["'])/gi, '$1#$2')
+          setHtmlContent(html)
         }
       } catch (err) {
         console.error('Error parsing Word document:', err)

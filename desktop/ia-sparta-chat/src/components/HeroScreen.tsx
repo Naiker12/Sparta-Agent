@@ -47,8 +47,8 @@ export function HeroScreen() {
       return
     }
     const promptsConfig: Record<string, string> = {
-      coding:   t('chat.activeSkills') === 'Código' ? 'Ayúdame a refactorizar este código: ' : 'Help me refactor this code: ',
-      research: t('chat.activeSkills') === 'Código' ? 'Investiga en profundidad sobre: ' : 'Research in depth about: ',
+      coding:   lang === 'es' ? 'Ayúdame a refactorizar este código: ' : 'Help me refactor this code: ',
+      research: lang === 'es' ? 'Investiga en profundidad sobre: ' : 'Research in depth about: ',
     }
     if (promptsConfig[action]) setInput(promptsConfig[action])
   }

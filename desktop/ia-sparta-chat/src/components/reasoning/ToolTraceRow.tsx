@@ -291,15 +291,17 @@ function ToolTraceRowContent({ toolCall }: ToolTraceRowProps) {
   const [liveSubstatus, setLiveSubstatus] = useState(toolCall.substatus)
   const { icon, label, description } = getToolCallSummary(toolCall)
   const writeFilePath = useMemo(() => {
+    if (toolCall.artifactPath) {
+      return toolCall.artifactPath
+    }
     if (toolCall.toolName === 'generate_chart') {
-      const output = typeof toolCall.output === 'string' ? toolCall.output : ''
-      const match = output.match(/Guardada en[^:]*:\s*([^\s\r\n]+)/) || output.match(/([a-zA-Z]:\\[^\s\r\n]+\.html)/)
-      return match ? match[1] : null
+      // artifactPath is always set via IPC chart:generated event — no fallback needed
+      return null
     }
     if (toolCall.toolName !== 'write_file_tool' && toolCall.toolName !== 'write_file') return null
     const input = toolCall.input as Record<string, unknown> | undefined
     return (input?.path ?? input?.file_path ?? input?.directory ?? null) as string | null
-  }, [toolCall.toolName, toolCall.input, toolCall.output])
+  }, [toolCall.artifactPath, toolCall.toolName, toolCall.input, toolCall.output])
   const isSearch = toolCall.toolName === 'web_search' || toolCall.toolName === 'web_search_tool'
   const isFetch = toolCall.toolName === 'web_fetch' || toolCall.toolName === 'web_fetch_tool'
 

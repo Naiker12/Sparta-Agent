@@ -49,6 +49,7 @@ export function ArtifactPanel() {
     }
     const path: string = effectiveOpenPath
     setError(null)
+    setLoading(true)
     const ext = path.split('.').pop()?.toLowerCase()
     const binaryExts = ['pdf', 'xlsx', 'xls', 'docx', 'doc', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp']
     const needsBinary = binaryExts.includes(ext ?? '')
@@ -56,12 +57,13 @@ export function ArtifactPanel() {
     async function load() {
       try {
         if (window.fs?.readFile) {
-          const text = await window.fs.readFile(path)
-          let base64: string | undefined
           if (needsBinary) {
-            base64 = (await window.fs.readFile(path, 'base64')).content as string
+            const base64Result = await window.fs.readFile(path, 'base64')
+            setFileData({ content: '', base64: base64Result.content as string, encoding: 'base64' })
+          } else {
+            const text = await window.fs.readFile(path)
+            setFileData({ content: text.content ?? '', encoding: 'utf-8' })
           }
-          setFileData({ content: text.content ?? '', base64, encoding: 'utf-8' })
         }
       } catch (e) {
         setError(String(e))

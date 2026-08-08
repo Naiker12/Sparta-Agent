@@ -1,4 +1,4 @@
-import { useEffect, type ComponentType } from 'react'
+import { useState, useEffect, type ComponentType } from 'react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -87,6 +87,15 @@ function handleZoom(delta: number) {
 
 export function AppMenu() {
   const { t } = useTranslation()
+  const [appVersion, setAppVersion] = useState('v0.1.4')
+
+  useEffect(() => {
+    if ((window as any).electronAPI?.getVersion) {
+      ;(window as any).electronAPI.getVersion().then((v: string) => {
+        if (v) setAppVersion(`v${v.replace(/^v/, '')}`)
+      }).catch(() => {})
+    }
+  }, [])
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -322,7 +331,7 @@ export function AppMenu() {
         {
           key: 'about',
           label: t('menu.about'),
-          shortcut: 'v0.1.1',
+          shortcut: appVersion,
           icon: Info,
           onClick: () => {
             useSettingsStore.getState().openSettings()

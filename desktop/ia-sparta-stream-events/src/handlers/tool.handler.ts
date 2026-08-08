@@ -4,7 +4,11 @@ import type { EventHandlerCtx } from './types'
 
 export function handleChartGenerated(ctx: EventHandlerCtx) {
   const filePath = (ctx.event.filePath as string) || ''
+  const toolCallId = (ctx.event.toolCallId as string) || ''
   if (filePath) {
+    if (toolCallId) {
+      useChatStore.getState().setToolCallArtifactPath(ctx.sid, ctx.mid, toolCallId, filePath)
+    }
     useArtifactStore.getState().open(filePath, ctx.sid)
   }
 }

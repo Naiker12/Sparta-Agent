@@ -262,7 +262,7 @@ export const es = {
     save: 'Guardar',
     cancel: 'Cancelar',
     modelPlaceholder: 'Seleccionar modelo...',
-    activeSkills: 'Skills activas cargadas',
+    activeSkills: 'Refactorizar',
     toolCalls: 'Llamadas de herramientas',
     pipelineTrace: 'Trazado de pipeline',
     thinkingTime: 'Proceso de razonamiento',

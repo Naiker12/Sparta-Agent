@@ -36,7 +36,10 @@ export function SheetPreview({ base64, fileName }: SheetPreviewProps) {
   const data = useMemo(() => {
     if (ext === 'csv') {
       try {
-        const text = atob(base64)
+        const binary = atob(base64)
+        const bytes = new Uint8Array(binary.length)
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+        const text = new TextDecoder('utf-8').decode(bytes)
         return parseCSV(text)
       } catch {
         return null

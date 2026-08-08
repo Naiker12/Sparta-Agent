@@ -5,7 +5,7 @@ interface PdfViewerProps {
   fileName: string
 }
 
-export function PdfViewer({ base64, fileName }: PdfViewerProps) {
+export function PdfViewer({ base64 }: PdfViewerProps) {
   const [src, setSrc] = useState<string | null>(null)
   const [error, setError] = useState(false)
 
@@ -27,9 +27,8 @@ export function PdfViewer({ base64, fileName }: PdfViewerProps) {
   if (!src) return <div style={{ padding: 16, color: 'var(--text-muted)' }}>Cargando PDF…</div>
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, height: '100%' }}>
-      <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{fileName}</div>
-      <embed src={src} type="application/pdf" style={{ width: '100%', flex: 1, minHeight: 400, borderRadius: 8, border: '1px solid var(--border-subtle)' }} />
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <embed src={src} type="application/pdf" style={{ width: '100%', flex: 1, minHeight: 400, borderRadius: 0, border: 'none' }} />
     </div>
   )
 }

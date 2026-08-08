@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { ThinkingStatus } from 'ia-sparta-core'
 import { Copy, Check, Pencil, CheckCircle, X, RefreshCw, Trash2, AlertCircle, Settings, ChevronDown } from 'lucide-react'
@@ -40,7 +40,7 @@ interface MessageBubbleProps {
   isLastAssistant?: boolean
 }
 
-export function MessageBubble({ message, isLastUser = false, isLastAssistant = false }: MessageBubbleProps) {
+function MessageBubbleBase({ message, isLastUser = false, isLastAssistant = false }: MessageBubbleProps) {
   const isUser = message.role === 'user'
   const renderState = getMessageRenderState(message.content, message.reasoningText, message.isStreaming ?? false)
   const [copied, setCopied] = useState(false)
@@ -642,8 +642,6 @@ function ReasoningGroupBlock({ group }: { group: ReasoningGroup }) {
     if (userToggled.current) return
     if (isActive) {
       setIsExpanded(true)
-    } else {
-      setIsExpanded(false)
     }
   }, [isActive])
 
@@ -825,10 +823,6 @@ function IconButton({ icon, onClick, title, style: extraStyle }: { icon: React.R
         transition: 'all 0.1s',
         ...extraStyle,
       }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.background = 'var(--bg-hover)'
-        e.currentTarget.style.color = 'var(--text-secondary)'
-      }}
       onMouseLeave={(e) => {
         e.currentTarget.style.background = 'none'
         e.currentTarget.style.color = 'var(--text-muted)'
@@ -838,3 +832,20 @@ function IconButton({ icon, onClick, title, style: extraStyle }: { icon: React.R
     </button>
   )
 }
+
+export const MessageBubble = React.memo(
+  MessageBubbleBase,
+  (prevProps, nextProps) => {
+    if (prevProps.isLastUser !== nextProps.isLastUser) return false
+    if (prevProps.isLastAssistant !== nextProps.isLastAssistant) return false
+    const pm = prevProps.message
+    const nm = nextProps.message
+    if (pm.id !== nm.id) return false
+    if (pm.content !== nm.content) return false
+    if (pm.isStreaming !== nm.isStreaming) return false
+    if (pm.reasoningText !== nm.reasoningText) return false
+    if (pm.toolCalls !== nm.toolCalls) return false
+    if (pm.parts !== nm.parts) return false
+    return true
+  }
+)

@@ -125,7 +125,7 @@ La seguridad es el pilar central de Sparta Agent:
 | **Permission Policy** | Modos `PLAN` y `BUILD` | En modo `PLAN`, la herramienta está restringida a solo lectura. El modo `BUILD` requiere autorización explícita para modificar archivos o ejecutar comandos. |
 | **CommandSanitizer** | Inspección de Comandos | Filtro de seguridad en tiempo real para evitar ejecución de scripts destructivos (`rm -rf`, alteración de registros del sistema, etc.). |
 | **PathGuard** | Restricción de Rutas | Aislamiento del sistema de archivos dentro de la raíz del workspace actual (`.env`, llaves `.pem` y datos privados protegidos). |
-| **Vault Cifrado** | Credenciales Locales | Almacenamiento seguro de claves de API en local mediante cifrado simétrico AES-256-GCM. |
+| **Vault Cifrado** | Credenciales Locales | Almacenamiento seguro de claves de API en local mediante `electron.safeStorage` (Keychain en macOS, DPAPI en Windows y Secret Service en Linux). |
 
 ---
 

@@ -262,7 +262,7 @@ export const en = {
     save: 'Save',
     cancel: 'Cancel',
     modelPlaceholder: 'Select model...',
-    activeSkills: 'Loaded active skills',
+    activeSkills: 'Refactor',
     toolCalls: 'Tool Calls',
     pipelineTrace: 'Pipeline Trace',
     thinkingTime: 'Reasoning process',

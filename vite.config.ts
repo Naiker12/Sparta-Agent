@@ -163,6 +163,30 @@ export default defineConfig(() => {
       minify: 'esbuild',
       chunkSizeWarningLimit: 2000,
       rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              if (id.includes('monaco-editor') || id.includes('@monaco-editor') || id.includes('@uiw/react-codemirror')) {
+                return 'vendor-editor'
+              }
+              if (id.includes('mermaid') || id.includes('d3') || id.includes('thinking-orbs')) {
+                return 'vendor-charts'
+              }
+              if (id.includes('xlsx') || id.includes('mammoth')) {
+                return 'vendor-documents'
+              }
+              if (id.includes('@xterm')) {
+                return 'vendor-xterm'
+              }
+              if (id.includes('@tiptap')) {
+                return 'vendor-tiptap'
+              }
+              if (id.includes('framer-motion') || id.includes('lucide-react')) {
+                return 'vendor-ui-core'
+              }
+            }
+          },
+        },
         onwarn(warning, warn) {
           if (warning.code === 'MODULE_LEVEL_DIRECTIVE') return
           if (warning.code === 'UNUSED_EXTERNAL_IMPORT') return

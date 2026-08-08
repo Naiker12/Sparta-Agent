@@ -58,6 +58,13 @@ desktop/runtime/**/*.node
 
 # Lockfile consistency: project uses pnpm only
 package-lock.json
+yarn.lock
+
+# Temporary build artifacts & timestamp files
+*.timestamp-*.mjs
+package.json.*
+*.tmp
+
 
 # Temporary / runtime files
 .tmp/

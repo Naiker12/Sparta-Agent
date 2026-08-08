@@ -113,7 +113,7 @@ function processChildren(children: React.ReactNode): React.ReactNode {
   return children
 }
 
-function makeMarkdownComponents(syntaxStyle: any): Components {
+function makeMarkdownComponents(syntaxStyle: any, isStreaming?: boolean): Components {
   return {
     p: ({ children }) => <p className="md-p">{processChildren(children)}</p>,
     ul: ({ children }) => <ul className="md-ul">{children}</ul>,
@@ -139,6 +139,32 @@ function makeMarkdownComponents(syntaxStyle: any): Components {
       }
       const lang = match?.[1] ?? ''
       const code = raw.replace(/\n$/, '')
+      if (isStreaming) {
+        return (
+          <div className="md-code-block">
+            <div className="md-code-header">
+              <span className="md-code-lang">{lang || 'code'}</span>
+              <CopyCodeButton code={code} />
+            </div>
+            <pre
+              style={{
+                margin: 0,
+                padding: '12px 14px',
+                fontSize: '12.5px',
+                lineHeight: '1.55',
+                background: 'var(--bg-surface)',
+                color: 'var(--text-primary)',
+                fontFamily: 'var(--font-mono, monospace)',
+                overflowX: 'auto',
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-all',
+              }}
+            >
+              <code>{code}</code>
+            </pre>
+          </div>
+        )
+      }
       return (
         <div className="md-code-block">
           <div className="md-code-header">
@@ -198,13 +224,11 @@ function makeMarkdownComponents(syntaxStyle: any): Components {
   }
 }
 
-
-
 export function MarkdownRenderer({ content, isStreaming }: MarkdownRendererProps) {
   const { theme } = useThemeStore()
   const rawStyle = isDarkTheme(theme) ? oneDark : oneLight
   const syntaxStyle = cleanSyntaxStyle(rawStyle)
-  const components = makeMarkdownComponents(syntaxStyle)
+  const components = makeMarkdownComponents(syntaxStyle, isStreaming)
 
   // Si se está stremeando y hay un bloque de código sin cerrar, cerramos virtualmente la valla
   const renderContent = isStreaming && (content.match(/```/g) || []).length % 2 !== 0
