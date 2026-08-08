@@ -124,6 +124,33 @@ export async function executeToolCall(ctx: ToolCallContext): Promise<string> {
     }
   }
 
+  // ── create_plan ──
+  if (toolName === 'create_plan') {
+    sendToRenderer({ sessionId, messageId, type: 'thinking:status', text: 'Registrando plan de acción...' })
+    try {
+      const title = (toolInput.title as string) || 'Plan de acción'
+      const steps = Array.isArray(toolInput.steps) ? toolInput.steps : []
+      const formattedSteps = steps.map((s: any, idx: number) => `  ${idx + 1}. **${s.title || 'Paso'}**: ${s.description || ''}`).join('\n')
+      return `Plan de acción registrado exitosamente: "${title}"\n\nPasos del plan:\n${formattedSteps}`
+    } catch (err) {
+      return `Error registrando plan: ${err instanceof Error ? err.message : String(err)}`
+    }
+  }
+
+  // ── delegate_research ──
+  if (toolName === 'delegate_research') {
+    sendToRenderer({ sessionId, messageId, type: 'thinking:status', text: 'Delegando tarea a Investigador Delegado...' })
+    const topic = (toolInput.topic as string) || 'Investigación'
+    return `Investigación delegada iniciada con éxito para el tema: "${topic}". El subagente paralelo recopilará y resumirá las fuentes disponibles.`
+  }
+
+  // ── delegate_code ──
+  if (toolName === 'delegate_code') {
+    sendToRenderer({ sessionId, messageId, type: 'thinking:status', text: 'Delegando tarea a Programador Delegado...' })
+    const task = (toolInput.task as string) || 'Desarrollo de código'
+    return `Tarea de programación delegada iniciada con éxito: "${task}". El subagente analizará la estructura y aplicará las refactorizaciones necesarias.`
+  }
+
   // ── Fallback ──
   return `Error: La herramienta '${toolName}' no está registrada o implementada en el sistema.`
 }

@@ -143,11 +143,11 @@ Cuando el usuario solicite información reciente, partidos en vivo, noticias, fe
 - Únicamente usá 'write_file' o 'filesystem__write_file' si el usuario te pidió explícitamente guardar un archivo en una ruta concreta o si aceptó de forma inequívoca una ruta declarada.`
 
   const chartGenerationDirective = `[REGLA ESTRICTA DE GENERACIÓN DE GRÁFICAS]
-Usá 'generate_chart' cuando el usuario solicite una gráfica interactiva de vista previa (Artifact):
-1. 'generate_chart' genera un Artifact HTML interactivo que se abre automáticamente en el panel lateral derecho de vista previa.
-2. Si el usuario pide explícitamente ver una gráfica (ej: "muestra una gráfica de barras..."), invocá 'generate_chart'.
+Usá 'generate_chart' cuando el usuario solicite visualizar datos numéricos reales:
+1. 'generate_chart' genera una gráfica visual que se muestra en el chat y abre el panel de artefactos.
+2. Si el usuario pide explícitamente ver una gráfica de datos reales o calculados en el chat, invocá 'generate_chart'.
 3. SIEMPRE escribe primero un texto breve en el chat explicando los datos mostrados, y luego invocá 'generate_chart'.
-4. Si el usuario no especificó números exactos, usá cifras representativas razonables de ejemplo (ej. Q1: $45k, Q2: $58k, Q3: $52k, Q4: $71k).
+4. Si el usuario pide una gráfica pero NO especificó números ni datos concretos en el contexto, NO inventes cifras ni invoques 'generate_chart'. En su lugar, responde en texto amablemente pidiéndole los números o categorías que desea visualizar.
 5. NUNCA ejecutes 'web_search' para buscar datos de ejemplo de una gráfica genérica.`
 
   const basePrompt = req.isSubagent ? SUBAGENT_PROMPT : (req.system || MAIN_AGENT_PROMPT)

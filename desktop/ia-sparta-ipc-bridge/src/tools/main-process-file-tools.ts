@@ -24,6 +24,12 @@ export function isWithinRoot(filePath: string, root: string): boolean {
   }
 }
 
+export class PathGuard {
+  public static isWithinRoot(filePath: string, root: string): boolean {
+    return isWithinRoot(filePath, root)
+  }
+}
+
 export const MAIN_FILE_TOOLS = ['read_file', 'write_file', 'edit_file', 'delete_file', 'list_directory'] as const
 
 export function isMainProcessFileTool(name: string): boolean {

@@ -54,6 +54,10 @@ export function ArtifactPanel() {
     const binaryExts = ['pdf', 'xlsx', 'xls', 'docx', 'doc', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp']
     const needsBinary = binaryExts.includes(ext ?? '')
 
+    if (isPreviewable) {
+      setViewMode('preview')
+    }
+
     async function load() {
       try {
         if (window.fs?.readFile) {

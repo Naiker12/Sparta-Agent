@@ -88,7 +88,7 @@ export function registerChatSendIPC(): void {
         })
 
         let loopCount = 0
-        const MAX_LOOPS = 5
+        const MAX_LOOPS = 12
         let streamFailed = false
         let streamAborted = false
 
@@ -242,6 +242,20 @@ export function registerChatSendIPC(): void {
             type: 'stream:completed',
           })
           break
+        }
+
+        if (loopCount >= MAX_LOOPS && !streamAborted && !streamFailed) {
+          sendToRenderer({
+            sessionId,
+            messageId,
+            type: 'stream:token',
+            token: `\n\n> ⚠️ **Límite de iteraciones alcanzado (${MAX_LOOPS} pasos).** El agente ha detenido el bucle autónomo para evitar bucles infinitos. Si la tarea aún requiere pasos adicionales, envía un mensaje para continuar.`,
+          })
+          sendToRenderer({
+            sessionId,
+            messageId,
+            type: 'stream:completed',
+          })
         }
       } catch (err) {
         completeThinking()

@@ -60,6 +60,7 @@ module.exports = {
   nsis: {
     oneClick: false,
     perMachine: false,
+    requestedExecutionLevel: 'asInvoker',
     allowToChangeInstallationDirectory: true,
     deleteAppDataOnUninstall: false
   },

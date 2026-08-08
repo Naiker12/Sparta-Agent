@@ -52,6 +52,15 @@ const DESTRUCTIVE_PATTERNS = [
   /\bdiskpart\b/,
 ]
 
+export class CommandSanitizer {
+  private static readonly DESTRUCTIVE_PATTERNS = DESTRUCTIVE_PATTERNS
+
+  public static isForbidden(command: string): boolean {
+    const trimmed = command.trim()
+    return CommandSanitizer.DESTRUCTIVE_PATTERNS.some((pattern) => pattern.test(trimmed))
+  }
+}
+
 function getShellCommand(profile?: string) {
   if (os.platform() === 'win32') {
     if (profile === 'pwsh') {

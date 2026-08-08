@@ -99,10 +99,11 @@ export function TimelineBlock({ message, className }: TimelineBlockProps) {
     userToggled.current = savedState !== null
   }, [message.id, savedState])
 
-  // Auto-expand when streaming starts, auto-collapse on finish (unless user manually toggled)
+  // Auto-expand during live streaming, auto-collapse on finish (unless user manually toggled)
   useEffect(() => {
-    if (userToggled.current) return
-    setIsExpanded(isStreamingActive)
+    if (!userToggled.current) {
+      setIsExpanded(isStreamingActive)
+    }
   }, [isStreamingActive])
 
   const handleToggle = useCallback(() => {

@@ -6,6 +6,8 @@
 import { buildWebSearchTool } from '../../../ia-sparta-core/src/services/tools/web-search'
 import { buildWebFetchTool } from '../../../ia-sparta-core/src/services/tools/web-fetch'
 import { buildGenerateChartTool } from '../../../ia-sparta-core/src/services/tools/generate-chart'
+import { buildCreatePlanTool } from '../../../ia-sparta-core/src/services/tools/create-plan'
+import { buildDelegateResearchTool, buildDelegateCodeTool } from '../../../ia-sparta-core/src/services/tools/delegate-tools'
 
 /** Catálogo de referencia de herramientas MCP conocidas con schemas explícitos */
 export const mcpCatalogReferenceTools: Record<string, Array<{ name: string; description: string; inputSchema?: Record<string, unknown> }>> = {
@@ -342,6 +344,27 @@ export function buildToolsList(
   )
   if (!hasGenerateChart) {
     tools.push(buildGenerateChartTool())
+  }
+
+  const hasCreatePlan = tools.some((t: any) =>
+    t.name === 'create_plan' || t.function?.name === 'create_plan'
+  )
+  if (!hasCreatePlan) {
+    tools.push(buildCreatePlanTool())
+  }
+
+  const hasDelegateResearch = tools.some((t: any) =>
+    t.name === 'delegate_research' || t.function?.name === 'delegate_research'
+  )
+  if (!hasDelegateResearch) {
+    tools.push(buildDelegateResearchTool())
+  }
+
+  const hasDelegateCode = tools.some((t: any) =>
+    t.name === 'delegate_code' || t.function?.name === 'delegate_code'
+  )
+  if (!hasDelegateCode) {
+    tools.push(buildDelegateCodeTool())
   }
 
   if (webSearchEnabled) {

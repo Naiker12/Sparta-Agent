@@ -459,42 +459,10 @@ function ToolTraceRowContent({ toolCall }: ToolTraceRowProps) {
               flexDirection: 'column',
               gap: 6,
             }}>
-              {/* Search results card */}
+              {/* Search results list estilo barra conector */}
               {hasSearchResults && (
-                <div className="rounded-md border border-[var(--border-subtle)] bg-[var(--bg-card)]/50 p-2 my-1">
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    fontSize: 10,
-                    fontWeight: 600,
-                    color: 'var(--text-muted)',
-                    fontFamily: 'var(--font-ui)',
-                    marginBottom: 6,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                  }}>
-                    <span>Resultados de búsqueda</span>
-                    <span style={{ fontWeight: 500, opacity: 0.8, textTransform: 'none' }}>
-                      {searchItems.length} fuentes encontradas
-                    </span>
-                  </div>
+                <div style={{ marginTop: 2, marginBottom: 4 }}>
                   <SearchResultsList items={searchItems} />
-                  {toolCall.status === 'completed' && (
-                    <div style={{
-                      marginTop: 6,
-                      paddingTop: 4,
-                      borderTop: '1px solid var(--border-subtle)',
-                      fontSize: 10,
-                      color: 'var(--text-muted)',
-                      fontFamily: 'var(--font-mono)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 4,
-                    }}>
-                      <span>✓ Se extrajeron y analizaron {searchItems.length} fuentes de la web</span>
-                    </div>
-                  )}
                 </div>
               )}
 
@@ -528,8 +496,33 @@ function ToolTraceRowContent({ toolCall }: ToolTraceRowProps) {
                 <DetailSection label="Contenido leído" content={toolCall.output} />
               )}
 
+              {/* Inline chart preview for generate_chart */}
+              {toolCall.toolName === 'generate_chart' && writeFilePath && (
+                <div style={{
+                  marginTop: 6,
+                  borderRadius: 8,
+                  border: '1px solid var(--border-subtle)',
+                  overflow: 'hidden',
+                  background: 'var(--bg-card)',
+                  height: 320,
+                  width: '100%',
+                }}>
+                  <iframe
+                    src={`file://${writeFilePath}`}
+                    title={typeof (toolCall.input as Record<string, unknown> | undefined)?.title === 'string' ? ((toolCall.input as Record<string, unknown>).title as string) : 'Gráfica'}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      border: 'none',
+                      display: 'block',
+                      background: 'transparent',
+                    }}
+                  />
+                </div>
+              )}
+
               {/* Output for non-search tools */}
-              {toolCall.output && toolCall.status !== 'error' && !isSearch && !isFetch && (
+              {toolCall.output && toolCall.status !== 'error' && !isSearch && !isFetch && toolCall.toolName !== 'generate_chart' && (
                 <DetailSection label="Output" content={toolCall.output} />
               )}
             </div>

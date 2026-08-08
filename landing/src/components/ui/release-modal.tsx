@@ -31,128 +31,120 @@ export function ReleaseModal() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           onClick={handleReopen}
-          className="fixed bottom-6 right-6 z-50 inline-flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-slate-900/90 dark:bg-slate-950/90 border border-[#663af3]/40 shadow-2xl shadow-[#663af3]/20 backdrop-blur-xl text-xs font-semibold text-white hover:border-[#663af3] hover:scale-105 transition-all group cursor-pointer"
+          className="fixed bottom-6 right-6 z-50 inline-flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-slate-900/90 dark:bg-slate-950/90 border border-indigo-500/40 shadow-2xl shadow-indigo-500/20 backdrop-blur-xl text-xs font-semibold text-white hover:border-indigo-500 hover:scale-105 transition-all group cursor-pointer"
         >
           <span className="flex h-2 w-2 relative">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ec4899] opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#663af3]"></span>
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-500 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
           </span>
-          <span className="font-mono text-[#a78bfa]">v0.1.4 Lanzado</span>
-          <Sparkles className="w-3.5 h-3.5 text-[#ec4899] group-hover:rotate-12 transition-transform" />
+          <span className="font-mono text-indigo-300">v0.1.5 Disponible</span>
+          <Sparkles className="w-3.5 h-3.5 text-pink-400 group-hover:rotate-12 transition-transform" />
         </motion.button>
       )}
 
       {/* Main Release Announcement Modal */}
       <AnimatePresence>
         {isOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-black/70 backdrop-blur-md">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-black/75 backdrop-blur-md">
             <motion.div
-              initial={{ opacity: 0, scale: 0.92, y: 20 }}
+              initial={{ opacity: 0, scale: 0.94, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 15 }}
-              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-              className="relative w-full max-w-2xl overflow-hidden rounded-2xl bg-slate-950 border border-slate-800 shadow-2xl shadow-[#663af3]/30 p-6 sm:p-8 text-left"
+              exit={{ opacity: 0, scale: 0.96, y: 10 }}
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              className="relative w-full max-w-xl overflow-hidden rounded-3xl bg-slate-950/95 border border-slate-800/80 shadow-2xl shadow-indigo-500/10 p-6 sm:p-8 text-left backdrop-blur-2xl"
             >
-              {/* Top Cyber Glow Orbs */}
-              <div className="absolute -top-24 -left-24 w-64 h-64 bg-[#663af3]/25 rounded-full blur-3xl pointer-events-none" />
-              <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-[#ec4899]/20 rounded-full blur-3xl pointer-events-none" />
+              {/* Glow Orbs de Acento */}
+              <div className="absolute -top-32 -left-32 w-72 h-72 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-32 -right-32 w-72 h-72 bg-pink-600/15 rounded-full blur-3xl pointer-events-none" />
 
-              {/* Close Button */}
+              {/* Botón Cerrar Minimalista */}
               <button
                 onClick={handleClose}
-                className="absolute top-4 right-4 p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-colors z-20 cursor-pointer"
-                title="Cerrar anuncio"
+                className="absolute top-5 right-5 p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-colors z-20 cursor-pointer"
+                title="Cerrar ventana"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
 
               {/* Release Header */}
               <div className="relative z-10 flex flex-col gap-3">
-                <div className="inline-flex items-center gap-2.5 px-3 py-1 rounded-full bg-[#663af3]/15 border border-[#663af3]/30 w-fit">
-                  <Sparkles className="w-3.5 h-3.5 text-[#ec4899]" />
-                  <span className="text-xs font-bold font-mono tracking-wide text-[#a78bfa] uppercase">
-                    ✨ LANZAMIENTO OFICIAL v0.1.4
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 w-fit">
+                  <Sparkles className="w-3.5 h-3.5 text-pink-400" />
+                  <span className="text-[11px] font-bold font-mono tracking-wider text-indigo-300 uppercase">
+                    Lanzamiento Oficial v0.1.5
                   </span>
                 </div>
 
                 <h2 className="text-2xl sm:text-3xl font-extrabold font-display text-white tracking-tight leading-tight">
-                  Sparta Agent <span className="bg-gradient-to-r from-[#a78bfa] via-[#ec4899] to-[#34d399] bg-clip-text text-transparent">v0.1.4</span> Ya Disponible
+                  Sparta Agent <span className="bg-gradient-to-r from-indigo-400 via-pink-400 to-emerald-400 bg-clip-text text-transparent">v0.1.5</span>
                 </h2>
 
-                <p className="text-sm text-slate-300 leading-relaxed font-sans">
-                  Hemos publicado la nueva versión con lector nativo de documentos asíncronos (PDF, Word, Excel, PowerPoint), vista previa modal de adjuntos, auto-actualizador y correcciones de seguridad.
+                <p className="text-xs sm:text-sm text-slate-300/90 leading-relaxed font-sans">
+                  Gran actualización con motor de gráficas v2 (8 tipos y 5 temas visuales), subagentes paralelos delegados, diseño de trazado de búsquedas estilo Claude Code y optimización de permisos de instalación.
                 </p>
               </div>
 
-              {/* Release Highlights Grid */}
-              <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 gap-3.5 my-6">
-                <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800/80 flex items-start gap-3">
-                  <div className="p-2 rounded-lg bg-[#663af3]/20 text-[#a78bfa] shrink-0">
-                    <FileText className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-white mb-0.5">Lector Nativo &amp; Asíncrono</h4>
-                    <p className="text-[11.5px] text-slate-400 leading-normal">
-                      Procesamiento de PDF, Office y EPUB sin bloquear la interfaz.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800/80 flex items-start gap-3">
-                  <div className="p-2 rounded-lg bg-[#ec4899]/20 text-[#ec4899] shrink-0">
+              {/* Feature Items List estilo moderno sin bordes de tarjeta pesados */}
+              <div className="relative z-10 flex flex-col gap-2.5 my-6">
+                <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.05] transition-colors group">
+                  <div className="p-2 rounded-xl bg-indigo-500/15 text-indigo-400 group-hover:scale-105 transition-transform shrink-0">
                     <Sparkles className="w-4 h-4" />
                   </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-white mb-0.5">Vista Previa Modal &amp; Tarjetas</h4>
-                    <p className="text-[11.5px] text-slate-400 leading-normal">
-                      Inspección cómoda de archivos en tarjetas interactivas sin saturar el chat.
-                    </p>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-xs font-semibold text-white">Motor de Gráficas V2 &amp; 5 Temas</h4>
+                    <p className="text-[11.5px] text-slate-400 truncate">Radar, scatter, barras horizontales y variación de color automática.</p>
                   </div>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800/80 flex items-start gap-3">
-                  <div className="p-2 rounded-lg bg-[#10b981]/20 text-[#10b981] shrink-0">
+                <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.05] transition-colors group">
+                  <div className="p-2 rounded-xl bg-pink-500/15 text-pink-400 group-hover:scale-105 transition-transform shrink-0">
                     <Cpu className="w-4 h-4" />
                   </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-white mb-0.5">Engine FlateDecode &amp; Telemetría</h4>
-                    <p className="text-[11.5px] text-slate-400 leading-normal">
-                      Extracción de streams PDF comprimidos zlib y métricas reales de RAM.
-                    </p>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-xs font-semibold text-white">Subagentes Delegados Paralelos</h4>
+                    <p className="text-[11.5px] text-slate-400 truncate">Herramientas nativas delegate_research y delegate_code activas.</p>
                   </div>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800/80 flex items-start gap-3">
-                  <div className="p-2 rounded-lg bg-[#3b82f6]/20 text-[#60a5fa] shrink-0">
+                <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.05] transition-colors group">
+                  <div className="p-2 rounded-xl bg-emerald-500/15 text-emerald-400 group-hover:scale-105 transition-transform shrink-0">
+                    <FileText className="w-4 h-4" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-xs font-semibold text-white">Búsqueda Web Estilo Claude Code</h4>
+                    <p className="text-[11.5px] text-slate-400 truncate">Trazado limpio de fuentes con línea conectora y auto-colapso.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.05] transition-colors group">
+                  <div className="p-2 rounded-xl bg-blue-500/15 text-blue-400 group-hover:scale-105 transition-transform shrink-0">
                     <ShieldCheck className="w-4 h-4" />
                   </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-white mb-0.5">Electron Auto-Updates</h4>
-                    <p className="text-[11.5px] text-slate-400 leading-normal">
-                      Notificación y botón de actualización directa para usuarios instalados.
-                    </p>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-xs font-semibold text-white">Instalación Local asInvoker (NSIS)</h4>
+                    <p className="text-[11.5px] text-slate-400 truncate">Sin solicitud molesta de permisos de administrador UAC.</p>
                   </div>
                 </div>
               </div>
 
-              {/* Action Buttons Footer */}
-              <div className="relative z-10 flex flex-col sm:flex-row items-center gap-3 pt-2 border-t border-slate-800/80">
+              {/* Botones de Acción Elegantes */}
+              <div className="relative z-10 flex flex-col sm:flex-row items-center gap-3 pt-2">
                 <a
-                  href="https://github.com/Naiker12/Sparta-Agent/releases/download/v0.1.4/Sparta-Agent-Windows-0.1.4-Setup.exe"
+                  href="https://github.com/Naiker12/Sparta-Agent/releases/download/v0.1.5/Sparta-Agent-Windows-0.1.5-Setup.exe"
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={handleClose}
-                  className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#663af3] to-[#8b5cf6] hover:from-[#5b21b6] hover:to-[#7c3aed] text-white text-xs font-bold shadow-lg shadow-[#663af3]/30 transition-all hover:scale-[1.02] cursor-pointer"
+                  className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white text-xs font-bold shadow-lg shadow-indigo-500/25 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
                 >
                   <Download className="w-4 h-4" />
-                  Descargar Sparta v0.1.4 (.exe)
+                  Descargar Sparta v0.1.5 (.exe)
                 </a>
 
                 <a
-                  href="https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.1.4"
+                  href="https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.1.5"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white text-xs font-semibold transition-all cursor-pointer"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 text-slate-300 hover:text-white text-xs font-semibold transition-all cursor-pointer"
                 >
                   Ver Release Notes
                   <ArrowRight className="w-3.5 h-3.5" />

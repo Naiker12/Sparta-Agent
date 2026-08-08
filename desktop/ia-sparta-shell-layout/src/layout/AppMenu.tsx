@@ -87,7 +87,7 @@ function handleZoom(delta: number) {
 
 export function AppMenu() {
   const { t } = useTranslation()
-  const [appVersion, setAppVersion] = useState('v0.1.4')
+  const [appVersion, setAppVersion] = useState('v0.1.5')
 
   useEffect(() => {
     if ((window as any).electronAPI?.getVersion) {

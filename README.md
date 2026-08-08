@@ -72,9 +72,9 @@ A diferencia de las extensiones tradicionales, Sparta Agent funciona como un mie
 
 ---
 
-##  Arquitectura Conceptual del Sistema
+##  Arquitectura Real del Sistema
 
-Sparta Agent está estructurado bajo una **arquitectura desacoplada de tres capas**, garantizando alto rendimiento, baja latencia y modularidad:
+Sparta Agent está estructurado bajo una **arquitectura desacoplada de alto rendimiento**, garantizando baja latencia, privacidad y ejecución nativa:
 
 ```text
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -84,17 +84,19 @@ Sparta Agent está estructurado bajo una **arquitectura desacoplada de tres capa
 └────────────────────────────┬────────────────────────────────────────────┘
                              │ Comunicación IPC Segura (Electron ContextBridge)
 ┌────────────────────────────┴────────────────────────────────────────────┐
-│ 2. CAPA DE ORQUESTACIÓN (Electron Main / Node.js Engine)                 │
-│ Puente de control de procesos, broker de permisos nativo, vault cifrado │
-│ AES-256-GCM para llaves API y gestión del ciclo de vida de terminales. │
+│ 2. MOTOR AGÉNTICO Y ORQUESTACIÓN (Electron Main / Node.js Engine)       │
+│ Bucle autónomo ReAct (TypeScript), inyección de herramientas MCP,      │
+│ broker de permisos nativo, vault cifrado safeStorage y terminal (PTY).  │
 └────────────────────────────┬────────────────────────────────────────────┘
-                             │ Protocolo de Comunicación JSON-RPC / Stdio
+                             │ Módulos Nativos Node.js & IPC
 ┌────────────────────────────┴────────────────────────────────────────────┐
-│ 3. NÚCLEO DE INTELIGENCIA (Python Sidecar & LangGraph Core + Rust Broker)│
-│ Motor de razonamiento basado en grafos de estado. Ejecuta bucles        │
-│ Plan-Reflect-Act, memoria contextual y validación de seguridad nativa.  │
+│ 3. CAPA DE SEGURIDAD Y HERRAMIENTAS NATIVAS                            │
+│ Filtro de inspección de comandos (CommandSanitizer), guardas de ruta   │
+│ (PathGuard), servidor de herramientas REST/MCP e indexador de memoria.  │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
+
+> **Roadmap de Inteligencia:** La versión de desarrollo incluye la integración en segundo plano de micro-servicios autónomos en Python y LangGraph para orquestación multi-agente distribuida.
 
 ---
 
