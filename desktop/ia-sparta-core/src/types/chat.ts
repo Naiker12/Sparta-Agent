@@ -48,6 +48,12 @@ export interface ReasoningDetail {
   signature?: string
 }
 
+export interface SubagentExecutionStep {
+  id: string
+  label: string
+  status: 'running' | 'completed' | 'error'
+}
+
 /**
  * A single "part" in the message timeline.
  * Parts are rendered in order to create a unified timeline of reasoning + tool calls.
@@ -68,7 +74,7 @@ export type MessagePart =
   | { kind: 'reasoning'; id: string; text: string; origin: ReasoningOrigin; startedAt: number; completedAt?: number }
   | { kind: 'text'; id: string; content: string; startedAt: number }
   | { kind: 'tool'; id: string; toolCallId: string; startedAt: number }
-  | { kind: 'subagent'; id: string; subagentName: string; taskSummary: string; startedAt: number; completedAt?: number; durationMs?: number; success?: boolean }
+  | { kind: 'subagent'; id: string; subagentName: string; taskSummary: string; startedAt: number; completedAt?: number; durationMs?: number; success?: boolean; steps?: SubagentExecutionStep[] }
   | { kind: 'attachment'; id: string; attachment: MessageAttachment }
 
 export interface Message {

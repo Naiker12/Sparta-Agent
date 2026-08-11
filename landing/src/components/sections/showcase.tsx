@@ -72,13 +72,13 @@ export function Showcase() {
         {/* Image Showcase Frame */}
         <Card className="border-[rgba(186,215,247,0.12)] bg-[rgba(186,214,247,0.02)] overflow-hidden shadow-2xl p-3 sm:p-5 max-w-5xl mx-auto">
           <div className="rounded-xl border border-[rgba(186,215,247,0.12)] overflow-hidden bg-[#0C0C10]">
-            <div className="bg-[#080914] px-4 py-3 border-b border-[rgba(186,215,247,0.08)] flex items-center justify-between">
+            <div className="bg-[#111113] px-4 py-3 border-b border-[rgba(186,215,247,0.08)] flex items-center justify-between">
               <span className="text-xs font-mono text-[#d8ecf8] flex items-center gap-2">
-                <Sparkles className="w-3.5 h-3.5 text-indigo-400" /> {current.title} — {current.badge}
+                <Sparkles className="w-3.5 h-3.5 text-zinc-400" /> {current.title} — {current.badge}
               </span>
               <Badge variant="success" className="text-[10px]">Verificado</Badge>
             </div>
-            <div className="relative aspect-[16/9] overflow-hidden bg-[#05060f] flex items-center justify-center p-2">
+            <div className="relative aspect-[16/9] overflow-hidden bg-[#0a0a0a] flex items-center justify-center p-2">
               <img
                 src={current.src}
                 alt={current.title}

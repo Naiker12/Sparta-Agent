@@ -8,7 +8,7 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'default', size = 'default', ...props }, ref) => {
-    const baseStyles = 'inline-flex items-center justify-center font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#663af3] disabled:pointer-events-none disabled:opacity-50 cursor-pointer';
+    const baseStyles = 'inline-flex items-center justify-center font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#18181b] disabled:pointer-events-none disabled:opacity-50 cursor-pointer';
 
     const variants = {
       // Primary Ghost Pill using CSS theme variables
@@ -20,7 +20,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       // Secondary Steel Plate fill
       secondary: 'bg-[#2f343e] hover:bg-[#3b414d] text-white rounded-full border border-[rgba(186,215,247,0.12)] active:scale-[0.98]',
       // Explicit Violet CTA: ONLY inside auth-forms, 6px radius
-      violet: 'bg-[#663af3] hover:bg-[#5b31e0] text-white rounded-[6px] font-medium shadow-md shadow-[#663af3]/30 active:scale-[0.98]',
+      violet: 'bg-[#18181b] hover:bg-[#09090b] text-white rounded-[6px] font-medium shadow-md shadow-[#18181b]/30 active:scale-[0.98]',
     };
 
     const sizes = {

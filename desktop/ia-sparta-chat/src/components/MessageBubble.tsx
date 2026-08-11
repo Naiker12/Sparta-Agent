@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { ThinkingStatus } from 'ia-sparta-core'
 import { Copy, Check, Pencil, CheckCircle, X, RefreshCw, Trash2, AlertCircle, Settings, ChevronDown } from 'lucide-react'
-import type { Message, MessagePart, ToolCall } from 'ia-sparta-core'
+import type { Message, MessageAttachment, MessagePart, ToolCall } from 'ia-sparta-core'
 import { useChatStore, useSettingsStore } from 'ia-sparta-core'
 import { useEventBus } from 'ia-sparta-core'
 import { useChatSession } from 'ia-sparta-core'
@@ -21,6 +21,7 @@ import { MarkdownRenderer } from './MarkdownRenderer'
 import { useTranslation } from 'ia-sparta-i18n'
 import { parseUserMessageAttachments } from '../lib/attachment-pipeline'
 import { AttachmentCard } from './input/AttachmentCard'
+import { PreviewRenderer } from './artifact/PreviewRenderer'
 
 function cleanDisplayContent(text: string): string {
   if (!text) return ''
@@ -62,6 +63,12 @@ function MessageBubbleBase({ message, isLastUser = false, isLastAssistant = fals
     if (!isUser) return { cleanText: message.content, attachments: [] }
     return parseUserMessageAttachments(message.content)
   }, [isUser, message.content])
+  const messageAttachments = useMemo(() => {
+    if (!isUser || !message.attachments?.length) return []
+    return message.attachments.map((attachment: MessageAttachment) => ({ ...attachment, previewText: '' }))
+  }, [isUser, message.attachments])
+  const displayAttachments = messageAttachments.length > 0 ? messageAttachments : userParsed.attachments
+  const previewUsesNativeViewer = Boolean(previewAttachment?.base64Data)
 
   const suggestions = !isUser && !isErrorMessage ? (message.suggestions ?? []) : []
 
@@ -230,9 +237,9 @@ function MessageBubbleBase({ message, isLastUser = false, isLastAssistant = fals
                 <>
                   {isUser ? (
                     <div>
-                      {userParsed.attachments.length > 0 && (
+                      {displayAttachments.length > 0 && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
-                          {userParsed.attachments.map((att) => (
+                          {displayAttachments.map((att) => (
                             <AttachmentCard
                               key={att.id}
                               attachment={att}
@@ -434,9 +441,10 @@ function MessageBubbleBase({ message, isLastUser = false, isLastAssistant = fals
             <div
               onClick={(e) => e.stopPropagation()}
               style={{
-                width: '100%',
-                maxWidth: 760,
-                maxHeight: '82vh',
+                width: 'min(1100px, calc(100vw - 48px))',
+                height: previewUsesNativeViewer ? 'min(780px, calc(100vh - 48px))' : undefined,
+                maxWidth: 1100,
+                maxHeight: 'calc(100vh - 48px)',
                 background: 'var(--bg-modal, #18181b)',
                 border: '1px solid var(--border-subtle)',
                 borderRadius: 'var(--radius-lg, 12px)',
@@ -492,7 +500,7 @@ function MessageBubbleBase({ message, isLastUser = false, isLastAssistant = fals
 
               <div
                 style={{
-                  padding: 18,
+                  padding: previewUsesNativeViewer ? 0 : 18,
                   overflowY: 'auto',
                   flex: 1,
                   fontSize: 13,
@@ -502,15 +510,23 @@ function MessageBubbleBase({ message, isLastUser = false, isLastAssistant = fals
                   background: 'var(--bg-elevated)',
                 }}
               >
-                <MarkdownRenderer
-                  content={(() => {
-                    const text = previewAttachment.previewText || ''
-                    let cleaned = text.replace(/^\[(?:Documento|Archivo):\s*[^\]]+\]\n```[a-zA-Z0-9_-]*\n/i, '')
-                    cleaned = cleaned.replace(/\n```(?:\n_\(contenido truncado\)_)?$/i, '')
-                    return cleaned.trim() || text
-                  })()}
-                  isStreaming={false}
-                />
+                {previewAttachment.base64Data ? (
+                  <PreviewRenderer
+                    filePath={previewAttachment.fileName}
+                    content={previewAttachment.previewText}
+                    base64={previewAttachment.base64Data}
+                  />
+                ) : (
+                  <MarkdownRenderer
+                    content={(() => {
+                      const text = previewAttachment.previewText || ''
+                      let cleaned = text.replace(/^\[(?:Documento|Archivo):\s*[^\]]+\]\n```[a-zA-Z0-9_-]*\n/i, '')
+                      cleaned = cleaned.replace(/\n```(?:\n_\(contenido truncado\)_)?$/i, '')
+                      return cleaned.trim() || text
+                    })()}
+                    isStreaming={false}
+                  />
+                )}
               </div>
             </div>
           </div>
@@ -594,6 +610,7 @@ function GroupRenderer({ group, isStreaming, toolCalls }: {
         status={group.completedAt ? (group.success === false ? 'failed' : 'completed') : 'running'}
         durationMs={group.durationMs}
         success={group.success}
+        steps={group.steps}
       />
     )
   }

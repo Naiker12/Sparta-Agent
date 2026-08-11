@@ -58,7 +58,7 @@ export function CustomCursor() {
     <>
       {/* Central Instant Dot (Zero Lag - 144Hz) */}
       <motion.div
-        className="fixed top-0 left-0 w-2.5 h-2.5 bg-[#a855f7] rounded-full pointer-events-none z-[9999] shadow-sm shadow-[#a855f7]"
+        className="fixed top-0 left-0 w-2.5 h-2.5 bg-[#52525b] rounded-full pointer-events-none z-[9999] shadow-sm shadow-[#52525b]"
         style={{
           x: cursorX,
           y: cursorY,
@@ -73,7 +73,7 @@ export function CustomCursor() {
 
       {/* Trailing Outer Ring (Ultra-Fast Spring) */}
       <motion.div
-        className="fixed top-0 left-0 w-8 h-8 rounded-full border border-[#a855f7]/60 pointer-events-none z-[9998] mix-blend-screen"
+        className="fixed top-0 left-0 w-8 h-8 rounded-full border border-[#52525b]/60 pointer-events-none z-[9998] mix-blend-screen"
         style={{
           x: cursorXSpring,
           y: cursorYSpring,
@@ -82,8 +82,8 @@ export function CustomCursor() {
         }}
         animate={{
           scale: isHovered ? 1.5 : 1,
-          backgroundColor: isHovered ? 'rgba(168, 85, 247, 0.15)' : 'rgba(168, 85, 247, 0)',
-          borderColor: isHovered ? 'rgba(168, 85, 247, 0.8)' : 'rgba(168, 85, 247, 0.4)',
+          backgroundColor: isHovered ? 'rgba(161, 161, 170, 0.15)' : 'rgba(161, 161, 170, 0)',
+          borderColor: isHovered ? 'rgba(161, 161, 170, 0.8)' : 'rgba(161, 161, 170, 0.4)',
         }}
         transition={{ duration: 0.15 }}
       />

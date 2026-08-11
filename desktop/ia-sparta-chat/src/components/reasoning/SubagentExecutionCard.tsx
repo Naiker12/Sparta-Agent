@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from 'ia-sparta-core'
+import type { SubagentExecutionStep } from 'ia-sparta-core'
 import {
   Bot,
   ChevronRight,
@@ -21,6 +22,7 @@ interface SubagentExecutionCardProps {
   status: 'running' | 'completed' | 'failed'
   durationMs?: number
   success?: boolean
+  steps?: SubagentExecutionStep[]
   className?: string
 }
 
@@ -39,9 +41,10 @@ export function SubagentExecutionCard({
   status,
   durationMs,
   success = true,
+  steps = [],
   className,
 }: SubagentExecutionCardProps) {
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded] = useState(status === 'running')
   const Icon = getSubagentIcon(subagentName)
 
   const formattedDuration = durationMs
@@ -87,6 +90,11 @@ export function SubagentExecutionCard({
             {taskSummary && (
               <span className="text-[10.5px] text-muted-foreground truncate max-w-[280px]">
                 {taskSummary}
+              </span>
+            )}
+            {steps.length > 0 && (
+              <span className="text-[10px] text-muted-foreground truncate max-w-[280px]">
+                {steps[steps.length - 1].label}
               </span>
             )}
           </div>
@@ -147,6 +155,16 @@ export function SubagentExecutionCard({
               {taskSummary && (
                 <div className="text-foreground/90 bg-background/50 p-2 rounded border border-border/20 font-mono text-[10.5px] leading-relaxed whitespace-pre-wrap">
                   {taskSummary}
+                </div>
+              )}
+              {steps.length > 0 && (
+                <div className="flex flex-col gap-1.5">
+                  {steps.map((step) => (
+                    <div key={step.id} className="flex items-center gap-2 text-[10.5px] text-muted-foreground">
+                      {step.status === 'running' ? <Loader2 className="size-3 animate-spin text-amber-400" /> : step.status === 'completed' ? <CheckCircle className="size-3 text-emerald-400" /> : <XCircle className="size-3 text-rose-400" />}
+                      <span className="truncate">{step.label}</span>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

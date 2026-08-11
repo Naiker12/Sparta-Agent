@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { SectionHeader } from '../ui/section-header';
 import {
   ShieldCheck,
@@ -8,7 +8,7 @@ import {
   Terminal,
   Layers,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   NotionIcon,
   OneDriveIcon,
@@ -22,12 +22,13 @@ export function Architecture() {
   const archTabs = [
     {
       id: 'layer1',
-      tabName: 'Capa 1: Frontend IDE',
+      tabName: 'Interfaz',
+      layer: 'Capa 1',
       title: 'Presentación & UI (Frontend IDE)',
       desc: 'Interfaz local impulsada por React 18, Monaco Editor, Base UI y terminales xterm.js.',
-      color: '#663af3',
+      color: '#18181b',
       inputCard: {
-        badge: '📥 Input / Frontend',
+        badge: 'Entrada · Frontend',
         title: 'Monaco Editor & Chat Panel',
         desc: 'Renderiza el editor Monaco, chat agéntico y terminales.',
         pills: [
@@ -37,7 +38,7 @@ export function Architecture() {
         time: '0.0s',
       },
       actionCard: {
-        badge: '⚡ Action / IPC Dispatcher',
+        badge: 'Acción · IPC',
         title: 'Puente IPC TypeScript Native',
         desc: 'Comunica el proceso UI con el orquestador principal.',
         model: 'Electron IPC',
@@ -46,12 +47,13 @@ export function Architecture() {
     },
     {
       id: 'layer2',
-      tabName: 'Capa 2: Orquestación IPC',
+      tabName: 'Orquestación',
+      layer: 'Capa 2',
       title: 'Orquestación & Security Broker',
       desc: 'Puente de comunicación que valida Sanitizer de comandos, PathGuard y Vault.',
-      color: '#a855f7',
+      color: '#52525b',
       inputCard: {
-        badge: '🔒 Interceptor / Security',
+        badge: 'Control · Seguridad',
         title: 'CommandSanitizer & PathGuard',
         desc: 'Restringe operaciones I/O dentro de los límites del workspace.',
         pills: [
@@ -61,7 +63,7 @@ export function Architecture() {
         time: '0.4s',
       },
       actionCard: {
-        badge: '⚡ Action / Conectores MCP',
+        badge: 'Acción · Conectores MCP',
         title: 'Llamada REST Directa (HTTP 200)',
         desc: 'Intercambio de tokens y bloques nativos para Notion/OneDrive.',
         model: 'OAuth 2.0 Vault',
@@ -70,12 +72,13 @@ export function Architecture() {
     },
     {
       id: 'layer3',
-      tabName: 'Capa 3: Motor Nativo TS',
+      tabName: 'Motor',
+      layer: 'Capa 3',
       title: 'Núcleo Agéntico Nativo (TypeScript)',
       desc: 'Motor que ejecuta ciclos deterministas de planificación y auto-reflexión.',
       color: '#10b981',
       inputCard: {
-        badge: '🧠 Engine / Planner',
+        badge: 'Motor · Planificador',
         title: 'LangGraph State Machine',
         desc: 'Gestiona la memoria y el bucle de auto-corrección.',
         pills: [
@@ -85,7 +88,7 @@ export function Architecture() {
         time: '1.4s',
       },
       actionCard: {
-        badge: '⚡ Action / Execution Node',
+        badge: 'Acción · Ejecución',
         title: 'Invocación LLM JSON-RPC',
         desc: 'Genera parches de código y resúmenes transparentes.',
         model: 'z-ai/glm-5.2',
@@ -94,38 +97,56 @@ export function Architecture() {
     },
   ];
 
+  const shouldReduceMotion = useReducedMotion();
+
+  useEffect(() => {
+    if (shouldReduceMotion) return;
+
+    const timer = window.setInterval(() => {
+      setActiveTab((currentId) => {
+        const currentIndex = archTabs.findIndex((tab) => tab.id === currentId);
+        return archTabs[(currentIndex + 1) % archTabs.length].id;
+      });
+    }, 4200);
+
+    return () => window.clearInterval(timer);
+  }, [shouldReduceMotion, archTabs.length]);
+
   const currentTab = archTabs.find((t) => t.id === activeTab) || archTabs[0];
 
   return (
-    <section id="arquitectura" className="py-16 relative overflow-hidden max-w-full bg-slate-50 dark:bg-[#07050d] text-slate-900 dark:text-white border-y border-slate-200 dark:border-white/10 font-sans transition-colors duration-300">
+    <section id="arquitectura" className="py-16 relative overflow-hidden max-w-full bg-slate-50 dark:bg-[#09090b] text-slate-900 dark:text-white border-y border-slate-200 dark:border-white/10 font-sans transition-colors duration-300">
       {/* Background Ambient Glow */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] max-w-[100vw] h-[250px] bg-[#663af3]/10 blur-[130px] pointer-events-none" />
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] max-w-[100vw] h-[250px] bg-[#18181b]/10 blur-[130px] pointer-events-none" />
 
       {/* UNIFIED CONTINUOUS GRID CONTAINER MAX-W-7XL BORDER-X */}
       <div className="mx-auto max-w-7xl border-x border-slate-200 dark:border-white/10 px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Section Header */}
         <SectionHeader
           eyebrow="ARQUITECTURA DECOUPLED // 3 CAPAS"
-          title="Estructura Decoupled de 3 Capas"
-          description="Sin bloqueos en el hilo principal de la UI. Separación limpia de responsabilidades entre presentación, orquestación nativa y razonamiento en TypeScript."
+          title="Arquitectura en tres capas"
+          description="La interfaz, la orquestación IPC y el motor agéntico mantienen responsabilidades separadas para que el flujo sea predecible e inspeccionable."
         />
 
         {/* ORION STYLE COMPACT TAB BAR TOP */}
-        <div className="flex flex-wrap items-center justify-center gap-1.5 mt-8 mb-5 bg-white dark:bg-[#0e0b16]/90 border border-slate-200 dark:border-white/10 rounded-xl p-1 backdrop-blur-xl max-w-3xl mx-auto shadow-sm dark:shadow-none">
+        <div role="tablist" aria-label="Capas de la arquitectura" className="mx-auto mt-8 mb-5 grid max-w-4xl grid-cols-3 gap-1 rounded-xl border border-slate-200 bg-white p-1 shadow-sm dark:border-white/10 dark:bg-[#18181b]/90 dark:shadow-none">
           {archTabs.map((tab) => {
             const isActive = activeTab === tab.id;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 min-w-[100px] sm:min-w-[130px] py-1.5 px-3 rounded-lg text-[11px] font-bold font-mono transition-all duration-300 cursor-pointer flex items-center justify-center gap-1.5 ${
+                role="tab"
+                aria-selected={isActive}
+                className={`flex min-w-0 flex-col items-center justify-center gap-0.5 rounded-lg px-2 py-2.5 text-center transition-all duration-300 cursor-pointer sm:flex-row sm:gap-2 sm:px-4 ${
                   isActive
-                    ? 'bg-[#663af3] text-white shadow-md shadow-[#663af3]/40'
+                    ? 'bg-[#18181b] text-white shadow-md shadow-[#18181b]/40'
                     : 'bg-transparent text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04]'
                 }`}
               >
-                <Layers className="w-3.5 h-3.5" />
-                <span>{tab.tabName}</span>
+                <Layers className="size-3.5 shrink-0" />
+                <span className="text-xs font-semibold">{tab.tabName}</span>
+                <span className="text-[10px] font-mono opacity-65 sm:hidden">{tab.layer}</span>
               </button>
             );
           })}
@@ -139,25 +160,26 @@ export function Architecture() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="bg-white dark:bg-[#0c0915] border border-slate-200 dark:border-white/15 rounded-2xl p-5 backdrop-blur-2xl shadow-lg dark:shadow-xl max-w-3xl mx-auto"
+            role="tabpanel"
+            className="mx-auto max-w-4xl rounded-2xl border border-slate-200 bg-white p-5 shadow-lg dark:border-white/15 dark:bg-[#18181b] dark:shadow-xl sm:p-6"
           >
             {/* Header Info */}
             <div className="mb-4 pb-3 border-b border-slate-200 dark:border-white/10">
-              <span className="text-[9px] font-mono text-[#a855f7] block font-bold uppercase tracking-wider mb-0.5">
-                {currentTab.tabName}
+              <span className="mb-1 block text-[10px] font-mono font-bold uppercase tracking-wider text-[#52525b]">
+                {currentTab.layer}
               </span>
               <h3 className="text-base font-bold text-slate-900 dark:text-white leading-tight">{currentTab.title}</h3>
               <p className="text-[11px] text-slate-500 dark:text-gray-400 mt-0.5">{currentTab.desc}</p>
             </div>
 
             {/* STAGGERED SEQUENTIAL NODE ANIMATION CANVAS (STEP 1 -> STEP 2 -> STEP 3) */}
-            <div className="relative w-full py-2 flex flex-col md:flex-row items-center justify-between gap-3">
+            <div className="relative flex w-full flex-col items-stretch justify-between gap-3 py-2 md:flex-row md:items-center">
               {/* STEP 1 (t = 0.1s): NODE CARD 1 - INPUT NODE */}
               <motion.div
                 initial={{ opacity: 0, x: -25, scale: 0.95 }}
                 animate={{ opacity: 1, x: 0, scale: 1 }}
                 transition={{ duration: 0.4, delay: 0.1, ease: 'easeOut' }}
-                className="w-full md:w-64 bg-white dark:bg-[#0e0b18] border border-slate-200 dark:border-white/20 rounded-xl p-3.5 shadow-sm dark:shadow-md relative group hover:border-[#663af3]/60 transition-all shrink-0"
+                className="relative w-full shrink-0 rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-sm transition-all hover:border-[#18181b]/60 dark:border-white/20 dark:bg-[#18181b] dark:shadow-md md:w-64"
               >
                 <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-sky-500/10 border border-sky-500/30 text-sky-400 font-mono text-[9px] font-bold mb-1.5">
                   {currentTab.inputCard.badge}
@@ -167,7 +189,7 @@ export function Architecture() {
                 <p className="text-[10px] text-slate-500 dark:text-gray-400 leading-tight mb-2">{currentTab.inputCard.desc}</p>
 
                 {/* Sub-Pills Container with SVGL Icons */}
-                <div className="bg-slate-50 dark:bg-[#05030a] border border-slate-200 dark:border-white/10 rounded-lg p-1.5 space-y-1 mb-2 font-mono text-[9px]">
+                <div className="bg-slate-50 dark:bg-[#0a0a0a] border border-slate-200 dark:border-white/10 rounded-lg p-1.5 space-y-1 mb-2 font-mono text-[9px]">
                   {currentTab.inputCard.pills.map((pill, idx) => {
                     const PillIcon = pill.icon;
                     return (
@@ -193,17 +215,17 @@ export function Architecture() {
                 initial={{ opacity: 0, scaleX: 0 }}
                 animate={{ opacity: 1, scaleX: 1 }}
                 transition={{ duration: 0.4, delay: 0.4, ease: 'easeInOut' }}
-                className="flex md:flex-1 items-center justify-center relative w-full md:w-auto my-1 md:my-0 origin-left"
+                className="relative my-1 flex w-full origin-left items-center justify-center md:my-0 md:w-auto md:flex-1"
               >
-                <div className="hidden md:block w-full h-[2px] bg-[#663af3]/40 relative overflow-hidden rounded-full">
+                <div className="hidden md:block w-full h-[2px] bg-[#18181b]/40 relative overflow-hidden rounded-full">
                   <motion.div
                     animate={{ x: ['-100%', '100%'] }}
                     transition={{ repeat: Infinity, duration: 1.5, ease: 'linear' }}
-                    className="w-1/2 h-full bg-gradient-to-r from-transparent via-[#a855f7] to-transparent shadow-md shadow-[#a855f7]"
+                    className="w-1/2 h-full bg-gradient-to-r from-transparent via-[#52525b] to-transparent shadow-md shadow-[#52525b]"
                   />
                 </div>
-                <div className="w-6 h-6 rounded-full bg-[#663af3]/30 border border-[#663af3] flex items-center justify-center text-[#a855f7] shrink-0 z-10 shadow-sm shadow-[#663af3]/50">
-                  <ArrowRight className="w-3 h-3" />
+                <div className="z-10 flex size-7 shrink-0 items-center justify-center rounded-full border border-[#18181b] bg-[#18181b]/10 text-[#52525b] shadow-sm shadow-[#18181b]/30">
+                  <ArrowRight className="size-3 -rotate-90 md:rotate-0" />
                 </div>
               </motion.div>
 
@@ -212,7 +234,7 @@ export function Architecture() {
                 initial={{ opacity: 0, x: 25, scale: 0.95 }}
                 animate={{ opacity: 1, x: 0, scale: 1 }}
                 transition={{ duration: 0.4, delay: 0.7, ease: 'easeOut' }}
-                className="w-full md:w-64 bg-white dark:bg-[#0e0b18] border border-slate-200 dark:border-white/20 rounded-xl p-3.5 shadow-sm dark:shadow-md relative group hover:border-[#a855f7]/60 transition-all shrink-0"
+                className="relative w-full shrink-0 rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-sm transition-all hover:border-[#52525b]/60 dark:border-white/20 dark:bg-[#18181b] dark:shadow-md md:w-64"
               >
                 <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-400 font-mono text-[9px] font-bold mb-1.5">
                   {currentTab.actionCard.badge}
@@ -228,7 +250,7 @@ export function Architecture() {
                     <span>{currentTab.actionCard.time}</span>
                   </div>
 
-                  <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#663af3]/20 border border-[#663af3]/40 text-[#a855f7] font-mono text-[9px] font-bold">
+                  <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#18181b]/20 border border-[#18181b]/40 text-[#52525b] font-mono text-[9px] font-bold">
                     <Zap className="w-2.5 h-2.5" />
                     <span>{currentTab.actionCard.model}</span>
                   </div>

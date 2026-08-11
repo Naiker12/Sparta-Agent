@@ -38,9 +38,9 @@ export function ParticleField() {
     const colors = new Float32Array(particleCount * 3);
     const sizes = new Float32Array(particleCount);
 
-    const colorViolet = new THREE.Color('#663af3');
-    const colorBlue = new THREE.Color('#b6d9fc');
-    const colorWhite = new THREE.Color('#d1e4fa');
+    const colorGraphite = new THREE.Color('#27272a');
+    const colorSteel = new THREE.Color('#a1a1aa');
+    const colorWhite = new THREE.Color('#f4f4f5');
 
     // Initial position & color setup
     let index = 0;
@@ -54,15 +54,15 @@ export function ParticleField() {
         positions[index * 3 + 1] = y;
         positions[index * 3 + 2] = z;
 
-        // Gradient coloring: Violet in the center fading to Blueprint Blue/White at the edges
+        // Neutral graphite center fading to soft white at the edges.
         const distFromCenter = Math.sqrt(x * x + z * z);
         const maxDist = Math.sqrt(
           (cols / 2 * spacing) ** 2 + (rows / 2 * spacing) ** 2
         );
         const ratio = Math.min(distFromCenter / maxDist, 1);
 
-        const mixedColor = colorViolet.clone().lerp(
-          c % 2 === 0 ? colorBlue : colorWhite,
+        const mixedColor = colorGraphite.clone().lerp(
+          c % 2 === 0 ? colorSteel : colorWhite,
           ratio
         );
 
@@ -110,8 +110,8 @@ export function ParticleField() {
       nodePositions[i * 3 + 1] = Math.random() * 100 - 30;
       nodePositions[i * 3 + 2] = (Math.random() - 0.5) * 800;
 
-      // Packets are bright Void Violet or Pure White
-      const c = Math.random() > 0.5 ? colorViolet : colorWhite;
+      // Packets alternate between graphite and soft white.
+      const c = Math.random() > 0.5 ? colorGraphite : colorWhite;
       nodeColors[i * 3] = c.r;
       nodeColors[i * 3 + 1] = c.g;
       nodeColors[i * 3 + 2] = c.b;

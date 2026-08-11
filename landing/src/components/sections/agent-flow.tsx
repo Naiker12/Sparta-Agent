@@ -48,7 +48,7 @@ export function AgentFlow() {
       stepNum: '02',
       desc: 'El agente inspecciona el workspace y genera un plan estructurado en Markdown (`task.md`).',
       badge: 'Plan Estructurado',
-      badgeColor: 'border-purple-500/30 text-purple-400 bg-purple-500/10',
+      badgeColor: 'border-zinc-500/30 text-zinc-400 bg-zinc-500/10',
       icon: NotionIcon,
       logs: [
         'Inspecting local repository files (14 matches found)...',
@@ -164,9 +164,9 @@ export function AgentFlow() {
   const StepIcon = currentStep.icon;
 
   return (
-    <section id="flujo-agentico" className="py-16 relative overflow-hidden max-w-full bg-white dark:bg-[#07050d] text-slate-900 dark:text-white border-y border-slate-200 dark:border-white/10 font-sans transition-colors duration-300">
+    <section id="flujo-agentico" className="py-16 relative overflow-hidden max-w-full bg-white dark:bg-[#09090b] text-slate-900 dark:text-white border-y border-slate-200 dark:border-white/10 font-sans transition-colors duration-300">
       {/* Background Glow */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[700px] max-w-[100vw] h-[350px] bg-[#663af3]/10 blur-[140px] pointer-events-none" />
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[700px] max-w-[100vw] h-[350px] bg-[#18181b]/10 blur-[140px] pointer-events-none" />
 
       <div className="mx-auto max-w-7xl border-x border-slate-200 dark:border-white/10 px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Section Header */}
@@ -189,8 +189,8 @@ export function AgentFlow() {
                 whileTap={{ scale: 0.98 }}
                 className={`px-3 py-2.5 rounded-xl border transition-all duration-300 cursor-pointer flex items-center justify-between relative overflow-hidden ${
                   isActive
-                    ? 'bg-gradient-to-r from-[#663af3] to-[#7c4dff] border-[#663af3] text-white shadow-lg shadow-[#663af3]/30 scale-[1.03]'
-                    : 'bg-white dark:bg-[#0e0b16]/70 border-slate-200 dark:border-white/10 hover:border-[#663af3]/40 hover:bg-purple-50/40 dark:hover:bg-white/[0.04]'
+                    ? 'bg-gradient-to-r from-[#18181b] to-[#27272a] border-[#18181b] text-white shadow-lg shadow-[#18181b]/30 scale-[1.03]'
+                    : 'bg-white dark:bg-[#18181b]/70 border-slate-200 dark:border-white/10 hover:border-[#18181b]/40 hover:bg-zinc-50/40 dark:hover:bg-white/[0.04]'
                 }`}
               >
                 {/* Active Step Top Progress Line */}
@@ -216,7 +216,7 @@ export function AgentFlow() {
                       isActive ? 'text-white' : 'text-slate-900 dark:text-white'
                     }`}>{step.title}</h4>
                     <span className={`text-[9px] font-mono block truncate mt-0.5 ${
-                      isActive ? 'text-purple-200' : 'text-slate-500 dark:text-gray-400'
+                      isActive ? 'text-zinc-200' : 'text-slate-500 dark:text-gray-400'
                     }`}>
                       {step.actor}
                     </span>
@@ -241,16 +241,16 @@ export function AgentFlow() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 15 }}
               transition={{ duration: 0.25 }}
-              className="lg:col-span-6 bg-white dark:bg-[#0e0b16]/90 border border-slate-200 dark:border-white/10 rounded-2xl p-5 backdrop-blur-xl flex flex-col justify-between relative overflow-hidden min-h-[310px] shadow-sm dark:shadow-none"
+              className="lg:col-span-6 bg-white dark:bg-[#18181b]/90 border border-slate-200 dark:border-white/10 rounded-2xl p-5 backdrop-blur-xl flex flex-col justify-between relative overflow-hidden min-h-[310px] shadow-sm dark:shadow-none"
             >
               <div>
-                <div className="flex items-center justify-between mb-4">
+                <div className="mb-4 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-[#663af3]/20 border border-[#663af3]/40 flex items-center justify-center shrink-0">
-                      <StepIcon className="w-5 h-5 text-[#a855f7]" />
+                    <div className="w-10 h-10 rounded-xl bg-[#18181b]/20 border border-[#18181b]/40 flex items-center justify-center shrink-0">
+                      <StepIcon className="w-5 h-5 text-[#52525b]" />
                     </div>
                     <div>
-                      <span className="text-[10px] font-mono text-[#a855f7] block font-semibold">
+                      <span className="text-[10px] font-mono text-[#52525b] block font-semibold">
                         NODO DE GRAFO #{currentStep.stepNum}
                       </span>
                       <h3 className="text-xl font-extrabold text-slate-900 dark:text-white leading-tight">{currentStep.title}</h3>
@@ -266,10 +266,10 @@ export function AgentFlow() {
                 </p>
 
                 {/* Compact State Variables Inspection Box */}
-                <div className="bg-slate-50 dark:bg-[#05030a] border border-slate-200 dark:border-white/10 rounded-xl p-3 font-mono text-xs space-y-1.5 mb-2">
+                <div className="bg-slate-50 dark:bg-[#0a0a0a] border border-slate-200 dark:border-white/10 rounded-xl p-3 font-mono text-xs space-y-1.5 mb-2">
                   <div className="flex items-center justify-between text-slate-500 dark:text-gray-400 pb-1.5 border-b border-slate-200 dark:border-white/10 text-[11px]">
                     <span className="flex items-center gap-1.5 text-slate-900 dark:text-white font-semibold">
-                      <Activity className="w-3 h-3 text-[#a855f7]" />
+                      <Activity className="w-3 h-3 text-[#52525b]" />
                       Estado del Grafo (State Object)
                     </span>
                     <span className="text-emerald-600 dark:text-emerald-400 font-bold text-[10px]">MEMORY_ACTIVE</span>
@@ -286,21 +286,21 @@ export function AgentFlow() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-white/10 text-[11px] text-slate-500 dark:text-gray-400 font-mono">
+              <div className="flex flex-col gap-1 border-t border-slate-200 pt-3 font-mono text-[11px] text-slate-500 dark:border-white/10 dark:text-gray-400 sm:flex-row sm:items-center sm:justify-between">
                 <span>Actor: <strong className="text-slate-900 dark:text-white">{currentStep.actor}</strong></span>
-                <span>Proceso: <strong className="text-[#a855f7]">IPC TypeScript Native</strong></span>
+                <span>Proceso: <strong className="text-[#52525b]">IPC TypeScript Native</strong></span>
               </div>
             </motion.div>
           </AnimatePresence>
 
           {/* Right Panel: Live Sleek Terminal Console Stream (6 Cols) */}
-          <div className="lg:col-span-6 bg-[#030206] border border-white/15 rounded-2xl p-5 backdrop-blur-xl flex flex-col justify-between shadow-2xl relative min-h-[310px]">
+          <div className="lg:col-span-6 bg-[#09090b] border border-white/15 rounded-2xl p-5 backdrop-blur-xl flex flex-col justify-between shadow-2xl relative min-h-[310px]">
             <div>
               {/* Console Header */}
-              <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/10 font-mono text-xs">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3 font-mono text-xs">
                 <div className="flex items-center gap-2">
-                  <Terminal className="w-3.5 h-3.5 text-[#a855f7]" />
-                  <span className="text-white font-bold text-[11px]">SPARTA ENGINE CONSOLE v0.1.1</span>
+                  <Terminal className="w-3.5 h-3.5 text-[#52525b]" />
+                  <span className="max-w-[13rem] truncate text-[11px] font-bold text-white">SPARTA ENGINE CONSOLE v0.1.6</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
@@ -316,11 +316,11 @@ export function AgentFlow() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.2 }}
-                  className="bg-[#080512] border border-white/10 rounded-xl p-3.5 font-mono text-xs space-y-2 mb-4"
+                  className="bg-[#111113] border border-white/10 rounded-xl p-3.5 font-mono text-xs space-y-2 mb-4"
                 >
                   {currentStep.logs.map((log, i) => (
                     <div key={i} className="flex items-start gap-2 text-gray-300 leading-relaxed text-[11px]">
-                      <span className="text-[#a855f7] font-bold select-none shrink-0">sparta@engine:~$</span>
+                      <span className="text-[#52525b] font-bold select-none shrink-0">sparta@engine:~$</span>
                       <span className="break-all">{log}</span>
                     </div>
                   ))}
@@ -329,7 +329,7 @@ export function AgentFlow() {
             </div>
 
             {/* Terminal Footer Status Bar */}
-            <div className="bg-[#07050d] border border-white/10 rounded-xl p-3 font-mono text-[11px] flex items-center justify-between text-gray-300">
+            <div className="flex flex-col gap-2 rounded-xl border border-white/10 bg-[#09090b] p-3 font-mono text-[11px] text-gray-300 sm:flex-row sm:items-center sm:justify-between">
               <span className="flex items-center gap-2">
                 <Workflow className="w-3.5 h-3.5 text-[#3b82f6]" />
                 Nodo Activo: <span className="text-white font-bold">{currentStep.node}</span>

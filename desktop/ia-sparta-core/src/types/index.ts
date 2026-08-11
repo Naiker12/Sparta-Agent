@@ -1,5 +1,5 @@
 export * from './events'
-export { type MessageRole, type ToolCall, type ToolCallSubstatus, type PipelineStep, type Message, type Session, type ChatRequest, type ChatStreamChunk, type ThinkingStatus, type SearchProgressItem, type ReasoningEffort, type ReasoningDetail, type MessagePart, type ReasoningOrigin } from './chat'
+export { type MessageRole, type ToolCall, type ToolCallSubstatus, type PipelineStep, type Message, type MessageAttachment, type Session, type ChatRequest, type ChatStreamChunk, type ThinkingStatus, type SearchProgressItem, type ReasoningEffort, type ReasoningDetail, type SubagentExecutionStep, type MessagePart, type ReasoningOrigin } from './chat'
 export { type ProviderVendor, type ProviderKind, type Provider, type ModelInfo, type AIProvider, type ConnectionTestResult } from './provider'
 export { type MCPServerType, type MCPAuthType, type MCPServerConfig, type MCPTool, type MCPServer } from './mcp'
 export { type MemoryEntry, type MemoryRelation, type MemoryGraphNode, type MemoryGraph, type ExtractedMemory, type RelationType } from './memory'
@@ -9,4 +9,4 @@ export { type ChannelKind, type IntegrationProvider, type IntegrationStatus, typ
 export { type Project } from './project'
 export { type SettingsTab, type SessionMode, type Language, type SettingsState } from './settings'
 export { type FileTreeNode, type FileReadResult, type FileWriteResult, type FilesystemAPI } from './filesystem'
-export * from './permission.types'
+export * from './permission.types'

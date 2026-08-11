@@ -18,7 +18,7 @@ import {
 
 export function CustomizationShowcase() {
   // Theme & State Options for the mockup
-  const [activeColor, setActiveColor] = useState({ name: 'Void Violet', hex: '#663af3' });
+  const [activeColor, setActiveColor] = useState({ name: 'Void Violet', hex: '#18181b' });
   const [buttonRadius, setButtonRadius] = useState(6);
   const [cardRadius, setCardRadius] = useState(16);
   const [buttonText, setButtonText] = useState('Iniciar Sandbox');
@@ -27,17 +27,17 @@ export function CustomizationShowcase() {
   const [activeDirectory, setActiveDirectory] = useState('~/workspace/mi-proyecto-local');
 
   const swatches = [
-    { name: 'Void Violet', hex: '#663af3' },
+    { name: 'Void Violet', hex: '#18181b' },
     { name: 'Signal Blue', hex: '#027dea' },
     { name: 'Deep Teal', hex: '#269684' },
     { name: 'Ember Glow', hex: '#e46d4c' },
   ];
 
   return (
-    <section id="personalizar" className="py-20 relative bg-[#07050d] border-y border-white/10">
+    <section id="personalizar" className="py-20 relative bg-[#09090b] border-y border-white/10">
       <div className="mx-auto max-w-7xl border-x border-white/10 px-4 sm:px-6 lg:px-8 space-y-16">
         {/* Background radial spotlight */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-[#663af3]/5 blur-[150px] rounded-full pointer-events-none -z-10" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-[#18181b]/5 blur-[150px] rounded-full pointer-events-none -z-10" />
 
         {/* Unified Section Header */}
         <SectionHeader
@@ -55,7 +55,7 @@ export function CustomizationShowcase() {
             {/* Inspector Panel 1: Styling Controls */}
             <Card className="p-6 border-[rgba(186,215,247,0.12)] bg-[rgba(5,6,15,0.97)] space-y-5 shadow-xl relative">
               <div className="flex items-center gap-2 pb-3 border-b border-[rgba(186,215,247,0.08)]">
-                <Sliders className="w-4 h-4 text-indigo-400" />
+                <Sliders className="w-4 h-4 text-zinc-400" />
                 <span className="text-xs font-mono text-[#d8ecf8] font-bold uppercase tracking-wider">Style Inspector</span>
               </div>
 
@@ -98,7 +98,7 @@ export function CustomizationShowcase() {
                   max="24"
                   value={buttonRadius}
                   onChange={(e) => setButtonRadius(Number(e.target.value))}
-                  className="w-full h-1 bg-[rgba(186,215,247,0.12)] rounded-lg appearance-none cursor-pointer accent-[#663af3]"
+                  className="w-full h-1 bg-[rgba(186,215,247,0.12)] rounded-lg appearance-none cursor-pointer accent-[#18181b]"
                 />
               </div>
 
@@ -114,7 +114,7 @@ export function CustomizationShowcase() {
                   max="28"
                   value={cardRadius}
                   onChange={(e) => setCardRadius(Number(e.target.value))}
-                  className="w-full h-1 bg-[rgba(186,215,247,0.12)] rounded-lg appearance-none cursor-pointer accent-[#663af3]"
+                  className="w-full h-1 bg-[rgba(186,215,247,0.12)] rounded-lg appearance-none cursor-pointer accent-[#18181b]"
                 />
               </div>
             </Card>
@@ -122,7 +122,7 @@ export function CustomizationShowcase() {
             {/* Inspector Panel 2: Component Configuration */}
             <Card className="p-6 border-[rgba(186,215,247,0.12)] bg-[rgba(5,6,15,0.97)] space-y-5 shadow-xl relative">
               <div className="flex items-center gap-2 pb-3 border-b border-[rgba(186,215,247,0.08)]">
-                <Command className="w-4 h-4 text-indigo-400" />
+                <Command className="w-4 h-4 text-zinc-400" />
                 <span className="text-xs font-mono text-[#d8ecf8] font-bold uppercase tracking-wider">Component Config</span>
               </div>
 
@@ -134,7 +134,7 @@ export function CustomizationShowcase() {
                   value={buttonText}
                   onChange={(e) => setButtonText(e.target.value)}
                   placeholder="Texto del botón..."
-                  className="w-full bg-[rgba(199,211,234,0.06)] text-white text-xs rounded-[6px] px-3 py-2 border border-[rgba(186,215,247,0.12)] focus:border-indigo-500/50 focus:outline-none transition-colors"
+                  className="w-full bg-[rgba(199,211,234,0.06)] text-white text-xs rounded-[6px] px-3 py-2 border border-[rgba(186,215,247,0.12)] focus:border-zinc-500/50 focus:outline-none transition-colors"
                 />
               </div>
 
@@ -148,7 +148,7 @@ export function CustomizationShowcase() {
                       onClick={() => setLogoIcon(logo)}
                       className={`p-2 rounded-[6px] border text-xs text-[#c7d3ea] capitalize transition-all cursor-pointer flex flex-col items-center gap-1 ${
                         logoIcon === logo
-                          ? 'bg-[rgba(186,214,247,0.08)] border-indigo-500/50 text-white font-semibold'
+                          ? 'bg-[rgba(186,214,247,0.08)] border-zinc-500/50 text-white font-semibold'
                           : 'bg-black/30 border-[rgba(186,215,247,0.08)] hover:text-white'
                       }`}
                     >
@@ -201,10 +201,10 @@ export function CustomizationShowcase() {
           <div className="lg:col-span-8 relative flex items-center justify-center p-2 sm:p-6 bg-black/40 rounded-[20px] border border-[rgba(186,215,247,0.06)] shadow-inner">
             
             {/* Mock browser container */}
-            <div className="w-full max-w-[500px] rounded-[12px] overflow-hidden border border-[rgba(186,215,247,0.12)] bg-[#05060f] shadow-2xl transition-all duration-300">
+            <div className="w-full max-w-[500px] rounded-[12px] overflow-hidden border border-[rgba(186,215,247,0.12)] bg-[#0a0a0a] shadow-2xl transition-all duration-300">
               
               {/* Browser Window Header */}
-              <div className="bg-[#080914] px-4 py-3 border-b border-[rgba(186,215,247,0.08)] flex items-center justify-between">
+              <div className="bg-[#111113] px-4 py-3 border-b border-[rgba(186,215,247,0.08)] flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-2.5 h-2.5 rounded-full bg-rose-500/80" />
                   <div className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
@@ -218,7 +218,7 @@ export function CustomizationShowcase() {
 
               {/* Browser Inner Workspace */}
               <div className={`p-8 flex items-center justify-center transition-colors duration-300 ${
-                isDarkMock ? 'bg-[#0a0b16]' : 'bg-[#f4f4f7]'
+                isDarkMock ? 'bg-[#18181b]' : 'bg-[#f4f4f7]'
               }`}>
                 
                 {/* Dynamically styled Card */}
@@ -276,7 +276,7 @@ export function CustomizationShowcase() {
                           onChange={(e) => setActiveDirectory(e.target.value)}
                           className={`w-full text-xs px-3 py-2 border focus:outline-none transition-colors ${
                             isDarkMock
-                              ? 'bg-[rgba(199,211,234,0.06)] text-white border-[rgba(186,215,247,0.12)] focus:border-indigo-500/50'
+                              ? 'bg-[rgba(199,211,234,0.06)] text-white border-[rgba(186,215,247,0.12)] focus:border-zinc-500/50'
                               : 'bg-zinc-50 text-zinc-800 border-zinc-200 focus:border-zinc-400'
                           }`}
                           style={{ borderRadius: `${buttonRadius}px` }}
@@ -297,7 +297,7 @@ export function CustomizationShowcase() {
                         style={{ borderRadius: `${buttonRadius}px` }}
                         >
                           <span className="flex items-center gap-1.5">
-                            <FolderOpen className="w-3.5 h-3.5 text-indigo-400" />
+                            <FolderOpen className="w-3.5 h-3.5 text-zinc-400" />
                             eslint / tsc
                           </span>
                           <span className="text-emerald-500 font-bold flex items-center gap-1">

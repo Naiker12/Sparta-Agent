@@ -1,6 +1,20 @@
 import { isSidecarRunning, sendToPython, sidecarEvents, SidecarEvent, waitForSidecarReady } from 'ia-sparta-ipc-bridge'
 import { sendToRenderer } from '../shared'
 
+function formatCodeStep(data: Record<string, unknown>): string {
+  const toolName = String(data.tool_name ?? 'Ejecutando tarea')
+  const args = data.tool_input && typeof data.tool_input === 'object' ? data.tool_input as Record<string, unknown> : data
+  const target = typeof args.path === 'string' ? args.path : typeof args.file_path === 'string' ? args.file_path : ''
+
+  if (toolName === 'write_file') return target ? `Escribiendo ${target}` : 'Escribiendo archivo'
+  if (toolName === 'edit_file') return target ? `Editando ${target}` : 'Editando archivo'
+  if (toolName === 'read_file') return target ? `Leyendo ${target}` : 'Leyendo archivo'
+  if (toolName === 'delete_file') return target ? `Eliminando ${target}` : 'Eliminando archivo'
+  if (toolName === 'run_command') return 'Ejecutando comando'
+  if (toolName === 'list_directory') return 'Revisando estructura del proyecto'
+  return toolName.replace(/_/g, ' ')
+}
+
 export async function runCodeSubagent(input: { sessionId: string; messageId: string; taskId: string; task: string; workspaceRoot?: string; model?: string; vendor?: string }): Promise<string> {
   if (!isSidecarRunning() || !(await waitForSidecarReady(15_000))) {
     throw new Error('El runtime de subagentes no está disponible.')
@@ -16,7 +30,7 @@ export async function runCodeSubagent(input: { sessionId: string; messageId: str
       const event = msg.event as string
       const data = (msg.data ?? {}) as Record<string, unknown>
       if (event === 'agent:step') {
-        sendToRenderer({ sessionId: input.sessionId, messageId: input.messageId, type: 'subagent:step', subagentName: 'code', stepId: data.step_id ?? input.taskId, stepLabel: data.tool_name ?? 'Ejecutando tarea', status: data.status ?? 'running', timestamp: Date.now() })
+        sendToRenderer({ sessionId: input.sessionId, messageId: input.messageId, type: 'subagent:step', subagentName: 'code', stepId: data.step_id ?? input.taskId, stepLabel: formatCodeStep(data), status: data.status ?? 'running', timestamp: Date.now() })
       }
       if (event === 'agent:completed' || event === 'agent:error') {
         clearTimeout(timer); cleanup()

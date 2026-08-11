@@ -45,6 +45,7 @@ export function ModeSwitch() {
       >
         <button
           onClick={() => setSessionMode('chat')}
+          title="Chat: consultar y analizar sin modificar archivos"
           style={{
             flex: 1,
             display: 'flex',
@@ -69,6 +70,7 @@ export function ModeSwitch() {
         </button>
         <button
           onClick={() => setSessionMode('agent')}
+          title="Agente: crear y editar archivos con confirmación"
           style={{
             flex: 1,
             display: 'flex',

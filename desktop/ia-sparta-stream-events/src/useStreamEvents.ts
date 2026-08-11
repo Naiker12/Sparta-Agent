@@ -8,6 +8,7 @@ import { handleToolCalled, handleToolResult, handleToolError, handleChartGenerat
 import { handleMCPEvent, handleMCPServerAdded, handleMCPServerRemoved } from './handlers/mcp.handler'
 import { handleSearchProgress } from './handlers/search.handler'
 import { handleSkillActivated, handleSkillCompleted, handleSkillAutoSuggested } from './handlers/skill.handler'
+import { handleSubagentCompleted, handleSubagentStarted, handleSubagentStep } from './handlers/subagent.handler'
 import { handlePlanCreated, handlePlanStep, handleFileChanged, handleWorkspaceConnected, handleSidecarLog, handleTerminalAgentCommand, handleTerminalAgentSpawn } from './handlers/plan-etc.handler'
 import type { EventHandlerCtx } from './handlers/types'
 
@@ -125,6 +126,10 @@ function _handleEvent(rawEvent: SpartaEvent) {
     case 'skill:activated': handleSkillActivated(ctx); break
     case 'skill:completed': handleSkillCompleted(ctx); break
     case 'skill:auto-suggested': handleSkillAutoSuggested(ctx); break
+
+    case 'subagent:started': handleSubagentStarted(ctx); break
+    case 'subagent:step': handleSubagentStep(ctx); break
+    case 'subagent:completed': handleSubagentCompleted(ctx); break
   }
 }
 

@@ -90,6 +90,7 @@ export function processFile(file: File): Promise<ProcessedAttachment> {
                 size: file.size,
                 kind: 'text',
                 previewText: fileBlock,
+                base64Data: base64Str,
                 extractedImages: conv.images ?? [],
               })
               return
@@ -104,6 +105,7 @@ export function processFile(file: File): Promise<ProcessedAttachment> {
           size: file.size,
           kind: 'binary',
           previewText: `[Documento adjunto: ${file.name} (${sizeStr}) - .${ext}]`,
+          base64Data: base64Str,
         })
       }
       reader.onerror = (err) => reject(err)

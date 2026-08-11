@@ -9,7 +9,7 @@ export function FeaturesGrid() {
       title: 'Planes de Ejecución Transparentes',
       desc: 'Nada de cambios invisibles. Antes de modificar tu proyecto, el agente genera un documento Markdown interactivo con la lista exacta de tareas, archivos a modificar y comandos a ejecutar.',
       badge: 'create_plan',
-      color: 'text-indigo-400 bg-indigo-500/10',
+      color: 'text-zinc-400 bg-zinc-500/10',
     },
     {
       icon: ShieldAlert,

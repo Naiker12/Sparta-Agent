@@ -1,11 +1,15 @@
 import { useEffect, useRef } from 'react';
+import { useReducedMotion } from 'framer-motion';
 import { useTheme } from 'next-themes';
 
 export function AIRain() {
   const { resolvedTheme } = useTheme();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const shouldReduceMotion = useReducedMotion();
 
   useEffect(() => {
+    if (shouldReduceMotion) return;
+
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -79,10 +83,14 @@ export function AIRain() {
         scrollBoost *= 0.92;
       }
 
-      // Clear canvas with theme-specific background color to make trails match the active theme
+      // Fade previous frames without painting an opaque layer over the page.
+      // This preserves contrast in both themes while retaining a subtle trail.
       const isLight = resolvedTheme === 'light';
-      ctx.fillStyle = isLight ? 'rgba(248, 250, 252, 0.12)' : 'rgba(7, 5, 13, 0.12)';
+      ctx.save();
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.16)';
       ctx.fillRect(0, 0, width, height);
+      ctx.restore();
 
       // Set font settings
       ctx.font = 'bold 10px monospace';
@@ -102,22 +110,22 @@ export function AIRain() {
           if (charY > 0 && charY < height) {
             let color = '';
             if (isLight) {
-              // Light theme colors: rich deep indigo/purple shades
+              // Light theme: neutral graphite tones.
               if (index === 0) {
-                color = `rgba(88, 28, 235, ${Math.min(drop.opacity * 2.2, 0.95)})`; // Head: rich deep violet
+                color = `rgba(24, 24, 27, ${Math.min(drop.opacity * 2.2, 0.95)})`;
               } else if (index < 3) {
-                color = `rgba(67, 56, 202, ${Math.min(drop.opacity * 1.8, 0.8)})`; // Upper body: indigo
+                color = `rgba(82, 82, 91, ${Math.min(drop.opacity * 1.8, 0.8)})`;
               } else {
-                color = `rgba(88, 28, 235, ${drop.opacity * (1 - index / drop.chars.length) * 0.65})`; // Fading tail
+                color = `rgba(113, 113, 122, ${drop.opacity * (1 - index / drop.chars.length) * 0.65})`;
               }
             } else {
-              // Dark theme colors: neon colors
+              // Dark theme: restrained silver tones.
               if (index === 0) {
-                color = `rgba(182, 217, 252, ${drop.opacity * 1.5})`; // Head: bright skywash blue
+                color = `rgba(244, 244, 245, ${drop.opacity * 1.25})`;
               } else if (index < 3) {
-                color = `rgba(168, 85, 247, ${drop.opacity * 1.1})`; // Upper body: bright purple
+                color = `rgba(161, 161, 170, ${drop.opacity})`;
               } else {
-                color = `rgba(102, 58, 243, ${drop.opacity * (1 - index / drop.chars.length) * 0.6})`; // Fading tail
+                color = `rgba(82, 82, 91, ${drop.opacity * (1 - index / drop.chars.length) * 0.6})`;
               }
             }
 
@@ -151,13 +159,15 @@ export function AIRain() {
       window.removeEventListener('scroll', handleScroll);
       cancelAnimationFrame(animationFrameId);
     };
-  }, [resolvedTheme]);
+  }, [resolvedTheme, shouldReduceMotion]);
+
+  if (shouldReduceMotion) return null;
 
   return (
     <canvas
       ref={canvasRef}
       className={`fixed inset-0 pointer-events-none z-0 transition-opacity duration-500 ${
-        resolvedTheme === 'light' ? 'opacity-35' : 'opacity-45'
+        resolvedTheme === 'light' ? 'opacity-20' : 'opacity-30'
       }`}
       style={{ filter: 'blur(0.2px)' }}
     />

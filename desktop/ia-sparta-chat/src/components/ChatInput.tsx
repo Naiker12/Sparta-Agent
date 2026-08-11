@@ -5,7 +5,7 @@ import { useSettingsStore } from 'ia-sparta-core'
 import { useChatStore } from 'ia-sparta-core'
 import { useSessionStore } from 'ia-sparta-core'
 import { useProviderStore } from 'ia-sparta-core'
-import { useChatSession } from 'ia-sparta-core'
+import { useChatSession, type MessageAttachment } from 'ia-sparta-core'
 import { useLocalSkillsLoader } from 'ia-sparta-core'
 import { cn } from 'ia-sparta-core'
 import { messagingAdapter } from 'ia-sparta-platform'
@@ -162,7 +162,15 @@ export function ChatInput({ sessionId, className }: ChatInputProps) {
       return
     }
 
-    sendMessage(fullText)
+    const messageAttachments: MessageAttachment[] = attachments.map(({ id, fileName, mimeType, size, kind, base64Data }) => ({
+      id,
+      fileName,
+      mimeType,
+      size,
+      kind,
+      base64Data,
+    }))
+    sendMessage(fullText, messageAttachments.length > 0 ? messageAttachments : undefined)
     setInput('')
     setAttachments([])
     setActiveMentions([])

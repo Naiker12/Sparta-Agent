@@ -66,36 +66,36 @@ export function DownloadBar() {
   const releases = [
     {
       os: 'Windows (x64)',
-      filename: 'Sparta-Agent-Windows-0.1.5-Setup.exe',
+      filename: 'Sparta-Agent-Windows-0.1.6-Setup.exe',
       size: '~120 MB',
       icon: Monitor,
       recommended: true,
       badge: 'Instalador NSIS .exe',
-      command: 'powershell -c "Invoke-WebRequest -Uri https://github.com/Naiker12/Sparta-Agent/releases/download/v0.1.5/Sparta-Agent-Windows-0.1.5-Setup.exe -OutFile Sparta-Setup.exe"',
-      url: 'https://github.com/Naiker12/Sparta-Agent/releases/download/v0.1.5/Sparta-Agent-Windows-0.1.5-Setup.exe',
-      fallbackUrl: 'https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.1.5',
+      command: 'powershell -c "Invoke-WebRequest -Uri https://github.com/Naiker12/Sparta-Agent/releases/download/v0.1.6/Sparta-Agent-Windows-0.1.6-Setup.exe -OutFile Sparta-Setup.exe"',
+      url: 'https://github.com/Naiker12/Sparta-Agent/releases/download/v0.1.6/Sparta-Agent-Windows-0.1.6-Setup.exe',
+      fallbackUrl: 'https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.1.6',
     },
     {
       os: 'macOS (Apple Silicon & Intel)',
-      filename: 'Sparta-Agent-Mac-0.1.5-Installer.dmg',
+      filename: 'Sparta-Agent-Mac-0.1.6-Installer.dmg',
       size: '~130 MB',
       icon: Apple,
       recommended: false,
       badge: 'Universal .dmg',
-      command: 'curl -L https://github.com/Naiker12/Sparta-Agent/releases/download/v0.1.5/Sparta-Agent-Mac-0.1.5-Installer.dmg -o Sparta-Installer.dmg',
-      url: 'https://github.com/Naiker12/Sparta-Agent/releases/download/v0.1.5/Sparta-Agent-Mac-0.1.5-Installer.dmg',
-      fallbackUrl: 'https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.1.5',
+      command: 'curl -L https://github.com/Naiker12/Sparta-Agent/releases/download/v0.1.6/Sparta-Agent-Mac-0.1.6-Installer.dmg -o Sparta-Installer.dmg',
+      url: 'https://github.com/Naiker12/Sparta-Agent/releases/download/v0.1.6/Sparta-Agent-Mac-0.1.6-Installer.dmg',
+      fallbackUrl: 'https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.1.6',
     },
     {
       os: 'Linux (AppImage)',
-      filename: 'Sparta-Agent-Linux-0.1.5.AppImage',
+      filename: 'Sparta-Agent-Linux-0.1.6.AppImage',
       size: '~115 MB',
       icon: Terminal,
       recommended: false,
       badge: 'Binario AppImage',
-      command: 'wget https://github.com/Naiker12/Sparta-Agent/releases/download/v0.1.5/Sparta-Agent-Linux-0.1.5.AppImage && chmod +x Sparta-Agent-Linux-0.1.5.AppImage',
-      url: 'https://github.com/Naiker12/Sparta-Agent/releases/download/v0.1.5/Sparta-Agent-Linux-0.1.5.AppImage',
-      fallbackUrl: 'https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.1.5',
+      command: 'wget https://github.com/Naiker12/Sparta-Agent/releases/download/v0.1.6/Sparta-Agent-Linux-0.1.6.AppImage && chmod +x Sparta-Agent-Linux-0.1.6.AppImage',
+      url: 'https://github.com/Naiker12/Sparta-Agent/releases/download/v0.1.6/Sparta-Agent-Linux-0.1.6.AppImage',
+      fallbackUrl: 'https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.1.6',
     },
   ];
 
@@ -156,9 +156,9 @@ export function DownloadBar() {
   };
 
   return (
-    <section id="descargas" className="py-12 relative overflow-hidden max-w-full bg-slate-50/85 dark:bg-[#07050d]/85 backdrop-blur-md text-slate-900 dark:text-white border-y border-slate-200 dark:border-white/10 font-sans transition-colors duration-300">
+    <section id="descargas" className="py-12 relative overflow-hidden max-w-full bg-slate-50/85 dark:bg-[#09090b]/85 backdrop-blur-md text-slate-900 dark:text-white border-y border-slate-200 dark:border-white/10 font-sans transition-colors duration-300">
       {/* Background Ambient Glow */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[700px] max-w-[100vw] h-[300px] bg-[#663af3]/10 blur-[140px] pointer-events-none" />
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[700px] max-w-[100vw] h-[300px] bg-[#18181b]/10 blur-[140px] pointer-events-none" />
 
       {/* UNIFIED CONTINUOUS GRID CONTAINER MAX-W-7XL BORDER-X */}
       <div className="mx-auto max-w-7xl border-x border-slate-200 dark:border-white/10 px-4 sm:px-6 lg:px-8 relative z-10">
@@ -185,20 +185,20 @@ export function DownloadBar() {
                 transition={{ duration: 0.2 }}
                 className={`p-5 rounded-xl border flex flex-col justify-between h-full relative overflow-hidden backdrop-blur-xl transition-all duration-300 ${
                   rel.recommended
-                    ? 'bg-[#663af3]/15 border-[#663af3] shadow-lg shadow-[#663af3]/20'
-                    : 'bg-white dark:bg-[#0e0b16]/80 border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/25 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
+                    ? 'bg-[#18181b]/15 border-[#18181b] shadow-lg shadow-[#18181b]/20'
+                    : 'bg-white dark:bg-[#18181b]/80 border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/25 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
                 }`}
               >
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
-                      rel.recommended ? 'bg-[#663af3] text-white' : 'bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-gray-300'
+                      rel.recommended ? 'bg-[#18181b] text-white' : 'bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-gray-300'
                     }`}>
                       <Icon className="w-4 h-4" />
                     </div>
 
                     {rel.recommended ? (
-                      <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-[#663af3] text-white shadow-md shadow-[#663af3]/40">
+                      <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-[#18181b] text-white shadow-md shadow-[#18181b]/40">
                         🔥 Recomendado
                       </span>
                     ) : (
@@ -209,10 +209,10 @@ export function DownloadBar() {
                   </div>
 
                   <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-0.5">{rel.os}</h3>
-                  <p className="text-[11px] font-mono text-purple-700 dark:text-purple-300 truncate mb-3">{displayFilename}</p>
+                  <p className="text-[11px] font-mono text-zinc-700 dark:text-zinc-300 truncate mb-3">{displayFilename}</p>
 
                   <div className="flex items-center gap-1.5 text-[10px] font-mono text-slate-600 dark:text-gray-400 mb-4">
-                    <HardDrive className="w-3 h-3 text-[#a855f7]" />
+                    <HardDrive className="w-3 h-3 text-[#52525b]" />
                     <span>Tamaño: <strong className="text-slate-900 dark:text-white">{displaySize}</strong></span>
                   </div>
                 </div>
@@ -221,7 +221,7 @@ export function DownloadBar() {
                   onClick={() => handleDownloadClick(rel)}
                   className={`w-full py-2 px-3 rounded-lg font-mono text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md ${
                     rel.recommended
-                      ? 'bg-[#663af3] hover:bg-[#7c4dff] text-white shadow-[#663af3]/40 border border-[#663af3]'
+                      ? 'bg-[#18181b] hover:bg-[#27272a] text-white shadow-[#18181b]/40 border border-[#18181b]'
                       : 'bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:hover:bg-white/20 text-slate-900 dark:text-white border border-slate-300 dark:border-white/10'
                   }`}
                 >
@@ -240,7 +240,7 @@ export function DownloadBar() {
             href="https://github.com/Naiker12/Sparta-Agent/releases/latest"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-mono text-xs font-semibold bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-purple-600 dark:text-purple-300 hover:text-purple-700 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-white/10 transition-all shadow-sm"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-slate-100 px-4 py-2 text-center font-mono text-xs font-semibold leading-5 text-zinc-600 shadow-sm transition-all hover:bg-slate-200 hover:text-zinc-700 dark:border-white/10 dark:bg-white/5 dark:text-zinc-300 dark:hover:bg-white/10 dark:hover:text-white sm:w-auto"
           >
             <span>Ver Release Oficial y notas de la versión en GitHub Releases</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -254,14 +254,14 @@ export function DownloadBar() {
               initial={{ opacity: 0, y: 15, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 15, scale: 0.95 }}
-              className="mt-6 max-w-lg mx-auto bg-white dark:bg-[#080512] border border-[#663af3]/50 rounded-xl p-4 shadow-lg dark:shadow-2xl backdrop-blur-2xl relative"
+              className="mt-6 max-w-lg mx-auto bg-white dark:bg-[#111113] border border-[#18181b]/50 rounded-xl p-4 shadow-lg dark:shadow-2xl backdrop-blur-2xl relative"
             >
               <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-200 dark:border-white/10 font-mono text-xs">
                 <div className="flex items-center gap-2 text-slate-900 dark:text-white font-bold truncate">
                   {downloadState.status === 'completed' ? (
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   ) : (
-                    <Loader2 className="w-3.5 h-3.5 text-[#a855f7] animate-spin shrink-0" />
+                    <Loader2 className="w-3.5 h-3.5 text-[#52525b] animate-spin shrink-0" />
                   )}
                   <span className="truncate">{downloadState.filename}</span>
                 </div>
@@ -276,12 +276,12 @@ export function DownloadBar() {
               {/* Progress Line */}
               <div className="w-full h-1.5 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden mb-2">
                 <motion.div
-                  className="h-full bg-gradient-to-r from-[#f66e60] via-[#663af3] to-emerald-400 rounded-full"
+                  className="h-full bg-gradient-to-r from-[#f66e60] via-[#18181b] to-emerald-400 rounded-full"
                   style={{ width: `${downloadState.progress}%` }}
                 />
               </div>
 
-              <div className="flex items-center justify-between text-[10px] font-mono text-slate-600 dark:text-gray-300">
+              <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] font-mono text-slate-600 dark:text-gray-300 sm:items-center sm:justify-between">
                 <span>Progreso: <strong className="text-slate-900 dark:text-white">{downloadState.progress}%</strong></span>
                 <span>Velocidad: <strong className="text-emerald-600 dark:text-emerald-400">{downloadState.speed}</strong></span>
                 <span>Cargado: <strong className="text-slate-900 dark:text-white">{downloadState.loaded} / {downloadState.total}</strong></span>

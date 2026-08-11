@@ -7,6 +7,23 @@ interface XlsxPreviewProps {
   fileName: string
 }
 
+function formatCellValue(value: unknown): string {
+  if (value == null) return ''
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return String(value)
+  if (value instanceof Date) return value.toLocaleString()
+
+  if (typeof value === 'object') {
+    const cell = value as { w?: unknown; v?: unknown; text?: unknown; r?: unknown }
+    for (const candidate of [cell.w, cell.v, cell.text, cell.r]) {
+      if (typeof candidate === 'string' || typeof candidate === 'number' || typeof candidate === 'boolean') {
+        return String(candidate)
+      }
+    }
+  }
+
+  return ''
+}
+
 export function XlsxPreview({ base64, fileName }: XlsxPreviewProps) {
   const [activeSheetIndex, setActiveSheetIndex] = useState(0)
 
@@ -31,7 +48,11 @@ export function XlsxPreview({ base64, fileName }: XlsxPreviewProps) {
     if (!sheet) return null
 
     // Convert sheet to array of arrays
-    const rawData = XLSX.utils.sheet_to_json<Array<string | number | boolean>>(sheet, { header: 1, defval: '' })
+    const rawData = XLSX.utils.sheet_to_json<unknown[]>(sheet, {
+      header: 1,
+      defval: '',
+      raw: false,
+    })
     return rawData
   }, [workbook, sheetNames, activeSheetIndex])
 
@@ -146,7 +167,7 @@ export function XlsxPreview({ base64, fileName }: XlsxPreviewProps) {
                           color: 'var(--text-primary)',
                         }}
                       >
-                        {String(cell ?? '')}
+                        {formatCellValue(cell)}
                       </td>
                     ))}
                   </tr>

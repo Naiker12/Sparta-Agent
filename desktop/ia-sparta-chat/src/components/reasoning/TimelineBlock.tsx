@@ -208,6 +208,7 @@ export function TimelineBlock({ message, className }: TimelineBlockProps) {
                         status={part.completedAt ? (part.success === false ? 'failed' : 'completed') : 'running'}
                         durationMs={part.durationMs}
                         success={part.success}
+                        steps={part.steps}
                       />
                     )
                   }

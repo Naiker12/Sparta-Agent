@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import {
   Cpu,
   Folder,
@@ -50,14 +50,19 @@ const ALL_MCP_TOOLS: MCPToolItem[] = [
 export function McpGraphShowcase() {
   const [activeModel, setActiveModel] = useState('z-ai/glm-5.2');
   const [activeStep, setActiveStep] = useState(0);
+  const shouldReduceMotion = useReducedMotion();
+  const reveal = shouldReduceMotion
+    ? { initial: false, animate: { opacity: 1, y: 0 } }
+    : { initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 } };
 
-  // Automated step simulation for Bento Card 2
   useEffect(() => {
+    if (shouldReduceMotion) return;
+
     const timer = setInterval(() => {
       setActiveStep((prev) => (prev + 1) % 6);
     }, 2500);
     return () => clearInterval(timer);
-  }, []);
+  }, [shouldReduceMotion]);
 
   const workflowSteps = [
     { num: 1, text: 'Buscando espacio de trabajo en Notion...' },
@@ -89,20 +94,8 @@ export function McpGraphShowcase() {
       <div className="max-w-7xl mx-auto border-x border-slate-200 dark:border-white/10 px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-100 dark:bg-white/[0.05] border border-slate-200 dark:border-white/15 text-xs font-mono text-slate-600 dark:text-gray-300 uppercase tracking-widest"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-[#f66e60]" />
-            Arquitectura Orion AI &amp; Conectores MCP
-          </motion.div>
-
           <motion.h2
-            initial={{ opacity: 0, y: 15 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            {...reveal}
             transition={{ delay: 0.1 }}
             className="text-3xl sm:text-5xl font-extrabold tracking-tight leading-tight text-slate-900 dark:text-white"
           >
@@ -113,14 +106,12 @@ export function McpGraphShowcase() {
           </motion.h2>
 
           <motion.p
-            initial={{ opacity: 0, y: 15 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            {...reveal}
             transition={{ delay: 0.2 }}
             className="text-base sm:text-lg text-slate-600 dark:text-gray-400"
           >
             Conecta Notion, OneDrive, Google Drive, Gmail y tu Filesystem local en una sola
-            interfaz inteligente con ejecución nativa IPC y seguridad garantizada.
+            interfaz con ejecución IPC y controles de permisos configurables.
           </motion.p>
         </div>
 
@@ -128,9 +119,7 @@ export function McpGraphShowcase() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           {/* Bento Card 1: Secure & Transparent (AES-256 Vault) */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            {...reveal}
             className="bg-white dark:bg-[#0e0b16]/90 border border-slate-200 dark:border-white/10 rounded-3xl p-6 sm:p-8 backdrop-blur-xl relative overflow-hidden group hover:border-[#f66e60]/50 transition-all duration-300 flex flex-col justify-between shadow-sm dark:shadow-none"
           >
             {/* Background Matrix Rain Simulation */}
@@ -162,20 +151,18 @@ export function McpGraphShowcase() {
 
           {/* Bento Card 2: Smart Workflow Automation (Step-by-step Execution) */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            {...reveal}
             transition={{ delay: 0.1 }}
             className="bg-white dark:bg-[#0e0b16]/90 border border-slate-200 dark:border-white/10 rounded-3xl p-6 sm:p-8 backdrop-blur-xl relative overflow-hidden group hover:border-[#a855f7]/50 transition-all duration-300 flex flex-col justify-between shadow-sm dark:shadow-none"
           >
             <div className="relative z-10">
               <div className="flex items-center gap-2 text-xs font-mono text-[#a855f7] mb-4">
-                <Zap className="w-4 h-4 animate-bounce" />
+                <Zap className="w-4 h-4" />
                 <span>Ejecución Paso a Paso</span>
               </div>
 
               {/* Dynamic Animated Steps List */}
-              <div className="space-y-2 mb-6">
+              <div className="space-y-2 mb-6" aria-hidden="true">
                 {workflowSteps.slice(0, 5).map((step, idx) => {
                   const isActive = activeStep === idx;
                   return (
@@ -210,9 +197,7 @@ export function McpGraphShowcase() {
 
           {/* Bento Card 3: Cross-Platform MCP Constellation WITH PRESERVED POLAR TRANSLATE */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            {...reveal}
             transition={{ delay: 0.2 }}
             className="bg-white dark:bg-[#0e0b16]/90 border border-slate-200 dark:border-white/10 rounded-3xl p-6 sm:p-8 backdrop-blur-xl relative overflow-hidden group hover:border-[#3b82f6]/50 transition-all duration-300 flex flex-col justify-between shadow-sm dark:shadow-none"
           >
@@ -220,7 +205,7 @@ export function McpGraphShowcase() {
             <div className="relative w-full h-52 flex items-center justify-center mb-6">
               {/* Central Core Breathing Glow Ring */}
               <motion.div
-                animate={{
+                animate={shouldReduceMotion ? undefined : {
                   scale: [1, 1.12, 1],
                   opacity: [0.4, 0.8, 0.4],
                 }}
@@ -234,7 +219,7 @@ export function McpGraphShowcase() {
 
               {/* Central Core Orb */}
               <motion.div
-                animate={{ scale: [1, 1.05, 1] }}
+                animate={shouldReduceMotion ? undefined : { scale: [1, 1.05, 1] }}
                 transition={{ repeat: Infinity, duration: 4, ease: 'easeInOut' }}
                 className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#f66e60] via-[#a855f7] to-[#3b82f6] p-[2px] shadow-2xl shadow-[#3b82f6]/40 z-20"
               >
@@ -296,7 +281,7 @@ export function McpGraphShowcase() {
                     className="z-10"
                   >
                     <motion.div
-                      animate={{
+                      animate={shouldReduceMotion ? undefined : {
                         y: [0, -5, 0],
                         scale: [1, 1.08, 1],
                       }}
@@ -329,15 +314,13 @@ export function McpGraphShowcase() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Bento Card 4: Multi-AI Integration & Floating Chat Input Mockup (7 Cols) */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            {...reveal}
             className="lg:col-span-7 bg-white dark:bg-[#0e0b16]/90 border border-slate-200 dark:border-white/10 rounded-3xl p-6 sm:p-8 backdrop-blur-xl relative overflow-hidden group hover:border-[#663af3]/50 transition-all duration-300 shadow-sm dark:shadow-none"
           >
             {/* CONTINUOUS INFINITE MARQUEE CAROUSEL ANIMATION FOR MCP ICONS */}
             <div className="relative overflow-hidden w-full mb-8 [mask-image:linear-gradient(to_right,transparent,black_15%,black_85%,transparent)]">
               <motion.div
-                animate={{ x: ['0%', '-50%'] }}
+                animate={shouldReduceMotion ? { x: 0 } : { x: ['0%', '-50%'] }}
                 transition={{
                   repeat: Infinity,
                   repeatType: 'loop',
@@ -374,13 +357,12 @@ export function McpGraphShowcase() {
               </div>
 
               {/* Chat Input Controls Bar */}
-              <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-200 dark:border-white/10">
-                <div className="flex items-center gap-2">
+              <div className="flex flex-col gap-2.5 pt-3 border-t border-slate-200 dark:border-white/10">
                   {/* Model Selector Dropdown Pill */}
                   <select
                     value={activeModel}
                     onChange={(e) => setActiveModel(e.target.value)}
-                    className="bg-slate-100 dark:bg-white/10 border border-slate-300 dark:border-white/15 text-slate-800 dark:text-white text-xs rounded-xl px-3 py-1.5 font-mono cursor-pointer outline-none hover:bg-slate-200 dark:hover:bg-white/20 transition-colors"
+                    className="w-full bg-slate-100 dark:bg-white/10 border border-slate-300 dark:border-white/15 text-slate-800 dark:text-white text-xs rounded-xl px-3 py-2 font-mono cursor-pointer outline-none hover:bg-slate-200 dark:hover:bg-white/20 transition-colors sm:w-auto"
                   >
                     <option value="z-ai/glm-5.2" className="bg-[#0a0614] text-white">z-ai/glm-5.2</option>
                     <option value="gpt-4o" className="bg-[#0a0614] text-white">gpt-4o</option>
@@ -389,16 +371,15 @@ export function McpGraphShowcase() {
                   </select>
 
                   {/* Attachment Pill */}
-                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs text-slate-600 dark:text-gray-300 font-mono">
+                <div className="flex items-center gap-2">
+                  <div className="flex min-w-0 flex-1 items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-100 px-2.5 py-2 font-mono text-xs text-slate-600 dark:border-white/10 dark:bg-white/5 dark:text-gray-300">
                     <NotionIcon className="w-3.5 h-3.5 text-[#a855f7]" />
                     <OneDriveIcon className="w-3.5 h-3.5 text-[#0078d4]" />
-                    <span>@Notion @OneDrive</span>
+                    <span className="truncate">@Notion @OneDrive</span>
                   </div>
-                </div>
-
-                {/* Send Button */}
-                <div className="w-8 h-8 rounded-xl bg-[#663af3] text-white flex items-center justify-center shadow-lg shadow-[#663af3]/40 cursor-pointer hover:scale-105 transition-transform">
+                  <button type="button" aria-label="Enviar prompt de ejemplo" className="size-9 shrink-0 rounded-xl bg-[#663af3] text-white flex items-center justify-center shadow-lg shadow-[#663af3]/40 hover:scale-105 transition-transform">
                   <ArrowUpRight className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
             </div>
@@ -411,9 +392,7 @@ export function McpGraphShowcase() {
 
           {/* Bento Card 5: Real-Time Action Notifications (5 Cols) */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            {...reveal}
             transition={{ delay: 0.1 }}
             className="lg:col-span-5 bg-white dark:bg-[#0e0b16]/90 border border-slate-200 dark:border-white/10 rounded-3xl p-6 sm:p-8 backdrop-blur-xl relative overflow-hidden group hover:border-[#10b981]/50 transition-all duration-300 flex flex-col justify-between shadow-sm dark:shadow-none"
           >

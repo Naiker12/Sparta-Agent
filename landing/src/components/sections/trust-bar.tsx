@@ -1,73 +1,75 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Folder, GitBranch, Globe } from 'lucide-react';
+import { useReducedMotion } from 'framer-motion';
+import type { ElementType } from 'react';
+import { getPublicUrl } from '../../lib/utils';
 import {
-  NotionIcon,
-  OneDriveIcon,
-  GoogleDriveIcon,
   GmailIcon,
   GoogleCalendarIcon,
+  GoogleDriveIcon,
+  NotionIcon,
+  OneDriveIcon,
   SlackIcon,
   SupabaseIcon,
 } from '../icons/mcp-brand-icons';
 
-export function TrustBar() {
-  const integrations = [
-    { name: 'Notion', icon: NotionIcon, color: '#a855f7', tools: '7 Herramientas' },
-    { name: 'OneDrive', icon: OneDriveIcon, color: '#0078d4', tools: '5 Herramientas' },
-    { name: 'Google Drive', icon: GoogleDriveIcon, color: '#34a853', tools: '3 Herramientas' },
-    { name: 'Gmail', icon: GmailIcon, color: '#ea4335', tools: '11 Herramientas' },
-    { name: 'Google Calendar', icon: GoogleCalendarIcon, color: '#4285f4', tools: '3 Herramientas' },
-    { name: 'Filesystem', icon: Folder, color: '#10b981', tools: '5 Herramientas' },
-    { name: 'GitHub', icon: GitBranch, color: '#ec4899', tools: '4 Herramientas' },
-    { name: 'Slack', icon: SlackIcon, color: '#e01e5a', tools: '3 Herramientas' },
-    { name: 'Supabase', icon: SupabaseIcon, color: '#3ecf8e', tools: '2 Herramientas' },
-    { name: 'Playwright', icon: Globe, color: '#06b6d4', tools: '3 Herramientas' },
-  ];
+type Integration = {
+  name: string;
+  tools: string;
+  icon?: ElementType;
+  logo?: string;
+};
 
-  const marqueeIntegrations = [...integrations, ...integrations];
+const integrations: Integration[] = [
+  { name: 'Notion', icon: NotionIcon, tools: '7 herramientas' },
+  { name: 'OneDrive', icon: OneDriveIcon, tools: '5 herramientas' },
+  { name: 'Google Drive', icon: GoogleDriveIcon, tools: '3 herramientas' },
+  { name: 'Gmail', icon: GmailIcon, tools: '11 herramientas' },
+  { name: 'Google Calendar', icon: GoogleCalendarIcon, tools: '3 herramientas' },
+  { name: 'Filesystem', logo: getPublicUrl('icons/brands/filesystem.svg'), tools: '5 herramientas' },
+  { name: 'GitHub', logo: getPublicUrl('icons/brands/github.svg'), tools: '4 herramientas' },
+  { name: 'Slack', icon: SlackIcon, tools: '3 herramientas' },
+  { name: 'Supabase', icon: SupabaseIcon, tools: '2 herramientas' },
+  { name: 'Playwright', logo: getPublicUrl('icons/brands/puppeteer.svg'), tools: '3 herramientas' },
+];
+
+function IntegrationCard({ integration }: { integration: Integration }) {
+  const { name, tools, icon: Icon, logo } = integration;
 
   return (
-    <div className="border-y border-slate-200 dark:border-white/10 bg-slate-50/85 dark:bg-[#07050d]/85 backdrop-blur-md py-8 overflow-hidden font-sans transition-colors duration-300">
-      <div className="mx-auto max-w-7xl border-x border-slate-200 dark:border-white/10 px-4 sm:px-6 lg:px-8">
-        <p className="text-center text-xs font-mono uppercase tracking-widest text-slate-500 dark:text-gray-400 mb-6 font-bold">
-          Integración Nativa con Conectores MCP (Standard SVGL)
-        </p>
-
-        {/* Infinite Marquee Loop Carousel */}
-        <div className="relative overflow-hidden w-full [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
-          <motion.div
-            animate={{ x: ['0%', '-50%'] }}
-            transition={{
-              repeat: Infinity,
-              repeatType: 'loop',
-              duration: 25,
-              ease: 'linear',
-            }}
-            className="flex items-center gap-4 w-max"
-          >
-            {marqueeIntegrations.map((item, idx) => {
-              const Icon = item.icon;
-              return (
-                <div
-                  key={`${item.name}-${idx}`}
-                  className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 rounded-2xl p-3.5 flex items-center gap-3 backdrop-blur-md hover:border-slate-300 dark:hover:border-white/25 hover:bg-slate-50 dark:hover:bg-white/[0.05] transition-all duration-200 shrink-0 w-52 shadow-sm"
-                >
-                  <div className="p-2.5 rounded-xl border border-slate-200 dark:border-white/10 flex items-center justify-center shrink-0 bg-slate-50 dark:bg-white/[0.03]">
-                    <Icon className="w-5 h-5" />
-                  </div>
-                  <div className="overflow-hidden">
-                    <h4 className="text-xs font-bold text-slate-900 dark:text-white truncate">{item.name}</h4>
-                    <span className="text-[10px] text-slate-500 dark:text-gray-400 font-mono block truncate font-medium">
-                      {item.tools}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </motion.div>
-        </div>
+    <li className="flex w-52 shrink-0 items-center gap-3 rounded-xl border border-slate-200 bg-white p-3.5 shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.03] dark:hover:border-white/20 dark:hover:bg-white/[0.06]">
+      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 dark:border-white/10 dark:bg-white/[0.03]">
+        {Icon ? <Icon className="size-5" aria-hidden="true" /> : <img src={logo} alt="" className="size-5 object-contain" />}
       </div>
-    </div>
+      <div className="min-w-0">
+        <p className="truncate text-sm font-semibold text-[var(--text-primary)]">{name}</p>
+        <p className="mt-0.5 truncate text-xs text-[var(--text-muted)]">{tools}</p>
+      </div>
+    </li>
+  );
+}
+
+export function TrustBar() {
+  const shouldReduceMotion = useReducedMotion();
+  const items = shouldReduceMotion ? integrations : [...integrations, ...integrations];
+
+  return (
+    <section aria-labelledby="integrations-title" className="border-y border-slate-200 bg-white/80 py-9 transition-colors dark:border-white/10 dark:bg-[#09090b]/80">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mb-6 flex flex-col gap-1 text-center">
+          <h2 id="integrations-title" className="text-xl font-semibold tracking-tight text-[var(--text-display)]">Integraciones con identidad propia</h2>
+        </div>
+
+        {shouldReduceMotion ? (
+          <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            {items.map((integration) => <IntegrationCard key={integration.name} integration={integration} />)}
+          </ul>
+        ) : (
+          <div className="connector-marquee group relative overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_7%,black_93%,transparent)]" aria-label="Conectores disponibles">
+            <ul className="connector-marquee-track flex w-max gap-3 py-1 group-hover:[animation-play-state:paused]">
+              {items.map((integration, index) => <IntegrationCard key={`${integration.name}-${index}`} integration={integration} />)}
+            </ul>
+          </div>
+        )}
+      </div>
+    </section>
   );
 }

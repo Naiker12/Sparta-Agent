@@ -20,9 +20,9 @@ export function SecurityMatrix() {
   const [activePolicy, setActivePolicy] = useState<'CHAT' | 'AGENT'>('AGENT');
 
   return (
-    <section id="seguridad" className="py-20 relative overflow-hidden max-w-full bg-white dark:bg-[#07050d] text-slate-900 dark:text-white border-y border-slate-200 dark:border-white/10 font-sans transition-colors duration-300">
+    <section id="seguridad" className="py-20 relative overflow-hidden max-w-full bg-white dark:bg-[#09090b] text-slate-900 dark:text-white border-y border-slate-200 dark:border-white/10 font-sans transition-colors duration-300">
       {/* Background Ambient Glow */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] max-w-[100vw] h-[350px] bg-gradient-to-r from-[#f66e60]/10 via-[#663af3]/15 to-[#10b981]/10 blur-[150px] pointer-events-none" />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] max-w-[100vw] h-[350px] bg-gradient-to-r from-[#f66e60]/10 via-[#18181b]/15 to-[#10b981]/10 blur-[150px] pointer-events-none" />
 
       <div className="mx-auto max-w-7xl border-x border-slate-200 dark:border-white/10 px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Section Header */}
@@ -39,15 +39,15 @@ export function SecurityMatrix() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="bg-white dark:bg-[#0e0b16]/90 border border-slate-200 dark:border-white/10 rounded-3xl p-6 sm:p-8 backdrop-blur-xl flex flex-col justify-between hover:border-[#663af3]/50 transition-all duration-300 relative overflow-hidden group shadow-sm dark:shadow-none"
+            className="bg-white dark:bg-[#18181b]/90 border border-slate-200 dark:border-white/10 rounded-3xl p-6 sm:p-8 backdrop-blur-xl flex flex-col justify-between hover:border-[#18181b]/50 transition-all duration-300 relative overflow-hidden group shadow-sm dark:shadow-none"
           >
             <div>
               {/* TOP ICON BADGE WITH SVGL BRAND ICON */}
-              <div className="w-12 h-12 rounded-2xl bg-[#663af3]/20 border border-[#663af3]/40 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-lg shadow-[#663af3]/30">
+              <div className="w-12 h-12 rounded-2xl bg-[#18181b]/20 border border-[#18181b]/40 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-lg shadow-[#18181b]/30">
                 <NotionIcon className="w-6 h-6" />
               </div>
 
-              <div className="inline-block px-2.5 py-0.5 rounded-full bg-[#663af3]/10 border border-[#663af3]/30 text-[#a855f7] text-[10px] font-mono mb-3">
+              <div className="inline-block px-2.5 py-0.5 rounded-full bg-[#18181b]/10 border border-[#18181b]/30 text-[#52525b] text-[10px] font-mono mb-3">
                 01. PermissionPolicy Engine
               </div>
 
@@ -57,7 +57,7 @@ export function SecurityMatrix() {
               </p>
 
               {/* Mode Selector Simulator */}
-              <div className="bg-slate-50 dark:bg-[#05030a] border border-slate-200 dark:border-white/10 rounded-2xl p-4 font-mono text-xs space-y-3 mb-4">
+              <div className="bg-slate-50 dark:bg-[#0a0a0a] border border-slate-200 dark:border-white/10 rounded-2xl p-4 font-mono text-xs space-y-3 mb-4">
                 <div className="flex items-center justify-between text-slate-500 dark:text-gray-400 pb-2 border-b border-slate-200 dark:border-white/10 text-[11px]">
                   <span>MODO SELECCIONADO</span>
                   <span className={activePolicy === 'AGENT' ? 'text-emerald-400 font-bold' : 'text-sky-400 font-bold'}>
@@ -82,7 +82,7 @@ export function SecurityMatrix() {
                     onClick={() => setActivePolicy('AGENT')}
                     className={`py-2 px-2.5 rounded-xl border text-[11px] font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-all ${
                       activePolicy === 'AGENT'
-                        ? 'bg-[#663af3] border-[#663af3] text-white shadow-md shadow-[#663af3]/40'
+                        ? 'bg-[#18181b] border-[#18181b] text-white shadow-md shadow-[#18181b]/40'
                         : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
                     }`}
                   >
@@ -131,7 +131,7 @@ export function SecurityMatrix() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className="bg-white dark:bg-[#0e0b16]/90 border border-slate-200 dark:border-white/10 rounded-3xl p-6 sm:p-8 backdrop-blur-xl flex flex-col justify-between hover:border-[#f66e60]/50 transition-all duration-300 relative overflow-hidden group shadow-sm dark:shadow-none"
+            className="bg-white dark:bg-[#18181b]/90 border border-slate-200 dark:border-white/10 rounded-3xl p-6 sm:p-8 backdrop-blur-xl flex flex-col justify-between hover:border-[#f66e60]/50 transition-all duration-300 relative overflow-hidden group shadow-sm dark:shadow-none"
           >
             <div>
               {/* TOP ICON BADGE WITH SVGL BRAND ICON */}
@@ -195,7 +195,7 @@ export function SecurityMatrix() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
-            className="bg-white dark:bg-[#0e0b16]/90 border border-slate-200 dark:border-white/10 rounded-3xl p-6 sm:p-8 backdrop-blur-xl flex flex-col justify-between hover:border-[#10b981]/50 transition-all duration-300 relative overflow-hidden group shadow-sm dark:shadow-none"
+            className="bg-white dark:bg-[#18181b]/90 border border-slate-200 dark:border-white/10 rounded-3xl p-6 sm:p-8 backdrop-blur-xl flex flex-col justify-between hover:border-[#10b981]/50 transition-all duration-300 relative overflow-hidden group shadow-sm dark:shadow-none"
           >
             <div>
               {/* TOP ICON BADGE WITH SVGL BRAND ICON */}
@@ -221,7 +221,7 @@ export function SecurityMatrix() {
                 ].map((p, idx) => (
                   <div
                     key={idx}
-                    className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#05030a] border border-slate-200 dark:border-white/10 flex items-center justify-between text-[11px]"
+                    className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#0a0a0a] border border-slate-200 dark:border-white/10 flex items-center justify-between text-[11px]"
                   >
                     <span className="text-slate-800 dark:text-gray-300 font-bold truncate">{p.path}</span>
                     <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-rose-500/15 text-rose-700 dark:text-rose-400 shrink-0">

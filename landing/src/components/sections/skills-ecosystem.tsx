@@ -24,7 +24,7 @@ export function SkillsEcosystem() {
       badge: 'skills/shadcn',
       desc: 'Gestión de componentes UI, presets base-nova y tokens.',
       skills: ['Base UI', 'shadcn/ui', 'base-nova preset', 'Tailwind CSS'],
-      badgeColor: 'border-purple-500/30 text-purple-400 bg-purple-500/10',
+      badgeColor: 'border-zinc-500/30 text-zinc-400 bg-zinc-500/10',
       sampleFile: '.agents/skills/shadcn/SKILL.md',
       yamlFrontmatter: `---
 name: shadcn
@@ -41,7 +41,7 @@ description: Manages shadcn UI components & design tokens.
       badge: 'skills/coding',
       desc: 'Principios SOLID, refactorización limpia en TypeScript.',
       skills: ['React 18', 'TypeScript', 'FastAPI', 'Rust', 'Go'],
-      badgeColor: 'border-[#663af3]/30 text-[#a855f7] bg-[#663af3]/10',
+      badgeColor: 'border-[#18181b]/30 text-[#52525b] bg-[#18181b]/10',
       sampleFile: '.agents/skills/coding/SKILL.md',
       yamlFrontmatter: `---
 name: clean-code
@@ -124,9 +124,9 @@ description: Automatic task breakdown & plan generator.
   const currentSkill = categories.find((c) => c.id === selectedSkill) || categories[0];
 
   return (
-    <section id="skills" className="py-12 relative overflow-hidden max-w-full bg-slate-50/85 dark:bg-[#07050d]/85 backdrop-blur-md text-slate-900 dark:text-white border-y border-slate-200 dark:border-white/10 font-sans transition-colors duration-300">
+    <section id="skills" className="py-12 relative overflow-hidden max-w-full bg-slate-50/85 dark:bg-[#09090b]/85 backdrop-blur-md text-slate-900 dark:text-white border-y border-slate-200 dark:border-white/10 font-sans transition-colors duration-300">
       {/* Ambient Background Glow */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] max-w-[100vw] h-[250px] bg-[#663af3]/10 blur-[130px] pointer-events-none" />
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] max-w-[100vw] h-[250px] bg-[#18181b]/10 blur-[130px] pointer-events-none" />
 
       {/* UNIFIED CONTINUOUS GRID CONTAINER MAX-W-7XL BORDER-X */}
       <div className="mx-auto max-w-7xl border-x border-slate-200 dark:border-white/10 px-4 sm:px-6 lg:px-8 relative z-10">
@@ -150,8 +150,8 @@ description: Automatic task breakdown & plan generator.
                   onClick={() => setSelectedSkill(cat.id)}
                   className={`p-3.5 rounded-xl border transition-all duration-300 cursor-pointer flex flex-col justify-between relative overflow-hidden ${
                     isSelected
-                       ? 'bg-[#663af3]/15 border-[#663af3] text-slate-900 dark:text-white shadow-lg shadow-[#663af3]/20 scale-[1.02]'
-                       : 'bg-white dark:bg-[#0e0b16]/80 border-slate-200 dark:border-white/10 text-slate-600 dark:text-gray-300 hover:border-slate-300 dark:hover:border-white/25 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
+                       ? 'bg-[#18181b]/15 border-[#18181b] text-slate-900 dark:text-white shadow-lg shadow-[#18181b]/20 scale-[1.02]'
+                       : 'bg-white dark:bg-[#18181b]/80 border-slate-200 dark:border-white/10 text-slate-600 dark:text-gray-300 hover:border-slate-300 dark:hover:border-white/25 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
                   }`}
                 >
                   <div>
@@ -189,12 +189,12 @@ description: Automatic task breakdown & plan generator.
           </div>
 
           {/* Right Side: Live SKILL.md Folder & Code Preview Box (5 Cols) */}
-          <div className="lg:col-span-5 bg-white dark:bg-[#030206] border border-slate-200 dark:border-white/15 rounded-2xl p-4 backdrop-blur-xl flex flex-col justify-between shadow-lg dark:shadow-xl relative h-full">
+          <div className="lg:col-span-5 bg-white dark:bg-[#09090b] border border-slate-200 dark:border-white/15 rounded-2xl p-4 backdrop-blur-xl flex flex-col justify-between shadow-lg dark:shadow-xl relative h-full">
             <div>
               {/* Folder & File Path Bar */}
               <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-200 dark:border-white/10 font-mono text-xs">
                 <div className="flex items-center gap-2 text-slate-600 dark:text-gray-300 truncate">
-                  <Folder className="w-3.5 h-3.5 text-[#a855f7] shrink-0" />
+                  <Folder className="w-3.5 h-3.5 text-[#52525b] shrink-0" />
                   <span className="text-slate-900 dark:text-white font-bold text-[11px] truncate">{currentSkill.sampleFile}</span>
                 </div>
                 <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shrink-0">
@@ -203,8 +203,8 @@ description: Automatic task breakdown & plan generator.
               </div>
 
               {/* Code Snippet Box with word wrap */}
-              <div className="bg-slate-50 dark:bg-[#080512] border border-slate-200 dark:border-white/10 rounded-xl p-3 font-mono text-xs text-slate-700 dark:text-gray-200 leading-relaxed mb-3">
-                <pre className="text-purple-700 dark:text-purple-300 text-[10.5px] whitespace-pre-wrap break-words font-mono">
+              <div className="bg-slate-50 dark:bg-[#111113] border border-slate-200 dark:border-white/10 rounded-xl p-3 font-mono text-xs text-slate-700 dark:text-gray-200 leading-relaxed mb-3">
+                <pre className="text-zinc-700 dark:text-zinc-300 text-[10.5px] whitespace-pre-wrap break-words font-mono">
                   <code>{currentSkill.yamlFrontmatter}</code>
                 </pre>
               </div>
@@ -212,11 +212,11 @@ description: Automatic task breakdown & plan generator.
               {/* Active Skill Summary Info */}
               <div className="bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 rounded-xl p-3 font-mono text-xs space-y-1.5">
                 <div className="flex items-center gap-1.5 text-slate-900 dark:text-white font-bold text-[11px]">
-                  <Zap className="w-3.5 h-3.5 text-[#a855f7]" />
+                  <Zap className="w-3.5 h-3.5 text-[#52525b]" />
                   <span>Detección Automática</span>
                 </div>
                 <p className="text-[10px] text-slate-500 dark:text-gray-400 leading-tight">
-                  Las carpetas en <code className="text-purple-700 dark:text-purple-300 font-mono">.agents/skills/</code> se cargan automáticamente sin registro manual.
+                  Las carpetas en <code className="text-zinc-700 dark:text-zinc-300 font-mono">.agents/skills/</code> se cargan automáticamente sin registro manual.
                 </p>
               </div>
             </div>

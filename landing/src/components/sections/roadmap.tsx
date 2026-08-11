@@ -26,7 +26,7 @@ export function Roadmap() {
   ];
 
   return (
-    <section id="roadmap" className="py-24 md:py-32 relative bg-[#05060f] border-t border-[rgba(186,215,247,0.12)]">
+    <section id="roadmap" className="py-24 md:py-32 relative bg-[#0a0a0a] border-t border-[rgba(186,215,247,0.12)]">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Unified Section Header */}
@@ -45,7 +45,7 @@ export function Roadmap() {
                   <CheckCircle2 className="w-5 h-5" />
                 </div>
                 <h3 className="text-xl font-bold font-display text-[#d8ecf8]">
-                  Logrado (v0.1.5)
+                  Logrado (v0.1.6)
                 </h3>
               </div>
               <Badge variant="success">Completado</Badge>

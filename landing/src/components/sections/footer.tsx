@@ -14,9 +14,9 @@ export function Footer() {
   const faviconSrc = getPublicUrl('favicon.svg');
 
   return (
-    <footer className="bg-white dark:bg-[#040208] border-t border-slate-200 dark:border-white/10 py-12 text-xs text-slate-500 dark:text-gray-400 relative overflow-hidden max-w-full select-none font-sans transition-colors duration-300">
+    <footer className="bg-white dark:bg-[#0a0a0a] border-t border-slate-200 dark:border-white/10 py-12 text-xs text-slate-500 dark:text-gray-400 relative overflow-hidden max-w-full select-none font-sans transition-colors duration-300">
       {/* Background Ambient Glow */}
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[700px] max-w-[100vw] h-[160px] bg-[#663af3]/10 blur-[140px] pointer-events-none -z-10" />
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[700px] max-w-[100vw] h-[160px] bg-[#18181b]/10 blur-[140px] pointer-events-none -z-10" />
 
       {/* UNIFIED CONTINUOUS GRID CONTAINER MAX-W-7XL BORDER-X */}
       <div className="mx-auto max-w-7xl border-x border-slate-200 dark:border-white/10 px-4 sm:px-6 lg:px-8 relative z-10">
@@ -157,9 +157,9 @@ export function Footer() {
             <h4 className="uppercase font-bold text-slate-900 dark:text-white tracking-widest text-[10px]">
               Especificaciones
             </h4>
-            <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#080512] border border-slate-200 dark:border-white/10 space-y-1.5 text-slate-600 dark:text-gray-300 shadow-inner">
+            <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#111113] border border-slate-200 dark:border-white/10 space-y-1.5 text-slate-600 dark:text-gray-300 shadow-inner">
               <div className="flex items-center justify-between pb-1.5 border-b border-slate-200 dark:border-white/10 text-[10px] font-bold text-slate-900 dark:text-white">
-                <span className="flex items-center gap-1.5"><Terminal className="w-3 h-3 text-[#a855f7]" /> SYSTEM SPECS</span>
+                <span className="flex items-center gap-1.5"><Terminal className="w-3 h-3 text-[#52525b]" /> SYSTEM SPECS</span>
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
               </div>
               <div className="flex justify-between gap-2">
@@ -185,7 +185,7 @@ export function Footer() {
         {/* Bottom copyright line */}
         <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] font-mono text-slate-500 dark:text-gray-400">
           <div>
-            © {new Date().getFullYear()} Sparta Agent — Desarrollado por <a href="https://github.com/Naiker12" target="_blank" rel="noopener noreferrer" className="text-[#a855f7] font-bold hover:underline">Naiker12</a>. Licencia MIT.
+            © {new Date().getFullYear()} Sparta Agent — Desarrollado por <a href="https://github.com/Naiker12" target="_blank" rel="noopener noreferrer" className="text-[#52525b] font-bold hover:underline">Naiker12</a>. Licencia MIT.
           </div>
           <div className="flex items-center gap-1">
             <span>Built with local-first pride &amp;</span> <Heart className="w-3.5 h-3.5 text-rose-500 fill-current inline" />

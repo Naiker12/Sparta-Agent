@@ -5,49 +5,49 @@
 @layer base {
   :root {
     /* === LIGHT MODE (Default) === */
-    --bg-base: #f8fafc;
+    --bg-base: #fafafa;
     --bg-surface: #ffffff;
     --bg-card: #ffffff;
-    --bg-elevated: #f1f5f9;
+    --bg-elevated: #f4f4f5;
 
-    --text-display: #0f172a;
-    --text-primary: #1e293b;
-    --text-secondary: #475569;
-    --text-muted: #64748b;
+    --text-display: #18181b;
+    --text-primary: #27272a;
+    --text-secondary: #52525b;
+    --text-muted: #71717a;
 
-    --accent: #663af3;
-    --accent-glow: rgba(102, 58, 243, 0.15);
+    --accent: #18181b;
+    --accent-glow: rgba(24, 24, 27, 0.15);
 
     --border-grid: rgba(15, 23, 42, 0.10);
     --border-glass: rgba(15, 23, 42, 0.10);
 
-    --background: #f8fafc;
-    --foreground: #0f172a;
+    --background: #fafafa;
+    --foreground: #18181b;
     --card: #ffffff;
-    --card-foreground: #0f172a;
-    --border: rgba(15, 23, 42, 0.10);
-    --muted-foreground: #64748b;
+    --card-foreground: #18181b;
+    --border: rgba(24, 24, 27, 0.10);
+    --muted-foreground: #71717a;
   }
 
   .dark {
     /* === DARK MODE (Cathedral) === */
-    --bg-base: #07050d;
+    --bg-base: #09090b;
     --bg-surface: rgba(255, 255, 255, 0.03);
-    --bg-card: #080512;
-    --bg-elevated: #0f111c;
+    --bg-card: #111113;
+    --bg-elevated: #18181b;
 
     --text-display: #ffffff;
     --text-primary: #f3f4f6;
-    --text-secondary: #c7d3ea;
+    --text-secondary: #d4d4d8;
     --text-muted: #9ca3af;
 
-    --accent: #663af3;
-    --accent-glow: rgba(102, 58, 243, 0.35);
+    --accent: #e4e4e7;
+    --accent-glow: rgba(228, 228, 231, 0.16);
 
     --border-grid: rgba(255, 255, 255, 0.1);
     --border-glass: rgba(255, 255, 255, 0.1);
 
-    --background: #07050d;
+    --background: #09090b;
     --foreground: #ffffff;
     --card: rgba(255, 255, 255, 0.03);
     --card-foreground: #ffffff;
@@ -87,4 +87,25 @@ code, pre, .font-mono {
     linear-gradient(to right, var(--border-grid) 1px, transparent 1px),
     linear-gradient(to bottom, var(--border-grid) 1px, transparent 1px);
   background-size: 80px 80px;
+}
+
+@keyframes connector-marquee {
+  to {
+    transform: translateX(calc(-50% - 0.375rem));
+  }
+}
+
+.connector-marquee-track {
+  animation: connector-marquee 42s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }

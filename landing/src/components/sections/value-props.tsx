@@ -9,7 +9,7 @@ export function ValueProps() {
   const [selectedModel, setSelectedModel] = useState<'Ollama' | 'Claude' | 'Gemini'>('Ollama');
 
   return (
-    <section id="pilares" className="py-20 relative bg-[#07050d] border-y border-white/10">
+    <section id="pilares" className="py-20 relative bg-[#09090b] border-y border-white/10">
       <div className="mx-auto max-w-7xl border-x border-white/10 px-4 sm:px-6 lg:px-8">
         
         {/* Unified Section Header */}
@@ -23,7 +23,7 @@ export function ValueProps() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-12">
           
           {/* Box 1: Local-First Security Engine (Col 7) */}
-          <Card className="lg:col-span-7 p-8 space-y-6 flex flex-col justify-between relative overflow-hidden group hover:border-[#663af3]/40 transition-all duration-300 bg-[#0e0b16]/90 border-white/10">
+          <Card className="lg:col-span-7 p-8 space-y-6 flex flex-col justify-between relative overflow-hidden group hover:border-[#18181b]/40 transition-all duration-300 bg-[#18181b]/90 border-white/10">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="p-3 rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-sm">
@@ -40,7 +40,7 @@ export function ValueProps() {
               </p>
 
               {/* Interactive Permission Policy Switcher */}
-              <div className="p-4 rounded-2xl bg-[#040208] border border-white/10 space-y-3 font-mono text-xs">
+              <div className="p-4 rounded-2xl bg-[#0a0a0a] border border-white/10 space-y-3 font-mono text-xs">
                 <div className="flex items-center justify-between text-gray-300 pb-2 border-b border-white/10">
                   <span>SELECCIONAR MODO DE PERMISO</span>
                   <span className="text-emerald-400 font-semibold">ACTIVO</span>
@@ -51,7 +51,7 @@ export function ValueProps() {
                     onClick={() => setPolicyMode('PLAN')}
                     className={`py-2 px-3 rounded-xl border flex items-center justify-center gap-2 cursor-pointer transition-all ${
                       policyMode === 'PLAN'
-                        ? 'bg-[#663af3] border-[#663af3] text-white font-bold shadow-lg shadow-[#663af3]/30'
+                        ? 'bg-[#18181b] border-[#18181b] text-white font-bold shadow-lg shadow-[#18181b]/30'
                         : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
                     }`}
                   >
@@ -63,7 +63,7 @@ export function ValueProps() {
                     onClick={() => setPolicyMode('BUILD')}
                     className={`py-2 px-3 rounded-xl border flex items-center justify-center gap-2 cursor-pointer transition-all ${
                       policyMode === 'BUILD'
-                        ? 'bg-[#663af3] border-[#663af3] text-white font-bold shadow-lg shadow-[#663af3]/30'
+                        ? 'bg-[#18181b] border-[#18181b] text-white font-bold shadow-lg shadow-[#18181b]/30'
                         : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
                     }`}
                   >
@@ -82,7 +82,7 @@ export function ValueProps() {
           </Card>
 
           {/* Box 2: TCO Savings (Col 5) */}
-          <Card className="lg:col-span-5 p-8 space-y-6 flex flex-col justify-between relative overflow-hidden group hover:border-[#a855f7]/40 transition-all duration-300 bg-[#0e0b16]/90 border-white/10">
+          <Card className="lg:col-span-5 p-8 space-y-6 flex flex-col justify-between relative overflow-hidden group hover:border-[#52525b]/40 transition-all duration-300 bg-[#18181b]/90 border-white/10">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="p-3 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/20 shadow-sm">
@@ -101,7 +101,7 @@ export function ValueProps() {
               </p>
 
               {/* Model Provider Simulator */}
-              <div className="p-4 rounded-2xl bg-[#040208] border border-white/10 space-y-3 font-mono text-xs">
+              <div className="p-4 rounded-2xl bg-[#0a0a0a] border border-white/10 space-y-3 font-mono text-xs">
                 <div className="flex items-center justify-between text-gray-300 pb-2 border-b border-white/10">
                   <span>PROVEEDOR SELECCIONADO</span>
                   <span className="text-amber-400 font-semibold">{selectedModel}</span>
@@ -113,7 +113,7 @@ export function ValueProps() {
                       onClick={() => setSelectedModel(m)}
                       className={`flex-1 py-1.5 rounded-xl border text-[11px] cursor-pointer transition-all ${
                         selectedModel === m
-                          ? 'bg-[#a855f7] border-[#a855f7] text-white font-bold'
+                          ? 'bg-[#52525b] border-[#52525b] text-white font-bold'
                           : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
                       }`}
                     >

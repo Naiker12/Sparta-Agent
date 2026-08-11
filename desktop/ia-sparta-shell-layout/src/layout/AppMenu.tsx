@@ -52,6 +52,7 @@ interface MenuGroupData {
 }
 
 let currentZoomFactor = 1.0
+const DOCUMENTATION_URL = 'https://naiker12.github.io/Sparta-Agent/?docs'
 
 function handleZoom(delta: number) {
   currentZoomFactor = Math.max(0.75, Math.min(1.5, Math.round((currentZoomFactor + delta) * 100) / 100))
@@ -87,7 +88,7 @@ function handleZoom(delta: number) {
 
 export function AppMenu() {
   const { t } = useTranslation()
-  const [appVersion, setAppVersion] = useState('v0.1.5')
+  const [appVersion, setAppVersion] = useState('v0.1.6')
 
   useEffect(() => {
     if ((window as any).electronAPI?.getVersion) {
@@ -325,7 +326,7 @@ export function AppMenu() {
           label: t('menu.documentation'),
           icon: BookOpen,
           onClick: () => {
-            window.open('https://github.com/Naiker12/Sparta-Agent#readme', '_blank')
+            window.open(DOCUMENTATION_URL, '_blank', 'noopener,noreferrer')
           },
         },
         {

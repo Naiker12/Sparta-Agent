@@ -16,7 +16,7 @@ import { useSessionLifecycle } from './useSessionLifecycle'
 import { useSessionMemory } from './useSessionMemory'
 import { useStreamEvents } from 'ia-sparta-stream-events'
 import { buildToolDefinitions } from '../services/agents/tool-executor'
-import type { Provider } from '../types'
+import type { MessageAttachment, Provider } from '../types'
 
 function getActiveProvider(providers: Provider[], activeModel: string): Provider | null {
   if (providers.length === 0) return null
@@ -279,7 +279,7 @@ export function useChatSession(sessionId?: string) {
   activeIdRef.current = resolvedSessionId
 
   const sendMessage = useCallback(
-    async (text: string) => {
+    async (text: string, attachments?: MessageAttachment[]) => {
       const existingSid = activeIdRef.current
       const streamState = existingSid ? useChatStore.getState().getStreamState(existingSid) : undefined
       if (streamState?.isStreaming) {
@@ -297,6 +297,7 @@ export function useChatSession(sessionId?: string) {
         id: userMessageId,
         role: 'user',
         content: text,
+        attachments,
         timestamp: Date.now(),
         sessionId: sid,
       })

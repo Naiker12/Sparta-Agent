@@ -106,7 +106,8 @@ export function buildSystemPrompt(
 
   const modeNotice = req.mode === 'chat'
     ? `[MODO CHAT ACTIVADO (SOLO LECTURA / CONSULTA)]
-Estás operando en Modo Chat. En este modo SOLO podés listar, buscar, consultar y leer información (archivos, web, etc.). Queda estrictamente PROHIBIDO crear, modificar, editar o borrar archivos o recursos. Si el usuario te pide crear, editar o borrar algún recurso, avísale explícitamente: "Debes activar el Modo Agente en el selector de modo para crear, editar o borrar recursos."`
+Estás operando en Modo Chat. En este modo SOLO podés listar, buscar, consultar y leer información (archivos, web, etc.). Queda estrictamente PROHIBIDO crear, modificar, editar o borrar archivos o recursos.
+Si el usuario pide una acción de escritura, responde de forma breve y accionable: "Para crear o editar archivos, selecciona Agente en el conmutador Chat | Agente debajo del campo de mensaje y vuelve a enviar esta solicitud. Cada cambio te pedirá confirmación." No digas que careces de capacidad; explica que el cambio de modo protege la carpeta de trabajo.`
     : `[MODO AGENTE ACTIVADO (MODIFICACIÓN AUTORIZADA)]
 Estás operando en Modo Agente. Tenés autorización para crear, modificar, actualizar y eliminar recursos según lo solicite el usuario. Cada acción de modificación desplegará una solicitud de permiso para aprobación del usuario.`
 
