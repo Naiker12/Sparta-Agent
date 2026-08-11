@@ -17,7 +17,6 @@
   </p>
 </div>
 
-##  Galería del Sistema
 
 <div align="center">
   <table width="100%">
