@@ -96,7 +96,7 @@ function MessageBubbleBase({ message, isLastUser = false, isLastAssistant = fals
       >
         <div
           style={{
-            maxWidth: isUser ? 560 : 860,
+            maxWidth: isUser ? 720 : 920,
             width: isUser ? undefined : '100%',
           }}
         >

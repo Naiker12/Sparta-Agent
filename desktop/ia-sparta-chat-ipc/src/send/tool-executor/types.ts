@@ -9,6 +9,8 @@ export interface ToolCallContext {
   mcpServers?: MCPServerConfig[]
   connectedFolder?: string
   workspaceRoot?: string
+  model?: string
+  vendor?: string
 }
 
 /** Base URLs de las APIs REST de Google, Microsoft Graph y Notion */

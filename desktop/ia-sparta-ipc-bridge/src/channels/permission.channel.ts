@@ -20,6 +20,7 @@ export interface PermissionRequestPayload {
   tool: string
   path: string
   preview: string
+  kind?: 'file_access' | 'mcp_install' | 'terminal_exec'
 }
 
 export interface PermissionResponsePayload {
@@ -27,6 +28,21 @@ export interface PermissionResponsePayload {
   approved: boolean
   /** 'once' | 'session' — passed to Python so it can cache the decision */
   remember: 'once' | 'session'
+}
+
+const nativePending = new Map<string, (response: PermissionResponsePayload) => void>()
+
+/** Requests a user decision for a native Electron-main action. */
+export function requestNativePermission(payload: PermissionRequestPayload): Promise<PermissionResponsePayload> {
+  const win = _win ?? BrowserWindow.getAllWindows()[0]
+  if (!win || win.isDestroyed()) {
+    return Promise.resolve({ requestId: payload.requestId, approved: false, remember: 'once' })
+  }
+  if (nativePending.has(payload.requestId)) {
+    throw new Error(`Permission request already pending: ${payload.requestId}`)
+  }
+  win.webContents.send('permission:request', payload)
+  return new Promise((resolve) => nativePending.set(payload.requestId, resolve))
 }
 
 // Track the active BrowserWindow so we can send events to the renderer.
@@ -62,6 +78,12 @@ export function registerPermissionIPC(): void {
   // The renderer calls window.electron.invoke('permission:respond', payload)
   // after the user makes a decision in PermissionRequestDialog.
   ipcMain.handle('permission:respond', (_event, payload: PermissionResponsePayload) => {
+    const nativeResolve = nativePending.get(payload.requestId)
+    if (nativeResolve) {
+      nativePending.delete(payload.requestId)
+      nativeResolve(payload)
+      return { ok: true }
+    }
     sendToPython({
       method: 'permission.respond',
       params: {

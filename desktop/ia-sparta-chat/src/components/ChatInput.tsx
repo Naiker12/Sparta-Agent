@@ -295,7 +295,7 @@ export function ChatInput({ sessionId, className }: ChatInputProps) {
   return (
     <div className={className} style={{ position: 'relative', paddingBottom: 16 }} {...dropProps}>
       <DropOverlay isVisible={isDragging} />
-      <div style={{ maxWidth: 680, margin: '0 auto' }}>
+      <div style={{ maxWidth: 840, margin: '0 auto' }}>
         {!hasProvider && (
           <div style={{
             display: 'flex',

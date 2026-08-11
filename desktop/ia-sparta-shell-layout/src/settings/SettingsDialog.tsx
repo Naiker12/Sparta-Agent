@@ -58,8 +58,8 @@ export function SettingsDialog() {
     >
       <div
         style={{
-          width: 900,
-          height: 640,
+          width: 'min(1040px, calc(100vw - 48px))',
+          height: 'min(720px, calc(100vh - 48px))',
           background: 'var(--bg-modal)',
           border: '1px solid var(--border-strong)',
           borderRadius: 'var(--radius-xl)',

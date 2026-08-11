@@ -10,6 +10,11 @@ import { McpProcessManager } from '../../mcp/core/McpProcessManager'
 import { sendToRenderer } from '../../shared'
 import { ToolCallContext, googleApiBaseUrls } from './types'
 import { executeGoogleApiCall } from './rest-api-executor'
+import '../tools'
+import { dispatchToolCall, hasRegisteredTool } from '../tool-registry'
+import { requestNativePermission } from 'ia-sparta-ipc-bridge'
+import { evaluatePermission } from '../../security/permission-policy'
+import { runCodeSubagent } from '../subagent-runner'
 
 export type { ToolCallContext } from './types'
 
@@ -20,6 +25,10 @@ import { executeGenerateChart } from './chart-generator'
 
 export async function executeToolCall(ctx: ToolCallContext): Promise<string> {
   const { sessionId, messageId, toolCallId, toolName, toolInput } = ctx
+
+  if (hasRegisteredTool(toolName)) {
+    return dispatchToolCall(ctx)
+  }
 
   // ── web_search ──
   if (toolName === 'web_search') {
@@ -77,6 +86,15 @@ export async function executeToolCall(ctx: ToolCallContext): Promise<string> {
 
   // ── Filesystem tools (list_directory, read_file, write_file, etc.) ──
   if (isMainProcessFileTool(toolName)) {
+    const isMutation = toolName === 'write_file' || toolName === 'edit_file' || toolName === 'delete_file'
+    if (isMutation) {
+      const target = String(toolInput.path ?? '')
+      const decision = evaluatePermission({ action: 'file_write', target, workspaceRoot: ctx.connectedFolder || ctx.workspaceRoot, preset: 'default', rules: [] })
+      if (decision !== 'allow') {
+        const approval = await requestNativePermission({ requestId: toolCallId, tool: toolName, path: target, preview: JSON.stringify(toolInput), kind: 'file_access' })
+        if (!approval.approved) return `Acción denegada por el usuario: ${toolName}`
+      }
+    }
     sendToRenderer({ sessionId, messageId, type: 'thinking:status', text: `Ejecutando ${toolName}...` })
     try {
       return await executeMainProcessFileTool(
@@ -92,6 +110,11 @@ export async function executeToolCall(ctx: ToolCallContext): Promise<string> {
   // ── run_command ──
   if (toolName === 'run_command') {
     const command = typeof toolInput.command === 'string' ? toolInput.command : JSON.stringify(toolInput)
+    const decision = evaluatePermission({ action: 'terminal_command', target: command, workspaceRoot: ctx.connectedFolder || ctx.workspaceRoot, preset: 'default', rules: [] })
+    if (decision !== 'allow') {
+      const approval = await requestNativePermission({ requestId: toolCallId, tool: toolName, path: command, preview: command, kind: 'terminal_exec' })
+      if (!approval.approved) return 'Acción denegada por el usuario: run_command'
+    }
     sendToRenderer({ sessionId, messageId, type: 'thinking:status', text: `Ejecutando comando: ${command}...` })
     try {
       const res = await runCommandForAgent(
@@ -130,6 +153,8 @@ export async function executeToolCall(ctx: ToolCallContext): Promise<string> {
     try {
       const title = (toolInput.title as string) || 'Plan de acción'
       const steps = Array.isArray(toolInput.steps) ? toolInput.steps : []
+      const plan = steps.map((s: any, idx: number) => `${idx + 1}. ${s.title || 'Paso'}${s.description ? `: ${s.description}` : ''}`)
+      sendToRenderer({ sessionId, messageId, type: 'plan:created', plan, currentStep: 0, planComplete: false })
       const formattedSteps = steps.map((s: any, idx: number) => `  ${idx + 1}. **${s.title || 'Paso'}**: ${s.description || ''}`).join('\n')
       return `Plan de acción registrado exitosamente: "${title}"\n\nPasos del plan:\n${formattedSteps}`
     } catch (err) {
@@ -140,6 +165,20 @@ export async function executeToolCall(ctx: ToolCallContext): Promise<string> {
   // ── delegate_research ──
   if (toolName === 'delegate_research') {
     sendToRenderer({ sessionId, messageId, type: 'thinking:status', text: 'Delegando tarea a Investigador Delegado...' })
+    const researchTopic = typeof toolInput.topic === 'string' ? toolInput.topic : 'Investigación'
+    const startedAt = Date.now()
+    sendToRenderer({ sessionId, messageId, type: 'subagent:started', subagentName: 'research', taskSummary: researchTopic, timestamp: startedAt })
+    sendToRenderer({ sessionId, messageId, type: 'subagent:step', subagentName: 'research', stepId: toolCallId, stepLabel: 'Buscando fuentes web', status: 'running', timestamp: Date.now() })
+    try {
+      const result = await executeWebSearch(researchTopic)
+      sendToRenderer({ sessionId, messageId, type: 'subagent:step', subagentName: 'research', stepId: toolCallId, stepLabel: 'Fuentes recopiladas', status: 'completed', timestamp: Date.now() })
+      sendToRenderer({ sessionId, messageId, type: 'subagent:completed', subagentName: 'research', durationMs: Date.now() - startedAt, success: true, timestamp: Date.now() })
+      return result
+    } catch (err) {
+      const error = err instanceof Error ? err.message : String(err)
+      sendToRenderer({ sessionId, messageId, type: 'subagent:completed', subagentName: 'research', durationMs: Date.now() - startedAt, success: false, timestamp: Date.now() })
+      return `La investigación delegada falló: ${error}`
+    }
     const topic = (toolInput.topic as string) || 'Investigación'
     return `Investigación delegada iniciada con éxito para el tema: "${topic}". El subagente paralelo recopilará y resumirá las fuentes disponibles.`
   }
@@ -147,6 +186,12 @@ export async function executeToolCall(ctx: ToolCallContext): Promise<string> {
   // ── delegate_code ──
   if (toolName === 'delegate_code') {
     sendToRenderer({ sessionId, messageId, type: 'thinking:status', text: 'Delegando tarea a Programador Delegado...' })
+    const codeTask = typeof toolInput.task === 'string' ? toolInput.task : 'Desarrollo de código'
+    try {
+      return await runCodeSubagent({ sessionId, messageId, taskId: toolCallId, task: codeTask, workspaceRoot: ctx.connectedFolder || ctx.workspaceRoot, model: ctx.model, vendor: ctx.vendor })
+    } catch (err) {
+      return `La delegación de código falló: ${err instanceof Error ? err.message : String(err)}`
+    }
     const task = (toolInput.task as string) || 'Desarrollo de código'
     return `Tarea de programación delegada iniciada con éxito: "${task}". El subagente analizará la estructura y aplicará las refactorizaciones necesarias.`
   }

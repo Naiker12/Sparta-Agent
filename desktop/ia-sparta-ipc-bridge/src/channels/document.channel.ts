@@ -268,6 +268,12 @@ export async function convertDocumentToMarkdown(
       }
     }
 
+    // Plain-text formats need no binary document parser. Avoid noisy anydoc
+    // warnings for Markdown, README files, JSON and CSV content.
+    if (['txt', 'csv', 'json', 'md', 'rtf'].includes(ext)) {
+      markdown = buf.toString('utf-8')
+    }
+
     // 1. Primary Engine: @firecrawl/anydoc (Async Rust NAPI bindings)
     try {
       const anydocPkg = ['@firecrawl', 'anydoc'].join('/')
@@ -278,7 +284,7 @@ export async function convertDocumentToMarkdown(
         anydoc = await import(/* @vite-ignore */ anydocPkg)
       }
 
-      if (anydoc) {
+      if (anydoc && !markdown) {
         if (typeof anydoc.formatFromBytes === 'function') {
           try {
             const fmt = await anydoc.formatFromBytes(buf)
@@ -323,7 +329,12 @@ export async function convertDocumentToMarkdown(
               }
             }
           } catch (docErr) {
-            console.warn('[document.channel] anydoc toDocument warning:', docErr)
+            const code = (docErr as { code?: string } | undefined)?.code
+            // Unsupported input is expected for files handled by the text and
+            // native fallbacks; logging it repeatedly makes the console noisy.
+            if (code !== 'unsupported') {
+              console.warn('[document.channel] anydoc toDocument warning:', docErr)
+            }
           }
         } else if (!markdown && typeof anydoc.toMarkdownBytes === 'function') {
           try {

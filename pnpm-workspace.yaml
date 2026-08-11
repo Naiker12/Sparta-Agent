@@ -15,6 +15,7 @@ packages:
   - 'desktop/ia-sparta-settings'
   - 'desktop/ia-sparta-skills'
   - 'desktop/ia-sparta-channels'
+  - 'desktop/ia-sparta-contracts'
   - 'desktop/ia-sparta-projects'
   - 'desktop/ia-sparta-shell-layout'
   - 'desktop/ia-sparta-design-system'

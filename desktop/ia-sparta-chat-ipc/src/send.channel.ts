@@ -179,6 +179,8 @@ export function registerChatSendIPC(): void {
                 mcpServers: req.mcpServers,
                 connectedFolder: req.connectedFolder,
                 workspaceRoot: req.workspaceRoot,
+                model: req.model,
+                vendor,
               })
 
               sendToRenderer({

@@ -16,5 +16,6 @@
     "ia-sparta-stream-events": "workspace:*",
     "ia-sparta-ipc-bridge": "workspace:*",
     "ia-sparta-design-system": "workspace:*"
+    ,"ia-sparta-core": "workspace:*"
   }
 }

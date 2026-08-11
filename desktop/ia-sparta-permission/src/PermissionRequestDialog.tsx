@@ -16,6 +16,11 @@ import { usePermissionRequests } from 'ia-sparta-core'
 import { ShieldAlert, FolderOpen, FileEdit, Trash2, Download, Terminal, X } from 'lucide-react'
 
 const TOOL_META: Record<string, { label: string; icon: React.ReactNode; risk: 'low' | 'high' }> = {
+  read_file:         { label: 'Leer archivo',     icon: <FolderOpen size={18} />, risk: 'low' },
+  write_file:        { label: 'Escribir archivo', icon: <FileEdit size={18} />, risk: 'high' },
+  edit_file:         { label: 'Editar archivo',   icon: <FileEdit size={18} />, risk: 'high' },
+  delete_file:       { label: 'Eliminar archivo', icon: <Trash2 size={18} />,    risk: 'high' },
+  run_command:       { label: 'Ejecutar comando', icon: <Terminal size={18} />,  risk: 'high' },
   read_file_tool:    { label: 'Leer archivo',    icon: <FolderOpen size={18} />, risk: 'low' },
   write_file_tool:   { label: 'Escribir archivo', icon: <FileEdit size={18} />,  risk: 'high' },
   patch_file_tool:   { label: 'Editar archivo',   icon: <FileEdit size={18} />,  risk: 'high' },

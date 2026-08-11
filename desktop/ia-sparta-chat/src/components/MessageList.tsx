@@ -35,7 +35,6 @@ export function MessageList({ messages, className }: MessageListProps) {
         data={messages}
         initialTopMostItemIndex={messages.length > 0 ? messages.length - 1 : 0}
         followOutput={(isAtBottom) => (isStreaming ? 'smooth' : isAtBottom ? 'auto' : false)}
-        alignToBottom
         style={{ height: '100%', width: '100%' }}
         components={{
           Header: () => <div style={{ height: 20 }} />,
