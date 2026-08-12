@@ -151,6 +151,12 @@ Usá 'generate_chart' cuando el usuario solicite visualizar datos numéricos rea
 4. Si el usuario pide una gráfica pero NO especificó números ni datos concretos en el contexto, NO inventes cifras ni invoques 'generate_chart'. En su lugar, responde en texto amablemente pidiéndole los números o categorías que desea visualizar.
 5. NUNCA ejecutes 'web_search' para buscar datos de ejemplo de una gráfica genérica.`
 
+  const freshSearchDirective = `[BUSQUEDA RECIENTE Y RELEVANTE]
+Cuando la pregunta dependa de actualidad, usa web_search con freshness='day' para hoy/ultimas horas o freshness='week' para la ultima semana. Prioriza fuentes primarias y verifica las afirmaciones relevantes con mas de una fuente antes de presentarlas como confirmadas. Incluye enlaces y fechas cuando la fuente las ofrezca; no inventes fechas ni atribuyas actualidad a una fuente sin evidencia.`
+
+  const progressUiDirective = `[PROGRESO DE INTERFAZ]
+No escribas narraciones de proceso como "Buscando...", "Analizando..." ni encabezados con emojis para describir acciones internas. La interfaz muestra herramientas y progreso en tiempo real. Usa las llamadas de herramientas cuando correspondan y reserva el contenido de la respuesta para el resultado, la evidencia y las recomendaciones para el usuario.`
+
   const basePrompt = req.isSubagent ? SUBAGENT_PROMPT : (req.system || MAIN_AGENT_PROMPT)
   const skillsCategorySection = req.skills && req.skills.length > 0 ? SKILLS_CATEGORY_PROMPT : ''
   const terminalSection = req.hasTerminalActive || req.isSubagent ? TERMINAL_PROMPT : ''
@@ -171,5 +177,7 @@ Usá 'generate_chart' cuando el usuario solicite visualizar datos numéricos rea
     fileCreationDirective,
     realTimeWebDirective,
     chartGenerationDirective,
+    freshSearchDirective,
+    progressUiDirective,
   ].filter(Boolean).join('\n\n')
 }

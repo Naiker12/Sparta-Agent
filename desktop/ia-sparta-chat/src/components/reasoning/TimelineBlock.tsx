@@ -61,6 +61,7 @@ export function TimelineBlock({ message, className }: TimelineBlockProps) {
   const hasParts = parts.length > 0
   const hasReasoningText = (message.reasoningText?.trim().length ?? 0) > 0
   const hasToolCalls = (message.toolCalls?.length ?? 0) > 0
+  const activityCount = parts.filter((part) => part.kind === 'tool' || part.kind === 'subagent').length || (message.toolCalls?.length ?? 0)
 
   const skillBadges = useMemo(
     () => message.pipelineSteps?.filter((s) => s.id?.startsWith('skill-')) ?? [],
@@ -123,6 +124,8 @@ export function TimelineBlock({ message, className }: TimelineBlockProps) {
       {/* Reasoning Header Button (🧠 Thought for 1s / Thinking) */}
       <button
         onClick={handleToggle}
+        aria-expanded={isExpanded}
+        aria-controls={`timeline-content-${message.id}`}
         style={{
           background: 'none',
           border: 'none',
@@ -137,6 +140,7 @@ export function TimelineBlock({ message, className }: TimelineBlockProps) {
           status={status}
           isExpanded={isExpanded}
           elapsed={elapsed}
+          activityCount={activityCount}
           lastSkillName={lastSkillName}
         />
       </button>
@@ -146,6 +150,7 @@ export function TimelineBlock({ message, className }: TimelineBlockProps) {
         {isExpanded && (
           <motion.div
             key="timeline-content"
+            id={`timeline-content-${message.id}`}
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
@@ -154,13 +159,13 @@ export function TimelineBlock({ message, className }: TimelineBlockProps) {
           >
             <div
               style={{
-                marginLeft: 20,
-                paddingLeft: 12,
-                borderLeft: '1px solid var(--border-subtle)',
-                marginTop: 2,
+                marginLeft: 7,
+                paddingLeft: 15,
+                borderLeft: '1px solid color-mix(in srgb, var(--border-normal) 80%, transparent)',
+                marginTop: 1,
                 display: 'flex',
                 flexDirection: 'column',
-                gap: 8,
+                gap: 4,
               }}
             >
               {(status === 'starting' || status === 'streaming') && !hasReasoningText && !hasParts && (
@@ -235,7 +240,7 @@ export function TimelineBlock({ message, className }: TimelineBlockProps) {
             </div>
 
             {(status === 'streaming' || status === 'starting') && (
-              <div style={{ padding: '4px 0 0 20px' }}>
+              <div style={{ padding: '4px 0 0 7px' }}>
                 <StreamStallIndicator streaming={status === 'streaming'} message={message} />
               </div>
             )}

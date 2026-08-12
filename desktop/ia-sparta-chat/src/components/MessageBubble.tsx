@@ -26,6 +26,12 @@ import { PreviewRenderer } from './artifact/PreviewRenderer'
 function cleanDisplayContent(text: string): string {
   if (!text) return ''
   let cleaned = text.replace(/<think>[\s\S]*?<\/think>/gi, '').trim()
+  // Local models sometimes narrate a tool action as Markdown before producing
+  // an answer. The live activity timeline already represents that progress.
+  cleaned = cleaned.replace(
+    /^\s*(?:[🔍🧠⚙️🛠️📂📄🌐]\s*)?(?:\*\*)?\s*(?:búsqueda|buscando|analizando|explorando|verificando|planificando|preparando|consultando)[^\n]*(?:\n|$)/i,
+    '',
+  ).trimStart()
   if (cleaned.startsWith('El usuario') && (cleaned.includes('¡') || cleaned.includes('Hola') || cleaned.includes('\n\n'))) {
     const match = /(¡[\s\S]*|Hola[\s\S]*|\n\n[\s\S]*)/.exec(cleaned)
     if (match && match[1].trim().length > 0) {
@@ -291,9 +297,12 @@ function MessageBubbleBase({ message, isLastUser = false, isLastAssistant = fals
                             {renderState.content.replace(/^Error:\s*/i, '')}
                           </div>
                           {(renderState.content.toLowerCase().includes('api key') ||
-                            renderState.content.toLowerCase().includes('expirada') ||
-                            renderState.content.toLowerCase().includes('inválida') ||
-                            renderState.content.toLowerCase().includes('configura')) && (
+                            renderState.content.toLowerCase().includes('api_key') ||
+                            renderState.content.toLowerCase().includes('unauthorized') ||
+                            renderState.content.toLowerCase().includes('authorization') ||
+                            renderState.content.toLowerCase().includes('autenticaci') ||
+                            renderState.content.toLowerCase().includes('http 401') ||
+                            renderState.content.toLowerCase().includes('http 403')) && (
                             <div style={{ paddingTop: 2 }}>
                               <button
                                 type="button"

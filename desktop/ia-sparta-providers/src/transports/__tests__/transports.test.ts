@@ -105,6 +105,28 @@ describe('ChatCompletionsTransport with serverUrl override', () => {
   })
 })
 
+describe('LM Studio local transport', () => {
+  const transport = new ChatCompletionsTransport('lmstudio', '', 'http://localhost:1234')
+
+  it('does not send an API key to the local server', () => {
+    const headers = transport.buildHeaders()
+    expect(headers['Authorization']).toBeUndefined()
+  })
+
+  it('uses the OpenAI-compatible local endpoint', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response('data: [DONE]\n\n', { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    for await (const _chunk of transport.streamChat({ ...sampleReq, model: 'local-model' })) { /* exhaust stream */ }
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://localhost:1234/v1/chat/completions',
+      expect.objectContaining({ headers: expect.not.objectContaining({ Authorization: expect.anything() }) }),
+    )
+    vi.unstubAllGlobals()
+  })
+})
+
 describe('OpenRouter reasoning controls', () => {
   it('passes the selected reasoning effort for compatible models', () => {
     const transport = new ChatCompletionsTransport('openrouter', 'sk-or-test')

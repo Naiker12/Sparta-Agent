@@ -79,6 +79,11 @@ export function registerChatSendIPC(): void {
         const systemPrompt = buildSystemPrompt(req, userText)
         const formattedMessages = (req.messages || []).map(m => ({ role: m.role as any, content: m.content }))
         const tools = buildToolsList(req.tools, req.webSearchEnabled, req.mode as 'chat' | 'agent')
+        // LM Studio and llama.cpp expose an OpenAI-compatible API, but function
+        // calling depends on the loaded model/template. Keep tools on the first
+        // attempt and fall back to a plain chat completion on a local 400.
+        let toolsForTurn = tools
+        let retriedLocalWithoutTools = false
 
         sendToRenderer({
           sessionId,
@@ -96,12 +101,13 @@ export function registerChatSendIPC(): void {
           loopCount++
           let turnContent = ''
           const pendingToolCalls: Array<{ id: string; toolName: string; input: Record<string, unknown> }> = []
+          let retryWithoutTools = false
 
           for await (const chunk of transport.streamChat({
             model: req.model,
             messages: formattedMessages,
             system: systemPrompt,
-            tools: tools.length > 0 ? tools : undefined,
+            tools: toolsForTurn.length > 0 ? toolsForTurn : undefined,
             thinkingEnabled: req.reasoning?.enabled,
             thinkingBudget: req.reasoning?.budget,
             reasoningEffort: req.reasoning?.effort as 'none' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh' | undefined,
@@ -135,6 +141,25 @@ export function registerChatSendIPC(): void {
                 input: (chunk.toolCall.input as Record<string, unknown>) || {},
               })
             } else if (chunk.type === 'error' && chunk.error) {
+              const localToolSchemaRejected =
+                isLocalProvider &&
+                !retriedLocalWithoutTools &&
+                toolsForTurn.length > 0 &&
+                /(?:http\s*)?400|solicitud inv[aá]lida|invalid request/i.test(chunk.error)
+
+              if (localToolSchemaRejected) {
+                retriedLocalWithoutTools = true
+                toolsForTurn = []
+                retryWithoutTools = true
+                sendToRenderer({
+                  sessionId,
+                  messageId,
+                  type: 'thinking:status',
+                  text: 'El modelo local no acepta herramientas; reintentando en modo chat...',
+                })
+                break
+              }
+
               streamFailed = true
               completeThinking()
               sendToRenderer({
@@ -146,6 +171,8 @@ export function registerChatSendIPC(): void {
               break
             }
           }
+
+          if (retryWithoutTools) continue
 
           if (streamAborted || streamFailed) break
 

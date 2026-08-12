@@ -1,9 +1,8 @@
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Mic, Square, Loader2 } from 'lucide-react'
-import { toast } from 'ia-sparta-design-system'
-import { useAudioRecorder } from 'ia-sparta-core'
-import { useAudioTranscription } from 'ia-sparta-core'
+import { toastReplace, useAudioRecorder, useAudioTranscription } from 'ia-sparta-core'
 import { AudioWaveform } from './AudioWaveform'
+import { VoiceReactiveOrb } from './reasoning/VoiceReactiveOrb'
 
 interface VoiceRecordButtonProps {
   onTranscript: (text: string) => void
@@ -12,17 +11,26 @@ interface VoiceRecordButtonProps {
 export function VoiceRecordButton({ onTranscript }: VoiceRecordButtonProps) {
   const { isRecording, levels, start, stop, error: recorderError } = useAudioRecorder()
   const { transcribe, isTranscribing, error: transcriptionError } = useAudioTranscription()
+  const [isStarting, setIsStarting] = useState(false)
 
   useEffect(() => {
-    if (recorderError) toast.error(recorderError, { duration: 4000 })
+    if (!recorderError) return
+    toastReplace('error', 'microphone', 'Micrófono no disponible', {
+      description: recorderError,
+      duration: 6500,
+    })
   }, [recorderError])
 
   useEffect(() => {
-    if (transcriptionError) toast.error(transcriptionError, { duration: 4000 })
+    if (!transcriptionError) return
+    toastReplace('error', 'transcription', 'No se pudo transcribir el audio', {
+      description: transcriptionError,
+      duration: 6500,
+    })
   }, [transcriptionError])
 
   const handleClick = useCallback(async () => {
-    if (isTranscribing) return
+    if (isTranscribing || isStarting) return
 
     if (isRecording) {
       const blob = await stop()
@@ -32,12 +40,18 @@ export function VoiceRecordButton({ onTranscript }: VoiceRecordButtonProps) {
       return
     }
 
-    await start()
-  }, [isRecording, isTranscribing, start, stop, transcribe, onTranscript])
+    setIsStarting(true)
+    try {
+      await start()
+    } finally {
+      setIsStarting(false)
+    }
+  }, [isRecording, isStarting, isTranscribing, start, stop, transcribe, onTranscript])
 
   if (isRecording) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+        <VoiceReactiveOrb active={isRecording} />
         <AudioWaveform levels={levels} active />
         <button
           onClick={handleClick}
@@ -88,7 +102,8 @@ export function VoiceRecordButton({ onTranscript }: VoiceRecordButtonProps) {
   return (
     <button
       onClick={handleClick}
-      title="Grabar audio"
+      disabled={isStarting}
+      title={isStarting ? 'Iniciando micrófono...' : 'Grabar audio'}
       style={{
         width: 28,
         height: 28,
@@ -96,14 +111,15 @@ export function VoiceRecordButton({ onTranscript }: VoiceRecordButtonProps) {
         border: '1px solid var(--border-normal)',
         borderRadius: 'var(--radius-md)',
         color: 'var(--text-muted)',
-        cursor: 'pointer',
+        cursor: isStarting ? 'wait' : 'pointer',
+        opacity: isStarting ? 0.65 : 1,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         transition: 'all 0.15s',
       }}
     >
-      <Mic size={13} strokeWidth={1.5} />
+      {isStarting ? <Loader2 size={13} strokeWidth={1.5} className="animate-spin" /> : <Mic size={13} strokeWidth={1.5} />}
     </button>
   )
 }

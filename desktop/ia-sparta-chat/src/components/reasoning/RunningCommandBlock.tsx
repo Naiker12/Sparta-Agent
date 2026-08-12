@@ -43,7 +43,7 @@ function parseCommandOutput(output: string): {
 }
 
 export function RunningCommandBlock({ toolCall }: RunningCommandBlockProps) {
-  const [isExpanded, setIsExpanded] = useState(true)
+  const [isExpanded, setIsExpanded] = useState(toolCall.status === 'running')
   const [liveOutput, setLiveOutput] = useState('')
   const [exitCode, setExitCode] = useState<number | null>(null)
   const [copied, setCopied] = useState(false)
@@ -125,14 +125,11 @@ export function RunningCommandBlock({ toolCall }: RunningCommandBlockProps) {
   return (
     <div
       style={{
-        borderRadius: 8,
-        border: '1px solid var(--border-subtle)',
-        background: 'var(--bg-elevated, #1a1a2e)',
+        borderRadius: 'var(--radius-sm)',
         overflow: 'hidden',
         fontSize: 12,
         fontFamily: 'var(--font-mono, monospace)',
-        marginTop: 4,
-        marginBottom: 4,
+        margin: 0,
       }}
     >
       {/* Header */}
@@ -141,9 +138,9 @@ export function RunningCommandBlock({ toolCall }: RunningCommandBlockProps) {
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 8,
+          gap: 7,
           width: '100%',
-          padding: '8px 12px',
+          padding: '3px 5px',
           background: 'none',
           border: 'none',
           cursor: 'pointer',
@@ -154,20 +151,20 @@ export function RunningCommandBlock({ toolCall }: RunningCommandBlockProps) {
         {/* Status icon */}
         {isActuallyRunning && !showExitCode ? (
           <Loader2
-            size={14}
+            size={12}
             style={{ color: 'var(--accent, #a78bfa)', flexShrink: 0 }}
             className="animate-spin"
           />
         ) : isAborted ? (
-          <X size={14} style={{ color: 'var(--status-warn, #eab308)', flexShrink: 0 }} />
+          <X size={12} style={{ color: 'var(--status-warn, #eab308)', flexShrink: 0 }} />
         ) : showExitCode ? (
           isSuccess ? (
-            <Check size={14} style={{ color: '#22c55e', flexShrink: 0 }} />
+            <Check size={12} style={{ color: 'var(--status-ok)', flexShrink: 0 }} />
           ) : (
-            <X size={14} style={{ color: '#ef4444', flexShrink: 0 }} />
+            <X size={12} style={{ color: 'var(--status-err)', flexShrink: 0 }} />
           )
         ) : (
-          <Terminal size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+          <Terminal size={12} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
         )}
 
         {/* Command text */}
@@ -177,12 +174,12 @@ export function RunningCommandBlock({ toolCall }: RunningCommandBlockProps) {
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
-            fontSize: 12,
-            fontWeight: 500,
+            fontSize: 11.5,
+            fontWeight: 450,
           }}
         >
-          <span style={{ color: 'var(--text-muted)', marginRight: 4 }}>$</span>
-          {commandText || 'Ejecutando comando...'}
+          <span style={{ color: 'var(--text-secondary)', marginRight: 5 }}>Ejecutó</span>
+          <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>{commandText || 'un comando'}</span>
         </span>
 
         {/* Duration / exit code */}
@@ -190,7 +187,7 @@ export function RunningCommandBlock({ toolCall }: RunningCommandBlockProps) {
           <span
             style={{
               fontSize: 10,
-              color: isSuccess ? '#22c55e' : '#ef4444',
+              color: isSuccess ? 'var(--status-ok)' : 'var(--status-err)',
               flexShrink: 0,
               fontWeight: 600,
             }}
@@ -203,7 +200,7 @@ export function RunningCommandBlock({ toolCall }: RunningCommandBlockProps) {
           <span
             style={{
               fontSize: 10,
-              color: 'var(--accent, #a78bfa)',
+              color: 'var(--text-muted)',
               flexShrink: 0,
             }}
           >
@@ -215,7 +212,7 @@ export function RunningCommandBlock({ toolCall }: RunningCommandBlockProps) {
           <span
             style={{
               fontSize: 10,
-              color: 'var(--status-warn, #eab308)',
+              color: 'var(--text-muted)',
               flexShrink: 0,
               fontWeight: 600,
             }}

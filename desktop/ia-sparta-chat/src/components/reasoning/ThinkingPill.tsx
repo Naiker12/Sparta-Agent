@@ -1,12 +1,13 @@
 import { motion } from 'framer-motion'
 import { cn } from 'ia-sparta-core'
-import { Brain, ChevronRight } from 'lucide-react'
+import { Brain, ChevronRight, Sparkles } from 'lucide-react'
 import type { ThinkingStatus } from 'ia-sparta-core'
 
 interface ThinkingPillProps {
   status: ThinkingStatus
   isExpanded: boolean
   elapsed: number
+  activityCount?: number
   lastSkillName?: string | null
   className?: string
 }
@@ -24,6 +25,7 @@ export function ThinkingPill({
   status,
   isExpanded,
   elapsed,
+  activityCount = 0,
   lastSkillName,
   className,
 }: ThinkingPillProps) {
@@ -34,6 +36,10 @@ export function ThinkingPill({
     ? 'Pensando...'
     : `Pensó durante ${formattedElapsed}`
 
+  const activityDetail = activityCount > 0
+    ? `${activityCount} ${activityCount === 1 ? 'acción' : 'acciones'} · ${formattedElapsed}`
+    : formattedElapsed
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 1 }}
@@ -43,27 +49,31 @@ export function ThinkingPill({
     >
       <div
         className={cn(
-          'group/reasoning flex items-center gap-1.5 py-1 pr-1 text-left text-xs font-medium text-[var(--text-secondary)] transition-colors',
+          'group/reasoning flex items-center gap-2 rounded-md py-1 pr-1.5 text-left text-xs font-medium text-[var(--text-secondary)] transition-colors',
           'hover:text-[var(--text-primary)] cursor-pointer'
         )}
       >
-        <Brain className="size-3.5 shrink-0 text-[var(--text-muted)] group-hover/reasoning:text-[var(--text-primary)] transition-colors" />
+        {isActive ? (
+          <Sparkles className="size-3 shrink-0 text-[var(--accent)] animate-pulse" />
+        ) : (
+          <Brain className="size-3.5 shrink-0 text-[var(--text-muted)] group-hover/reasoning:text-[var(--text-primary)] transition-colors" />
+        )}
 
         {isActive ? (
           <span className="inline-flex items-center gap-1.5 font-medium text-[var(--text-primary)]">
             <span className="animate-pulse">{label}</span>
-            <span className="text-[11px] font-mono text-[var(--text-muted)]">
-              ({elapsed > 0 ? `${elapsed.toFixed(0)}s` : '0s'})
+            <span className="text-[10.5px] font-mono text-[var(--text-muted)]">
+              {elapsed > 0 ? `${elapsed.toFixed(0)}s` : 'ahora'}
             </span>
           </span>
         ) : (
           <span className="font-medium text-[var(--text-secondary)] group-hover/reasoning:text-[var(--text-primary)] transition-colors">
-            {label}
+            {!isActive && activityCount > 0 ? `Actividad · ${activityDetail}` : label}
           </span>
         )}
 
         {lastSkillName && (
-          <span className="text-[10px] opacity-75 font-mono text-[var(--text-muted)]">
+          <span className="text-[10px] opacity-75 font-mono text-[var(--text-muted)] truncate max-w-36">
             · {lastSkillName.replace(/^[^\s]+\s/, '')}
           </span>
         )}

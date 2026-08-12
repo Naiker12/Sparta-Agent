@@ -332,9 +332,9 @@ function ToolTraceRowContent({ toolCall }: ToolTraceRowProps) {
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 8,
+          gap: 7,
           width: '100%',
-          padding: '2px 6px',
+          padding: '3px 5px',
           background: 'none',
           border: 'none',
           cursor: 'pointer',
@@ -356,8 +356,8 @@ function ToolTraceRowContent({ toolCall }: ToolTraceRowProps) {
         )}
 
         <span style={{
-          color: toolCall.status === 'running' ? 'var(--status-warn)' : 'var(--text-secondary)',
-          fontWeight: 500,
+          color: toolCall.status === 'running' ? 'var(--text-primary)' : 'var(--text-secondary)',
+          fontWeight: toolCall.status === 'running' ? 550 : 450,
           whiteSpace: 'nowrap',
         }}>
           {label}
@@ -368,7 +368,7 @@ function ToolTraceRowContent({ toolCall }: ToolTraceRowProps) {
             color: 'var(--text-muted)',
             fontSize: 10,
             fontFamily: 'var(--font-ui)',
-            fontStyle: 'italic',
+            fontStyle: 'normal',
           }}>
             {substatusLabel(liveSubstatus)}
           </span>
@@ -382,7 +382,7 @@ function ToolTraceRowContent({ toolCall }: ToolTraceRowProps) {
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
             fontFamily: 'var(--font-mono)',
-            fontSize: 11,
+            fontSize: 10.5,
           }}>
             {description}
           </span>
@@ -393,10 +393,9 @@ function ToolTraceRowContent({ toolCall }: ToolTraceRowProps) {
             color: 'var(--text-muted)',
             fontSize: 10,
             fontFamily: 'var(--font-ui)',
-            background: 'var(--bg-input)',
-            border: '1px solid var(--border-subtle)',
-            padding: '1px 6px',
-            borderRadius: '10px',
+            background: 'var(--bg-hover)',
+            padding: '1px 5px',
+            borderRadius: '8px',
             fontWeight: 500,
             flexShrink: 0,
           }}>

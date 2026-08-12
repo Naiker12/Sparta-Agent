@@ -10,6 +10,8 @@ export interface SearchResult {
   snippet: string
 }
 
+export type SearchFreshness = 'day' | 'week' | 'month' | 'any'
+
 const SEARCH_HEADERS: Record<string, string>[] = [
   {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
@@ -70,6 +72,7 @@ export function buildWebSearchTool(): ToolDefinition {
         query: { type: 'string', description: 'Términos de búsqueda' },
         count: { type: 'number', description: 'Cantidad de resultados (máx 10)' },
       },
+      freshness: { type: 'string', enum: ['day', 'week', 'month', 'any'], description: 'Actualidad requerida; usar day o week para datos recientes.' },
       required: ['query'],
     },
   }
@@ -80,13 +83,21 @@ function isCaptchaBlocked(html: string): boolean {
   return lower.includes('captcha') || lower.includes('challenge') || lower.includes('verify you are human')
 }
 
-async function duckduckgoSearch(query: string): Promise<string> {
+function queryWithFreshness(query: string, freshness: SearchFreshness): string {
+  if (freshness === 'any') return query
+  const lower = query.toLowerCase()
+  if (/\b(hoy|actual|actuales|reciente|recientes|ultimas|últimas|noticia|noticias|202\d)\b/.test(lower)) return query
+  const suffix = freshness === 'day' ? ' últimas 24 horas' : freshness === 'week' ? ' última semana' : ' último mes'
+  return `${query}${suffix}`
+}
+
+async function duckduckgoSearch(query: string, freshness: SearchFreshness): Promise<string> {
   const headers = pickHeaders()
-  const signal = AbortSignal.timeout(20_000)
+  const signal = AbortSignal.timeout(8_000)
   const resp = await fetch('https://html.duckduckgo.com/html/', {
     method: 'POST',
     headers,
-    body: `q=${encodeURIComponent(query)}`,
+    body: `q=${encodeURIComponent(queryWithFreshness(query, freshness))}`,
     signal,
   })
   if (!resp.ok) throw new Error(`DuckDuckGo error HTTP ${resp.status}`)
@@ -127,9 +138,9 @@ async function duckduckgoSearch(query: string): Promise<string> {
     .join('\n\n')
 }
 
-async function fallbackSearch(query: string): Promise<string> {
-  const signal = AbortSignal.timeout(15_000)
-  const resp = await fetch(`https://lite.duckduckgo.com/lite/?q=${encodeURIComponent(query)}`, {
+async function fallbackSearch(query: string, freshness: SearchFreshness): Promise<string> {
+  const signal = AbortSignal.timeout(8_000)
+  const resp = await fetch(`https://lite.duckduckgo.com/lite/?q=${encodeURIComponent(queryWithFreshness(query, freshness))}`, {
     headers: {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
       'Accept': 'text/html,application/xhtml+xml',
@@ -207,14 +218,20 @@ async function wikipediaSearch(query: string): Promise<string> {
     .join('\n\n')
 }
 
-export async function executeWebSearch(query: string, count = 5): Promise<string> {
-  const engines = [duckduckgoSearch, fallbackSearch, wikipediaSearch]
+export async function executeWebSearch(query: string, count = 5, freshness: SearchFreshness = 'any'): Promise<string> {
+  const safeCount = Math.min(Math.max(Math.floor(count) || 5, 1), 10)
+  const engines: Array<(q: string) => Promise<string>> = [
+    (q) => duckduckgoSearch(q, freshness),
+    (q) => fallbackSearch(q, freshness),
+    // Wikipedia is a background fallback, not a source for fresh news.
+    ...(freshness === 'any' ? [wikipediaSearch] : []),
+  ]
 
   for (const engine of engines) {
     try {
       const results = await engine(query)
       if (results) {
-        const limited = results.split('\n\n').slice(0, count).join('\n\n')
+        const limited = results.split('\n\n').slice(0, safeCount).join('\n\n')
         return ['Información obtenida de búsqueda web:', limited].join('\n')
       }
     } catch (err) {

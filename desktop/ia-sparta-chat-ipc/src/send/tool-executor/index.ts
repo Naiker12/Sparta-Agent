@@ -37,7 +37,11 @@ export async function executeToolCall(ctx: ToolCallContext): Promise<string> {
     sendToRenderer({ sessionId, messageId, type: 'search:progress', stage: 'searching', query, tool_call_id: toolCallId })
     sendToRenderer({ sessionId, messageId, type: 'thinking:status', text: `Buscando en la web: "${query}"...` })
 
-    const output = await executeWebSearch(query)
+    const count = typeof toolInput.count === 'number' ? toolInput.count : 5
+    const freshness = toolInput.freshness === 'day' || toolInput.freshness === 'week' || toolInput.freshness === 'month'
+      ? toolInput.freshness
+      : 'any'
+    const output = await executeWebSearch(query, count, freshness)
 
     sendToRenderer({ sessionId, messageId, type: 'search:progress', stage: 'done', tool_call_id: toolCallId })
     return output

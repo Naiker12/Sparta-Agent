@@ -1,7 +1,10 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { clearVoiceActivity, publishVoiceActivity } from '../stores/voice-activity.store'
 
 const BAR_COUNT = 24
 const MIN_RECORDING_MS = 300
+const VOICE_ON_THRESHOLD = 0.035
+const VOICE_OFF_THRESHOLD = 0.02
 
 export interface UseAudioRecorderReturn {
   isRecording: boolean
@@ -40,12 +43,17 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
     }
     mediaRecorderRef.current = null
     setLevels(Array(BAR_COUNT).fill(0))
+    clearVoiceActivity()
   }, [])
+
+  useEffect(() => cleanup, [cleanup])
 
   const start = useCallback(async () => {
     setError(null)
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+      })
       streamRef.current = stream
 
       // Web Audio API for real-time volume
@@ -58,6 +66,9 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       analyserRef.current = analyser
 
       const data = new Uint8Array(analyser.frequencyBinCount)
+      const timeData = new Uint8Array(analyser.fftSize)
+      let smoothedAmplitude = 0
+      let isVoiceActive = false
 
       // MediaRecorder for capturing the blob
       const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
@@ -79,6 +90,27 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
         analyser.getByteFrequencyData(data)
         const avg = data.reduce((a, b) => a + b, 0) / data.length / 255
         setLevels((prev) => [...prev.slice(1), avg])
+
+        // RMS from the time-domain signal is a stable measure of microphone
+        // energy. The separate thresholds provide hysteresis around silence.
+        analyser.getByteTimeDomainData(timeData)
+        let sumSquares = 0
+        for (const sample of timeData) {
+          const normalized = (sample - 128) / 128
+          sumSquares += normalized * normalized
+        }
+        const rms = Math.sqrt(sumSquares / timeData.length)
+        smoothedAmplitude = smoothedAmplitude * 0.72 + rms * 0.28
+        if (isVoiceActive) {
+          isVoiceActive = smoothedAmplitude >= VOICE_OFF_THRESHOLD
+        } else {
+          isVoiceActive = smoothedAmplitude >= VOICE_ON_THRESHOLD
+        }
+        publishVoiceActivity({
+          amplitude: Math.min(1, smoothedAmplitude * 8),
+          isVoiceActive,
+          isRecording: true,
+        })
         rafRef.current = requestAnimationFrame(loop)
       }
       rafRef.current = requestAnimationFrame(loop)

@@ -108,36 +108,35 @@ function ToasterViewport({ position, closeButton }: { position: string; closeBut
           positionClasses[position] || positionClasses["top-right"]
         )}
       >
-        {toasts.map((t: any) => (
-          <Toast.Root
+        {toasts.map((t: any) => {
+          const visual = toastVisuals[t.type] ?? toastVisuals.info
+          const Icon = visual.Icon
+          return (
+            <Toast.Root
             key={t.id}
             toast={t}
             className={cn(
-              "pointer-events-auto flex items-start gap-3 w-full max-w-[410px] border text-popover-foreground transition-all duration-200 backdrop-blur-xl px-3.5 py-3 shadow-2xl group",
-              "data-[starting]:opacity-0 data-[starting]:scale-[0.97] data-[starting]:-translate-y-2",
-              "data-[ending]:opacity-0 data-[ending]:scale-[0.97] data-[ending]:-translate-y-1"
+              "pointer-events-auto flex items-start gap-3 w-full max-w-[360px] border text-popover-foreground transition-all duration-200 backdrop-blur-xl px-3 py-2.5 shadow-xl group",
+              "data-[starting]:opacity-0 data-[starting]:scale-[0.98] data-[starting]:-translate-y-1",
+              "data-[ending]:opacity-0 data-[ending]:scale-[0.98] data-[ending]:-translate-y-1"
             )}
             style={{
               background: 'color-mix(in srgb, var(--bg-modal, var(--bg-surface, #1e1e22)) 92%, transparent)',
               borderColor: 'var(--border-strong, var(--border-normal, rgba(255,255,255,0.18)))',
+              borderLeftWidth: 3,
+              borderLeftColor: visual.color,
               borderRadius: 12,
-              boxShadow: '0 18px 48px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08)',
+              boxShadow: '0 12px 30px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08)',
             }}
           >
-            {(() => {
-              const visual = toastVisuals[t.type] ?? toastVisuals.info
-              const Icon = visual.Icon
-              return (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, flexShrink: 0, borderRadius: 8, background: visual.tint, color: visual.color }}>
-                  <Icon size={15} strokeWidth={1.9} className={t.type === 'loading' ? 'animate-spin' : undefined} />
-                </div>
-              )
-            })()}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, flexShrink: 0, borderRadius: 7, background: visual.tint, color: visual.color }}>
+              <Icon size={14} strokeWidth={1.9} className={t.type === 'loading' ? 'animate-spin' : undefined} />
+            </div>
 
             <div className="flex-1 min-w-0 py-0.5">
               {t.title && (
                 <Toast.Title
-                  className="text-[13px] font-semibold tracking-[-0.01em] leading-[1.35] m-0"
+                className="text-[12.5px] font-semibold tracking-[-0.01em] leading-[1.35] m-0"
                   style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-ui)' }}
                 >
                   {t.title}
@@ -145,7 +144,7 @@ function ToasterViewport({ position, closeButton }: { position: string; closeBut
               )}
               {t.description && (
                 <Toast.Description
-                  className="text-[12px] leading-[1.45] m-0 mt-1"
+                className="text-[11.5px] leading-[1.45] m-0 mt-0.5"
                   style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-ui)' }}
                 >
                   {t.description}
@@ -166,15 +165,16 @@ function ToasterViewport({ position, closeButton }: { position: string; closeBut
 
             {closeButton && (
               <Toast.Close
-                className="flex items-center justify-center size-6 rounded-md transition-all focus:outline-none shrink-0 cursor-pointer opacity-0 group-hover:opacity-100 focus:opacity-100"
+                className="flex items-center justify-center size-6 rounded-md transition-all focus:outline-none shrink-0 cursor-pointer opacity-60 group-hover:opacity-100 focus:opacity-100"
                 style={{ color: 'var(--text-muted)' }}
                 aria-label="Cerrar notificación"
               >
                 <X size={14} strokeWidth={1.8} />
               </Toast.Close>
             )}
-          </Toast.Root>
-        ))}
+            </Toast.Root>
+          )
+        })}
       </Toast.Viewport>
     </Toast.Portal>
   )

@@ -49,6 +49,19 @@ function getActiveProvider(providers: Provider[], activeModel: string): Provider
   return configured ?? providers[0] ?? null
 }
 
+/**
+ * A session can retain the model selected for a previous provider. Passing that
+ * model to a local OpenAI-compatible server produces a 400 because the server
+ * only knows about its currently loaded models.
+ */
+function getModelForProvider(provider: Provider, requestedModel: string): string {
+  const requestedBelongsToProvider =
+    requestedModel === provider.defaultModel || provider.models?.includes(requestedModel)
+
+  if (requestedBelongsToProvider) return requestedModel
+  return provider.defaultModel || provider.models?.[0] || requestedModel
+}
+
 function resolveWorkspaceRoot(): string | undefined {
   const connectedFolder = useFolderStore.getState().connectedPath
   if (connectedFolder) {
@@ -136,6 +149,7 @@ async function runAssistantTurn(
       return
     }
     setProviderForSession(sid, provider.id)
+    const selectedModel = getModelForProvider(provider, activeModel)
     if (!messagingAdapter.isReady()) {
       if (IS_WEB && messagingAdapter.onReady) {
         await new Promise<void>((resolve) => {
@@ -166,7 +180,7 @@ async function runAssistantTurn(
       store.stopStreaming(sid)
       store.updateMessage(assistantId, {
         isStreaming: false,
-        content: `El proveedor "${provider.label}" requiere una API Key para procesar este modelo (${activeModel}). Por favor, agrégala en Ajustes ⚙️ > Modelos.`,
+        content: `El proveedor "${provider.label}" requiere una API Key para procesar este modelo (${selectedModel}). Por favor, agrégala en Ajustes ⚙️ > Modelos.`,
       })
       return
     }
@@ -204,11 +218,11 @@ async function runAssistantTurn(
     const workspaceRoot = resolveWorkspaceRoot()
     const connectedFolder = useFolderStore.getState().connectedPath || undefined
 
-    console.log(`[ChatSession PERF] Dispatching turn: model=${activeModel || provider.defaultModel} vendor=${provider.vendor || provider.id} sessionId=${sid}`)
+    console.log(`[ChatSession PERF] Dispatching turn: model=${selectedModel} vendor=${provider.vendor || provider.id} sessionId=${sid}`)
     const sendResult = messagingAdapter.sendMessage({
       sessionId: sid,
       messageId: assistantId,
-      model: activeModel || provider.defaultModel || '',
+      model: selectedModel,
       messages: msgs,
       providerKey,
       apiUrl,
@@ -233,7 +247,7 @@ async function runAssistantTurn(
     })
     const resolved = sendResult instanceof Promise ? await sendResult : null
     if (resolved?.ok) {
-      useModelPerformanceStore.getState().recordLatency(activeModel, Date.now() - turnStartedAt)
+      useModelPerformanceStore.getState().recordLatency(selectedModel, Date.now() - turnStartedAt)
     }
     if (resolved && !resolved.ok) {
       store.stopStreaming(sid)
