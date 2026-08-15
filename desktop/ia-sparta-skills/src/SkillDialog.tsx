@@ -161,10 +161,10 @@ export function SkillDialog({ open, onClose, onSubmit, onDelete, initial }: Skil
               Eliminar
             </button>
           )}
-          <Button type="button" variant="ghost" onClick={onClose} style={{ fontSize: 11, height: 30 }}>
+          <Button type="button" variant="ghost" onClick={onClose} className="px-4 py-1.5 shrink-0" style={{ fontSize: 11, height: 30 }}>
             Cancelar
           </Button>
-          <Button form="skill-form" type="submit" disabled={!name.trim() || !prompt.trim()} style={{ fontSize: 11, height: 30, fontWeight: 600 }}>
+          <Button form="skill-form" type="submit" disabled={!name.trim() || !prompt.trim()} className="px-4 py-1.5 shrink-0 min-w-[90px]" style={{ fontSize: 11, height: 30, fontWeight: 600 }}>
             {isEditing ? 'Guardar cambios' : 'Crear skill'}
           </Button>
         </div>

@@ -535,23 +535,31 @@ function ToolTraceRowContent({ toolCall }: ToolTraceRowProps) {
 function DetailSection({ label, content }: { label: string; content: string }) {
   return (
     <div>
-      <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)', marginBottom: 2, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+      <div style={{
+        fontSize: 10,
+        fontWeight: 600,
+        color: 'var(--text-muted)',
+        fontFamily: 'var(--font-ui)',
+        marginBottom: 3,
+        textTransform: 'uppercase',
+        letterSpacing: '0.05em',
+      }}>
         {label}
       </div>
       <pre
         aria-label={label}
         style={{
           margin: 0,
-          padding: '9px 10px',
-          maxHeight: 190,
+          padding: '8px 12px',
+          maxHeight: 200,
           overflow: 'auto',
-          borderRadius: 'var(--radius-sm)',
-          border: '1px solid var(--border-normal)',
-          background: 'var(--bg-input)',
+          borderRadius: 8,
+          border: '1px solid var(--border-subtle)',
+          background: 'color-mix(in srgb, var(--text-primary) 3%, var(--bg-sidebar))',
           color: 'var(--text-secondary)',
-          fontFamily: 'var(--font-mono)',
-          fontSize: 11.5,
-          lineHeight: 1.55,
+          fontFamily: 'var(--font-ui)',
+          fontSize: 12,
+          lineHeight: 1.5,
           whiteSpace: 'pre-wrap',
           overflowWrap: 'anywhere',
         }}

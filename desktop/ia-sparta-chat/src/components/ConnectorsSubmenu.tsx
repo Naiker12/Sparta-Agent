@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Plug, ChevronRight } from 'lucide-react'
+import { Plug, ChevronRight, Check } from 'lucide-react'
 import { useMCPStore } from 'ia-sparta-core'
 
 export function ConnectorsSubmenu() {
@@ -21,6 +21,7 @@ export function ConnectorsSubmenu() {
   return (
     <div ref={ref} style={{ position: 'relative' }}>
       <button
+        type="button"
         onClick={() => setOpen(!open)}
         style={{
           display: 'flex',
@@ -56,85 +57,111 @@ export function ConnectorsSubmenu() {
         </span>
         <span style={{ flex: 1 }}>Conectores</span>
         <ChevronRight
-          size={12}
+          size={14}
           strokeWidth={1.5}
           style={{
             color: 'var(--text-muted)',
             transition: 'transform 0.15s ease',
-            transform: open ? 'rotate(90deg)' : 'none',
+            transform: open ? 'translateX(2px)' : 'none',
           }}
         />
       </button>
 
+      {/* ── Side Submenu Popover Window (matching Image 4) ── */}
       {open && (
         <div
           style={{
-            marginLeft: 14,
-            borderLeft: '1px solid var(--border-subtle)',
-            paddingLeft: 4,
+            position: 'absolute',
+            left: 'calc(100% + 8px)',
+            bottom: 0,
+            zIndex: 9999,
+            width: 240,
+            background: 'var(--bg-elevated)',
+            border: '1px solid var(--border-normal)',
+            borderRadius: 14,
+            boxShadow: '0 12px 36px rgba(0,0,0,0.22)',
+            padding: 6,
             display: 'flex',
             flexDirection: 'column',
-            gap: '1px',
-            marginTop: '2px',
+            gap: 2,
+            animation: 'fadeIn 0.12s ease-out',
           }}
         >
           {servers.length === 0 ? (
             <p
               style={{
-                padding: '6px 8px',
+                padding: '12px 10px',
                 margin: 0,
-                fontSize: 11,
+                fontSize: 11.5,
                 color: 'var(--text-muted)',
                 fontFamily: 'var(--font-ui)',
+                textAlign: 'center',
               }}
             >
-              No hay conectores disponibles
+              No hay conectores MCP configurados
             </p>
           ) : (
-            servers.map((server) => (
-              <label
-                key={server.id}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  padding: '5px 8px',
-                  borderRadius: 'var(--radius-md)',
-                  cursor: 'pointer',
-                  fontSize: 11.5,
-                  color: 'var(--text-secondary)',
-                  fontFamily: 'var(--font-ui)',
-                  transition: 'all 0.15s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'var(--bg-hover)'
-                  e.currentTarget.style.color = 'var(--text-primary)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'none'
-                  e.currentTarget.style.color = 'var(--text-secondary)'
-                }}
-              >
-                <span
+            servers.map((server) => {
+              const isEnabled = server.config.enabled
+              return (
+                <button
+                  key={server.id}
+                  type="button"
+                  onClick={() => useMCPStore.getState().toggleServer(server.id)}
                   style={{
-                    width: 6,
-                    height: 6,
-                    borderRadius: '50%',
-                    background: server.connected ? 'var(--status-ok)' : 'var(--status-err)',
-                    flexShrink: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    width: '100%',
+                    padding: '7px 10px',
+                    borderRadius: 8,
+                    border: 'none',
+                    background: isEnabled ? 'var(--bg-active)' : 'transparent',
+                    color: 'var(--text-primary)',
+                    cursor: 'pointer',
+                    fontSize: 12,
+                    fontFamily: 'var(--font-ui)',
+                    transition: 'all 0.12s ease',
+                    textAlign: 'left',
                   }}
-                />
-                <span style={{ flex: 1, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                  {server.name}
-                </span>
-                <input
-                  type="checkbox"
-                  checked={server.config.enabled}
-                  onChange={() => useMCPStore.getState().toggleServer(server.id)}
-                  style={{ cursor: 'pointer', accentColor: 'var(--accent)' }}
-                />
-              </label>
-            ))
+                  onMouseEnter={(e) => {
+                    if (!isEnabled) e.currentTarget.style.background = 'var(--bg-hover)'
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isEnabled) e.currentTarget.style.background = 'transparent'
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: '50%',
+                      background: server.connected ? '#10b981' : '#ef4444',
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span style={{ flex: 1, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                    {server.name}
+                  </span>
+                  <div
+                    style={{
+                      width: 16,
+                      height: 16,
+                      borderRadius: 4,
+                      border: isEnabled ? '1px solid var(--accent)' : '1px solid var(--border-subtle)',
+                      background: isEnabled ? 'var(--accent)' : 'var(--bg-input)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'white',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {isEnabled && <Check size={12} strokeWidth={3} />}
+                  </div>
+                </button>
+              )
+            })
           )}
         </div>
       )}

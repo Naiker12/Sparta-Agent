@@ -1,16 +1,15 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, Code, Search, Settings, Shield, Split, TestTube, Globe, Cpu, Sparkles, RotateCw } from 'lucide-react'
+import { Code, Shield, Split, TestTube, Globe, Cpu, Sparkles, RotateCw, Sun, Pencil, BarChart } from 'lucide-react'
 import { useSettingsStore } from 'ia-sparta-core'
-import { useSessionStore } from 'ia-sparta-core'
-import { useSessionTabsStore } from 'ia-sparta-core'
 import { useTranslation } from 'ia-sparta-i18n'
 
-const QUICK_ACTIONS = [
-  { icon: Plus,    labelKey: 'sidebar.newSession', action: 'new' as const },
-  { icon: Code,   labelKey: 'chat.activeSkills',  action: 'coding' as const, fallbackLabel: 'Código' },
-  { icon: Search,  labelKey: 'sidebar.agents',     action: 'research' as const, fallbackLabel: 'Investigar' },
-  { icon: Settings,labelKey: 'sidebar.settings',   action: 'settings' as const },
+const TOPIC_PILLS = [
+  { icon: Sun, label: 'Clima', prompt: '¿Cuál es el pronóstico del clima para hoy?' },
+  { icon: Code, label: 'Código', prompt: 'Escribe una función en TypeScript para ' },
+  { icon: Pencil, label: 'Redacción', prompt: 'Ayúdame a redactar un correo profesional para ' },
+  { icon: BarChart, label: 'Análisis', prompt: 'Analiza los pros y contras de ' },
+  { icon: Sparkles, label: 'Ideas', prompt: 'Dame 5 ideas creativas para ' },
 ]
 
 const EXAMPLE_PROMPTS = [
@@ -23,8 +22,7 @@ const EXAMPLE_PROMPTS = [
 ]
 
 export function HeroScreen() {
-  const { openSettings, setInput } = useSettingsStore()
-  const { createSession } = useSessionStore()
+  const { setInput } = useSettingsStore()
   const { t, lang } = useTranslation()
   const [prompts, setPrompts] = useState<typeof EXAMPLE_PROMPTS>([])
 
@@ -38,20 +36,6 @@ export function HeroScreen() {
   useEffect(() => {
     shufflePrompts()
   }, [])
-
-  function handleAction(action: string) {
-    if (action === 'settings') { openSettings(); return }
-    if (action === 'new') {
-      const id = createSession()
-      useSessionTabsStore.getState().openTab(id)
-      return
-    }
-    const promptsConfig: Record<string, string> = {
-      coding:   lang === 'es' ? 'Ayúdame a refactorizar este código: ' : 'Help me refactor this code: ',
-      research: lang === 'es' ? 'Investiga en profundidad sobre: ' : 'Research in depth about: ',
-    }
-    if (promptsConfig[action]) setInput(promptsConfig[action])
-  }
 
   return (
     <div style={{
@@ -116,107 +100,84 @@ export function HeroScreen() {
       </motion.div>
 
       <motion.div
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ 
-          opacity: 1, 
-          y: 0,
-          scale: [1, 1.02, 1]
-        }}
-        transition={{ 
-          opacity: { duration: 0.5, delay: 0.15 },
-          y: { duration: 0.5, delay: 0.15 },
-          scale: {
-            repeat: Infinity,
-            duration: 4,
-            ease: "easeInOut",
-            delay: 0.5
-          }
-        }}
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, delay: 0.1 }}
         style={{ textAlign: 'center' }}
       >
         <h1 
-          className="hero-gradient-title"
           style={{
             fontFamily: 'var(--font-display)',
-            fontSize: 'clamp(44px, 7vw, 56px)',
-            fontWeight: 900,
-            letterSpacing: '-0.03em',
-            lineHeight: 1.1,
-            textTransform: 'uppercase',
+            fontSize: 'clamp(32px, 5vw, 42px)',
+            fontWeight: 800,
+            letterSpacing: '-0.02em',
+            color: 'var(--text-display)',
+            lineHeight: 1.25,
+            marginBottom: 6,
           }}
         >
-          SPARTA AGENT
+          Chat with Sparta Agent
         </h1>
+        <p
+          style={{
+            fontSize: 14,
+            color: 'var(--text-muted)',
+            textAlign: 'center',
+            maxWidth: 480,
+            lineHeight: 1.5,
+            fontWeight: 400,
+            fontFamily: 'var(--font-ui)',
+          }}
+        >
+          {t('chat.welcome') || 'Run local LLMs, cloud models, agents & MCP tools'}
+        </p>
       </motion.div>
 
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4, delay: 0.1 }}
-        style={{
-          fontSize: 13.5,
-          color: 'var(--text-secondary)',
-          textAlign: 'center',
-          maxWidth: 440,
-          lineHeight: 1.6,
-          fontWeight: 400,
-          fontFamily: 'var(--font-ui)',
-        }}
-      >
-        {t('chat.welcome')}
-      </motion.p>
 
+
+      {/* ── Topic Action Pills (matching Image 4) ── */}
       <motion.div
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35, delay: 0.18 }}
-        style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}
+        transition={{ duration: 0.35, delay: 0.22 }}
+        style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center', marginTop: 4 }}
       >
-        {QUICK_ACTIONS.map(({ icon: Icon, labelKey, action, fallbackLabel }, index) => {
-          const isPrimary = index === 0
-          return (
-            <button
-              key={action}
-              onClick={() => handleAction(action)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                padding: '6px 14px',
-                background: isPrimary ? 'var(--accent)' : 'none',
-                border: isPrimary ? '1px solid var(--accent)' : '1px solid var(--border-normal)',
-                borderRadius: 20,
-                color: isPrimary ? '#ffffff' : 'var(--text-secondary)',
-                fontWeight: isPrimary ? 600 : 400,
-                fontSize: 12,
-                fontFamily: 'var(--font-ui)',
-                cursor: 'pointer',
-                transition: 'all 0.15s',
-              }}
-              onMouseEnter={e => {
-                if (!isPrimary) {
-                  e.currentTarget.style.borderColor = 'var(--accent)'
-                  e.currentTarget.style.color = 'var(--accent)'
-                  e.currentTarget.style.background = 'var(--accent-muted)'
-                } else {
-                  e.currentTarget.style.opacity = '0.9'
-                }
-              }}
-              onMouseLeave={e => {
-                if (!isPrimary) {
-                  e.currentTarget.style.borderColor = 'var(--border-normal)'
-                  e.currentTarget.style.color = 'var(--text-secondary)'
-                  e.currentTarget.style.background = 'none'
-                } else {
-                  e.currentTarget.style.opacity = '1'
-                }
-              }}
-            >
-              <Icon size={12} strokeWidth={1.8} />
-              {t(labelKey) || fallbackLabel}
-            </button>
-          )
-        })}
+        {TOPIC_PILLS.map(({ icon: Icon, label, prompt }) => (
+          <button
+            key={label}
+            onClick={() => setInput(prompt)}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '6px 14px',
+              background: 'var(--bg-surface)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: 999,
+              color: 'var(--text-secondary)',
+              fontWeight: 500,
+              fontSize: 12,
+              fontFamily: 'var(--font-ui)',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.borderColor = 'var(--accent)'
+              e.currentTarget.style.color = 'var(--text-primary)'
+              e.currentTarget.style.background = 'var(--bg-hover)'
+              e.currentTarget.style.transform = 'translateY(-1px)'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.borderColor = 'var(--border-subtle)'
+              e.currentTarget.style.color = 'var(--text-secondary)'
+              e.currentTarget.style.background = 'var(--bg-surface)'
+              e.currentTarget.style.transform = 'translateY(0)'
+            }}
+          >
+            <Icon size={13} strokeWidth={1.8} style={{ color: 'var(--text-muted)' }} />
+            {label}
+          </button>
+        ))}
       </motion.div>
 
       <motion.div

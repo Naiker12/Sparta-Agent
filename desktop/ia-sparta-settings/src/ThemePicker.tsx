@@ -20,6 +20,7 @@ const THEMES: ThemeDef[] = [
   { name: 'catppuccin', label: 'Catppuccin', accent: '#CBA6F7', bg: '#1E1E2E', sidebar: '#181825', group: 'dark' },
   { name: 'nord', label: 'Nord', accent: '#88C0D0', bg: '#242933', sidebar: '#2E3440', group: 'dark' },
   { name: 'light', label: 'Light', accent: '#6366F1', bg: '#F4F4F7', sidebar: '#EBEBEF', group: 'light' },
+  { name: 'studio', label: 'Studio', accent: '#17B88B', bg: '#FEFEFD', sidebar: '#FFFFFF', group: 'light' },
   { name: 'linen', label: 'Lino', accent: '#C46A4A', bg: '#F7F2EA', sidebar: '#EFE9DF', group: 'light' },
   { name: 'sage', label: 'Salvia', accent: '#3A7D4A', bg: '#F3F7F2', sidebar: '#E8EDE6', group: 'light' },
   { name: 'mist', label: 'Bruma', accent: '#4A6A8A', bg: '#F2F4F7', sidebar: '#E6E9ED', group: 'light' },

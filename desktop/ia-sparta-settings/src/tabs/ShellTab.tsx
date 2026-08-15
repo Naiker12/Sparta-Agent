@@ -75,7 +75,7 @@ export function ShellTab() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 680 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, width: '100%' }}>
       {/* Header section */}
       <div>
         <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)', margin: 0, fontFamily: 'var(--font-ui)' }}>

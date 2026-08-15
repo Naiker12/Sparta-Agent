@@ -30,11 +30,13 @@ const EDGE_COLOR: Record<string, string> = {
 
 function cleanLabel(rawContent: string): string {
   let cleaned = rawContent.trim()
-  cleaned = cleaned.replace(/^(usuario|user|assistant|system|\/\s*respuesta)\s*:\s*/i, '')
+  cleaned = cleaned.replace(/^(usuario|user|assistant|system|\/\s*respuesta|\#\#|\[documento:[^\]]*\])\s*:?\s*/gi, '')
+  cleaned = cleaned.replace(/[\[\]\#\`\*\_\>]/g, '')
+  cleaned = cleaned.trim()
   if (!cleaned) cleaned = rawContent.trim()
   const words = cleaned.split(/\s+/).slice(0, 3)
   const label = words.join(' ')
-  return label.length > 22 ? label.substring(0, 20) + '…' : label
+  return label.length > 20 ? label.substring(0, 18) + '…' : label
 }
 
 export const MemoryGraphD3 = forwardRef<MemoryGraphHandle, Props>(
@@ -60,6 +62,16 @@ export const MemoryGraphD3 = forwardRef<MemoryGraphHandle, Props>(
       if (!ctx) return
       const { width, height } = canvas
       ctx.clearRect(0, 0, width, height)
+
+      // Draw subtle background grid
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.02)'
+      for (let x = 20; x < width; x += 40) {
+        for (let y = 20; y < height; y += 40) {
+          ctx.beginPath()
+          ctx.arc(x, y, 1, 0, Math.PI * 2)
+          ctx.fill()
+        }
+      }
 
       const transform = transformRef.current
       ctx.save()
@@ -94,7 +106,7 @@ export const MemoryGraphD3 = forwardRef<MemoryGraphHandle, Props>(
         if (r > 12) {
           ctx.beginPath()
           ctx.arc(node.x, node.y, r + 6, 0, Math.PI * 2)
-          ctx.strokeStyle = node.color + '30'
+          ctx.strokeStyle = node.color + '35'
           ctx.lineWidth = 1 / transform.k
           ctx.stroke()
         }
@@ -132,12 +144,11 @@ export const MemoryGraphD3 = forwardRef<MemoryGraphHandle, Props>(
         ctx.fillStyle = 'rgba(255, 255, 255, 0.35)'
         ctx.fill()
 
-        // 3. Draw Selective Floating Badge Label
-        const screenRadius = r * transform.k
-        const shouldShowLabel = isSelected || screenRadius > 9.5 || transform.k > 0.8
+        // 3. Draw Selective Floating Badge Label (clean non-overlapping)
+        const shouldShowLabel = isSelected || transform.k > 1.25 || (r > 14 && transform.k > 0.85)
         if (shouldShowLabel) {
           const label = cleanLabel(node.entry.content)
-          const fontSize = Math.max(9.5, Math.min(12, r * 1.0))
+          const fontSize = Math.max(9.5, Math.min(11.5, r * 0.9))
           ctx.font = `600 ${fontSize}px -apple-system, "Inter", "Segoe UI", sans-serif`
           ctx.textAlign = 'center'
           ctx.textBaseline = 'top'
@@ -150,7 +161,7 @@ export const MemoryGraphD3 = forwardRef<MemoryGraphHandle, Props>(
           const ly = node.y + r + 5
 
           // Glass Badge
-          ctx.fillStyle = isSelected ? 'rgba(15, 23, 42, 0.95)' : 'rgba(15, 23, 42, 0.82)'
+          ctx.fillStyle = isSelected ? 'rgba(15, 23, 42, 0.95)' : 'rgba(15, 23, 42, 0.85)'
           ctx.strokeStyle = isSelected ? '#fbbf24' : node.color + '55'
           ctx.lineWidth = 1 / transform.k
 

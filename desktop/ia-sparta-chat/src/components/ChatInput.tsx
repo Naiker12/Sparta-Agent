@@ -484,7 +484,6 @@ export function ChatInput({ sessionId, className }: ChatInputProps) {
                   />
                 )}
               </div>
-
               <ModelPicker />
 
               <div style={{ flex: 1 }} />
@@ -503,57 +502,66 @@ export function ChatInput({ sessionId, className }: ChatInputProps) {
                 <button
                   onClick={handleStop}
                   style={{
-                    width: 28, height: 28,
-                    background: 'var(--accent)',
+                    width: 32,
+                    height: 32,
+                    background: 'var(--status-warn)',
                     border: 'none',
-                    borderRadius: 'var(--radius-lg)',
+                    borderRadius: '50%',
                     color: 'white',
                     cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     transition: 'all 0.15s',
+                    flexShrink: 0,
                   }}
                 >
-                  <Square size={11} strokeWidth={2.5} />
+                  <Square size={12} strokeWidth={2.5} />
                 </button>
               ) : (
                 <button
                   onClick={() => canSend && handleSend()}
                   style={{
-                    width: 28, height: 28,
+                    width: 32,
+                    height: 32,
                     background: canSend ? 'var(--accent)' : 'var(--bg-active)',
                     border: 'none',
-                    borderRadius: 'var(--radius-lg)',
+                    borderRadius: '50%',
                     color: canSend ? 'white' : 'var(--text-muted)',
                     cursor: canSend ? 'pointer' : 'not-allowed',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     transition: 'all 0.15s',
                     transform: canSend ? 'scale(1)' : 'scale(0.95)',
+                    boxShadow: canSend ? '0 2px 8px color-mix(in srgb, var(--accent) 35%, transparent)' : 'none',
+                    flexShrink: 0,
                   }}
                 >
-                  <ArrowUp size={13} strokeWidth={2.5} />
+                  <ArrowUp size={14} strokeWidth={2.5} />
                 </button>
               )}
             </div>
           </div>
-        </div>
 
-        {/* Bottom chips row (Traycer Style: Host Picker + Workspace/Mode + ModeSwitch) */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 6,
-          marginTop: 6,
-          paddingLeft: 4,
-          flexWrap: 'wrap',
-        }}>
-          <HostPickerButton />
-          <WorkspaceModePicker />
-          <SkillSuggestionChip />
-          <div style={{ flex: 1 }} />
-          <ModeSwitch />
-        </div>
+          {/* Bottom chips row (Host Picker + Workspace Mode + ModeSwitch) */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            marginTop: 6,
+            paddingLeft: 4,
+            flexWrap: 'wrap',
+          }}>
+            <HostPickerButton />
+            <WorkspaceModePicker />
+            <SkillSuggestionChip />
+            <div style={{ flex: 1 }} />
+            <ModeSwitch />
+          </div>
 
-        <ProjectDialog open={showFolderDialog} onClose={() => setShowFolderDialog(false)} />
+          <ProjectDialog open={showFolderDialog} onClose={() => setShowFolderDialog(false)} />
+        </div>
       </div>
     </div>
   )

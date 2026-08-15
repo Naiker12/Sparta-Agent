@@ -85,12 +85,9 @@ export function AppSidebar() {
             type="button"
             className="sidebar-new-session-btn"
             onClick={() => {
-              const tabs = useSessionTabsStore.getState().openTabs
-              for (const id of [...tabs]) {
-                useSessionTabsStore.getState().closeTab(id)
-              }
-              resetActiveSession()
-              setMainView({ type: 'chat' })
+              const newId = useSessionStore.getState().createSession()
+              useSessionTabsStore.getState().openTab(newId)
+              setMainView({ type: 'chat', sessionId: newId })
             }}
           >
             <Plus size={16} strokeWidth={2.5} className="btn-icon" />
@@ -113,7 +110,17 @@ export function AppSidebar() {
                 key={type}
                 type="button"
                 className={`sidebar-nav-btn ${isActive ? 'active' : ''}`}
-                onClick={() => setMainView({ type: type as MainView['type'] })}
+                onClick={() => {
+                  if (type === 'sessions') {
+                    const activeId = useSessionStore.getState().activeSessionId
+                    if (activeId) {
+                      useSessionTabsStore.getState().openTab(activeId)
+                    }
+                    setMainView({ type: 'chat', sessionId: activeId ?? undefined })
+                  } else {
+                    setMainView({ type: type as MainView['type'] })
+                  }
+                }}
               >
                 {isActive && <span className="nav-indicator" />}
                 <Icon size={18} strokeWidth={isActive ? 2.25 : 1.75} className="nav-icon" />
@@ -172,6 +179,7 @@ export function AppSidebar() {
             {sessions.length > 0 && (
               <button
                 type="button"
+                className="sidebar-vaciar-btn"
                 onClick={handleDeleteAllSessions}
                 title="Vaciar todos los chats e historial de sesiones"
                 style={{
@@ -191,7 +199,7 @@ export function AppSidebar() {
                 onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
               >
                 <Trash2 size={11} strokeWidth={2} />
-                <span>Vaciar</span>
+                <span className="sidebar-vaciar-text">Vaciar</span>
               </button>
             )}
           </div>

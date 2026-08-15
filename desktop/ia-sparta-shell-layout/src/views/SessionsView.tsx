@@ -1,14 +1,16 @@
 import { MessageSquare } from 'lucide-react'
-import { useSessionStore } from 'ia-sparta-core'
+import { useSessionStore, useUIStore } from 'ia-sparta-core'
 import { useSessionTabsStore } from 'ia-sparta-core'
 
 export function SessionsView() {
   const { sessions, activeSessionId, createSession } = useSessionStore()
   const openTab = useSessionTabsStore((s) => s.openTab)
+  const setMainView = useUIStore((s) => s.setMainView)
 
   function handleNewSession() {
     const id = createSession()
     openTab(id)
+    setMainView({ type: 'chat', sessionId: id })
   }
 
   return (
@@ -21,9 +23,10 @@ export function SessionsView() {
           Sesiones
         </h2>
         <button onClick={handleNewSession} style={{
-          padding: '5px 12px', background: 'var(--accent)', border: 'none',
-          borderRadius: 'var(--radius-md)', color: 'white', fontSize: 11,
-          fontFamily: 'var(--font-ui)', cursor: 'pointer',
+          padding: '6px 14px', background: 'var(--accent)', border: 'none',
+          borderRadius: 'var(--radius-md)', color: 'white', fontSize: 11.5,
+          fontWeight: 600, fontFamily: 'var(--font-ui)', cursor: 'pointer',
+          whiteSpace: 'nowrap', flexShrink: 0,
         }}>
           + Nueva sesión
         </button>

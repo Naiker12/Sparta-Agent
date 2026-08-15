@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { FileText, Code, Copy, Check, Loader2, ShieldAlert } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
 } from 'ia-sparta-design-system'
-import { MarkdownRenderer } from 'ia-sparta-chat'
+import { MarkdownText } from 'ia-sparta-chat'
 import type { InstalledSkill, Skill } from 'ia-sparta-core'
 
 interface SkillMarkdownDialogProps {
@@ -21,6 +21,8 @@ const SOURCE_LABEL: Record<string, string> = {
   system: 'Sistema',
 }
 
+const skillBodyCache = new Map<string, string>()
+
 export function SkillMarkdownDialog({ open, onClose, skill, trustLevel }: SkillMarkdownDialogProps) {
   const [raw, setRaw] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -31,21 +33,39 @@ export function SkillMarkdownDialog({ open, onClose, skill, trustLevel }: SkillM
     if (!open || !skill) return
     let cancelled = false
     const fallback = 'prompt' in skill ? skill.prompt || '' : ''
+
+    if (skillBodyCache.has(skill.id)) {
+      setBody(skillBodyCache.get(skill.id) || fallback)
+      setLoading(false)
+      return
+    }
+
     setBody(fallback)
-    setLoading(true)
+    setLoading(!fallback)
+
     void window.skills?.view(skill.id)
-      .then((result) => { if (!cancelled) setBody(result.body || fallback) })
+      .then((result) => {
+        if (!cancelled && result.body) {
+          skillBodyCache.set(skill.id, result.body)
+          setBody(result.body)
+        }
+      })
       .catch(() => { if (!cancelled) setBody(fallback) })
       .finally(() => { if (!cancelled) setLoading(false) })
-    return () => { cancelled = true }
-  }, [open, skill])
 
-  if (!skill) return null
+    return () => { cancelled = true }
+  }, [open, skill?.id])
 
   const content = body || '_Esta skill no tiene contenido._'
-  const sourceLabel = SOURCE_LABEL[skill.source ?? ''] ?? 'Desconocido'
-  const subtitle = [skill.category ?? 'general', sourceLabel, 'SKILL.md'].filter(Boolean).join(' · ')
+  const sourceLabel = SOURCE_LABEL[skill?.source ?? ''] ?? 'Desconocido'
+  const subtitle = [skill?.category ?? 'general', sourceLabel, 'SKILL.md'].filter(Boolean).join(' · ')
   const isQuarantined = trustLevel === 'quarantined'
+
+  const renderedMarkdown = useMemo(() => {
+    return <MarkdownText content={content} isStreaming={false} />
+  }, [content])
+
+  if (!skill) return null
 
   async function handleCopy() {
     try {
@@ -59,7 +79,7 @@ export function SkillMarkdownDialog({ open, onClose, skill, trustLevel }: SkillM
 
   return (
     <Dialog open={open} onOpenChange={(next) => { if (!next) onClose() }}>
-      <DialogContent className="sm:max-w-2xl max-h-[85vh] flex flex-col p-0 overflow-hidden rounded-2xl border border-[var(--border-normal)] bg-[var(--bg-modal)] shadow-2xl">
+      <DialogContent className="sm:max-w-3xl max-h-[85vh] flex flex-col p-0 overflow-hidden rounded-2xl border border-[var(--border-normal)] bg-[var(--bg-modal)] shadow-2xl">
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '16px 20px', borderBottom: '1px solid var(--border-normal)', background: 'var(--bg-surface)' }}>
           <div style={{
@@ -157,7 +177,7 @@ export function SkillMarkdownDialog({ open, onClose, skill, trustLevel }: SkillM
             </pre>
           ) : (
             <div style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-ui)', fontSize: 12, lineHeight: 1.6 }}>
-              <MarkdownRenderer content={content} />
+              {renderedMarkdown}
             </div>
           )}
         </div>

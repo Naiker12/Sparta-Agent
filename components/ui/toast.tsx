@@ -77,24 +77,24 @@ export function Toaster({ position = "top-right", ...props }: ToasterProps) {
 type ToastVisual = {
   Icon: typeof Info
   color: string
-  tint: string
+  bgTint: string
 }
 
 const toastVisuals: Record<string, ToastVisual> = {
-  success: { Icon: CheckCircle, color: 'var(--status-ok)', tint: 'color-mix(in srgb, var(--status-ok) 12%, transparent)' },
-  info: { Icon: Info, color: 'var(--accent)', tint: 'var(--accent-muted)' },
-  warning: { Icon: AlertTriangle, color: 'var(--status-warn)', tint: 'color-mix(in srgb, var(--status-warn) 12%, transparent)' },
-  error: { Icon: XCircle, color: 'var(--status-err)', tint: 'color-mix(in srgb, var(--status-err) 12%, transparent)' },
-  loading: { Icon: Loader2, color: 'var(--accent)', tint: 'var(--accent-muted)' },
+  success: { Icon: CheckCircle, color: '#10b981', bgTint: 'color-mix(in srgb, #10b981 12%, transparent)' },
+  info: { Icon: Info, color: 'var(--accent)', bgTint: 'var(--accent-muted)' },
+  warning: { Icon: AlertTriangle, color: '#f59e0b', bgTint: 'color-mix(in srgb, #f59e0b 12%, transparent)' },
+  error: { Icon: XCircle, color: '#ef4444', bgTint: 'color-mix(in srgb, #ef4444 12%, transparent)' },
+  loading: { Icon: Loader2, color: 'var(--accent)', bgTint: 'var(--accent-muted)' },
 }
 
 function ToasterViewport({ position, closeButton }: { position: string; closeButton: boolean }) {
   const { toasts } = Toast.useToastManager()
 
   const positionClasses: Record<string, string> = {
-    "top-left": "top-12 left-5 items-start",
-    "top-center": "top-12 left-1/2 -translate-x-1/2 items-center",
-    "top-right": "top-12 right-5 items-end",
+    "top-left": "top-10 left-5 items-start",
+    "top-center": "top-10 left-1/2 -translate-x-1/2 items-center",
+    "top-right": "top-10 right-5 items-end",
     "bottom-left": "bottom-6 left-6 items-start",
     "bottom-center": "bottom-6 left-1/2 -translate-x-1/2 items-center",
     "bottom-right": "bottom-6 right-6 items-end",
@@ -104,7 +104,7 @@ function ToasterViewport({ position, closeButton }: { position: string; closeBut
     <Toast.Portal>
       <Toast.Viewport
         className={cn(
-          "fixed z-[99999] flex flex-col gap-2 max-w-[420px] w-auto p-2 pointer-events-none transition-all duration-200",
+          "fixed z-[999999] flex flex-col gap-2 max-w-[400px] w-auto p-2 pointer-events-none transition-all duration-200",
           positionClasses[position] || positionClasses["top-right"]
         )}
       >
@@ -113,65 +113,78 @@ function ToasterViewport({ position, closeButton }: { position: string; closeBut
           const Icon = visual.Icon
           return (
             <Toast.Root
-            key={t.id}
-            toast={t}
-            className={cn(
-              "pointer-events-auto flex items-start gap-3 w-full max-w-[360px] border text-popover-foreground transition-all duration-200 backdrop-blur-xl px-3 py-2.5 shadow-xl group",
-              "data-[starting]:opacity-0 data-[starting]:scale-[0.98] data-[starting]:-translate-y-1",
-              "data-[ending]:opacity-0 data-[ending]:scale-[0.98] data-[ending]:-translate-y-1"
-            )}
-            style={{
-              background: 'color-mix(in srgb, var(--bg-modal, var(--bg-surface, #1e1e22)) 92%, transparent)',
-              borderColor: 'var(--border-strong, var(--border-normal, rgba(255,255,255,0.18)))',
-              borderLeftWidth: 3,
-              borderLeftColor: visual.color,
-              borderRadius: 12,
-              boxShadow: '0 12px 30px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08)',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, flexShrink: 0, borderRadius: 7, background: visual.tint, color: visual.color }}>
-              <Icon size={14} strokeWidth={1.9} className={t.type === 'loading' ? 'animate-spin' : undefined} />
-            </div>
-
-            <div className="flex-1 min-w-0 py-0.5">
-              {t.title && (
-                <Toast.Title
-                className="text-[12.5px] font-semibold tracking-[-0.01em] leading-[1.35] m-0"
-                  style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-ui)' }}
-                >
-                  {t.title}
-                </Toast.Title>
+              key={t.id}
+              toast={t}
+              className={cn(
+                "pointer-events-auto flex items-center gap-3 w-auto min-w-[220px] max-w-[360px] transition-all duration-200 backdrop-blur-2xl group",
+                "data-[starting]:opacity-0 data-[starting]:scale-[0.95] data-[starting]:-translate-y-2",
+                "data-[ending]:opacity-0 data-[ending]:scale-[0.95] data-[ending]:-translate-y-2"
               )}
-              {t.description && (
-                <Toast.Description
-                className="text-[11.5px] leading-[1.45] m-0 mt-0.5"
-                  style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-ui)' }}
-                >
-                  {t.description}
-                </Toast.Description>
-              )}
-            </div>
-
-            {t.actionProps && (
-              <Toast.Action
-                {...t.actionProps}
-                className="inline-flex items-center justify-center rounded-md text-xs font-semibold h-7 px-2.5 transition-colors shrink-0 cursor-pointer self-center"
+              style={{
+                background: 'var(--bg-elevated)',
+                border: '1px solid var(--border-normal)',
+                borderRadius: 999,
+                padding: '6px 14px 6px 8px',
+                boxShadow: '0 12px 32px rgba(0,0,0,0.18), 0 2px 6px rgba(0,0,0,0.06)',
+              }}
+            >
+              {/* Circular Status Icon Badge */}
+              <div
                 style={{
-                  background: 'var(--accent)',
-                  color: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 24,
+                  height: 24,
+                  flexShrink: 0,
+                  borderRadius: '50%',
+                  background: visual.bgTint,
+                  color: visual.color,
                 }}
-              />
-            )}
-
-            {closeButton && (
-              <Toast.Close
-                className="flex items-center justify-center size-6 rounded-md transition-all focus:outline-none shrink-0 cursor-pointer opacity-60 group-hover:opacity-100 focus:opacity-100"
-                style={{ color: 'var(--text-muted)' }}
-                aria-label="Cerrar notificación"
               >
-                <X size={14} strokeWidth={1.8} />
-              </Toast.Close>
-            )}
+                <Icon size={13} strokeWidth={2} className={t.type === 'loading' ? 'animate-spin' : undefined} />
+              </div>
+
+              {/* Title & Description Text */}
+              <div className="flex-1 min-w-0 flex flex-col justify-center">
+                {t.title && (
+                  <Toast.Title
+                    className="text-[12px] font-semibold leading-tight m-0 truncate"
+                    style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-ui)' }}
+                  >
+                    {t.title}
+                  </Toast.Title>
+                )}
+                {t.description && (
+                  <Toast.Description
+                    className="text-[11px] leading-tight m-0 mt-0.5 truncate"
+                    style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-ui)' }}
+                  >
+                    {t.description}
+                  </Toast.Description>
+                )}
+              </div>
+
+              {t.actionProps && (
+                <Toast.Action
+                  {...t.actionProps}
+                  className="inline-flex items-center justify-center rounded-full text-[11px] font-semibold h-6 px-2.5 transition-colors shrink-0 cursor-pointer self-center"
+                  style={{
+                    background: 'var(--accent)',
+                    color: '#ffffff',
+                  }}
+                />
+              )}
+
+              {closeButton && (
+                <Toast.Close
+                  className="flex items-center justify-center size-5 rounded-full transition-all focus:outline-none shrink-0 cursor-pointer opacity-50 hover:opacity-100 focus:opacity-100"
+                  style={{ color: 'var(--text-muted)' }}
+                  aria-label="Cerrar notificación"
+                >
+                  <X size={12} strokeWidth={2} />
+                </Toast.Close>
+              )}
             </Toast.Root>
           )
         })}

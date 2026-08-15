@@ -4,7 +4,7 @@ import { persist } from 'zustand/middleware'
 export type ThemeName =
   | 'midnight' | 'obsidian' | 'emerald' | 'rose'
   | 'amber' | 'dracula' | 'catppuccin' | 'nord'
-  | 'light' | 'linen' | 'sage' | 'mist' | 'sand'
+  | 'light' | 'studio' | 'linen' | 'sage' | 'mist' | 'sand'
 
 export const DARK_THEMES: readonly ThemeName[] = [
   'midnight', 'obsidian', 'emerald', 'rose',
@@ -29,6 +29,7 @@ const THEME_OVERLAY_COLORS: Record<ThemeName, { color: string; symbolColor: stri
   mist:       { color: '#E9EDF1', symbolColor: '#3A434B' },
   sand:       { color: '#F1E9DC', symbolColor: '#4A4032' },
   light:      { color: '#FFFFFF', symbolColor: '#374151' },
+  studio:     { color: '#FEFEFD', symbolColor: '#17B88B' },
 }
 
 function applyOverlay(theme: ThemeName) {

@@ -7,7 +7,12 @@ export function ReleaseModal() {
 
   useEffect(() => {
     // Show the announcement once for this specific release.
-    const hasSeen = localStorage.getItem('sparta_release_v0.1.6_seen');
+export function ReleaseModal() {
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    // Show the announcement once for this specific release.
+    const hasSeen = localStorage.getItem('sparta_release_v0.1.7_seen');
     if (!hasSeen) {
       const timer = setTimeout(() => setIsOpen(true), 600);
       return () => clearTimeout(timer);
@@ -15,7 +20,7 @@ export function ReleaseModal() {
   }, []);
 
   const handleClose = () => {
-    localStorage.setItem('sparta_release_v0.1.6_seen', 'true');
+    localStorage.setItem('sparta_release_v0.1.7_seen', 'true');
     setIsOpen(false);
   };
 
@@ -37,7 +42,7 @@ export function ReleaseModal() {
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-zinc-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-zinc-500"></span>
           </span>
-          <span className="font-mono text-zinc-300">v0.1.6 disponible</span>
+          <span className="font-mono text-zinc-300">v0.1.7 disponible</span>
           <Sparkles className="w-3.5 h-3.5 text-zinc-300 group-hover:rotate-12 transition-transform" />
         </motion.button>
       )}
@@ -71,28 +76,28 @@ export function ReleaseModal() {
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-500/10 border border-zinc-500/20 w-fit">
                   <Sparkles className="w-3.5 h-3.5 text-zinc-300" />
                   <span className="text-[11px] font-bold font-mono tracking-wider text-zinc-300 uppercase">
-                    Lanzamiento oficial v0.1.6
+                    Lanzamiento oficial v0.1.7
                   </span>
                 </div>
 
                 <h2 className="text-2xl sm:text-3xl font-extrabold font-display text-white tracking-tight leading-tight">
-                  Sparta Agent <span className="text-zinc-300">v0.1.6</span>
+                  Sparta Agent <span className="text-zinc-300">v0.1.7</span>
                 </h2>
 
                 <p className="text-xs sm:text-sm text-slate-300/90 leading-relaxed font-sans">
-                  Gran actualización con motor de gráficas v2 (8 tipos y 5 temas visuales), subagentes paralelos delegados, diseño de trazado de búsquedas estilo Claude Code y optimización de permisos de instalación.
+                  Gran actualización con selector de modelos ultra-estilizado, logotipos vectoriales dinámicos, control segmentado Chat/Terminal, notificaciones toast en píldora y grafo de memoria temático mejorado.
                 </p>
               </div>
 
-              {/* Feature Items List estilo moderno sin bordes de tarjeta pesados */}
+              {/* Feature Items List */}
               <div className="relative z-10 flex flex-col gap-2.5 my-6">
                 <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.05] transition-colors group">
                   <div className="p-2 rounded-xl bg-zinc-500/15 text-zinc-400 group-hover:scale-105 transition-transform shrink-0">
                     <Sparkles className="w-4 h-4" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-xs font-semibold text-white">Motor de Gráficas V2 &amp; 5 Temas</h4>
-                    <p className="text-[11.5px] text-slate-400 truncate">Radar, scatter, barras horizontales y variación de color automática.</p>
+                    <h4 className="text-xs font-semibold text-white">Selector de Modelos Delgado &amp; Vectores SVG</h4>
+                    <p className="text-[11.5px] text-slate-400 truncate">Menú de 215px con logotipos nativos de OpenAI, DeepSeek, Grok, Anthropic y OpenRouter.</p>
                   </div>
                 </div>
 
@@ -101,8 +106,8 @@ export function ReleaseModal() {
                     <Cpu className="w-4 h-4" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-xs font-semibold text-white">Subagentes Delegados Paralelos</h4>
-                    <p className="text-[11.5px] text-slate-400 truncate">Herramientas nativas delegate_research y delegate_code activas.</p>
+                    <h4 className="text-xs font-semibold text-white">Barra Superior Segmentada Chat / Terminal</h4>
+                    <p className="text-[11.5px] text-slate-400 truncate">Control segmentado tipo píldora con iconos nativos y estado activo sutil.</p>
                   </div>
                 </div>
 
@@ -111,8 +116,8 @@ export function ReleaseModal() {
                     <FileText className="w-4 h-4" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-xs font-semibold text-white">Búsqueda Web Estilo Claude Code</h4>
-                    <p className="text-[11.5px] text-slate-400 truncate">Trazado limpio de fuentes con línea conectora y auto-colapso.</p>
+                    <h4 className="text-xs font-semibold text-white">Notificaciones Toast &amp; Salida de Herramientas</h4>
+                    <p className="text-[11.5px] text-slate-400 truncate">Toast en píldora flotante cristalina y bloques de herramientas sutiles sin cajas blancas.</p>
                   </div>
                 </div>
 
@@ -121,8 +126,8 @@ export function ReleaseModal() {
                     <ShieldCheck className="w-4 h-4" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-xs font-semibold text-white">Instalación Local asInvoker (NSIS)</h4>
-                    <p className="text-[11.5px] text-slate-400 truncate">Sin solicitud molesta de permisos de administrador UAC.</p>
+                    <h4 className="text-xs font-semibold text-white">Grafo de Memoria Temático D3 &amp; Terminal Nítida</h4>
+                    <p className="text-[11.5px] text-slate-400 truncate">Separación de nodos por temática, rejilla cósmica y formato EOL de terminal nítido.</p>
                   </div>
                 </div>
               </div>
@@ -130,18 +135,18 @@ export function ReleaseModal() {
               {/* Botones de Acción Elegantes */}
               <div className="relative z-10 flex flex-col sm:flex-row items-center gap-3 pt-2">
                 <a
-                  href="https://github.com/Naiker12/Sparta-Agent/releases/download/v0.1.6/Sparta-Agent-Windows-0.1.6-Setup.exe"
+                  href="https://github.com/Naiker12/Sparta-Agent/releases/download/v0.1.7/Sparta-Agent-Windows-0.1.7-Setup.exe"
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={handleClose}
                   className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-zinc-100 hover:bg-white text-zinc-950 text-xs font-bold shadow-lg shadow-black/25 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
                 >
                   <Download className="w-4 h-4" />
-                  Descargar Sparta v0.1.6 (.exe)
+                  Descargar Sparta v0.1.7 (.exe)
                 </a>
 
                 <a
-                  href="https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.1.6"
+                  href="https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.1.7"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 text-slate-300 hover:text-white text-xs font-semibold transition-all cursor-pointer"

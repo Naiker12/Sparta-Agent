@@ -25,6 +25,56 @@ const CATEGORY_FALLBACKS: Record<string, string> = {
 function InlineSvgIcon({ vendor, size }: { vendor: string; size: number }) {
   const v = vendor.toLowerCase()
 
+  if (v === 'openai' || v.includes('gpt') || v.includes('o1') || v.includes('o3')) {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+        <path d="M22.28 9.82a5.98 5.98 0 0 0-.52-4.91 6.04 6.04 0 0 0-6.51-2.9 6.07 6.07 0 0 0-4.63-2.07 6.04 6.04 0 0 0-5.76 4.19 6.05 6.05 0 0 0-4.3 3.1 6.05 6.05 0 0 0 .74 7.11 5.98 5.98 0 0 0 .52 4.91 6.04 6.04 0 0 0 6.51 2.9 6.06 6.06 0 0 0 4.63 2.07 6.04 6.04 0 0 0 5.76-4.19 6.05 6.05 0 0 0 4.3-3.1 6.05 6.05 0 0 0-.74-7.11zm-9.02 11.23a4.57 4.57 0 0 1-2.82-.98l.15-.08 3.52-2.03a.75.75 0 0 0 .38-.65v-4.96l1.48.86v4.07a4.56 4.56 0 0 1-2.71 3.77zM4.34 17.5a4.54 4.54 0 0 1-.52-2.94l.15.09 3.52 2.03a.75.75 0 0 0 .75 0l4.3-2.48v1.73l-3.52 2.03a4.55 4.55 0 0 1-4.68-.46zm-1.1-8.38a4.56 4.56 0 0 1 2.3-1.96v4.22a.75.75 0 0 0 .38.65l4.3 2.48-1.48.86-3.52-2.03a4.57 4.57 0 0 1-1.98-4.22zm15.42-3.14l-4.3 2.48v-1.73l3.52-2.03a4.57 4.57 0 0 1 5.2.94 4.54 4.54 0 0 1 .52 2.94l-.15-.09-3.52-2.03a.75.75 0 0 0-.75 0zm2.08 7.37a4.56 4.56 0 0 1-2.3 1.96v-4.22a.75.75 0 0 0-.38-.65l-4.3-2.48 1.48-.86 3.52 2.03a4.57 4.57 0 0 1 1.98 4.22zM12 13.73l-2.15-1.24 2.15-1.24 2.15 1.24z" />
+      </svg>
+    )
+  }
+
+  if (v === 'anthropic' || v.includes('claude')) {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+        <path d="M17.47 3.5H13.8L6.53 20.5h3.67l1.45-3.48h6.75l1.45 3.48h3.67L17.47 3.5zm-4.36 10.74l2.25-5.38 2.25 5.38h-4.5z" />
+      </svg>
+    )
+  }
+
+  if (v === 'deepseek') {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="#3b82f6">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 14.5h-2v-2h2v2zm0-4h-2V7h2v5.5z" />
+      </svg>
+    )
+  }
+
+  if (v === 'grok' || v === 'xai') {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+      </svg>
+    )
+  }
+
+  if (v === 'meta' || v.includes('llama')) {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="#0668E1">
+        <path d="M17.5 7.5C15.8 7.5 14.3 8.3 13.2 9.5C12.1 8.3 10.6 7.5 8.9 7.5C5.6 7.5 3 10.1 3 13.4C3 16.7 5.6 19.3 8.9 19.3C10.6 19.3 12.1 18.5 13.2 17.3C14.3 18.5 15.8 19.3 17.5 19.3C20.8 19.3 23.4 16.7 23.4 13.4C23.4 10.1 20.8 7.5 17.5 7.5ZM8.9 17.2C6.8 17.2 5.1 15.5 5.1 13.4C5.1 11.3 6.8 9.6 8.9 9.6C10.7 9.6 12.1 10.9 12.9 12.4C12.2 13.9 10.7 17.2 8.9 17.2ZM17.5 17.2C15.7 17.2 14.2 13.9 13.5 12.4C14.3 10.9 15.7 9.6 17.5 9.6C19.6 9.6 21.3 11.3 21.3 13.4C21.3 15.5 19.6 17.2 17.5 17.2Z" />
+      </svg>
+    )
+  }
+
+  if (v === 'openrouter' || v.includes('openrouter')) {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <rect x="3" y="3" width="18" height="18" rx="5" fill="#6366f1" opacity="0.15" />
+        <path d="M12 4L19 8V16L12 20L5 16V8L12 4Z" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="12" cy="12" r="2.5" fill="#6366f1" />
+      </svg>
+    )
+  }
+
   if (v === 'gmail') {
     return (
       <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
@@ -127,7 +177,19 @@ export function BrandIcon({ vendor, size = 16, className }: BrandIconProps) {
   const normalizedVendor = (vendor || 'filesystem').toLowerCase()
 
   // Native inline SVG vectors for instant loading & crisp rendering
-  if (['gmail', 'google-drive', 'drive', 'google-calendar', 'calendar', 'google', 'gemini', 'slack', 'github', 'notion', 'figma'].includes(normalizedVendor)) {
+  if (
+    [
+      'gmail', 'google-drive', 'drive', 'google-calendar', 'calendar', 'google',
+      'gemini', 'slack', 'github', 'notion', 'figma', 'openai', 'anthropic',
+      'deepseek', 'grok', 'xai', 'meta', 'openrouter', 'qwen', 'inclusionai',
+      'thinkingmachines',
+    ].includes(normalizedVendor) ||
+    normalizedVendor.includes('gpt') ||
+    normalizedVendor.includes('claude') ||
+    normalizedVendor.includes('llama') ||
+    normalizedVendor.includes('deepseek') ||
+    normalizedVendor.includes('openrouter')
+  ) {
     return <InlineSvgIcon vendor={normalizedVendor} size={size} />
   }
 

@@ -83,14 +83,14 @@ export function ConfirmDialogShell({
         </div>
 
         <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8,
-          padding: '12px 24px', borderTop: '1px solid var(--border-subtle)',
+          display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 10,
+          padding: '14px 24px', borderTop: '1px solid var(--border-subtle)',
           background: 'var(--bg-surface)', flexShrink: 0,
         }}>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+          <Button variant="ghost" onClick={() => onOpenChange(false)} className="px-4 py-2 text-xs font-medium shrink-0">
             Cancelar
           </Button>
-          <Button variant={confirmVariant} onClick={handleConfirm}>
+          <Button variant={confirmVariant} onClick={handleConfirm} className="px-4 py-2 text-xs font-semibold shrink-0 min-w-[80px]">
             {confirmLabel}
           </Button>
         </div>

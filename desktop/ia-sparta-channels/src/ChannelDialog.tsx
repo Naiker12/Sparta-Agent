@@ -112,8 +112,8 @@ export function ChannelDialog({ open, onClose, onSubmit }: ChannelDialogProps) {
         </form>
 
         <DialogFooter>
-          <Button variant="ghost" onClick={onClose}>Cancelar</Button>
-          <Button form="channel-form" type="submit" disabled={!name.trim()}>Crear canal</Button>
+          <Button variant="ghost" onClick={onClose} className="px-4 py-1.5 shrink-0">Cancelar</Button>
+          <Button form="channel-form" type="submit" disabled={!name.trim()} className="px-4 py-1.5 shrink-0 font-semibold min-w-[90px]">Crear canal</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

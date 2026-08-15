@@ -24,7 +24,7 @@ import { useUIStore } from 'ia-sparta-core'
 import { useChatStore } from 'ia-sparta-core'
 import { useSkillStore } from 'ia-sparta-core'
 import { useLocalSkillsLoader } from 'ia-sparta-core'
-import { IS_ELECTRON } from 'ia-sparta-platform'
+
 
 const SessionsView = lazy(() => import('../views/SessionsView').then(m => ({ default: m.SessionsView })))
 const SkillsView = lazy(() => import('ia-sparta-skills').then(m => ({ default: m.SkillsView })))
@@ -127,7 +127,7 @@ export function AppShell() {
   return (
     <div className="flex flex-col h-screen bg-[var(--bg-base)] overflow-hidden">
       <TitleBar />
-      {IS_ELECTRON && <PersistentTerminal />}
+      <PersistentTerminal />
       <div ref={containerRef} className="relative flex flex-1 min-h-0 overflow-hidden">
         <SidebarProvider
           open={sidebarOpen}
@@ -149,25 +149,23 @@ export function AppShell() {
                   <ChatArea />
                 </ChatErrorBoundary>
               </div>
-              {IS_ELECTRON && (
-                <div className="relative" style={{ flexShrink: 0 }}>
-                  {terminalOpen && <div className="border-t border-[var(--border-normal)]" />}
-                  <motion.div
-                    initial={false}
-                    animate={{ height: terminalOpen ? terminalHeight : 0 }}
-                    transition={{ duration: isDraggingTerminal ? 0 : 0.12, ease: 'easeOut' }}
-                    style={{ overflow: 'hidden', position: 'relative', display: 'flex', flexDirection: 'column' }}
-                  >
-                    <TerminalSlot />
-                  </motion.div>
-                  {terminalOpen && (
-                    <PanelDragHandle
-                      className="terminal-resize-handle"
-                      onMouseDown={handleTerminalResize}
-                    />
-                  )}
-                </div>
-              )}
+              <div className="relative" style={{ flexShrink: 0 }}>
+                {terminalOpen && <div className="border-t border-[var(--border-normal)]" />}
+                <motion.div
+                  initial={false}
+                  animate={{ height: terminalOpen ? terminalHeight : 0 }}
+                  transition={{ duration: isDraggingTerminal ? 0 : 0.12, ease: 'easeOut' }}
+                  style={{ overflow: 'hidden', position: 'relative', display: 'flex', flexDirection: 'column' }}
+                >
+                  <TerminalSlot />
+                </motion.div>
+                {terminalOpen && (
+                  <PanelDragHandle
+                    className="terminal-resize-handle"
+                    onMouseDown={handleTerminalResize}
+                  />
+                )}
+              </div>
             </div>
 
             {/* Full Views (Skills, MCP, Channels, Memory, Sessions) */}

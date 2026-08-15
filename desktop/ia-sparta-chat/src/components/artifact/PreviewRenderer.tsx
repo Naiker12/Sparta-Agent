@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { MarkdownRenderer } from '../MarkdownRenderer'
+import { MarkdownText } from '../assistant-ui/markdown-text'
 import { SyntaxHighlighterPreview } from './SyntaxHighlighterPreview'
 import { SafeSvg } from './SafeSvg'
 import { PdfViewer } from './PdfViewer'
@@ -51,7 +51,7 @@ export function PreviewRenderer({ filePath, content, base64, viewMode = 'preview
     case 'md':
       return (
         <div style={{ padding: '20px', background: 'var(--bg-surface)', borderRadius: 0, height: '100%', overflow: 'auto' }}>
-          <MarkdownRenderer content={content} />
+          <MarkdownText content={content} />
         </div>
       )
     case 'code':

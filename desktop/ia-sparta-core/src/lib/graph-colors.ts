@@ -56,13 +56,30 @@ const CATEGORY_COLORS: Record<string, string> = {
   auto:        '#6366f1', // Indigo Glow
 }
 
-export function getGraphNodeColor(source: 'auto' | 'manual', category?: string): string {
+const PALETTE = ['#3b82f6', '#10b981', '#ec4899', '#8b5cf6', '#06b6d4', '#f59e0b', '#17b88b', '#6366f1']
+
+export function getGraphNodeColor(source: 'auto' | 'manual', category?: string, content?: string): string {
   if (category) {
     const key = category.toLowerCase().trim()
     if (CATEGORY_COLORS[key]) {
       return CATEGORY_COLORS[key]
     }
   }
+
+  if (content) {
+    const lower = content.toLowerCase()
+    if (lower.includes('código') || lower.includes('codigo') || lower.includes('función') || lower.includes('file') || lower.includes('path') || lower.includes('script') || lower.includes('ts') || lower.includes('js')) return '#06b6d4'
+    if (lower.includes('plan') || lower.includes('proyecto') || lower.includes('refactor') || lower.includes('mejora') || lower.includes('sesión') || lower.includes('tarea')) return '#8b5cf6'
+    if (lower.includes('usuario') || lower.includes('respuesta') || lower.includes('nombre') || lower.includes('pregunta') || lower.includes('dame')) return '#3b82f6'
+    if (lower.includes('preferencia') || lower.includes('gusta') || lower.includes('estilo') || lower.includes('tema')) return '#ec4899'
+    if (lower.includes('clima') || lower.includes('hecho') || lower.includes('dato')) return '#10b981'
+
+    // Hash content for deterministic vibrant color assignment
+    let hash = 0
+    for (let i = 0; i < content.length; i++) hash = (hash << 5) - hash + content.charCodeAt(i)
+    return PALETTE[Math.abs(hash) % PALETTE.length]
+  }
+
   return source === 'manual' ? CATEGORY_COLORS.manual : CATEGORY_COLORS.auto
 }
 

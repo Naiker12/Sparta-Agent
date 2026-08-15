@@ -18,14 +18,21 @@ export function ChatArea() {
         <TabStrip />
       </div>
       {messages.length > 0 ? (
-        <MessageList className="flex-1 min-h-0 overflow-y-auto" messages={messages} />
+        <>
+          <MessageList className="flex-1 min-h-0 overflow-y-auto" messages={messages} />
+          <div style={{ padding: '0 16px 6px' }}>
+            <PlanWatchPane />
+          </div>
+          <ChatInput className="shrink-0 px-4 py-3" />
+        </>
       ) : (
-        <HeroScreen />
+        <div className="flex-1 flex flex-col items-center justify-center min-h-0 overflow-y-auto px-4 py-6">
+          <HeroScreen />
+          <div className="w-full max-w-3xl px-4 mt-2">
+            <ChatInput />
+          </div>
+        </div>
       )}
-      <div style={{ padding: '0 16px 6px' }}>
-        <PlanWatchPane />
-      </div>
-      <ChatInput className="shrink-0 px-4 py-3" />
     </div>
   )
 }

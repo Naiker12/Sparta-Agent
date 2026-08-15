@@ -7,7 +7,7 @@ import { SkillCreator } from './SkillCreator'
 import { SkillDialog } from './SkillDialog'
 import { SkillMarkdownDialog } from './SkillMarkdownDialog'
 import type { Skill, InstalledSkill } from 'ia-sparta-core'
-import { Button, SkillCategoryIcon } from 'ia-sparta-design-system'
+import { SkillCategoryIcon } from 'ia-sparta-design-system'
 
 type Tab = 'mine' | 'explore' | 'create'
 
@@ -299,14 +299,32 @@ export function SkillsView() {
           </div>
         </div>
 
-        <Button
+        <button
+          type="button"
           onClick={() => { setEditSkill(null); setDialogOpen(true) }}
-          size="sm"
-          style={{ fontSize: 11, fontWeight: 600, height: 30, gap: 6 }}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '6px 14px',
+            height: 30,
+            background: 'var(--accent)',
+            border: 'none',
+            borderRadius: 'var(--radius-md)',
+            color: '#ffffff',
+            fontSize: 11.5,
+            fontWeight: 600,
+            fontFamily: 'var(--font-ui)',
+            cursor: 'pointer',
+            whiteSpace: 'nowrap',
+            flexShrink: 0,
+            transition: 'all 0.15s ease',
+            boxShadow: '0 2px 6px color-mix(in srgb, var(--accent) 25%, transparent)',
+          }}
         >
-          <Plus size={12} strokeWidth={2.5} />
-          Nueva Skill
-        </Button>
+          <Plus size={13} strokeWidth={2.5} />
+          <span>Nueva Skill</span>
+        </button>
       </div>
 
       {/* ── Stats bar ───────────────────────────────────────────── */}

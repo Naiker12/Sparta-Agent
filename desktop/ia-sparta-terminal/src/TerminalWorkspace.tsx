@@ -176,8 +176,9 @@ export function TerminalWorkspace() {
       disableStdin: tab.kind === 'agent',
       cursorStyle: 'bar',
       fontSize: 13,
-      fontFamily: '"Cascadia Code", "Fira Code", monospace',
-      lineHeight: 1.35,
+      fontFamily: '"Cascadia Code", "Fira Code", "JetBrains Mono", Consolas, monospace',
+      lineHeight: 1.3,
+      convertEol: true,
       scrollback: tab.kind === 'agent' ? 2000 : 5000,
       theme: getXtermTheme(),
       allowProposedApi: true,
@@ -411,10 +412,10 @@ export function TerminalWorkspace() {
         </div>
       </div>
 
-      <div className="relative min-h-0" style={{ background: '#0C0C10', flex: 1 }}>
+      <div className="relative min-h-0" style={{ background: '#0C0C10', flex: 1, padding: '6px 12px' }}>
           {tabs.map((tab) => (
             <div key={tab.id} ref={containerRefCallback(tab.id)}
-              className={cn('absolute inset-0', tab.id === activeTabId ? 'visible' : 'invisible pointer-events-none')} />
+              className={cn('absolute inset-3', tab.id === activeTabId ? 'visible' : 'invisible pointer-events-none')} />
           ))}
           {searchVisible && (
             <div style={{

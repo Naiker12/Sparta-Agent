@@ -17,7 +17,7 @@ import { MessageActionsDialog } from './MessageActionsDialog'
 import { SpartaIcon } from './SpartaIcon'
 import { getMessageRenderState, getAssistantRenderGroups, splitTurnAtAnswer, shouldCollapseSteps, formatDuration } from 'ia-sparta-core'
 import type { AssistantRenderGroup, ReasoningGroup } from 'ia-sparta-core'
-import { MarkdownRenderer } from './MarkdownRenderer'
+import { MarkdownText } from './assistant-ui/markdown-text'
 import { useTranslation } from 'ia-sparta-i18n'
 import { parseUserMessageAttachments } from '../lib/attachment-pipeline'
 import { AttachmentCard } from './input/AttachmentCard'
@@ -256,7 +256,7 @@ function MessageBubbleBase({ message, isLastUser = false, isLastAssistant = fals
                         </div>
                       )}
                       {userParsed.cleanText && (
-                        <MarkdownRenderer
+                        <MarkdownText
                           content={userParsed.cleanText}
                           isStreaming={false}
                         />
@@ -329,7 +329,7 @@ function MessageBubbleBase({ message, isLastUser = false, isLastAssistant = fals
                           )}
                         </div>
                       ) : (
-                        <MarkdownRenderer
+                        <MarkdownText
                           content={cleanDisplayContent(renderState.content)}
                           isStreaming={renderState.kind === 'responding' || renderState.kind === 'generating'}
                         />
@@ -526,7 +526,7 @@ function MessageBubbleBase({ message, isLastUser = false, isLastAssistant = fals
                     base64={previewAttachment.base64Data}
                   />
                 ) : (
-                  <MarkdownRenderer
+                  <MarkdownText
                     content={(() => {
                       const text = previewAttachment.previewText || ''
                       let cleaned = text.replace(/^\[(?:Documento|Archivo):\s*[^\]]+\]\n```[a-zA-Z0-9_-]*\n/i, '')
@@ -600,7 +600,7 @@ function GroupRenderer({ group, isStreaming, toolCalls }: {
   }
   if (group.kind === 'text') {
     return (
-      <MarkdownRenderer
+      <MarkdownText
         content={cleanDisplayContent(group.content)}
         isStreaming={isStreaming}
       />
