@@ -11,8 +11,6 @@
   },
   "dependencies": {
     "@assistant-ui/react": "^0.12.28",
-    "@hugeicons/core-free-icons": "^0.4.0",
-    "@hugeicons/react": "^0.4.0",
     "@streamdown/code": "^1.1.1",
     "@streamdown/math": "^1.0.2",
     "@streamdown/mermaid": "^1.0.2",
