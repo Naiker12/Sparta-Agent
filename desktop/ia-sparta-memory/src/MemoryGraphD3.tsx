@@ -30,8 +30,8 @@ const EDGE_COLOR: Record<string, string> = {
 
 function cleanLabel(rawContent: string): string {
   let cleaned = rawContent.trim()
-  cleaned = cleaned.replace(/^(usuario|user|assistant|system|\/\s*respuesta|\#\#|\[documento:[^\]]*\])\s*:?\s*/gi, '')
-  cleaned = cleaned.replace(/[\[\]\#\`\*\_\>]/g, '')
+  cleaned = cleaned.replace(/^(usuario|user|assistant|system|\/\s*respuesta|##|\[documento:[^\]]*\])\s*:?\s*/gi, '')
+  cleaned = cleaned.replace(/[[\]#`*_>]/g, '')
   cleaned = cleaned.trim()
   if (!cleaned) cleaned = rawContent.trim()
   const words = cleaned.split(/\s+/).slice(0, 3)

@@ -26,10 +26,8 @@ import { PreviewRenderer } from './artifact/PreviewRenderer'
 function cleanDisplayContent(text: string): string {
   if (!text) return ''
   let cleaned = text.replace(/<think>[\s\S]*?<\/think>/gi, '').trim()
-  // Local models sometimes narrate a tool action as Markdown before producing
-  // an answer. The live activity timeline already represents that progress.
   cleaned = cleaned.replace(
-    /^\s*(?:[🔍🧠⚙️🛠️📂📄🌐]\s*)?(?:\*\*)?\s*(?:búsqueda|buscando|analizando|explorando|verificando|planificando|preparando|consultando)[^\n]*(?:\n|$)/i,
+    /^\s*(?:(?:🔍|🧠|⚙️|🛠️|📂|📄|🌐)\s*)?(?:\*\*)?\s*(?:búsqueda|buscando|analizando|explorando|verificando|planificando|preparando|consultando)[^\n]*(?:\n|$)/iu,
     '',
   ).trimStart()
   if (cleaned.startsWith('El usuario') && (cleaned.includes('¡') || cleaned.includes('Hola') || cleaned.includes('\n\n'))) {

@@ -7,11 +7,6 @@ export function ReleaseModal() {
 
   useEffect(() => {
     // Show the announcement once for this specific release.
-export function ReleaseModal() {
-  const [isOpen, setIsOpen] = useState(false);
-
-  useEffect(() => {
-    // Show the announcement once for this specific release.
     const hasSeen = localStorage.getItem('sparta_release_v0.1.7_seen');
     if (!hasSeen) {
       const timer = setTimeout(() => setIsOpen(true), 600);
