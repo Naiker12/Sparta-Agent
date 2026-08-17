@@ -57,7 +57,7 @@ jobs:
           workspaces: rust/sparta-security
 
       # Install JS deps (triggers prebuild → rust:napi automatically)
-      - run: pnpm install
+      - run: pnpm install --no-frozen-lockfile
 
       # Build: tsc → vite build → electron-builder
       - run: pnpm build

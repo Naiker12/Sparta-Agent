@@ -343,6 +343,9 @@ importers:
 
   desktop/ia-sparta-design-system:
     dependencies:
+      '@radix-ui/react-switch':
+        specifier: ^1.1.3
+        version: 1.3.7(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -446,6 +449,9 @@ importers:
 
   desktop/ia-sparta-providers:
     dependencies:
+      ia-sparta-core:
+        specifier: workspace:*
+        version: link:../ia-sparta-core
       ia-sparta-design-system:
         specifier: workspace:*
         version: link:../ia-sparta-design-system

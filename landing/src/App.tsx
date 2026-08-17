@@ -4,7 +4,6 @@ import {
   ArrowRight,
   Download,
   Terminal,
-  Shield,
   Cpu,
   Layers,
   CheckCircle2,
@@ -20,15 +19,11 @@ import {
   Apple,
   FolderOpen,
   GitBranch,
-  Globe,
-  Radio,
-  FileCode,
-  HardDrive,
-  Workflow,
   Wrench,
   BookOpen,
 } from 'lucide-react'
 import { DocsPage } from './components/docs/docs-page'
+import { getPublicUrl } from './lib/utils'
 
 // ── SVG Brand & Technology Icons for Marquee ─────────────────────────────────
 function SvgReact() {
@@ -218,7 +213,7 @@ function Navbar({ onOpenDocs }: { onOpenDocs: () => void }) {
           className="flex items-center gap-3 group select-none"
         >
           <img
-            src="/favicon.svg"
+            src={getPublicUrl('favicon.svg')}
             alt="Sparta Agent Logo"
             className="w-8 h-8 object-contain drop-shadow-[0_0_12px_rgba(234,179,8,0.5)] group-hover:scale-110 transition-transform"
           />
@@ -937,7 +932,7 @@ function FooterSection({ onOpenDocs }: { onOpenDocs?: () => void }) {
         {/* Col 1: Sparta Agent Brand */}
         <div className="space-y-3">
           <div className="flex items-center gap-3">
-            <img src="/favicon.svg" alt="Sparta Agent" className="w-7 h-7" />
+            <img src={getPublicUrl('favicon.svg')} alt="Sparta Agent" className="w-7 h-7" />
             <span className="text-xl font-bold tracking-tight text-white">Sparta Agent</span>
           </div>
           <p className="text-sm text-gray-400 leading-relaxed">
