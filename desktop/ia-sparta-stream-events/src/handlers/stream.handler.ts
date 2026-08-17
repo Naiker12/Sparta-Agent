@@ -9,6 +9,12 @@ export function handleStreamToken(ctx: EventHandlerCtx) {
   queueContent(ctx.sid, ctx.mid, token)
 }
 
+export function handleStreamReplaceContent(ctx: EventHandlerCtx) {
+  const content = (ctx.event.content as string) ?? ''
+  _cancelFlush()
+  useChatStore.getState().updateMessage(ctx.mid, { content })
+}
+
 export function handleStreamCompleted(
   ctx: EventHandlerCtx,
   providerBySession: MapStore<string, string>,

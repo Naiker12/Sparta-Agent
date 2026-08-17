@@ -2,10 +2,21 @@
 
 @custom-variant dark (&:where([data-theme-mode="dark"], [data-theme-mode="dark"] *));
 
+@source "../../**/*.{ts,tsx}";
+@source "../../../components/**/*.{ts,tsx}";
 @source "../../../node_modules/streamdown/dist/*.js";
 @source "../../../node_modules/@streamdown/code/dist/*.js";
 @source "../../../node_modules/@streamdown/math/dist/*.js";
 @source "../../../node_modules/@streamdown/mermaid/dist/*.js";
+
+/* Explicit utilities for design-system card classes that Tailwind v4 scanner may miss */
+@layer utilities {
+  .p-card-lg { padding: 22px; }
+  .p-card-md { padding: 18px; }
+  .size-icon-box { width: 52px; height: 52px; flex-shrink: 0; }
+  .size-icon-sm { width: 18px; height: 18px; }
+}
+
 
 @theme inline {
   --color-background: var(--bg-base);
@@ -43,6 +54,9 @@
   --color-bg-surface: var(--bg-surface);
   --color-bg-elevated: var(--bg-elevated);
   --color-status-thinking: var(--status-think);
+
+  /* Icon box size token */
+  --size-icon-box: 52px;
 
   --animate-fadeUp: fadeUp 0.4s ease forwards;
   --animate-bounce: bounce 1.2s ease infinite;

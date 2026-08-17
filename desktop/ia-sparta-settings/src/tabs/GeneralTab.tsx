@@ -1,40 +1,9 @@
-import { useSettingsStore } from 'ia-sparta-core'
-import { useProviderStore } from 'ia-sparta-core'
+import { useSettingsStore, useProviderStore, modelSupportsThinking, thinkingUnsupportedReason } from 'ia-sparta-core'
 import { useTranslation } from 'ia-sparta-i18n'
-import { modelSupportsThinking, thinkingUnsupportedReason } from 'ia-sparta-core'
 import { SettingRow, SettingGroup } from './primitives'
+import { Switch } from 'ia-sparta-design-system'
 import type { ReasoningEffort } from 'ia-sparta-core'
 
-function Toggle({ value, onChange }: { value: boolean; onChange: () => void }) {
-  return (
-    <button
-      onClick={onChange}
-      style={{
-        width: 32,
-        height: 16,
-        borderRadius: 8,
-        background: value ? 'var(--accent)' : 'var(--border-normal)',
-        border: 'none',
-        cursor: 'pointer',
-        position: 'relative',
-        transition: 'background 0.15s',
-      }}
-    >
-      <div
-        style={{
-          width: 12,
-          height: 12,
-          borderRadius: '50%',
-          background: 'white',
-          position: 'absolute',
-          top: 2,
-          left: value ? 18 : 2,
-          transition: 'left 0.15s',
-        }}
-      />
-    </button>
-  )
-}
 
 const EFFORT_LEVELS: { value: ReasoningEffort; label: string; desc: string }[] = [
   { value: 'none', label: 'None', desc: 'Sin razonamiento' },
@@ -93,7 +62,7 @@ export function GeneralTab() {
         <SettingRow
           title={t('general.persistentMemory')}
           description={t('general.persistentMemoryDesc')}
-          control={<Toggle value={memoryEnabled} onChange={toggleMemory} />}
+          control={<Switch checked={memoryEnabled} onCheckedChange={toggleMemory} />}
         />
       </SettingGroup>
 
@@ -129,35 +98,11 @@ export function GeneralTab() {
           title="Razonamiento visible"
           description={thinkingReason ?? "Mostrar el proceso de razonamiento del modelo"}
           control={
-            <button
-              onClick={thinkingSupported ? toggleReasoning : undefined}
-              style={{
-                width: 32,
-                height: 16,
-                borderRadius: 8,
-                background: thinkingSupported
-                  ? (reasoningEnabled ? 'var(--accent)' : 'var(--border-normal)')
-                  : 'var(--bg-muted)',
-                border: 'none',
-                cursor: thinkingSupported ? 'pointer' : 'not-allowed',
-                position: 'relative',
-                transition: 'background 0.15s',
-                opacity: thinkingSupported ? 1 : 0.4,
-              }}
-            >
-              <div
-                style={{
-                  width: 12,
-                  height: 12,
-                  borderRadius: '50%',
-                  background: 'white',
-                  position: 'absolute',
-                  top: 2,
-                  left: reasoningEnabled ? 18 : 2,
-                  transition: 'left 0.15s',
-                }}
-              />
-            </button>
+            <Switch
+              checked={reasoningEnabled && thinkingSupported}
+              disabled={!thinkingSupported}
+              onCheckedChange={thinkingSupported ? toggleReasoning : undefined}
+            />
           }
         />
         {reasoningEnabled && thinkingSupported && (

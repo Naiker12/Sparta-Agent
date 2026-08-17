@@ -133,10 +133,10 @@ Cada vez que ejecutes una herramienta (Notion, Google Drive, OneDrive, Gmail, Fi
   3. Un desglose en viñetas del contenido o cambio aplicado.`
 
   const realTimeWebDirective = `[BÚSQUEDA Y DATOS EN TIEMPO REAL]
-Cuando el usuario solicite información reciente, partidos en vivo, noticias, fechas, cotizaciones o datos de internet:
-1. Usá SIEMPRE la herramienta 'web_search' para consultar la web en tiempo real.
-2. Si un sitio específico contiene los detalles (ej. FotMob, ESPN, MDN, GitHub), usá 'web_fetch' para extraer el contenido directo.
-3. Presentá SIEMPRE los resultados de forma premium: con tablas Markdown estructuradas, fechas traducidas y horarios ajustados a la zona horaria del usuario (ej. UTC-5 Colombia).`
+Cuando el usuario solicite información reciente, librerías, noticias o datos de internet:
+1. Usá la herramienta 'web_search' realizando MÁXIMO 1 o 2 búsquedas específicas. NUNCA generes múltiples llamadas repetidas ni spam de queries.
+2. Si un sitio específico contiene los detalles (ej. GitHub, Oracle, Spring, MDN), usá 'web_fetch' para extraer el contenido directo.
+3. Presentá SIEMPRE los resultados de forma premium: con tablas Markdown estructuradas, fechas traducidas y enlaces limpios.`
 
   const fileCreationDirective = `[REGLA ESTRICTA DE CREACIÓN DE ARCHIVOS EN DISCO]
 - NUNCA crees o escribas archivos en disco (ej. D:\\, C:\\, carpetas arbitrarias) si el usuario solo hace una pregunta, aprueba una propuesta ("sí", "ok") o no ha especificado explícitamente una ruta de archivo.

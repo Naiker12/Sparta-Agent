@@ -1,20 +1,44 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
-import { registerMemoryIPC } from 'ia-sparta-ipc-bridge'
-import { registerVaultIPC } from 'ia-sparta-ipc-bridge'
-import { registerKeyManagerIPC, pushAllKeys } from 'ia-sparta-ipc-bridge'
-import { registerChatSendIPC, registerOnMessageHandler, registerSidecarStatusIPC, registerMemoryIPC as registerChatMemoryIPC, registerEditorDiffIPC, registerAudioIPC, registerMcpTestIPC, registerMcpOAuthIPC, registerAgentTaskIPC, registerMcpCallToolIPC, registerMcpSyncIPC, getEnhancedEnv } from 'ia-sparta-chat-ipc'
-import { registerSecurityIPC, wireSecurityIntoPipeline } from 'ia-sparta-ipc-bridge'
-import { startSidecar, stopSidecar, waitForSidecarReady, registerSidecarIPC } from 'ia-sparta-ipc-bridge'
-import { registerTerminalIPC, sessions, agentProcs } from 'ia-sparta-ipc-bridge'
-import { registerFilesystemIPC } from 'ia-sparta-ipc-bridge'
-import { registerSkillsIPC } from 'ia-sparta-ipc-bridge'
-import { registerPermissionIPC, setPermissionWindow } from 'ia-sparta-ipc-bridge'
-import { registerModelsIPC } from 'ia-sparta-ipc-bridge'
-import { convertDocumentToMarkdown } from 'ia-sparta-ipc-bridge'
-import { getSystemMetrics } from 'ia-sparta-ipc-bridge'
-import { stopFileWatcher } from 'ia-sparta-ipc-bridge'
+import {
+  registerMemoryIPC,
+  registerVaultIPC,
+  registerKeyManagerIPC,
+  pushAllKeys,
+  registerSecurityIPC,
+  wireSecurityIntoPipeline,
+  startSidecar,
+  stopSidecar,
+  waitForSidecarReady,
+  registerSidecarIPC,
+  registerTerminalIPC,
+  sessions,
+  agentProcs,
+  registerFilesystemIPC,
+  registerSkillsIPC,
+  registerPermissionIPC,
+  setPermissionWindow,
+  registerModelsIPC,
+  registerHarnessIPC,
+  convertDocumentToMarkdown,
+  getSystemMetrics,
+  stopFileWatcher,
+} from 'ia-sparta-ipc-bridge'
+import {
+  registerChatSendIPC,
+  registerOnMessageHandler,
+  registerSidecarStatusIPC,
+  registerMemoryIPC as registerChatMemoryIPC,
+  registerEditorDiffIPC,
+  registerAudioIPC,
+  registerMcpTestIPC,
+  registerMcpOAuthIPC,
+  registerAgentTaskIPC,
+  registerMcpCallToolIPC,
+  registerMcpSyncIPC,
+  getEnhancedEnv,
+} from 'ia-sparta-chat-ipc'
 
 // Suppress noisy Chromium GPU/cache errors on Windows dev hot-reloads and optimize performance & RAM usage
 app.commandLine.appendSwitch('disable-gpu-shader-disk-cache')
@@ -97,7 +121,6 @@ function createWindow() {
   })
 
   if (VITE_DEV_SERVER_URL) {
-    // Retry loading Vite dev server URL if it fails (common during hot-reload rebuilds)
     win.webContents.on('did-fail-load', (_event, _code, _desc, url) => {
       if (url === VITE_DEV_SERVER_URL) {
         setTimeout(() => {
@@ -141,20 +164,18 @@ app.whenReady().then(async () => {
   startSidecar()
 
   // Register security IPC early so the renderer gets the real module status
-  // as soon as the window loads (avoids false "security unavailable" warning).
   registerSecurityIPC()
 
   createWindow()
 
   // Keep the native Windows caption buttons visually aligned with the active app theme.
-  // The renderer owns theme selection; the main process owns the title bar overlay.
   ipcMain.on('titlebar:set-overlay', (_event, colors: { color?: string; symbolColor?: string }) => {
     if (!win || !/^#[0-9a-f]{6}$/i.test(colors?.color ?? '') || !/^#[0-9a-f]{6}$/i.test(colors?.symbolColor ?? '')) return
     win.setTitleBarOverlay({ color: colors.color!, symbolColor: colors.symbolColor!, height: 38 })
   })
 
   // App metadata IPC handlers
-  ipcMain.handle('app:getVersion', () => app.getVersion() || '0.1.7')
+  ipcMain.handle('app:getVersion', () => app.getVersion() || '0.1.8')
   ipcMain.handle('app:getName', () => app.getName() || 'Sparta Agent')
   ipcMain.handle('document:convert-to-markdown', async (_event, req) => {
     try {
@@ -187,6 +208,7 @@ app.whenReady().then(async () => {
   registerSkillsIPC()
   registerPermissionIPC()
   registerModelsIPC()
+  registerHarnessIPC()
   registerSidecarIPC()
 
   // Push all stored API keys to Sidecar and wire security module into pipeline

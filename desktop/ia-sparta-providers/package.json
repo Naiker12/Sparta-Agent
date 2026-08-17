@@ -12,6 +12,7 @@
   "dependencies": {
     "react": "^18.2.0",
     "lucide-react": "^1.24.0",
+    "ia-sparta-core": "workspace:*",
     "ia-sparta-design-system": "workspace:*",
     "ia-sparta-ipc-bridge": "workspace:*"
   }

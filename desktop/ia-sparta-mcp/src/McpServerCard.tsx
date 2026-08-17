@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Plug, Zap, Trash2, Pencil, ChevronDown, Wifi, WifiOff, Wrench, MoreHorizontal, Shield, Unplug } from 'lucide-react'
+import { Plug, Trash2, Pencil, ChevronDown, Wifi, WifiOff, Wrench, MoreHorizontal, Shield, Unplug } from 'lucide-react'
 import type { MCPServer } from 'ia-sparta-core'
 import { useMCPStore } from 'ia-sparta-core'
-import { ConfirmDeleteDialog, BrandIcon, toast } from 'ia-sparta-design-system'
+import { ConfirmDeleteDialog, BrandIcon, toast, Switch } from 'ia-sparta-design-system'
 import { McpToolItem } from './McpToolItem'
 import { getVendorForServer } from './data/mcp-catalog'
 import { REFERENCE_TOOLS_CATALOG } from './data/mcp-reference-tools'
@@ -106,8 +106,8 @@ export function McpServerCard({ server, onEdit, onViewCapabilities }: McpServerC
           <div style={{
             width: 36, height: 36, borderRadius: 9, flexShrink: 0,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: isConnected ? 'rgba(34,197,94,0.1)' : 'var(--bg-elevated)',
-            border: isConnected ? '1px solid rgba(34,197,94,0.2)' : '1px solid var(--border-normal)',
+            background: isConnected ? 'color-mix(in srgb, var(--status-ok) 12%, transparent)' : 'var(--bg-elevated)',
+            border: isConnected ? '1px solid color-mix(in srgb, var(--status-ok) 25%, transparent)' : '1px solid var(--border-normal)',
             color: isConnected ? 'var(--status-ok)' : 'var(--text-muted)',
           }}>
             {brandVendor
@@ -133,7 +133,7 @@ export function McpServerCard({ server, onEdit, onViewCapabilities }: McpServerC
                 <span style={{
                   fontSize: 9, fontWeight: 600, letterSpacing: '0.03em',
                   padding: '1px 5px', borderRadius: 4, fontFamily: 'var(--font-ui)',
-                  background: 'rgba(234,179,8,0.12)', color: 'rgb(234,179,8)',
+                  background: 'color-mix(in srgb, var(--status-warn) 12%, transparent)', color: 'var(--status-warn)',
                 }}>
                   Archivado
                 </span>
@@ -199,22 +199,15 @@ export function McpServerCard({ server, onEdit, onViewCapabilities }: McpServerC
           </div>
 
           {/* Actions */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            {/* Power toggle */}
-            <button
-              onClick={(e) => { e.stopPropagation(); toggleServer(server.id) }}
-              title={isEnabled ? t('mcp.deactivate') : t('mcp.activate')}
-              style={{
-                width: 28, height: 28, borderRadius: 7, cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                border: isEnabled ? '1px solid rgba(34,197,94,0.25)' : '1px solid var(--border-subtle)',
-                background: isEnabled ? 'rgba(34,197,94,0.1)' : 'var(--bg-elevated)',
-                color: isEnabled ? 'var(--status-ok)' : 'var(--text-muted)',
-                transition: 'all 0.12s',
-              }}
-            >
-              <Zap size={11} strokeWidth={2} />
-            </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {/* Switch toggle */}
+            <div onClick={(e) => e.stopPropagation()}>
+              <Switch
+                checked={isEnabled}
+                onCheckedChange={() => toggleServer(server.id)}
+                title={isEnabled ? t('mcp.deactivate') ?? 'Desactivar' : t('mcp.activate') ?? 'Activar'}
+              />
+            </div>
 
             {/* More menu */}
             <DropdownMenu>

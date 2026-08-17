@@ -11,6 +11,7 @@ import { SkillsTab } from 'ia-sparta-settings'
 import { AgentsTab } from 'ia-sparta-settings'
 import { SearchTab } from 'ia-sparta-settings'
 import { ShellTab } from 'ia-sparta-settings'
+import { HarnessesTab } from 'ia-sparta-settings'
 import type { SettingsTab } from 'ia-sparta-core'
 
 export function SettingsDialog() {
@@ -23,6 +24,7 @@ export function SettingsDialog() {
     { id: 'appearance', label: t('settings.appearance') },
     { id: 'keybinds', label: t('settings.keybinds') },
     { id: 'models', label: t('settings.models') },
+    { id: 'harnesses', label: 'Herramientas IA' },
     { id: 'shell', label: 'Shell' },
     { id: 'memory', label: t('settings.memory') },
     { id: 'skills', label: t('settings.skills') },
@@ -35,6 +37,7 @@ export function SettingsDialog() {
     appearance: <AppearanceTab />,
     keybinds: <KeybindsTab />,
     models: <ModelsTab />,
+    harnesses: <HarnessesTab />,
     shell: <ShellTab />,
     memory: <MemoryTab />,
     skills: <SkillsTab />,
@@ -58,11 +61,11 @@ export function SettingsDialog() {
     >
       <div
         style={{
-          width: 'min(1040px, calc(100vw - 48px))',
-          height: 'min(720px, calc(100vh - 48px))',
+          width: 'min(1100px, calc(100vw - 48px))',
+          height: 'min(760px, calc(100vh - 48px))',
           background: 'var(--bg-modal)',
           border: '1px solid var(--border-strong)',
-          borderRadius: 'var(--radius-xl)',
+          borderRadius: 'var(--radius-2xl, 20px)',
           boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
           display: 'flex',
           overflow: 'hidden',
@@ -71,35 +74,44 @@ export function SettingsDialog() {
         onClick={(e) => e.stopPropagation()}
       >
         <aside style={{
-          width: 160,
+          width: 180,
           borderRight: '1px solid var(--border-subtle)',
-          paddingTop: 12,
+          padding: '16px 10px',
           flexShrink: 0,
-          overflow: 'hidden',
+          overflowY: 'auto',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2,
         }}>
-          {tabs.map(({ id, label }) => (
-            <button
-              key={id}
-              onClick={() => setActiveTab(id)}
-              style={{
-                display: 'block',
-                width: '100%',
-                textAlign: 'left',
-                padding: '6px 16px',
-                background: activeTab === id ? 'var(--accent-muted)' : 'none',
-                border: 'none',
-                color: activeTab === id ? 'var(--accent)' : 'var(--text-secondary)',
-                fontSize: 12,
-                fontFamily: 'var(--font-ui)',
-                cursor: 'pointer',
-                transition: 'all 0.12s',
-              }}
-              onMouseEnter={e => { if (activeTab !== id) e.currentTarget.style.background = 'var(--bg-hover)' }}
-              onMouseLeave={e => { if (activeTab !== id) e.currentTarget.style.background = 'none' }}
-            >
-              {label}
-            </button>
-          ))}
+          {tabs.map(({ id, label }) => {
+            const isActive = activeTab === id
+            return (
+              <button
+                key={id}
+                onClick={() => setActiveTab(id)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  width: '100%',
+                  textAlign: 'left',
+                  padding: '8px 14px',
+                  borderRadius: 'var(--radius-md, 10px)',
+                  background: isActive ? 'var(--accent-muted)' : 'transparent',
+                  border: 'none',
+                  color: isActive ? 'var(--accent)' : 'var(--text-secondary)',
+                  fontSize: 13,
+                  fontWeight: isActive ? 600 : 400,
+                  fontFamily: 'var(--font-ui)',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s',
+                }}
+                onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'var(--bg-hover)' }}
+                onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent' }}
+              >
+                {label}
+              </button>
+            )
+          })}
         </aside>
 
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
@@ -107,30 +119,34 @@ export function SettingsDialog() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '12px 20px',
+            padding: '14px 28px',
             borderBottom: '1px solid var(--border-subtle)',
             flexShrink: 0,
           }}>
             <h2 style={{
-              fontSize: 13,
-              fontWeight: 500,
+              fontSize: 14,
+              fontWeight: 600,
               color: 'var(--text-primary)',
               fontFamily: 'var(--font-ui)',
             }}>{t('settings.title')}</h2>
             <button onClick={closeSettings} style={{
-              width: 24, height: 24,
+              width: 28, height: 28,
               background: 'none', border: 'none',
-              borderRadius: 'var(--radius-sm)',
+              borderRadius: 'var(--radius-md)',
               color: 'var(--text-muted)',
               cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <X size={14} />
+              transition: 'all 0.15s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'none'}
+            >
+              <X size={16} />
             </button>
           </div>
 
           <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', minHeight: 0 }}>
-            <div style={{ padding: '16px 20px' }}>
+            <div style={{ padding: '24px 32px' }}>
               {tabContent[activeTab]}
             </div>
           </div>
@@ -139,3 +155,5 @@ export function SettingsDialog() {
     </div>
   )
 }
+
+

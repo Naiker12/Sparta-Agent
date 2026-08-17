@@ -18,6 +18,7 @@ import { ChatCompletionsTransport, AnthropicTransport, OllamaTransport } from '.
 import { buildSystemPrompt } from './send/system-prompt'
 import { buildToolsList } from './send/tool-injector'
 import { executeToolCall } from './send/tool-executor'
+import { extractTextualToolCalls } from './send/textual-tool-parser'
 
 export function registerChatSendIPC(): void {
   ipcMain.handle('chat:send', async (_event, req: ChatRequest) => {
@@ -83,7 +84,7 @@ export function registerChatSendIPC(): void {
         // calling depends on the loaded model/template. Keep tools on the first
         // attempt and fall back to a plain chat completion on a local 400.
         let toolsForTurn = tools
-        let retriedLocalWithoutTools = false
+        let retriedWithoutTools = false
 
         sendToRenderer({
           sessionId,
@@ -121,12 +122,25 @@ export function registerChatSendIPC(): void {
             if (chunk.type === 'content_token' && chunk.delta) {
               completeThinking()
               turnContent += chunk.delta
-              sendToRenderer({
-                sessionId,
-                messageId,
-                type: 'stream:token',
-                token: chunk.delta,
-              })
+
+              // Detectar si el modelo está emitiendo tags de herramientas en texto
+              const isToolTagStreaming = /<(?:tool_call|function_call|invoke)/i.test(turnContent)
+
+              // Si ya emitió múltiples llamadas de herramientas en texto, cortar el stream para evitar bucle infinito
+              const tagMatches = (turnContent.match(/<(?:tool_call|function_call)/gi) || []).length
+              if (tagMatches >= 2) {
+                break
+              }
+
+              // Solo emitir tokens que no sean etiquetas de herramientas
+              if (!isToolTagStreaming) {
+                sendToRenderer({
+                  sessionId,
+                  messageId,
+                  type: 'stream:token',
+                  token: chunk.delta,
+                })
+              }
             } else if (chunk.type === 'thinking_token' && chunk.delta) {
               sendToRenderer({
                 sessionId,
@@ -141,21 +155,20 @@ export function registerChatSendIPC(): void {
                 input: (chunk.toolCall.input as Record<string, unknown>) || {},
               })
             } else if (chunk.type === 'error' && chunk.error) {
-              const localToolSchemaRejected =
-                isLocalProvider &&
-                !retriedLocalWithoutTools &&
+              const toolSchemaRejected =
+                !retriedWithoutTools &&
                 toolsForTurn.length > 0 &&
-                /(?:http\s*)?400|solicitud inv[aá]lida|invalid request/i.test(chunk.error)
+                /(?:http\s*)?(?:400|404)|solicitud inv[aá]lida|invalid request|tool|support tool|function|endpoint|read_file|provider routing/i.test(chunk.error)
 
-              if (localToolSchemaRejected) {
-                retriedLocalWithoutTools = true
+              if (toolSchemaRejected) {
+                retriedWithoutTools = true
                 toolsForTurn = []
                 retryWithoutTools = true
                 sendToRenderer({
                   sessionId,
                   messageId,
                   type: 'thinking:status',
-                  text: 'El modelo local no acepta herramientas; reintentando en modo chat...',
+                  text: 'El modelo no soporta llamada a herramientas; reintentando directamente...',
                 })
                 break
               }
@@ -175,6 +188,33 @@ export function registerChatSendIPC(): void {
           if (retryWithoutTools) continue
 
           if (streamAborted || streamFailed) break
+
+          // Interceptar llamadas a herramientas emitidas en texto (<tool_call>, <function_call>, etc.)
+          if (pendingToolCalls.length === 0 && turnContent) {
+            const extracted = extractTextualToolCalls(turnContent)
+            if (extracted.toolCalls.length > 0) {
+              const seen = new Set<string>()
+              for (const tc of extracted.toolCalls) {
+                const key = `${tc.toolName}:${JSON.stringify(tc.input)}`
+                if (!seen.has(key) && pendingToolCalls.length < 2) {
+                  seen.add(key)
+                  pendingToolCalls.push({
+                    id: tc.id,
+                    toolName: tc.toolName,
+                    input: tc.input,
+                  })
+                }
+              }
+
+              // Reemplazar el contenido del mensaje para limpiar las etiquetas de tool_call
+              sendToRenderer({
+                sessionId,
+                messageId,
+                type: 'stream:replace_content',
+                content: extracted.cleanedContent,
+              })
+            }
+          }
 
           // If assistant gave text content, append it to messages history
           if (turnContent) {
@@ -219,40 +259,48 @@ export function registerChatSendIPC(): void {
                 output: toolOutput,
               })
 
-              // Append assistant tool_call message if not already present
-              const lastMsg = formattedMessages[formattedMessages.length - 1] as any
-              if (!lastMsg || lastMsg.role !== 'assistant') {
+              if (toolsForTurn.length === 0) {
+                // Modo sin soporte de herramientas nativas en el modelo: inyectar resultado como contexto directo
                 formattedMessages.push({
-                  role: 'assistant',
-                  content: '',
-                  tool_calls: [
-                    {
-                      id: toolCallId,
-                      type: 'function',
-                      function: {
-                        name: toolName,
-                        arguments: JSON.stringify(toolInput),
-                      },
-                    },
-                  ],
+                  role: 'user',
+                  content: `[Información obtenida de ${toolName}]:\n${typeof toolOutput === 'string' ? toolOutput : JSON.stringify(toolOutput)}\n\nPor favor, responde y sintetiza la información para el usuario de forma clara en español.`,
                 } as any)
               } else {
-                if (!lastMsg.tool_calls) lastMsg.tool_calls = []
-                lastMsg.tool_calls.push({
-                  id: toolCallId,
-                  type: 'function',
-                  function: {
-                    name: toolName,
-                    arguments: JSON.stringify(toolInput),
-                  },
-                })
-              }
+                // Modo con herramientas nativas JSON
+                const lastMsg = formattedMessages[formattedMessages.length - 1] as any
+                if (!lastMsg || lastMsg.role !== 'assistant') {
+                  formattedMessages.push({
+                    role: 'assistant',
+                    content: '',
+                    tool_calls: [
+                      {
+                        id: toolCallId,
+                        type: 'function',
+                        function: {
+                          name: toolName,
+                          arguments: JSON.stringify(toolInput),
+                        },
+                      },
+                    ],
+                  } as any)
+                } else {
+                  if (!lastMsg.tool_calls) lastMsg.tool_calls = []
+                  lastMsg.tool_calls.push({
+                    id: toolCallId,
+                    type: 'function',
+                    function: {
+                      name: toolName,
+                      arguments: JSON.stringify(toolInput),
+                    },
+                  })
+                }
 
-              formattedMessages.push({
-                role: 'tool',
-                tool_call_id: toolCallId,
-                content: typeof toolOutput === 'string' ? toolOutput : JSON.stringify(toolOutput),
-              } as any)
+                formattedMessages.push({
+                  role: 'tool',
+                  tool_call_id: toolCallId,
+                  content: typeof toolOutput === 'string' ? toolOutput : JSON.stringify(toolOutput),
+                } as any)
+              }
             }
 
             // Continue loop to get assistant's response to tool output

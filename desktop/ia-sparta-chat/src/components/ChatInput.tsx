@@ -1,14 +1,20 @@
 import { useRef, useState, useEffect } from 'react'
-import { Plus, ArrowUp, Square, AlertCircle } from 'lucide-react'
-import { toast } from 'ia-sparta-design-system'
-import { useSettingsStore } from 'ia-sparta-core'
-import { useChatStore } from 'ia-sparta-core'
-import { useSessionStore } from 'ia-sparta-core'
-import { useProviderStore } from 'ia-sparta-core'
-import { useChatSession, type MessageAttachment } from 'ia-sparta-core'
-import { useLocalSkillsLoader } from 'ia-sparta-core'
-import { cn } from 'ia-sparta-core'
+import { Plus, ArrowUp, Square, AlertCircle, X } from 'lucide-react'
+import { toast, BrandIcon } from 'ia-sparta-design-system'
+import {
+  useSettingsStore,
+  useChatStore,
+  useSessionStore,
+  useProviderStore,
+  useChatSession,
+  type MessageAttachment,
+  useLocalSkillsLoader,
+  cn,
+} from 'ia-sparta-core'
 import { messagingAdapter } from 'ia-sparta-platform'
+import { useTranslation } from 'ia-sparta-i18n'
+import { HostPickerButton, WorkspaceModePicker } from 'ia-sparta-shell-layout'
+import { ProjectDialog } from 'ia-sparta-projects'
 import { ModelPicker } from './ModelPicker'
 import { AttachMenu } from './AttachMenu'
 import { VoiceRecordButton } from './VoiceRecordButton'
@@ -16,15 +22,11 @@ import { ModeSwitch } from './input/ModeSwitch'
 import { SkillSuggestionChip } from './input/SkillSuggestionChip'
 import { SlashCommandMenu, executeSlashCommand, type SlashCommand, setSlashSkillCache } from './SlashCommandMenu'
 import { McpMentionMenu, type MentionItem } from './McpMentionMenu'
-import { BrandIcon } from 'ia-sparta-design-system'
-import { X } from 'lucide-react'
-import { ProjectDialog } from 'ia-sparta-projects'
-import { useTranslation } from 'ia-sparta-i18n'
-import { HostPickerButton, WorkspaceModePicker } from 'ia-sparta-shell-layout'
 import { useFileDrop } from '../hooks/useFileDrop'
 import { DropOverlay } from './DropOverlay'
 import { processFile, type ProcessedAttachment } from '../lib/attachment-pipeline'
 import { AttachmentCard } from './input/AttachmentCard'
+import { AgentWorkflowsBar } from './input/AgentWorkflowsBar'
 
 interface ChatInputProps {
   sessionId?: string
@@ -48,6 +50,8 @@ export function ChatInput({ sessionId, className }: ChatInputProps) {
   const { input, setInput } = useSettingsStore()
   const activeSessionId = useSessionStore((s) => s.activeSessionId)
   const resolvedSessionId = sessionId ?? activeSessionId
+  const messagesBySession = useChatStore((s) => s.messagesBySession)
+  const hasMessages = resolvedSessionId ? (messagesBySession[resolvedSessionId]?.length ?? 0) > 0 : false
 
   async function handlePaste(e: React.ClipboardEvent<HTMLTextAreaElement>) {
     const files = Array.from(e.clipboardData.files)
@@ -338,6 +342,15 @@ export function ChatInput({ sessionId, className }: ChatInputProps) {
               </button>
               {' '}{t('chat.configureProviderSuffix')}
             </span>
+          </div>
+        )}
+
+        {!hasMessages && (
+          <div style={{ marginBottom: 8 }}>
+            <AgentWorkflowsBar onSelectWorkflow={(text) => {
+              setInput(text)
+              textareaRef.current?.focus()
+            }} />
           </div>
         )}
 

@@ -1,16 +1,8 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Code, Shield, Split, TestTube, Globe, Cpu, Sparkles, RotateCw, Sun, Pencil, BarChart } from 'lucide-react'
+import { Code, Shield, Split, TestTube, Globe, Cpu, Sparkles, RotateCw } from 'lucide-react'
 import { useSettingsStore } from 'ia-sparta-core'
 import { useTranslation } from 'ia-sparta-i18n'
-
-const TOPIC_PILLS = [
-  { icon: Sun, label: 'Clima', prompt: '¿Cuál es el pronóstico del clima para hoy?' },
-  { icon: Code, label: 'Código', prompt: 'Escribe una función en TypeScript para ' },
-  { icon: Pencil, label: 'Redacción', prompt: 'Ayúdame a redactar un correo profesional para ' },
-  { icon: BarChart, label: 'Análisis', prompt: 'Analiza los pros y contras de ' },
-  { icon: Sparkles, label: 'Ideas', prompt: 'Dame 5 ideas creativas para ' },
-]
 
 const EXAMPLE_PROMPTS = [
   { es: '¿Cómo implemento autenticación JWT en Node.js?', en: 'How do I implement JWT authentication in Node.js?', icon: Shield, color: '#10b981' },
@@ -116,7 +108,7 @@ export function HeroScreen() {
             marginBottom: 6,
           }}
         >
-          Chat with Sparta Agent
+          {t('chat.heroTitle') || 'Chat with Sparta Agent'}
         </h1>
         <p
           style={{
@@ -135,50 +127,7 @@ export function HeroScreen() {
 
 
 
-      {/* ── Topic Action Pills (matching Image 4) ── */}
-      <motion.div
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35, delay: 0.22 }}
-        style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center', marginTop: 4 }}
-      >
-        {TOPIC_PILLS.map(({ icon: Icon, label, prompt }) => (
-          <button
-            key={label}
-            onClick={() => setInput(prompt)}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '6px 14px',
-              background: 'var(--bg-surface)',
-              border: '1px solid var(--border-subtle)',
-              borderRadius: 999,
-              color: 'var(--text-secondary)',
-              fontWeight: 500,
-              fontSize: 12,
-              fontFamily: 'var(--font-ui)',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease',
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.borderColor = 'var(--accent)'
-              e.currentTarget.style.color = 'var(--text-primary)'
-              e.currentTarget.style.background = 'var(--bg-hover)'
-              e.currentTarget.style.transform = 'translateY(-1px)'
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.borderColor = 'var(--border-subtle)'
-              e.currentTarget.style.color = 'var(--text-secondary)'
-              e.currentTarget.style.background = 'var(--bg-surface)'
-              e.currentTarget.style.transform = 'translateY(0)'
-            }}
-          >
-            <Icon size={13} strokeWidth={1.8} style={{ color: 'var(--text-muted)' }} />
-            {label}
-          </button>
-        ))}
-      </motion.div>
+
 
       <motion.div
         initial={{ opacity: 0 }}

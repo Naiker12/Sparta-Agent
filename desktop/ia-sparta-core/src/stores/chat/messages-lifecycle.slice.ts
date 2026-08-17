@@ -12,13 +12,30 @@ export const createMessagesLifecycleSlice: StateCreator<ChatState, [], [], Messa
       const sessionMessages = s.messagesBySession[sessionId]
       if (!sessionMessages) return s
       const target = sessionMessages.find((m) => m.id === messageId)
-      if (!target || !target.reasoningText) return s
-      const rt = target.reasoningText.trim()
+      if (!target) return s
       let content = target.content
-      if (!rt || !content) return s
+      if (!content) return s
 
       content = content.replace(/<(think|thinking|reasoning)>[\s\S]*?<\/\1>/gi, '')
-      content = content.replace(/<\/?(?:think|thinking|reasoning)>/gi, '').trim()
+      content = content.replace(/<\/?(?:think|thinking|reasoning)>/gi, '')
+      content = content.replace(/<tool_call>[\s\S]*?(?:<\/tool_call>|>|$)/gi, '')
+      content = content.replace(/<function_call>[\s\S]*?(?:<\/function_call>|>|$)/gi, '').trim()
+
+      const rt = target.reasoningText ? target.reasoningText.trim() : ''
+
+      if (!rt) {
+        if (content !== target.content) {
+          return {
+            messagesBySession: {
+              ...s.messagesBySession,
+              [sessionId]: sessionMessages.map((msg) =>
+                msg.id === messageId ? { ...msg, content } : msg
+              ),
+            },
+          }
+        }
+        return s
+      }
 
       const normalize = (v: string) => v.replace(/\s+/g, ' ').trim()
       const nRt = normalize(rt)
@@ -26,21 +43,22 @@ export const createMessagesLifecycleSlice: StateCreator<ChatState, [], [], Messa
 
       if (nContent.startsWith(nRt) || nRt.startsWith(nContent)) {
         const deduped = content.slice(rt.length).trimStart()
-        if (deduped.length > 0) {
-          return {
-            messagesBySession: {
-              ...s.messagesBySession,
-              [sessionId]: sessionMessages.map((msg) =>
-                msg.id === messageId ? { ...msg, content: deduped } : msg
-              ),
-            },
-          }
-        }
         return {
           messagesBySession: {
             ...s.messagesBySession,
             [sessionId]: sessionMessages.map((msg) =>
-              msg.id === messageId ? { ...msg, content: '' } : msg
+              msg.id === messageId ? { ...msg, content: deduped } : msg
+            ),
+          },
+        }
+      }
+
+      if (content !== target.content) {
+        return {
+          messagesBySession: {
+            ...s.messagesBySession,
+            [sessionId]: sessionMessages.map((msg) =>
+              msg.id === messageId ? { ...msg, content } : msg
             ),
           },
         }

@@ -7,7 +7,7 @@ export function ReleaseModal() {
 
   useEffect(() => {
     // Show the announcement once for this specific release.
-    const hasSeen = localStorage.getItem('sparta_release_v0.1.7_seen');
+    const hasSeen = localStorage.getItem('sparta_release_v0.1.8_seen');
     if (!hasSeen) {
       const timer = setTimeout(() => setIsOpen(true), 600);
       return () => clearTimeout(timer);
@@ -15,7 +15,7 @@ export function ReleaseModal() {
   }, []);
 
   const handleClose = () => {
-    localStorage.setItem('sparta_release_v0.1.7_seen', 'true');
+    localStorage.setItem('sparta_release_v0.1.8_seen', 'true');
     setIsOpen(false);
   };
 
@@ -37,7 +37,7 @@ export function ReleaseModal() {
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-zinc-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-zinc-500"></span>
           </span>
-          <span className="font-mono text-zinc-300">v0.1.7 disponible</span>
+          <span className="font-mono text-zinc-300">v0.1.8 disponible</span>
           <Sparkles className="w-3.5 h-3.5 text-zinc-300 group-hover:rotate-12 transition-transform" />
         </motion.button>
       )}
@@ -71,16 +71,16 @@ export function ReleaseModal() {
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-500/10 border border-zinc-500/20 w-fit">
                   <Sparkles className="w-3.5 h-3.5 text-zinc-300" />
                   <span className="text-[11px] font-bold font-mono tracking-wider text-zinc-300 uppercase">
-                    Lanzamiento oficial v0.1.7
+                    Lanzamiento oficial v0.1.8
                   </span>
                 </div>
 
                 <h2 className="text-2xl sm:text-3xl font-extrabold font-display text-white tracking-tight leading-tight">
-                  Sparta Agent <span className="text-zinc-300">v0.1.7</span>
+                  Sparta Agent <span className="text-zinc-300">v0.1.8</span>
                 </h2>
 
                 <p className="text-xs sm:text-sm text-slate-300/90 leading-relaxed font-sans">
-                  Gran actualización con selector de modelos ultra-estilizado, logotipos vectoriales dinámicos, control segmentado Chat/Terminal, notificaciones toast en píldora y grafo de memoria temático mejorado.
+                  Gran actualización con landing page cinematográfica, búsqueda web multi-motor integrada, resiliencia ante errores de proveedores y acceso completo a la documentación oficial.
                 </p>
               </div>
 
@@ -91,8 +91,8 @@ export function ReleaseModal() {
                     <Sparkles className="w-4 h-4" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-xs font-semibold text-white">Selector de Modelos Delgado &amp; Vectores SVG</h4>
-                    <p className="text-[11.5px] text-slate-400 truncate">Menú de 215px con logotipos nativos de OpenAI, DeepSeek, Grok, Anthropic y OpenRouter.</p>
+                    <h4 className="text-xs font-semibold text-white">Landing Page Cinematográfica</h4>
+                    <p className="text-[11.5px] text-slate-400 truncate">Videos fluidos, arquitectura limpia y portal integrado de documentación técnica.</p>
                   </div>
                 </div>
 
@@ -101,8 +101,8 @@ export function ReleaseModal() {
                     <Cpu className="w-4 h-4" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-xs font-semibold text-white">Barra Superior Segmentada Chat / Terminal</h4>
-                    <p className="text-[11.5px] text-slate-400 truncate">Control segmentado tipo píldora con iconos nativos y estado activo sutil.</p>
+                    <h4 className="text-xs font-semibold text-white">Búsqueda Web Multi-Motor Resiliente</h4>
+                    <p className="text-[11.5px] text-slate-400 truncate">DuckDuckGo Instant Answer API, HackerNews y Wikipedia en cascada sin bloqueos.</p>
                   </div>
                 </div>
 
@@ -111,8 +111,8 @@ export function ReleaseModal() {
                     <FileText className="w-4 h-4" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-xs font-semibold text-white">Notificaciones Toast &amp; Salida de Herramientas</h4>
-                    <p className="text-[11.5px] text-slate-400 truncate">Toast en píldora flotante cristalina y bloques de herramientas sutiles sin cajas blancas.</p>
+                    <h4 className="text-xs font-semibold text-white">Cortafuegos y Parser Textual para Modelos de Razonamiento</h4>
+                    <p className="text-[11.5px] text-slate-400 truncate">Extracción en tiempo real de llamadas emitidas por DeepSeek y adaptación de roles.</p>
                   </div>
                 </div>
 
@@ -121,8 +121,8 @@ export function ReleaseModal() {
                     <ShieldCheck className="w-4 h-4" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-xs font-semibold text-white">Grafo de Memoria Temático D3 &amp; Terminal Nítida</h4>
-                    <p className="text-[11.5px] text-slate-400 truncate">Separación de nodos por temática, rejilla cósmica y formato EOL de terminal nítido.</p>
+                    <h4 className="text-xs font-semibold text-white">Soporte Local-First &amp; Vault Seguro</h4>
+                    <p className="text-[11.5px] text-slate-400 truncate">Cifrado AES-256 en SO local y total privacidad donde el código nunca sale de tu PC.</p>
                   </div>
                 </div>
               </div>
@@ -130,18 +130,18 @@ export function ReleaseModal() {
               {/* Botones de Acción Elegantes */}
               <div className="relative z-10 flex flex-col sm:flex-row items-center gap-3 pt-2">
                 <a
-                  href="https://github.com/Naiker12/Sparta-Agent/releases/download/v0.1.7/Sparta-Agent-Windows-0.1.7-Setup.exe"
+                  href="https://github.com/Naiker12/Sparta-Agent/releases/download/v0.1.8/Sparta-Agent-Windows-0.1.8-Setup.exe"
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={handleClose}
                   className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-zinc-100 hover:bg-white text-zinc-950 text-xs font-bold shadow-lg shadow-black/25 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
                 >
                   <Download className="w-4 h-4" />
-                  Descargar Sparta v0.1.7 (.exe)
+                  Descargar Sparta v0.1.8 (.exe)
                 </a>
 
                 <a
-                  href="https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.1.7"
+                  href="https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.1.8"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 text-slate-300 hover:text-white text-xs font-semibold transition-all cursor-pointer"

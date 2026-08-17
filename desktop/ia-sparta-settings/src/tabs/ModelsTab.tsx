@@ -14,7 +14,7 @@ import {
   ComboboxList,
   ComboboxItem,
 } from 'ia-sparta-design-system'
-import { ChooseProviderDialog } from 'ia-sparta-providers'
+import { ChooseProviderDialog, LocalModelsDiscoveryBadge } from 'ia-sparta-providers'
 
 const DEFAULT_VENDOR_MODELS: Record<string, string[]> = {
   openrouter: [
@@ -315,6 +315,17 @@ export function ModelsTab() {
               )
             })
           )}
+        </div>
+
+        {/* Local models discovery footer */}
+        <div style={{
+          padding: '10px 12px',
+          borderTop: '1px solid var(--border-subtle)',
+          background: 'var(--bg-input)',
+          display: 'flex',
+          justifyContent: 'center',
+        }}>
+          <LocalModelsDiscoveryBadge />
         </div>
       </div>
 

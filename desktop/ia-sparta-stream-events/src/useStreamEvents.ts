@@ -3,7 +3,7 @@ import { messagingAdapter } from 'ia-sparta-platform'
 import type { SpartaEvent } from 'ia-sparta-core'
 
 import { handleThinkingStarted, handleThinkingToken, handleThinkingCompleted, handleThinkingStatus, handleReasoningToken, handleReasoningAvailable } from './handlers/thinking.handler'
-import { handleStreamToken, handleStreamCompleted, handleStreamAborted, handleStreamCancelled, handleStreamNotice, handleStreamError } from './handlers/stream.handler'
+import { handleStreamToken, handleStreamReplaceContent, handleStreamCompleted, handleStreamAborted, handleStreamCancelled, handleStreamNotice, handleStreamError } from './handlers/stream.handler'
 import { handleToolCalled, handleToolResult, handleToolError, handleChartGenerated } from './handlers/tool.handler'
 import { handleMCPEvent, handleMCPServerAdded, handleMCPServerRemoved } from './handlers/mcp.handler'
 import { handleSearchProgress } from './handlers/search.handler'
@@ -107,6 +107,7 @@ function _handleEvent(rawEvent: SpartaEvent) {
 
     // Stream lifecycle
     case 'stream:token': handleStreamToken(ctx); break
+    case 'stream:replace_content': handleStreamReplaceContent(ctx); break
     case 'stream:completed': handleStreamCompleted(ctx, _providerBySession, _lastUserMessage); break
     case 'stream:aborted': handleStreamAborted(ctx, _providerBySession, _lastUserMessage); break
     case 'stream:cancelled': handleStreamCancelled(ctx, _providerBySession, _lastUserMessage); break

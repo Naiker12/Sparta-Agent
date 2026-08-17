@@ -18,6 +18,7 @@
     "framer-motion": "^12.41.0",
     "lucide-react": "^1.24.0",
     "motion-dom": "^12.0.0",
-    "motion-utils": "^12.0.0"
+    "motion-utils": "^12.0.0",
+    "@radix-ui/react-switch": "^1.1.3"
   }
 }

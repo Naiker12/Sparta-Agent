@@ -6,13 +6,24 @@ import { SearchAddon } from '@xterm/addon-search'
 import { FEATURES, IS_WEB } from 'ia-sparta-platform'
 import { generateId, cn } from 'ia-sparta-core'
 import { getXtermTheme } from 'ia-sparta-core'
-import { Plus, ChevronDown, RotateCw, MessageSquarePlus, Bot, Terminal as TerminalIcon } from 'lucide-react'
+import {
+  Plus,
+  ChevronDown,
+  ChevronUp,
+  RotateCw,
+  MessageSquarePlus,
+  Bot,
+  Terminal as TerminalIcon,
+  X,
+  Activity,
+} from 'lucide-react'
 import { useUIStore } from 'ia-sparta-core'
 import { useChatStore } from 'ia-sparta-core'
 import { useTerminalStore } from 'ia-sparta-core'
 import { useSettingsStore } from 'ia-sparta-core'
 import { useFolderStore } from 'ia-sparta-core'
 import { registerAgentTerminalWriter, seedAgentTerminalCommand, writeAgentTerminalChunk, clearAgentTerminal } from './agent-terminal-stream'
+import { TERMINAL_PALETTE } from './theme'
 import '@xterm/xterm/css/xterm.css'
 
 interface TerminalInstance {
@@ -27,30 +38,38 @@ interface TerminalInstance {
   cleanups: (() => void)[]
 }
 
+interface SystemMetrics {
+  cpuPercent: number
+  memoryMb: number
+}
+
 function TerminalSelectionPopup({ style, onAddToChat, onClose }: { style: React.CSSProperties; onAddToChat: () => void; onClose: () => void }) {
   return (
-    <div className="fixed z-50 flex items-center gap-1 px-1.5 py-1 rounded-lg shadow-lg"
-      style={{ ...style, background: '#1e1e2e', border: '1px solid #313244' }}>
-      <button onClick={() => { onAddToChat(); onClose() }}
-        className="flex items-center gap-1.5 px-2 py-1 text-[11px] text-[#cdd6f4] rounded hover:bg-[#313244] transition-colors"
-        title="Agregar selección al chat">
+    <div
+      className="fixed z-50 flex items-center gap-1 px-1.5 py-1 rounded-lg shadow-lg"
+      style={{
+        ...style,
+        background: TERMINAL_PALETTE.cardBg,
+        border: `1px solid ${TERMINAL_PALETTE.border}`,
+      }}
+    >
+      <button
+        onClick={() => { onAddToChat(); onClose() }}
+        className="flex items-center gap-1.5 px-2 py-1 text-[11px] rounded hover:bg-[#313244] transition-colors"
+        style={{ color: TERMINAL_PALETTE.textSecondary }}
+        title="Agregar selección al chat"
+      >
         <MessageSquarePlus className="w-3 h-3" />
         <span>Agregar al chat</span>
       </button>
-      <button onClick={onClose}
-        className="flex items-center justify-center w-5 h-5 text-[#6c7086] hover:text-[#cdd6f4] rounded hover:bg-[#313244] transition-colors">
-        <XIcon className="w-3 h-3" />
+      <button
+        onClick={onClose}
+        className="flex items-center justify-center w-5 h-5 rounded hover:bg-[#313244] transition-colors"
+        style={{ color: TERMINAL_PALETTE.textMuted }}
+      >
+        <X className="w-3 h-3" />
       </button>
     </div>
-  )
-}
-
-function XIcon(props: { className?: string }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={props.className}>
-      <line x1="18" y1="6" x2="6" y2="18" />
-      <line x1="6" y1="6" x2="18" y2="18" />
-    </svg>
   )
 }
 
@@ -65,10 +84,36 @@ export function TerminalWorkspace() {
   const [, forceRender] = useState(0)
   const fitTimerRef = useRef<number>(0)
 
+  const [metrics, setMetrics] = useState<SystemMetrics | null>(null)
+
   useEffect(() => {
     store.getState().ensureAtLeastOneTab()
     if (!store.getState().activeTabId) {
       store.setState({ activeTabId: store.getState().tabs[0]?.id ?? null })
+    }
+  }, [])
+
+  // Poll system metrics every 3 seconds if electron invoke is available
+  useEffect(() => {
+    let alive = true
+    async function fetchMetrics() {
+      try {
+        if (typeof window !== 'undefined' && window.electron?.invoke) {
+          const res = await window.electron.invoke('system:get-metrics') as any
+          if (alive && res && typeof res.cpuPercent === 'number') {
+            setMetrics({ cpuPercent: res.cpuPercent, memoryMb: res.memoryMb })
+          }
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+
+    fetchMetrics()
+    const interval = setInterval(fetchMetrics, 3000)
+    return () => {
+      alive = false
+      clearInterval(interval)
     }
   }, [])
 
@@ -241,13 +286,11 @@ export function TerminalWorkspace() {
     })
     const unsubExit = window.terminal.onAgentExit?.(({ procId, code }: { procId: string; code: number }) => {
       writeAgentTerminalChunk(procId, `\r\n\x1b[33mProceso de agente terminado (código: ${code})\x1b[0m\r\n`)
-      // Close the agent tab and dispose xterm after a short delay so the user sees the exit message
       setTimeout(() => store.getState().closeAgentTabByProc(procId), 3000)
     })
     return () => { unsubSpawn?.(); unsubOutput?.(); unsubExit?.() }
   }, [])
 
-  // Clean up xterm instances when tabs are removed (e.g. by closeAgentTabByProc)
   useEffect(() => {
     const unsub = useTerminalStore.subscribe((state, prev) => {
       if (state.tabs.length >= prev.tabs.length) return
@@ -332,68 +375,127 @@ export function TerminalWorkspace() {
   if (!FEATURES.terminal) return null
 
   return (
-    <div className="flex flex-col h-full bg-background">
-      <div className="flex items-center justify-between shrink-0 h-10 bg-[#15151d] border-b border-[#ffffff12] px-2.5 shadow-[0_1px_0_rgba(255,255,255,0.025)]">
+    <div className="flex flex-col h-full bg-background" style={{ background: TERMINAL_PALETTE.bg }}>
+      {/* Header bar */}
+      <div
+        className="flex items-center justify-between shrink-0 h-10 px-2.5 shadow-[0_1px_0_rgba(255,255,255,0.025)]"
+        style={{
+          background: TERMINAL_PALETTE.surface,
+          borderBottom: `1px solid ${TERMINAL_PALETTE.borderSubtle}`,
+        }}
+      >
         <div className="flex items-center gap-1 overflow-x-auto min-w-0 h-full">
-          <div className="hidden sm:flex items-center gap-1.5 px-2 text-[10px] font-semibold uppercase tracking-[0.09em] text-[#8d8da3] shrink-0">
-            <TerminalIcon className="w-3.5 h-3.5 text-[#a78bfa]" />
+          <div
+            className="hidden sm:flex items-center gap-1.5 px-2 text-[10px] font-semibold uppercase tracking-[0.09em] shrink-0"
+            style={{ color: TERMINAL_PALETTE.textMuted }}
+          >
+            <TerminalIcon className="w-3.5 h-3.5" style={{ color: TERMINAL_PALETTE.accent }} />
             Terminal
           </div>
           <div className="h-4 w-px bg-[#ffffff12] shrink-0" />
           {tabs.map((tab) => {
             const info = renderTabInfo(tab.id)
+            const isActive = tab.id === activeTabId
             return (
-              <button key={tab.id} onClick={() => store.getState().selectTab(tab.id)}
+              <button
+                key={tab.id}
+                onClick={() => store.getState().selectTab(tab.id)}
                 className={cn(
                   'group flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-medium rounded-md border transition-all shrink-0 max-w-[170px] whitespace-nowrap',
-                  tab.id === activeTabId ? 'text-[#f0f0f7] bg-[#ffffff0c] border-[#ffffff14] shadow-[inset_0_-1px_0_#8b5cf6]' : 'text-[#88889d] border-transparent hover:text-[#d4d4e0] hover:bg-[#ffffff08]'
+                  isActive
+                    ? 'text-[#f0f0f7] bg-[#ffffff0c] border-[#ffffff14]'
+                    : 'text-[#88889d] border-transparent hover:text-[#d4d4e0] hover:bg-[#ffffff08]'
                 )}
-                aria-current={tab.id === activeTabId ? 'page' : undefined}>
-                {info.kind === 'agent'
-                  ? <Bot className="w-3 h-3 text-[#a78bfa] shrink-0" />
-                  : <span className={cn('inline-block w-1.5 h-1.5 rounded-full shrink-0 ring-2 ring-[#15151d]', info.connected ? 'bg-[#48bb78]' : 'bg-[#6b6b80]')} />}
+                style={isActive ? { boxShadow: `inset 0 -1px 0 ${TERMINAL_PALETTE.accent}` } : undefined}
+                aria-current={isActive ? 'page' : undefined}
+              >
+                {info.kind === 'agent' ? (
+                  <Bot className="w-3 h-3 shrink-0" style={{ color: TERMINAL_PALETTE.accent }} />
+                ) : (
+                  <span
+                    className={cn(
+                      'inline-block w-1.5 h-1.5 rounded-full shrink-0 ring-2 ring-[#15151d]',
+                      info.connected ? 'bg-[#48bb78]' : 'bg-[#6b6b80]'
+                    )}
+                  />
+                )}
                 <span className="truncate">{info.shell}</span>
-                <span onClick={(e) => closeTab(tab.id, e)}
-                  className="inline-flex items-center justify-center w-4 h-4 rounded text-[#77778b] opacity-0 group-hover:opacity-100 hover:bg-[#ffffff14] hover:text-[#e6e6ef] ml-0.5 shrink-0 transition-opacity"
-                  aria-label={`Cerrar ${info.shell}`}>
-                  <XIcon className="w-2.5 h-2.5" />
+                <span
+                  onClick={(e) => closeTab(tab.id, e)}
+                  className="inline-flex items-center justify-center w-4 h-4 rounded opacity-0 group-hover:opacity-100 hover:bg-[#ffffff14] hover:text-[#e6e6ef] ml-0.5 shrink-0 transition-opacity"
+                  style={{ color: TERMINAL_PALETTE.textMuted }}
+                  aria-label={`Cerrar ${info.shell}`}
+                >
+                  <X className="w-2.5 h-2.5" />
                 </span>
               </button>
             )
           })}
-          <button onClick={addTab}
-            className="inline-flex items-center justify-center w-6 h-6 rounded-md text-[#9898aa] hover:text-white hover:bg-[#ffffff0e] shrink-0 ml-0.5 transition-colors"
-            title="Nueva terminal">
+          <button
+            onClick={addTab}
+            className="inline-flex items-center justify-center w-6 h-6 rounded-md hover:text-white hover:bg-[#ffffff0e] shrink-0 ml-0.5 transition-colors"
+            style={{ color: TERMINAL_PALETTE.textMuted }}
+            title="Nueva terminal"
+          >
             <Plus className="w-3 h-3" />
           </button>
         </div>
 
-        <div className="flex items-center gap-1 shrink-0 h-full">
+        <div className="flex items-center gap-1.5 shrink-0 h-full">
+          {/* Live system metrics */}
+          {metrics && (
+            <div
+              className="hidden md:flex items-center gap-2 px-2 py-0.5 rounded text-[10.5px] font-mono select-none"
+              style={{
+                color: TERMINAL_PALETTE.textMuted,
+                background: 'rgba(255, 255, 255, 0.03)',
+                border: `1px solid ${TERMINAL_PALETTE.borderSubtle}`,
+              }}
+              title="Métricas en tiempo real"
+            >
+              <Activity className="size-3 text-[#48bb78]" />
+              <span>CPU {metrics.cpuPercent.toFixed(1)}%</span>
+              <span className="opacity-40">·</span>
+              <span>RAM {metrics.memoryMb} MB</span>
+            </div>
+          )}
+
           {activeInstance && renderTabInfo(activeTabId ?? '').kind === 'user' && (
             <>
-              <button onClick={() => handleNewSession(activeTabId!)}
-                className="inline-flex items-center justify-center w-7 h-7 text-[#9898aa] hover:text-white rounded-md hover:bg-[#ffffff0e] transition-colors"
+              <button
+                onClick={() => handleNewSession(activeTabId!)}
+                className="inline-flex items-center justify-center w-7 h-7 hover:text-white rounded-md hover:bg-[#ffffff0e] transition-colors"
+                style={{ color: TERMINAL_PALETTE.textMuted }}
                 title="Reiniciar sesión"
-                aria-label="Reiniciar sesión">
+                aria-label="Reiniciar sesión"
+              >
                 <RotateCw className="w-3.5 h-3.5" />
               </button>
               <div className="relative">
-                <button onClick={() => setShowProfileMenu((v) => !v)}
-                  className="flex items-center gap-1.5 h-7 px-2 text-[11px] font-medium text-[#b8b8c8] hover:text-white rounded-md hover:bg-[#ffffff0e] transition-colors"
+                <button
+                  onClick={() => setShowProfileMenu((v) => !v)}
+                  className="flex items-center gap-1.5 h-7 px-2 text-[11px] font-medium hover:text-white rounded-md hover:bg-[#ffffff0e] transition-colors"
+                  style={{ color: TERMINAL_PALETTE.textSecondary }}
                   title="Cambiar intérprete"
-                  aria-expanded={showProfileMenu}>
+                  aria-expanded={showProfileMenu}
+                >
                   <span className="max-w-16 truncate">{selectedProfile || 'Predeterminado'}</span>
                   <ChevronDown className="w-3 h-3" />
                 </button>
                 {showProfileMenu && (
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setShowProfileMenu(false)} />
-                    <div className="absolute right-0 top-full mt-1.5 z-50 w-40 py-1.5 rounded-lg shadow-2xl"
-                      style={{ background: '#20202b', border: '1px solid #3a3a4a' }}>
-                      <p className="px-3 pb-1.5 text-[10px] font-medium uppercase tracking-wider text-[#8c8ca0]">Intérprete</p>
+                    <div
+                      className="absolute right-0 top-full mt-1.5 z-50 w-40 py-1.5 rounded-lg shadow-2xl"
+                      style={{ background: '#20202b', border: `1px solid ${TERMINAL_PALETTE.borderStrong}` }}
+                    >
+                      <p className="px-3 pb-1.5 text-[10px] font-medium uppercase tracking-wider" style={{ color: TERMINAL_PALETTE.textMuted }}>Intérprete</p>
                       {['', 'cmd', 'pwsh', 'bash', 'zsh'].map((p) => (
-                        <button key={p} onClick={() => { setSelectedProfile(p); setShowProfileMenu(false); handleNewSession(activeTabId!) }}
-                          className={cn('w-full text-left px-3 py-1.5 text-[11px] transition-colors hover:bg-[#ffffff0d]', selectedProfile === p ? 'text-[#ddd6fe]' : 'text-[#d2d2df]')}>
+                        <button
+                          key={p}
+                          onClick={() => { setSelectedProfile(p); setShowProfileMenu(false); handleNewSession(activeTabId!) }}
+                          className={cn('w-full text-left px-3 py-1.5 text-[11px] transition-colors hover:bg-[#ffffff0d]', selectedProfile === p ? 'text-[#ddd6fe]' : 'text-[#d2d2df]')}
+                        >
                           {p || 'Predeterminado'}
                         </button>
                       ))}
@@ -403,69 +505,114 @@ export function TerminalWorkspace() {
               </div>
             </>
           )}
-          <button onClick={toggleTerminal}
-            className="inline-flex items-center justify-center w-7 h-7 text-[#9898aa] hover:text-white rounded-md hover:bg-[#ffffff0e] transition-colors"
+          <button
+            onClick={toggleTerminal}
+            className="inline-flex items-center justify-center w-7 h-7 hover:text-white rounded-md hover:bg-[#ffffff0e] transition-colors"
+            style={{ color: TERMINAL_PALETTE.textMuted }}
             title="Ocultar terminal"
-            aria-label="Ocultar terminal">
+            aria-label="Ocultar terminal"
+          >
             <ChevronDown className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
 
-      <div className="relative min-h-0" style={{ background: '#0C0C10', flex: 1, padding: '6px 12px' }}>
-          {tabs.map((tab) => (
-            <div key={tab.id} ref={containerRefCallback(tab.id)}
-              className={cn('absolute inset-3', tab.id === activeTabId ? 'visible' : 'invisible pointer-events-none')} />
-          ))}
-          {searchVisible && (
-            <div style={{
-              position: 'absolute', top: 4, right: 12, zIndex: 20,
-              display: 'flex', alignItems: 'center', gap: 4,
-              background: '#1e1e2e', border: '1px solid #313244', borderRadius: 6,
-              padding: '4px 8px', boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
-            }}>
-              <input
-                ref={searchInputRef}
-                autoFocus
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value)
-                  if (activeInstance) {
-                    if (e.target.value) {
-                      activeInstance.searchAddon.findNext(e.target.value)
-                    } else {
-                      activeInstance.searchAddon.clearDecorations()
-                    }
+      {/* Terminal Viewport */}
+      <div className="relative min-h-0" style={{ background: TERMINAL_PALETTE.bg, flex: 1, padding: '6px 12px' }}>
+        {tabs.map((tab) => (
+          <div
+            key={tab.id}
+            ref={containerRefCallback(tab.id)}
+            className={cn('absolute inset-3', tab.id === activeTabId ? 'visible' : 'invisible pointer-events-none')}
+          />
+        ))}
+
+        {/* Search floating panel */}
+        {searchVisible && (
+          <div
+            style={{
+              position: 'absolute',
+              top: 4,
+              right: 12,
+              zIndex: 20,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              background: TERMINAL_PALETTE.cardBg,
+              border: `1px solid ${TERMINAL_PALETTE.border}`,
+              borderRadius: 6,
+              padding: '4px 8px',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
+            }}
+          >
+            <input
+              ref={searchInputRef}
+              autoFocus
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value)
+                if (activeInstance) {
+                  if (e.target.value) {
+                    activeInstance.searchAddon.findNext(e.target.value)
+                  } else {
+                    activeInstance.searchAddon.clearDecorations()
                   }
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    if (activeInstance && searchQuery) {
-                      activeInstance.searchAddon.findNext(searchQuery, { caseSensitive: false, incremental: e.shiftKey })
-                    }
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  if (activeInstance && searchQuery) {
+                    activeInstance.searchAddon.findNext(searchQuery, { caseSensitive: false, incremental: e.shiftKey })
                   }
-                }}
-                placeholder="Buscar en terminal... (Ctrl+F)"
-                style={{
-                  background: '#0C0C10', border: '1px solid #313244', borderRadius: 4,
-                  padding: '3px 8px', color: '#cdd6f4', fontSize: 11, fontFamily: 'monospace',
-                  width: 200, outline: 'none',
-                }}
-              />
-              <button onClick={() => {
+                }
+              }}
+              placeholder="Buscar en terminal... (Ctrl+F)"
+              style={{
+                background: TERMINAL_PALETTE.bg,
+                border: `1px solid ${TERMINAL_PALETTE.border}`,
+                borderRadius: 4,
+                padding: '3px 8px',
+                color: TERMINAL_PALETTE.textSecondary,
+                fontSize: 11,
+                fontFamily: 'monospace',
+                width: 200,
+                outline: 'none',
+              }}
+            />
+            <button
+              onClick={() => {
                 if (activeInstance && searchQuery) {
                   activeInstance.searchAddon.findNext(searchQuery, { caseSensitive: false })
                 }
-              }} style={{ background: 'transparent', border: 'none', color: '#6c7086', cursor: 'pointer', fontSize: 11 }}>▼</button>
-              <button onClick={() => {
+              }}
+              className="p-1 hover:bg-[#ffffff14] rounded transition-colors"
+              style={{ color: TERMINAL_PALETTE.textMuted }}
+              title="Siguiente"
+            >
+              <ChevronDown className="size-3" />
+            </button>
+            <button
+              onClick={() => {
                 if (activeInstance && searchQuery) {
                   activeInstance.searchAddon.findPrevious(searchQuery, { caseSensitive: false })
                 }
-              }} style={{ background: 'transparent', border: 'none', color: '#6c7086', cursor: 'pointer', fontSize: 11 }}>▲</button>
-              <button onClick={() => { setSearchVisible(false); setSearchQuery(''); activeInstance?.searchAddon.clearDecorations() }}
-                style={{ background: 'transparent', border: 'none', color: '#6c7086', cursor: 'pointer', fontSize: 11, marginLeft: 2 }}>✕</button>
-            </div>
-          )}
+              }}
+              className="p-1 hover:bg-[#ffffff14] rounded transition-colors"
+              style={{ color: TERMINAL_PALETTE.textMuted }}
+              title="Anterior"
+            >
+              <ChevronUp className="size-3" />
+            </button>
+            <button
+              onClick={() => { setSearchVisible(false); setSearchQuery(''); activeInstance?.searchAddon.clearDecorations() }}
+              className="p-1 hover:bg-[#ffffff14] rounded transition-colors ml-0.5"
+              style={{ color: TERMINAL_PALETTE.textMuted }}
+              title="Cerrar búsqueda"
+            >
+              <X className="size-3" />
+            </button>
+          </div>
+        )}
       </div>
 
       {renderSelectionPopup()}

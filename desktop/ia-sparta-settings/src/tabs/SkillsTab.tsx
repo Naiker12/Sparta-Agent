@@ -1,11 +1,21 @@
 import { useState, useMemo } from 'react'
 import { Plus, Pencil, Trash2, Search } from 'lucide-react'
-import { useSkillStore } from 'ia-sparta-core'
-import { useLocalSkillsLoader } from 'ia-sparta-core'
+import { useSkillStore, useLocalSkillsLoader } from 'ia-sparta-core'
 import { useTranslation } from 'ia-sparta-i18n'
-import { SettingGroup } from './primitives'
 import { SkillDialog } from 'ia-sparta-skills'
-import { ConfirmDeleteDialog, SkillCategoryIcon } from 'ia-sparta-design-system'
+import { Switch, ConfirmDeleteDialog, SkillCategoryIcon, cn } from 'ia-sparta-design-system'
+
+function normalizeCategoryName(raw: string): string {
+  if (!raw) return 'General'
+  const trimmed = raw.trim().toLowerCase()
+  if (trimmed === 'all' || trimmed === 'todas') return 'Todas'
+  if (trimmed === 'coding' || trimmed === 'code' || trimmed === 'software development') return 'Coding'
+  if (trimmed === 'sistema' || trimmed === 'builtin' || trimmed === 'system') return 'Sistema'
+  if (trimmed === 'research' || trimmed === 'investigacion' || trimmed === 'analysis') return 'Research'
+  if (trimmed === 'productivity' || trimmed === 'productividad' || trimmed === 'automation') return 'Productivity'
+  if (trimmed === 'creative' || trimmed === 'creativo' || trimmed === 'media') return 'Creative'
+  return raw.charAt(0).toUpperCase() + raw.slice(1)
+}
 
 interface SkillDisplay {
   id: string
@@ -26,7 +36,7 @@ export function SkillsTab() {
   const [editId, setEditId] = useState<string | null>(null)
   const [skillToDelete, setSkillToDelete] = useState<string | null>(null)
   const [search, setSearch] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState<string>('all')
+  const [selectedCategory, setSelectedCategory] = useState<string>('Todas')
 
   const allSkills: SkillDisplay[] = useMemo(() => {
     const userIds = new Set(userSkills.map((s) => s.id))
@@ -36,7 +46,7 @@ export function SkillsTab() {
         name: s.name,
         description: s.description,
         icon: (s as any).icon || '',
-        category: (s as any).category || 'Coding',
+        category: normalizeCategoryName((s as any).category || 'Coding'),
         tags: s.tags ?? [],
         source: 'user',
         editable: true,
@@ -48,7 +58,7 @@ export function SkillsTab() {
           name: s.name,
           description: s.description,
           icon: s.icon,
-          category: s.category || 'Sistema',
+          category: normalizeCategoryName(s.category || 'Sistema'),
           tags: s.tags || [],
           source: s.source || 'builtin',
           editable: false,
@@ -61,13 +71,14 @@ export function SkillsTab() {
   }, [userSkills, localSkills])
 
   const categories = useMemo(() => {
-    const cats = new Set(allSkills.map((s) => s.category).filter(Boolean))
-    return ['all', ...Array.from(cats)]
+    const primary = ['Todas', 'Coding', 'Sistema', 'Research', 'Productivity', 'Creative']
+    const existing = new Set(allSkills.map((s) => s.category))
+    return primary.filter((c) => c === 'Todas' || existing.has(c))
   }, [allSkills])
 
   const filtered = useMemo(() => {
     return allSkills.filter((s) => {
-      const matchCat = selectedCategory === 'all' || s.category.toLowerCase() === selectedCategory.toLowerCase()
+      const matchCat = selectedCategory === 'Todas' || s.category.toLowerCase() === selectedCategory.toLowerCase()
       if (!matchCat) return false
       if (!search.trim()) return true
       const q = search.toLowerCase()
@@ -97,221 +108,183 @@ export function SkillsTab() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <SettingGroup
-        title={t('skills.title') || 'Skills'}
-        description={t('skills.desc') || 'Capacidades reutilizables que los agentes pueden invocar.'}
-      >
-        {/* Sub-header counter badge */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, marginTop: 4 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
-              Total: {allSkills.length} skills
-            </span>
-            <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 10, background: 'rgba(16,185,129,0.12)', color: 'var(--status-ok, #10b981)', fontWeight: 600 }}>
-              {activeCount} Activas
-            </span>
-          </div>
+    <div className="flex flex-col gap-5 py-2">
+
+      {/* ── Header row ── */}
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+            {t('skills.title') || 'Skills'}
+          </h1>
+          <p className="text-sm mt-0.5" style={{ color: 'var(--text-secondary)' }}>
+            {activeCount} activas de {allSkills.length} disponibles
+          </p>
         </div>
-
-        {/* Category Pills */}
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
-          {categories.map((cat) => {
-            const isSelected = selectedCategory === cat
-            const label = cat === 'all' ? 'Todas' : cat
-            return (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                style={{
-                  padding: '3px 10px',
-                  borderRadius: 14,
-                  fontSize: 10.5,
-                  fontWeight: isSelected ? 600 : 400,
-                  background: isSelected ? 'var(--accent)' : 'var(--bg-input)',
-                  color: isSelected ? '#ffffff' : 'var(--text-muted)',
-                  border: `1px solid ${isSelected ? 'var(--accent)' : 'var(--border-subtle)'}`,
-                  cursor: 'pointer',
-                  transition: 'all 0.12s',
-                  fontFamily: 'var(--font-ui)',
-                }}
-              >
-                {label}
-              </button>
-            )
-          })}
-        </div>
-
-        {/* Search Bar */}
-        <div style={{ position: 'relative', marginBottom: 10 }}>
-          <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar skills por nombre, categoría o etiqueta..."
-            style={{
-              width: '100%',
-              padding: '7px 10px 7px 30px',
-              fontSize: 12,
-              background: 'var(--bg-input)',
-              border: '1px solid var(--border-normal)',
-              borderRadius: 'var(--radius-md)',
-              color: 'var(--text-primary)',
-              fontFamily: 'var(--font-ui)',
-              outline: 'none',
-            }}
-          />
-        </div>
-
-        {/* Skills Cards List */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {filtered.map((skill) => {
-            const isEnabled = activeSkillIds.includes(skill.id) || !skill.editable
-
-            return (
-              <div
-                key={skill.id}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 12,
-                  padding: '10px 12px',
-                  background: 'var(--bg-input)',
-                  border: `1px solid ${isEnabled ? 'var(--border-normal)' : 'var(--border-subtle)'}`,
-                  borderRadius: 'var(--radius-md)',
-                  opacity: isEnabled ? 1 : 0.65,
-                  transition: 'all 0.12s ease',
-                }}
-              >
-                {/* SVG / Lucide Category Icon */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', flexShrink: 0 }}>
-                  <SkillCategoryIcon category={skill.category} size={16} />
-                </div>
-
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-ui)' }}>
-                      {skill.name}
-                    </span>
-
-                    <span style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-muted)', background: 'var(--bg-active)', padding: '1px 6px', borderRadius: 4, fontFamily: 'var(--font-mono)' }}>
-                      {skill.category}
-                    </span>
-
-                    {!skill.editable && (
-                      <span style={{ fontSize: 8.5, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--accent)', background: 'rgba(99,102,241,0.12)', padding: '1px 5px', borderRadius: 3, fontFamily: 'var(--font-mono)' }}>
-                        SISTEMA
-                      </span>
-                    )}
-
-                    {isEnabled && (
-                      <span style={{ fontSize: 8.5, fontWeight: 600, textTransform: 'uppercase', color: 'var(--status-ok, #10b981)', background: 'rgba(16,185,129,0.12)', padding: '1px 6px', borderRadius: 10, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                        <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--status-ok, #10b981)' }} />
-                        ACTIVA
-                      </span>
-                    )}
-                  </div>
-
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)', marginTop: 3, lineHeight: 1.4 }}>
-                    {skill.description}
-                  </div>
-
-                  {skill.tags && skill.tags.length > 0 && (
-                    <div style={{ display: 'flex', gap: 4, marginTop: 4, flexWrap: 'wrap' }}>
-                      {skill.tags.map((tag) => (
-                        <span key={tag} style={{ fontSize: 9.5, color: 'var(--text-muted)', opacity: 0.8, fontFamily: 'var(--font-mono)' }}>
-                          #{tag}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Toggle & Actions */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                  <button
-                    onClick={() => toggleActive(skill.id)}
-                    title={isEnabled ? 'Desactivar skill' : 'Activar skill'}
-                    style={{
-                      width: 30,
-                      height: 16,
-                      borderRadius: 8,
-                      background: isEnabled ? 'var(--status-ok, #10b981)' : 'var(--border-normal)',
-                      border: 'none',
-                      cursor: 'pointer',
-                      position: 'relative',
-                      transition: 'background 0.15s',
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: 12,
-                        height: 12,
-                        borderRadius: '50%',
-                        background: 'white',
-                        position: 'absolute',
-                        top: 2,
-                        left: isEnabled ? 16 : 2,
-                        transition: 'left 0.15s',
-                      }}
-                    />
-                  </button>
-
-                  {skill.editable && (
-                    <div style={{ display: 'flex', gap: 2 }}>
-                      <button
-                        onClick={() => { setEditId(skill.id); setDialogOpen(true) }}
-                        title={t('skills.edit')}
-                        style={{
-                          width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          background: 'none', border: 'none', borderRadius: 'var(--radius-sm)',
-                          color: 'var(--text-muted)', cursor: 'pointer', transition: 'all 0.12s',
-                        }}
-                      >
-                        <Pencil size={11} strokeWidth={1.5} />
-                      </button>
-                      <button
-                        onClick={() => setSkillToDelete(skill.id)}
-                        title={t('skills.delete')}
-                        style={{
-                          width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          background: 'none', border: 'none', borderRadius: 'var(--radius-sm)',
-                          color: 'var(--text-muted)', cursor: 'pointer', transition: 'all 0.12s',
-                        }}
-                      >
-                        <Trash2 size={11} strokeWidth={1.5} />
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )
-          })}
-
-          {filtered.length === 0 && (
-            <div style={{ padding: '20px 0', textAlign: 'center', fontSize: 12, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)' }}>
-              {search ? 'No se encontraron skills con ese filtro.' : 'No hay skills disponibles.'}
-            </div>
-          )}
-        </div>
-
         <button
           onClick={() => { setEditId(null); setDialogOpen(true) }}
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            padding: '8px 12px', marginTop: 8,
-            background: 'none', border: '1px dashed var(--border-normal)',
-            borderRadius: 'var(--radius-md)', color: 'var(--text-muted)',
-            fontSize: 11.5, fontFamily: 'var(--font-ui)', cursor: 'pointer',
-            transition: 'all 0.12s', width: '100%',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)' }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-normal)'; e.currentTarget.style.color = 'var(--text-muted)' }}
+          className="flex items-center gap-2 rounded-xl font-semibold text-sm transition-all cursor-pointer active:scale-[0.98] shrink-0"
+          style={{ background: 'var(--accent)', color: '#fff', padding: '9px 18px', border: 'none', fontFamily: 'var(--font-ui)' }}
+          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.85' }}
+          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '1' }}
         >
-          <Plus size={13} strokeWidth={1.5} />
-          {t('skills.create') || 'Crear skill'}
+          <Plus className="size-icon-sm" strokeWidth={2.5} />
+          <span>{t('skills.create') || 'Nueva skill'}</span>
         </button>
-      </SettingGroup>
+      </div>
+
+
+      {/* ── Category Pills ── */}
+      <div className="flex items-center gap-2 flex-wrap">
+        {categories.map((cat) => {
+          const isSelected = selectedCategory === cat
+          return (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className="text-sm rounded-full transition-all cursor-pointer"
+              style={{
+                padding: '7px 18px',
+                background: isSelected ? 'var(--accent)' : 'var(--bg-surface)',
+                color: isSelected ? '#fff' : 'var(--text-secondary)',
+                border: `1px solid ${isSelected ? 'var(--accent)' : 'var(--border-subtle)'}`,
+                fontWeight: isSelected ? 600 : 400,
+                fontFamily: 'var(--font-ui)',
+              }}
+              onMouseEnter={e => { if (!isSelected) (e.currentTarget as HTMLButtonElement).style.background = 'var(--bg-active)' }}
+              onMouseLeave={e => { if (!isSelected) (e.currentTarget as HTMLButtonElement).style.background = 'var(--bg-surface)' }}
+            >
+              {cat}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* ── Search Bar ── */}
+      <div style={{ position: 'relative' }}>
+        <Search
+          className="size-icon-sm pointer-events-none"
+          style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}
+        />
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Buscar skills por nombre, categoria o etiqueta..."
+          className="w-full text-sm rounded-2xl transition-all"
+          style={{
+            padding: '11px 16px 11px 40px',
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--border-subtle)',
+            color: 'var(--text-primary)',
+            outline: 'none',
+            fontFamily: 'var(--font-ui)',
+          }}
+          onFocus={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.boxShadow = '0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent)' }}
+          onBlur={e => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.boxShadow = 'none' }}
+        />
+      </div>
+
+      {/* ── Skills List ── */}
+      <div className="flex flex-col gap-2">
+        {filtered.map((skill) => {
+          const isEnabled = activeSkillIds.includes(skill.id) || !skill.editable
+          const isSystem = !skill.editable
+
+          return (
+            <div
+              key={skill.id}
+              className={cn('rounded-2xl p-card-lg flex items-center justify-between gap-5 transition-all', !isEnabled && 'opacity-55')}
+              style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--border-strong)' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--border-subtle)' }}
+            >
+              {/* Icon box */}
+              <div
+                className="size-icon-box rounded-2xl flex items-center justify-center border shrink-0"
+                style={{
+                  background: 'color-mix(in srgb, var(--accent) 10%, transparent)',
+                  borderColor: 'color-mix(in srgb, var(--accent) 20%, transparent)',
+                }}
+              >
+                <SkillCategoryIcon
+                  category={skill.category}
+                  size={22}
+                  strokeWidth={1.8}
+                  className=""
+                />
+              </div>
+
+              {/* Info */}
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-sm font-semibold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+                    {skill.name}
+                  </h3>
+                  <span
+                    className="px-2 py-0.5 rounded-full text-[10px] font-medium lowercase"
+                    style={{ background: 'var(--bg-active)', color: 'var(--text-secondary)', border: '1px solid var(--border-subtle)' }}
+                  >
+                    {skill.category.toLowerCase()}
+                  </span>
+                  {isSystem && (
+                    <span
+                      className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                      style={{
+                        background: 'color-mix(in srgb, var(--accent) 10%, transparent)',
+                        color: 'var(--accent)',
+                        border: '1px solid color-mix(in srgb, var(--accent) 22%, transparent)',
+                      }}
+                    >
+                      sistema
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs mt-0.5 line-clamp-1 leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+                  {skill.description}
+                </p>
+              </div>
+
+              {/* Actions + Switch */}
+              <div className="flex items-center gap-2 shrink-0">
+                {skill.editable && (
+                  <div className="flex items-center gap-0.5">
+                    <button
+                      onClick={() => { setEditId(skill.id); setDialogOpen(true) }}
+                      title={t('skills.edit') || 'Editar'}
+                      className="p-2 rounded-lg transition-colors cursor-pointer"
+                      style={{ color: 'var(--text-muted)', background: 'transparent' }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-active)'; e.currentTarget.style.color = 'var(--text-primary)' }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)' }}
+                    >
+                      <Pencil className="size-icon-sm" strokeWidth={1.75} />
+                    </button>
+                    <button
+                      onClick={() => setSkillToDelete(skill.id)}
+                      title={t('skills.delete') || 'Eliminar'}
+                      className="p-2 rounded-lg transition-colors cursor-pointer"
+                      style={{ color: 'var(--text-muted)', background: 'transparent' }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-active)'; e.currentTarget.style.color = 'var(--status-err)' }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)' }}
+                    >
+                      <Trash2 className="size-icon-sm" strokeWidth={1.75} />
+                    </button>
+                  </div>
+                )}
+                <Switch
+                  checked={isEnabled}
+                  disabled={!skill.editable}
+                  onCheckedChange={skill.editable ? () => toggleActive(skill.id) : undefined}
+                />
+              </div>
+            </div>
+          )
+        })}
+
+        {filtered.length === 0 && (
+          <div className="py-16 text-center text-sm" style={{ color: 'var(--text-secondary)' }}>
+            {search ? 'No se encontraron skills con ese filtro.' : 'No hay skills disponibles.'}
+          </div>
+        )}
+      </div>
 
       <SkillDialog
         open={dialogOpen}
@@ -324,7 +297,7 @@ export function SkillsTab() {
       <ConfirmDeleteDialog
         open={skillToDelete !== null}
         onOpenChange={(open) => !open && setSkillToDelete(null)}
-        title={t('skills.delete')}
+        title={t('skills.delete') || 'Eliminar habilidad'}
         itemLabel={skillToDeleteName}
         onConfirm={() => {
           if (skillToDelete) deleteSkill(skillToDelete)

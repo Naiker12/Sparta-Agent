@@ -22,6 +22,7 @@ export * from './channels/terminal.channel.ts'
 export * from './channels/vault.ipc.ts'
 export * from './channels/document.channel'
 export * from './channels/system.channel'
+export * from './channels/harness-detect.channel'
 export * from './tools/main-process-file-tools'
 export * from './tools/main-process-shell-tool'
 

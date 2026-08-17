@@ -11,13 +11,24 @@ export const HTTP_STATUS_MESSAGES: Record<number, string> = {
 }
 
 export function isRetryable(status: number): boolean {
-  return status === 429 || status === 529
+  return (
+    status === 429 ||
+    status === 500 ||
+    status === 502 ||
+    status === 503 ||
+    status === 504 ||
+    status === 520 ||
+    status === 521 ||
+    status === 522 ||
+    status === 524 ||
+    status === 529
+  )
 }
 
 export async function fetchWithRetry(
   url: string,
   options: RequestInit,
-  retries = 1,
+  retries = 2,
   timeoutMs = 120_000,
 ): Promise<Response> {
   for (let i = 0; i <= retries; i++) {

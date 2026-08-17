@@ -83,15 +83,17 @@ function isCaptchaBlocked(html: string): boolean {
   return lower.includes('captcha') || lower.includes('challenge') || lower.includes('verify you are human')
 }
 
-function queryWithFreshness(query: string, freshness: SearchFreshness): string {
-  if (freshness === 'any') return query
+function queryWithFreshness(query: string, freshness?: string): string {
+  if (!freshness || freshness === 'any' || freshness === 'year' || freshness === 'none') return query
   const lower = query.toLowerCase()
   if (/\b(hoy|actual|actuales|reciente|recientes|ultimas|últimas|noticia|noticias|202\d)\b/.test(lower)) return query
-  const suffix = freshness === 'day' ? ' últimas 24 horas' : freshness === 'week' ? ' última semana' : ' último mes'
-  return `${query}${suffix}`
+  if (freshness === 'day') return `${query} últimas 24 horas`
+  if (freshness === 'week') return `${query} última semana`
+  if (freshness === 'month') return `${query} último mes`
+  return query
 }
 
-async function duckduckgoSearch(query: string, freshness: SearchFreshness): Promise<string> {
+async function duckduckgoSearch(query: string, freshness?: string): Promise<string> {
   const headers = pickHeaders()
   const signal = AbortSignal.timeout(8_000)
   const resp = await fetch('https://html.duckduckgo.com/html/', {
@@ -138,7 +140,7 @@ async function duckduckgoSearch(query: string, freshness: SearchFreshness): Prom
     .join('\n\n')
 }
 
-async function fallbackSearch(query: string, freshness: SearchFreshness): Promise<string> {
+async function fallbackSearch(query: string, freshness?: string): Promise<string> {
   const signal = AbortSignal.timeout(8_000)
   const resp = await fetch(`https://lite.duckduckgo.com/lite/?q=${encodeURIComponent(queryWithFreshness(query, freshness))}`, {
     headers: {
@@ -200,9 +202,9 @@ function resolveDdgUrl(url: string): string {
   return url
 }
 
-async function wikipediaSearch(query: string): Promise<string> {
-  const signal = AbortSignal.timeout(10_000)
-  const url = `https://es.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&format=json&origin=*`
+async function wikipediaSearch(query: string, lang = 'es'): Promise<string> {
+  const signal = AbortSignal.timeout(8_000)
+  const url = `https://${lang}.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&format=json&origin=*`
   const resp = await fetch(url, { signal })
   if (!resp.ok) return ''
   const data = await resp.json()
@@ -213,9 +215,47 @@ async function wikipediaSearch(query: string): Promise<string> {
     .slice(0, 5)
     .map((r: { title: string; pageid: number; snippet: string }, i: number) => {
       const cleanSnippet = r.snippet.replace(/<[^>]+>/g, '').trim()
-      return `${i + 1}. ${r.title}\n   URL: https://es.wikipedia.org/wiki?curid=${r.pageid}\n   ${cleanSnippet}`
+      return `${i + 1}. ${r.title}\n   URL: https://${lang}.wikipedia.org/wiki?curid=${r.pageid}\n   ${cleanSnippet}`
     })
     .join('\n\n')
+}
+
+async function hnTechSearch(query: string): Promise<string> {
+  const signal = AbortSignal.timeout(8_000)
+  const url = `https://hn.algolia.com/api/v1/search?query=${encodeURIComponent(query)}&tags=story&hitsPerPage=5`
+  const resp = await fetch(url, { signal })
+  if (!resp.ok) return ''
+  const data = await resp.json()
+  const hits = (data?.hits || []).filter((h: any) => h.title && (h.url || h.objectID))
+  if (hits.length === 0) return ''
+
+  return hits
+    .slice(0, 5)
+    .map((h: any, i: number) => {
+      const targetUrl = h.url || `https://news.ycombinator.com/item?id=${h.objectID}`
+      return `${i + 1}. ${h.title} (Score: ${h.points ?? 0})\n   URL: ${targetUrl}\n   Comentarios y discusiones técnicas relevantes.`
+    })
+    .join('\n\n')
+}
+
+async function duckduckgoInstantAnswer(query: string): Promise<string> {
+  const signal = AbortSignal.timeout(8_000)
+  const url = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&skip_disambig=1`
+  const resp = await fetch(url, { signal })
+  if (!resp.ok) return ''
+  const data = await resp.json()
+  const items: string[] = []
+  if (data?.AbstractText) {
+    items.push(`1. ${data.Heading || query}\n   URL: ${data.AbstractURL || 'https://duckduckgo.com'}\n   ${data.AbstractText}`)
+  }
+  if (Array.isArray(data?.RelatedTopics)) {
+    for (const t of data.RelatedTopics.slice(0, 4)) {
+      if (t.Text && t.FirstURL) {
+        items.push(`${items.length + 1}. ${t.Text.slice(0, 60)}...\n   URL: ${t.FirstURL}\n   ${t.Text}`)
+      }
+    }
+  }
+  return items.join('\n\n')
 }
 
 export async function executeWebSearch(query: string, count = 5, freshness: SearchFreshness = 'any'): Promise<string> {
@@ -223,26 +263,37 @@ export async function executeWebSearch(query: string, count = 5, freshness: Sear
   const engines: Array<(q: string) => Promise<string>> = [
     (q) => duckduckgoSearch(q, freshness),
     (q) => fallbackSearch(q, freshness),
-    // Wikipedia is a background fallback, not a source for fresh news.
-    ...(freshness === 'any' ? [wikipediaSearch] : []),
+    (q) => duckduckgoInstantAnswer(q),
+    (q) => hnTechSearch(q),
+    (q) => wikipediaSearch(q, 'es'),
+    (q) => wikipediaSearch(q, 'en'),
   ]
 
   for (const engine of engines) {
     try {
       const results = await engine(query)
-      if (results) {
+      if (results && results.trim().length > 20) {
         const limited = results.split('\n\n').slice(0, safeCount).join('\n\n')
         return ['Información obtenida de búsqueda web:', limited].join('\n')
       }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err)
-      if (message === 'CAPTCHA' || message === 'NoResults') {
+    } catch {
+      continue
+    }
+  }
+
+  // Fallback: Si la búsqueda con la frase larga no encontró nada, intentar con términos clave
+  const simplified = query.replace(/\b(latest|stable|version|release|date|features|202\d|best|official|documentation|popular)\b/gi, '').trim()
+  if (simplified && simplified.length > 2 && simplified !== query) {
+    for (const engine of [hnTechSearch, (q: string) => wikipediaSearch(q, 'en'), (q: string) => wikipediaSearch(q, 'es')]) {
+      try {
+        const results = await engine(simplified)
+        if (results && results.trim().length > 20) {
+          const limited = results.split('\n\n').slice(0, safeCount).join('\n\n')
+          return ['Información obtenida de búsqueda web:', limited].join('\n')
+        }
+      } catch {
         continue
       }
-      if (/aborted/i.test(message) || /timeout/i.test(message)) {
-        continue
-      }
-      throw err
     }
   }
 

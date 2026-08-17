@@ -34,6 +34,7 @@ const ALLOWED_INVOKE_CHANNELS = new Set([
   'fs:readFile',
   'document:convert-to-markdown',
   'system:get-metrics',
+  'harnesses:detect',
 ])
 
 contextBridge.exposeInMainWorld('electron', {
@@ -106,6 +107,9 @@ contextBridge.exposeInMainWorld('sparta', {
   memoryCount: () => ipcRenderer.invoke('memory:count') as Promise<{ ok: boolean; count?: number; error?: string }>,
   transcribeAudio: (req: { audio: string; filename: string; language?: string }) =>
     ipcRenderer.invoke('audio:transcribe', req) as Promise<{ text?: string; error?: string }>,
+  harnesses: {
+    detect: () => ipcRenderer.invoke('harnesses:detect') as Promise<unknown[]>,
+  },
 })
 
 contextBridge.exposeInMainWorld('vault', {

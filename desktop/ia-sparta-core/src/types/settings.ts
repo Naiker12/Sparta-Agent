@@ -8,6 +8,7 @@ export type SettingsTab =
   | 'agents'
   | 'search'
   | 'shell'
+  | 'harnesses'
 
 export type SessionMode = 'chat' | 'agent'
 

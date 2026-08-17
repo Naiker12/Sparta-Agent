@@ -59,7 +59,7 @@ function CodeBlock() {
   );
 }
 
-export function DocsPage() {
+export function DocsPage({ onBackToLanding }: { onBackToLanding?: () => void }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const docsQuery = new URLSearchParams(window.location.search).get('docs');
   const currentPage = docsQuery || window.location.pathname.split('/docs')[1]?.replace(/^\//, '').replace(/\/$/, '') || 'inicio';
@@ -67,20 +67,50 @@ export function DocsPage() {
   const screenshot = getPublicUrl('escritorio.png');
   const docsHref = (slug = '') => `${getPublicUrl('')}?docs${slug ? `=${slug}` : ''}`;
 
+  const handleHomeClick = (e: React.MouseEvent) => {
+    if (onBackToLanding) {
+      e.preventDefault();
+      onBackToLanding();
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-white text-zinc-950 dark:bg-[#09090b] dark:text-zinc-100">
-      <header className="sticky top-0 z-50 border-b border-zinc-200 bg-white/90 backdrop-blur-xl dark:border-white/10 dark:bg-[#09090b]/90">
+    <div className="min-h-screen bg-black text-white selection:bg-amber-400/20 selection:text-amber-200">
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-black/90 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-[1440px] items-center justify-between px-4 sm:px-6">
-          <Breadcrumb><BreadcrumbList><BreadcrumbItem><BreadcrumbLink href={getPublicUrl('')} className="flex items-center gap-2.5 font-semibold tracking-tight"><img src={favicon} alt="Sparta Agent" className="size-7" /><span>Sparta Agent</span></BreadcrumbLink></BreadcrumbItem><BreadcrumbSeparator /><BreadcrumbItem><BreadcrumbPage>Docs</BreadcrumbPage></BreadcrumbItem></BreadcrumbList></Breadcrumb>
-          <div className="hidden items-center gap-5 text-sm text-zinc-600 md:flex dark:text-zinc-400">
-            <a href={docsHref('instalacion')} className="hover:text-zinc-950 dark:hover:text-white">Guía</a>
-            <a href={docsHref('arquitectura')} className="hover:text-zinc-950 dark:hover:text-white">Arquitectura</a>
-            <a href={docsHref('permisos')} className="hover:text-zinc-950 dark:hover:text-white">Seguridad</a>
-            <a href="https://github.com/Naiker12/Sparta-Agent" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 px-3 py-1.5 text-zinc-950 transition hover:bg-zinc-50 dark:border-white/15 dark:text-white dark:hover:bg-white/10"><Github className="size-4" /> GitHub</a>
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink
+                  href={getPublicUrl('')}
+                  onClick={handleHomeClick}
+                  className="flex items-center gap-2.5 font-semibold tracking-tight text-white hover:text-amber-300 transition-colors"
+                >
+                  <img src={favicon} alt="Sparta Agent" className="size-7" />
+                  <span>Sparta Agent</span>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage className="text-gray-400">Docs</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+          <div className="hidden items-center gap-5 text-sm text-gray-300 md:flex">
+            <button
+              onClick={handleHomeClick}
+              className="text-xs text-gray-400 hover:text-white transition-colors"
+            >
+              ← Volver a la Landing
+            </button>
+            <a href={docsHref('instalacion')} className="hover:text-white transition-colors">Guía</a>
+            <a href={docsHref('arquitectura')} className="hover:text-white transition-colors">Arquitectura</a>
+            <a href={docsHref('permisos')} className="hover:text-white transition-colors">Seguridad</a>
+            <a href="https://github.com/Naiker12/Sparta-Agent" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-3 py-1.5 text-white transition hover:bg-white/10"><Github className="size-4" /> GitHub</a>
           </div>
-          <button aria-label="Abrir navegación" onClick={() => setMenuOpen(!menuOpen)} className="rounded-md p-2 md:hidden"><Menu className="size-5" /></button>
+          <button aria-label="Abrir navegación" onClick={() => setMenuOpen(!menuOpen)} className="rounded-md p-2 text-gray-400 hover:text-white md:hidden"><Menu className="size-5" /></button>
         </div>
-        {menuOpen ? <nav className="border-t border-zinc-200 px-5 py-4 text-sm md:hidden dark:border-white/10"><div className="flex flex-col gap-3"><a href={docsHref('instalacion')}>Guía</a><a href={docsHref('arquitectura')}>Arquitectura</a><a href={docsHref('permisos')}>Seguridad</a><a href="https://github.com/Naiker12/Sparta-Agent" target="_blank" rel="noreferrer">GitHub</a></div></nav> : null}
+        {menuOpen ? <nav className="border-t border-white/10 px-5 py-4 text-sm md:hidden bg-black"><div className="flex flex-col gap-3"><button onClick={handleHomeClick} className="text-left text-amber-300 py-1 font-medium">← Volver a la Landing</button><a href={docsHref('instalacion')}>Guía</a><a href={docsHref('arquitectura')}>Arquitectura</a><a href={docsHref('permisos')}>Seguridad</a><a href="https://github.com/Naiker12/Sparta-Agent" target="_blank" rel="noreferrer">GitHub</a></div></nav> : null}
       </header>
 
       <div className="mx-auto grid max-w-[1440px] grid-cols-1 lg:grid-cols-[238px_minmax(0,1fr)] xl:grid-cols-[238px_minmax(0,1fr)_200px]">

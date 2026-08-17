@@ -88,8 +88,11 @@ export class ChatCompletionsTransport extends BaseTransport {
     if (this.vendor === 'openai' && req.thinkingEnabled && req.reasoningEffort && req.reasoningEffort !== 'none') {
       body.reasoning_effort = req.reasoningEffort
     }
-    if (this.vendor === 'openrouter' && req.thinkingEnabled && req.reasoningEffort && req.reasoningEffort !== 'none') {
-      body.reasoning = { effort: req.reasoningEffort }
+    if (this.vendor === 'openrouter' || this.baseUrl.includes('openrouter')) {
+      body.provider = { allow_fallbacks: true }
+      if (req.thinkingEnabled && req.reasoningEffort && req.reasoningEffort !== 'none') {
+        body.reasoning = { effort: req.reasoningEffort }
+      }
     }
     return body
   }
@@ -135,7 +138,7 @@ export class ChatCompletionsTransport extends BaseTransport {
     const headers = this.buildHeaders()
     const body = JSON.stringify(this.buildBody(req))
 
-    const res = await fetchWithRetry(url, {
+    let res = await fetchWithRetry(url, {
       method: 'POST',
       headers,
       body,
@@ -153,11 +156,35 @@ export class ChatCompletionsTransport extends BaseTransport {
         }
       } catch { /* ignore */ }
 
-      yield { type: 'error', error: errorMsg }
-      if (isRetryable(res.status)) {
-        yield { type: 'error', error: `${errorMsg} — se agotaron los reintentos.` }
+      // Si el proveedor o modelo no soporta tool use / function calling (ej. OpenRouter free endpoints)
+      if (req.tools && req.tools.length > 0) {
+        const isToolUnsupported =
+          /(?:tool|function|endpoint|read_file|support tool|routing|invalid request)/i.test(errorMsg) ||
+          res.status === 400 ||
+          res.status === 404
+
+        if (isToolUnsupported) {
+          console.warn(`[${this.vendor}] Model ${req.model} does not support tools (${errorMsg}). Retrying without tools...`)
+          const fallbackReq = { ...req, tools: undefined }
+          const fallbackBody = JSON.stringify(this.buildBody(fallbackReq))
+          const retryRes = await fetchWithRetry(url, {
+            method: 'POST',
+            headers,
+            body: fallbackBody,
+          })
+          if (retryRes.ok) {
+            res = retryRes
+          }
+        }
       }
-      return
+
+      if (!res.ok) {
+        yield { type: 'error', error: errorMsg }
+        if (isRetryable(res.status)) {
+          yield { type: 'error', error: `${errorMsg} — se agotaron los reintentos.` }
+        }
+        return
+      }
     }
 
     const reader = res.body?.getReader()

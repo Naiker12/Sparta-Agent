@@ -37,6 +37,17 @@ interface SpartaAPI {
   memoryDelete: (entryId: string) => Promise<{ ok: boolean; error?: string }>
   memoryCount: () => Promise<{ ok: boolean; count?: number; error?: string }>
   transcribeAudio: (req: { audio: string; filename: string; language?: string }) => Promise<{ text?: string; error?: string }>
+  harnesses?: {
+    detect: () => Promise<Array<{
+      id: string
+      label: string
+      installed: boolean
+      version: string | null
+      path: string | null
+      description: string
+      docsUrl: string
+    }>>
+  }
 }
 
 interface VaultAPI {
