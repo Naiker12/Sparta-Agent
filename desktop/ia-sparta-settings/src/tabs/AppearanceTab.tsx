@@ -1,66 +1,71 @@
-import { ThemePicker } from '../ThemePicker'
-import { SettingGroup } from './primitives'
-import { useTranslation } from 'ia-sparta-i18n'
-
-function SettingRowStatic({ title, value }: { title: string; value: string }) {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 16,
-        padding: '10px 0',
-        borderBottom: '1px solid var(--border-subtle)',
-      }}
-    >
-      <div
-        style={{
-          fontSize: 12.5,
-          color: 'var(--text-primary)',
-          fontFamily: 'var(--font-ui)',
-          fontWeight: 500,
-        }}
-      >
-        {title}
-      </div>
-      <div
-        style={{
-          fontSize: 11,
-          color: 'var(--text-secondary)',
-          fontFamily: 'var(--font-ui)',
-        }}
-      >
-        {value}
-      </div>
-    </div>
-  )
-}
+import { ThemeSection } from './appearance/sections/ThemeSection'
+import { TypographySection } from './appearance/sections/TypographySection'
+import { PreferencesSection } from './appearance/sections/PreferencesSection'
+import { SidebarNavSection } from './appearance/sections/SidebarNavSection'
+import { ProfileMenuSection } from './appearance/sections/ProfileMenuSection'
+import { RotateCw } from 'lucide-react'
 
 export function AppearanceTab() {
-  const { t } = useTranslation()
+  function handleResetPreferences() {
+    if (window.confirm('¿Deseas restablecer toda la personalización de apariencia a los valores predeterminados de Sparta?')) {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('sparta-theme')
+        localStorage.removeItem('sparta-appearance-prefs')
+        window.location.reload()
+      }
+    }
+  }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-      <SettingGroup title={t('appearance.theme')} description={t('appearance.themeDesc')}>
-        <div style={{ paddingTop: 4 }}>
-          <ThemePicker />
-        </div>
-      </SettingGroup>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {/* 1. Tema & Esquema de Color */}
+      <ThemeSection />
 
-      <SettingGroup title={t('appearance.typography')} description={t('appearance.typographyDesc')}>
-        <SettingRowStatic title={t('appearance.fontUI')} value="Geist / Inter" />
-        <SettingRowStatic title={t('appearance.fontMono')} value="Geist Mono" />
-        <SettingRowStatic title={t('appearance.baseSize')} value="13px" />
-      </SettingGroup>
+      {/* 2. Tipografía & Fuentes */}
+      <TypographySection />
 
-      <SettingGroup title={t('appearance.window')} description={t('appearance.windowDesc')}>
-        <SettingRowStatic title={t('appearance.transparency')} value={t('appearance.disabled')} />
-        <SettingRowStatic title={t('appearance.roundedBorders')} value={t('appearance.enabled')} />
-      </SettingGroup>
+      {/* 3. Preferencias & Accesibilidad */}
+      <PreferencesSection />
+
+      {/* 4. Navegación de la barra lateral */}
+      <SidebarNavSection />
+
+      {/* 5. Menú de la barra lateral (Perfil) */}
+      <ProfileMenuSection />
+
+      {/* 6. Footer con Botón Restablecer */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: 8, paddingBottom: 16 }}>
+        <button
+          type="button"
+          onClick={handleResetPreferences}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '8px 18px',
+            borderRadius: 20,
+            backgroundColor: 'var(--bg-surface)',
+            border: '1px solid var(--border-subtle)',
+            color: 'var(--text-secondary)',
+            fontSize: 12,
+            fontWeight: 600,
+            cursor: 'pointer',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+            transition: 'all 0.15s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
+            e.currentTarget.style.color = 'var(--text-primary)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--bg-surface)'
+            e.currentTarget.style.color = 'var(--text-secondary)'
+          }}
+        >
+          <RotateCw size={13} />
+          <span>Restablecer la personalización</span>
+        </button>
+      </div>
     </div>
   )
 }
-
-
-

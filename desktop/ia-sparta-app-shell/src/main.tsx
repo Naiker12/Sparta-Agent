@@ -4,7 +4,7 @@ import { AppShell } from 'ia-sparta-shell-layout'
 import { ChatErrorBoundary } from 'ia-sparta-core'
 import { useChatStore } from 'ia-sparta-core'
 import { useSecurityStore } from 'ia-sparta-core'
-import { initTheme } from 'ia-sparta-core'
+import { initTheme, initAppearance } from 'ia-sparta-core'
 import '../../ia-sparta-core/src/styles/globals.css'
 import '../../ia-sparta-core/src/index.css'
 
@@ -19,6 +19,7 @@ if (typeof window !== 'undefined') {
 }
 
 initTheme()
+initAppearance()
 
 // Clean up stale streaming sessions on app start
 useChatStore.getState().cleanupStaleStreams()

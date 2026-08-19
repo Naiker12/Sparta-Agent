@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { Cpu, RefreshCw } from 'lucide-react'
-import { Badge } from 'ia-sparta-design-system'
+import { Cpu, RefreshCw, CheckCircle } from 'lucide-react'
 import { fetchModelsByVendor } from 'ia-sparta-core'
 
 export function LocalModelsDiscoveryBadge({ onDiscovered }: { onDiscovered?: (count: number) => void }) {
@@ -31,33 +30,72 @@ export function LocalModelsDiscoveryBadge({ onDiscovered }: { onDiscovered?: (co
     scan()
   }, [scan])
 
-  if (count === null && !scanning) return null
-
   return (
-    <div className="inline-flex items-center gap-1.5">
-      <Badge
-        variant="secondary"
-        className="gap-1.5 px-2.5 py-1 text-[11px] font-medium bg-[var(--bg-hover)] border border-[var(--border-subtle)] text-[var(--text-secondary)] select-none"
-      >
-        <Cpu className="size-3 text-[var(--accent)]" />
-        {scanning ? (
-          <span className="animate-pulse">Buscando modelos locales...</span>
-        ) : count && count > 0 ? (
+    <div
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6,
+        backgroundColor: '#FFFFFF',
+        border: '1px solid #E4DDD2',
+        borderRadius: 999,
+        padding: '3px 10px',
+        boxShadow: '0 1px 2px rgba(0,0,0,0.02)',
+        fontSize: 11,
+        color: '#5C5245',
+        fontFamily: 'var(--font-ui, system-ui, sans-serif)',
+        userSelect: 'none',
+      }}
+    >
+      {scanning ? (
+        <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#B45309' }}>
+          <RefreshCw size={11} className="animate-spin" />
+          <span style={{ fontWeight: 500 }}>Escaneando modelos en PC...</span>
+        </span>
+      ) : count && count > 0 ? (
+        <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#166534' }}>
+          <CheckCircle size={11} color="#16A34A" />
           <span>
-            <strong className="text-[var(--text-primary)] font-semibold">{count}</strong> modelo{count !== 1 ? 's' : ''} local{count !== 1 ? 'es' : ''} encontrado{count !== 1 ? 's' : ''}
+            <strong style={{ fontWeight: 700, color: '#14532D' }}>{count}</strong> {count === 1 ? 'modelo local detectado' : 'modelos locales detectados'}
           </span>
-        ) : (
-          <span>Sin modelos locales activos</span>
-        )}
-      </Badge>
+        </span>
+      ) : (
+        <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#786C5E' }}>
+          <Cpu size={12} color="#B45309" />
+          <span>Sin servidores locales activos</span>
+        </span>
+      )}
+
       <button
         onClick={scan}
         disabled={scanning}
-        className="p-1 rounded-md text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors disabled:opacity-50"
-        title="Volver a escanear servidores locales (Ollama, LM Studio, LLaMA.cpp)"
+        style={{
+          background: 'none',
+          border: 'none',
+          padding: 2,
+          marginLeft: 2,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: '#8A7D6F',
+          cursor: scanning ? 'default' : 'pointer',
+          borderRadius: 4,
+          transition: 'color 0.15s, background-color 0.15s',
+        }}
+        onMouseEnter={(e) => {
+          if (!scanning) {
+            e.currentTarget.style.color = '#B45309'
+            e.currentTarget.style.backgroundColor = '#F5EFE6'
+          }
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.color = '#8A7D6F'
+          e.currentTarget.style.backgroundColor = 'transparent'
+        }}
+        title="Volver a escanear servidores locales (Ollama, LM Studio, vLLM, llama.cpp)"
         aria-label="Re-escanear modelos locales"
       >
-        <RefreshCw className={`size-3 ${scanning ? 'animate-spin' : ''}`} />
+        <RefreshCw size={10} className={scanning ? 'animate-spin' : ''} />
       </button>
     </div>
   )

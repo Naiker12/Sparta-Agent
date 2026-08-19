@@ -85,40 +85,37 @@ function InlineSvgIcon({ vendor, size }: { vendor: string; size: number }) {
     )
   }
 
-  // 6. DeepSeek (SVGL DeepSeek Whale/AI Icon)
+  // 6. DeepSeek (SVGL DeepSeek Whale)
   if (v === 'deepseek') {
     return (
       <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-        <rect width="24" height="24" rx="5" fill="#0066FF" fillOpacity="0.12" />
-        <path d="M12 4C7.58 4 4 7.58 4 12C4 16.42 7.58 20 12 20C16.42 20 20 16.42 20 12C20 7.58 16.42 4 12 4ZM15.5 13.5C15.5 14.33 14.83 15 14 15H10C9.17 15 8.5 14.33 8.5 13.5V10.5C8.5 9.67 9.17 9 10 9H14C14.83 9 15.5 9.67 15.5 10.5V13.5Z" fill="#0066FF" />
-        <circle cx="11" cy="11.5" r="1" fill="#FFFFFF" />
-        <circle cx="13" cy="11.5" r="1" fill="#FFFFFF" />
+        <path
+          d="M21.5 12.2C20.9 7.8 17.2 4.5 12.5 4.5C7.2 4.5 2.8 8.8 2.8 14.1C2.8 17.1 4.1 19.7 6.3 21.5C6.7 20.6 7.3 19.8 8.1 19.2C9.3 18.3 10.8 17.8 12.3 17.8C15.1 17.8 17.5 19.3 18.8 21.5C20.6 19.7 21.5 17.1 21.5 14.1C21.5 13.5 21.5 12.8 21.5 12.2Z"
+          fill="#0066FF"
+        />
+        <circle cx="8" cy="11.5" r="1.4" fill="#FFFFFF" />
+        <path d="M14 11.5C15 11.5 16 12.2 16 13.5C16 14.8 15 15.5 14 15.5" stroke="#FFFFFF" strokeWidth="1.6" strokeLinecap="round" />
       </svg>
     )
   }
 
-  // 7. Ollama (SVGL Ollama Llama)
+  // 7. Ollama (SVGL Ollama Llama Silhouette)
   if (v === 'ollama') {
     return (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-        <rect width="24" height="24" rx="5" fill="#FFFFFF" fillOpacity="0.08" stroke="currentColor" strokeWidth="1" />
-        <circle cx="9" cy="8" r="1.5" fill="currentColor" />
-        <circle cx="15" cy="8" r="1.5" fill="currentColor" />
-        <path d="M7 14C7 16.76 9.24 19 12 19C14.76 19 17 16.76 17 14H7Z" fill="currentColor" />
-        <path d="M6 5L8 8H6V5Z" fill="currentColor" />
-        <path d="M18 5L16 8H18V5Z" fill="currentColor" />
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2C8.686 2 6 4.686 6 8c0 1.25.385 2.41 1.043 3.37L5.5 15.5c-.3.6-.1 1.3.5 1.6.2.1.4.1.6.1h.9l.7 2.1c.2.6.8 1 1.4 1h4.8c.6 0 1.2-.4 1.4-1l.7-2.1h.9c.2 0 .4 0 .6-.1.6-.3.8-1 .5-1.6l-1.543-4.13C17.615 10.41 18 9.25 18 8c0-3.314-2.686-6-6-6zm-2.5 5a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm5 0a1.5 1.5 0 110 3 1.5 1.5 0 010-3z" />
       </svg>
     )
   }
 
-  // 8. LM Studio
+  // 8. LM Studio (SVGL LM Studio Aperture)
   if (v === 'lmstudio') {
     return (
       <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-        <rect width="24" height="24" rx="5" fill="#6C5CE7" fillOpacity="0.15" stroke="#6C5CE7" strokeWidth="1.2" />
-        <circle cx="12" cy="12" r="5" stroke="#6C5CE7" strokeWidth="2" />
-        <circle cx="12" cy="12" r="2" fill="#6C5CE7" />
-        <path d="M12 3V6M12 18V21M3 12H6M18 12H21" stroke="#6C5CE7" strokeWidth="1.5" strokeLinecap="round" />
+        <rect width="24" height="24" rx="6" fill="#1C1826" />
+        <circle cx="12" cy="12" r="6" stroke="#9065F7" strokeWidth="2" />
+        <circle cx="12" cy="12" r="2.5" fill="#C084FC" />
+        <path d="M12 2V5.5M12 18.5V22M2 12H5.5M18.5 12H22" stroke="#9065F7" strokeWidth="1.75" strokeLinecap="round" />
       </svg>
     )
   }
@@ -237,6 +234,112 @@ function InlineSvgIcon({ vendor, size }: { vendor: string; size: number }) {
     )
   }
 
+  // 19b. vLLM
+  if (v === 'vllm') {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <path d="M3 5L8 19L11 19L6 5L3 5Z" fill="#3B82F6" />
+        <path d="M9 5L14 19L17 19L12 5L9 5Z" fill="#F59E0B" />
+        <path d="M15 5L20 19L21 19L17.5 5L15 5Z" fill="#10B981" />
+      </svg>
+    )
+  }
+
+  // 19c. Kimi / Moonshot AI
+  if (v === 'kimi' || v === 'moonshot') {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="10" fill="#1E293B" />
+        <path d="M6 14C8 10 12 8 16 10C17 10.5 18 11.5 18 13C16 11 13 11 9 14.5C8 15.3 7 15.5 6 14Z" fill="#38BDF8" />
+        <circle cx="15.5" cy="8.5" r="1.5" fill="#F8FAFC" />
+      </svg>
+    )
+  }
+
+  // 19c2. Qwen / Alibaba Cloud AI
+  if (v === 'qwen' || v.includes('qwen') || v === 'alibaba') {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <rect width="24" height="24" rx="6" fill="#6366F1" />
+        <path d="M6 8L12 4L18 8V16L12 20L6 16V8Z" stroke="#FFFFFF" strokeWidth="1.8" strokeLinejoin="round" />
+        <path d="M12 4V12M18 8L12 12M6 8L12 12M12 12V20M12 12L18 16M12 12L6 16" stroke="#FFFFFF" strokeWidth="1.2" />
+        <circle cx="12" cy="12" r="2.5" fill="#38BDF8" />
+      </svg>
+    )
+  }
+
+  // 19c3. Microsoft / Phi
+  if (v === 'microsoft' || v.includes('phi') || v === 'msft') {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <rect x="2" y="2" width="9.5" height="9.5" rx="1" fill="#F25022" />
+        <rect x="12.5" y="2" width="9.5" height="9.5" rx="1" fill="#7FBA00" />
+        <rect x="2" y="12.5" width="9.5" height="9.5" rx="1" fill="#00A4EF" />
+        <rect x="12.5" y="12.5" width="9.5" height="9.5" rx="1" fill="#FFB900" />
+      </svg>
+    )
+  }
+
+  // 19d. Unsloth AI (SVGL Mascot)
+  if (v === 'unsloth' || v.includes('unsloth')) {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <rect width="24" height="24" rx="6" fill="#EA580C" />
+        <circle cx="12" cy="12" r="7.5" fill="#FB923C" />
+        <path d="M8.2 9.5C7.2 10.2 7 11.5 7.8 12.5C8.6 13.5 9.8 13.2 10.2 12C10.5 10.8 9.5 9 8.2 9.5Z" fill="#1C1917" />
+        <path d="M15.8 9.5C16.8 10.2 17 11.5 16.2 12.5C15.4 13.5 14.2 13.2 13.8 12C13.5 10.8 14.5 9 15.8 9.5Z" fill="#1C1917" />
+        <circle cx="8.6" cy="11.2" r="0.9" fill="#FFFFFF" />
+        <circle cx="15.4" cy="11.2" r="0.9" fill="#FFFFFF" />
+        <ellipse cx="12" cy="14" rx="1.6" ry="1.1" fill="#1C1917" />
+      </svg>
+    )
+  }
+
+  // 19e. Hugging Face (SVGL 🤗 Official)
+  if (v === 'huggingface' || v === 'hf') {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="10" fill="#FFD21E" />
+        <ellipse cx="8.5" cy="10" rx="1.3" ry="1.9" fill="#1C1917" />
+        <ellipse cx="15.5" cy="10" rx="1.3" ry="1.9" fill="#1C1917" />
+        <path d="M8.5 14.5C10 16.8 14 16.8 15.5 14.5" stroke="#1C1917" strokeWidth="1.8" strokeLinecap="round" />
+        <path d="M3.2 13.5C2 12 3 9.8 4.6 10.8C5.6 11.5 5.2 13.8 3.2 13.5Z" fill="#FF8D00" />
+        <path d="M20.8 13.5C22 12 21 9.8 19.4 10.8C18.4 11.5 18.8 13.8 20.8 13.5Z" fill="#FF8D00" />
+      </svg>
+    )
+  }
+
+  // 19f. Replicate
+  if (v === 'replicate') {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <rect width="24" height="24" rx="5" fill="#000000" />
+        <path d="M5 6H19V8H5V6ZM5 11H15V13H5V11ZM5 16H11V18H5V16Z" fill="#FFFFFF" />
+      </svg>
+    )
+  }
+
+  // 19g. MiniMax (Audio/Wave gradient icon)
+  if (v === 'minimax') {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <rect width="24" height="24" rx="6" fill="#F43F5E" fillOpacity="0.15" />
+        <path d="M4 12V12.01M7 9V15M10 6V18M13 8V16M16 10V14M19 12V12.01" stroke="#F43F5E" strokeWidth="2" strokeLinecap="round" />
+      </svg>
+    )
+  }
+
+  // 19h. Muse / Inkling / Laguna / Creative
+  if (v === 'muse' || v.includes('inkling') || v.includes('laguna') || v.includes('ornith')) {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <rect width="24" height="24" rx="6" fill="#0D9488" fillOpacity="0.15" />
+        <path d="M12 3C7.02944 3 3 7.02944 3 12C3 16.9706 7.02944 21 12 21C16.9706 21 21 16.9706 21 12C21 7.02944 16.9706 3 12 3ZM12 7C14.7614 7 17 9.23858 17 12C17 14.7614 14.7614 17 12 17C9.23858 17 7 14.7614 7 12C7 9.23858 9.23858 7 12 7Z" fill="#0D9488" />
+        <circle cx="12" cy="12" r="2.5" fill="#5EEAD4" />
+      </svg>
+    )
+  }
+
   // 20. Google Search / Gmail / Drive / Calendar / GitHub / Notion / Slack / Figma
   if (v === 'gmail') {
     return (
@@ -326,7 +429,54 @@ function InlineSvgIcon({ vendor, size }: { vendor: string; size: number }) {
     )
   }
 
-  // Fallback for filesystem, git, fetch, etc.
+  if (v === 'filesystem' || v.includes('filesystem') || v === 'files') {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" fill="#F59E0B" fillOpacity="0.2" stroke="#D97706" strokeWidth="1.75" />
+      </svg>
+    )
+  }
+
+  if (v === 'fetch' || v.includes('fetch') || v === 'web-search') {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="10" stroke="#0284C7" strokeWidth="1.75" />
+        <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" stroke="#0284C7" strokeWidth="1.75" />
+      </svg>
+    )
+  }
+
+  if (v === 'onedrive' || v.includes('onedrive') || v.includes('sharepoint')) {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z" fill="#0078D4" />
+      </svg>
+    )
+  }
+
+  if (v === 'chrome' || v.includes('chrome') || v.includes('devtools')) {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="10" fill="#EA4335" />
+        <circle cx="12" cy="12" r="4" fill="#FFFFFF" />
+        <circle cx="12" cy="12" r="3" fill="#4285F4" />
+        <path d="M12 2C15.8 2 19.1 4.3 20.6 7.7L12 12" fill="#34A853" />
+        <path d="M3.4 16.3C2.5 15 2 13.6 2 12c0-3.6 1.9-6.7 4.7-8.4L12 12" fill="#FBBC05" />
+      </svg>
+    )
+  }
+
+  if (v === 'sqlite' || v === 'database' || v === 'sql') {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <ellipse cx="12" cy="5" rx="9" ry="3" fill="#003B57" fillOpacity="0.2" stroke="#003B57" strokeWidth="1.75" />
+        <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" stroke="#003B57" strokeWidth="1.75" />
+        <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" stroke="#003B57" strokeWidth="1.75" />
+      </svg>
+    )
+  }
+
+  // Fallback for generic vendors
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <rect x="3" y="3" width="18" height="18" rx="4" />
@@ -343,8 +493,9 @@ export function BrandIcon({ vendor, size = 16, className }: BrandIconProps) {
   if (
     [
       'openai', 'anthropic', 'claude', 'claude-code', 'google', 'gemini', 'gemini-cli', 'google-gemini',
-      'groq', 'mistral', 'deepseek', 'ollama', 'lmstudio', 'xai', 'grok', 'together', 'cohere',
+      'groq', 'mistral', 'deepseek', 'ollama', 'lmstudio', 'vllm', 'kimi', 'moonshot', 'xai', 'grok', 'together', 'cohere',
       'perplexity', 'fireworks', 'nvidia', 'azure', 'meta', 'llama', 'openrouter', 'opencode',
+      'unsloth', 'qwen', 'alibaba', 'huggingface', 'hf', 'microsoft', 'phi', 'msft',
       'custom', 'llamacpp', 'gmail', 'google-drive', 'drive', 'google-calendar', 'calendar',
       'slack', 'github', 'notion', 'figma',
     ].includes(normalizedVendor) ||
@@ -356,7 +507,12 @@ export function BrandIcon({ vendor, size = 16, className }: BrandIconProps) {
     normalizedVendor.includes('llama') ||
     normalizedVendor.includes('mistral') ||
     normalizedVendor.includes('deepseek') ||
-    normalizedVendor.includes('openrouter')
+    normalizedVendor.includes('openrouter') ||
+    normalizedVendor.includes('unsloth') ||
+    normalizedVendor.includes('qwen') ||
+    normalizedVendor.includes('huggingface') ||
+    normalizedVendor.includes('microsoft') ||
+    normalizedVendor.includes('phi')
   ) {
     return <InlineSvgIcon vendor={normalizedVendor} size={size} />
   }

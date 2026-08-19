@@ -9,6 +9,9 @@ export type SettingsTab =
   | 'search'
   | 'shell'
   | 'harnesses'
+  | 'voice'
+  | 'system'
+  | 'data'
 
 export type SessionMode = 'chat' | 'agent'
 

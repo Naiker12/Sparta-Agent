@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Check, X, Eye, EyeOff } from 'lucide-react'
 import { useTranslation } from 'ia-sparta-i18n'
-import { SettingRow, SettingGroup } from './primitives'
+import { SettingRow, SettingGroup } from './shared'
 
 export function SearchTab() {
   const { t } = useTranslation()

@@ -3,7 +3,7 @@ import type { ChatRequest, ChatStreamChunk } from './chat'
 export type ProviderVendor =
   | 'anthropic' | 'openai' | 'google' | 'groq' | 'mistral' | 'azure'
   | 'deepseek' | 'together' | 'fireworks' | 'openrouter' | 'cohere' | 'perplexity' | 'xai' | 'nvidia'
-  | 'ollama' | 'lmstudio' | 'llamacpp' | 'custom'
+  | 'ollama' | 'lmstudio' | 'llamacpp' | 'unsloth' | 'vllm' | 'huggingface' | 'custom'
 
 export type ProviderKind = 'cloud' | 'local'
 

@@ -315,9 +315,9 @@ export function SvglTestTube({ size = 16, className = '' }: { size?: number; cla
 export function SvglDeepSearch({ size = 16, className = '' }: { size?: number; className?: string }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" className={className} fill="none">
-      <circle cx="12" cy="12" r="9.5" stroke="#F59E0B" strokeWidth="1.8" />
-      <path d="M12 2.5C12 2.5 16 6.5 16 12C16 17.5 12 21.5 12 21.5C12 21.5 8 17.5 8 12C8 6.5 12 2.5 12 2.5Z" stroke="#F59E0B" strokeWidth="1.5" />
-      <path d="M3 12H21" stroke="#F59E0B" strokeWidth="1.5" />
+      <circle cx="12" cy="12" r="9.5" stroke="#10B981" strokeWidth="1.8" />
+      <path d="M12 2.5C12 2.5 16 6.5 16 12C16 17.5 12 21.5 12 21.5C12 21.5 8 17.5 8 12C8 6.5 12 2.5 12 2.5Z" stroke="#10B981" strokeWidth="1.5" />
+      <path d="M3 12H21" stroke="#10B981" strokeWidth="1.5" />
     </svg>
   )
 }

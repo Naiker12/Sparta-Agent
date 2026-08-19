@@ -274,7 +274,7 @@ const WORKFLOW_CATEGORIES: WorkflowCategory[] = [
     labelKey: 'chat.workflows.deepSearch',
     defaultLabel: 'Investigar',
     icon: SvglDeepSearch,
-    color: '#f59e0b',
+    color: '#10b981',
     options: [
       {
         id: 'search-google',
@@ -364,7 +364,7 @@ interface AgentWorkflowsBarProps {
   compact?: boolean
 }
 
-export function AgentWorkflowsBar({ onSelectWorkflow, compact = false }: AgentWorkflowsBarProps) {
+export function AgentWorkflowsBar({ onSelectWorkflow }: AgentWorkflowsBarProps) {
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const { setInput, setSessionMode: setDefaultSessionMode } = useSettingsStore()
   const activeSessionId = useSessionStore((s) => s.activeSessionId)
@@ -398,14 +398,14 @@ export function AgentWorkflowsBar({ onSelectWorkflow, compact = false }: AgentWo
 
   return (
     <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 6 }}>
-      {/* Barra superior de pestañas de flujos con iconos SVGL exactos */}
+      {/* Barra superior de pestañas de flujos centrada con iconos SVGL */}
       <div
         style={{
           display: 'flex',
           alignItems: 'center',
           gap: 6,
           flexWrap: 'wrap',
-          justifyContent: compact ? 'center' : 'flex-start',
+          justifyContent: 'center',
         }}
       >
         {WORKFLOW_CATEGORIES.map((cat) => {

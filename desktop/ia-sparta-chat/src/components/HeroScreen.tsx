@@ -1,16 +1,76 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Code, Shield, Split, TestTube, Globe, Cpu, Sparkles, RotateCw } from 'lucide-react'
+import { Sparkles, RotateCw } from 'lucide-react'
 import { useSettingsStore } from 'ia-sparta-core'
 import { useTranslation } from 'ia-sparta-i18n'
+import {
+  SvglReact,
+  SvglNextjs,
+  SvglTypeScript,
+  SvglNodejs,
+  SvglPython,
+  SvglVitest,
+  SvglPostgres,
+  SvglSparta,
+} from './input/SvglIcons'
 
 const EXAMPLE_PROMPTS = [
-  { es: '¿Cómo implemento autenticación JWT en Node.js?', en: 'How do I implement JWT authentication in Node.js?', icon: Shield, color: '#10b981' },
-  { es: 'Explícame las diferencias entre REST y GraphQL', en: 'Explain the differences between REST and GraphQL', icon: Split, color: '#8b5cf6' },
-  { es: 'Refactoriza este código para hacerlo más legible', en: 'Refactor this code to make it more readable', icon: Code, color: '#f59e0b' },
-  { es: 'Busca las últimas noticias sobre IA generativa', en: 'Search for the latest news on generative AI', icon: Globe, color: '#3b82f6' },
-  { es: 'Escribe tests unitarios para esta función', en: 'Write unit tests for this function', icon: TestTube, color: '#ec4899' },
-  { es: '¿Cuál es la complejidad temporal de quicksort?', en: 'What is the time complexity of quicksort?', icon: Cpu, color: '#06b6d4' },
+  {
+    es: 'Crea un componente UI en React y TypeScript con diseño moderno y animaciones',
+    en: 'Build a modern React & TypeScript UI component with fluid animations',
+    icon: SvglReact,
+    badge: 'React',
+    color: '#0284c7',
+  },
+  {
+    es: '¿Cómo implemento autenticación JWT segura con cookies HTTP-only en Node.js?',
+    en: 'How to implement secure JWT authentication with HTTP-only cookies in Node.js?',
+    icon: SvglNodejs,
+    badge: 'Node.js',
+    color: '#16a34a',
+  },
+  {
+    es: 'Explícame las diferencias entre arquitecturas REST y GraphQL en Next.js',
+    en: 'Explain differences between REST and GraphQL architectures in Next.js',
+    icon: SvglNextjs,
+    badge: 'Next.js',
+    color: '#18181b',
+  },
+  {
+    es: 'Refactoriza este código aplicando principios SOLID y TypeScript estricto',
+    en: 'Refactor this code applying SOLID principles and strict TypeScript typing',
+    icon: SvglTypeScript,
+    badge: 'TypeScript',
+    color: '#2563eb',
+  },
+  {
+    es: 'Escribe una suite exhaustiva de tests unitarios con Vitest y mocks de APIs',
+    en: 'Write a comprehensive unit test suite with Vitest and API mocks',
+    icon: SvglVitest,
+    badge: 'Vitest',
+    color: '#65a30d',
+  },
+  {
+    es: 'Escribe un microservicio en Python usando FastAPI y validación con Pydantic',
+    en: 'Write a Python microservice using FastAPI and Pydantic models validation',
+    icon: SvglPython,
+    badge: 'Python',
+    color: '#d97706',
+  },
+  {
+    es: 'Audita y optimiza consultas complejas, índices y esquema en PostgreSQL',
+    en: 'Audit and optimize complex queries, indexes and schema in PostgreSQL',
+    icon: SvglPostgres,
+    badge: 'Postgres',
+    color: '#0284c7',
+  },
+  {
+    es: 'Actúa como Sparta Agent autónomo: investiga el workspace y ejecuta los cambios',
+    en: 'Act as autonomous Sparta Agent: inspect workspace and execute code changes',
+    icon: SvglSparta,
+    badge: 'Sparta Agent',
+    color: '#b45309',
+  },
 ]
 
 export function HeroScreen() {
@@ -30,141 +90,149 @@ export function HeroScreen() {
   }, [])
 
   return (
-    <div style={{
-      flex: 1,
-      minHeight: 0,
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 16,
-      padding: '0 40px',
-      userSelect: 'none',
-    }}>
+    <div
+      style={{
+        flex: 1,
+        minHeight: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 16,
+        padding: '0 24px',
+        userSelect: 'none',
+        fontFamily: 'var(--font-ui, system-ui, sans-serif)',
+      }}
+    >
+      {/* Animated Brand Icon */}
       <motion.div
         initial={{ opacity: 0, scale: 0.7, y: 10 }}
-        animate={{ 
-          opacity: 1, 
+        animate={{
+          opacity: 1,
           scale: 1,
-          y: [0, -8, 0]
+          y: [0, -6, 0],
         }}
-        transition={{ 
+        transition={{
           opacity: { duration: 0.5 },
           scale: { duration: 0.5 },
           y: {
             repeat: Infinity,
             duration: 4,
-            ease: "easeInOut",
-            delay: 0.5
-          }
+            ease: 'easeInOut',
+            delay: 0.5,
+          },
         }}
         style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          width: 220,
-          height: 135,
+          width: 180,
+          height: 110,
           overflow: 'hidden',
           position: 'relative',
         }}
       >
-        {/* Glow de acento de marca Detrás del Logo */}
-        <div style={{
-          position: 'absolute',
-          width: 140,
-          height: 140,
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, var(--accent-glow) 0%, transparent 70%)',
-          pointerEvents: 'none',
-        }} />
+        {/* Glow de acento de marca */}
+        <div
+          style={{
+            position: 'absolute',
+            width: 130,
+            height: 130,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, var(--accent-glow) 0%, transparent 70%)',
+            pointerEvents: 'none',
+          }}
+        />
         <img
           src="./sparta-icon.png"
           alt="Sparta"
           style={{
             position: 'absolute',
-            top: -28,
-            width: 220,
-            height: 220,
+            top: -24,
+            width: 180,
+            height: 180,
             objectFit: 'contain',
             filter: 'var(--invert-logo)',
           }}
         />
       </motion.div>
 
+      {/* Hero Title & Welcome */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, delay: 0.1 }}
         style={{ textAlign: 'center' }}
       >
-        <h1 
+        <h1
           style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: 'clamp(32px, 5vw, 42px)',
+            fontFamily: 'var(--font-display, var(--font-ui))',
+            fontSize: 'clamp(28px, 4.5vw, 36px)',
             fontWeight: 800,
             letterSpacing: '-0.02em',
-            color: 'var(--text-display)',
+            color: 'var(--text-display, #1C1713)',
             lineHeight: 1.25,
             marginBottom: 6,
           }}
         >
-          {t('chat.heroTitle') || 'Chat with Sparta Agent'}
+          {t('chat.heroTitle') || 'Chat con Sparta Agent'}
         </h1>
         <p
           style={{
-            fontSize: 14,
-            color: 'var(--text-muted)',
+            fontSize: 13.5,
+            color: 'var(--text-muted, #786C5E)',
             textAlign: 'center',
-            maxWidth: 480,
+            maxWidth: 500,
             lineHeight: 1.5,
             fontWeight: 400,
-            fontFamily: 'var(--font-ui)',
+            margin: 0,
           }}
         >
-          {t('chat.welcome') || 'Run local LLMs, cloud models, agents & MCP tools'}
+          {t('chat.welcome') || 'Describe tu tarea. Elegiré las herramientas, explicaré el plan y confirmaré antes de acciones riesgosas.'}
         </p>
       </motion.div>
 
-
-
-
-
+      {/* Prompt Suggestions Grid with Authentic SVGL Technology Vectors */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}
         style={{
           width: '100%',
-          maxWidth: 480,
-          marginTop: 8,
+          maxWidth: 560,
+          marginTop: 6,
         }}
       >
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'between',
-          marginBottom: 10,
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1 }}>
-            <Sparkles size={12} style={{ color: 'var(--accent)', opacity: 0.7 }} />
-            <span style={{
-              fontSize: 11,
-              color: 'var(--text-muted)',
-              fontFamily: 'var(--font-ui)',
-              fontWeight: 500,
-              letterSpacing: '0.03em',
-              textTransform: 'uppercase',
-            }}>
-              {t('chat.tryWith')}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 8,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Sparkles size={13} color="#B45309" />
+            <span
+              style={{
+                fontSize: 11,
+                color: 'var(--text-muted, #8A7D6F)',
+                fontWeight: 700,
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase',
+                fontFamily: 'var(--font-mono, monospace)',
+              }}
+            >
+              {t('chat.tryWith') || 'PRUEBA CON'}
             </span>
           </div>
           <button
             onClick={shufflePrompts}
-            title={t('chat.suggestions')}
+            title={t('chat.suggestions') || 'Nuevas sugerencias'}
             style={{
               background: 'none',
               border: 'none',
-              color: 'var(--text-muted)',
+              color: '#8A7D6F',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -173,27 +241,26 @@ export function HeroScreen() {
               borderRadius: '50%',
               transition: 'all 0.2s ease',
             }}
-            onMouseEnter={e => {
-              e.currentTarget.style.color = 'var(--accent)'
-              e.currentTarget.style.background = 'var(--accent-muted)'
-              const icon = e.currentTarget.querySelector('svg')
-              if (icon) icon.style.transform = 'rotate(180deg)'
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = '#B45309'
+              e.currentTarget.style.backgroundColor = '#F5EFE6'
             }}
-            onMouseLeave={e => {
-              e.currentTarget.style.color = 'var(--text-muted)'
-              e.currentTarget.style.background = 'none'
-              const icon = e.currentTarget.querySelector('svg')
-              if (icon) icon.style.transform = 'rotate(0deg)'
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = '#8A7D6F'
+              e.currentTarget.style.backgroundColor = 'transparent'
             }}
           >
-            <RotateCw size={12} style={{ transition: 'transform 0.3s ease' }} />
+            <RotateCw size={13} />
           </button>
         </div>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(2, 1fr)',
-          gap: 8,
-        }}>
+
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: 8,
+          }}
+        >
           {prompts.map((prompt, idx) => {
             const Icon = prompt.icon
             return (
@@ -201,55 +268,61 @@ export function HeroScreen() {
                 key={prompt.es}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.35 + idx * 0.07, duration: 0.3, ease: 'easeOut' }}
+                transition={{ delay: 0.35 + idx * 0.06, duration: 0.25, ease: 'easeOut' }}
                 onClick={() => setInput(prompt[lang as 'es' | 'en'] || prompt.es)}
                 style={{
                   display: 'flex',
-                  alignItems: 'flex-start',
+                  alignItems: 'center',
                   gap: 10,
                   padding: '10px 12px',
-                  background: 'var(--bg-surface)',
-                  border: '1px solid var(--border-subtle)',
-                  borderRadius: 10,
-                  color: 'var(--text-secondary)',
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid #EAE3D8',
+                  borderRadius: 12,
+                  color: '#423A31',
                   fontSize: 11.5,
-                  fontFamily: 'var(--font-ui)',
                   cursor: 'pointer',
-                  transition: 'all 0.18s ease',
+                  transition: 'all 0.15s ease',
                   textAlign: 'left',
-                  lineHeight: 1.45,
+                  lineHeight: 1.4,
                   position: 'relative',
                   overflow: 'hidden',
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.02)',
                 }}
-                onMouseEnter={e => {
-                  const el = e.currentTarget
-                  el.style.borderColor = prompt.color
-                  el.style.background = `color-mix(in srgb, ${prompt.color} 6%, var(--bg-surface))`
-                  el.style.transform = 'translateY(-1px)'
-                  el.style.boxShadow = `0 4px 12px color-mix(in srgb, ${prompt.color} 12%, transparent)`
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = prompt.color
+                  e.currentTarget.style.backgroundColor = '#FAF8F5'
+                  e.currentTarget.style.transform = 'translateY(-1px)'
+                  e.currentTarget.style.boxShadow = `0 4px 12px rgba(0,0,0,0.04)`
                 }}
-                onMouseLeave={e => {
-                  const el = e.currentTarget
-                  el.style.borderColor = 'var(--border-subtle)'
-                  el.style.background = 'var(--bg-surface)'
-                  el.style.transform = 'translateY(0)'
-                  el.style.boxShadow = 'none'
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = '#EAE3D8'
+                  e.currentTarget.style.backgroundColor = '#FFFFFF'
+                  e.currentTarget.style.transform = 'translateY(0)'
+                  e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,0.02)'
                 }}
               >
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: 26,
-                  height: 26,
-                  borderRadius: 7,
-                  background: `color-mix(in srgb, ${prompt.color} 12%, transparent)`,
-                  flexShrink: 0,
-                  marginTop: 1,
-                }}>
-                  <Icon size={13} style={{ color: prompt.color }} strokeWidth={2} />
+                {/* Authentic SVGL Technology Icon */}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 30,
+                    height: 30,
+                    borderRadius: 8,
+                    backgroundColor: '#F5EFE6',
+                    border: '1px solid #E6DFD5',
+                    flexShrink: 0,
+                  }}
+                >
+                  <Icon size={16} />
                 </div>
-                <span style={{ flex: 1, paddingTop: 3 }}>{prompt[lang as 'es' | 'en'] || prompt.es}</span>
+
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ display: 'block', fontSize: 11.5, fontWeight: 500, color: '#2A241E' }}>
+                    {prompt[lang as 'es' | 'en'] || prompt.es}
+                  </span>
+                </div>
               </motion.button>
             )
           })}

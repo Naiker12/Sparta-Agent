@@ -47,8 +47,8 @@ export function HarnessCard({ harness }: { harness: HarnessStatus }) {
   const [copied, setCopied] = useState(false)
   const meta = HARNESS_METADATA[harness.id] ?? {
     vendor: 'filesystem',
-    color: 'var(--accent)',
-    accentBg: 'var(--accent-muted)',
+    color: '#B45309',
+    accentBg: '#F5EFE6',
     commandHint: harness.id,
     installCmd: `npm install -g ${harness.id}`,
   }
@@ -65,56 +65,51 @@ export function HarnessCard({ harness }: { harness: HarnessStatus }) {
       style={{
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'space-between',
-        padding: '16px 18px',
-        borderRadius: 14,
-        background: 'var(--bg-surface)',
-        border: '1px solid var(--border-normal)',
-        borderLeft: harness.installed ? `4px solid ${meta.color}` : '1px solid var(--border-normal)',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
-        transition: 'all 0.18s ease',
-        position: 'relative',
-        overflow: 'hidden',
+        gap: 8,
+        padding: '10px 14px',
+        borderRadius: 10,
+        backgroundColor: '#FFFFFF',
+        border: '1px solid #EAE3D8',
+        borderLeft: harness.installed ? `3px solid ${meta.color}` : '1px solid #EAE3D8',
+        boxShadow: '0 1px 2px rgba(0, 0, 0, 0.02)',
+        transition: 'all 0.15s ease',
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = harness.installed ? meta.color : 'var(--border-strong)'
-        e.currentTarget.style.transform = 'translateY(-1px)'
-        e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.08)'
+        e.currentTarget.style.borderColor = harness.installed ? meta.color : '#DED6CA'
+        e.currentTarget.style.boxShadow = '0 2px 6px rgba(0, 0, 0, 0.03)'
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = harness.installed ? meta.color : 'var(--border-normal)'
-        e.currentTarget.style.transform = 'none'
-        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.04)'
+        e.currentTarget.style.borderColor = harness.installed ? meta.color : '#EAE3D8'
+        e.currentTarget.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.02)'
       }}
     >
       {/* Top Header Row */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 240, flex: 1 }}>
           <div
             style={{
-              width: 38,
-              height: 38,
-              borderRadius: 10,
+              width: 32,
+              height: 32,
+              borderRadius: 8,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              background: harness.installed ? meta.accentBg : 'var(--bg-input)',
-              border: `1px solid ${harness.installed ? meta.color : 'var(--border-subtle)'}`,
-              color: harness.installed ? meta.color : 'var(--text-muted)',
+              backgroundColor: '#F5EFE6',
+              border: '1px solid #E6DFD5',
               flexShrink: 0,
             }}
           >
-            <BrandIcon vendor={meta.vendor} size={20} />
+            <BrandIcon vendor={meta.vendor} size={18} />
           </div>
 
-          <div style={{ minWidth: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
               <span
                 style={{
-                  fontSize: 14,
-                  fontWeight: 600,
-                  color: 'var(--text-primary)',
-                  fontFamily: 'var(--font-ui)',
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: '#2A241E',
+                  letterSpacing: '-0.01em',
                 }}
               >
                 {harness.label}
@@ -125,48 +120,44 @@ export function HarnessCard({ harness }: { harness: HarnessStatus }) {
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: 4,
-                    padding: '2px 8px',
+                    gap: 3,
+                    padding: '1px 6px',
                     borderRadius: 999,
-                    fontSize: 11,
-                    fontWeight: 600,
-                    background: 'rgba(34, 197, 94, 0.12)',
-                    color: '#16a34a',
-                    border: '1px solid rgba(34, 197, 94, 0.25)',
-                    fontFamily: 'var(--font-ui)',
+                    fontSize: 9.5,
+                    fontWeight: 700,
+                    backgroundColor: '#DCFCE7',
+                    color: '#166534',
+                    border: '1px solid #86EFAC',
                   }}
                 >
-                  <Check size={11} strokeWidth={2.5} /> Detectado
+                  <Check size={10} strokeWidth={2.5} /> Detectado
                 </span>
               ) : (
                 <span
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: 4,
-                    padding: '2px 8px',
+                    gap: 3,
+                    padding: '1px 6px',
                     borderRadius: 999,
-                    fontSize: 11,
-                    fontWeight: 500,
-                    background: 'var(--bg-hover)',
-                    color: 'var(--text-muted)',
-                    border: '1px solid var(--border-subtle)',
-                    fontFamily: 'var(--font-ui)',
+                    fontSize: 9.5,
+                    fontWeight: 600,
+                    backgroundColor: '#F5EFE6',
+                    color: '#786C5E',
+                    border: '1px solid #E6DFD5',
                   }}
                 >
-                  <X size={11} /> No instalado
+                  <X size={10} /> No instalado
                 </span>
               )}
             </div>
 
             <p
               style={{
-                fontSize: 12,
-                color: 'var(--text-secondary)',
-                marginTop: 4,
-                marginBottom: 0,
-                lineHeight: 1.45,
-                fontFamily: 'var(--font-ui)',
+                fontSize: 11,
+                color: '#786C5E',
+                margin: '2px 0 0 0',
+                lineHeight: 1.35,
               }}
             >
               {harness.description}
@@ -175,24 +166,24 @@ export function HarnessCard({ harness }: { harness: HarnessStatus }) {
         </div>
 
         {/* Action Button */}
-        <div style={{ flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
           {harness.installed ? (
             <div
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 5,
-                padding: '5px 10px',
-                borderRadius: 8,
-                background: 'var(--bg-input)',
-                border: '1px solid var(--border-subtle)',
-                fontSize: 11,
-                fontWeight: 500,
-                color: 'var(--text-secondary)',
-                fontFamily: 'var(--font-mono)',
+                gap: 4,
+                padding: '4px 8px',
+                borderRadius: 6,
+                backgroundColor: '#FAF8F5',
+                border: '1px solid #DED7CB',
+                fontSize: 10.5,
+                fontWeight: 600,
+                color: '#423A31',
+                fontFamily: 'var(--font-mono, monospace)',
               }}
             >
-              <ShieldCheck size={13} color="#16a34a" />
+              <ShieldCheck size={12} color="#16A34A" />
               <span>{meta.commandHint}</span>
             </div>
           ) : (
@@ -202,21 +193,23 @@ export function HarnessCard({ harness }: { harness: HarnessStatus }) {
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: 5,
-                  padding: '5px 10px',
-                  borderRadius: 8,
-                  background: 'var(--bg-input)',
-                  border: '1px solid var(--border-subtle)',
+                  gap: 4,
+                  padding: '4px 9px',
+                  borderRadius: 6,
+                  backgroundColor: '#FAF8F5',
+                  border: '1px solid #DED7CB',
                   fontSize: 11,
-                  fontWeight: 500,
-                  color: 'var(--text-secondary)',
+                  fontWeight: 600,
+                  color: '#423A31',
                   cursor: 'pointer',
-                  fontFamily: 'var(--font-ui)',
-                  transition: 'all 0.15s',
+                  transition: 'all 0.12s',
+                  whiteSpace: 'nowrap',
                 }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#EFEAE1' }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#FAF8F5' }}
                 title={`Copiar comando: ${meta.installCmd}`}
               >
-                {copied ? <CheckCircle size={12} color="#16a34a" /> : <Copy size={12} />}
+                {copied ? <CheckCircle size={11} color="#16a34a" /> : <Copy size={11} />}
                 <span>{copied ? 'Copiado' : 'Copiar npm'}</span>
               </button>
 
@@ -228,22 +221,22 @@ export function HarnessCard({ harness }: { harness: HarnessStatus }) {
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: 5,
-                    padding: '5px 12px',
-                    borderRadius: 8,
-                    background: 'var(--accent)',
-                    color: '#ffffff',
+                    gap: 4,
+                    padding: '4px 10px',
+                    borderRadius: 6,
+                    backgroundColor: '#B45309',
+                    color: '#FFFFFF',
                     fontSize: 11,
                     fontWeight: 600,
                     textDecoration: 'none',
-                    fontFamily: 'var(--font-ui)',
-                    transition: 'opacity 0.15s',
+                    transition: 'background 0.12s',
+                    whiteSpace: 'nowrap',
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#92400E' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#B45309' }}
                 >
                   <span>Guía</span>
-                  <ExternalLink size={11} />
+                  <ExternalLink size={10} />
                 </a>
               )}
             </div>
@@ -254,20 +247,19 @@ export function HarnessCard({ harness }: { harness: HarnessStatus }) {
       {/* Bottom Metadata Bar */}
       <div
         style={{
-          marginTop: 12,
-          paddingTop: 10,
-          borderTop: '1px solid var(--border-subtle)',
+          paddingTop: 6,
+          borderTop: '1px solid #F0ECE4',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          fontSize: 11,
-          fontFamily: 'var(--font-mono)',
-          color: 'var(--text-muted)',
+          fontSize: 10,
+          fontFamily: 'var(--font-mono, monospace)',
+          color: '#8A7D6F',
         }}
       >
         {harness.installed ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, overflow: 'hidden' }}>
-            <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, overflow: 'hidden' }}>
+            <span style={{ color: '#2A241E', fontWeight: 600 }}>
               {harness.version || 'v1.0.0'}
             </span>
             <span>·</span>
@@ -276,7 +268,7 @@ export function HarnessCard({ harness }: { harness: HarnessStatus }) {
                 textOverflow: 'ellipsis',
                 overflow: 'hidden',
                 whiteSpace: 'nowrap',
-                maxWidth: 400,
+                maxWidth: 360,
               }}
               title={harness.path || ''}
             >
@@ -284,13 +276,11 @@ export function HarnessCard({ harness }: { harness: HarnessStatus }) {
             </span>
           </div>
         ) : (
-          <span style={{ color: 'var(--text-muted)' }}>
-            Binario no encontrado en el PATH del sistema
-          </span>
+          <span>Binario no encontrado en el PATH del sistema</span>
         )}
 
-        <span style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-          {harness.installed ? 'Listo para sesión' : 'Requiere instalación'}
+        <span style={{ fontSize: 9.5, textTransform: 'uppercase', letterSpacing: '0.05em', color: harness.installed ? '#16A34A' : '#A89F91' }}>
+          {harness.installed ? 'LISTO PARA SESIÓN' : 'REQUIERE INSTALACIÓN'}
         </span>
       </div>
     </div>

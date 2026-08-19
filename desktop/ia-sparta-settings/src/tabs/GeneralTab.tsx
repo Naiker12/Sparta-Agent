@@ -1,6 +1,6 @@
 import { useSettingsStore, useProviderStore, modelSupportsThinking, thinkingUnsupportedReason } from 'ia-sparta-core'
 import { useTranslation } from 'ia-sparta-i18n'
-import { SettingRow, SettingGroup } from './primitives'
+import { SettingRow, SettingGroup } from './shared'
 import { Switch } from 'ia-sparta-design-system'
 import type { ReasoningEffort } from 'ia-sparta-core'
 

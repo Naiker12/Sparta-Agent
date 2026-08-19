@@ -1,7 +1,6 @@
 import { MessageSquare, Terminal, PanelLeftOpen, PanelLeftClose } from 'lucide-react'
 import { useUIStore, type MainView } from 'ia-sparta-core'
 import { AppMenu } from './AppMenu'
-import { SpartaIcon } from 'ia-sparta-chat'
 import { FEATURES, IS_ELECTRON } from 'ia-sparta-platform'
 import { Button } from 'ia-sparta-design-system'
 import { ResourceMonitorPopover } from './ResourceMonitorPopover'
@@ -24,7 +23,7 @@ export function TitleBar() {
   function handleTabClick(type: MainView['type']) {
     if (type === 'terminal') {
       toggleTerminal()
-      if (mainView.type === 'agents' || mainView.type === 'sessions' || mainView.type === 'skills' || mainView.type === 'mcp' || mainView.type === 'channels' || mainView.type === 'memory') {
+      if (mainView.type === 'agents' || mainView.type === 'models' || mainView.type === 'skills' || mainView.type === 'mcp' || mainView.type === 'channels' || mainView.type === 'memory') {
         setMainView({ type: 'chat' })
       }
       return
@@ -57,16 +56,6 @@ export function TitleBar() {
       </Button>
 
       <AppMenu />
-
-      {/* Brand logo & Title */}
-      <div className="no-drag flex items-center gap-2 px-1">
-        <SpartaIcon size={16} />
-        <span className="text-xs font-semibold" style={{ color: 'var(--text-display)', fontFamily: 'var(--font-ui)', letterSpacing: '0.02em' }}>
-          Sparta
-        </span>
-      </div>
-
-      <div className="w-px h-[14px]" style={{ background: 'var(--border-subtle)' }} />
 
       {/* ── Segmented Control Tabs (Chat / Terminal) ── */}
       <div

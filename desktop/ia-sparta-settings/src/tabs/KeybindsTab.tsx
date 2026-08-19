@@ -1,4 +1,4 @@
-import { SettingGroup } from './primitives'
+import { SettingGroup } from './shared'
 import { useTranslation } from 'ia-sparta-i18n'
 
 interface Keybind {

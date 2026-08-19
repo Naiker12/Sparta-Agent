@@ -3,6 +3,7 @@
  *
  * Fachada pública.
  */
+export * from './AIProviderModal'
 export * from './ConfigureProviderDialog'
 export * from './ChooseProviderDialog'
 export * from './ProviderCard'

@@ -26,7 +26,7 @@ import { useSkillStore } from 'ia-sparta-core'
 import { useLocalSkillsLoader } from 'ia-sparta-core'
 
 
-const SessionsView = lazy(() => import('../views/SessionsView').then(m => ({ default: m.SessionsView })))
+const ModelHubView = lazy(() => import('../views/ModelHubView').then(m => ({ default: m.ModelHubView })))
 const SkillsView = lazy(() => import('ia-sparta-skills').then(m => ({ default: m.SkillsView })))
 const McpView = lazy(() => import('ia-sparta-mcp').then(m => ({ default: m.McpView })))
 const ChannelsView = lazy(() => import('ia-sparta-channels').then(m => ({ default: m.ChannelsView })))
@@ -44,8 +44,7 @@ function ViewSkeleton() {
 }
 
 const FULL_VIEWS: Record<string, React.ReactNode> = {
-  sessions: <Suspense fallback={<ViewSkeleton />}><SessionsView /></Suspense>,
-
+  models: <Suspense fallback={<ViewSkeleton />}><ModelHubView /></Suspense>,
   skills: <Suspense fallback={<ViewSkeleton />}><SkillsView /></Suspense>,
   mcp: <Suspense fallback={<ViewSkeleton />}><McpView /></Suspense>,
   channels: <Suspense fallback={<ViewSkeleton />}><ChannelsView /></Suspense>,

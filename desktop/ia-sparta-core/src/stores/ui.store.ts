@@ -7,7 +7,7 @@ export type MainView =
   | { type: 'chat'; sessionId?: string }
   | { type: 'terminal' }
   | { type: 'agents' }
-  | { type: 'sessions' }
+  | { type: 'models' }
   | { type: 'skills' }
   | { type: 'mcp' }
   | { type: 'channels'; channelId?: string }

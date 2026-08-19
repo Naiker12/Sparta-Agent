@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react'
-import { Button } from 'ia-sparta-design-system'
 import {
   Plug, Check, Loader2, Upload,
   Terminal, Globe, Copy, Info,
@@ -28,12 +27,18 @@ type InputMode = 'manual' | 'config'
 
 /* ── Shared input style ─────────────────────────────────── */
 const inputStyle: React.CSSProperties = {
-  width: '100%', height: 34, padding: '0 10px',
-  borderRadius: 7, border: '1px solid var(--border-normal)',
-  background: 'var(--bg-input)', color: 'var(--text-primary)',
-  fontSize: 11, fontFamily: 'var(--font-ui)',
-  outline: 'none', boxSizing: 'border-box',
-  transition: 'border-color 0.12s',
+  width: '100%',
+  height: 36,
+  padding: '0 12px',
+  borderRadius: 8,
+  border: '1px solid #DED7CB',
+  backgroundColor: '#FFFFFF',
+  color: '#1C1713',
+  fontSize: 12,
+  fontFamily: 'var(--font-ui, system-ui, sans-serif)',
+  outline: 'none',
+  boxSizing: 'border-box',
+  transition: 'border-color 0.15s, box-shadow 0.15s',
 }
 
 export function AddMcpServerDialog({ open, onClose, editServer, initialTools }: AddMcpServerDialogProps) {
@@ -335,40 +340,40 @@ export function AddMcpServerDialog({ open, onClose, editServer, initialTools }: 
     <>
     <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) { reset(); onClose() } }}>
       <DialogContent
-        className="max-w-[520px] w-full overflow-hidden"
+        className="max-w-[540px] w-full overflow-hidden p-0"
         style={{
-          background: 'var(--bg-modal)',
-          border: '1px solid var(--border-normal)',
-          borderRadius: 22,
+          backgroundColor: '#FFFFFF',
+          border: '1px solid #EAE3D8',
+          borderRadius: 20,
           padding: 0,
-          maxWidth: 520,
+          maxWidth: 540,
           width: '100%',
           overflow: 'hidden',
-          fontFamily: 'var(--font-ui)',
-          boxShadow: '0 30px 70px rgba(0,0,0,0.14)',
+          fontFamily: 'var(--font-ui, system-ui, sans-serif)',
+          boxShadow: '0 24px 64px -12px rgba(40, 25, 10, 0.18), 0 2px 8px rgba(0,0,0,0.04)',
         }}
       >
         {/* ── Header ────────────────────────────────────────── */}
         <div style={{
-          padding: '20px 20px 14px',
-          borderBottom: '1px solid var(--border-subtle)',
+          padding: '20px 24px 14px',
+          borderBottom: '1px solid #F0ECE4',
         }}>
           <DialogHeader>
-            <DialogTitle style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.2 }}>
-              {isEditing ? t('mcp.editServer') : t('mcp.addServerTitle')}
+            <DialogTitle style={{ fontSize: 16, fontWeight: 700, color: '#1C1713', lineHeight: 1.25, letterSpacing: '-0.01em' }}>
+              {isEditing ? t('mcp.editServer') || 'Editar servidor MCP' : t('mcp.addServerTitle') || 'Agregar servidor MCP'}
             </DialogTitle>
-            <DialogDescription style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-              {t('mcp.addServerDesc')}
+            <DialogDescription style={{ fontSize: 12, color: '#786C5E', lineHeight: 1.5, margin: '3px 0 0 0' }}>
+              {t('mcp.addServerDesc') || 'Conecta un servidor MCP para exponer herramientas al agente.'}
             </DialogDescription>
           </DialogHeader>
 
           {/* Mode tabs */}
           <div style={{
-            display: 'flex', marginTop: 14, gap: 0,
-            borderBottom: '1px solid var(--border-subtle)',
+            display: 'flex', marginTop: 14, gap: 4,
+            borderBottom: '1px solid #F0ECE4',
           }}>
             {(['manual', 'config'] as InputMode[]).map((mode) => {
-              const label = mode === 'manual' ? t('mcp.manualConfig') : t('mcp.importJson')
+              const label = mode === 'manual' ? (t('mcp.manualConfig') || 'Configuración manual') : (t('mcp.importJson') || 'Importar JSON')
               const active = inputMode === mode
               return (
                 <button
@@ -376,12 +381,18 @@ export function AddMcpServerDialog({ open, onClose, editServer, initialTools }: 
                   type="button"
                   onClick={() => setInputMode(mode)}
                   style={{
-                    padding: '6px 14px 8px', fontSize: 11, fontWeight: active ? 600 : 500,
-                    fontFamily: 'var(--font-ui)', cursor: 'pointer',
-                    border: 'none', background: 'transparent',
-                    borderBottom: `2px solid ${active ? 'var(--accent)' : 'transparent'}`,
-                    color: active ? 'var(--accent)' : 'var(--text-muted)',
-                    marginBottom: -1, outline: 'none', transition: 'all 0.12s',
+                    padding: '8px 16px',
+                    fontSize: 12,
+                    fontWeight: active ? 700 : 500,
+                    fontFamily: 'var(--font-ui, system-ui, sans-serif)',
+                    cursor: 'pointer',
+                    border: 'none',
+                    background: 'transparent',
+                    borderBottom: `2px solid ${active ? '#B45309' : 'transparent'}`,
+                    color: active ? '#B45309' : '#8A7D6F',
+                    marginBottom: -1,
+                    outline: 'none',
+                    transition: 'all 0.12s',
                   }}
                 >
                   {label}
@@ -393,16 +404,16 @@ export function AddMcpServerDialog({ open, onClose, editServer, initialTools }: 
 
         {/* ── Body ──────────────────────────────────────────── */}
         <form id="mcp-form" onSubmit={handleSubmit}>
-          <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={{ padding: '16px 24px', display: 'flex', flexDirection: 'column', gap: 14, maxHeight: '68vh', overflowY: 'auto' }}>
 
             {inputMode === 'manual' ? (
               <>
                 {/* Server name */}
-                <FieldRow label={t('mcp.serverName')}>
+                <FieldRow label={t('mcp.serverName') || 'NOMBRE DEL SERVIDOR'}>
                   <FocusInput
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder={t('mcp.serverNamePlaceholder')}
+                    placeholder={t('mcp.serverNamePlaceholder') || 'Ej: MongoDB, GitHub, Filesystem...'}
                     autoFocus
                   />
                 </FieldRow>
@@ -411,26 +422,33 @@ export function AddMcpServerDialog({ open, onClose, editServer, initialTools }: 
                 {editServer && getAuthTypeForServer(editServer.id) && (
                   <div style={{
                     display: 'flex', alignItems: 'center', gap: 8,
-                    padding: '8px 12px', borderRadius: 8,
-                    background: 'var(--bg-surface)',
-                    border: '1px solid var(--border-subtle)',
+                    padding: '7px 12px', borderRadius: 8,
+                    backgroundColor: '#FAF8F5',
+                    border: '1px solid #EAE3D8',
                   }}>
-                    <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      Auth
+                    <span style={{ fontSize: 10, fontWeight: 700, color: '#8A7D6F', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      AUTH
                     </span>
                     <span style={{
-                      fontSize: 10, fontWeight: 700, fontFamily: 'var(--font-mono)',
-                      padding: '2px 8px', borderRadius: 4,
-                      background: authType === 'oauth2'
-                        ? 'rgba(59,130,246,0.12)'
+                      fontSize: 10.5, fontWeight: 700, fontFamily: 'var(--font-mono, monospace)',
+                      padding: '2px 8px', borderRadius: 5,
+                      backgroundColor: authType === 'oauth2'
+                        ? '#EFF6FF'
                         : authType === 'api_key'
-                          ? 'rgba(234,179,8,0.12)'
-                          : 'rgba(107,114,128,0.12)',
+                          ? '#FEF3C7'
+                          : '#F5EFE6',
                       color: authType === 'oauth2'
-                        ? '#60a5fa'
+                        ? '#1D4ED8'
                         : authType === 'api_key'
-                          ? '#eab308'
-                          : '#9ca3af',
+                          ? '#92400E'
+                          : '#5C5245',
+                      border: `1px solid ${
+                        authType === 'oauth2'
+                          ? '#BFDBFE'
+                          : authType === 'api_key'
+                            ? '#FDE68A'
+                            : '#E6DFD5'
+                      }`,
                     }}>
                       {authType === 'oauth2' ? 'OAuth 2.0' : authType === 'api_key' ? 'API Key' : 'Sin auth'}
                     </span>
@@ -438,20 +456,20 @@ export function AddMcpServerDialog({ open, onClose, editServer, initialTools }: 
                 )}
 
                 {/* Connection type */}
-                <FieldRow label={t('mcp.connectionType')}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                <FieldRow label={t('mcp.connectionType') || 'TIPO DE CONEXIÓN'}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                     <TypeCard
                       active={type === 'stdio'}
-                      icon={<Terminal size={13} />}
-                      title={t('mcp.stdio')}
-                      subtitle={t('mcp.stdioDesc')}
+                      icon={<Terminal size={14} />}
+                      title={t('mcp.stdio') || 'Stdio'}
+                      subtitle={t('mcp.stdioDesc') || 'Proceso local'}
                       onClick={() => { setType('stdio'); setTestResult(null) }}
                     />
                     <TypeCard
                       active={type === 'http'}
-                      icon={<Globe size={13} />}
-                      title={t('mcp.httpSse')}
-                      subtitle={t('mcp.httpSseDesc')}
+                      icon={<Globe size={14} />}
+                      title={t('mcp.httpSse') || 'HTTP / SSE'}
+                      subtitle={t('mcp.httpSseDesc') || 'Servidor remoto'}
                       onClick={() => { setType('http'); setTestResult(null) }}
                     />
                   </div>
@@ -459,11 +477,11 @@ export function AddMcpServerDialog({ open, onClose, editServer, initialTools }: 
 
                 {/* Command / URL */}
                 {type === 'stdio' ? (
-                  <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: 8 }}>
-                    <FieldRow label={t('mcp.command')}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '130px 1fr', gap: 10 }}>
+                    <FieldRow label={t('mcp.command') || 'COMANDO'}>
                       <FocusInput value={command} onChange={(e) => setCommand(e.target.value)} placeholder="npx" />
                     </FieldRow>
-                    <FieldRow label={t('mcp.arguments')}>
+                    <FieldRow label={t('mcp.arguments') || 'ARGUMENTOS'}>
                       <FocusInput
                         value={args}
                         onChange={(e) => setArgs(e.target.value)}
@@ -472,57 +490,57 @@ export function AddMcpServerDialog({ open, onClose, editServer, initialTools }: 
                     </FieldRow>
                   </div>
                 ) : (
-                  <FieldRow label={t('mcp.serverUrl')}>
+                  <FieldRow label={t('mcp.serverUrl') || 'URL DEL SERVIDOR'}>
                     <FocusInput value={url} onChange={(e) => setUrl(e.target.value)} placeholder="http://localhost:3001/mcp" />
                   </FieldRow>
                 )}
 
                 {/* Env vars */}
-                <FieldRow label={t('mcp.envVars')}>
+                <FieldRow label={t('mcp.envVars') || 'VARIABLES DE ENTORNO'}>
                   <FocusInput
                     value={envVars}
                     onChange={(e) => setEnvVars(e.target.value)}
                     placeholder="KEY=value KEY2=value2"
                   />
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 5 }}>
-                    <Info size={10} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
-                    <span style={{ fontSize: 10, color: 'var(--text-muted)', lineHeight: 1.4 }}>
-                      {t('mcp.envVarsHint')}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 4 }}>
+                    <Info size={11} color="#8A7D6F" style={{ flexShrink: 0 }} />
+                    <span style={{ fontSize: 10.5, color: '#8A7D6F', lineHeight: 1.4 }}>
+                      {t('mcp.envVarsHint') || 'Opcional · separar con espacios: API_KEY=sk-xxx PORT=3001'}
                     </span>
                   </div>
                 </FieldRow>
 
                 {/* Command preview */}
-                <FieldRow label={t('mcp.commandPreview')}>
+                <FieldRow label={t('mcp.commandPreview') || 'VISTA PREVIA DEL COMANDO'}>
                   <div style={{
                     display: 'flex', alignItems: 'center', gap: 8,
-                    padding: '0 10px', minHeight: 34, borderRadius: 7,
-                    border: '1px solid var(--border-subtle)',
-                    background: 'var(--bg-elevated)',
-                    fontFamily: 'var(--font-mono)', fontSize: 11,
+                    padding: '0 12px', minHeight: 36, borderRadius: 8,
+                    border: '1px solid #EAE3D8',
+                    backgroundColor: '#FAF8F5',
+                    fontFamily: 'var(--font-mono, monospace)', fontSize: 11,
                   }}>
                     <span style={{
                       flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                      color: isEmpty ? 'var(--text-muted)' : 'var(--text-primary)',
+                      color: isEmpty ? '#A89F91' : '#2A241E',
                       fontStyle: isEmpty ? 'italic' : 'normal',
                       userSelect: 'all',
                     }}>
-                      {isEmpty ? t('mcp.commandPreviewPlaceholder') : preview}
+                      {isEmpty ? (t('mcp.commandPreviewPlaceholder') || 'El comando se mostrará aquí') : preview}
                     </span>
                     {!isEmpty && (
                       <button
                         type="button"
                         onClick={copyPreview}
-                        title="Copy"
+                        title="Copiar comando"
                         style={{
-                          width: 22, height: 22, borderRadius: 5, border: 'none',
-                          background: copied ? 'rgba(34,197,94,0.12)' : 'transparent',
-                          color: copied ? 'var(--status-ok)' : 'var(--text-muted)',
+                          width: 24, height: 24, borderRadius: 6, border: 'none',
+                          backgroundColor: copied ? '#DCFCE7' : 'transparent',
+                          color: copied ? '#166534' : '#8A7D6F',
                           cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
                           flexShrink: 0, transition: 'all 0.12s',
                         }}
                       >
-                        {copied ? <Check size={11} strokeWidth={2.5} /> : <Copy size={11} />}
+                        {copied ? <Check size={12} strokeWidth={2.5} /> : <Copy size={12} />}
                       </button>
                     )}
                   </div>
@@ -531,67 +549,215 @@ export function AddMcpServerDialog({ open, onClose, editServer, initialTools }: 
                 {/* Test connection */}
                 <div style={{
                   display: 'flex', alignItems: 'center', gap: 10,
-                  padding: '10px 12px', borderRadius: 8,
-                  border: '1px solid var(--border-subtle)',
-                  background: 'var(--bg-surface)',
+                  padding: '10px 14px', borderRadius: 10,
+                  border: '1px solid #EAE3D8',
+                  backgroundColor: '#FAF8F5',
                 }}>
-                  <Button
+                  <button
                     type="button"
-                    variant="outline"
-                    size="sm"
                     onClick={handleTest}
                     disabled={testing || (type === 'stdio' ? !command.trim() : !url.trim())}
-                    style={{ fontSize: 11, fontWeight: 600, gap: 6, height: 28, paddingLeft: 10, paddingRight: 10, flexShrink: 0 }}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      height: 30,
+                      padding: '0 12px',
+                      borderRadius: 7,
+                      backgroundColor: '#FFFFFF',
+                      border: '1px solid #DED7CB',
+                      color: '#2A241E',
+                      fontSize: 11.5,
+                      fontWeight: 600,
+                      cursor: testing || (type === 'stdio' ? !command.trim() : !url.trim()) ? 'default' : 'pointer',
+                      opacity: testing || (type === 'stdio' ? !command.trim() : !url.trim()) ? 0.6 : 1,
+                      flexShrink: 0,
+                      transition: 'background-color 0.12s',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!testing && (type === 'stdio' ? command.trim() : url.trim())) {
+                        e.currentTarget.style.backgroundColor = '#F5EFE6'
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = '#FFFFFF'
+                    }}
                   >
                     {testing
-                      ? <Loader2 size={11} style={{ animation: 'spin 1s linear infinite' }} />
-                      : <Plug size={11} />}
-                    {t('mcp.testConnection')}
-                  </Button>
+                      ? <Loader2 size={12} className="animate-spin" />
+                      : <Plug size={12} color="#B45309" />}
+                    <span>{t('mcp.testConnection') || 'Probar conexión'}</span>
+                  </button>
                   {testResult ? (
-                    <span style={{ fontSize: 11, color: 'var(--status-ok)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5 }}>
-                      <Check size={11} strokeWidth={2.5} />
+                    <span style={{ fontSize: 11, color: testResult.startsWith('Error') ? '#DC2626' : '#166534', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5 }}>
+                      {!testResult.startsWith('Error') && <Check size={12} strokeWidth={2.5} />}
                       {testResult}
                     </span>
                   ) : !testing && (
-                    <span style={{ fontSize: 10, color: 'var(--text-muted)', lineHeight: 1.4 }}>
-                      {t('mcp.testHint')}
+                    <span style={{ fontSize: 10.5, color: '#8A7D6F', lineHeight: 1.4 }}>
+                      {t('mcp.testHint') || 'Verifica que el servidor responde correctamente antes de guardar'}
                     </span>
                   )}
                 </div>
               </>
             ) : (
               <>
-                {/* Info banner */}
+                {/* Info banner with modern ecosystem badges */}
                 <div style={{
-                  display: 'flex', gap: 8, padding: '10px 12px', borderRadius: 8,
-                  background: 'var(--accent-muted)', border: '1px solid var(--accent-dim)',
+                  display: 'flex', flexDirection: 'column', gap: 8, padding: '12px 14px', borderRadius: 10,
+                  backgroundColor: '#FAF8F5', border: '1px solid #EAE3D8',
                 }}>
-                  <Info size={13} style={{ color: 'var(--accent)', flexShrink: 0, marginTop: 1 }} />
-                  <span
-                    style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.5, fontFamily: 'var(--font-ui)' }}
-                    dangerouslySetInnerHTML={{ __html: t('mcp.importJsonHint') }}
-                  />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                    <Info size={14} color="#B45309" style={{ flexShrink: 0 }} />
+                    <span
+                      style={{ fontSize: 11.5, color: '#423A31', lineHeight: 1.45, fontFamily: 'var(--font-ui, system-ui, sans-serif)', fontWeight: 500 }}
+                      dangerouslySetInnerHTML={{ __html: t('mcp.importJsonHint') || 'Compatible con configuraciones de <strong>Claude Desktop</strong>, <strong>Cursor</strong>, <strong>Windsurf</strong> y formato universal <code>mcpServers</code>.' }}
+                    />
+                  </div>
+
+                  {/* Format Pills */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginTop: 2 }}>
+                    {['Claude Desktop', 'Cursor IDE', 'Windsurf', 'Sparta Universal'].map((tag) => (
+                      <span
+                        key={tag}
+                        style={{
+                          fontSize: 10,
+                          fontWeight: 600,
+                          padding: '2px 7px',
+                          borderRadius: 999,
+                          backgroundColor: '#F5EFE6',
+                          color: '#786C5E',
+                          border: '1px solid #E6DFD5',
+                          fontFamily: 'var(--font-mono, monospace)',
+                        }}
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Templates & Quick Load Bar */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ fontSize: 10.5, fontWeight: 700, color: '#8A7D6F', textTransform: 'uppercase', letterSpacing: '0.04em', fontFamily: 'var(--font-mono, monospace)' }}>
+                      PLANTILLAS:
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setConfigJson(`{\n  "mcpServers": {\n    "filesystem": {\n      "command": "npx",\n      "args": ["-y", "@modelcontextprotocol/server-filesystem", "./"]\n    }\n  }\n}`)}
+                      style={{
+                        padding: '3px 8px',
+                        fontSize: 11,
+                        fontWeight: 600,
+                        backgroundColor: '#FAF8F5',
+                        border: '1px solid #DED7CB',
+                        borderRadius: 6,
+                        color: '#2A241E',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      + Stdio (npx)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfigJson(`{\n  "mcpServers": {\n    "remote-mcp": {\n      "url": "http://localhost:3001/mcp"\n    }\n  }\n}`)}
+                      style={{
+                        padding: '3px 8px',
+                        fontSize: 11,
+                        fontWeight: 600,
+                        backgroundColor: '#FAF8F5',
+                        border: '1px solid #DED7CB',
+                        borderRadius: 6,
+                        color: '#2A241E',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      + HTTP / SSE
+                    </button>
+                  </div>
+
+                  {configJson.trim() && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        try {
+                          const parsed = JSON.parse(configJson)
+                          setConfigJson(JSON.stringify(parsed, null, 2))
+                        } catch { /* ignore */ }
+                      }}
+                      style={{
+                        padding: '3px 8px',
+                        fontSize: 11,
+                        fontWeight: 600,
+                        backgroundColor: 'transparent',
+                        border: '1px solid #DED7CB',
+                        borderRadius: 6,
+                        color: '#786C5E',
+                        cursor: 'pointer',
+                      }}
+                      title="Formatear indentación JSON"
+                    >
+                      {'{ } Formatear'}
+                    </button>
+                  )}
                 </div>
 
                 {/* JSON textarea */}
-                <FieldRow label={t('mcp.jsonConfig')}>
+                <FieldRow label={t('mcp.jsonConfig') || 'CONFIGURACIÓN JSON'}>
                   <textarea
                     value={configJson}
                     onChange={(e) => setConfigJson(e.target.value)}
                     placeholder={`{\n  "mcpServers": {\n    "filesystem": {\n      "command": "npx",\n      "args": ["-y", "@modelcontextprotocol/server-filesystem", "./"]\n    }\n  }\n}`}
                     style={{
                       width: '100%', minHeight: 160, resize: 'vertical',
-                      padding: '10px 12px', borderRadius: 7,
-                      border: '1px solid var(--border-normal)',
-                      background: 'var(--bg-input)', color: 'var(--text-primary)',
-                      fontFamily: 'var(--font-mono)', fontSize: 11, lineHeight: 1.5,
-                      outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.12s',
+                      padding: '10px 12px', borderRadius: 8,
+                      border: '1px solid #DED7CB',
+                      backgroundColor: '#FFFFFF', color: '#1C1713',
+                      fontFamily: 'var(--font-mono, monospace)', fontSize: 11.5, lineHeight: 1.5,
+                      outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.15s',
                     }}
-                    onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)' }}
-                    onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border-normal)' }}
+                    onFocus={(e) => { e.currentTarget.style.borderColor = '#B45309' }}
+                    onBlur={(e) => { e.currentTarget.style.borderColor = '#DED7CB' }}
                   />
                 </FieldRow>
+
+                {/* Live validation status / detected servers */}
+                {configJson.trim() && (
+                  (() => {
+                    try {
+                      const parsed = JSON.parse(configJson)
+                      const serversObj = parsed.mcpServers ?? parsed
+                      const keys = typeof serversObj === 'object' && serversObj !== null ? Object.keys(serversObj) : []
+                      if (keys.length > 0) {
+                        return (
+                          <div style={{
+                            display: 'flex', alignItems: 'center', gap: 6,
+                            padding: '6px 12px', borderRadius: 7,
+                            backgroundColor: '#DCFCE7', color: '#166534',
+                            border: '1px solid #86EFAC', fontSize: 11, fontWeight: 600,
+                          }}>
+                            <Check size={13} strokeWidth={2.5} />
+                            <span>{keys.length} {keys.length === 1 ? 'servidor detectado' : 'servidores detectados'}: {keys.join(', ')}</span>
+                          </div>
+                        )
+                      }
+                      return null
+                    } catch (err) {
+                      return (
+                        <div style={{
+                          display: 'flex', alignItems: 'center', gap: 6,
+                          padding: '6px 12px', borderRadius: 7,
+                          backgroundColor: '#FEE2E2', color: '#991B1B',
+                          border: '1px solid #FCA5A5', fontSize: 11, fontWeight: 500,
+                        }}>
+                          <Info size={13} />
+                          <span>Sintaxis JSON incompleta o con errores: {(err as Error).message}</span>
+                        </div>
+                      )
+                    }
+                  })()
+                )}
 
                 <input ref={fileInputRef} type="file" accept=".json" onChange={handleFileUpload} style={{ display: 'none' }} />
                 <button
@@ -599,17 +765,17 @@ export function AddMcpServerDialog({ open, onClose, editServer, initialTools }: 
                   onClick={() => fileInputRef.current?.click()}
                   style={{
                     display: 'inline-flex', alignItems: 'center', gap: 6,
-                    padding: '6px 12px', borderRadius: 7, cursor: 'pointer',
-                    border: '1px solid var(--border-normal)',
-                    background: 'var(--bg-elevated)', color: 'var(--text-secondary)',
-                    fontSize: 11, fontWeight: 600, fontFamily: 'var(--font-ui)',
+                    padding: '7px 14px', borderRadius: 8, cursor: 'pointer',
+                    border: '1px solid #DED7CB',
+                    backgroundColor: '#FFFFFF', color: '#423A31',
+                    fontSize: 11.5, fontWeight: 600, fontFamily: 'var(--font-ui, system-ui, sans-serif)',
                     alignSelf: 'flex-start', transition: 'all 0.12s',
                   }}
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-primary)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border-strong)' }}
-                  onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-secondary)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border-normal)' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#F5EFE6' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#FFFFFF' }}
                 >
-                  <Upload size={12} />
-                  {t('mcp.loadConfigFile')}
+                  <Upload size={13} />
+                  {t('mcp.loadConfigFile') || 'Cargar archivo JSON'}
                 </button>
               </>
             )}
@@ -618,33 +784,54 @@ export function AddMcpServerDialog({ open, onClose, editServer, initialTools }: 
           {/* ── Footer ──────────────────────────────────────── */}
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8,
-            padding: '12px 20px', borderTop: '1px solid var(--border-subtle)',
+            padding: '14px 24px', borderTop: '1px solid #F0ECE4',
           }}>
             <button
               type="button"
               onClick={() => { reset(); onClose() }}
               style={{
-                padding: '6px 16px', borderRadius: 7, cursor: 'pointer',
-                border: '1px solid var(--border-normal)',
-                background: 'transparent', color: 'var(--text-secondary)',
-                fontSize: 11, fontWeight: 500, fontFamily: 'var(--font-ui)',
+                padding: '7px 18px', borderRadius: 8, cursor: 'pointer',
+                border: '1px solid #DED7CB',
+                backgroundColor: '#FFFFFF', color: '#5C5245',
+                fontSize: 12, fontWeight: 600, fontFamily: 'var(--font-ui, system-ui, sans-serif)',
                 transition: 'all 0.12s',
               }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--bg-hover)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-primary)' }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-secondary)' }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#F5EFE6' }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#FFFFFF' }}
             >
-              {t('mcp.cancel')}
+              {t('mcp.cancel') || 'Cancelar'}
             </button>
-            <Button
+            <button
               form="mcp-form"
               type="submit"
               disabled={inputMode === 'manual' ? !canSubmitManual : !canSubmitConfig}
-              style={{ fontSize: 11, fontWeight: 600, height: 32, minWidth: 130, paddingLeft: 16, paddingRight: 16 }}
+              style={{
+                padding: '7px 20px',
+                borderRadius: 8,
+                border: 'none',
+                backgroundColor: '#B45309',
+                color: '#FFFFFF',
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: (inputMode === 'manual' ? !canSubmitManual : !canSubmitConfig) ? 'default' : 'pointer',
+                opacity: (inputMode === 'manual' ? !canSubmitManual : !canSubmitConfig) ? 0.5 : 1,
+                transition: 'background-color 0.12s',
+                fontFamily: 'var(--font-ui, system-ui, sans-serif)',
+                minWidth: 140,
+              }}
+              onMouseEnter={(e) => {
+                if (inputMode === 'manual' ? canSubmitManual : canSubmitConfig) {
+                  e.currentTarget.style.backgroundColor = '#92400E'
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#B45309'
+              }}
             >
               {inputMode === 'config'
-                ? t('mcp.importServers')
-                : isEditing ? t('mcp.saveChanges') : t('mcp.addServer')}
-            </Button>
+                ? (t('mcp.importServers') || 'Importar servidores')
+                : isEditing ? (t('mcp.saveChanges') || 'Guardar cambios') : (t('mcp.addServer') || 'Agregar servidor')}
+            </button>
           </div>
         </form>
       </DialogContent>
@@ -665,18 +852,6 @@ export function AddMcpServerDialog({ open, onClose, editServer, initialTools }: 
   )
 }
 
-/**
- * Splits a single-line "Arguments" field like a shell would:
- * `-y @modelcontextprotocol/server-filesystem ./` → 3 separate args.
- * Supports quoted segments so paths with spaces (common on Windows) survive
- * as one argument: `-y "C:\My Projects\app"` → ['-y', 'C:\My Projects\app'].
- *
- * Previously this field was split on '\n' (newline), which does nothing on
- * a single-line input — the whole string was passed to the MCP server's
- * command as one malformed argument (e.g. npx received
- * "-y @modelcontextprotocol/server-filesystem ./" as a single arg instead
- * of three), which is what broke stdio server connections silently.
- */
 function parseShellArgs(input: string): string[] {
   const matches = input.trim().match(/"[^"]*"|'[^']*'|\S+/g)
   if (!matches) return []
@@ -693,7 +868,7 @@ function parseShellArgs(input: string): string[] {
 function FieldRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-      <label style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'var(--font-ui)' }}>
+      <label style={{ fontSize: 10.5, fontWeight: 700, color: '#8A7D6F', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'var(--font-mono, monospace)' }}>
         {label}
       </label>
       {children}
@@ -716,8 +891,14 @@ function FocusInput({
       placeholder={placeholder}
       autoFocus={autoFocus}
       style={inputStyle}
-      onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)' }}
-      onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border-normal)' }}
+      onFocus={(e) => {
+        e.currentTarget.style.borderColor = '#B45309'
+        e.currentTarget.style.boxShadow = '0 0 0 2px rgba(180, 83, 9, 0.12)'
+      }}
+      onBlur={(e) => {
+        e.currentTarget.style.borderColor = '#DED7CB'
+        e.currentTarget.style.boxShadow = 'none'
+      }}
     />
   )
 }
@@ -731,27 +912,39 @@ function TypeCard({ active, icon, title, subtitle, onClick }: {
       onClick={onClick}
       style={{
         display: 'flex', alignItems: 'center', gap: 10,
-        padding: '10px 12px', borderRadius: 9, cursor: 'pointer',
-        border: active ? '1px solid var(--accent)' : '1px solid var(--border-normal)',
-        background: active ? 'var(--accent-muted)' : 'var(--bg-elevated)',
+        padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
+        border: active ? '1.5px solid #B45309' : '1px solid #EAE3D8',
+        backgroundColor: active ? '#FDF8F3' : '#FFFFFF',
         outline: 'none', textAlign: 'left', width: '100%',
         transition: 'all 0.12s',
       }}
+      onMouseEnter={(e) => {
+        if (!active) {
+          e.currentTarget.style.borderColor = '#DED6CA'
+          e.currentTarget.style.backgroundColor = '#FAF8F5'
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!active) {
+          e.currentTarget.style.borderColor = '#EAE3D8'
+          e.currentTarget.style.backgroundColor = '#FFFFFF'
+        }
+      }}
     >
       <div style={{
-        width: 30, height: 30, borderRadius: 7, flexShrink: 0,
+        width: 32, height: 32, borderRadius: 8, flexShrink: 0,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: active ? 'var(--accent)' : 'var(--bg-active)',
-        color: active ? '#fff' : 'var(--text-muted)',
+        backgroundColor: active ? '#B45309' : '#F5EFE6',
+        color: active ? '#FFFFFF' : '#8A7D6F',
         transition: 'all 0.12s',
       }}>
         {icon}
       </div>
       <div style={{ minWidth: 0 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: active ? 'var(--accent)' : 'var(--text-primary)', lineHeight: 1.2 }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: active ? '#B45309' : '#1C1713', lineHeight: 1.2 }}>
           {title}
         </div>
-        <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2, lineHeight: 1.3 }}>
+        <div style={{ fontSize: 10.5, color: '#786C5E', marginTop: 2, lineHeight: 1.3 }}>
           {subtitle}
         </div>
       </div>

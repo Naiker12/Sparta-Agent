@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { RefreshCw, Terminal } from 'lucide-react'
+import { RefreshCw, Terminal, Sparkles } from 'lucide-react'
 import { HarnessCard } from '../components/HarnessCard'
 import { HarnessHistoryList } from '../components/HarnessHistoryList'
 import type { HarnessStatus } from 'ia-sparta-ipc-bridge'
@@ -40,99 +40,172 @@ export function HarnessesTab() {
   }, [scan])
 
   const installedCount = statuses?.filter((s) => s.installed).length ?? 0
-  const totalCount = statuses?.length ?? 0
+  const totalCount = statuses?.length ?? 4
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 14, fontFamily: 'var(--font-ui)' }}>
-      {/* Top Banner / Status Overview */}
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 14,
+        padding: '4px 0 16px',
+        maxWidth: 820,
+        width: '100%',
+        fontFamily: 'var(--font-ui, system-ui, -apple-system, sans-serif)',
+      }}
+    >
+      {/* 1. Header principal técnico superior */}
+      <div>
+        <h2
+          style={{
+            fontSize: 11.5,
+            fontWeight: 800,
+            letterSpacing: '0.07em',
+            textTransform: 'uppercase',
+            color: '#2A241E',
+            margin: '0 0 2px 0',
+            fontFamily: 'var(--font-mono, monospace)',
+          }}
+        >
+          SPARTA — HERRAMIENTAS IA Y ASISTENTES CLI
+        </h2>
+        <p
+          style={{
+            fontSize: 11.5,
+            color: '#786C5E',
+            margin: 0,
+            lineHeight: 1.35,
+          }}
+        >
+          Detecta y conecta automáticamente CLIs como Claude Code, OpenCode, Gemini CLI y Codex para streaming en vivo.
+        </p>
+      </div>
+
+      {/* 2. Tarjeta Contenedora Principal */}
       <div
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '14px 18px',
+          backgroundColor: '#FAF8F5',
+          border: '1px solid #EAE3D8',
           borderRadius: 14,
-          background: 'var(--bg-surface)',
-          border: '1px solid var(--border-normal)',
-          boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
+          padding: '14px 18px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 12,
+          boxShadow: '0 1px 4px rgba(0,0,0,0.02)',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: 10,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: 'var(--accent-muted)',
-              color: 'var(--accent)',
-              border: '1px solid var(--accent)',
-              flexShrink: 0,
-            }}
-          >
-            <Terminal size={18} />
-          </div>
+        {/* Card Header */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 8,
+                backgroundColor: '#F5EFE6',
+                border: '1px solid #E6DFD5',
+                color: '#B45309',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <Terminal size={16} />
+            </div>
 
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <h2 style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
-                Herramientas IA y Asistentes CLI
-              </h2>
-              {statuses && (
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <h3
+                  style={{
+                    fontSize: 11.5,
+                    fontWeight: 800,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                    color: '#1C1713',
+                    margin: 0,
+                    fontFamily: 'var(--font-mono, monospace)',
+                  }}
+                >
+                  ASISTENTES Y RUNTIMES DETECTADOS
+                </h3>
                 <span
                   style={{
-                    padding: '2px 8px',
+                    fontSize: 9.5,
+                    fontWeight: 700,
+                    padding: '1.5px 7px',
                     borderRadius: 999,
-                    fontSize: 10.5,
-                    fontWeight: 600,
-                    background: installedCount > 0 ? 'rgba(34, 197, 94, 0.12)' : 'var(--bg-input)',
-                    color: installedCount > 0 ? '#16a34a' : 'var(--text-muted)',
-                    border: `1px solid ${installedCount > 0 ? 'rgba(34, 197, 94, 0.25)' : 'var(--border-subtle)'}`,
+                    backgroundColor: installedCount > 0 ? '#DCFCE7' : '#F5EFE6',
+                    color: installedCount > 0 ? '#166534' : '#786C5E',
+                    border: `1px solid ${installedCount > 0 ? '#86EFAC' : '#E6DFD5'}`,
                   }}
                 >
                   {installedCount}/{totalCount} activos
                 </span>
-              )}
+              </div>
+              <p style={{ fontSize: 11, color: '#8A7D6F', margin: '2px 0 0 0' }}>
+                Harneses de terminal ejecutables en el PATH de tu sistema local.
+              </p>
             </div>
-            <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '2px 0 0 0' }}>
-              Detecta y conecta automáticamente CLIs como Claude Code, OpenCode, Gemini CLI y Codex para streaming en vivo.
-            </p>
           </div>
+
+          <button
+            onClick={scan}
+            disabled={scanning}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 5,
+              padding: '5px 12px',
+              borderRadius: 8,
+              backgroundColor: '#FFFFFF',
+              border: '1px solid #DED7CB',
+              color: '#423A31',
+              fontSize: 11.5,
+              fontWeight: 600,
+              cursor: scanning ? 'default' : 'pointer',
+              opacity: scanning ? 0.7 : 1,
+              transition: 'all 0.12s',
+              whiteSpace: 'nowrap',
+            }}
+            onMouseEnter={(e) => { if (!scanning) e.currentTarget.style.backgroundColor = '#EFEAE1' }}
+            onMouseLeave={(e) => { if (!scanning) e.currentTarget.style.backgroundColor = '#FFFFFF' }}
+          >
+            <RefreshCw size={12} className={scanning ? 'animate-spin' : ''} />
+            <span>{scanning ? 'Escaneando...' : 'Re-escanear'}</span>
+          </button>
         </div>
 
-        <button
-          onClick={scan}
-          disabled={scanning}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-            padding: '6px 12px',
-            borderRadius: 8,
-            background: 'var(--bg-input)',
-            border: '1px solid var(--border-normal)',
-            color: 'var(--text-primary)',
-            fontSize: 12,
-            fontWeight: 500,
-            cursor: scanning ? 'not-allowed' : 'pointer',
-            opacity: scanning ? 0.7 : 1,
-            transition: 'all 0.15s',
-          }}
-          onMouseEnter={(e) => { if (!scanning) e.currentTarget.style.background = 'var(--bg-hover)' }}
-          onMouseLeave={(e) => { if (!scanning) e.currentTarget.style.background = 'var(--bg-input)' }}
-        >
-          <RefreshCw size={13} className={scanning ? 'animate-spin' : ''} />
-          <span>{scanning ? 'Escaneando...' : 'Re-escanear'}</span>
-        </button>
-      </div>
+        {/* Cards List Compact */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {statuses?.map((h) => (
+            <HarnessCard key={h.id} harness={h} />
+          ))}
+        </div>
 
-      {/* Cards List */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {statuses?.map((h) => (
-          <HarnessCard key={h.id} harness={h} />
-        ))}
+        {/* Footer */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            borderTop: '1px solid #EAE3D8',
+            paddingTop: 8,
+            marginTop: 2,
+          }}
+        >
+          <span style={{ fontSize: 10.5, color: '#8A7D6F', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Sparkles size={11} color="#B45309" />
+            Integración nativa con canales de terminal Sparta IPC
+          </span>
+        </div>
       </div>
 
       {/* History log */}

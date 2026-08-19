@@ -6,9 +6,9 @@ import { useUsageStore } from './usage.store'
 const VENDOR_LABELS: Record<ProviderVendor, string> = {
   anthropic: 'Anthropic',
   openai: 'OpenAI',
-  google: 'Google',
+  google: 'Google Gemini',
   groq: 'Groq',
-  mistral: 'Mistral',
+  mistral: 'Mistral AI',
   azure: 'Azure OpenAI',
   deepseek: 'DeepSeek',
   together: 'Together AI',
@@ -16,16 +16,19 @@ const VENDOR_LABELS: Record<ProviderVendor, string> = {
   openrouter: 'OpenRouter',
   cohere: 'Cohere',
   perplexity: 'Perplexity',
-  xai: 'xAI',
-  nvidia: 'NVIDIA',
+  xai: 'xAI (Grok)',
+  nvidia: 'NVIDIA NIM',
   ollama: 'Ollama',
   lmstudio: 'LM Studio',
   llamacpp: 'llama.cpp',
+  unsloth: 'Unsloth AI',
+  vllm: 'vLLM',
+  huggingface: 'Hugging Face',
   custom: 'Servidor personalizado',
 }
 
 export function getVendorLabel(vendor: ProviderVendor): string {
-  return VENDOR_LABELS[vendor]
+  return VENDOR_LABELS[vendor] ?? vendor
 }
 
 interface ProviderState {
@@ -54,7 +57,7 @@ export const useProviderStore = create<ProviderState>()(
           id,
           vendor: data.vendor,
           kind: data.kind,
-          label: data.label || VENDOR_LABELS[data.vendor],
+          label: data.label || VENDOR_LABELS[data.vendor] || data.vendor,
           apiKey: data.apiKey,
           serverUrl: data.serverUrl,
           defaultModel: data.defaultModel,
