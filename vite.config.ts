@@ -47,6 +47,8 @@ export default defineConfig(() => {
     '@xterm/addon-serialize', '@xterm/addon-unicode11',
     '@xterm/addon-web-links', '@xterm/addon-webgl',
     '@tanstack/react-query',
+    '@tanstack/react-table',
+    '@hugeicons/react',
     '@base-ui/react',
     '@pierre/diffs', '@pierre/trees',
     'thinking-orbs', 'shadcn',
@@ -196,6 +198,14 @@ export default defineConfig(() => {
           warn(warning)
         },
       },
+    },
+    optimizeDeps: {
+      include: [
+        '@tanstack/react-table',
+        '@hugeicons/react',
+        'react',
+        'react-dom',
+      ],
     },
     server: {
       port: 5173,
