@@ -1,7 +1,7 @@
 <div align="center">
   <img src="docs/assets/banner.png" alt="Sparta Agent Header Banner" width="100%" style="border-radius: 12px; margin-bottom: 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.12);" />
 
-  <h1> Sparta Agent</h1>
+  <h1>Spartan Agent</h1>
 
   <p><strong>Plataforma de Desarrollo Agéntica Local-First para Equipos de Ingeniería de Alto Rendimiento</strong></p>
 

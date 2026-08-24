@@ -1,0 +1,2 @@
+[data_designer.plugins]
+github_repo_seed = data_designer_github_repo_seed.plugin:github_repo_seed_plugin

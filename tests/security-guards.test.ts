@@ -11,7 +11,7 @@ describe('CommandSanitizer', () => {
   })
 
   it('debe permitir comandos seguros cotidianos', () => {
-    expect(CommandSanitizer.isForbidden('pnpm build')).toBe(false)
+    expect(CommandSanitizer.isForbidden('npm run build')).toBe(false)
     expect(CommandSanitizer.isForbidden('git status')).toBe(false)
     expect(CommandSanitizer.isForbidden('npm run dev')).toBe(false)
   })

@@ -1,0 +1,2 @@
+
+export { normalizeNonEmptyName } from "./strings";

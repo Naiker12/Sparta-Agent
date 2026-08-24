@@ -42,7 +42,9 @@ module.exports = {
     '!public/post.png',
     '!public/readmin.png'
   ],
-  extraResources: [],
+  extraResources: [
+    { from: 'desktop/backend-spartan', to: 'backend' },
+  ],
   icon: 'public/sparta-escritorio.png',
   mac: {
     target: ['dmg'],

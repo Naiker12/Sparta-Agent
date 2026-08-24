@@ -1,0 +1,2 @@
+data-designer-engine<0.6,>=0.5.4
+requests>=2.31

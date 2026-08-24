@@ -1,0 +1,25 @@
+
+// Apply the stored theme and palette before the bundle loads so the first
+// paint is never the wrong mode. Loaded as an external classic script (it
+// blocks parsing, like an inline script) because the backend CSP only
+// allows script-src 'self'.
+try {
+  // Storage reads get their own guards so a blocked localStorage (private
+  // browsing) still resolves a mode from the OS preference.
+  var theme = "light";
+  var palette = null;
+  try {
+    theme = localStorage.getItem("theme") || "light";
+    palette = localStorage.getItem("palette");
+  } catch (e) {}
+  var dark =
+    theme === "dark" ||
+    (theme !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
+  var root = document.documentElement;
+  root.classList.toggle("dark", dark);
+  root.classList.toggle("light", !dark);
+  root.style.colorScheme = dark ? "dark" : "light";
+  if (palette === "classic" || palette === "minimal") {
+    root.setAttribute("data-palette", palette);
+  }
+} catch (e) {}

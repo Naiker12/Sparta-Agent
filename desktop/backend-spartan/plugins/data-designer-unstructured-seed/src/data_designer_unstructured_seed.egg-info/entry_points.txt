@@ -1,0 +1,2 @@
+[data_designer.plugins]
+unstructured = data_designer_unstructured_seed.plugin:unstructured_seed_plugin

@@ -1,5 +1,0 @@
-export { runAgentTask } from 'ia-sparta-core'
-export { executeTool, executeToolsParallel, buildToolDefinitions, tryExecuteNativeTool } from 'ia-sparta-core'
-export type { ToolResult } from 'ia-sparta-core'
-export { getNativeFileToolDefinitions, isNativeFileTool, executeNativeFileTool } from '../tools/native-file-tools'
-export { getNativeShellToolDefinition, isNativeShellTool, executeNativeShellTool } from '../tools/native-shell-tool'

@@ -1,44 +1,7 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
-import {
-  registerMemoryIPC,
-  registerVaultIPC,
-  registerKeyManagerIPC,
-  pushAllKeys,
-  registerSecurityIPC,
-  wireSecurityIntoPipeline,
-  startSidecar,
-  stopSidecar,
-  waitForSidecarReady,
-  registerSidecarIPC,
-  registerTerminalIPC,
-  sessions,
-  agentProcs,
-  registerFilesystemIPC,
-  registerSkillsIPC,
-  registerPermissionIPC,
-  setPermissionWindow,
-  registerModelsIPC,
-  registerHarnessIPC,
-  convertDocumentToMarkdown,
-  getSystemMetrics,
-  stopFileWatcher,
-} from 'ia-sparta-ipc-bridge'
-import {
-  registerChatSendIPC,
-  registerOnMessageHandler,
-  registerSidecarStatusIPC,
-  registerMemoryIPC as registerChatMemoryIPC,
-  registerEditorDiffIPC,
-  registerAudioIPC,
-  registerMcpTestIPC,
-  registerMcpOAuthIPC,
-  registerAgentTaskIPC,
-  registerMcpCallToolIPC,
-  registerMcpSyncIPC,
-  getEnhancedEnv,
-} from 'ia-sparta-chat-ipc'
+import { BackendManager } from './backend-manager'
 
 // Suppress noisy Chromium GPU/cache errors on Windows dev hot-reloads and optimize performance & RAM usage
 app.commandLine.appendSwitch('disable-gpu-shader-disk-cache')
@@ -50,7 +13,6 @@ app.commandLine.appendSwitch('js-flags', '--max-old-space-size=4096')
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-
 process.env.APP_ROOT = path.join(__dirname, '..')
 
 export const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
@@ -62,6 +24,11 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL
   : RENDERER_DIST
 
 let win: BrowserWindow | null
+const backend = new BackendManager()
+
+function backendDirectory(): string {
+  return app.isPackaged ? path.join(process.resourcesPath, 'backend') : path.resolve(__dirname, '..', 'desktop', 'backend-spartan')
+}
 
 function createWindow() {
   win = new BrowserWindow({
@@ -79,7 +46,10 @@ function createWindow() {
     show: false,
     icon: path.join(process.env.VITE_PUBLIC!, 'sparta-escritorio.png'),
     webPreferences: {
-      preload: path.join(__dirname, 'preload.mjs'),
+      // vite-plugin-electron writes the preload entry under this filename.
+      // Loading the old `preload.mjs` leaves the renderer without electronAPI,
+      // so API requests fall through to Vite's HTML page instead of the backend.
+      preload: path.join(__dirname, 'electron-preload.mjs'),
       contextIsolation: true,
       nodeIntegration: false,
     },
@@ -88,7 +58,6 @@ function createWindow() {
 
   win.once('ready-to-show', () => {
     win?.show()
-    if (win) setPermissionWindow(win)
   })
 
   win.webContents.on('did-finish-load', () => {
@@ -96,27 +65,6 @@ function createWindow() {
   })
 
   win.on('closed', () => {
-    for (const [, session] of sessions) {
-      if (session && 'destroy' in session && typeof (session as { destroy?: () => void }).destroy === 'function') {
-        (session as { destroy: () => void }).destroy()
-      }
-    }
-    sessions.clear()
-
-    for (const [, proc] of agentProcs) {
-      try {
-        if (proc && typeof (proc as any).kill === 'function') {
-          (proc as any).kill()
-        }
-      } catch {
-        // ignore
-      }
-    }
-    agentProcs.clear()
-
-    stopFileWatcher()
-    stopSidecar()
-
     win = null
   })
 
@@ -155,20 +103,16 @@ app.on('activate', () => {
 })
 
 app.whenReady().then(async () => {
-  // Enrich process.env.PATH to fix ENOENT when launching binaries like npx, uvx or node
-  const env = getEnhancedEnv()
-  process.env.PATH = env.PATH
-  process.env.Path = env.Path
-
-  // Start native TypeScript EventBridge before creating window
-  startSidecar()
-
-  // Register security IPC early so the renderer gets the real module status
-  registerSecurityIPC()
-
+  // Register this before loading the renderer. Otherwise an eager renderer can
+  // ask for the port during its first frame, before the handler exists, then
+  // fall back to Vite's HTML response for /api requests.
+  ipcMain.handle('backend:get-port', () => backend.getPort())
   createWindow()
+  void backend.start(backendDirectory())
+    .then((port) => win?.webContents.send('backend:ready', port))
+    .catch((error) => win?.webContents.send('backend:error', error instanceof Error ? error.message : String(error)))
 
-  // Keep the native Windows caption buttons visually aligned with the active app theme.
+  // Caption buttons theme overlay
   ipcMain.on('titlebar:set-overlay', (_event, colors: { color?: string; symbolColor?: string }) => {
     if (!win || !/^#[0-9a-f]{6}$/i.test(colors?.color ?? '') || !/^#[0-9a-f]{6}$/i.test(colors?.symbolColor ?? '')) return
     win.setTitleBarOverlay({ color: colors.color!, symbolColor: colors.symbolColor!, height: 38 })
@@ -177,47 +121,6 @@ app.whenReady().then(async () => {
   // App metadata IPC handlers
   ipcMain.handle('app:getVersion', () => app.getVersion() || '0.1.8')
   ipcMain.handle('app:getName', () => app.getName() || 'Sparta Agent')
-  ipcMain.handle('document:convert-to-markdown', async (_event, req) => {
-    try {
-      return await convertDocumentToMarkdown(req)
-    } catch (err: any) {
-      return { ok: false, markdown: `[Error: ${err?.message || String(err)}]`, images: [], error: String(err) }
-    }
-  })
-  ipcMain.handle('system:get-metrics', () => getSystemMetrics())
-
-  // Register chat IPC handlers from ia-sparta-chat-ipc
-  registerChatSendIPC()
-  registerOnMessageHandler()
-  registerSidecarStatusIPC()
-  registerChatMemoryIPC()
-  registerEditorDiffIPC()
-  registerAudioIPC()
-  registerMcpTestIPC()
-  registerMcpOAuthIPC()
-  registerMcpCallToolIPC()
-  registerMcpSyncIPC()
-  registerAgentTaskIPC()
-  registerMemoryIPC()
-  registerVaultIPC()
-  registerKeyManagerIPC()
-
-  // Register remaining IPC modules
-  registerTerminalIPC()
-  registerFilesystemIPC()
-  registerSkillsIPC()
-  registerPermissionIPC()
-  registerModelsIPC()
-  registerHarnessIPC()
-  registerSidecarIPC()
-
-  // Push all stored API keys to Sidecar and wire security module into pipeline
-  await waitForSidecarReady()
-  wireSecurityIntoPipeline()
-
-  try {
-    await pushAllKeys()
-  } catch (err) {
-    console.warn('[main] Could not push keys to sidecar:', err)
-  }
 })
+
+app.on('before-quit', () => backend.stop())

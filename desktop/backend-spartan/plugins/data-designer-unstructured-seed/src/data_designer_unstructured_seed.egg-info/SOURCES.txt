@@ -1,0 +1,12 @@
+pyproject.toml
+src/data_designer_unstructured_seed/__init__.py
+src/data_designer_unstructured_seed/chunking.py
+src/data_designer_unstructured_seed/config.py
+src/data_designer_unstructured_seed/impl.py
+src/data_designer_unstructured_seed/plugin.py
+src/data_designer_unstructured_seed.egg-info/PKG-INFO
+src/data_designer_unstructured_seed.egg-info/SOURCES.txt
+src/data_designer_unstructured_seed.egg-info/dependency_links.txt
+src/data_designer_unstructured_seed.egg-info/entry_points.txt
+src/data_designer_unstructured_seed.egg-info/requires.txt
+src/data_designer_unstructured_seed.egg-info/top_level.txt

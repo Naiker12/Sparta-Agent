@@ -5,6 +5,11 @@ import electron from 'vite-plugin-electron/simple'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
+// Codex and some Node toolchains set this flag for Electron's Node runtime.
+// It must never reach the child process spawned by vite-plugin-electron, or
+// Electron starts as plain Node and cannot load BrowserWindow/shell.
+delete process.env.ELECTRON_RUN_AS_NODE
+
 export default defineConfig(() => {
   // List of Node native built-in modules and heavy native binaries to externalize
   const externalNodeModules = [
@@ -57,31 +62,10 @@ export default defineConfig(() => {
   return {
     resolve: {
       alias: {
-        '@': path.join(__dirname, '.'),
-        '@/components': path.join(__dirname, 'components'),
+        '@': path.join(__dirname, 'desktop/frontend-spartan/src'),
+        '@/components': path.join(__dirname, 'desktop/frontend-spartan/src/components'),
         'ia-sparta-app-shell': path.join(__dirname, 'desktop/ia-sparta-app-shell/src/index.ts'),
         'ia-sparta-ipc-bridge': path.join(__dirname, 'desktop/ia-sparta-ipc-bridge/src/index.ts'),
-        'ia-sparta-chat-ipc': path.join(__dirname, 'desktop/ia-sparta-chat-ipc/src/index.ts'),
-        'ia-sparta-vault': path.join(__dirname, 'desktop/ia-sparta-vault/src/index.ts'),
-        'ia-sparta-stream-events': path.join(__dirname, 'desktop/ia-sparta-stream-events/src/index.ts'),
-        'ia-sparta-chat': path.join(__dirname, 'desktop/ia-sparta-chat/src/index.ts'),
-        'ia-sparta-agents': path.join(__dirname, 'desktop/ia-sparta-agents/src/index.ts'),
-        'ia-sparta-terminal': path.join(__dirname, 'desktop/ia-sparta-terminal/src/index.ts'),
-        'ia-sparta-mcp': path.join(__dirname, 'desktop/ia-sparta-mcp/src/index.ts'),
-        'ia-sparta-memory': path.join(__dirname, 'desktop/ia-sparta-memory/src/index.ts'),
-        'ia-sparta-permission': path.join(__dirname, 'desktop/ia-sparta-permission/src/index.ts'),
-        'ia-sparta-providers': path.join(__dirname, 'desktop/ia-sparta-providers/src/index.ts'),
-        'ia-sparta-settings': path.join(__dirname, 'desktop/ia-sparta-settings/src/index.ts'),
-        'ia-sparta-skills': path.join(__dirname, 'desktop/ia-sparta-skills/src/index.ts'),
-        'ia-sparta-channels': path.join(__dirname, 'desktop/ia-sparta-channels/src/index.ts'),
-        'ia-sparta-projects': path.join(__dirname, 'desktop/ia-sparta-projects/src/index.ts'),
-        'ia-sparta-shell-layout': path.join(__dirname, 'desktop/ia-sparta-shell-layout/src/index.ts'),
-        'ia-sparta-design-system': path.join(__dirname, 'desktop/ia-sparta-design-system/src/index.ts'),
-        'ia-sparta-i18n': path.join(__dirname, 'desktop/ia-sparta-i18n/src/index.ts'),
-        'ia-sparta-contracts': path.join(__dirname, 'desktop/ia-sparta-contracts/src/index.ts'),
-        'ia-sparta-core': path.join(__dirname, 'desktop/ia-sparta-core/src/index.ts'),
-        'ia-sparta-platform': path.join(__dirname, 'desktop/ia-sparta-platform/src/index.ts'),
-        'ia-sparta-tabs': path.join(__dirname, 'desktop/ia-sparta-tabs/src/index.ts'),
       },
     },
     define: {
@@ -97,28 +81,7 @@ export default defineConfig(() => {
             resolve: {
               alias: {
                 'ia-sparta-ipc-bridge': path.join(__dirname, 'desktop/ia-sparta-ipc-bridge/src/index.ts'),
-                'ia-sparta-chat-ipc': path.join(__dirname, 'desktop/ia-sparta-chat-ipc/src/index.ts'),
-                'ia-sparta-vault': path.join(__dirname, 'desktop/ia-sparta-vault/src/index.ts'),
-                'ia-sparta-stream-events': path.join(__dirname, 'desktop/ia-sparta-stream-events/src/index.ts'),
-                'ia-sparta-chat': path.join(__dirname, 'desktop/ia-sparta-chat/src/index.ts'),
-                'ia-sparta-agents': path.join(__dirname, 'desktop/ia-sparta-agents/src/index.ts'),
-                'ia-sparta-terminal': path.join(__dirname, 'desktop/ia-sparta-terminal/src/index.ts'),
-                'ia-sparta-mcp': path.join(__dirname, 'desktop/ia-sparta-mcp/src/index.ts'),
-                'ia-sparta-memory': path.join(__dirname, 'desktop/ia-sparta-memory/src/index.ts'),
-                'ia-sparta-permission': path.join(__dirname, 'desktop/ia-sparta-permission/src/index.ts'),
-                'ia-sparta-providers': path.join(__dirname, 'desktop/ia-sparta-providers/src/index.ts'),
-                'ia-sparta-settings': path.join(__dirname, 'desktop/ia-sparta-settings/src/index.ts'),
-                'ia-sparta-skills': path.join(__dirname, 'desktop/ia-sparta-skills/src/index.ts'),
-                'ia-sparta-channels': path.join(__dirname, 'desktop/ia-sparta-channels/src/index.ts'),
-                'ia-sparta-projects': path.join(__dirname, 'desktop/ia-sparta-projects/src/index.ts'),
-                'ia-sparta-shell-layout': path.join(__dirname, 'desktop/ia-sparta-shell-layout/src/index.ts'),
-                'ia-sparta-design-system': path.join(__dirname, 'desktop/ia-sparta-design-system/src/index.ts'),
-                'ia-sparta-i18n': path.join(__dirname, 'desktop/ia-sparta-i18n/src/index.ts'),
-                'ia-sparta-contracts': path.join(__dirname, 'desktop/ia-sparta-contracts/src/index.ts'),
-                'ia-sparta-core': path.join(__dirname, 'desktop/ia-sparta-core/src/index.ts'),
-                'ia-sparta-platform': path.join(__dirname, 'desktop/ia-sparta-platform/src/index.ts'),
                 'ia-sparta-app-shell': path.join(__dirname, 'desktop/ia-sparta-app-shell/src/index.ts'),
-                'ia-sparta-tabs': path.join(__dirname, 'desktop/ia-sparta-tabs/src/index.ts'),
               },
             },
             build: {
@@ -138,7 +101,7 @@ export default defineConfig(() => {
           },
         },
         preload: {
-          input: path.join(__dirname, 'desktop/ia-sparta-ipc-bridge/src/preload.ts'),
+          input: path.join(__dirname, 'desktop/ia-sparta-ipc-bridge/src/electron-preload.ts'),
           vite: {
             build: {
               target: 'node20',
@@ -200,6 +163,7 @@ export default defineConfig(() => {
       },
     },
     optimizeDeps: {
+      entries: ['index.html'],
       include: [
         '@tanstack/react-table',
         '@hugeicons/react',

@@ -1,0 +1,12 @@
+{
+  "name": "sparta-backend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Backend de Sparta-Agent — Proceso principal Electron, IPC channels, MCP manager",
+  "scripts": {
+    "dev": "tsc --watch",
+    "build": "tsc"
+  },
+  "dependencies": {}
+}

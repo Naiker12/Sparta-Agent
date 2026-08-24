@@ -8,13 +8,13 @@
   <link rel="apple-touch-icon" href="/blanco/apple-touch-icon.png" />
   <link rel="manifest" href="/site.webmanifest" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data: https:; connect-src 'self' ws://localhost:* http://localhost:* wss://* https:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data: https:; connect-src 'self' ws://localhost:* http://localhost:* ws://127.0.0.1:* http://127.0.0.1:* wss://* https:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'" />
   <title>Sparta Agent</title>
 </head>
 
 <body>
   <div id="root"></div>
-  <script type="module" src="/desktop/ia-sparta-app-shell/src/main.tsx"></script>
+  <script type="module" src="/desktop/frontend-spartan/src/main.tsx"></script>
 </body>
 
 </html>
