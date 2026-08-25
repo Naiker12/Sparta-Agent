@@ -71,9 +71,9 @@ export function DownloadBar() {
       icon: Monitor,
       recommended: true,
       badge: 'Instalador NSIS .exe',
-      command: 'powershell -c "Invoke-WebRequest -Uri https://github.com/Naiker12/Sparta-Agent/releases/download/v0.1.9/Sparta-Agent-Windows-0.1.9-Setup.exe -OutFile Sparta-Setup.exe"',
-      url: 'https://github.com/Naiker12/Sparta-Agent/releases/download/v0.1.9/Sparta-Agent-Windows-0.1.9-Setup.exe',
-      fallbackUrl: 'https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.1.9',
+      command: 'powershell -c "Invoke-WebRequest -Uri https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Windows-0.1.9-Setup.exe -OutFile Sparta-Setup.exe"',
+      url: 'https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Windows-0.1.9-Setup.exe',
+      fallbackUrl: 'https://github.com/Naiker12/Sparta-Agent/releases/latest',
     },
     {
       os: 'macOS (Apple Silicon & Intel)',
@@ -82,9 +82,9 @@ export function DownloadBar() {
       icon: Apple,
       recommended: false,
       badge: 'Universal .dmg',
-      command: 'curl -L https://github.com/Naiker12/Sparta-Agent/releases/download/v0.1.9/Sparta-Agent-Mac-0.1.9-Installer.dmg -o Sparta-Installer.dmg',
-      url: 'https://github.com/Naiker12/Sparta-Agent/releases/download/v0.1.9/Sparta-Agent-Mac-0.1.9-Installer.dmg',
-      fallbackUrl: 'https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.1.9',
+      command: 'curl -L https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Mac-0.1.9-Installer.dmg -o Sparta-Installer.dmg',
+      url: 'https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Mac-0.1.9-Installer.dmg',
+      fallbackUrl: 'https://github.com/Naiker12/Sparta-Agent/releases/latest',
     },
     {
       os: 'Linux (AppImage)',
@@ -93,9 +93,9 @@ export function DownloadBar() {
       icon: Terminal,
       recommended: false,
       badge: 'Binario AppImage',
-      command: 'wget https://github.com/Naiker12/Sparta-Agent/releases/download/v0.1.9/Sparta-Agent-Linux-0.1.9.AppImage && chmod +x Sparta-Agent-Linux-0.1.9.AppImage',
-      url: 'https://github.com/Naiker12/Sparta-Agent/releases/download/v0.1.9/Sparta-Agent-Linux-0.1.9.AppImage',
-      fallbackUrl: 'https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.1.9',
+      command: 'wget https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Linux-0.1.9.AppImage && chmod +x Sparta-Agent-Linux-0.1.9.AppImage',
+      url: 'https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Linux-0.1.9.AppImage',
+      fallbackUrl: 'https://github.com/Naiker12/Sparta-Agent/releases/latest',
     },
   ];
 

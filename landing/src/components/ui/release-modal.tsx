@@ -130,7 +130,7 @@ export function ReleaseModal() {
               {/* Botones de Acción Elegantes */}
               <div className="relative z-10 flex flex-col sm:flex-row items-center gap-3 pt-2">
                 <a
-                  href="https://github.com/Naiker12/Sparta-Agent/releases/download/v0.1.9/Sparta-Agent-Windows-0.1.9-Setup.exe"
+                  href="https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Windows-0.1.9-Setup.exe"
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={handleClose}
