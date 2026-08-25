@@ -18,9 +18,22 @@ export function OnThisPage({ page }: { page: string }) {
   const items = contents[page] ?? contents.inicio;
   return (
     <aside aria-label="En esta página" className="hidden xl:block">
-      <div className="sticky top-24 border-l border-zinc-200 pl-5 dark:border-white/10">
-        <p className="mb-3 text-sm text-zinc-500">En esta página</p>
-        <nav className="flex flex-col gap-1.5">{items.map((item, index) => <a key={item} href="#contenido" className={cn('text-sm leading-6 transition hover:text-zinc-950 dark:hover:text-white', index === 0 ? 'font-medium text-zinc-950 dark:text-white' : 'text-zinc-500 dark:text-zinc-400')}>{item}</a>)}</nav>
+      <div className="sticky top-24 border-l border-white/10 pl-5">
+        <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">En esta página</p>
+        <nav className="flex flex-col gap-1.5">
+          {items.map((item, index) => (
+            <a
+              key={item}
+              href="#contenido"
+              className={cn(
+                'text-sm leading-6 transition hover:text-white',
+                index === 0 ? 'font-medium text-white' : 'text-zinc-400'
+              )}
+            >
+              {item}
+            </a>
+          ))}
+        </nav>
       </div>
     </aside>
   );
