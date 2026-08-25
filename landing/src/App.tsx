@@ -698,13 +698,13 @@ function DownloadSection() {
             </div>
           </div>
           <a
-            href="https://github.com/Naiker12/Sparta-Agent/releases/latest"
+            href="https://github.com/Naiker12/Sparta-Agent/releases/download/v0.1.9/Sparta-Agent-Windows-0.1.9-Setup.exe"
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full text-center bg-white hover:bg-gray-100 text-black text-xs font-bold py-3.5 rounded-full transition-all flex items-center justify-center gap-2"
+            className="w-full text-center bg-white hover:bg-gray-100 text-black text-xs font-bold py-3.5 rounded-full transition-all flex items-center justify-center gap-2 shadow-lg hover:scale-[1.02]"
           >
             <Download className="w-4 h-4" />
-            <span>Descargar para Windows</span>
+            <span>Descargar para Windows (.exe)</span>
           </a>
         </FadeInUp>
 
@@ -726,13 +726,13 @@ function DownloadSection() {
             </div>
           </div>
           <a
-            href="https://github.com/Naiker12/Sparta-Agent/releases/latest"
+            href="https://github.com/Naiker12/Sparta-Agent/releases/download/v0.1.9/Sparta-Agent-Mac-0.1.9-Installer.dmg"
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full text-center bg-white hover:bg-gray-100 text-black text-xs font-bold py-3.5 rounded-full transition-all flex items-center justify-center gap-2"
+            className="w-full text-center bg-white hover:bg-gray-100 text-black text-xs font-bold py-3.5 rounded-full transition-all flex items-center justify-center gap-2 shadow-lg hover:scale-[1.02]"
           >
             <Download className="w-4 h-4" />
-            <span>Descargar para macOS</span>
+            <span>Descargar para macOS (.dmg)</span>
           </a>
         </FadeInUp>
 
@@ -754,13 +754,13 @@ function DownloadSection() {
             </div>
           </div>
           <a
-            href="https://github.com/Naiker12/Sparta-Agent/releases/latest"
+            href="https://github.com/Naiker12/Sparta-Agent/releases/download/v0.1.9/Sparta-Agent-Linux-0.1.9.AppImage"
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full text-center bg-white hover:bg-gray-100 text-black text-xs font-bold py-3.5 rounded-full transition-all flex items-center justify-center gap-2"
+            className="w-full text-center bg-white hover:bg-gray-100 text-black text-xs font-bold py-3.5 rounded-full transition-all flex items-center justify-center gap-2 shadow-lg hover:scale-[1.02]"
           >
             <Download className="w-4 h-4" />
-            <span>Descargar para Linux</span>
+            <span>Descargar para Linux (.AppImage)</span>
           </a>
         </FadeInUp>
       </div>
