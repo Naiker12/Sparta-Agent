@@ -1,25 +1,25 @@
 <div align="center">
   <img src="public/sparta-escritorio.png" alt="Sparta Agent Logo" width="120" />
   <h1>Sparta Agent</h1>
-  <p><strong>Plataforma de Desarrollo Agéntica Local-First para Equipos de Ingeniería de Alto Rendimiento</strong></p>
+  <p><strong>Plataforma de Desarrollo Agéntica Local-First para Equipos de Ingeniería</strong></p>
 
   <p>
-    <a href="https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.1.9"><img src="https://img.shields.io/badge/Versi%C3%B3n-v0.1.9-6366f1?style=for-the-badge&logo=github&logoColor=white" alt="Version 0.1.9" /></a>
-    <img src="https://img.shields.io/badge/React_19-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React 19" />
-    <img src="https://img.shields.io/badge/TypeScript_5-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript 5" />
-    <img src="https://img.shields.io/badge/Electron-47848F?style=for-the-badge&logo=electron&logoColor=white" alt="Electron" />
-    <img src="https://img.shields.io/badge/TailwindCSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="TailwindCSS" />
-    <img src="https://img.shields.io/badge/MCP-Standard-8b5cf6?style=for-the-badge" alt="MCP Standard" />
-    <img src="https://img.shields.io/badge/Licencia-MIT-10b981?style=for-the-badge" alt="License MIT" />
+    <a href="https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.1.9"><img src="https://img.shields.io/badge/Versi%C3%B3n-v0.1.9-6366f1?style=flat-square&logo=github&logoColor=white" alt="Version 0.1.9" /></a>
+    <img src="https://img.shields.io/badge/React_19-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React 19" />
+    <img src="https://img.shields.io/badge/TypeScript_5-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript 5" />
+    <img src="https://img.shields.io/badge/Electron-47848F?style=flat-square&logo=electron&logoColor=white" alt="Electron" />
+    <img src="https://img.shields.io/badge/TailwindCSS-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white" alt="TailwindCSS" />
+    <img src="https://img.shields.io/badge/MCP-Standard-8b5cf6?style=flat-square" alt="MCP Standard" />
+    <img src="https://img.shields.io/badge/Licencia-MIT-10b981?style=flat-square" alt="License MIT" />
   </p>
 </div>
 
 ---
 
 <div align="center">
-  <img src="docs/assets/sparta-principal.png" alt="Entorno de Trabajo Sparta Agent" width="100%" style="border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.12);" />
+  <img src="docs/assets/sparta-principal.png" alt="Entorno de Trabajo Sparta Agent" width="100%" style="border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);" />
   <br />
-  <sub><b>Entorno de Desarrollo y Orquestación Agéntica en Tiempo Real</b></sub>
+  <sub>Entorno de Desarrollo y Orquestación Agéntica en Tiempo Real</sub>
 </div>
 
 <br />
@@ -28,14 +28,14 @@
   <table width="100%">
     <tr>
       <td width="50%" align="center">
-        <img src="docs/assets/sparta-permisos.png" alt="Control de Permisos y Acciones Sensibles" width="100%" style="border-radius: 8px;" />
+        <img src="docs/assets/sparta-permisos.png" alt="Control de Permisos y Acciones Sensibles" width="100%" style="border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.08);" />
         <br />
-        <sub><b>Diálogo Modal de Permisos y Validación Previa</b></sub>
+        <sub>Diálogo Modal de Permisos y Validación Previa</sub>
       </td>
       <td width="50%" align="center">
-        <img src="docs/assets/sparta-contexto.png" alt="Selector de Modelos y Gestión de Contexto" width="100%" style="border-radius: 8px;" />
+        <img src="docs/assets/sparta-contexto.png" alt="Selector de Modelos y Gestión de Contexto" width="100%" style="border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.08);" />
         <br />
-        <sub><b>Gestión Dinámica de Contexto y Proveedores</b></sub>
+        <sub>Gestión Dinámica de Contexto y Proveedores</sub>
       </td>
     </tr>
   </table>
@@ -43,44 +43,44 @@
 
 ---
 
-## 📑 Tabla de Contenidos
+## Tabla de Contenidos
 
-- [Propuesta de Valor](#-propuesta-de-valor)
-- [Características Principales](#-características-principales)
-- [Arquitectura del Sistema](#-arquitectura-del-sistema)
-- [Matriz de Seguridad y Privacidad](#-matriz-de-seguridad-y-privacidad)
-- [Ecosistema MCP (Model Context Protocol)](#-ecosistema-mcp-model-context-protocol)
-- [Proveedores de IA Compatibles](#-proveedores-de-ia-compatibles)
-- [Instalación y Puesta en Marcha](#-instalación-y-puesta-en-marcha)
-- [Estructura del Proyecto](#-estructura-del-proyecto)
-- [Licencia](#-licencia)
-
----
-
-## 🎯 Propuesta de Valor
-
-En la era de la Inteligencia Artificial aplicada al desarrollo de software, la productividad real de los equipos de ingeniería requiere herramientas autónomas con comprensión holística del código.
-
-**Sparta Agent** ofrece un **IDE agéntico autónomo y local-first**, diseñado para desarrolladores y equipos exigentes:
-
-1. **Privacidad y Cumplimiento (Compliance)**: Ejecución y análisis dentro de tu máquina local. Protección de datos confidenciales y código propietario.
-2. **Optimización de Costos**: Alterna libremente entre modelos locales (Ollama, LM Studio, llama.cpp) y APIs cloud avanzadas (Gemini 2.5, Claude 3.7, OpenAI, DeepSeek).
-3. **Autonomía con Control Humano**: Planificación transparente, ejecución de comandos supervisada mediante permisos modales y diffs precisos.
+- [Propuesta de Valor](#propuesta-de-valor)
+- [Características Principales](#características-principales)
+- [Arquitectura del Sistema](#arquitectura-del-sistema)
+- [Matriz de Seguridad y Privacidad](#matriz-de-seguridad-y-privacidad)
+- [Ecosistema MCP (Model Context Protocol)](#ecosistema-mcp-model-context-protocol)
+- [Proveedores de IA Compatibles](#proveedores-de-ia-compatibles)
+- [Instalación y Puesta en Marcha](#instalación-y-puesta-en-marcha)
+- [Estructura del Proyecto](#estructura-del-proyecto)
+- [Licencia](#licencia)
 
 ---
 
-## ⚡ Características Principales
+## Propuesta de Valor
 
-* **Chat Temporal / Modo Incógnito**: Sesiones de conversación efímeras que no se guardan en el historial local para consultas rápidas o pruebas aisladas.
-* **Control de Permisos Granular**: Validación previa obligatoria para cada acción de creación, modificación o borrado de archivos y ejecución de terminal.
-* **Motor de Diferenciales Inteligentes**: Revisión precisa de cambios de código con soporte sintáctico avanzado.
-* **Terminal Integrado Multi-Shell**: Ejecución de comandos en PowerShell, Bash y Zsh protegida por filtros de seguridad.
-* **Previsualización de Documentos**: Visores integrados para archivos Excel (`.xlsx`, `.xls`), Word (`.docx`), PDF, Markdown e imágenes.
-* **Conexión MCP Universal**: Integración inmediata con herramientas de base de datos, Git, navegadores web, APIs y servicios en la nube.
+En el desarrollo de software actual, la productividad de los equipos de ingeniería requiere herramientas autónomas con comprensión integral del código.
+
+**Sparta Agent** es un **IDE agéntico autónomo y local-first**, diseñado para desarrolladores y organizaciones técnicas:
+
+1. **Privacidad y Cumplimiento**: Ejecución y análisis dentro del perímetro local de tu equipo. Protección estricta de código propietario y datos sensibles.
+2. **Optimización de Costos**: Alterna dinámicamente entre modelos locales (Ollama, LM Studio, llama.cpp) y APIs cloud avanzadas (Gemini 2.5, Claude 3.7, OpenAI, DeepSeek).
+3. **Supervisión y Control Humano**: Planificación transparente, ejecución de comandos auditada mediante diálogos modales de permisos y diffs precisos.
 
 ---
 
-## 🏗️ Arquitectura del Sistema
+## Características Principales
+
+* **Chat Temporal e Incógnito**: Sesiones efímeras de trabajo que no persisten en el historial local para consultas rápidas o pruebas aisladas.
+* **Control Granular de Permisos**: Validación previa obligatoria para cada acción que cree, modifique o elimine archivos, o invoque comandos de terminal.
+* **Motor de Diferenciales Preciso**: Revisión interactiva de cambios en el código fuente con soporte de resaltado sintáctico.
+* **Terminal Multi-Shell Integrado**: Ejecución protegida de comandos en PowerShell, Bash o Zsh con filtros de seguridad activos.
+* **Previsualización Nativa de Documentos**: Visores integrados para hojas de cálculo Excel (`.xlsx`, `.xls`), documentos Word (`.docx`), archivos PDF, Markdown e imágenes.
+* **Conexión MCP Estándar**: Integración directa con bases de datos, repositorios Git, herramientas de navegador y servicios cloud mediante Model Context Protocol.
+
+---
+
+## Arquitectura del Sistema
 
 ```text
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -104,23 +104,23 @@ En la era de la Inteligencia Artificial aplicada al desarrollo de software, la p
 
 ---
 
-## 🛡️ Matriz de Seguridad y Privacidad
+## Matriz de Seguridad y Privacidad
 
 | Componente | Función | Descripción |
 | :--- | :--- | :--- |
-| **Permission Dialog** | Aprobación Obligatoria | Cada acción que modifique el sistema de archivos o ejecute comandos requiere confirmación explícita del usuario. |
-| **Command Sanitizer** | Inspección de Comandos | Prevención de comandos destructivos o llamadas que comprometan el sistema operativo. |
-| **Path Guard** | Aislamiento de Espacios | Restricción de lectura y escritura al directorio de trabajo autorizado del proyecto. |
-| **Vault Cifrado** | Credenciales Seguras | Almacenamiento local protegido de claves de API mediante `electron.safeStorage`. |
+| **Permission Dialog** | Aprobación Obligatoria | Cada acción que altere el sistema de archivos o ejecute comandos requiere confirmación explícita previa del usuario. |
+| **Command Sanitizer** | Inspección de Comandos | Prevención en tiempo real contra la ejecución de scripts destructivos o llamadas no autorizadas al sistema operativo. |
+| **Path Guard** | Aislamiento de Espacios | Restricción de operaciones de lectura y escritura al directorio de trabajo autorizado del proyecto actual. |
+| **Vault Cifrado** | Credenciales Locales | Almacenamiento local protegido de claves de API mediante `electron.safeStorage`. |
 
 ---
 
-## 🔌 Ecosistema MCP (Model Context Protocol)
+## Ecosistema MCP (Model Context Protocol)
 
-Sparta Agent incorpora conectividad nativa con el estándar oficial de Anthropic Model Context Protocol:
+Sparta Agent incorpora conectividad nativa con el estándar Model Context Protocol:
 
 * **Control de Versiones**: GitHub, Git Local
-* **Archivos y Nube**: Filesystem Local, Google Drive, OneDrive
+* **Archivos y Almacenamiento**: Filesystem Local, Google Drive, OneDrive
 * **Bases de Datos**: PostgreSQL, MySQL, SQLite, Supabase, MongoDB
 * **Productividad**: Notion, Gmail, Google Calendar
 * **Colaboración**: Slack, Figma
@@ -128,16 +128,16 @@ Sparta Agent incorpora conectividad nativa con el estándar oficial de Anthropic
 
 ---
 
-## 🧠 Proveedores de IA Compatibles
+## Proveedores de IA Compatibles
 
-* **Locales (100% Offline y Privados)**: Ollama, LM Studio, llama.cpp, Servidores OpenAI-compatible.
-* **Cloud (Máximo Rendimiento)**: Google Gemini (2.5 Flash, 2.0 Flash, 1.5 Pro), Anthropic Claude, OpenAI (GPT-4o, o3-mini), DeepSeek, Groq, Mistral, OpenRouter, Together AI, Fireworks AI.
+* **Locales (100% Offline)**: Ollama, LM Studio, llama.cpp, Servidores OpenAI-compatible.
+* **Cloud (Alto Rendimiento)**: Google Gemini (2.5 Flash, 2.0 Flash, 1.5 Pro), Anthropic Claude, OpenAI (GPT-4o, o3-mini), DeepSeek, Groq, Mistral, OpenRouter, Together AI, Fireworks AI.
 
 ---
 
-## 🚀 Instalación y Puesta en Marcha
+## Instalación y Puesta en Marcha
 
-### Requisitos
+### Requisitos Previos
 * **Node.js**: `v20.0.0` o superior (Recomendado `v22+ LTS`)
 * **npm**: `v10+`
 
@@ -148,10 +148,10 @@ Sparta Agent incorpora conectividad nativa con el estándar oficial de Anthropic
 git clone https://github.com/Naiker12/Sparta-Agent.git
 cd Sparta-Agent
 
-# 2. Instalar dependencias
+# 2. Instalar dependencias del proyecto
 npm install
 
-# 3. Instalar dependencias del frontend desktop
+# 3. Instalar dependencias del frontend de escritorio
 npm --prefix desktop/frontend-spartan install
 
 # 4. Iniciar en modo desarrollo
@@ -161,48 +161,48 @@ npm run dev
 ### Comandos de Utilidad
 
 ```bash
-# Verificar tipos de todo el proyecto
+# Validación de tipos estáticos
 npm run typecheck
 
-# Ejecutar linter
+# Análisis de código con linter
 npm run lint
 
-# Ejecutar suite de pruebas unitarias
+# Ejecución de pruebas unitarias
 npm test
 
-# Compilar landing page
+# Compilación de la landing page
 npm run landing:build
 
-# Compilar binarios de escritorio
+# Compilación de binarios de escritorio
 npm run build
 ```
 
 ---
 
-## 📁 Estructura del Proyecto
+## Estructura del Proyecto
 
 ```text
 Sparta-Agent/
 ├── desktop/
-│   ├── frontend-spartan/     # Interfaz de usuario principal (React + Vite + Assistant-UI)
-│   ├── backend-spartan/      # Servicios y motor de soporte de backend
-│   ├── ia-sparta-app-shell/  # Proceso principal de Electron y gestor de ventanas
+│   ├── frontend-spartan/     # Interfaz de usuario (React + Vite + Assistant-UI)
+│   ├── backend-spartan/      # Servicios y motor de soporte backend
+│   ├── ia-sparta-app-shell/  # Proceso principal Electron y gestor de ventanas
 │   └── ia-sparta-ipc-bridge/ # Canales IPC de comunicación segura
 ├── docs/                     # Documentación técnica y capturas de pantalla
-├── landing/                  # Landing page oficial (Vite + React + TailwindCSS)
+├── landing/                  # Landing page del producto (Vite + React + TailwindCSS)
 ├── public/                   # Recursos estáticos, logotipos e iconos
 ├── skills/                   # Habilidades y plugins agénticos modulares
 ├── tests/                    # Pruebas unitarias del sistema
-├── electron-builder.config.cjs # Configuración de empaquetado para Win/Mac/Linux
+├── electron-builder.config.cjs # Configuración de empaquetado (Win / Mac / Linux)
 └── package.json              # Configuración y scripts del proyecto
 ```
 
 ---
 
-## 📄 Licencia
+## Licencia
 
-Este proyecto está bajo la Licencia **MIT**. Consulta el archivo [LICENSE](LICENSE) para más detalles.
+Este proyecto está distribuido bajo la Licencia **MIT**. Consulta el archivo [LICENSE](LICENSE) para más detalles.
 
 <div align="center">
-  <sub>Desarrollado con dedicación para la comunidad de ingeniería de software.</sub>
+  <sub>Desarrollado para la comunidad de ingeniería de software.</sub>
 </div>
