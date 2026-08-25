@@ -7,7 +7,7 @@ export function ReleaseModal() {
 
   useEffect(() => {
     // Show the announcement once for this specific release.
-    const hasSeen = localStorage.getItem('sparta_release_v0.2.0_seen');
+    const hasSeen = localStorage.getItem('sparta_release_v0.2.1_seen');
     if (!hasSeen) {
       const timer = setTimeout(() => setIsOpen(true), 600);
       return () => clearTimeout(timer);
@@ -15,7 +15,7 @@ export function ReleaseModal() {
   }, []);
 
   const handleClose = () => {
-    localStorage.setItem('sparta_release_v0.2.0_seen', 'true');
+    localStorage.setItem('sparta_release_v0.2.1_seen', 'true');
     setIsOpen(false);
   };
 
@@ -37,7 +37,7 @@ export function ReleaseModal() {
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-zinc-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-zinc-500"></span>
           </span>
-          <span className="font-mono text-zinc-300">v0.2.0 disponible</span>
+          <span className="font-mono text-zinc-300">v0.2.1 disponible</span>
           <Sparkles className="w-3.5 h-3.5 text-zinc-300 group-hover:rotate-12 transition-transform" />
         </motion.button>
       )}
@@ -71,12 +71,12 @@ export function ReleaseModal() {
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-500/10 border border-zinc-500/20 w-fit">
                   <Sparkles className="w-3.5 h-3.5 text-zinc-300" />
                   <span className="text-[11px] font-bold font-mono tracking-wider text-zinc-300 uppercase">
-                    Lanzamiento oficial v0.2.0
+                    Lanzamiento oficial v0.2.1
                   </span>
                 </div>
 
                 <h2 className="text-2xl sm:text-3xl font-extrabold font-display text-white tracking-tight leading-tight">
-                  Sparta Agent <span className="text-zinc-300">v0.2.0</span>
+                  Sparta Agent <span className="text-zinc-300">v0.2.1</span>
                 </h2>
 
                 <p className="text-xs sm:text-sm text-slate-300/90 leading-relaxed font-sans">
@@ -130,18 +130,18 @@ export function ReleaseModal() {
               {/* Botones de Acción Elegantes */}
               <div className="relative z-10 flex flex-col sm:flex-row items-center gap-3 pt-2">
                 <a
-                  href="https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Windows-0.2.0-Setup.exe"
+                  href="https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Windows-0.2.1-Setup.exe"
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={handleClose}
                   className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-zinc-100 hover:bg-white text-zinc-950 text-xs font-bold shadow-lg shadow-black/25 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
                 >
                   <Download className="w-4 h-4" />
-                  Descargar Sparta v0.2.0 (.exe)
+                  Descargar Sparta v0.2.1 (.exe)
                 </a>
 
                 <a
-                  href="https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.2.0"
+                  href="https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.2.1"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 text-slate-300 hover:text-white text-xs font-semibold transition-all cursor-pointer"

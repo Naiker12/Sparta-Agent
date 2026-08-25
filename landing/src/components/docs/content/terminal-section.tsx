@@ -10,7 +10,7 @@ export function TerminalSection() {
       <SectionHeader
         eyebrow="Producto"
         title="Terminal nativa con permisos explícitos"
-        description="La terminal de ia-sparta-terminal se ejecuta a través del proceso principal de Electron con pseudo-terminales nativos (PTY). El agente no necesita un shell web emulado: las solicitudes pasan por el bridge IPC con validación rigurosa de comandos destructivos."
+        description="La terminal de ia-sparta-terminal se ejecuta a través del proceso principal de Electron con procesos nativos del sistema. El agente no necesita un shell web emulado: las solicitudes pasan por el bridge IPC con validación rigurosa de comandos destructivos."
       />
 
       <DiagramEmbed caption="Figura 3: Arquitectura de ejecución segura de la terminal IPC">
@@ -31,8 +31,8 @@ export function TerminalSection() {
 
           {/* Main Process */}
           <rect x="560" y="50" width="200" height="120" rx="10" fill="#18181b" stroke="#10b981" strokeWidth="1" />
-          <text x="580" y="85" fill="#34d399" fontSize="14" fontWeight="600">Main Process (PTY)</text>
-          <text x="580" y="110" fill="#a1a1aa" fontSize="12">Node.js node-pty</text>
+          <text x="580" y="85" fill="#34d399" fontSize="14" fontWeight="600">Main Process</text>
+          <text x="580" y="110" fill="#a1a1aa" fontSize="12">Node.js child_process</text>
           <text x="580" y="130" fill="#a1a1aa" fontSize="12">PowerShell / Zsh / Bash</text>
 
           {/* Connections */}
@@ -44,9 +44,9 @@ export function TerminalSection() {
       <div className="mt-8 grid gap-4 sm:grid-cols-3">
         <div className="rounded-xl border border-white/10 bg-white/[.02] p-5">
           <TerminalSquare className="mb-4 size-5 text-amber-300" strokeWidth={1.6} />
-          <h3 className="font-medium text-white">Pseudo-Terminal (PTY)</h3>
+          <h3 className="font-medium text-white">Proceso nativo</h3>
           <p className="mt-2 text-sm leading-6 text-zinc-400">
-            Soporta sesiones interactivas, colores ANSI completos y piping de procesos de larga duración.
+            Ejecuta PowerShell, CMD, Bash y Zsh con salida en tiempo real, sin módulos nativos adicionales.
           </p>
         </div>
         <div className="rounded-xl border border-white/10 bg-white/[.02] p-5">

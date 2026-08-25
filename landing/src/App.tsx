@@ -699,7 +699,7 @@ function DownloadSection() {
             </div>
           </div>
           <a
-            href="https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Windows-0.2.0-Setup.exe"
+            href="https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Windows-0.2.1-Setup.exe"
             target="_blank"
             rel="noopener noreferrer"
             className="w-full text-center bg-white hover:bg-gray-100 text-black text-xs font-bold py-3.5 rounded-full transition-all flex items-center justify-center gap-2 shadow-lg hover:scale-[1.02]"
@@ -727,7 +727,7 @@ function DownloadSection() {
             </div>
           </div>
           <a
-            href="https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Mac-0.2.0-Installer.dmg"
+            href="https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Mac-0.2.1-Installer.dmg"
             target="_blank"
             rel="noopener noreferrer"
             className="w-full text-center bg-white hover:bg-gray-100 text-black text-xs font-bold py-3.5 rounded-full transition-all flex items-center justify-center gap-2 shadow-lg hover:scale-[1.02]"
@@ -755,7 +755,7 @@ function DownloadSection() {
             </div>
           </div>
           <a
-            href="https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Linux-0.2.0.AppImage"
+            href="https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Linux-0.2.1.AppImage"
             target="_blank"
             rel="noopener noreferrer"
             className="w-full text-center bg-white hover:bg-gray-100 text-black text-xs font-bold py-3.5 rounded-full transition-all flex items-center justify-center gap-2 shadow-lg hover:scale-[1.02]"

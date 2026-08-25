@@ -8,7 +8,7 @@ if (!existsSync(bundlePath)) {
   process.exit(0)
 }
 
-const banned = ['react', 'react-dom', 'framer-motion', 'lucide-react', 'mermaid', 'monaco-editor']
+const banned = ['react', 'react-dom', 'framer-motion', 'lucide-react', 'mermaid', 'monaco-editor', 'node-pty']
 const code = readFileSync(bundlePath, 'utf8')
 
 const leaks = banned.filter((pkg) =>
