@@ -101,19 +101,17 @@ async function redirectToAuth(): Promise<void> {
 }
 
 function asTransportFailure(err: unknown): unknown {
-  // fetch TypeError = offline | backend down | CORS/DNS. Tagged so callers tell "never reached"
-  // from "rejected"; Tauri is always backend-down, the web build distinguishes offline.
   if (!(err instanceof TypeError)) return err;
   if (!isTauri && typeof navigator !== "undefined" && navigator.onLine === false) {
     return Object.assign(
       new Error(
-        "You appear to be offline. Check your network connection and try again.",
+        "Parece que no tienes conexión a internet. Verifica tu red e intenta de nuevo.",
       ),
       { unslothTransportFailure: true },
     );
   }
   return Object.assign(
-    new Error("Unsloth isn't running -- please relaunch it."),
+    new Error("El motor local de Sparta Agent se está iniciando. Por favor, espera un momento o reintenta."),
     { unslothTransportFailure: true },
   );
 }

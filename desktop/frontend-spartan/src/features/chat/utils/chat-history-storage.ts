@@ -220,7 +220,8 @@ export function isExpectedBackgroundChatStorageError(error: unknown): boolean {
     (error.message === "Invalid or expired token" ||
       error.message === "Not authenticated" ||
       error.message === "Request failed (401)" ||
-      error.message === "Unsloth isn't running -- please relaunch it.")
+      error.message === "Unsloth isn't running -- please relaunch it." ||
+      error.message.includes("Sparta Agent"))
   );
 }
 
