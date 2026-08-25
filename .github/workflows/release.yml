@@ -42,12 +42,10 @@ jobs:
             exit 1
           }
 
-      - uses: pnpm/action-setup@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: pnpm
+          cache: npm
 
       # Rust toolchain for sparta-security NAPI build
       - uses: dtolnay/rust-toolchain@stable
@@ -57,13 +55,13 @@ jobs:
           workspaces: rust/sparta-security
 
       # Install JS deps (triggers prebuild → rust:napi automatically)
-      - run: pnpm install --no-frozen-lockfile
+      - run: npm install
 
       - name: Install desktop frontend dependencies
-        run: npm --prefix desktop/frontend-spartan ci
+        run: npm --prefix desktop/frontend-spartan ci || npm --prefix desktop/frontend-spartan install
 
       # Build: tsc → vite build → electron-builder
-      - run: pnpm build
+      - run: npm run build
         env:
           TARGET_PLATFORM: ${{ matrix.platform }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

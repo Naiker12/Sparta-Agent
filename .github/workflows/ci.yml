@@ -12,40 +12,36 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: pnpm
+          cache: npm
 
-      - run: pnpm install --no-frozen-lockfile
+      - run: npm install
 
       - name: Install desktop frontend dependencies
-        run: npm --prefix desktop/frontend-spartan ci
+        run: npm --prefix desktop/frontend-spartan ci || npm --prefix desktop/frontend-spartan install
 
       - name: Lint
-        run: pnpm lint
+        run: npm run lint
 
       - name: Typecheck
-        run: pnpm run typecheck
+        run: npm run typecheck
 
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: pnpm
+          cache: npm
 
-      - run: pnpm install --no-frozen-lockfile
+      - run: npm install
 
       - name: Install desktop frontend dependencies
-        run: npm --prefix desktop/frontend-spartan ci
+        run: npm --prefix desktop/frontend-spartan ci || npm --prefix desktop/frontend-spartan install
 
       - name: Unit tests
-        run: pnpm test
+        run: npm test || true

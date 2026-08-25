@@ -25,15 +25,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Install Dependencies
-        run: pnpm install --no-frozen-lockfile
+      - name: Install Landing Dependencies
+        run: npm --prefix landing ci || npm --prefix landing install
 
       - name: Build Static Site
-        run: pnpm --filter ./landing build:gh
+        run: npm --prefix landing run build:gh
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
