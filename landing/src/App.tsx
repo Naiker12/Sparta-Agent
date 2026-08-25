@@ -25,6 +25,7 @@ import {
 } from 'lucide-react'
 import { DocsPage } from './components/docs/docs-page'
 import { ProductTour } from './components/sections/product-tour'
+import { ReleaseModal } from './components/ui/release-modal'
 import { getPublicUrl } from './lib/utils'
 
 // ── SVG Brand & Technology Icons for Marquee ─────────────────────────────────
@@ -1037,6 +1038,7 @@ export default function App() {
         <FaqSection />
       </main>
       <FooterSection onOpenDocs={openDocs} />
+      <ReleaseModal />
     </div>
   )
 }
