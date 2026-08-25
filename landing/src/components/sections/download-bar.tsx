@@ -51,7 +51,7 @@ export function DownloadBar() {
               } else if (asset.name.endsWith('.dmg')) {
                 info['macOS (Apple Silicon & Intel)'] = { size: formattedSize, filename: asset.name, url: downloadUrl };
               } else if (asset.name.endsWith('.AppImage')) {
-                info['Linux (AppImage & deb)'] = { size: formattedSize, filename: asset.name, url: downloadUrl };
+                info['Linux (AppImage)'] = { size: formattedSize, filename: asset.name, url: downloadUrl };
               }
             }
           }

@@ -223,8 +223,8 @@ function Navbar({ onOpenDocs }: { onOpenDocs: () => void }) {
           />
           <span className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
             Sparta Agent
-            <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-white/10 text-gray-300 border border-white/10">
-              v2.0
+            <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-white/10 text-gray-300 border border-white/10 font-bold tracking-wider">
+              BETA
             </span>
           </span>
         </a>
