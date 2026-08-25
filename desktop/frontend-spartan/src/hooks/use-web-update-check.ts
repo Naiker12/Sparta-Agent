@@ -1,187 +1,145 @@
-
-import { getAuthToken } from "@/features/auth";
-import { apiUrl, isTauri } from "@/lib/api-base";
+import { SPARTA_VERSION } from "@/config/version";
 import { useCallback, useEffect, useState } from "react";
 
-// Checked once per launch only (no polling), to avoid background load. A
-// re-check happens naturally the next time the user reopens the app.
-const WEB_UPDATE_CHECK_DELAY_MS = 5000;
+const UPDATE_CHECK_DELAY_MS = 3000;
+const DISMISS_PREFIX = "sparta_update_dismissed";
 
-// End-to-end override, absent in every real browser.
-//
-// The banner layout suite boots a fresh page for each case it measures, and every one of
-// those boots waits out this timer before the card it is there to measure exists at all.
-// At 33 boots that is over two and a half minutes of a five minute step spent waiting for
-// a delay whose entire purpose is to keep a network call off the critical path at launch,
-// which is not a property that suite is testing.
-//
-// Read at mount rather than at module load, so a test can set it from an init script and
-// so a bundle that is never driven by one behaves exactly as before: the global is
-// undefined, and the constant above stands. Deliberately not an env var, which would bake
-// the shortened delay into whatever build read it.
-const E2E_DELAY_GLOBAL = "__unslothE2EWebUpdateDelayMs";
-
-function overriddenDelayMs(): number | null {
-  if (typeof window === "undefined") return null;
-  const raw = (window as unknown as Record<string, unknown>)[E2E_DELAY_GLOBAL];
-  const value = typeof raw === "number" ? raw : Number.NaN;
-  return Number.isFinite(value) && value >= 0 ? value : null;
-}
-const DISMISS_PREFIX = "unsloth_web_update_dismissed";
-const CAN_SHOW_KEY = "can_show_web_notification";
-const UPDATE_AVAILABLE_KEY = "update_available";
-const INSTALL_SOURCE_KEY = "install_source";
-const LATEST_VERSION_KEY = "latest_version";
-const CURRENT_VERSION_KEY = "current_version";
-const CHECKED_AT_KEY = "checked_at";
-
-type ApiObject = Record<string, unknown>;
-
-export type WebUpdateInstallSource =
-  | "pypi"
-  | "editable"
-  | "local_path"
-  | "vcs"
-  | "local_repo"
-  | "unknown";
-
-export interface WebUpdateStatus {
+export interface SpartaUpdateStatus {
   currentVersion: string;
   latestVersion: string;
-  installSource: "pypi";
-  checkedAt: string;
+  downloadUrl: string;
+  releaseUrl: string;
+  releaseNotes?: string;
+  publishedAt?: string;
 }
 
-interface UseWebUpdateCheckOptions {
-  enabled?: boolean;
-  delayMs?: number;
+export type WebUpdateStatus = SpartaUpdateStatus;
+
+function parseSemver(v: string): [number, number, number] {
+  const clean = v.replace(/^v/, "").trim();
+  const parts = clean.split(".").map((p) => parseInt(p, 10) || 0);
+  return [parts[0] || 0, parts[1] || 0, parts[2] || 0];
 }
 
-function stringField(value: ApiObject, key: string): string | null {
-  const field = value[key];
-  return typeof field === "string" ? field : null;
+function isNewerVersion(latest: string, current: string): boolean {
+  const [lMajor, lMinor, lPatch] = parseSemver(latest);
+  const [cMajor, cMinor, cPatch] = parseSemver(current);
+  if (lMajor > cMajor) return true;
+  if (lMajor < cMajor) return false;
+  if (lMinor > cMinor) return true;
+  if (lMinor < cMinor) return false;
+  return lPatch > cPatch;
 }
 
-function toDisplayableUpdateStatus(value: unknown): WebUpdateStatus | null {
-  if (!value || typeof value !== "object") {
-    return null;
+function getPlatformAsset(assets: Array<{ name: string; browser_download_url: string }>): string | null {
+  const userAgent = typeof navigator !== "undefined" ? navigator.userAgent.toLowerCase() : "";
+  const isWin = userAgent.includes("win");
+  const isMac = userAgent.includes("mac");
+
+  if (isWin) {
+    const winAsset = assets.find((a) => a.name.endsWith(".exe"));
+    if (winAsset) return winAsset.browser_download_url;
+  } else if (isMac) {
+    const macAsset = assets.find((a) => a.name.endsWith(".dmg"));
+    if (macAsset) return macAsset.browser_download_url;
+  } else {
+    const linuxAsset = assets.find((a) => a.name.endsWith(".AppImage"));
+    if (linuxAsset) return linuxAsset.browser_download_url;
   }
 
-  const status = value as ApiObject;
-  const latestVersion = stringField(status, LATEST_VERSION_KEY);
-  const currentVersion = stringField(status, CURRENT_VERSION_KEY);
-  const checkedAt = stringField(status, CHECKED_AT_KEY);
-  if (
-    status[CAN_SHOW_KEY] !== true ||
-    status[UPDATE_AVAILABLE_KEY] !== true ||
-    status[INSTALL_SOURCE_KEY] !== "pypi" ||
-    !latestVersion ||
-    !currentVersion ||
-    !checkedAt
-  ) {
-    return null;
-  }
-
-  return {
-    currentVersion,
-    latestVersion,
-    installSource: "pypi",
-    checkedAt,
-  };
+  return assets[0]?.browser_download_url || null;
 }
 
-function dismissalKey(status: WebUpdateStatus): string {
-  return `${DISMISS_PREFIX}:${status.installSource}:${status.latestVersion}`;
+function dismissalKey(version: string): string {
+  return `${DISMISS_PREFIX}:${version}`;
 }
 
-function isDismissed(status: WebUpdateStatus): boolean {
-  if (typeof window === "undefined") {
-    return true;
-  }
+function isDismissed(version: string): boolean {
+  if (typeof window === "undefined") return true;
   try {
-    return window.localStorage.getItem(dismissalKey(status)) !== null;
+    return window.localStorage.getItem(dismissalKey(version)) !== null;
   } catch {
     return false;
   }
 }
 
-function markDismissed(status: WebUpdateStatus): void {
-  if (typeof window === "undefined") {
-    return;
-  }
+function markDismissed(version: string): void {
+  if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(dismissalKey(status), String(Date.now()));
+    window.localStorage.setItem(dismissalKey(version), String(Date.now()));
+  } catch {}
+}
+
+async function fetchLatestGitHubRelease(): Promise<SpartaUpdateStatus | null> {
+  try {
+    const res = await fetch("https://api.github.com/repos/Naiker12/Sparta-Agent/releases/latest", {
+      headers: { Accept: "application/vnd.github.v3+json" },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const tagName = data.tag_name || "";
+    const cleanTag = tagName.replace(/^v/, "");
+
+    if (!cleanTag || !isNewerVersion(cleanTag, SPARTA_VERSION)) {
+      return null;
+    }
+
+    const downloadUrl =
+      (Array.isArray(data.assets) ? getPlatformAsset(data.assets) : null) ||
+      data.html_url ||
+      `https://github.com/Naiker12/Sparta-Agent/releases/tag/${tagName}`;
+
+    return {
+      currentVersion: SPARTA_VERSION,
+      latestVersion: cleanTag,
+      downloadUrl,
+      releaseUrl: data.html_url || `https://github.com/Naiker12/Sparta-Agent/releases/tag/${tagName}`,
+      releaseNotes: data.body || "",
+      publishedAt: data.published_at,
+    };
   } catch {
-    // Ignore storage failures; the banner can still be dismissed in-memory.
+    return null;
   }
 }
 
-async function fetchDisplayableUpdateStatus(): Promise<WebUpdateStatus | null> {
-  const token = getAuthToken();
-  if (!token) {
-    return null;
-  }
-
-  const headers = new Headers();
-  headers.set("Authorization", `Bearer ${token}`);
-  const res = await fetch(apiUrl("/api/studio/update-status"), { headers });
-  if (!res.ok) {
-    return null;
-  }
-
-  return toDisplayableUpdateStatus(await res.json());
-}
-
-export function useWebUpdateCheck({
-  enabled = true,
-  delayMs = WEB_UPDATE_CHECK_DELAY_MS,
-}: UseWebUpdateCheckOptions = {}) {
-  const [status, setStatus] = useState<WebUpdateStatus | null>(null);
+export function useWebUpdateCheck({ enabled = true }: { enabled?: boolean } = {}) {
+  const [status, setStatus] = useState<SpartaUpdateStatus | null>(null);
 
   useEffect(() => {
-    if (isTauri || !enabled || !getAuthToken()) {
+    if (!enabled) {
       setStatus(null);
       return;
     }
 
     let canceled = false;
-    // One check per launch, 5s after load. No polling: the next re-check is
-    // simply the next time the user opens the app.
     const timer = window.setTimeout(() => {
-      fetchDisplayableUpdateStatus()
-        .then((next) => {
-          if (!canceled && next && !isDismissed(next)) {
-            setStatus(next);
+      fetchLatestGitHubRelease()
+        .then((update) => {
+          if (!canceled && update && !isDismissed(update.latestVersion)) {
+            setStatus(update);
           }
         })
         .catch(() => {});
-      // The override wins over the caller's delayMs as well as over the constant: the
-      // only caller that passes one is a unit test asserting the timer's behaviour, and
-      // it does not set the global.
-    }, overriddenDelayMs() ?? delayMs);
+    }, UPDATE_CHECK_DELAY_MS);
 
     return () => {
       canceled = true;
       window.clearTimeout(timer);
     };
-  }, [delayMs, enabled]);
+  }, [enabled]);
 
-  // X: silence this version for good (persists across launches).
   const dismiss = useCallback(() => {
     setStatus((current) => {
       if (current) {
-        markDismissed(current);
+        markDismissed(current.latestVersion);
       }
       return null;
     });
   }, []);
 
-  // "Remind me later" / post-copy: hide without persisting a dismissal, so the
-  // banner returns on the next launch if the install is still behind. Copying
-  // the command is not the same as having updated.
   const snooze = useCallback(() => {
     setStatus(null);
   }, []);
 
-  return { status: enabled && !isTauri ? status : null, dismiss, snooze };
+  return { status, dismiss, snooze };
 }

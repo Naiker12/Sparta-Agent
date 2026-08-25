@@ -2491,4 +2491,14 @@ export const en = {
       researchActivity: "Research activity",
     },
   },
+  update: {
+    newVersionTitle: "New Sparta Agent Version",
+    updateAvailable: "Version {version} is available to install.",
+    downloadUpdate: "Download & Install",
+    releaseNotes: "Release Notes",
+    hideReleaseNotes: "Hide notes",
+    showReleaseNotes: "View notes",
+    remindLater: "Remind later",
+    dismiss: "Dismiss update notification",
+  },
 } as const;
