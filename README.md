@@ -4,7 +4,7 @@
   <p><strong>Plataforma de Desarrollo Agéntica Local-First para Equipos de Ingeniería de Alto Rendimiento</strong></p>
 
   <p>
-    <a href="https://github.com/Naiker12/Sparta-Agent"><img src="https://img.shields.io/badge/Versi%C3%B3n-v0.1.8-6366f1?style=for-the-badge&logo=github&logoColor=white" alt="Version 0.1.8" /></a>
+    <a href="https://github.com/Naiker12/Sparta-Agent"><img src="https://img.shields.io/badge/Versi%C3%B3n-v0.1.9-6366f1?style=for-the-badge&logo=github&logoColor=white" alt="Version 0.1.9" /></a>
     <img src="https://img.shields.io/badge/React_18-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React 18" />
     <img src="https://img.shields.io/badge/TypeScript_5-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript 5" />
     <img src="https://img.shields.io/badge/Electron_30-47848F?style=for-the-badge&logo=electron&logoColor=white" alt="Electron 30" />

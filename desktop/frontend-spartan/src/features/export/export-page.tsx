@@ -40,6 +40,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { usePlatformStore } from "@/config/env";
+import { useT } from "@/i18n";
 import { prepareHfTokenForUse } from "@/features/hf-auth";
 import { hfApiToken, useHfTokenStore, useHubModelSearch } from "@/features/hub";
 import { confirmRemoteCodeIfNeeded } from "@/features/security";
@@ -161,6 +162,7 @@ function siblingGgufDirectory(sourcePath: string): string | null {
 }
 
 export function ExportPage() {
+  const t = useT();
   const { hfToken, setHfToken } = useHfTokenStore(
     useShallow((s) => ({
       hfToken: s.token,
@@ -864,17 +866,17 @@ export function ExportPage() {
 
         <div className="mb-8 flex flex-col gap-0.5">
           <h1 className="text-ui-30 font-semibold leading-[1.04] tracking-[-0.028em] text-foreground sm:text-ui-34">
-            Export Model
+            {t("exportPage.title")}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Export fine-tuned or base models for deployment
+            {t("exportPage.subtitle")}
           </p>
         </div>
 
         <SectionCard
           icon={<HugeiconsIcon icon={PackageIcon} className="size-5" />}
-          title="Export Configuration"
-          description="Select source, method, and quantization"
+          title={t("exportPage.configuration")}
+          description={t("exportPage.configurationDescription")}
           accent="emerald"
           featured={true}
           className="ring-0 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.16)] dark:shadow-none"
@@ -901,7 +903,7 @@ export function ExportPage() {
                 <div className="flex flex-col gap-3">
                   <div className="flex flex-col gap-2">
                     <label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                      Source
+                      {t("exportPage.source")}
                       <Tooltip>
                         <TooltipTrigger asChild={true}>
                           <button
@@ -934,14 +936,14 @@ export function ExportPage() {
                           indicatorClassName="hub-tab-toggle-pill rounded-full"
                           className="h-9 rounded-full border-0 px-3 text-ui-12p5 text-muted-foreground hover:text-foreground data-active:text-foreground data-[state=active]:text-foreground"
                         >
-                          Local Model
+                          {t("exportPage.localModel")}
                         </TabsTrigger>
                         <TabsTrigger
                           value="checkpoint"
                           indicatorClassName="hub-tab-toggle-pill rounded-full"
                           className="h-9 rounded-full border-0 px-3 text-ui-12p5 text-muted-foreground hover:text-foreground data-active:text-foreground data-[state=active]:text-foreground"
                         >
-                          Fine-tuned
+                          {t("exportPage.fineTuned")}
                         </TabsTrigger>
                         <TabsTrigger
                           value="hf"
@@ -961,7 +963,7 @@ export function ExportPage() {
                         className="flex flex-col gap-2"
                       >
                         <label className="text-xs font-medium text-muted-foreground">
-                          Training Run
+                          {t("exportPage.trainingRun")}
                         </label>
                         <Select
                           value={selectedModelIdx ?? ""}
@@ -971,7 +973,7 @@ export function ExportPage() {
                             <SelectValue
                               placeholder={
                                 models.length === 0
-                                  ? "No training runs found"
+                                  ? t("exportPage.noTrainingRuns")
                                   : "Select a training run…"
                               }
                             />
@@ -1016,7 +1018,7 @@ export function ExportPage() {
                         className="flex flex-col gap-2"
                       >
                         <label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                          Checkpoint
+                          {t("exportPage.checkpoint")}
                           <Tooltip>
                             <TooltipTrigger asChild={true}>
                               <button
@@ -1296,7 +1298,7 @@ export function ExportPage() {
                   {sourceMode === "checkpoint" && (
                     <div className="rounded-xl bg-foreground/[0.04] p-3 flex flex-col gap-2">
                       <span className="text-ui-11 font-medium text-muted-foreground uppercase tracking-wider">
-                        Training Info
+                        {t("exportPage.trainingInfo")}
                       </span>
                       <div className="grid grid-cols-1 gap-x-6 gap-y-1.5 text-xs sm:grid-cols-2">
                         <div className="flex justify-between">
@@ -1334,7 +1336,7 @@ export function ExportPage() {
 
                 <div className="flex flex-col gap-2.5">
                   <span className="text-xs font-medium text-muted-foreground">
-                    Quick Guide
+                    {t("exportPage.quickGuide")}
                   </span>
                   <ol className="flex flex-col gap-3">
                     {exportGuideSteps.map((step, i) => (
@@ -1355,7 +1357,7 @@ export function ExportPage() {
               {exportUnsupported && (
                 <Alert variant="destructive">
                   <HugeiconsIcon icon={AlertCircleIcon} className="size-4" />
-                  <AlertTitle>Export unavailable</AlertTitle>
+                  <AlertTitle>{t("exportPage.unavailable")}</AlertTitle>
                   <AlertDescription>
                     {exportUnsupportedMessage}
                   </AlertDescription>
@@ -1726,7 +1728,7 @@ export function ExportPage() {
                     disabled={!canExport}
                     onClick={handleOpenPanel}
                   >
-                    Export Model
+                    {t("exportPage.exportModel")}
                   </Button>
                 </div>
               )}

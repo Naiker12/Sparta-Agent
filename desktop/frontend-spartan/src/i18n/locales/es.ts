@@ -4,6 +4,8 @@ import type { DeepPartialMessageTree } from "../types";
 import type { en } from "./en";
 
 export const es = {
+  audioPage: { selectModel: "Seleccionar modelo de audio", generateAudio: "Generar audio", transcribe: "Transcribir", generate: "Generar", text: "Texto", noTtsModel: "No hay ningún modelo TTS cargado.", noTranscriptModel: "No hay ningún modelo de transcripción seleccionado." },
+  exportPage: { title: "Exportar modelo", subtitle: "Exporta modelos ajustados o base para desplegarlos", configuration: "Configuración de exportación", configurationDescription: "Selecciona el origen, el método y la cuantización", source: "Origen", localModel: "Modelo local", fineTuned: "Ajustado", trainingRun: "Ejecución de entrenamiento", noTrainingRuns: "No se encontraron ejecuciones de entrenamiento", checkpoint: "Punto de control", trainingInfo: "Información del entrenamiento", quickGuide: "Guía rápida", unavailable: "Exportación no disponible", exportModel: "Exportar modelo" },
   hub: {
     title: "Centro de modelos",
     datasetsTitle: "Conjuntos de datos",
@@ -315,6 +317,9 @@ export const es = {
       train: "Entrenar",
       recipes: "Recetas",
       images: "Imágenes",
+      channels: "Canales",
+      comingSoon: "Próximo",
+      channelsComingSoon: "Canales estará disponible próximamente.",
       video: "Vídeo",
       audio: "Audio",
       trainChecking: "Comprobando si este equipo admite entrenamiento...",
@@ -2556,6 +2561,13 @@ export const es = {
       nightShiftBeginsNamed: "Comienza el turno de noche, {name}",
       temporaryChat: "Chat temporal",
       temporaryChatDescription: "Este chat no aparecerá en tu historial ni se guardará. Desaparecerá cuando salgas.",
+    },
+    toolbar: {
+      turnOnTemporaryChat: "Activar chat temporal",
+      turnOffTemporaryChat: "Desactivar chat temporal",
+      temporaryChatActive: "Chat temporal",
+      openRunSettings: "Abrir ajustes de ejecución",
+      researchActivity: "Actividad de investigación",
     },
   },
 } satisfies DeepPartialMessageTree<typeof en>;

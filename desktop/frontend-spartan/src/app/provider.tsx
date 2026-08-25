@@ -477,14 +477,14 @@ const MAC_NATIVE_CHROME_STYLE = {
 
 const CUSTOM_CHROME_STYLE = {
   "--studio-titlebar-height": "0px",
-  "--studio-custom-titlebar-height": "34px",
-  "--studio-desktop-titlebar-height": "34px",
+  "--studio-custom-titlebar-height": "38px",
+  "--studio-desktop-titlebar-height": "38px",
   "--studio-sidebar-expanded-width": "17.5rem",
   "--studio-sidebar-collapsed-width": "3rem",
   "--studio-collapsed-chat-controls-inset": "12px",
   "--studio-startup-top-inset": "42px",
-  "--studio-content-top-inset": "34px",
-  "--studio-hidden-route-top-inset": "34px",
+  "--studio-content-top-inset": "38px",
+  "--studio-hidden-route-top-inset": "38px",
   "--studio-chat-header-height": "48px",
   "--studio-chat-header-padding-top": "9px",
   "--studio-media-header-left-inset": "0.5rem",
@@ -508,19 +508,21 @@ function DesktopChromeVarsEffect({
       value === null
         ? el.style.removeProperty(name)
         : el.style.setProperty(name, value);
-    set("--studio-custom-titlebar-height", usesCustomTitlebar ? "34px" : null);
+    set("--studio-custom-titlebar-height", usesCustomTitlebar ? "38px" : null);
     set("--studio-mac-titlebar-height", usesNativeMacTitlebar ? "34px" : null);
     set("--studio-window-control-inset", usesCustomTitlebar ? "112px" : null);
+    set("--studio-content-top-inset", usesCustomTitlebar ? "38px" : null);
     // How far body-portaled surfaces (dialogs, alert dialogs) must stay clear of the
     // top: either titlebar paints over them, and neither inherits the wrapper's style.
     set(
       "--studio-window-chrome-top",
-      usesCustomTitlebar || usesNativeMacTitlebar ? "34px" : null,
+      usesCustomTitlebar ? "38px" : usesNativeMacTitlebar ? "34px" : null,
     );
     return () => {
       set("--studio-custom-titlebar-height", null);
       set("--studio-mac-titlebar-height", null);
       set("--studio-window-control-inset", null);
+      set("--studio-content-top-inset", null);
       set("--studio-window-chrome-top", null);
     };
   }, [usesCustomTitlebar, usesNativeMacTitlebar]);
@@ -710,8 +712,15 @@ function TauriWrapper({ children }: { children: ReactNode }) {
 
   if (!isTauri) {
     return (
-      <>
-        {children}
+      <div
+        className="relative h-dvh min-h-0 overflow-hidden bg-background"
+        style={CUSTOM_CHROME_STYLE}
+      >
+        <DesktopChromeVarsEffect
+          usesCustomTitlebar={true}
+          usesNativeMacTitlebar={false}
+        />
+        <div className="h-full min-h-0 overflow-hidden">{children}</div>
         {/* One bottom-right stack so overlays never overlap: download panel at the
             corner, banners above, each owning its width. */}
         {/* Capped to the viewport, or a long download list plus expanded notes
@@ -749,7 +758,7 @@ function TauriWrapper({ children }: { children: ReactNode }) {
               transient banners above it never cover it. */}
           <LoadedModelsIndicator positioned={false} />
         </div>
-      </>
+      </div>
     );
   }
 

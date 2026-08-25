@@ -495,7 +495,7 @@ function NavItem({
           data-spinner={spinner ? "true" : undefined}
           className="sidebar-nav-btn h-[33px] rounded-full gap-[8.5px] pl-3 pr-2.5 font-medium group-data-[collapsible=icon]:px-2.5 group-data-[collapsible=icon]:!w-[32px] group-data-[collapsible=icon]:mx-auto"
         >
-          <HugeiconsIcon icon={icon} strokeWidth={1.75} className="size-icon! shrink-0 translate-x-0.5 group-hover/menu-button:animate-icon-pop" />
+          <HugeiconsIcon icon={icon} strokeWidth={1.9} className="size-icon! shrink-0 translate-x-0.5 text-primary group-hover/menu-button:animate-icon-pop" />
           <span className="text-ui-14p5 leading-ui-19 tracking-nav">{label}</span>
           {badge && (
             <NavBadge
@@ -2727,10 +2727,9 @@ export function AppSidebar() {
                 >
                   {/* Logo lockup follows the UI font size at half rate:
                       base + (root scale - 1) * 8px. Exact base sizes at 16px. */}
-                  <img
-                    src={publicAssetUrl("/spartan-logo.svg")}
-                    alt="SPARTAN AGENT"
-                    className="relative top-px h-[calc(24px+0.5rem*var(--ui-font-scale,1))] w-[calc(24px+0.5rem*var(--ui-font-scale,1))] shrink-0 rounded-lg bg-primary/10 object-contain ring-1 ring-primary/20"
+                  <span
+                    aria-hidden="true"
+                    className="relative top-px h-[calc(24px+0.5rem*var(--ui-font-scale,1))] w-[calc(24px+0.5rem*var(--ui-font-scale,1))] shrink-0 bg-primary [mask-image:url('/spartan-logo.svg')] [mask-position:center] [mask-repeat:no-repeat] [mask-size:contain]"
                   />
                   <span className="relative -top-px truncate font-heading text-[calc(10px+0.3rem*var(--ui-font-scale,1))] font-bold tracking-[0.04em] uppercase leading-tight text-nav-fg">
                     SPARTAN AGENT
@@ -2745,7 +2744,7 @@ export function AppSidebar() {
                         useChatSearchStore.getState().open();
                         closeMobileIfOpen();
                       }}
-                      className="inline-flex size-[30px] cursor-pointer items-center justify-center rounded-[10px] text-nav-icon-idle dark:text-nav-fg-muted transition-colors hover:bg-nav-surface-hover hover:text-black dark:hover:text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      className="inline-flex size-[30px] cursor-pointer items-center justify-center rounded-[10px] text-primary transition-colors hover:bg-nav-surface-hover hover:text-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                       aria-label={t("shell.navigation.search")}
                     >
                       <HugeiconsIcon icon={Search01Icon} strokeWidth={1.75} className="size-icon" />
@@ -2771,7 +2770,7 @@ export function AppSidebar() {
                       <button
                         type="button"
                         onClick={togglePinned}
-                        className="inline-flex size-[30px] cursor-pointer items-center justify-center rounded-[10px] text-nav-icon-idle dark:text-nav-fg-muted transition-colors hover:bg-nav-surface-hover hover:text-black dark:hover:text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        className="inline-flex size-[30px] cursor-pointer items-center justify-center rounded-[10px] text-primary transition-colors hover:bg-nav-surface-hover hover:text-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                         aria-label={t("shell.aria.closeSidebar")}
                       >
                         <HugeiconsIcon icon={LayoutAlignLeftIcon} strokeWidth={1.75} className="size-icon" />
@@ -2966,6 +2965,17 @@ export function AppSidebar() {
                   </NavItem>
                 );
               })}
+              <NavItem
+                icon={BubbleChatIcon}
+                label={t("shell.navigation.channels")}
+                badge={t("shell.navigation.comingSoon")}
+                active={false}
+                disabled={true}
+                tooltip={t("shell.navigation.channelsComingSoon")}
+                alwaysTooltip={true}
+                onClick={() => undefined}
+                testId="nav-row-channels"
+              />
               {/* Unpinned destinations, behind one row. */}
               {overflowNavIds.length > 0 && (
                 <SidebarMenuItem

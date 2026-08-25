@@ -11,13 +11,16 @@ function detectTauri(): boolean {
   )
 }
 
-const isTauri = detectTauri()
+function detectElectron(): boolean {
+  if (typeof window === 'undefined') return false
+  return (
+    'electronAPI' in window ||
+    navigator.userAgent.includes('Electron')
+  )
+}
 
-// Keep the base relative until Tauri reports a validated server-port. Port zero
-// is deliberately rejected by Chromium as unsafe, which turned early startup
-// probes into noisy `net::ERR_UNSAFE_PORT` errors before the backend was ready.
-// A relative URL works through Vite's development proxy and fails normally (and
-// recoverably) in a packaged webview until the real loopback port arrives.
+const isTauri = detectTauri()
+const isElectron = detectElectron()
 
 const initialApiBase = apiBase
 
@@ -39,4 +42,4 @@ export function apiUrl(path: string): string {
   return `${apiBase}${path}`
 }
 
-export { isTauri }
+export { isTauri, isElectron }

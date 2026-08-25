@@ -32,7 +32,13 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Eye, EyeOff } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  type WheelEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { toast } from "sonner";
 import { ApiProviderLogo } from "./api-provider-logo";
 
@@ -188,6 +194,36 @@ export function ChatProvidersSettings({
   const [customProviderName, setCustomProviderName] = useState(
     CUSTOM_PROVIDER_DISPLAY_NAME,
   );
+
+  const handoffModelListScroll = (event: WheelEvent<HTMLDivElement>) => {
+    const modelList = (event.target as HTMLElement).closest<HTMLElement>(
+      "[data-provider-model-list]",
+    );
+    if (!modelList) return;
+
+    const movingDown = event.deltaY > 0;
+    const atTop = modelList.scrollTop <= 0;
+    const atBottom =
+      modelList.scrollTop + modelList.clientHeight >=
+      modelList.scrollHeight - 1;
+    if ((!movingDown || !atBottom) && (movingDown || !atTop)) return;
+
+    const scrollRoot = event.currentTarget.closest<HTMLElement>(
+      "[data-provider-scroll-root]",
+    );
+    if (!scrollRoot) return;
+
+    // A modal scroll lock prevents native wheel chaining out of a nested list.
+    // Once the list reaches an edge, explicitly continue in the page scroller.
+    const pixels =
+      event.deltaMode === 1
+        ? event.deltaY * 16
+        : event.deltaMode === 2
+          ? event.deltaY * scrollRoot.clientHeight
+          : event.deltaY;
+    scrollRoot.scrollBy({ top: pixels });
+    event.preventDefault();
+  };
   const [isReasoningModel, setIsReasoningModel] = useState(false);
   const reduceMotion = useReducedMotion();
   const connectionsEnabled = useExternalProvidersStore(
@@ -1220,7 +1256,10 @@ export function ChatProvidersSettings({
 
   if (page === "form") {
     return (
-      <div className="@container -mt-3 flex min-h-0 flex-col gap-2">
+      <div
+        className="@container -mt-3 flex shrink-0 flex-col gap-2"
+        onWheelCapture={handoffModelListScroll}
+      >
         <header className="flex items-center gap-2 pr-8">
           <Button
             type="button"
@@ -1690,7 +1729,10 @@ export function ChatProvidersSettings({
                             </Button>
                           </div>
                         </div>
-                        <ul className="max-h-56 overflow-y-auto rounded-[8px] border border-border/70 bg-background/50">
+                        <ul
+                          data-provider-model-list
+                          className="max-h-56 overflow-y-auto rounded-[8px] border border-border/70 bg-background/50"
+                        >
                           {filteredAvailableModels.length === 0 ? (
                             <li className="px-3 py-3 text-xs text-muted-foreground">
                               {t("chat.providersDialog.noMatchingModels")}
@@ -1779,7 +1821,10 @@ export function ChatProvidersSettings({
                             </Button>
                           </div>
                         </div>
-                        <ul className="max-h-56 overflow-y-auto rounded-[8px] border border-border/70 bg-background/50">
+                        <ul
+                          data-provider-model-list
+                          className="max-h-56 overflow-y-auto rounded-[8px] border border-border/70 bg-background/50"
+                        >
                           {filteredAvailableModels.length === 0 ? (
                             <li className="px-3 py-3 text-xs text-muted-foreground">
                               {t("chat.providersDialog.noMatchingModels")}
@@ -1876,7 +1921,10 @@ export function ChatProvidersSettings({
   }
 
   return (
-    <div className="flex min-h-0 flex-col gap-6">
+    <div
+      className="flex shrink-0 flex-col gap-6"
+      onWheelCapture={handoffModelListScroll}
+    >
       <header className="flex flex-col gap-1 pr-8">
         <div className="flex min-w-0 flex-col gap-1">
           <h1 className="font-heading text-lg font-semibold">{t("chat.providersDialog.title")}</h1>
@@ -2052,11 +2100,13 @@ export function ChatProvidersDialog({
   onProvidersChange,
 }: ChatProvidersDialogProps) {
   const t = useT();
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
+        data-provider-scroll-root
         overlayClassName="bg-black/50 backdrop-blur-sm"
-        className="flex max-h-[90dvh] w-[96vw] flex-col gap-0 overflow-y-auto p-8 sm:max-w-none md:max-w-[44rem]"
+        className="flex max-h-[90dvh] w-[96vw] flex-col gap-0 overflow-y-scroll p-8 [scrollbar-gutter:stable] sm:max-w-none md:max-w-[44rem]"
       >
         <DialogHeader className="sr-only">
           <DialogTitle>{t("chat.providersDialog.title")}</DialogTitle>

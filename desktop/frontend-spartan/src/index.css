@@ -13,6 +13,31 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@keyframes welcome-logo-arrive {
+	0% {
+		opacity: 0;
+		transform: translateY(10px) scale(0.84);
+	}
+	65% {
+		opacity: 1;
+		transform: translateY(-2px) scale(1.04);
+	}
+	100% {
+		opacity: 1;
+		transform: translateY(0) scale(1);
+	}
+}
+
+.aui-thread-welcome-logo {
+	animation: welcome-logo-arrive 560ms var(--ease-out-quart) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.aui-thread-welcome-logo {
+		animation: none;
+	}
+}
+
 @layer components {
 	/* The surface the sidebar panel actually paints. The collapsed icon rail
 	   repaints it, so gradients fading into the panel must read this rather
@@ -176,34 +201,34 @@
 	--ease-out-quart: cubic-bezier(0.165, 0.84, 0.44, 1);
 	--ease-out-cubic: cubic-bezier(0.215, 0.61, 0.355, 1);
 
-	/* Soft lilac base used by every page and the chat surface. */
-	--background: #f7f2ff;
+	/* Warm parchment base used by every page and the chat surface. */
+	--background: #f2ebe0;
 	--foreground: oklch(0.2686 0 0);
-	--card: #fdfaff;
+	--card: #fbf7f0;
 	--card-foreground: oklch(0.1281 0.0179 169.2764);
-	--popover: #fdfaff;
+	--popover: #fbf7f0;
 	--popover-foreground: oklch(0.1281 0.0179 169.2764);
-	--primary: #6d28d9;
-	--primary-foreground: oklch(1 0 0);
-	--secondary: #eee5ff;
-	--secondary-foreground: #4c1d95;
-	--muted: #f0ebf8;
+	--primary: #339cff;
+	--primary-foreground: #111417;
+	--secondary: #e9dfd1;
+	--secondary-foreground: #164570;
+	--muted: #ebe2d6;
 	--muted-foreground: #675f72;
-	--accent: #e9ddff;
-	--accent-foreground: #3d1d71;
+	--accent: #e5dacb;
+	--accent-foreground: #16314d;
 	--destructive: oklch(0.6368 0.2078 25.3313);
 	/* Bypass permissions accent: bright, saturated yellow (not dark gold). */
 	--bypass: #c99d00;
-	--border: #ded3ee;
-	--input: #ded3ee;
-	--ring: #6d28d9;
+	--border: #d9cebf;
+	--input: #d9cebf;
+	--ring: #339cff;
 	/* Focus and selection indicators: the element's own border, darker.
 	   Derived from the live border/foreground tokens so every palette and
 	   mode gets the right shade from these definitions. Focus/hover uses the
 	   soft shade; selected state uses the deeper one (still never black). */
 	--ring-soft: color-mix(in srgb, var(--foreground) 22%, var(--border));
 	--ring-select: color-mix(in srgb, var(--foreground) 48%, var(--border));
-	--chart-1: #6d28d9;
+	--chart-1: #339cff;
 	--chart-2: oklch(0.694 0.1395 136.6059);
 	--chart-3: oklch(0.7014 0.1193 197.5897);
 	--chart-4: oklch(0.6926 0.1112 346.5775);
@@ -211,14 +236,14 @@
 	--radius: 1.1rem;
 	/* White sidebar against the warm off-white page; the tone difference is
 	   the separator now that the right-edge divider is gone. */
-	--sidebar: #fbf8ff;
+	--sidebar: #e8dfd3;
 	--sidebar-foreground: oklch(0.1281 0.0179 169.2764);
-	--sidebar-primary: #6d28d9;
-	--sidebar-primary-foreground: oklch(1 0 0);
-	--sidebar-accent: #ece2fa;
-	--sidebar-accent-foreground: #3d1d71;
-	--sidebar-border: #ece6f4;
-	--sidebar-ring: #6d28d9;
+	--sidebar-primary: #339cff;
+	--sidebar-primary-foreground: #111417;
+	--sidebar-accent: #dfd3c3;
+	--sidebar-accent-foreground: #16314d;
+	--sidebar-border: #d5c9ba;
+	--sidebar-ring: #339cff;
 	--destructive-foreground: oklch(1 0 0);
 	--font-sans: "Inter Variable", ui-sans-serif, sans-serif, system-ui;
 	--font-heading: "Hellix", "Space Grotesk Variable", var(--font-sans);
@@ -254,11 +279,11 @@
 
 	/* Hex (not OKLCH) so the rendered surface matches the design mockup pixel-for-pixel. */
 	--nav-fg: #352d40;
-	--nav-fg-muted: #786d85;
-	--nav-surface-hover: #eee6f8;
-	--nav-icon-idle: #81768d;
-	--nav-beta-border: #ded3ee;
-	--panel-surface-hover: #eee6f8;
+	--nav-fg-muted: #625a53;
+	--nav-surface-hover: #dfd4c5;
+	--nav-icon-idle: #554d47;
+	--nav-beta-border: #d9cebf;
+	--panel-surface-hover: #dfd4c5;
 	/* Right-side chat-parameters panel: matches the chat content
 	   surface in both themes — distinction from the left sidebar
 	   (#f9faf9) is handled by the left border alone. Tracks
@@ -346,8 +371,8 @@
 	--card-foreground: #ececec;
 	--popover: #212121;
 	--popover-foreground: #ececec;
-	--primary: #a78bfa;
-	--primary-foreground: #21113b;
+	--primary: #4dabff;
+	--primary-foreground: #111417;
 	--secondary: #242424;
 	--secondary-foreground: #ececec;
 	--muted: #242424;
@@ -373,12 +398,12 @@
 	   the separator. */
 	--sidebar: #1f1f1f;
 	--sidebar-foreground: #ececec;
-	--sidebar-primary: #a78bfa;
-	--sidebar-primary-foreground: #21113b;
+	--sidebar-primary: #4dabff;
+	--sidebar-primary-foreground: #111417;
 	--sidebar-accent: #2a2a2a;
 	--sidebar-accent-foreground: #ececec;
 	--sidebar-border: #2a2a2a;
-	--sidebar-ring: #ececec;
+	--sidebar-ring: #4dabff;
 	--destructive-foreground: oklch(1 0 0);
 	/* Match light's radius so every rounded-* element is the same in both themes. */
 	--radius: 1.1rem;
@@ -440,7 +465,7 @@
    carried on <html> as `data-palette` (managed by theme-store.ts alongside the
    light/dark class):
 
-     (no attribute)            → Standard: the signature Unsloth green.
+     (no attribute)            → Standard: the Sparta light-blue accent.
      data-palette="classic"    → Classic: neutral grays with a calm blue
                                  accent; enterprise-safe.
      data-palette="minimal"    → Minimal: strictly black, white, and gray.

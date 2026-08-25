@@ -22,11 +22,11 @@ export function createMainWindow(): BrowserWindow {
     minHeight: 600,
     titleBarStyle: 'hidden',
     titleBarOverlay: {
-      color: '#0C0C10',
-      symbolColor: '#9CA3AF',
+      color: '#F2EBE0',
+      symbolColor: '#352D40',
       height: 38,
     },
-    backgroundColor: '#0C0C10',
+    backgroundColor: '#F2EBE0',
     show: false,
     icon: path.join(process.env.VITE_PUBLIC || '', 'sparta-escritorio.png'),
     webPreferences: {

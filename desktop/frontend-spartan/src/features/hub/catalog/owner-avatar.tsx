@@ -125,6 +125,7 @@ function ProviderLogoTile({
   size: AvatarSize;
   className?: string;
 }) {
+  const [failed, setFailed] = useState(false);
   const altLabel = `${provider.name} logo`;
   const bgClass =
     provider.background === "white" ? "bg-white" : "bg-transparent";
@@ -142,16 +143,23 @@ function ProviderLogoTile({
           className,
         )}
       >
-        <img
-          src={provider.logoPath}
-          alt=""
-          decoding="async"
-          className={cn(
-            fit === "cover"
-              ? "size-full object-cover"
-              : "size-3/4 object-contain",
-          )}
-        />
+        {failed ? (
+          <span className="text-xs font-semibold text-muted-foreground">
+            {provider.name[0]?.toUpperCase() ?? "?"}
+          </span>
+        ) : (
+          <img
+            src={provider.logoPath}
+            alt=""
+            decoding="async"
+            className={cn(
+              fit === "cover"
+                ? "size-full object-cover"
+                : "size-3/4 object-contain",
+            )}
+            onError={() => setFailed(true)}
+          />
+        )}
       </span>
     );
   }

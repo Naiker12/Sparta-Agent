@@ -1948,14 +1948,15 @@ export function ChatPage({
   active,
 }: { search: ChatSearch; active: boolean }): ReactElement {
   const navigate = useNavigate();
+  const t = useT();
 
   const settingsOpen = useChatRuntimeStore((s) => s.settingsPanelOpen);
   const setSettingsOpen = useChatRuntimeStore((s) => s.setSettingsPanelOpen);
   const incognito = useChatRuntimeStore((s) => s.incognito);
   const setIncognito = useChatRuntimeStore((s) => s.setIncognito);
   const incognitoLabel = incognito
-    ? "Turn off temporary chat"
-    : "Turn on temporary chat";
+    ? t("chat.toolbar.turnOffTemporaryChat")
+    : t("chat.toolbar.turnOnTemporaryChat");
   const toggleIncognito = useCallback(() => {
     const store = useChatRuntimeStore.getState();
     const wasIncognito = store.incognito;
@@ -3423,7 +3424,7 @@ export function ChatPage({
         )}
         <div
           className={cn(
-            "pointer-events-none absolute top-[var(--studio-content-top-inset,0px)] left-0 right-[10px] z-40 flex h-[var(--studio-chat-header-height,48px)] shrink-0 items-start bg-background pt-[var(--studio-chat-header-padding-top,11px)] pr-[calc(0.5rem+var(--studio-chat-header-right-inset,var(--studio-window-control-inset,0px)))]",
+            "pointer-events-none absolute top-[var(--studio-content-top-inset,0px)] left-0 right-0 z-40 flex h-[var(--studio-chat-header-height,48px)] shrink-0 items-start bg-background pt-[var(--studio-chat-header-padding-top,11px)] pr-3 md:pr-4",
             isMobile
               ? "pl-12"
               : pinned
@@ -3432,7 +3433,7 @@ export function ChatPage({
                   ? "pl-[var(--studio-collapsed-chat-controls-inset,0.75rem)]"
                   : "pl-[calc(0.5rem+max(0px,var(--studio-mac-traffic-light-inset,0px)-var(--sidebar-width-icon,3rem)))]",
             view.mode === "compare" &&
-              "right-[10px] left-auto w-auto bg-transparent pl-0 pr-[calc(0.5rem+var(--studio-chat-header-right-inset,var(--studio-window-control-inset,0px)))]",
+              "right-0 left-auto w-auto bg-transparent pl-0 pr-3 md:pr-4",
           )}
         >
           <div className="pointer-events-auto flex items-center gap-1">
@@ -3540,10 +3541,10 @@ export function ChatPage({
                     type="button"
                     onClick={toggleIncognito}
                     className={cn(
-                      "flex size-[30px] cursor-pointer items-center justify-center rounded-[10px] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+                      "flex h-[30px] cursor-pointer items-center gap-1.5 rounded-[10px] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
                       incognito
-                        ? "bg-primary/10 text-primary hover:bg-primary/15"
-                        : "text-nav-fg hover:bg-nav-surface-hover hover:text-black dark:hover:text-white",
+                        ? "bg-primary/15 px-2 font-medium text-primary text-xs hover:bg-primary/20"
+                        : "size-[30px] justify-center text-nav-fg hover:bg-nav-surface-hover hover:text-black dark:hover:text-white",
                     )}
                     aria-label={incognitoLabel}
                     aria-pressed={incognito}
@@ -3551,8 +3552,11 @@ export function ChatPage({
                     <HugeiconsIcon
                       icon={BubbleChatTemporaryIcon}
                       strokeWidth={1.75}
-                      className="size-icon"
+                      className="size-icon shrink-0"
                     />
+                    {incognito && (
+                      <span className="text-xs">{t("chat.toolbar.temporaryChatActive")}</span>
+                    )}
                   </button>
                 </TooltipPrimitive.Trigger>
                 <TooltipContent
@@ -3581,7 +3585,7 @@ export function ChatPage({
                       openResearchPanel(latestResearchRunId);
                     }}
                     className="relative flex size-[30px] cursor-pointer items-center justify-center rounded-[10px] text-nav-fg transition-colors hover:bg-nav-surface-hover hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:hover:text-white"
-                    aria-label="Open research activity"
+                    aria-label={t("chat.toolbar.researchActivity")}
                     aria-pressed={openResearchRunId === latestResearchRunId}
                   >
                     <HugeiconsIcon
@@ -3595,7 +3599,7 @@ export function ChatPage({
                   </button>
                 </TooltipPrimitive.Trigger>
                 <TooltipContent side="bottom" sideOffset={6} className="tooltip-compact">
-                  Research activity
+                  {t("chat.toolbar.researchActivity")}
                 </TooltipContent>
               </Tooltip>
             ) : null}
@@ -3609,7 +3613,7 @@ export function ChatPage({
                       setSettingsOpen(true);
                     }}
                     className="flex size-[30px] cursor-pointer items-center justify-center rounded-[10px] text-nav-fg transition-colors hover:bg-nav-surface-hover hover:text-black dark:hover:text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                    aria-label="Open run settings"
+                    aria-label={t("chat.toolbar.openRunSettings")}
                   >
                     <HugeiconsIcon
                       icon={LayoutAlignRightIcon}
@@ -3623,7 +3627,7 @@ export function ChatPage({
                   sideOffset={6}
                   className="tooltip-compact"
                 >
-                  Open run settings
+                  {t("chat.toolbar.openRunSettings")}
                 </TooltipContent>
               </Tooltip>
             )}

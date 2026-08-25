@@ -241,6 +241,7 @@ import {
   AttachmentIcon,
   Bookmark02Icon,
   BookOpen01Icon,
+  BubbleChatTemporaryIcon,
   CodeIcon,
   Copy01Icon,
   Delete02Icon,
@@ -1523,6 +1524,8 @@ export const Thread: FC<{
     ({ threadListItem }) => threadListItem.id,
   );
   const activeThreadId = useChatRuntimeStore((s) => s.activeThreadId);
+  const incognito = useChatRuntimeStore((s) => s.incognito);
+  const t = useT();
   const threadId = targetThreadId ?? activeThreadId ?? null;
   const aui = useAui();
   useThreadForkCounts();
@@ -1752,6 +1755,26 @@ export const Thread: FC<{
                 condition={({ thread }) => thread.isEmpty && !thread.isLoading}
               >
                 <ThreadWelcome hideComposer={hideComposer} threadId={threadId} />
+              </AuiIf>
+            )}
+
+            {incognito && (
+              <AuiIf condition={({ thread }) => hideWelcome || !thread.isEmpty}>
+                <div className="mx-auto my-2 flex w-full max-w-(--thread-max-width) items-center gap-2.5 rounded-xl border border-primary/20 bg-primary/5 px-3.5 py-2 text-xs text-foreground/80 backdrop-blur-sm animate-in fade-in duration-200">
+                  <HugeiconsIcon
+                    icon={BubbleChatTemporaryIcon}
+                    strokeWidth={2}
+                    className="size-4 shrink-0 text-primary"
+                  />
+                  <div className="flex flex-1 flex-wrap items-center justify-between gap-x-3 gap-y-1">
+                    <span className="font-medium text-primary">
+                      {t("chat.welcome.temporaryChat")}
+                    </span>
+                    <span className="text-muted-foreground">
+                      {t("chat.welcome.temporaryChatDescription")}
+                    </span>
+                  </div>
+                </div>
               </AuiIf>
             )}
 
@@ -2126,14 +2149,13 @@ const ThreadWelcome: FC<{
     <div className="aui-thread-welcome-root mx-auto my-auto flex w-full max-w-(--thread-max-width) grow flex-col">
       <div className="aui-thread-welcome-center flex w-full grow flex-col items-center justify-start pt-[27.5dvh]">
         <div className="aui-thread-welcome-message flex w-full flex-col justify-center gap-9 px-4">
-          {/* Center the greeting (sloth + title) over the composer. */}
-          <div className="flex flex-row items-center justify-center gap-[15px]">
+          {/* Center the greeting logo above the title so it remains legible on every theme. */}
+          <div className="flex flex-col items-center justify-center gap-4">
             {/* Temporary chat keeps the title on its own, no mascot. */}
             {showGreetingSloth && !incognito && (
-              <img
-                src={publicAssetUrl("/spartan-logo.svg")}
-                alt=""
-                className="size-[44px] -translate-y-[2px] object-contain"
+              <span
+                aria-hidden="true"
+                className="aui-thread-welcome-logo size-[96px] shrink-0 bg-primary [mask-image:url('/spartan-logo.svg')] [mask-position:center] [mask-repeat:no-repeat] [mask-size:125%]"
               />
             )}
             <h1 className="aui-thread-welcome-message-inner unsloth-welcome-title fade-in slide-in-from-bottom-1 animate-in text-3xl tracking-[-0.02em] duration-200">

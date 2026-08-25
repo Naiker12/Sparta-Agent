@@ -778,13 +778,13 @@ export function applyCustomizationToDocument(
   setVar(
     "--nav-fg-muted",
     navigationInk
-      ? `color-mix(in srgb, ${navigationInk} 58%, ${navigationSurface})`
+      ? `color-mix(in srgb, ${navigationInk} 70%, ${navigationSurface})`
       : null,
   );
   setVar(
     "--nav-icon-idle",
     navigationInk
-      ? `color-mix(in srgb, ${navigationInk} 48%, ${navigationSurface})`
+      ? `color-mix(in srgb, ${navigationInk} 72%, ${navigationSurface})`
       : null,
   );
   setVar(

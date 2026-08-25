@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { motion } from 'framer-motion'
 import {
   Plus,
   ArrowRight,
@@ -23,6 +24,7 @@ import {
   BookOpen,
 } from 'lucide-react'
 import { DocsPage } from './components/docs/docs-page'
+import { ProductTour } from './components/sections/product-tour'
 import { getPublicUrl } from './lib/utils'
 
 // ── SVG Brand & Technology Icons for Marquee ─────────────────────────────────
@@ -169,6 +171,7 @@ function SvgDocsIcon({ className = 'w-4 h-4' }: { className?: string }) {
 function Navbar({ onOpenDocs }: { onOpenDocs: () => void }) {
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [activeLink, setActiveLink] = useState('#flujo-agentico')
 
   useEffect(() => {
     const handleScroll = () => {
@@ -190,6 +193,7 @@ function Navbar({ onOpenDocs }: { onOpenDocs: () => void }) {
 
   const scrollTo = (href: string) => {
     setMobileOpen(false)
+    setActiveLink(href)
     const element = document.querySelector(href)
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' })
@@ -198,8 +202,8 @@ function Navbar({ onOpenDocs }: { onOpenDocs: () => void }) {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled ? 'bg-black/85 backdrop-blur-xl border-b border-white/10 py-3 shadow-2xl' : 'bg-transparent py-5'
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+        scrolled ? 'bg-black/90 backdrop-blur-xl py-4 shadow-2xl' : 'bg-black/80 backdrop-blur-xl py-5'
       }`}
     >
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
@@ -226,7 +230,7 @@ function Navbar({ onOpenDocs }: { onOpenDocs: () => void }) {
         </a>
 
         {/* Desktop Links */}
-        <div className="hidden lg:flex items-center gap-4 xl:gap-6 bg-white/[0.03] px-4 xl:px-5 py-2 rounded-full border border-white/10 backdrop-blur-md">
+        <div className="hidden lg:flex items-center gap-1 bg-white/[0.035] px-2 py-2 rounded-full border border-white/15 backdrop-blur-md shadow-[0_12px_36px_rgba(0,0,0,0.28)]">
           {navLinks.map((link) => (
             <a
               key={link.name}
@@ -235,8 +239,15 @@ function Navbar({ onOpenDocs }: { onOpenDocs: () => void }) {
                 e.preventDefault()
                 scrollTo(link.href)
               }}
-              className="text-xs font-semibold text-gray-300 hover:text-white hover:bg-white/10 px-2.5 xl:px-3 py-1.5 rounded-full transition-all"
+              className={`relative isolate px-4 py-2.5 text-sm font-semibold transition-colors ${activeLink === link.href ? 'text-white' : 'text-gray-300 hover:text-white'}`}
             >
+              {activeLink === link.href && (
+                <motion.span
+                  layoutId="active-nav-link"
+                  className="absolute inset-0 -z-10 rounded-full border border-white/15 bg-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]"
+                  transition={{ type: 'spring', stiffness: 360, damping: 28 }}
+                />
+              )}
               {link.name}
             </a>
           ))}
@@ -248,16 +259,16 @@ function Navbar({ onOpenDocs }: { onOpenDocs: () => void }) {
             href="https://github.com/Naiker12/Sparta-Agent"
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-[#1F1F22] hover:bg-[#2A2A2D] text-white text-xs font-medium px-4 py-2 rounded-full border border-white/10 transition-all flex items-center gap-1.5"
+            className="group flex h-11 items-center gap-2 rounded-full border border-white/15 bg-[#1F1F22] px-5 text-sm font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#2A2A2D] hover:shadow-lg hover:shadow-black/30"
           >
             <span>GitHub</span>
-            <ExternalLink className="w-3.5 h-3.5 text-gray-400" />
+            <ExternalLink className="size-5 text-gray-300 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </a>
           <button
             onClick={onOpenDocs}
-            className="bg-white hover:bg-gray-100 text-black text-xs font-semibold px-4 py-2 rounded-full transition-all shadow-lg hover:shadow-white/10 flex items-center gap-2 cursor-pointer"
+            className="group flex h-11 items-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-black shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:bg-violet-100 hover:shadow-violet-300/25 cursor-pointer"
           >
-            <SvgDocsIcon className="w-3.5 h-3.5 text-black" />
+            <SvgDocsIcon className="size-5 text-black transition-transform duration-300 group-hover:scale-110 group-hover:rotate-[-6deg]" />
             <span>Docs</span>
           </button>
         </div>
@@ -329,64 +340,39 @@ function HeroSection() {
   const marqueeLogos = [...techLogos, ...techLogos, ...techLogos, ...techLogos]
 
   return (
-    <section id="about" className="min-h-screen flex flex-col items-center justify-center pt-32 pb-20 relative z-0 overflow-hidden">
-      {/* Background Video */}
-      <video
-        autoPlay
-        loop
-        muted
-        playsInline
-        className="absolute inset-0 w-full h-full object-cover min-w-full min-h-full opacity-90 -z-10 pointer-events-none"
-      >
-        <source
-          src="https://cdn.sceneai.art/Hero%20Section%20Video/50b4f304-cdca-4e12-8735-580d225834be.mp4"
-          type="video/mp4"
-        />
+    <section id="about" className="relative z-0 flex min-h-screen flex-col items-center justify-center overflow-hidden bg-black pb-12 pt-28">
+      <video autoPlay loop muted playsInline className="pointer-events-none absolute inset-0 -z-10 size-full object-cover opacity-90">
+        <source src="https://cdn.sceneai.art/Hero%20Section%20Video/50b4f304-cdca-4e12-8735-580d225834be.mp4" type="video/mp4" />
       </video>
-
-      {/* Overlay Gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black -z-10 pointer-events-none" />
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-black/40 via-black/20 to-black" />
 
       <div className="max-w-5xl mx-auto px-6 flex flex-col items-center text-center">
         {/* Headline */}
         <FadeInUp delay={100}>
-          <h1 className="text-5xl md:text-7xl font-medium tracking-tight mb-6 text-center text-white leading-[1.1]">
-            La capa de inteligencia <br className="hidden md:block" />
-            para <span className="font-serif italic font-normal text-amber-200">decisiones claras.</span>
+          <h1 className="text-center text-5xl font-medium leading-[1.05] tracking-tight text-white md:text-7xl">
+            Inteligencia para <br className="hidden md:block" />
+            <span className="font-serif italic font-normal text-violet-300">decisiones claras.</span>
           </h1>
         </FadeInUp>
 
-        {/* Sub-text */}
-        <FadeInUp delay={200}>
-          <p className="text-[16px] text-gray-300 max-w-2xl text-center mb-10 leading-relaxed">
-            Un entorno de desarrollo agéntico donde tus modelos planifican, ejecutan comandos de terminal y refactorizan código en tiempo real con 100% de privacidad local y protocolo MCP.
-          </p>
-        </FadeInUp>
-
-        {/* Action Buttons */}
-        <FadeInUp delay={300}>
-          <div className="flex flex-row items-center gap-4 justify-center">
-            <a
-              href="#descargas"
-              className="bg-white hover:bg-gray-100 text-black text-sm font-semibold px-7 py-3.5 rounded-full transition-all shadow-xl hover:shadow-white/20 flex items-center gap-2"
-            >
-              <Download className="w-4 h-4" />
-              <span>Descargar Gratis</span>
-            </a>
-            <a
-              href="#flujo-agentico"
-              className="bg-[#1F1F22] hover:bg-[#2A2A2D] text-white text-sm font-medium px-6 py-3.5 rounded-full border border-white/10 transition-all flex items-center gap-2"
-            >
-              <span>Ver Características</span>
-              <ArrowRight className="w-4 h-4 text-gray-400" />
-            </a>
+        <FadeInUp delay={220} className="mt-10 w-full max-w-6xl">
+          <div className="group rounded-2xl border border-white/15 bg-black/60 p-2 shadow-2xl shadow-black/60 backdrop-blur-sm transition-transform duration-700 ease-out hover:-translate-y-1 md:p-3">
+            <div className="overflow-hidden rounded-xl border border-white/10 bg-[#0c0c10]">
+              <div className="flex items-center gap-2 border-b border-white/10 bg-white/[0.03] px-4 py-3 text-left">
+                <span className="size-2 rounded-full bg-red-400/70" />
+                <span className="size-2 rounded-full bg-amber-300/70" />
+                <span className="size-2 rounded-full bg-emerald-400/70" />
+                <span className="ml-2 text-[10px] font-mono uppercase tracking-[0.16em] text-gray-400">Sparta Agent · Vista de aplicación</span>
+              </div>
+              <img src={getPublicUrl('proyecto/SPARTAN-PRINCIPAL.png')} alt="Pantalla principal de la aplicación Sparta Agent" className="mx-auto block w-full object-contain transition-transform duration-1000 ease-out motion-safe:group-hover:scale-[1.012]" />
+            </div>
           </div>
         </FadeInUp>
       </div>
 
       {/* Marquee (Technologies & Ecosystem) */}
       <div className="w-full mt-24">
-        <p className="text-[11px] font-mono uppercase tracking-widest text-gray-500 font-semibold mb-8 text-center">
+        <p className="mb-8 text-center text-[11px] font-mono font-semibold uppercase tracking-widest text-gray-500">
           ARQUITECTURA MODULAR IMPULSADA POR ESTÁNDARES ABIERTOS
         </p>
 
@@ -1045,9 +1031,7 @@ export default function App() {
       <Navbar onOpenDocs={openDocs} />
       <main>
         <HeroSection />
-        <FeatureAiChat />
-        <FeatureMcpEcosystem />
-        <FeatureArchitecture />
+        <ProductTour />
         <SkillsShowcase />
         <DownloadSection />
         <FaqSection />

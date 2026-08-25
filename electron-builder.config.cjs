@@ -25,6 +25,7 @@ module.exports = {
     owner: 'Naiker12',
     repo: 'Sparta-Agent',
   },
+  compression: 'maximum',
   npmRebuild: false,
   directories: {
     output: `release/\${version}`
@@ -40,10 +41,24 @@ module.exports = {
     '!public/negro/**',
     '!public/escritorio.png',
     '!public/post.png',
-    '!public/readmin.png'
+    '!public/readmin.png',
+    '!**/*.map',
+    '!**/*.tsbuildinfo'
   ],
   extraResources: [
-    { from: 'desktop/backend-spartan', to: 'backend' },
+    {
+      from: 'desktop/backend-spartan',
+      to: 'backend',
+      filter: [
+        '**/*',
+        '!**/.venv/**',
+        '!**/__pycache__/**',
+        '!**/*.pyc',
+        '!**/.pytest_cache/**',
+        '!**/tests/**',
+        '!**/.git/**',
+      ],
+    },
   ],
   icon: 'public/sparta-escritorio.png',
   mac: {

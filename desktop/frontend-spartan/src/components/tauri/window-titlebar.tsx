@@ -371,8 +371,7 @@ export function WindowTitlebar({
       )}
       <header
         className={cn(
-          "pointer-events-none absolute inset-x-0 top-0 z-[70] h-[var(--studio-custom-titlebar-height)] select-none text-foreground",
-          showSidebarSurface && "bg-sidebar text-sidebar-foreground",
+          "pointer-events-none absolute inset-x-0 top-0 z-[70] h-[var(--studio-custom-titlebar-height)] select-none bg-background text-foreground",
         )}
         aria-label="Window titlebar"
       >
@@ -381,6 +380,7 @@ export function WindowTitlebar({
             className={cn(
               "pointer-events-auto absolute left-0 top-0 flex h-full min-w-0 items-center",
               "pl-3",
+              "bg-sidebar text-sidebar-foreground",
             )}
             style={{ width: titlebarNavigationWidth }}
             onMouseDown={handleDragMouseDown}

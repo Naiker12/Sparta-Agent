@@ -21,11 +21,14 @@ jobs:
 
       - run: pnpm install --no-frozen-lockfile
 
+      - name: Install desktop frontend dependencies
+        run: npm --prefix desktop/frontend-spartan ci
+
       - name: Lint
         run: pnpm lint
 
       - name: Typecheck
-        run: pnpm exec tsc --noEmit
+        run: pnpm run typecheck
 
   test:
     runs-on: ubuntu-latest
@@ -40,6 +43,9 @@ jobs:
           cache: pnpm
 
       - run: pnpm install --no-frozen-lockfile
+
+      - name: Install desktop frontend dependencies
+        run: npm --prefix desktop/frontend-spartan ci
 
       - name: Unit tests
         run: pnpm test

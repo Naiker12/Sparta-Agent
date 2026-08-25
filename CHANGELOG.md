@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.1.9] - 2026-08-25
+
+### Añadido y Mejorado
+
+- Landing de producto renovada con demostraciones reales de planificación, edición de código y conexiones MCP.
+- Capturas de contexto y permisos integradas en las capacidades del producto.
+- Panel de ajustes de ejecución incluido en el frontend distribuido, con preajustes, instrucción del sistema y parámetros de muestreo.
+- Navegación lateral ampliada con Canales como próxima funcionalidad.
+
+### Corregido
+
+- El contenido de Conexiones vuelve a desplazarse correctamente en los ajustes.
+- Recursos visuales con respaldo para evitar avatares e iconos de proveedor rotos.
+- Traducciones y consistencia del tema claro en las vistas de Audio, Exportar y la barra de título.
+
+### Cambiado
+
+- Metadatos, instaladores, enlaces de descarga y anuncios públicos actualizados a la versión `0.1.9`.
+
 ## [0.1.8] - 2026-08-16
 
 ### Añadido y Mejorado

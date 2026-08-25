@@ -80,6 +80,7 @@ import { BlobUrlCache } from "@/lib/blob-url-cache";
 import { subscribeModelLifecycle } from "@/lib/model-lifecycle-events";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
+import { useT } from "@/i18n";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 
 import {
@@ -266,6 +267,7 @@ function formatClipDuration(seconds: number): string {
 }
 
 export function AudioPage({ active = true }: { active?: boolean }) {
+  const t = useT();
   const [mode, setMode] = useState<CreateMode>("speak");
   const [selectorOpen, setSelectorOpen] = useState(false);
   const [busy, setBusy] = useState<AudioBusy>(null);
@@ -1945,7 +1947,7 @@ export function AudioPage({ active = true }: { active?: boolean }) {
               // TTS/ASR come from the checkpoint's own tokenizer, not a curated
               // recipe, so any publisher's audio repo loads here.
               communityModelPolicy="search-only"
-              placeholder="Select audio model"
+              placeholder={t("audioPage.selectModel")}
               open={active && selectorOpen}
               onOpenChange={(o) => setSelectorOpen(active && o)}
             />
@@ -1975,7 +1977,7 @@ export function AudioPage({ active = true }: { active?: boolean }) {
                   icon={mode === "speak" ? AudioWave01Icon : Mic01Icon}
                   className="size-[18px] shrink-0"
                 />
-                {mode === "speak" ? "Generate audio" : "Transcribe"}
+                {mode === "speak" ? t("audioPage.generateAudio") : t("audioPage.transcribe")}
               </h2>
               {/* The always-on capability line: which task the selected model actually does. */}
               <p className="text-xs leading-snug text-muted-foreground">
@@ -1990,15 +1992,15 @@ export function AudioPage({ active = true }: { active?: boolean }) {
               fit={true}
               className="h-[30px] self-start [&>button]:h-[30px] [&>button]:px-6"
               tabs={[
-                { value: "speak", label: "Generate" },
-                { value: "transcribe", label: "Transcribe" },
+                { value: "speak", label: t("audioPage.generate") },
+                { value: "transcribe", label: t("audioPage.transcribe") },
               ]}
             />
 
             {mode === "speak" ? (
               <>
                 <Field
-                  label="Text"
+                  label={t("audioPage.text")}
                   hint="What the model should say. Generation runs on the loaded TTS model and lands in the gallery on the right."
                 >
                   <Textarea

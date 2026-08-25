@@ -62,8 +62,8 @@ const PALETTE_DEFAULT_COLORS: Record<
   Record<ResolvedTheme, DefaultModeColors>
 > = {
   standard: {
-    light: { accent: "#6d28d9", background: "#f7f2ff", foreground: "#262626" },
-    dark: { accent: "#a78bfa", background: "#181818", foreground: "#ececec" },
+    light: { accent: "#339cff", background: "#f2ebe0", foreground: "#262626" },
+    dark: { accent: "#4dabff", background: "#181818", foreground: "#ececec" },
   },
   classic: {
     light: { accent: "#339cff", background: "#ffffff", foreground: "#1a1c1f" },

@@ -38,11 +38,11 @@ function createWindow() {
     minHeight: 600,
     titleBarStyle: 'hidden',
     titleBarOverlay: {
-      color: '#0C0C10',
-      symbolColor: '#9CA3AF',
+      color: '#F2EBE0',
+      symbolColor: '#352D40',
       height: 38,
     },
-    backgroundColor: '#0C0C10',
+    backgroundColor: '#F2EBE0',
     show: false,
     icon: path.join(process.env.VITE_PUBLIC!, 'sparta-escritorio.png'),
     webPreferences: {
@@ -119,7 +119,7 @@ app.whenReady().then(async () => {
   })
 
   // App metadata IPC handlers
-  ipcMain.handle('app:getVersion', () => app.getVersion() || '0.1.8')
+  ipcMain.handle('app:getVersion', () => app.getVersion() || '0.1.9')
   ipcMain.handle('app:getName', () => app.getName() || 'Sparta Agent')
 })
 

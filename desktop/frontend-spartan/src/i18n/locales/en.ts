@@ -1,6 +1,8 @@
 // Copyright 2026-present the Spartan AI Inc. team. All rights reserved. See /studio/LICENSE.AGPL-3.0
 
 export const en = {
+  audioPage: { selectModel: "Select audio model", generateAudio: "Generate audio", transcribe: "Transcribe", generate: "Generate", text: "Text", noTtsModel: "No TTS model loaded.", noTranscriptModel: "No transcription model selected." },
+  exportPage: { title: "Export Model", subtitle: "Export fine-tuned or base models for deployment", configuration: "Export Configuration", configurationDescription: "Select source, method, and quantization", source: "Source", localModel: "Local Model", fineTuned: "Fine-tuned", trainingRun: "Training Run", noTrainingRuns: "No training runs found", checkpoint: "Checkpoint", trainingInfo: "Training Info", quickGuide: "Quick Guide", unavailable: "Export unavailable", exportModel: "Export Model" },
   hub: {
     title: "Model hub",
     datasetsTitle: "Datasets",
@@ -307,6 +309,9 @@ export const en = {
       train: "Train",
       recipes: "Recipes",
       images: "Images",
+      channels: "Channels",
+      comingSoon: "Coming soon",
+      channelsComingSoon: "Channels will be available soon.",
       video: "Video",
       audio: "Audio",
       // Hover text while the row spins, before this machine's capability is measured.
@@ -2477,6 +2482,13 @@ export const en = {
       nightShiftBeginsNamed: "The night shift begins, {name}",
       temporaryChat: "Temporary chat",
       temporaryChatDescription: "This chat won't appear in your history and isn't saved. It disappears when you leave.",
+    },
+    toolbar: {
+      turnOnTemporaryChat: "Turn on temporary chat",
+      turnOffTemporaryChat: "Turn off temporary chat",
+      temporaryChatActive: "Temporary chat",
+      openRunSettings: "Open run settings",
+      researchActivity: "Research activity",
     },
   },
 } as const;

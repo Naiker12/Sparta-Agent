@@ -59,6 +59,9 @@ jobs:
       # Install JS deps (triggers prebuild → rust:napi automatically)
       - run: pnpm install --no-frozen-lockfile
 
+      - name: Install desktop frontend dependencies
+        run: npm --prefix desktop/frontend-spartan ci
+
       # Build: tsc → vite build → electron-builder
       - run: pnpm build
         env:

@@ -565,6 +565,7 @@ export function SettingsDialog() {
               </button>
               <div
                 ref={mainScrollRef}
+                data-provider-scroll-root
                 className="hover-scrollbar flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto p-6 [scrollbar-gutter:stable]"
               >
                 {/* Only a panel's first view waits, so the fallback is delayed and a

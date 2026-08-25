@@ -1,4 +1,6 @@
 
+import { useState } from "react";
+import fallbackMascot from "@/assets/mascot-fallback.webp?inline";
 import { cn } from "@/lib/utils";
 import { avatarBgStyle, initialsFromName } from "../utils/avatar-initials";
 import {
@@ -35,6 +37,7 @@ export function UserAvatar({
   className,
   shape,
 }: UserAvatarProps) {
+  const [imageFailed, setImageFailed] = useState(false);
   const label = initialsFromName(name);
   const storedShape = useUserProfileStore((s) => s.avatarShape);
   const shapeClass = SHAPE[shape ?? storedShape];
@@ -49,7 +52,12 @@ export function UserAvatar({
           className,
         )}
       >
-        <img src={imageUrl} alt="" className="size-full object-cover" />
+        <img
+          src={imageFailed ? fallbackMascot : imageUrl}
+          alt=""
+          className="size-full object-cover"
+          onError={() => setImageFailed(true)}
+        />
       </span>
     );
   }

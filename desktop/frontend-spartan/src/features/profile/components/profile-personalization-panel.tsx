@@ -1,5 +1,5 @@
 
-import { publicAssetUrl } from "@/components/mascot-img";
+import { MascotImg, publicAssetUrl } from "@/components/mascot-img";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -341,8 +341,8 @@ export function ProfilePersonalizationPanel() {
                             "ring-2 ring-ring-strong hover:ring-ring-strong",
                         )}
                       >
-                        <img
-                          src={url}
+                        <MascotImg
+                          src={path}
                           alt=""
                           loading="lazy"
                           className="size-full object-cover"
