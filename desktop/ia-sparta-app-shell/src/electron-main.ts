@@ -119,7 +119,7 @@ app.whenReady().then(async () => {
   })
 
   // App metadata IPC handlers
-  ipcMain.handle('app:getVersion', () => app.getVersion() || '0.1.9')
+  ipcMain.handle('app:getVersion', () => app.getVersion() || '0.2.0')
   ipcMain.handle('app:getName', () => app.getName() || 'Sparta Agent')
 })
 

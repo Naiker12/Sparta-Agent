@@ -1,6 +1,6 @@
 /**
  * security-sanitizer.ts
- * Lógica pura de sanitización de comandos sin dependencias nativas de node-pty.
+ * Lógica pura de sanitización de comandos nativos para Sparta Terminal.
  */
 
 export const DESTRUCTIVE_PATTERNS = [

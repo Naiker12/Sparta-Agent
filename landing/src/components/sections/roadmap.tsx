@@ -45,7 +45,7 @@ export function Roadmap() {
                   <CheckCircle2 className="w-5 h-5" />
                 </div>
                 <h3 className="text-xl font-bold font-display text-[#d8ecf8]">
-                  Logrado (v0.1.9)
+                  Logrado (v0.2.0)
                 </h3>
               </div>
               <Badge variant="success">Completado</Badge>

@@ -203,7 +203,7 @@ export function AboutTab() {
         </SettingsRow>
         <SettingsRow label={t("settings.about.releaseNotes")}>
           <a
-            href="https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.1.9"
+            href="https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.2.0"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"

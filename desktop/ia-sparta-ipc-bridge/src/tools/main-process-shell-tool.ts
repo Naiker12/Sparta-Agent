@@ -1,7 +1,7 @@
 /**
  * main-process-shell-tool.ts — Herramienta nativa run_command para el proceso principal (Node.js).
  *
- * Ejecuta comandos en segundo plano usando node-pty, sanitiza comandos destructivos,
+ * Ejecuta comandos en segundo plano usando el motor nativo pty-manager, sanitiza comandos destructivos,
  * emite chunks de salida en tiempo real al renderer y retorna el resultado al loop LLM.
  */
 

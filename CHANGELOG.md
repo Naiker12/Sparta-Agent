@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.2.0] - 2026-08-25
+
+### Añadido y Mejorado
+
+- Motor de terminal y ejecución de comandos 100% nativo multiplataforma (`pty-manager.ts`) sin dependencias C++ externas ni compilación nativa en runtime.
+- Soporte robusto y transparente para PowerShell, CMD, Bash y Zsh en Windows, macOS y Linux.
+- Sincronización completa de enlaces directos de descarga y modales de lanzamiento a la versión `0.2.0`.
+
+### Corregido
+
+- Eliminado el error crítico `ENOENT: no such file or directory, open '.../app.asar.unpacked/node_modules/node-pty/package.json'` en el arranque del proceso principal de Electron.
+- Resuelto el problema de empaquetado de módulos nativos garantizando inicialización limpia y rápida en todos los sistemas operativos.
+
 ## [0.1.9] - 2026-08-25
 
 ### Añadido y Mejorado
