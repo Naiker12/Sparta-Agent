@@ -11,6 +11,7 @@
   },
   "homepage": "https://github.com/Naiker12/Sparta-Agent#readme",
   "type": "module",
+  "packageManager": "pnpm@9.15.4",
   "bin": {
     "sparta": "./bin/sparta.mjs"
   },
