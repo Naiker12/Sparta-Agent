@@ -1,224 +1,208 @@
-
-  <h1>Spartan Agent</h1>
-
+<div align="center">
+  <img src="public/sparta-escritorio.png" alt="Sparta Agent Logo" width="120" />
+  <h1>Sparta Agent</h1>
   <p><strong>Plataforma de Desarrollo Agéntica Local-First para Equipos de Ingeniería de Alto Rendimiento</strong></p>
 
   <p>
-    <a href="https://github.com/Naiker12/Sparta-Agent"><img src="https://img.shields.io/badge/Versi%C3%B3n-v0.1.9-6366f1?style=for-the-badge&logo=github&logoColor=white" alt="Version 0.1.9" /></a>
-    <img src="https://img.shields.io/badge/React_18-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React 18" />
+    <a href="https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.1.9"><img src="https://img.shields.io/badge/Versi%C3%B3n-v0.1.9-6366f1?style=for-the-badge&logo=github&logoColor=white" alt="Version 0.1.9" /></a>
+    <img src="https://img.shields.io/badge/React_19-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React 19" />
     <img src="https://img.shields.io/badge/TypeScript_5-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript 5" />
-    <img src="https://img.shields.io/badge/Electron_30-47848F?style=for-the-badge&logo=electron&logoColor=white" alt="Electron 30" />
-    <img src="https://img.shields.io/badge/Python_3.11-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python 3.11" />
-    <img src="https://img.shields.io/badge/Rust_1.85-000000?style=for-the-badge&logo=rust&logoColor=white" alt="Rust 1.85" />
-    <img src="https://img.shields.io/badge/MCP-Standard-8b5cf6?style=for-the-badge&logo=protocol&logoColor=white" alt="MCP Standard" />
+    <img src="https://img.shields.io/badge/Electron-47848F?style=for-the-badge&logo=electron&logoColor=white" alt="Electron" />
+    <img src="https://img.shields.io/badge/TailwindCSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="TailwindCSS" />
+    <img src="https://img.shields.io/badge/MCP-Standard-8b5cf6?style=for-the-badge" alt="MCP Standard" />
     <img src="https://img.shields.io/badge/Licencia-MIT-10b981?style=for-the-badge" alt="License MIT" />
   </p>
 </div>
 
+---
+
+<div align="center">
+  <img src="docs/assets/sparta-principal.png" alt="Entorno de Trabajo Sparta Agent" width="100%" style="border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.12);" />
+  <br />
+  <sub><b>Entorno de Desarrollo y Orquestación Agéntica en Tiempo Real</b></sub>
+</div>
+
+<br />
 
 <div align="center">
   <table width="100%">
     <tr>
       <td width="50%" align="center">
-        <img src="docs/assets/escritorio.png" alt="Entorno de Escritorio Sparta Agent" width="100%" style="border-radius: 8px;" />
+        <img src="docs/assets/sparta-permisos.png" alt="Control de Permisos y Acciones Sensibles" width="100%" style="border-radius: 8px;" />
         <br />
-        <sub><b>Figura 1: Entorno de Desarrollo y Panel de Artefactos Nativo</b></sub>
+        <sub><b>Diálogo Modal de Permisos y Validación Previa</b></sub>
       </td>
       <td width="50%" align="center">
-        <img src="docs/assets/sparta-escritorio.png" alt="Vista General del Agente" width="100%" style="border-radius: 8px;" />
+        <img src="docs/assets/sparta-contexto.png" alt="Selector de Modelos y Gestión de Contexto" width="100%" style="border-radius: 8px;" />
         <br />
-        <sub><b>Figura 2: Orquestación Agéntica y Consola Integrada</b></sub>
+        <sub><b>Gestión Dinámica de Contexto y Proveedores</b></sub>
       </td>
     </tr>
   </table>
-  <br />
-  <img src="docs/assets/post.png" alt="Vista Principal Sparta Agent" width="90%" style="border-radius: 10px; margin-top: 10px;" />
-  <br />
-  <sub><b>Figura 3: Panel Principal e Integración Multimodal</b></sub>
 </div>
 
 ---
 
-##  Propuesta de Valor y Caso de Negocio
+## 📑 Tabla de Contenidos
 
-En la era de la Inteligencia Artificial aplicada al desarrollo de software, la productividad real de los equipos de ingeniería se ve obstaculizada por herramientas de autocompletado pasivo que sugieren fragmentos aislados sin comprensión holística del código.
-
-**Sparta Agent** redefine este paradigma al ofrecer un **IDE agéntico autónomo y local-first**. Diseñado para empresas y desarrolladores exigentes, resuelve los tres principales desafíos técnicos y corporativos:
-
-### 1.  Protección de Propiedad Intelectual y Cumplimiento (Compliance)
-Las soluciones cloud convencionales transmiten código fuente sensible a servidores de terceros. Sparta Agent opera bajo un enfoque **Local-First**, ejecutando el análisis de archivos, la indexación del espacio de trabajo y el control de flujos dentro del perímetro de seguridad local. Cumple estrictamente con normativas **GDPR, CCPA, HIPAA** y estándares bancarios de confidencialidad.
-
-### 2.  Optimización de Costos (TCO) y Flexibilidad de Modelos
-El consumo masivo de APIs comerciales genera costos de tokens impredecibles. Sparta Agent incluye una capa de abstracción multi-proveedor que permite alternar dinámicamente entre modelos locales de código abierto (Ollama, LM Studio, llama.cpp) para tareas de rutina, y modelos cloud avanzados (Gemini 2.5 Flash, Anthropic, OpenAI, DeepSeek) para tareas arquitectónicas complejas, reduciendo el Costo Total de Propiedad (TCO) hasta en un **70%**.
-
-### 3.  Autonomía Real vs Copilotos Pasivos
-A diferencia de las extensiones tradicionales, Sparta Agent funciona como un miembro sintético autónomo del equipo. Ejecuta ciclos estructurados de **Planificación (`create_plan`), Ejecución, Diagnóstico y Reflexión**. Analiza proyectos completos, ejecuta comandos en entornos seguros, valida cambios mediante linters/compiladores locales y entrega soluciones probadas y listas para producción.
+- [Propuesta de Valor](#-propuesta-de-valor)
+- [Características Principales](#-características-principales)
+- [Arquitectura del Sistema](#-arquitectura-del-sistema)
+- [Matriz de Seguridad y Privacidad](#-matriz-de-seguridad-y-privacidad)
+- [Ecosistema MCP (Model Context Protocol)](#-ecosistema-mcp-model-context-protocol)
+- [Proveedores de IA Compatibles](#-proveedores-de-ia-compatibles)
+- [Instalación y Puesta en Marcha](#-instalación-y-puesta-en-marcha)
+- [Estructura del Proyecto](#-estructura-del-proyecto)
+- [Licencia](#-licencia)
 
 ---
 
-## Características Principales
+## 🎯 Propuesta de Valor
 
-*    Planificación Transparente e Interactiva (`create_plan`)**: Cada tarea se desglosa en un plan de ejecución visual en tiempo real. El desarrollador puede inspeccionar, pausar o guiar el plan en cualquier momento.
-*    Previsualizaciones Nativas de Documentos**: Visores nativos para archivos de **Excel (`.xlsx`, `.xls`)**, **Word (`.docx`)**, PDF, imágenes y código fuente directamente dentro del panel de artefactos.
-*    Adjuntos Flotantes e Imágenes Multimodales**: Soporte para Drag & Drop y pegado de imágenes (`Ctrl+V`) con tarjetas visuales (*chips*) tipo ChatGPT/Claude y soporte de visión por IA.
-*    Editor de Código Monaco & Diferenciales Inteligentes**: Integración directa con Monaco Editor y un motor de diffs ultra dinámico impulsado por `@pierre/diffs` y `@pierre/trees` para revisión precisa de cambios.
-*    Terminal Emulado Nativo (`xterm.js` + `node-pty`)**: Shell multi-instancia totalmente interactivo integrado en el entorno de desarrollo para compilar, ejecutar pruebas y gestores de paquetes.
-*    Protocolo MCP (Model Context Protocol)**: Conectividad nativa estándar con decenas de servidores MCP (GitHub, bases de datos, productividad, navegadores y herramientas de monitoreo).
-*    Árboles de Razonamiento Visual ("Thinking Orbs")**: Visualización interactiva de estados de pensamiento y subagentes en ejecución en tiempo real.
-*    Broker de Seguridad y Permisos (Rust Core)**: Intercepción nativa de comandos peligrosos (`CommandSanitizer`), protección de rutas sensibles (`PathGuard`) y diálogos modales de autorización previa.
+En la era de la Inteligencia Artificial aplicada al desarrollo de software, la productividad real de los equipos de ingeniería requiere herramientas autónomas con comprensión holística del código.
+
+**Sparta Agent** ofrece un **IDE agéntico autónomo y local-first**, diseñado para desarrolladores y equipos exigentes:
+
+1. **Privacidad y Cumplimiento (Compliance)**: Ejecución y análisis dentro de tu máquina local. Protección de datos confidenciales y código propietario.
+2. **Optimización de Costos**: Alterna libremente entre modelos locales (Ollama, LM Studio, llama.cpp) y APIs cloud avanzadas (Gemini 2.5, Claude 3.7, OpenAI, DeepSeek).
+3. **Autonomía con Control Humano**: Planificación transparente, ejecución de comandos supervisada mediante permisos modales y diffs precisos.
 
 ---
 
-##  Arquitectura Real del Sistema
+## ⚡ Características Principales
 
-Sparta Agent está estructurado bajo una **arquitectura desacoplada de alto rendimiento**, garantizando baja latencia, privacidad y ejecución nativa:
+* **Chat Temporal / Modo Incógnito**: Sesiones de conversación efímeras que no se guardan en el historial local para consultas rápidas o pruebas aisladas.
+* **Control de Permisos Granular**: Validación previa obligatoria para cada acción de creación, modificación o borrado de archivos y ejecución de terminal.
+* **Motor de Diferenciales Inteligentes**: Revisión precisa de cambios de código con soporte sintáctico avanzado.
+* **Terminal Integrado Multi-Shell**: Ejecución de comandos en PowerShell, Bash y Zsh protegida por filtros de seguridad.
+* **Previsualización de Documentos**: Visores integrados para archivos Excel (`.xlsx`, `.xls`), Word (`.docx`), PDF, Markdown e imágenes.
+* **Conexión MCP Universal**: Integración inmediata con herramientas de base de datos, Git, navegadores web, APIs y servicios en la nube.
+
+---
+
+## 🏗️ Arquitectura del Sistema
 
 ```text
 ┌─────────────────────────────────────────────────────────────────────────┐
-│ 1. CAPA DE PRESENTACIÓN (React 18 / Monaco Editor / xterm.js)            │
-│ Interfaz de usuario rica con visualización de planes, diffs interactivos,│
-│ consolas múltiples, gestión de MCPs y renderizado de componentes UI.    │
+│ 1. CAPA DE PRESENTACIÓN (React 19 / Vite / TailwindCSS / Radix UI)       │
+│ Interfaz moderna con soporte de temas, chat temporal, diffs interactivos│
+│ y paneles de control contextuales.                                      │
 └────────────────────────────┬────────────────────────────────────────────┘
-                             │ Comunicación IPC Segura (Electron ContextBridge)
+                             │ Canal IPC Seguro (Electron Preload / ContextBridge)
 ┌────────────────────────────┴────────────────────────────────────────────┐
 │ 2. MOTOR AGÉNTICO Y ORQUESTACIÓN (Electron Main / Node.js Engine)       │
-│ Bucle autónomo ReAct (TypeScript), inyección de herramientas MCP,      │
-│ broker de permisos nativo, vault cifrado safeStorage y terminal (PTY).  │
+│ Orquestador de herramientas MCP, broker de permisos nativo, terminal    │
+│ PTY interactivo y gestor de almacenamiento seguro.                      │
 └────────────────────────────┬────────────────────────────────────────────┘
-                             │ Módulos Nativos Node.js & IPC
+                             │ Conectores Locales / REST / Stdio
 ┌────────────────────────────┴────────────────────────────────────────────┐
-│ 3. CAPA DE SEGURIDAD Y HERRAMIENTAS NATIVAS                            │
-│ Filtro de inspección de comandos (CommandSanitizer), guardas de ruta   │
-│ (PathGuard), servidor de herramientas REST/MCP e indexador de memoria.  │
+│ 3. HERRAMIENTAS Y SERVICIOS CONECTADOS (MCP Core)                       │
+│ Filesystem, GitHub, Git, Bases de Datos (Postgres/MySQL/SQLite),        │
+│ Servicios Google, Slack, Notion y Modelos Locales/Cloud.                │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-> **Roadmap de Inteligencia:** La versión de desarrollo incluye la integración en segundo plano de micro-servicios autónomos en Python y LangGraph para orquestación multi-agente distribuida.
-
 ---
 
-##  Matriz de Seguridad y Privacidad
+## 🛡️ Matriz de Seguridad y Privacidad
 
-La seguridad es el pilar central de Sparta Agent:
-
-| Componente | Función de Seguridad | Descripción |
+| Componente | Función | Descripción |
 | :--- | :--- | :--- |
-| **Permission Policy** | Modos `PLAN` y `BUILD` | En modo `PLAN`, la herramienta está restringida a solo lectura. El modo `BUILD` requiere autorización explícita para modificar archivos o ejecutar comandos. |
-| **CommandSanitizer** | Inspección de Comandos | Filtro de seguridad en tiempo real para evitar ejecución de scripts destructivos (`rm -rf`, alteración de registros del sistema, etc.). |
-| **PathGuard** | Restricción de Rutas | Aislamiento del sistema de archivos dentro de la raíz del workspace actual (`.env`, llaves `.pem` y datos privados protegidos). |
-| **Vault Cifrado** | Credenciales Locales | Almacenamiento seguro de claves de API en local mediante `electron.safeStorage` (Keychain en macOS, DPAPI en Windows y Secret Service en Linux). |
+| **Permission Dialog** | Aprobación Obligatoria | Cada acción que modifique el sistema de archivos o ejecute comandos requiere confirmación explícita del usuario. |
+| **Command Sanitizer** | Inspección de Comandos | Prevención de comandos destructivos o llamadas que comprometan el sistema operativo. |
+| **Path Guard** | Aislamiento de Espacios | Restricción de lectura y escritura al directorio de trabajo autorizado del proyecto. |
+| **Vault Cifrado** | Credenciales Seguras | Almacenamiento local protegido de claves de API mediante `electron.safeStorage`. |
 
 ---
 
-## 🔌 Catálogo de Integraciones MCP Nativas
+## 🔌 Ecosistema MCP (Model Context Protocol)
 
-Sparta Agent incorpora compatibilidad lista para usar con el estándar **Model Context Protocol (MCP)**:
+Sparta Agent incorpora conectividad nativa con el estándar oficial de Anthropic Model Context Protocol:
 
-| Categoría | Servidores MCP Soportados |
-| :--- | :--- |
-| **DevTools & VCS** | GitHub (HTTP oficial), Git (stdio estructurado) |
-| **Storage & Docs** | Filesystem Local, Google Drive, OneDrive / SharePoint Online |
-| **Bases de Datos** | Supabase, DBHub (PostgreSQL / MySQL / SQLite), MongoDB |
-| **Productividad** | Notion, Gmail, Google Calendar |
-| **Comunicación & Diseño**| Slack, Figma |
-| **Pagos y Monitoreo** | Stripe, Sentry |
-| **Navegación & Web** | Playwright MCP, Chrome DevTools MCP, Fetch (RAG Markdown) |
-| **Conocimiento & Utilidades**| Memory (Graph Knowledge), Time Zone System |
+* **Control de Versiones**: GitHub, Git Local
+* **Archivos y Nube**: Filesystem Local, Google Drive, OneDrive
+* **Bases de Datos**: PostgreSQL, MySQL, SQLite, Supabase, MongoDB
+* **Productividad**: Notion, Gmail, Google Calendar
+* **Colaboración**: Slack, Figma
+* **Navegación Web**: Playwright, Chrome DevTools, Fetch RAG
 
 ---
 
-##  Proveedores de IA Compatibles
+## 🧠 Proveedores de IA Compatibles
 
-Sparta Agent ofrece soporte omnicanal para los motores de IA más potentes del mercado:
-
-*   **Locales (Privacidad 100% Offline)**: Ollama, LM Studio, llama.cpp, Servidores Custom OpenAI-compatible.
-*   **Cloud (Alto Rendimiento)**: Google Gemini (2.5 Flash, 2.0 Flash, 1.5 Pro), Anthropic Claude, OpenAI, DeepSeek, Groq, Mistral, Azure OpenAI, OpenRouter, Cohere, Perplexity, xAI, Together AI, Fireworks AI, NVIDIA NIM.
+* **Locales (100% Offline y Privados)**: Ollama, LM Studio, llama.cpp, Servidores OpenAI-compatible.
+* **Cloud (Máximo Rendimiento)**: Google Gemini (2.5 Flash, 2.0 Flash, 1.5 Pro), Anthropic Claude, OpenAI (GPT-4o, o3-mini), DeepSeek, Groq, Mistral, OpenRouter, Together AI, Fireworks AI.
 
 ---
 
-##  Requisitos e Instalación
+## 🚀 Instalación y Puesta en Marcha
 
-### Requisitos Previos
-*   **Node.js**: `v18.0.0` o superior (Recomendado LTS)
-*   **Gestor de paquetes**: `pnpm v10+`
-*   **Python**: `v3.11+` (requerido para el sidecar de inteligencia)
-*   **Rust**: `v1.85+` (opcional, para aceleración nativa del broker de seguridad)
+### Requisitos
+* **Node.js**: `v20.0.0` o superior (Recomendado `v22+ LTS`)
+* **npm**: `v10+`
 
 ### Pasos de Instalación
 
-1. **Clonar el repositorio**:
-   ```bash
-   git clone https://github.com/Naiker12/Sparta-Agent.git
-   cd Sparta-Agent
-   ```
+```bash
+# 1. Clonar el repositorio
+git clone https://github.com/Naiker12/Sparta-Agent.git
+cd Sparta-Agent
 
-2. **Instalar dependencias globales del proyecto**:
-   ```bash
-   pnpm install
-   ```
+# 2. Instalar dependencias
+npm install
 
-3. **Inicializar entorno Python Sidecar**:
-   ```bash
-   npx sparta install
-   ```
+# 3. Instalar dependencias del frontend desktop
+npm --prefix desktop/frontend-spartan install
 
-4. **Iniciar el entorno de desarrollo desktop**:
-   ```bash
-   pnpm dev
-   ```
+# 4. Iniciar en modo desarrollo
+npm run dev
+```
 
----
-
-##  Uso de la CLI Sparta
-
-El proyecto incluye la herramienta CLI `sparta` para facilitar el mantenimiento y desarrollo:
+### Comandos de Utilidad
 
 ```bash
-# Instalación completa de dependencias (Node + Python venv + Rust)
-npx sparta install
+# Verificar tipos de todo el proyecto
+npm run typecheck
 
-# Iniciar servidor de desarrollo (Desktop App)
-npx sparta dev
+# Ejecutar linter
+npm run lint
 
-# Compilar proyecto y generar binario ejecutable
-npx sparta build
+# Ejecutar suite de pruebas unitarias
+npm test
 
-# Ejecutar suite de pruebas completa (JS + Rust + Python)
-npx sparta test
+# Compilar landing page
+npm run landing:build
 
-# Lanzar subcomandos del Python Sidecar
-npx sparta sidecar run    # Ejecuta el motor principal en Python
-npx sparta sidecar web    # Inicia el servidor web secundario
-npx sparta sidecar test   # Ejecuta pruebas unitarias pytest
+# Compilar binarios de escritorio
+npm run build
 ```
 
 ---
 
-##  Estructura del Proyecto
+## 📁 Estructura del Proyecto
 
 ```text
 Sparta-Agent/
-├── bin/                    # Scripts ejecutables CLI (sparta.mjs)
-├── components/             # Componentes UI compartidos (Shadcn UI, Monaco, Terminal)
-├── desktop/                # Código fuente de Electron Main, Preload e IPC Bridges
-├── docs/                   # Documentación técnica, capturas de pantalla y activos
-├── landing/                # Landing page promocional del producto (Vite + React)
-├── public/                 # Iconos, imágenes y manifiestos estáticos
-├── python/                 # Motor de inteligencia agéntica en Python (LangGraph)
-├── rust/                   # Módulo nativo de seguridad y validaciones (Cargo)
-├── skills/                 # Catálogo de habilidades extensibles para el agente
-├── sparta_mcp_catalog.json # Fuente de verdad oficial para servidores MCP
-├── sparta-vault.json       # Gestor cifrado de credenciales de proveedores
-├── package.json            # Configuración de scripts y dependencias
-└── vite.config.ts          # Configuración principal de empaquetado Vite
+├── desktop/
+│   ├── frontend-spartan/     # Interfaz de usuario principal (React + Vite + Assistant-UI)
+│   ├── backend-spartan/      # Servicios y motor de soporte de backend
+│   ├── ia-sparta-app-shell/  # Proceso principal de Electron y gestor de ventanas
+│   └── ia-sparta-ipc-bridge/ # Canales IPC de comunicación segura
+├── docs/                     # Documentación técnica y capturas de pantalla
+├── landing/                  # Landing page oficial (Vite + React + TailwindCSS)
+├── public/                   # Recursos estáticos, logotipos e iconos
+├── skills/                   # Habilidades y plugins agénticos modulares
+├── tests/                    # Pruebas unitarias del sistema
+├── electron-builder.config.cjs # Configuración de empaquetado para Win/Mac/Linux
+└── package.json              # Configuración y scripts del proyecto
 ```
-
-## 📄 Licencia
-
-Este proyecto está bajo la Licencia **MIT**. Consulta el archivo [LICENSE](LICENSE) para obtener más detalles.
 
 ---
 
+## 📄 Licencia
+
+Este proyecto está bajo la Licencia **MIT**. Consulta el archivo [LICENSE](LICENSE) para más detalles.
+
 <div align="center">
-  <sub>Construido con ❤️ para la comunidad global de ingeniería. Diseñado bajo los más altos estándares de seguridad corporativa.</sub>
+  <sub>Desarrollado con dedicación para la comunidad de ingeniería de software.</sub>
 </div>
