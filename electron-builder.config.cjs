@@ -16,7 +16,6 @@ module.exports = {
   appId: 'com.sparta.agent',
   asar: true,
   asarUnpack: [
-    'node_modules/node-pty/**/*',
     'node_modules/@firecrawl/**/*',
   ],
   productName: 'Sparta Agent',
@@ -36,7 +35,6 @@ module.exports = {
     'skills/**/*',
     'public/**/*',
     '!node_modules/**',
-    'node_modules/node-pty/**/*',
     'node_modules/@firecrawl/**/*',
     '!public/negro/**',
     '!public/escritorio.png',

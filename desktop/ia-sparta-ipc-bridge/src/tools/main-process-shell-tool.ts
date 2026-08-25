@@ -5,7 +5,7 @@
  * emite chunks de salida en tiempo real al renderer y retorna el resultado al loop LLM.
  */
 
-import * as pty from 'node-pty'
+import { spawnPty, type SpartaPtyProcess } from './pty-manager'
 import os from 'os'
 import { execSync } from 'node:child_process'
 import { accessSync } from 'node:fs'
@@ -96,9 +96,9 @@ export function runCommandForAgent(
   const workingDir = cwd || getWorkspaceRoot() || process.env.HOME || process.cwd()
 
   return new Promise((resolve) => {
-    let ptyProcess: pty.IPty
+    let ptyProcess: SpartaPtyProcess
     try {
-      ptyProcess = pty.spawn(shell, shellArgs, {
+      ptyProcess = spawnPty(shell, shellArgs, {
         name: 'xterm-256color',
         cols: 120,
         rows: 30,

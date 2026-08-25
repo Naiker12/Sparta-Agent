@@ -1,5 +1,5 @@
 import { ipcMain, BrowserWindow, dialog, type IpcMainInvokeEvent, type IpcMainEvent } from 'electron'
-import * as pty from 'node-pty'
+import { spawnPty, type SpartaPtyProcess } from '../tools/pty-manager'
 import { execSync } from 'node:child_process'
 import { accessSync } from 'node:fs'
 import os from 'os'
@@ -56,14 +56,14 @@ const DESTRUCTIVE_PATTERNS = [
 ]
 
 interface SessionState {
-  pty: pty.IPty
+  pty: SpartaPtyProcess
   buffer: string[]
   ready: boolean
   win: BrowserWindow
 }
 
 interface AgentProcState {
-  pty: pty.IPty
+  pty: SpartaPtyProcess
   win: BrowserWindow
 }
 export const sessions = new Map<string, SessionState>()
@@ -143,9 +143,9 @@ export function registerTerminalIPC() {
 
     const workingDir = cwd || getWorkspaceRoot() || process.env.HOME || process.cwd()
 
-    let ptyProcess: pty.IPty
+    let ptyProcess: SpartaPtyProcess
     try {
-      ptyProcess = pty.spawn(shell, shellArgs, {
+      ptyProcess = spawnPty(shell, shellArgs, {
         name: 'xterm-256color',
         cols: cols ?? 80,
         rows: rows ?? 24,

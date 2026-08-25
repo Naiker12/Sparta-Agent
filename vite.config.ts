@@ -14,7 +14,6 @@ export default defineConfig(() => {
   // List of Node native built-in modules and heavy native binaries to externalize
   const externalNodeModules = [
     'electron',
-    'node-pty',
     '@firecrawl/anydoc',
     /^@firecrawl\//,
     /\.node$/,
