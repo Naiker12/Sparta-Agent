@@ -1,3 +1,4 @@
+import { ipcMain } from 'electron'
 import path from 'node:path'
 import fs from 'node:fs'
 import fsPromises from 'node:fs/promises'
@@ -396,4 +397,10 @@ export async function convertDocumentToMarkdown(
       error: String(err),
     }
   }
+}
+
+export function registerDocumentIPC() {
+  ipcMain.handle('document:convert-to-markdown', async (_event, req: DocumentConversionRequest) => {
+    return convertDocumentToMarkdown(req)
+  })
 }

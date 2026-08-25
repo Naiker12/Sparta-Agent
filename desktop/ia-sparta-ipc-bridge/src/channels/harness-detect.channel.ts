@@ -105,3 +105,6 @@ export function registerHarnessIPC(): void {
     return detectHarnesses()
   })
 }
+
+export const registerHarnessDetectIPC = registerHarnessIPC
+

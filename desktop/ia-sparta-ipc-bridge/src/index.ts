@@ -26,3 +26,35 @@ export * from './channels/harness-detect.channel'
 export * from './tools/main-process-file-tools'
 export * from './tools/main-process-shell-tool'
 
+import { registerChatIPC } from './channels/chat.ipc.ts'
+import { registerFilesystemIPC } from './channels/filesystem.channel.ts'
+import { registerKeyManagerIPC } from './channels/keymanager.ipc.ts'
+import { registerMemoryIPC } from './channels/memory.ipc.ts'
+import { registerModelsIPC } from './channels/models.channel.ts'
+import { registerPermissionIPC } from './channels/permission.channel.ts'
+import { registerSecurityIPC } from './channels/security.ipc.ts'
+import { registerSidecarIPC } from './channels/sidecar.channel.ts'
+import { registerSkillsIPC } from './channels/skills.channel.ts'
+import { registerTerminalIPC } from './channels/terminal.channel.ts'
+import { registerVaultIPC } from './channels/vault.ipc.ts'
+import { registerDocumentIPC } from './channels/document.channel'
+import { registerSystemIPC } from './channels/system.channel'
+import { registerHarnessDetectIPC } from './channels/harness-detect.channel'
+
+export function registerAllIPC() {
+  registerFilesystemIPC()
+  registerTerminalIPC()
+  registerVaultIPC()
+  registerSkillsIPC()
+  registerModelsIPC()
+  registerPermissionIPC()
+  registerSecurityIPC()
+  registerSidecarIPC()
+  registerKeyManagerIPC()
+  registerMemoryIPC()
+  registerHarnessDetectIPC()
+  registerChatIPC()
+  registerDocumentIPC()
+  registerSystemIPC()
+}
+

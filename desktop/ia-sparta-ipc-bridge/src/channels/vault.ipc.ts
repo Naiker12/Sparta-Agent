@@ -1,5 +1,5 @@
 import { ipcMain } from 'electron'
-import { isEncryptionAvailable, storeKey, getKey, deleteKey, listKeys, hasKey } from 'ia-sparta-vault'
+import { isEncryptionAvailable, storeKey, getKey, deleteKey, listKeys, hasKey } from '../lib/vault'
 
 export function registerVaultIPC(): void {
   ipcMain.handle('vault:isAvailable', () => {

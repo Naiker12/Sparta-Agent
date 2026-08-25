@@ -1,6 +1,6 @@
 import { ipcMain } from 'electron'
 import { sendToPython, waitForSidecarReady } from './sidecar.channel'
-import { getKey, listKeys } from 'ia-sparta-vault'
+import { getKey, listKeys } from '../lib/vault'
 
 export function registerKeyManagerIPC(): void {
   ipcMain.handle('keymanager:push', async (_event, keyId: string, vendor?: string) => {

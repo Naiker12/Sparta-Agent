@@ -1,4 +1,4 @@
-import { app } from 'electron'
+import { app, ipcMain } from 'electron'
 
 export interface ProcessMetricsGroup {
   name: string
@@ -77,3 +77,8 @@ export function getSystemMetrics(): SystemMetricsResult {
     }
   }
 }
+
+export function registerSystemIPC() {
+  ipcMain.handle('system:get-metrics', () => getSystemMetrics())
+}
+

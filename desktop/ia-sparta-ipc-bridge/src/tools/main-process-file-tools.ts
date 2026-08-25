@@ -9,7 +9,7 @@ import fsPromises from 'node:fs/promises'
 import path from 'node:path'
 import { getWorkspaceRoot } from '../channels/filesystem.channel'
 import { isDocumentConvertible, convertDocumentToMarkdown, getCachedAttachmentContent } from '../channels/document.channel'
-import { IGNORED_DIR_SET } from '../../../ia-sparta-core/src/lib/filesystem-constants'
+import { IGNORED_DIR_SET } from '../lib/filesystem-constants'
 import { isWithinRoot, PathGuard } from './path-guard'
 
 export { isWithinRoot, PathGuard }

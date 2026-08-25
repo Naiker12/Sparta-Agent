@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import { BackendManager } from './backend-manager'
+import { registerAllIPC } from 'ia-sparta-ipc-bridge'
 
 // Suppress noisy Chromium GPU/cache errors on Windows dev hot-reloads and optimize performance & RAM usage
 app.commandLine.appendSwitch('disable-gpu-shader-disk-cache')
@@ -103,6 +104,18 @@ app.on('activate', () => {
 })
 
 app.whenReady().then(async () => {
+  // Register all system, terminal, filesystem, security and core IPC channels
+  registerAllIPC()
+
+  // Window control IPC handlers
+  ipcMain.on('win:minimize', () => win?.minimize())
+  ipcMain.on('win:maximize', () => {
+    if (win?.isMaximized()) win.unmaximize()
+    else win?.maximize()
+  })
+  ipcMain.on('win:close', () => win?.close())
+  ipcMain.handle('win:isMaximized', () => win?.isMaximized() ?? false)
+
   // Register this before loading the renderer. Otherwise an eager renderer can
   // ask for the port during its first frame, before the handler exists, then
   // fall back to Vite's HTML response for /api requests.
@@ -119,8 +132,9 @@ app.whenReady().then(async () => {
   })
 
   // App metadata IPC handlers
-  ipcMain.handle('app:getVersion', () => app.getVersion() || '0.2.0')
+  ipcMain.handle('app:getVersion', () => app.getVersion() || '0.2.1')
   ipcMain.handle('app:getName', () => app.getName() || 'Sparta Agent')
 })
 
 app.on('before-quit', () => backend.stop())
+

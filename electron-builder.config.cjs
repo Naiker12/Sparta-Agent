@@ -63,8 +63,10 @@ module.exports = {
     target: ['dmg'],
     artifactName: 'Sparta-Agent-Mac-\${version}-Installer.\${ext}'
   },
+  forceCodeSigning: false,
   win: {
     requestedExecutionLevel: 'asInvoker',
+    sign: null,
     target: [
       {
         target: 'nsis',

@@ -218,7 +218,7 @@ export function registerTerminalIPC() {
     _event: IpcMainEvent,
     { terminalId, cols, rows }: { terminalId: string; cols: number; rows: number }
   ) => {
-    sessions.get(terminalId)?.pty.resize(cols, rows)
+    sessions.get(terminalId)?.pty.resize?.(cols, rows)
   })
 
   ipcMain.handle('terminal:destroy', (
