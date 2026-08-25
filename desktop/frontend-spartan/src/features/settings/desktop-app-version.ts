@@ -1,3 +1,5 @@
+import { SPARTA_VERSION } from "@/config/version";
+import { isTauri } from "@/lib/api-base";
 
 type VersionReader = () => Promise<string>;
 
@@ -6,19 +8,23 @@ async function readTauriAppVersion(): Promise<string> {
   return getVersion();
 }
 
-// Callers gate this on isTauri: null means desktop without a readable version,
-// and never reaching the loader is what keeps the row off browser builds.
 export async function loadDesktopAppVersion(
   readVersion: VersionReader = readTauriAppVersion,
 ): Promise<string | null> {
-  try {
-    const version = await readVersion();
-    return version.trim() || null;
-  } catch (error) {
-    console.warn(
-      "Tauri app version read failed; showing it as unavailable",
-      error,
-    );
-    return null;
+  if (typeof window !== "undefined" && window.electronAPI && typeof (window.electronAPI as any).getVersion === "function") {
+    try {
+      const v = await (window.electronAPI as any).getVersion();
+      if (v) return String(v).trim();
+    } catch {}
   }
+  if (isTauri) {
+    try {
+      const version = await readVersion();
+      return version.trim() || SPARTA_VERSION;
+    } catch (error) {
+      console.warn("Desktop app version read failed; using SPARTA_VERSION", error);
+      return SPARTA_VERSION;
+    }
+  }
+  return SPARTA_VERSION;
 }

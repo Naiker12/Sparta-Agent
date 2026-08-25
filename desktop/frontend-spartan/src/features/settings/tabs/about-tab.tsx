@@ -114,14 +114,11 @@ export function AboutTab() {
         setInstallSource(nextInstallSource);
       }
     });
-    // Left undefined on browser builds so the row stays off entirely.
-    if (isTauri) {
-      loadDesktopAppVersion().then((version) => {
-        if (!canceled) {
-          setDesktopAppVersion(version);
-        }
-      });
-    }
+    loadDesktopAppVersion().then((version) => {
+      if (!canceled) {
+        setDesktopAppVersion(version);
+      }
+    });
 
     return () => {
       canceled = true;
@@ -194,19 +191,19 @@ export function AboutTab() {
       <SettingsSection title={t("settings.about.help")}>
         <SettingsRow label={t("settings.about.documentation")}>
           <a
-            href="https://github.com/Naiker12/Spartan-Agent"
+            href="https://github.com/Naiker12/Sparta-Agent"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
           >
             <HugeiconsIcon icon={Book03Icon} className="size-3.5" />
-            github.com/Naiker12/Spartan-Agent
+            github.com/Naiker12/Sparta-Agent
             <HugeiconsIcon icon={ArrowUpRight01Icon} className="size-3" />
           </a>
         </SettingsRow>
         <SettingsRow label={t("settings.about.releaseNotes")}>
           <a
-            href="https://github.com/Naiker12/Spartan-Agent/releases"
+            href="https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.1.9"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
@@ -218,7 +215,7 @@ export function AboutTab() {
         </SettingsRow>
         <SettingsRow label={t("settings.about.feedback")}>
           <a
-            href="https://github.com/Naiker12/Spartan-Agent/issues"
+            href="https://github.com/Naiker12/Sparta-Agent/issues"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
@@ -239,7 +236,7 @@ export function AboutTab() {
           description={t("settings.about.license.studioDescription")}
         >
           <a
-            href="https://github.com/Naiker12/Spartan-Agent/blob/main/LICENSE"
+            href="https://github.com/Naiker12/Sparta-Agent/blob/main/LICENSE"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 font-mono text-xs font-medium text-muted-foreground hover:text-foreground"
@@ -253,7 +250,7 @@ export function AboutTab() {
           description={t("settings.about.license.libraryDescription")}
         >
           <a
-            href="https://github.com/Naiker12/Spartan-Agent/blob/main/LICENSE"
+            href="https://github.com/Naiker12/Sparta-Agent/blob/main/LICENSE"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 font-mono text-xs font-medium text-muted-foreground hover:text-foreground"

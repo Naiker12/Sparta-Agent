@@ -66,6 +66,8 @@ async function fetchStudioVersions(): Promise<StudioVersions> {
 // tab passes llamaCppVersion to surface the installed llama.cpp build alongside
 // the version rows; General omits it, so the row only shows on About. Children
 // are appended below the version rows, for controls that act on them.
+import { SPARTA_VERSION } from "@/config/version";
+
 export function StudioVersionSection({
   llamaCppVersion,
   desktopAppVersion,
@@ -76,8 +78,8 @@ export function StudioVersionSection({
   children?: ReactNode;
 } = {}) {
   const t = useT();
-  const [packageVersion, setPackageVersion] = useState("1.0.0");
-  const [studioVersion, setStudioVersion] = useState("v1.0.0");
+  const [packageVersion, setPackageVersion] = useState(SPARTA_VERSION);
+  const [studioVersion, setStudioVersion] = useState(`v${SPARTA_VERSION}`);
 
   useEffect(() => {
     let canceled = false;
@@ -86,12 +88,12 @@ export function StudioVersionSection({
       if (next.packageVersion && !next.packageVersion.includes("2026.8")) {
         setPackageVersion(next.packageVersion);
       } else {
-        setPackageVersion("1.0.0");
+        setPackageVersion(SPARTA_VERSION);
       }
       if (next.studioVersion && !next.studioVersion.includes("beta")) {
         setStudioVersion(next.studioVersion);
       } else {
-        setStudioVersion("v1.0.0");
+        setStudioVersion(`v${SPARTA_VERSION}`);
       }
     });
     return () => {
@@ -100,7 +102,7 @@ export function StudioVersionSection({
   }, []);
 
   return (
-    <SettingsSection title="Spartan Agent">
+    <SettingsSection title="Sparta Agent">
       <SettingsRow label={t("settings.about.studioVersion")}>
         <code className="font-mono text-xs text-muted-foreground">
           {studioVersion}
@@ -114,7 +116,7 @@ export function StudioVersionSection({
       {desktopAppVersion !== undefined ? (
         <SettingsRow label={t("settings.about.desktopAppVersion")}>
           <code className="font-mono text-xs text-muted-foreground">
-            {desktopAppVersion ?? "1.0.0"}
+            {desktopAppVersion ?? SPARTA_VERSION}
           </code>
         </SettingsRow>
       ) : null}
