@@ -978,7 +978,6 @@ export function VirtualRows<T>({
 }) {
   const lanes = Math.max(1, columns);
   const rowCount = Math.ceil(items.length / lanes);
-  // eslint-disable-next-line react-hooks/incompatible-library
   const virtualizer = useVirtualizer({
     count: rowCount,
     getScrollElement: () => scrollElement,

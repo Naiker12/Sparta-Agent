@@ -66,7 +66,6 @@ export function GithubCrawlerEasyView({
   // blur we clamp back to a sane default if the user left it empty.
   const [rowsText, setRowsText] = useState(String(rows));
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- keep the draft input in sync when the parent resets rows.
     setRowsText(String(rows));
   }, [rows]);
 

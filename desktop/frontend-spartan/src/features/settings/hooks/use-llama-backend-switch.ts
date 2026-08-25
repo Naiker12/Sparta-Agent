@@ -57,7 +57,6 @@ export function useLlamaBackendSwitch() {
     mounted.current = true;
     // Opening the picker is an explicit host-capability recheck. If an install
     // is running, the poll repeats it once the backend can resolve options.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     void refresh(true);
     return () => {
       mounted.current = false;

@@ -332,7 +332,6 @@ export function useRagDocuments(
       // cannot cancel the only refresh after prevScopeKeyRef has advanced.
       setDocuments([]);
       if (scope) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         void (scope.type === "project"
           ? loadProjectSources(scope.projectId)
           : refresh());
@@ -342,7 +341,6 @@ export function useRagDocuments(
         // Left set, the composer reads the list as still unknown and holds
         // every send.
         refreshInFlight.current = false;
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setLoading(false);
       }
     } else if (prev === null && scope && !uploadInFlightRef.current) {
