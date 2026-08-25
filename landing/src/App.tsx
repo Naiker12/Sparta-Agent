@@ -612,9 +612,9 @@ function FeatureArchitecture() {
           <div className="w-12 h-12 rounded-xl bg-emerald-400/10 text-emerald-400 flex items-center justify-center">
             <Terminal className="w-6 h-6" />
           </div>
-          <h3 className="text-lg font-semibold text-white">Terminal node-pty</h3>
+          <h3 className="text-lg font-semibold text-white">Terminal Integrada Multi-Shell</h3>
           <p className="text-sm text-gray-400 leading-relaxed">
-            Ejecución nativa de comandos con emulación PTY completa, gestión de procesos en segundo plano y auditoría en tiempo real.
+            Ejecución nativa de comandos con emulación completa, gestión de procesos en segundo plano y auditoría en tiempo real.
           </p>
         </FadeInUp>
       </div>

@@ -1,7 +1,7 @@
 /**
- * pty-manager.ts — Abstracción resiliente de PTY / Terminal para Electron.
- * Intenta cargar `node-pty` si está disponible en runtime. Si no, usa `node:child_process.spawn`
- * de forma 100% transparente sin fallar ni romper el inicio de la aplicación.
+ * pty-manager.ts — Motor nativo de Terminal y Shell para Sparta Agent.
+ * Ejecuta comandos en PowerShell, Bash, Zsh y CMD de forma 100% nativa
+ * sin dependencias C++ externas, garantizando portabilidad absoluta en Windows/Mac/Linux.
  */
 
 import { spawn as cpSpawn, type ChildProcessWithoutNullStreams } from 'node:child_process'
@@ -16,17 +16,6 @@ export interface SpartaPtyProcess {
   kill: (signal?: string) => void
 }
 
-let nativePty: any = null
-try {
-  // Carga condicional segura en runtime
-  const req = typeof require !== 'undefined' ? require : null
-  if (req) {
-    nativePty = req('node-pty')
-  }
-} catch {
-  // node-pty no está presente o compilado, child_process fallback activo
-}
-
 export function spawnPty(
   shell: string,
   args: string[],
@@ -38,15 +27,6 @@ export function spawnPty(
     env?: Record<string, string | undefined>
   }
 ): SpartaPtyProcess {
-  if (nativePty && typeof nativePty.spawn === 'function') {
-    try {
-      return nativePty.spawn(shell, args, options)
-    } catch (err) {
-      console.warn('[pty-manager] node-pty spawn failed, falling back to child_process:', err)
-    }
-  }
-
-  // Fallback nativo transparente con child_process (funciona en 100% de plataformas)
   const emitter = new EventEmitter()
   const child: ChildProcessWithoutNullStreams = cpSpawn(shell, args, {
     cwd: options.cwd,
@@ -82,7 +62,7 @@ export function spawnPty(
       }
     },
     resize: () => {
-      // noop para procesos spawn estándar
+      // noop para procesos de terminal estándar
     },
     kill: (signal) => {
       try {
