@@ -1,7 +1,7 @@
 {
   "name": "sparta-agent",
   "private": true,
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Local-first agentic IDE for high-performance engineering teams",
   "author": "Naiker12",
   "license": "MIT",
@@ -19,7 +19,7 @@
     "landing:dev": "npm --prefix ./landing run dev",
     "landing:build": "npm --prefix ./landing run build",
     "typecheck": "npm --prefix ./desktop/frontend-spartan run typecheck && tsc --noEmit",
-    "build": "npm run typecheck && node --max-old-space-size=8192 ./node_modules/vite/bin/vite.js build && node scripts/check-main-bundle.js && electron-builder --config electron-builder.config.cjs",
+    "build": "npm run typecheck && node --max-old-space-size=8192 ./node_modules/vite/bin/vite.js build && node scripts/check-main-bundle.js && electron-builder --config electron-builder.config.cjs && node scripts/check-packaged-app.js",
     "lint": "eslint . --ext ts,tsx",
     "preview": "vite preview",
     "sparta": "node ./bin/sparta.mjs",

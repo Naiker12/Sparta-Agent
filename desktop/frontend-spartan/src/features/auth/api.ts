@@ -1,5 +1,5 @@
 
-import { apiUrl, isTauri } from "@/lib/api-base";
+import { apiUrl, getBackendError, isElectron, isTauri } from "@/lib/api-base";
 import {
   clearAuthTokens,
   getAuthToken,
@@ -102,6 +102,10 @@ async function redirectToAuth(): Promise<void> {
 
 function asTransportFailure(err: unknown): unknown {
   if (!(err instanceof TypeError)) return err;
+  const knownBackendError = isElectron ? getBackendError() : null;
+  if (knownBackendError) {
+    return Object.assign(new Error(knownBackendError), { unslothTransportFailure: true });
+  }
   if (!isTauri && typeof navigator !== "undefined" && navigator.onLine === false) {
     return Object.assign(
       new Error(

@@ -48,14 +48,8 @@ jobs:
           cache: npm
 
       # Rust toolchain for sparta-security NAPI build
-      - uses: dtolnay/rust-toolchain@stable
-
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: rust/sparta-security
-
       # Install JS deps (triggers prebuild → rust:napi automatically)
-      - run: npm install
+      - run: npm ci
 
       - name: Install desktop frontend dependencies
         run: npm --prefix desktop/frontend-spartan ci || npm --prefix desktop/frontend-spartan install

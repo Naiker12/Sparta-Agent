@@ -2,10 +2,16 @@ import { readFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
 
 const bundlePath = join(process.cwd(), 'dist-electron', 'electron-main.js')
+const rendererEntryPath = join(process.cwd(), 'dist', 'index.html')
 
 if (!existsSync(bundlePath)) {
   console.warn('⚠️ Warning: dist-electron/electron-main.js no existe todavía. Saltando chequeo.')
   process.exit(0)
+}
+
+if (!existsSync(rendererEntryPath)) {
+  console.error('ERROR DE BUILD: dist/index.html no existe. Vite no produjo el renderer que Electron debe cargar.')
+  process.exit(1)
 }
 
 const banned = ['react', 'react-dom', 'framer-motion', 'lucide-react', 'mermaid', 'monaco-editor', 'node-pty']

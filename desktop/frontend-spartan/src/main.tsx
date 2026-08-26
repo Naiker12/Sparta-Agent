@@ -4,16 +4,23 @@ import { createRoot } from "react-dom/client";
 
 import "./index.css";
 import { App } from "./app/app";
+import { BackendSetupGate } from "./features/setup/backend-setup-gate";
 import { fetchDeviceType } from "./config/env";
 import { initializeLocale } from "./i18n";
-import { isTauri, setApiBase } from "./lib/api-base";
+import { isTauri, setApiBase, setBackendError } from "./lib/api-base";
 import { watchOverlayScrollbarGutter } from "./lib/overlay-scrollbar";
 
 declare global {
   interface Window {
     electronAPI?: {
       getBackendPort?: () => Promise<number | null>;
-      onBackendReady?: (listener: (port: number) => void) => void;
+      getBackendStatus?: () => Promise<{ port?: number; error?: string }>;
+      onBackendReady?: (listener: (port: number) => void) => () => void;
+      bootstrapBackend?: () => Promise<{ ok: boolean; error?: string }>;
+      onBackendError?: (listener: (message: string) => void) => () => void;
+      onBackendInstallProgress?: (listener: (message: string) => void) => () => void;
+      onBackendInstallComplete?: (listener: () => void) => () => void;
+      onBackendInstallError?: (listener: (message: string) => void) => () => void;
     };
   }
 }
@@ -42,6 +49,7 @@ function renderApp(): void {
   root.render(
     <StrictMode>
       <App />
+      <BackendSetupGate />
     </StrictMode>,
   );
 }
@@ -64,6 +72,11 @@ if (!isTauri) {
   void window.electronAPI?.getBackendPort?.().then((port) => {
     if (typeof port === "number") applyElectronPort(port);
   });
+  void window.electronAPI?.getBackendStatus?.().then((status) => {
+    if (typeof status.port === "number") applyElectronPort(status.port);
+    if (status.error) setBackendError(status.error);
+  });
   window.electronAPI?.onBackendReady?.(applyElectronPort);
+  window.electronAPI?.onBackendError?.(setBackendError);
   fetchDeviceType().catch(() => undefined);
 }

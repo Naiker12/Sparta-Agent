@@ -12,10 +12,10 @@ export class BackendManager {
     return this.port;
   }
 
-  async start(backendDir: string): Promise<number> {
+  async start(backendDir: string, runtimeDir?: string): Promise<number> {
     if (this.port) return this.port;
     if (this.process) throw new Error("El backend ya se está iniciando.");
-    const python = this.findPython(backendDir);
+    const python = this.findPython(backendDir, runtimeDir);
     if (!python) {
       console.warn("[backend-manager] Python no encontrado en el sistema. Operando en modo Electron agéntico puro.");
       throw new Error("No se encontró Python. Sparta Agent puede operar directamente con modelos cloud y herramientas locales.");
@@ -57,6 +57,40 @@ export class BackendManager {
     });
   }
 
+  /**
+   * Builds a user-writable virtual environment for the packaged backend.
+   * The application resources directory must never be mutated: Windows installs
+   * commonly live below Program Files and are read-only for a normal user.
+   */
+  async bootstrap(
+    backendDir: string,
+    runtimeDir: string,
+    onProgress: (message: string) => void,
+  ): Promise<void> {
+    const systemPython = this.findPython(backendDir);
+    if (!systemPython) {
+      throw new Error("No se encontrÃ³ Python para instalar el motor local. Instala Python 3.10 o superior y vuelve a intentarlo.");
+    }
+
+    const venvDir = path.join(runtimeDir, ".venv");
+    const venvPython = path.join(
+      venvDir,
+      process.platform === "win32" ? "Scripts" : "bin",
+      process.platform === "win32" ? "python.exe" : "python",
+    );
+    const requirements = path.join(backendDir, "requirements.txt");
+    if (!existsSync(requirements)) throw new Error("No se encontrÃ³ requirements.txt en el motor local.");
+
+    onProgress("Creando entorno de Python...");
+    await this.run(systemPython.command, [...systemPython.args, "-m", "venv", venvDir], backendDir, onProgress);
+
+    onProgress("Actualizando instalador de paquetes...");
+    await this.run(venvPython, ["-m", "pip", "install", "--upgrade", "pip"], backendDir, onProgress);
+
+    onProgress("Instalando dependencias del motor local...");
+    await this.run(venvPython, ["-m", "pip", "install", "-r", requirements], backendDir, onProgress);
+  }
+
   stop(): void {
     const child = this.process;
     this.process = undefined;
@@ -66,12 +100,36 @@ export class BackendManager {
     }
   }
 
-  private findPython(backendDir: string): { command: string; args: string[] } | undefined {
+  private async run(command: string, args: string[], cwd: string, onProgress: (message: string) => void): Promise<void> {
+    await new Promise<void>((resolve, reject) => {
+      const child = spawn(command, args, {
+        cwd,
+        windowsHide: true,
+        stdio: ["ignore", "pipe", "pipe"],
+      });
+      let output = "";
+      const read = (chunk: Buffer) => {
+        const text = chunk.toString();
+        output += text;
+        const lastLine = text.trim().split(/\r?\n/).at(-1);
+        if (lastLine) onProgress(lastLine.slice(0, 300));
+      };
+      child.stdout?.on("data", read);
+      child.stderr?.on("data", read);
+      child.once("error", (error) => reject(new Error(`No se pudo ejecutar ${command}: ${error.message}`)));
+      child.once("exit", (code) => {
+        if (code === 0) resolve();
+        else reject(new Error(`La instalaciÃ³n fallÃ³ (cÃ³digo ${code ?? "desconocido"}).\n${output.slice(-2000)}`));
+      });
+    });
+  }
+
+  private findPython(backendDir: string, runtimeDir?: string): { command: string; args: string[] } | undefined {
     const configured = process.env.SPARTA_PYTHON;
     if (configured && existsSync(configured)) return { command: configured, args: [] };
 
     const bundled = path.join(
-      backendDir,
+      runtimeDir ?? backendDir,
       ".venv",
       process.platform === "win32" ? "Scripts" : "bin",
       process.platform === "win32" ? "python.exe" : "python"

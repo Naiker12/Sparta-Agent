@@ -26,9 +26,14 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL
 
 let win: BrowserWindow | null
 const backend = new BackendManager()
+let backendStartupError: string | undefined
 
 function backendDirectory(): string {
   return app.isPackaged ? path.join(process.resourcesPath, 'backend') : path.resolve(__dirname, '..', 'desktop', 'backend-spartan')
+}
+
+function backendRuntimeDirectory(): string {
+  return path.join(app.getPath('userData'), 'backend-runtime')
 }
 
 function createWindow() {
@@ -120,10 +125,37 @@ app.whenReady().then(async () => {
   // ask for the port during its first frame, before the handler exists, then
   // fall back to Vite's HTML response for /api requests.
   ipcMain.handle('backend:get-port', () => backend.getPort())
+  ipcMain.handle('backend:get-status', () => ({
+    port: backend.getPort(),
+    error: backendStartupError,
+  }))
+  ipcMain.handle('backend:bootstrap', async () => {
+    const emitProgress = (message: string) => win?.webContents.send('backend:install-progress', message)
+    try {
+      await backend.bootstrap(backendDirectory(), backendRuntimeDirectory(), emitProgress)
+      emitProgress('Iniciando motor local...')
+      const port = await backend.start(backendDirectory(), backendRuntimeDirectory())
+      backendStartupError = undefined
+      win?.webContents.send('backend:ready', port)
+      win?.webContents.send('backend:install-complete')
+      return { ok: true }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      backendStartupError = message
+      win?.webContents.send('backend:install-error', message)
+      return { ok: false, error: message }
+    }
+  })
   createWindow()
-  void backend.start(backendDirectory())
-    .then((port) => win?.webContents.send('backend:ready', port))
-    .catch((error) => win?.webContents.send('backend:error', error instanceof Error ? error.message : String(error)))
+  void backend.start(backendDirectory(), backendRuntimeDirectory())
+    .then((port) => {
+      backendStartupError = undefined
+      win?.webContents.send('backend:ready', port)
+    })
+    .catch((error) => {
+      backendStartupError = error instanceof Error ? error.message : String(error)
+      win?.webContents.send('backend:error', backendStartupError)
+    })
 
   // Caption buttons theme overlay
   ipcMain.on('titlebar:set-overlay', (_event, colors: { color?: string; symbolColor?: string }) => {
@@ -132,9 +164,8 @@ app.whenReady().then(async () => {
   })
 
   // App metadata IPC handlers
-  ipcMain.handle('app:getVersion', () => app.getVersion() || '0.2.1')
+  ipcMain.handle('app:getVersion', () => app.getVersion())
   ipcMain.handle('app:getName', () => app.getName() || 'Sparta Agent')
 })
 
 app.on('before-quit', () => backend.stop())
-

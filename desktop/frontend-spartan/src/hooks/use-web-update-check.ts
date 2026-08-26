@@ -72,6 +72,20 @@ function markDismissed(version: string): void {
 
 async function fetchLatestGitHubRelease(): Promise<SpartaUpdateStatus | null> {
   try {
+    // The packaged app version is Electron's source of truth. The fallback keeps
+    // the web/dev build working without exposing Node to the renderer.
+    let currentVersion = SPARTA_VERSION;
+    const desktopApi = typeof window === "undefined" ? undefined : (window as Window & {
+      electronAPI?: { getVersion?: () => Promise<unknown> };
+    }).electronAPI;
+    if (desktopApi?.getVersion) {
+      try {
+        const version = await desktopApi.getVersion();
+        if (typeof version === "string" && version.trim()) currentVersion = version.trim();
+      } catch {
+        // Use the build-time fallback when Electron IPC is not ready yet.
+      }
+    }
     const res = await fetch("https://api.github.com/repos/Naiker12/Sparta-Agent/releases/latest", {
       headers: { Accept: "application/vnd.github.v3+json" },
     });
@@ -80,7 +94,7 @@ async function fetchLatestGitHubRelease(): Promise<SpartaUpdateStatus | null> {
     const tagName = data.tag_name || "";
     const cleanTag = tagName.replace(/^v/, "");
 
-    if (!cleanTag || !isNewerVersion(cleanTag, SPARTA_VERSION)) {
+    if (!cleanTag || !isNewerVersion(cleanTag, currentVersion)) {
       return null;
     }
 
@@ -90,7 +104,7 @@ async function fetchLatestGitHubRelease(): Promise<SpartaUpdateStatus | null> {
       `https://github.com/Naiker12/Sparta-Agent/releases/tag/${tagName}`;
 
     return {
-      currentVersion: SPARTA_VERSION,
+      currentVersion,
       latestVersion: cleanTag,
       downloadUrl,
       releaseUrl: data.html_url || `https://github.com/Naiker12/Sparta-Agent/releases/tag/${tagName}`,

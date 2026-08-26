@@ -4,6 +4,7 @@ import { builtinModules } from 'node:module'
 import electron from 'vite-plugin-electron/simple'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import packageJson from './package.json'
 
 // Codex and some Node toolchains set this flag for Electron's Node runtime.
 // It must never reach the child process spawned by vite-plugin-electron, or
@@ -69,6 +70,7 @@ export default defineConfig(() => {
     },
     define: {
       __IS_ELECTRON__: 'true',
+      __SPARTA_VERSION__: JSON.stringify(packageJson.version),
     },
     plugins: [
       tailwindcss(),

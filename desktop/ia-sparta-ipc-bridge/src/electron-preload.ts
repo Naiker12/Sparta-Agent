@@ -15,6 +15,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.send('titlebar:set-overlay', colors),
   getVersion: () => ipcRenderer.invoke('app:getVersion'),
   getBackendPort: () => ipcRenderer.invoke('backend:get-port') as Promise<number | undefined>,
+  getBackendStatus: () => ipcRenderer.invoke('backend:get-status') as Promise<{ port?: number; error?: string }>,
+  bootstrapBackend: () => ipcRenderer.invoke('backend:bootstrap') as Promise<{ ok: boolean; error?: string }>,
   onBackendReady: (callback: (port: number) => void) => {
     const listener = (_event: Electron.IpcRendererEvent, port: number) => callback(port)
     ipcRenderer.on('backend:ready', listener)
@@ -24,6 +26,21 @@ contextBridge.exposeInMainWorld('electronAPI', {
     const listener = (_event: Electron.IpcRendererEvent, message: string) => callback(message)
     ipcRenderer.on('backend:error', listener)
     return () => ipcRenderer.removeListener('backend:error', listener)
+  },
+  onBackendInstallProgress: (callback: (message: string) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, message: string) => callback(message)
+    ipcRenderer.on('backend:install-progress', listener)
+    return () => ipcRenderer.removeListener('backend:install-progress', listener)
+  },
+  onBackendInstallComplete: (callback: () => void) => {
+    const listener = () => callback()
+    ipcRenderer.on('backend:install-complete', listener)
+    return () => ipcRenderer.removeListener('backend:install-complete', listener)
+  },
+  onBackendInstallError: (callback: (message: string) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, message: string) => callback(message)
+    ipcRenderer.on('backend:install-error', listener)
+    return () => ipcRenderer.removeListener('backend:install-error', listener)
   },
 })
 

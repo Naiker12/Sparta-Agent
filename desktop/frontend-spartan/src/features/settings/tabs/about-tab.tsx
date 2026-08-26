@@ -2,6 +2,7 @@
 import { ShutdownDialog } from "@/components/shutdown-dialog";
 import { Button } from "@/components/ui/button";
 import { usePlatformStore } from "@/config/env";
+import { SPARTA_VERSION } from "@/config/version";
 import { getAuthToken } from "@/features/auth";
 import { type HardwareInfo, useHardwareInfo } from "@/hooks/use-hardware-info";
 import { type TranslationKey, useT } from "@/i18n";
@@ -203,7 +204,7 @@ export function AboutTab() {
         </SettingsRow>
         <SettingsRow label={t("settings.about.releaseNotes")}>
           <a
-            href="https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.2.0"
+            href={`https://github.com/Naiker12/Sparta-Agent/releases/tag/v${SPARTA_VERSION}`}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
