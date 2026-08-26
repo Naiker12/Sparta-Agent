@@ -1,7 +1,7 @@
 
 import { getAuthToken, refreshSession } from "@/features/auth";
 import { useT } from "@/i18n";
-import { apiUrl } from "@/lib/api-base";
+import { apiUrl, isElectron } from "@/lib/api-base";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { SettingsRow } from "./settings-row";
@@ -82,6 +82,14 @@ export function StudioVersionSection({
   const [studioVersion, setStudioVersion] = useState(`v${SPARTA_VERSION}`);
 
   useEffect(() => {
+    // The bundled Electron renderer and shell are released together. `/api/health`
+    // describes the Python backend, which may deliberately use a different
+    // version, so it must not overwrite the application's About information.
+    if (isElectron) {
+      setPackageVersion(SPARTA_VERSION);
+      setStudioVersion(`v${SPARTA_VERSION}`);
+      return;
+    }
     let canceled = false;
     fetchStudioVersions().then((next) => {
       if (canceled) return;
