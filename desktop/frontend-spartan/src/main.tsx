@@ -4,7 +4,7 @@ import { createRoot } from "react-dom/client";
 
 import "./index.css";
 import { App } from "./app/app";
-import { BackendSetupGate } from "./features/setup/backend-setup-gate";
+import { StartupGate } from "./features/setup/startup-gate";
 import { fetchDeviceType } from "./config/env";
 import { initializeLocale } from "./i18n";
 import { isTauri, setApiBase, setBackendError } from "./lib/api-base";
@@ -48,8 +48,9 @@ watchOverlayScrollbarGutter(window);
 function renderApp(): void {
   root.render(
     <StrictMode>
-      <App />
-      <BackendSetupGate />
+      <StartupGate>
+        <App />
+      </StartupGate>
     </StrictMode>,
   );
 }
@@ -78,5 +79,4 @@ if (!isTauri) {
   });
   window.electronAPI?.onBackendReady?.(applyElectronPort);
   window.electronAPI?.onBackendError?.(setBackendError);
-  fetchDeviceType().catch(() => undefined);
 }

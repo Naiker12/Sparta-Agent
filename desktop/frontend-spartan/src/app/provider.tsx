@@ -8,6 +8,7 @@ import { UpdateBanner } from "@/components/tauri/update-banner";
 import { UpdateScreen } from "@/components/tauri/update-screen";
 import {
   WindowTitlebar,
+  getClientPlatform,
   shouldUseCustomWindowTitlebar,
   shouldUseNativeMacWindowTitlebar,
 } from "@/components/tauri/window-titlebar";
@@ -30,7 +31,7 @@ import { SttDownloadPrompt } from "@/features/settings/components/stt-download-p
 import { TauriUpdateContext } from "@/hooks/tauri-update-context";
 import { type BackendStatus, useTauriBackend } from "@/hooks/use-tauri-backend";
 import { useTauriUpdate } from "@/hooks/use-tauri-update";
-import { isTauri } from "@/lib/api-base";
+import { isElectron, isTauri } from "@/lib/api-base";
 import { getToastOffsets } from "@/lib/toast-offset";
 import { cn } from "@/lib/utils";
 import { Z_LAYER } from "@/lib/z-layers";
@@ -559,6 +560,11 @@ function TauriWrapper({ children }: { children: ReactNode }) {
   const [windowRevealRevision, setWindowRevealRevision] = useState(0);
   const usesCustomTitlebar = shouldUseCustomWindowTitlebar();
   const usesNativeMacTitlebar = shouldUseNativeMacWindowTitlebar();
+  // Electron keeps native window buttons, but its `titleBarOverlay` still
+  // occupies 38px on Windows/Linux. Reserve that space without mounting the
+  // Tauri titlebar component or duplicating controls.
+  const usesElectronTitlebarOverlay =
+    isElectron && !getClientPlatform().includes("mac");
   const hidesTitlebarSidebar = HIDDEN_TITLEBAR_SIDEBAR_ROUTES.has(pathname);
 
   useEffect(() => {
@@ -810,7 +816,7 @@ function TauriWrapper({ children }: { children: ReactNode }) {
 
   const chromeVars = (
     <DesktopChromeVarsEffect
-      usesCustomTitlebar={usesCustomTitlebar}
+      usesCustomTitlebar={usesCustomTitlebar || usesElectronTitlebarOverlay}
       usesNativeMacTitlebar={usesNativeMacTitlebar}
     />
   );

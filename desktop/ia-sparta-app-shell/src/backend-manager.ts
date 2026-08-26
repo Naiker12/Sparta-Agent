@@ -15,8 +15,13 @@ export class BackendManager {
   async start(backendDir: string, runtimeDir?: string): Promise<number> {
     if (this.port) return this.port;
     if (this.process) throw new Error("El backend ya se está iniciando.");
-    const python = this.findPython(backendDir, runtimeDir);
+    // A managed Electron runtime must be isolated from global Python installs
+    // and from other desktop products such as Unsloth/GeoNexus.
+    const python = runtimeDir ? this.findRuntimePython(runtimeDir) : this.findPython(backendDir);
     if (!python) {
+      if (runtimeDir) {
+        throw new Error("El motor local de Sparta aún no está preparado. Instálalo para crear su entorno aislado.");
+      }
       console.warn("[backend-manager] Python no encontrado en el sistema. Operando en modo Electron agéntico puro.");
       throw new Error("No se encontró Python. Sparta Agent puede operar directamente con modelos cloud y herramientas locales.");
     }
@@ -28,9 +33,17 @@ export class BackendManager {
     }
 
     return new Promise<number>((resolve, reject) => {
+      const childEnv: NodeJS.ProcessEnv = { ...process.env };
+      for (const key of Object.keys(childEnv)) {
+        if (key.startsWith("UNSLOTH_")) delete childEnv[key];
+      }
+      // The backend originates from Unsloth Studio, but its mutable state must
+      // belong to Sparta. Never inherit C:\\Users\\...\\.unsloth from another app.
+      childEnv.UNSLOTH_STUDIO_HOME = path.join(runtimeDir ?? backendDir, "studio-data");
+      childEnv.UNSLOTH_STUDIO_DESKTOP_OWNER_PID = String(process.pid);
       const child = spawn(python.command, [...python.args, "run.py", "--api-only", "--port", "0"], {
         cwd: backendDir,
-        env: { ...process.env, PYTHONPATH: backendDir, UNSLOTH_STUDIO_DESKTOP_OWNER_PID: String(process.pid) },
+        env: { ...childEnv, PYTHONPATH: backendDir },
         stdio: ["ignore", "pipe", "pipe"],
         windowsHide: true,
       });
@@ -81,14 +94,26 @@ export class BackendManager {
     const requirements = path.join(backendDir, "requirements.txt");
     if (!existsSync(requirements)) throw new Error("No se encontrÃ³ requirements.txt en el motor local.");
 
-    onProgress("Creando entorno de Python...");
-    await this.run(systemPython.command, [...systemPython.args, "-m", "venv", venvDir], backendDir, onProgress);
+    if (existsSync(venvPython)) {
+      onProgress(`Entorno local existente detectado: ${venvDir}`);
+    } else {
+      onProgress("Creando entorno de Python aislado para Sparta...");
+      await this.run(systemPython.command, [...systemPython.args, "-m", "venv", venvDir], backendDir, onProgress);
+    }
 
     onProgress("Actualizando instalador de paquetes...");
     await this.run(venvPython, ["-m", "pip", "install", "--upgrade", "pip"], backendDir, onProgress);
 
     onProgress("Instalando dependencias del motor local...");
     await this.run(venvPython, ["-m", "pip", "install", "-r", requirements], backendDir, onProgress);
+
+    onProgress("Verificando dependencias críticas del motor...");
+    await this.run(
+      venvPython,
+      ["-c", "import structlog, fastapi; print('Dependencias críticas verificadas')"],
+      backendDir,
+      onProgress,
+    );
   }
 
   stop(): void {
@@ -102,6 +127,7 @@ export class BackendManager {
 
   private async run(command: string, args: string[], cwd: string, onProgress: (message: string) => void): Promise<void> {
     await new Promise<void>((resolve, reject) => {
+      onProgress(`$ ${command} ${args.join(" ")}`);
       const child = spawn(command, args, {
         cwd,
         windowsHide: true,
@@ -111,8 +137,9 @@ export class BackendManager {
       const read = (chunk: Buffer) => {
         const text = chunk.toString();
         output += text;
-        const lastLine = text.trim().split(/\r?\n/).at(-1);
-        if (lastLine) onProgress(lastLine.slice(0, 300));
+        for (const line of text.split(/\r?\n/)) {
+          if (line.trim()) onProgress(line.slice(0, 500));
+        }
       };
       child.stdout?.on("data", read);
       child.stderr?.on("data", read);
@@ -171,5 +198,15 @@ export class BackendManager {
     } catch {}
 
     return undefined;
+  }
+
+  private findRuntimePython(runtimeDir: string): { command: string; args: string[] } | undefined {
+    const python = path.join(
+      runtimeDir,
+      ".venv",
+      process.platform === "win32" ? "Scripts" : "bin",
+      process.platform === "win32" ? "python.exe" : "python",
+    );
+    return existsSync(python) ? { command: python, args: [] } : undefined;
   }
 }

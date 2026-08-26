@@ -21,6 +21,7 @@ import {
   Thread,
 } from "@/components/assistant-ui/thread";
 import { useT } from "@/i18n";
+import { useOnlineStatus } from "@/features/hub";
 import { CopyableErrorChip } from "@/components/ui/copyable-error-chip";
 import {
   DropdownMenu,
@@ -1988,8 +1989,10 @@ export function ChatPage({
   const connectionsEnabled = useExternalProvidersStore(
     (s) => s.connectionsEnabled,
   );
+  const online = useOnlineStatus();
+  const remoteModelsAvailable = connectionsEnabled && online;
   const setExternalProviders = useExternalProvidersStore((s) => s.setProviders);
-  const externalProvidersForChat = connectionsEnabled ? externalProviders : [];
+  const externalProvidersForChat = remoteModelsAvailable ? externalProviders : [];
 
   useEffect(() => {
     void hydratePersistedSettings();
@@ -2147,10 +2150,10 @@ export function ChatPage({
     loadProgress,
     loadToastDismissed,
   } = useChatModelRuntime();
-  const prevConnectionsEnabledRef = useRef(connectionsEnabled);
+  const prevConnectionsEnabledRef = useRef(remoteModelsAvailable);
   useEffect(() => {
-    const turnedOff = prevConnectionsEnabledRef.current && !connectionsEnabled;
-    if (!connectionsEnabled && isExternalModelId(inferenceParams.checkpoint)) {
+    const turnedOff = prevConnectionsEnabledRef.current && !remoteModelsAvailable;
+    if (!remoteModelsAvailable && isExternalModelId(inferenceParams.checkpoint)) {
       resetArtifacts();
       clearCheckpoint();
       if (turnedOff) {
@@ -2159,10 +2162,10 @@ export function ChatPage({
         });
       }
     }
-    prevConnectionsEnabledRef.current = connectionsEnabled;
+    prevConnectionsEnabledRef.current = remoteModelsAvailable;
   }, [
     clearCheckpoint,
-    connectionsEnabled,
+    remoteModelsAvailable,
     inferenceParams.checkpoint,
     resetArtifacts,
   ]);
@@ -3245,7 +3248,7 @@ export function ChatPage({
   // render.
   const externalConnections = useMemo<ExternalConnectionRef[]>(
     () =>
-      connectionsEnabled
+      remoteModelsAvailable
         ? externalProviders.map((provider) => ({
             id: provider.id,
             name: provider.name,
@@ -3253,7 +3256,7 @@ export function ChatPage({
             availableModels: provider.availableModels,
           }))
         : [],
-    [connectionsEnabled, externalProviders],
+    [remoteModelsAvailable, externalProviders],
   );
 
   const localModelInventory = useDeviceInventorySources(["localModels"], {
@@ -3395,7 +3398,7 @@ export function ChatPage({
     // Provides `active` to ChatRuntimeProvider (drops the message views/composers
     // while off-route, keeping the runtime alive) and to the compare chrome.
     <ChatActiveContext.Provider value={active}>
-    <div className="flex min-h-0 min-w-0 flex-1 basis-0 overflow-hidden bg-background">
+    <div className="flex min-h-0 min-w-0 flex-1 basis-0 overflow-hidden bg-background pt-[var(--studio-content-top-inset,0px)]">
       {/* Portaled surfaces render to document.body, escaping the parent's hidden
           wrapper, so gate them on `active` to keep them off other tabs. */}
       {active && <GuidedTour {...tour.tourProps} />}
@@ -3411,7 +3414,7 @@ export function ChatPage({
           space nothing reserved, and the top of the first message reads
           underneath it. Declared here, on the nearest ancestor of BOTH the
           notice and the viewport, so the two cannot disagree about its height. */}
-      <div className="relative flex min-h-0 min-w-0 flex-1 basis-0 flex-col overflow-hidden has-[[data-chat-model-notice]]:[--studio-chat-notice-height:2.25rem]">
+      <div className="relative flex min-h-0 min-w-0 flex-1 basis-0 flex-col overflow-hidden [--studio-content-top-inset:0px] has-[[data-chat-model-notice]]:[--studio-chat-notice-height:2.25rem]">
         <NativeModelDropOverlay state={nativeModelDropState} />
         {/* Fade under the top bar so messages dissolve as they scroll
             beneath it, instead of a hard cut. */}
