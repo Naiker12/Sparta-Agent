@@ -29,7 +29,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Validate release tag matches package version
         if: startsWith(github.ref, 'refs/tags/')
@@ -42,7 +42,7 @@ jobs:
             exit 1
           }
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -52,7 +52,7 @@ jobs:
       - run: npm ci
 
       - name: Install desktop frontend dependencies
-        run: npm --prefix desktop/frontend-spartan ci || npm --prefix desktop/frontend-spartan install
+        run: npm --prefix desktop/frontend-spartan ci
 
       # Build: tsc → vite build → electron-builder
       - run: npm run build
