@@ -66,7 +66,6 @@ module.exports = {
   forceCodeSigning: false,
   win: {
     requestedExecutionLevel: 'asInvoker',
-    sign: null,
     target: [
       {
         target: 'nsis',
