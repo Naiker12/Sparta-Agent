@@ -66,35 +66,35 @@ export function DownloadBar() {
   const releases = [
     {
       os: 'Windows (x64)',
-      filename: 'Sparta-Agent-Windows-0.2.6-Setup.exe',
+      filename: 'Sparta-Agent-Windows-0.2.7-Setup.exe',
       size: '~120 MB',
       icon: Monitor,
       recommended: true,
       badge: 'Instalador NSIS .exe',
-      command: 'powershell -c "Invoke-WebRequest -Uri https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Windows-0.2.6-Setup.exe -OutFile Sparta-Setup.exe"',
-      url: 'https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Windows-0.2.6-Setup.exe',
+      command: 'powershell -c "Invoke-WebRequest -Uri https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Windows-0.2.7-Setup.exe -OutFile Sparta-Setup.exe"',
+      url: 'https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Windows-0.2.7-Setup.exe',
       fallbackUrl: 'https://github.com/Naiker12/Sparta-Agent/releases/latest',
     },
     {
       os: 'macOS (Apple Silicon & Intel)',
-      filename: 'Sparta-Agent-Mac-0.2.6-Installer.dmg',
+      filename: 'Sparta-Agent-Mac-0.2.7-Installer.dmg',
       size: '~130 MB',
       icon: Apple,
       recommended: false,
       badge: 'Universal .dmg',
-      command: 'curl -L https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Mac-0.2.6-Installer.dmg -o Sparta-Installer.dmg',
-      url: 'https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Mac-0.2.6-Installer.dmg',
+      command: 'curl -L https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Mac-0.2.7-Installer.dmg -o Sparta-Installer.dmg',
+      url: 'https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Mac-0.2.7-Installer.dmg',
       fallbackUrl: 'https://github.com/Naiker12/Sparta-Agent/releases/latest',
     },
     {
       os: 'Linux (AppImage)',
-      filename: 'Sparta-Agent-Linux-0.2.6.AppImage',
+      filename: 'Sparta-Agent-Linux-0.2.7.AppImage',
       size: '~115 MB',
       icon: Terminal,
       recommended: false,
       badge: 'Binario AppImage',
-      command: 'wget https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Linux-0.2.6.AppImage && chmod +x Sparta-Agent-Linux-0.2.6.AppImage',
-      url: 'https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Linux-0.2.6.AppImage',
+      command: 'wget https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Linux-0.2.7.AppImage && chmod +x Sparta-Agent-Linux-0.2.7.AppImage',
+      url: 'https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Linux-0.2.7.AppImage',
       fallbackUrl: 'https://github.com/Naiker12/Sparta-Agent/releases/latest',
     },
   ];
@@ -237,12 +237,12 @@ export function DownloadBar() {
         {/* GitHub Releases Direct Link Sub-Bar */}
         <div className="mt-6 text-center">
           <a
-            href="https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.2.6"
+            href="https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.2.7"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-slate-100 px-4 py-2 text-center font-mono text-xs font-semibold leading-5 text-zinc-600 shadow-sm transition-all hover:bg-slate-200 hover:text-zinc-700 dark:border-white/10 dark:bg-white/5 dark:text-zinc-300 dark:hover:bg-white/10 dark:hover:text-white sm:w-auto"
           >
-            <span>Ver Release Oficial y notas de la versión en GitHub Releases (v0.2.6)</span>
+            <span>Ver Release Oficial y notas de la versión en GitHub Releases (v0.2.7)</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </a>
         </div>

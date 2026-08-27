@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.7] - 2026-08-27
+
+### Corregido
+
+- Sincronizado el lockfile de npm para que las instalaciones limpias de CI y releases funcionen correctamente.
+
 ## [0.2.6] - 2026-08-27
 
 ### Añadido y Mejorado
