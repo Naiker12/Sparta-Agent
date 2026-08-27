@@ -76,6 +76,23 @@ function applyToDocument(resolved: ResolvedTheme) {
   el.classList.toggle("light", resolved === "light");
   // Native controls (scrollbars, spinners, pickers) follow the app mode.
   el.style.colorScheme = resolved;
+
+  if (typeof window !== "undefined") {
+    const isDark = resolved === "dark";
+    const colors = isDark
+      ? { color: "#1E1E22", symbolColor: "#FFFFFF" }
+      : { color: "#F2EBE0", symbolColor: "#352D40" };
+    try {
+      const electron = (window as unknown as { electron?: { send: (channel: string, data: unknown) => void }; electronAPI?: { setTitleBarOverlay?: (c: typeof colors) => void } });
+      if (electron.electronAPI?.setTitleBarOverlay) {
+        electron.electronAPI.setTitleBarOverlay(colors);
+      } else if (electron.electron?.send) {
+        electron.electron.send("titlebar:set-overlay", colors);
+      }
+    } catch {
+      // ignore
+    }
+  }
 }
 
 function applyPaletteToDocument(palette: Palette) {

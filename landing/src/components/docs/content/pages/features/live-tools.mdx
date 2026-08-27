@@ -1,0 +1,46 @@
+---
+title: Herramientas en Tiempo Real
+description: Herramientas nativas de clima en vivo, fecha y hora local, y navegación web integradas en Sparta Agent.
+---
+
+# Herramientas en Tiempo Real
+
+Sparta Agent incorpora un conjunto de herramientas nativas de acceso instantáneo a información del mundo real sin requerir APIs de pago.
+
+---
+
+## ☀️ Clima en Vivo (`get_weather`)
+
+Permite obtener información meteorológica precisa y actualizada para cualquier ciudad del mundo o mediante geolocalización automática por IP:
+
+- **Proveedor**: Open-Meteo API (gratuita, sin API key).
+- **Geocodificación**: Detección de ciudades y coordenadas globales.
+- **Datos entregados**:
+  - Temperatura actual y sensación térmica (°C).
+  - Humedad relativa (%).
+  - Velocidad y dirección del viento (km/h).
+  - Nivel de precipitación (mm).
+  - Condición meteorológica y emoji según código WMO.
+
+### Ejemplo de uso:
+```text
+Usuario: "¿Qué tiempo hace hoy en Barcelona?"
+Sparta Agent: 📍 Clima actual en Barcelona, Cataluña, España:
+- Condición: Mayormente despejado 🌤️
+- Temperatura: 18.5 °C (Sensación térmica: 18.2 °C)
+- Humedad: 64%
+- Viento: 12.0 km/h
+- Precipitación: 0.0 mm
+```
+
+---
+
+## ⏰ Fecha y Hora del Sistema (`get_current_datetime`)
+
+Entrega la fecha, hora exacta, día de la semana y zona horaria del equipo del usuario para responder con precisión contextual temporal.
+
+---
+
+## 🌐 Búsqueda Web (`web_search`)
+
+Motor de búsqueda web que consulta múltiples fuentes públicas, filtra dominios no deseados y permite extraer el contenido legible de páginas web directamente.

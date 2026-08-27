@@ -1,0 +1,51 @@
+---
+title: Búsqueda Profunda (Deep Research)
+description: Motor de investigación web iterativa multi-etapa con generación de planes, validación de evidencia y síntesis de reportes.
+---
+
+import { Steps } from 'fumadocs-ui/components/steps';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Búsqueda Profunda (Deep Research)
+
+La **Búsqueda Profunda** de Sparta Agent transforma una pregunta compleja en un proceso de investigación autónomo exhaustivo. En lugar de limitarse a resumir los primeros resultados de una búsqueda convencional, el supervisor ejecuta un ciclo iterativo de recolección, auditoría y síntesis.
+
+---
+
+## 🔄 El Ciclo de Vida de una Investigación
+
+```
+[1. Planificación] ──► [2. Búsquedas Web Multi-Paso] ──► [3. Extracción y Raspado] ──► [4. Auditoría de Síntesis] ──► [5. Reporte Final con Citas]
+```
+
+<Steps>
+
+### 1. Planificación Adaptativa (`_plan`)
+El modelo genera un plan de investigación estructurado en 2 a 6 pasos enfocados, cada uno con una consulta de búsqueda concreta y no superpuesta.
+
+### 2. Búsqueda y Recolección de Fuentes (`_research`)
+Para cada paso, el supervisor ejecuta la herramienta de búsqueda web (`web_search` vía DuckDuckGo / motores distribuidos) y opcionalmente descarga el texto completo de páginas clave.
+
+### 3. Decisión Iterativa del Siguiente Paso (`phase="decision"`)
+Tras evaluar la evidencia recopilada, el agente decide si necesita profundizar en una contradicción, investigar una fuente primaria o finalizar porque la evidencia es suficiente.
+
+### 4. Auditoría de Síntesis (`phase="synthesis_audit"`)
+Antes de redactar el reporte, se construye una matriz de evidencia-afirmación clasificando hechos demostrados, inferencias y fuentes requeridas.
+
+### 5. Generación del Informe Final (`phase="synthesis"`)
+Se redacta un informe completo en Markdown con análisis detallado, tablas comparativas y citas directas hacia las fuentes originales catalogadas en formato `[Título de la Fuente](URL)`.
+
+</Steps>
+
+---
+
+## 📊 Panel de Actividad en Tiempo Real
+
+Durante la investigación, puedes desplegar el panel **"Ver actividad"** para observar:
+- La lista ordenada de pasos del plan y su progreso.
+- Las consultas exactas ejecutadas y las URLs descubiertas.
+- Las trazas de pensamiento y razonamiento del agente.
+
+<Callout type="info">
+  Si una investigación se interrumpe por conexión o caída del proceso, puedes pulsar **"Reintentar investigación"** para continuar el análisis sin perder el contexto previo.
+</Callout>

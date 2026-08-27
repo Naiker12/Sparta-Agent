@@ -1,0 +1,32 @@
+---
+title: Ejecución de Código y Terminal
+description: Intérprete de Python y ejecución de comandos en entorno de sandbox seguro en Sparta Agent.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Ejecución de Código y Terminal
+
+En **Modo Agente**, Sparta Agent puede escribir, ejecutar y depurar código en tiempo real para resolver problemas matemáticos, procesar datos o automatizar flujos de desarrollo.
+
+---
+
+## 🐍 Entorno Python (`python_exec`)
+
+- **Intérprete Local**: Ejecución directa contra el entorno de Python local del usuario.
+- **Gráficos y Datos**: Capacidad para generar visualizaciones con `matplotlib`, `pandas`, `numpy` o `seaborn`.
+- **Captura de Salida**: Captura automática de `stdout`, `stderr`, trazas de error y retorno de variables.
+
+---
+
+## 💻 Comandos de Terminal (`run_command`)
+
+- **Shell Nativo**: Compatible con PowerShell en Windows, Zsh/Bash en macOS y Bash en Linux.
+- **Flujo de Ejecución**:
+  1. El modelo genera el comando requerido.
+  2. En Modo Agente, el sistema presenta la tarjeta de confirmación de permisos.
+  3. Al ser aprobado por el usuario, el comando se ejecuta y el resultado se transmite de vuelta al contexto del agente.
+
+<Callout type="warn">
+  Los comandos de consola nunca se ejecutan en segundo plano sin autorización en pantalla.
+</Callout>

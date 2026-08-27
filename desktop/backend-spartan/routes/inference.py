@@ -2391,7 +2391,7 @@ from utils.utils import is_hf_authentication_error, safe_error_detail, log_and_h
 
 import io
 import base64
-from datetime import date as _date
+from datetime import date as _date, datetime as _datetime
 
 if TYPE_CHECKING:
     import numpy as np
@@ -3259,6 +3259,16 @@ _TOOL_ARTIFACT_TIP = (
 )
 
 
+def _get_current_datetime_string() -> str:
+    """Return a formatted string representing the current local date, time, weekday, and timezone."""
+    now = _datetime.now().astimezone()
+    weekday_name = now.strftime("%A")
+    tz_name = now.tzname() or ""
+    offset = now.strftime("%z")
+    formatted_offset = f"UTC{offset[:3]}:{offset[3:]}" if offset else ""
+    return f"The current local date and time is {now.strftime('%Y-%m-%d %H:%M:%S')} ({weekday_name}, {tz_name} {formatted_offset})."
+
+
 def _build_tool_action_nudge(
     *,
     tools: list[dict],
@@ -3278,8 +3288,9 @@ def _build_tool_action_nudge(
     code_tools = [name for name in _LOCAL_CODE_TOOLS if name in tool_names]
     has_code = bool(code_tools)
     has_artifact = "render_html" in tool_names
+    datetime_str = _get_current_datetime_string()
     if not (has_web or has_code or has_artifact):
-        return ""
+        return datetime_str
     if full_access_only:
         return _full_access_tip(code_tools) if (full_access and has_code) else ""
 
@@ -3295,7 +3306,7 @@ def _build_tool_action_nudge(
     if has_artifact:
         tool_tip_parts.append(_TOOL_ARTIFACT_TIP)
     return (
-        f"The current date is {_date.today().isoformat()}. "
+        f"{datetime_str} "
         + _TOOL_BASE_NUDGE
         + " "
         + " ".join(tool_tip_parts)
@@ -3361,7 +3372,7 @@ def _apply_rag_nudge(nudge: str, tools: list[dict], *, rag_scope) -> str:
     if "search_knowledge_base" not in tool_names or not rag_scope:
         return nudge
     if not nudge:
-        date_line = f"The current date is {_date.today().isoformat()}."
+        date_line = _get_current_datetime_string()
         return date_line + " " + _RAG_GROUNDING_NUDGE
     return nudge + " " + _RAG_GROUNDING_NUDGE
 

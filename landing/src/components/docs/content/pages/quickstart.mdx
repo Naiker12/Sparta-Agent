@@ -1,0 +1,73 @@
+---
+title: Inicio Rápido
+description: Configura y comienza a utilizar Sparta Agent en menos de 3 minutos.
+---
+
+import { Steps } from 'fumadocs-ui/components/steps';
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Guía de Inicio Rápido
+
+Sigue estos pasos para poner en marcha tu entorno de Sparta Agent:
+
+<Steps>
+
+### 1. Iniciar la Aplicación
+
+Abre la aplicación de escritorio de Sparta Agent o ejecuta el entorno local de desarrollo:
+
+<Tabs items={['Windows', 'macOS / Linux']}>
+  <Tab value="Windows">
+    ```powershell
+    # Desde la raíz del proyecto
+    npm run dev
+    ```
+  </Tab>
+  <Tab value="macOS / Linux">
+    ```bash
+    # Desde la raíz del proyecto
+    npm run dev
+    ```
+  </Tab>
+</Tabs>
+
+### 2. Seleccionar o Descargar un Modelo
+
+En la esquina superior del chat, abre el **Selector de Modelos**:
+- **Modelos Locales (GGUF)**: Puedes descargar directamente modelos optimizados como *Qwen 2.5 7B*, *Llama 3.1 8B*, o *Mistral 7B* con aceleración GPU (CUDA, Metal o Vulkan).
+- **Proveedores Cloud**: Configura tu clave de API para OpenAI, Anthropic, Gemini, DeepSeek o Groq en la pestaña de Ajustes.
+
+<Callout type="info">
+  Para equipos con poca memoria RAM o sin tarjeta gráfica dedicada, se recomiendan modelos cuantizados en formato `Q4_K_M` o proveedores cloud.
+</Callout>
+
+### 3. Elegir el Modo de Operación
+
+En la barra inferior de entrada de mensajes:
+- Selecciona **Modo Chat** para hacer preguntas, buscar en la web, analizar PDFs o consultar información en modo solo lectura.
+- Selecciona **Modo Agente** si deseas que el asistente cree o modifique archivos, instale dependencias o ejecute código previa confirmación en pantalla.
+
+### 4. Probar tu Primera Consulta
+
+Prueba una de estas consultas de ejemplo:
+
+```text
+¿Cuál es el clima actual en Madrid y qué recomendaciones de ropa me das?
+```
+
+O para activar la **Búsqueda Profunda (Deep Research)**:
+
+```text
+Investiga las mejores prácticas de arquitectura para aplicaciones Next.js y FastAPI en 2026.
+```
+
+</Steps>
+
+---
+
+## Siguientes Pasos
+
+- Conoce los detalles de [Modo Chat vs Modo Agente](/docs/core-concepts/chat-vs-agent-mode).
+- Aprende a indexar documentos en el [RAG Local Multimodal](/docs/features/multimodal-rag).
+- Configura tus servidores [MCP (Notion, Google Drive, Slack)](/docs/mcp/supported-servers).

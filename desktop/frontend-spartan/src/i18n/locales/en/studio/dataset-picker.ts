@@ -1,0 +1,23 @@
+export const datasetPicker = {
+  "noun": "datasets",
+  "selectDataset": "Select dataset",
+  "hubPlaceholder": "Search Hugging Face datasets...",
+  "devicePlaceholder": "Search local datasets...",
+  "useAsHubDataset": "Use as Hugging Face dataset",
+  "hfCacheLabel": "HF cache",
+  "scanningLocal": "Scanning datasets on this device…",
+  "couldntScan": "Couldn't scan local datasets",
+  "someLocationsUnscanned": "Some dataset locations could not be scanned.",
+  "noLocalDatasets": "Nothing on this device yet. Download a dataset from the Hub, build one in Recipes, or upload a file.",
+  "openDataRecipes": "Open Data Recipes",
+  "searchingHub": "Searching Hugging Face…",
+  "noDatasetsFound": "No datasets found.",
+  "tokenRejectedTitle": "Hugging Face token rejected",
+  "tokenRejectedBody": "Update your token in Settings → General, then retry.",
+  "hubUnreachable": "Couldn't reach Hugging Face",
+  "cantUseDataset": "Can't use dataset",
+  "reasonInvalidHubId": "Enter a valid Hugging Face dataset ID: repo or owner/repo, with no consecutive periods or hyphens and no .git suffix (maximum 96 characters per part).",
+  "sourceRecipe": "Recipe",
+  "sourceUpload": "Upload",
+  "sourceLocal": "Local"
+} as const;

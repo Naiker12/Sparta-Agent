@@ -136,11 +136,16 @@ def _select_synthesis_report(content: str, reasoning: str) -> str:
     if content_report:
         return content_report
     reasoning_report = _report_after_boundary(reasoning, _REPORT_BOUNDARY_MARKER)
-    if content_report == "":
-        return reasoning_report or ""
-    if content.strip():
+    if reasoning_report:
+        return reasoning_report
+    if content and content.strip():
         return content.strip()
-    return reasoning_report or ""
+    recovered = _recover_report_from_reasoning(reasoning)
+    if recovered:
+        return recovered
+    if reasoning and reasoning.strip():
+        return reasoning.strip()
+    return ""
 
 
 def _synthesis_needs_recovery(report: str, finish_reason: str | None) -> bool:
@@ -2398,10 +2403,23 @@ class ResearchSupervisor:
                     )
                 )
         if not report:
-            raise ValueError(
-                "Local model returned no safely identifiable final report. Disable thinking or "
-                "use a compatible chat template and retry."
-            )
+            if notes:
+                fallback_parts = ["# Resumen de Investigación\n"]
+                for note in notes[:8]:
+                    fallback_parts.append(note)
+                report = "\n\n---\n\n".join(fallback_parts)
+            elif sources:
+                fallback_parts = ["# Fuentes Encontradas\n"]
+                for src in sources[:8]:
+                    fallback_parts.append(
+                        f"- **{src.get('title') or src.get('url')}**: {src.get('snippet') or ''}\n  {src.get('url')}"
+                    )
+                report = "\n\n".join(fallback_parts)
+            else:
+                report = (
+                    "No se pudo generar un reporte estructurado debido a límites de contexto "
+                    "o formato del modelo. Reintenta la investigación o ajusta los parámetros de inferencia."
+                )
         report = _validate_report_sources(report, sources)
         report = _validate_report_document_sources(report, document_sources)
         reasoning = await asyncio.to_thread(db.get_reasoning_text, run["id"])

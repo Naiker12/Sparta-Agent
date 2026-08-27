@@ -111,6 +111,19 @@ import {
   providerSupportsFastMode,
 } from "../provider-capabilities";
 import { selectCodeToolNames } from "./code-tool-placement";
+
+// A connected project is an explicit capability: these tools are available
+// even when the generic Code pill is off, and mutations still use the normal
+// permission gate sent with every local tool request.
+const WORKSPACE_TOOL_NAMES = [
+  "list_directory",
+  "read_file",
+  "write_file",
+  "create_file",
+  "delete_path",
+  "rename_path",
+  "search_in_files",
+] as const;
 import {
   type PendingImageEditReference,
   type RagAutoInject,
@@ -1583,10 +1596,12 @@ export async function buildOutboundMessagesForTokenCount(
         )
       : "";
   const projectInstructions = await resolveProjectInstructions(threadId);
+  const projectWorkspaceContext = await resolveProjectWorkspaceContext(threadId);
   const combinedSystemPrompt = [
     projectInstructions
       ? `<project_instructions>\n${projectInstructions}\n</project_instructions>`
       : "",
+    projectWorkspaceContext,
     safeSystemPrompt.trim(),
     defaultResponseLanguageInstruction(),
   ]
@@ -1687,13 +1702,17 @@ export async function buildLocalTokenCountExtras(
   const projectRagEnabled = ragProjectId
     ? await projectHasSources(ragProjectId)
     : false;
+  const workspaceEnabled = ragProjectId
+    ? Boolean((await getStoredChatProject(ragProjectId).catch(() => null))?.connectedFolderPath?.trim())
+    : false;
   const ragOn = ragEnabled || projectRagEnabled;
   if (
     !toolsEnabled &&
     !codeToolsEnabled &&
     !artifactsEnabled &&
     !mcpEnabledForChat &&
-    !ragOn
+    !ragOn &&
+    !workspaceEnabled
   ) {
     // Explicit false, not an omitted field: the server defaults tools on for a
     // request that never mentions them, so every pill being off has to say so.
@@ -1716,6 +1735,7 @@ export async function buildLocalTokenCountExtras(
       ...(ragOn ? ["search_knowledge_base"] : []),
       ...(toolsEnabled ? ["web_search"] : []),
       ...(codeToolsEnabled ? ["python", "terminal", "edit_file"] : []),
+      ...(workspaceEnabled ? WORKSPACE_TOOL_NAMES : []),
       ...(artifactsEnabled ? ["render_html"] : []),
     ],
     mcp_enabled: mcpEnabledForChat,
@@ -1791,6 +1811,24 @@ async function resolveProjectInstructions(
   return project.instructions?.trim() ?? "";
 }
 
+/** Tell the model that a workspace exists without disclosing the user's local path. */
+async function resolveProjectWorkspaceContext(
+  threadId: string | undefined,
+  readThreadRecord?: ThreadRecordReader,
+): Promise<string> {
+  const projectId = await resolveProjectId(threadId, readThreadRecord);
+  if (!projectId) return "";
+  const project = await getStoredChatProject(projectId).catch(() => null);
+  const workspace = project?.connectedFolderPath?.trim();
+  if (!project || project.archived || !workspace) return "";
+  return [
+    "<project_workspace>",
+    "The user connected a writable workspace folder to this project.",
+    "Use the project file tools for files inside that workspace when the user asks for code or file changes. Do not reveal or request its absolute local path, and do not write outside it. The usual tool permission flow still applies.",
+    "</project_workspace>",
+  ].join("\n");
+}
+
 const RESPONSE_LANGUAGE_BY_LOCALE = {
   en: "English",
   "zh-CN": "Simplified Chinese",
@@ -1833,11 +1871,16 @@ async function resolveChatInstructions(
     threadId,
     readThreadRecord,
   );
+  const projectWorkspaceContext = await resolveProjectWorkspaceContext(
+    threadId,
+    readThreadRecord,
+  );
   const responseLanguageInstruction = defaultResponseLanguageInstruction();
   return [
     projectInstructions
       ? `<project_instructions>\n${projectInstructions}\n</project_instructions>`
       : "",
+    projectWorkspaceContext,
     safeSystemPrompt.trim(),
     responseLanguageInstruction,
   ]
@@ -4077,6 +4120,9 @@ export function createOpenAIStreamAdapter(
       const projectRagEnabled = ragProjectId
         ? await projectHasSources(ragProjectId)
         : false;
+      const workspaceEnabled = ragProjectId
+        ? Boolean((await getStoredChatProject(ragProjectId).catch(() => null))?.connectedFolderPath?.trim())
+        : false;
       const externalSelection = parseExternalModelId(params.checkpoint);
       const isExternalRequest = externalSelection !== null;
       if (
@@ -5187,7 +5233,8 @@ export function createOpenAIStreamAdapter(
                 studioLocalCodeTools.length > 0 ||
                 mcpEnabledForChat ||
                 ragEnabled ||
-                projectRagEnabled)
+                projectRagEnabled ||
+                workspaceEnabled)
                 ? {
                     enable_tools: true,
                     enabled_tools: [
@@ -5196,6 +5243,7 @@ export function createOpenAIStreamAdapter(
                         : []),
                       ...(toolsEnabled ? ["web_search"] : []),
                       ...studioLocalCodeTools,
+                      ...(workspaceEnabled ? WORKSPACE_TOOL_NAMES : []),
                       // Hosted tools Studio has no local stand-in for. Their
                       // pills stay lit whether or not a Studio tool is on, so
                       // listing only the local names here would silently drop
@@ -5420,7 +5468,8 @@ export function createOpenAIStreamAdapter(
               renderHtmlToolEnabledForThisTurn ||
               mcpEnabledForChat ||
               ragEnabled ||
-              projectRagEnabled)
+              projectRagEnabled ||
+              workspaceEnabled)
               ? {
                   enable_tools: true,
                   enabled_tools: [
@@ -5432,6 +5481,7 @@ export function createOpenAIStreamAdapter(
                     ...(codeToolsEnabled
                       ? ["python", "terminal", "edit_file"]
                       : []),
+                    ...(workspaceEnabled ? WORKSPACE_TOOL_NAMES : []),
                     ...(renderHtmlToolEnabledForThisTurn
                       ? ["render_html"]
                       : []),

@@ -9,6 +9,7 @@ import type {
 } from "@/hooks/use-tauri-update";
 import type { CopySupportDiagnosticsResult } from "@/lib/tauri-diagnostics";
 import { cn } from "@/lib/utils";
+import { useT } from "@/i18n";
 import { CircleAlert, Download } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
@@ -52,6 +53,7 @@ export function UpdateBanner({
   onDismiss,
   onCopyDiagnostics,
 }: UpdateBannerProps) {
+  const t = useT();
   const [copying, setCopying] = useState(false);
   const [manualReport, setManualReport] = useState<string | null>(null);
   const [manualMessage, setManualMessage] = useState<string | null>(null);
@@ -269,7 +271,7 @@ export function UpdateBanner({
                     className="h-auto whitespace-nowrap rounded-full px-2.5 py-2 text-ui-13 font-medium text-foreground"
                     onClick={onDismiss}
                   >
-                    Remind me later
+                    {t("update.remindLater")}
                   </Button>
                   <Button
                     size="sm"
@@ -277,7 +279,9 @@ export function UpdateBanner({
                     onClick={onInstall}
                     disabled={installDisabled}
                   >
-                    {isManualLinuxPackage ? "Open release page" : "Update"}
+                    {isManualLinuxPackage
+                      ? t("update.openReleasePage")
+                      : t("common.update")}
                   </Button>
                 </div>
               )}

@@ -20,6 +20,7 @@ export interface ProjectRecord {
   instructions?: string;
   rootPath?: string | null;
   sandboxPath?: string | null;
+  connectedFolderPath?: string | null;
   archived: boolean;
   createdAt: number;
   updatedAt: number;

@@ -1,8 +1,9 @@
 
 import { Badge } from "@/components/assistant-ui/badge";
 import { Spinner } from "@/components/ui/spinner";
+import { getAttachmentIcon } from "@/lib/attachment-file-kind";
 import { cn } from "@/lib/utils";
-import { File02Icon, Folder02Icon } from "@hugeicons/core-free-icons";
+import { Folder02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { XIcon } from "lucide-react";
 import type { DocumentStatus } from "../types/rag";
@@ -42,7 +43,7 @@ export function DocumentStatusChip({
     >
       {/* file, or folder when the doc is a project-wide source */}
       <HugeiconsIcon
-        icon={shared ? Folder02Icon : File02Icon}
+        icon={shared ? Folder02Icon : getAttachmentIcon(filename)}
         strokeWidth={2}
         className="size-3 shrink-0"
       />

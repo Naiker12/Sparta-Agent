@@ -3529,15 +3529,15 @@ export function AppSidebar() {
               closeMobileIfOpen();
             }}
           />
-          <SidebarMenuItem>
+          <SidebarMenuItem className="relative">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuButton
-                  size="lg"
+                <button
+                  type="button"
                   aria-label={t("shell.accountMenu", { name: displayTitle })}
-                  className="sidebar-nav-btn !h-[44px] -my-[3px] gap-[9px] pl-2 pr-[45px] py-[3px] rounded-[14px] group-data-[collapsible=icon]:!size-[34px] group-data-[collapsible=icon]:!rounded-full group-data-[collapsible=icon]:!p-0 group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:justify-center"
+                  className="sidebar-nav-btn peer/menu-button flex w-full items-center !h-[44px] -my-[3px] gap-[9px] pl-2 pr-[45px] py-[3px] rounded-[14px] cursor-pointer select-none text-left outline-none transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[state=open]:bg-sidebar-accent group-data-[collapsible=icon]:!size-[34px] group-data-[collapsible=icon]:!rounded-full group-data-[collapsible=icon]:!p-0 group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:justify-center"
                 >
-                  <div className="flex shrink-0 items-center">
+                  <div className="flex shrink-0 items-center pointer-events-none">
                     <UserAvatar
                       name={displayTitle}
                       imageUrl={avatarDataUrl}
@@ -3547,17 +3547,17 @@ export function AppSidebar() {
                   </div>
                   {/* min-w-0 so long names truncate instead of overflowing;
                       pr on the button reserves room for the settings cog */}
-                  <div className="flex min-w-0 flex-1 flex-col gap-px leading-tight group-data-[collapsible=icon]:hidden">
+                  <div className="flex min-w-0 flex-1 flex-col gap-px leading-tight group-data-[collapsible=icon]:hidden pointer-events-none">
                     <span className="truncate font-heading text-ui-13p5 tracking-[0.025em] dark:tracking-[0.04em] font-semibold text-nav-fg">{displayTitle}</span>
-                    <span className="truncate text-ui-11p5 tracking-nav text-muted-foreground">Spartan Agent</span>
+                    <span className="truncate text-ui-11p5 tracking-nav text-muted-foreground">Sparta Agent</span>
                   </div>
-                </SidebarMenuButton>
+                </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 side="top"
-                align="center"
+                align="start"
                 sideOffset={8}
-                className="app-user-menu menu-soft-surface-up ring-0 w-[16rem] rounded-[20px] border border-transparent px-2.5 py-2.5 font-heading dark:border-white/[0.05]"
+                className="app-user-menu menu-soft-surface-up ring-0 !w-[16rem] min-w-[16rem] rounded-[20px] border border-transparent px-2.5 py-2.5 font-heading dark:border-white/[0.05] z-[100]"
               >
                 <DropdownMenuGroup>
                   <DropdownMenuItem

@@ -310,6 +310,27 @@ def test_chat_projects_delete_cascades_threads_and_messages(tmp_path, monkeypatc
         studio_db.upsert_chat_thread({**_thread(), "projectId": "project-1"})
 
 
+def test_chat_project_connected_workspace_persists_and_disconnects(tmp_path, monkeypatch):
+    _reset_studio_db(tmp_path, monkeypatch)
+    project = studio_db.upsert_chat_project(_project())
+    workspace = tmp_path / "existing-codebase"
+    workspace.mkdir()
+
+    updated = studio_db.update_chat_project(
+        project["id"], {"connectedFolderPath": str(workspace)}
+    )
+
+    assert updated is not None
+    assert updated["connectedFolderPath"] == str(workspace)
+    assert studio_db.get_chat_project(project["id"])["connectedFolderPath"] == str(workspace)
+
+    disconnected = studio_db.update_chat_project(
+        project["id"], {"connectedFolderPath": None}
+    )
+    assert disconnected is not None
+    assert disconnected["connectedFolderPath"] is None
+
+
 def test_thread_delete_blocks_a_late_create_with_the_same_id(tmp_path, monkeypatch):
     _reset_studio_db(tmp_path, monkeypatch)
 

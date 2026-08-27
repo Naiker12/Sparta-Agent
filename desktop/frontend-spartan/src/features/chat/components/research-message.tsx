@@ -122,19 +122,19 @@ export function ResearchMessage(): ReactElement {
   const liveDetail =
     runningResearchActivityTitle(session?.activities) ??
     run.plan?.title ??
-    "Building a rigorous research plan…";
+    "Choosing the next step";
   return (
     <div
       className={cn(
-        "rounded-[22px] border border-border/70 bg-card/65 p-4",
-        needsApproval && "border-amber-500/25 bg-amber-500/[0.035]",
-        failed && "border-destructive/25 bg-destructive/[0.025]",
+        "my-2 rounded-[24px] border border-border/70 bg-card/85 p-4 shadow-sm backdrop-blur-sm transition-all sm:p-5",
+        needsApproval && "border-amber-500/30 bg-amber-500/[0.04]",
+        failed && "border-destructive/30 bg-destructive/[0.03]",
       )}
     >
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-3.5">
         <span
           className={cn(
-            "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-[12px] bg-primary/10 text-primary",
+            "mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-sky-500/10 text-sky-500 dark:bg-sky-500/15 dark:text-sky-400",
             failed && "bg-destructive/10 text-destructive",
           )}
         >
@@ -143,20 +143,20 @@ export function ResearchMessage(): ReactElement {
           ) : cancelled ? (
             <HugeiconsIcon icon={Telescope02Icon} className="size-4" />
           ) : (
-            <Spinner className="size-4" />
+            <Spinner className="size-4 text-sky-500" />
           )}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="font-heading text-sm font-medium">
+          <p className="font-heading text-sm font-semibold tracking-tight text-foreground">
             {failed
               ? "Research could not be completed"
               : cancelled
                 ? "Research stopped"
                 : needsApproval
                   ? "Your research plan is ready"
-                  : researchStatusLabel(run.status)}
+                  : "Researching"}
           </p>
-          <p className="mt-1 text-ui-12p5 leading-relaxed text-muted-foreground">
+          <p className="mt-0.5 text-ui-13 leading-relaxed text-muted-foreground">
             {session?.error
               ? session.error
               : failed
@@ -169,8 +169,11 @@ export function ResearchMessage(): ReactElement {
           </p>
           <Button
             size="sm"
-            variant={needsApproval ? "default" : "outline"}
-            className="mt-3"
+            variant={needsApproval ? "default" : "secondary"}
+            className={cn(
+              "mt-3.5 inline-flex items-center justify-center rounded-full px-4 py-1.5 text-xs font-medium transition-all shadow-sm",
+              !needsApproval && "bg-muted/80 hover:bg-muted text-foreground border border-border/40",
+            )}
             onClick={() => openPanel(run.id)}
           >
             {needsApproval ? "Review plan" : "View activity"}

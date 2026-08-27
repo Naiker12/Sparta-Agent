@@ -16,6 +16,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 from auth.authentication import get_current_subject
 from core.inference.llama_server_args import BATCH_MAX, BATCH_MIN, PARALLEL_MAX, PARALLEL_MIN
 from loggers import get_logger
+from state.project_workspace_link import validate_connectable_folder
 from utils.api_errors import safe_validation_errors
 from utils.utils import safe_curated_detail, log_and_http_error
 from storage.studio_db import (
@@ -271,6 +272,7 @@ class ChatProject(BaseModel):
     instructions: str = ""
     rootPath: Optional[str] = None
     sandboxPath: Optional[str] = None
+    connectedFolderPath: Optional[str] = None
     archived: bool = False
     createdAt: int
     updatedAt: int
@@ -288,6 +290,11 @@ class ChatProjectPatch(BaseModel):
     archived: Optional[bool] = None
     createdAt: Optional[int] = None
     updatedAt: Optional[int] = None
+
+
+class ChatProjectWorkspacePatch(BaseModel):
+    # Explicit null means disconnect; omitting the field is a malformed request.
+    connectedFolderPath: Optional[str] = Field(...)
 
 
 class ChatThreadListResponse(BaseModel):
@@ -974,6 +981,23 @@ def patch_project(
             status_code = 404,
             detail = f"Project {project_id} not found",
         )
+    return ChatProject(**project)
+
+
+@router.patch("/projects/{project_id}/workspace", response_model = ChatProject)
+def patch_project_workspace(
+    project_id: str,
+    payload: ChatProjectWorkspacePatch,
+    current_subject: str = Depends(get_current_subject),
+):
+    valid, normalized_path = validate_connectable_folder(payload.connectedFolderPath)
+    if not valid:
+        raise HTTPException(status_code = 400, detail = normalized_path)
+    project = update_chat_project(
+        project_id, {"connectedFolderPath": normalized_path}
+    )
+    if project is None:
+        raise HTTPException(status_code = 404, detail = f"Project {project_id} not found")
     return ChatProject(**project)
 
 

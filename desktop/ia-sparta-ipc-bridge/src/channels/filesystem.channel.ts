@@ -20,6 +20,24 @@ export function getWorkspaceRoot(): string | null {
   return _workspaceRoot
 }
 
+function assertWorkspacePath(candidate: string): string | null {
+  if (!_workspaceRoot) return 'No workspace folder is connected'
+  if (!isWithinRoot(candidate, _workspaceRoot)) return 'Path is outside workspace root'
+  return null
+}
+
+function setWorkspaceRoot(root: string): { success: true } | { success: false; error: string } {
+  try {
+    if (!root || typeof root !== 'string') return { success: false, error: 'Invalid path' }
+    const stat = fs.statSync(root)
+    if (!stat.isDirectory()) return { success: false, error: 'Workspace root must be a directory' }
+    _workspaceRoot = fs.realpathSync(root)
+    return { success: true }
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : 'Invalid workspace root' }
+  }
+}
+
 export function registerFilesystemIPC() {
   ipcMain.handle('fs:openFolderDialog', async () => {
     const result = await dialog.showOpenDialog({
@@ -30,6 +48,8 @@ export function registerFilesystemIPC() {
 
   ipcMain.handle('fs:readDirLevel', async (_event, dirPath: string) => {
     if (!dirPath || typeof dirPath !== 'string') return { nodes: [], error: 'Invalid path' }
+    const pathError = assertWorkspacePath(dirPath)
+    if (pathError) return { nodes: [], error: pathError }
     try {
       let entries: fs.Dirent[] = []
       try {
@@ -64,6 +84,8 @@ export function registerFilesystemIPC() {
 
   ipcMain.handle('fs:readFile', async (_event, filePath: string, encoding?: string) => {
     if (!filePath || typeof filePath !== 'string') return { success: false, error: 'Invalid path' }
+    const pathError = assertWorkspacePath(filePath)
+    if (pathError) return { success: false, error: pathError }
 
     //  Check chat attachment cache first (e.g. for uploaded PDFs, DOCX, XLSX)
     const cached = getCachedAttachmentContent(filePath)
@@ -81,9 +103,6 @@ export function registerFilesystemIPC() {
       } catch { /* ignore fallback to fs */ }
     }
 
-    if (_workspaceRoot && !isWithinRoot(filePath, _workspaceRoot)) {
-      return { success: false, error: 'Path is outside workspace root' }
-    }
     try {
       const enc: 'utf-8' | 'base64' = encoding === 'base64' ? 'base64' : 'utf-8'
       const content = fs.readFileSync(filePath, enc)
@@ -95,9 +114,8 @@ export function registerFilesystemIPC() {
 
   ipcMain.handle('fs:writeFile', async (_event, filePath: string, content: string) => {
     if (!filePath || typeof filePath !== 'string') return { success: false, error: 'Invalid path' }
-    if (_workspaceRoot && !isWithinRoot(filePath, _workspaceRoot)) {
-      return { success: false, error: 'Path is outside workspace root' }
-    }
+    const pathError = assertWorkspacePath(filePath)
+    if (pathError) return { success: false, error: pathError }
     try {
       fs.writeFileSync(filePath, content, 'utf-8')
       return { success: true }
@@ -108,9 +126,8 @@ export function registerFilesystemIPC() {
 
   ipcMain.handle('fs:deleteFile', async (_event, filePath: string) => {
     if (!filePath || typeof filePath !== 'string') return { success: false, error: 'Invalid path' }
-    if (_workspaceRoot && !isWithinRoot(filePath, _workspaceRoot)) {
-      return { success: false, error: 'Path is outside workspace root' }
-    }
+    const pathError = assertWorkspacePath(filePath)
+    if (pathError) return { success: false, error: pathError }
     try {
       await shell.trashItem(filePath)
       return { success: true }
@@ -121,9 +138,8 @@ export function registerFilesystemIPC() {
 
   ipcMain.handle('fs:deleteFolder', async (_event, folderPath: string) => {
     if (!folderPath || typeof folderPath !== 'string') return { success: false, error: 'Invalid path' }
-    if (_workspaceRoot && !isWithinRoot(folderPath, _workspaceRoot)) {
-      return { success: false, error: 'Path is outside workspace root' }
-    }
+    const pathError = assertWorkspacePath(folderPath)
+    if (pathError) return { success: false, error: pathError }
     try {
       await shell.trashItem(folderPath)
       return { success: true }
@@ -134,9 +150,8 @@ export function registerFilesystemIPC() {
 
   ipcMain.handle('fs:mkdir', async (_event, dirPath: string) => {
     if (!dirPath || typeof dirPath !== 'string') return { success: false, error: 'Invalid path' }
-    if (_workspaceRoot && !isWithinRoot(dirPath, _workspaceRoot)) {
-      return { success: false, error: 'Path is outside workspace root' }
-    }
+    const pathError = assertWorkspacePath(dirPath)
+    if (pathError) return { success: false, error: pathError }
     try {
       await fsPromises.mkdir(dirPath, { recursive: true })
       return { success: true }
@@ -146,17 +161,17 @@ export function registerFilesystemIPC() {
   })
 
   ipcMain.handle('fs:startWatcher', async (_event, dirPath: string) => {
-    if (!dirPath || typeof dirPath !== 'string') return { success: false }
-    _workspaceRoot = dirPath
-    await startFileWatcher(dirPath)
-    return { success: true }
+    const configured = setWorkspaceRoot(dirPath)
+    if (!configured.success) return configured
+    await startFileWatcher(_workspaceRoot!)
+    return configured
   })
 
   ipcMain.handle('fs:setWorkspaceRoot', async (_event, root: string) => {
-    if (!root || typeof root !== 'string') return { success: false, error: 'Invalid path' }
-    _workspaceRoot = root
-    await startFileWatcher(root)
-    return { success: true }
+    const configured = setWorkspaceRoot(root)
+    if (!configured.success) return configured
+    await startFileWatcher(_workspaceRoot!)
+    return configured
   })
 
   ipcMain.handle('fs:stopWatcher', () => {

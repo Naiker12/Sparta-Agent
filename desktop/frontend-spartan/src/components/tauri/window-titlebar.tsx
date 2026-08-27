@@ -371,7 +371,7 @@ export function WindowTitlebar({
       )}
       <header
         className={cn(
-          "pointer-events-none absolute inset-x-0 top-0 z-[70] h-[var(--studio-custom-titlebar-height)] select-none bg-background text-foreground",
+          "pointer-events-none absolute inset-x-0 top-0 z-[70] h-[var(--studio-custom-titlebar-height)] select-none border-b border-border/60 bg-background text-foreground",
         )}
         aria-label="Window titlebar"
       >

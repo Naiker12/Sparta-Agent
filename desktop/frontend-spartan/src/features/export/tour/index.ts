@@ -1,3 +1,3 @@
 
-export { exportTourSteps } from "./steps";
+export { buildExportTourSteps, exportTourSteps } from "./steps";
 

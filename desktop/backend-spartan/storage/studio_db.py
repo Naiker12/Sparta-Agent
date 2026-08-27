@@ -336,6 +336,7 @@ def _ensure_schema(conn: sqlite3.Connection) -> None:
             name TEXT NOT NULL,
             instructions TEXT,
             root_path TEXT,
+            connected_folder_path TEXT,
             archived INTEGER NOT NULL DEFAULT 0,
             created_at INTEGER NOT NULL,
             updated_at INTEGER NOT NULL
@@ -347,6 +348,8 @@ def _ensure_schema(conn: sqlite3.Connection) -> None:
     }
     if "root_path" not in chat_project_cols:
         conn.execute("ALTER TABLE chat_projects ADD COLUMN root_path TEXT")
+    if "connected_folder_path" not in chat_project_cols:
+        conn.execute("ALTER TABLE chat_projects ADD COLUMN connected_folder_path TEXT")
     conn.execute(
         "CREATE INDEX IF NOT EXISTS idx_chat_projects_archived_updated_at ON chat_projects(archived, updated_at)"
     )
@@ -1668,6 +1671,7 @@ def _chat_project_from_row(row: sqlite3.Row) -> dict:
         "instructions": data.get("instructions") or "",
         "rootPath": root_path or None,
         "sandboxPath": os.path.join(root_path, "sandbox") if root_path else None,
+        "connectedFolderPath": data.get("connected_folder_path") or None,
         "archived": bool(data["archived"]),
         "createdAt": data["created_at"],
         "updatedAt": data["updated_at"],
@@ -2251,6 +2255,9 @@ def count_chat_threads() -> int:
 def upsert_chat_project(project: dict) -> dict:
     existing = get_chat_project(project["id"])
     root_path = existing.get("rootPath") if existing else None
+    connected_folder_path = project.get("connectedFolderPath")
+    if connected_folder_path is None and existing:
+        connected_folder_path = existing.get("connectedFolderPath")
     if not root_path:
         root_path = _default_project_root(project)
     root_path = _ensure_project_workspace(root_path)
@@ -2259,12 +2266,13 @@ def upsert_chat_project(project: dict) -> dict:
         conn.execute(
             """
             INSERT INTO chat_projects
-                (id, name, instructions, root_path, archived, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+                (id, name, instructions, root_path, connected_folder_path, archived, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(id) DO UPDATE SET
                 name = excluded.name,
                 instructions = excluded.instructions,
                 root_path = COALESCE(chat_projects.root_path, excluded.root_path),
+                connected_folder_path = excluded.connected_folder_path,
                 archived = excluded.archived,
                 created_at = excluded.created_at,
                 updated_at = excluded.updated_at
@@ -2274,6 +2282,7 @@ def upsert_chat_project(project: dict) -> dict:
                 project["name"],
                 project.get("instructions") or "",
                 root_path,
+                connected_folder_path,
                 1 if project.get("archived") else 0,
                 int(project["createdAt"]),
                 int(project["updatedAt"]),
@@ -2292,6 +2301,7 @@ def update_chat_project(id: str, patch: dict) -> Optional[dict]:
         "archived": ("archived", 1 if patch.get("archived") else 0),
         "createdAt": ("created_at", patch.get("createdAt")),
         "updatedAt": ("updated_at", patch.get("updatedAt")),
+        "connectedFolderPath": ("connected_folder_path", patch.get("connectedFolderPath")),
     }
     assignments = []
     values = []

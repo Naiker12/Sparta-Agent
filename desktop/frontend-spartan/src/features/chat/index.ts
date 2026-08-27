@@ -284,7 +284,9 @@ export {
 } from "./hooks/use-chat-sidebar-items";
 export {
   createChatProject,
+  connectChatProjectWorkspace,
   deleteChatProject,
+  disconnectChatProjectWorkspace,
   moveChatItemToProject,
   renameChatProject,
   updateChatProjectInstructions,

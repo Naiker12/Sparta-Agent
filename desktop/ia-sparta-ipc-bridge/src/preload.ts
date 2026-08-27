@@ -34,6 +34,7 @@ const ALLOWED_INVOKE_CHANNELS = new Set([
   'fs:readFile',
   'document:convert-to-markdown',
   'system:get-metrics',
+  'system:get-info',
   'harnesses:detect',
 ])
 

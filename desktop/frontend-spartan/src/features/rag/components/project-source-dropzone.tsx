@@ -6,6 +6,7 @@ import {
 } from "@/features/native-intents";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
+import { useT } from "@/i18n";
 import { File02Icon, FolderAddIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { XIcon } from "lucide-react";
@@ -159,6 +160,7 @@ export function ProjectSourceDropzone({
    * settle. Create must wait, or it commits without the files just dropped. */
   onPendingChange?: (pending: boolean) => void;
 }) {
+  const t = useT();
   const inputRef = useRef<HTMLInputElement>(null);
   // Count enter/leave pairs: children fire dragleave on the parent.
   const dragDepth = useRef(0);
@@ -310,8 +312,8 @@ export function ProjectSourceDropzone({
       // Claimed but refusing, so say so: returning quietly made the file
       // vanish with no border and no message (#9036).
       if (disabled) {
-        toast.error("Sources are still uploading", {
-          description: "Wait for them to finish, then drop again.",
+        toast.error(t("projectsPage.sourcesUploading"), {
+          description: t("projectsPage.sourcesUploadingDescription"),
         });
         return;
       }
@@ -326,8 +328,8 @@ export function ProjectSourceDropzone({
   }, []);
 
   return (
-    <div className="space-y-2.5">
-      <p className="text-ui-15 font-medium text-foreground">Sources</p>
+    <div className="flex min-w-0 flex-col gap-2.5">
+      <p className="text-ui-15 font-medium text-foreground">{t("projectsPage.sourcesTitle")}</p>
       {/* Panel is the drop target; the inner button owns the click so staged
           rows can carry their own remove buttons. */}
       <div
@@ -377,7 +379,7 @@ export function ProjectSourceDropzone({
         {staged.length === 0 ? (
           <button
             type="button"
-            aria-label="Add sources"
+            aria-label={t("projectsPage.addSources")}
             disabled={disabled}
             onClick={() => inputRef.current?.click()}
             className="flex w-full cursor-pointer flex-col items-center justify-center gap-3 rounded-[22px] px-6 py-12 text-center transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
@@ -388,7 +390,7 @@ export function ProjectSourceDropzone({
               className="size-6 text-muted-foreground"
             />
             <span className="text-sm text-muted-foreground">
-              Add files every chat in this project can read
+              {t("projectsPage.addProjectSources")}
             </span>
           </button>
         ) : (
@@ -438,7 +440,7 @@ export function ProjectSourceDropzone({
                 strokeWidth={1.75}
                 className="size-4"
               />
-              Add files
+              {t("projectsPage.addSources")}
             </button>
           </div>
         )}

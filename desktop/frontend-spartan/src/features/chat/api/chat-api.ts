@@ -987,6 +987,23 @@ export async function updateChatProject(
   return project;
 }
 
+export async function updateChatProjectWorkspace(
+  projectId: string,
+  connectedFolderPath: string | null,
+): Promise<ProjectRecord> {
+  const response = await authFetch(
+    `/api/chat/projects/${encodeURIComponent(projectId)}/workspace`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ connectedFolderPath }),
+    },
+  );
+  const project = await parseJsonOrThrow<ProjectRecord>(response);
+  notifyChatProjectsUpdated();
+  return project;
+}
+
 /** Member thread ids whose sandbox still holds files, from the route. */
 export async function deleteChatProject(
   projectId: string,

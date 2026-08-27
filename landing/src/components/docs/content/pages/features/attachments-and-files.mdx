@@ -1,0 +1,34 @@
+---
+title: Gestión de Adjuntos y Archivos
+description: Sistema inteligente de clasificación de adjuntos por extensión y tipo MIME con previsualización e íconos dinámicos.
+---
+
+# Gestión de Adjuntos y Archivos
+
+Sparta Agent cuenta con un módulo especializado (`attachment-file-kind.ts`) que analiza y categoriza automáticamente cualquier archivo que arrastres o selecciones en el compositor del chat.
+
+---
+
+## 🎨 Clasificación Visual e Íconos Dinámicos
+
+Cada tipo de archivo se renderiza con un chip estilizado y un ícono distintivo según su categoría:
+
+| Tipo de Archivo | Extensiones Reconocidas | Color / Distintivo |
+| :--- | :--- | :--- |
+| 📕 **PDF** | `.pdf` | Rojo / `Pdf02Icon` |
+| 📘 **Word** | `.doc`, `.docx`, `.odt`, `.rtf` | Azul / `Doc02Icon` |
+| 📗 **Excel** | `.xls`, `.xlsx`, `.ods` | Verde esmeralda / `Xls02Icon` |
+| 📊 **CSV** | `.csv`, `.tsv` | Verde azulado / `Csv02Icon` |
+| 📙 **Presentación** | `.ppt`, `.pptx`, `.odp`, `.key` | Naranja / `Ppt02Icon` |
+| 🖼️ **Imágenes** | `.jpg`, `.jpeg`, `.png`, `.webp`, `.gif`, `.svg` | Miniatura visual interactiva |
+| 🎬 **Videos** | `.mp4`, `.webm`, `.mkv`, `.mov`, `.avi` | Morado / `FileVideoIcon` |
+| 🎵 **Audio** | `.mp3`, `.wav`, `.m4a`, `.ogg`, `.flac` | Ámbar / `AudioWave01Icon` |
+| 💻 **Código** | `.ts`, `.tsx`, `.js`, `.py`, `.json`, `.yaml`, `.rs`, `.go` | Gris oscuro / `FileCodeIcon` |
+| 📦 **Comprimidos** | `.zip`, `.tar`, `.gz`, `.7z`, `.rar` | Amarillo / `FileZipIcon` |
+
+---
+
+## ⚡ Modos de Procesamiento de Adjuntos
+
+1. **Adjunto Directo al Prompt**: El contenido se formatea e incluye en el contexto de la conversación activa.
+2. **Indexación en Base de Conocimiento (RAG)**: Si el archivo es voluminoso (ej. un libro o manual de 200 páginas), se indexa en fragmentos semánticos para consultas eficientes sin desbordar el contexto del modelo.

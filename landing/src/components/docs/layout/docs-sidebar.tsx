@@ -12,7 +12,7 @@ export function DocsSidebar({ currentPage, docsHref }: DocsSidebarProps) {
   return (
     <aside
       aria-label="Navegación de documentación"
-      className="hidden h-[calc(100vh-4rem)] overflow-y-auto border-r border-white/10 px-5 py-8 lg:sticky lg:top-16 lg:block"
+      className="hidden h-[calc(100dvh-4rem)] self-start overflow-y-auto overscroll-contain border-r border-white/10 px-5 py-8 lg:sticky lg:top-16 lg:block"
     >
       <div>
         <p className="mb-5 px-2 text-xs font-semibold uppercase tracking-[0.14em] text-zinc-400">

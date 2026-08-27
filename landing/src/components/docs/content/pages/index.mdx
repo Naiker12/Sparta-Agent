@@ -1,0 +1,75 @@
+---
+title: Introducción a Sparta Agent
+description: Agente de Inteligencia Artificial local, privado y autónomo con soporte para RAG multimodal, Búsqueda Profunda y protocolo MCP.
+---
+
+import { Bot, Shield, Zap, Database, Search, Layers } from 'lucide-react';
+import { Card, Cards } from 'fumadocs-ui/components/card';
+
+# Sparta Agent
+
+**Sparta Agent** es un asistente y agente de inteligencia artificial de escritorio diseñado con una premisa fundamental: **control total, privacidad absoluta y capacidades avanzadas de ejecución autónoma**.
+
+Funciona de forma **100% offline y local** utilizando modelos en formato GGUF mediante `llama.cpp` o Apple Silicon MLX, y también permite conectar proveedores en la nube (OpenAI, Anthropic, Google Gemini, DeepSeek, Groq, Ollama) bajo una capa unificada de seguridad.
+
+---
+
+## ⚡ Pilares Fundamentales
+
+<Cards>
+  <Card
+    icon={<Shield className="text-emerald-500" />}
+    title="Privacidad y Aislamiento"
+    href="/docs/core-concepts/security-and-sandbox"
+  >
+    Tus conversaciones, documentos y claves nunca salen de tu equipo a menos que tú lo autorices explícitamente.
+  </Card>
+
+  <Card
+    icon={<Bot className="text-emerald-500" />}
+    title="Diferenciación de Modos"
+    href="/docs/core-concepts/chat-vs-agent-mode"
+  >
+    Modo Chat para consultas de solo lectura y Modo Agente con diálogo modal de confirmación previa.
+  </Card>
+
+  <Card
+    icon={<Search className="text-emerald-500" />}
+    title="Búsqueda Profunda (Deep Research)"
+    href="/docs/features/deep-research"
+  >
+    Investigaciones web autónomas de múltiples pasos con síntesis y citas estructuradas.
+  </Card>
+
+  <Card
+    icon={<Database className="text-emerald-500" />}
+    title="RAG Local Multimodal"
+    href="/docs/features/multimodal-rag"
+  >
+    Búsqueda híbrida (vectorial + FTS5 léxica) sobre PDFs, Excel, Word, CSV y repositorios de código.
+  </Card>
+
+  <Card
+    icon={<Layers className="text-emerald-500" />}
+    title="Protocolo MCP Nativo"
+    href="/docs/mcp/introduction"
+  >
+    Integración directa con herramientas como Notion, Google Drive, Slack, GitHub y Filesystem mediante Model Context Protocol.
+  </Card>
+
+  <Card
+    icon={<Zap className="text-emerald-500" />}
+    title="Herramientas en Tiempo Real"
+    href="/docs/features/live-tools"
+  >
+    Pronóstico meteorológico global en vivo (Open-Meteo), fecha/hora del sistema y navegación web headless.
+  </Card>
+</Cards>
+
+---
+
+## 🚀 ¿Por dónde empezar?
+
+- Si es tu primera vez, sigue la [Guía de Inicio Rápido](/docs/quickstart).
+- Comprende la diferencia entre el [Modo Chat y el Modo Agente](/docs/core-concepts/chat-vs-agent-mode).
+- Aprende a conectar tus servidores [MCP (Model Context Protocol)](/docs/mcp/introduction).

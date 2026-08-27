@@ -409,11 +409,13 @@ export function ResourcesTab() {
         <div className="grid gap-2 py-3 sm:grid-cols-2">
           <MetricTile
             label={t("settings.resources.liveMonitor.cpu")}
-            value={cpuFrequencyLabel ?? cpuCoresLabel}
+            value={systemInfo.cpu?.model || cpuFrequencyLabel || cpuCoresLabel}
             detail={
-              cpuFrequencyLabel
-                ? cpuCoresLabel
-                : t("settings.resources.liveMonitor.currentLoad")
+              systemInfo.cpu?.model
+                ? `${cpuCoresLabel}${cpuFrequencyLabel ? ` · ${cpuFrequencyLabel}` : ""}`
+                : cpuFrequencyLabel
+                  ? cpuCoresLabel
+                  : t("settings.resources.liveMonitor.currentLoad")
             }
             percent={systemInfo.cpu?.usage_percent ?? 0}
           />

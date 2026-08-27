@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.6] - 2026-08-27
+
+### Añadido y Mejorado
+
+- Los proyectos con carpeta conectada disponen de un workspace operativo para el agente y el explorador de escritorio.
+- Se añadieron herramientas de listado, lectura, búsqueda y modificación de archivos limitadas a la carpeta del proyecto.
+
+### Corregido
+
+- El agente recibe las herramientas de workspace cuando una carpeta está conectada y puede analizar el contenido del proyecto.
+
 ## [0.2.1] - 2026-08-25
 
 ### Añadido y Mejorado

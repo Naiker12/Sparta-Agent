@@ -1,0 +1,23 @@
+export const runSettings = {
+  "title": "Run settings",
+  "model": "Model",
+  "preset": "Preset",
+  "default": "Default",
+  "save": "Save",
+  "delete": "Delete",
+  "reset": "Reset",
+  "systemPrompt": "System Prompt",
+  "sampling": "Sampling",
+  "temperature": "Temperature",
+  "topP": "Top P",
+  "topK": "Top K",
+  "minP": "Min P",
+  "repetitionPenalty": "Repetition Penalty",
+  "off": "Off",
+  "contextLength": "Context Length",
+  "advancedSettings": "Advanced settings",
+  "rememberForModel": "Remember for this model",
+  "reloadModel": "Reload model",
+  "loadModel": "Load model",
+  "close": "Close run settings"
+} as const;

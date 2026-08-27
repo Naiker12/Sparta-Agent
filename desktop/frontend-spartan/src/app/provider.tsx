@@ -855,10 +855,16 @@ function TauriWrapper({ children }: { children: ReactNode }) {
     }
 
     return (
-      <>
+      <div className="relative h-dvh min-h-0 overflow-hidden bg-background">
         {chromeVars}
+        {usesElectronTitlebarOverlay && (
+          <div
+            aria-hidden="true"
+            className="pointer-events-none fixed inset-x-0 top-[38px] z-[9999] h-px bg-foreground/25 dark:bg-white/20"
+          />
+        )}
         {content}
-      </>
+      </div>
     );
   }
 

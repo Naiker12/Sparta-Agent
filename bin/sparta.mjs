@@ -25,7 +25,7 @@ const commands = {
     console.log('[sparta] Instalando dependencias Python...')
     run(`${pip} install -r requirements.txt -r requirements-dev.txt`, { cwd: join(ROOT, 'python') })
     console.log('[sparta] Instalando dependencias Node...')
-    run('pnpm install')
+    run('npm install')
     console.log('[sparta] Compilando módulo Rust...')
     if (existsSync(join(ROOT, 'rust', 'sparta-security', 'Cargo.toml'))) {
       run('cargo build --release', { cwd: join(ROOT, 'rust', 'sparta-security') })
@@ -34,16 +34,16 @@ const commands = {
   },
 
   dev() {
-    run('pnpm dev')
+    run('npm run dev')
   },
 
   build() {
-    run('pnpm build')
+    run('npm run build')
   },
 
   test() {
     console.log('[sparta] Tests JS...')
-    run('pnpm test')
+    run('npm test')
     console.log('[sparta] Tests Rust...')
     if (existsSync(join(ROOT, 'rust', 'sparta-security', 'Cargo.toml'))) {
       run('cargo test', { cwd: join(ROOT, 'rust', 'sparta-security') })
@@ -53,7 +53,7 @@ const commands = {
   },
 
   lint() {
-    run('pnpm lint')
+    run('npm run lint')
   },
 
   sidecar() {

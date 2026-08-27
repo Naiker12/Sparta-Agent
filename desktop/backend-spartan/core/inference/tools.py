@@ -4529,7 +4529,19 @@ def _render_html_reaches_network(arguments: dict) -> bool:
 # Tools that are read-only regardless of their arguments, so auto mode never has
 # to pause them and their safety needs no argument scan. render_html is handled
 # separately above because a networked canvas does need approval.
-_ALWAYS_SAFE_TOOLS = frozenset({"web_search", "search_knowledge_base", "list_mcp_servers", "test_mcp_server"})
+_ALWAYS_SAFE_TOOLS = frozenset({
+    "web_search",
+    "search_knowledge_base",
+    "list_mcp_servers",
+    "test_mcp_server",
+    "get_current_datetime",
+    "get_weather",
+    "list_skills",
+    "search_skill_catalog",
+    "list_directory",
+    "read_file",
+    "search_in_files",
+})
 
 
 def is_always_safe_tool(name: str) -> bool:
@@ -4566,8 +4578,16 @@ def _web_search_fetches_url(name: str, arguments: dict) -> bool:
     return name == "web_search" and bool(str(arguments.get("url", "") or "").strip())
 
 
-# MCP server management tools that always require confirmation.
-_MCP_CRUD_MUTATING_TOOLS = frozenset({"add_mcp_server", "update_mcp_server", "delete_mcp_server"})
+# MCP and Skills management tools that mutate state and require explicit confirmation.
+_MCP_CRUD_MUTATING_TOOLS = frozenset({
+    "add_mcp_server",
+    "update_mcp_server",
+    "delete_mcp_server",
+    "import_mcp_config",
+    "install_skill",
+    "remove_skill",
+    "toggle_skill",
+})
 
 
 def is_potentially_unsafe_tool_call(name: str, arguments: dict) -> bool:
@@ -4614,7 +4634,7 @@ def is_potentially_unsafe_tool_call(name: str, arguments: dict) -> bool:
     # Always writes, and python's open(..., "w") already prompts, so the cheaper
     # tool must not become the quiet way around that. Stated rather than left to
     # the fail-closed default, so a later clause cannot drop it.
-    if name == "edit_file":
+    if name in {"edit_file", "write_file", "create_file", "delete_path", "rename_path"}:
         return True
     return True
 
@@ -7701,7 +7721,21 @@ def _get_project_workdir(session_id: str) -> str | None:
     sandbox_real = os.path.realpath(sandbox_path)
     if sandbox_real != root_real and not sandbox_real.startswith(root_real + os.sep):
         return None
-    return sandbox_real
+    try:
+        from state.project_workspace_link import (
+            resolve_active_workspace,
+            validate_connectable_folder,
+        )
+
+        connected = project.get("connectedFolderPath")
+        valid, _ = validate_connectable_folder(connected)
+        if connected is not None and not valid:
+            logger.warning("Ignoring invalid connected workspace for project %s", project_id)
+            return sandbox_real
+        return resolve_active_workspace(project)
+    except Exception:
+        logger.warning("Failed to resolve active workspace for project %s", project_id, exc_info = True)
+        return sandbox_real
 
 
 # Dropped in every session directory we create. The root can be an existing
@@ -9723,6 +9757,94 @@ EDIT_FILE_TOOL_FULL_ACCESS = {
 
 _FULL_ACCESS_TOOL_BY_NAME["edit_file"] = EDIT_FILE_TOOL_FULL_ACCESS
 
+
+def _workspace_tool(name: str, description: str, properties: dict, required: list[str] = []) -> dict:
+    return {"type": "function", "function": {"name": name, "description": description + " Paths are relative to the connected project folder.", "parameters": {"type": "object", "properties": properties, "required": required}}}
+
+
+_WORKSPACE_PATH = {"path": {"type": "string", "description": "Relative path in the connected project folder."}}
+LIST_DIRECTORY_TOOL = _workspace_tool("list_directory", "List one directory without loading the whole repository.", _WORKSPACE_PATH)
+READ_FILE_TOOL = _workspace_tool("read_file", "Read a UTF-8 text file.", _WORKSPACE_PATH, ["path"])
+WRITE_FILE_TOOL = _workspace_tool("write_file", "Create or replace a UTF-8 text file.", {**_WORKSPACE_PATH, "content": {"type": "string"}}, ["path", "content"])
+CREATE_FILE_TOOL = _workspace_tool("create_file", "Create an empty file or directory. Fails if it already exists.", {**_WORKSPACE_PATH, "type": {"type": "string", "enum": ["file", "directory"]}}, ["path", "type"])
+DELETE_PATH_TOOL = _workspace_tool("delete_path", "Permanently delete a file or directory from the connected project folder.", _WORKSPACE_PATH, ["path"])
+RENAME_PATH_TOOL = _workspace_tool("rename_path", "Rename or move a file or directory inside the connected project folder.", {**_WORKSPACE_PATH, "destination": {"type": "string", "description": "New relative path."}}, ["path", "destination"])
+SEARCH_IN_FILES_TOOL = _workspace_tool("search_in_files", "Search UTF-8 text files in the connected project folder.", {"query": {"type": "string", "minLength": 1}, **_WORKSPACE_PATH}, ["query"])
+
+
+def _connected_workspace_for_tool(session_id: "str | None") -> "tuple[str | None, str]":
+    """Resolve only an explicitly connected project workspace, never a sandbox."""
+    if not session_id or not session_id.startswith(_PROJECT_SESSION_PREFIX):
+        return None, "Error: this conversation is not attached to a project workspace."
+    try:
+        from storage.studio_db import get_chat_project
+        from state.project_files import connected_workspace
+        project = get_chat_project(session_id[len(_PROJECT_SESSION_PREFIX) :])
+        return connected_workspace(project or {}), ""
+    except RuntimeError as exc:
+        return None, f"Error: {exc}"
+
+
+def _workspace_tool_exec(name: str, arguments: dict, session_id: "str | None") -> str:
+    from state.project_files import ProjectWorkspacePathError, display_path, resolve_project_path
+    root, error = _connected_workspace_for_tool(session_id)
+    if error or root is None: return error
+    try:
+        path = arguments.get("path", "")
+        target = resolve_project_path(root, path, allow_root = name in {"list_directory", "search_in_files"})
+        if name == "list_directory":
+            if not os.path.isdir(target): return "Error: directory not found."
+            return "\n".join(f"{'dir' if item.is_dir(follow_symlinks = False) else 'file'}  {item.name}" for item in sorted(os.scandir(target), key = lambda item: (not item.is_dir(follow_symlinks = False), item.name.casefold()))[:500]) or "(empty directory)"
+        if name == "read_file":
+            if not os.path.isfile(target): return "Error: file not found."
+            if os.path.getsize(target) > 2 * 1024 * 1024: return "Error: file is too large to read."
+            with open(target, "r", encoding = "utf-8") as file: return file.read()
+        if name == "write_file":
+            content = arguments.get("content")
+            if not isinstance(content, str): return "Error: content must be a string."
+            os.makedirs(os.path.dirname(target), exist_ok = True)
+            with open(target, "w", encoding = "utf-8") as file: file.write(content)
+            return f"Wrote {display_path(root, target)}."
+        if name == "create_file":
+            kind = arguments.get("type")
+            if kind not in {"file", "directory"}: return "Error: type must be file or directory."
+            if os.path.lexists(target): return "Error: path already exists."
+            os.makedirs(os.path.dirname(target), exist_ok = True)
+            if kind == "directory": os.mkdir(target)
+            else:
+                with open(target, "x", encoding = "utf-8"): pass
+            return f"Created {kind} {display_path(root, target)}."
+        if name == "rename_path":
+            destination = resolve_project_path(root, arguments.get("destination"))
+            if not os.path.lexists(target): return "Error: source path not found."
+            if os.path.lexists(destination): return "Error: destination already exists."
+            os.makedirs(os.path.dirname(destination), exist_ok = True); os.replace(target, destination)
+            return f"Moved to {display_path(root, destination)}."
+        if name == "delete_path":
+            if not os.path.lexists(target): return "Error: path not found."
+            if os.path.isdir(target) and not os.path.islink(target): shutil.rmtree(target)
+            else: os.unlink(target)
+            return f"Deleted {display_path(root, target)}."
+        if name == "search_in_files":
+            query = arguments.get("query")
+            if not isinstance(query, str) or not query: return "Error: query is required."
+            matches = []
+            for base, dirs, files in os.walk(target):
+                dirs[:] = [entry for entry in dirs if entry not in {".git", "node_modules", "dist", "build", ".next", "__pycache__"}]
+                for filename in files:
+                    file_path = resolve_project_path(root, os.path.relpath(os.path.join(base, filename), root))
+                    try:
+                        if os.path.getsize(file_path) > 2 * 1024 * 1024: continue
+                        with open(file_path, "r", encoding = "utf-8") as file:
+                            for number, line in enumerate(file, 1):
+                                if query in line: matches.append(f"{display_path(root, file_path)}:{number}: {line.rstrip()[:300]}")
+                                if len(matches) >= 100: return "\n".join(matches) + "\n... (results truncated)"
+                    except (OSError, UnicodeDecodeError): continue
+            return "\n".join(matches) or "No matches found."
+    except ProjectWorkspacePathError as exc: return f"Error: {exc}"
+    except OSError as exc: return f"Error: filesystem operation failed: {exc}"
+    return f"Error: unknown workspace tool {name}."
+
 RENDER_HTML_TOOL = {
     "type": "function",
     "function": {
@@ -9872,11 +9994,155 @@ TEST_MCP_SERVER_TOOL = {
     },
 }
 
+GET_CURRENT_DATETIME_TOOL = {
+    "type": "function",
+    "function": {
+        "name": "get_current_datetime",
+        "description": "Get the current local date, time, weekday, and timezone on the user's computer.",
+        "parameters": {"type": "object", "properties": {}},
+    },
+}
+
+GET_WEATHER_TOOL = {
+    "type": "function",
+    "function": {
+        "name": "get_weather",
+        "description": "Get real-time weather and forecast for the user's location (auto-detected via IP) or a specified city.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "location": {
+                    "type": "string",
+                    "description": "Optional city, region, or country name (e.g. 'Madrid', 'Bogotá', 'Mexico City', 'Tokyo'). Defaults to user's detected local location.",
+                },
+            },
+        },
+    },
+}
+
+IMPORT_MCP_CONFIG_TOOL = {
+    "type": "function",
+    "function": {
+        "name": "import_mcp_config",
+        "description": (
+            "Register one or more MCP servers from a raw JSON config block (standard format "
+            "with 'mcpServers' object, same as Claude Desktop). Automatically tests connections "
+            "and diagnoses authentication/API key requirements."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "config_json": {
+                    "type": "string",
+                    "description": "Raw JSON string or configuration block containing 'mcpServers'.",
+                },
+            },
+            "required": ["config_json"],
+        },
+    },
+}
+
+LIST_SKILLS_TOOL = {
+    "type": "function",
+    "function": {
+        "name": "list_skills",
+        "description": "List all installed skills with their IDs, names, descriptions, and required API keys or environment variables.",
+        "parameters": {"type": "object", "properties": {}},
+    },
+}
+
+SEARCH_SKILL_CATALOG_TOOL = {
+    "type": "function",
+    "function": {
+        "name": "search_skill_catalog",
+        "description": "Search marketplace catalogs for available skills to install by keyword or category.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "Search keyword (e.g. 'github', 'postgres', 'notion', 'testing').",
+                },
+            },
+            "required": ["query"],
+        },
+    },
+}
+
+INSTALL_SKILL_TOOL = {
+    "type": "function",
+    "function": {
+        "name": "install_skill",
+        "description": "Install a new skill into the user skills library from a GitHub repository or source name.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "source": {
+                    "type": "string",
+                    "description": "Source repository or identifier (e.g. 'owner/repo' or skill package name).",
+                },
+                "skill_name": {
+                    "type": "string",
+                    "description": "Optional custom name for the skill folder.",
+                },
+            },
+            "required": ["source"],
+        },
+    },
+}
+
+REMOVE_SKILL_TOOL = {
+    "type": "function",
+    "function": {
+        "name": "remove_skill",
+        "description": "Remove an installed skill from the user library.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "skill_id": {
+                    "type": "string",
+                    "description": "The ID or name of the skill to remove.",
+                },
+            },
+            "required": ["skill_id"],
+        },
+    },
+}
+
+TOGGLE_SKILL_TOOL = {
+    "type": "function",
+    "function": {
+        "name": "toggle_skill",
+        "description": "Enable or disable an installed skill.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "skill_id": {
+                    "type": "string",
+                    "description": "The ID of the skill.",
+                },
+                "enabled": {
+                    "type": "boolean",
+                    "description": "True to enable, False to disable.",
+                },
+            },
+            "required": ["skill_id", "enabled"],
+        },
+    },
+}
+
 ALL_TOOLS = [
     WEB_SEARCH_TOOL,
     PYTHON_TOOL,
     TERMINAL_TOOL,
     EDIT_FILE_TOOL,
+    LIST_DIRECTORY_TOOL,
+    READ_FILE_TOOL,
+    WRITE_FILE_TOOL,
+    CREATE_FILE_TOOL,
+    DELETE_PATH_TOOL,
+    RENAME_PATH_TOOL,
+    SEARCH_IN_FILES_TOOL,
     RENDER_HTML_TOOL,
     SEARCH_KNOWLEDGE_BASE_TOOL,
     LIST_MCP_SERVERS_TOOL,
@@ -9884,6 +10150,14 @@ ALL_TOOLS = [
     UPDATE_MCP_SERVER_TOOL,
     DELETE_MCP_SERVER_TOOL,
     TEST_MCP_SERVER_TOOL,
+    GET_CURRENT_DATETIME_TOOL,
+    GET_WEATHER_TOOL,
+    IMPORT_MCP_CONFIG_TOOL,
+    LIST_SKILLS_TOOL,
+    SEARCH_SKILL_CATALOG_TOOL,
+    INSTALL_SKILL_TOOL,
+    REMOVE_SKILL_TOOL,
+    TOGGLE_SKILL_TOOL,
 ]
 
 
@@ -10165,6 +10439,34 @@ def execute_tool(
         return mcp_server_actions.delete_server_for_model(arguments)
     if name == "test_mcp_server":
         return mcp_server_actions.test_server_for_model(arguments)
+    if name == "import_mcp_config":
+        return mcp_server_actions.import_config_for_model(arguments)
+    if name == "get_current_datetime":
+        from datetime import datetime as _dt
+        now = _dt.now().astimezone()
+        weekday = now.strftime("%A")
+        tz = now.tzname() or ""
+        offset = now.strftime("%z")
+        formatted_offset = f"UTC{offset[:3]}:{offset[3:]}" if offset else ""
+        return f"Fecha y hora actual del equipo: {now.strftime('%Y-%m-%d %H:%M:%S')} ({weekday}, {tz} {formatted_offset})."
+    if name == "get_weather":
+        from core.inference.weather_actions import get_weather_for_model
+        return get_weather_for_model(arguments)
+    if name == "list_skills":
+        from core.inference.skill_actions import list_skills_for_model
+        return list_skills_for_model(arguments)
+    if name == "search_skill_catalog":
+        from core.inference.skill_actions import search_skill_catalog_for_model
+        return search_skill_catalog_for_model(arguments)
+    if name == "install_skill":
+        from core.inference.skill_actions import install_skill_for_model
+        return install_skill_for_model(arguments)
+    if name == "remove_skill":
+        from core.inference.skill_actions import remove_skill_for_model
+        return remove_skill_for_model(arguments)
+    if name == "toggle_skill":
+        from core.inference.skill_actions import toggle_skill_for_model
+        return toggle_skill_for_model(arguments)
     if name == "web_search":
         return _web_search(
             arguments.get("query", ""),
@@ -10204,6 +10506,9 @@ def execute_tool(
                 session_id = session_id,
                 disable_sandbox = disable_sandbox,
             )
+    if name in {"list_directory", "read_file", "write_file", "create_file", "delete_path", "rename_path", "search_in_files"}:
+        with _session_in_flight(session_id):
+            return _workspace_tool_exec(name, arguments, session_id)
     return f"Unknown tool: {name}"
 
 
@@ -11540,7 +11845,20 @@ def _web_search(
             (website_policy or {}).get(key) for key in ("allowedDomains", "blockedDomains")
         )
         wanted = max_results * _POLICY_OVERFETCH if restricted else max_results
-        results = DDGS(timeout = timeout).text(effective_query, max_results = wanted)
+        results = None
+        last_search_exc = None
+        for attempt in range(2):
+            if cancel_event is not None and cancel_event.is_set():
+                return "Search cancelled."
+            try:
+                results = DDGS(timeout = timeout).text(effective_query, max_results = wanted)
+                break
+            except Exception as exc:
+                last_search_exc = exc
+                if attempt == 0 and (cancel_event is None or not cancel_event.is_set()):
+                    time.sleep(0.75)
+                    continue
+                return _search_failure_message(exc, timeout)
         if cancel_event is not None and cancel_event.is_set():
             return "Search cancelled."
         if not results:

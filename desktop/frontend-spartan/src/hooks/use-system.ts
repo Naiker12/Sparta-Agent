@@ -45,6 +45,7 @@ export interface SystemInfoResponse {
     physical_count: number;
     usage_percent: number;
     frequency_mhz: number | null;
+    model?: string;
   };
   memory: {
     total_gb: number;
@@ -151,6 +152,35 @@ export async function fetchSystemInfo({
       systemSubscribers.forEach((subscriber) => subscriber(cachedSystem!));
       return cachedSystem;
     } catch {
+      // If Python backend is unreachable or not yet started, query Electron native IPC
+      const electron =
+        typeof window !== "undefined"
+          ? (
+              window as unknown as {
+                electron?: {
+                  invoke: (
+                    channel: string,
+                    ...args: unknown[]
+                  ) => Promise<unknown>;
+                };
+              }
+            ).electron
+          : undefined;
+
+      if (electron?.invoke) {
+        try {
+          const nativeInfo = (await electron.invoke(
+            "system:get-info",
+          )) as SystemInfoResponse | undefined;
+          if (nativeInfo && nativeInfo.cpu) {
+            cachedSystem = nativeInfo;
+            systemSubscribers.forEach((subscriber) => subscriber(cachedSystem!));
+            return cachedSystem;
+          }
+        } catch {
+          // ignore IPC error
+        }
+      }
       return null;
     } finally {
       systemFetchPromise = null;

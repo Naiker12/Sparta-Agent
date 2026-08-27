@@ -313,17 +313,26 @@ function ActivityIcon({
   activity,
 }: { activity: ResearchActivity }): ReactElement {
   const className = "size-3.5";
-  if (activity.state === "running") return <Spinner className={className} />;
+  if (activity.state === "running") return <Spinner className={cn(className, "text-sky-500")} />;
   if (activity.state === "failed")
     return <X className={cn(className, "text-destructive")} />;
   if (activity.state === "cancelled")
     return <Square className={cn(className, "text-muted-foreground")} />;
-  if (activity.kind === "reasoning") return <Brain className={className} />;
-  if (activity.kind === "plan") return <FileText className={className} />;
-  if (activity.kind === "report") return <FileText className={className} />;
-  if (activity.action === "fetch") return <BookOpen className={className} />;
-  if (activity.action === "search") return <Search className={className} />;
-  return <Check className={className} />;
+  const titleLower = (activity.title || "").toLowerCase();
+  if (
+    activity.kind === "reasoning" ||
+    titleLower.includes("planning") ||
+    titleLower.includes("choosing") ||
+    titleLower.includes("enfoque")
+  ) {
+    return <Brain className={cn(className, "text-muted-foreground")} />;
+  }
+  if (activity.kind === "plan" || activity.kind === "report" || titleLower.includes("plan ready")) {
+    return <FileText className={cn(className, "text-muted-foreground")} />;
+  }
+  if (activity.action === "fetch") return <BookOpen className={cn(className, "text-muted-foreground")} />;
+  if (activity.action === "search") return <Search className={cn(className, "text-muted-foreground")} />;
+  return <Check className={cn(className, "text-muted-foreground")} />;
 }
 
 const ActivityRow = memo(function ActivityRow({
@@ -355,15 +364,20 @@ const ActivityRow = memo(function ActivityRow({
   const content = (
     <div className="space-y-2 pb-3 pl-7 pr-1 text-ui-12p5 text-muted-foreground">
       {activity.input ? (
-        <p
-          className={cn(
-            "line-clamp-3 break-words rounded-xl bg-muted/45 px-3 py-2 text-foreground/80",
-            activity.kind === "step" &&
-              "bg-primary/[0.045] ring-1 ring-primary/10",
-          )}
-        >
-          {activity.input}
-        </p>
+        <div className="space-y-1.5 pt-0.5">
+          <p
+            className={cn(
+              "line-clamp-3 break-words rounded-2xl bg-muted/40 p-3.5 text-xs leading-relaxed text-foreground/90 font-sans border border-border/40",
+              activity.kind === "step" &&
+                "bg-muted/50 border-border/50",
+            )}
+          >
+            {activity.input}
+          </p>
+          <span className="inline-block text-xs font-medium text-sky-500 dark:text-sky-400 pl-0.5">
+            {activity.action === "search" || activity.kind === "step" ? "Web search" : "Tool query"}
+          </span>
+        </div>
       ) : null}
       {activity.previewLabels?.length ? (
         <ul className="space-y-1 rounded-xl bg-muted/35 px-3 py-2">
@@ -896,19 +910,19 @@ export function ResearchActivityPanel({
           : undefined
       }
     >
-      <header className="shrink-0 border-b border-border/70 px-4 py-3.5">
+      <header className="shrink-0 border-b border-border/70 bg-background/80 px-4 py-3.5 backdrop-blur-sm">
         <div className="flex items-start gap-3">
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-[13px] bg-primary/10 text-primary">
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-sky-500/10 text-sky-500 dark:bg-sky-500/15 dark:text-sky-400">
             <HugeiconsIcon icon={Telescope02Icon} className="size-[18px]" />
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <h2 className="font-heading text-ui-15 font-medium">
+              <h2 className="font-heading text-ui-15 font-semibold tracking-tight text-foreground">
                 Deep research
               </h2>
               <span
                 className={cn(
-                  "rounded-full bg-muted px-2 py-0.5 text-ui-10p5 font-medium text-muted-foreground",
+                  "rounded-full bg-muted/80 px-2.5 py-0.5 text-ui-10p5 font-medium text-muted-foreground",
                   run.status === "awaiting_approval" &&
                     "bg-amber-500/10 text-amber-700 dark:text-amber-300",
                   run.status === "failed" &&
@@ -918,7 +932,7 @@ export function ResearchActivityPanel({
                 {researchStatusLabel(run.status)}
               </span>
             </div>
-            <p className="mt-0.5 line-clamp-2 break-words text-xs text-muted-foreground">
+            <p className="mt-0.5 line-clamp-2 break-words text-xs leading-relaxed text-muted-foreground">
               {run.plan?.title ?? "Investigating your question"}
             </p>
             {websiteLimitLabel ? (
@@ -942,8 +956,9 @@ export function ResearchActivityPanel({
             size="icon-sm"
             onClick={onClose}
             aria-label="Close research activity"
+            className="rounded-full hover:bg-muted/80 text-muted-foreground hover:text-foreground"
           >
-            <X />
+            <X className="size-4" />
           </Button>
         </div>
         {session.connection === "reconnecting" ? (

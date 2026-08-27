@@ -5,6 +5,7 @@
    - Cuando el usuario solicite un ejemplo, plantilla o app web de demostración:
      - Entrega todo el código completo en bloques de Markdown (`.md`) dentro del chat.
      - Si hay una carpeta conectada explícitamente, escribe los archivos en esa carpeta y no en la raíz del proyecto.
+     - Si el proyecto dispone de un workspace gestionado (sandbox), puedes crear los archivos reales ahí con la autorización correspondiente. Usa bloques de Markdown solo si el usuario pide expresamente no guardar archivos o no existe un workspace escribible.
 
 2. **Respuestas Directas para Ejemplos de Código**:
    - Para solicitudes de código general (ej. "crear una calculadora en html y js y css"), genera el código directamente sin delegar a subagentes de código que puedan consumir cuotas o expirar.

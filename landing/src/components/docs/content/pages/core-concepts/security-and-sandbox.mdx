@@ -1,0 +1,36 @@
+---
+title: Seguridad y Sandbox
+description: Arquitectura de seguridad, aislamiento de procesos y almacenamiento local seguro en Sparta Agent.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Seguridad y Sandbox
+
+Sparta Agent está diseñado para que desarrolladores, investigadores y empresas puedan ejecutar agentes autónomos con **garantías de seguridad de nivel de producción**.
+
+---
+
+## 🔒 Almacenamiento Local Seguro
+
+Toda la base de datos de Sparta Agent reside en tu disco local mediante **SQLite en modo WAL (Write-Ahead Logging)**:
+- **Ubicación de datos**: `~/.sparta/studio.db` o dentro del directorio de la aplicación.
+- **Sin telemetría forzada**: Ningún prompt, reporte de investigación, fragmento de código o archivo adjunto se envía a servidores externos de telemetría.
+- **Cifrado de Credenciales**: Las claves de API (OpenAI, Anthropic, Google, etc.) y los tokens de MCP se almacenan de forma segura utilizando el almacenamiento seguro del sistema operativo (Keychain en macOS, DPAPI en Windows, Secret Service en Linux).
+
+---
+
+## 🛡️ Sandbox de Ejecución de Código
+
+Cuando el agente ejecuta código Python o comandos de consola en Modo Agente:
+1. **Entorno Aislado (`_session_in_flight`)**: El código se ejecuta dentro de un subproceso con un directorio de trabajo temporal confinado (`sandbox/`).
+2. **Control de Timeout y Recursos**: Cada proceso cuenta con un temporizador estricto para evitar loops infinitos o bloqueo de recursos del sistema.
+3. **Validación de Señales de Escape**: El backend analiza los patrones de ejecución para evitar escapes de señales antes de lanzar el intérprete.
+
+---
+
+## 🛑 Protocolo de Consentimiento Explícito
+
+<Callout type="warn">
+  Ninguna operación destructiva (modificar código fuente, eliminar archivos, ejecutar scripts en PowerShell o Bash) se ejecutará en segundo plano sin mostrar primero una tarjeta interactiva con los detalles del comando para aprobación manual.
+</Callout>

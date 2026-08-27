@@ -6,8 +6,8 @@
 // --strict also fails on missing keys, naming them (see studio-frontend-ci.yml).
 // Run: npm run i18n:check   (or: npx tsx src/i18n/check-parity.ts [--strict])
 
-import { en } from "./locales/en.ts";
-import { es } from "./locales/es.ts";
+import { en } from "./locales/en/index.ts";
+import { es } from "./locales/es/index.ts";
 
 type Tree = { readonly [k: string]: string | Tree };
 

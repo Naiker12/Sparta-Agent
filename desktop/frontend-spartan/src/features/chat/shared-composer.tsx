@@ -86,6 +86,7 @@ import { BypassPermissionsMenuItem } from "./bypass-permissions-menu-item";
 import { PermissionModeComposerPill } from "./permission-mode-select";
 import { reasoningCapsFromLoad } from "./lib/apply-inference-status-to-store";
 import { NewProjectDialog } from "./components/new-project-dialog";
+import { WorkspaceFolderChip } from "./components/workspace-folder-chip";
 import { useChatProjects } from "./hooks/use-chat-projects";
 import { useT } from "@/i18n";
 import { confirmRemoteCodeIfNeeded } from "@/features/security";
@@ -2306,6 +2307,7 @@ export function SharedComposer({
               of every other tool pill (Search, Code, ...) so the Full access
               danger state reads first; only Compare outranks it. */}
           <PermissionModeComposerPill side="top" />
+          <WorkspaceFolderChip />
           <button
             type="button"
             disabled={searchDisabled}

@@ -1,0 +1,23 @@
+export const runSettings = {
+  "title": "Ajustes de ejecución",
+  "model": "Modelo",
+  "preset": "Preajuste",
+  "default": "Predeterminado",
+  "save": "Guardar",
+  "delete": "Eliminar",
+  "reset": "Restablecer",
+  "systemPrompt": "Instrucción del sistema",
+  "sampling": "Muestreo",
+  "temperature": "Temperatura",
+  "topP": "Top P",
+  "topK": "Top K",
+  "minP": "Min P",
+  "repetitionPenalty": "Penalización por repetición",
+  "off": "Desactivado",
+  "contextLength": "Longitud del contexto",
+  "advancedSettings": "Ajustes avanzados",
+  "rememberForModel": "Recordar para este modelo",
+  "reloadModel": "Recargar modelo",
+  "loadModel": "Cargar modelo",
+  "close": "Cerrar ajustes de ejecución"
+} as const;

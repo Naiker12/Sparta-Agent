@@ -1,0 +1,63 @@
+---
+title: Modo Chat vs Modo Agente
+description: Diferenciación estricta de modos de operación y sistema de permisos explícitos en Sparta Agent.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Modo Chat vs Modo Agente
+
+Sparta Agent implementa una separación estricta de seguridad entre dos modos de trabajo para garantizar que ninguna acción destructiva o modificación de archivos se realice sin tu consentimiento expreso.
+
+---
+
+## 💬 Modo Chat (Solo Lectura / Consulta)
+
+El **Modo Chat** está diseñado para exploración segura, análisis documental y consultas. En este modo, el agente tiene permisos estrictamente de **solo lectura**.
+
+### Acciones Permitidas en Modo Chat:
+- ✅ Búsqueda web y obtención de información en tiempo real (`web_search`, `get_weather`, `get_current_datetime`).
+- ✅ Búsqueda y lectura de archivos en proyectos o carpetas vinculadas (`search_files`, `list_files`, `read_file`).
+- ✅ Consultas semánticas y vectoriales en el RAG local sobre PDFs, Excel y documentos.
+- ✅ Búsqueda y lectura de datos en servidores MCP (ej. listar páginas de Notion, leer mensajes de Slack, consultar eventos de Calendar).
+
+### Restricciones en Modo Chat:
+<Callout type="warn">
+  En Modo Chat **queda estrictamente prohibido crear, modificar, editar o borrar recursos**. Si solicitas una acción de escritura, el asistente te indicará amablemente:
+  
+  > *"Debes activar el Modo Agente en el selector de modo para crear, editar o borrar recursos."*
+</Callout>
+
+---
+
+## ⚡ Modo Agente (Modificación con Autorización)
+
+El **Modo Agente** habilita capacidades completas de creación, edición, ejecución de comandos y sincronización bidireccional.
+
+### Acciones Habilitadas en Modo Agente:
+- 🛠️ Creación y edición de archivos en el disco (`write_file`, `edit_file`, `create_file`).
+- 🛠️ Ejecución de comandos de terminal y scripts en sandbox (`run_command`, `python_exec`).
+- 🛠️ Creación y actualización de páginas en Notion, subida de archivos a Google Drive o envío de mensajes en Slack mediante MCP.
+- 🛠️ Gestión de extensiones y skills.
+
+### 🛡️ Diálogo Modal de Permisos Obligatorio:
+<Callout type="info">
+  Cada vez que el agente se disponga a ejecutar una herramienta de modificación o comando en Modo Agente, se activará en pantalla una tarjeta de confirmación (`PermissionRequestDialog`) mostrando:
+  
+  1. La herramienta a ejecutar.
+  2. Los parámetros exactos (ruta del archivo, comando de consola, contenido).
+  3. Botones explícitos de **Aprobar** o **Rechazar**.
+</Callout>
+
+---
+
+## 📊 Tabla Comparativa
+
+| Capacidad | Modo Chat | Modo Agente |
+| :--- | :---: | :---: |
+| Lectura de archivos y RAG | ✅ Permitido | ✅ Permitido |
+| Búsqueda web y clima | ✅ Permitido | ✅ Permitido |
+| Creación / Edición de archivos | ❌ Bloqueado | ✅ Con confirmación |
+| Ejecución de scripts / Terminal | ❌ Bloqueado | ✅ Con confirmación |
+| Escritura en servidores MCP | ❌ Bloqueado | ✅ Con confirmación |
+| Diálogo de permisos en pantalla | No requerido | **Obligatorio** |

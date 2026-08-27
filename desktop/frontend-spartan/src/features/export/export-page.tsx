@@ -87,7 +87,7 @@ import {
   isExportPanelActive,
   useExportRuntimeStore,
 } from "./stores/export-runtime-store";
-import { exportTourSteps } from "./tour";
+import { buildExportTourSteps } from "./tour";
 
 const SEARCH_INPUT_REASONS = new Set([
   "input-change",
@@ -287,9 +287,11 @@ export function ExportPage() {
   const hfModelInputRef = useRef("");
   const localModelInputRef = useRef("");
 
+  const tourSteps = useMemo(() => buildExportTourSteps(t), [t]);
+
   const tour = useGuidedTourController({
     id: "export",
-    steps: exportTourSteps,
+    steps: tourSteps,
   });
 
   // ---- Fetch checkpoints on mount ----

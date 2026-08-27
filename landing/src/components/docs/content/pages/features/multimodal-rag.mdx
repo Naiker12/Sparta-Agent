@@ -1,0 +1,42 @@
+---
+title: RAG Local Multimodal
+description: Sistema de Recuperación y Generación Aumentada (RAG) híbrido con soporte para PDFs, Office, código y búsqueda semántica local.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# RAG Local Multimodal
+
+El motor de **RAG (Retrieval-Augmented Generation)** de Sparta Agent te permite conectar carpetas enteras de proyectos, manuales en PDF, hojas de cálculo de Excel o documentos Word para responder con precisión y citas basadas en tu información.
+
+---
+
+## 🔍 Búsqueda Híbrida Inteligente
+
+Sparta Agent combina dos tecnologías complementarias para ofrecer la máxima precisión de recuperación:
+
+1. **Búsqueda Vectorial (Dense Retrieval)**:
+   - Utiliza modelos de embeddings locales (GGUF / Sentence Transformers) para comprender el significado semántico profundo, sinónimos y conceptos relacionados.
+2. **Búsqueda Léxica FTS5 (Sparse Retrieval / BM25)**:
+   - Motor SQLite FTS5 para coincidencias exactas de términos técnicos, nombres propios, identificadores y números de modelo.
+3. **Reordenamiento (Reranking)**:
+   - Cruza los resultados de ambas búsquedas y selecciona los fragmentos con mayor relevancia y menor redundancia.
+
+---
+
+## 📂 Formatos de Documentos Compatibles
+
+- 📄 **PDFs**: Documentos técnicos, libros, contratos, diapositivas y artículos de investigación.
+- 📊 **Hojas de Cálculo**: Archivos `.xlsx`, `.xls`, `.csv` con preservación de tablas y columnas.
+- 📝 **Documentos Word y Texto**: `.docx`, `.doc`, `.txt`, `.md`, `.json`, `.yaml`.
+- 💻 **Código Fuente**: `.ts`, `.tsx`, `.js`, `.py`, `.rs`, `.go`, `.cpp`, `.java`, `.html`, `.css`.
+
+---
+
+## 🔗 Citaciones Automáticas y Transparencia
+
+Cada vez que el asistente responde utilizando información de tus documentos, añade citas directas numeradas:
+
+> *"Según lo especificado en la política de seguridad [Documento: manual_seguridad.pdf, p. 14], el límite de tiempo de sesión es de 30 minutos."*
+
+Al hacer clic en la cita, puedes previsualizar el fragmento exacto y la página de donde se extrajo.

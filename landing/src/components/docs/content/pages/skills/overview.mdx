@@ -1,0 +1,28 @@
+---
+title: Sistema de Skills
+description: Extiende las capacidades del agente con módulos reutilizables y catálogos de habilidades.
+---
+
+# Sistema de Skills
+
+Las **Skills** son paquetes modulares de instrucciones especializadas, scripts y definiciones de herramientas que potencian a Sparta Agent en flujos de trabajo específicos (ej. frameworks UI, pipelines de datos, auditorías de código).
+
+---
+
+## 🧩 Estructura de una Skill
+
+Cada skill se almacena en su propio directorio dentro de `.sparta/skills/<nombre_skill>/` y contiene:
+
+- **`SKILL.md` (Obligatorio)**: Archivo de instrucciones con encabezado YAML (`name`, `description`) y directivas de comportamiento.
+- **`scripts/`**: Utilidades y scripts ejecutables que la skill pone a disposición del agente.
+- **`resources/`**: Plantillas, esquemas o ejemplos de referencia.
+
+---
+
+## 🛠️ Herramientas de Gestión de Skills
+
+Sparta Agent cuenta con herramientas integradas para administrar su catálogo:
+- `list_skills`: Lista las habilidades actualmente instaladas y su estado.
+- `search_skill_catalog`: Busca nuevas habilidades en el registro oficial.
+- `install_skill`: Descarga e instala una nueva habilidad.
+- `toggle_skill`: Activa o desactiva una habilidad según la tarea en curso.

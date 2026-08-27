@@ -260,7 +260,98 @@ def test_server_for_model(arguments: dict) -> str:
     return _probe_server(url, headers, use_oauth=False) or "Error: probe returned no result."
 
 
+def import_config_for_model(arguments: dict) -> str:
+    """Register MCP servers from a raw JSON config string (standard mcpServers format)."""
+    raw_config = arguments.get("config_json") or arguments.get("config") or arguments.get("json") or ""
+    if isinstance(raw_config, dict):
+        raw_config = json.dumps(raw_config)
+
+    from core.inference.mcp_config_import import parse_mcp_config
+
+    parsed_entries, errors = parse_mcp_config(raw_config)
+    if errors and not parsed_entries:
+        return f"Error al parsear configuración MCP: {'; '.join(errors)}"
+
+    existing = mcp_servers_db.load_servers()
+    existing_urls = {s.get("url") for s in existing if s.get("url")}
+
+    added_count = 0
+    skipped_count = 0
+    results: list[str] = []
+
+    for entry in parsed_entries:
+        name = entry.get("display_name") or "Servidor MCP"
+        url = entry.get("url") or ""
+        headers = entry.get("headers")
+
+        if url in existing_urls:
+            skipped_count += 1
+            results.append(f"- ⏩ '{name}' ({url}): Ya existe, se omitió.")
+            continue
+
+        server_id = str(uuid.uuid4())
+        try:
+            mcp_servers_db.add_server(
+                server_id=server_id,
+                display_name=name,
+                url=url,
+                headers=headers,
+                is_enabled=True,
+                use_oauth=False,
+            )
+            existing_urls.add(url)
+            probe_res = _probe_server(url, headers, use_oauth=False, server_id=server_id)
+            added_count += 1
+            results.append(f"- ✅ '{name}' ({url}): Registrado. {probe_res}")
+        except Exception as exc:
+            results.append(f"- ❌ '{name}' ({url}): Error al guardar: {safe_curated_detail(exc)}")
+
+    summary_header = f"Resumen de importación MCP: {added_count} agregado(s), {skipped_count} omitido(s)."
+    if errors:
+        summary_header += f"\nAdvertencias del parser: {'; '.join(errors)}"
+    return summary_header + "\n" + "\n".join(results)
+
+
 # ── Internal helpers ────────────────────────────────────────────────
+
+
+def _classify_probe_error(exc: Exception) -> str:
+    """Analyze probe exception and return actionable error classification (auth vs timeout vs network)."""
+    exc_str = str(exc).lower()
+    detail = safe_curated_detail(exc)
+
+    # Check for authentication / API key requirements (HTTP 401, 403, Unauthorized, Forbidden)
+    status_code = getattr(exc, "status_code", None) or getattr(exc, "code", None)
+    if (
+        status_code in (401, 403)
+        or "401" in exc_str
+        or "403" in exc_str
+        or "unauthorized" in exc_str
+        or "forbidden" in exc_str
+        or "api key" in exc_str
+        or "authentication" in exc_str
+    ):
+        return (
+            f"Probe failed (Authentication required): This MCP server rejected the connection (HTTP 401/403). "
+            f"It requires an API key or authentication token in the request headers (e.g. 'Authorization: Bearer <KEY>') "
+            f"or environment variables. Detail: {detail}"
+        )
+
+    if "timeout" in exc_str or "timed out" in exc_str:
+        return f"Probe failed (Timeout): The server did not respond within the timeout limit. Detail: {detail}"
+
+    if (
+        "connection refused" in exc_str
+        or "econnrefused" in exc_str
+        or "name or service not known" in exc_str
+        or "nodename nor servname provided" in exc_str
+    ):
+        return (
+            f"Probe failed (Connection unreachable): Could not connect to the server address. "
+            f"Check if the server is running and the URL/port is correct. Detail: {detail}"
+        )
+
+    return f"Probe failed: {detail}"
 
 
 def _probe_server(
@@ -303,7 +394,7 @@ def _probe_server(
             return f"Probe: connected, {len(tools)} tool(s) found."
         except Exception as exc:
             logger.error("mcp_server_actions.probe_failed", error=str(exc), exc_info=True)
-            return f"Probe failed: {safe_curated_detail(exc)}"
+            return _classify_probe_error(exc)
     except Exception as exc:
         logger.error("mcp_server_actions.probe_failed", error=str(exc), exc_info=True)
-        return f"Probe failed: {safe_curated_detail(exc)}"
+        return _classify_probe_error(exc)

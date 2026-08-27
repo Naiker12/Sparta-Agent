@@ -26,6 +26,9 @@ export async function executeMainProcessFileTool(
   customWorkspaceRoot?: string,
 ): Promise<string> {
   const root = customWorkspaceRoot || getWorkspaceRoot()
+  if (!root) {
+    throw new Error('No hay una carpeta de proyecto conectada para esta operación.')
+  }
 
   switch (toolName) {
     case 'read_file': {

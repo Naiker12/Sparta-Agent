@@ -1,0 +1,54 @@
+---
+title: Modelos y Proveedores
+description: Configuración de modelos locales GGUF (llama.cpp / MLX) y proveedores Cloud en Sparta Agent.
+---
+
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Modelos y Proveedores Soportados
+
+Sparta Agent ofrece una arquitectura de inferencia flexible que te permite alternar entre modelos ejecutados 100% en tu hardware o proveedores en la nube.
+
+---
+
+## 🖥️ Modelos Locales (GGUF / Llama.cpp / MLX)
+
+La ejecución local garantiza que ninguna palabra o dato abandone tu máquina:
+
+- **Llama.cpp Backend**: Soporte nativo para inferencia en CPU y GPU mediante CUDA (NVIDIA), ROCm (AMD), Metal (Apple Silicon) y Vulkan (Intel/AMD).
+- **Formatos Cuantizados (GGUF)**: Soporte completo para cuantizaciones `Q4_K_M`, `Q5_K_M`, `Q8_0` y `FP16`.
+- **Modelos Recomendados**:
+  - `Qwen 2.5 (7B / 14B / 32B)`: Excelente para razonamiento, seguimiento de instrucciones y código.
+  - `Llama 3.1 / 3.3 (8B / 70B)`: Gran versatilidad general en español e inglés.
+  - `DeepSeek R1 Distill`: Especializado en razonamiento paso a paso con token thinking.
+  - `Mistral Nemo (12B)`: Gran ventana de contexto de hasta 128k tokens.
+
+<Callout type="info">
+  Puedes descargar modelos GGUF directamente desde el catálogo integrado de Hugging Face sin necesidad de salir de la aplicación.
+</Callout>
+
+---
+
+## ☁️ Proveedores Cloud
+
+Si necesitas la máxima potencia de cálculo para tareas complejas o modelos de gran escala, puedes conectar tus propias API Keys:
+
+| Proveedor | Modelos Destacados | Características |
+| :--- | :--- | :--- |
+| **OpenAI** | `gpt-4o`, `gpt-4o-mini`, `o1`, `o3-mini` | Soporte de Structured Outputs, tool calling y visión. |
+| **Anthropic** | `claude-3-5-sonnet`, `claude-3-5-haiku` | Gran capacidad de redacción y análisis de código largo. |
+| **Google Gemini** | `gemini-2.0-flash`, `gemini-1.5-pro` | Ventana de contexto ultra amplia y baja latencia. |
+| **DeepSeek** | `deepseek-chat`, `deepseek-reasoner` | Inferencia económica de alta calidad y modo razonamiento. |
+| **Groq** | `llama-3.3-70b-versatile`, `mixtral-8x7b` | Inferencia ultra rápida a más de 300 tokens por segundo. |
+| **Ollama** | Cualquier modelo local servido vía API | Conexión a servidores Ollama existentes en tu red local. |
+
+---
+
+## ⚙️ Configuración de Parámetros de Inferencia
+
+En los ajustes de cada conversación o modelo puedes personalizar:
+- **Temperatura (`0.0` - `1.0`)**: Menor para respuestas precisas/código, mayor para creatividad.
+- **Top P**: Muestreo por probabilidad acumulada.
+- **Context Length**: Límite de tokens de la ventana de contexto (ej. 8,192, 16,384 o 32,768).
+- **Reasoning Effort**: Nivel de profundidad en modelos de pensamiento (Low, Medium, High).

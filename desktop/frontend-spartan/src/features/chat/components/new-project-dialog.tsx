@@ -16,11 +16,15 @@ import {
   uploadStagedSources,
 } from "@/features/rag/components/project-source-dropzone";
 import { toast } from "@/lib/toast";
-import { Folder02Icon } from "@hugeicons/core-free-icons";
+import { Folder02Icon, FolderAddIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useT } from "@/i18n";
 
-import { createChatProject } from "../hooks/use-chat-projects";
+import {
+  chooseProjectWorkspaceFolder,
+  createChatProject,
+  setChatProjectWorkspace,
+} from "../hooks/use-chat-projects";
 import { useChatRuntimeStore } from "../stores/chat-runtime-store";
 import type { ProjectRecord } from "../types";
 
@@ -53,6 +57,7 @@ export function NewProjectDialog({
   const resolvedTitle = title ?? t("projectsPage.createProjectTitle");
   const resolvedSubmitLabel = submitLabel ?? t("projectsPage.createProjectTitle");
   const [name, setName] = useState("");
+  const [workspacePath, setWorkspacePath] = useState<string | null>(null);
   const [staged, setStaged] = useState<StagedSource[]>([]);
   const [busy, setBusy] = useState(false);
   // A desktop drop reaches `staged` only once its native registration settles.
@@ -72,6 +77,7 @@ export function NewProjectDialog({
 
   function reset() {
     setName("");
+    setWorkspacePath(null);
     setStaged([]);
     setStagingDrop(false);
   }
@@ -93,6 +99,9 @@ export function NewProjectDialog({
     const origin = currentRoute();
     try {
       const project = await createChatProject(trimmed);
+      if (workspacePath) {
+        await setChatProjectWorkspace(project.id, workspacePath);
+      }
       // Upload before closing so the Sources panel lists them on first fetch.
       await uploadStagedSources(project.id, staged);
       if (!mounted.current) return;
@@ -117,6 +126,18 @@ export function NewProjectDialog({
     }
   }
 
+  async function chooseWorkspace() {
+    if (busy) return;
+    try {
+      const folder = await chooseProjectWorkspaceFolder();
+      if (folder) setWorkspacePath(folder);
+    } catch (err) {
+      toast.error(t("projectsPage.failedToUpdateFolder"), {
+        description: err instanceof Error ? err.message : undefined,
+      });
+    }
+  }
+
   return (
     <Dialog
       open={open}
@@ -128,7 +149,7 @@ export function NewProjectDialog({
         close();
       }}
     >
-      <DialogContent className="corner-squircle dialog-soft-surface gap-5 sm:max-w-lg">
+      <DialogContent className="corner-squircle dialog-soft-surface grid-cols-[minmax(0,1fr)] gap-4 overflow-x-hidden [&>*]:min-w-0 sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="text-ui-21">{resolvedTitle}</DialogTitle>
         </DialogHeader>
@@ -158,6 +179,25 @@ export function NewProjectDialog({
             aria-label={t("projectsPage.projectNamePlaceholder")}
             className="min-w-0 flex-1 bg-transparent py-4 pr-4 pl-2.5 text-base outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed"
           />
+        </div>
+        <div className="min-w-0 rounded-[16px] border border-border bg-background p-3 dark:border-transparent dark:bg-white/[0.06]">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-foreground">{t("projectsPage.workspaceTitle")}</p>
+              <p className="mt-0.5 truncate text-xs text-muted-foreground" title={workspacePath ?? undefined}>
+                {workspacePath ?? t("projectsPage.workspaceOptional")}
+              </p>
+              {workspacePath && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {t("projectsPage.workspaceSavedWithProject")}
+                </p>
+              )}
+            </div>
+            <Button type="button" variant="outline" size="sm" disabled={busy} onClick={() => void chooseWorkspace()}>
+              <HugeiconsIcon data-icon="inline-start" icon={FolderAddIcon} strokeWidth={1.75} />
+              {workspacePath ? t("projectsPage.changeFolder") : t("projectsPage.connectFolder")}
+            </Button>
+          </div>
         </div>
         <ProjectSourceDropzone
           staged={staged}

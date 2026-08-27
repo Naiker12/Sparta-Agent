@@ -1,0 +1,31 @@
+---
+title: Introducción a MCP
+description: Qué es el protocolo Model Context Protocol y cómo Sparta Agent lo integra de forma nativa y segura.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# ¿Qué es Model Context Protocol (MCP)?
+
+**Model Context Protocol (MCP)** es el estándar abierto impulsado por la industria para conectar modelos de inteligencia artificial con fuentes de datos externas, bases de conocimiento y herramientas empresariales de forma estandarizada y segura.
+
+Sparta Agent incorpora un **gestor de procesos MCP nativo** (`McpProcessManager`) que se comunica directamente a través del canal IPC interno de la aplicación.
+
+---
+
+## 🏗️ Arquitectura de MCP en Sparta Agent
+
+```
+[ Sparta Agent Frontend ] ──(IPC: mcp:call-tool)──► [ McpProcessManager ] ──(STDIO / SSE)──► [ Servidor MCP ]
+                                                            │                                       │
+                                                            ▼                                       ▼
+                                                [ Diálogo de Permisos ]                 [ Notion / Drive / Slack / Git ]
+```
+
+---
+
+## 🔒 Reglas de Seguridad MCP en Sparta Agent
+
+1. **Invocación Exclusiva por IPC**: Todas las llamadas a herramientas MCP se ejecutan mediante `mcp:call-tool` y `McpProcessManager`. Queda estrictamente prohibido intentar suplantar herramientas MCP mediante comandos de terminal.
+2. **Modo Chat (Consulta)**: Solo permite herramientas de lectura (ej. `read_resource`, `list_prompts`, `search_notes`).
+3. **Modo Agente (Acción)**: Las acciones que crean o editan recursos activan obligatoriamente el diálogo modal de permisos antes de ejecutarse.

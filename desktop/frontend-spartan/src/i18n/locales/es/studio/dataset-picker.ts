@@ -1,0 +1,23 @@
+export const datasetPicker = {
+  "noun": "conjuntos de datos",
+  "selectDataset": "Seleccionar conjunto de datos",
+  "hubPlaceholder": "Buscar conjuntos de datos en Hugging Face...",
+  "devicePlaceholder": "Buscar conjuntos de datos locales...",
+  "useAsHubDataset": "Usar como conjunto de datos de Hugging Face",
+  "hfCacheLabel": "Caché de HF",
+  "scanningLocal": "Buscando conjuntos de datos en este dispositivo…",
+  "couldntScan": "No se pudieron buscar conjuntos de datos locales",
+  "someLocationsUnscanned": "No se pudieron explorar algunas ubicaciones de conjuntos de datos.",
+  "noLocalDatasets": "Todavía no hay nada en este dispositivo. Descarga un conjunto de datos del Hub, crea uno en Recetas o sube un archivo.",
+  "openDataRecipes": "Abrir recetas de datos",
+  "searchingHub": "Buscando en Hugging Face…",
+  "noDatasetsFound": "No se encontraron conjuntos de datos.",
+  "tokenRejectedTitle": "Hugging Face rechazó el token",
+  "tokenRejectedBody": "Actualiza el token en Configuración → General y vuelve a intentarlo.",
+  "hubUnreachable": "No se pudo acceder a Hugging Face",
+  "cantUseDataset": "No se puede usar el conjunto de datos",
+  "reasonInvalidHubId": "Introduce un ID válido de conjunto de datos de Hugging Face: repositorio o propietario/repositorio, usando solo letras, números, ., _ o - (máximo 96 caracteres por parte).",
+  "sourceRecipe": "Receta",
+  "sourceUpload": "Subida",
+  "sourceLocal": "Local"
+} as const;

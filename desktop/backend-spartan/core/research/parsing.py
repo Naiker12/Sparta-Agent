@@ -242,6 +242,46 @@ def _validate_plan(value: dict, max_steps: int) -> dict:
     return {"title": str(value.get("title") or "Research plan").strip()[:200], "steps": steps}
 
 
+def _extract_plan_from_text(text: str, max_steps: int) -> dict | None:
+    if not text or not text.strip():
+        return None
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    step_pattern = re.compile(r"^(?:(?:\d+[\.\)]|\-|\*|•|Step\s+\d+:?|Paso\s+\d+:?))\s+(.+)", re.IGNORECASE)
+
+    # First try lines that explicitly match step prefix patterns
+    pattern_steps = []
+    for line in lines:
+        match = step_pattern.match(line)
+        if match:
+            clean = match.group(1).strip().strip("`*#\"'")
+            if len(clean) >= 4 and not clean.endswith(":"):
+                try:
+                    query = _sanitize_public_query(clean)
+                    pattern_steps.append({"title": clean[:200], "query": query})
+                except ValueError:
+                    continue
+                if len(pattern_steps) >= max_steps:
+                    break
+    if pattern_steps:
+        return {"title": "Research plan", "steps": pattern_steps}
+
+    # Fallback to general lines
+    general_steps = []
+    for line in lines:
+        clean = line.strip().strip("`*#\"':")
+        if len(clean) >= 4 and not clean.startswith(("{", "}", "[", "]")):
+            try:
+                query = _sanitize_public_query(clean)
+                general_steps.append({"title": clean[:200], "query": query})
+            except ValueError:
+                continue
+            if len(general_steps) >= max_steps:
+                break
+    if general_steps:
+        return {"title": "Research plan", "steps": general_steps}
+    return None
+
+
 def _parse_and_validate_plan(response: str, reasoning: str, max_steps: int) -> dict:
     last_error: Exception | None = None
     for candidate in (response, reasoning):
@@ -258,6 +298,23 @@ def _parse_and_validate_plan(response: str, reasoning: str, max_steps: int) -> d
                 last_error = exc
         if valid_plans:
             return valid_plans[-1]
+
+    # Fallback to text step extraction if JSON decode failed
+    for candidate in (response, reasoning):
+        fallback_plan = _extract_plan_from_text(candidate, max_steps)
+        if fallback_plan:
+            return fallback_plan
+
+    # Ultimate fallback: create an initial 1-step plan from the text so planning never crashes
+    raw = response.strip() or reasoning.strip()
+    if raw:
+        first_line = raw.splitlines()[0].strip()[:200]
+        try:
+            query = _sanitize_public_query(first_line)
+            return {"title": "Research plan", "steps": [{"title": first_line, "query": query}]}
+        except ValueError:
+            pass
+
     if last_error is not None:
         raise last_error
     raise ValueError("Planner did not return a JSON object")

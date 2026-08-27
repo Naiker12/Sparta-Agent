@@ -10,6 +10,7 @@ import {
   moveStoredChatItemToProject,
   updateStoredChatProject,
 } from "../utils/chat-history-storage";
+import { updateChatProjectWorkspace } from "../api/chat-api";
 import { offerToDeleteKeptSandboxes } from "../utils/offer-kept-sandbox-files";
 import type { SidebarItem } from "./use-chat-sidebar-items";
 
@@ -135,6 +136,61 @@ export async function updateChatProjectInstructions(
   instructions: string,
 ): Promise<void> {
   await updateStoredChatProject(projectId, { instructions: instructions.trim() });
+}
+
+type NativeFilesystem = {
+  openFolderDialog: () => Promise<string | null>;
+  setWorkspaceRoot?: (root: string) => Promise<{ success: boolean; error?: string }>;
+  readDirLevel?: (path: string) => Promise<{
+    nodes: Array<{ name: string; path: string; type: "file" | "directory" }>;
+    error?: string;
+  }>;
+  readFile?: (path: string, encoding?: "utf-8") => Promise<{
+    success: boolean;
+    content?: string;
+    error?: string;
+  }>;
+  writeFile?: (path: string, content: string) => Promise<{
+    success: boolean;
+    error?: string;
+  }>;
+};
+
+function nativeFilesystem(): NativeFilesystem | null {
+  if (typeof window === "undefined") return null;
+  return (window as Window & { fs?: NativeFilesystem }).fs ?? null;
+}
+
+export async function connectChatProjectWorkspace(projectId: string): Promise<string | null> {
+  const selected = await chooseProjectWorkspaceFolder();
+  if (!selected) return null;
+  return setChatProjectWorkspace(projectId, selected);
+}
+
+export async function chooseProjectWorkspaceFolder(): Promise<string | null> {
+  const filesystem = nativeFilesystem();
+  if (!filesystem) {
+    throw new Error("Connecting a local folder is available only in the desktop app.");
+  }
+  return filesystem.openFolderDialog();
+}
+
+export async function setChatProjectWorkspace(
+  projectId: string,
+  folder: string,
+): Promise<string | null> {
+  const project = await updateChatProjectWorkspace(projectId, folder);
+  const filesystem = nativeFilesystem();
+  await filesystem?.setWorkspaceRoot?.(project.connectedFolderPath ?? folder);
+  return project.connectedFolderPath ?? null;
+}
+
+export function getProjectNativeFilesystem(): NativeFilesystem | null {
+  return nativeFilesystem();
+}
+
+export async function disconnectChatProjectWorkspace(projectId: string): Promise<void> {
+  await updateChatProjectWorkspace(projectId, null);
 }
 
 export async function deleteChatProject(

@@ -307,6 +307,7 @@ from routes import (
     research_runs_router,
     youtube_router,
 )
+from routes.project_files import router as project_files_router
 from routes.llama import router as llama_router
 from routes.whisper import router as whisper_router
 from routes.preview import router as preview_router
@@ -1345,6 +1346,7 @@ app.add_middleware(RemoteAccessStopResponseMiddleware)
 app.include_router(auth_router, prefix = "/api/auth", tags = ["auth"])
 app.include_router(models_router, prefix = "/api/models", tags = ["models"])
 app.include_router(chat_history_router, prefix = "/api/chat", tags = ["chat"])
+app.include_router(project_files_router, prefix = "/api/chat", tags = ["project-files"])
 app.include_router(research_runs_router, prefix = "/api/chat/research-runs", tags = ["research-runs"])
 app.include_router(inference_router, prefix = "/api/inference", tags = ["inference"])
 # Unsloth-only inference endpoints (cancel, etc.) are not on the /v1 OpenAI-compat prefix.
