@@ -1,28 +1,36 @@
 ---
-title: Sistema de Skills
-description: Extiende las capacidades del agente con módulos reutilizables y catálogos de habilidades.
+title: Visión General de Skills y Reglas
+description: Sistema modular de habilidades y personalización de directivas de equipo en Sparta Agent.
 ---
 
-# Sistema de Skills
+# Visión General de Skills y Reglas
 
-Las **Skills** son paquetes modulares de instrucciones especializadas, scripts y definiciones de herramientas que potencian a Sparta Agent en flujos de trabajo específicos (ej. frameworks UI, pipelines de datos, auditorías de código).
-
----
-
-## 🧩 Estructura de una Skill
-
-Cada skill se almacena en su propio directorio dentro de `.sparta/skills/<nombre_skill>/` y contiene:
-
-- **`SKILL.md` (Obligatorio)**: Archivo de instrucciones con encabezado YAML (`name`, `description`) y directivas de comportamiento.
-- **`scripts/`**: Utilidades y scripts ejecutables que la skill pone a disposición del agente.
-- **`resources/`**: Plantillas, esquemas o ejemplos de referencia.
+Sparta Agent permite extender las capacidades del agente y personalizar sus directivas de comportamiento mediante **Skills modulares** y **archivos de Reglas de Proyecto**.
 
 ---
 
-## 🛠️ Herramientas de Gestión de Skills
+## Reglas de Proyecto (`.agents/AGENTS.md`)
 
-Sparta Agent cuenta con herramientas integradas para administrar su catálogo:
-- `list_skills`: Lista las habilidades actualmente instaladas y su estado.
-- `search_skill_catalog`: Busca nuevas habilidades en el registro oficial.
-- `install_skill`: Descarga e instala una nueva habilidad.
-- `toggle_skill`: Activa o desactiva una habilidad según la tarea en curso.
+Puedes definir directivas estrictas de estilo de código, convenciones de arquitectura y restricciones de seguridad creando un archivo `AGENTS.md` dentro de la carpeta `.agents` de tu repositorio.
+
+### Ejemplo de Archivo `AGENTS.md`:
+```markdown
+# Reglas de Proyecto — Backend API
+
+1. **Convenciones de Código**:
+   - Todo nuevo endpoint debe implementar esquemas de validación Zod / Pydantic.
+   - Prohibido utilizar `any` explícito en TypeScript.
+
+2. **Seguridad y Permisos**:
+   - Nunca modificar archivos de migración de base de datos ya ejecutados en producción.
+   - Ejecutar la suite de tests (`npm test`) antes de considerar completa cualquier tarea.
+```
+
+---
+
+## Skills Modulares (`skills/<nombre>/SKILL.md`)
+
+Las **Skills** son carpetas autocontenidas que enseñan al agente flujos de trabajo especializados:
+- **`SKILL.md`**: Instrucciones principales con metadatos en YAML frontmatter (nombre, descripción y directivas).
+- **`scripts/`**: Scripts auxiliares en Python, Node o Bash que el agente puede invocar.
+- **`references/`**: Documentación técnica complementaria que el agente consulta bajo demanda.

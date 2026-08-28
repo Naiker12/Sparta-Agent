@@ -28,6 +28,8 @@ class McpServerResponse(BaseModel):
     headers: dict[str, str] = Field(default_factory = dict)
     is_enabled: bool = True
     use_oauth: bool = False
+    # Runtime-only discovery metadata; never persisted and never includes schemas.
+    tool_count: Optional[int] = None
     created_at: str
     updated_at: str
 

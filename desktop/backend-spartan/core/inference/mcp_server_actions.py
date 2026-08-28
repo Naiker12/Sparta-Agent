@@ -13,6 +13,7 @@ from __future__ import annotations
 import asyncio
 import json
 import uuid
+from pathlib import Path
 from typing import Any, Optional
 from urllib.parse import urlparse
 
@@ -22,6 +23,7 @@ from core.inference.mcp_client import (
     TOOL_CACHE_INVALIDATING_FIELDS,
     cache_tools,
     close_stdio_sessions,
+    get_cached_tools,
     invalidate_tool_cache,
     is_stdio,
     list_tools_async,
@@ -101,20 +103,90 @@ def normalize_headers(headers: dict[str, str] | None) -> dict[str, str] | None:
 
 
 def list_servers_for_model() -> str:
-    """Return a JSON array of configured MCP servers (no secrets)."""
+    """Return a safe inventory of configured MCP servers (never secrets)."""
     rows = mcp_servers_db.list_servers()
     servers = []
     for row in rows:
+        cached_tools = get_cached_tools(row["id"])
         servers.append({
             "id": row["id"],
             "display_name": row["display_name"],
             "url": row["url"],
             "is_enabled": bool(row["is_enabled"]),
             "use_oauth": bool(row.get("use_oauth")),
+            "transport": "stdio" if is_stdio(row["url"]) else "http",
+            "status": "disabled" if not row["is_enabled"] else "tools_cached" if cached_tools is not None else "not_tested",
+            "tool_count": len(cached_tools) if cached_tools is not None else None,
+            "tools": [
+                {"name": tool.get("name"), "description": tool.get("description", "")}
+                for tool in (cached_tools or [])
+                if isinstance(tool, dict) and isinstance(tool.get("name"), str)
+            ],
         })
     if not servers:
-        return "No MCP servers configured."
+        return json.dumps({"configured_servers": [], "message": "No MCP servers configured."})
     return json.dumps(servers, indent=2)
+
+
+def _mcp_catalog_path() -> Path | None:
+    """Find the workspace-owned catalog without depending on process CWD."""
+    for parent in Path(__file__).resolve().parents:
+        candidate = parent / "sparta_mcp_catalog.json"
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+def list_catalog_templates() -> list[dict[str, Any]]:
+    """Return safe, UI-ready catalog entries; credentials are never catalog data."""
+    path = _mcp_catalog_path()
+    if path is None:
+        return []
+    try:
+        entries = json.loads(path.read_text(encoding="utf-8")).get("servers", {})
+    except Exception as exc:
+        logger.error("mcp_server_actions.catalog_read_failed", error=str(exc), exc_info=True)
+        return []
+    templates = []
+    for identifier, entry in entries.items():
+        if not isinstance(entry, dict):
+            continue
+        templates.append({
+            "id": identifier,
+            "name": entry.get("name", identifier),
+            "description": entry.get("description", ""),
+            "vendor": entry.get("vendor", ""),
+            "category": entry.get("category", "Other"),
+            "transport": entry.get("type", "http"),
+            "url": entry.get("url"),
+            "command": entry.get("command"),
+            "args": entry.get("args", []),
+            "auth_type": entry.get("auth_type", "none"),
+            "env_required": entry.get("env_required", []),
+            "headers_required": entry.get("headers_required", []),
+            "notes": entry.get("notes"),
+            "docs_url": entry.get("docs_url"),
+        })
+    return templates
+
+
+def search_catalog_for_model(arguments: dict[str, Any] | str) -> str:
+    """Search bundled MCP templates. Returns setup metadata, never credentials."""
+    if isinstance(arguments, str):
+        arguments = {"query": arguments}
+    query = str(arguments.get("query") or arguments.get("q") or "").strip().lower()
+    if not query:
+        return "Error: query is required to search the MCP catalog."
+    matches = []
+    for entry in list_catalog_templates():
+        searchable = " ".join(
+            str(entry.get(key, ""))
+            for key in ("name", "description", "vendor", "category", "notes")
+        ).lower()
+        if query not in f"{entry['id']} {searchable}":
+            continue
+        matches.append(entry)
+    return json.dumps({"query": query, "matches": matches}, indent=2)
 
 
 def add_server_for_model(arguments: dict) -> str:
@@ -140,8 +212,8 @@ def add_server_for_model(arguments: dict) -> str:
     raw_headers = arguments.get("headers")
     headers = normalize_headers(raw_headers) if isinstance(raw_headers, dict) else None
     is_enabled = arguments.get("is_enabled", True)
-    # OAuth is HTTP-only; force it off for stdio commands.
-    use_oauth = False
+    # OAuth is HTTP-only; local stdio servers receive credentials through env.
+    use_oauth = bool(arguments.get("use_oauth", False)) and not is_stdio(url)
 
     server_id = uuid.uuid4().hex[:16]
     try:
@@ -190,6 +262,8 @@ def update_server_for_model(arguments: dict) -> str:
         changes["headers_json"] = json.dumps(headers) if headers else None
     if "is_enabled" in arguments and arguments["is_enabled"] is not None:
         changes["is_enabled"] = bool(arguments["is_enabled"])
+    if "use_oauth" in arguments and arguments["use_oauth"] is not None:
+        changes["use_oauth"] = bool(arguments["use_oauth"])
 
     if not changes:
         return "Error: no fields to update. Provide at least one of: display_name, address, headers, is_enabled."
@@ -257,7 +331,11 @@ def test_server_for_model(arguments: dict) -> str:
         return f"Error: {error}"
     raw_headers = arguments.get("headers")
     headers = normalize_headers(raw_headers) if isinstance(raw_headers, dict) else None
-    return _probe_server(url, headers, use_oauth=False) or "Error: probe returned no result."
+    return _probe_server(
+        url,
+        headers,
+        bool(arguments.get("use_oauth", False)) and not is_stdio(url),
+    ) or "Error: probe returned no result."
 
 
 def import_config_for_model(arguments: dict) -> str:
@@ -297,10 +375,15 @@ def import_config_for_model(arguments: dict) -> str:
                 url=url,
                 headers=headers,
                 is_enabled=True,
-                use_oauth=False,
+                use_oauth=entry.use_oauth and not is_stdio(url),
             )
             existing_urls.add(url)
-            probe_res = _probe_server(url, headers, use_oauth=False, server_id=server_id)
+            probe_res = _probe_server(
+                url,
+                headers,
+                entry.use_oauth and not is_stdio(url),
+                server_id=server_id,
+            )
             added_count += 1
             results.append(f"- ✅ '{name}' ({url}): Registrado. {probe_res}")
         except Exception as exc:

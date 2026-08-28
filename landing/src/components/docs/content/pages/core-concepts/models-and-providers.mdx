@@ -1,54 +1,70 @@
 ---
 title: Modelos y Proveedores
-description: Configuración de modelos locales GGUF (llama.cpp / MLX) y proveedores Cloud en Sparta Agent.
+description: Pasarela agéntica multi-proveedor para inferencia local offline y conexiones en la nube.
 ---
 
-import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 import { Callout } from 'fumadocs-ui/components/callout';
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 
-# Modelos y Proveedores Soportados
+# Modelos y Proveedores
 
-Sparta Agent ofrece una arquitectura de inferencia flexible que te permite alternar entre modelos ejecutados 100% en tu hardware o proveedores en la nube.
+Sparta Agent incorpora una pasarela agéntica flexible que permite alternar dinámicamente entre **modelos locales de máxima privacidad** y **los modelos más avanzados de la industria en la nube**.
 
 ---
 
-## 🖥️ Modelos Locales (GGUF / Llama.cpp / MLX)
+## Modelos Locales (Inferencia 100% Offline)
 
-La ejecución local garantiza que ninguna palabra o dato abandone tu máquina:
+Al operar con modelos locales, tus datos, código fuente y mensajes se procesan en tu propia GPU/CPU sin emitir un solo paquete hacia internet.
 
-- **Llama.cpp Backend**: Soporte nativo para inferencia en CPU y GPU mediante CUDA (NVIDIA), ROCm (AMD), Metal (Apple Silicon) y Vulkan (Intel/AMD).
-- **Formatos Cuantizados (GGUF)**: Soporte completo para cuantizaciones `Q4_K_M`, `Q5_K_M`, `Q8_0` y `FP16`.
-- **Modelos Recomendados**:
-  - `Qwen 2.5 (7B / 14B / 32B)`: Excelente para razonamiento, seguimiento de instrucciones y código.
-  - `Llama 3.1 / 3.3 (8B / 70B)`: Gran versatilidad general en español e inglés.
-  - `DeepSeek R1 Distill`: Especializado en razonamiento paso a paso con token thinking.
-  - `Mistral Nemo (12B)`: Gran ventana de contexto de hasta 128k tokens.
+### Servidores y Motores Compatibles:
+- **Ollama**: Integración automática con detección de modelos descargados (`http://localhost:11434`).
+- **LM Studio**: Compatible con el servidor local de inferencia en el puerto `1234`.
+- **vLLM / llama.cpp**: Soporte para formatos cuantizados GGUF (`Q4_K_M`, `Q8_0`) con aceleración por hardware (NVIDIA CUDA, Apple Silicon Metal, AMD ROCm).
+
+### Modelos Locales Recomendados para Programación:
+| Modelo | Parámetros | Context Window | Caso de Uso Óptimo |
+| :--- | :--- | :--- | :--- |
+| **Qwen 2.5 Coder** | 7B / 14B / 32B | 32k - 128k | Edición de código, refactorización y pruebas unitarias. |
+| **Llama 3.3** | 70B | 128k | Razonamiento arquitectónico complejo y planificación. |
+| **DeepSeek R1 (GGUF)** | 8B / 14B / 32B | 64k - 128k | Resolución de problemas matemáticos y depuración profunda. |
+
+---
+
+## Proveedores en la Nube
+
+Para tareas que demandan la máxima capacidad cognitiva o ventanas de contexto masivas, Sparta Agent permite conectar los principales proveedores comerciales con almacenamiento de claves cifradas en tu sistema.
+
+<Tabs items={['Anthropic', 'OpenAI', 'Google Gemini', 'DeepSeek Cloud', 'Groq / OpenRouter']}>
+  <Tab value="Anthropic">
+    - **Modelos**: Claude 3.7 Sonnet (con modo de pensamiento híbrido), Claude 3.5 Sonnet, Claude 3.5 Haiku.
+    - **Ventana de Contexto**: 200.000 tokens.
+    - **Características**: Soporte para Computer Use nativo, generación de diffs precisos y comprensión de bases de código complejas.
+  </Tab>
+  <Tab value="OpenAI">
+    - **Modelos**: GPT-4o, GPT-4o-mini, o1, o3-mini.
+    - **Ventana de Contexto**: 128.000 tokens.
+    - **Características**: Excelente velocidad en llamadas a herramientas estructuradas (Function Calling) y soporte multimodal.
+  </Tab>
+  <Tab value="Google Gemini">
+    - **Modelos**: Gemini 2.5 Flash, Gemini 2.5 Pro, Gemini 1.5 Pro.
+    - **Ventana de Contexto**: 1.000.000 - 2.000.000 tokens.
+    - **Características**: Análisis masivo de repositorios completos en una sola llamada de contexto.
+  </Tab>
+  <Tab value="DeepSeek Cloud">
+    - **Modelos**: DeepSeek V3, DeepSeek R1.
+    - **Ventana de Contexto**: 64.000 tokens.
+    - **Características**: Razonamiento de alta densidad a costos de inferencia sumamente accesibles.
+  </Tab>
+  <Tab value="Groq / OpenRouter">
+    - **Modelos**: Llama 3.3 70B Versatile, Qwen 2.5 72B, Mixtral 8x22B.
+    - **Características**: Velocidades de streaming ultrarrápidas (>300 tokens/segundo en LPU Groq).
+  </Tab>
+</Tabs>
+
+---
+
+## Gestión Segura de Secretos (Vault Local)
 
 <Callout type="info">
-  Puedes descargar modelos GGUF directamente desde el catálogo integrado de Hugging Face sin necesidad de salir de la aplicación.
+  Todas las API Keys introducidas en Sparta Agent se almacenan en un almacén de claves local cifrado mediante **AES-256-GCM**, vinculado a la clave maestra de tu sesión de usuario. Ninguna clave es transmitida a servidores de telemetría de Sparta Agent.
 </Callout>
-
----
-
-## ☁️ Proveedores Cloud
-
-Si necesitas la máxima potencia de cálculo para tareas complejas o modelos de gran escala, puedes conectar tus propias API Keys:
-
-| Proveedor | Modelos Destacados | Características |
-| :--- | :--- | :--- |
-| **OpenAI** | `gpt-4o`, `gpt-4o-mini`, `o1`, `o3-mini` | Soporte de Structured Outputs, tool calling y visión. |
-| **Anthropic** | `claude-3-5-sonnet`, `claude-3-5-haiku` | Gran capacidad de redacción y análisis de código largo. |
-| **Google Gemini** | `gemini-2.0-flash`, `gemini-1.5-pro` | Ventana de contexto ultra amplia y baja latencia. |
-| **DeepSeek** | `deepseek-chat`, `deepseek-reasoner` | Inferencia económica de alta calidad y modo razonamiento. |
-| **Groq** | `llama-3.3-70b-versatile`, `mixtral-8x7b` | Inferencia ultra rápida a más de 300 tokens por segundo. |
-| **Ollama** | Cualquier modelo local servido vía API | Conexión a servidores Ollama existentes en tu red local. |
-
----
-
-## ⚙️ Configuración de Parámetros de Inferencia
-
-En los ajustes de cada conversación o modelo puedes personalizar:
-- **Temperatura (`0.0` - `1.0`)**: Menor para respuestas precisas/código, mayor para creatividad.
-- **Top P**: Muestreo por probabilidad acumulada.
-- **Context Length**: Límite de tokens de la ventana de contexto (ej. 8,192, 16,384 o 32,768).
-- **Reasoning Effort**: Nivel de profundidad en modelos de pensamiento (Low, Medium, High).

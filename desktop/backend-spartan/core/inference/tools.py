@@ -4533,6 +4533,7 @@ _ALWAYS_SAFE_TOOLS = frozenset({
     "web_search",
     "search_knowledge_base",
     "list_mcp_servers",
+    "search_mcp_catalog",
     "test_mcp_server",
     "get_current_datetime",
     "get_weather",
@@ -9906,11 +9907,36 @@ LIST_MCP_SERVERS_TOOL = {
     "function": {
         "name": "list_mcp_servers",
         "description": (
-            "List the MCP servers currently configured (connected or disabled), "
-            "including display name, whether it's a local command (stdio) or a "
-            "remote URL, and whether it's enabled."
+            "Use this first whenever the user asks which MCP servers or MCP tools "
+            "they have, what an installed MCP can do, or whether one is connected. "
+            "Lists configured servers only, with safe status and cached tool metadata; "
+            "never exposes secrets."
         ),
         "parameters": {"type": "object", "properties": {}},
+    },
+}
+
+SEARCH_MCP_CATALOG_TOOL = {
+    "type": "function",
+    "function": {
+        "name": "search_mcp_catalog",
+        "description": (
+            "Search the MCP templates bundled with this app. Use this when the user "
+            "asks to add, install, or learn about an MCP by name or capability. Explain "
+            "the matching server, required authentication, and permissions before calling "
+            "a mutating MCP tool. Catalog entries are available templates, not proof that "
+            "they are configured."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "MCP name, vendor, category, or capability to search for.",
+                },
+            },
+            "required": ["query"],
+        },
     },
 }
 
@@ -9935,6 +9961,10 @@ ADD_MCP_SERVER_TOOL = {
                     "description": "HTTP headers (remote) or environment variables (stdio). Optional.",
                     "additionalProperties": {"type": "string"},
                 },
+                "use_oauth": {
+                    "type": "boolean",
+                    "description": "Use browser OAuth for an HTTP MCP server. Never use for local stdio commands.",
+                },
                 "is_enabled": {"type": "boolean", "description": "Defaults to true."},
             },
             "required": ["display_name", "address"],
@@ -9955,6 +9985,7 @@ UPDATE_MCP_SERVER_TOOL = {
                 "address": {"type": "string"},
                 "headers": {"type": "object", "additionalProperties": {"type": "string"}},
                 "is_enabled": {"type": "boolean"},
+                "use_oauth": {"type": "boolean"},
             },
             "required": ["server_id"],
         },
@@ -9988,6 +10019,7 @@ TEST_MCP_SERVER_TOOL = {
             "properties": {
                 "address": {"type": "string"},
                 "headers": {"type": "object", "additionalProperties": {"type": "string"}},
+                "use_oauth": {"type": "boolean"},
             },
             "required": ["address"],
         },
@@ -10146,6 +10178,7 @@ ALL_TOOLS = [
     RENDER_HTML_TOOL,
     SEARCH_KNOWLEDGE_BASE_TOOL,
     LIST_MCP_SERVERS_TOOL,
+    SEARCH_MCP_CATALOG_TOOL,
     ADD_MCP_SERVER_TOOL,
     UPDATE_MCP_SERVER_TOOL,
     DELETE_MCP_SERVER_TOOL,
@@ -10431,6 +10464,8 @@ def execute_tool(
         )
     if name == "list_mcp_servers":
         return mcp_server_actions.list_servers_for_model()
+    if name == "search_mcp_catalog":
+        return mcp_server_actions.search_catalog_for_model(arguments)
     if name == "add_mcp_server":
         return mcp_server_actions.add_server_for_model(arguments)
     if name == "update_mcp_server":

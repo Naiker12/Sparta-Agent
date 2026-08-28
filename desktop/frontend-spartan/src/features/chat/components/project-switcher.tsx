@@ -1,4 +1,3 @@
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,6 +9,7 @@ import { Folder01Icon } from "@hugeicons/core-free-icons";
 import { Tick02Icon } from "@/lib/tick-icon";
 import { ChevronDownStandardIcon } from "@/lib/chevron-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { useT } from "@/i18n";
 import { type ReactElement, useState } from "react";
 import { useChatActive } from "../runtime-provider";
 import type { ProjectRecord } from "../types";
@@ -27,25 +27,35 @@ export function ProjectSwitcher({
   onSelectProject: (projectId: string) => void;
   onViewAllProjects: () => void;
 }): ReactElement {
+  const t = useT();
   const showLoadingRow = isLoading && projects.length === 0;
   const showEmptyRow = !isLoading && projects.length === 0;
-  const label = currentProject?.name ?? (isLoading ? "Project" : "Projects");
+  const label =
+    currentProject?.name ??
+    (isLoading
+      ? t("chat.projectSwitcher.project")
+      : t("chat.projectSwitcher.projects"));
 
   // Controlled so the body-portaled dropdown can't linger over another tab off-route.
   const active = useChatActive();
   const [open, setOpen] = useState(false);
 
   return (
-    <DropdownMenu open={active && open} onOpenChange={(o) => setOpen(active && o)}>
+    <DropdownMenu
+      open={active && open}
+      onOpenChange={(o) => setOpen(active && o)}
+    >
       <DropdownMenuTrigger asChild={true}>
         <button
           type="button"
           aria-label={
             currentProject
-              ? `Project: ${currentProject.name}. Switch project`
+              ? t("chat.projectSwitcher.switchProject", {
+                  name: currentProject.name,
+                })
               : isLoading
-                ? "Loading project"
-                : "Pick a project"
+                ? t("chat.projectSwitcher.loadingProject")
+                : t("chat.projectSwitcher.pickProject")
           }
           className="-mx-1 flex h-[34px] shrink-0 items-center gap-2 rounded-full pl-3 pr-2.5 transition-colors hover:bg-[#ececec] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring dark:hover:bg-accent"
         >
@@ -78,46 +88,46 @@ export function ProjectSwitcher({
         {/* Scroll the list here, not the container, so the rounded corners on
             the scrollbar side are not squared off. */}
         <div className="max-h-72 overflow-y-auto">
-        {showLoadingRow ? (
-          <DropdownMenuItem disabled={true} className="text-muted-foreground">
-            Loading…
-          </DropdownMenuItem>
-        ) : null}
-        {showEmptyRow ? (
-          <DropdownMenuItem disabled={true} className="text-muted-foreground">
-            No projects yet
-          </DropdownMenuItem>
-        ) : null}
-        {projects.map((project) => {
-          const isActive = currentProject?.id === project.id;
-          return (
-            <DropdownMenuItem
-              key={project.id}
-              onSelect={() => onSelectProject(project.id)}
-              className="justify-between"
-            >
-              <span className="flex min-w-0 items-center gap-2">
-                <HugeiconsIcon
-                  icon={Folder01Icon}
-                  strokeWidth={1.75}
-                  className="size-icon shrink-0 text-foreground/70"
-                />
-                <span className="truncate">{project.name}</span>
-              </span>
-              {isActive ? (
-                <HugeiconsIcon
-                  icon={Tick02Icon}
-                  strokeWidth={2}
-                  className="size-icon shrink-0 text-foreground/80"
-                />
-              ) : null}
+          {showLoadingRow ? (
+            <DropdownMenuItem disabled={true} className="text-muted-foreground">
+              {t("chat.projectSwitcher.loading")}
             </DropdownMenuItem>
-          );
-        })}
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onSelect={onViewAllProjects}>
-          View all projects
-        </DropdownMenuItem>
+          ) : null}
+          {showEmptyRow ? (
+            <DropdownMenuItem disabled={true} className="text-muted-foreground">
+              {t("chat.projectSwitcher.noProjects")}
+            </DropdownMenuItem>
+          ) : null}
+          {projects.map((project) => {
+            const isActive = currentProject?.id === project.id;
+            return (
+              <DropdownMenuItem
+                key={project.id}
+                onSelect={() => onSelectProject(project.id)}
+                className="justify-between"
+              >
+                <span className="flex min-w-0 items-center gap-2">
+                  <HugeiconsIcon
+                    icon={Folder01Icon}
+                    strokeWidth={1.75}
+                    className="size-icon shrink-0 text-foreground/70"
+                  />
+                  <span className="truncate">{project.name}</span>
+                </span>
+                {isActive ? (
+                  <HugeiconsIcon
+                    icon={Tick02Icon}
+                    strokeWidth={2}
+                    className="size-icon shrink-0 text-foreground/80"
+                  />
+                ) : null}
+              </DropdownMenuItem>
+            );
+          })}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onSelect={onViewAllProjects}>
+            {t("chat.projectSwitcher.viewAll")}
+          </DropdownMenuItem>
         </div>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -1,0 +1,30 @@
+---
+title: Entrada de Voz y Transcripción Whisper
+description: Dictado por voz en lenguaje natural con procesamiento Whisper local para agilizar prompts.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Entrada de Voz y Transcripción Whisper
+
+Sparta Agent incorpora soporte nativo para **dictado por voz e interacción multimodal de audio**, permitiendo redactar instrucciones complejas, explicaciones arquitectónicas o refactorizaciones simplemente hablando.
+
+---
+
+## Modos de Transcripción
+
+### 1. Whisper Local (100% Offline)
+- Utiliza modelos `whisper.cpp` cuantizados (`tiny`, `base`, `small`) ejecutados en tu procesador o acelerador neural (NPU / Metal).
+- Transcripción instantánea en español, inglés y más de 90 idiomas con cero latencia de red.
+
+### 2. Speech Recognition Nativo del Sistema Operativo
+- Integración directa con las APIs de reconocimiento de voz de Windows, macOS y Linux para menor consumo de batería en portátiles.
+
+---
+
+## Formateo Inteligente de Código
+
+El agente procesa el audio transcribiendo la intención del usuario y aplicando post-procesamiento para:
+- Corregir términos técnicos y nombres de paquetes (`npm`, `zustand`, `postgresql`, `docker`).
+- Insertar bloques de código automáticamente cuando se dictan funciones o comandos de terminal.
+- Eliminar muletillas y ruidos ambientales antes de enviar el prompt al LLM.

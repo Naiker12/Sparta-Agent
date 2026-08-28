@@ -16,6 +16,7 @@ from routes.mcp_servers import router as mcp_servers_router
 from routes.rag import router as rag_router
 from routes.research_runs import router as research_runs_router
 from routes.youtube import router as youtube_router
+from routes.skills import router as skills_router
 
 __all__ = [
     "models_router",
@@ -30,7 +31,8 @@ __all__ = [
     "rag_router",
     "research_runs_router",
     "youtube_router",
+    "skills_router",
 ]
 
 # Bind the re-export so the import-hoist verifier counts it as used.
-_ = (rag_router, research_runs_router, youtube_router)
+_ = (rag_router, research_runs_router, youtube_router, skills_router)

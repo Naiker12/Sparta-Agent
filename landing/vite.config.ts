@@ -8,7 +8,7 @@ export default defineConfig({
   base: './',
   plugins: [fumadocsMdx({}), react(), tailwindcss()],
   optimizeDeps: {
-    include: ['cookie'],
+    include: ['cookie', 'set-cookie-parser', 'react-router', 'react-router-dom'],
   },
   ssr: { noExternal: ['fumadocs-core', 'fumadocs-ui'] },
   resolve: {

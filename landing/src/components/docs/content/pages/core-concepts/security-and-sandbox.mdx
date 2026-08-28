@@ -1,36 +1,44 @@
 ---
 title: Seguridad y Sandbox
-description: Arquitectura de seguridad, aislamiento de procesos y almacenamiento local seguro en Sparta Agent.
+description: Modelo de aislamiento de procesos, cifrado local y protección contra fugas de datos en Sparta Agent.
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
 
 # Seguridad y Sandbox
 
-Sparta Agent está diseñado para que desarrolladores, investigadores y empresas puedan ejecutar agentes autónomos con **garantías de seguridad de nivel de producción**.
+La seguridad de Sparta Agent está fundamentada en el principio de **cero confianza no autorizada (Zero-Trust Local Engine)**. A diferencia de los asistentes que transmiten tu espacio de trabajo a servidores remotos, Sparta Agent implementa múltiples capas de contención.
 
 ---
 
-## 🔒 Almacenamiento Local Seguro
+## Arquitectura de Aislamiento en Capas
 
-Toda la base de datos de Sparta Agent reside en tu disco local mediante **SQLite en modo WAL (Write-Ahead Logging)**:
-- **Ubicación de datos**: `~/.sparta/studio.db` o dentro del directorio de la aplicación.
-- **Sin telemetría forzada**: Ningún prompt, reporte de investigación, fragmento de código o archivo adjunto se envía a servidores externos de telemetría.
-- **Cifrado de Credenciales**: Las claves de API (OpenAI, Anthropic, Google, etc.) y los tokens de MCP se almacenan de forma segura utilizando el almacenamiento seguro del sistema operativo (Keychain en macOS, DPAPI en Windows, Secret Service en Linux).
+<SecurityIsolationDiagram />
 
 ---
 
-## 🛡️ Sandbox de Ejecución de Código
+## Principios de Seguridad Fundamentales
 
-Cuando el agente ejecuta código Python o comandos de consola en Modo Agente:
-1. **Entorno Aislado (`_session_in_flight`)**: El código se ejecuta dentro de un subproceso con un directorio de trabajo temporal confinado (`sandbox/`).
-2. **Control de Timeout y Recursos**: Cada proceso cuenta con un temporizador estricto para evitar loops infinitos o bloqueo de recursos del sistema.
-3. **Validación de Señales de Escape**: El backend analiza los patrones de ejecución para evitar escapes de señales antes de lanzar el intérprete.
+### 1. Invariantes del Sistema de Archivos
+- **Rutas Relativas al Workspace**: Toda operación de lectura o modificación debe circunscribirse al directorio del workspace activo seleccionado por el usuario.
+- **Prohibición de Sobreescrituras Ciegas**: El agente debe inspeccionar el contenido existente antes de aplicar cualquier modificación incremental.
+- **Preservación de Integridad**: Si una edición genera errores sintácticos detectados por el parser de AST, la operación puede revertirse inmediatamente.
 
----
+### 2. Sandbox de Ejecución de Comandos
+- Los comandos de terminal se ejecutan en subprocesos aislados con variables de entorno restringidas.
+- **Paginación Desactivada**: Se fuerza `PAGER=cat` para evitar bloqueos interactivos no gestionados.
+- **Gestión de Procesos en Segundo Plano**: Cada tarea asíncrona cuenta con identificadores únicos, temporizadores de cancelación y aislamiento de streams `stdout`/`stderr`.
 
-## 🛑 Protocolo de Consentimiento Explícito
-
-<Callout type="warn">
-  Ninguna operación destructiva (modificar código fuente, eliminar archivos, ejecutar scripts en PowerShell o Bash) se ejecutará en segundo plano sin mostrar primero una tarjeta interactiva con los detalles del comando para aprobación manual.
+### 3. Cero Telemetría de Código Fuente
+<Callout type="info">
+  Sparta Agent no recopila fragmentos de tu código, historiales de conversación ni nombres de variables. La única conexión externa es la que el usuario configure explícitamente hacia su proveedor de IA o servidores MCP.
 </Callout>
+
+---
+
+## Políticas de Auditoría en Tiempo Real
+
+Cada acción ejecutada por el agente genera un registro inmutable en formato JSON Lines (`transcript.jsonl`) almacenado en el directorio de la aplicación, permitiendo:
+1. Inspeccionar cada llamada a herramientas y sus argumentos exactos.
+2. Comprobar la respuesta devuelta por el sistema.
+3. Auditar la cronología completa de cambios para trazabilidad de equipo.

@@ -1,39 +1,38 @@
 ---
 title: Configuración de Servidores MCP
-description: Cómo importar y configurar servidores MCP en formato JSON estándar en Sparta Agent.
+description: Guía de configuración y sintaxis del archivo mcp_config.json en Sparta Agent.
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
 
 # Configuración de Servidores MCP
 
-Puedes importar y gestionar la configuración de tus servidores MCP desde la interfaz gráfica en **Ajustes > MCP** o pidiéndole al agente que procese tu configuración JSON.
+Los servidores MCP se configuran de forma declarativa mediante un archivo `mcp_config.json` ubicado en la carpeta de configuración de tu usuario o en la raíz de tu proyecto.
 
 ---
 
-## 📄 Formato Estándar de Configuración (`mcpServers`)
-
-Sparta Agent utiliza el mismo formato estándar de configuración que Claude Desktop:
+## Estructura del Archivo `mcp_config.json`
 
 ```json
 {
   "mcpServers": {
     "filesystem": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "C:\\proyectos"]
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/ruta/a/tu/workspace"],
+      "env": {}
+    },
+    "postgres": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres"],
+      "env": {
+        "POSTGRES_CONNECTION_STRING": "postgresql://usuario:password@localhost:5432/mibase"
+      }
     },
     "github": {
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-github"],
       "env": {
         "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_xxxxxxxxxxxxxxxxxxxx"
-      }
-    },
-    "notion": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-notion"],
-      "env": {
-        "NOTION_API_KEY": "secret_xxxxxxxxxxxxxxxxxxxx"
       }
     }
   }
@@ -42,12 +41,14 @@ Sparta Agent utiliza el mismo formato estándar de configuración que Claude Des
 
 ---
 
-## ⚡ Importación Automática con `import_mcp_config`
+## Parámetros de Configuración
 
-En el chat, puedes pegar un bloque de configuración JSON y pedirle a Sparta Agent:
+- **`command`**: Ejecutable a invocar (ej. `npx`, `node`, `python`, `uvx`, o un binario nativo).
+- **`args`**: Lista de argumentos de línea de comandos para iniciar el servidor.
+- **`env`**: Variables de entorno inyectadas de forma aislada al proceso hijo del servidor MCP.
 
-```text
-"Por favor importa esta configuración de servidores MCP para Notion y GitHub."
-```
+---
 
-El agente ejecutará la herramienta `import_mcp_config`, verificará la sintaxis, probará la conectividad y registrará los nuevos servidores en el catálogo activo.
+## Verificación de Conexión
+
+Al iniciar Sparta Agent o al recargar la configuración, el sistema inicializa los servidores MCP y reporta su estado en el panel de herramientas activas. Si un servidor falla al iniciar, los errores se registran en el visor de depuración de IPC.

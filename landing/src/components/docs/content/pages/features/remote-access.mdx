@@ -1,0 +1,40 @@
+---
+title: Acceso Remoto, LAN y Puente GPU Colab
+description: Control remoto cifrado mediante LAN, Cloudflare Tunnel y aceleración GPU gratuita con Google Colab.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+
+# Acceso Remoto, LAN y Puente GPU Colab
+
+Sparta Agent permite extender tu entorno de ingeniería más allá de tu estación de trabajo principal mediante módulos de conectividad remota segura y aceleración por GPU distribuida.
+
+---
+
+## Modos de Acceso Remoto
+
+<Tabs items={['Acceso LAN Local', 'Túnel Cloudflare', 'Puente GPU Colab']}>
+  <Tab value="Acceso LAN Local">
+    - **Uso**: Controla Sparta Agent desde tu tablet, smartphone o laptop secundaria en la misma red Wi-Fi.
+    - **Seguridad**: Autenticación mediante código QR / PIN temporal con cifrado TLS local.
+    - **Activación**: Activa el conmutador *Acceso LAN* en Ajustes para generar la URL interna (ej. `http://192.168.1.50:8000`).
+  </Tab>
+  <Tab value="Túnel Cloudflare">
+    - **Uso**: Acceso seguro a tu agente desde cualquier lugar del mundo sin abrir puertos en tu router ni configurar DDNS.
+    - **Tecnología**: Utiliza `cloudflared` para crear un túnel TLS seguro hacia tu subdominio de Cloudflare.
+    - **Protección**: Integración con Cloudflare Zero Trust y autenticación de doble factor.
+  </Tab>
+  <Tab value="Puente GPU Colab">
+    - **Uso**: ¿Tu máquina local no tiene GPU potente? Conecta un notebook de **Google Colab (T4 / A100)** gratuito o de bajo costo para procesar modelos pesados de 70B parámetros.
+    - **Integración**: Sparta Agent se conecta mediante un WebSocket cifrado al runtime de Colab, enviando los tensores y recibiendo el streaming de tokens a velocidad completa.
+  </Tab>
+</Tabs>
+
+---
+
+## Privacidad en Conexiones Remotas
+
+<Callout type="info">
+  Incluso cuando se utiliza el túnel remoto o el puente de Colab, tu código fuente permanece exclusivamente en tu máquina anfitriona; únicamente se transmiten los fragmentos de contexto requeridos para la inferencia del modelo.
+</Callout>

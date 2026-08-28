@@ -1,75 +1,90 @@
 ---
 title: Introducción a Sparta Agent
-description: Agente de Inteligencia Artificial local, privado y autónomo con soporte para RAG multimodal, Búsqueda Profunda y protocolo MCP.
+description: Entorno de desarrollo agéntico local-first, privado y autónomo con soporte para RAG multimodal, Deep Research y protocolo MCP.
 ---
 
-import { Bot, Shield, Zap, Database, Search, Layers } from 'lucide-react';
+import { Bot, Shield, Zap, Database, Search, Layers, Terminal, Cpu, Lock } from 'lucide-react';
 import { Card, Cards } from 'fumadocs-ui/components/card';
+import { Callout } from 'fumadocs-ui/components/callout';
 
 # Sparta Agent
 
-**Sparta Agent** es un asistente y agente de inteligencia artificial de escritorio diseñado con una premisa fundamental: **control total, privacidad absoluta y capacidades avanzadas de ejecución autónoma**.
+**Sparta Agent** es un entorno de desarrollo integrado (IDE) y agente de inteligencia artificial de escritorio diseñado bajo tres principios fundamentales: **control total del usuario, privacidad absoluta local-first y ejecución autónoma verificable**.
 
-Funciona de forma **100% offline y local** utilizando modelos en formato GGUF mediante `llama.cpp` o Apple Silicon MLX, y también permite conectar proveedores en la nube (OpenAI, Anthropic, Google Gemini, DeepSeek, Groq, Ollama) bajo una capa unificada de seguridad.
+A diferencia de los entornos basados en la nube tradicionales, Sparta Agent opera con un motor de ejecución híbrido: la indexación de código, la terminal, el almacenamiento de secretos y la máquina de estados agéntica residen **100% en tu máquina local**.
 
 ---
 
-## ⚡ Pilares Fundamentales
+## Pilares de Arquitectura
 
 <Cards>
   <Card
-    icon={<Shield className="text-emerald-500" />}
-    title="Privacidad y Aislamiento"
+    icon={<Shield className="size-5 text-[#e6e6e6]" />}
+    title="Privacidad y Aislamiento Local-First"
     href="/docs/core-concepts/security-and-sandbox"
   >
-    Tus conversaciones, documentos y claves nunca salen de tu equipo a menos que tú lo autorices explícitamente.
+    Tus conversaciones, documentos y claves nunca salen de tu equipo. Compatibilidad nativa con modelos locales mediante Ollama, LM Studio y vLLM.
   </Card>
 
   <Card
-    icon={<Bot className="text-emerald-500" />}
-    title="Diferenciación de Modos"
+    icon={<Bot className="size-5 text-[#e6e6e6]" />}
+    title="Diferenciación Estricta de Modos"
     href="/docs/core-concepts/chat-vs-agent-mode"
   >
-    Modo Chat para consultas de solo lectura y Modo Agente con diálogo modal de confirmación previa.
+    Modo Chat para consultas de solo lectura y Modo Agente con diálogo modal de autorización previa explícita para cada cambio en disco o terminal.
   </Card>
 
   <Card
-    icon={<Search className="text-emerald-500" />}
+    icon={<Search className="size-5 text-[#e6e6e6]" />}
     title="Búsqueda Profunda (Deep Research)"
     href="/docs/features/deep-research"
   >
-    Investigaciones web autónomas de múltiples pasos con síntesis y citas estructuradas.
+    Investigaciones web autónomas de múltiples pasos con síntesis recursiva, planificación de subpreguntas y citas estructuradas.
   </Card>
 
   <Card
-    icon={<Database className="text-emerald-500" />}
-    title="RAG Local Multimodal"
+    icon={<Database className="size-5 text-[#e6e6e6]" />}
+    title="RAG Local Híbrido Multimodal"
     href="/docs/features/multimodal-rag"
   >
-    Búsqueda híbrida (vectorial + FTS5 léxica) sobre PDFs, Excel, Word, CSV y repositorios de código.
+    Búsqueda híbrida (vectorial con SQLite-vec + FTS5 léxica) sobre PDFs, Excel, Word, CSV y repositorios completos de código fuente.
   </Card>
 
   <Card
-    icon={<Layers className="text-emerald-500" />}
-    title="Protocolo MCP Nativo"
+    icon={<Layers className="size-5 text-[#e6e6e6]" />}
+    title="Protocolo MCP Nativo (Model Context Protocol)"
     href="/docs/mcp/introduction"
   >
-    Integración directa con herramientas como Notion, Google Drive, Slack, GitHub y Filesystem mediante Model Context Protocol.
+    Integración directa con herramientas como Notion, Google Drive, Slack, GitHub, PostgreSQL y Filesystem mediante el estándar abierto MCP.
   </Card>
 
   <Card
-    icon={<Zap className="text-emerald-500" />}
-    title="Herramientas en Tiempo Real"
-    href="/docs/features/live-tools"
+    icon={<Terminal className="size-5 text-[#e6e6e6]" />}
+    title="Motor de Ejecución y Terminal Multi-Shell"
+    href="/docs/features/code-execution"
   >
-    Pronóstico meteorológico global en vivo (Open-Meteo), fecha/hora del sistema y navegación web headless.
+    Ejecución nativa de comandos en PowerShell, Zsh y Bash con streaming en vivo, timeout configurable y aislamiento en segundo plano.
   </Card>
 </Cards>
 
 ---
 
-## 🚀 ¿Por dónde empezar?
+## Tabla Comparativa de Capacidades
 
-- Si es tu primera vez, sigue la [Guía de Inicio Rápido](/docs/quickstart).
-- Comprende la diferencia entre el [Modo Chat y el Modo Agente](/docs/core-concepts/chat-vs-agent-mode).
-- Aprende a conectar tus servidores [MCP (Model Context Protocol)](/docs/mcp/introduction).
+| Característica | Sparta Agent | IDEs Cloud Tradicionales | Extensiones Genéricas |
+| :--- | :--- | :--- | :--- |
+| **Residencia del Código** | 100% en tu máquina (Local-First) | Servidores de terceros | Servidores de terceros |
+| **Modelos Locales (Ollama / vLLM)** | Soportado sin conexión | No disponible | Limitado |
+| **Control de Permisos** | Diálogo modal obligatorio por acción | Automático sin aviso | No configurable |
+| **Soporte MCP** | Nativo (Cliente IPC completo) | Parcial / Cerrado | Requiere plugins externos |
+| **Almacenamiento de Secretos** | Vault local cifrado con AES-256 | Nube del proveedor | Texto plano / Variables de entorno |
+| **RAG Multimodal** | Base de datos vectorial SQLite local | Indexación remota | No incluido |
+
+---
+
+## Guía de Navegación
+
+- Para configurar tu entorno en menos de 3 minutos, consulta la [Guía de Inicio Rápido](/docs/quickstart).
+- Comprende el modelo de permisos en [Modo Chat vs Modo Agente](/docs/core-concepts/chat-vs-agent-mode).
+- Aprende a conectar tus servidores de datos en [Servidores MCP Soportados](/docs/mcp/supported-servers).
+- Revisa los detalles técnicos del motor en [Arquitectura del Backend y Rust Sidecar](/docs/architecture/backend-architecture).

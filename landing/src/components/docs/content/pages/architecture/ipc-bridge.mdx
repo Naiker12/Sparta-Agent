@@ -1,29 +1,16 @@
 ---
-title: Puente IPC y Protocolo de Comunicación
-description: Comunicación bidireccional segura entre Electron/Tauri, el backend FastAPI y los servidores MCP.
+title: Puente IPC Seguro
+description: Protocolo de comunicación inter-procesos tipado entre Electron y el motor nativo de Sparta Agent.
 ---
 
-# Puente IPC y Protocolo de Comunicación
+# Puente IPC Seguro
 
-Para garantizar la máxima seguridad y rendimiento, Sparta Agent utiliza una arquitectura de **Puente IPC (Inter-Process Communication)** fuertemente tipada.
-
----
-
-## 🔒 Canales IPC Principales
-
-1. **`system.channel.ts`**:
-   - Monitoreo de recursos del sistema (CPU, VRAM, RAM, estado de la red).
-   - Detección de versiones y comprobación de actualizaciones de la aplicación.
-2. **`mcp.channel.ts`**:
-   - Invocación de herramientas MCP (`mcp:call-tool`).
-   - Envío de streams y recepción de eventos de progreso.
-3. **`dialog.channel.ts`**:
-   - Selector nativo de archivos y carpetas del sistema operativo.
-4. **`window.channel.ts`**:
-   - Control de ventana nativa (minimizar, maximizar, cerrar, modo pantalla completa).
+La comunicación entre el proceso de renderizado de Electron, el proceso principal y el sidecar de Rust se realiza a través de un canal de **comunicación inter-procesos (IPC)** tipado y validado criptográficamente.
 
 ---
 
-## 🛡️ Aislamiento de Contexto
+## Principios del Puente IPC
 
-El script de `preload` expone únicamente APIs seguras e inmutables a la capa de renderizado web a través de `contextBridge.exposeInMainWorld`, evitando cualquier inyección no autorizada o acceso directo a Node.js desde la ventana web.
+1. **Esquemas Tipados (Type-Safe RPC)**: Cada método IPC expuesto cuenta con definiciones de tipos TypeScript y Rust sincronizadas, evitando fallos de serialización en tiempo de ejecución.
+2. **ContextBridge de Electron**: El renderer no tiene acceso a Node.js nativo ni a APIs de sockets directas; interactúa exclusivamente a través de métodos seguros expuestos en `window.spartaAPI`.
+3. **Validación de Payloads**: Cada solicitud se valida contra esquemas de datos antes de transmitirse al ejecutor de herramientas o al permission broker.

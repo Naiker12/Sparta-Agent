@@ -305,6 +305,7 @@ from routes import (
     openai_codex_auth_router,
     rag_router,
     research_runs_router,
+    skills_router,
     youtube_router,
 )
 from routes.project_files import router as project_files_router
@@ -1361,6 +1362,7 @@ app.include_router(openai_codex_auth_router, prefix = "/api/providers", tags = [
 
 app.include_router(settings_router, prefix = "/api/settings", tags = ["settings"])
 app.include_router(mcp_servers_router, prefix = "/api/mcp/servers", tags = ["mcp"])
+app.include_router(skills_router, prefix = "/api/skills", tags = ["skills"])
 app.include_router(prompts_router, prefix = "/api/prompts", tags = ["prompts"])
 app.include_router(profile_stats_router, prefix = "/api/profile", tags = ["profile"])
 app.include_router(llama_router, prefix = "/api/llama", tags = ["llama"])

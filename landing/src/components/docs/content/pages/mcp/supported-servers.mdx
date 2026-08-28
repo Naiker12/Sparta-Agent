@@ -1,31 +1,39 @@
 ---
 title: Servidores MCP Soportados
-description: Catálogo de conectores MCP preconfigurados y compatibles con Sparta Agent.
+description: Catálogo oficial de conectores y servidores Model Context Protocol validados para Sparta Agent.
 ---
 
 # Servidores MCP Soportados
 
-Sparta Agent es compatible con cualquier servidor que implemente la especificación estándar de MCP mediante transporte **STDIO** o **SSE (Server-Sent Events)**.
+Sparta Agent ha sido validado exhaustivamente con el ecosistema oficial y comunitario de servidores MCP. A continuación se detallan los principales servidores soportados:
 
 ---
 
-## 📦 Conectores Populares
+## Catálogo de Servidores Validados
 
-### 1. Notion MCP Server
-- **Lectura**: Buscar páginas, consultar bases de datos, leer bloques de contenido.
-- **Escritura (Modo Agente)**: Crear nuevas páginas, agregar tareas en bases de datos, actualizar bloques.
+### 1. Filesystem MCP Server
+Permite al agente explorar directorios, leer metadatos y operar sobre archivos con límites de ruta estrictos.
+- **Paquete**: `@modelcontextprotocol/server-filesystem`
+- **Operaciones**: `read_file`, `write_file`, `list_directory`, `get_file_info`.
 
-### 2. Google Drive / OneDrive MCP
-- **Lectura**: Listar archivos, descargar contenido de documentos, buscar por nombre o contenido.
-- **Escritura (Modo Agente)**: Subir archivos, organizar carpetas.
+### 2. PostgreSQL & SQLite MCP Servers
+Inspección de esquemas relacionales, ejecución de consultas SQL y análisis de rendimiento de índices.
+- **Paquete**: `@modelcontextprotocol/server-postgres`, `mcp-server-sqlite`
+- **Operaciones**: `query`, `list_tables`, `describe_table`.
 
-### 3. Slack MCP
-- **Lectura**: Listar canales, buscar hilos de conversación, leer mensajes recientes.
-- **Escritura (Modo Agente)**: Enviar mensajes a canales o responder en hilos.
+### 3. Git & GitHub MCP Server
+Gestión de repositorios, creación de commits, inspección de diffs y gestión de issues y pull requests.
+- **Paquete**: `@modelcontextprotocol/server-github`
+- **Operaciones**: `create_or_update_file`, `push_files`, `create_pull_request`, `search_repositories`.
 
-### 4. GitHub / Git MCP
-- **Lectura**: Consultar issues, pull requests, commits y ramas.
-- **Escritura (Modo Agente)**: Crear issues, comentar en PRs, hacer commit de cambios aprobados.
+### 4. Notion MCP Server
+Lectura y actualización de bases de datos, páginas y documentación de equipo en Notion.
+- **Operaciones**: `search_notion`, `append_block_children`, `create_database_item`.
 
-### 5. Filesystem MCP
-- **Lectura/Escritura**: Acceso controlado a directorios autorizados en el equipo local.
+### 5. Slack MCP Server
+Consulta de canales, búsqueda de hilos y envío de notificaciones y resúmenes de despliegue a tu equipo.
+- **Operaciones**: `post_message`, `list_channels`, `get_channel_history`.
+
+### 6. Google Drive & Gmail MCP Server
+Búsqueda y lectura de documentos en la nube de Google, descarga de adjuntos y redacción de borradores.
+- **Operaciones**: `search_files`, `download_file`, `create_draft`.

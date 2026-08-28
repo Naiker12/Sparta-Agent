@@ -9,65 +9,78 @@ import { Callout } from 'fumadocs-ui/components/callout';
 
 # Guía de Inicio Rápido
 
-Sigue estos pasos para poner en marcha tu entorno de Sparta Agent:
+Aprende a instalar, configurar y ejecutar tu primera tarea autónoma con Sparta Agent.
+
+---
 
 <Steps>
 
-### 1. Iniciar la Aplicación
+### 1. Descarga e Instalación
 
-Abre la aplicación de escritorio de Sparta Agent o ejecuta el entorno local de desarrollo:
+Descarga el instalador oficial correspondiente a tu sistema operativo desde la sección de descargas o compílalo desde el código fuente:
 
-<Tabs items={['Windows', 'macOS / Linux']}>
+<Tabs items={['Windows', 'macOS', 'Linux']}>
   <Tab value="Windows">
-    ```powershell
-    # Desde la raíz del proyecto
-    npm run dev
-    ```
+    1. Descarga el instalador `Sparta-Agent-Windows-0.2.9-Setup.exe`.
+    2. Ejecuta el asistente de instalación.
+    3. Sparta Agent se integrará en tu menú de inicio y configurará el canal IPC local de Windows.
   </Tab>
-  <Tab value="macOS / Linux">
+  <Tab value="macOS">
+    1. Descarga el paquete `Sparta-Agent-Mac-0.2.9-Installer.dmg` (Universal: Apple Silicon M1-M4 & Intel).
+    2. Arrastra `Sparta Agent.app` a tu carpeta de **Aplicaciones**.
+    3. Otorga permisos de terminal cuando el sistema lo solicite para la ejecución de comandos locales.
+  </Tab>
+  <Tab value="Linux">
+    1. Descarga el binario portable `Sparta-Agent-Linux-0.2.9.AppImage` o el paquete `.deb`.
+    2. Otorga permisos de ejecución:
     ```bash
-    # Desde la raíz del proyecto
-    npm run dev
+    chmod +x Sparta-Agent-Linux-0.2.9.AppImage
+    ./Sparta-Agent-Linux-0.2.9.AppImage
     ```
   </Tab>
 </Tabs>
 
-### 2. Seleccionar o Descargar un Modelo
+---
 
-En la esquina superior del chat, abre el **Selector de Modelos**:
-- **Modelos Locales (GGUF)**: Puedes descargar directamente modelos optimizados como *Qwen 2.5 7B*, *Llama 3.1 8B*, o *Mistral 7B* con aceleración GPU (CUDA, Metal o Vulkan).
-- **Proveedores Cloud**: Configura tu clave de API para OpenAI, Anthropic, Gemini, DeepSeek o Groq en la pestaña de Ajustes.
+### 2. Configuración del Proveedor de Modelos
 
-<Callout type="info">
-  Para equipos con poca memoria RAM o sin tarjeta gráfica dedicada, se recomiendan modelos cuantizados en formato `Q4_K_M` o proveedores cloud.
-</Callout>
+En la barra de estado o en la ventana de **Ajustes**, selecciona tu motor de inferencia preferido:
 
-### 3. Elegir el Modo de Operación
+- **Modelos Locales (Privacidad 100% Offline)**:
+  - **Ollama**: Sparta Agent detecta automáticamente instancias de Ollama corriendo en `http://localhost:11434`.
+  - **LM Studio / vLLM**: Compatible con cualquier endpoint compatible con OpenAI en tu red local.
+  - **Modelos recomendados**: `qwen2.5-coder:7b`, `llama3.3:70b`, `deepseek-r1:14b`.
 
-En la barra inferior de entrada de mensajes:
-- Selecciona **Modo Chat** para hacer preguntas, buscar en la web, analizar PDFs o consultar información en modo solo lectura.
-- Selecciona **Modo Agente** si deseas que el asistente cree o modifique archivos, instale dependencias o ejecute código previa confirmación en pantalla.
+- **Proveedores en la Nube**:
+  - Introduce tu API Key de Anthropic (Claude 3.7 / 3.5 Sonnet), OpenAI (GPT-4o), Google Gemini, DeepSeek o Groq.
+  - Tus claves se almacenan cifradas localmente en tu sistema con **AES-256-GCM**.
 
-### 4. Probar tu Primera Consulta
+---
 
-Prueba una de estas consultas de ejemplo:
+### 3. Selección del Modo de Operación
+
+En el selector inferior de la interfaz:
+- **Modo Chat**: Para análisis exploratorio, lectura de archivos, búsqueda web y preguntas técnicas sin riesgo de modificación.
+- **Modo Agente**: Para tareas de desarrollo activo (creación de archivos, refactorización, ejecución de suites de tests). Cada acción activará una tarjeta de confirmación en pantalla antes de aplicarse.
+
+---
+
+### 4. Ejecución de tu Primera Tarea
+
+Escribe una instrucción en lenguaje natural para comprobar la capacidad del agente:
 
 ```text
-¿Cuál es el clima actual en Madrid y qué recomendaciones de ropa me das?
+Analiza la estructura del proyecto en esta carpeta, localiza posibles cuellos de botella en las consultas SQL y propón un plan de refactorización por etapas.
 ```
 
-O para activar la **Búsqueda Profunda (Deep Research)**:
-
-```text
-Investiga las mejores prácticas de arquitectura para aplicaciones Next.js y FastAPI en 2026.
-```
+El agente generará un **plan visible por pasos** y esperará tu aprobación antes de realizar modificaciones.
 
 </Steps>
 
 ---
 
-## Siguientes Pasos
+## Recursos Relacionados
 
-- Conoce los detalles de [Modo Chat vs Modo Agente](/docs/core-concepts/chat-vs-agent-mode).
-- Aprende a indexar documentos en el [RAG Local Multimodal](/docs/features/multimodal-rag).
-- Configura tus servidores [MCP (Notion, Google Drive, Slack)](/docs/mcp/supported-servers).
+- [Modo Chat vs Modo Agente](/docs/core-concepts/chat-vs-agent-mode): Comprende el flujo de trabajo y la seguridad de permisos.
+- [RAG Local Multimodal](/docs/features/multimodal-rag): Indexa repositorios y documentación técnica.
+- [Servidores MCP](/docs/mcp/supported-servers): Conecta bases de datos, APIs y herramientas de terceros.

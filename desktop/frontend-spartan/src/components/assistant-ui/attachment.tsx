@@ -1,4 +1,3 @@
-
 "use client";
 
 // Avatar removed — caused circular crop on image thumbnails
@@ -32,15 +31,13 @@ import {
   useAui,
   useAuiState,
 } from "@assistant-ui/react";
-import {
-  File02Icon,
-  TextAlignLeft01Icon,
-} from "@hugeicons/core-free-icons";
+import { File02Icon, TextAlignLeft01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   getAttachmentFileKind,
   getAttachmentIcon,
 } from "@/lib/attachment-file-kind";
+import { useDocumentPreviewStore } from "@/features/rag/components/preview-store";
 import { ChevronRightIcon, PlusIcon, XIcon } from "lucide-react";
 import {
   type FC,
@@ -206,8 +203,9 @@ const usePastedTextAttachment = (): PastedTextAttachment | null => {
 };
 
 /** Only the composer inlines, and there the File is always still around. */
-const readPastedText = async ({ file }: PastedTextAttachment): Promise<string> =>
-  file ? await file.text() : "";
+const readPastedText = async ({
+  file,
+}: PastedTextAttachment): Promise<string> => (file ? await file.text() : "");
 
 const readPastedTextPreview = async (
   attachment: PastedTextAttachment,
@@ -370,6 +368,16 @@ const AttachmentUI: FC = () => {
 
   const isImage = useAuiState(({ attachment }) => attachment.type === "image");
   const name = useAuiState(({ attachment }) => attachment.name);
+  const previewAttachment = useAuiState(({ attachment }) => ({
+    file: (attachment as { file?: File }).file,
+    content: attachment.content?.find((part) => part.type === "file") as
+      | { type: "file"; data: string; mimeType?: string }
+      | undefined,
+    contentType: (attachment as { contentType?: string }).contentType ?? "",
+  }));
+  const openLocalPreview = useDocumentPreviewStore(
+    (state) => state.openLocalPreview,
+  );
   const typeLabel = useAuiState(({ attachment }) => {
     const type = attachment.type;
     switch (type) {
@@ -382,11 +390,7 @@ const AttachmentUI: FC = () => {
           attachment.name,
           (attachment as { file?: File }).file?.type ?? "",
         );
-        return kind === "audio"
-          ? "Audio"
-          : kind === "video"
-            ? "Video"
-            : "File";
+        return kind === "audio" ? "Audio" : kind === "video" ? "Video" : "File";
       }
       default:
         throw new Error(`Unknown attachment type: ${type as string}`);
@@ -397,6 +401,25 @@ const AttachmentUI: FC = () => {
   const accessibleName = name
     ? `${typeLabel} attachment: ${name}`
     : `${typeLabel} attachment`;
+  const handlePreview = useCallback(() => {
+    if (isImage || !name) return;
+    const kind = getAttachmentFileKind(
+      name,
+      previewAttachment.file?.type ??
+        previewAttachment.content?.mimeType ??
+        previewAttachment.contentType,
+    );
+    if (previewAttachment.file) {
+      openLocalPreview({ blob: previewAttachment.file, filename: name, kind });
+      return;
+    }
+    const data = previewAttachment.content?.data;
+    if (!data) return;
+    fetch(data)
+      .then((response) => response.blob())
+      .then((blob) => openLocalPreview({ blob, filename: name, kind }))
+      .catch(() => undefined);
+  }, [isImage, name, openLocalPreview, previewAttachment]);
 
   if (pastedText) {
     return (
@@ -417,7 +440,25 @@ const AttachmentUI: FC = () => {
             "aui-attachment-root-composer only:[&>#attachment-tile]:size-16",
         )}
       >
-        <AttachmentPreviewDialog>
+        {isImage ? (
+          <AttachmentPreviewDialog>
+            <TooltipTrigger asChild={true}>
+              <button
+                className={cn(
+                  "aui-attachment-tile size-14 cursor-pointer overflow-hidden rounded-[14px] border bg-muted transition-opacity hover:opacity-75",
+                  isComposer &&
+                    "aui-attachment-tile-composer border-foreground/20",
+                )}
+                id="attachment-tile"
+                aria-label={accessibleName}
+                type="button"
+                onClick={handlePreview}
+              >
+                <AttachmentThumb />
+              </button>
+            </TooltipTrigger>
+          </AttachmentPreviewDialog>
+        ) : (
           <TooltipTrigger asChild={true}>
             <button
               className={cn(
@@ -428,11 +469,12 @@ const AttachmentUI: FC = () => {
               id="attachment-tile"
               aria-label={accessibleName}
               type="button"
+              onClick={handlePreview}
             >
               <AttachmentThumb />
             </button>
           </TooltipTrigger>
-        </AttachmentPreviewDialog>
+        )}
         {isComposer && <AttachmentRemove />}
       </AttachmentPrimitive.Root>
       <TooltipContent side="top" className="tooltip-compact">

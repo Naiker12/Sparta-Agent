@@ -1,34 +1,26 @@
 ---
-title: Gestión de Adjuntos y Archivos
-description: Sistema inteligente de clasificación de adjuntos por extensión y tipo MIME con previsualización e íconos dinámicos.
+title: Gestión de Archivos y Adjuntos
+description: Unificación de documentos, esquemas y código fuente en una sola sesión de trabajo.
 ---
 
-# Gestión de Adjuntos y Archivos
+import { Callout } from 'fumadocs-ui/components/callout';
 
-Sparta Agent cuenta con un módulo especializado (`attachment-file-kind.ts`) que analiza y categoriza automáticamente cualquier archivo que arrastres o selecciones en el compositor del chat.
+# Gestión de Archivos y Adjuntos
 
----
-
-## 🎨 Clasificación Visual e Íconos Dinámicos
-
-Cada tipo de archivo se renderiza con un chip estilizado y un ícono distintivo según su categoría:
-
-| Tipo de Archivo | Extensiones Reconocidas | Color / Distintivo |
-| :--- | :--- | :--- |
-| 📕 **PDF** | `.pdf` | Rojo / `Pdf02Icon` |
-| 📘 **Word** | `.doc`, `.docx`, `.odt`, `.rtf` | Azul / `Doc02Icon` |
-| 📗 **Excel** | `.xls`, `.xlsx`, `.ods` | Verde esmeralda / `Xls02Icon` |
-| 📊 **CSV** | `.csv`, `.tsv` | Verde azulado / `Csv02Icon` |
-| 📙 **Presentación** | `.ppt`, `.pptx`, `.odp`, `.key` | Naranja / `Ppt02Icon` |
-| 🖼️ **Imágenes** | `.jpg`, `.jpeg`, `.png`, `.webp`, `.gif`, `.svg` | Miniatura visual interactiva |
-| 🎬 **Videos** | `.mp4`, `.webm`, `.mkv`, `.mov`, `.avi` | Morado / `FileVideoIcon` |
-| 🎵 **Audio** | `.mp3`, `.wav`, `.m4a`, `.ogg`, `.flac` | Ámbar / `AudioWave01Icon` |
-| 💻 **Código** | `.ts`, `.tsx`, `.js`, `.py`, `.json`, `.yaml`, `.rs`, `.go` | Gris oscuro / `FileCodeIcon` |
-| 📦 **Comprimidos** | `.zip`, `.tar`, `.gz`, `.7z`, `.rar` | Amarillo / `FileZipIcon` |
+Sparta Agent permite arrastrar, soltar e indexar archivos directamente en el hilo de conversación, permitiendo al agente comprender el contexto exacto del problema sin necesidad de copiar y pegar fragmentos manualmente.
 
 ---
 
-## ⚡ Modos de Procesamiento de Adjuntos
+## Modos de Incorporación de Contexto
 
-1. **Adjunto Directo al Prompt**: El contenido se formatea e incluye en el contexto de la conversación activa.
-2. **Indexación en Base de Conocimiento (RAG)**: Si el archivo es voluminoso (ej. un libro o manual de 200 páginas), se indexa en fragmentos semánticos para consultas eficientes sin desbordar el contexto del modelo.
+### 1. Adjuntos Directos en el Chat
+Arrastra archivos (PDFs, imágenes de capturas de pantalla, archivos JSON o scripts) directamente a la caja de entrada para que el modelo los analice de forma inmediata.
+
+### 2. Vinculación de Espacios de Trabajo (Workspaces)
+Al seleccionar una carpeta como workspace activo:
+- Sparta Agent indexa la estructura jerárquica de archivos.
+- Reconoce automáticamente archivos de reglas (`.agents/AGENTS.md`).
+- Rastrea el estado de `git` para identificar archivos modificados o pendientes de commit.
+
+### 3. Presupuesto Inteligente de Tokens
+El sistema administra de forma dinámica el contexto inyectado para evitar saturar la ventana de atención del modelo, priorizando fragmentos relevantes y resúmenes estructurados cuando los archivos son extensos.

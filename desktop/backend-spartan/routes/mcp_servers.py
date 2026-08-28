@@ -18,6 +18,7 @@ from core.inference.mcp_client import (
     cache_tools,
     clear_oauth_tokens_async,
     close_stdio_sessions,
+    get_cached_tools,
     invalidate_tool_cache,
     is_stdio,
     list_tools_async,
@@ -30,6 +31,7 @@ from core.inference.mcp_client import (
 )
 from core.inference.mcp_config_import import parse_mcp_config
 from core.inference.mcp_server_actions import (
+    list_catalog_templates,
     normalize_headers as _normalize_headers,
     validate_url as _validate_url_safe,
 )
@@ -75,6 +77,7 @@ def _validate_url(url: str) -> str:
 
 
 def _row_to_response(row: dict) -> McpServerResponse:
+    cached_tools = get_cached_tools(row["id"])
     return McpServerResponse(
         id = row["id"],
         display_name = row["display_name"],
@@ -82,9 +85,16 @@ def _row_to_response(row: dict) -> McpServerResponse:
         headers = parse_server_headers(row) or {},
         is_enabled = bool(row["is_enabled"]),
         use_oauth = bool(row.get("use_oauth")),
+        tool_count = len(cached_tools) if cached_tools is not None else None,
         created_at = row["created_at"],
         updated_at = row["updated_at"],
     )
+
+
+@router.get("/catalog")
+async def list_mcp_catalog(current_subject: str = Depends(get_current_subject)):
+    """Bundled connection templates; this endpoint never returns user secrets."""
+    return list_catalog_templates()
 
 
 @router.get("/", response_model = list[McpServerResponse])

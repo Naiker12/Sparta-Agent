@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.2.9] - 2026-08-28
+
+### Añadido y mejorado
+
+- **Documentación Técnica Enriquecida**: Suite de diagramas visuales interactivos (*SecurityIsolationDiagram*, *LangGraphFlowDiagram*, *DeepResearchDiagram*, *HybridRagDiagram*, *McpArchitectureDiagram*).
+- **Navegación Táctil con Paginación Reactiva**: Tarjetas interactivas de `Anterior` y `Siguiente` en todas las 21 secciones de la documentación con enrutamiento reactivo sin recarga de página.
+- **Nuevas Secciones Documentadas**: Recipe Studio & Data Recipes, Monitor de APIs y Costos en tiempo real, Acceso Remoto / LAN / Colab GPU Bridge y Entrada de Voz con Whisper.
+- **Showcase de Conectores MCP**: Catálogo de servidores MCP integrado en el diseño Raycast (Filesystem, PostgreSQL, GitHub, Notion, Slack, Google Drive).
+- **Micro-Interacciones & Efectos Hover**: Particle burst con destellos stardust y barrido de luz shimmer en todos los botones de acción.
+
 ## [0.2.8] - 2026-08-28
 
 ### Añadido y mejorado

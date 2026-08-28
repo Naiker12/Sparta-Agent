@@ -1,31 +1,26 @@
 ---
-title: Introducción a MCP
-description: Qué es el protocolo Model Context Protocol y cómo Sparta Agent lo integra de forma nativa y segura.
+title: Introducción a Model Context Protocol (MCP)
+description: Estándar abierto para la conexión segura entre agentes de IA y herramientas o fuentes de datos.
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
 
-# ¿Qué es Model Context Protocol (MCP)?
+# Introducción a Model Context Protocol (MCP)
 
-**Model Context Protocol (MCP)** es el estándar abierto impulsado por la industria para conectar modelos de inteligencia artificial con fuentes de datos externas, bases de conocimiento y herramientas empresariales de forma estandarizada y segura.
+**Model Context Protocol (MCP)** es el protocolo estándar de código abierto diseñado para estandarizar la forma en que los modelos de inteligencia artificial se comunican con fuentes de datos externas, APIs, bases de datos y sistemas de archivos.
 
-Sparta Agent incorpora un **gestor de procesos MCP nativo** (`McpProcessManager`) que se comunica directamente a través del canal IPC interno de la aplicación.
-
----
-
-## 🏗️ Arquitectura de MCP en Sparta Agent
-
-```
-[ Sparta Agent Frontend ] ──(IPC: mcp:call-tool)──► [ McpProcessManager ] ──(STDIO / SSE)──► [ Servidor MCP ]
-                                                            │                                       │
-                                                            ▼                                       ▼
-                                                [ Diálogo de Permisos ]                 [ Notion / Drive / Slack / Git ]
-```
+Sparta Agent incorpora soporte nativo como **Cliente MCP completo**, permitiendo orquestar múltiples servidores locales y remotos bajo una misma interfaz de ejecución segura.
 
 ---
 
-## 🔒 Reglas de Seguridad MCP en Sparta Agent
+## Arquitectura de Conexión MCP en Sparta Agent
 
-1. **Invocación Exclusiva por IPC**: Todas las llamadas a herramientas MCP se ejecutan mediante `mcp:call-tool` y `McpProcessManager`. Queda estrictamente prohibido intentar suplantar herramientas MCP mediante comandos de terminal.
-2. **Modo Chat (Consulta)**: Solo permite herramientas de lectura (ej. `read_resource`, `list_prompts`, `search_notes`).
-3. **Modo Agente (Acción)**: Las acciones que crean o editan recursos activan obligatoriamente el diálogo modal de permisos antes de ejecutarse.
+<McpArchitectureDiagram />
+
+---
+
+## Principios del Protocolo MCP en Sparta Agent
+
+1. **Transporte Estandarizado (JSON-RPC 2.0)**: Comunicación tipada sobre `stdio` o `SSE` (Server-Sent Events) con manejo de errores uniforme.
+2. **Descubrimiento Dinámico de Capacidades**: El agente descubre dinámicamente las herramientas (`tools`), recursos (`resources`) y plantillas de prompts expuestos por cada servidor.
+3. **Control de Permisos Intermediado**: Cualquier llamada a una herramienta MCP que realice mutaciones en un servicio externo debe ser aprobada explícitamente mediante el diálogo de permisos.

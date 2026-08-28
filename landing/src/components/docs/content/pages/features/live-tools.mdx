@@ -1,46 +1,30 @@
 ---
-title: Herramientas en Tiempo Real
-description: Herramientas nativas de clima en vivo, fecha y hora local, y navegación web integradas en Sparta Agent.
+title: Herramientas en Vivo y Subagentes
+description: Catálogo de herramientas del sistema, subagentes especializados e inspección en tiempo real.
 ---
 
-# Herramientas en Tiempo Real
+# Herramientas en Vivo y Subagentes
 
-Sparta Agent incorpora un conjunto de herramientas nativas de acceso instantáneo a información del mundo real sin requerir APIs de pago.
-
----
-
-## ☀️ Clima en Vivo (`get_weather`)
-
-Permite obtener información meteorológica precisa y actualizada para cualquier ciudad del mundo o mediante geolocalización automática por IP:
-
-- **Proveedor**: Open-Meteo API (gratuita, sin API key).
-- **Geocodificación**: Detección de ciudades y coordenadas globales.
-- **Datos entregados**:
-  - Temperatura actual y sensación térmica (°C).
-  - Humedad relativa (%).
-  - Velocidad y dirección del viento (km/h).
-  - Nivel de precipitación (mm).
-  - Condición meteorológica y emoji según código WMO.
-
-### Ejemplo de uso:
-```text
-Usuario: "¿Qué tiempo hace hoy en Barcelona?"
-Sparta Agent: 📍 Clima actual en Barcelona, Cataluña, España:
-- Condición: Mayormente despejado 🌤️
-- Temperatura: 18.5 °C (Sensación térmica: 18.2 °C)
-- Humedad: 64%
-- Viento: 12.0 km/h
-- Precipitación: 0.0 mm
-```
+Sparta Agent incluye un conjunto de herramientas internas de alta fidelidad que complementan el razonamiento del modelo y permiten interactuar con el entorno local y la web.
 
 ---
 
-## ⏰ Fecha y Hora del Sistema (`get_current_datetime`)
+## Catálogo de Herramientas Principales
 
-Entrega la fecha, hora exacta, día de la semana y zona horaria del equipo del usuario para responder con precisión contextual temporal.
+### 1. Navegación e Inspección Web (`read_url_content`)
+Extrae el contenido textual limpio de páginas web públicas, documentación técnica y repositorios sin renderizar scripts pesados ni consumir recursos innecesarios.
+
+### 2. Gestión de Tareas Asíncronas (`manage_task` / `schedule`)
+Permite pausar, cancelar, enviar entradas de teclado a comandos activos y programar recordatorios o rutinas recurrentes de verificación de despliegue o pruebas.
+
+### 3. Edición Precisa de Código (`replace_file_content` / `multi_replace_file_content`)
+Aplica modificaciones quirúrgicas bloque por bloque en archivos existentes sin reescribir el archivo entero, reduciendo la latencia de generación de tokens y previniendo la pérdida accidental de código adyacente.
+
+### 4. Búsqueda Rápida de Patrones (`grep_search` / ripgrep)
+Integración nativa con `ripgrep` para localizar símbolos, funciones o referencias en cuestión de milisegundos en repositorios con miles de archivos.
 
 ---
 
-## 🌐 Búsqueda Web (`web_search`)
+## Subagentes de Propósito Específico
 
-Motor de búsqueda web que consulta múltiples fuentes públicas, filtra dominios no deseados y permite extraer el contenido legible de páginas web directamente.
+Cuando una tarea requiere una investigación autónoma o una ejecución paso a paso que excede una sola interacción, Sparta Agent puede instanciar subagentes especializados con contexto aislado y herramientas dedicadas.

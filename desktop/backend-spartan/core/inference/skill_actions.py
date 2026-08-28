@@ -133,8 +133,8 @@ def _scan_dir_for_skills(directory: Path, source_label: str) -> list[dict[str, A
     return skills
 
 
-def list_skills_for_model(arguments: dict[str, Any] | None = None) -> str:
-    """List all available installed skills."""
+def list_installed_skills() -> list[dict[str, Any]]:
+    """Return installed skills as safe structured data for UI and model callers."""
     all_skills: list[dict[str, Any]] = []
     seen_ids: set[str] = set()
 
@@ -152,6 +152,12 @@ def list_skills_for_model(arguments: dict[str, Any] | None = None) -> str:
                 seen_ids.add(skill["id"])
                 all_skills.append(skill)
 
+    return all_skills
+
+
+def list_skills_for_model(arguments: dict[str, Any] | None = None) -> str:
+    """List all available installed skills."""
+    all_skills = list_installed_skills()
     if not all_skills:
         return "No hay skills instaladas en el sistema."
 

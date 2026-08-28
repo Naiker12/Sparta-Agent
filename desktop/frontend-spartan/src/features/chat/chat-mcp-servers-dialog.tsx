@@ -1,7 +1,16 @@
-
-import { type ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
+import {
+  type ChangeEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { toast } from "sonner";
-import { Delete02Icon, Edit03Icon, PlusSignIcon } from "@hugeicons/core-free-icons";
+import {
+  Delete02Icon,
+  Edit03Icon,
+  PlusSignIcon,
+} from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { RefreshCwIcon, UploadIcon } from "lucide-react";
 
@@ -16,6 +25,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -29,9 +39,11 @@ import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
 import {
   type McpServerConfig,
+  type McpCatalogTemplate,
   createMcpServer,
   deleteMcpServer,
   importMcpServers,
+  listMcpCatalog,
   listMcpServers,
   refreshMcpServerTools,
   testMcpServer,
@@ -65,7 +77,9 @@ function headersFromObject(headers: Record<string, string>): HeaderRow[] {
   }));
 }
 
-function headersToObject(rows: HeaderRow[]): Record<string, string> | undefined {
+function headersToObject(
+  rows: HeaderRow[],
+): Record<string, string> | undefined {
   const out: Record<string, string> = {};
   for (const row of rows) {
     const key = row.key.trim();
@@ -111,10 +125,8 @@ function HeadersEditor({
 }) {
   const update = (id: string, patch: Partial<HeaderRow>) =>
     onChange(rows.map((row) => (row.id === id ? { ...row, ...patch } : row)));
-  const add = () =>
-    onChange([...rows, { id: newRowId(), key: "", value: "" }]);
-  const remove = (id: string) =>
-    onChange(rows.filter((row) => row.id !== id));
+  const add = () => onChange([...rows, { id: newRowId(), key: "", value: "" }]);
+  const remove = (id: string) => onChange(rows.filter((row) => row.id !== id));
 
   const copy = stdio
     ? {
@@ -147,8 +159,8 @@ function HeadersEditor({
             "Optional. Environment variables passed to the server process."
           ) : (
             <>
-              Optional. Add an <code>Authorization</code> header here for servers
-              that require auth.
+              Optional. Add an <code>Authorization</code> header here for
+              servers that require auth.
             </>
           )}
         </div>
@@ -190,6 +202,7 @@ export interface ChatMcpServersDialogProps {
 
 type View =
   | { kind: "list" }
+  | { kind: "catalog" }
   | { kind: "create" }
   | { kind: "edit"; id: string };
 
@@ -198,6 +211,8 @@ export function ChatMcpServersDialog({
   onOpenChange,
 }: ChatMcpServersDialogProps) {
   const [servers, setServers] = useState<McpServerConfig[]>([]);
+  const [catalog, setCatalog] = useState<McpCatalogTemplate[]>([]);
+  const [catalogLoading, setCatalogLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [view, setView] = useState<View>({ kind: "list" });
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
@@ -205,9 +220,8 @@ export function ChatMcpServersDialog({
   const [testing, setTesting] = useState(false);
   const [importing, setImporting] = useState(false);
   const [refreshingId, setRefreshingId] = useState<string | null>(null);
-  const [confirmingDelete, setConfirmingDelete] = useState<McpServerConfig | null>(
-    null,
-  );
+  const [confirmingDelete, setConfirmingDelete] =
+    useState<McpServerConfig | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const refresh = useCallback(async () => {
@@ -235,6 +249,34 @@ export function ChatMcpServersDialog({
   function startCreate() {
     setView({ kind: "create" });
     setForm(EMPTY_FORM);
+  }
+
+  async function openCatalog() {
+    setView({ kind: "catalog" });
+    if (catalog.length > 0) return;
+    setCatalogLoading(true);
+    try {
+      setCatalog(await listMcpCatalog());
+    } catch (err) {
+      toast.error("Failed to load MCP catalog", {
+        description: err instanceof Error ? err.message : String(err),
+      });
+    } finally {
+      setCatalogLoading(false);
+    }
+  }
+
+  function useCatalogTemplate(template: McpCatalogTemplate) {
+    const address =
+      template.url ??
+      [template.command, ...template.args].filter(Boolean).join(" ");
+    setForm({
+      displayName: template.name,
+      url: address,
+      headers: [],
+      useOauth: template.auth_type === "oauth2",
+    });
+    setView({ kind: "create" });
   }
 
   function startEdit(server: McpServerConfig) {
@@ -426,10 +468,9 @@ export function ChatMcpServersDialog({
     }
   }
 
-  const showForm = view.kind !== "list";
+  const showForm = view.kind === "create" || view.kind === "edit";
   // A local stdio command uses env vars, not headers or OAuth.
-  const addressIsCommand =
-    form.url.trim() !== "" && !isHttpAddress(form.url);
+  const addressIsCommand = form.url.trim() !== "" && !isHttpAddress(form.url);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -448,7 +489,73 @@ export function ChatMcpServersDialog({
           onChange={onImportFile}
         />
 
-        {showForm ? (
+        {view.kind === "catalog" ? (
+          <div className="flex max-h-[60dvh] flex-col gap-3 overflow-auto">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm text-muted-foreground">
+                Choose a template, then review credentials and confirm before
+                connecting.
+              </p>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={cancelForm}
+              >
+                Back
+              </Button>
+            </div>
+            {catalogLoading ? (
+              <div className="flex justify-center py-6">
+                <Spinner />
+              </div>
+            ) : catalog.length === 0 ? (
+              <div className="rounded-md border border-dashed py-6 text-center text-sm text-muted-foreground">
+                No MCP templates are available.
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {catalog.map((template) => (
+                  <div
+                    key={template.id}
+                    className="flex items-start justify-between gap-3 rounded-md border p-3"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{template.name}</span>
+                        <Badge variant="outline">{template.category}</Badge>
+                        <Badge variant="outline">{template.transport}</Badge>
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {template.description}
+                      </p>
+                      {template.auth_type !== "none" ? (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Requires{" "}
+                          {template.auth_type === "oauth2"
+                            ? "OAuth sign-in"
+                            : [
+                                ...template.env_required,
+                                ...template.headers_required,
+                              ].join(", ") || "an API key"}
+                          .
+                        </p>
+                      ) : null}
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => useCatalogTemplate(template)}
+                    >
+                      Use template
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : showForm ? (
           <div className="flex flex-col gap-4">
             {view.kind === "create" && (
               <div className="flex items-center justify-between gap-3 rounded-md border border-dashed px-3 py-2">
@@ -549,6 +656,9 @@ export function ChatMcpServersDialog({
         ) : (
           <div className="flex min-w-0 flex-col gap-3">
             <div className="flex justify-end gap-2">
+              <Button size="sm" variant="outline" onClick={openCatalog}>
+                Browse catalog
+              </Button>
               <Button
                 size="sm"
                 variant="outline"
@@ -580,11 +690,27 @@ export function ChatMcpServersDialog({
                     className="flex items-center justify-between gap-3 px-3 py-2"
                   >
                     <div className="min-w-0 flex-1">
-                      <div className="truncate font-medium">
-                        {server.display_name}
+                      <div className="flex min-w-0 items-center gap-2">
+                        <span className="truncate font-medium">
+                          {server.display_name}
+                        </span>
+                        <Badge
+                          variant={server.is_enabled ? "secondary" : "outline"}
+                        >
+                          {server.is_enabled ? "Enabled" : "Disabled"}
+                        </Badge>
+                        <Badge variant="outline">
+                          {server.url.startsWith("http") ? "HTTP" : "stdio"}
+                        </Badge>
+                        {server.use_oauth ? (
+                          <Badge variant="outline">OAuth</Badge>
+                        ) : null}
                       </div>
                       <div className="truncate text-xs text-muted-foreground">
-                        {server.url}
+                        {server.tool_count === null
+                          ? "Tools not discovered yet"
+                          : `${server.tool_count} tool${server.tool_count === 1 ? "" : "s"}`}{" "}
+                        · {server.url}
                       </div>
                     </div>
                     <div className="flex items-center gap-1">

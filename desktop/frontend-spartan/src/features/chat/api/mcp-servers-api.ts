@@ -1,4 +1,3 @@
-
 import { authFetch } from "@/features/auth";
 import { formatFastApiDetail } from "@/lib/format-fastapi-error";
 
@@ -9,6 +8,7 @@ export interface McpServerConfig {
   headers: Record<string, string>;
   is_enabled: boolean;
   use_oauth: boolean;
+  tool_count: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -17,6 +17,23 @@ export interface McpServerProbeResult {
   ok: boolean;
   tool_count: number;
   error: string | null;
+}
+
+export interface McpCatalogTemplate {
+  id: string;
+  name: string;
+  description: string;
+  vendor: string;
+  category: string;
+  transport: "http" | "stdio";
+  url: string | null;
+  command: string | null;
+  args: string[];
+  auth_type: "none" | "api_key" | "oauth2";
+  env_required: string[];
+  headers_required: string[];
+  notes: string | null;
+  docs_url: string | null;
 }
 
 export interface McpServerImportResult {
@@ -55,6 +72,10 @@ export function listMcpServers(): Promise<McpServerConfig[]> {
   return mcpRequest("/");
 }
 
+export function listMcpCatalog(): Promise<McpCatalogTemplate[]> {
+  return mcpRequest("/catalog");
+}
+
 export function createMcpServer(payload: {
   displayName: string;
   url: string;
@@ -86,7 +107,8 @@ export function updateMcpServer(
   },
 ): Promise<McpServerConfig> {
   const body: Record<string, unknown> = {};
-  if (payload.displayName !== undefined) body.display_name = payload.displayName;
+  if (payload.displayName !== undefined)
+    body.display_name = payload.displayName;
   if (payload.url !== undefined) body.url = payload.url;
   if (payload.headers !== undefined) body.headers = payload.headers;
   if (payload.isEnabled !== undefined) body.is_enabled = payload.isEnabled;

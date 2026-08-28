@@ -1,32 +1,33 @@
 ---
-title: Ejecución de Código y Terminal
-description: Intérprete de Python y ejecución de comandos en entorno de sandbox seguro en Sparta Agent.
+title: Ejecución de Código y Terminal Multi-Shell
+description: Ejecución nativa de comandos, suites de pruebas y tareas en segundo plano con control de concurrencia.
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
 
-# Ejecución de Código y Terminal
+# Ejecución de Código y Terminal Multi-Shell
 
-En **Modo Agente**, Sparta Agent puede escribir, ejecutar y depurar código en tiempo real para resolver problemas matemáticos, procesar datos o automatizar flujos de desarrollo.
-
----
-
-## 🐍 Entorno Python (`python_exec`)
-
-- **Intérprete Local**: Ejecución directa contra el entorno de Python local del usuario.
-- **Gráficos y Datos**: Capacidad para generar visualizaciones con `matplotlib`, `pandas`, `numpy` o `seaborn`.
-- **Captura de Salida**: Captura automática de `stdout`, `stderr`, trazas de error y retorno de variables.
+El motor de terminal de Sparta Agent permite ejecutar comandos de sistema operativo, suites de pruebas automatizadas y compilaciones directamente desde el flujo de trabajo del agente, manteniendo la salida y los logs asociados a la conversación.
 
 ---
 
-## 💻 Comandos de Terminal (`run_command`)
+## Características de la Terminal Integrada
 
-- **Shell Nativo**: Compatible con PowerShell en Windows, Zsh/Bash en macOS y Bash en Linux.
-- **Flujo de Ejecución**:
-  1. El modelo genera el comando requerido.
-  2. En Modo Agente, el sistema presenta la tarjeta de confirmación de permisos.
-  3. Al ser aprobado por el usuario, el comando se ejecuta y el resultado se transmite de vuelta al contexto del agente.
+### 1. Detección Automática de Shells
+- **Windows**: PowerShell 7 / Windows PowerShell, Command Prompt, Git Bash y WSL.
+- **macOS**: Zsh, Bash.
+- **Linux**: Bash, Zsh, Fish.
 
-<Callout type="warn">
-  Los comandos de consola nunca se ejecutan en segundo plano sin autorización en pantalla.
-</Callout>
+### 2. Streaming de Salida en Tiempo Real
+La salida estándar (`stdout`) y el flujo de errores (`stderr`) se transmiten de forma progresiva sin bloquear la interfaz gráfica de usuario.
+
+### 3. Tareas en Segundo Plano (Background Tasks)
+Para procesos de larga duración (servidores de desarrollo, suites de tests exhaustivas, compilaciones de Rust o descargas masivas), el agente puede enviar la tarea al fondo y recibir notificaciones asíncronas cuando finalice o requiera atención.
+
+---
+
+## Directivas de Ejecución Segura
+
+- **Paginador Neutro**: Las llamadas configuran automáticamente `PAGER=cat` para evitar que comandos interactivos como `git log` o `less` queden esperando una pulsación de tecla.
+- **Directorio de Trabajo Explícito (`cwd`)**: Toda ejecución debe validar que su directorio de trabajo pertenezca al workspace activo.
+- **Cancelación Inmediata**: Cualquier comando en ejecución puede terminarse instantáneamente desde la interfaz con el botón de cancelación o mediante la herramienta de gestión de procesos.

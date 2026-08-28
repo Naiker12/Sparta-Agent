@@ -1,63 +1,65 @@
 ---
 title: Modo Chat vs Modo Agente
-description: Diferenciación estricta de modos de operación y sistema de permisos explícitos en Sparta Agent.
+description: Separación estricta de seguridad operativa y protocolo de permisos explícitos en Sparta Agent.
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
 
 # Modo Chat vs Modo Agente
 
-Sparta Agent implementa una separación estricta de seguridad entre dos modos de trabajo para garantizar que ninguna acción destructiva o modificación de archivos se realice sin tu consentimiento expreso.
+Sparta Agent implementa una separación estricta entre dos modos de trabajo para garantizar que ninguna acción de modificación, escritura en disco o ejecución de comandos se realice sin tu consentimiento expreso.
 
 ---
 
-## 💬 Modo Chat (Solo Lectura / Consulta)
+## Modo Chat (Solo Lectura y Consulta)
 
-El **Modo Chat** está diseñado para exploración segura, análisis documental y consultas. En este modo, el agente tiene permisos estrictamente de **solo lectura**.
+El **Modo Chat** está concebido para la exploración analítica, auditoría de código y consultas sin efectos secundarios en el sistema.
 
-### Acciones Permitidas en Modo Chat:
-- ✅ Búsqueda web y obtención de información en tiempo real (`web_search`, `get_weather`, `get_current_datetime`).
-- ✅ Búsqueda y lectura de archivos en proyectos o carpetas vinculadas (`search_files`, `list_files`, `read_file`).
-- ✅ Consultas semánticas y vectoriales en el RAG local sobre PDFs, Excel y documentos.
-- ✅ Búsqueda y lectura de datos en servidores MCP (ej. listar páginas de Notion, leer mensajes de Slack, consultar eventos de Calendar).
+### Capacidades Permitidas en Modo Chat:
+- **Búsqueda Web en Tiempo Real**: Ejecución de consultas web sintéticas y verificación de documentación oficial (`web_search`, `read_url_content`).
+- **Lectura e Indexación del Workspace**: Listar carpetas, obtener metadatos y leer archivos de código (`list_files`, `search_files`, `read_file`).
+- **Consultas al RAG Local**: Búsqueda semántica y recuperación de fragmentos sobre PDFs, documentos y repositorios.
+- **Consultas en Servidores MCP**: Listar páginas de Notion, leer mensajes en canales de Slack o consultar eventos de Google Calendar.
 
-### Restricciones en Modo Chat:
+### Restricciones del Modo Chat:
 <Callout type="warn">
-  En Modo Chat **queda estrictamente prohibido crear, modificar, editar o borrar recursos**. Si solicitas una acción de escritura, el asistente te indicará amablemente:
+  En Modo Chat **queda estrictamente prohibido crear, modificar, editar o borrar recursos en disco o terminal**. Si solicitas una acción de escritura, el asistente indicará:
   
-  > *"Debes activar el Modo Agente en el selector de modo para crear, editar o borrar recursos."*
+  *"Debes activar el Modo Agente en el selector de modo para crear, editar o borrar recursos."*
 </Callout>
 
 ---
 
-## ⚡ Modo Agente (Modificación con Autorización)
+## Modo Agente (Modificación con Autorización)
 
-El **Modo Agente** habilita capacidades completas de creación, edición, ejecución de comandos y sincronización bidireccional.
+El **Modo Agente** habilita capacidades completas de ingeniería de software autónoma: generación de código, refactorización multi-archivo, ejecución de pruebas en consola y operaciones en herramientas externas.
 
-### Acciones Habilitadas en Modo Agente:
-- 🛠️ Creación y edición de archivos en el disco (`write_file`, `edit_file`, `create_file`).
-- 🛠️ Ejecución de comandos de terminal y scripts en sandbox (`run_command`, `python_exec`).
-- 🛠️ Creación y actualización de páginas en Notion, subida de archivos a Google Drive o envío de mensajes en Slack mediante MCP.
-- 🛠️ Gestión de extensiones y skills.
-
-### 🛡️ Diálogo Modal de Permisos Obligatorio:
-<Callout type="info">
-  Cada vez que el agente se disponga a ejecutar una herramienta de modificación o comando en Modo Agente, se activará en pantalla una tarjeta de confirmación (`PermissionRequestDialog`) mostrando:
-  
-  1. La herramienta a ejecutar.
-  2. Los parámetros exactos (ruta del archivo, comando de consola, contenido).
-  3. Botones explícitos de **Aprobar** o **Rechazar**.
-</Callout>
+### Capacidades Habilitadas en Modo Agente:
+- **Operaciones de Archivo**: Creación, sustitución parcial y eliminación de archivos en el workspace (`write_to_file`, `replace_file_content`, `multi_replace_file_content`).
+- **Ejecución de Comandos**: Ejecución controlada en PowerShell, Zsh o Bash con gestión de procesos en segundo plano (`run_command`, `manage_task`).
+- **Mutaciones en Servidores MCP**: Creación y actualización de páginas en Notion, subida de documentos a Google Drive, apertura de pull requests en GitHub y emisión de mensajes en Slack.
+- **Gestión de Skills y Tareas Programadas**: Creación y activación de flujos especializados.
 
 ---
 
-## 📊 Tabla Comparativa
+## Diálogo Modal de Permisos (Permission Request Dialog)
 
-| Capacidad | Modo Chat | Modo Agente |
-| :--- | :---: | :---: |
-| Lectura de archivos y RAG | ✅ Permitido | ✅ Permitido |
-| Búsqueda web y clima | ✅ Permitido | ✅ Permitido |
-| Creación / Edición de archivos | ❌ Bloqueado | ✅ Con confirmación |
-| Ejecución de scripts / Terminal | ❌ Bloqueado | ✅ Con confirmación |
-| Escritura en servidores MCP | ❌ Bloqueado | ✅ Con confirmación |
-| Diálogo de permisos en pantalla | No requerido | **Obligatorio** |
+En Modo Agente, el subsistema **Permission Broker** intercepta cualquier llamada a herramientas de modificación antes de su ejecución:
+
+1. **Inspección de Parámetros**: Muestra la ruta exacta del archivo, las líneas a sustituir o el comando de consola completo.
+2. **Revisión del Diff**: Presenta el código agregado o eliminado antes de guardarse en el disco.
+3. **Decisión Explícita**: El usuario debe presionar **Aprobar** o **Rechazar**. Ninguna herramienta puede eludir este paso.
+
+---
+
+## Matriz Comparativa de Seguridad
+
+| Capacidad Operativa | Modo Chat | Modo Agente |
+| :--- | :--- | :--- |
+| **Lectura de código y archivos locales** | Permitido | Permitido |
+| **Búsqueda web y Deep Research** | Permitido | Permitido |
+| **Consultas a bases de datos (solo lectura)** | Permitido | Permitido |
+| **Creación o edición de archivos en disco** | Bloqueado | Requiere Aprobación Modal |
+| **Ejecución de scripts y comandos de terminal** | Bloqueado | Requiere Aprobación Modal |
+| **Mutaciones en servidores MCP (Notion, Drive)** | Bloqueado | Requiere Aprobación Modal |
+| **Auditoría de cambios en tiempo real** | Activa | Activa |

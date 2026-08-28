@@ -2,25 +2,31 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
 interface SectionHeaderProps {
-  eyebrow: string;
+  eyebrow?: string;
   title: string;
   description?: string;
   className?: string;
 }
 
-export function SectionHeader({ title, description, className }: SectionHeaderProps) {
+export function SectionHeader({ eyebrow, title, description, className }: SectionHeaderProps) {
   const shouldReduceMotion = useReducedMotion();
   const reveal = shouldReduceMotion
     ? {}
     : { initial: { opacity: 0, y: 12 }, whileInView: { opacity: 1, y: 0 } };
 
   return (
-    <header className={cn('mx-auto mb-12 flex max-w-3xl flex-col items-center gap-4 px-4 text-center md:mb-16', className)}>
+    <header className={cn('mx-auto mb-12 flex max-w-3xl flex-col items-center gap-3 px-4 text-center md:mb-16', className)}>
+      {eyebrow && (
+        <span className="text-[11px] font-mono font-medium uppercase tracking-[0.08em] text-[#9c9c9d]">
+          {eyebrow}
+        </span>
+      )}
+      
       <motion.h2
         {...reveal}
         viewport={{ once: true }}
         transition={{ duration: 0.4 }}
-        className="text-3xl font-bold tracking-tight text-[var(--text-display)] sm:text-4xl md:text-5xl"
+        className="text-3xl font-medium tracking-tight text-white sm:text-4xl md:text-5xl"
       >
         {title}
       </motion.h2>
@@ -29,8 +35,8 @@ export function SectionHeader({ title, description, className }: SectionHeaderPr
         <motion.p
           {...reveal}
           viewport={{ once: true }}
-          transition={{ duration: 0.4, delay: shouldReduceMotion ? 0 : 0.16 }}
-          className="max-w-2xl text-base leading-relaxed text-[var(--text-secondary)] md:text-lg"
+          transition={{ duration: 0.4, delay: shouldReduceMotion ? 0 : 0.12 }}
+          className="max-w-2xl text-base leading-relaxed text-[#9c9c9d]"
         >
           {description}
         </motion.p>

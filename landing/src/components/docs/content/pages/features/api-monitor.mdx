@@ -1,0 +1,35 @@
+---
+title: Monitor de APIs, Tokens y Costos
+description: Telemetría en tiempo real de consumo de tokens, latencia de inferencia y costos por modelo.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Monitor de APIs, Tokens y Costos
+
+Sparta Agent incorpora un panel de **telemetría y observabilidad en tiempo real** que supervisa cada solicitud emitida hacia modelos locales y proveedores cloud.
+
+---
+
+## Métricas Supervisadas en Vivo
+
+### 1. Contador de Tokens de Entrada y Salida
+- **Prompt Tokens**: Desglose de tokens consumidos por el system prompt, herramientas inyectadas, contexto RAG y mensaje del usuario.
+- **Completion Tokens**: Tokens generados por el modelo y velocidad de emisión (**tokens por segundo - TPS**).
+
+### 2. Latencia por Etapa (Time-To-First-Token)
+- Mide con precisión el tiempo de respuesta inicial (**TTFT**) de cada proveedor y el tiempo total de ejecución de llamadas a herramientas MCP.
+
+### 3. Estimación de Costos
+- Cálculo acumulado de costos en USD basado en las tarifas oficiales de cada proveedor (Claude 3.7 Sonnet, OpenAI GPT-4o, Gemini 2.5 Pro, DeepSeek V3).
+- Alerta configurable de límite de presupuesto por sesión para evitar gastos imprevistos.
+
+---
+
+## Trazabilidad y Logs de Peticiones
+
+Cada interacción almacena:
+- Modelo exacto y versión del checkpoint utilizado.
+- Parámetros de generación (`temperature`, `top_p`, `max_tokens`).
+- Código de estado HTTP y tiempo total de socket.
+- Registro de posibles reintentos automáticos en caso de congestión de red o rate-limiting (HTTP 429).

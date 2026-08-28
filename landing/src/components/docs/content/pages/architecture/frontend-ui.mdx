@@ -1,17 +1,27 @@
 ---
-title: Arquitectura del Frontend
-description: Componentes visuales, Assistant-UI, Tailwind CSS, Hugeicons y sistema de diseño reactivo.
+title: Arquitectura del Frontend y UI
+description: Pila tecnológica de la interfaz de usuario basada en Electron 34, React 19 y Monaco Editor.
 ---
 
-# Arquitectura del Frontend
+# Arquitectura del Frontend y UI
 
-El frontend de Sparta Agent está construido con **React 18/19**, **TypeScript**, **Tailwind CSS** y la biblioteca **Assistant-UI** para ofrecer una experiencia fluida, moderna y con soporte integral para modo oscuro/claro.
+La interfaz de usuario de Sparta Agent está diseñada para ofrecer una experiencia de escritorio de alto rendimiento, baja latencia y estética sobria tipo power-tool.
 
 ---
 
-## 🎨 Sistema de Componentes
+## Pila Tecnológica del Frontend
 
-- **Assistant-UI Runtime**: Control de flujos de mensajes, streaming token a token, bloques de código interactivos, herramientas visuales y tarjetas de confirmación.
-- **Hugeicons & Lucide Icons**: Iconografía de alta definición con soporte para íconos especializados por tipo de archivo (`Pdf02Icon`, `Xls02Icon`, `Doc02Icon`, etc.).
-- **Framer Motion**: Micro-animaciones fluidas para transiciones de estado, apertura de paneles laterales y modales de permisos.
-- **Zustand**: Gestión reactiva de estado global (configuración de tema, modelos activos, carpetas vinculadas, tour interactivo).
+- **Shell de Escritorio**: **Electron 34** con aislamiento de contexto (`contextIsolation: true`) y desactivación de integración directa de Node en el renderer (`nodeIntegration: false`).
+- **Framework de UI**: **React 19** con renderizado concurrente y gestión reactiva de estado.
+- **Motor de Estilos**: **Tailwind CSS v4** integrado con el sistema de diseño Raycast (paleta acromática profunda, elevación táctil *keyboard-key* y tipografía técnica en Inter y Geist Mono).
+- **Editor de Código**: **Monaco Editor** (el mismo núcleo de VS Code) para visualización de sintaxis, diff de cambios en vivo e inspección de AST.
+- **Animaciones**: **Framer Motion** para microinteracciones fluidas a 60 FPS sin bloquear el hilo principal.
+
+---
+
+## Componentes Clave de la Interfaz
+
+1. **Cockpit Central de Conversación**: Renderizado de mensajes con soporte para bloques Markdown, tablas interactivas con vista expandida y visualización de planes de trabajo.
+2. **Inspector de Diffs en Vivo**: Comparador visual antes/después para cambios propuestos en archivos de código.
+3. **Panel de Herramientas y Estado MCP**: Monitor de conectividad en tiempo real de servidores MCP activos.
+4. **Terminal Integrada**: Consola nativa con soporte de streaming ANSI y gestión de procesos.

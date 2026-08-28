@@ -1,33 +1,22 @@
 ---
-title: Arquitectura del Backend
-description: Diseño del servidor FastAPI, SQLite en modo WAL, supervisores asíncronos y motor de inferencia.
+title: Arquitectura del Backend y Rust Sidecar
+description: Motor de ejecución híbrido con Rust, Tokio runtime y máquina de estados finitos LangGraph.
 ---
 
-# Arquitectura del Backend
+# Arquitectura del Backend y Rust Sidecar
 
-El backend de Sparta Agent está construido en **Python 3.11+** sobre **FastAPI** y **Uvicorn**, diseñado para máxima concurrencia y baja latencia.
+El backend de Sparta Agent implementa un motor híbrido que combina la velocidad y seguridad de memoria de **Rust** con la flexibilidad de orquestación agéntica de **LangGraph**.
 
 ---
 
-## 🏛️ Componentes Principales
+## Máquina de Estados Finitos y Checkpointing
 
-```
-[ FastAPI REST / SSE Endpoints ]
-       │
-       ├──► [ Inference Orchestrator ] ──► [ llama.cpp / External Providers ]
-       ├──► [ ResearchSupervisor ]     ──► [ Background Worker Loop ]
-       ├──► [ RAG Engine ]             ──► [ Embeddings + FTS5 SQLite ]
-       └──► [ Storage Layer ]          ──► [ SQLite WAL: studio.db ]
-```
+<LangGraphFlowDiagram />
 
-### 1. Inferencia Unificada (`core/inference/`)
-Gestiona el ciclo de vida de los modelos locales y externos:
-- Carga y descarga dinámica de pesos en VRAM / RAM.
-- Gestión de slots paralelos de inferencia.
-- Despacho y ejecución de herramientas (`tools.py`).
+---
 
-### 2. Supervisor de Investigación (`core/research_runs.py`)
-Maneja tareas en segundo plano (`ResearchSupervisor`) mediante colas durables en base de datos, soportando pausa, reanudación y tolerancia a fallos.
+## Ventajas del Sidecar en Rust
 
-### 3. Capa de Persistencia (`storage/`)
-SQLite en modo WAL (`journal_mode=WAL`) para lecturas y escrituras concurrentes sin contención de bloqueos.
+1. **Latencia Sub-milisegundo**: Las operaciones de escaneo del workspace, cálculo de hashes y búsqueda con `ripgrep` se ejecutan en código nativo compiled sin sobrecarga de recolección de basura.
+2. **Seguridad de Memoria**: Aislamiento estricto de hilos de ejecución mediante el sistema de tipos y borrow checker de Rust.
+3. **Consumo de Memoria Optimizado**: El sidecar en segundo plano mantiene un footprint de RAM inferior a 45 MB en reposo.

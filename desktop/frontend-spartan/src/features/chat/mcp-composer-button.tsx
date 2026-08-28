@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -127,11 +128,16 @@ export function McpComposerButton({
   const enabledUrls = new Set(
     servers.filter((s) => s.is_enabled).map((s) => normalizeMcpUrl(s.url)),
   );
-  // Non-preset servers, shown below the presets so they stay toggleable.
-  const customServers = servers.filter(
-    (s) => !PRESET_URLS.has(normalizeMcpUrl(s.url)),
+  // This is the only source for the "connected" section: persisted and enabled
+  // rows. A static preset is merely a shortcut until the user enables it.
+  const connectedServers = servers.filter((s) => s.is_enabled);
+  const availablePresets = MCP_PRESETS.filter(
+    (preset) => !enabledUrls.has(normalizeMcpUrl(preset.url)),
   );
-  const enabledCount = servers.filter((s) => s.is_enabled).length;
+  const disabledCustomServers = servers.filter(
+    (s) => !s.is_enabled && !PRESET_URLS.has(normalizeMcpUrl(s.url)),
+  );
+  const enabledCount = connectedServers.length;
   const active = mcpEnabledForChat && enabledCount > 0;
 
   async function toggleServer(args: {
@@ -283,8 +289,29 @@ export function McpComposerButton({
             avoidCollisions={true}
             className="unsloth-plus-menu mcp-menu w-[232px]"
           >
-            <DropdownMenuLabel>MCP Servers</DropdownMenuLabel>
-            {MCP_PRESETS.map((preset) => {
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>Connected MCP servers</DropdownMenuLabel>
+              {connectedServers.length === 0 ? (
+                <DropdownMenuItem disabled={true}>
+                  No connected MCP servers
+                </DropdownMenuItem>
+              ) : null}
+              {connectedServers.map((server) =>
+                renderRow({
+                  key: server.id,
+                  label: server.display_name,
+                  url: server.url,
+                  displayName: server.display_name,
+                  enabled: true,
+                  existing: server,
+                }),
+              )}
+            </DropdownMenuGroup>
+            {availablePresets.length > 0 ? <DropdownMenuSeparator /> : null}
+            {availablePresets.length > 0 ? (
+              <DropdownMenuGroup>
+                <DropdownMenuLabel>Quick connections</DropdownMenuLabel>
+                {availablePresets.map((preset) => {
               const norm = normalizeMcpUrl(preset.url);
               return renderRow({
                 key: preset.id,
@@ -296,18 +323,25 @@ export function McpComposerButton({
                 hint: preset.hint,
                 disablesWebSearch: preset.disablesWebSearch,
               });
-            })}
-            {customServers.length > 0 ? <DropdownMenuSeparator /> : null}
-            {customServers.map((server) =>
-              renderRow({
-                key: server.id,
-                label: server.display_name,
-                url: server.url,
-                displayName: server.display_name,
-                enabled: server.is_enabled,
-                existing: server,
-              }),
-            )}
+                })}
+              </DropdownMenuGroup>
+            ) : null}
+            {disabledCustomServers.length > 0 ? <DropdownMenuSeparator /> : null}
+            {disabledCustomServers.length > 0 ? (
+              <DropdownMenuGroup>
+                <DropdownMenuLabel>Configured, disabled</DropdownMenuLabel>
+                {disabledCustomServers.map((server) =>
+                  renderRow({
+                    key: server.id,
+                    label: server.display_name,
+                    url: server.url,
+                    displayName: server.display_name,
+                    enabled: false,
+                    existing: server,
+                  }),
+                )}
+              </DropdownMenuGroup>
+            ) : null}
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onSelect={() => {
@@ -315,7 +349,7 @@ export function McpComposerButton({
                 setDialogOpen(true);
               }}
             >
-              Manage MCP servers
+              Explore and manage MCP servers
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

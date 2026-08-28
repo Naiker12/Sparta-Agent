@@ -129,6 +129,7 @@ import {
   readTextThoughtSignature,
 } from "@/features/chat/utils/continuation";
 import { McpComposerButton } from "@/features/chat/mcp-composer-button";
+import { ComposerMentions } from "@/features/chat/composer-mentions";
 import { getExternalReasoningCapabilities } from "@/features/chat/provider-capabilities";
 import { useRagToolDisabled } from "@/features/chat/hooks/use-rag-tool-disabled";
 import { BypassPermissionsMenuItem } from "@/features/chat/bypass-permissions-menu-item";
@@ -3229,6 +3230,11 @@ const Composer: FC<{
   );
 
   const handleIndexingChange = useCallback((active: boolean) => {
+    // ThreadDocumentsBar can report the same state again while a first upload
+    // materializes its thread. Do not turn a repeated notification into another
+    // composer render: that feedback loop can otherwise exceed React's update
+    // depth before the document row settles.
+    if (indexingActiveRef.current === active) return;
     indexingActiveRef.current = active;
     setIndexingActive(active);
   }, []);
@@ -4524,12 +4530,14 @@ const Composer: FC<{
 
   return (
     <PromptQueueContext.Provider value={queueContextValue}>
+    <ComposerPrimitive.Unstable_TriggerPopoverRoot>
     <ComposerPrimitive.Root
       ref={attachComposer}
       className="aui-composer-root relative flex w-full flex-col"
       aria-disabled={disabled}
       onSubmit={handleSubmit}
     >
+      <ComposerMentions threadId={referenceThreadId} />
       <PromptQueueStack queueThreadIds={promptQueueThreadIds} />
       {youtubeOfferUrl && !isDictating && !disabled ? (
         // Keyed by URL: pasting a second link while the first is still fetching
@@ -4581,6 +4589,7 @@ const Composer: FC<{
         </ComposerPrimitive.AttachmentDropzone>
       )}
     </ComposerPrimitive.Root>
+    </ComposerPrimitive.Unstable_TriggerPopoverRoot>
     </PromptQueueContext.Provider>
   );
 };

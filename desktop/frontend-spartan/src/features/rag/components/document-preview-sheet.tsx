@@ -1,7 +1,12 @@
-
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import {
   ChevronLeftIcon,
@@ -20,10 +25,11 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { getDocumentFileUrl, getPreviewTarget } from "../api/rag-api";
 import type { PdfRegion, PreviewTarget } from "../types/rag";
-import { useDocumentPreviewStore } from "./preview-store";
+import { type LocalPreview, useDocumentPreviewStore } from "./preview-store";
 
 // Serve the pdf.js worker from the app origin.
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -111,13 +117,10 @@ function PdfPreview({
     return () => el.removeEventListener("wheel", onWheel);
   }, []);
 
-  const onLoad = useCallback(
-    ({ numPages: n }: { numPages: number }) => {
-      setNumPages(n);
-      setPage((p) => Math.min(Math.max(p, 1), n));
-    },
-    [],
-  );
+  const onLoad = useCallback(({ numPages: n }: { numPages: number }) => {
+    setNumPages(n);
+    setPage((p) => Math.min(Math.max(p, 1), n));
+  }, []);
 
   const zoomBy = useCallback(
     (delta: number) => setScale((s) => clampZoom(s + delta)),
@@ -296,6 +299,158 @@ function PdfPreview({
   );
 }
 
+function LocalTextPreview({ blob }: { blob: Blob }) {
+  const [text, setText] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    void blob
+      .text()
+      .then((value) => !cancelled && setText(value))
+      .catch(() => !cancelled && setText("Unable to read this file."));
+    return () => {
+      cancelled = true;
+    };
+  }, [blob]);
+  return (
+    <pre className="h-full overflow-auto whitespace-pre-wrap break-words p-5 font-mono text-xs leading-relaxed">
+      {text ?? "Loading…"}
+    </pre>
+  );
+}
+
+function LocalWordPreview({ blob }: { blob: Blob }) {
+  const [html, setHtml] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const mammoth = await import("mammoth");
+      const result = await mammoth.convertToHtml({
+        arrayBuffer: await blob.arrayBuffer(),
+      });
+      const document = new DOMParser().parseFromString(
+        result.value,
+        "text/html",
+      );
+      document
+        .querySelectorAll("script, style, iframe, object, embed")
+        .forEach((node) => node.remove());
+      document.querySelectorAll("*").forEach((node) => {
+        for (const attribute of Array.from(node.attributes)) {
+          if (
+            attribute.name.startsWith("on") ||
+            (attribute.name === "href" &&
+              attribute.value.trim().toLowerCase().startsWith("javascript:"))
+          )
+            node.removeAttribute(attribute.name);
+        }
+      });
+      if (!cancelled) setHtml(document.body.innerHTML);
+    })().catch(() => !cancelled && setHtml(""));
+    return () => {
+      cancelled = true;
+    };
+  }, [blob]);
+  return html === null ? (
+    <div className="p-6 text-sm text-muted-foreground">Loading…</div>
+  ) : html ? (
+    <article
+      className="h-full overflow-auto p-6 text-sm leading-relaxed [&_img]:max-w-full [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:p-2 [&_th]:border [&_th]:bg-muted [&_th]:p-2"
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  ) : (
+    <div className="p-6 text-sm text-muted-foreground">
+      This Word file could not be previewed.
+    </div>
+  );
+}
+
+function LocalSpreadsheetPreview({ blob }: { blob: Blob }) {
+  const [sheet, setSheet] = useState<{
+    name: string;
+    rows: unknown[][];
+  } | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const XLSX = await import("xlsx");
+      const workbook = XLSX.read(await blob.arrayBuffer(), { type: "array" });
+      const name = workbook.SheetNames[0];
+      if (!name) throw new Error("No sheets");
+      const rows = XLSX.utils.sheet_to_json<unknown[]>(workbook.Sheets[name], {
+        header: 1,
+        defval: "",
+      });
+      if (!cancelled) setSheet({ name, rows: rows.slice(0, 500) });
+    })().catch(() => !cancelled && setSheet({ name: "", rows: [] }));
+    return () => {
+      cancelled = true;
+    };
+  }, [blob]);
+  if (!sheet)
+    return <div className="p-6 text-sm text-muted-foreground">Loading…</div>;
+  if (!sheet.name)
+    return (
+      <div className="p-6 text-sm text-muted-foreground">
+        This spreadsheet could not be previewed.
+      </div>
+    );
+  return (
+    <div className="h-full overflow-auto p-5">
+      <p className="mb-3 text-sm text-muted-foreground">
+        {sheet.name}
+        {sheet.rows.length === 500 ? " · first 500 rows" : ""}
+      </p>
+      <Table className="text-xs">
+        <TableBody>
+          {sheet.rows.map((row, rowIndex) => (
+            <TableRow key={rowIndex}>
+              {row.map((cell, cellIndex) => (
+                <TableCell
+                  key={cellIndex}
+                  className="max-w-72 truncate p-2 align-top"
+                >
+                  {String(cell ?? "")}
+                </TableCell>
+              ))}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
+
+function LocalPreviewContent({ preview }: { preview: LocalPreview }) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (preview.kind !== "pdf") return;
+    const objectUrl = URL.createObjectURL(preview.blob);
+    setUrl(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [preview]);
+  switch (preview.kind) {
+    case "pdf":
+      return url ? (
+        <PdfPreview fileUrl={url} initialPage={1} regions={[]} />
+      ) : null;
+    case "word":
+      return <LocalWordPreview blob={preview.blob} />;
+    case "excel":
+    case "csv":
+      return <LocalSpreadsheetPreview blob={preview.blob} />;
+    case "code":
+    case "text":
+      return <LocalTextPreview blob={preview.blob} />;
+    default:
+      return (
+        <div className="p-6 text-sm text-muted-foreground">
+          Preview is not available for this file type. You can download the
+          attachment from the chat.
+        </div>
+      );
+  }
+}
+
 // Resizable preview width (px). Default matches the prior fixed 44rem; drag the
 // left edge to widen. Persisted so it survives reopen.
 const PREVIEW_WIDTH_KEY = "unsloth-rag-preview-width";
@@ -327,8 +482,15 @@ function persistPreviewWidth(w: number) {
 }
 
 export function DocumentPreviewSheet() {
-  const { open, documentId, chunkId, filename, page, closePreview } =
-    useDocumentPreviewStore();
+  const {
+    open,
+    documentId,
+    chunkId,
+    filename,
+    page,
+    localPreview,
+    closePreview,
+  } = useDocumentPreviewStore();
   const [target, setTarget] = useState<PreviewTarget | null>(null);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -399,7 +561,8 @@ export function DocumentPreviewSheet() {
     };
   }, [open, documentId, chunkId]);
 
-  const headerName = target?.filename ?? filename ?? "Document";
+  const headerName =
+    localPreview?.filename ?? target?.filename ?? filename ?? "Document";
   const headerPage = target?.targetPage ?? page ?? null;
 
   return (
@@ -452,6 +615,8 @@ export function DocumentPreviewSheet() {
             <div className="p-6 text-sm text-muted-foreground">
               Could not open this document ({error}).
             </div>
+          ) : localPreview ? (
+            <LocalPreviewContent preview={localPreview} />
           ) : target && target.mediaKind === "pdf" && fileUrl ? (
             <PdfPreview
               fileUrl={fileUrl}
