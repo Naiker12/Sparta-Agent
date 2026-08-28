@@ -14,6 +14,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setTitleBarOverlay: (colors: { color: string; symbolColor: string }) =>
     ipcRenderer.send('titlebar:set-overlay', colors),
   getVersion: () => ipcRenderer.invoke('app:getVersion'),
+  updater: {
+    check: () => ipcRenderer.invoke('updater:check') as Promise<{ ok: boolean; error?: string }>,
+    download: () => ipcRenderer.invoke('updater:download') as Promise<{ ok: boolean; error?: string }>,
+    install: () => ipcRenderer.invoke('updater:install') as Promise<{ ok: boolean; error?: string }>,
+    getState: () => ipcRenderer.invoke('updater:get-state') as Promise<unknown>,
+    onState: (callback: (state: unknown) => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, state: unknown) => callback(state)
+      ipcRenderer.on('updater:state', listener)
+      return () => ipcRenderer.removeListener('updater:state', listener)
+    },
+  },
 })
 
 const ALLOWED_SEND_CHANNELS = new Set([

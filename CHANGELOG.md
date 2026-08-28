@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.8] - 2026-08-28
+
+### Añadido y mejorado
+
+- Actualizador nativo para Electron: la aplicación comprueba las versiones publicadas, ofrece la descarga, muestra el progreso y permite instalar al reiniciar de forma controlada.
+- Las novedades de cada versión se presentan dentro de la aplicación antes de descargarla, con acceso a las notas completas del release.
+- El modal público de lanzamiento y todos los enlaces de descarga se sincronizaron con la versión `0.2.8`.
+
+### Corregido
+
+- Las tablas Markdown ampliadas respetan la barra de título de escritorio; el control para cerrar la vista completa permanece visible y utilizable.
+- El separador de la barra de título se alinea dinámicamente con el panel lateral, incluso al expandirlo, contraerlo o cambiar su ancho.
+- Los ajustes de ejecución usan el idioma seleccionado para etiquetas, estados y ejemplos, sin cambiar la identidad interna de los preajustes.
+
 ## [0.2.7] - 2026-08-27
 
 ### Corregido

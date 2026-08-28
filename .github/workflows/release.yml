@@ -73,5 +73,7 @@ jobs:
             release/*/*.exe
             release/*/*.dmg
             release/*/*.AppImage
+            release/*/*.yml
+            release/*/*.blockmap
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -15,6 +15,7 @@ import {
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { WebUpdateBanner } from "@/components/web/update-banner";
+import { ElectronUpdateBanner } from "@/components/electron/update-banner";
 import { fetchDeviceType } from "@/config/env";
 import { getTauriAuthFailure, tauriAutoAuth } from "@/features/auth";
 import { DeepLinkHandler } from "@/features/deep-links";
@@ -29,6 +30,8 @@ import {
 } from "@/features/settings";
 import { SttDownloadPrompt } from "@/features/settings/components/stt-download-prompt";
 import { TauriUpdateContext } from "@/hooks/tauri-update-context";
+import { useSidebarPin } from "@/hooks/use-sidebar-pin";
+import { useSidebarWidth } from "@/hooks/use-sidebar-width";
 import { type BackendStatus, useTauriBackend } from "@/hooks/use-tauri-backend";
 import { useTauriUpdate } from "@/hooks/use-tauri-update";
 import { isElectron, isTauri } from "@/lib/api-base";
@@ -530,6 +533,30 @@ function DesktopChromeVarsEffect({
   return null;
 }
 
+/** Mirrors the dynamic sidebar geometry for Electron's native titlebar seam. */
+function ElectronTitlebarDivider() {
+  const { pinned } = useSidebarPin();
+  const { width } = useSidebarWidth();
+  // Match WindowTitlebar: the live CSS variable updates while the user drags
+  // the sidebar edge; the store value is the settled fallback.
+  const sidebarWidth = pinned
+    ? `var(--studio-sidebar-live-width, ${width}px)`
+    : "var(--studio-sidebar-collapsed-width,3rem)";
+  const contentBorderLeft = pinned ? sidebarWidth : "0px";
+
+  return (
+    <div
+      aria-hidden="true"
+      className="pointer-events-none fixed inset-x-0 top-[38px] z-[9999] h-3"
+    >
+      <div
+        className="absolute top-0 h-px bg-sidebar-border"
+        style={{ left: contentBorderLeft, right: 0 }}
+      />
+    </div>
+  );
+}
+
 function TauriWrapper({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const stack = useStackGeometry();
@@ -726,6 +753,7 @@ function TauriWrapper({ children }: { children: ReactNode }) {
           usesCustomTitlebar={true}
           usesNativeMacTitlebar={false}
         />
+        {isElectron && <ElectronTitlebarDivider />}
         <div className="h-full min-h-0 overflow-hidden">{children}</div>
         {/* One bottom-right stack so overlays never overlap: download panel at the
             corner, banners above, each owning its width. */}
@@ -751,10 +779,11 @@ function TauriWrapper({ children }: { children: ReactNode }) {
             zIndex: Z_LAYER.OVERLAY_STACK,
           }}
         >
-          <WebUpdateBanner
-            positioned={false}
-            enabled={!WEB_UPDATE_HIDDEN_ROUTES.has(pathname)}
-          />
+          {isElectron ? (
+            <ElectronUpdateBanner enabled={!WEB_UPDATE_HIDDEN_ROUTES.has(pathname)} />
+          ) : (
+            <WebUpdateBanner positioned={false} enabled={!WEB_UPDATE_HIDDEN_ROUTES.has(pathname)} />
+          )}
           <LlamaUpdateBanner
             positioned={false}
             enabled={!WEB_UPDATE_HIDDEN_ROUTES.has(pathname)}
@@ -857,12 +886,6 @@ function TauriWrapper({ children }: { children: ReactNode }) {
     return (
       <div className="relative h-dvh min-h-0 overflow-hidden bg-background">
         {chromeVars}
-        {usesElectronTitlebarOverlay && (
-          <div
-            aria-hidden="true"
-            className="pointer-events-none fixed inset-x-0 top-[38px] z-[9999] h-px bg-foreground/25 dark:bg-white/20"
-          />
-        )}
         {content}
       </div>
     );

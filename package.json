@@ -1,7 +1,7 @@
 {
   "name": "sparta-agent",
   "private": true,
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "Local-first agentic IDE for high-performance engineering teams",
   "author": "Naiker12",
   "license": "MIT",
@@ -54,6 +54,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "d3": "^7.9.0",
+    "electron-updater": "^6.8.9",
     "framer-motion": "^12.41.0",
     "lucide-react": "^1.24.0",
     "mammoth": "^1.12.0",

@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import { BackendManager } from './backend-manager'
+import { setupAutoUpdater } from './auto-updater'
 import { registerAllIPC } from 'ia-sparta-ipc-bridge'
 
 // Suppress noisy Chromium GPU/cache errors on Windows dev hot-reloads and optimize performance & RAM usage
@@ -147,6 +148,7 @@ app.whenReady().then(async () => {
     }
   })
   createWindow()
+  setupAutoUpdater(() => win)
   void backend.start(backendDirectory(), backendRuntimeDirectory())
     .then((port) => {
       backendStartupError = undefined

@@ -13,6 +13,15 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Streamdown portals a maximised Markdown table directly into document.body.
+   In desktop shells, the top 34–38 px are owned by the window chrome, so its
+   built-in toolbar (including the close button) would be painted underneath
+   that chrome. Reserve the same inset used by our own body-portaled dialogs. */
+[data-streamdown="table-fullscreen"] {
+	box-sizing: border-box;
+	padding-top: var(--studio-window-chrome-top, 0px);
+}
+
 @keyframes welcome-logo-arrive {
 	0% {
 		opacity: 0;

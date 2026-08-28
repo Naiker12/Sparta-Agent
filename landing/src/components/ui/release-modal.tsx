@@ -7,7 +7,7 @@ export function ReleaseModal() {
 
   useEffect(() => {
     // Show the announcement once for this specific release.
-    const hasSeen = localStorage.getItem('sparta_release_v0.2.7_seen');
+    const hasSeen = localStorage.getItem('sparta_release_v0.2.8_seen');
     if (!hasSeen) {
       const timer = setTimeout(() => setIsOpen(true), 600);
       return () => clearTimeout(timer);
@@ -15,7 +15,7 @@ export function ReleaseModal() {
   }, []);
 
   const handleClose = () => {
-    localStorage.setItem('sparta_release_v0.2.7_seen', 'true');
+    localStorage.setItem('sparta_release_v0.2.8_seen', 'true');
     setIsOpen(false);
   };
 
@@ -37,7 +37,7 @@ export function ReleaseModal() {
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-zinc-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-zinc-500"></span>
           </span>
-          <span className="font-mono text-zinc-300">v0.2.7 disponible</span>
+          <span className="font-mono text-zinc-300">v0.2.8 disponible</span>
           <Sparkles className="w-3.5 h-3.5 text-zinc-300 group-hover:rotate-12 transition-transform" />
         </motion.button>
       )}
@@ -71,16 +71,16 @@ export function ReleaseModal() {
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-500/10 border border-zinc-500/20 w-fit">
                   <Sparkles className="w-3.5 h-3.5 text-zinc-300" />
                   <span className="text-[11px] font-bold font-mono tracking-wider text-zinc-300 uppercase">
-                    Lanzamiento oficial v0.2.7
+                    Lanzamiento oficial v0.2.8
                   </span>
                 </div>
 
                 <h2 className="text-2xl sm:text-3xl font-extrabold font-display text-white tracking-tight leading-tight">
-                  Sparta Agent <span className="text-zinc-300">v0.2.7</span>
+                  Sparta Agent <span className="text-zinc-300">v0.2.8</span>
                 </h2>
 
                 <p className="text-xs sm:text-sm text-slate-300/90 leading-relaxed font-sans">
-                  Gran actualización con arquitectura de terminal nativa 100% libre de dependencias C++, búsqueda web multi-motor integrada, resiliencia ante errores de proveedores y acceso completo a la documentación oficial.
+                  Una entrega centrada en la experiencia de escritorio: actualizaciones automáticas verificables, notas de versión visibles antes de instalar, tablas Markdown que se expanden y cierran correctamente, una barra de título integrada con el panel lateral y ajustes completamente localizados.
                 </p>
               </div>
 
@@ -91,8 +91,8 @@ export function ReleaseModal() {
                     <Sparkles className="w-4 h-4" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-xs font-semibold text-white">Motor de Terminal Nativo Multiplataforma</h4>
-                    <p className="text-[11.5px] text-slate-400 truncate">Soporte directo para PowerShell, CMD, Bash y Zsh sin bloqueos de paquetes externos.</p>
+                    <h4 className="text-xs font-semibold text-white">Actualizaciones seguras desde la aplicación</h4>
+                    <p className="text-[11.5px] text-slate-400 truncate">La app detecta, descarga y aplica nuevas versiones con progreso, reinicio controlado y notas del lanzamiento.</p>
                   </div>
                 </div>
 
@@ -101,8 +101,8 @@ export function ReleaseModal() {
                     <Cpu className="w-4 h-4" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-xs font-semibold text-white">Búsqueda Web Multi-Motor Resiliente</h4>
-                    <p className="text-[11.5px] text-slate-400 truncate">DuckDuckGo Instant Answer API, HackerNews y Wikipedia en cascada sin bloqueos.</p>
+                    <h4 className="text-xs font-semibold text-white">Interfaz de escritorio más consistente</h4>
+                    <p className="text-[11.5px] text-slate-400 truncate">El separador de la barra de título acompaña al panel lateral sin invadir el contenido ni dejar artefactos al contraerlo.</p>
                   </div>
                 </div>
 
@@ -111,8 +111,8 @@ export function ReleaseModal() {
                     <FileText className="w-4 h-4" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-xs font-semibold text-white">Cortafuegos y Parser Textual para Modelos de Razonamiento</h4>
-                    <p className="text-[11.5px] text-slate-400 truncate">Extracción en tiempo real de llamadas emitidas por DeepSeek y adaptación de roles.</p>
+                    <h4 className="text-xs font-semibold text-white">Tablas Markdown utilizables en pantalla completa</h4>
+                    <p className="text-[11.5px] text-slate-400 truncate">Al ampliar una tabla, los controles quedan debajo de la barra nativa para poder cerrarla y volver al chat con normalidad.</p>
                   </div>
                 </div>
 
@@ -121,8 +121,8 @@ export function ReleaseModal() {
                     <ShieldCheck className="w-4 h-4" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-xs font-semibold text-white">Soporte Local-First &amp; Vault Seguro</h4>
-                    <p className="text-[11.5px] text-slate-400 truncate">Cifrado AES-256 en SO local y total privacidad donde el código nunca sale de tu PC.</p>
+                    <h4 className="text-xs font-semibold text-white">Ajustes en tu idioma</h4>
+                    <p className="text-[11.5px] text-slate-400 truncate">Los controles de ejecución traducen sus etiquetas, estados y ejemplos al idioma seleccionado sin alterar tus preajustes guardados.</p>
                   </div>
                 </div>
               </div>
@@ -130,18 +130,18 @@ export function ReleaseModal() {
               {/* Botones de Acción Elegantes */}
               <div className="relative z-10 flex flex-col sm:flex-row items-center gap-3 pt-2">
                 <a
-                  href="https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Windows-0.2.7-Setup.exe"
+                  href="https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Windows-0.2.8-Setup.exe"
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={handleClose}
                   className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-zinc-100 hover:bg-white text-zinc-950 text-xs font-bold shadow-lg shadow-black/25 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
                 >
                   <Download className="w-4 h-4" />
-                  Descargar Sparta v0.2.7 (.exe)
+                  Descargar Sparta v0.2.8 (.exe)
                 </a>
 
                 <a
-                  href="https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.2.7"
+                  href="https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.2.8"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 text-slate-300 hover:text-white text-xs font-semibold transition-all cursor-pointer"

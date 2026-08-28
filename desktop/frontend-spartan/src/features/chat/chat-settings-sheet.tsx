@@ -717,6 +717,11 @@ export function ChatSettingsPanel({
       }),
     [activePreset, hasUnsavedPresetChanges, presetNameInput, presets],
   );
+  const defaultPresetName = BUILTIN_PRESETS[0]?.name ?? "Default";
+  const displayedPresetName =
+    presetNameInput === defaultPresetName
+      ? t("runSettings.default")
+      : presetNameInput;
   const systemVariablesError = getPromptVariablesError(systemVariablesDraft);
   const currentSystemPrompt = params.systemPrompt ?? "";
   const currentSystemVariables = params.systemVariables ?? "";
@@ -1116,8 +1121,14 @@ export function ChatSettingsPanel({
                   <InputGroup className="panel-input-group">
                     <InputGroupInput
                       id="inference-preset-name"
-                      value={presetNameInput}
-                      onChange={(e) => setPresetNameInput(e.target.value)}
+                      value={displayedPresetName}
+                      onChange={(e) =>
+                        setPresetNameInput(
+                          e.target.value === t("runSettings.default")
+                            ? defaultPresetName
+                            : e.target.value,
+                        )
+                      }
                       onPointerDown={(e) => e.stopPropagation()}
                       onClick={(e) => e.stopPropagation()}
                       onKeyDown={(e) => {
@@ -1131,7 +1142,7 @@ export function ChatSettingsPanel({
                         }
                         e.stopPropagation();
                       }}
-                      placeholder="Preset name"
+                      placeholder={t("runSettings.preset")}
                       maxLength={80}
                       autoComplete="off"
                       className={cn(
@@ -1204,7 +1215,9 @@ export function ChatSettingsPanel({
                 title={presetSaveState.title}
                 aria-label={presetSaveState.title}
               >
-                {presetSaveState.buttonLabel}
+                {presetSaveState.buttonLabel === "Saved"
+                  ? t("runSettings.saved")
+                  : t("runSettings.save")}
               </Button>
               <Button
                 type="button"
@@ -1377,7 +1390,7 @@ export function ChatSettingsPanel({
                   openSystemPromptEditor();
                 }
               }}
-              placeholder="Example: You are a helpful assistant..."
+              placeholder={t("runSettings.systemPromptPlaceholder")}
               aria-label="System prompt"
               className={cn(
                 "block size-full resize-none bg-transparent px-3.5 py-2.5 text-left text-ui-13 font-medium leading-relaxed text-nav-fg outline-none placeholder:text-muted-foreground",
@@ -1402,7 +1415,7 @@ export function ChatSettingsPanel({
             ) : null}
             {showTopP ? (
               <ParamSlider
-                label="Top P"
+                label={t("runSettings.topP")}
                 value={params.topP}
                 min={0}
                 max={1}
@@ -1414,7 +1427,7 @@ export function ChatSettingsPanel({
             ) : null}
             {showTopK ? (
               <ParamSlider
-                label="Top K"
+                label={t("runSettings.topK")}
                 value={params.topK}
                 min={0}
                 max={100}
@@ -1426,7 +1439,7 @@ export function ChatSettingsPanel({
             ) : null}
             {showMinP ? (
               <ParamSlider
-                label="Min P"
+                label={t("runSettings.minP")}
                 value={params.minP}
                 min={0}
                 max={1}
@@ -1451,20 +1464,20 @@ export function ChatSettingsPanel({
             ) : null}
             {showPresencePenalty ? (
               <ParamSlider
-                label="Presence Penalty"
+                label={t("runSettings.presencePenalty")}
                 value={params.presencePenalty}
                 min={0}
                 max={2}
                 step={0.1}
                 onChange={set("presencePenalty")}
                     displayValue={
-                      params.presencePenalty === 0 ? "Off" : undefined
+                      params.presencePenalty === 0 ? t("runSettings.off") : undefined
                     }
                 info="Penalizes any token that has already appeared at least once, encouraging the model to introduce new topics. 0 = off."
               />
             ) : null}
             <ParamSlider
-              label="Max Tokens"
+              label={t("runSettings.maxTokens")}
               value={params.maxTokens}
               min={
                 isExternalModel
@@ -1476,11 +1489,11 @@ export function ChatSettingsPanel({
               onChange={set("maxTokens")}
               displayValue={
                 isGguf && baseContext && params.maxTokens >= baseContext
-                  ? "Max"
+                  ? t("runSettings.max")
                   : !isExternalModel &&
                       !isGguf &&
                       params.maxTokens >= maxTokensMax
-                    ? "Max"
+                    ? t("runSettings.max")
                     : undefined
               }
               info="Maximum number of tokens to generate per response. Generation stops at this limit or when the model emits an end-of-sequence token."
