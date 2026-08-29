@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.11] - 2026-08-29
+
+### Corregido
+
+- La landing, la guía de instalación y los enlaces de descarga se sincronizaron con la versión actual.
+
 ## [0.2.10] - 2026-08-29
 
 ### Añadido y mejorado
