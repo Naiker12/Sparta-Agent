@@ -1,5 +1,7 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
 import { autoUpdater } from 'electron-updater'
+import { existsSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs'
+import path from 'node:path'
 
 export type UpdaterStage =
   | 'idle'
@@ -8,6 +10,7 @@ export type UpdaterStage =
   | 'not-available'
   | 'downloading'
   | 'downloaded'
+  | 'installing'
   | 'error'
 
 export interface UpdaterState {
@@ -21,6 +24,42 @@ export interface UpdaterState {
 let state: UpdaterState = { stage: 'idle' }
 let checking = false
 let downloading = false
+
+const updateMetaPath = (): string => path.join(app.getPath('userData'), 'update-meta.json')
+
+function rememberDownloadedVersion(version: string): void {
+  try {
+    writeFileSync(updateMetaPath(), JSON.stringify({ downloadedVersion: version }), 'utf8')
+  } catch {
+    // A failed guard must never prevent the updater from working.
+  }
+}
+
+function shouldSkipAutomaticCheck(): boolean {
+  const metaPath = updateMetaPath()
+  try {
+    if (!existsSync(metaPath)) return false
+    const { downloadedVersion } = JSON.parse(readFileSync(metaPath, 'utf8')) as { downloadedVersion?: unknown }
+    if (downloadedVersion !== app.getVersion()) return false
+    unlinkSync(metaPath)
+    return true
+  } catch {
+    return false
+  }
+}
+
+function isSameOrOlderVersion(candidate: string, current: string): boolean {
+  const candidateParts = candidate.split(/[.+-]/).map((part) => Number(part))
+  const currentParts = current.split(/[.+-]/).map((part) => Number(part))
+  if (candidateParts.some(Number.isNaN) || currentParts.some(Number.isNaN)) return candidate === current
+
+  const length = Math.max(candidateParts.length, currentParts.length)
+  for (let index = 0; index < length; index += 1) {
+    const difference = (candidateParts[index] ?? 0) - (currentParts[index] ?? 0)
+    if (difference !== 0) return difference < 0
+  }
+  return true
+}
 
 function releaseNotesText(notes: string | Array<{ note?: string | null }> | null | undefined): string | undefined {
   if (typeof notes === 'string') return notes || undefined
@@ -43,6 +82,10 @@ export function setupAutoUpdater(getWindow: () => BrowserWindow | null | undefin
     emit({ stage: 'checking' }, getWindow)
   })
   autoUpdater.on('update-available', (info) => {
+    if (isSameOrOlderVersion(info.version, app.getVersion())) {
+      emit({ stage: 'not-available' }, getWindow)
+      return
+    }
     emit({
       stage: 'available',
       version: info.version,
@@ -57,6 +100,7 @@ export function setupAutoUpdater(getWindow: () => BrowserWindow | null | undefin
   })
   autoUpdater.on('update-downloaded', (info) => {
     downloading = false
+    rememberDownloadedVersion(info.version)
     emit({ stage: 'downloaded', version: info.version }, getWindow)
   })
   autoUpdater.on('error', (error) => {
@@ -98,9 +142,10 @@ export function setupAutoUpdater(getWindow: () => BrowserWindow | null | undefin
   })
   ipcMain.handle('updater:install', () => {
     if (state.stage !== 'downloaded') return { ok: false, error: 'The update has not finished downloading' }
-    autoUpdater.quitAndInstall(false, true)
+    emit({ stage: 'installing', version: state.version }, getWindow)
+    autoUpdater.quitAndInstall(true, true)
     return { ok: true }
   })
 
-  if (app.isPackaged) void autoUpdater.checkForUpdates()
+  if (app.isPackaged && !shouldSkipAutomaticCheck()) void autoUpdater.checkForUpdates()
 }

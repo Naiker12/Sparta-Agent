@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.10] - 2026-08-29
+
+### Añadido y mejorado
+
+- El contexto del chat incluye automáticamente fecha, hora, día de la semana y zona horaria locales para interpretar correctamente expresiones como «hoy» y «mañana».
+- La instalación y actualización de escritorio se prepararon para operar en segundo plano y para limpiar los datos de Sparta Agent al desinstalar en Windows.
+
+### Corregido
+
+- La restauración del historial evita la clonación JSON recursiva que podía impedir un envío con el error «Maximum call stack size exceeded».
+
 ## [0.2.9] - 2026-08-28
 
 ### Añadido y mejorado

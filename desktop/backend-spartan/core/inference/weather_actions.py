@@ -50,7 +50,7 @@ WMO_CODE_MAP: dict[int, tuple[str, str]] = {
 def _http_get_json(url: str, timeout: float = 4.0) -> dict[str, Any] | list[Any] | None:
     """Execute GET request using urllib with JSON response."""
     try:
-        req = urllib.request.Request(url, headers={"User-Agent": "SpartaAgent/0.2.9"})
+        req = urllib.request.Request(url, headers={"User-Agent": "SpartaAgent/0.2.10"})
         with urllib.request.urlopen(req, timeout=timeout) as response:
             if response.status == 200:
                 raw = response.read().decode("utf-8")

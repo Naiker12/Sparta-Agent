@@ -111,6 +111,22 @@ import {
   providerSupportsFastMode,
 } from "../provider-capabilities";
 import { selectCodeToolNames } from "./code-tool-placement";
+import {
+  buildCurrentTemporalContext,
+  resolveSystemPromptVariables,
+} from "./chat-adapter/system-prompt";
+import {
+  attachAssistantThoughtSignature,
+  buildReplayContent,
+  setAssistantCodexReasoning,
+} from "./chat-adapter/replay-content";
+import {
+  autoLoadSourceKey,
+  isRememberedAutoLoadSource,
+  normalizeAutoLoadTarget,
+  orderAutoLoadSources,
+  type AutoLoadSource,
+} from "./chat-adapter/model-autoload-selection";
 
 // A connected project is an explicit capability: these tools are available
 // even when the generic Code pill is off, and mutations still use the normal
@@ -411,124 +427,6 @@ function parseLiveToolArgs(
     return null;
   }
   return { args: parsed, argsText: candidate };
-}
-
-function parseSystemVariablesMap(raw: string): Record<string, unknown> {
-  if (!raw.trim()) {
-    return {};
-  }
-  try {
-    const parsed = JSON.parse(raw) as unknown;
-    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-      return parsed as Record<string, unknown>;
-    }
-  } catch {
-    // Invalid JSON: keep unresolved placeholders in output prompt.
-  }
-  return {};
-}
-
-function hasOwn(object: object, key: string): boolean {
-  return Object.prototype.hasOwnProperty.call(object, key);
-}
-
-function getNestedValue(
-  values: Record<string, unknown>,
-  path: string,
-): unknown | undefined {
-  const parts = path.split(".").map((part) => part.trim()).filter(Boolean);
-  if (parts.length === 0) {
-    return undefined;
-  }
-  let current: unknown = values;
-  for (const part of parts) {
-    if (!current || typeof current !== "object" || Array.isArray(current)) {
-      return undefined;
-    }
-    if (!hasOwn(current, part)) {
-      return undefined;
-    }
-    current = (current as Record<string, unknown>)[part];
-  }
-  return current;
-}
-
-function padDatePart(value: number): string {
-  return String(value).padStart(2, "0");
-}
-
-function formatLocalDate(now: Date): string {
-  return [
-    now.getFullYear(),
-    padDatePart(now.getMonth() + 1),
-    padDatePart(now.getDate()),
-  ].join("-");
-}
-
-function formatLocalTime(now: Date): string {
-  return [
-    padDatePart(now.getHours()),
-    padDatePart(now.getMinutes()),
-    padDatePart(now.getSeconds()),
-  ].join(":");
-}
-
-function formatTimezoneOffset(now: Date): string {
-  const offsetMinutes = -now.getTimezoneOffset();
-  const sign = offsetMinutes >= 0 ? "+" : "-";
-  const abs = Math.abs(offsetMinutes);
-  const hours = Math.floor(abs / 60);
-  const minutes = abs % 60;
-  return `${sign}${padDatePart(hours)}:${padDatePart(minutes)}`;
-}
-
-function stringifyTemplateValue(value: unknown): string {
-  if (value == null) {
-    return "";
-  }
-  if (typeof value === "string") {
-    return value;
-  }
-  if (typeof value === "number" || typeof value === "boolean") {
-    return String(value);
-  }
-  try {
-    return JSON.stringify(value);
-  } catch {
-    return String(value);
-  }
-}
-
-function resolveSystemPromptVariables(
-  prompt: string,
-  customVariablesRaw: string,
-): string {
-  if (!prompt) {
-    return prompt;
-  }
-  const now = new Date();
-  const localDate = formatLocalDate(now);
-  const localTime = formatLocalTime(now);
-  const systemVariables: Record<string, string> = {
-    $date: localDate,
-    $time: localTime,
-    $now: `${localDate}T${localTime}${formatTimezoneOffset(now)}`,
-  };
-  const customVariables = parseSystemVariablesMap(customVariablesRaw);
-  return prompt.replaceAll(
-    /{{\s*([a-zA-Z_$][a-zA-Z0-9_$.-]*)\s*}}/g,
-    (full, keyRaw) => {
-      const key = String(keyRaw).trim();
-      if (hasOwn(systemVariables, key)) {
-        return systemVariables[key] ?? full;
-      }
-      const resolved = getNestedValue(customVariables, key);
-      if (resolved === undefined) {
-        return full;
-      }
-      return stringifyTemplateValue(resolved);
-    },
-  );
 }
 
 export const ThreadAutosaveHandle: ThreadAutosaveHandle = {
@@ -1140,15 +1038,6 @@ function sanitizeAssistantReplayText(text: string): string {
   );
 }
 
-function buildReplayContent(
-  textContent: string,
-  imageParts: Array<{ type: "image_url"; image_url: { url: string } }>,
-): OpenAIMessageContent {
-  return imageParts.length > 0
-    ? [{ type: "text", text: textContent }, ...imageParts]
-    : textContent;
-}
-
 function collectAssistantTextThoughtSignature(
   message: RunMessage,
 ): string | undefined {
@@ -1163,49 +1052,6 @@ function collectAssistantTextThoughtSignature(
     if (typeof sig === "string" && sig) return sig;
   }
   return undefined;
-}
-
-function setAssistantCodexReasoning(
-  message: SerializedMessage,
-  reasoning: unknown[] | undefined,
-): void {
-  if (!reasoning) return;
-  const extra =
-    message.extra_content &&
-    typeof message.extra_content === "object" &&
-    !Array.isArray(message.extra_content)
-      ? (message.extra_content as Record<string, unknown>)
-      : {};
-  message.extra_content = { ...extra, openai_codex_reasoning: reasoning };
-}
-
-
-function attachAssistantThoughtSignature(
-  messages: SerializedMessage[],
-  thoughtSignature: string | undefined,
-): void {
-  if (!thoughtSignature) return;
-  for (let i = messages.length - 1; i >= 0; i -= 1) {
-    const message = messages[i];
-    if (message.role !== "assistant") continue;
-    const extra =
-      message.extra_content &&
-      typeof message.extra_content === "object" &&
-      !Array.isArray(message.extra_content)
-        ? (message.extra_content as Record<string, unknown>)
-        : {};
-    const google =
-      extra.google &&
-      typeof extra.google === "object" &&
-      !Array.isArray(extra.google)
-        ? (extra.google as Record<string, unknown>)
-        : {};
-    message.extra_content = {
-      ...extra,
-      google: { ...google, thought_signature: thoughtSignature },
-    };
-    return;
-  }
 }
 
 function serializeAssistantReplayMessages(
@@ -1603,6 +1449,7 @@ export async function buildOutboundMessagesForTokenCount(
       : "",
     projectWorkspaceContext,
     safeSystemPrompt.trim(),
+    buildCurrentTemporalContext(getLocale()),
     defaultResponseLanguageInstruction(),
   ]
     .filter(Boolean)
@@ -1882,6 +1729,7 @@ async function resolveChatInstructions(
       : "",
     projectWorkspaceContext,
     safeSystemPrompt.trim(),
+    buildCurrentTemporalContext(getLocale()),
     responseLanguageInstruction,
   ]
     .filter(Boolean)
@@ -2007,7 +1855,7 @@ function autoLoadCandidateKey(
   id: string,
   ggufVariant?: string | null,
 ): string {
-  return `${kind}:${normalizeTarget(id)}:${(ggufVariant ?? "").toLowerCase()}`;
+  return `${kind}:${normalizeAutoLoadTarget(id)}:${(ggufVariant ?? "").toLowerCase()}`;
 }
 
 function hasBigEndianGgufMarker(filename: string, quant?: string | null): boolean {
@@ -2336,38 +2184,6 @@ function cachedModelsRunOnThisPlatform(): boolean {
 
 /** One loadable thing on this device, from any inventory. `listVariants` is
  * lazy, so only the repos the cascade reaches are scanned. */
-type AutoLoadSource = {
-  kind: LastLocalModelKind;
-  /** Catalog id: per-model settings, toasts, remembered-model matching. */
-  id: string;
-  /** Sent to /api/inference/load as model_path. */
-  loadId: string;
-  sizeBytes: number;
-  maxSeqLength: number;
-  /** null when the target is one file already (a local .gguf) or safetensors. */
-  listVariants: (() => Promise<GgufVariantDetail[]>) | null;
-};
-
-// Case-sensitive targets keep their case (Linux distinguishes /models/Foo from
-// /models/foo; \\wsl$\ reaches the same ext4). Repo ids and Windows paths fold,
-// separators included, so C:\a\m.gguf and C:/a/m.gguf are one key. NFC first:
-// macOS returns decomposed names for the same file.
-function normalizeTarget(value: string): string {
-  const target = value.trim().normalize("NFC");
-  if (/^[A-Za-z]:[\\/]/.test(target) || target.startsWith("\\\\")) {
-    const slashed = target.replace(/\\/g, "/");
-    return /^\/\/wsl[$.]/i.test(slashed) ? slashed : slashed.toLowerCase();
-  }
-  return /^[/~]/.test(target) ? target : target.toLowerCase();
-}
-
-// The load target alone, not the kind: a repo holding both GGUF and safetensors
-// yields a row in each list, but the backend resolves one target to one model,
-// so keeping both would spend a second attempt on the same files.
-function autoLoadSourceKey(source: AutoLoadSource): string {
-  return normalizeTarget(source.loadId);
-}
-
 function buildAutoLoadSources(
   ggufRepos: CachedGgufRepo[],
   modelRepos: CachedModelRepo[],
@@ -2423,38 +2239,6 @@ function buildAutoLoadSources(
     });
   }
   return sources;
-}
-
-function isRememberedSource(
-  source: AutoLoadSource,
-  remembered: { id: string; kind: LastLocalModelKind },
-): boolean {
-  if (source.kind !== remembered.kind) return false;
-  // Same case rules as the dedupe key: folding a POSIX path would mark two
-  // models differing only by case as both being the remembered one.
-  const target = normalizeTarget(remembered.id);
-  return (
-    normalizeTarget(source.id) === target ||
-    normalizeTarget(source.loadId) === target
-  );
-}
-
-/** Last used first, then GGUF before safetensors, then smallest first. */
-function orderAutoLoadSources(
-  sources: AutoLoadSource[],
-  remembered: { id: string; kind: LastLocalModelKind } | null,
-): AutoLoadSource[] {
-  const rank = (source: AutoLoadSource): number => {
-    if (remembered && isRememberedSource(source, remembered)) return 0;
-    return source.kind === "gguf" ? 1 : 2;
-  };
-  // Unknown sizes sort last so a sizeless row cannot shadow a real one.
-  const size = (source: AutoLoadSource): number =>
-    source.sizeBytes > 0 ? source.sizeBytes : Number.MAX_SAFE_INTEGER;
-  // Same-target twins are kept, just ordered behind the preferred row: dropping
-  // them here lost a loadable safetensors row whenever its GGUF twin resolved
-  // no quant, so the cascade skips a twin at run time instead.
-  return [...sources].sort((a, b) => rank(a) - rank(b) || size(a) - size(b));
 }
 
 /** The candidate to attempt, resolving a GGUF quant when one is needed:
@@ -3325,7 +3109,7 @@ async function autoLoadSmallestModel(options?: AutoLoadOptions): Promise<{
       const sourceKey = autoLoadSourceKey(source);
       if (candidateResolvedFor.has(sourceKey)) continue;
       const isRemembered = lastLoaded
-        ? isRememberedSource(source, lastLoaded)
+        ? isRememberedAutoLoadSource(source, lastLoaded)
         : false;
       const isTried = (entry: AutoLoadCandidate): boolean =>
         skippedAutoLoadCandidates.has(

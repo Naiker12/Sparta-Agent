@@ -13,8 +13,14 @@ env:
 
 jobs:
   build:
+    # electron-builder writes one latest-mac.yml for both macOS architectures.
+    # Serializing the matrix prevents concurrent uploads from overwriting it.
+    concurrency:
+      group: release-${{ github.ref }}
+      cancel-in-progress: false
     strategy:
       fail-fast: false
+      max-parallel: 1
       matrix:
         include:
           - os: windows-latest
@@ -59,6 +65,17 @@ jobs:
         env:
           TARGET_PLATFORM: ${{ matrix.platform }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Signing material lives exclusively in GitHub Actions secrets.
+          # WIN_CSC_* is used by the Windows job; CSC_* by macOS.
+          WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+          WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
+          CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          # Set this repository variable to true once certificates are in place.
+          REQUIRE_CODE_SIGNING: ${{ vars.REQUIRE_CODE_SIGNING }}
 
       # Publish artifacts to GitHub Release
       - uses: softprops/action-gh-release@v2

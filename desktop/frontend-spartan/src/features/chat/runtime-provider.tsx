@@ -627,13 +627,23 @@ async function generateTitleWithModel(payload: {
 
 const inflightTitleByKey = new Set<string>();
 
+function clonePersistedValue<T>(value: T, fallback: T): T {
+  try {
+    return structuredClone(value);
+  } catch {
+    // Stored chat records should be serializable, but malformed legacy data
+    // must not turn a recoverable send into a recursive JSON.stringify error.
+    return fallback;
+  }
+}
+
 function cloneContent(
   content: ThreadMessage["content"],
 ): ThreadMessage["content"] {
   if (typeof content === "string") {
     return content;
   }
-  return Array.isArray(content) ? JSON.parse(JSON.stringify(content)) : [];
+  return Array.isArray(content) ? clonePersistedValue(content, content) : [];
 }
 
 function cloneAttachments(
@@ -642,7 +652,7 @@ function cloneAttachments(
   if (!Array.isArray(attachments)) {
     return [];
   }
-  return JSON.parse(JSON.stringify(attachments));
+  return clonePersistedValue(attachments, attachments);
 }
 
 function toThreadMessage(m: MessageRecord): ThreadMessage {

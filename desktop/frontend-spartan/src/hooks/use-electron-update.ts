@@ -7,6 +7,7 @@ export type ElectronUpdaterStage =
   | "not-available"
   | "downloading"
   | "downloaded"
+  | "installing"
   | "error";
 
 export interface ElectronUpdaterState {

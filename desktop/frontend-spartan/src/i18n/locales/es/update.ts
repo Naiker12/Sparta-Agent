@@ -6,6 +6,8 @@ export const update = {
   "installAndRestart": "Actualizar y reiniciar",
   "readyToInstall": "La versión {version} está lista para instalar",
   "updateFailed": "No se pudo completar la actualización.",
+  "installing": "Instalando la actualización… la aplicación se reiniciará sola.",
+  "preparingRestart": "Preparando el reinicio…",
   "tryAgain": "Reintentar",
   "releaseNotes": "Notas de la Versión",
   "hideReleaseNotes": "Ocultar notas",
