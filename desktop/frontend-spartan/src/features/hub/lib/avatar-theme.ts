@@ -1,4 +1,3 @@
-
 const PALETTE = [
   "hsl(214 66% 52%)",
   "hsl(172 54% 44%)",
@@ -20,6 +19,7 @@ function hashOwner(owner: string): number {
   return Math.abs(h);
 }
 
+/** Deterministic accent used by Hub cards; avatar fallbacks use Blobatar. */
 export function ownerPaletteColor(owner: string): string {
   const owned = owner.trim() || "?";
   return PALETTE[hashOwner(owned) % PALETTE.length];

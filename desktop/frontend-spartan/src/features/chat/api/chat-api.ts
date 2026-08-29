@@ -990,13 +990,14 @@ export async function updateChatProject(
 export async function updateChatProjectWorkspace(
   projectId: string,
   connectedFolderPath: string | null,
+  workspaceAccess: "read" | "write" = "read",
 ): Promise<ProjectRecord> {
   const response = await authFetch(
     `/api/chat/projects/${encodeURIComponent(projectId)}/workspace`,
     {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ connectedFolderPath }),
+      body: JSON.stringify({ connectedFolderPath, workspaceAccess }),
     },
   );
   const project = await parseJsonOrThrow<ProjectRecord>(response);

@@ -64,6 +64,7 @@ import {
   useScrollThreadToBottom,
 } from "@/components/assistant-ui/use-intent-aware-autoscroll";
 import { Button } from "@/components/ui/button";
+import { GeneratedAvatar, ThinkingAvatar } from "@/components/ui/blobatar-avatar";
 import { publicAssetUrl } from "@/components/mascot-img";
 import { Spinner } from "@/components/ui/spinner";
 import {
@@ -95,7 +96,13 @@ import {
   type PromptEntry,
 } from "@/features/chat/api/prompts-api";
 import { useChatPreferencesStore } from "@/features/chat/stores/chat-preferences-store";
-import { useChatProjects } from "@/features/chat/hooks/use-chat-projects";
+import {
+  createChatProject,
+  getDroppedNativePath,
+  getProjectNativeFilesystem,
+  setChatProjectWorkspace,
+  useChatProjects,
+} from "@/features/chat/hooks/use-chat-projects";
 import { NewProjectDialog } from "@/features/chat/components/new-project-dialog";
 import { ResearchMessage } from "@/features/chat/components/research-message";
 import {
@@ -312,6 +319,29 @@ const PageDragContext = createContext(false);
 // entry, so receive the already-controlled selector as a visual slot instead
 // of creating a second picker with a second source of truth.
 const ChatComposerModelSelectorContext = createContext<ReactNode>(null);
+
+/** Extract one absolute path from a paste without treating ordinary prose as a path. */
+function extractAbsoluteFolderPath(value: string): string | null {
+  const match = value.match(/(?:^|[\s"'])([A-Za-z]:[\\/][^\r\n"']+|\/(?:Users|home|mnt|var|opt|tmp)\/[^\r\n\s"']+)/);
+  if (!match?.[1]) return null;
+  // A common chat phrasing is "D:\\project what is this?". Keep the folder
+  // portion instead of making the question part of the local path.
+  const withoutQuestion = match[1].replace(
+    /\s+(?:de\s+qu[eé]\s+se\s+trata|qu[eé]\s+es|que\s+es|what\s+is|how\s+does|por\s+favor)\b.*$/i,
+    "",
+  );
+  return withoutQuestion.replace(/[),.;:!?]+$/, "").trim() || null;
+}
+
+function droppedFolderPath(dataTransfer: DataTransfer): string | null {
+  for (const item of Array.from(dataTransfer.items)) {
+    const entry = (item as DataTransferItem & { webkitGetAsEntry?: () => { isDirectory: boolean } | null }).webkitGetAsEntry?.();
+    if (!entry?.isDirectory) continue;
+    const file = item.getAsFile();
+    if (file) return getDroppedNativePath(file);
+  }
+  return null;
+}
 
 export const ChatComposerModelSelectorProvider: FC<{
   selector: ReactNode;
@@ -1700,6 +1730,12 @@ export const Thread: FC<{
     if (isTauri) return;
     dragDepth.current = 0;
     setPageDragging(false);
+    const folderPath = droppedFolderPath(e.dataTransfer);
+    if (folderPath) {
+      window.dispatchEvent(new CustomEvent<string>("sparta:workspace-folder-drop", { detail: folderPath }));
+      e.preventDefault();
+      return;
+    }
     // Compare panes hide this composer and use the shared composer's own
     // dropzone, so don't capture drops into a hidden composer here.
     if (hideComposer) return;
@@ -2152,12 +2188,11 @@ const ThreadWelcome: FC<{
         <div className="aui-thread-welcome-message flex w-full flex-col justify-center gap-9 px-4">
           {/* Center the greeting logo above the title so it remains legible on every theme. */}
           <div className="flex flex-col items-center justify-center gap-4">
-            {/* Temporary chat keeps the title on its own, no mascot. */}
-            {showGreetingSloth && !incognito && (
-              <span
-                aria-hidden="true"
-                className="aui-thread-welcome-logo size-[96px] shrink-0 bg-primary [mask-image:url('/spartan-logo.svg')] [mask-position:center] [mask-repeat:no-repeat] [mask-size:125%]"
-              />
+            {/* A temporary session has its own neutral identity instead of the
+                persistent-chat mascot. */}
+            {showGreetingSloth && !incognito && <RotatingWelcomeAvatar prefix="sparta-agent" />}
+            {incognito && (
+              <RotatingWelcomeAvatar prefix="sparta-temporary-chat" />
             )}
             <h1 className="aui-thread-welcome-message-inner unsloth-welcome-title fade-in slide-in-from-bottom-1 animate-in text-3xl tracking-[-0.02em] duration-200">
               {incognito ? t("chat.welcome.temporaryChat") : welcome.text}
@@ -2172,6 +2207,33 @@ const ThreadWelcome: FC<{
         </div>
       </div>
     </div>
+  );
+};
+
+const WELCOME_AVATAR_VARIANTS = ["01", "02", "03", "04", "05", "06", "07", "08"] as const;
+const WELCOME_AVATAR_INTERVAL_MS = 4_000;
+
+/** A gentle identity rotation for an otherwise empty chat, not a loading state. */
+const RotatingWelcomeAvatar: FC<{ prefix: string }> = ({ prefix }) => {
+  const [variant, setVariant] = useState(0);
+
+  useEffect(() => {
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (reducedMotion.matches) return;
+    const timer = window.setInterval(
+      () => setVariant((current) => (current + 1) % WELCOME_AVATAR_VARIANTS.length),
+      WELCOME_AVATAR_INTERVAL_MS,
+    );
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const seed = `${prefix}-${WELCOME_AVATAR_VARIANTS[variant]}`;
+  return (
+    <GeneratedAvatar
+      name={seed}
+      className="aui-thread-welcome-logo size-[152px] shrink-0"
+      fallback={<span className="aui-thread-welcome-logo size-[152px] shrink-0 rounded-full bg-muted" />}
+    />
   );
 };
 
@@ -2266,6 +2328,18 @@ const Composer: FC<{
     (s) => s.deepResearchEnabled,
   );
   const activeThreadId = useChatRuntimeStore((s) => s.activeThreadId);
+  const activeProjectId = useChatRuntimeStore((s) => s.activeProjectId);
+  const { projects: chatProjects } = useChatProjects();
+  const activeProject = chatProjects.find((project) => project.id === activeProjectId);
+  useEffect(() => {
+    const workspace = activeProject?.connectedFolderPath?.trim();
+    if (!activeProjectId || !workspace) return;
+    void getProjectNativeFilesystem()?.setWorkspaceRoot?.(
+      activeProjectId,
+      workspace,
+      activeProject?.workspaceAccess ?? "read",
+    );
+  }, [activeProject, activeProjectId]);
   const researchThreadId = threadId ?? activeThreadId ?? null;
   const researchThreadClaimed = useResearchRunStore((state) =>
     researchThreadId ? Boolean(state.claimedThreadIds[researchThreadId]) : false,
@@ -2355,9 +2429,22 @@ const Composer: FC<{
     });
   // A pasted YouTube link offers a transcript attachment above the composer.
   const [youtubeLink, setYoutubeLink] = useState<string | null>(null);
+  const [workspacePathOffer, setWorkspacePathOffer] = useState<string | null>(null);
+  useEffect(() => {
+    const onFolderDrop = (event: Event) => {
+      const path = (event as CustomEvent<string>).detail;
+      if (path && activeProjectId) setWorkspacePathOffer(path);
+    };
+    window.addEventListener("sparta:workspace-folder-drop", onFolderDrop);
+    return () => window.removeEventListener("sparta:workspace-folder-drop", onFolderDrop);
+  }, [activeProjectId]);
   const handleFilePaste = useCallback(
     (event: ClipboardEvent<HTMLTextAreaElement>) => {
       const pastedText = event.clipboardData?.getData("text/plain") ?? "";
+      const pastedWorkspacePath = extractAbsoluteFolderPath(pastedText);
+      if (pastedWorkspacePath && activeProjectId) {
+        setWorkspacePathOffer(pastedWorkspacePath);
+      }
       if (extractYoutubeVideoId(pastedText)) {
         setYoutubeLink(pastedText.trim());
       }
@@ -2415,10 +2502,51 @@ const Composer: FC<{
         justSentRef.current = null;
       }
     },
-    [aui, overlay, pastedTextMinChars],
+    [activeProjectId, aui, overlay, pastedTextMinChars],
+  );
+
+  const connectOfferedWorkspace = useCallback(
+    async (workspaceAccess: "read" | "write") => {
+      if (!workspacePathOffer) return;
+      try {
+        let projectId = activeProjectId;
+        if (!projectId) {
+          const folderName = workspacePathOffer
+            .replace(/[\\/]+$/, "")
+            .split(/[\\/]/)
+            .at(-1) || "Workspace";
+          const project = await createChatProject(folderName);
+          projectId = project.id;
+          useChatRuntimeStore.getState().setActiveProjectId(projectId);
+          if (activeThreadId) {
+            await updateStoredChatThread(activeThreadId, { projectId });
+          }
+        }
+        const folder = await setChatProjectWorkspace(
+          projectId,
+          workspacePathOffer,
+          workspaceAccess,
+        );
+        if (folder) {
+          toast.success(t("projectsPage.folderConnected"), { description: folder });
+          setWorkspacePathOffer(null);
+        }
+      } catch (error) {
+        toast.error(t("projectsPage.failedToUpdateFolder"), {
+          description: error instanceof Error ? error.message : undefined,
+        });
+      }
+    },
+    [activeProjectId, activeThreadId, t, workspacePathOffer],
   );
 
   const composerText = useAuiState(({ composer }) => composer.text);
+  const typedWorkspacePath = extractAbsoluteFolderPath(composerText);
+  useEffect(() => {
+    if (typedWorkspacePath && activeProjectId) {
+      setWorkspacePathOffer((current) => current ?? typedWorkspacePath);
+    }
+  }, [activeProjectId, typedWorkspacePath]);
   // Derived, not cleared in an effect: the offer retracts as soon as the link
   // leaves the draft, which also covers sending.
   const youtubeOfferUrl =
@@ -4162,6 +4290,17 @@ const Composer: FC<{
       // Read once per submit: a rejected send must not leave it armed.
       const forceQueue = forceQueueRef.current;
       forceQueueRef.current = false;
+      const workspacePathInDraft = extractAbsoluteFolderPath(
+        aui.composer().getState().text,
+      );
+      if (workspacePathInDraft && activeProjectId) {
+        event.preventDefault();
+        // assistant-ui is still committing its resource tree while submit is
+        // dispatched. Deferring avoids a nested React update that can roll its
+        // internal version back below the committed version.
+        queueMicrotask(() => setWorkspacePathOffer(workspacePathInDraft));
+        return;
+      }
       if (isResearchActive) {
         event.preventDefault();
         return;
@@ -4548,6 +4687,23 @@ const Composer: FC<{
           url={youtubeOfferUrl}
           onClose={() => setYoutubeLink(null)}
         />
+      ) : null}
+      {workspacePathOffer && activeProjectId && !isDictating && !disabled ? (
+        <div className="mb-2 flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-muted/60 px-3 py-2 text-sm">
+          <HugeiconsIcon icon={Folder01Icon} className="size-4 shrink-0 text-primary" strokeWidth={1.8} />
+          <span className="min-w-0 flex-1">
+            {t("projectsPage.connectPastedFolder")} <span className="font-medium">{workspacePathOffer}</span>
+          </span>
+          <Button type="button" size="sm" variant="outline" onClick={() => void connectOfferedWorkspace("read")}>
+            {t("projectsPage.workspaceReadOnly")}
+          </Button>
+          <Button type="button" size="sm" onClick={() => void connectOfferedWorkspace("write")}>
+            {t("projectsPage.workspaceAllowEdits")}
+          </Button>
+          <Button type="button" size="icon" variant="ghost" aria-label={t("projectsPage.dismissFolderConnection")} onClick={() => setWorkspacePathOffer(null)}>
+            <XIcon className="size-4" />
+          </Button>
+        </div>
       ) : null}
       {isTauri ? (
         // Phase 1 native model owns Tauri local-path drops. Restore browser
@@ -6455,7 +6611,16 @@ const GeneratingIndicator: FC = () => {
   if (!show) {
     return null;
   }
-  return <span className="text-sm text-muted-foreground">Generating...</span>;
+  return (
+    <span className="flex items-center gap-2 text-sm text-muted-foreground" role="status">
+      <ThinkingAvatar
+        name="sparta-assistant"
+        size={24}
+        fallback={<Spinner className="size-4" />}
+      />
+      Generating...
+    </span>
+  );
 };
 
 // Placeholder when stop fires before any visible content (e.g. mid-think).

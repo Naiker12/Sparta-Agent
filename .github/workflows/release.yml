@@ -61,6 +61,15 @@ jobs:
         run: npm --prefix desktop/frontend-spartan ci
 
       # Build: tsc → vite build → electron-builder
+      - name: Verify release quality gates
+        run: |
+          npm run lint
+          npm run typecheck
+          npm test
+          npm --prefix desktop/frontend-spartan run test
+          npm --prefix desktop/frontend-spartan run test:electron
+          npm --prefix desktop/frontend-spartan run i18n:check
+
       - run: npm run build
         env:
           TARGET_PLATFORM: ${{ matrix.platform }}
@@ -78,7 +87,7 @@ jobs:
           REQUIRE_CODE_SIGNING: ${{ vars.REQUIRE_CODE_SIGNING }}
 
       # Publish artifacts to GitHub Release
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.ref_name }}
           name: Release ${{ github.ref_name }}

@@ -1,28 +1,9 @@
 
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import test from "node:test";
-import { fileURLToPath } from "node:url";
+import { normalizeAutoLoadTarget } from "../src/features/chat/api/chat-adapter/model-autoload-selection.ts";
 
-import ts from "typescript";
-
-// The shipped helper is lifted out of chat-adapter.ts rather than copied, so
-// these assert against the real source. Importing the module would drag in the
-// stores and the toast layer for one pure string function.
-const adapterPath = fileURLToPath(
-  new URL("../src/features/chat/api/chat-adapter.ts", import.meta.url),
-);
-const source = readFileSync(adapterPath, "utf8");
-const start = source.indexOf("function normalizeTarget(");
-assert.ok(start >= 0, "normalizeTarget is no longer defined in chat-adapter.ts");
-const declaration = source.slice(start, source.indexOf("\n}", start) + 2);
-const normalizeTarget = new Function(
-  `${ts.transpileModule(declaration, {
-    compilerOptions: { target: ts.ScriptTarget.ES2020 },
-  }).outputText}; return normalizeTarget;`,
-)() as (value: string) => string;
-
-const sameKey = (a: string, b: string) => normalizeTarget(a) === normalizeTarget(b);
+const sameKey = (a: string, b: string) => normalizeAutoLoadTarget(a) === normalizeAutoLoadTarget(b);
 
 test("one Windows file spelled with either separator is one candidate", () => {
   // Two keys meant one spelling burned an attempt on the same file, and a

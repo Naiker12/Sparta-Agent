@@ -1,5 +1,5 @@
 
-import { StrictMode } from "react";
+import { Component, type ErrorInfo, type ReactNode, StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 import "./index.css";
@@ -31,6 +31,31 @@ if (!rootElement) {
 }
 const root = createRoot(rootElement);
 
+class GlobalErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+
+  static getDerivedStateFromError(): { failed: boolean } {
+    return { failed: true };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo): void {
+    console.error("[app] Unhandled render error", error, info);
+  }
+
+  render(): ReactNode {
+    if (!this.state.failed) return this.props.children;
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background p-6 text-center text-foreground">
+        <h1 className="text-xl font-semibold">Something went wrong</h1>
+        <p className="max-w-md text-sm text-muted-foreground">Reload Sparta Agent to recover. If this persists, check the application logs.</p>
+        <button className="rounded-md bg-primary px-4 py-2 text-primary-foreground" type="button" onClick={() => window.location.reload()}>
+          Reload
+        </button>
+      </main>
+    );
+  }
+}
+
 if (isTauri) {
   document.documentElement.classList.add("tauri");
 }
@@ -48,9 +73,11 @@ watchOverlayScrollbarGutter(window);
 function renderApp(): void {
   root.render(
     <StrictMode>
-      <StartupGate>
-        <App />
-      </StartupGate>
+      <GlobalErrorBoundary>
+        <StartupGate>
+          <App />
+        </StartupGate>
+      </GlobalErrorBoundary>
     </StrictMode>,
   );
 }

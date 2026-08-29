@@ -15,23 +15,35 @@ export interface FileTreeNode {
 }
 
 let _workspaceRoot: string | null = null
+const workspaceRoots = new Map<string, { root: string; access: 'read' | 'write' }>()
 
 export function getWorkspaceRoot(): string | null {
   return _workspaceRoot
 }
 
-function assertWorkspacePath(candidate: string): string | null {
-  if (!_workspaceRoot) return 'No workspace folder is connected'
-  if (!isWithinRoot(candidate, _workspaceRoot)) return 'Path is outside workspace root'
+function assertWorkspacePath(projectId: string, candidate: string): string | null {
+  const workspace = workspaceRoots.get(projectId)
+  if (!workspace) return 'No workspace folder is connected for this project'
+  if (!isWithinRoot(candidate, workspace.root)) return 'Path is outside workspace root'
   return null
 }
 
-function setWorkspaceRoot(root: string): { success: true } | { success: false; error: string } {
+function assertWorkspaceWrite(projectId: string, candidate: string): string | null {
+  const pathError = assertWorkspacePath(projectId, candidate)
+  if (pathError) return pathError
+  return workspaceRoots.get(projectId)?.access === 'write' ? null : 'Workspace is read-only'
+}
+
+function setWorkspaceRoot(projectId: string, root: string, access: 'read' | 'write' = 'read'): { success: true } | { success: false; error: string } {
   try {
-    if (!root || typeof root !== 'string') return { success: false, error: 'Invalid path' }
+    if (!projectId || typeof projectId !== 'string' || !root || typeof root !== 'string') return { success: false, error: 'Invalid project or path' }
+    if (access !== 'read' && access !== 'write') return { success: false, error: 'Invalid workspace access' }
     const stat = fs.statSync(root)
     if (!stat.isDirectory()) return { success: false, error: 'Workspace root must be a directory' }
-    _workspaceRoot = fs.realpathSync(root)
+    const canonicalRoot = fs.realpathSync(root)
+    workspaceRoots.set(projectId, { root: canonicalRoot, access })
+    // Legacy main-process tools use the active workspace. Renderer IPC never does.
+    _workspaceRoot = canonicalRoot
     return { success: true }
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : 'Invalid workspace root' }
@@ -46,9 +58,9 @@ export function registerFilesystemIPC() {
     return result.canceled ? null : result.filePaths[0]
   })
 
-  ipcMain.handle('fs:readDirLevel', async (_event, dirPath: string) => {
+  ipcMain.handle('fs:readDirLevel', async (_event, projectId: string, dirPath: string) => {
     if (!dirPath || typeof dirPath !== 'string') return { nodes: [], error: 'Invalid path' }
-    const pathError = assertWorkspacePath(dirPath)
+    const pathError = assertWorkspacePath(projectId, dirPath)
     if (pathError) return { nodes: [], error: pathError }
     try {
       let entries: fs.Dirent[] = []
@@ -82,9 +94,9 @@ export function registerFilesystemIPC() {
     }
   })
 
-  ipcMain.handle('fs:readFile', async (_event, filePath: string, encoding?: string) => {
+  ipcMain.handle('fs:readFile', async (_event, projectId: string, filePath: string, encoding?: string) => {
     if (!filePath || typeof filePath !== 'string') return { success: false, error: 'Invalid path' }
-    const pathError = assertWorkspacePath(filePath)
+    const pathError = assertWorkspacePath(projectId, filePath)
     if (pathError) return { success: false, error: pathError }
 
     //  Check chat attachment cache first (e.g. for uploaded PDFs, DOCX, XLSX)
@@ -112,9 +124,9 @@ export function registerFilesystemIPC() {
     }
   })
 
-  ipcMain.handle('fs:writeFile', async (_event, filePath: string, content: string) => {
+  ipcMain.handle('fs:writeFile', async (_event, projectId: string, filePath: string, content: string) => {
     if (!filePath || typeof filePath !== 'string') return { success: false, error: 'Invalid path' }
-    const pathError = assertWorkspacePath(filePath)
+    const pathError = assertWorkspaceWrite(projectId, filePath)
     if (pathError) return { success: false, error: pathError }
     try {
       fs.writeFileSync(filePath, content, 'utf-8')
@@ -124,9 +136,9 @@ export function registerFilesystemIPC() {
     }
   })
 
-  ipcMain.handle('fs:deleteFile', async (_event, filePath: string) => {
+  ipcMain.handle('fs:deleteFile', async (_event, projectId: string, filePath: string) => {
     if (!filePath || typeof filePath !== 'string') return { success: false, error: 'Invalid path' }
-    const pathError = assertWorkspacePath(filePath)
+    const pathError = assertWorkspaceWrite(projectId, filePath)
     if (pathError) return { success: false, error: pathError }
     try {
       await shell.trashItem(filePath)
@@ -136,9 +148,9 @@ export function registerFilesystemIPC() {
     }
   })
 
-  ipcMain.handle('fs:deleteFolder', async (_event, folderPath: string) => {
+  ipcMain.handle('fs:deleteFolder', async (_event, projectId: string, folderPath: string) => {
     if (!folderPath || typeof folderPath !== 'string') return { success: false, error: 'Invalid path' }
-    const pathError = assertWorkspacePath(folderPath)
+    const pathError = assertWorkspaceWrite(projectId, folderPath)
     if (pathError) return { success: false, error: pathError }
     try {
       await shell.trashItem(folderPath)
@@ -148,9 +160,9 @@ export function registerFilesystemIPC() {
     }
   })
 
-  ipcMain.handle('fs:mkdir', async (_event, dirPath: string) => {
+  ipcMain.handle('fs:mkdir', async (_event, projectId: string, dirPath: string) => {
     if (!dirPath || typeof dirPath !== 'string') return { success: false, error: 'Invalid path' }
-    const pathError = assertWorkspacePath(dirPath)
+    const pathError = assertWorkspaceWrite(projectId, dirPath)
     if (pathError) return { success: false, error: pathError }
     try {
       await fsPromises.mkdir(dirPath, { recursive: true })
@@ -160,15 +172,15 @@ export function registerFilesystemIPC() {
     }
   })
 
-  ipcMain.handle('fs:startWatcher', async (_event, dirPath: string) => {
-    const configured = setWorkspaceRoot(dirPath)
+  ipcMain.handle('fs:startWatcher', async (_event, projectId: string, dirPath: string) => {
+    const configured = setWorkspaceRoot(projectId, dirPath)
     if (!configured.success) return configured
     await startFileWatcher(_workspaceRoot!)
     return configured
   })
 
-  ipcMain.handle('fs:setWorkspaceRoot', async (_event, root: string) => {
-    const configured = setWorkspaceRoot(root)
+  ipcMain.handle('fs:setWorkspaceRoot', async (_event, projectId: string, root: string, access: 'read' | 'write' = 'read') => {
+    const configured = setWorkspaceRoot(projectId, root, access)
     if (!configured.success) return configured
     await startFileWatcher(_workspaceRoot!)
     return configured
@@ -191,11 +203,13 @@ export function registerFilesystemIPC() {
     return { success: true }
   })
 
-  ipcMain.handle('fs:scanModelWeights', async (_event, scanDir: string) => {
+  ipcMain.handle('fs:scanModelWeights', async (_event, projectId: string, scanDir: string) => {
     if (!scanDir || typeof scanDir !== 'string') {
       return { success: false, error: 'Ruta no válida', models: [] }
     }
 
+    const pathError = assertWorkspacePath(projectId, scanDir)
+    if (pathError) return { success: false, error: pathError, models: [] }
     try {
       if (!fs.existsSync(scanDir)) {
         return { success: false, error: `El directorio "${scanDir}" no existe en el equipo`, models: [] }

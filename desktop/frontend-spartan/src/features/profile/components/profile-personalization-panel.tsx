@@ -1,5 +1,5 @@
 
-import { MascotImg, publicAssetUrl } from "@/components/mascot-img";
+import { GeneratedAvatar } from "@/components/ui/blobatar-avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,7 +20,11 @@ import {
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useRef, useState } from "react";
-import { SLOTH_AVATARS } from "../sloth-avatars";
+import {
+  BLOBATAR_AVATARS,
+  blobatarAvatarValue,
+  blobatarSeedFromValue,
+} from "../blobatar-avatars";
 import { decodeJwtSubject } from "../utils/jwt-subject";
 import { resizeImageFileToDataUrl } from "../utils/resize-image-file";
 import {
@@ -30,8 +34,6 @@ import {
 import { UserAvatar } from "./user-avatar";
 
 const PROFILE_STORAGE_KEY = "unsloth_user_profile";
-const SLOTH_NAME = /^large\s+/i;
-const PNG_SUFFIX = /\.png$/i;
 
 function readPersistedProfile(): {
   displayName: string;
@@ -312,40 +314,31 @@ export function ProfilePersonalizationPanel() {
 
               <div className="flex flex-col gap-2">
                 <span className="text-ui-11 font-medium uppercase tracking-wide text-muted-foreground">
-                  {t("settings.profile.chooseSloth")}
+                  {t("settings.profile.chooseAvatar")}
                 </span>
                 <div className="grid grid-cols-7 gap-2">
-                  {SLOTH_AVATARS.map((path) => {
-                    const url = publicAssetUrl(path);
-                    const selected = shownAvatar === url;
-                    const label =
-                      path
-                        .split("/")
-                        .pop()
-                        ?.replace(PNG_SUFFIX, "")
-                        .replace(SLOTH_NAME, "")
-                        .trim() ?? "sloth";
+                  {BLOBATAR_AVATARS.map((seed, index) => {
+                    const value = blobatarAvatarValue(seed);
+                    const selected = blobatarSeedFromValue(shownAvatar) === seed;
+                    const label = `${t("settings.profile.chooseAvatar")} ${index + 1}`;
                     return (
                       <button
-                        key={path}
+                        key={seed}
                         type="button"
-                        onClick={() => pickAvatarValue(url)}
+                        onClick={() => pickAvatarValue(value)}
                         aria-pressed={selected}
                         aria-label={label}
                         title={label}
                         className={cn(
-                          // No transition here: animating the ring makes the old
-                          // icon's selection border linger when switching sloths.
                           "relative aspect-square overflow-hidden rounded-full bg-muted ring-1 ring-border hover:ring-ring focus-visible:outline-none focus-visible:ring-ring",
                           selected &&
                             "ring-2 ring-ring-strong hover:ring-ring-strong",
                         )}
                       >
-                        <MascotImg
-                          src={path}
-                          alt=""
-                          loading="lazy"
-                          className="size-full object-cover"
+                        <GeneratedAvatar
+                          name={seed}
+                          className="size-full"
+                          fallback={<span className="block size-full bg-muted" />}
                         />
                       </button>
                     );

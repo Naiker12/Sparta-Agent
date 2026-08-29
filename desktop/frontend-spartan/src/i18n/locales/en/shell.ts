@@ -21,6 +21,12 @@ export const shell = {
   },
   "navigation": {
     "newChat": "New chat",
+    "projectHome": "Project home",
+    "projectOptions": "Project options",
+    "renameProject": "Rename project",
+    "pinProject": "Pin project",
+    "unpinProject": "Unpin project",
+    "deleteProject": "Delete project",
     "returnToChat": "Return to Chat",
     "returnToChats": "Return to {count} Chats",
     "chatGenerating": "Generating",

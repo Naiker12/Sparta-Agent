@@ -1668,10 +1668,13 @@ async function resolveProjectWorkspaceContext(
   const project = await getStoredChatProject(projectId).catch(() => null);
   const workspace = project?.connectedFolderPath?.trim();
   if (!project || project.archived || !workspace) return "";
+  const canWrite = project.workspaceAccess === "write";
   return [
     "<project_workspace>",
-    "The user connected a writable workspace folder to this project.",
-    "Use the project file tools for files inside that workspace when the user asks for code or file changes. Do not reveal or request its absolute local path, and do not write outside it. The usual tool permission flow still applies.",
+    `The user connected a ${canWrite ? "read-write" : "read-only"} workspace folder to this project.`,
+    canWrite
+      ? "Use the project file tools for files inside that workspace when the user asks for code or file changes. Do not reveal or request its absolute local path, and do not write outside it. The usual tool permission flow still applies."
+      : "Use the project file tools only to inspect files inside that workspace. Do not modify, create, rename, or delete files. Do not reveal or request its absolute local path.",
     "</project_workspace>",
   ].join("\n");
 }

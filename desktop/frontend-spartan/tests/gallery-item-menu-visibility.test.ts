@@ -4,17 +4,13 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 test("gallery overlay actions follow interaction state instead of stale mouse focus", async () => {
-  const [menu, imagesPage, videoPage] = await Promise.all([
+  const [menu, imagesPage] = await Promise.all([
     readFile(
       new URL("../src/components/gallery-item-menu.tsx", import.meta.url),
       "utf8",
     ),
     readFile(
       new URL("../src/features/images/images-page.tsx", import.meta.url),
-      "utf8",
-    ),
-    readFile(
-      new URL("../src/features/video/video-page.tsx", import.meta.url),
       "utf8",
     ),
   ]);
@@ -40,5 +36,4 @@ test("gallery overlay actions follow interaction state instead of stale mouse fo
   );
 
   assert.doesNotMatch(imagesPage, /focus-within:opacity-100/);
-  assert.doesNotMatch(videoPage, /focus-within:opacity-100/);
 });

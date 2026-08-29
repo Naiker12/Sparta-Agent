@@ -273,6 +273,7 @@ class ChatProject(BaseModel):
     rootPath: Optional[str] = None
     sandboxPath: Optional[str] = None
     connectedFolderPath: Optional[str] = None
+    workspaceAccess: str = "read"
     archived: bool = False
     createdAt: int
     updatedAt: int
@@ -295,6 +296,7 @@ class ChatProjectPatch(BaseModel):
 class ChatProjectWorkspacePatch(BaseModel):
     # Explicit null means disconnect; omitting the field is a malformed request.
     connectedFolderPath: Optional[str] = Field(...)
+    workspaceAccess: str = "read"
 
 
 class ChatThreadListResponse(BaseModel):
@@ -993,9 +995,9 @@ def patch_project_workspace(
     valid, normalized_path = validate_connectable_folder(payload.connectedFolderPath)
     if not valid:
         raise HTTPException(status_code = 400, detail = normalized_path)
-    project = update_chat_project(
-        project_id, {"connectedFolderPath": normalized_path}
-    )
+    if payload.workspaceAccess not in {"read", "write"}:
+        raise HTTPException(status_code = 400, detail = "Invalid workspace access")
+    project = update_chat_project(project_id, {"connectedFolderPath": normalized_path, "workspaceAccess": payload.workspaceAccess})
     if project is None:
         raise HTTPException(status_code = 404, detail = f"Project {project_id} not found")
     return ChatProject(**project)

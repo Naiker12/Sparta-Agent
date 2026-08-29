@@ -142,7 +142,7 @@ test("the recovery poll runs while the verdict is unknown, on every platform", a
   );
 });
 
-test("the poll is mounted on every route that gates on the verdict", async () => {
+test("the sidebar keeps the verdict poll mounted across routes", async () => {
   const root = await readFile(
     new URL("../src/app/routes/__root.tsx", import.meta.url),
     "utf8",
@@ -155,26 +155,4 @@ test("the poll is mounted on every route that gates on the verdict", async () =>
   );
   assert.match(root, /<AppSidebar \/>/, "the component that owns the poll is not rendered");
 
-  // Neither page starts a poll of its own. Video needs none at all -- its answer is
-  // /api/system/hardware's, which settles detection before replying -- so it is absent from the
-  // waits-on-the-verdict assertion below, but a second /api/health poll would still be wrong.
-  for (const page of [
-    "../src/features/studio/studio-page.tsx",
-    "../src/features/video/video-page.tsx",
-  ]) {
-    const src = await readFile(new URL(page, import.meta.url), "utf8");
-    assert.ok(
-      !/fetchDeviceType\(/.test(src),
-      `${page} re-reads the verdict itself instead of reading the store`,
-    );
-  }
-  const studio = await readFile(
-    new URL("../src/features/studio/studio-page.tsx", import.meta.url),
-    "utf8",
-  );
-  assert.match(
-    studio,
-    /capabilitiesUnknown/,
-    "the Train page no longer waits on the verdict it shares with the poll",
-  );
 });

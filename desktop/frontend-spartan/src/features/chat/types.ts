@@ -21,6 +21,7 @@ export interface ProjectRecord {
   rootPath?: string | null;
   sandboxPath?: string | null;
   connectedFolderPath?: string | null;
+  workspaceAccess?: "read" | "write";
   archived: boolean;
   createdAt: number;
   updatedAt: number;

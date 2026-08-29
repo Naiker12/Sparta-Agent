@@ -1,4 +1,4 @@
-import { ipcRenderer, contextBridge } from 'electron'
+import { ipcRenderer, contextBridge, webUtils } from 'electron'
 import type { FileTreeNode } from './channels/filesystem.channel'
 
 contextBridge.exposeInMainWorld('electronAPI', {
@@ -222,15 +222,18 @@ contextBridge.exposeInMainWorld('agent', {
 
 contextBridge.exposeInMainWorld('fs', {
   openFolderDialog: () => ipcRenderer.invoke('fs:openFolderDialog') as Promise<string | null>,
-  readDirLevel: (dirPath: string) => ipcRenderer.invoke('fs:readDirLevel', dirPath) as Promise<{ nodes: FileTreeNode[]; error?: string }>,
-  readFile: (filePath: string, encoding?: string) => ipcRenderer.invoke('fs:readFile', filePath, encoding) as Promise<{ success: boolean; content?: string; error?: string; encoding?: string }>,
-  writeFile: (filePath: string, content: string) => ipcRenderer.invoke('fs:writeFile', filePath, content) as Promise<{ success: boolean; error?: string }>,
-  mkdir: (dirPath: string) => ipcRenderer.invoke('fs:mkdir', dirPath) as Promise<{ success: boolean; error?: string }>,
-  deleteFile: (filePath: string) => ipcRenderer.invoke('fs:deleteFile', filePath) as Promise<{ success: boolean; error?: string }>,
-  deleteFolder: (folderPath: string) => ipcRenderer.invoke('fs:deleteFolder', folderPath) as Promise<{ success: boolean; error?: string }>,
-  startWatcher: (dirPath: string) => ipcRenderer.invoke('fs:startWatcher', dirPath) as Promise<{ success: boolean }>,
+  getPathForFile: (file: File) => {
+    try { return webUtils.getPathForFile(file) } catch { return null }
+  },
+  readDirLevel: (projectId: string, dirPath: string) => ipcRenderer.invoke('fs:readDirLevel', projectId, dirPath) as Promise<{ nodes: FileTreeNode[]; error?: string }>,
+  readFile: (projectId: string, filePath: string, encoding?: string) => ipcRenderer.invoke('fs:readFile', projectId, filePath, encoding) as Promise<{ success: boolean; content?: string; error?: string; encoding?: string }>,
+  writeFile: (projectId: string, filePath: string, content: string) => ipcRenderer.invoke('fs:writeFile', projectId, filePath, content) as Promise<{ success: boolean; error?: string }>,
+  mkdir: (projectId: string, dirPath: string) => ipcRenderer.invoke('fs:mkdir', projectId, dirPath) as Promise<{ success: boolean; error?: string }>,
+  deleteFile: (projectId: string, filePath: string) => ipcRenderer.invoke('fs:deleteFile', projectId, filePath) as Promise<{ success: boolean; error?: string }>,
+  deleteFolder: (projectId: string, folderPath: string) => ipcRenderer.invoke('fs:deleteFolder', projectId, folderPath) as Promise<{ success: boolean; error?: string }>,
+  startWatcher: (projectId: string, dirPath: string) => ipcRenderer.invoke('fs:startWatcher', projectId, dirPath) as Promise<{ success: boolean }>,
   stopWatcher: () => ipcRenderer.invoke('fs:stopWatcher') as Promise<{ success: boolean }>,
-  setWorkspaceRoot: (root: string) => ipcRenderer.invoke('fs:setWorkspaceRoot', root) as Promise<{ success: boolean; error?: string }>,
+  setWorkspaceRoot: (projectId: string, root: string, access: 'read' | 'write' = 'read') => ipcRenderer.invoke('fs:setWorkspaceRoot', projectId, root, access) as Promise<{ success: boolean; error?: string }>,
   expandWatcher: (dirPath: string) => ipcRenderer.invoke('fs:expandWatcher', dirPath) as Promise<{ success: boolean }>,
   collapseWatcher: (dirPath: string) => ipcRenderer.invoke('fs:collapseWatcher', dirPath) as Promise<{ success: boolean }>,
 })

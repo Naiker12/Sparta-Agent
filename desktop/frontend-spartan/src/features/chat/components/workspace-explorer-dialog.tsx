@@ -27,11 +27,11 @@ export function WorkspaceExplorerDialog({ project, open, onOpenChange }: {
 
   const loadDirectory = useCallback(async (path: string) => {
     const filesystem = getProjectNativeFilesystem();
-    if (!filesystem?.readDirLevel) throw new Error(t("projectsPage.folderBrowserDesktopOnly"));
-    const result = await filesystem.readDirLevel(path);
+    if (!filesystem?.readDirLevel || !project) throw new Error(t("projectsPage.folderBrowserDesktopOnly"));
+    const result = await filesystem.readDirLevel(project.id, path);
     setError(result.error ?? null);
     setNodes(result.nodes ?? []);
-  }, [t]);
+  }, [project, t]);
 
   useEffect(() => setCurrentPath(root), [root, open]);
   useEffect(() => {
@@ -39,10 +39,10 @@ export function WorkspaceExplorerDialog({ project, open, onOpenChange }: {
     let cancelled = false;
     void (async () => {
       const filesystem = getProjectNativeFilesystem();
-      if (!filesystem?.readDirLevel) throw new Error(t("projectsPage.folderBrowserDesktopOnly"));
-      const configured = await filesystem.setWorkspaceRoot?.(root);
+      if (!filesystem?.readDirLevel || !project) throw new Error(t("projectsPage.folderBrowserDesktopOnly"));
+      const configured = await filesystem.setWorkspaceRoot?.(project.id, root);
       if (configured && !configured.success) throw new Error(configured.error);
-      const result = await filesystem.readDirLevel(currentPath);
+      const result = await filesystem.readDirLevel(project.id, currentPath);
       if (cancelled) return;
       setError(result.error ?? null);
       setNodes(result.nodes ?? []);
@@ -50,15 +50,15 @@ export function WorkspaceExplorerDialog({ project, open, onOpenChange }: {
       if (!cancelled) setError(reason instanceof Error ? reason.message : String(reason));
     });
     return () => { cancelled = true; };
-  }, [currentPath, open, root, t]);
+  }, [currentPath, open, project, root, t]);
 
   const openFile = useCallback(async (path: string) => {
     const filesystem = getProjectNativeFilesystem();
-    if (!filesystem?.readFile) {
+    if (!filesystem?.readFile || !project) {
       setError(t("projectsPage.folderBrowserDesktopOnly"));
       return;
     }
-    const result = await filesystem.readFile(path, "utf-8");
+    const result = await filesystem.readFile(project.id, path, "utf-8");
     if (!result.success) {
       setError(result.error ?? "Could not read file");
       return;
@@ -66,18 +66,18 @@ export function WorkspaceExplorerDialog({ project, open, onOpenChange }: {
     setError(null);
     setSelectedFile(path);
     setContent(result.content ?? "");
-  }, [t]);
+  }, [project, t]);
 
   const saveFile = useCallback(async () => {
     if (!selectedFile) return;
     const filesystem = getProjectNativeFilesystem();
-    if (!filesystem?.writeFile) {
+    if (!filesystem?.writeFile || !project) {
       setError(t("projectsPage.folderBrowserDesktopOnly"));
       return;
     }
     setSaving(true);
     try {
-      const result = await filesystem.writeFile(selectedFile, content);
+      const result = await filesystem.writeFile(project.id, selectedFile, content);
       if (!result.success) throw new Error(result.error ?? "Could not save file");
       setError(null);
       if (currentPath) await loadDirectory(currentPath);
@@ -86,7 +86,7 @@ export function WorkspaceExplorerDialog({ project, open, onOpenChange }: {
     } finally {
       setSaving(false);
     }
-  }, [content, currentPath, loadDirectory, selectedFile, t]);
+  }, [content, currentPath, loadDirectory, project, selectedFile, t]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

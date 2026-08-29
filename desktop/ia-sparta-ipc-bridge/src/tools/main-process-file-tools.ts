@@ -35,15 +35,16 @@ export async function executeMainProcessFileTool(
       const filePath = String(args.path ?? '')
       if (!filePath) throw new Error('read_file requiere "path"')
 
+      if (!isWithinRoot(filePath, root)) {
+        throw new Error('La ruta está fuera de la carpeta conectada / workspace root.')
+      }
+
       // Check chat attachment cache first (e.g. for uploaded PDFs, DOCX, XLSX)
       const cachedText = getCachedAttachmentContent(filePath)
       if (cachedText && cachedText.trim()) {
         return cachedText
       }
 
-      if (root && !isWithinRoot(filePath, root)) {
-        throw new Error('La ruta está fuera de la carpeta conectada / workspace root.')
-      }
       if (isDocumentConvertible(filePath)) {
         const conv = await convertDocumentToMarkdown({ filePath })
         return conv.markdown

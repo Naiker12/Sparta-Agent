@@ -9,7 +9,7 @@ export const profile = {
   "avatarShape": "Forma de la foto de perfil",
   "avatarShapeCircle": "Círculo",
   "avatarShapeRounded": "Redondeada",
-  "chooseSloth": "O elige un perezoso",
+  "chooseAvatar": "O elige un avatar",
   "nameSaved": "Nombre de perfil guardado",
   "namePersistErrorTitle": "No se pudo guardar el nombre de perfil",
   "namePersistErrorDescription": "El nombre se actualizó para esta sesión, pero podría no conservarse tras recargar.",

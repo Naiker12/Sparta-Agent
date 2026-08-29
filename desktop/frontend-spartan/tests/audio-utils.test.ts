@@ -11,7 +11,7 @@ import {
 
 test("chat audio uses the backend's raw upload limit", () => {
   const backendLimits = readFileSync(
-    new URL("../../backend/utils/upload_limits.py", import.meta.url),
+    new URL("../../backend-spartan/utils/upload_limits.py", import.meta.url),
     "utf8",
   );
   const limitMb = Number(

@@ -140,17 +140,18 @@ export async function updateChatProjectInstructions(
 
 type NativeFilesystem = {
   openFolderDialog: () => Promise<string | null>;
-  setWorkspaceRoot?: (root: string) => Promise<{ success: boolean; error?: string }>;
-  readDirLevel?: (path: string) => Promise<{
+  getPathForFile?: (file: File) => string | null;
+  setWorkspaceRoot?: (projectId: string, root: string, access?: "read" | "write") => Promise<{ success: boolean; error?: string }>;
+  readDirLevel?: (projectId: string, path: string) => Promise<{
     nodes: Array<{ name: string; path: string; type: "file" | "directory" }>;
     error?: string;
   }>;
-  readFile?: (path: string, encoding?: "utf-8") => Promise<{
+  readFile?: (projectId: string, path: string, encoding?: "utf-8") => Promise<{
     success: boolean;
     content?: string;
     error?: string;
   }>;
-  writeFile?: (path: string, content: string) => Promise<{
+  writeFile?: (projectId: string, path: string, content: string) => Promise<{
     success: boolean;
     error?: string;
   }>;
@@ -161,10 +162,13 @@ function nativeFilesystem(): NativeFilesystem | null {
   return (window as Window & { fs?: NativeFilesystem }).fs ?? null;
 }
 
-export async function connectChatProjectWorkspace(projectId: string): Promise<string | null> {
+export async function connectChatProjectWorkspace(
+  projectId: string,
+  workspaceAccess: "read" | "write" = "read",
+): Promise<string | null> {
   const selected = await chooseProjectWorkspaceFolder();
   if (!selected) return null;
-  return setChatProjectWorkspace(projectId, selected);
+  return setChatProjectWorkspace(projectId, selected, workspaceAccess);
 }
 
 export async function chooseProjectWorkspaceFolder(): Promise<string | null> {
@@ -178,15 +182,27 @@ export async function chooseProjectWorkspaceFolder(): Promise<string | null> {
 export async function setChatProjectWorkspace(
   projectId: string,
   folder: string,
+  workspaceAccess: "read" | "write" = "read",
 ): Promise<string | null> {
-  const project = await updateChatProjectWorkspace(projectId, folder);
+  const project = await updateChatProjectWorkspace(projectId, folder, workspaceAccess);
   const filesystem = nativeFilesystem();
-  await filesystem?.setWorkspaceRoot?.(project.connectedFolderPath ?? folder);
+  const configured = await filesystem?.setWorkspaceRoot?.(
+    projectId,
+    project.connectedFolderPath ?? folder,
+    project.workspaceAccess ?? "read",
+  );
+  if (configured && !configured.success) {
+    throw new Error(configured.error ?? "Unable to connect workspace folder.");
+  }
   return project.connectedFolderPath ?? null;
 }
 
 export function getProjectNativeFilesystem(): NativeFilesystem | null {
   return nativeFilesystem();
+}
+
+export function getDroppedNativePath(file: File): string | null {
+  return nativeFilesystem()?.getPathForFile?.(file) ?? null;
 }
 
 export async function disconnectChatProjectWorkspace(projectId: string): Promise<void> {

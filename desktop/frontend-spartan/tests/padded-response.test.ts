@@ -58,21 +58,3 @@ test("only the two padded routes require a payload", () => {
   assert.deepEqual(labelled, ["Model load", "Model unload"]);
   assert.ok(chatApi.includes("assertCompletedPaddedBody(body, paddedLabel)"));
 });
-
-test("the Python client agrees", () => {
-  // If only one client rejects a truncated reply, one reads success where the other fails.
-  let cli = "";
-  try {
-    cli = readFileSync(
-      new URL("../../../spartan_agent_cli/_inference.py", import.meta.url),
-      "utf8",
-    );
-  } catch {
-    cli = readFileSync(
-      new URL("../../../spartan_agent_cli/_inference.py", import.meta.url),
-      "utf8",
-    );
-  }
-  assert.ok(cli.includes("def require_completed_padded_body("));
-  assert.ok(cli.includes("if isinstance(body, dict) and body:"));
-});

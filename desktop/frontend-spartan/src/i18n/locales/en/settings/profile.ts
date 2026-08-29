@@ -14,7 +14,7 @@ export const profile = {
   "avatarShapeRounded": "Rounded",
   "greetingSloth": "Sloth in greeting",
   "greetingSlothDescription": "Show the sloth in the chat greeting.",
-  "chooseSloth": "Or pick a sloth",
+  "chooseAvatar": "Or pick an avatar",
   "noPicture": "No profile picture",
   "noneLabel": "None",
   "nameSaved": "Profile name saved",

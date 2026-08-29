@@ -1,7 +1,7 @@
 
 import { cn } from "@/lib/utils";
+import { GeneratedAvatar } from "@/components/ui/blobatar-avatar";
 import { useEffect, useState } from "react";
-import { ownerPaletteColor } from "../lib/avatar-theme";
 import { useHfOwnerAvatar } from "../lib/hf-owner-avatar";
 import {
   type ProviderLogo,
@@ -203,8 +203,6 @@ function DefaultAvatar({
   remote?: boolean;
 }) {
   const owned = owner.trim() || "?";
-  const initial = owned[0]?.toUpperCase() ?? "?";
-  const color = ownerPaletteColor(owned);
   const remoteUrl = useHfOwnerAvatar(owned, remote);
   const [failedImage, setFailedImage] = useState<FailedAvatarImage | null>(
     null,
@@ -233,21 +231,17 @@ function DefaultAvatar({
   }, [remoteUrl, failedImage]);
 
   return (
-    <span
-      style={showImage ? undefined : { backgroundColor: color }}
-      className={cn(
-        "hub-avatar-tile inline-flex shrink-0 items-center justify-center overflow-hidden font-semibold text-white",
-        SIZES[size],
-        className,
-      )}
-      aria-hidden="true"
-    >
+    <>
       {showImage ? (
         <img
           src={remoteUrl ?? ""}
           alt=""
           decoding="async"
-          className="size-full object-cover"
+          className={cn(
+            "hub-avatar-tile inline-block shrink-0 overflow-hidden object-cover",
+            SIZES[size],
+            className,
+          )}
           onLoad={() => setFailedImage(null)}
           onError={() => {
             if (!remoteUrl) {
@@ -261,8 +255,17 @@ function DefaultAvatar({
           }}
         />
       ) : (
-        initial
+        <GeneratedAvatar
+          name={owned}
+          animate="hover"
+          className={cn(
+            "hub-avatar-tile inline-block shrink-0 overflow-hidden",
+            SIZES[size],
+            className,
+          )}
+          fallback={<span className={cn("hub-avatar-tile inline-block shrink-0 bg-muted", SIZES[size], className)} />}
+        />
       )}
-    </span>
+    </>
   );
 }

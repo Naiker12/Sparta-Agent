@@ -1,12 +1,13 @@
 
 import { useState } from "react";
 import fallbackMascot from "@/assets/mascot-fallback.webp?inline";
+import { GeneratedAvatar } from "@/components/ui/blobatar-avatar";
 import { cn } from "@/lib/utils";
-import { avatarBgStyle, initialsFromName } from "../utils/avatar-initials";
 import {
   useUserProfileStore,
   type AvatarShape,
 } from "../stores/user-profile-store";
+import { blobatarSeedFromValue } from "../blobatar-avatars";
 
 type UserAvatarProps = {
   name: string;
@@ -38,11 +39,11 @@ export function UserAvatar({
   shape,
 }: UserAvatarProps) {
   const [imageFailed, setImageFailed] = useState(false);
-  const label = initialsFromName(name);
   const storedShape = useUserProfileStore((s) => s.avatarShape);
   const shapeClass = SHAPE[shape ?? storedShape];
+  const selectedSeed = blobatarSeedFromValue(imageUrl);
 
-  if (imageUrl) {
+  if (imageUrl && !selectedSeed) {
     return (
       <span
         className={cn(
@@ -63,17 +64,10 @@ export function UserAvatar({
   }
 
   return (
-    <span
-      style={avatarBgStyle()}
-      className={cn(
-        "inline-flex shrink-0 items-center justify-center font-semibold",
-        shapeClass,
-        SIZE[size],
-        className,
-      )}
-      aria-hidden
-    >
-      {label}
-    </span>
+    <GeneratedAvatar
+      name={selectedSeed ?? (name.trim() || "sparta-user")}
+      className={cn("inline-block shrink-0", shapeClass, SIZE[size], className)}
+      fallback={<span className={cn("inline-block shrink-0 bg-muted", shapeClass, SIZE[size], className)} />}
+    />
   );
 }

@@ -3228,7 +3228,7 @@ export function AppSidebar() {
                               {/* New chat in this project */}
                               <button
                                 type="button"
-                                aria-label="New chat"
+                                aria-label={t("shell.navigation.newChat")}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   openNewChat(project.id);
@@ -3245,7 +3245,7 @@ export function AppSidebar() {
                                   <button
                                     type="button"
                                     onClick={(e) => e.stopPropagation()}
-                                    aria-label="Project options"
+                                    aria-label={t("shell.navigation.projectOptions")}
                                     className="sidebar-row-action sidebar-touch-reveal group-hover/recent-item:opacity-100 group-hover/recent-item:pointer-events-auto focus-visible:opacity-100 focus-visible:pointer-events-auto"
                                   >
                                     <span className="sidebar-row-action-glyph">
@@ -3261,11 +3261,11 @@ export function AppSidebar() {
                                 >
                                   <DropdownMenuItem onSelect={() => openProject(project.id)}>
                                     <HugeiconsIcon icon={Folder01Icon} strokeWidth={1.75} className="size-icon" />
-                                    <span>Project home</span>
+                                    <span>{t("shell.navigation.projectHome")}</span>
                                   </DropdownMenuItem>
                                   <DropdownMenuItem onSelect={() => openNewChat(project.id)}>
                                     <HugeiconsIcon icon={PencilEdit02Icon} strokeWidth={1.75} className="size-icon" />
-                                    <span>New chat</span>
+                                    <span>{t("shell.navigation.newChat")}</span>
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
                                     onSelect={() => {
@@ -3279,7 +3279,7 @@ export function AppSidebar() {
                                     }}
                                   >
                                     <HugeiconsIcon icon={Edit03Icon} strokeWidth={1.75} className="size-icon" />
-                                    <span>Rename project</span>
+                                    <span>{t("shell.navigation.renameProject")}</span>
                                   </DropdownMenuItem>
                                   {renderMoveRowItems(
                                     PROJECT_ORDER_SCOPE,
@@ -3289,7 +3289,7 @@ export function AppSidebar() {
                                   )}
                                   <DropdownMenuItem onSelect={() => toggleProjectPin(project.id)}>
                                     <HugeiconsIcon icon={isProjectPinned ? PinOffIcon : PinIcon} strokeWidth={1.75} className="size-icon" />
-                                    <span>{isProjectPinned ? "Unpin project" : "Pin project"}</span>
+                                    <span>{t(isProjectPinned ? "shell.navigation.unpinProject" : "shell.navigation.pinProject")}</span>
                                   </DropdownMenuItem>
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem
@@ -3300,7 +3300,7 @@ export function AppSidebar() {
                                     }}
                                   >
                                     <HugeiconsIcon icon={Delete02Icon} strokeWidth={1.75} className="size-icon" />
-                                    <span>Delete project</span>
+                                    <span>{t("shell.navigation.deleteProject")}</span>
                                   </DropdownMenuItem>
                                 </DropdownMenuContent>
                               </DropdownMenu>
