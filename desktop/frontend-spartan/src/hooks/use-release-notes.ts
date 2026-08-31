@@ -28,6 +28,7 @@ export type ReleaseNotesState = "idle" | "loading" | "ready" | "error";
 // ask before one exists. Wait briefly rather than fail.
 const AUTH_POLL_MS = 250;
 const AUTH_POLL_LIMIT = 40;
+const FETCH_RETRY_DELAYS_MS = [500, 1_500] as const;
 
 interface UseReleaseNotesOptions {
   version: string | null | undefined;
@@ -80,6 +81,24 @@ async function fetchReleaseNotes(
   return toReleaseNotes(await res.json(), version);
 }
 
+async function fetchReleaseNotesWithRetry(
+  version: string,
+  refresh = false,
+): Promise<ReleaseNotes | null> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt <= FETCH_RETRY_DELAYS_MS.length; attempt += 1) {
+    try {
+      return await fetchReleaseNotes(version, refresh || attempt > 0);
+    } catch (error) {
+      lastError = error;
+      const delay = FETCH_RETRY_DELAYS_MS[attempt];
+      if (delay === undefined) break;
+      await new Promise<void>((resolve) => window.setTimeout(resolve, delay));
+    }
+  }
+  throw lastError;
+}
+
 export function useReleaseNotes({
   version,
   enabled = true,
@@ -97,7 +116,7 @@ export function useReleaseNotes({
     const requestId = requestIdRef.current;
     setState("loading");
     setNotes(null);
-    fetchReleaseNotes(target, refresh)
+    fetchReleaseNotesWithRetry(target, refresh)
       .then((next) => {
         // A newer request owns the state now.
         if (requestIdRef.current !== requestId) {

@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.2.13] - 2026-08-31
+
+### Añadido y mejorado
+
+- El aviso de actualización de Electron puede minimizarse y restaurarse, mostrando el progreso mientras descarga.
+- Las notas incluidas en el manifiesto aparecen inmediatamente y la consulta enriquecida reintenta fallos transitorios.
+
+### Corregido
+
+- Los releases de macOS generan y publican el ZIP requerido por `electron-updater` junto con `latest-mac.yml`.
+- Las notas de versión se conservan al completar la descarga y durante la instalación.
+- Linux evita iniciar una instalación automática cuando la aplicación no se ejecuta desde un AppImage válido.
+
 ## [0.2.11] - 2026-08-29
 
 ### Corregido

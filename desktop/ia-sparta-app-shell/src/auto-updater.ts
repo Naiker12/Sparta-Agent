@@ -25,6 +25,11 @@ let state: UpdaterState = { stage: 'idle' }
 let checking = false
 let downloading = false
 
+function appImageEnvironmentError(): string | null {
+  if (process.platform !== 'linux' || !app.isPackaged || process.env.APPIMAGE) return null
+  return 'Automatic installation requires running Sparta Agent from its writable AppImage file. Download the latest AppImage from GitHub instead.'
+}
+
 const updateMetaPath = (): string => path.join(app.getPath('userData'), 'update-meta.json')
 
 function rememberDownloadedVersion(version: string): void {
@@ -101,7 +106,12 @@ export function setupAutoUpdater(getWindow: () => BrowserWindow | null | undefin
   autoUpdater.on('update-downloaded', (info) => {
     downloading = false
     rememberDownloadedVersion(info.version)
-    emit({ stage: 'downloaded', version: info.version }, getWindow)
+    emit({
+      stage: 'downloaded',
+      version: info.version,
+      releaseNotes: state.releaseNotes ?? releaseNotesText(info.releaseNotes),
+      percent: 100,
+    }, getWindow)
   })
   autoUpdater.on('error', (error) => {
     checking = false
@@ -128,6 +138,11 @@ export function setupAutoUpdater(getWindow: () => BrowserWindow | null | undefin
   })
   ipcMain.handle('updater:download', async () => {
     if (state.stage !== 'available') return { ok: false, error: 'No update is available to download' }
+    const environmentError = appImageEnvironmentError()
+    if (environmentError) {
+      emit({ ...state, stage: 'error', error: environmentError }, getWindow)
+      return { ok: false, error: environmentError }
+    }
     if (downloading) return { ok: false, error: 'The update is already downloading' }
     downloading = true
     try {
@@ -142,7 +157,12 @@ export function setupAutoUpdater(getWindow: () => BrowserWindow | null | undefin
   })
   ipcMain.handle('updater:install', () => {
     if (state.stage !== 'downloaded') return { ok: false, error: 'The update has not finished downloading' }
-    emit({ stage: 'installing', version: state.version }, getWindow)
+    const environmentError = appImageEnvironmentError()
+    if (environmentError) {
+      emit({ ...state, stage: 'error', error: environmentError }, getWindow)
+      return { ok: false, error: environmentError }
+    }
+    emit({ ...state, stage: 'installing' }, getWindow)
     autoUpdater.quitAndInstall(true, true)
     return { ok: true }
   })

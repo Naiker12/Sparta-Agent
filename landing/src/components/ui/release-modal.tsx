@@ -19,7 +19,7 @@ export function ReleaseModal() {
 
   useEffect(() => {
     // Show the announcement once for this specific release.
-    const hasSeen = localStorage.getItem('sparta_release_v0.2.12_seen');
+    const hasSeen = localStorage.getItem('sparta_release_v0.2.13_seen');
     if (!hasSeen) {
       const timer = setTimeout(() => setIsOpen(true), 600);
       return () => clearTimeout(timer);
@@ -27,7 +27,7 @@ export function ReleaseModal() {
   }, []);
 
   const handleClose = () => {
-    localStorage.setItem('sparta_release_v0.2.12_seen', 'true');
+    localStorage.setItem('sparta_release_v0.2.13_seen', 'true');
     setIsOpen(false);
   };
 
@@ -41,57 +41,55 @@ export function ReleaseModal() {
 
   const releaseFeatures = [
     {
-      title: 'Suite de diagramas arquitectónicos interactivos',
+      title: 'Actualizaciones confiables en macOS',
       summary:
-        'Esquemas visuales interactivos de alta fidelidad para Zero-Trust, LangGraph FSM, Deep Research y RAG híbrido.',
+        'Los releases de macOS incluyen el ZIP necesario para que Electron encuentre, descargue e instale nuevas versiones.',
       details: [
-        'Diagrama de capas Zero-Trust: Electron ContextIsolation, Tokio IPC Broker, Interceptor de Syscalls y Vault AES-256.',
-        'Flujo de máquina de estados finitos LangGraph con checkpoints inmutables en SQLite.',
-        'Pipeline recursivo de Búsqueda Profunda (Deep Research) con descomposición de 3-5 subpreguntas y síntesis verificada.',
-        'Búsqueda híbrida RAG local: embeddings vectoriales en SQLite-vec + FTS5 léxico BM25.',
+        'El empaquetado genera instaladores DMG para descarga manual y ZIP para Squirrel.Mac.',
+        'El workflow publica el ZIP junto con latest-mac.yml y los demás artefactos.',
+        'La comprobación de versiones vuelve a funcionar en instalaciones empaquetadas de macOS.',
       ],
-      docSlug: 'permisos',
+      docSlug: 'quickstart',
       icon: Workflow,
       iconColor: 'text-[#ff6363]',
       iconBg: 'bg-[#ff6363]/10 border-[#ff6363]/25',
     },
     {
-      title: 'Navegación y paginación reactiva en documentación',
+      title: 'Aviso de actualización minimizable',
       summary:
-        'Navega con fluidez entre los 21 capítulos técnicos mediante tarjetas táctiles de Anterior y Siguiente.',
+        'El aviso ya no bloquea permanentemente la interfaz y puede reducirse a un indicador flotante.',
       details: [
-        'Tarjetas táctiles Raycast al final de cada artículo para navegación secuencial con micro-animaciones elásticas.',
-        'Enrutamiento reactivo en estado local con pushState sin recargas de página ni parpadeos.',
-        'Interceptor global de clics para enlaces de la barra lateral y referencias cruzadas entre documentos.',
+        'Cada versión puede minimizarse y volver a abrirse sin perder el estado.',
+        'Durante una descarga minimizada se mantiene visible el porcentaje de progreso.',
+        'Una versión nueva vuelve a mostrar el aviso aunque la anterior se hubiera minimizado.',
       ],
-      docSlug: 'inicio',
+      docSlug: 'quickstart',
       icon: BookOpen,
       iconColor: 'text-[#63a1ff]',
       iconBg: 'bg-[#63a1ff]/10 border-[#63a1ff]/25',
     },
     {
-      title: 'Recipe Studio, Telemetría y Acceso Remoto',
+      title: 'Notas de versión más resistentes',
       summary:
-        'Soporte y documentación para pipelines agénticos de datos, monitor de tokens/costos y GPU Colab.',
+        'Las novedades aparecen de inmediato y ya no dependen únicamente del arranque del backend local.',
       details: [
-        'Recipe Studio: Diseñador visual para encadenar herramientas MCP en flujos parametrizados (.sparta/recipes/).',
-        'Monitor de APIs en tiempo real: Desglose de Prompt vs Completion tokens, TTFT y estimación de costos en USD.',
-        'Acceso Remoto & LAN: Control móvil mediante código QR/PIN, túneles Cloudflare y puente GPU Google Colab.',
-        'Entrada de Voz: Dictado en lenguaje natural con whisper.cpp local y formateo automático de código.',
+        'El texto incluido en el manifiesto del actualizador funciona como respaldo inmediato.',
+        'La consulta enriquecida de novedades reintenta automáticamente los fallos transitorios.',
+        'Las notas se conservan al finalizar la descarga y al preparar la instalación.',
       ],
-      docSlug: 'recipe-studio',
+      docSlug: 'quickstart',
       icon: Cpu,
       iconColor: 'text-[#fbbf24]',
       iconBg: 'bg-[#fbbf24]/10 border-[#fbbf24]/25',
     },
     {
-      title: 'Micro-interacciones y efectos táctiles',
+      title: 'Instalación segura en Linux',
       summary:
-        'Animación de explosión radial de chispas stardust y barrido de luz shimmer en botones de acción.',
+        'Sparta comprueba que se esté ejecutando desde un AppImage válido antes de intentar reemplazarlo.',
       details: [
-        'Efecto de explosión Particle Burst con 18 micro-chispas concéntricas de colores y onda expansiva perimetral.',
-        'Barrido de luz translúcido (Shimmer Light Sweep) sobre la superficie de los botones al hacer hover.',
-        'Resaltado interactivo con elevación suave en el mockup del Hero, enlaces de navegación y FAQs.',
+        'Se evita cerrar la aplicación con una instalación automática que no puede completarse.',
+        'Los entornos incompatibles reciben una explicación y pueden descargar el AppImage manualmente.',
+        'El flujo compatible conserva la descarga, instalación y reinicio administrados por Electron.',
       ],
       docSlug: 'quickstart',
       icon: Sparkles,
@@ -117,7 +115,7 @@ export function ReleaseModal() {
             alt="Sparta Agent"
             className="size-4 object-contain drop-shadow-[0_0_6px_rgba(234,179,8,0.5)] group-hover:scale-110 transition-transform duration-200"
           />
-          <span className="font-mono text-[11px] text-[#e6e6e6]">v0.2.12 disponible</span>
+          <span className="font-mono text-[11px] text-[#e6e6e6]">v0.2.13 disponible</span>
           <Sparkles className="w-3.5 h-3.5 text-[#ff6363]" />
         </motion.button>
       )}
@@ -156,12 +154,12 @@ export function ReleaseModal() {
                     className="size-3.5 object-contain drop-shadow-[0_0_4px_rgba(234,179,8,0.5)]"
                   />
                   <span className="text-[11px] font-mono font-medium tracking-[0.08em] text-[#9c9c9d] uppercase">
-                    Lanzamiento oficial v0.2.12
+                    Lanzamiento oficial v0.2.13
                   </span>
                 </div>
 
                 <h2 className="text-2xl sm:text-3xl font-medium tracking-tight text-white">
-                  Sparta Agent v0.2.12
+                  Sparta Agent v0.2.13
                 </h2>
 
                 <p className="text-xs sm:text-sm text-[#9c9c9d] leading-relaxed font-normal">
@@ -265,18 +263,18 @@ export function ReleaseModal() {
               {/* Action Buttons Group */}
               <div className="relative z-10 flex flex-col sm:flex-row items-center gap-2.5 pt-1">
                 <a
-                  href="https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Windows-0.2.12-Setup.exe"
+                  href="https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Windows-0.2.13-Setup.exe"
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={handleClose}
                   className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#e6e6e6] hover:bg-white text-[#454647] hover:text-[#111214] text-xs font-medium shadow-button-neutral transition-all active:scale-[0.98] cursor-pointer"
                 >
                   <Download className="w-3.5 h-3.5" />
-                  <span>Descargar Sparta v0.2.12 (.exe)</span>
+                  <span>Descargar Sparta v0.2.13 (.exe)</span>
                 </a>
 
                 <a
-                  href="https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.2.12"
+                  href="https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.2.13"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#111214] hover:bg-[#1b1c1e] border border-[#363739] text-[#9c9c9d] hover:text-white text-xs font-medium transition-all shadow-key cursor-pointer"

@@ -65,7 +65,9 @@ module.exports = {
   ],
   icon: 'public/sparta-escritorio.png',
   mac: {
-    target: ['dmg'],
+    // Squirrel.Mac consumes the ZIP and latest-mac.yml; the DMG is only the
+    // manual installer. Keep both artifacts in every macOS release.
+    target: ['dmg', 'zip'],
     artifactName: 'Sparta-Agent-Mac-\${version}-Installer.\${ext}',
     hardenedRuntime: true,
     gatekeeperAssess: false,

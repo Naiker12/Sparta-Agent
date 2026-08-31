@@ -18,6 +18,7 @@ interface ReleaseNotesPanelProps {
   // Collapsed previews the top bullets; expanded scrolls the full notes.
   open: boolean;
   releaseNotesUrl?: string | null;
+  fallbackMarkdown?: string | null;
   className?: string;
 }
 
@@ -63,15 +64,16 @@ export function ReleaseNotesPanel({
   version,
   open,
   releaseNotesUrl = null,
+  fallbackMarkdown = null,
   className,
 }: ReleaseNotesPanelProps): ReactElement | null {
   // Fetched with the popup: the collapsed preview needs the notes too.
   const { state, notes, retry } = useReleaseNotes({ version, enabled: true });
   const scrollRef = useRef<HTMLElement | null>(null);
 
-  // No fallback body: the updater's `notes` is latest.json's static download
-  // blurb, the same install boilerplate the backend now strips.
-  const source = notes?.matched ? notes.markdown : null;
+  // Prefer enriched backend notes, but render the updater manifest's notes
+  // immediately while the backend starts or if that lookup fails.
+  const source = notes?.matched ? notes.markdown : fallbackMarkdown;
   // Notes target the repository, so relative links must point back at it.
   const markdown = useMemo(
     () => (source === null ? null : resolveReleaseBodyLinks(source)),
