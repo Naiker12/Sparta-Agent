@@ -35,6 +35,7 @@ import {
   markChatThreadDeleted,
   markChatThreadsDeleted,
 } from "./chat-thread-tombstones";
+import { isAssistantLocalThreadId } from "./thread-ids";
 import { ThreadRecordWriteCoordinator } from "./thread-record-write-coordinator";
 
 // Thread ids that belong to a temporary/incognito session. A thread is
@@ -581,6 +582,12 @@ export async function getStoredChatThreadReadResult(
   if (isThreadIncognito(threadId)) {
     return { thread: undefined, cacheable: true };
   }
+  // Assistant UI creates a temporary id before a server-side history row exists.
+  // Reading it remotely only produces a guaranteed 404 and can be retried by several
+  // consumers at once. These chats remain in the active runtime until they are saved.
+  if (isAssistantLocalThreadId(threadId)) {
+    return { thread: undefined, cacheable: false };
+  }
   if (isChatThreadDeleted(threadId)) {
     return { thread: undefined, cacheable: true };
   }
@@ -632,6 +639,7 @@ export async function ensureStoredChatThread(
   // to ensure -- skip the backend round-trips this would otherwise make
   // on every autosave (runStart/runEnd) and message append.
   if (isThreadIncognito(threadId)) return undefined;
+  if (isAssistantLocalThreadId(threadId)) return fallback;
   if (isChatThreadDeleted(threadId)) return undefined;
   // Outcome ignored on purpose: adopting the failure here would skip the retryFailedThreadRecord
   // branch below for exactly the callers already waiting when the write rejected.
@@ -685,6 +693,7 @@ export async function listStoredChatMessages(
   threadId: string,
 ): Promise<MessageRecord[]> {
   if (isThreadIncognito(threadId)) return [];
+  if (isAssistantLocalThreadId(threadId)) return [];
   if (isChatThreadDeleted(threadId)) return [];
   const legacyMessages = await db.messages
     .where("threadId")
@@ -932,6 +941,7 @@ export async function updateStoredChatThread(
   options: { signal?: AbortSignal } = {},
 ): Promise<ThreadRecord | undefined> {
   if (isThreadIncognito(threadId)) return undefined;
+  if (isAssistantLocalThreadId(threadId)) return undefined;
   // Same bound and same signal as the write it precedes: a stall here left the settings
   // write chain pending for the life of the page, and reopening or forking that chat
   // waits on that chain.

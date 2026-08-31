@@ -1,7 +1,7 @@
 {
   "name": "sparta-agent",
   "private": true,
-  "version": "0.2.15",
+  "version": "0.2.16",
   "description": "Local-first agentic IDE for high-performance engineering teams",
   "author": "Naiker12",
   "license": "MIT",

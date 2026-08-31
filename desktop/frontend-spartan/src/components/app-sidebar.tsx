@@ -2883,7 +2883,9 @@ export function AppSidebar() {
       </SidebarGroup>
 
       <SidebarContent
-        ref={attachScroller}
+        ref={(element) => {
+          attachScroller(element);
+        }}
         onScroll={(e) => syncScrollState(e.currentTarget)}
         // Collapsible groups animate their height; re-measure the fade once the animation settles.
         onAnimationEnd={(e) => {

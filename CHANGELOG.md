@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.16] - 2026-08-31
+
+### Corregido
+
+- Las fuentes locales se empaquetan correctamente, sin respuestas HTML inválidas en lugar de archivos de fuente.
+- La barra lateral reenvía sus referencias de React correctamente, eliminando los avisos de `ref` en consola.
+- Los chats temporales ya no hacen solicitudes a hilos que aún no existen en el servidor.
+
 ## [0.2.15] - 2026-08-31
 
 ### Corregido

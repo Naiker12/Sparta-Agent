@@ -214,7 +214,7 @@ function Navbar({ onOpenDocs }: { onOpenDocs: () => void }) {
           <span className="font-medium text-sm tracking-tight text-white flex items-center gap-2">
             Sparta Agent
             <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded-[6px] bg-[#1b1c1e] text-[#9c9c9d] border border-[#363739]">
-              v0.2.15
+              v0.2.16
             </span>
           </span>
         </a>
@@ -547,7 +547,7 @@ function DownloadSection() {
             </div>
 
             <BurstLink
-              href="https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Windows-0.2.15-Setup.exe"
+              href="https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Windows-0.2.16-Setup.exe"
               target="_blank"
               rel="noopener noreferrer"
               className="w-full text-center bg-[#e6e6e6] hover:bg-white text-[#111214] text-xs font-medium py-2.5 rounded-lg transition-all flex items-center justify-center gap-2 shadow-button-neutral active:scale-[0.98]"
@@ -582,7 +582,7 @@ function DownloadSection() {
             </div>
 
             <BurstLink
-              href="https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Mac-0.2.15-Installer.dmg"
+              href="https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Mac-0.2.16-Installer.dmg"
               target="_blank"
               rel="noopener noreferrer"
               className="w-full text-center bg-[#e6e6e6] hover:bg-white text-[#111214] text-xs font-medium py-2.5 rounded-lg transition-all flex items-center justify-center gap-2 shadow-button-neutral active:scale-[0.98]"
@@ -617,7 +617,7 @@ function DownloadSection() {
             </div>
 
             <BurstLink
-              href="https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Linux-0.2.15.AppImage"
+              href="https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Linux-0.2.16.AppImage"
               target="_blank"
               rel="noopener noreferrer"
               className="w-full text-center bg-[#e6e6e6] hover:bg-white text-[#111214] text-xs font-medium py-2.5 rounded-lg transition-all flex items-center justify-center gap-2 shadow-button-neutral active:scale-[0.98]"
@@ -815,7 +815,7 @@ function FooterSection({ onOpenDocs }: { onOpenDocs?: () => void }) {
                   />
                   <span className="font-medium text-sm tracking-tight text-white">Sparta Agent</span>
                   <span className="font-mono text-[10px] text-[#9c9c9d] px-1.5 py-0.5 rounded-[6px] bg-[#111214] border border-[#363739]">
-                    v0.2.15
+                    v0.2.16
                   </span>
                 </div>
 

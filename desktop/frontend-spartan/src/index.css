@@ -170,7 +170,7 @@
 
 @font-face {
 	font-family: "Hellix";
-	src: url("/fonts/Hellix-Regular.woff") format("woff");
+	src: url("../public/fonts/Hellix-Regular.woff") format("woff");
 	font-weight: 400;
 	font-style: normal;
 	font-display: swap;
@@ -178,7 +178,7 @@
 
 @font-face {
 	font-family: "Hellix";
-	src: url("/fonts/Hellix-Medium.woff") format("woff");
+	src: url("../public/fonts/Hellix-Medium.woff") format("woff");
 	font-weight: 500;
 	font-style: normal;
 	font-display: swap;
@@ -186,8 +186,8 @@
 
 @font-face {
 	font-family: "Hellix";
-	src: url("/fonts/Hellix-SemiBold.woff2") format("woff2"),
-		url("/fonts/Hellix-SemiBold.woff") format("woff");
+	src: url("../public/fonts/Hellix-SemiBold.woff2") format("woff2"),
+		url("../public/fonts/Hellix-SemiBold.woff") format("woff");
 	font-weight: 600;
 	font-style: normal;
 	font-display: swap;
@@ -195,7 +195,7 @@
 
 @font-face {
 	font-family: "Fira Code";
-	src: url("/fonts/FiraCode-VariableFont_wght.ttf") format("truetype-variations");
+	src: url("../public/fonts/FiraCode-VariableFont_wght.ttf") format("truetype-variations");
 	font-weight: 300 700;
 	font-style: normal;
 	font-display: swap;
