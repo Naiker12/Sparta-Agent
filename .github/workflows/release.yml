@@ -69,16 +69,35 @@ jobs:
           npm --prefix desktop/frontend-spartan run test:electron
           npm --prefix desktop/frontend-spartan run i18n:check
 
+      # Do not expose empty signing secrets as environment variables:
+      # electron-builder resolves an empty CSC_LINK to the checkout directory
+      # and fails with "not a file" instead of producing an unsigned build.
+      - name: Configure Windows signing credentials
+        if: runner.os == 'Windows' && secrets.WIN_CSC_LINK != ''
+        shell: bash
+        env:
+          SIGNING_LINK: ${{ secrets.WIN_CSC_LINK }}
+          SIGNING_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
+        run: |
+          echo "WIN_CSC_LINK=$SIGNING_LINK" >> "$GITHUB_ENV"
+          echo "WIN_CSC_KEY_PASSWORD=$SIGNING_PASSWORD" >> "$GITHUB_ENV"
+
+      - name: Configure macOS signing credentials
+        if: runner.os == 'macOS' && secrets.MAC_CSC_LINK != ''
+        shell: bash
+        env:
+          SIGNING_LINK: ${{ secrets.MAC_CSC_LINK }}
+          SIGNING_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
+        run: |
+          echo "CSC_LINK=$SIGNING_LINK" >> "$GITHUB_ENV"
+          echo "CSC_KEY_PASSWORD=$SIGNING_PASSWORD" >> "$GITHUB_ENV"
+
       - run: npm run build
         env:
           TARGET_PLATFORM: ${{ matrix.platform }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Signing material lives exclusively in GitHub Actions secrets.
           # WIN_CSC_* is used by the Windows job; CSC_* by macOS.
-          WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
-          WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
-          CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
-          CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
