@@ -3,7 +3,7 @@
 
 import type { ToolCallMessagePartComponent } from "@assistant-ui/react";
 import { useToolArgsStatus } from "@assistant-ui/react";
-import { TerminalIcon } from "lucide-react";
+import { AlertCircleIcon, TerminalIcon } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { memo } from "react";
 import {
@@ -69,6 +69,31 @@ const TerminalToolUIImpl: ToolCallMessagePartComponent = ({
   // written even while the args status still reads as streaming.
   const awaitingApproval = useToolAwaitingApproval(toolCallId);
   const isWriting = isWritingCommand && !awaitingApproval;
+
+  // Hide setup commands (for example package installation) from a document
+  // generation turn. The user only needs its progress and resulting file.
+  if (isRunning) {
+    return (
+      <div className="my-2 flex items-center gap-2 text-sm text-muted-foreground">
+        <Spinner className="size-3.5" />
+        <span>Preparing file…</span>
+      </div>
+    );
+  }
+  if (status?.type === "incomplete") {
+    return (
+      <div className="my-2 flex items-center gap-2 text-sm text-destructive">
+        <AlertCircleIcon className="size-3.5" />
+        <span>Could not prepare the file.</span>
+      </div>
+    );
+  }
+  if (files.length > 0) {
+    return <SandboxFiles sessionId={sessionId} files={files} />;
+  }
+  if (/\b(?:pip|npm|pnpm|yarn)\s+install\b/i.test(command)) {
+    return null;
+  }
 
   return (
     // Open mid-run so command and live output show, collapsed from history.

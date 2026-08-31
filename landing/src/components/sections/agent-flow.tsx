@@ -300,7 +300,7 @@ export function AgentFlow() {
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3 font-mono text-xs">
                 <div className="flex items-center gap-2">
                   <Terminal className="w-3.5 h-3.5 text-[#52525b]" />
-                  <span className="max-w-[13rem] truncate text-[11px] font-bold text-white">SPARTA ENGINE CONSOLE v0.2.14</span>
+                  <span className="max-w-[13rem] truncate text-[11px] font-bold text-white">SPARTA ENGINE CONSOLE v0.2.15</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />

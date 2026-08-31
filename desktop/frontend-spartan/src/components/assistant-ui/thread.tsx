@@ -16,7 +16,6 @@ import {
 } from "@/components/assistant-ui/message-response-details-sheet";
 import { MessageTiming } from "@/components/assistant-ui/message-timing";
 import { threadHasResearchMessage } from "@/components/assistant-ui/thread-research-presence";
-import { Reasoning, ReasoningGroup } from "@/components/assistant-ui/reasoning";
 import { RagSourcesGroup } from "@/components/assistant-ui/rag-sources";
 import { researchReplyOwners } from "@/components/assistant-ui/research-reply-owners";
 import { Sources, SourcesGroup } from "@/components/assistant-ui/sources";
@@ -6805,8 +6804,9 @@ const ToolFallbackConfirmable = withToolConfirmation(ToolFallback);
  */
 const ASSISTANT_PART_COMPONENTS = {
   Text: MarkdownText,
-  Reasoning: Reasoning,
-  ReasoningGroup: ReasoningGroup,
+  // Reasoning remains available to the model, but not in the user-facing chat.
+  Reasoning: () => null,
+  ReasoningGroup: () => null,
   Source: Sources,
   ToolGroup: ToolGroup,
   tools: {

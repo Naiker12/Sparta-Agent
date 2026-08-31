@@ -4,7 +4,7 @@
   <p><strong>Un espacio de trabajo para construir software con agentes, modelos locales y control humano.</strong></p>
 
   <p>
-    <a href="https://github.com/Naiker12/Sparta-Agent/releases"><img src="https://img.shields.io/badge/version-v0.2.14-111827?style=flat-square&logo=github&logoColor=white" alt="Versión del proyecto" /></a>
+    <a href="https://github.com/Naiker12/Sparta-Agent/releases"><img src="https://img.shields.io/badge/version-v0.2.15-111827?style=flat-square&logo=github&logoColor=white" alt="Versión del proyecto" /></a>
     <img src="https://img.shields.io/badge/desktop-Electron-47848F?style=flat-square&logo=electron&logoColor=white" alt="Electron" />
     <img src="https://img.shields.io/badge/interface-React%2019-111827?style=flat-square&logo=react&logoColor=white" alt="React 19" />
     <img src="https://img.shields.io/badge/license-MIT-111827?style=flat-square" alt="Licencia MIT" />

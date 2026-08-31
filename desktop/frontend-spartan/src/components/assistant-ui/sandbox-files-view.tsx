@@ -6,9 +6,12 @@ import {
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useCallback, useState } from "react";
+import { EyeIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { authFetch, getAuthToken } from "@/features/auth";
+import { useDocumentPreviewStore } from "@/features/rag/components/preview-store";
+import { getAttachmentFileKind } from "@/lib/attachment-file-kind";
 import { apiUrl, isTauri } from "@/lib/api-base";
 import { downloadUrlStreaming, isDownloadCancelled } from "@/lib/native-files";
 
@@ -30,6 +33,31 @@ function SandboxFileRow({
   file: SandboxFile;
 }) {
   const [busy, setBusy] = useState(false);
+  const [previewing, setPreviewing] = useState(false);
+  const openLocalPreview = useDocumentPreviewStore(
+    (state) => state.openLocalPreview,
+  );
+
+  const preview = useCallback(async () => {
+    setPreviewing(true);
+    try {
+      const path = sandboxFilePath(sessionId, file.name);
+      const response = await authFetch(apiUrl(path));
+      if (!response.ok) throw new Error(`Preview refused (${response.status})`);
+      openLocalPreview({
+        blob: await response.blob(),
+        filename: file.name,
+        kind: getAttachmentFileKind(
+          file.name,
+          response.headers.get("content-type"),
+        ),
+      });
+    } catch {
+      toast.error(`Could not preview ${file.name}.`);
+    } finally {
+      setPreviewing(false);
+    }
+  }, [file.name, openLocalPreview, sessionId]);
 
   // Streamed to the chosen path rather than buffered: a tool can write a
   // multi-gigabyte artifact, and a Blob plus its IPC copy would be two more of
@@ -61,20 +89,32 @@ function SandboxFileRow({
   }, [file.name, sessionId]);
 
   return (
-    <button
-      type="button"
-      onClick={save}
-      disabled={busy}
-      title={`Save ${file.name}`}
-      className="flex items-center gap-2 rounded border border-border px-2 py-1 text-xs text-foreground hover:bg-muted disabled:opacity-60"
-    >
-      <HugeiconsIcon icon={File02Icon} className="size-3.5 shrink-0" />
-      <span className="truncate font-mono">{file.name}</span>
-      {file.size !== null && (
-        <span className="text-muted-foreground">{formatSize(file.size)}</span>
-      )}
-      <HugeiconsIcon icon={Download01Icon} className="size-3.5 shrink-0" />
-    </button>
+    <div className="flex overflow-hidden rounded border border-border text-xs text-foreground">
+      <button
+        type="button"
+        onClick={preview}
+        disabled={previewing}
+        title={`Preview ${file.name}`}
+        className="flex min-w-0 items-center gap-2 px-2 py-1 hover:bg-muted disabled:opacity-60"
+      >
+        <HugeiconsIcon icon={File02Icon} className="size-3.5 shrink-0" />
+        <span className="truncate font-mono">{file.name}</span>
+        {file.size !== null && (
+          <span className="shrink-0 text-muted-foreground">{formatSize(file.size)}</span>
+        )}
+        <EyeIcon className="size-3.5 shrink-0 text-muted-foreground" />
+      </button>
+      <button
+        type="button"
+        onClick={save}
+        disabled={busy}
+        title={`Save ${file.name}`}
+        aria-label={`Save ${file.name}`}
+        className="border-l border-border px-2 hover:bg-muted disabled:opacity-60"
+      >
+        <HugeiconsIcon icon={Download01Icon} className="size-3.5" />
+      </button>
+    </div>
   );
 }
 

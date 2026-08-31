@@ -1,10 +1,16 @@
 # Changelog
 
+## [0.2.15] - 2026-08-31
+
+### Corregido
+
+- Los documentos creados por el asistente muestran solo el archivo final, con vista previa y descarga, sin razonamiento, scripts ni comandos de instalación.
+
 ## [0.2.14] - 2026-08-31
 
 ### Corregido
 
-- Se sincronizaron la versión de la aplicación, la landing, la documentación y los enlaces de descarga para el siguiente release.
+- Se sincronizaron la versión de la aplicación, la landing, la documentación y los enlaces de descarga para el release.
 
 ## [0.2.13] - 2026-08-31
 

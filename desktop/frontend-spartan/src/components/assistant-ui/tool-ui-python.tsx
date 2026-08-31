@@ -16,7 +16,7 @@ import {
 import { stringifyToolResult } from "@/lib/strip-ansi";
 import type { ToolCallMessagePartComponent } from "@assistant-ui/react";
 import { useToolArgsStatus } from "@assistant-ui/react";
-import { CodeIcon } from "lucide-react";
+import { AlertCircleIcon, CodeIcon, LoaderIcon } from "lucide-react";
 import { memo, useEffect, useRef, useState } from "react";
 import { pythonToolImagePath } from "./python-tool-image-path";
 import { CopyBtn, ToolCodeCell } from "./tool-code-cell";
@@ -176,6 +176,29 @@ const PythonToolUIImpl: ToolCallMessagePartComponent = ({
   // written even while the args status still reads as streaming.
   const awaitingApproval = useToolAwaitingApproval(toolCallId);
   const isWriting = isWritingCode && !awaitingApproval;
+
+  // Document generation should read like a finished result, not a transcript
+  // of its implementation. Keep the technical card for ordinary code work,
+  // but replace artifact-producing runs with a small status and the final file.
+  if (isRunning) {
+    return (
+      <div className="my-2 flex items-center gap-2 text-sm text-muted-foreground">
+        <LoaderIcon className="size-3.5 animate-spin" />
+        <span>Generating file…</span>
+      </div>
+    );
+  }
+  if (status?.type === "incomplete") {
+    return (
+      <div className="my-2 flex items-center gap-2 text-sm text-destructive">
+        <AlertCircleIcon className="size-3.5" />
+        <span>Could not create the file.</span>
+      </div>
+    );
+  }
+  if (files.length > 0) {
+    return <SandboxFiles sessionId={sessionId} files={files} />;
+  }
 
   return (
     // Status, output and images collapse from history; the executed script
