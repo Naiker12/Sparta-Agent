@@ -34,8 +34,6 @@
 
 Descarga el instalador desde las [releases](https://github.com/Naiker12/Sparta-Agent/releases). En el primer arranque, Sparta Agent prepara su motor local en su propio directorio de datos y muestra el progreso; no reutiliza la instalación de otra aplicación.
 
-Windows releases will be code signed through the SignPath Foundation to help users verify that official Sparta Agent downloads originate from this open-source project.
-
 Para desarrollo:
 
 ```bash
