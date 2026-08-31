@@ -73,24 +73,28 @@ jobs:
       # electron-builder resolves an empty CSC_LINK to the checkout directory
       # and fails with "not a file" instead of producing an unsigned build.
       - name: Configure Windows signing credentials
-        if: runner.os == 'Windows' && secrets.WIN_CSC_LINK != ''
+        if: runner.os == 'Windows'
         shell: bash
         env:
           SIGNING_LINK: ${{ secrets.WIN_CSC_LINK }}
           SIGNING_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
         run: |
-          echo "WIN_CSC_LINK=$SIGNING_LINK" >> "$GITHUB_ENV"
-          echo "WIN_CSC_KEY_PASSWORD=$SIGNING_PASSWORD" >> "$GITHUB_ENV"
+          if [ -n "$SIGNING_LINK" ]; then
+            echo "WIN_CSC_LINK=$SIGNING_LINK" >> "$GITHUB_ENV"
+            echo "WIN_CSC_KEY_PASSWORD=$SIGNING_PASSWORD" >> "$GITHUB_ENV"
+          fi
 
       - name: Configure macOS signing credentials
-        if: runner.os == 'macOS' && secrets.MAC_CSC_LINK != ''
+        if: runner.os == 'macOS'
         shell: bash
         env:
           SIGNING_LINK: ${{ secrets.MAC_CSC_LINK }}
           SIGNING_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
         run: |
-          echo "CSC_LINK=$SIGNING_LINK" >> "$GITHUB_ENV"
-          echo "CSC_KEY_PASSWORD=$SIGNING_PASSWORD" >> "$GITHUB_ENV"
+          if [ -n "$SIGNING_LINK" ]; then
+            echo "CSC_LINK=$SIGNING_LINK" >> "$GITHUB_ENV"
+            echo "CSC_KEY_PASSWORD=$SIGNING_PASSWORD" >> "$GITHUB_ENV"
+          fi
 
       - run: npm run build
         env:
