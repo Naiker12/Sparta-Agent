@@ -8,12 +8,6 @@ const targetPlatform = process.env.TARGET_PLATFORM || (
   process.platform === 'darwin' ? (process.arch === 'arm64' ? 'darwin-arm64' : 'darwin-x64') :
   'linux-x64'
 );
-const hasAppleNotarizationCredentials = Boolean(
-  process.env.APPLE_ID &&
-  process.env.APPLE_APP_SPECIFIC_PASSWORD &&
-  process.env.APPLE_TEAM_ID,
-);
-
 console.log(`[electron-builder] Building for target platform: ${targetPlatform}`);
 
 module.exports = {
@@ -73,12 +67,7 @@ module.exports = {
     gatekeeperAssess: false,
     entitlements: 'build/entitlements.mac.plist',
     entitlementsInherit: 'build/entitlements.mac.plist',
-    // CI enables this only once Apple credentials are supplied as secrets.
-    notarize: hasAppleNotarizationCredentials,
   },
-  // Turn this on in the release environment after both platform certificates
-  // have been added. Keeping it configurable preserves unsigned local builds.
-  forceCodeSigning: process.env.REQUIRE_CODE_SIGNING === 'true',
   win: {
     requestedExecutionLevel: 'asInvoker',
     target: [
@@ -88,7 +77,6 @@ module.exports = {
       }
     ],
     artifactName: 'Sparta-Agent-Windows-\${version}-Setup.\${ext}',
-    signAndEditExecutable: true,
   },
   nsis: {
     oneClick: true,
