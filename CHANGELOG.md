@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.14] - 2026-08-31
+
+### Corregido
+
+- Se sincronizaron la versión de la aplicación, la landing, la documentación y los enlaces de descarga para el siguiente release.
+
 ## [0.2.13] - 2026-08-31
 
 ### Añadido y mejorado
