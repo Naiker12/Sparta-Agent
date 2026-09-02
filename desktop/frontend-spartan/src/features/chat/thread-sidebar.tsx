@@ -1,5 +1,5 @@
-
 import { useState } from "react";
+import { useT } from "@/i18n";
 import {
   SidebarContent,
   SidebarFooter,
@@ -61,9 +61,7 @@ import {
   EXPORT_FORMATS_LIST,
   type ConvExportFormat,
 } from "./prompt-storage/prompt-storage-dialog";
-import {
-  listStoredChatThreads,
-} from "./utils/chat-history-storage";
+import { listStoredChatThreads } from "./utils/chat-history-storage";
 
 const EXPORT_FORMATS = [
   { label: "Raw JSONL", fn: exportConversationRawJsonl },
@@ -91,6 +89,7 @@ export function ThreadSidebar({
   onNewCompare: () => void;
   showCompare: boolean;
 }) {
+  const t = useT();
   const { items } = useChatSidebarItems();
   const storeThreadId = useChatRuntimeStore((s) => s.activeThreadId);
   const activeId =
@@ -160,7 +159,10 @@ export function ThreadSidebar({
   ) {
     try {
       const ids = await getBulkThreadIds(scope);
-      if (ids.length === 0) { toast.info("No conversations to export."); return; }
+      if (ids.length === 0) {
+        toast.info("No conversations to export.");
+        return;
+      }
       const ts = new Date().toISOString().slice(0, 10);
       const basename = `${scope === "all" ? "all-chats" : "recents"}-${ts}`;
       if (merged) {
@@ -178,7 +180,9 @@ export function ThreadSidebar({
   return (
     <>
       <SidebarHeader className="px-4 py-3">
-        <span className="text-base font-semibold tracking-tight">Playground</span>
+        <span className="text-base font-semibold tracking-tight">
+          Playground
+        </span>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup className="px-4 pt-1">
@@ -187,12 +191,15 @@ export function ThreadSidebar({
               <SidebarMenuItem>
                 <SidebarMenuButton onClick={onNewThread}>
                   <HugeiconsIcon icon={PencilEdit02Icon} />
-                  <span>New Chat</span>
+                  <span>{t("shell.navigation.newChat")}</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               {showCompare ? (
                 <SidebarMenuItem>
-                  <SidebarMenuButton data-tour="chat-compare" onClick={onNewCompare}>
+                  <SidebarMenuButton
+                    data-tour="chat-compare"
+                    onClick={onNewCompare}
+                  >
                     <HugeiconsIcon icon={ColumnInsertIcon} />
                     <span>Compare</span>
                   </SidebarMenuButton>
@@ -204,7 +211,9 @@ export function ThreadSidebar({
         <SidebarGroup className="flex-1 px-4">
           {/* Recents label with export-all menu */}
           <div className="flex items-center justify-between px-2 py-1.5">
-            <span className="text-xs font-medium text-muted-foreground/80">Recents</span>
+            <span className="text-xs font-medium text-muted-foreground/80">
+              {t("shell.navigation.recents")}
+            </span>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
@@ -212,24 +221,43 @@ export function ThreadSidebar({
                   className="flex items-center justify-center rounded-sm p-0.5 text-muted-foreground hover:bg-accent focus:outline-none focus-visible:ring-0"
                   title="Export options"
                 >
-                  <HugeiconsIcon icon={MoreHorizontalIcon} className="size-3.5" />
+                  <HugeiconsIcon
+                    icon={MoreHorizontalIcon}
+                    className="size-3.5"
+                  />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent side="bottom" align="end" className="w-56">
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
-                    <HugeiconsIcon icon={Download01Icon} className="mr-2 size-4" />
+                    <HugeiconsIcon
+                      icon={Download01Icon}
+                      className="mr-2 size-4"
+                    />
                     Export Recents
                   </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent avoidCollisions={false} className="w-52">
+                  <DropdownMenuSubContent
+                    avoidCollisions={false}
+                    className="w-52"
+                  >
                     {EXPORT_FORMATS_LIST.map(({ fmt, label }) => (
-                      <DropdownMenuItem key={`r-m-${fmt}`} onSelect={() => void handleBulkExport("recents", fmt, true)}>
+                      <DropdownMenuItem
+                        key={`r-m-${fmt}`}
+                        onSelect={() =>
+                          void handleBulkExport("recents", fmt, true)
+                        }
+                      >
                         {label} — combined
                       </DropdownMenuItem>
                     ))}
                     <DropdownMenuSeparator />
                     {EXPORT_FORMATS_LIST.map(({ fmt, label }) => (
-                      <DropdownMenuItem key={`r-s-${fmt}`} onSelect={() => void handleBulkExport("recents", fmt, false)}>
+                      <DropdownMenuItem
+                        key={`r-s-${fmt}`}
+                        onSelect={() =>
+                          void handleBulkExport("recents", fmt, false)
+                        }
+                      >
                         {label} — per chat
                       </DropdownMenuItem>
                     ))}
@@ -237,18 +265,32 @@ export function ThreadSidebar({
                 </DropdownMenuSub>
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
-                    <HugeiconsIcon icon={Download01Icon} className="mr-2 size-4" />
+                    <HugeiconsIcon
+                      icon={Download01Icon}
+                      className="mr-2 size-4"
+                    />
                     Export Recents + Projects
                   </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent avoidCollisions={false} className="w-52">
+                  <DropdownMenuSubContent
+                    avoidCollisions={false}
+                    className="w-52"
+                  >
                     {EXPORT_FORMATS_LIST.map(({ fmt, label }) => (
-                      <DropdownMenuItem key={`a-m-${fmt}`} onSelect={() => void handleBulkExport("all", fmt, true)}>
+                      <DropdownMenuItem
+                        key={`a-m-${fmt}`}
+                        onSelect={() => void handleBulkExport("all", fmt, true)}
+                      >
                         {label} — combined
                       </DropdownMenuItem>
                     ))}
                     <DropdownMenuSeparator />
                     {EXPORT_FORMATS_LIST.map(({ fmt, label }) => (
-                      <DropdownMenuItem key={`a-s-${fmt}`} onSelect={() => void handleBulkExport("all", fmt, false)}>
+                      <DropdownMenuItem
+                        key={`a-s-${fmt}`}
+                        onSelect={() =>
+                          void handleBulkExport("all", fmt, false)
+                        }
+                      >
                         {label} — per chat
                       </DropdownMenuItem>
                     ))}
@@ -277,22 +319,42 @@ export function ThreadSidebar({
                   </SidebarMenuButton>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <SidebarMenuAction showOnHover className="focus:outline-none focus-visible:ring-0" onClick={(e) => e.stopPropagation()}>
-                        <HugeiconsIcon icon={MoreHorizontalIcon} className="size-4" />
+                      <SidebarMenuAction
+                        showOnHover
+                        className="focus:outline-none focus-visible:ring-0"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <HugeiconsIcon
+                          icon={MoreHorizontalIcon}
+                          className="size-4"
+                        />
                         <span className="sr-only">More options</span>
                       </SidebarMenuAction>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent side="bottom" align="end" className="w-44">
+                    <DropdownMenuContent
+                      side="bottom"
+                      align="end"
+                      className="w-44"
+                    >
                       <DropdownMenuItem onSelect={() => openRename(item)}>
-                        <HugeiconsIcon icon={PencilEdit02Icon} className="mr-2 size-4" />
+                        <HugeiconsIcon
+                          icon={PencilEdit02Icon}
+                          className="mr-2 size-4"
+                        />
                         Rename
                       </DropdownMenuItem>
                       <DropdownMenuSub>
                         <DropdownMenuSubTrigger>
-                          <HugeiconsIcon icon={Download01Icon} className="mr-2 size-4" />
+                          <HugeiconsIcon
+                            icon={Download01Icon}
+                            className="mr-2 size-4"
+                          />
                           Export
                         </DropdownMenuSubTrigger>
-                        <DropdownMenuSubContent avoidCollisions={false} className="w-52">
+                        <DropdownMenuSubContent
+                          avoidCollisions={false}
+                          className="w-52"
+                        >
                           {EXPORT_FORMATS.map(({ label, fn }) => (
                             <DropdownMenuItem
                               key={label}
@@ -308,7 +370,10 @@ export function ThreadSidebar({
                         className="text-destructive focus:text-destructive"
                         onSelect={() => void handleDelete(item)}
                       >
-                        <HugeiconsIcon icon={Delete02Icon} className="mr-2 size-4" />
+                        <HugeiconsIcon
+                          icon={Delete02Icon}
+                          className="mr-2 size-4"
+                        />
                         Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -331,7 +396,11 @@ export function ThreadSidebar({
           rel="noopener noreferrer"
           className="flex items-center gap-2 corner-squircle rounded-md px-2 py-1.5 text-xs font-medium text-primary bg-primary/10 transition-colors hover:bg-primary/20"
         >
-          <HugeiconsIcon icon={BookOpen02Icon} className="size-4 shrink-0" strokeWidth={2} />
+          <HugeiconsIcon
+            icon={BookOpen02Icon}
+            className="size-4 shrink-0"
+            strokeWidth={2}
+          />
           <span>Learn more in docs</span>
         </a>
         <a
@@ -340,13 +409,22 @@ export function ThreadSidebar({
           rel="noopener noreferrer"
           className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
         >
-          <HugeiconsIcon icon={NewReleasesIcon} className="size-4 shrink-0" strokeWidth={2} />
+          <HugeiconsIcon
+            icon={NewReleasesIcon}
+            className="size-4 shrink-0"
+            strokeWidth={2}
+          />
           <span>What&apos;s new</span>
         </a>
       </SidebarFooter>
 
       {/* Rename dialog */}
-      <Dialog open={renamingItem !== null} onOpenChange={(open) => { if (!open) setRenamingItem(null); }}>
+      <Dialog
+        open={renamingItem !== null}
+        onOpenChange={(open) => {
+          if (!open) setRenamingItem(null);
+        }}
+      >
         <DialogContent className="corner-squircle dialog-soft-surface sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>Rename chat</DialogTitle>
@@ -354,14 +432,21 @@ export function ThreadSidebar({
           <Input
             value={renameDraft}
             onChange={(e) => setRenameDraft(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") void commitRename(); }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") void commitRename();
+            }}
             autoFocus
           />
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRenamingItem(null)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setRenamingItem(null)}>
+              Cancel
+            </Button>
             <Button
               onClick={() => void commitRename()}
-              disabled={!renameDraft.trim() || renameDraft.trim() === renamingItem?.title}
+              disabled={
+                !renameDraft.trim() ||
+                renameDraft.trim() === renamingItem?.title
+              }
             >
               Rename
             </Button>

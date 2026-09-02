@@ -16,4 +16,22 @@ export const update = {
   "dismiss": "Cerrar aviso de actualización",
   "update": "Actualizar",
   "openReleasePage": "Abrir página de lanzamiento"
+  ,"screen": {
+    "updatingBackend": "Actualizando el servicio...",
+    "downloading": "Descargando la actualización...",
+    "installing": "Instalando la actualización...",
+    "updating": "Actualizando...",
+    "updateFailed": "La actualización falló",
+    "backendHelp": "Esto puede tardar unos minutos. No cierres la aplicación.",
+    "downloaded": "{progress}% descargado",
+    "restartSoon": "La aplicación se reiniciará en breve.",
+    "updateProblem": "Ocurrió un problema durante la actualización.",
+    "showDetails": "Mostrar detalles de la actualización",
+    "hideDetails": "Ocultar detalles de la actualización",
+    "copying": "Copiando...",
+    "copyDiagnostics": "Copiar diagnósticos",
+    "copyFailed": "No se pudo copiar al portapapeles. Selecciona y copia los diagnósticos de abajo.",
+    "diagnosticsCopyFailed": "No se pudieron copiar los diagnósticos: {error}",
+    "skipAndRestart": "Omitir y reiniciar"
+  }
 } as const;

@@ -1,5 +1,6 @@
 
 import { Spinner } from "@/components/ui/spinner";
+import { useT } from "@/i18n";
 import type { UpdateStatus } from "@/hooks/use-tauri-update";
 import type { CopySupportDiagnosticsResult } from "@/lib/tauri-diagnostics";
 
@@ -39,37 +40,38 @@ function Logo() {
   );
 }
 
-function statusLabel(status: UpdateStatus): string {
+function statusLabel(status: UpdateStatus, t: ReturnType<typeof useT>): string {
   switch (status) {
     case "updating-backend":
-      return "Updating backend...";
+      return t("update.screen.updatingBackend");
     case "downloading":
-      return "Downloading app update...";
+      return t("update.screen.downloading");
     case "installing":
-      return "Installing update...";
+      return t("update.screen.installing");
     case "error":
-      return "Update failed";
+      return t("update.screen.updateFailed");
     default:
-      return "Updating...";
+      return t("update.screen.updating");
   }
 }
 
-function statusSubtext(status: UpdateStatus, progress: number): string {
+function statusSubtext(status: UpdateStatus, progress: number, t: ReturnType<typeof useT>): string {
   switch (status) {
     case "updating-backend":
-      return "This may take a few minutes. Do not close the app.";
+      return t("update.screen.backendHelp");
     case "downloading":
-      return `${progress}% downloaded`;
+      return t("update.screen.downloaded", { progress });
     case "installing":
-      return "The app will restart shortly.";
+      return t("update.screen.restartSoon");
     case "error":
-      return "Something went wrong during the update.";
+      return t("update.screen.updateProblem");
     default:
       return "";
   }
 }
 
 function UpdateDetails({ logs }: { logs: string[] }) {
+  const t = useT();
   if (logs.length === 0) {
     return null;
   }
@@ -77,8 +79,8 @@ function UpdateDetails({ logs }: { logs: string[] }) {
   return (
     <details className="group mt-2 w-full max-w-sm text-left">
       <summary className="mx-auto flex w-fit cursor-pointer list-none items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
-        <span className="group-open:hidden">Show update details</span>
-        <span className="hidden group-open:inline">Hide update details</span>
+        <span className="group-open:hidden">{t("update.screen.showDetails")}</span>
+        <span className="hidden group-open:inline">{t("update.screen.hideDetails")}</span>
         <HugeiconsIcon
           icon={ChevronDownIcon}
           aria-hidden="true"
@@ -102,6 +104,7 @@ export function UpdateScreen({
   onSkipRestart,
   onCopyDiagnostics,
 }: UpdateScreenProps) {
+  const t = useT();
   const isError = status === "error";
   const [copying, setCopying] = useState(false);
   const [manualReport, setManualReport] = useState<string | null>(null);
@@ -118,12 +121,12 @@ export function UpdateScreen({
         setManualReport(result.report);
         setManualMessage(
           result.error ??
-            "Clipboard copy failed. Select and copy the diagnostics below.",
+            t("update.screen.copyFailed"),
         );
       }
     } catch (copyError) {
       setManualReport(null);
-      setManualMessage(`Diagnostics copy failed: ${String(copyError)}`);
+      setManualMessage(t("update.screen.diagnosticsCopyFailed", { error: String(copyError) }));
     } finally {
       setCopying(false);
     }
@@ -151,10 +154,10 @@ export function UpdateScreen({
                   : "text-sm font-bold text-foreground"
               }
             >
-              {statusLabel(status)}
+              {statusLabel(status, t)}
             </p>
             <p className="text-sm text-muted-foreground">
-              {statusSubtext(status, progress)}
+              {statusSubtext(status, progress, t)}
             </p>
 
             {status === "downloading" && (
@@ -188,21 +191,21 @@ export function UpdateScreen({
                   className="rounded-lg bg-muted px-5 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted/80"
                   onClick={() => void handleCopyDiagnostics()}
                 >
-                  {copying ? "Copying..." : "Copy Diagnostics"}
+                  {copying ? t("update.screen.copying") : t("update.screen.copyDiagnostics")}
                 </button>
                 <button
                   type="button"
                   className="rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/80"
                   onClick={onRetry}
                 >
-                  Retry
+                  {t("update.tryAgain")}
                 </button>
                 <button
                   type="button"
                   className="rounded-lg bg-muted px-5 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted/80"
                   onClick={onSkipRestart}
                 >
-                  Skip & Restart
+                  {t("update.screen.skipAndRestart")}
                 </button>
               </div>
             )}

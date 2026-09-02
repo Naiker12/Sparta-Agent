@@ -44,17 +44,6 @@ import { useT } from "@/i18n";
 // which opens the curated channel instead of becoming the active format filter.
 type FormatMenuValue = ModelFormatFilter | "finetune";
 
-const SORT_OPTIONS: ReadonlyArray<{
-  value: HfSortKey;
-  label: string;
-}> = [
-  { value: "createdAt", label: "Newest" },
-  { value: "trendingScore", label: "Trending" },
-  { value: "downloads", label: "Most downloads" },
-  { value: "lastModified", label: "Recently updated" },
-  { value: "likes", label: "Most likes" },
-];
-
 export const ModelsToolbar = memo(function ModelsToolbar({
   tab,
   onTabChange,
@@ -98,6 +87,7 @@ export const ModelsToolbar = memo(function ModelsToolbar({
   onOpenFineTune: () => void;
 }) {
   const t = useT();
+  const filterLabel = (value: string) => t(`hub.filters.${value === "all" ? "allCapabilities" : value === "embedding" ? "embeddings" : value === "diffusion" ? "imageGeneration" : value}` as never);
   // Recent searches surface while the empty search field is focused, only on
   // Discover (on-device search is a local filter and isn't recorded).
   const recentSearches = useRecentSearches();
@@ -183,17 +173,14 @@ export const ModelsToolbar = memo(function ModelsToolbar({
     () =>
       CAPABILITY_FILTER_OPTIONS.map((option) => ({
         value: option.value,
-        label: option.label,
+        label: filterLabel(option.value),
       })),
-    [],
+    [t],
   );
   const sortOptions = useMemo<HubOption<HfSortKey>[]>(
     () =>
-      SORT_OPTIONS.map((option) => ({
-        value: option.value,
-        label: option.label,
-      })),
-    [],
+      (["createdAt", "trendingScore", "downloads", "lastModified", "likes"] as HfSortKey[]).map((value) => ({ value, label: t(`hub.filters.${({ createdAt: "newest", trendingScore: "trending", downloads: "mostDownloads", lastModified: "recentlyUpdated", likes: "mostLikes" } as Record<HfSortKey, string>)[value]}` as never) })),
+    [t],
   );
   const triggerBase = cn(
     "field-trigger hub-menu-trigger field-soft transition-colors",

@@ -22,7 +22,13 @@ RRF_K = int(os.environ.get("RAG_RRF_K", "60"))
 THREAD_WHOLE_DOC = os.environ.get("RAG_THREAD_WHOLE_DOC", "1") == "1"
 WHOLE_DOC_MAX_TOKENS = int(os.environ.get("RAG_WHOLE_DOC_MAX_TOKENS", "6000"))
 
-UPLOAD_EXTS = {".pdf", ".txt", ".md", ".markdown", ".docx", ".html", ".htm"}
+# Textual office files are indexed as retrieval sources. Binary office formats
+# that need a separate parser (.pptx, legacy .xls) intentionally stay out until
+# their parser preserves enough structure to be useful.
+UPLOAD_EXTS = {
+    ".pdf", ".txt", ".md", ".markdown", ".docx", ".html", ".htm",
+    ".csv", ".tsv", ".xlsx", ".pptx", ".odt", ".rtf", ".epub", ".json",
+}
 # Reject uploads larger than this, so one pathological file can't drive unbounded parse
 # + vision work at ingest. 0 disables the cap. Default 200 MB.
 MAX_UPLOAD_BYTES = int(os.environ.get("RAG_MAX_UPLOAD_BYTES", str(200 * 1024 * 1024)))

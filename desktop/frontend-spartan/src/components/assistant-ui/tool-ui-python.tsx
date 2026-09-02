@@ -2,6 +2,7 @@
 "use client";
 
 import { Spinner } from "@/components/ui/spinner";
+import { useT } from "@/i18n";
 import { authFetch } from "@/features/auth";
 
 import { SandboxFiles } from "./sandbox-files-view";
@@ -139,6 +140,7 @@ const PythonToolUIImpl: ToolCallMessagePartComponent = ({
   result,
   status,
 }) => {
+  const t = useT();
   const code = (args as { code?: string })?.code ?? "";
   const firstLine = code.split("\n")[0]?.slice(0, 60) ?? "";
   const isRunning = status?.type === "running";
@@ -184,7 +186,7 @@ const PythonToolUIImpl: ToolCallMessagePartComponent = ({
     return (
       <div className="my-2 flex items-center gap-2 text-sm text-muted-foreground">
         <LoaderIcon className="size-3.5 animate-spin" />
-        <span>Generating file…</span>
+        <span>{t("chat.tools.generatingFile")}</span>
       </div>
     );
   }
@@ -192,7 +194,7 @@ const PythonToolUIImpl: ToolCallMessagePartComponent = ({
     return (
       <div className="my-2 flex items-center gap-2 text-sm text-destructive">
         <AlertCircleIcon className="size-3.5" />
-        <span>Could not create the file.</span>
+        <span>{t("chat.tools.fileCreationFailed")}</span>
       </div>
     );
   }
@@ -207,7 +209,7 @@ const PythonToolUIImpl: ToolCallMessagePartComponent = ({
     // command is not the artifact a user comes back for, a script is.
     <ToolFallbackRoot defaultOpen={isRunning}>
       <ToolFallbackTrigger
-        toolName={firstLine ? `Python: ${firstLine}` : "Python"}
+        toolName={firstLine ? `${t("chat.tools.python")}: ${firstLine}` : t("chat.tools.python")}
         status={status}
         icon={CodeIcon}
       />
@@ -231,10 +233,10 @@ const PythonToolUIImpl: ToolCallMessagePartComponent = ({
                 <Spinner className="size-3.5" />
                 <span>
                   {awaitingApproval
-                    ? "Waiting for approval…"
+                    ? t("chat.tools.waitingApproval")
                     : isWriting
-                      ? "Writing code…"
-                      : "Running…"}
+                      ? t("chat.tools.writingCode")
+                      : t("chat.tools.running")}
                 </span>
               </div>
               {/* Live stdout streamed via tool_output SSE events. */}
@@ -244,7 +246,7 @@ const PythonToolUIImpl: ToolCallMessagePartComponent = ({
             <div className="mt-2 border-t border-dashed pt-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-medium text-muted-foreground">
-                  output
+                  {t("chat.tools.output")}
                 </span>
                 <CopyBtn text={displayOutput} />
               </div>

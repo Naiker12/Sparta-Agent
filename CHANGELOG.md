@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.2.17] - 2026-09-02
+
+### Añadido y mejorado
+
+- La carpeta de trabajo se vincula explícitamente a cada chat, con permisos de solo lectura, edición sin eliminación o edición completa.
+- El selector de carpeta vive en una fila propia del compositor y usa un diálogo integrado con la interfaz de Sparta Agent.
+- Las herramientas de archivos usan primero la carpeta del chat, evitando compartir accidentalmente una carpeta de Proyecto.
+- Las Fuentes y la carpeta de trabajo pueden leer PDF, DOCX, XLSX, CSV, TSV, PPTX, ODT, RTF, EPUB, JSON, HTML, Markdown y texto.
+- Excel conserva las hojas, encabezados, valores y fórmulas durante la extracción para búsqueda y análisis.
+
+### Corregido
+
+- `list_directory`, lectura y edición de archivos reconocen el vínculo de carpeta por chat.
+- Los permisos de carpeta bloquean correctamente cambios, renombrados y eliminaciones según el acceso concedido.
+
 ## [0.2.16] - 2026-08-31
 
 ### Corregido

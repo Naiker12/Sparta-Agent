@@ -343,3 +343,38 @@ def test_docx_table_vertical_merge_emitted_once(tmp_path):
     text = "\n".join(p.text for p in parsers.parse(str(path)))
     assert text.count("SECTION") == 1  # not repeated on each spanned row
     assert "SECTION | r0" in text and " | r1" in text and " | r2" in text
+
+
+def test_xlsx_keeps_each_sheet_headers_and_formulas(tmp_path):
+    pytest.importorskip("openpyxl")
+    import openpyxl
+
+    from core.rag import parsers
+
+    workbook = openpyxl.Workbook()
+    sheet = workbook.active
+    sheet.title = "Ingresos"
+    sheet.append(["Mes", "Ventas", "Total"])
+    sheet.append(["Enero", 10, "=B2*2"])
+    notes = workbook.create_sheet("Notas")
+    notes.append(["Estado", "Revisar"])
+    path = tmp_path / "reporte.xlsx"
+    workbook.save(path)
+
+    pages = parsers.parse(str(path))
+    text = "\n".join(page.text for page in pages)
+    assert "# Hoja: Ingresos" in text
+    assert "Mes | Ventas | Total" in text
+    assert "Enero | 10 | =B2*2" in text
+    assert "# Hoja: Notas" in text
+
+
+def test_csv_preserves_empty_columns_and_excel_bom(tmp_path):
+    from core.rag import parsers
+
+    path = tmp_path / "ventas.csv"
+    path.write_text("\ufeffA,B,C\nuno,,tres\n", encoding = "utf-8")
+
+    text = "\n".join(page.text for page in parsers.parse(str(path)))
+    assert "A | B | C" in text
+    assert "uno |  | tres" in text

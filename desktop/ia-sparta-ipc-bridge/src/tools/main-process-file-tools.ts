@@ -7,7 +7,7 @@
 
 import fsPromises from 'node:fs/promises'
 import path from 'node:path'
-import { getWorkspaceRoot } from '../channels/filesystem.channel'
+import { getWorkspaceAccess, getWorkspaceRoot } from '../channels/filesystem.channel'
 import { isDocumentConvertible, convertDocumentToMarkdown, getCachedAttachmentContent } from '../channels/document.channel'
 import { IGNORED_DIR_SET } from '../lib/filesystem-constants'
 import { isWithinRoot, PathGuard } from './path-guard'
@@ -24,10 +24,19 @@ export async function executeMainProcessFileTool(
   toolName: string,
   args: Record<string, unknown>,
   customWorkspaceRoot?: string,
+  workspaceAccess: 'read' | 'write' | 'write_no_delete' = 'write',
 ): Promise<string> {
   const root = customWorkspaceRoot || getWorkspaceRoot()
   if (!root) {
     throw new Error('No hay una carpeta de proyecto conectada para esta operación.')
+  }
+
+  const access = customWorkspaceRoot ? workspaceAccess : getWorkspaceAccess()
+  if (toolName === 'delete_file' && access === 'write_no_delete') {
+    throw new Error('La carpeta conectada no permite eliminar archivos.')
+  }
+  if (['write_file', 'edit_file', 'delete_file'].includes(toolName) && access === 'read') {
+    throw new Error('La carpeta conectada es de solo lectura.')
   }
 
   switch (toolName) {

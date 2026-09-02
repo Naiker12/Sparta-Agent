@@ -1,5 +1,6 @@
 
 import { toast } from "sonner";
+import { translate } from "@/i18n";
 import { deleteStoredChatThreads } from "./chat-history-storage";
 
 /**
@@ -12,15 +13,15 @@ export function offerToDeleteKeptSandboxes(keptThreadIds: string[]): void {
   if (keptThreadIds.length === 0) return;
   toast(
     keptThreadIds.length === 1
-      ? "Files from this chat were kept."
-      : `Files from ${keptThreadIds.length} chats were kept.`,
+      ? translate("chat.keptSandboxFiles.one")
+      : translate("chat.keptSandboxFiles.many", { count: keptThreadIds.length }),
     {
       description:
         keptThreadIds.length === 1
-          ? "Its sandbox folder is no longer reachable from Studio."
-          : "Their sandbox folders are no longer reachable from Studio.",
+          ? translate("chat.keptSandboxFiles.oneDescription")
+          : translate("chat.keptSandboxFiles.manyDescription"),
       action: {
-        label: "Delete files",
+        label: translate("chat.keptSandboxFiles.deleteFiles"),
         onClick: () => {
           void deleteStoredChatThreads(keptThreadIds, { deleteFiles: true })
             .then((stillKept) => {
@@ -30,7 +31,7 @@ export function offerToDeleteKeptSandboxes(keptThreadIds: string[]): void {
               if (stillKept.length > 0) offerToDeleteKeptSandboxes(stillKept);
             })
             .catch(() => {
-              toast.error("Could not delete the files.");
+              toast.error(translate("chat.keptSandboxFiles.deleteFailed"));
             });
         },
       },

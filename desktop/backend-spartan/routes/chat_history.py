@@ -7,6 +7,8 @@ mixed handlers explicitly send their database transaction through Starlette's th
 """
 
 import asyncio
+import os
+import time
 import sqlite3
 from typing import Annotated, Any, Literal, Optional, Union
 
@@ -27,6 +29,7 @@ from storage.studio_db import (
     CorruptSettingsError,
     ProjectWorkspaceError,
     build_chat_history_export,
+    bind_chat_thread_workspace,
     clear_chat_history,
     count_chat_threads,
     count_forks_for_message,
@@ -39,6 +42,7 @@ from storage.studio_db import (
     get_chat_attachment,
     get_chat_project,
     get_chat_thread,
+    get_thread_workspace_binding,
     get_chat_message,
     list_chat_attachments_page,
     list_chat_projects,
@@ -48,6 +52,7 @@ from storage.studio_db import (
     list_chat_messages_for_threads,
     list_chat_threads,
     sync_chat_messages,
+    unbind_chat_thread_workspace,
     update_chat_project,
     update_chat_thread,
     upsert_chat_project,
@@ -297,6 +302,27 @@ class ChatProjectWorkspacePatch(BaseModel):
     # Explicit null means disconnect; omitting the field is a malformed request.
     connectedFolderPath: Optional[str] = Field(...)
     workspaceAccess: str = "read"
+
+
+class ChatThreadWorkspacePatch(BaseModel):
+    # A task/chat explicitly chooses its local working folder. This is not a
+    # project source and never triggers RAG ingestion.
+    folderPath: str = Field(min_length = 1)
+    access: Literal["read", "write", "write_no_delete"] = "read"
+
+
+class ChatThreadWorkspaceBinding(BaseModel):
+    bindingId: str
+    threadId: str
+    id: str
+    displayName: str
+    canonicalPath: str
+    filesystemIdentity: Optional[str] = None
+    access: Literal["read", "write", "write_no_delete"]
+    createdAt: int
+    updatedAt: int
+    lastUsedAt: Optional[int] = None
+    boundAt: int
 
 
 class ChatThreadListResponse(BaseModel):
@@ -1001,6 +1027,46 @@ def patch_project_workspace(
     if project is None:
         raise HTTPException(status_code = 404, detail = f"Project {project_id} not found")
     return ChatProject(**project)
+
+
+@router.get("/threads/{thread_id}/workspace", response_model = ChatThreadWorkspaceBinding | None)
+def get_thread_workspace(
+    thread_id: str, current_subject: str = Depends(get_current_subject),
+):
+    if get_chat_thread(thread_id) is None:
+        raise HTTPException(status_code = 404, detail = f"Thread {thread_id} not found")
+    binding = get_thread_workspace_binding(thread_id)
+    return ChatThreadWorkspaceBinding(**binding) if binding else None
+
+
+@router.put("/threads/{thread_id}/workspace", response_model = ChatThreadWorkspaceBinding)
+def bind_thread_workspace(
+    thread_id: str,
+    payload: ChatThreadWorkspacePatch,
+    current_subject: str = Depends(get_current_subject),
+):
+    valid, canonical_path = validate_connectable_folder(payload.folderPath)
+    if not valid or canonical_path is None:
+        raise HTTPException(status_code = 400, detail = canonical_path or "Invalid workspace folder")
+    try:
+        stat = os.stat(canonical_path)
+        identity = f"{stat.st_dev}:{stat.st_ino}"
+        binding = bind_chat_thread_workspace(
+            thread_id, canonical_path, os.path.basename(canonical_path) or canonical_path,
+            identity, payload.access, int(time.time() * 1000),
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code = 404, detail = str(exc)) from exc
+    return ChatThreadWorkspaceBinding(**binding)
+
+
+@router.delete("/threads/{thread_id}/workspace", status_code = 204)
+def unbind_thread_workspace(
+    thread_id: str, current_subject: str = Depends(get_current_subject),
+):
+    if get_chat_thread(thread_id) is None:
+        raise HTTPException(status_code = 404, detail = f"Thread {thread_id} not found")
+    unbind_chat_thread_workspace(thread_id)
 
 
 def _delete_project_rag_sources(project_id: str) -> None:

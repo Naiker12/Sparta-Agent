@@ -14,6 +14,7 @@ import re
 import shutil
 import sqlite3
 import threading
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -419,6 +420,39 @@ def _ensure_schema(conn: sqlite3.Connection) -> None:
             )
             """
         )
+    # A local workspace is a reusable capability, not project knowledge. A
+    # thread selects at most one active workspace; every file operation later
+    # receives this binding rather than consulting a process-global root.
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS chat_workspaces (
+            id TEXT NOT NULL PRIMARY KEY,
+            display_name TEXT NOT NULL,
+            canonical_path TEXT NOT NULL UNIQUE,
+            filesystem_identity TEXT,
+            created_at INTEGER NOT NULL,
+            updated_at INTEGER NOT NULL,
+            last_used_at INTEGER
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS chat_workspace_bindings (
+            id TEXT NOT NULL PRIMARY KEY,
+            thread_id TEXT NOT NULL UNIQUE,
+            workspace_id TEXT NOT NULL,
+            access TEXT NOT NULL CHECK(access IN ('read', 'write', 'write_no_delete')),
+            created_at INTEGER NOT NULL,
+            updated_at INTEGER NOT NULL,
+            FOREIGN KEY(thread_id) REFERENCES chat_threads(id) ON DELETE CASCADE,
+            FOREIGN KEY(workspace_id) REFERENCES chat_workspaces(id) ON DELETE CASCADE
+        )
+        """
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_chat_workspace_bindings_workspace ON chat_workspace_bindings(workspace_id)"
+    )
     conn.execute(
         """
         CREATE TABLE IF NOT EXISTS chat_thread_tombstones (
@@ -1996,6 +2030,81 @@ def get_chat_thread(id: str) -> Optional[dict]:
     try:
         row = conn.execute("SELECT * FROM chat_threads WHERE id = ?", (id,)).fetchone()
         return _chat_thread_from_row(row) if row is not None else None
+    finally:
+        conn.close()
+
+
+def _workspace_from_row(row: sqlite3.Row) -> dict:
+    data = dict(row)
+    return {
+        "id": data["id"],
+        "displayName": data["display_name"],
+        "canonicalPath": data["canonical_path"],
+        "filesystemIdentity": data.get("filesystem_identity"),
+        "createdAt": data["created_at"],
+        "updatedAt": data["updated_at"],
+        "lastUsedAt": data.get("last_used_at"),
+    }
+
+
+def get_thread_workspace_binding(thread_id: str) -> Optional[dict]:
+    conn = get_connection()
+    try:
+        row = conn.execute(
+            "SELECT b.id AS binding_id, b.thread_id, b.access, b.created_at AS binding_created_at, "
+            "b.updated_at AS binding_updated_at, w.* "
+            "FROM chat_workspace_bindings b JOIN chat_workspaces w ON w.id=b.workspace_id "
+            "WHERE b.thread_id=?",
+            (thread_id,),
+        ).fetchone()
+        if row is None:
+            return None
+        binding = _workspace_from_row(row)
+        binding.update({
+            "bindingId": row["binding_id"],
+            "threadId": row["thread_id"],
+            "access": row["access"],
+            "boundAt": row["binding_created_at"],
+        })
+        return binding
+    finally:
+        conn.close()
+
+
+def bind_chat_thread_workspace(
+    thread_id: str, canonical_path: str, display_name: str, filesystem_identity: str | None,
+    access: str, now: int,
+) -> dict:
+    if access not in {"read", "write", "write_no_delete"}:
+        raise ValueError("Invalid workspace access")
+    conn = get_connection(_CONTENDED_BUSY_TIMEOUT_SECONDS)
+    try:
+        conn.execute("BEGIN IMMEDIATE")
+        if conn.execute("SELECT 1 FROM chat_threads WHERE id=?", (thread_id,)).fetchone() is None:
+            raise ValueError("Chat thread not found")
+        row = conn.execute("SELECT id FROM chat_workspaces WHERE canonical_path=?", (canonical_path,)).fetchone()
+        workspace_id = row["id"] if row else str(uuid.uuid4())
+        if row:
+            conn.execute("UPDATE chat_workspaces SET display_name=?, filesystem_identity=?, updated_at=?, last_used_at=? WHERE id=?", (display_name, filesystem_identity, now, now, workspace_id))
+        else:
+            conn.execute("INSERT INTO chat_workspaces(id, display_name, canonical_path, filesystem_identity, created_at, updated_at, last_used_at) VALUES(?,?,?,?,?,?,?)", (workspace_id, display_name, canonical_path, filesystem_identity, now, now, now))
+        binding_id = str(uuid.uuid4())
+        conn.execute("INSERT INTO chat_workspace_bindings(id, thread_id, workspace_id, access, created_at, updated_at) VALUES(?,?,?,?,?,?) ON CONFLICT(thread_id) DO UPDATE SET workspace_id=excluded.workspace_id, access=excluded.access, updated_at=excluded.updated_at", (binding_id, thread_id, workspace_id, access, now, now))
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+    return get_thread_workspace_binding(thread_id) or {}
+
+
+def unbind_chat_thread_workspace(thread_id: str) -> bool:
+    conn = get_connection(_CONTENDED_BUSY_TIMEOUT_SECONDS)
+    try:
+        cur = conn.execute("DELETE FROM chat_workspace_bindings WHERE thread_id=?", (thread_id,))
+        conn.commit()
+        return cur.rowcount > 0
     finally:
         conn.close()
 

@@ -1,4 +1,3 @@
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,6 +17,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { usePlatformStore } from "@/config/env";
+import { useT } from "@/i18n";
 import { getCachedModelPath, revealCachedModel } from "@/features/chat";
 import { pinKey, usePinnedModelsStore } from "@/features/model-picker";
 import { ChevronDownStandardIcon } from "@/lib/chevron-icons";
@@ -93,38 +93,29 @@ import { useDownloadCardState } from "./use-download-card-state";
 import { useGgufVariantFetchState } from "./use-gguf-variant-fetch-state";
 
 interface FitBadgeMeta {
-  label: string;
-  tooltip: string;
+  labelKey: "fits" | "marginal" | "partial" | "ram" | "oom";
   iconClassName: string;
 }
 
 const FIT_BADGE: Record<GgufFitClass, FitBadgeMeta> = {
   fits: {
-    label: "Full GPU offload",
-    tooltip: "Full offload likely possible on your system.",
+    labelKey: "fits",
     iconClassName: "text-emerald-600 dark:text-emerald-400",
   },
   marginal: {
-    label: "Might fit",
-    tooltip:
-      "Might fit. Within the last GB of VRAM headroom, so loading can fail if other apps are using GPU memory.",
+    labelKey: "marginal",
     iconClassName: "text-amber-600 dark:text-amber-400",
   },
   partial: {
-    label: "Partial offload",
-    tooltip:
-      "Partial offload possible. Exceeds VRAM but fits with system RAM offload. Inference will be slower.",
+    labelKey: "partial",
     iconClassName: "text-sky-600 dark:text-sky-400",
   },
   ram: {
-    label: "RAM fallback",
-    tooltip:
-      "No GPU VRAM detected. This GGUF may run with system RAM and CPU offload. Inference will be slower.",
+    labelKey: "ram",
     iconClassName: "text-sky-600 dark:text-sky-400",
   },
   oom: {
-    label: "Won't fit",
-    tooltip: "Exceeds combined VRAM and system RAM budget.",
+    labelKey: "oom",
     iconClassName: "text-rose-600 dark:text-rose-400",
   },
 };
@@ -152,6 +143,7 @@ function QuantBadge({
   variant?: "trigger" | "menu";
   tooltipMode?: "eager" | "lazy" | "none";
 }) {
+  const t = useT();
   const meta = FIT_BADGE[fit];
   const [tooltipArmed, setTooltipArmed] = useState(false);
   const [tooltipOpen, setTooltipOpen] = useState(false);
@@ -226,7 +218,7 @@ function QuantBadge({
         {inner}
       </TooltipTrigger>
       <TooltipContent side="top" sideOffset={4}>
-        {meta.tooltip}
+        {t(`hub.gguf.fit.${meta.labelKey}.tooltip`)}
       </TooltipContent>
     </Tooltip>
   );
@@ -285,34 +277,39 @@ export function QuantOptionsMenu({
   buttonClassName?: string;
   iconClassName?: string;
 }) {
+  const t = useT();
   const pinnedKeys = usePinnedModelsStore((s) => s.pinned);
   const togglePinned = usePinnedModelsStore((s) => s.togglePinned);
   const pinned = pinnedKeys.includes(pinKey(repoId, quant));
   const deviceType = usePlatformStore((s) => s.deviceType);
   const revealLabel =
-    deviceType === "mac" ? "Reveal in Finder" : "Reveal in Folder";
+    deviceType === "mac"
+      ? t("hub.gguf.menu.revealInFinder")
+      : t("hub.gguf.menu.revealInFolder");
   const handleCopyPath = useCallback(async () => {
     try {
       const { path } = await getCachedModelPath(repoId, quant);
       if (await copyToClipboard(path)) {
-        toast.success("Copied path");
+        toast.success(t("hub.gguf.menu.copiedPath"));
       } else {
-        toast.error("Failed to copy");
+        toast.error(t("hub.gguf.menu.failedToCopy"));
       }
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Failed to resolve model path",
+        err instanceof Error
+          ? err.message
+          : t("hub.gguf.menu.failedToResolvePath"),
       );
     }
-  }, [repoId, quant]);
+  }, [repoId, quant, t]);
   const handleCopyId = useCallback(async () => {
     const id = quant ? `${repoId}:${quant}` : repoId;
     if (await copyToClipboard(id)) {
-      toast.success("Copied identifier");
+      toast.success(t("hub.gguf.menu.copiedIdentifier"));
     } else {
-      toast.error("Failed to copy");
+      toast.error(t("hub.gguf.menu.failedToCopy"));
     }
-  }, [repoId, quant]);
+  }, [repoId, quant, t]);
 
   return (
     <DropdownMenu>
@@ -353,7 +350,9 @@ export function QuantOptionsMenu({
               strokeWidth={1.75}
               className="size-icon"
             />
-            <span>{pinned ? "Unpin" : "Pin to top"}</span>
+            <span>
+              {pinned ? t("hub.gguf.menu.unpin") : t("hub.gguf.menu.pinToTop")}
+            </span>
           </DropdownMenuItem>
         )}
         {downloaded && (
@@ -364,7 +363,7 @@ export function QuantOptionsMenu({
                 toast.error(
                   err instanceof Error
                     ? err.message
-                    : "Failed to open file manager",
+                    : t("hub.gguf.menu.failedToOpenFileManager"),
                 );
               });
             }}
@@ -388,7 +387,7 @@ export function QuantOptionsMenu({
             strokeWidth={1.75}
             className="size-icon"
           />
-          <span>Copy identifier</span>
+          <span>{t("hub.gguf.menu.copyIdentifier")}</span>
         </DropdownMenuItem>
         {downloaded && (
           <DropdownMenuItem
@@ -402,7 +401,7 @@ export function QuantOptionsMenu({
               strokeWidth={1.75}
               className="size-icon"
             />
-            <span>Copy path</span>
+            <span>{t("hub.gguf.menu.copyPath")}</span>
           </DropdownMenuItem>
         )}
         {canDelete && (
@@ -420,7 +419,7 @@ export function QuantOptionsMenu({
                 strokeWidth={1.75}
                 className="size-icon"
               />
-              <span>Delete</span>
+              <span>{t("hub.gguf.menu.delete")}</span>
             </DropdownMenuItem>
           </>
         )}
@@ -448,6 +447,7 @@ const GgufVariantMenuRow = memo(function GgufVariantMenuRow({
   onSelect: (quant: string) => void;
   onDelete: (quant: string) => void;
 }) {
+  const t = useT();
   const selectVariant = useCallback(() => {
     onSelect(item.quant);
   }, [item.quant, onSelect]);
@@ -492,7 +492,14 @@ const GgufVariantMenuRow = memo(function GgufVariantMenuRow({
           tooltipMode="lazy"
         />
         {item.downloaded && (
-          <DotTag tone="success" label={loaded ? "Loaded" : "On device"} />
+          <DotTag
+            tone="success"
+            label={
+              loaded
+                ? t("hub.gguf.status.loaded")
+                : t("hub.gguf.status.onDevice")
+            }
+          />
         )}
         {!item.downloaded && item.partial && (
           <Tooltip>
@@ -500,7 +507,11 @@ const GgufVariantMenuRow = memo(function GgufVariantMenuRow({
               <span className="inline-flex">
                 <DotTag
                   tone="warning"
-                  label={liveActive ? "Downloading" : "Partial"}
+                  label={
+                    liveActive
+                      ? t("hub.gguf.status.downloading")
+                      : t("hub.gguf.status.partial")
+                  }
                 />
               </span>
             </TooltipTrigger>
@@ -508,8 +519,8 @@ const GgufVariantMenuRow = memo(function GgufVariantMenuRow({
               {/* Selecting a row only selects it; the card's button starts the
                   transfer, so do not promise otherwise. */}
               {liveActive
-                ? "Download is running. Select it to view progress."
-                : "Partial download. Select it, then use the button on the card to finish it."}
+                ? t("hub.gguf.downloadRunningSelect")
+                : t("hub.gguf.partialSelect")}
             </TooltipContent>
           </Tooltip>
         )}
@@ -572,6 +583,7 @@ export function GgufDownloadCard({
   onEject?: () => void;
   onChange?: () => void;
 }) {
+  const t = useT();
   const hfToken = useHfTokenStore((s) => s.token);
   const online = useOnlineStatus();
   const partialsResumable = useHttpPartialsResumable();
@@ -791,7 +803,11 @@ export function GgufDownloadCard({
   const deleteTargetLabel = deleteTargetVariant
     ? ggufVariantDisplayLabel(deleteTargetVariant)
     : deleteTarget;
-  const deleteImpact = useDeleteImpact(deleteTarget !== null, repoId, deleteTarget);
+  const deleteImpact = useDeleteImpact(
+    deleteTarget !== null,
+    repoId,
+    deleteTarget,
+  );
   const { deleting, runDelete } = useDeleteConfirmAction({
     action: async () => {
       if (!deleteTarget) return;
@@ -803,9 +819,11 @@ export function GgufDownloadCard({
       );
     },
     successMessage: () =>
-      `Deleted ${repoId} ${deleteTargetLabel ?? deleteTarget}`,
+      t("hub.gguf.deleted", {
+        model: `${repoId} ${deleteTargetLabel ?? deleteTarget}`,
+      }),
     errorToast: (err) => ({
-      title: err instanceof Error ? err.message : "Failed to delete",
+      title: err instanceof Error ? err.message : t("hub.gguf.failedToDelete"),
     }),
     onSuccess: () => {
       onChange?.();
@@ -863,7 +881,7 @@ export function GgufDownloadCard({
       <GgufDownloadStatusCard
         job={job}
         loading={true}
-        message="Loading available quantizations…"
+        message={t("hub.gguf.loadingQuantizations")}
       />
     );
   }
@@ -875,8 +893,8 @@ export function GgufDownloadCard({
           job={job}
           tone="muted"
           partial={true}
-          message="Partial download present. Couldn't load quantizations."
-          actionLabel="Reload"
+          message={t("hub.gguf.partialUnavailable")}
+          actionLabel={t("hub.gguf.reload")}
           onAction={() => void refresh()}
         />
       );
@@ -885,7 +903,7 @@ export function GgufDownloadCard({
       <GgufDownloadStatusCard
         job={job}
         tone="danger"
-        message={error ?? "No GGUF quantizations found in this repository."}
+        message={error ?? t("hub.gguf.noQuantizations")}
       />
     );
   }
@@ -902,7 +920,7 @@ export function GgufDownloadCard({
               onOpenChange={(o) => {
                 if (!o && !deleting) setDeleteTarget(null);
               }}
-              title="Delete quantization?"
+              title={t("hub.gguf.deleteTitle")}
               deleting={deleting}
               blocked={(deleteImpact?.blocked_by.length ?? 0) > 0}
               onConfirm={() => void runDelete()}
@@ -963,13 +981,17 @@ export function GgufDownloadCard({
                   />
                 ) : (
                   <span className="text-ui-12p5 text-muted-foreground">
-                    Select quantization
+                    {t("hub.gguf.selectQuantization")}
                   </span>
                 )}
                 {selected?.downloaded && (
                   <DotTag
                     tone="success"
-                    label={selectedIsActive ? "Loaded" : "On device"}
+                    label={
+                      selectedIsActive
+                        ? t("hub.gguf.status.loaded")
+                        : t("hub.gguf.status.onDevice")
+                    }
                   />
                 )}
                 {selected && !selected.downloaded && selected.partial && (
@@ -978,7 +1000,11 @@ export function GgufDownloadCard({
                       <span className="inline-flex">
                         <DotTag
                           tone="warning"
-                          label={selectedLiveActive ? "Downloading" : "Partial"}
+                          label={
+                            selectedLiveActive
+                              ? t("hub.gguf.status.downloading")
+                              : t("hub.gguf.status.partial")
+                          }
                         />
                       </span>
                     </TooltipTrigger>
@@ -986,7 +1012,7 @@ export function GgufDownloadCard({
                       {/* The badge rides inside the quant trigger, so clicking
                           it opens the menu. Name the button that acts. */}
                       {selectedLiveActive
-                        ? "Download is running. Use the button on the right to stop it."
+                        ? t("hub.gguf.downloadRunningStop")
                         : downloadAction.partialHint}
                     </TooltipContent>
                   </Tooltip>
@@ -1076,7 +1102,7 @@ export function GgufDownloadCard({
                 icon={ArrowReloadHorizontalIcon}
                 strokeWidth={1.75}
               />
-              Update
+              {t("hub.gguf.update")}
             </button>
           )}
 
@@ -1126,7 +1152,7 @@ export function GgufDownloadCard({
           {cancelling ? (
             <span className="inline-flex items-center gap-2 text-muted-foreground">
               <Spinner />
-              Cancelling…
+              {t("hub.gguf.cancelling")}
             </span>
           ) : downloadingThisVariant ? (
             <span className="inline-flex items-center gap-2">
@@ -1138,12 +1164,12 @@ export function GgufDownloadCard({
           ) : downloadAction.starting ? (
             <span className="inline-flex items-center gap-2">
               <Spinner />
-              Starting…
+              {t("hub.gguf.starting")}
             </span>
           ) : isLoadingThisModel ? (
             <span className="inline-flex items-center gap-2">
               <Spinner />
-              Loading…
+              {t("hub.gguf.loading")}
             </span>
           ) : selectedIsActive ? (
             <>
@@ -1153,7 +1179,7 @@ export function GgufDownloadCard({
           ) : selected?.downloaded ? (
             <>
               <HugeiconsIcon icon={PlayIcon} strokeWidth={1.75} />
-              Run
+              {t("hub.gguf.run")}
             </>
           ) : (
             <>
@@ -1169,7 +1195,7 @@ export function GgufDownloadCard({
           onClick={() => void refresh()}
           className="self-start px-1 text-ui-11 text-status-warning underline-offset-2 transition-colors hover:underline"
         >
-          Couldn't refresh quantizations. Retry
+          {t("hub.gguf.retryRefresh")}
         </button>
       )}
     </div>

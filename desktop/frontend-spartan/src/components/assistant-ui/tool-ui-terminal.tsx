@@ -5,6 +5,7 @@ import type { ToolCallMessagePartComponent } from "@assistant-ui/react";
 import { useToolArgsStatus } from "@assistant-ui/react";
 import { AlertCircleIcon, TerminalIcon } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
+import { useT } from "@/i18n";
 import { memo } from "react";
 import {
   ToolFallbackContent,
@@ -32,6 +33,7 @@ const TerminalToolUIImpl: ToolCallMessagePartComponent = ({
   result,
   status,
 }) => {
+  const t = useT();
   const command = (args as { command?: string })?.command ?? "";
   const isRunning = status?.type === "running";
   // Args still streaming = the model is WRITING the command, not running it yet.
@@ -76,7 +78,7 @@ const TerminalToolUIImpl: ToolCallMessagePartComponent = ({
     return (
       <div className="my-2 flex items-center gap-2 text-sm text-muted-foreground">
         <Spinner className="size-3.5" />
-        <span>Preparing file…</span>
+        <span>{t("chat.tools.preparingFile")}</span>
       </div>
     );
   }
@@ -84,7 +86,7 @@ const TerminalToolUIImpl: ToolCallMessagePartComponent = ({
     return (
       <div className="my-2 flex items-center gap-2 text-sm text-destructive">
         <AlertCircleIcon className="size-3.5" />
-        <span>Could not prepare the file.</span>
+        <span>{t("chat.tools.filePreparationFailed")}</span>
       </div>
     );
   }
@@ -99,7 +101,7 @@ const TerminalToolUIImpl: ToolCallMessagePartComponent = ({
     // Open mid-run so command and live output show, collapsed from history.
     <ToolFallbackRoot defaultOpen={isRunning}>
       <ToolFallbackTrigger
-        toolName={command ? `$ ${command.slice(0, 60)}` : "Terminal"}
+        toolName={command ? `$ ${command.slice(0, 60)}` : t("chat.tools.terminal")}
         status={status}
         icon={TerminalIcon}
       />
@@ -120,10 +122,10 @@ const TerminalToolUIImpl: ToolCallMessagePartComponent = ({
                 <Spinner className="size-3.5" />
                 <span>
                   {awaitingApproval
-                    ? "Waiting for approval…"
+                    ? t("chat.tools.waitingApproval")
                     : isWriting
-                      ? "Writing command…"
-                      : "Running…"}
+                      ? t("chat.tools.writingCommand")
+                      : t("chat.tools.running")}
                 </span>
               </div>
               {/* Live stdout streamed via tool_output SSE events. */}
@@ -132,7 +134,7 @@ const TerminalToolUIImpl: ToolCallMessagePartComponent = ({
           ) : displayOutput ? (
             <div>
               <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-muted-foreground">output</span>
+                <span className="text-xs font-medium text-muted-foreground">{t("chat.tools.output")}</span>
                 <CopyBtn text={displayOutput} />
               </div>
               <ToolResultOutput text={displayOutput} />

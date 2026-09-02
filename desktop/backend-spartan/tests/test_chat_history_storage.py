@@ -1179,3 +1179,24 @@ def test_replaying_a_clear_does_not_signal_its_research_runs_again(tmp_path, mon
 
     replay = studio_db.clear_chat_history_with_active_research_runs(operation_id = "op-1")
     assert replay == ([], ["src"])
+
+
+def test_a_workspace_binding_is_private_to_its_thread_and_can_be_replaced(tmp_path, monkeypatch):
+    _reset_studio_db(tmp_path, monkeypatch)
+    studio_db.upsert_chat_thread(_thread("thread-a"))
+    studio_db.upsert_chat_thread(_thread("thread-b"))
+
+    first = studio_db.bind_chat_thread_workspace(
+        "thread-a", str(tmp_path / "work-a"), "work-a", "1:10", "read", 100,
+    )
+    assert first["threadId"] == "thread-a"
+    assert first["access"] == "read"
+    assert studio_db.get_thread_workspace_binding("thread-b") is None
+
+    replaced = studio_db.bind_chat_thread_workspace(
+        "thread-a", str(tmp_path / "work-b"), "work-b", "1:11", "write", 200,
+    )
+    assert replaced["canonicalPath"] == str(tmp_path / "work-b")
+    assert replaced["access"] == "write"
+    assert studio_db.unbind_chat_thread_workspace("thread-a") is True
+    assert studio_db.get_thread_workspace_binding("thread-a") is None

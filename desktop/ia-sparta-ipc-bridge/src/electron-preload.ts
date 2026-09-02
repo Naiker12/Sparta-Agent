@@ -1,291 +1,514 @@
-import { ipcRenderer, contextBridge, webUtils } from 'electron'
-import type { FileTreeNode } from './channels/filesystem.channel'
+import { ipcRenderer, contextBridge, webUtils } from "electron";
+import type { FileTreeNode } from "./channels/filesystem.channel";
 
-contextBridge.exposeInMainWorld('electronAPI', {
-  minimize: () => ipcRenderer.send('win:minimize'),
-  maximize: () => ipcRenderer.send('win:maximize'),
-  close: () => ipcRenderer.send('win:close'),
-  isMaximized: () => ipcRenderer.invoke('win:isMaximized'),
+contextBridge.exposeInMainWorld("electronAPI", {
+  minimize: () => ipcRenderer.send("win:minimize"),
+  maximize: () => ipcRenderer.send("win:maximize"),
+  close: () => ipcRenderer.send("win:close"),
+  isMaximized: () => ipcRenderer.invoke("win:isMaximized"),
   onMaximizedChange: (callback: (maximized: boolean) => void) => {
-    const handler = () => ipcRenderer.invoke('win:isMaximized').then(callback)
-    ipcRenderer.on('win:maximized-changed', handler)
-    return () => ipcRenderer.removeListener('win:maximized-changed', handler)
+    const handler = () => ipcRenderer.invoke("win:isMaximized").then(callback);
+    ipcRenderer.on("win:maximized-changed", handler);
+    return () => ipcRenderer.removeListener("win:maximized-changed", handler);
   },
   setTitleBarOverlay: (colors: { color: string; symbolColor: string }) =>
-    ipcRenderer.send('titlebar:set-overlay', colors),
-  getVersion: () => ipcRenderer.invoke('app:getVersion'),
+    ipcRenderer.send("titlebar:set-overlay", colors),
+  getVersion: () => ipcRenderer.invoke("app:getVersion"),
   updater: {
-    check: () => ipcRenderer.invoke('updater:check') as Promise<{ ok: boolean; error?: string }>,
-    download: () => ipcRenderer.invoke('updater:download') as Promise<{ ok: boolean; error?: string }>,
-    install: () => ipcRenderer.invoke('updater:install') as Promise<{ ok: boolean; error?: string }>,
-    getState: () => ipcRenderer.invoke('updater:get-state') as Promise<unknown>,
+    check: () =>
+      ipcRenderer.invoke("updater:check") as Promise<{
+        ok: boolean;
+        error?: string;
+      }>,
+    download: () =>
+      ipcRenderer.invoke("updater:download") as Promise<{
+        ok: boolean;
+        error?: string;
+      }>,
+    install: () =>
+      ipcRenderer.invoke("updater:install") as Promise<{
+        ok: boolean;
+        error?: string;
+      }>,
+    getState: () => ipcRenderer.invoke("updater:get-state") as Promise<unknown>,
     onState: (callback: (state: unknown) => void) => {
-      const listener = (_event: Electron.IpcRendererEvent, state: unknown) => callback(state)
-      ipcRenderer.on('updater:state', listener)
-      return () => ipcRenderer.removeListener('updater:state', listener)
+      const listener = (_event: Electron.IpcRendererEvent, state: unknown) =>
+        callback(state);
+      ipcRenderer.on("updater:state", listener);
+      return () => ipcRenderer.removeListener("updater:state", listener);
     },
   },
-  getBackendPort: () => ipcRenderer.invoke('backend:get-port') as Promise<number | undefined>,
-  getBackendStatus: () => ipcRenderer.invoke('backend:get-status') as Promise<{ port?: number; error?: string }>,
-  bootstrapBackend: () => ipcRenderer.invoke('backend:bootstrap') as Promise<{ ok: boolean; error?: string }>,
+  getBackendPort: () =>
+    ipcRenderer.invoke("backend:get-port") as Promise<number | undefined>,
+  getBackendStatus: () =>
+    ipcRenderer.invoke("backend:get-status") as Promise<{
+      port?: number;
+      error?: string;
+    }>,
+  bootstrapBackend: () =>
+    ipcRenderer.invoke("backend:bootstrap") as Promise<{
+      ok: boolean;
+      error?: string;
+    }>,
   onBackendReady: (callback: (port: number) => void) => {
-    const listener = (_event: Electron.IpcRendererEvent, port: number) => callback(port)
-    ipcRenderer.on('backend:ready', listener)
-    return () => ipcRenderer.removeListener('backend:ready', listener)
+    const listener = (_event: Electron.IpcRendererEvent, port: number) =>
+      callback(port);
+    ipcRenderer.on("backend:ready", listener);
+    return () => ipcRenderer.removeListener("backend:ready", listener);
   },
   onBackendError: (callback: (message: string) => void) => {
-    const listener = (_event: Electron.IpcRendererEvent, message: string) => callback(message)
-    ipcRenderer.on('backend:error', listener)
-    return () => ipcRenderer.removeListener('backend:error', listener)
+    const listener = (_event: Electron.IpcRendererEvent, message: string) =>
+      callback(message);
+    ipcRenderer.on("backend:error", listener);
+    return () => ipcRenderer.removeListener("backend:error", listener);
   },
   onBackendInstallProgress: (callback: (message: string) => void) => {
-    const listener = (_event: Electron.IpcRendererEvent, message: string) => callback(message)
-    ipcRenderer.on('backend:install-progress', listener)
-    return () => ipcRenderer.removeListener('backend:install-progress', listener)
+    const listener = (_event: Electron.IpcRendererEvent, message: string) =>
+      callback(message);
+    ipcRenderer.on("backend:install-progress", listener);
+    return () =>
+      ipcRenderer.removeListener("backend:install-progress", listener);
   },
   onBackendInstallComplete: (callback: () => void) => {
-    const listener = () => callback()
-    ipcRenderer.on('backend:install-complete', listener)
-    return () => ipcRenderer.removeListener('backend:install-complete', listener)
+    const listener = () => callback();
+    ipcRenderer.on("backend:install-complete", listener);
+    return () =>
+      ipcRenderer.removeListener("backend:install-complete", listener);
   },
   onBackendInstallError: (callback: (message: string) => void) => {
-    const listener = (_event: Electron.IpcRendererEvent, message: string) => callback(message)
-    ipcRenderer.on('backend:install-error', listener)
-    return () => ipcRenderer.removeListener('backend:install-error', listener)
+    const listener = (_event: Electron.IpcRendererEvent, message: string) =>
+      callback(message);
+    ipcRenderer.on("backend:install-error", listener);
+    return () => ipcRenderer.removeListener("backend:install-error", listener);
   },
-})
+});
 
 const ALLOWED_SEND_CHANNELS = new Set([
-  'chat:ready',
-  'terminal:ready',
-  'shell:open-external',
-])
+  "chat:ready",
+  "terminal:ready",
+  "shell:open-external",
+]);
 
 const ALLOWED_INVOKE_CHANNELS = new Set([
-  'win:isMaximized',
-  'app:getVersion',
-  'security:status',
-  'mcp:test',
-  'mcp:call-tool',
-  'mcp:sync-all',
-  'mcp:oauth:start',
-  'mcp:oauth:discover',
-  'fs:readFile',
-  'document:convert-to-markdown',
-  'system:get-metrics',
-  'system:get-info',
-  'harnesses:detect',
-])
+  "win:isMaximized",
+  "app:getVersion",
+  "security:status",
+  "mcp:test",
+  "mcp:call-tool",
+  "mcp:sync-all",
+  "mcp:oauth:start",
+  "mcp:oauth:discover",
+  "fs:readFile",
+  "document:convert-to-markdown",
+  "system:get-metrics",
+  "system:get-info",
+  "harnesses:detect",
+]);
 
-contextBridge.exposeInMainWorld('electron', {
+contextBridge.exposeInMainWorld("electron", {
   on: (channel: string, listener: (...args: unknown[]) => void) => {
-    const subscription = (_event: Electron.IpcRendererEvent, ...args: unknown[]) => listener(...args)
-    ipcRenderer.on(channel, subscription)
-    return () => ipcRenderer.removeListener(channel, subscription)
+    const subscription = (
+      _event: Electron.IpcRendererEvent,
+      ...args: unknown[]
+    ) => listener(...args);
+    ipcRenderer.on(channel, subscription);
+    return () => ipcRenderer.removeListener(channel, subscription);
   },
   send: (channel: string, ...args: unknown[]) => {
     if (!ALLOWED_SEND_CHANNELS.has(channel)) {
-      console.warn(`[preload] Blocked send to disallowed channel: ${channel}`)
-      return
+      console.warn(`[preload] Blocked send to disallowed channel: ${channel}`);
+      return;
     }
-    ipcRenderer.send(channel, ...args)
+    ipcRenderer.send(channel, ...args);
   },
   invoke: (channel: string, ...args: unknown[]) => {
     if (!ALLOWED_INVOKE_CHANNELS.has(channel)) {
-      console.warn(`[preload] Blocked invoke to disallowed channel: ${channel}`)
-      return Promise.reject(new Error(`Channel "${channel}" is not allowed`))
+      console.warn(
+        `[preload] Blocked invoke to disallowed channel: ${channel}`,
+      );
+      return Promise.reject(new Error(`Channel "${channel}" is not allowed`));
     }
-    return ipcRenderer.invoke(channel, ...args)
+    return ipcRenderer.invoke(channel, ...args);
   },
-})
+});
 
-contextBridge.exposeInMainWorld('sparta', {
+contextBridge.exposeInMainWorld("sparta", {
   onEvent: (listener: (event: unknown) => void) => {
-    const subscription = (_event: Electron.IpcRendererEvent, data: unknown) => listener(data)
-    ipcRenderer.on('sparta:event', subscription)
-    return () => ipcRenderer.removeListener('sparta:event', subscription)
+    const subscription = (_event: Electron.IpcRendererEvent, data: unknown) =>
+      listener(data);
+    ipcRenderer.on("sparta:event", subscription);
+    return () => ipcRenderer.removeListener("sparta:event", subscription);
   },
   sendEvent: (event: unknown) => {
-    ipcRenderer.send('sparta:event', event)
+    ipcRenderer.send("sparta:event", event);
   },
-  getTerminalToken: () => ipcRenderer.invoke('sidecar:terminal-token') as Promise<string | undefined>,
+  getTerminalToken: () =>
+    ipcRenderer.invoke("sidecar:terminal-token") as Promise<string | undefined>,
   sendMessage: (req: {
-    sessionId: string
-    messageId: string
-    model: string
-    messages: { role: string; content: string }[]
-    providerKey?: string
-    apiUrl?: string
-    isLocal?: boolean
-    system?: string
-    vendor?: string
-    providerId?: string
-    mode?: string
-    skills?: string[]
-    mcpServers?: unknown[]
-    tools?: unknown[]
-    semanticMemory?: boolean
-    reasoning?: { enabled: boolean; budget: number; effort?: string }
-    webSearchEnabled?: boolean
-    workspaceRoot?: string
-    agentAutonomy?: string
-    agentExecuteLocal?: boolean
-    securityLoaded?: boolean
-    sandboxMode?: string
-    openFiles?: string[]
-    activeFilePath?: string
-  }) => ipcRenderer.invoke('chat:send', req),
-  abortMessage: (sessionId: string) => ipcRenderer.invoke('chat:abort', sessionId),
-  isSidecarReady: () => ipcRenderer.invoke('sidecar:status') as Promise<{ running: boolean; ready: boolean }>,
+    sessionId: string;
+    messageId: string;
+    model: string;
+    messages: { role: string; content: string }[];
+    providerKey?: string;
+    apiUrl?: string;
+    isLocal?: boolean;
+    system?: string;
+    vendor?: string;
+    providerId?: string;
+    mode?: string;
+    skills?: string[];
+    mcpServers?: unknown[];
+    tools?: unknown[];
+    semanticMemory?: boolean;
+    reasoning?: { enabled: boolean; budget: number; effort?: string };
+    webSearchEnabled?: boolean;
+    workspaceRoot?: string;
+    agentAutonomy?: string;
+    agentExecuteLocal?: boolean;
+    securityLoaded?: boolean;
+    sandboxMode?: string;
+    openFiles?: string[];
+    activeFilePath?: string;
+  }) => ipcRenderer.invoke("chat:send", req),
+  abortMessage: (sessionId: string) =>
+    ipcRenderer.invoke("chat:abort", sessionId),
+  isSidecarReady: () =>
+    ipcRenderer.invoke("sidecar:status") as Promise<{
+      running: boolean;
+      ready: boolean;
+    }>,
   fetchModels: (req: { vendor: string; apiKey?: string; serverUrl?: string }) =>
-    ipcRenderer.invoke('models:list', req) as Promise<{ models: string[]; error?: string }>,
-  testMcpConnection: (config: Record<string, unknown>) => ipcRenderer.invoke('mcp:test', config) as Promise<{ ok: boolean; serverId?: string; toolCount?: number; tools?: unknown[]; error?: string }>,
-  memoryIndex: (entry: Record<string, unknown>) => ipcRenderer.invoke('memory:index', entry) as Promise<{ ok: boolean; id?: string | null; error?: string }>,
-  memorySearch: (query: string, k?: number) => ipcRenderer.invoke('memory:search', { query, k }) as Promise<{ ok: boolean; results?: unknown[]; error?: string }>,
-  memoryEmbed: (texts: string[]) => ipcRenderer.invoke('memory:embed', { texts }) as Promise<{ ok: boolean; embeddings?: number[][]; error?: string }>,
-  memoryDelete: (entryId: string) => ipcRenderer.invoke('memory:delete', entryId) as Promise<{ ok: boolean; error?: string }>,
-  memoryCount: () => ipcRenderer.invoke('memory:count') as Promise<{ ok: boolean; count?: number; error?: string }>,
-  transcribeAudio: (req: { audio: string; filename: string; language?: string }) =>
-    ipcRenderer.invoke('audio:transcribe', req) as Promise<{ text?: string; error?: string }>,
+    ipcRenderer.invoke("models:list", req) as Promise<{
+      models: string[];
+      error?: string;
+    }>,
+  testMcpConnection: (config: Record<string, unknown>) =>
+    ipcRenderer.invoke("mcp:test", config) as Promise<{
+      ok: boolean;
+      serverId?: string;
+      toolCount?: number;
+      tools?: unknown[];
+      error?: string;
+    }>,
+  memoryIndex: (entry: Record<string, unknown>) =>
+    ipcRenderer.invoke("memory:index", entry) as Promise<{
+      ok: boolean;
+      id?: string | null;
+      error?: string;
+    }>,
+  memorySearch: (query: string, k?: number) =>
+    ipcRenderer.invoke("memory:search", { query, k }) as Promise<{
+      ok: boolean;
+      results?: unknown[];
+      error?: string;
+    }>,
+  memoryEmbed: (texts: string[]) =>
+    ipcRenderer.invoke("memory:embed", { texts }) as Promise<{
+      ok: boolean;
+      embeddings?: number[][];
+      error?: string;
+    }>,
+  memoryDelete: (entryId: string) =>
+    ipcRenderer.invoke("memory:delete", entryId) as Promise<{
+      ok: boolean;
+      error?: string;
+    }>,
+  memoryCount: () =>
+    ipcRenderer.invoke("memory:count") as Promise<{
+      ok: boolean;
+      count?: number;
+      error?: string;
+    }>,
+  transcribeAudio: (req: {
+    audio: string;
+    filename: string;
+    language?: string;
+  }) =>
+    ipcRenderer.invoke("audio:transcribe", req) as Promise<{
+      text?: string;
+      error?: string;
+    }>,
   harnesses: {
-    detect: () => ipcRenderer.invoke('harnesses:detect') as Promise<unknown[]>,
+    detect: () => ipcRenderer.invoke("harnesses:detect") as Promise<unknown[]>,
   },
-})
+});
 
-contextBridge.exposeInMainWorld('vault', {
-  isAvailable: () => ipcRenderer.invoke('vault:isAvailable'),
-  storeKey: (keyId: string, value: string, vendor?: string) => ipcRenderer.invoke('vault:storeKey', keyId, value, vendor),
-  getKey: (keyId: string) => ipcRenderer.invoke('vault:getKey', keyId),
-  deleteKey: (keyId: string) => ipcRenderer.invoke('vault:deleteKey', keyId),
-  listKeys: () => ipcRenderer.invoke('vault:listKeys'),
-  hasKey: (keyId: string) => ipcRenderer.invoke('vault:hasKey', keyId),
-})
+contextBridge.exposeInMainWorld("vault", {
+  isAvailable: () => ipcRenderer.invoke("vault:isAvailable"),
+  storeKey: (keyId: string, value: string, vendor?: string) =>
+    ipcRenderer.invoke("vault:storeKey", keyId, value, vendor),
+  getKey: (keyId: string) => ipcRenderer.invoke("vault:getKey", keyId),
+  deleteKey: (keyId: string) => ipcRenderer.invoke("vault:deleteKey", keyId),
+  listKeys: () => ipcRenderer.invoke("vault:listKeys"),
+  hasKey: (keyId: string) => ipcRenderer.invoke("vault:hasKey", keyId),
+});
 
-contextBridge.exposeInMainWorld('terminal', {
+contextBridge.exposeInMainWorld("terminal", {
   create: (opts: {
-    terminalId: string
-    cols: number
-    rows: number
-    shell?: string
-    cwd?: string
-    shellFlags?: string[]
-    envOverrides?: Record<string, string>
-  }) => ipcRenderer.invoke('terminal:create', opts),
+    terminalId: string;
+    cols: number;
+    rows: number;
+    shell?: string;
+    cwd?: string;
+    shellFlags?: string[];
+    envOverrides?: Record<string, string>;
+  }) => ipcRenderer.invoke("terminal:create", opts),
 
   write: (terminalId: string, data: string) =>
-    ipcRenderer.send('terminal:write', { terminalId, data }),
+    ipcRenderer.send("terminal:write", { terminalId, data }),
 
   resize: (terminalId: string, cols: number, rows: number) =>
-    ipcRenderer.send('terminal:resize', { terminalId, cols, rows }),
+    ipcRenderer.send("terminal:resize", { terminalId, cols, rows }),
 
   destroy: (terminalId: string) =>
-    ipcRenderer.invoke('terminal:destroy', { terminalId }),
+    ipcRenderer.invoke("terminal:destroy", { terminalId }),
 
   onData: (terminalId: string, callback: (data: string) => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, data: string) => callback(data)
-    ipcRenderer.on(`terminal:data:${terminalId}`, handler)
-    return () => ipcRenderer.removeListener(`terminal:data:${terminalId}`, handler)
+    const handler = (_event: Electron.IpcRendererEvent, data: string) =>
+      callback(data);
+    ipcRenderer.on(`terminal:data:${terminalId}`, handler);
+    return () =>
+      ipcRenderer.removeListener(`terminal:data:${terminalId}`, handler);
   },
 
   onExit: (terminalId: string, callback: (code: number) => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, { exitCode }: { exitCode: number }) => callback(exitCode)
-    ipcRenderer.on(`terminal:exit:${terminalId}`, handler)
-    return () => ipcRenderer.removeListener(`terminal:exit:${terminalId}`, handler)
+    const handler = (
+      _event: Electron.IpcRendererEvent,
+      { exitCode }: { exitCode: number },
+    ) => callback(exitCode);
+    ipcRenderer.on(`terminal:exit:${terminalId}`, handler);
+    return () =>
+      ipcRenderer.removeListener(`terminal:exit:${terminalId}`, handler);
   },
 
   agentWrite: (terminalId: string, command: string) =>
-    ipcRenderer.invoke('terminal:agent-write', { terminalId, command }),
+    ipcRenderer.invoke("terminal:agent-write", { terminalId, command }),
   agentWriteForce: (terminalId: string, command: string) =>
-    ipcRenderer.invoke('terminal:agent-write-force', { terminalId, command }),
-  listSessions: () => ipcRenderer.invoke('terminal:list-sessions'),
+    ipcRenderer.invoke("terminal:agent-write-force", { terminalId, command }),
+  listSessions: () => ipcRenderer.invoke("terminal:list-sessions"),
 
   agentSpawn: (procId: string, command: string, cwd?: string) =>
-    ipcRenderer.invoke('terminal:agent-spawn', { procId, command, cwd }),
+    ipcRenderer.invoke("terminal:agent-spawn", { procId, command, cwd }),
   agentKill: (procId: string) =>
-    ipcRenderer.invoke('terminal:agent-kill', { procId }),
+    ipcRenderer.invoke("terminal:agent-kill", { procId }),
 
-  onAgentSpawn: (callback: (payload: { procId: string; command: string }) => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, payload: { procId: string; command: string }) => callback(payload)
-    ipcRenderer.on('terminal:agent-spawn', handler)
-    return () => ipcRenderer.removeListener('terminal:agent-spawn', handler)
+  onAgentSpawn: (
+    callback: (payload: { procId: string; command: string }) => void,
+  ) => {
+    const handler = (
+      _event: Electron.IpcRendererEvent,
+      payload: { procId: string; command: string },
+    ) => callback(payload);
+    ipcRenderer.on("terminal:agent-spawn", handler);
+    return () => ipcRenderer.removeListener("terminal:agent-spawn", handler);
   },
 
-  onAgentOutput: (callback: (payload: { procId: string; chunk: string }) => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, payload: { procId: string; chunk: string }) => callback(payload)
-    ipcRenderer.on('terminal:agent-output', handler)
-    return () => ipcRenderer.removeListener('terminal:agent-output', handler)
+  onAgentOutput: (
+    callback: (payload: { procId: string; chunk: string }) => void,
+  ) => {
+    const handler = (
+      _event: Electron.IpcRendererEvent,
+      payload: { procId: string; chunk: string },
+    ) => callback(payload);
+    ipcRenderer.on("terminal:agent-output", handler);
+    return () => ipcRenderer.removeListener("terminal:agent-output", handler);
   },
 
-  onAgentExit: (callback: (payload: { procId: string; code: number }) => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, payload: { procId: string; code: number }) => callback(payload)
-    ipcRenderer.on('terminal:agent-exit', handler)
-    return () => ipcRenderer.removeListener('terminal:agent-exit', handler)
+  onAgentExit: (
+    callback: (payload: { procId: string; code: number }) => void,
+  ) => {
+    const handler = (
+      _event: Electron.IpcRendererEvent,
+      payload: { procId: string; code: number },
+    ) => callback(payload);
+    ipcRenderer.on("terminal:agent-exit", handler);
+    return () => ipcRenderer.removeListener("terminal:agent-exit", handler);
   },
-})
+});
 
-contextBridge.exposeInMainWorld('agent', {
+contextBridge.exposeInMainWorld("agent", {
   executeTask: (req: {
-    taskId: string
-    agentId: string
-    taskDescription: string
-    systemPrompt: string
-    allowedTools: string[]
-    model: string
-    provider: string
-    vendor?: string
-    providerKey?: string
-    apiUrl?: string
-    workspaceRoot?: string
-    agentAutonomy: string
-    maxTurns?: number
-  }) => ipcRenderer.invoke('agent:execute-task', req) as Promise<{ ok: boolean; result?: string; error?: string }>,
+    taskId: string;
+    agentId: string;
+    taskDescription: string;
+    systemPrompt: string;
+    allowedTools: string[];
+    model: string;
+    provider: string;
+    vendor?: string;
+    providerKey?: string;
+    apiUrl?: string;
+    workspaceRoot?: string;
+    agentAutonomy: string;
+    maxTurns?: number;
+  }) =>
+    ipcRenderer.invoke("agent:execute-task", req) as Promise<{
+      ok: boolean;
+      result?: string;
+      error?: string;
+    }>,
 
-  onTaskEvent: (callback: (payload: { event: string; data: unknown }) => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, payload: { event: string; data: unknown }) => callback(payload)
-    ipcRenderer.on('agent:task-event', handler)
-    return () => ipcRenderer.removeListener('agent:task-event', handler)
+  onTaskEvent: (
+    callback: (payload: { event: string; data: unknown }) => void,
+  ) => {
+    const handler = (
+      _event: Electron.IpcRendererEvent,
+      payload: { event: string; data: unknown },
+    ) => callback(payload);
+    ipcRenderer.on("agent:task-event", handler);
+    return () => ipcRenderer.removeListener("agent:task-event", handler);
   },
-})
+});
 
-contextBridge.exposeInMainWorld('fs', {
-  openFolderDialog: () => ipcRenderer.invoke('fs:openFolderDialog') as Promise<string | null>,
+contextBridge.exposeInMainWorld("fs", {
+  openFolderDialog: () =>
+    ipcRenderer.invoke("fs:openFolderDialog") as Promise<string | null>,
+  confirmWorkspaceAccess: (folderPath: string, locale?: string) =>
+    ipcRenderer.invoke(
+      "fs:confirmWorkspaceAccess",
+      folderPath,
+      locale,
+    ) as Promise<"read" | "write" | "write_no_delete" | null>,
   getPathForFile: (file: File) => {
-    try { return webUtils.getPathForFile(file) } catch { return null }
+    try {
+      return webUtils.getPathForFile(file);
+    } catch {
+      return null;
+    }
   },
-  readDirLevel: (projectId: string, dirPath: string) => ipcRenderer.invoke('fs:readDirLevel', projectId, dirPath) as Promise<{ nodes: FileTreeNode[]; error?: string }>,
-  readFile: (projectId: string, filePath: string, encoding?: string) => ipcRenderer.invoke('fs:readFile', projectId, filePath, encoding) as Promise<{ success: boolean; content?: string; error?: string; encoding?: string }>,
-  writeFile: (projectId: string, filePath: string, content: string) => ipcRenderer.invoke('fs:writeFile', projectId, filePath, content) as Promise<{ success: boolean; error?: string }>,
-  mkdir: (projectId: string, dirPath: string) => ipcRenderer.invoke('fs:mkdir', projectId, dirPath) as Promise<{ success: boolean; error?: string }>,
-  deleteFile: (projectId: string, filePath: string) => ipcRenderer.invoke('fs:deleteFile', projectId, filePath) as Promise<{ success: boolean; error?: string }>,
-  deleteFolder: (projectId: string, folderPath: string) => ipcRenderer.invoke('fs:deleteFolder', projectId, folderPath) as Promise<{ success: boolean; error?: string }>,
-  startWatcher: (projectId: string, dirPath: string) => ipcRenderer.invoke('fs:startWatcher', projectId, dirPath) as Promise<{ success: boolean }>,
-  stopWatcher: () => ipcRenderer.invoke('fs:stopWatcher') as Promise<{ success: boolean }>,
-  setWorkspaceRoot: (projectId: string, root: string, access: 'read' | 'write' = 'read') => ipcRenderer.invoke('fs:setWorkspaceRoot', projectId, root, access) as Promise<{ success: boolean; error?: string }>,
-  expandWatcher: (dirPath: string) => ipcRenderer.invoke('fs:expandWatcher', dirPath) as Promise<{ success: boolean }>,
-  collapseWatcher: (dirPath: string) => ipcRenderer.invoke('fs:collapseWatcher', dirPath) as Promise<{ success: boolean }>,
-})
+  readDirLevel: (projectId: string, dirPath: string) =>
+    ipcRenderer.invoke("fs:readDirLevel", projectId, dirPath) as Promise<{
+      nodes: FileTreeNode[];
+      error?: string;
+    }>,
+  readFile: (projectId: string, filePath: string, encoding?: string) =>
+    ipcRenderer.invoke(
+      "fs:readFile",
+      projectId,
+      filePath,
+      encoding,
+    ) as Promise<{
+      success: boolean;
+      content?: string;
+      error?: string;
+      encoding?: string;
+    }>,
+  writeFile: (projectId: string, filePath: string, content: string) =>
+    ipcRenderer.invoke(
+      "fs:writeFile",
+      projectId,
+      filePath,
+      content,
+    ) as Promise<{ success: boolean; error?: string }>,
+  mkdir: (projectId: string, dirPath: string) =>
+    ipcRenderer.invoke("fs:mkdir", projectId, dirPath) as Promise<{
+      success: boolean;
+      error?: string;
+    }>,
+  deleteFile: (projectId: string, filePath: string) =>
+    ipcRenderer.invoke("fs:deleteFile", projectId, filePath) as Promise<{
+      success: boolean;
+      error?: string;
+    }>,
+  deleteFolder: (projectId: string, folderPath: string) =>
+    ipcRenderer.invoke("fs:deleteFolder", projectId, folderPath) as Promise<{
+      success: boolean;
+      error?: string;
+    }>,
+  startWatcher: (projectId: string, dirPath: string) =>
+    ipcRenderer.invoke("fs:startWatcher", projectId, dirPath) as Promise<{
+      success: boolean;
+    }>,
+  stopWatcher: () =>
+    ipcRenderer.invoke("fs:stopWatcher") as Promise<{ success: boolean }>,
+  setWorkspaceRoot: (
+    projectId: string,
+    root: string,
+    access: "read" | "write" = "read",
+  ) =>
+    ipcRenderer.invoke(
+      "fs:setWorkspaceRoot",
+      projectId,
+      root,
+      access,
+    ) as Promise<{ success: boolean; error?: string }>,
+  clearWorkspaceRoot: (projectId: string) =>
+    ipcRenderer.invoke("fs:clearWorkspaceRoot", projectId) as Promise<{
+      success: boolean;
+      error?: string;
+    }>,
+  setWorkspaceBinding: (
+    bindingId: string,
+    root: string,
+    access: "read" | "write" | "write_no_delete" = "read",
+  ) => ipcRenderer.invoke("fs:setWorkspaceBinding", bindingId, root, access) as Promise<{ success: boolean; error?: string }>,
+  clearWorkspaceBinding: (bindingId: string) =>
+    ipcRenderer.invoke("fs:clearWorkspaceBinding", bindingId) as Promise<{ success: boolean; error?: string }>,
+  expandWatcher: (dirPath: string) =>
+    ipcRenderer.invoke("fs:expandWatcher", dirPath) as Promise<{
+      success: boolean;
+    }>,
+  collapseWatcher: (dirPath: string) =>
+    ipcRenderer.invoke("fs:collapseWatcher", dirPath) as Promise<{
+      success: boolean;
+    }>,
+});
 
-contextBridge.exposeInMainWorld('skills', {
-  list: () => ipcRenderer.invoke('skills:list') as Promise<unknown[]>,
-  view: (skillId: string) => ipcRenderer.invoke('skills:view', skillId) as Promise<{ metadata: Record<string, unknown>; body: string; source_path: string }>,
-  install: (repo: string, skill?: string) => ipcRenderer.invoke('skills:install', { repo, skill }) as Promise<{ ok: boolean; output: string }>,
-  repoList: (repo: string) => ipcRenderer.invoke('skills:repo-list', repo) as Promise<{ ok: boolean; output: string }>,
-  find: (query: string) => ipcRenderer.invoke('skills:find', query) as Promise<{ ok: boolean; output: string }>,
-  update: () => ipcRenderer.invoke('skills:update') as Promise<{ ok: boolean; output: string }>,
-  uninstall: (skillId: string) => ipcRenderer.invoke('skills:uninstall', skillId) as Promise<{ success: boolean; error?: string }>,
-})
+contextBridge.exposeInMainWorld("skills", {
+  list: () => ipcRenderer.invoke("skills:list") as Promise<unknown[]>,
+  view: (skillId: string) =>
+    ipcRenderer.invoke("skills:view", skillId) as Promise<{
+      metadata: Record<string, unknown>;
+      body: string;
+      source_path: string;
+    }>,
+  install: (repo: string, skill?: string) =>
+    ipcRenderer.invoke("skills:install", { repo, skill }) as Promise<{
+      ok: boolean;
+      output: string;
+    }>,
+  repoList: (repo: string) =>
+    ipcRenderer.invoke("skills:repo-list", repo) as Promise<{
+      ok: boolean;
+      output: string;
+    }>,
+  find: (query: string) =>
+    ipcRenderer.invoke("skills:find", query) as Promise<{
+      ok: boolean;
+      output: string;
+    }>,
+  update: () =>
+    ipcRenderer.invoke("skills:update") as Promise<{
+      ok: boolean;
+      output: string;
+    }>,
+  uninstall: (skillId: string) =>
+    ipcRenderer.invoke("skills:uninstall", skillId) as Promise<{
+      success: boolean;
+      error?: string;
+    }>,
+});
 
-contextBridge.exposeInMainWorld('permission', {
+contextBridge.exposeInMainWorld("permission", {
   onRequest: (callback: (payload: unknown) => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, data: unknown) => callback(data)
-    ipcRenderer.on('permission:request', handler)
-    return () => ipcRenderer.removeListener('permission:request', handler)
+    const handler = (_event: Electron.IpcRendererEvent, data: unknown) =>
+      callback(data);
+    ipcRenderer.on("permission:request", handler);
+    return () => ipcRenderer.removeListener("permission:request", handler);
   },
-  respond: (payload: { requestId: string; approved: boolean; remember: 'once' | 'session' }) =>
-    ipcRenderer.invoke('permission:respond', payload) as Promise<{ ok: boolean }>,
-})
+  respond: (payload: {
+    requestId: string;
+    approved: boolean;
+    remember: "once" | "session";
+  }) =>
+    ipcRenderer.invoke("permission:respond", payload) as Promise<{
+      ok: boolean;
+    }>,
+});
 
-contextBridge.exposeInMainWorld('editorBridge', {
+contextBridge.exposeInMainWorld("editorBridge", {
   respondDiff: (payload: { requestId: string; approved: boolean }) =>
-    ipcRenderer.invoke('editor:diff_respond', payload) as Promise<{ ok: boolean }>,
-})
+    ipcRenderer.invoke("editor:diff_respond", payload) as Promise<{
+      ok: boolean;
+    }>,
+});

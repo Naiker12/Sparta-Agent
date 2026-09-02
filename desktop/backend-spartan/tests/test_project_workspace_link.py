@@ -13,7 +13,7 @@ def test_resolve_active_workspace_prefers_existing_connected_folder(tmp_path):
     sandbox.mkdir()
 
     assert resolve_active_workspace(
-        {"connectedFolderPath": str(connected), "sandboxPath": str(sandbox)}
+        {"connectedFolderPath": str(connected), "workspaceAccess": "write", "sandboxPath": str(sandbox)}
     ) == str(connected.resolve())
 
 
@@ -23,6 +23,17 @@ def test_resolve_active_workspace_falls_back_to_sandbox(tmp_path):
 
     assert resolve_active_workspace(
         {"connectedFolderPath": str(tmp_path / "missing"), "sandboxPath": str(sandbox)}
+    ) == str(sandbox)
+
+
+def test_resolve_active_workspace_keeps_read_only_folder_out_of_mutable_tools(tmp_path):
+    connected = tmp_path / "connected"
+    sandbox = tmp_path / "sandbox"
+    connected.mkdir()
+    sandbox.mkdir()
+
+    assert resolve_active_workspace(
+        {"connectedFolderPath": str(connected), "workspaceAccess": "read", "sandboxPath": str(sandbox)}
     ) == str(sandbox)
 
 
@@ -49,10 +60,15 @@ def test_project_session_uses_connected_folder(tmp_path, monkeypatch):
     connected = tmp_path / "existing-codebase"
     connected.mkdir()
     studio_db.update_chat_project(
-        project["id"], {"connectedFolderPath": str(connected)}
+        project["id"], {"connectedFolderPath": str(connected), "workspaceAccess": "write"}
     )
     tools._workdirs.clear()
 
     assert tools.get_sandbox_workdir(
         f"{tools._PROJECT_SESSION_PREFIX}{project['id']}"
     ) == str(connected.resolve())
+
+    studio_db.update_chat_project(project["id"], {"workspaceAccess": "read"})
+    assert tools.get_sandbox_workdir(
+        f"{tools._PROJECT_SESSION_PREFIX}{project['id']}"
+    ) == str(Path(project["sandboxPath"]).resolve())

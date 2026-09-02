@@ -1,300 +1,516 @@
-import { ipcMain, dialog, shell } from 'electron'
-import fs from 'node:fs'
-import fsPromises from 'node:fs/promises'
-import path from 'node:path'
-import { startFileWatcher, stopFileWatcher, expandWatcher, collapseWatcher } from './file-watcher'
-import { IGNORED_DIR_SET } from '../lib/filesystem-constants'
-import { isWithinRoot } from '../tools/main-process-file-tools'
-import { isDocumentConvertible, convertDocumentToMarkdown, getCachedAttachmentContent } from './document.channel'
+import { ipcMain, dialog, shell } from "electron";
+import fs from "node:fs";
+import fsPromises from "node:fs/promises";
+import path from "node:path";
+import {
+  startFileWatcher,
+  stopFileWatcher,
+  expandWatcher,
+  collapseWatcher,
+} from "./file-watcher";
+import { IGNORED_DIR_SET } from "../lib/filesystem-constants";
+import { isWithinRoot } from "../tools/main-process-file-tools";
+import {
+  isDocumentConvertible,
+  convertDocumentToMarkdown,
+  getCachedAttachmentContent,
+} from "./document.channel";
 
 export interface FileTreeNode {
-  name: string
-  path: string
-  type: 'file' | 'directory'
-  children?: FileTreeNode[]
+  name: string;
+  path: string;
+  type: "file" | "directory";
+  children?: FileTreeNode[];
 }
 
-let _workspaceRoot: string | null = null
-const workspaceRoots = new Map<string, { root: string; access: 'read' | 'write' }>()
+let _workspaceRoot: string | null = null;
+let _workspaceAccess: "read" | "write" = "read";
+const workspaceRoots = new Map<
+  string,
+  { root: string; access: "read" | "write" | "write_no_delete" }
+>();
 
 export function getWorkspaceRoot(): string | null {
-  return _workspaceRoot
+  return _workspaceRoot;
 }
 
-function assertWorkspacePath(projectId: string, candidate: string): string | null {
-  const workspace = workspaceRoots.get(projectId)
-  if (!workspace) return 'No workspace folder is connected for this project'
-  if (!isWithinRoot(candidate, workspace.root)) return 'Path is outside workspace root'
-  return null
+export function getWorkspaceAccess(): "read" | "write" {
+  return _workspaceAccess;
 }
 
-function assertWorkspaceWrite(projectId: string, candidate: string): string | null {
-  const pathError = assertWorkspacePath(projectId, candidate)
-  if (pathError) return pathError
-  return workspaceRoots.get(projectId)?.access === 'write' ? null : 'Workspace is read-only'
+function assertWorkspacePath(
+  projectId: string,
+  candidate: string,
+): string | null {
+  const workspace = workspaceRoots.get(projectId);
+  if (!workspace) return "No workspace folder is connected for this project";
+  if (!isWithinRoot(candidate, workspace.root))
+    return "Path is outside workspace root";
+  return null;
 }
 
-function setWorkspaceRoot(projectId: string, root: string, access: 'read' | 'write' = 'read'): { success: true } | { success: false; error: string } {
+function assertWorkspaceWrite(
+  projectId: string,
+  candidate: string,
+  isDelete = false,
+): string | null {
+  const pathError = assertWorkspacePath(projectId, candidate);
+  if (pathError) return pathError;
+  const access = workspaceRoots.get(projectId)?.access;
+  if (access === "read" || !access) return "Workspace is read-only";
+  if (isDelete && access === "write_no_delete") return "Workspace does not allow deletion";
+  return null;
+}
+
+function setWorkspaceRoot(
+  projectId: string,
+  root: string,
+  access: "read" | "write" = "read",
+): { success: true } | { success: false; error: string } {
   try {
-    if (!projectId || typeof projectId !== 'string' || !root || typeof root !== 'string') return { success: false, error: 'Invalid project or path' }
-    if (access !== 'read' && access !== 'write') return { success: false, error: 'Invalid workspace access' }
-    const stat = fs.statSync(root)
-    if (!stat.isDirectory()) return { success: false, error: 'Workspace root must be a directory' }
-    const canonicalRoot = fs.realpathSync(root)
-    workspaceRoots.set(projectId, { root: canonicalRoot, access })
+    if (
+      !projectId ||
+      typeof projectId !== "string" ||
+      !root ||
+      typeof root !== "string"
+    )
+      return { success: false, error: "Invalid project or path" };
+    if (access !== "read" && access !== "write")
+      return { success: false, error: "Invalid workspace access" };
+    const stat = fs.statSync(root);
+    if (!stat.isDirectory())
+      return { success: false, error: "Workspace root must be a directory" };
+    const canonicalRoot = fs.realpathSync(root);
+    workspaceRoots.set(projectId, { root: canonicalRoot, access });
     // Legacy main-process tools use the active workspace. Renderer IPC never does.
-    _workspaceRoot = canonicalRoot
-    return { success: true }
+    _workspaceRoot = canonicalRoot;
+    _workspaceAccess = access;
+    return { success: true };
   } catch (error) {
-    return { success: false, error: error instanceof Error ? error.message : 'Invalid workspace root' }
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Invalid workspace root",
+    };
+  }
+}
+
+/** Configure a workspace capability for one chat binding. Unlike the legacy
+ * project API this intentionally does not alter `_workspaceRoot` or start a
+ * watcher: selecting a folder must be cheap and must not affect another chat.
+ */
+function setWorkspaceBinding(
+  bindingId: string,
+  root: string,
+  access: "read" | "write" | "write_no_delete" = "read",
+): { success: true } | { success: false; error: string } {
+  try {
+    if (!bindingId || typeof bindingId !== "string" || !root || typeof root !== "string")
+      return { success: false, error: "Invalid workspace binding or path" };
+    if (!["read", "write", "write_no_delete"].includes(access))
+      return { success: false, error: "Invalid workspace access" };
+    const stat = fs.statSync(root);
+    if (!stat.isDirectory()) return { success: false, error: "Workspace root must be a directory" };
+    workspaceRoots.set(bindingId, {
+      root: fs.realpathSync(root),
+      access,
+    });
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Invalid workspace root" };
   }
 }
 
 export function registerFilesystemIPC() {
-  ipcMain.handle('fs:openFolderDialog', async () => {
+  ipcMain.handle("fs:openFolderDialog", async () => {
     const result = await dialog.showOpenDialog({
-      properties: ['openDirectory'],
-    })
-    return result.canceled ? null : result.filePaths[0]
-  })
+      properties: ["openDirectory"],
+    });
+    return result.canceled ? null : result.filePaths[0];
+  });
 
-  ipcMain.handle('fs:readDirLevel', async (_event, projectId: string, dirPath: string) => {
-    if (!dirPath || typeof dirPath !== 'string') return { nodes: [], error: 'Invalid path' }
-    const pathError = assertWorkspacePath(projectId, dirPath)
-    if (pathError) return { nodes: [], error: pathError }
-    try {
-      let entries: fs.Dirent[] = []
+  ipcMain.handle(
+    "fs:confirmWorkspaceAccess",
+    async (_event, folderPath: string, locale?: string) => {
+      if (!folderPath || typeof folderPath !== "string") return null;
+      const spanish = locale?.toLowerCase().startsWith("es") ?? false;
+      const result = await dialog.showMessageBox({
+        type: "warning",
+        title: spanish
+          ? "Conectar carpeta de trabajo"
+          : "Connect workspace folder",
+        message: spanish
+          ? "Elige el acceso que Sparta Agent puede tener a esta carpeta."
+          : "Choose the access Sparta Agent may have to this folder.",
+        detail: spanish
+          ? `${folderPath}\n\nUsa una carpeta de trabajo dedicada cuando sea posible. El acceso a esta carpeta no concede permisos de red, conectores ni otras aplicaciones.`
+          : `${folderPath}\n\nUse a dedicated work folder when possible. Folder access does not grant network, connector, or other app permissions.`,
+        buttons: spanish
+          ? ["Solo lectura", "Editar sin eliminar", "Permitir ediciones", "Cancelar"]
+          : ["Read only", "Edit without deleting", "Allow edits", "Cancel"],
+        defaultId: 0,
+        cancelId: 3,
+        noLink: true,
+      });
+      return result.response === 0
+        ? "read"
+        : result.response === 1
+          ? "write_no_delete"
+          : result.response === 2
+            ? "write"
+            : null;
+    },
+  );
+
+  ipcMain.handle(
+    "fs:setWorkspaceBinding",
+    async (_event, bindingId: string, root: string, access: "read" | "write" | "write_no_delete" = "read") =>
+      setWorkspaceBinding(bindingId, root, access),
+  );
+
+  ipcMain.handle("fs:clearWorkspaceBinding", async (_event, bindingId: string) => {
+    workspaceRoots.delete(bindingId);
+    return { success: true };
+  });
+
+  ipcMain.handle(
+    "fs:readDirLevel",
+    async (_event, projectId: string, dirPath: string) => {
+      if (!dirPath || typeof dirPath !== "string")
+        return { nodes: [], error: "Invalid path" };
+      const pathError = assertWorkspacePath(projectId, dirPath);
+      if (pathError) return { nodes: [], error: pathError };
       try {
-        entries = await fsPromises.readdir(dirPath, { withFileTypes: true })
-      } catch (err) {
-        return { nodes: [], error: (err as Error).message }
-      }
-
-      const nodes: FileTreeNode[] = []
-      for (const entry of entries) {
-        if (entry.name.startsWith('.') && entry.name !== '.env') continue
-        if (entry.isDirectory() && IGNORED_DIR_SET.has(entry.name)) continue
-
-        const fullPath = path.join(dirPath, entry.name)
-        if (entry.isDirectory()) {
-          nodes.push({ name: entry.name, path: fullPath, type: 'directory', children: [] })
-        } else if (entry.isFile()) {
-          nodes.push({ name: entry.name, path: fullPath, type: 'file' })
-        }
-      }
-
-      nodes.sort((a, b) => {
-        if (a.type === b.type) return a.name.localeCompare(b.name)
-        return a.type === 'directory' ? -1 : 1
-      })
-
-      return { nodes }
-    } catch (err) {
-      return { nodes: [], error: (err as Error).message }
-    }
-  })
-
-  ipcMain.handle('fs:readFile', async (_event, projectId: string, filePath: string, encoding?: string) => {
-    if (!filePath || typeof filePath !== 'string') return { success: false, error: 'Invalid path' }
-    const pathError = assertWorkspacePath(projectId, filePath)
-    if (pathError) return { success: false, error: pathError }
-
-    //  Check chat attachment cache first (e.g. for uploaded PDFs, DOCX, XLSX)
-    const cached = getCachedAttachmentContent(filePath)
-    if (cached && cached.trim()) {
-      return { success: true, content: cached, encoding: 'utf-8' }
-    }
-
-    //  Convert document if PDF, DOCX, XLSX, etc.
-    if (isDocumentConvertible(filePath)) {
-      try {
-        const conv = await convertDocumentToMarkdown({ filePath })
-        if (conv && conv.markdown) {
-          return { success: true, content: conv.markdown, encoding: 'utf-8' }
-        }
-      } catch { /* ignore fallback to fs */ }
-    }
-
-    try {
-      const enc: 'utf-8' | 'base64' = encoding === 'base64' ? 'base64' : 'utf-8'
-      const content = fs.readFileSync(filePath, enc)
-      return { success: true, content, encoding: enc }
-    } catch (err) {
-      return { success: false, error: (err as Error).message }
-    }
-  })
-
-  ipcMain.handle('fs:writeFile', async (_event, projectId: string, filePath: string, content: string) => {
-    if (!filePath || typeof filePath !== 'string') return { success: false, error: 'Invalid path' }
-    const pathError = assertWorkspaceWrite(projectId, filePath)
-    if (pathError) return { success: false, error: pathError }
-    try {
-      fs.writeFileSync(filePath, content, 'utf-8')
-      return { success: true }
-    } catch (err) {
-      return { success: false, error: (err as Error).message }
-    }
-  })
-
-  ipcMain.handle('fs:deleteFile', async (_event, projectId: string, filePath: string) => {
-    if (!filePath || typeof filePath !== 'string') return { success: false, error: 'Invalid path' }
-    const pathError = assertWorkspaceWrite(projectId, filePath)
-    if (pathError) return { success: false, error: pathError }
-    try {
-      await shell.trashItem(filePath)
-      return { success: true }
-    } catch (err) {
-      return { success: false, error: (err as Error).message }
-    }
-  })
-
-  ipcMain.handle('fs:deleteFolder', async (_event, projectId: string, folderPath: string) => {
-    if (!folderPath || typeof folderPath !== 'string') return { success: false, error: 'Invalid path' }
-    const pathError = assertWorkspaceWrite(projectId, folderPath)
-    if (pathError) return { success: false, error: pathError }
-    try {
-      await shell.trashItem(folderPath)
-      return { success: true }
-    } catch (err) {
-      return { success: false, error: (err as Error).message }
-    }
-  })
-
-  ipcMain.handle('fs:mkdir', async (_event, projectId: string, dirPath: string) => {
-    if (!dirPath || typeof dirPath !== 'string') return { success: false, error: 'Invalid path' }
-    const pathError = assertWorkspaceWrite(projectId, dirPath)
-    if (pathError) return { success: false, error: pathError }
-    try {
-      await fsPromises.mkdir(dirPath, { recursive: true })
-      return { success: true }
-    } catch (err) {
-      return { success: false, error: (err as Error).message }
-    }
-  })
-
-  ipcMain.handle('fs:startWatcher', async (_event, projectId: string, dirPath: string) => {
-    const configured = setWorkspaceRoot(projectId, dirPath)
-    if (!configured.success) return configured
-    await startFileWatcher(_workspaceRoot!)
-    return configured
-  })
-
-  ipcMain.handle('fs:setWorkspaceRoot', async (_event, projectId: string, root: string, access: 'read' | 'write' = 'read') => {
-    const configured = setWorkspaceRoot(projectId, root, access)
-    if (!configured.success) return configured
-    await startFileWatcher(_workspaceRoot!)
-    return configured
-  })
-
-  ipcMain.handle('fs:stopWatcher', () => {
-    stopFileWatcher()
-    return { success: true }
-  })
-
-  ipcMain.handle('fs:expandWatcher', async (_event, dirPath: string) => {
-    if (!dirPath || typeof dirPath !== 'string') return { success: false }
-    await expandWatcher(dirPath)
-    return { success: true }
-  })
-
-  ipcMain.handle('fs:collapseWatcher', async (_event, dirPath: string) => {
-    if (!dirPath || typeof dirPath !== 'string') return { success: false }
-    collapseWatcher(dirPath)
-    return { success: true }
-  })
-
-  ipcMain.handle('fs:scanModelWeights', async (_event, projectId: string, scanDir: string) => {
-    if (!scanDir || typeof scanDir !== 'string') {
-      return { success: false, error: 'Ruta no válida', models: [] }
-    }
-
-    const pathError = assertWorkspacePath(projectId, scanDir)
-    if (pathError) return { success: false, error: pathError, models: [] }
-    try {
-      if (!fs.existsSync(scanDir)) {
-        return { success: false, error: `El directorio "${scanDir}" no existe en el equipo`, models: [] }
-      }
-
-      const discovered: Array<{
-        name: string
-        path: string
-        size: string
-        sizeBytes: number
-        format: 'GGUF' | 'Safetensors' | 'LoRA' | 'PyTorch' | 'Checkpoint'
-        quantization: string
-        lastModified: string
-      }> = []
-
-      async function scanRecursive(currentPath: string, depth: number) {
-        if (depth > 3) return
-        let entries: fs.Dirent[] = []
+        let entries: fs.Dirent[] = [];
         try {
-          entries = await fsPromises.readdir(currentPath, { withFileTypes: true })
-        } catch {
-          return
+          entries = await fsPromises.readdir(dirPath, { withFileTypes: true });
+        } catch (err) {
+          return { nodes: [], error: (err as Error).message };
         }
 
+        const nodes: FileTreeNode[] = [];
         for (const entry of entries) {
-          if (entry.name.startsWith('.') || entry.name === 'node_modules') continue
-          const fullPath = path.join(currentPath, entry.name)
+          if (entry.name.startsWith(".") && entry.name !== ".env") continue;
+          if (entry.isDirectory() && IGNORED_DIR_SET.has(entry.name)) continue;
 
+          const fullPath = path.join(dirPath, entry.name);
           if (entry.isDirectory()) {
-            const isCheckpointDir =
-              entry.name.includes('checkpoint') ||
-              entry.name.includes('lora') ||
-              entry.name.includes('models') ||
-              entry.name.includes('output') ||
-              entry.name.includes('weights')
-            if (isCheckpointDir || depth < 2) {
-              await scanRecursive(fullPath, depth + 1)
-            }
+            nodes.push({
+              name: entry.name,
+              path: fullPath,
+              type: "directory",
+              children: [],
+            });
           } else if (entry.isFile()) {
-            const ext = path.extname(entry.name).toLowerCase()
-            const nameLower = entry.name.toLowerCase()
+            nodes.push({ name: entry.name, path: fullPath, type: "file" });
+          }
+        }
 
-            if (ext === '.gguf' || ext === '.safetensors' || ext === '.bin' || ext === '.pt' || ext === '.onnx') {
-              try {
-                const stat = await fsPromises.stat(fullPath)
-                const sizeGb = (stat.size / (1024 * 1024 * 1024)).toFixed(1)
-                const sizeMb = (stat.size / (1024 * 1024)).toFixed(0)
-                const sizeStr = stat.size >= 1024 * 1024 * 1024 ? `${sizeGb} GB` : `${sizeMb} MB`
+        nodes.sort((a, b) => {
+          if (a.type === b.type) return a.name.localeCompare(b.name);
+          return a.type === "directory" ? -1 : 1;
+        });
 
-                let format: 'GGUF' | 'Safetensors' | 'LoRA' | 'PyTorch' | 'Checkpoint' = 'GGUF'
-                if (ext === '.safetensors') format = nameLower.includes('adapter') ? 'LoRA' : 'Safetensors'
-                else if (ext === '.pt' || ext === '.bin') format = 'PyTorch'
+        return { nodes };
+      } catch (err) {
+        return { nodes: [], error: (err as Error).message };
+      }
+    },
+  );
 
-                let quant = 'Estándar'
-                if (nameLower.includes('q4_k_m') || nameLower.includes('q4_k')) quant = 'Q4_K_M'
-                else if (nameLower.includes('q5_k_m') || nameLower.includes('q5_k')) quant = 'Q5_K_M'
-                else if (nameLower.includes('q8_0') || nameLower.includes('q8_k')) quant = 'Q8_0'
-                else if (nameLower.includes('q4_0')) quant = 'Q4_0'
-                else if (nameLower.includes('q4_1')) quant = 'Q4_1'
-                else if (nameLower.includes('4bit') || nameLower.includes('4-bit') || nameLower.includes('bnb')) quant = '4-bit BnB'
-                else if (nameLower.includes('8bit') || nameLower.includes('8-bit')) quant = '8-bit'
-                else if (nameLower.includes('f16') || nameLower.includes('fp16')) quant = 'FP16'
-                else if (nameLower.includes('bf16')) quant = 'BF16'
+  ipcMain.handle(
+    "fs:readFile",
+    async (_event, projectId: string, filePath: string, encoding?: string) => {
+      if (!filePath || typeof filePath !== "string")
+        return { success: false, error: "Invalid path" };
+      const pathError = assertWorkspacePath(projectId, filePath);
+      if (pathError) return { success: false, error: pathError };
 
-                discovered.push({
-                  name: path.basename(entry.name, ext),
-                  path: fullPath,
-                  size: sizeStr,
-                  sizeBytes: stat.size,
-                  format,
-                  quantization: quant,
-                  lastModified: stat.mtime.toISOString(),
-                })
-              } catch {
-                /* skip */
+      //  Check chat attachment cache first (e.g. for uploaded PDFs, DOCX, XLSX)
+      const cached = getCachedAttachmentContent(filePath);
+      if (cached && cached.trim()) {
+        return { success: true, content: cached, encoding: "utf-8" };
+      }
+
+      //  Convert document if PDF, DOCX, XLSX, etc.
+      if (isDocumentConvertible(filePath)) {
+        try {
+          const conv = await convertDocumentToMarkdown({ filePath });
+          if (conv && conv.markdown) {
+            return { success: true, content: conv.markdown, encoding: "utf-8" };
+          }
+        } catch {
+          /* ignore fallback to fs */
+        }
+      }
+
+      try {
+        const enc: "utf-8" | "base64" =
+          encoding === "base64" ? "base64" : "utf-8";
+        const content = fs.readFileSync(filePath, enc);
+        return { success: true, content, encoding: enc };
+      } catch (err) {
+        return { success: false, error: (err as Error).message };
+      }
+    },
+  );
+
+  ipcMain.handle(
+    "fs:writeFile",
+    async (_event, projectId: string, filePath: string, content: string) => {
+      if (!filePath || typeof filePath !== "string")
+        return { success: false, error: "Invalid path" };
+      const pathError = assertWorkspaceWrite(projectId, filePath);
+      if (pathError) return { success: false, error: pathError };
+      try {
+        fs.writeFileSync(filePath, content, "utf-8");
+        return { success: true };
+      } catch (err) {
+        return { success: false, error: (err as Error).message };
+      }
+    },
+  );
+
+  ipcMain.handle(
+    "fs:deleteFile",
+    async (_event, projectId: string, filePath: string) => {
+      if (!filePath || typeof filePath !== "string")
+        return { success: false, error: "Invalid path" };
+      const pathError = assertWorkspaceWrite(projectId, filePath, true);
+      if (pathError) return { success: false, error: pathError };
+      try {
+        await shell.trashItem(filePath);
+        return { success: true };
+      } catch (err) {
+        return { success: false, error: (err as Error).message };
+      }
+    },
+  );
+
+  ipcMain.handle(
+    "fs:deleteFolder",
+    async (_event, projectId: string, folderPath: string) => {
+      if (!folderPath || typeof folderPath !== "string")
+        return { success: false, error: "Invalid path" };
+      const pathError = assertWorkspaceWrite(projectId, folderPath, true);
+      if (pathError) return { success: false, error: pathError };
+      try {
+        await shell.trashItem(folderPath);
+        return { success: true };
+      } catch (err) {
+        return { success: false, error: (err as Error).message };
+      }
+    },
+  );
+
+  ipcMain.handle(
+    "fs:mkdir",
+    async (_event, projectId: string, dirPath: string) => {
+      if (!dirPath || typeof dirPath !== "string")
+        return { success: false, error: "Invalid path" };
+      const pathError = assertWorkspaceWrite(projectId, dirPath);
+      if (pathError) return { success: false, error: pathError };
+      try {
+        await fsPromises.mkdir(dirPath, { recursive: true });
+        return { success: true };
+      } catch (err) {
+        return { success: false, error: (err as Error).message };
+      }
+    },
+  );
+
+  ipcMain.handle(
+    "fs:startWatcher",
+    async (_event, projectId: string, dirPath: string) => {
+      const configured = setWorkspaceRoot(projectId, dirPath);
+      if (!configured.success) return configured;
+      await startFileWatcher(_workspaceRoot!);
+      return configured;
+    },
+  );
+
+  ipcMain.handle(
+    "fs:setWorkspaceRoot",
+    async (
+      _event,
+      projectId: string,
+      root: string,
+      access: "read" | "write" = "read",
+    ) => {
+      const configured = setWorkspaceRoot(projectId, root, access);
+      if (!configured.success) return configured;
+      await startFileWatcher(_workspaceRoot!);
+      return configured;
+    },
+  );
+
+  ipcMain.handle("fs:clearWorkspaceRoot", async (_event, projectId: string) => {
+    workspaceRoots.delete(projectId);
+    if (workspaceRoots.size === 0) {
+      _workspaceRoot = null;
+      _workspaceAccess = "read";
+      stopFileWatcher();
+    }
+    return { success: true };
+  });
+
+  ipcMain.handle("fs:stopWatcher", () => {
+    stopFileWatcher();
+    return { success: true };
+  });
+
+  ipcMain.handle("fs:expandWatcher", async (_event, dirPath: string) => {
+    if (!dirPath || typeof dirPath !== "string") return { success: false };
+    await expandWatcher(dirPath);
+    return { success: true };
+  });
+
+  ipcMain.handle("fs:collapseWatcher", async (_event, dirPath: string) => {
+    if (!dirPath || typeof dirPath !== "string") return { success: false };
+    collapseWatcher(dirPath);
+    return { success: true };
+  });
+
+  ipcMain.handle(
+    "fs:scanModelWeights",
+    async (_event, projectId: string, scanDir: string) => {
+      if (!scanDir || typeof scanDir !== "string") {
+        return { success: false, error: "Ruta no válida", models: [] };
+      }
+
+      const pathError = assertWorkspacePath(projectId, scanDir);
+      if (pathError) return { success: false, error: pathError, models: [] };
+      try {
+        if (!fs.existsSync(scanDir)) {
+          return {
+            success: false,
+            error: `El directorio "${scanDir}" no existe en el equipo`,
+            models: [],
+          };
+        }
+
+        const discovered: Array<{
+          name: string;
+          path: string;
+          size: string;
+          sizeBytes: number;
+          format: "GGUF" | "Safetensors" | "LoRA" | "PyTorch" | "Checkpoint";
+          quantization: string;
+          lastModified: string;
+        }> = [];
+
+        async function scanRecursive(currentPath: string, depth: number) {
+          if (depth > 3) return;
+          let entries: fs.Dirent[] = [];
+          try {
+            entries = await fsPromises.readdir(currentPath, {
+              withFileTypes: true,
+            });
+          } catch {
+            return;
+          }
+
+          for (const entry of entries) {
+            if (entry.name.startsWith(".") || entry.name === "node_modules")
+              continue;
+            const fullPath = path.join(currentPath, entry.name);
+
+            if (entry.isDirectory()) {
+              const isCheckpointDir =
+                entry.name.includes("checkpoint") ||
+                entry.name.includes("lora") ||
+                entry.name.includes("models") ||
+                entry.name.includes("output") ||
+                entry.name.includes("weights");
+              if (isCheckpointDir || depth < 2) {
+                await scanRecursive(fullPath, depth + 1);
+              }
+            } else if (entry.isFile()) {
+              const ext = path.extname(entry.name).toLowerCase();
+              const nameLower = entry.name.toLowerCase();
+
+              if (
+                ext === ".gguf" ||
+                ext === ".safetensors" ||
+                ext === ".bin" ||
+                ext === ".pt" ||
+                ext === ".onnx"
+              ) {
+                try {
+                  const stat = await fsPromises.stat(fullPath);
+                  const sizeGb = (stat.size / (1024 * 1024 * 1024)).toFixed(1);
+                  const sizeMb = (stat.size / (1024 * 1024)).toFixed(0);
+                  const sizeStr =
+                    stat.size >= 1024 * 1024 * 1024
+                      ? `${sizeGb} GB`
+                      : `${sizeMb} MB`;
+
+                  let format:
+                    "GGUF" | "Safetensors" | "LoRA" | "PyTorch" | "Checkpoint" =
+                    "GGUF";
+                  if (ext === ".safetensors")
+                    format = nameLower.includes("adapter")
+                      ? "LoRA"
+                      : "Safetensors";
+                  else if (ext === ".pt" || ext === ".bin") format = "PyTorch";
+
+                  let quant = "Estándar";
+                  if (
+                    nameLower.includes("q4_k_m") ||
+                    nameLower.includes("q4_k")
+                  )
+                    quant = "Q4_K_M";
+                  else if (
+                    nameLower.includes("q5_k_m") ||
+                    nameLower.includes("q5_k")
+                  )
+                    quant = "Q5_K_M";
+                  else if (
+                    nameLower.includes("q8_0") ||
+                    nameLower.includes("q8_k")
+                  )
+                    quant = "Q8_0";
+                  else if (nameLower.includes("q4_0")) quant = "Q4_0";
+                  else if (nameLower.includes("q4_1")) quant = "Q4_1";
+                  else if (
+                    nameLower.includes("4bit") ||
+                    nameLower.includes("4-bit") ||
+                    nameLower.includes("bnb")
+                  )
+                    quant = "4-bit BnB";
+                  else if (
+                    nameLower.includes("8bit") ||
+                    nameLower.includes("8-bit")
+                  )
+                    quant = "8-bit";
+                  else if (
+                    nameLower.includes("f16") ||
+                    nameLower.includes("fp16")
+                  )
+                    quant = "FP16";
+                  else if (nameLower.includes("bf16")) quant = "BF16";
+
+                  discovered.push({
+                    name: path.basename(entry.name, ext),
+                    path: fullPath,
+                    size: sizeStr,
+                    sizeBytes: stat.size,
+                    format,
+                    quantization: quant,
+                    lastModified: stat.mtime.toISOString(),
+                  });
+                } catch {
+                  /* skip */
+                }
               }
             }
           }
         }
-      }
 
-      await scanRecursive(scanDir, 0)
-      return { success: true, models: discovered }
-    } catch (err) {
-      return { success: false, error: (err as Error).message, models: [] }
-    }
-  })
+        await scanRecursive(scanDir, 0);
+        return { success: true, models: discovered };
+      } catch (err) {
+        return { success: false, error: (err as Error).message, models: [] };
+      }
+    },
+  );
 }

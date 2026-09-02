@@ -11,6 +11,10 @@ from __future__ import annotations
 import logging
 import os
 import re
+import csv
+import json
+import zipfile
+from xml.etree import ElementTree
 from dataclasses import dataclass
 from html.parser import HTMLParser
 
@@ -432,6 +436,77 @@ def _docx(path: str) -> list[Page]:
     return [_page("\n".join(lines), None)]
 
 
+def _delimited_table(path: str, delimiter: str) -> list[Page]:
+    """Keep tabular context readable by retrieval: one row per line, columns
+    separated by pipes. ``utf-8-sig`` also accepts CSV files exported by Excel."""
+    with open(path, encoding = "utf-8-sig", errors = "replace", newline = "") as f:
+        rows = csv.reader(f, delimiter = delimiter)
+        lines = [" | ".join(cell.replace("\n", " ").strip() for cell in row) for row in rows]
+    return [_page("\n".join(line for line in lines if line.strip()), None)]
+
+
+def _xlsx(path: str) -> list[Page]:
+    """Extract each worksheet independently, retaining formulas rather than
+    cached values so questions about calculations remain answerable."""
+    import openpyxl
+
+    workbook = openpyxl.load_workbook(path, read_only = True, data_only = False)
+    try:
+        pages: list[Page] = []
+        for sheet in workbook.worksheets:
+            lines = [f"# Hoja: {sheet.title}"]
+            for row in sheet.iter_rows(values_only = True):
+                values = ["" if value is None else str(value).replace("\n", " ").strip() for value in row]
+                if any(values):
+                    lines.append(" | ".join(values))
+            pages.append(_page("\n".join(lines), None))
+        return pages or [_page("", None)]
+    finally:
+        workbook.close()
+
+
+def _zip_xml_text(archive: zipfile.ZipFile, member: str) -> str:
+    """Read visible text from an XML member without interpreting markup."""
+    root = ElementTree.fromstring(archive.read(member))
+    return "\n".join(part.strip() for part in root.itertext() if part and part.strip())
+
+
+def _pptx(path: str) -> list[Page]:
+    with zipfile.ZipFile(path) as archive:
+        members = [name for name in archive.namelist() if re.fullmatch(r"ppt/slides/slide\d+\.xml", name)]
+        members.sort(key = lambda name: int(re.search(r"\d+", os.path.basename(name)).group()))
+        return [_page(_zip_xml_text(archive, member), index + 1) for index, member in enumerate(members)]
+
+
+def _odt(path: str) -> list[Page]:
+    with zipfile.ZipFile(path) as archive:
+        return [_page(_zip_xml_text(archive, "content.xml"), None)]
+
+
+def _epub(path: str) -> list[Page]:
+    with zipfile.ZipFile(path) as archive:
+        members = sorted(name for name in archive.namelist() if name.lower().endswith((".xhtml", ".html", ".htm")))
+        pages: list[Page] = []
+        for index, member in enumerate(members, 1):
+            raw = archive.read(member).decode("utf-8", errors = "replace")
+            text = "\n".join(page.text for page in _html(raw))
+            if text:
+                pages.append(_page(text, index))
+        return pages
+
+
+def _rtf(path: str) -> list[Page]:
+    raw = open(path, encoding = "utf-8", errors = "replace").read()
+    # A small, dependency-free fallback: turn paragraph/tab escapes into text
+    # and discard formatting controls. It deliberately never claims to retain
+    # visual RTF formatting.
+    text = re.sub(r"\\par[d]?\b", "\n", raw)
+    text = re.sub(r"\\tab\b", "\t", text)
+    text = re.sub(r"\\[a-zA-Z]+-?\d* ?", "", text)
+    text = text.replace("{", "").replace("}", "").replace(r"\\", "\\")
+    return [_page(text.strip(), None)]
+
+
 def parse(path: str, *, want_images: bool = False):
     """Parse a file into pages by extension. Returns ``list[Page]``, or
     ``(list[Page], list[ParsedImage])`` when ``want_images=True`` (only PDFs yield
@@ -446,9 +521,38 @@ def parse(path: str, *, want_images: bool = False):
         pages = _docx(path)
         return (pages, []) if want_images else pages
 
-    if ext in (".html", ".htm", ".txt", ".md", ".markdown"):
+    if ext == ".xlsx":
+        pages = _xlsx(path)
+        return (pages, []) if want_images else pages
+
+    if ext == ".pptx":
+        pages = _pptx(path)
+        return (pages, []) if want_images else pages
+
+    if ext == ".odt":
+        pages = _odt(path)
+        return (pages, []) if want_images else pages
+
+    if ext == ".epub":
+        pages = _epub(path)
+        return (pages, []) if want_images else pages
+
+    if ext == ".rtf":
+        pages = _rtf(path)
+        return (pages, []) if want_images else pages
+
+    if ext in (".csv", ".tsv"):
+        pages = _delimited_table(path, "\t" if ext == ".tsv" else ",")
+        return (pages, []) if want_images else pages
+
+    if ext in (".html", ".htm", ".txt", ".md", ".markdown", ".json"):
         with open(path, encoding = "utf-8", errors = "replace") as f:
             raw = f.read()
+        if ext == ".json":
+            try:
+                raw = json.dumps(json.loads(raw), ensure_ascii = False, indent = 2)
+            except json.JSONDecodeError:
+                pass
         pages = _html(raw) if ext in (".html", ".htm") else [_page(raw, None)]
         return (pages, []) if want_images else pages
 

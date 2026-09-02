@@ -8,9 +8,19 @@ from typing import Optional
 
 
 def resolve_active_workspace(project: dict) -> str:
-    """Return the connected folder when present, otherwise the managed sandbox."""
+    """Return a writable workspace without trusting UI-only permission state.
+
+    Mutable code tools run with this directory as their process working tree.
+    A read-only connection therefore stays outside their reach and uses the
+    managed sandbox; browsing the connected folder goes through guarded IPC.
+    """
     connected = project.get("connectedFolderPath")
-    if isinstance(connected, str) and connected and os.path.isdir(connected):
+    if (
+        project.get("workspaceAccess") == "write"
+        and isinstance(connected, str)
+        and connected
+        and os.path.isdir(connected)
+    ):
         return os.path.realpath(connected)
     sandbox = project.get("sandboxPath")
     if not isinstance(sandbox, str) or not sandbox:

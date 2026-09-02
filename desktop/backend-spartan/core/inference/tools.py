@@ -7692,6 +7692,25 @@ def _project_workdir_for(session_id: "str | None") -> "str | None":
     return _get_project_workdir(session_id)
 
 
+def _thread_workspace_workdir(session_id: "str | None") -> "str | None":
+    """Resolve the explicit workspace capability of one chat.
+
+    A workspace is deliberately bound to the thread, not inferred from its
+    project. Read-only and no-delete bindings stay in the managed sandbox until
+    the individual tool paths carry their finer-grained permission.
+    """
+    if not session_id or not _thread_exists(session_id):
+        return None
+    try:
+        from storage.studio_db import get_thread_workspace_binding
+        from state.thread_workspace import resolve_writable_thread_workspace
+        binding = get_thread_workspace_binding(session_id)
+        return resolve_writable_thread_workspace(binding)
+    except Exception:
+        logger.warning("Failed to resolve thread workspace for %s", session_id, exc_info = True)
+        return None
+
+
 def _get_project_workdir(session_id: str) -> str | None:
     if not session_id.startswith(_PROJECT_SESSION_PREFIX):
         return None
@@ -8421,7 +8440,13 @@ def _get_workdir(session_id: str | None = None) -> str:
     cached = _workdirs.get(key)
     if cached is not None and not os.path.isdir(cached):
         cached = None
-    if cached is not None and not _get_project_workdir(session_id or ""):
+    project_now = _thread_workspace_workdir(session_id) or _get_project_workdir(session_id or "")
+    # Workspace access can be changed while the backend stays alive. Never let
+    # a cached read-write folder survive a downgrade to read-only (or a folder
+    # replacement/disconnect).
+    if cached is not None and project_now and os.path.realpath(cached) != os.path.realpath(project_now):
+        cached = None
+    if cached is not None and not project_now:
         # The same checks a fresh resolve makes: the entry can have been
         # renamed and replaced with a link to another chat's directory since,
         # and containment alone accepts that.
@@ -9760,12 +9785,12 @@ _FULL_ACCESS_TOOL_BY_NAME["edit_file"] = EDIT_FILE_TOOL_FULL_ACCESS
 
 
 def _workspace_tool(name: str, description: str, properties: dict, required: list[str] = []) -> dict:
-    return {"type": "function", "function": {"name": name, "description": description + " Paths are relative to the connected project folder.", "parameters": {"type": "object", "properties": properties, "required": required}}}
+    return {"type": "function", "function": {"name": name, "description": description + " Paths are relative to the folder connected to this chat.", "parameters": {"type": "object", "properties": properties, "required": required}}}
 
 
-_WORKSPACE_PATH = {"path": {"type": "string", "description": "Relative path in the connected project folder."}}
+_WORKSPACE_PATH = {"path": {"type": "string", "description": "Relative path in the folder connected to this chat."}}
 LIST_DIRECTORY_TOOL = _workspace_tool("list_directory", "List one directory without loading the whole repository.", _WORKSPACE_PATH)
-READ_FILE_TOOL = _workspace_tool("read_file", "Read a UTF-8 text file.", _WORKSPACE_PATH, ["path"])
+READ_FILE_TOOL = _workspace_tool("read_file", "Read a text file or extract readable content from PDF, DOCX, XLSX, CSV, or TSV.", _WORKSPACE_PATH, ["path"])
 WRITE_FILE_TOOL = _workspace_tool("write_file", "Create or replace a UTF-8 text file.", {**_WORKSPACE_PATH, "content": {"type": "string"}}, ["path", "content"])
 CREATE_FILE_TOOL = _workspace_tool("create_file", "Create an empty file or directory. Fails if it already exists.", {**_WORKSPACE_PATH, "type": {"type": "string", "enum": ["file", "directory"]}}, ["path", "type"])
 DELETE_PATH_TOOL = _workspace_tool("delete_path", "Permanently delete a file or directory from the connected project folder.", _WORKSPACE_PATH, ["path"])
@@ -9773,23 +9798,69 @@ RENAME_PATH_TOOL = _workspace_tool("rename_path", "Rename or move a file or dire
 SEARCH_IN_FILES_TOOL = _workspace_tool("search_in_files", "Search UTF-8 text files in the connected project folder.", {"query": {"type": "string", "minLength": 1}, **_WORKSPACE_PATH}, ["query"])
 
 
-def _connected_workspace_for_tool(session_id: "str | None") -> "tuple[str | None, str]":
-    """Resolve only an explicitly connected project workspace, never a sandbox."""
+def _connected_workspace_for_tool(session_id: "str | None") -> "tuple[str | None, str | None, str]":
+    """Resolve a chat workspace first; retain project workspace as legacy fallback."""
+    if session_id:
+        try:
+            from storage.studio_db import get_thread_workspace_binding
+            from state.thread_workspace import resolve_thread_workspace
+            binding = get_thread_workspace_binding(session_id)
+            if binding:
+                root = resolve_thread_workspace(binding)
+                if root:
+                    return root, binding.get("access"), ""
+                return None, None, "Error: the connected chat folder is unavailable or has changed."
+        except RuntimeError as exc:
+            return None, None, f"Error: {exc}"
     if not session_id or not session_id.startswith(_PROJECT_SESSION_PREFIX):
-        return None, "Error: this conversation is not attached to a project workspace."
+        return None, None, "Error: this chat does not have a connected work folder."
     try:
         from storage.studio_db import get_chat_project
         from state.project_files import connected_workspace
         project = get_chat_project(session_id[len(_PROJECT_SESSION_PREFIX) :])
-        return connected_workspace(project or {}), ""
+        return connected_workspace(project or {}), "write", ""
     except RuntimeError as exc:
-        return None, f"Error: {exc}"
+        return None, None, f"Error: {exc}"
+
+
+_WORKSPACE_DOCUMENT_EXTS = frozenset({
+    ".pdf", ".docx", ".xlsx", ".csv", ".tsv", ".pptx", ".odt",
+    ".rtf", ".epub", ".json",
+})
+_WORKSPACE_DOCUMENT_MAX_BYTES = 30 * 1024 * 1024
+_WORKSPACE_DOCUMENT_MAX_CHARS = 1_000_000
+
+
+def _read_workspace_document(path: str) -> str:
+    """Extract structured office content without exposing binary bytes to chat.
+
+    This is intentionally separate from RAG ingestion: reading a document in a
+    work folder is an on-demand tool call and must not persist or index it.
+    """
+    if os.path.getsize(path) > _WORKSPACE_DOCUMENT_MAX_BYTES:
+        return "Error: document is too large to read directly (maximum 30 MB)."
+    from core.rag.parsers import parse
+
+    pages = parse(path)
+    sections = [
+        (f"--- Page {page.page_number} ---\n" if page.page_number else "") + page.text
+        for page in pages
+        if page.text
+    ]
+    text = "\n\n".join(sections) or "(document has no extractable text)"
+    if len(text) > _WORKSPACE_DOCUMENT_MAX_CHARS:
+        return text[:_WORKSPACE_DOCUMENT_MAX_CHARS] + "\n\n... (document text truncated)"
+    return text
 
 
 def _workspace_tool_exec(name: str, arguments: dict, session_id: "str | None") -> str:
     from state.project_files import ProjectWorkspacePathError, display_path, resolve_project_path
-    root, error = _connected_workspace_for_tool(session_id)
+    root, access, error = _connected_workspace_for_tool(session_id)
     if error or root is None: return error
+    if name in {"write_file", "create_file"} and access == "read":
+        return "Error: this chat folder is read-only."
+    if name in {"delete_path", "rename_path"} and access != "write":
+        return "Error: this chat folder does not allow deletion or renaming."
     try:
         path = arguments.get("path", "")
         target = resolve_project_path(root, path, allow_root = name in {"list_directory", "search_in_files"})
@@ -9798,6 +9869,8 @@ def _workspace_tool_exec(name: str, arguments: dict, session_id: "str | None") -
             return "\n".join(f"{'dir' if item.is_dir(follow_symlinks = False) else 'file'}  {item.name}" for item in sorted(os.scandir(target), key = lambda item: (not item.is_dir(follow_symlinks = False), item.name.casefold()))[:500]) or "(empty directory)"
         if name == "read_file":
             if not os.path.isfile(target): return "Error: file not found."
+            if os.path.splitext(target)[1].lower() in _WORKSPACE_DOCUMENT_EXTS:
+                return _read_workspace_document(target)
             if os.path.getsize(target) > 2 * 1024 * 1024: return "Error: file is too large to read."
             with open(target, "r", encoding = "utf-8") as file: return file.read()
         if name == "write_file":

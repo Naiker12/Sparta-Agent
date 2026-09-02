@@ -17,10 +17,6 @@ interface GgufVariantFetchState {
   refreshError: string | null;
 }
 
-function isAbortError(error: unknown): boolean {
-  return error instanceof DOMException && error.name === "AbortError";
-}
-
 export function useGgufVariantFetchState({
   repoId,
   hfToken,
@@ -106,7 +102,10 @@ export function useGgufVariantFetchState({
         refreshError: null,
       });
     } catch (error) {
-      if (controller.signal.aborted || isAbortError(error)) return;
+      // A timeout in the API layer also rejects as AbortError. Only ignore an
+      // abort issued by this hook (a newer request or an unmount), so a timed
+      // out request can clear its loading state and expose a retry.
+      if (controller.signal.aborted) return;
       setState((prev) => {
         const sameScope = prev.scopeKey === variantScopeKey;
         const variants = sameScope ? prev.variants : null;

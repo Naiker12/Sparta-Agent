@@ -280,12 +280,18 @@ function stemMatchesAtBoundary(haystack: string, stem: string): boolean {
  */
 export function matchProviderLogo(repoName: string): ProviderLogo | null {
 	if (!repoName) return null;
+	// Hub rows normally carry a full Hugging Face id (`owner/repo`), while the
+	// registry intentionally stores prefixes for the repository segment only.
+	// Without this normalization every Unsloth re-upload misses and falls back
+	// to its generated initial tile.
+	const normalizedRepoName = repoName.trim().split("/").at(-1) ?? "";
+	if (!normalizedRepoName) return null;
 	for (const provider of PROVIDER_LOGOS) {
-		if (provider.prefixes.some((prefix) => repoName.startsWith(prefix))) {
+		if (provider.prefixes.some((prefix) => normalizedRepoName.startsWith(prefix))) {
 			return provider;
 		}
 	}
-	const lower = repoName.toLowerCase();
+	const lower = normalizedRepoName.toLowerCase();
 	for (const provider of PROVIDER_LOGOS) {
 		if (provider.stems?.some((stem) => stemMatchesAtBoundary(lower, stem))) {
 			return provider;

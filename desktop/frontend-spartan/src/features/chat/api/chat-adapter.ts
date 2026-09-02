@@ -1,4 +1,3 @@
-
 import { mlxRuntimeStateFrom } from "../lib/mlx-runtime-state";
 import { getAuthToken } from "@/features/auth";
 import { prepareHfTokenForUse } from "@/features/hf-auth";
@@ -61,7 +60,6 @@ import {
   isPromptCacheTtl,
   loadExternalProviders,
   parseExternalModelId,
-
   providerModelSupportsStudioTools,
   providerModelSupportsVision,
   supportsProviderPromptCacheTtl,
@@ -71,13 +69,10 @@ import {
 
 import {
   addCodexReasoning,
-
   codexLocalToolRoundId,
   codexReasoningForToolCalls,
   readCodexReasoning,
-
   shouldReplayAssistantReasoning,
-
   startsNewCodexToolRound,
   type CodexReasoningLedger,
 } from "../codex-reasoning";
@@ -155,7 +150,10 @@ import {
   awaitThreadScopedPairing,
   useChatRuntimeStore,
 } from "../stores/chat-runtime-store";
-import { resolveFitMaxSeqLength, resolveManualAutoCtxPin } from "../presets/preset-policy";
+import {
+  resolveFitMaxSeqLength,
+  resolveManualAutoCtxPin,
+} from "../presets/preset-policy";
 import { ensureGpuDeviceCache } from "@/hooks/use-gpu-info";
 import { useExternalProvidersStore } from "../stores/external-providers-store";
 import {
@@ -193,6 +191,7 @@ import {
   type LastLocalModelKind,
 } from "../utils/last-local-model-load";
 import { createRetryableSharedRead } from "../utils/retryable-shared-read";
+import { getThreadWorkspace } from "./chat-api";
 import { getImageInputUnavailableReason } from "../utils/image-input-support";
 import {
   createThinkTagTracker,
@@ -402,8 +401,7 @@ function parseLiveToolArgs(
     candidate = candidate.slice(brace);
   }
   const parsed = parsePartialJsonObject(candidate) as
-    | Record<string, unknown>
-    | undefined;
+    Record<string, unknown> | undefined;
   if (!parsed || typeof parsed !== "object") return null;
   // Call envelope from the text path: unwrap to the arguments payload.
   const inner = parsed.arguments ?? parsed.parameters;
@@ -411,8 +409,7 @@ function parseLiveToolArgs(
     if (typeof inner === "string") {
       // Stringified arguments: partial-parse the inner JSON string.
       const innerParsed = parsePartialJsonObject(inner) as
-        | Record<string, unknown>
-        | undefined;
+        Record<string, unknown> | undefined;
       if (innerParsed && typeof innerParsed === "object") {
         return { args: innerParsed, argsText: inner };
       }
@@ -554,8 +551,7 @@ function documentCitationToSource(
   // Anthropic numbers inline [N] per citation, not per source URL.
   // Fold citation type + position-bearing fields into the id so distinct
   // citations on the same source keep separate Sources entries.
-  const citationType =
-    typeof cit.type === "string" ? String(cit.type) : "";
+  const citationType = typeof cit.type === "string" ? String(cit.type) : "";
   const positionParts = [
     cit.search_result_index,
     cit.start_char_index,
@@ -779,8 +775,7 @@ function toOpenAIImageEditReferenceMessage(
 function isAnthropicRefusalMessage(message: RunMessage): boolean {
   if (message.role !== "assistant") return false;
   const metadata = (message as { metadata?: unknown }).metadata as
-    | { custom?: Record<string, unknown> }
-    | undefined;
+    { custom?: Record<string, unknown> } | undefined;
   return metadata?.custom?.anthropicRefusal === true;
 }
 
@@ -834,8 +829,8 @@ function getToolPartReplayMetadata(
       : null;
   const hasNativePart = Boolean(
     argsGoogle &&
-      typeof argsGoogle.native_part === "object" &&
-      argsGoogle.native_part !== null,
+    typeof argsGoogle.native_part === "object" &&
+    argsGoogle.native_part !== null,
   );
   const hasServerToolMarker = Boolean(
     argsObj && (argsObj as Record<string, unknown>)._server_tool === true,
@@ -959,9 +954,7 @@ function isSandboxWrapper(
   return isSandboxToolResult(result);
 }
 
-export function isMcpImageToolResult(
-  val: unknown,
-): val is McpImageToolResult {
+export function isMcpImageToolResult(val: unknown): val is McpImageToolResult {
   if (typeof val !== "object" || val === null) {
     return false;
   }
@@ -1006,7 +999,8 @@ function serializeToolResultPart(
   ) {
     // Replay the stdout the model saw, not the card's sessionId/images/files:
     // stringifying the wrapper feeds it internal metadata instead of the output.
-    content = result.text.length > 0 ? result.text : JSON.stringify({ result: "" });
+    content =
+      result.text.length > 0 ? result.text : JSON.stringify({ result: "" });
   } else {
     try {
       content = JSON.stringify(result);
@@ -1170,7 +1164,6 @@ function serializeAssistantReplayMessages(
       if (!toolResult && !canReplayToolCallWithoutRoleTool(toolPart)) {
         continue;
       }
-
 
       const provenance = getToolReplayProvenance(toolPart);
       const localRoundId = codexLocalToolRoundId(provenance);
@@ -1366,7 +1359,8 @@ function extractVideoPartBase64(
 ): string | undefined {
   if (!part || part.type !== "file") return undefined;
   const filePart = part as unknown as { data?: string; mimeType?: string };
-  if (!filePart.data || !/^video\//i.test(filePart.mimeType ?? "")) return undefined;
+  if (!filePart.data || !/^video\//i.test(filePart.mimeType ?? ""))
+    return undefined;
   return filePart.data.startsWith("data:")
     ? filePart.data.split(",")[1]
     : filePart.data;
@@ -1442,7 +1436,8 @@ export async function buildOutboundMessagesForTokenCount(
         )
       : "";
   const projectInstructions = await resolveProjectInstructions(threadId);
-  const projectWorkspaceContext = await resolveProjectWorkspaceContext(threadId);
+  const projectWorkspaceContext =
+    await resolveProjectWorkspaceContext(threadId);
   const combinedSystemPrompt = [
     projectInstructions
       ? `<project_instructions>\n${projectInstructions}\n</project_instructions>`
@@ -1549,8 +1544,8 @@ export async function buildLocalTokenCountExtras(
   const projectRagEnabled = ragProjectId
     ? await projectHasSources(ragProjectId)
     : false;
-  const workspaceEnabled = ragProjectId
-    ? Boolean((await getStoredChatProject(ragProjectId).catch(() => null))?.connectedFolderPath?.trim())
+  const workspaceEnabled = threadId
+    ? Boolean(await getThreadWorkspace(threadId).catch(() => null))
     : false;
   const ragOn = ragEnabled || projectRagEnabled;
   if (
@@ -1627,7 +1622,8 @@ async function resolveUseAdapter(
     return undefined;
   }
   try {
-    const thread = await (readThreadRecord?.() ?? getStoredChatThread(threadId));
+    const thread = await (readThreadRecord?.() ??
+      getStoredChatThread(threadId));
     if (!thread?.pairId) {
       return undefined;
     }
@@ -1661,21 +1657,19 @@ async function resolveProjectInstructions(
 /** Tell the model that a workspace exists without disclosing the user's local path. */
 async function resolveProjectWorkspaceContext(
   threadId: string | undefined,
-  readThreadRecord?: ThreadRecordReader,
+  _readThreadRecord?: ThreadRecordReader,
 ): Promise<string> {
-  const projectId = await resolveProjectId(threadId, readThreadRecord);
-  if (!projectId) return "";
-  const project = await getStoredChatProject(projectId).catch(() => null);
-  const workspace = project?.connectedFolderPath?.trim();
-  if (!project || project.archived || !workspace) return "";
-  const canWrite = project.workspaceAccess === "write";
+  if (!threadId) return "";
+  const workspace = await getThreadWorkspace(threadId).catch(() => null);
+  if (!workspace) return "";
+  const canWrite = workspace.access !== "read";
   return [
-    "<project_workspace>",
-    `The user connected a ${canWrite ? "read-write" : "read-only"} workspace folder to this project.`,
+    "<thread_workspace>",
+    `The user connected a ${workspace.access.replace(/_/g, "-")} workspace folder to this chat.`,
     canWrite
-      ? "Use the project file tools for files inside that workspace when the user asks for code or file changes. Do not reveal or request its absolute local path, and do not write outside it. The usual tool permission flow still applies."
-      : "Use the project file tools only to inspect files inside that workspace. Do not modify, create, rename, or delete files. Do not reveal or request its absolute local path.",
-    "</project_workspace>",
+      ? "Use file tools only inside this workspace when the user requests file changes. Do not reveal or request its absolute local path."
+      : "This workspace is read-only. Do not modify, create, rename, or delete its files. Do not reveal or request its absolute local path.",
+    "</thread_workspace>",
   ].join("\n");
 }
 
@@ -1861,10 +1855,14 @@ function autoLoadCandidateKey(
   return `${kind}:${normalizeAutoLoadTarget(id)}:${(ggufVariant ?? "").toLowerCase()}`;
 }
 
-function hasBigEndianGgufMarker(filename: string, quant?: string | null): boolean {
+function hasBigEndianGgufMarker(
+  filename: string,
+  quant?: string | null,
+): boolean {
   const normalized = filename.replace(/\\/g, "/").toLowerCase();
   const separatorIndex = normalized.lastIndexOf("/");
-  const basename = separatorIndex >= 0 ? normalized.slice(separatorIndex + 1) : normalized;
+  const basename =
+    separatorIndex >= 0 ? normalized.slice(separatorIndex + 1) : normalized;
   const parent = separatorIndex >= 0 ? normalized.slice(0, separatorIndex) : "";
   const stem = basename.replace(/\.[^.]*$/, "");
   const quantKey = quant?.trim().toLowerCase() || "";
@@ -1878,7 +1876,9 @@ function hasBigEndianGgufMarker(filename: string, quant?: string | null): boolea
     if (quantIndex >= 0 && quantIndex < (match.index ?? 0)) {
       return true;
     }
-    const tail = stem.slice((match.index ?? 0) + match[0].length).replace(/^[._-]+/, "");
+    const tail = stem
+      .slice((match.index ?? 0) + match[0].length)
+      .replace(/^[._-]+/, "");
     if (!tail || !GGUF_KNOWN_QUANT_RE.test(tail)) {
       return !quantInParentOnly;
     }
@@ -2009,12 +2009,11 @@ function snapshotVisibleModelState(
 
 function restoreVisibleModelState(snapshot: VisibleModelStateSnapshot): void {
   const liveUsage = useChatRuntimeStore.getState();
-  liveUsage
-    .setCheckpoint(snapshot.settings.params.checkpoint, undefined, {
-      trackQueuedSettings: false,
-      // The model being stepped off is the one the background load put there.
-      persist: false,
-    });
+  liveUsage.setCheckpoint(snapshot.settings.params.checkpoint, undefined, {
+    trackQueuedSettings: false,
+    // The model being stepped off is the one the background load put there.
+    persist: false,
+  });
   useChatRuntimeStore.setState({
     ...snapshot.runtime,
     ...snapshot.settings,
@@ -2156,7 +2155,9 @@ function isAutoLoadableLocalRow(
 // Reading only the field made such a row a Transformers source, which sends the
 // safetensors context length to /load and remembers the wrong kind.
 function isGgufLocalRow(row: LocalModelInfo): boolean {
-  return row.model_format === "gguf" || row.path.toLowerCase().endsWith(".gguf");
+  return (
+    row.model_format === "gguf" || row.path.toLowerCase().endsWith(".gguf")
+  );
 }
 
 /** Chat-only installs run GGUF anywhere and MLX on a Mac; the picker hides
@@ -2546,12 +2547,18 @@ async function autoLoadSmallestModel(options?: AutoLoadOptions): Promise<{
 
   function noteLoadFailure(label: string, error: unknown): void {
     const detail =
-      error instanceof Error && error.message.trim() ? error.message.trim() : "";
+      error instanceof Error && error.message.trim()
+        ? error.message.trim()
+        : "";
     // loadModel also rejects before /api/inference/load is sent (dismissed token dialog, dead
     // backend): those stop the Hub download, but must not blame the model.
-    const marker = error as { unslothTransportFailure?: boolean; unslothUserCancelled?: boolean };
+    const marker = error as {
+      unslothTransportFailure?: boolean;
+      unslothUserCancelled?: boolean;
+    };
     const blamesModel = !(
-      marker?.unslothTransportFailure === true || marker?.unslothUserCancelled === true
+      marker?.unslothTransportFailure === true ||
+      marker?.unslothUserCancelled === true
     );
     loadFailure.current = {
       label,
@@ -2644,7 +2651,10 @@ async function autoLoadSmallestModel(options?: AutoLoadOptions): Promise<{
     const failureLabel = candidate.ggufVariant
       ? `${candidate.id} (${candidate.ggufVariant})`
       : candidate.id;
-    const { config } = resolveInitialConfig(candidate.id, candidate.ggufVariant);
+    const { config } = resolveInitialConfig(
+      candidate.id,
+      candidate.ggufVariant,
+    );
     const effectiveMaxSeqLength = resolveLoadMaxSeqLength({
       modelId: candidate.id,
       ggufVariant: candidate.ggufVariant,
@@ -2717,10 +2727,14 @@ async function autoLoadSmallestModel(options?: AutoLoadOptions): Promise<{
       try {
         const managed = await loadManagedLlamaFlags();
         const clean = (tokens: readonly string[]) =>
-          sanitizeStoredExtraArgs(tokens, managed?.managed ?? new Set<string>(), {
-            maxBytes: managed?.maxBytes,
-            windowsCommandBudget: managed?.windowsCommandBudget,
-          });
+          sanitizeStoredExtraArgs(
+            tokens,
+            managed?.managed ?? new Set<string>(),
+            {
+              maxBytes: managed?.maxBytes,
+              windowsCommandBudget: managed?.windowsCommandBudget,
+            },
+          );
         if (resolvedExtraArgs === undefined) {
           const stored = await fetchLoadExtraArgs(
             modelPath,
@@ -2756,9 +2770,7 @@ async function autoLoadSmallestModel(options?: AutoLoadOptions): Promise<{
         // comes up as it did before the feature existed.
       }
     }
-    const effectiveTensorParallel = isDiffusion
-      ? false
-      : config.tensorParallel;
+    const effectiveTensorParallel = isDiffusion ? false : config.tensorParallel;
     const effectiveGpuIds =
       config.selectedGpuIds !== undefined
         ? reconcilePersistedGpuIds(
@@ -2909,7 +2921,7 @@ async function autoLoadSmallestModel(options?: AutoLoadOptions): Promise<{
             : { maxSeqLength: effectiveMaxSeqLength }),
           maxTokens:
             candidate.kind === "gguf"
-              ? loadResp.context_length ?? 131072
+              ? (loadResp.context_length ?? 131072)
               : effectiveMaxSeqLength,
         },
         {
@@ -2942,16 +2954,13 @@ async function autoLoadSmallestModel(options?: AutoLoadOptions): Promise<{
         );
         // Slots this auto-load committed. Diffusion ignores --parallel, so a count
         // there would mint a phantom override a saved preset carries onto a GGUF.
-        const committedSlots = (loadResp.is_diffusion ?? false)
-          ? null
-          : (config.nParallel ?? null);
+        const committedSlots =
+          (loadResp.is_diffusion ?? false) ? null : (config.nParallel ?? null);
         // same rule for the batch sizes
-        const committedNBatch = (loadResp.is_diffusion ?? false)
-          ? null
-          : (config.nBatch ?? null);
-        const committedNUbatch = (loadResp.is_diffusion ?? false)
-          ? null
-          : (config.nUbatch ?? null);
+        const committedNBatch =
+          (loadResp.is_diffusion ?? false) ? null : (config.nBatch ?? null);
+        const committedNUbatch =
+          (loadResp.is_diffusion ?? false) ? null : (config.nUbatch ?? null);
         useChatRuntimeStore.setState({
           ggufContextLength: loadResp.context_length ?? 131072,
           ggufMaxContextLength:
@@ -3095,7 +3104,9 @@ async function autoLoadSmallestModel(options?: AutoLoadOptions): Promise<{
         cachedModelsRunOnThisPlatform()
           ? allModelRepos.filter(isChattableCachedRepo)
           : [],
-        localRows.filter((row) => isAutoLoadableLocalRow(row, cachedInventoryFailed)),
+        localRows.filter((row) =>
+          isAutoLoadableLocalRow(row, cachedInventoryFailed),
+        ),
         store.params.maxSeqLength,
         options?.abortSignal,
       ),
@@ -3129,7 +3140,7 @@ async function autoLoadSmallestModel(options?: AutoLoadOptions): Promise<{
         while (!autoLoadCancelled && loadAttempts < MAX_AUTO_LOAD_ATTEMPTS) {
           const candidate = await resolveAutoLoadCandidate(
             source,
-            isRemembered ? lastLoaded?.ggufVariant ?? null : null,
+            isRemembered ? (lastLoaded?.ggufVariant ?? null) : null,
             isTried,
           );
           options?.abortSignal?.throwIfAborted();
@@ -3231,9 +3242,7 @@ async function autoLoadSmallestModel(options?: AutoLoadOptions): Promise<{
   }
 }
 
-async function resolveQueuedEmptyLocalModel(
-  abortSignal: AbortSignal,
-): Promise<{
+async function resolveQueuedEmptyLocalModel(abortSignal: AbortSignal): Promise<{
   loaded: boolean;
   blockedByTrustRemoteCode: boolean;
   loadFailureReported?: boolean;
@@ -3383,7 +3392,10 @@ export function createOpenAIStreamAdapter(
       const resolvedThreadId =
         (runThreadId ?? runtime.activeThreadId) || undefined;
       if (resolvedThreadId) {
-        rememberComposerProjectForRun(resolvedThreadId, composerProjectIdAtSend);
+        rememberComposerProjectForRun(
+          resolvedThreadId,
+          composerProjectIdAtSend,
+        );
       }
       const sharedThreadRecordRead = resolvedThreadId
         ? createRetryableSharedRead(
@@ -3395,12 +3407,8 @@ export function createOpenAIStreamAdapter(
         ? async () => (await sharedThreadRecordRead()).thread
         : undefined;
       const releaseCurrentPreStreamRun = () =>
-        releasePreStreamRunForThreadIds([
-          unstable_threadId,
-          resolvedThreadId,
-        ]);
-      const queuedRunSettings =
-        consumeQueuedChatRunSettings(resolvedThreadId);
+        releasePreStreamRunForThreadIds([unstable_threadId, resolvedThreadId]);
+      const queuedRunSettings = consumeQueuedChatRunSettings(resolvedThreadId);
       let queuedEmptyModelRuntime: QueuedResolvedModelRuntime | null = null;
       const persistResolvedQueuedModel = async (modelId: string) => {
         if (
@@ -3422,7 +3430,7 @@ export function createOpenAIStreamAdapter(
       }
       const threadAlreadyResearched = Boolean(
         resolvedThreadId &&
-          useResearchRunStore.getState().claimedThreadIds[resolvedThreadId],
+        useResearchRunStore.getState().claimedThreadIds[resolvedThreadId],
       );
       if (runtime.deepResearchEnabled && threadAlreadyResearched) {
         if (queuedRunSettings) {
@@ -3520,13 +3528,16 @@ export function createOpenAIStreamAdapter(
                 ),
               }
           : liveRuntime;
-        if (!resolvedThreadId) throw new Error("Research requires a saved chat.");
+        if (!resolvedThreadId)
+          throw new Error("Research requires a saved chat.");
         if (!unstable_assistantMessageId) {
           throw new Error(
             "Deep research could not bind its assistant message. Please retry the send.",
           );
         }
-        const userMessage = [...messages].reverse().find((m) => m.role === "user");
+        const userMessage = [...messages]
+          .reverse()
+          .find((m) => m.role === "user");
         if (!userMessage) throw new Error("Research requires a user message.");
         const userMessageIndex = messages.indexOf(userMessage);
         const userMessageParentId =
@@ -3534,10 +3545,12 @@ export function createOpenAIStreamAdapter(
         const { params } = runtime;
         await persistResolvedQueuedModel(params.checkpoint);
         const selectedCheckpoint = params.checkpoint.trim();
-        const researchExternalSelection = parseExternalModelId(selectedCheckpoint);
+        const researchExternalSelection =
+          parseExternalModelId(selectedCheckpoint);
         const researchExternalProvider = researchExternalSelection
           ? loadExternalProviders().find(
-              (provider) => provider.id === researchExternalSelection.providerId,
+              (provider) =>
+                provider.id === researchExternalSelection.providerId,
             )
           : null;
         if (
@@ -3592,10 +3605,10 @@ export function createOpenAIStreamAdapter(
             ? runtime.ragEnabled && runtime.ragSource.type === "kb"
               ? {
                   kb_id: runtime.ragSource.kbId,
-                   default_top_k: runtime.ragTopK,
-                   mode: runtime.ragMode,
-                   autoinject: runtime.ragAutoInject,
-                   autoinject_min_score: runtime.ragAutoInjectMinScore,
+                  default_top_k: runtime.ragTopK,
+                  mode: runtime.ragMode,
+                  autoinject: runtime.ragAutoInject,
+                  autoinject_min_score: runtime.ragAutoInjectMinScore,
                 }
               : {
                   ...(runtime.ragEnabled
@@ -3604,10 +3617,10 @@ export function createOpenAIStreamAdapter(
                   ...(projectRagEnabled && researchProjectId
                     ? { project_id: researchProjectId }
                     : {}),
-                   default_top_k: runtime.ragTopK,
-                   mode: runtime.ragMode,
-                   autoinject: runtime.ragAutoInject,
-                   autoinject_min_score: runtime.ragAutoInjectMinScore,
+                  default_top_k: runtime.ragTopK,
+                  mode: runtime.ragMode,
+                  autoinject: runtime.ragAutoInject,
+                  autoinject_min_score: runtime.ragAutoInjectMinScore,
                 }
             : undefined;
 
@@ -3626,7 +3639,9 @@ export function createOpenAIStreamAdapter(
         };
         runtime.registerThreadServerCancel(threadKey, researchServerCancel);
         releaseCurrentPreStreamRun();
-        runtime.setThreadRunning(threadKey, true, { owner: researchServerCancel });
+        runtime.setThreadRunning(threadKey, true, {
+          owner: researchServerCancel,
+        });
         let report = "";
         let releaseResearchFollow: (() => void) | null = null;
         const researchFollowController = new AbortController();
@@ -3636,13 +3651,15 @@ export function createOpenAIStreamAdapter(
         const forwardAdapterAbort = () => {
           researchFollowController.abort(abortSignal.reason);
         };
-        abortSignal.addEventListener("abort", forwardAdapterAbort, { once: true });
+        abortSignal.addEventListener("abort", forwardAdapterAbort, {
+          once: true,
+        });
         try {
           // The normal history adapter persists messages after model execution,
           // but research validates the user message before it can start.
-          const storedUserMessage = (await listStoredChatMessages(resolvedThreadId)).find(
-            (message) => message.id === userMessage.id,
-          );
+          const storedUserMessage = (
+            await listStoredChatMessages(resolvedThreadId)
+          ).find((message) => message.id === userMessage.id);
           await saveStoredChatMessage({
             id: userMessage.id,
             threadId: resolvedThreadId,
@@ -3659,7 +3676,9 @@ export function createOpenAIStreamAdapter(
             userMessageId: userMessage.id,
             assistantMessageId: unstable_assistantMessageId,
             inferenceRequest,
-            ...(researchInstructions ? { instructions: researchInstructions } : {}),
+            ...(researchInstructions
+              ? { instructions: researchInstructions }
+              : {}),
             ...(ragScope ? { ragScope } : {}),
             budgets: {
               modelTimeoutSeconds: runtime.researchModelTimeoutSeconds,
@@ -3682,8 +3701,7 @@ export function createOpenAIStreamAdapter(
           );
           if (
             !queuedRunSettings ||
-            resolvedThreadId ===
-              useChatRuntimeStore.getState().activeThreadId
+            resolvedThreadId === useChatRuntimeStore.getState().activeThreadId
           ) {
             runtime.setDeepResearchEnabled(false);
           }
@@ -3727,14 +3745,19 @@ export function createOpenAIStreamAdapter(
             };
           }
         } catch (error) {
-          if (!abortSignal.aborted && !researchFollowController.signal.aborted) {
+          if (
+            !abortSignal.aborted &&
+            !researchFollowController.signal.aborted
+          ) {
             throw error;
           }
         } finally {
           abortSignal.removeEventListener("abort", forwardAdapterAbort);
           releaseResearchFollow?.();
           runtime.clearThreadServerCancel(threadKey, researchServerCancel);
-          runtime.setThreadRunning(threadKey, false, { owner: researchServerCancel });
+          runtime.setThreadRunning(threadKey, false, {
+            owner: researchServerCancel,
+          });
         }
         return;
       }
@@ -3907,8 +3930,8 @@ export function createOpenAIStreamAdapter(
       const projectRagEnabled = ragProjectId
         ? await projectHasSources(ragProjectId)
         : false;
-      const workspaceEnabled = ragProjectId
-        ? Boolean((await getStoredChatProject(ragProjectId).catch(() => null))?.connectedFolderPath?.trim())
+      const workspaceEnabled = resolvedThreadId
+        ? Boolean(await getThreadWorkspace(resolvedThreadId).catch(() => null))
         : false;
       const externalSelection = parseExternalModelId(params.checkpoint);
       const isExternalRequest = externalSelection !== null;
@@ -3959,8 +3982,8 @@ export function createOpenAIStreamAdapter(
         : false;
       const externalProviderIsGeminiCustomBase = Boolean(
         externalProvider &&
-          externalProvider.providerType === "gemini" &&
-          isGeminiCustomOpenAICompatBase(externalProvider.baseUrl),
+        externalProvider.providerType === "gemini" &&
+        isGeminiCustomOpenAICompatBase(externalProvider.baseUrl),
       );
       const externalProviderUsesOAuth =
         externalProvider?.authKind === "chatgpt_oauth";
@@ -3969,7 +3992,6 @@ export function createOpenAIStreamAdapter(
         isExternalRequest &&
         !externalApiKey &&
         !externalProvider?.hasApiKey &&
-
         !externalProviderUsesOAuth &&
         !externalProviderIsCustom &&
         !externalProviderIsGeminiCustomBase
@@ -3985,13 +4007,13 @@ export function createOpenAIStreamAdapter(
       // computed first so Gemini image mode can suppress Search/Code.
       const imageGenerationEnabledForThisTurn = Boolean(
         externalProvider &&
-          externalSelection &&
-          imageToolsEnabled &&
-          providerSupportsBuiltinImageGeneration(
-            externalProvider.providerType,
-            externalSelection.modelId,
-            externalProvider.baseUrl,
-          ),
+        externalSelection &&
+        imageToolsEnabled &&
+        providerSupportsBuiltinImageGeneration(
+          externalProvider.providerType,
+          externalSelection.modelId,
+          externalProvider.baseUrl,
+        ),
       );
       // Per-model Search/Code allowances live in
       // providerSupportsBuiltin*; this flag just signals image-mode.
@@ -4000,50 +4022,52 @@ export function createOpenAIStreamAdapter(
         imageGenerationEnabledForThisTurn;
       const webSearchEnabledForThisTurn = Boolean(
         externalProvider &&
-          externalSelection &&
-          toolsEnabled &&
-          providerSupportsBuiltinWebSearch(
-            externalProvider.providerType,
-            externalSelection.modelId,
-            externalProvider.baseUrl,
-          ),
+        externalSelection &&
+        toolsEnabled &&
+        providerSupportsBuiltinWebSearch(
+          externalProvider.providerType,
+          externalSelection.modelId,
+          externalProvider.baseUrl,
+        ),
       );
       const codeExecEnabledForThisTurn = Boolean(
         externalProvider &&
-          externalSelection &&
-          codeToolsEnabled &&
-          !geminiImageModeForThisTurn &&
-          providerSupportsBuiltinCodeExecution(
-            externalProvider.providerType,
-            externalSelection.modelId,
-            externalProvider.baseUrl,
-          ),
+        externalSelection &&
+        codeToolsEnabled &&
+        !geminiImageModeForThisTurn &&
+        providerSupportsBuiltinCodeExecution(
+          externalProvider.providerType,
+          externalSelection.modelId,
+          externalProvider.baseUrl,
+        ),
       );
       // Fetch pill is independent of Search (Anthropic bills web_fetch
       // separately). Sourced from `webFetchToolsEnabled`; on providers
       // without web_fetch the toggle is forced off in chat-page setState.
       const webFetchEnabledForThisTurn = Boolean(
         externalProvider &&
-          webFetchToolsEnabled &&
-          providerSupportsBuiltinWebFetch(externalProvider.providerType),
+        webFetchToolsEnabled &&
+        providerSupportsBuiltinWebFetch(externalProvider.providerType),
       );
       const providerShipsWebFetch = Boolean(
         externalProvider &&
-          providerSupportsBuiltinWebFetch(externalProvider.providerType),
+        providerSupportsBuiltinWebFetch(externalProvider.providerType),
       );
       // Which side of the connection the Code pill runs code on. Hosted
       // `code_execution` and local `python` / `terminal` are two trust
       // boundaries, not two spellings of one feature, so the stored pill keeps
       // meaning the provider's sandbox wherever it meant that before the Studio
       // loop reached these providers. See code-tool-placement.ts.
-      const { local: studioLocalCodeTools, hosted: hostedCodeToolsForThisTurn } =
-        selectCodeToolNames({
-          codeToolsEnabled,
-          hostedCodeExecutionForThisTurn: codeExecEnabledForThisTurn,
-          providerHostsCodeExecution: providerHostsCodeExecution(
-            externalProvider?.providerType,
-          ),
-        });
+      const {
+        local: studioLocalCodeTools,
+        hosted: hostedCodeToolsForThisTurn,
+      } = selectCodeToolNames({
+        codeToolsEnabled,
+        hostedCodeExecutionForThisTurn: codeExecEnabledForThisTurn,
+        providerHostsCodeExecution: providerHostsCodeExecution(
+          externalProvider?.providerType,
+        ),
+      });
 
       if (selectedImageEditReference && !imageGenerationEnabledForThisTurn) {
         clearSelectedImageEditReference();
@@ -4072,9 +4096,7 @@ export function createOpenAIStreamAdapter(
       // follow-ups; the backend Gemini translator rebuilds the
       // functionCall / functionResponse parts (with thoughtSignature).
       const outboundMessages = survivingMessages
-        .flatMap((message) =>
-          toOpenAIMessages(message, !isExternalRequest),
-        )
+        .flatMap((message) => toOpenAIMessages(message, !isExternalRequest))
         .filter((message): message is NonNullable<typeof message> =>
           Boolean(message),
         );
@@ -4247,9 +4269,9 @@ export function createOpenAIStreamAdapter(
       // with Canvas on exposes render_html even with no other pills active.
       const renderHtmlToolEnabledForThisTurn = Boolean(
         !isExternalRequest &&
-          supportsTools &&
-          artifactsEnabled &&
-          !hasOutboundImage,
+        supportsTools &&
+        artifactsEnabled &&
+        !hasOutboundImage,
       );
       const artifactInstruction = artifactsEnabled
         ? renderHtmlToolEnabledForThisTurn
@@ -4764,9 +4786,7 @@ export function createOpenAIStreamAdapter(
             params.checkpoint ||
             "Unknown model",
           responseModelId:
-            responseModelId ||
-            externalSelection?.modelId ||
-            params.checkpoint,
+            responseModelId || externalSelection?.modelId || params.checkpoint,
           ...(externalProvider?.id ? { providerId: externalProvider.id } : {}),
           providerName:
             externalProvider?.name ??
@@ -4796,10 +4816,10 @@ export function createOpenAIStreamAdapter(
               codeExecEnabledForThisTurn ||
               (!isExternalRequest && supportsTools && codeToolsEnabled),
             images: imageGenerationEnabledForThisTurn,
-            mcp:
-              supportsStudioToolsForThisTurn && mcpEnabledForChat,
+            mcp: supportsStudioToolsForThisTurn && mcpEnabledForChat,
             docs:
-              supportsStudioToolsForThisTurn && (ragEnabled || projectRagEnabled),
+              supportsStudioToolsForThisTurn &&
+              (ragEnabled || projectRagEnabled),
             artifacts: renderHtmlToolEnabledForThisTurn,
             confirmToolCalls,
             bypassPermissions,
@@ -5070,8 +5090,12 @@ export function createOpenAIStreamAdapter(
                     // older bundle sent meaning hosted search, so without this
                     // flag Search silently stayed hosted.
                     run_tools_locally: true,
-                    ...(sandboxSessionId ? { session_id: sandboxSessionId } : {}),
-                    ...(resolvedThreadId ? { thread_id: resolvedThreadId } : {}),
+                    ...(sandboxSessionId
+                      ? { session_id: sandboxSessionId }
+                      : {}),
+                    ...(resolvedThreadId
+                      ? { thread_id: resolvedThreadId }
+                      : {}),
                     ...(ragEnabled || projectRagEnabled
                       ? {
                           rag_scope: {
@@ -5179,7 +5203,11 @@ export function createOpenAIStreamAdapter(
                       : {
                           reasoning_effort: fallbackExternalEffort,
                         }
-                  : { thinking: { type: reasoningEnabled ? "enabled" : "disabled" } }
+                  : {
+                      thinking: {
+                        type: reasoningEnabled ? "enabled" : "disabled",
+                      },
+                    }
                 : {}),
             };
           }
@@ -5302,7 +5330,9 @@ export function createOpenAIStreamAdapter(
                             ? { whole_doc: false }
                             : {}),
                           context_length:
-                            runtime.ggufContextLength ?? params.maxSeqLength ?? undefined,
+                            runtime.ggufContextLength ??
+                            params.maxSeqLength ??
+                            undefined,
                         },
                       }
                     : {}),
@@ -5365,9 +5395,7 @@ export function createOpenAIStreamAdapter(
               const reasoningMs = (
                 chunk as { _reasoningDurationMs?: number } | null | undefined
               )?._reasoningDurationMs;
-              if (
-                reasoningDurationTracker.recordServerDuration(reasoningMs)
-              ) {
+              if (reasoningDurationTracker.recordServerDuration(reasoningMs)) {
                 continue;
               }
 
@@ -5406,8 +5434,7 @@ export function createOpenAIStreamAdapter(
                 // Persist container_id onto the thread (OpenAI / Anthropic).
                 if (toolEvent.type === "container_ready") {
                   const newContainerId = toolEvent.container_id as
-                    | string
-                    | undefined;
+                    string | undefined;
                   if (newContainerId && resolvedThreadId) {
                     const field =
                       externalProvider?.providerType === "anthropic"
@@ -5547,8 +5574,7 @@ export function createOpenAIStreamAdapter(
                       ? `${toolConfirmationScopeId}:${approvalId}`
                       : backendToolCallId
                         ? resolveToolPartId(backendToolCallId)
-                        : approvalId ||
-                          `${toolEvent.tool_name}_${Date.now()}`;
+                        : approvalId || `${toolEvent.tool_name}_${Date.now()}`;
                   if (awaitingConfirmation && backendToolCallId) {
                     toolConfirmationIdsByBackendId.set(backendToolCallId, id);
                   }
@@ -5676,7 +5702,8 @@ export function createOpenAIStreamAdapter(
                           text: rawResult.slice(0, mcpImgIdx),
                           images,
                         };
-                        if (isMcpImageToolResult(candidate)) mcpImages = candidate;
+                        if (isMcpImageToolResult(candidate))
+                          mcpImages = candidate;
                       } catch {
                         // Not a valid envelope; fall through below.
                       }
@@ -5859,8 +5886,7 @@ export function createOpenAIStreamAdapter(
                 serverMetadata = {
                   usage: chunk.usage,
                   timings: (chunk as Record<string, unknown>).timings as
-                    | ServerTimings
-                    | undefined,
+                    ServerTimings | undefined,
                 };
                 if (chunk.choices?.length === 0) continue;
               }
@@ -5894,32 +5920,36 @@ export function createOpenAIStreamAdapter(
               }
               const rawDelta = chunk.choices?.[0]?.delta?.content;
               // Normalize structured delta.content (mistral magistral).
-              const {
-                text: delta,
-                structuredReasoningContinues,
-              } = extractDeltaText(rawDelta);
+              const { text: delta, structuredReasoningContinues } =
+                extractDeltaText(rawDelta);
               // Latest Gemini text-part thoughtSignature for next-turn replay.
               const deltaExtraContent = (
                 chunk.choices?.[0]?.delta as
-                  | { extra_content?: unknown }
-                  | undefined
+                  { extra_content?: unknown } | undefined
               )?.extra_content;
               // Replay state reaches the message only through a yield, so a
               // Stop while the gate holds one persists a turn that cannot
               // replay. Pace previews, never state.
               let replayStateChanged = false;
               if (deltaExtraContent && typeof deltaExtraContent === "object") {
-                const extraRecord = deltaExtraContent as Record<string, unknown>;
+                const extraRecord = deltaExtraContent as Record<
+                  string,
+                  unknown
+                >;
                 const eGoogle = extraRecord.google;
                 if (eGoogle && typeof eGoogle === "object") {
-                  const sig = (eGoogle as Record<string, unknown>).thought_signature;
+                  const sig = (eGoogle as Record<string, unknown>)
+                    .thought_signature;
                   if (typeof sig === "string" && sig) {
                     replayStateChanged ||= sig !== latestTextThoughtSignature;
                     latestTextThoughtSignature = sig;
                   }
                 }
                 const codexReasoning = extraRecord.openai_codex_reasoning;
-                if (Array.isArray(codexReasoning) && codexReasoning.length > 0) {
+                if (
+                  Array.isArray(codexReasoning) &&
+                  codexReasoning.length > 0
+                ) {
                   codexReasoningLedger = addCodexReasoning(
                     codexReasoningLedger,
                     codexReasoning,
@@ -5936,15 +5966,13 @@ export function createOpenAIStreamAdapter(
               // wrap inline as <think>...</think> for parseAssistantContent.
               const rawReasoning = (
                 chunk.choices?.[0]?.delta as
-                  | { reasoning_content?: unknown }
-                  | undefined
+                  { reasoning_content?: unknown } | undefined
               )?.reasoning_content;
               // OpenRouter ships reasoning as delta.reasoning_details[]
               // regardless of provider; merge into the same wrap path.
               const rawReasoningDetails = (
                 chunk.choices?.[0]?.delta as
-                  | { reasoning_details?: unknown }
-                  | undefined
+                  { reasoning_details?: unknown } | undefined
               )?.reasoning_details;
               const reasoningFromDetails = Array.isArray(rawReasoningDetails)
                 ? rawReasoningDetails
@@ -5963,8 +5991,7 @@ export function createOpenAIStreamAdapter(
               // thoughtSignature for replay.
               const rawDeltaToolCalls = (
                 chunk.choices?.[0]?.delta as
-                  | { tool_calls?: unknown }
-                  | undefined
+                  { tool_calls?: unknown } | undefined
               )?.tool_calls;
               if (
                 Array.isArray(rawDeltaToolCalls) &&
@@ -6062,7 +6089,8 @@ export function createOpenAIStreamAdapter(
                     toolCallParts[existingIndex] = updated;
                   } else {
                     const callId =
-                      stablePartId || `tool_call_${idx ?? toolCallParts.length}`;
+                      stablePartId ||
+                      `tool_call_${idx ?? toolCallParts.length}`;
 
                     if (!codexRoundToolCallIds.includes(callId)) {
                       codexRoundToolCallIds.push(callId);
@@ -6176,8 +6204,7 @@ export function createOpenAIStreamAdapter(
               const parsedReasoningGroupCount =
                 countReasoningGroups(assistantContent);
               if (
-                parsedReasoningGroupCount >
-                reasoningDurationTracker.groupCount
+                parsedReasoningGroupCount > reasoningDurationTracker.groupCount
               ) {
                 reasoningDurationTracker.startGroup(
                   parsedReasoningGroupCount - 1,
@@ -6357,7 +6384,8 @@ export function createOpenAIStreamAdapter(
           }
           if (
             usageThreadIsVisible &&
-            useChatRuntimeStore.getState().params.checkpoint === params.checkpoint
+            useChatRuntimeStore.getState().params.checkpoint ===
+              params.checkpoint
           ) {
             useChatRuntimeStore.getState().setContextUsage(usage);
           }
@@ -6400,7 +6428,9 @@ export function createOpenAIStreamAdapter(
               // Persisted so Continue survives a reload; cleared on a normal end.
 
               openaiCodexReasoning: codexReasoningLedger,
-              incomplete: incompleteReason ? { reason: incompleteReason } : undefined,
+              incomplete: incompleteReason
+                ? { reason: incompleteReason }
+                : undefined,
               // Persisted refusal flag driving the two-pass prune.
               anthropicRefusal: anthropicRefusalSeen || undefined,
               serverTimings: meta?.timings ?? undefined,
@@ -6544,8 +6574,7 @@ export function createOpenAIStreamAdapter(
         args.unstable_threadId,
         useChatRuntimeStore.getState().activeThreadId,
       );
-      const reservationToken =
-        findPreStreamRunReservation(preStreamThreadIds);
+      const reservationToken = findPreStreamRunReservation(preStreamThreadIds);
       if (reservationToken) {
         adoptPreStreamRunReservation(reservationToken, preStreamThreadIds);
       }

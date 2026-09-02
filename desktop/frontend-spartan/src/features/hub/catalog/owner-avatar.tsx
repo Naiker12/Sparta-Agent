@@ -34,6 +34,14 @@ function isUnslothOwner(owner: string): boolean {
 const AVATAR_IMAGE_RETRY_BASE_MS = 60_000;
 const AVATAR_IMAGE_RETRY_MAX_MS = 30 * 60_000;
 
+function publicAssetUrl(path: string): string {
+  // `BASE_URL` may be relative (`./`) in the desktop build. An image URL
+  // relative to the current Hub route then resolves under that route and 404s,
+  // triggering the provider-initial fallback. Provider assets are served from
+  // the application origin, so resolve their rooted public path explicitly.
+  return new URL(path, window.location.origin).toString();
+}
+
 interface FailedAvatarImage {
   url: string;
   failures: number;
@@ -149,7 +157,7 @@ function ProviderLogoTile({
           </span>
         ) : (
           <img
-            src={provider.logoPath}
+            src={publicAssetUrl(provider.logoPath)}
             alt=""
             decoding="async"
             className={cn(
@@ -183,8 +191,8 @@ function ProviderLogoTile({
         aria-hidden="true"
         className="size-3/4 bg-current"
         style={{
-          mask: `url(${provider.logoPath}) center / contain no-repeat`,
-          WebkitMask: `url(${provider.logoPath}) center / contain no-repeat`,
+          mask: `url(${publicAssetUrl(provider.logoPath)}) center / contain no-repeat`,
+          WebkitMask: `url(${publicAssetUrl(provider.logoPath)}) center / contain no-repeat`,
         }}
       />
     </span>

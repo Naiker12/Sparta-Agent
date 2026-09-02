@@ -16,6 +16,7 @@ import {
   ZoomOutIcon,
 } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
+import { useT } from "@/i18n";
 
 import {
   Sheet,
@@ -75,6 +76,7 @@ function PdfPreview({
   initialPage: number;
   regions: PdfRegion[];
 }) {
+  const t = useT();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [width, setWidth] = useState(0);
   const [numPages, setNumPages] = useState(0);
@@ -186,7 +188,7 @@ function PdfPreview({
   if (error) {
     return (
       <div className="p-6 text-sm text-muted-foreground">
-        Could not render this PDF ({error}).
+        {t("chat.preview.pdfError", { error: error.slice(0, 240) })}
       </div>
     );
   }
@@ -208,10 +210,11 @@ function PdfPreview({
         <Document
           file={fileUrl}
           onLoadSuccess={onLoad}
+          onSourceError={(e) => setError(e.message)}
           onLoadError={(e) => setError(e.message)}
           loading={
             <div className="flex items-center gap-2 p-6 text-sm text-muted-foreground">
-              <Spinner className="size-3.5" /> Loading PDF…
+              <Spinner className="size-3.5" /> {t("chat.preview.loadingPdf")}
             </div>
           }
         >
@@ -226,6 +229,7 @@ function PdfPreview({
                   renderTextLayer={false}
                   renderAnnotationLayer={false}
                   onRenderSuccess={recheckScrollable}
+                  onRenderError={(e) => setError(e.message)}
                 />
                 <RegionOverlay regions={pageRegions} />
               </div>
@@ -300,25 +304,27 @@ function PdfPreview({
 }
 
 function LocalTextPreview({ blob }: { blob: Blob }) {
+  const t = useT();
   const [text, setText] = useState<string | null>(null);
   useEffect(() => {
     let cancelled = false;
     void blob
       .text()
       .then((value) => !cancelled && setText(value))
-      .catch(() => !cancelled && setText("Unable to read this file."));
+      .catch(() => !cancelled && setText(t("chat.preview.textError")));
     return () => {
       cancelled = true;
     };
-  }, [blob]);
+  }, [blob, t]);
   return (
     <pre className="h-full overflow-auto whitespace-pre-wrap break-words p-5 font-mono text-xs leading-relaxed">
-      {text ?? "Loading…"}
+      {text ?? t("chat.preview.loading")}
     </pre>
   );
 }
 
 function LocalWordPreview({ blob }: { blob: Blob }) {
+  const t = useT();
   const [html, setHtml] = useState<string | null>(null);
   useEffect(() => {
     let cancelled = false;
@@ -349,9 +355,11 @@ function LocalWordPreview({ blob }: { blob: Blob }) {
     return () => {
       cancelled = true;
     };
-  }, [blob]);
+  }, [blob, t]);
   return html === null ? (
-    <div className="p-6 text-sm text-muted-foreground">Loading…</div>
+    <div className="p-6 text-sm text-muted-foreground">
+      {t("chat.preview.loading")}
+    </div>
   ) : html ? (
     <article
       className="h-full overflow-auto p-6 text-sm leading-relaxed [&_img]:max-w-full [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:p-2 [&_th]:border [&_th]:bg-muted [&_th]:p-2"
@@ -359,16 +367,21 @@ function LocalWordPreview({ blob }: { blob: Blob }) {
     />
   ) : (
     <div className="p-6 text-sm text-muted-foreground">
-      This Word file could not be previewed.
+      {t("chat.preview.wordError")}
     </div>
   );
 }
 
 function LocalSpreadsheetPreview({ blob }: { blob: Blob }) {
+  const t = useT();
   const [sheet, setSheet] = useState<{
+    blob: Blob;
     name: string;
     rows: unknown[][];
   } | null>(null);
+  const [error, setError] = useState<{ blob: Blob; message: string } | null>(
+    null,
+  );
   useEffect(() => {
     let cancelled = false;
     void (async () => {
@@ -380,25 +393,46 @@ function LocalSpreadsheetPreview({ blob }: { blob: Blob }) {
         header: 1,
         defval: "",
       });
-      if (!cancelled) setSheet({ name, rows: rows.slice(0, 500) });
-    })().catch(() => !cancelled && setSheet({ name: "", rows: [] }));
+      if (!cancelled) setSheet({ blob, name, rows: rows.slice(0, 500) });
+    })().catch((reason: unknown) => {
+      if (cancelled) return;
+      setSheet({ blob, name: "", rows: [] });
+      setError({
+        blob,
+        message: (reason instanceof Error && reason.message
+          ? reason.message
+          : t("chat.preview.unsupportedSpreadsheet")
+        ).slice(0, 240),
+      });
+    });
     return () => {
       cancelled = true;
     };
-  }, [blob]);
-  if (!sheet)
-    return <div className="p-6 text-sm text-muted-foreground">Loading…</div>;
+  }, [blob, t]);
+  if (!sheet || sheet.blob !== blob)
+    return (
+      <div className="p-6 text-sm text-muted-foreground">
+        {t("chat.preview.loading")}
+      </div>
+    );
   if (!sheet.name)
     return (
       <div className="p-6 text-sm text-muted-foreground">
-        This spreadsheet could not be previewed.
+        {t("chat.preview.spreadsheetError", {
+          error:
+            error?.blob === blob
+              ? error.message
+              : t("chat.preview.unknownError"),
+        })}
       </div>
     );
   return (
     <div className="h-full overflow-auto p-5">
       <p className="mb-3 text-sm text-muted-foreground">
         {sheet.name}
-        {sheet.rows.length === 500 ? " · first 500 rows" : ""}
+        {sheet.rows.length === 500
+          ? ` · ${t("chat.preview.firstRows", { count: 500 })}`
+          : ""}
       </p>
       <Table className="text-xs">
         <TableBody>
@@ -421,6 +455,7 @@ function LocalSpreadsheetPreview({ blob }: { blob: Blob }) {
 }
 
 function LocalPreviewContent({ preview }: { preview: LocalPreview }) {
+  const t = useT();
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
     if (preview.kind !== "pdf") return;
@@ -431,7 +466,7 @@ function LocalPreviewContent({ preview }: { preview: LocalPreview }) {
   switch (preview.kind) {
     case "pdf":
       return url ? (
-        <PdfPreview fileUrl={url} initialPage={1} regions={[]} />
+        <PdfPreview key={url} fileUrl={url} initialPage={1} regions={[]} />
       ) : null;
     case "word":
       return <LocalWordPreview blob={preview.blob} />;
@@ -444,8 +479,7 @@ function LocalPreviewContent({ preview }: { preview: LocalPreview }) {
     default:
       return (
         <div className="p-6 text-sm text-muted-foreground">
-          Preview is not available for this file type. You can download the
-          attachment from the chat.
+          {t("chat.preview.unavailable")}
         </div>
       );
   }

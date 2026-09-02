@@ -10,7 +10,8 @@ import {
   ComposerPrimitive,
   unstable_useMentionAdapter,
 } from "@assistant-ui/react";
-import { useEffect, useMemo, useState } from "react";
+import { Component, useEffect, useMemo, useState } from "react";
+import type { ErrorInfo, ReactNode } from "react";
 
 type Mention = {
   id: string;
@@ -21,7 +22,26 @@ type Mention = {
 };
 
 /** Native assistant-ui @ mention surface. Selecting only serializes context; it never runs a tool. */
-export function ComposerMentions({ threadId }: { threadId: string | null }) {
+class ComposerMentionsBoundary extends Component<
+  { children: ReactNode },
+  { failed: boolean }
+> {
+  state = { failed: false };
+
+  static getDerivedStateFromError(): { failed: boolean } {
+    return { failed: true };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo): void {
+    console.warn("Mention picker was disabled after a render error", error, info);
+  }
+
+  render(): ReactNode {
+    return this.state.failed ? null : this.props.children;
+  }
+}
+
+function ComposerMentionsContent({ threadId }: { threadId: string | null }) {
   const activeProjectId = useChatRuntimeStore((s) => s.activeProjectId);
   const { projects } = useChatProjects();
   const [mcps, setMcps] = useState<Mention[]>([]);
@@ -98,5 +118,13 @@ export function ComposerMentions({ threadId }: { threadId: string | null }) {
         ))}
       </ComposerPrimitive.Unstable_TriggerPopoverItems>
     </ComposerPrimitive.Unstable_TriggerPopover>
+  );
+}
+
+export function ComposerMentions({ threadId }: { threadId: string | null }) {
+  return (
+    <ComposerMentionsBoundary key={threadId ?? "new"}>
+      <ComposerMentionsContent threadId={threadId} />
+    </ComposerMentionsBoundary>
   );
 }

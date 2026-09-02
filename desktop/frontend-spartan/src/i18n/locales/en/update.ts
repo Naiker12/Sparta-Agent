@@ -16,4 +16,22 @@ export const update = {
   "dismiss": "Dismiss update notification",
   "update": "Update",
   "openReleasePage": "Open release page"
+  ,"screen": {
+    "updatingBackend": "Updating backend...",
+    "downloading": "Downloading app update...",
+    "installing": "Installing update...",
+    "updating": "Updating...",
+    "updateFailed": "Update failed",
+    "backendHelp": "This may take a few minutes. Do not close the app.",
+    "downloaded": "{progress}% downloaded",
+    "restartSoon": "The app will restart shortly.",
+    "updateProblem": "Something went wrong during the update.",
+    "showDetails": "Show update details",
+    "hideDetails": "Hide update details",
+    "copying": "Copying...",
+    "copyDiagnostics": "Copy diagnostics",
+    "copyFailed": "Clipboard copy failed. Select and copy the diagnostics below.",
+    "diagnosticsCopyFailed": "Diagnostics copy failed: {error}",
+    "skipAndRestart": "Skip and restart"
+  }
 } as const;

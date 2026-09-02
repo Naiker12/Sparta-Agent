@@ -14,7 +14,6 @@ import {
 } from "../api/rag-api";
 import { RAG_UPLOAD_ACCEPT, isLinkedFolderManaged } from "../types/rag";
 import { DocumentStatusChip } from "./document-status-chip";
-import { LinkedFoldersManager } from "./linked-folders-manager";
 import { fileItems, useRagDocuments } from "./use-rag-documents";
 import type { RagUploadItem } from "./use-rag-documents";
 
@@ -72,11 +71,6 @@ export function ProjectSourcesPanel({ projectId }: { projectId: string }) {
     },
     [projectId, remove],
   );
-  const handleLinkedSourcesChanged = useCallback(() => {
-    announceProjectSourcesUpdated(projectId);
-    void refresh({ quiet: true });
-  }, [projectId, refresh]);
-
   // External mutators (sidebar/thread saves, deletes elsewhere) announce when
   // they are done; refresh the mounted list so a source saved from a chat shows
   // up here without a remount. The list only polls while a row it already knows
@@ -115,13 +109,6 @@ export function ProjectSourcesPanel({ projectId }: { projectId: string }) {
           void handleFiles(files);
         }}
       />
-      <div className="mb-4 rounded-[22px] bg-muted/30 px-5 py-4">
-        <LinkedFoldersManager
-          scope={{ type: "project", id: projectId }}
-          compact={true}
-          onSourcesChanged={handleLinkedSourcesChanged}
-        />
-      </div>
       {empty ? (
         <div
           className={cn(

@@ -178,4 +178,4 @@ export interface PreviewTarget {
   text?: string | null;
 }
 
-export const RAG_UPLOAD_ACCEPT = ".pdf,.txt,.md,.markdown,.docx,.html,.htm";
+export const RAG_UPLOAD_ACCEPT = ".pdf,.txt,.md,.markdown,.docx,.xlsx,.csv,.tsv,.pptx,.odt,.rtf,.epub,.json,.html,.htm";

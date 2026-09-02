@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
 import { Spinner } from "@/components/ui/spinner";
+import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { FolderSyncIcon, MoreHorizontalIcon, RotateCwIcon } from "lucide-react";
 import { useState } from "react";
@@ -30,19 +31,19 @@ function percent(progress?: number | null): number | null {
   return Math.max(0, Math.min(100, progress <= 1 ? progress * 100 : progress));
 }
 
-function jobSummary(job: FolderSyncJob): string {
-  if (job.status === "failed") return job.error ?? "Sync failed";
+function jobSummary(job: FolderSyncJob, t: ReturnType<typeof useT>): string {
+  if (job.status === "failed") return job.error ?? t("projectsPage.syncFailed");
   if (job.status === "completed") {
     const indexed = job.indexedFiles ?? job.processedFiles;
     return indexed == null
-      ? "Sync complete"
-      : `${indexed} file${indexed === 1 ? "" : "s"} indexed`;
+      ? t("projectsPage.syncComplete")
+      : t("projectsPage.filesIndexed", { count: indexed });
   }
   const processed = job.processedFiles ?? 0;
   const discovered = job.discoveredFiles;
   return discovered == null
-    ? job.stage || "Scanning folder"
-    : `${processed} of ${discovered} files`;
+    ? job.stage || t("projectsPage.scanningFolder")
+    : t("projectsPage.filesProcessed", { processed, total: discovered });
 }
 
 export function LinkedFoldersManager({
@@ -54,6 +55,7 @@ export function LinkedFoldersManager({
   compact?: boolean;
   onSourcesChanged?: () => void;
 }) {
+  const t = useT();
   const manager = useLinkedFolders(scope, onSourcesChanged);
   const [removeIndexFolder, setRemoveIndexFolder] = useState<{
     id: string;
@@ -65,12 +67,12 @@ export function LinkedFoldersManager({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="text-sm font-medium text-foreground">
-            Linked local folders
+            {t("projectsPage.linkedFoldersTitle")}
           </h3>
           <p className="text-xs leading-snug text-muted-foreground">
             {manager.desktopSupported
-              ? "Keep supported documents indexed as this folder changes."
-              : "Existing linked folders stay synced; linking requires the managed desktop backend."}
+              ? t("projectsPage.linkedFoldersDescription")
+              : t("projectsPage.linkedFoldersDesktopDescription")}
           </p>
         </div>
         {scope ? (
@@ -83,8 +85,8 @@ export function LinkedFoldersManager({
             onClick={() => void manager.link()}
             title={
               manager.desktopSupported
-                ? "Choose a local folder"
-                : "Requires the managed desktop backend"
+                ? t("projectsPage.chooseLocalFolder")
+                : t("projectsPage.desktopBackendRequired")
             }
           >
             {manager.mutating ? (
@@ -92,7 +94,7 @@ export function LinkedFoldersManager({
             ) : (
               <FolderSyncIcon className="size-3.5" />
             )}
-            Link folder
+            {t("projectsPage.linkFolder")}
           </Button>
         ) : null}
       </div>
@@ -103,7 +105,7 @@ export function LinkedFoldersManager({
         </div>
       ) : manager.folders.length === 0 ? (
         <div className="rounded-xl border border-dashed px-4 py-5 text-center text-xs text-muted-foreground">
-          No linked folders.
+          {t("projectsPage.noLinkedFolders")}
         </div>
       ) : (
         <ul className="flex flex-col gap-1.5">
@@ -147,16 +149,16 @@ export function LinkedFoldersManager({
                     )}
                   >
                     {job
-                      ? jobSummary(job)
+                      ? jobSummary(job, t)
                       : folder.error ||
                         (folder.lastSyncedAt
-                          ? `Last synced ${new Date(folder.lastSyncedAt).toLocaleString()}`
-                          : `${folder.documentCount ?? 0} indexed documents`)}
+                          ? t("projectsPage.lastSynced", { date: new Date(folder.lastSyncedAt).toLocaleString() })
+                          : t("projectsPage.indexedDocuments", { count: folder.documentCount ?? 0 }))}
                   </p>
                   {running ? (
                     <Progress
                       value={progress ?? 0}
-                      aria-label={`Sync progress for ${folder.displayName}`}
+                      aria-label={t("projectsPage.syncProgress", { name: folder.displayName })}
                       className="mt-2 h-1.5"
                     />
                   ) : null}
@@ -168,7 +170,7 @@ export function LinkedFoldersManager({
                       size="icon-sm"
                       variant="ghost"
                       className="shrink-0 rounded-full"
-                      aria-label={`Actions for ${folder.displayName}`}
+                      aria-label={t("projectsPage.folderActions", { name: folder.displayName })}
                     >
                       {running ? (
                         <Spinner className="size-3.5" />
@@ -182,19 +184,19 @@ export function LinkedFoldersManager({
                       disabled={running}
                       onSelect={() => void manager.sync(folder.id)}
                     >
-                      <FolderSyncIcon className="size-3.5" /> Sync changes
+                      <FolderSyncIcon className="size-3.5" /> {t("projectsPage.syncChanges")}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       disabled={running}
                       onSelect={() => void manager.rebuild(folder.id)}
                     >
-                      <RotateCwIcon className="size-3.5" /> Rebuild index
+                      <RotateCwIcon className="size-3.5" /> {t("projectsPage.rebuildIndex")}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onSelect={() => void manager.remove(folder.id, false)}
                     >
-                      Unlink and keep indexed files
+                      {t("projectsPage.unlinkKeepFiles")}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       variant="destructive"
@@ -205,7 +207,7 @@ export function LinkedFoldersManager({
                         })
                       }
                     >
-                      Unlink and remove indexed files
+                      {t("projectsPage.unlinkRemoveFiles")}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -222,15 +224,13 @@ export function LinkedFoldersManager({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Unlink folder and remove files?</AlertDialogTitle>
+            <AlertDialogTitle>{t("projectsPage.unlinkRemoveTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will unlink &quot;{removeIndexFolder?.name}&quot; and remove
-              all documents it manages from the index. The files on disk will
-              not be changed.
+              {t("projectsPage.unlinkRemoveDescription", { name: removeIndexFolder?.name ?? "" })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
               onClick={() => {
@@ -239,7 +239,7 @@ export function LinkedFoldersManager({
                 if (folder) void manager.remove(folder.id, true);
               }}
             >
-              Unlink and remove
+              {t("projectsPage.unlinkRemoveAction")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

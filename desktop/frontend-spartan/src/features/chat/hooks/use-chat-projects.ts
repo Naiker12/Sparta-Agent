@@ -1,5 +1,5 @@
-
 import { useEffect, useState, useSyncExternalStore } from "react";
+import { getLocale } from "@/i18n";
 import { CHAT_PROJECTS_UPDATED_EVENT } from "../api/chat-api";
 import type { ProjectRecord } from "../types";
 import {
@@ -111,7 +111,10 @@ export function useChatProjects(): {
     window.addEventListener(CHAT_PROJECTS_UPDATED_EVENT, onProjectsUpdated);
     return () => {
       cancelled = true;
-      window.removeEventListener(CHAT_PROJECTS_UPDATED_EVENT, onProjectsUpdated);
+      window.removeEventListener(
+        CHAT_PROJECTS_UPDATED_EVENT,
+        onProjectsUpdated,
+      );
     };
   }, []);
 
@@ -135,23 +138,47 @@ export async function updateChatProjectInstructions(
   projectId: string,
   instructions: string,
 ): Promise<void> {
-  await updateStoredChatProject(projectId, { instructions: instructions.trim() });
+  await updateStoredChatProject(projectId, {
+    instructions: instructions.trim(),
+  });
 }
 
 type NativeFilesystem = {
   openFolderDialog: () => Promise<string | null>;
+  confirmWorkspaceAccess?: (
+    folderPath: string,
+    locale?: string,
+  ) => Promise<"read" | "write" | "write_no_delete" | null>;
   getPathForFile?: (file: File) => string | null;
-  setWorkspaceRoot?: (projectId: string, root: string, access?: "read" | "write") => Promise<{ success: boolean; error?: string }>;
-  readDirLevel?: (projectId: string, path: string) => Promise<{
+  setWorkspaceRoot?: (
+    projectId: string,
+    root: string,
+    access?: "read" | "write",
+  ) => Promise<{ success: boolean; error?: string }>;
+  clearWorkspaceRoot?: (
+    projectId: string,
+  ) => Promise<{ success: boolean; error?: string }>;
+  readDirLevel?: (
+    projectId: string,
+    path: string,
+  ) => Promise<{
     nodes: Array<{ name: string; path: string; type: "file" | "directory" }>;
     error?: string;
   }>;
-  readFile?: (projectId: string, path: string, encoding?: "utf-8") => Promise<{
+  readFile?: (
+    projectId: string,
+    path: string,
+    encoding?: "utf-8",
+  ) => Promise<{
     success: boolean;
     content?: string;
     error?: string;
   }>;
-  writeFile?: (projectId: string, path: string, content: string) => Promise<{
+  writeFile?: (
+    projectId: string,
+    path: string,
+    content: string,
+  ) => Promise<{
     success: boolean;
     error?: string;
   }>;
@@ -164,17 +191,43 @@ function nativeFilesystem(): NativeFilesystem | null {
 
 export async function connectChatProjectWorkspace(
   projectId: string,
-  workspaceAccess: "read" | "write" = "read",
+  workspaceAccess?: "read" | "write",
 ): Promise<string | null> {
   const selected = await chooseProjectWorkspaceFolder();
   if (!selected) return null;
-  return setChatProjectWorkspace(projectId, selected, workspaceAccess);
+  const access = workspaceAccess ?? (await requestWorkspaceAccess(selected));
+  if (!access) return null;
+  return setChatProjectWorkspace(projectId, selected, access);
+}
+
+export async function requestWorkspaceAccess(
+  folder: string,
+): Promise<"read" | "write" | null> {
+  const filesystem = nativeFilesystem();
+  if (!filesystem) return null;
+  if (filesystem.confirmWorkspaceAccess) {
+    const access = await filesystem.confirmWorkspaceAccess(folder, getLocale());
+    return access === "write_no_delete" ? "write" : access;
+  }
+  return "read";
+}
+
+export async function requestThreadWorkspaceAccess(
+  folder: string,
+): Promise<"read" | "write" | "write_no_delete" | null> {
+  const filesystem = nativeFilesystem();
+  if (!filesystem) return null;
+  if (filesystem.confirmWorkspaceAccess)
+    return filesystem.confirmWorkspaceAccess(folder, getLocale());
+  return "read";
 }
 
 export async function chooseProjectWorkspaceFolder(): Promise<string | null> {
   const filesystem = nativeFilesystem();
   if (!filesystem) {
-    throw new Error("Connecting a local folder is available only in the desktop app.");
+    throw new Error(
+      "Connecting a local folder is available only in the desktop app.",
+    );
   }
   return filesystem.openFolderDialog();
 }
@@ -184,7 +237,11 @@ export async function setChatProjectWorkspace(
   folder: string,
   workspaceAccess: "read" | "write" = "read",
 ): Promise<string | null> {
-  const project = await updateChatProjectWorkspace(projectId, folder, workspaceAccess);
+  const project = await updateChatProjectWorkspace(
+    projectId,
+    folder,
+    workspaceAccess,
+  );
   const filesystem = nativeFilesystem();
   const configured = await filesystem?.setWorkspaceRoot?.(
     projectId,
@@ -205,8 +262,11 @@ export function getDroppedNativePath(file: File): string | null {
   return nativeFilesystem()?.getPathForFile?.(file) ?? null;
 }
 
-export async function disconnectChatProjectWorkspace(projectId: string): Promise<void> {
+export async function disconnectChatProjectWorkspace(
+  projectId: string,
+): Promise<void> {
   await updateChatProjectWorkspace(projectId, null);
+  await nativeFilesystem()?.clearWorkspaceRoot?.(projectId);
 }
 
 export async function deleteChatProject(

@@ -33,8 +33,6 @@ import { isDownloadCancelled, pickNativeChatImport } from "@/lib/native-files";
 import { toast } from "@/lib/toast";
 import {
   deleteChatProject,
-  connectChatProjectWorkspace,
-  disconnectChatProjectWorkspace,
   renameChatProject,
   useChatProjects,
   useChatRuntimeStore,
@@ -42,7 +40,6 @@ import {
   type ProjectRecord,
 } from "@/features/chat";
 import { NewProjectDialog } from "./components/new-project-dialog";
-import { WorkspaceExplorerDialog } from "./components/workspace-explorer-dialog";
 import {
   Delete02Icon,
   Download01Icon,
@@ -112,12 +109,6 @@ function formatModified(ts: number, t: (key: any, values?: any) => string): stri
   });
 }
 
-function folderName(folderPath: string): string {
-  const normalized = folderPath.replace(/[\\/]+$/, "");
-  const segments = normalized.split(/[\\/]/);
-  return segments[segments.length - 1] || folderPath;
-}
-
 export function ProjectsPage() {
   const t = useT();
   const navigate = useNavigate();
@@ -141,7 +132,6 @@ export function ProjectsPage() {
   const [renaming, setRenaming] = useState<ProjectRecord | null>(null);
   const [renameDraft, setRenameDraft] = useState("");
   const [deleting, setDeleting] = useState<ProjectRecord | null>(null);
-  const [exploring, setExploring] = useState<ProjectRecord | null>(null);
 
   const globalImportRef = useRef<HTMLInputElement>(null);
   const projectImportRefs = useRef<Map<string, HTMLInputElement>>(new Map());
@@ -387,28 +377,6 @@ export function ProjectsPage() {
     }
   }
 
-  async function connectProjectFolder(project: ProjectRecord) {
-    try {
-      const folder = await connectChatProjectWorkspace(project.id);
-      if (folder) toast.success(t("projectsPage.folderConnected"), { description: folder });
-    } catch (error) {
-      toast.error(t("projectsPage.failedToUpdateFolder"), {
-        description: error instanceof Error ? error.message : undefined,
-      });
-    }
-  }
-
-  async function disconnectProjectFolder(project: ProjectRecord) {
-    try {
-      await disconnectChatProjectWorkspace(project.id);
-      toast.success(t("projectsPage.folderDisconnected"));
-    } catch (error) {
-      toast.error(t("projectsPage.failedToUpdateFolder"), {
-        description: error instanceof Error ? error.message : undefined,
-      });
-    }
-  }
-
   return (
     <main className="mx-auto w-full max-w-5xl px-6 pb-10 pt-16 font-heading sm:px-10">
       {/* Global import file input */}
@@ -537,7 +505,6 @@ export function ProjectsPage() {
         <div className="mt-16">
           <div className="mb-1 flex items-center gap-3 px-5 pb-1 text-ui-13 font-medium text-muted-foreground">
             <span className="flex-1">{t("projectsPage.colName")}</span>
-            <span className="w-52 shrink-0">{t("projectsPage.colFolder")}</span>
             <span className="w-32 shrink-0">{t("projectsPage.colModified")}</span>
             <span className="w-8 shrink-0" />
           </div>
@@ -627,30 +594,6 @@ export function ProjectsPage() {
               <span className="min-w-0 flex-1 truncate text-ui-15 font-semibold text-foreground">
                 {project.name}
               </span>
-              <div className="flex w-52 shrink-0 items-center">
-                {project.connectedFolderPath ? (
-                  <span
-                    className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground"
-                    title={project.connectedFolderPath}
-                  >
-                    <HugeiconsIcon icon={Folder02Icon} strokeWidth={1.75} className="size-4 shrink-0" />
-                    <span className="truncate">{folderName(project.connectedFolderPath)}</span>
-                  </span>
-                ) : (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="xs"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      void connectProjectFolder(project);
-                    }}
-                  >
-                    <HugeiconsIcon data-icon="inline-start" icon={FolderAddIcon} strokeWidth={1.75} />
-                    {t("projectsPage.connectFolder")}
-                  </Button>
-                )}
-              </div>
               <span className="w-32 shrink-0 text-sm text-muted-foreground">
                 {formatModified(project.updatedAt, t)}
               </span>
@@ -710,26 +653,6 @@ export function ProjectsPage() {
                       <HugeiconsIcon icon={Upload01Icon} strokeWidth={1.75} className="size-icon" />
                       <span>{t("projectsPage.importIntoProject")}</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onSelect={() => void connectProjectFolder(project)}
-                    >
-                      <HugeiconsIcon icon={FolderAddIcon} strokeWidth={1.75} className="size-icon" />
-                      <span>{t(project.connectedFolderPath ? "projectsPage.changeFolder" : "projectsPage.connectFolder")}</span>
-                    </DropdownMenuItem>
-                    {project.connectedFolderPath && (
-                      <DropdownMenuItem onSelect={() => setExploring(project)}>
-                        <HugeiconsIcon icon={Folder02Icon} strokeWidth={1.75} className="size-icon" />
-                        <span>{t("projectsPage.browseFolder")}</span>
-                      </DropdownMenuItem>
-                    )}
-                    {project.connectedFolderPath && (
-                      <DropdownMenuItem
-                        onSelect={() => void disconnectProjectFolder(project)}
-                      >
-                        <HugeiconsIcon icon={Folder02Icon} strokeWidth={1.75} className="size-icon" />
-                        <span>{t("projectsPage.disconnectFolder")}</span>
-                      </DropdownMenuItem>
-                    )}
                     <DropdownMenuSub>
                       <DropdownMenuSubTrigger>
                         <HugeiconsIcon icon={Download01Icon} strokeWidth={1.75} className="size-icon mr-1" />
@@ -773,11 +696,6 @@ export function ProjectsPage() {
 
       {/* Create project (name + drag-and-drop sources) */}
       <NewProjectDialog open={creating} onOpenChange={setCreating} />
-      <WorkspaceExplorerDialog
-        project={exploring}
-        open={exploring !== null}
-        onOpenChange={(open) => { if (!open) setExploring(null); }}
-      />
 
       {/* Rename project */}
       <Dialog

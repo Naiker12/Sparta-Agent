@@ -3,6 +3,7 @@
 
 import { type ToolCallMessagePartComponent, useAuiState } from "@assistant-ui/react";
 import { GlobeIcon } from "lucide-react";
+import { useT } from "@/i18n";
 
 import { stringifyToolResult } from "@/lib/strip-ansi";
 import { memo, useEffect, useState } from "react";
@@ -79,6 +80,7 @@ const WebSearchToolUIImpl: ToolCallMessagePartComponent = ({
   result,
   status,
 }) => {
+  const t = useT();
   const query = (args as { query?: string })?.query ?? "";
   const url = ((args as { url?: string })?.url ?? "").trim();
   const isUrlFetch = !!url;
@@ -118,10 +120,10 @@ const WebSearchToolUIImpl: ToolCallMessagePartComponent = ({
       <ToolFallbackTrigger
         toolName={
           isUrlFetch
-            ? displayDomain ? `Read ${displayDomain}` : "Read page"
+            ? displayDomain ? t("chat.tools.web.read", { domain: displayDomain }) : t("chat.tools.web.readPage")
             : query
-              ? `Searched "${query}"`
-              : "Web Search"
+              ? t("chat.tools.web.searched", { query })
+              : t("chat.tools.web.search")
         }
         status={status}
         icon={GlobeIcon}
@@ -131,8 +133,8 @@ const WebSearchToolUIImpl: ToolCallMessagePartComponent = ({
           <div className="flex items-center text-sm text-muted-foreground">
             <span>
               {isUrlFetch
-                ? <>Reading {displayDomain || "page"}&hellip;</>
-                : <>Searching for &ldquo;{query}&rdquo;&hellip;</>
+                ? <>{t("chat.tools.web.reading", { domain: displayDomain || "page" })}</>
+                : <>{t("chat.tools.web.searching", { query })}</>
               }
             </span>
           </div>

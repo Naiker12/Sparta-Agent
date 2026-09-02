@@ -6,6 +6,7 @@ import {
   type StartupMessage,
 } from "@/components/tauri/startup-messages";
 import { Spinner } from "@/components/ui/spinner";
+import { translate } from "@/i18n";
 import type { BackendStatus } from "@/hooks/use-tauri-backend";
 import type { CopySupportDiagnosticsResult } from "@/lib/tauri-diagnostics";
 
@@ -51,11 +52,11 @@ function DiagnosticsCopyActions({
         setManualMessage(null);
       } else {
         setManualReport(result.report);
-        setManualMessage(result.error ?? "Clipboard copy failed. Select and copy the diagnostics below.");
+        setManualMessage(result.error ?? translate("shell.startup.copyFailed"));
       }
     } catch (error) {
       setManualReport(null);
-      setManualMessage(`Diagnostics copy failed: ${String(error)}`);
+      setManualMessage(translate("shell.startup.diagnosticsCopyFailed", { error: String(error) }));
     } finally {
       setCopying(false);
     }
@@ -68,7 +69,7 @@ function DiagnosticsCopyActions({
           variant="secondary"
           onClick={() => void handleCopyDiagnostics()}
         >
-          {copying ? "Copying..." : "Copy Diagnostics"}
+          {copying ? translate("shell.startup.copying") : translate("shell.startup.copyDiagnostics")}
         </ActionButton>
         {children}
       </div>
@@ -155,7 +156,7 @@ function CheckingContent() {
       </div>
       <div className="mb-10 flex flex-col items-center gap-2">
         <Spinner className="size-6 text-primary" />
-        <p className="text-sm text-muted-foreground">Checking...</p>
+        <p className="text-sm text-muted-foreground">{translate("shell.startup.checking")}</p>
       </div>
     </div>
   );
@@ -172,10 +173,10 @@ function NotInstalledContent({ onInstall }: { onInstall: () => void }) {
           className="text-ui-13 font-semibold tracking-[-0.01em] text-muted-foreground"
           style={{ fontFamily: '"Hellix", sans-serif' }}
         >
-          To install Spartan Agent, click Get Started.
+          {translate("shell.startup.installPrompt")}
         </p>
         <ActionButton onClick={onInstall}>
-          Get Started
+          {translate("shell.startup.getStarted")}
         </ActionButton>
       </div>
     </div>
@@ -225,8 +226,8 @@ function InstallingContent({
         {detailLines.length > 0 && (
           <details className="group mt-2 w-full max-w-sm text-left">
             <summary className="mx-auto flex w-fit cursor-pointer list-none items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
-              <span className="group-open:hidden">Show installation details</span>
-              <span className="hidden group-open:inline">Hide installation details</span>
+              <span className="group-open:hidden">{translate("shell.startup.showInstallDetails")}</span>
+              <span className="hidden group-open:inline">{translate("shell.startup.hideInstallDetails")}</span>
               <HugeiconsIcon
                 icon={ChevronDownIcon}
                 aria-hidden="true"
@@ -262,13 +263,13 @@ function RepairingContent({
       </div>
       <div className="mb-10 flex w-full flex-col items-center gap-2">
         <Spinner className="size-6 text-primary" />
-        <p className="text-sm font-bold text-foreground">Getting things ready...</p>
-        <p className="text-sm text-muted-foreground">This won’t take long.</p>
+        <p className="text-sm font-bold text-foreground">{translate("shell.startup.gettingReady")}</p>
+        <p className="text-sm text-muted-foreground">{translate("shell.startup.gettingReadyHelp")}</p>
         {detailLines.length > 0 && (
           <details className="group mt-2 w-full max-w-sm text-left">
             <summary className="mx-auto flex w-fit cursor-pointer list-none items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
-              <span className="group-open:hidden">Show setup details</span>
-              <span className="hidden group-open:inline">Hide setup details</span>
+              <span className="group-open:hidden">{translate("shell.startup.showSetupDetails")}</span>
+              <span className="hidden group-open:inline">{translate("shell.startup.hideSetupDetails")}</span>
               <HugeiconsIcon
                 icon={ChevronDownIcon}
                 aria-hidden="true"
@@ -295,9 +296,9 @@ function ClosingContent() {
       <div className="mb-10 flex w-full flex-col items-center gap-2">
         <Spinner className="size-6 text-primary" />
         <p className="text-sm font-bold text-foreground" aria-live="polite">
-          Closing Spartan Agent Desktop...
+          {translate("shell.startup.closing")}
         </p>
-        <p className="text-sm text-muted-foreground">Shutting down the backend.</p>
+        <p className="text-sm text-muted-foreground">{translate("shell.startup.shuttingDown")}</p>
       </div>
     </div>
   );
@@ -316,12 +317,12 @@ function InstallErrorContent({
     <>
       <Logo />
       <div className="mt-8 flex flex-col items-center gap-2">
-        <p className="text-sm font-medium text-destructive">Setup ran into a problem</p>
+        <p className="text-sm font-medium text-destructive">{translate("shell.startup.setupProblem")}</p>
         {error && (
           <p className="max-w-xs text-center text-xs text-muted-foreground">{error}</p>
         )}
         <DiagnosticsCopyActions onCopyDiagnostics={onCopyDiagnostics}>
-          <ActionButton onClick={onRetryInstall}>Try Again</ActionButton>
+          <ActionButton onClick={onRetryInstall}>{translate("shell.startup.tryAgain")}</ActionButton>
         </DiagnosticsCopyActions>
       </div>
     </>
@@ -341,12 +342,12 @@ function RepairErrorContent({
     <>
       <Logo />
       <div className="mt-8 flex flex-col items-center gap-2">
-        <p className="text-sm font-medium text-destructive">Update failed</p>
+        <p className="text-sm font-medium text-destructive">{translate("shell.startup.updateFailed")}</p>
         {error && (
           <p className="max-w-md text-center text-xs text-muted-foreground">{error}</p>
         )}
         <DiagnosticsCopyActions onCopyDiagnostics={onCopyDiagnostics}>
-          <ActionButton onClick={onRetry}>Retry</ActionButton>
+          <ActionButton onClick={onRetry}>{translate("shell.startup.tryAgain")}</ActionButton>
         </DiagnosticsCopyActions>
       </div>
     </>
@@ -366,9 +367,9 @@ function NeedsElevationContent({
     <>
       <Logo />
       <div className="mt-8 flex flex-col items-center gap-2">
-        <p className="text-sm font-medium text-foreground">Permission needed</p>
+        <p className="text-sm font-medium text-foreground">{translate("shell.startup.permissionNeeded")}</p>
         <p className="text-xs text-muted-foreground">
-          The following system packages need to be installed:
+          {translate("shell.startup.packagesNeeded")}
         </p>
         <div className="mt-2 w-full max-w-xs rounded-lg bg-muted p-3 font-mono text-xs">
           {elevationPackages.map((pkg) => (
@@ -377,7 +378,7 @@ function NeedsElevationContent({
         </div>
         <div className="mt-4 flex gap-3">
           <ActionButton variant="secondary" onClick={onRetryInstall}>Cancel</ActionButton>
-          <ActionButton onClick={onApproveElevation}>Allow</ActionButton>
+          <ActionButton onClick={onApproveElevation}>{translate("shell.startup.allow")}</ActionButton>
         </div>
       </div>
     </>
@@ -406,9 +407,9 @@ function StoppedContent({ onStartServer }: { onStartServer: () => void }) {
     <>
       <Logo />
       <div className="mt-8 flex flex-col items-center gap-2">
-        <p className="text-sm font-medium text-foreground">Server stopped</p>
+        <p className="text-sm font-medium text-foreground">{translate("shell.startup.serverStopped")}</p>
         <div className="mt-4">
-          <ActionButton onClick={onStartServer}>Start Server</ActionButton>
+          <ActionButton onClick={onStartServer}>{translate("shell.startup.startServer")}</ActionButton>
         </div>
       </div>
     </>
@@ -428,12 +429,12 @@ function ErrorContent({
     <>
       <Logo />
       <div className="mt-8 flex flex-col items-center gap-2">
-        <p className="text-sm font-medium text-destructive">Something went wrong</p>
+        <p className="text-sm font-medium text-destructive">{translate("shell.startup.somethingWrong")}</p>
         {error && (
           <p className="max-w-md text-center text-xs text-muted-foreground">{error}</p>
         )}
         <DiagnosticsCopyActions onCopyDiagnostics={onCopyDiagnostics}>
-          <ActionButton onClick={onRetry}>Retry</ActionButton>
+          <ActionButton onClick={onRetry}>{translate("shell.startup.tryAgain")}</ActionButton>
         </DiagnosticsCopyActions>
       </div>
     </>

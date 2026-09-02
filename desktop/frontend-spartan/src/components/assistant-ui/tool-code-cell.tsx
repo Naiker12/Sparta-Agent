@@ -1,4 +1,3 @@
-
 "use client";
 
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
@@ -6,11 +5,14 @@ import { MAX_HIGHLIGHT_CHARS } from "@/lib/markdown-plugins";
 import { downloadFile, isDownloadCancelled } from "@/lib/native-files";
 import { toast } from "@/lib/toast";
 import { code as codePlugin } from "@streamdown/code";
-import { CopyIcon, DownloadIcon } from "lucide-react";
+import { CopyIcon, DownloadIcon, Maximize2Icon } from "lucide-react";
+import { useT } from "@/i18n";
 import { Tick02Icon } from "@/lib/tick-icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Streamdown } from "streamdown";
+
+import { CodeViewerModal } from "./code-viewer-modal";
 
 const COPY_RESET_MS = 2000;
 const SHIKI_THEME = ["github-light", "github-dark"] as [
@@ -20,7 +22,14 @@ const SHIKI_THEME = ["github-light", "github-dark"] as [
 /** Within this many px of the bottom counts as following the stream. */
 const PIN_SLACK_PX = 40;
 
-export function CopyBtn({ text }: { text: string }) {
+export function CopyBtn({
+  text,
+  compact = false,
+}: {
+  text: string;
+  compact?: boolean;
+}) {
+  const t = useT();
   const [copied, setCopied] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -47,39 +56,51 @@ export function CopyBtn({ text }: { text: string }) {
       type="button"
       onClick={copy}
       className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-      aria-label="Copy to clipboard"
+      aria-label={t("chat.tools.codeViewer.copy")}
     >
       {copied ? (
         <HugeiconsIcon icon={Tick02Icon} strokeWidth={2} className="size-3" />
       ) : (
         <CopyIcon className="size-3" />
       )}
-      {copied ? "Copied" : "Copy"}
+      {!compact &&
+        (copied
+          ? t("chat.tools.codeViewer.copied")
+          : t("chat.tools.codeViewer.copy"))}
     </button>
   );
 }
 
-function DownloadBtn({ code, name }: { code: string; name: string }) {
+export function DownloadBtn({
+  code,
+  name,
+  compact = false,
+}: {
+  code: string;
+  name: string;
+  compact?: boolean;
+}) {
+  const t = useT();
   // Route through the shared boundary: browsers keep the normal download,
   // Tauri gets the native save chooser. A bare blob anchor is silently
   // dropped by the desktop WebView2.
   const download = useCallback(() => {
     void downloadFile(code, name, "text/plain;charset=utf-8").catch((error) => {
       if (!isDownloadCancelled(error)) {
-        toast.error("Could not save file.");
+        toast.error(t("chat.tools.codeViewer.saveFailed"));
       }
     });
-  }, [code, name]);
+  }, [code, name, t]);
 
   return (
     <button
       type="button"
       onClick={download}
       className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-      aria-label="Download"
+      aria-label={t("chat.tools.codeViewer.download")}
     >
       <DownloadIcon className="size-3" />
-      Download
+      {!compact && t("chat.tools.codeViewer.download")}
     </button>
   );
 }
@@ -96,14 +117,18 @@ function fenceFor(source: string): string {
 /** Syntax-highlighted code via Streamdown + shiki. Always in the DOM as plain monospace, but
  * shiki only tokenizes once the block nears the viewport, so a long transcript does not
  * highlight every script up front. Immediate where IntersectionObserver is missing. */
-function HighlightedCode({
+export function HighlightedCode({
   code: source,
   language,
   plain = false,
+  expanded = false,
+  lineNumbers = false,
 }: {
   code: string;
   language: string;
   plain?: boolean;
+  expanded?: boolean;
+  lineNumbers?: boolean;
 }) {
   const markdown = useMemo(() => {
     const fence = fenceFor(source);
@@ -156,24 +181,57 @@ function HighlightedCode({
     <div
       ref={containerRef}
       onScroll={handleScroll}
-      className="max-h-48 overflow-auto text-xs [&_pre]:!m-0 [&_pre]:!bg-transparent [&_pre]:!p-0 [&_pre]:!text-xs [&_[data-streamdown=code-block]]:!my-0 [&_[data-streamdown=code-block]]:!p-3 [&_[data-streamdown=code-block]]:!border-0"
+      className={
+        expanded
+          ? "h-full overflow-auto text-xs"
+          : "max-h-48 overflow-auto text-xs"
+      }
     >
-      {highlight ? (
-        <Streamdown
-          mode="static"
-          plugins={{ code: codePlugin }}
-          controls={{ code: false }}
-          shikiTheme={SHIKI_THEME}
+      <div className="flex min-w-max">
+        {lineNumbers && (
+          <div
+            aria-hidden="true"
+            className="sticky left-0 z-[1] select-none border-r bg-muted/40 py-4 text-right font-mono leading-5 text-muted-foreground/60"
+          >
+            {Array.from(
+              { length: Math.max(1, source.split("\n").length) },
+              (_, index) => (
+                <div key={index} className="min-w-12 px-3">
+                  {index + 1}
+                </div>
+              ),
+            )}
+          </div>
+        )}
+        <div
+          className={
+            expanded
+              ? "min-w-0 flex-1 [&_pre]:!m-0 [&_pre]:!bg-transparent [&_pre]:!p-0 [&_pre]:!text-xs [&_pre]:!leading-5 [&_[data-streamdown=code-block]]:!my-0 [&_[data-streamdown=code-block]]:!border-0 [&_[data-streamdown=code-block]]:!p-4"
+              : "min-w-0 flex-1 [&_pre]:!m-0 [&_pre]:!bg-transparent [&_pre]:!p-0 [&_pre]:!text-xs [&_[data-streamdown=code-block]]:!my-0 [&_[data-streamdown=code-block]]:!border-0 [&_[data-streamdown=code-block]]:!p-3"
+          }
         >
-          {markdown}
-        </Streamdown>
-      ) : (
-        // A div, not a <pre>: the container's [&_pre]:!p-0 would strip the padding and shift
-        // the content when shiki swaps in. whitespace-pre so long lines scroll.
-        <div className="whitespace-pre p-3 font-mono text-xs text-muted-foreground">
-          {source}
+          {highlight ? (
+            <Streamdown
+              mode="static"
+              plugins={{ code: codePlugin }}
+              controls={{ code: false }}
+              shikiTheme={SHIKI_THEME}
+            >
+              {markdown}
+            </Streamdown>
+          ) : (
+            <div
+              className={
+                expanded
+                  ? "whitespace-pre p-4 font-mono text-xs leading-5 text-muted-foreground"
+                  : "whitespace-pre p-3 font-mono text-xs text-muted-foreground"
+              }
+            >
+              {source}
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -192,6 +250,8 @@ export function ToolCodeCell({
   downloadName: string;
   streaming?: boolean;
 }) {
+  const t = useT();
+  const [open, setOpen] = useState(false);
   return (
     <div className="border-l-2 border-muted-foreground/20 pl-2">
       <div className="flex items-center justify-between">
@@ -201,9 +261,32 @@ export function ToolCodeCell({
         <div className="flex items-center gap-1">
           <CopyBtn text={code} />
           <DownloadBtn code={code} name={downloadName} />
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="inline-flex rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+            aria-label={t("chat.tools.codeViewer.open")}
+            title={t("chat.tools.codeViewer.open")}
+          >
+            <Maximize2Icon className="size-3" />
+          </button>
         </div>
       </div>
       <HighlightedCode code={code} language={language} plain={streaming} />
+      <CodeViewerModal
+        open={open}
+        onOpenChange={setOpen}
+        title={label}
+        language={language}
+        actions={
+          <>
+            <CopyBtn text={code} />
+            <DownloadBtn code={code} name={downloadName} />
+          </>
+        }
+      >
+        <HighlightedCode code={code} language={language} expanded lineNumbers />
+      </CodeViewerModal>
     </div>
   );
 }

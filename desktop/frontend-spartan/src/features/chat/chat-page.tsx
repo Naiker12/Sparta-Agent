@@ -144,7 +144,6 @@ import { chatModelSwitchMeta } from "./components/chat-model-notice-switch";
 import { ContextUsageBar } from "./components/context-usage-bar";
 import { ModelLoadInlineStatus } from "./components/model-load-status";
 import { ProjectSwitcher } from "./components/project-switcher";
-import { WorkspaceExplorerDialog } from "./components/workspace-explorer-dialog";
 import {
   buildExternalModelId,
   isExternalModelId,
@@ -156,8 +155,6 @@ import { useChatModelRuntime } from "./hooks/use-chat-model-runtime";
 import type { SelectedModelInput } from "./hooks/use-chat-model-runtime";
 import {
   deleteChatProject,
-  connectChatProjectWorkspace,
-  disconnectChatProjectWorkspace,
   moveChatItemToProject,
   renameChatProject,
   useChatProjects,
@@ -1178,34 +1175,6 @@ function ProjectLanding({
   const [renamingProject, setRenamingProject] = useState(false);
   const [projectNameDraft, setProjectNameDraft] = useState("");
   const [deletingProject, setDeletingProject] = useState(false);
-  const [exploringWorkspace, setExploringWorkspace] = useState(false);
-
-  async function connectProjectWorkspace() {
-    try {
-      const folder = await connectChatProjectWorkspace(projectId);
-      if (folder) toast.success(t("projectsPage.folderConnected"), { description: folder });
-    } catch (error) {
-      toast.error(t("projectsPage.failedToUpdateFolder"), {
-        description: error instanceof Error ? error.message : undefined,
-      });
-    }
-  }
-
-  async function disconnectProjectWorkspace() {
-    try {
-      await disconnectChatProjectWorkspace(projectId);
-      toast.success(t("projectsPage.folderDisconnected"));
-    } catch (error) {
-      toast.error(t("projectsPage.failedToUpdateFolder"), {
-        description: error instanceof Error ? error.message : undefined,
-      });
-    }
-  }
-
-  const connectedFolderPath = project?.connectedFolderPath ?? null;
-  const connectedFolderName = connectedFolderPath
-    ? connectedFolderPath.replace(/[\\/]+$/, "").split(/[\\/]/).at(-1) || connectedFolderPath
-    : null;
 
   async function handleProjectExport(
     format: ProjectChatExportFormat,
@@ -1529,7 +1498,7 @@ function ProjectLanding({
                 <DropdownMenuTrigger asChild={true}>
                   <button
                     type="button"
-                    aria-label="Project options"
+                    aria-label={t("projectsPage.projectOptionsAria")}
                     className="inline-flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring data-[state=open]:bg-muted data-[state=open]:text-foreground"
                   >
                     <HugeiconsIcon icon={MoreHorizontalIcon} strokeWidth={1.75} className="size-5" />
@@ -1548,32 +1517,16 @@ function ProjectLanding({
                     }}
                   >
                     <HugeiconsIcon icon={Edit03Icon} strokeWidth={1.75} className="size-icon" />
-                    <span>Rename project</span>
+                    <span>{t("projectsPage.renameTitle")}</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem onSelect={() => togglePinProject(projectId)}>
                     <HugeiconsIcon icon={projectPinned ? PinOffIcon : PinIcon} strokeWidth={1.75} className="size-icon" />
-                    <span>{projectPinned ? "Unpin project" : "Pin project"}</span>
+                    <span>{t(projectPinned ? "projectsPage.unpinProject" : "projectsPage.pinProject")}</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => void connectProjectWorkspace()}>
-                    <HugeiconsIcon icon={Folder01Icon} strokeWidth={1.75} className="size-icon" />
-                    <span>{t(project?.connectedFolderPath ? "projectsPage.changeFolder" : "projectsPage.connectFolder")}</span>
-                  </DropdownMenuItem>
-                  {project?.connectedFolderPath && (
-                    <>
-                      <DropdownMenuItem onSelect={() => setExploringWorkspace(true)}>
-                        <HugeiconsIcon icon={Folder02Icon} strokeWidth={1.75} className="size-icon" />
-                        <span>{t("projectsPage.browseFolder")}</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onSelect={() => void disconnectProjectWorkspace()}>
-                        <HugeiconsIcon icon={Folder01Icon} strokeWidth={1.75} className="size-icon" />
-                        <span>{t("projectsPage.disconnectFolder")}</span>
-                      </DropdownMenuItem>
-                    </>
-                  )}
                   <DropdownMenuSub>
                     <DropdownMenuSubTrigger>
                       <HugeiconsIcon icon={Download01Icon} strokeWidth={1.75} className="size-icon" />
-                      <span>Export</span>
+                      <span>{t("projectsPage.export")}</span>
                     </DropdownMenuSubTrigger>
                     <DropdownMenuSubContent className="unsloth-plus-menu w-48">
                       {PROJECT_CHAT_EXPORT_OPTIONS.map(({ label, format }) => (
@@ -1592,56 +1545,10 @@ function ProjectLanding({
                     onSelect={() => setDeletingProject(true)}
                   >
                     <HugeiconsIcon icon={Delete02Icon} strokeWidth={1.75} className="size-icon" />
-                    <span>Delete project</span>
+                    <span>{t("projectsPage.deleteTitle")}</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            </div>
-
-            <WorkspaceExplorerDialog
-              project={project}
-              open={exploringWorkspace}
-              onOpenChange={setExploringWorkspace}
-            />
-
-            <div className="mb-5 flex min-w-0 items-center gap-3 rounded-2xl border border-border bg-background p-3 dark:border-transparent dark:bg-white/[0.06]">
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground">
-                <HugeiconsIcon icon={Folder01Icon} strokeWidth={1.75} className="size-4.5" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-foreground">{t("projectsPage.workspaceTitle")}</p>
-                {connectedFolderPath ? (
-                  <>
-                    <p className="truncate text-sm text-muted-foreground" title={connectedFolderPath}>
-                      {connectedFolderName}
-                    </p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {t("projectsPage.workspaceConnectedDescription")}
-                    </p>
-                  </>
-                ) : (
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    {t("projectsPage.workspaceNotConnected")}
-                  </p>
-                )}
-              </div>
-              {connectedFolderPath ? (
-                <div className="flex shrink-0 items-center gap-1">
-                  <Button type="button" variant="ghost" size="sm" onClick={() => setExploringWorkspace(true)}>
-                    <HugeiconsIcon data-icon="inline-start" icon={Folder02Icon} strokeWidth={1.75} />
-                    {t("projectsPage.browseFolder")}
-                  </Button>
-                  <Button type="button" variant="outline" size="sm" onClick={() => void connectProjectWorkspace()}>
-                    <HugeiconsIcon data-icon="inline-start" icon={Folder01Icon} strokeWidth={1.75} />
-                    {t("projectsPage.changeFolder")}
-                  </Button>
-                </div>
-              ) : (
-                <Button type="button" variant="outline" size="sm" onClick={() => void connectProjectWorkspace()}>
-                  <HugeiconsIcon data-icon="inline-start" icon={Folder01Icon} strokeWidth={1.75} />
-                  {t("projectsPage.connectFolder")}
-                </Button>
-              )}
             </div>
 
             <ProjectComposer
@@ -1656,7 +1563,7 @@ function ProjectLanding({
                 data-active={projectTab === "chats"}
                 className="h-10 rounded-full px-5 text-ui-14 font-semibold transition-colors data-[active=true]:bg-muted data-[active=true]:text-foreground data-[active=false]:text-muted-foreground data-[active=false]:hover:bg-nav-surface-hover"
               >
-                Chats
+                {t("projectsPage.chatsTitle")}
               </button>
               <button
                 type="button"
@@ -1664,7 +1571,7 @@ function ProjectLanding({
                 data-active={projectTab === "sources"}
                 className="h-10 rounded-full px-5 text-ui-14 font-semibold transition-colors data-[active=true]:bg-muted data-[active=true]:text-foreground data-[active=false]:text-muted-foreground data-[active=false]:hover:bg-nav-surface-hover"
               >
-                Sources
+                {t("projectsPage.sourcesTitle")}
               </button>
             </div>
 
@@ -1955,7 +1862,7 @@ function ProjectLanding({
       >
         <DialogContent className="corner-squircle dialog-soft-surface sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Rename project</DialogTitle>
+            <DialogTitle>{t("projectsPage.renameTitle")}</DialogTitle>
           </DialogHeader>
           <Input
             value={projectNameDraft}
@@ -1968,8 +1875,8 @@ function ProjectLanding({
             }}
             autoFocus={true}
             maxLength={120}
-            placeholder="Project name"
-            aria-label="Project name"
+            placeholder={t("projectsPage.projectNamePlaceholder")}
+            aria-label={t("projectsPage.projectNamePlaceholder")}
             className="focus-visible:border-input focus-visible:ring-0"
           />
           <DialogFooter className="flex-wrap gap-2 sm:justify-end">
@@ -1996,9 +1903,9 @@ function ProjectLanding({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete project</AlertDialogTitle>
+            <AlertDialogTitle>{t("projectsPage.deleteTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Delete "{projectName}"? Its chats will be permanently deleted.
+              {t("projectsPage.deleteDescription", { name: projectName })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

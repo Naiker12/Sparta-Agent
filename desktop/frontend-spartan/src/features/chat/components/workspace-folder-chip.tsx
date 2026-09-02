@@ -19,7 +19,12 @@ import {
 import { useChatRuntimeStore } from "../stores/chat-runtime-store";
 
 function folderName(path: string): string {
-  return path.replace(/[\\/]+$/, "").split(/[\\/]/).pop() || path;
+  return (
+    path
+      .replace(/[\\/]+$/, "")
+      .split(/[\\/]/)
+      .pop() || path
+  );
 }
 
 /** Shows the writable folder for the active project, never the internal sandbox. */
@@ -29,6 +34,7 @@ export function WorkspaceFolderChip() {
   const { projects } = useChatProjects();
   const project = projects.find((item) => item.id === projectId) ?? null;
   const connectedFolder = project?.connectedFolderPath;
+  const access = project?.workspaceAccess ?? "read";
 
   if (!project || !connectedFolder) return null;
   const activeProjectId = project.id;
@@ -36,7 +42,10 @@ export function WorkspaceFolderChip() {
   async function changeFolder() {
     try {
       const folder = await connectChatProjectWorkspace(activeProjectId);
-      if (folder) toast.success(t("projectsPage.folderConnected"), { description: folder });
+      if (folder)
+        toast.success(t("projectsPage.folderConnected"), {
+          description: folder,
+        });
     } catch (error) {
       toast.error(t("projectsPage.failedToUpdateFolder"), {
         description: error instanceof Error ? error.message : undefined,
@@ -66,9 +75,18 @@ export function WorkspaceFolderChip() {
           title={connectedFolder}
         >
           <span className="composer-pill-glyph">
-            <HugeiconsIcon icon={Folder01Icon} className="size-[15px]" strokeWidth={1.8} />
+            <HugeiconsIcon
+              icon={Folder01Icon}
+              className="size-[15px]"
+              strokeWidth={1.8}
+            />
           </span>
-          <span className="max-w-32 truncate">{folderName(connectedFolder)}</span>
+          <span className="max-w-32 truncate">
+            {folderName(connectedFolder)}
+          </span>
+          <span className="rounded bg-muted px-1 py-0.5 text-[10px] font-medium uppercase text-muted-foreground">
+            {access === "write" ? "RW" : "RO"}
+          </span>
           <ChevronDownIcon className="composer-pill-caret size-[15px]" />
         </button>
       </DropdownMenuTrigger>
@@ -76,13 +94,26 @@ export function WorkspaceFolderChip() {
         <DropdownMenuItem disabled className="truncate text-muted-foreground">
           {connectedFolder}
         </DropdownMenuItem>
+        <DropdownMenuItem disabled className="text-muted-foreground">
+          {access === "write"
+            ? t("projectsPage.workspaceAllowEdits")
+            : t("projectsPage.workspaceReadOnly")}
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={() => void changeFolder()}>
-          <HugeiconsIcon icon={FolderAddIcon} className="size-icon" strokeWidth={1.75} />
+          <HugeiconsIcon
+            icon={FolderAddIcon}
+            className="size-icon"
+            strokeWidth={1.75}
+          />
           {t("projectsPage.changeFolder")}
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => void disconnectFolder()}>
-          <HugeiconsIcon icon={Folder01Icon} className="size-icon" strokeWidth={1.75} />
+          <HugeiconsIcon
+            icon={Folder01Icon}
+            className="size-icon"
+            strokeWidth={1.75}
+          />
           {t("projectsPage.disconnectFolder")}
         </DropdownMenuItem>
       </DropdownMenuContent>

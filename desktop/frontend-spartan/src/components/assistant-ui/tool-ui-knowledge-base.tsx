@@ -7,6 +7,7 @@ import {
 } from "@assistant-ui/react";
 import { FileTextIcon, LibraryBigIcon } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
+import { useT } from "@/i18n";
 
 import { stringifyToolResult } from "@/lib/strip-ansi";
 import { memo, useEffect, useMemo, useState } from "react";
@@ -74,6 +75,7 @@ const KnowledgeBaseToolUIImpl: ToolCallMessagePartComponent = ({
   result,
   status,
 }) => {
+  const t = useT();
   const query = (args as { query?: string })?.query ?? "";
   const isRunning = status?.type === "running";
 
@@ -102,7 +104,7 @@ const KnowledgeBaseToolUIImpl: ToolCallMessagePartComponent = ({
   return (
     <ToolFallbackRoot open={open} onOpenChange={setOpen}>
       <ToolFallbackTrigger
-        toolName={query ? `Searched documents for "${query}"` : "Knowledge search"}
+        toolName={query ? t("chat.tools.knowledge.searched", { query }) : t("chat.tools.knowledge.search")}
         status={status}
         icon={LibraryBigIcon}
       />
@@ -112,24 +114,27 @@ const KnowledgeBaseToolUIImpl: ToolCallMessagePartComponent = ({
             <Spinner className="size-3.5" />
             <span>
               {query ? (
-                <>Searching documents for &ldquo;{query}&rdquo;&hellip;</>
+                <>{t("chat.tools.knowledge.searching", { query })}</>
               ) : (
-                <>Searching documents&hellip;</>
+                <>{t("chat.tools.knowledge.searchingAll")}</>
               )}
             </span>
           </div>
         ) : citations.length > 0 ? (
           <div className="text-sm text-muted-foreground">
-            Retrieved {citations.length} passage
-            {citations.length === 1 ? "" : "s"} from {docCount} document
-            {docCount === 1 ? "" : "s"}. See Document Sources below.
+            {t("chat.tools.knowledge.retrieved", {
+              passages: citations.length,
+              passageSuffix: citations.length === 1 ? "" : "s",
+              documents: docCount,
+              documentSuffix: docCount === 1 ? "" : "s",
+            })}
           </div>
         ) : resultText ? (
           <pre className="max-h-40 overflow-auto whitespace-pre-wrap break-words rounded bg-muted/50 p-2 text-xs">
             {resultText}
           </pre>
         ) : (
-          <div className="text-sm text-muted-foreground">No matching passages.</div>
+          <div className="text-sm text-muted-foreground">{t("chat.tools.knowledge.noMatches")}</div>
         )}
       </ToolFallbackContent>
     </ToolFallbackRoot>
