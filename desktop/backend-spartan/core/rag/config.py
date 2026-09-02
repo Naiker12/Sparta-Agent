@@ -28,6 +28,15 @@ WHOLE_DOC_MAX_TOKENS = int(os.environ.get("RAG_WHOLE_DOC_MAX_TOKENS", "6000"))
 UPLOAD_EXTS = {
     ".pdf", ".txt", ".md", ".markdown", ".docx", ".html", ".htm",
     ".csv", ".tsv", ".xlsx", ".pptx", ".odt", ".rtf", ".epub", ".json",
+    ".jsonl", ".ndjson", ".xml", ".yaml", ".yml", ".toml", ".ini", ".cfg",
+    ".conf", ".env", ".properties", ".log", ".rst", ".tex", ".css", ".scss",
+    ".less", ".svg", ".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx", ".py",
+    ".pyi", ".ipynb", ".rb", ".php", ".go", ".rs", ".java", ".kt", ".kts",
+    ".scala", ".swift", ".c", ".h", ".cc", ".cpp", ".hpp", ".cxx", ".cs",
+    ".m", ".mm", ".sh", ".bash", ".zsh", ".fish", ".ps1", ".bat", ".lua",
+    ".pl", ".pm", ".r", ".jl", ".dart", ".vue", ".svelte", ".astro", ".sql",
+    ".graphql", ".gql", ".proto", ".tf", ".tfvars", ".gradle", ".dockerfile",
+    ".makefile", ".cmake", ".diff", ".patch",
 }
 # Reject uploads larger than this, so one pathological file can't drive unbounded parse
 # + vision work at ingest. 0 disables the cap. Default 200 MB.

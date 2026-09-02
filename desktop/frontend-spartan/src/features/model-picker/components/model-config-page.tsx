@@ -226,9 +226,9 @@ function withoutUnsupportedDiffusionSettings(
     llamaExtraArgs: null,
     ...(hasUnsupportedGpuPick
       ? {
-          selectedGpuIds: undefined,
-          selectedGpuIndexKind: undefined,
-        }
+        selectedGpuIds: undefined,
+        selectedGpuIndexKind: undefined,
+      }
       : {}),
   };
 }
@@ -269,20 +269,23 @@ function ChatTemplateSetting({
   onEditTemplate: () => void;
   readOnly?: boolean;
 }) {
+  const t = useT();
   return (
     <div className={ROW_CLASS}>
       <div className="flex min-w-0 items-center gap-1.5">
-        <span className={LABEL_CLASS}>Chat Template</span>
+        <span className={LABEL_CLASS}>{t("runSettings.chatTemplate")}</span>
         <InfoHint>
           {readOnly
             ? "Preview the model's chat template. This model's backend cannot take a custom one."
-            : "Override the model's chat template with custom Jinja. Applies when the model loads."}
+            : t("runSettings.chatTemplateHint")}
         </InfoHint>
       </div>
       <div className="flex shrink-0 items-center gap-2">
         {readOnly ? null : (
           <span className="text-ui-12 text-muted-foreground">
-            {config.chatTemplateOverride ? "Custom" : "Default"}
+            {config.chatTemplateOverride
+              ? t("runSettings.chatTemplateStatusCustom")
+              : t("runSettings.chatTemplateStatusDefault")}
           </span>
         )}
         <Button
@@ -292,7 +295,7 @@ function ChatTemplateSetting({
           className={`h-8 px-3 text-ui-13 ${CONTROL_SURFACE}`}
           onClick={onEditTemplate}
         >
-          {readOnly ? "View" : "Edit"}
+          {readOnly ? t("runSettings.chatTemplateView") : t("runSettings.chatTemplateEdit")}
         </Button>
       </div>
     </div>
@@ -312,13 +315,14 @@ function MaxSeqLengthSetting({
   onChange: (value: number) => void;
   inputRef?: Ref<NumericValueInputHandle>;
 }) {
+  const t = useT();
   return (
     <div className="space-y-3">
       <div className={ROW_CLASS}>
         <div className="flex min-w-0 items-center gap-1.5">
-          <span className={LABEL_CLASS}>Max Seq Length</span>
+          <span className={LABEL_CLASS}>{t("runSettings.maxSeqLengthLabel")}</span>
           <InfoHint>
-            Maximum context window size in tokens. Applies when the model loads.
+            {t("runSettings.maxSeqLengthHint")}
           </InfoHint>
         </div>
         <NumericValueInput
@@ -328,7 +332,7 @@ function MaxSeqLengthSetting({
           max={inputMax}
           step={MAX_SEQ_LENGTH_STEP}
           onChange={onChange}
-          ariaLabel="Max Seq Length"
+          ariaLabel={t("runSettings.maxSeqLengthLabel")}
           className={NUMBER_INPUT_CLASS}
           size={8}
         />
@@ -340,7 +344,7 @@ function MaxSeqLengthSetting({
         value={[value]}
         onValueChange={([next]) => onChange(next)}
         className="panel-slider"
-        aria-label="Max Seq Length"
+        aria-label={t("runSettings.maxSeqLengthLabel")}
       />
     </div>
   );
@@ -560,10 +564,11 @@ function VramBudgetRow() {
     }, 400);
   };
 
+  const t = useT();
   return (
     <div className="space-y-2">
       <AdvancedGpuSlider
-        label="VRAM Budget"
+        label={t("runSettings.vramBudget")}
         value={percent}
         min={vramFractionToPercent(settings.minFraction)}
         max={vramFractionToPercent(settings.maxFraction)}
@@ -639,6 +644,7 @@ function GpuMemorySettings({
   gpuLayersInputRef?: Ref<NumericValueInputHandle>;
   moeLayersInputRef?: Ref<NumericValueInputHandle>;
 }) {
+  const t = useT();
   const mode = config.gpuMemoryMode ?? "auto";
   const isManual = mode === "manual";
   const gpuLayers = config.gpuLayers ?? GPU_LAYERS_AUTO;
@@ -674,15 +680,15 @@ function GpuMemorySettings({
     <>
       <div className={isDiffusion ? "hidden" : ROW_CLASS}>
         <div className="flex min-w-0 items-center gap-1.5">
-          <span className={LABEL_CLASS}>GPU Memory</span>
+          <span className={LABEL_CLASS}>{t("runSettings.gpuMemory")}</span>
           <InfoHint>
             <div className="flex flex-col gap-1.5">
               <div>
-                <span className="font-medium">Default:</span> Unsloth fits the
+                <span className="font-medium">{t("runSettings.gpuMemoryDefault")}:</span> Unsloth fits the
                 model and context to your GPUs.
               </div>
               <div>
-                <span className="font-medium">Manual:</span> set GPU Layers
+                <span className="font-medium">{t("runSettings.gpuMemoryManual")}:</span> set GPU Layers
                 yourself. Leave it on Auto to let llama.cpp size the context and
                 offload overflow (including MoE experts) to RAM.
               </div>
@@ -697,12 +703,12 @@ function GpuMemorySettings({
               v === "manual"
                 ? { gpuMemoryMode: "manual" }
                 : {
-                    gpuMemoryMode: "auto",
-                    gpuLayers: undefined,
-                    nCpuMoe: undefined,
-                    selectedGpuIds: undefined,
-                    selectedGpuIndexKind: undefined,
-                  },
+                  gpuMemoryMode: "auto",
+                  gpuLayers: undefined,
+                  nCpuMoe: undefined,
+                  selectedGpuIds: undefined,
+                  selectedGpuIndexKind: undefined,
+                },
             )
           }
         >
@@ -715,8 +721,8 @@ function GpuMemorySettings({
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="menu-soft-surface ring-0 border-0 rounded-lg">
-            <SelectItem value="auto">Default</SelectItem>
-            <SelectItem value="manual">Manual</SelectItem>
+            <SelectItem value="auto">{t("runSettings.gpuMemoryDefault")}</SelectItem>
+            <SelectItem value="manual">{t("runSettings.gpuMemoryManual")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -730,7 +736,7 @@ function GpuMemorySettings({
       {!isDiffusion && isManual && (
         <>
           <AdvancedGpuSlider
-            label="GPU Layers"
+            label={t("runSettings.gpuLayers")}
             inputRef={gpuLayersInputRef}
             value={Math.max(GPU_LAYERS_AUTO, Math.min(gpuLayers, gpuLayersMax))}
             min={GPU_LAYERS_AUTO}
@@ -747,7 +753,7 @@ function GpuMemorySettings({
           />
           {showMoeSlider && (
             <AdvancedGpuSlider
-              label="MoE Layers on CPU"
+              label={t("runSettings.nCpuMoe")}
               inputRef={moeLayersInputRef}
               value={Math.min(nCpuMoe, moeLayersMax)}
               min={0}
@@ -767,7 +773,7 @@ function GpuMemorySettings({
       {showGpuPicker && (
         <div className="space-y-2">
           <div className="flex min-w-0 items-center gap-1.5">
-            <span className={LABEL_CLASS}>GPUs</span>
+            <span className={LABEL_CLASS}>{t("runSettings.gpus")}</span>
             <InfoHint>
               By default, Unsloth chooses GPUs automatically. Editing this list
               makes the checked GPUs the explicit candidate pool. At least one
@@ -849,48 +855,49 @@ function MlxAdvancedSettings({
   /** Why the loaded model could not take the override it was given. */
   templateOutcome: string | null;
 }) {
+  const t = useT();
   return (
     <div className="flex flex-col gap-1">
       {servedByMlx && (
         <>
-      <div className={ROW_CLASS}>
-        <div className="flex min-w-0 items-center gap-1.5">
-          <span className={LABEL_CLASS}>KV Cache Dtype</span>
-          <InfoHint>
-            Lower KV cache precision to save memory at the cost of some
-            quality. Auto keeps full precision; 8-bit is the safest reduction,
-            and lower widths save more memory.
-          </InfoHint>
-        </div>
-        <Select
-          value={config.mlxKvBits ? String(config.mlxKvBits) : MLX_KV_BITS_AUTO}
-          onValueChange={(v) =>
-            update({ mlxKvBits: v === MLX_KV_BITS_AUTO ? null : Number(v) })
-          }
-        >
-          <SelectTrigger
-            animateRadius={false}
-            icon={ChevronDownStandardIcon}
-            iconClassName="size-3.5"
-            className={`w-[92px] ${SELECT_TRIGGER_CLASS}`}
-          >
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent className="menu-soft-surface ring-0 border-0 rounded-lg">
-            <SelectItem value={MLX_KV_BITS_AUTO}>Auto</SelectItem>
-            {MLX_KV_BITS.map((bits) => (
-              <SelectItem key={bits} value={String(bits)}>
-                {bits}-bit
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      {outcome ? (
-        <p className="text-ui-11 leading-snug text-muted-foreground">
-          {outcome}
-        </p>
-      ) : null}
+          <div className={ROW_CLASS}>
+            <div className="flex min-w-0 items-center gap-1.5">
+              <span className={LABEL_CLASS}>{t("runSettings.kvCacheDtype")}</span>
+              <InfoHint>
+                Lower KV cache precision to save memory at the cost of some
+                quality. Auto keeps full precision; 8-bit is the safest reduction,
+                and lower widths save more memory.
+              </InfoHint>
+            </div>
+            <Select
+              value={config.mlxKvBits ? String(config.mlxKvBits) : MLX_KV_BITS_AUTO}
+              onValueChange={(v) =>
+                update({ mlxKvBits: v === MLX_KV_BITS_AUTO ? null : Number(v) })
+              }
+            >
+              <SelectTrigger
+                animateRadius={false}
+                icon={ChevronDownStandardIcon}
+                iconClassName="size-3.5"
+                className={`w-[92px] ${SELECT_TRIGGER_CLASS}`}
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="menu-soft-surface ring-0 border-0 rounded-lg">
+                <SelectItem value={MLX_KV_BITS_AUTO}>Auto</SelectItem>
+                {MLX_KV_BITS.map((bits) => (
+                  <SelectItem key={bits} value={String(bits)}>
+                    {bits}-bit
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {outcome ? (
+            <p className="text-ui-11 leading-snug text-muted-foreground">
+              {outcome}
+            </p>
+          ) : null}
         </>
       )}
       <ChatTemplateSetting
@@ -935,6 +942,7 @@ function GgufAdvancedSettings({
   /** Which stored entries the extra-arguments row reads, most specific first. */
   onExtraArgsLoadableChange: (loadable: boolean) => void;
 }) {
+  const t = useT();
   const batchAdviceId = useId();
   const ubatchAdviceId = useId();
   // llama-server aborts below 2 (GGML_ASSERT(n_tokens_all <= cparams.n_batch)) and below
@@ -961,7 +969,7 @@ function GgufAdvancedSettings({
     <>
       <div className={ROW_CLASS}>
         <div className="flex min-w-0 items-center gap-1.5">
-          <span className={LABEL_CLASS}>KV Cache Dtype</span>
+          <span className={LABEL_CLASS}>{t("runSettings.kvCacheDtype")}</span>
           <InfoHint>
             Lower KV cache precision to save VRAM at the cost of some quality.
             f16 is the default; bf16 and f32 are full precision; q8_0 through
@@ -997,7 +1005,7 @@ function GgufAdvancedSettings({
 
       <div className={ROW_CLASS}>
         <div className="flex min-w-0 items-center gap-1.5">
-          <span className={LABEL_CLASS_WRAP}>Speculative Decoding</span>
+          <span className={LABEL_CLASS_WRAP}>{t("runSettings.speculativeDecoding")}</span>
           <InfoHint>
             Faster generation. Auto picks the best strategy for the model and
             platform: DSpark or DFlash when the model ships a drafter sidecar,
@@ -1040,7 +1048,7 @@ function GgufAdvancedSettings({
       {showDraftTokens && (
         <div className={ROW_CLASS}>
           <div className="flex min-w-0 items-center gap-1.5">
-            <span className={LABEL_CLASS}>Draft Tokens</span>
+            <span className={LABEL_CLASS}>{t("runSettings.draftTokens")}</span>
             <InfoHint>
               Max draft tokens per step. Leave blank for the default (MTP and
               DFlash: 2 on GPU, 3 on CPU/Mac; DSpark: 3).
@@ -1072,7 +1080,7 @@ function GgufAdvancedSettings({
 
       <div className={ROW_CLASS}>
         <div className="flex min-w-0 items-center gap-1.5">
-          <span className={LABEL_CLASS}>Parallel Slots</span>
+          <span className={LABEL_CLASS}>{t("runSettings.parallelSlots")}</span>
           <InfoHint>
             llama-server decode slots (--parallel) for concurrent requests.
             Leave blank for the server default. More slots share the context
@@ -1112,7 +1120,7 @@ function GgufAdvancedSettings({
         <div className="space-y-1">
           <div className={ROW_CLASS}>
             <div className="flex min-w-0 items-center gap-1.5">
-              <span className={LABEL_CLASS}>Batch Size</span>
+              <span className={LABEL_CLASS}>{t("runSettings.batchSize")}</span>
               <InfoHint>
                 Logical prompt batch size (--batch-size). Leave blank for the
                 llama.cpp default (2048). Rarely needs changing; the micro-batch
@@ -1159,7 +1167,7 @@ function GgufAdvancedSettings({
         <div className="space-y-1">
           <div className={ROW_CLASS}>
             <div className="flex min-w-0 items-center gap-1.5">
-              <span className={LABEL_CLASS}>Micro-batch Size</span>
+              <span className={LABEL_CLASS}>{t("runSettings.uBatchSize")}</span>
               <InfoHint>
                 Physical prompt micro-batch size (--ubatch-size). Leave blank for
                 the llama.cpp default (512). Larger values speed up prompt
@@ -1203,7 +1211,7 @@ function GgufAdvancedSettings({
 
       <div className={ROW_CLASS}>
         <div className="flex min-w-0 items-center gap-1.5">
-          <span className={LABEL_CLASS}>Tensor Parallelism</span>
+          <span className={LABEL_CLASS}>{t("runSettings.tensorParallelism")}</span>
           <InfoHint>
             No effect on a single GPU. On multi-GPU setups, improves tokens/sec
             for dense models. MoE models don't benefit.
@@ -1261,6 +1269,7 @@ function ExtraArgsRow({
   update: (patch: Partial<PerModelConfig>) => void;
   onLoadableChange: (loadable: boolean) => void;
 }) {
+  const t = useT();
   const [catalog, setCatalog] = useState<LlamaFlagCatalog | null>(null);
   // What is typed, which is not what is stored: the stored value is argv tokens, so
   // the text only exists here. Seeded from the config, then owned by the box, or
@@ -1323,7 +1332,7 @@ function ExtraArgsRow({
           setModelMemory(loaded);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
     const unsubscribe = subscribeModelMemorySettings(setModelMemory);
     return () => {
       cancelled = true;
@@ -1370,7 +1379,7 @@ function ExtraArgsRow({
   return (
     <div className="space-y-2">
       <div className="flex min-w-0 items-center gap-1.5">
-        <span className={LABEL_CLASS}>Extra Arguments</span>
+        <span className={LABEL_CLASS}>{t("runSettings.extraArguments")}</span>
         <InfoHint>
           <div className="flex flex-col gap-1.5">
             <div>
@@ -1533,16 +1542,16 @@ export function ModelConfigPage({
   // new value must retire a verdict that answered a different request.
   const chatTemplateOutcome =
     isActiveModel &&
-    (configState.chatTemplateOverride ?? null) ===
+      (configState.chatTemplateOverride ?? null) ===
       (loadedChatTemplateOverride ?? null)
       ? chatTemplateOverrideReason
       : null;
   const mlxKvQuantOutcome =
     isActiveModel &&
-    (configState.mlxKvBits ?? null) === (loadedMlxKvBitsRequested ?? null)
+      (configState.mlxKvBits ?? null) === (loadedMlxKvBitsRequested ?? null)
       ? // Both, not either: dropping the note promises savings before the offset
-        // where quantization actually starts.
-        [mlxKvQuantReason, mlxKvQuantNote].filter(Boolean).join(". ") || null
+      // where quantization actually starts.
+      [mlxKvQuantReason, mlxKvQuantNote].filter(Boolean).join(". ") || null
       : null;
   const servedByMlx = isServedByMlx(
     target.isGguf,
@@ -1892,13 +1901,13 @@ export function ModelConfigPage({
             parallelSlotsClamped: managed?.parallelSlotsClamped ?? false,
             probeOk: false,
           },
-          {
-            // The slot floor is already known here, and the backend refuses a batch
-            // below it deterministically. Left out, this released Load on a stored
-            // "--batch-size 2" against a four-slot server, and a click in the window
-            // before the full catalogue check lands reaches that 400.
-            batchFloor: effectiveBatchFloor(configRef.current.nParallel, managed),
-          }),
+            {
+              // The slot floor is already known here, and the backend refuses a batch
+              // below it deterministically. Left out, this released Load on a stored
+              // "--batch-size 2" against a four-slot server, and a click in the window
+              // before the full catalogue check lands reaches that 400.
+              batchFloor: effectiveBatchFloor(configRef.current.nParallel, managed),
+            }),
         );
         // Read from a ref rather than inside the updater below: an updater must stay
         // free of side effects (StrictMode calls it twice), and this decides one.
@@ -1993,9 +2002,9 @@ export function ModelConfigPage({
   const contextValue = Math.min(
     Math.max(
       config.customContextLength ??
-        activeLoadedContext ??
-        nativeContextLength ??
-        maxContext,
+      activeLoadedContext ??
+      nativeContextLength ??
+      maxContext,
       minContext,
     ),
     maxContext,
@@ -2064,7 +2073,7 @@ export function ModelConfigPage({
       ? "Save settings"
       : "Forget settings"
     : isActiveModel
-    ? t("runSettings.reloadModel")
+      ? t("runSettings.reloadModel")
       : t("runSettings.loadModel");
 
   const handleRun = () => {
@@ -2219,12 +2228,12 @@ export function ModelConfigPage({
       // and the load would proceed on the old fraction with nothing said.
       void stagedBudget
         .catch((error: unknown) => {
-            // Dropped rather than left for the next flush: the picker teardown that
-            // onRun triggers flushes it, and that PUT would then race the load
-            // request this click is about to send. Either fraction could win, which
-            // is the one thing this control promises cannot happen. Only the retry
-            // goes, never a newer edit staged over it. The toast says the budget
-            // did not change, and the slider is still there to retry.
+          // Dropped rather than left for the next flush: the picker teardown that
+          // onRun triggers flushes it, and that PUT would then race the load
+          // request this click is about to send. Either fraction could win, which
+          // is the one thing this control promises cannot happen. Only the retry
+          // goes, never a newer edit staged over it. The toast says the budget
+          // did not change, and the slider is still there to retry.
           dropVramBudgetRetry();
           toast.error(
             error instanceof Error ? error.message : "Failed to save VRAM budget",
@@ -2262,7 +2271,7 @@ export function ModelConfigPage({
           )}
           <div className="min-w-0 flex-1">
             <div className="text-ui-10 font-semibold uppercase leading-none tracking-wider text-muted-foreground">
-              Run settings
+              {t("runSettings.title")}
             </div>
             <div className="mt-1.5 truncate text-ui-14 font-semibold leading-tight text-nav-fg">
               {target.displayName}
@@ -2294,8 +2303,8 @@ export function ModelConfigPage({
                   onChange={setContextLength}
                   displayValue={
                     config.customContextLength == null &&
-                    nativeContextLength == null &&
-                    activeLoadedContext == null
+                      nativeContextLength == null &&
+                      activeLoadedContext == null
                       ? "Auto"
                       : undefined
                   }

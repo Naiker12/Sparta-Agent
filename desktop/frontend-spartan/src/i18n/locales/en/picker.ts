@@ -51,5 +51,19 @@ export const picker = {
     "addAriaLabel": "Set Hugging Face token",
     "savedHint": "Token saved. Access is checked when you use it.",
     "addHint": "Set a token to access private and gated repositories."
-  }
+  },
+  "startingModel": "Starting model…",
+  "loadingModel": "Loading model…",
+  "downloadingModel": "Downloading model…",
+  "cachingModelInMemory": "Loading cached model into memory.",
+  "loadingTrainedModelInMemory": "Loading trained model into memory.",
+  "loadingWeightsInMemory": "Loading weights into memory.",
+  "modelLoadedSuccessfully": "The model loaded successfully.",
+  "modelReady": "{model} ready",
+  "switchingModels": "Switching models.",
+  "downloadCompleteLoading": "Download complete. Loading the model into memory.",
+  "stop": "Stop",
+  "loadingFromCache": "Loading {name} from cache.",
+  "loadingInMemory": "Loading {name} into memory.",
+  "loadingWithDownload": "Loading {name}. This may include downloading."
 } as const;

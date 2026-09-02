@@ -51,5 +51,19 @@ export const picker = {
     "addAriaLabel": "Configurar token de Hugging Face",
     "savedHint": "Token guardado. El acceso se comprueba cuando lo usas.",
     "addHint": "Configura un token para acceder a repositorios privados y restringidos."
-  }
+  },
+  "startingModel": "Iniciando modelo…",
+  "loadingModel": "Cargando modelo…",
+  "downloadingModel": "Descargando modelo…",
+  "cachingModelInMemory": "Cargando en memoria el modelo almacenado en caché.",
+  "loadingTrainedModelInMemory": "Cargando en memoria el modelo entrenado.",
+  "loadingWeightsInMemory": "Cargando los pesos en memoria.",
+  "modelLoadedSuccessfully": "El modelo se cargó correctamente.",
+  "modelReady": "{model} listo",
+  "switchingModels": "Cambiando de modelo.",
+  "downloadCompleteLoading": "Descarga completada. Cargando el modelo en memoria.",
+  "stop": "Detener",
+  "loadingFromCache": "Cargando {name} desde la caché.",
+  "loadingInMemory": "Cargando {name} en memoria.",
+  "loadingWithDownload": "Cargando {name}. Esto puede incluir descargas."
 } as const;

@@ -344,16 +344,16 @@ const SingleContent = memo(function SingleContent({
     useState(false);
   const researchMatchesThread = Boolean(
     openResearchThreadId &&
-      openResearchThreadId === (threadId ?? activeThreadId),
+    openResearchThreadId === (threadId ?? activeThreadId),
   );
   const showResearchPanel = researchMatchesThread && !isMobile;
   // Without a URL threadId the artifact must belong to the active thread.
   const showArtifactPanel = !showResearchPanel && Boolean(
     artifact &&
-      artifactSurface === "panel" &&
-      (threadId
-        ? !artifact.threadId || artifact.threadId === threadId
-        : Boolean(artifact.threadId && artifact.threadId === activeThreadId)),
+    artifactSurface === "panel" &&
+    (threadId
+      ? !artifact.threadId || artifact.threadId === threadId
+      : Boolean(artifact.threadId && artifact.threadId === activeThreadId)),
   );
   const showContextPanel = showResearchPanel || showArtifactPanel;
 
@@ -371,7 +371,7 @@ const SingleContent = memo(function SingleContent({
 
     if (!hasInitializedArtifactPanelRef.current) {
       hasInitializedArtifactPanelRef.current = true;
-       if (!showContextPanel) {
+      if (!showContextPanel) {
         panel.resize("0%");
         return;
       }
@@ -387,8 +387,8 @@ const SingleContent = memo(function SingleContent({
     });
     const surfaceTimerId = showContextPanel
       ? window.setTimeout(() => {
-          setIsArtifactSurfaceVisible(true);
-        }, ARTIFACT_SURFACE_POP_DELAY_MS)
+        setIsArtifactSurfaceVisible(true);
+      }, ARTIFACT_SURFACE_POP_DELAY_MS)
       : 0;
     const timeoutId = window.setTimeout(() => {
       setIsArtifactLayoutAnimating(false);
@@ -450,7 +450,7 @@ const SingleContent = memo(function SingleContent({
           className={cn(
             "relative z-30 -ml-1 -mr-4 w-5 bg-transparent transition-[width,margin] duration-[260ms] ease-[var(--ease-out-cubic)] hover:bg-transparent hover:shadow-none active:bg-transparent active:shadow-none focus-visible:bg-transparent focus-visible:shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none",
             !artifactLayoutActive &&
-              "pointer-events-none -ml-0 -mr-0 w-0",
+            "pointer-events-none -ml-0 -mr-0 w-0",
           )}
         />
         <ResizablePanel
@@ -487,13 +487,13 @@ const SingleContent = memo(function SingleContent({
               showResearchPanel && "border-l border-border/70",
             )}
           >
-             {showResearchPanel && openResearchRunId ? (
-               <ResearchActivityPanel
-                 key={openResearchRunId}
-                 runId={openResearchRunId}
-                 onClose={closeResearchPanel}
-               />
-             ) : showArtifactPanel && artifact ? (
+            {showResearchPanel && openResearchRunId ? (
+              <ResearchActivityPanel
+                key={openResearchRunId}
+                runId={openResearchRunId}
+                onClose={closeResearchPanel}
+              />
+            ) : showArtifactPanel && artifact ? (
               <ArtifactSurface
                 artifact={artifact}
                 variant="panel"
@@ -1050,14 +1050,14 @@ const PROJECT_CHAT_EXPORT_OPTIONS: Array<{
   label: string;
   format: ProjectChatExportFormat;
 }> = [
-  { label: "Raw JSONL", format: "raw-jsonl" },
-  { label: "CSV", format: "csv" },
-  { label: "ShareGPT JSONL", format: "sharegpt-jsonl" },
-  {
-    label: CONVERSATION_MARKDOWN_LABEL,
-    format: CONVERSATION_MARKDOWN_FORMAT,
-  },
-];
+    { label: "Raw JSONL", format: "raw-jsonl" },
+    { label: "CSV", format: "csv" },
+    { label: "ShareGPT JSONL", format: "sharegpt-jsonl" },
+    {
+      label: CONVERSATION_MARKDOWN_LABEL,
+      format: CONVERSATION_MARKDOWN_FORMAT,
+    },
+  ];
 
 async function exportProjectConversation(
   threadId: string,
@@ -1284,7 +1284,7 @@ function ProjectLanding({
 
   // Landing has no active thread selected, so the onView callback here is a
   // no-op; the items list refreshes itself once storage emits its update.
-  const noopView = useCallback(() => {}, []);
+  const noopView = useCallback(() => { }, []);
 
   const handleArchive = useCallback(
     async (item: SidebarItem) => {
@@ -1443,7 +1443,7 @@ function ProjectLanding({
               // the row would otherwise be blank.
               snippet: firstUserMessage
                 ? extractMessageText(firstUserMessage.content) ||
-                  attachmentsSample(firstUserMessage.attachments)
+                attachmentsSample(firstUserMessage.attachments)
                 : "",
               date: formatProjectChatDate(item.createdAt),
             },
@@ -2574,7 +2574,7 @@ export function ChatPage({
         const isLoadingThisPick =
           !!loadingModel &&
           normalizeModelRef(loadingModel.id) ===
-            normalizeModelRef(selection.id) &&
+          normalizeModelRef(selection.id) &&
           (loadingModel.ggufVariant ?? null) === (selection.ggufVariant ?? null);
         if (isLoadingThisPick) {
           toast.info("This model is already loading", {
@@ -2618,19 +2618,19 @@ export function ChatPage({
       if (wantManagerStage) {
         setPendingHubAutoLoad((current) =>
           current &&
-          current.selection.id === selection.id &&
-          (current.selection.ggufVariant ?? null) ===
+            current.selection.id === selection.id &&
+            (current.selection.ggufVariant ?? null) ===
             (selection.ggufVariant ?? null) &&
-          current.contextKey === chatContextKey &&
-          current.originCheckpoint === store.params.checkpoint &&
-          current.originGgufVariant === store.activeGgufVariant
+            current.contextKey === chatContextKey &&
+            current.originCheckpoint === store.params.checkpoint &&
+            current.originGgufVariant === store.activeGgufVariant
             ? current
             : {
-                selection,
-                contextKey: chatContextKey,
-                originCheckpoint: store.params.checkpoint,
-                originGgufVariant: store.activeGgufVariant,
-              },
+              selection,
+              contextKey: chatContextKey,
+              originCheckpoint: store.params.checkpoint,
+              originGgufVariant: store.activeGgufVariant,
+            },
         );
         return;
       }
@@ -2666,7 +2666,7 @@ export function ChatPage({
         !active ||
         pending.contextKey !== chatContextKey ||
         normalizeModelRef(pending.originCheckpoint) !==
-          normalizeModelRef(store.params.checkpoint) ||
+        normalizeModelRef(store.params.checkpoint) ||
         pending.originGgufVariant !== store.activeGgufVariant
       ) {
         return;
@@ -2825,8 +2825,8 @@ export function ChatPage({
         const selectedExternal = parseExternalModelId(value);
         const selectedProvider = selectedExternal
           ? externalProvidersForChat.find(
-              (p) => p.id === selectedExternal.providerId,
-            )
+            (p) => p.id === selectedExternal.providerId,
+          )
           : null;
         const reasoningCaps = getExternalReasoningCapabilities(
           selectedProvider?.providerType,
@@ -3253,11 +3253,11 @@ export function ChatPage({
     () =>
       remoteModelsAvailable
         ? externalProviders.map((provider) => ({
-            id: provider.id,
-            name: provider.name,
-            providerType: provider.providerType,
-            availableModels: provider.availableModels,
-          }))
+          id: provider.id,
+          name: provider.name,
+          providerType: provider.providerType,
+          availableModels: provider.availableModels,
+        }))
         : [],
     [remoteModelsAvailable, externalProviders],
   );
@@ -3396,384 +3396,385 @@ export function ChatPage({
 
   const showArtifactOverlay = Boolean(
     selectedArtifact &&
-      (view.mode === "compare" || artifactSurface === "overlay"),
+    (view.mode === "compare" || artifactSurface === "overlay"),
   );
 
   return (
     // Provides `active` to ChatRuntimeProvider (drops the message views/composers
     // while off-route, keeping the runtime alive) and to the compare chrome.
     <ChatActiveContext.Provider value={active}>
-    <div className="flex min-h-0 min-w-0 flex-1 basis-0 overflow-hidden bg-background pt-[var(--studio-content-top-inset,0px)]">
-      {/* Portaled surfaces render to document.body, escaping the parent's hidden
+      <div className="flex min-h-0 min-w-0 flex-1 basis-0 overflow-hidden bg-background pt-[var(--studio-content-top-inset,0px)]">
+        {/* Portaled surfaces render to document.body, escaping the parent's hidden
           wrapper, so gate them on `active` to keep them off other tabs. */}
-      {active && <GuidedTour {...tour.tourProps} />}
-      {/* Single app-level mount for the Bypass permissions warning. It is driven
+        {active && <GuidedTour {...tour.tourProps} />}
+        {/* Single app-level mount for the Bypass permissions warning. It is driven
           by global store state, so it must live at one stable root (not inside a
           Composer) -- otherwise Compare mode's multiple composers would each
           render their own copy and the shared-composer menu would have none. It
           also portals to body, so gate it on `active` like the tour above. */}
-      {active && <BypassPermissionsConfirmDialog />}
-      {/* `--studio-chat-notice-height` is 0 until ChatModelNotice is actually on
+        {active && <BypassPermissionsConfirmDialog />}
+        {/* `--studio-chat-notice-height` is 0 until ChatModelNotice is actually on
           screen, and the thread viewport adds it to the top padding it already
           reserves for the header. Without it the notice is an opaque bar over
           space nothing reserved, and the top of the first message reads
           underneath it. Declared here, on the nearest ancestor of BOTH the
           notice and the viewport, so the two cannot disagree about its height. */}
-      <div className="relative flex min-h-0 min-w-0 flex-1 basis-0 flex-col overflow-hidden [--studio-content-top-inset:0px] has-[[data-chat-model-notice]]:[--studio-chat-notice-height:2.25rem]">
-        <NativeModelDropOverlay state={nativeModelDropState} />
-        {/* Fade under the top bar so messages dissolve as they scroll
+        <div className="relative flex min-h-0 min-w-0 flex-1 basis-0 flex-col overflow-hidden [--studio-content-top-inset:0px] has-[[data-chat-model-notice]]:[--studio-chat-notice-height:2.25rem]">
+          <NativeModelDropOverlay state={nativeModelDropState} />
+          {/* Fade under the top bar so messages dissolve as they scroll
             beneath it, instead of a hard cut. */}
-        {view.mode !== "compare" && (
-          <div
-            aria-hidden
-            className="chat-header-fade pointer-events-none absolute left-0 right-[10px] top-[calc(var(--studio-content-top-inset,0px)+var(--studio-chat-header-height,48px)+var(--studio-chat-notice-height,0px))] z-20 h-6 bg-gradient-to-b from-background to-transparent"
-          />
-        )}
-        <div
-          className={cn(
-            "pointer-events-none absolute top-[var(--studio-content-top-inset,0px)] left-0 right-0 z-40 flex h-[var(--studio-chat-header-height,48px)] shrink-0 items-start bg-background pt-[var(--studio-chat-header-padding-top,11px)] pr-3 md:pr-4",
-            isMobile
-              ? "pl-12"
-              : pinned
-                ? "pl-2"
-                : isTauri
-                  ? "pl-[var(--studio-collapsed-chat-controls-inset,0.75rem)]"
-                  : "pl-[calc(0.5rem+max(0px,var(--studio-mac-traffic-light-inset,0px)-var(--sidebar-width-icon,3rem)))]",
-            view.mode === "compare" &&
-              "right-0 left-auto w-auto bg-transparent pl-0 pr-3 md:pr-4",
+          {view.mode !== "compare" && (
+            <div
+              aria-hidden
+              className="chat-header-fade pointer-events-none absolute left-0 right-[10px] top-[calc(var(--studio-content-top-inset,0px)+var(--studio-chat-header-height,48px)+var(--studio-chat-notice-height,0px))] z-20 h-6 bg-gradient-to-b from-background to-transparent"
+            />
           )}
-        >
-          <div className="pointer-events-auto flex items-center gap-1">
-            {isTauri && !isMobile && !pinned && view.mode !== "compare" && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                title="New chat"
-                aria-label="New chat"
-                onClick={handleDesktopNewChat}
-                className="!size-[30px] rounded-[10px] text-muted-foreground"
-              >
-                <HugeiconsIcon
-                  icon={PencilEdit02Icon}
-                  strokeWidth={1.75}
-                  className="size-icon"
-                />
-              </Button>
+          <div
+            className={cn(
+              "pointer-events-none absolute top-[var(--studio-content-top-inset,0px)] left-0 right-0 z-40 flex h-[var(--studio-chat-header-height,48px)] shrink-0 items-start bg-background pt-[var(--studio-chat-header-padding-top,11px)] pr-3 md:pr-4",
+              isMobile
+                ? "pl-12"
+                : pinned
+                  ? "pl-2"
+                  : isTauri
+                    ? "pl-[var(--studio-collapsed-chat-controls-inset,0.75rem)]"
+                    : "pl-[calc(0.5rem+max(0px,var(--studio-mac-traffic-light-inset,0px)-var(--sidebar-width-icon,3rem)))]",
+              view.mode === "compare" &&
+              "right-0 left-auto w-auto bg-transparent pl-0 pr-3 md:pr-4",
             )}
-            {view.mode !== "compare" && currentProjectId && (
-              <nav
-                aria-label="Project location"
-                className="flex h-[var(--studio-chat-control-height,34px)] min-w-0 items-center gap-1.5 self-center text-ui-13p5 tracking-nav text-muted-foreground"
-              >
-                <ProjectSwitcher
-                  currentProject={currentProject}
-                  projects={projects}
-                  isLoading={projectsLoading}
-                  onSelectProject={openProjectLanding}
-                  onViewAllProjects={openProjectsList}
-                />
-                {currentProject && activeThreadId ? (
-                  <>
-                    <span className="shrink-0" aria-hidden={true}>
-                      /
-                    </span>
-                    <span className="min-w-0 truncate">
-                      {currentChatTitle ?? "New chat"}
-                    </span>
-                  </>
-                ) : null}
-              </nav>
-            )}
-            {pendingNativeModelIntent && view.mode !== "compare" ? (
-              <NativeModelChip
-                intent={pendingNativeModelIntent}
-                nativeReadsDisabled={!nativePathLeasesSupported}
-                onLoad={() =>
-                  loadNativeModelIntent(
-                    pendingNativeModelIntent,
-                    "Loading selected local GGUF model.",
-                  )
-                }
-              />
-            ) : null}
-            {loadingModel && loadToastDismissed ? (
-              <ModelLoadInlineStatus
-                label={
-                  loadProgress?.phase === "starting"
-                    ? "Starting model…"
-                    : loadingModel.isDownloaded || loadingModel.isCachedLora
-                      ? "Loading model…"
-                      : "Downloading model…"
-                }
-                title={
-                  loadingModel.isDownloaded
-                    ? `Loading ${loadingModel.displayName} from cache.`
-                    : loadingModel.isCachedLora
-                      ? `Loading ${loadingModel.displayName} into memory.`
-                      : `Loading ${loadingModel.displayName}. This may include downloading.`
-                }
-                progressPercent={loadProgress?.percent}
-                progressLabel={loadProgress?.label}
-                onStop={cancelLoading}
-              />
-            ) : null}
-            {!loadingModel && modelsError ? (
-              <div
-                className="relative top-0.5 pl-0.5"
-                role="status"
-                aria-live="polite"
-              >
-                <CopyableErrorChip message={modelsError} />
-              </div>
-            ) : null}
-          </div>
-          <div className="pointer-events-auto ml-auto flex items-center gap-1">
-            {view.mode === "single" && (contextUsage || contextWindowKnown) ? (
-              <ContextUsageBar
-                used={contextUsage?.totalTokens ?? null}
-                // null on external providers; the bar handles that.
-                total={ggufContextLength}
-                cached={contextUsage?.cachedTokens}
-                cacheWrites={contextUsage?.cacheWriteTokens}
-                promptTokens={contextUsage?.promptTokens}
-                completionTokens={contextUsage?.completionTokens}
-                className="h-[var(--studio-chat-control-height,34px)]"
-              />
-            ) : null}
-            {view.mode === "single" && (
-              <Tooltip>
-                <TooltipPrimitive.Trigger asChild={true}>
-                  <button
-                    type="button"
-                    onClick={toggleIncognito}
-                    className={cn(
-                      "flex h-[30px] cursor-pointer items-center gap-1.5 rounded-[10px] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
-                      incognito
-                        ? "bg-primary/15 px-2 font-medium text-primary text-xs hover:bg-primary/20"
-                        : "size-[30px] justify-center text-nav-fg hover:bg-nav-surface-hover hover:text-black dark:hover:text-white",
-                    )}
-                    aria-label={incognitoLabel}
-                    aria-pressed={incognito}
-                  >
-                    <HugeiconsIcon
-                      icon={BubbleChatTemporaryIcon}
-                      strokeWidth={1.75}
-                      className="size-icon shrink-0"
-                    />
-                    {incognito && (
-                      <span className="text-xs">{t("chat.toolbar.temporaryChatActive")}</span>
-                    )}
-                  </button>
-                </TooltipPrimitive.Trigger>
-                <TooltipContent
-                  side="bottom"
-                  sideOffset={6}
-                  className="tooltip-compact"
+          >
+            <div className="pointer-events-auto flex items-center gap-1">
+              {isTauri && !isMobile && !pinned && view.mode !== "compare" && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  title="New chat"
+                  aria-label="New chat"
+                  onClick={handleDesktopNewChat}
+                  className="!size-[30px] rounded-[10px] text-muted-foreground"
                 >
-                  {incognitoLabel}
-                </TooltipContent>
-              </Tooltip>
-            )}
-            {view.mode === "single" &&
-            latestResearchRunId &&
-            latestResearchRunStatus ? (
-              <Tooltip>
-                <TooltipPrimitive.Trigger asChild={true}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (openResearchRunId === latestResearchRunId) {
-                        closeResearchPanel();
-                        return;
-                      }
-                      setSettingsOpen(false);
-                      closeArtifactSurface();
-                      openResearchPanel(latestResearchRunId);
-                    }}
-                    className="relative flex size-[30px] cursor-pointer items-center justify-center rounded-[10px] text-nav-fg transition-colors hover:bg-nav-surface-hover hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:hover:text-white"
-                    aria-label={t("chat.toolbar.researchActivity")}
-                    aria-pressed={openResearchRunId === latestResearchRunId}
-                  >
-                    <HugeiconsIcon
-                      icon={Telescope02Icon}
-                      className="size-icon"
-                      strokeWidth={1.75}
-                    />
-                    {!['completed', 'failed', 'cancelled'].includes(latestResearchRunStatus) ? (
-                      <span className="absolute right-1 top-1 size-1.5 rounded-full bg-primary ring-2 ring-background" />
-                    ) : null}
-                  </button>
-                </TooltipPrimitive.Trigger>
-                <TooltipContent side="bottom" sideOffset={6} className="tooltip-compact">
-                  {t("chat.toolbar.researchActivity")}
-                </TooltipContent>
-              </Tooltip>
-            ) : null}
-            {!settingsOpen && (
-              <Tooltip>
-                <TooltipPrimitive.Trigger asChild={true}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      useResearchRunStore.getState().closePanel();
-                      setSettingsOpen(true);
-                    }}
-                    className="flex size-[30px] cursor-pointer items-center justify-center rounded-[10px] text-nav-fg transition-colors hover:bg-nav-surface-hover hover:text-black dark:hover:text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                    aria-label={t("chat.toolbar.openRunSettings")}
-                  >
-                    <HugeiconsIcon
-                      icon={LayoutAlignRightIcon}
-                      strokeWidth={1.75}
-                      className="size-icon"
-                    />
-                  </button>
-                </TooltipPrimitive.Trigger>
-                <TooltipContent
-                  side="bottom"
-                  sideOffset={6}
-                  className="tooltip-compact"
+                  <HugeiconsIcon
+                    icon={PencilEdit02Icon}
+                    strokeWidth={1.75}
+                    className="size-icon"
+                  />
+                </Button>
+              )}
+              {view.mode !== "compare" && currentProjectId && (
+                <nav
+                  aria-label="Project location"
+                  className="flex h-[var(--studio-chat-control-height,34px)] min-w-0 items-center gap-1.5 self-center text-ui-13p5 tracking-nav text-muted-foreground"
                 >
-                  {t("chat.toolbar.openRunSettings")}
-                </TooltipContent>
-              </Tooltip>
-            )}
+                  <ProjectSwitcher
+                    currentProject={currentProject}
+                    projects={projects}
+                    isLoading={projectsLoading}
+                    onSelectProject={openProjectLanding}
+                    onViewAllProjects={openProjectsList}
+                  />
+                  {currentProject && activeThreadId ? (
+                    <>
+                      <span className="shrink-0" aria-hidden={true}>
+                        /
+                      </span>
+                      <span className="min-w-0 truncate">
+                        {currentChatTitle ?? "New chat"}
+                      </span>
+                    </>
+                  ) : null}
+                </nav>
+              )}
+              {pendingNativeModelIntent && view.mode !== "compare" ? (
+                <NativeModelChip
+                  intent={pendingNativeModelIntent}
+                  nativeReadsDisabled={!nativePathLeasesSupported}
+                  onLoad={() =>
+                    loadNativeModelIntent(
+                      pendingNativeModelIntent,
+                      "Loading selected local GGUF model.",
+                    )
+                  }
+                />
+              ) : null}
+              {loadingModel ? (
+                <ModelLoadInlineStatus
+                  label={
+                    loadProgress?.phase === "starting"
+                      ? t("picker.startingModel")
+                      : loadingModel.isDownloaded || loadingModel.isCachedLora
+                        ? t("picker.loadingModel")
+                        : t("picker.downloadingModel")
+                  }
+                  title={
+                    loadingModel.isDownloaded
+                      ? t("picker.loadingFromCache", { name: loadingModel.displayName })
+                      : loadingModel.isCachedLora
+                        ? t("picker.loadingInMemory", { name: loadingModel.displayName })
+                        : t("picker.loadingWithDownload", { name: loadingModel.displayName })
+                  }
+                  progressPercent={loadProgress?.percent}
+                  progressLabel={loadProgress?.label}
+                  stopLabel={t("picker.stop")}
+                  onStop={cancelLoading}
+                />
+              ) : null}
+              {!loadingModel && modelsError ? (
+                <div
+                  className="relative top-0.5 pl-0.5"
+                  role="status"
+                  aria-live="polite"
+                >
+                  <CopyableErrorChip message={modelsError} />
+                </div>
+              ) : null}
+            </div>
+            <div className="pointer-events-auto ml-auto flex items-center gap-1">
+              {view.mode === "single" && (contextUsage || contextWindowKnown) ? (
+                <ContextUsageBar
+                  used={contextUsage?.totalTokens ?? null}
+                  // null on external providers; the bar handles that.
+                  total={ggufContextLength}
+                  cached={contextUsage?.cachedTokens}
+                  cacheWrites={contextUsage?.cacheWriteTokens}
+                  promptTokens={contextUsage?.promptTokens}
+                  completionTokens={contextUsage?.completionTokens}
+                  className="h-[var(--studio-chat-control-height,34px)]"
+                />
+              ) : null}
+              {view.mode === "single" && (
+                <Tooltip>
+                  <TooltipPrimitive.Trigger asChild={true}>
+                    <button
+                      type="button"
+                      onClick={toggleIncognito}
+                      className={cn(
+                        "flex h-[30px] cursor-pointer items-center gap-1.5 rounded-[10px] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+                        incognito
+                          ? "bg-primary/15 px-2 font-medium text-primary text-xs hover:bg-primary/20"
+                          : "size-[30px] justify-center text-nav-fg hover:bg-nav-surface-hover hover:text-black dark:hover:text-white",
+                      )}
+                      aria-label={incognitoLabel}
+                      aria-pressed={incognito}
+                    >
+                      <HugeiconsIcon
+                        icon={BubbleChatTemporaryIcon}
+                        strokeWidth={1.75}
+                        className="size-icon shrink-0"
+                      />
+                      {incognito && (
+                        <span className="text-xs">{t("chat.toolbar.temporaryChatActive")}</span>
+                      )}
+                    </button>
+                  </TooltipPrimitive.Trigger>
+                  <TooltipContent
+                    side="bottom"
+                    sideOffset={6}
+                    className="tooltip-compact"
+                  >
+                    {incognitoLabel}
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              {view.mode === "single" &&
+                latestResearchRunId &&
+                latestResearchRunStatus ? (
+                <Tooltip>
+                  <TooltipPrimitive.Trigger asChild={true}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (openResearchRunId === latestResearchRunId) {
+                          closeResearchPanel();
+                          return;
+                        }
+                        setSettingsOpen(false);
+                        closeArtifactSurface();
+                        openResearchPanel(latestResearchRunId);
+                      }}
+                      className="relative flex size-[30px] cursor-pointer items-center justify-center rounded-[10px] text-nav-fg transition-colors hover:bg-nav-surface-hover hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:hover:text-white"
+                      aria-label={t("chat.toolbar.researchActivity")}
+                      aria-pressed={openResearchRunId === latestResearchRunId}
+                    >
+                      <HugeiconsIcon
+                        icon={Telescope02Icon}
+                        className="size-icon"
+                        strokeWidth={1.75}
+                      />
+                      {!['completed', 'failed', 'cancelled'].includes(latestResearchRunStatus) ? (
+                        <span className="absolute right-1 top-1 size-1.5 rounded-full bg-primary ring-2 ring-background" />
+                      ) : null}
+                    </button>
+                  </TooltipPrimitive.Trigger>
+                  <TooltipContent side="bottom" sideOffset={6} className="tooltip-compact">
+                    {t("chat.toolbar.researchActivity")}
+                  </TooltipContent>
+                </Tooltip>
+              ) : null}
+              {!settingsOpen && (
+                <Tooltip>
+                  <TooltipPrimitive.Trigger asChild={true}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        useResearchRunStore.getState().closePanel();
+                        setSettingsOpen(true);
+                      }}
+                      className="flex size-[30px] cursor-pointer items-center justify-center rounded-[10px] text-nav-fg transition-colors hover:bg-nav-surface-hover hover:text-black dark:hover:text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      aria-label={t("chat.toolbar.openRunSettings")}
+                    >
+                      <HugeiconsIcon
+                        icon={LayoutAlignRightIcon}
+                        strokeWidth={1.75}
+                        className="size-icon"
+                      />
+                    </button>
+                  </TooltipPrimitive.Trigger>
+                  <TooltipContent
+                    side="bottom"
+                    sideOffset={6}
+                    className="tooltip-compact"
+                  >
+                    {t("chat.toolbar.openRunSettings")}
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </div>
           </div>
+
+          {view.mode === "single" && (
+            <ChatModelNotice
+              threadId={view.threadId ?? newChatThreadId ?? undefined}
+              checkpoint={inferenceParams.checkpoint}
+              selectableModelIds={selectableModelIds}
+              onSwitch={handleSwitchBackToChatModel}
+            />
+          )}
+
+          {view.mode === "project" ? (
+            <ProjectLanding
+              key={view.projectId}
+              projectId={view.projectId}
+              projectName={currentProject?.name ?? "Project"}
+              items={currentProjectItems}
+            />
+          ) : view.mode === "single" ? (
+            // Keyed by project only (not thread / new-chat nonce) so switching threads or
+            // starting a New Chat reuses the same provider and switches in place. This keeps
+            // an in-flight generation streaming in the background (assistant-ui keeps every
+            // alive thread's runtime mounted) instead of remounting the provider and cutting
+            // it off; returning to that thread reattaches the live run rather than reloading
+            // a half-saved one.
+            <ChatComposerModelSelectorProvider
+              selector={
+                <ModelSelector
+                  models={models}
+                  loraModels={loraModels}
+                  externalModels={externalModels}
+                  externalConnections={externalConnections}
+                  value={inferenceParams.checkpoint}
+                  loaded={chatModelLoaded({
+                    checkpoint: inferenceParams.checkpoint,
+                    isExternalModel: isExternalModelId(inferenceParams.checkpoint),
+                    isExternalMissing: Boolean(
+                      missingExternalModel(
+                        inferenceParams.checkpoint,
+                        externalModels,
+                        externalConnections,
+                      ),
+                    ),
+                    residentCheckpoint,
+                  })}
+                  activeGgufVariant={activeGgufVariant}
+                  activeModelConfig={activeModelConfig}
+                  activeGgufContextLength={ggufContextLength}
+                  onValueChange={handleCheckpointChange}
+                  onEject={handleEject}
+                  onFoldersChange={refreshLocalModels}
+                  onModelsChange={refreshModelLists}
+                  deleteDisabled={modelOperationInProgress}
+                  variant="muted"
+                  size="sm"
+                  open={active && modelSelectorOpen}
+                  onOpenChange={handleModelSelectorOpenChange}
+                  triggerDataTour="chat-model-selector"
+                  contentDataTour="chat-model-selector-popover"
+                  showCloudIndicator={isExternalModel}
+                  className="max-w-full !pr-2"
+                />
+              }
+            >
+              <NativeAttachmentTargetContext.Provider value={artifactViewKey}>
+                <SingleContent
+                  key={view.projectId ?? "single"}
+                  threadId={view.threadId}
+                  newThreadNonce={view.newThreadNonce}
+                  projectId={view.projectId}
+                  artifact={selectedArtifact}
+                  artifactSurface={artifactSurface}
+                  onCloseArtifact={closeArtifactSurface}
+                />
+              </NativeAttachmentTargetContext.Provider>
+            </ChatComposerModelSelectorProvider>
+          ) : (
+            <CompareContent
+              key={view.pairId}
+              pairId={view.pairId}
+              projectId={view.projectId}
+              models={models}
+              loraModels={loraModels}
+              externalModels={externalModels}
+              externalConnections={externalConnections}
+              onFoldersChange={refreshLocalModels}
+              onModelsChange={refreshModelLists}
+              deleteDisabled={modelOperationInProgress}
+              onExitCompare={exitCompare}
+            />
+          )}
+
+          {active && showArtifactOverlay && selectedArtifact ? (
+            <ArtifactSurface
+              artifact={selectedArtifact}
+              variant="overlay"
+              onClose={closeArtifactSurface}
+            />
+          ) : null}
         </div>
 
-        {view.mode === "single" && (
-          <ChatModelNotice
-            threadId={view.threadId ?? newChatThreadId ?? undefined}
-            checkpoint={inferenceParams.checkpoint}
-            selectableModelIds={selectableModelIds}
-            onSwitch={handleSwitchBackToChatModel}
-          />
-        )}
-
-        {view.mode === "project" ? (
-          <ProjectLanding
-            key={view.projectId}
-            projectId={view.projectId}
-            projectName={currentProject?.name ?? "Project"}
-            items={currentProjectItems}
-          />
-        ) : view.mode === "single" ? (
-          // Keyed by project only (not thread / new-chat nonce) so switching threads or
-          // starting a New Chat reuses the same provider and switches in place. This keeps
-          // an in-flight generation streaming in the background (assistant-ui keeps every
-          // alive thread's runtime mounted) instead of remounting the provider and cutting
-          // it off; returning to that thread reattaches the live run rather than reloading
-          // a half-saved one.
-          <ChatComposerModelSelectorProvider
-            selector={
-              <ModelSelector
-                models={models}
-                loraModels={loraModels}
-                externalModels={externalModels}
-                externalConnections={externalConnections}
-                value={inferenceParams.checkpoint}
-                loaded={chatModelLoaded({
-                  checkpoint: inferenceParams.checkpoint,
-                  isExternalModel: isExternalModelId(inferenceParams.checkpoint),
-                  isExternalMissing: Boolean(
-                    missingExternalModel(
-                      inferenceParams.checkpoint,
-                      externalModels,
-                      externalConnections,
-                    ),
-                  ),
-                  residentCheckpoint,
-                })}
-                activeGgufVariant={activeGgufVariant}
-                activeModelConfig={activeModelConfig}
-                activeGgufContextLength={ggufContextLength}
-                onValueChange={handleCheckpointChange}
-                onEject={handleEject}
-                onFoldersChange={refreshLocalModels}
-                onModelsChange={refreshModelLists}
-                deleteDisabled={modelOperationInProgress}
-                variant="muted"
-                size="sm"
-                open={active && modelSelectorOpen}
-                onOpenChange={handleModelSelectorOpenChange}
-                triggerDataTour="chat-model-selector"
-                contentDataTour="chat-model-selector-popover"
-                showCloudIndicator={isExternalModel}
-                className="max-w-full !pr-2"
+        <ChatSettingsPanel
+          open={active && settingsOpen}
+          onOpenChange={(open) => {
+            setSettingsOpen(open);
+          }}
+          params={inferenceParams}
+          onParamsChange={setInferenceParams}
+          modelConfig={
+            view.mode !== "compare" && activeModelConfig && !modelLoading ? (
+              <SidebarModelConfig
+                modelId={inferenceParams.checkpoint}
+                ggufVariant={activeGgufVariant ?? null}
+                isGguf={activeModelIsGguf}
+                isDiffusion={activeModelIsDiffusion}
+                nativeContextLength={ggufNativeContextLength}
+                loadedContextLength={ggufContextLength}
+                loadedConfig={activeModelConfig}
+                onReload={handleReloadActiveModel}
               />
-            }
-          >
-            <NativeAttachmentTargetContext.Provider value={artifactViewKey}>
-              <SingleContent
-                key={view.projectId ?? "single"}
-                threadId={view.threadId}
-                newThreadNonce={view.newThreadNonce}
-                projectId={view.projectId}
-                artifact={selectedArtifact}
-                artifactSurface={artifactSurface}
-                onCloseArtifact={closeArtifactSurface}
-              />
-            </NativeAttachmentTargetContext.Provider>
-          </ChatComposerModelSelectorProvider>
-        ) : (
-          <CompareContent
-            key={view.pairId}
-            pairId={view.pairId}
-            projectId={view.projectId}
-            models={models}
-            loraModels={loraModels}
-            externalModels={externalModels}
-            externalConnections={externalConnections}
-            onFoldersChange={refreshLocalModels}
-            onModelsChange={refreshModelLists}
-            deleteDisabled={modelOperationInProgress}
-            onExitCompare={exitCompare}
-          />
-        )}
-
-        {active && showArtifactOverlay && selectedArtifact ? (
-          <ArtifactSurface
-            artifact={selectedArtifact}
-            variant="overlay"
-            onClose={closeArtifactSurface}
-          />
-        ) : null}
+            ) : null
+          }
+          isExternalModel={isExternalModel}
+          providerCapabilities={activeProviderCapabilities}
+          activeExternalProvider={activeExternalProvider}
+          onExternalProviderChange={(updatedProvider) => {
+            setExternalProviders(
+              externalProviders.map((provider) =>
+                provider.id === updatedProvider.id ? updatedProvider : provider,
+              ),
+            );
+          }}
+          externalProviderType={activeExternalProviderType}
+        />
       </div>
-
-      <ChatSettingsPanel
-        open={active && settingsOpen}
-        onOpenChange={(open) => {
-          setSettingsOpen(open);
-        }}
-        params={inferenceParams}
-        onParamsChange={setInferenceParams}
-        modelConfig={
-          view.mode !== "compare" && activeModelConfig && !modelLoading ? (
-            <SidebarModelConfig
-              modelId={inferenceParams.checkpoint}
-              ggufVariant={activeGgufVariant ?? null}
-              isGguf={activeModelIsGguf}
-              isDiffusion={activeModelIsDiffusion}
-              nativeContextLength={ggufNativeContextLength}
-              loadedContextLength={ggufContextLength}
-              loadedConfig={activeModelConfig}
-              onReload={handleReloadActiveModel}
-            />
-          ) : null
-        }
-        isExternalModel={isExternalModel}
-        providerCapabilities={activeProviderCapabilities}
-        activeExternalProvider={activeExternalProvider}
-        onExternalProviderChange={(updatedProvider) => {
-          setExternalProviders(
-            externalProviders.map((provider) =>
-              provider.id === updatedProvider.id ? updatedProvider : provider,
-            ),
-          );
-        }}
-        externalProviderType={activeExternalProviderType}
-      />
-    </div>
     </ChatActiveContext.Provider>
   );
 }

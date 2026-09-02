@@ -85,6 +85,7 @@ type ModelLoadInlineStatusProps = {
   title: string;
   progressPercent?: number | null;
   progressLabel?: string | null;
+  stopLabel?: string;
   onStop?: () => void;
 };
 
@@ -93,6 +94,7 @@ export function ModelLoadInlineStatus({
   title,
   progressPercent,
   progressLabel,
+  stopLabel,
   onStop,
 }: ModelLoadInlineStatusProps) {
   const hasProgress = typeof progressPercent === "number";
@@ -129,7 +131,7 @@ export function ModelLoadInlineStatus({
           className="shrink-0 text-ui-11"
           onClick={onStop}
         >
-          Stop
+          {stopLabel ?? "Stop"}
         </Button>
       ) : null}
     </div>

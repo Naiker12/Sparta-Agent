@@ -310,8 +310,9 @@ class TextAttachmentAdapter implements AttachmentAdapter {
   // (assistant-ui's fileMatchesAccept supports ".ext" entries). Covers svg, code,
   // config and other plain-text formats; html keeps its own adapter below.
   accept = [
+    "text/*",
     "text/plain,text/markdown,text/csv,text/xml,text/json,text/css",
-    "application/json,application/xml,image/svg+xml",
+    "application/json,application/xml,application/javascript,application/x-yaml,image/svg+xml",
     ".txt,.text,.log,.md,.markdown,.mdx,.rst,.csv,.tsv",
     ".json,.jsonl,.ndjson,.xml,.yaml,.yml,.toml,.ini,.cfg,.conf,.env,.properties",
     ".css,.scss,.sass,.less,.svg",
@@ -533,6 +534,11 @@ function clip(input: string, maxLen: number): string {
 
 function extractTextParts(m: ThreadMessage | undefined): string {
   if (!m) return "";
+  // assistant-ui normally supplies content parts, but restored and locally
+  // created user messages can still arrive as a plain string. Treating that
+  // valid form as an empty array made the opening title stay "New Chat".
+  const rawContent: unknown = m.content;
+  if (typeof rawContent === "string") return rawContent.trim();
   const content = Array.isArray(m.content) ? m.content : [];
   return content
     .filter((p): p is Extract<typeof p, { type: "text" }> => p.type === "text")
@@ -656,10 +662,13 @@ function cloneAttachments(
 }
 
 function toThreadMessage(m: MessageRecord): ThreadMessage {
+  const rawContent: unknown = m.content;
   const content =
-    Array.isArray(m.content) && m.content.length > 0
-      ? cloneContent(m.content)
-      : [{ type: "text" as const, text: "" }];
+    typeof rawContent === "string"
+      ? [{ type: "text" as const, text: rawContent }]
+      : Array.isArray(rawContent) && rawContent.length > 0
+        ? cloneContent(rawContent as ThreadMessage["content"])
+        : [{ type: "text" as const, text: "" }];
 
   if (m.role === "user") {
     return {
@@ -1229,11 +1238,11 @@ function useStudioRuntimeAdapters(
                     ),
                     ...(Array.isArray(attachments)
                       ? {
-                          attachments: attachments.filter(
-                            (attachment) =>
-                              attachment.id !== attachmentId,
-                          ),
-                        }
+                        attachments: attachments.filter(
+                          (attachment) =>
+                            attachment.id !== attachmentId,
+                        ),
+                      }
                       : {}),
                   } as typeof item.message,
                 };
@@ -1362,6 +1371,24 @@ function useStudioRuntimeAdapters(
           return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
         });
 
+        // Repair existing rows created while the opening title path could not
+        // read a plain-string message. This also makes a restored "Nuevo
+        // chat" adopt its first prompt as soon as it is opened.
+        const storedThread = await ensureStoredChatThread(remoteId).catch(
+          () => undefined,
+        );
+        if (storedThread?.title === "New Chat") {
+          const openingUser = msgs.find((message) => message.role === "user");
+          if (openingUser) {
+            const title = fallbackTitleFromUserText(
+              titleTextOf(toThreadMessage(openingUser)),
+            );
+            if (title !== "New Chat") {
+              await updateStoredChatThread(remoteId, { title });
+            }
+          }
+        }
+
         // Restore context usage from last assistant message if model matches.
         const lastAssistant = [...msgs]
           .reverse()
@@ -1369,13 +1396,13 @@ function useStudioRuntimeAdapters(
         const savedUsage = (lastAssistant?.metadata as Record<string, unknown>)
           ?.contextUsage as
           | {
-              promptTokens: number;
-              completionTokens: number;
-              totalTokens: number;
-              cachedTokens: number;
-              cacheWriteTokens?: number;
-              modelId?: string;
-            }
+            promptTokens: number;
+            completionTokens: number;
+            totalTokens: number;
+            cachedTokens: number;
+            cacheWriteTokens?: number;
+            modelId?: string;
+          }
           | undefined;
         const store = useChatRuntimeStore.getState();
         // Window check applies only when a local GGUF window is known; external
@@ -1389,7 +1416,7 @@ function useStudioRuntimeAdapters(
         const modelMatches = savedUsage?.modelId
           ? savedUsage.modelId === store.params.checkpoint
           : typeof store.ggufContextLength === "number" &&
-            store.ggufContextLength > 0;
+          store.ggufContextLength > 0;
         // The value, not a boolean: the writes below need the narrowing.
         const restoredUsage =
           savedUsage && withinLocalLimit && modelMatches ? savedUsage : null;
@@ -1493,7 +1520,7 @@ function useStudioRuntimeAdapters(
           const createdAt =
             existingMessage?.createdAt ??
             message.createdAt?.getTime?.() ??
-              Date.now();
+            Date.now();
           const existingMetadata = existingMessage?.metadata;
           const incomingRevision = Number(
             (custom as Record<string, unknown> | undefined)?.serverRevision ?? -1,
@@ -1527,6 +1554,23 @@ function useStudioRuntimeAdapters(
             ...(metadata && { metadata }),
             createdAt,
           });
+          // Give every new conversation a useful name as soon as the opening
+          // prompt is safely stored. assistant-ui may request generateTitle
+          // only after a model response, which left "New Chat" behind when a
+          // run was interrupted, the tab changed, or the model was still
+          // loading. The later title generator honours this title instead of
+          // replacing it, so this is also the deterministic fallback.
+          if (message.role === "user") {
+            const thread = await ensureStoredChatThread(remoteId).catch(
+              () => undefined,
+            );
+            if (thread?.title === "New Chat") {
+              const title = fallbackTitleFromUserText(titleTextOf(message));
+              if (title !== "New Chat") {
+                await updateStoredChatThread(remoteId, { title });
+              }
+            }
+          }
           await throwIfHistoryWasCleared(remoteId);
         })();
         return trackHistoryAppend(message.id, write);
@@ -2029,7 +2073,7 @@ function CancelRegistrar(): ReactElement | null {
       // assistant-ui enters its running state before adapter preflight turns
       // on runningByThreadId. Keep the only cancel handle after navigation,
       // then release it when assistant-ui reports that the run actually ended.
-      let unsubscribe = () => {};
+      let unsubscribe = () => { };
       unsubscribe = thread.subscribe(() => {
         if (thread.getState().isRunning) {
           return;
@@ -2103,7 +2147,7 @@ function ThreadBackendAutosave({
   const queueSave = useCallback(
     (threadId: string): void => {
       saveChainRef.current = saveChainRef.current
-        .catch(() => {})
+        .catch(() => { })
         .then(async () => {
           await pendingFirstSavesRef.current.get(threadId);
           await saveThread(threadId);

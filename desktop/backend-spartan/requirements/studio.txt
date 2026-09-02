@@ -28,6 +28,9 @@ huggingface-hub==0.36.2; python_version < "3.10"
 # way, so this is defence in depth, not the bound itself.
 urllib3>=2.3.0
 structlog>=24.1.0
+# Used by the desktop status endpoint and by the local Unsloth runtime. Keep it
+# explicit: a GGUF-only installation does not otherwise bring it in.
+psutil==7.2.2
 diceware==1.0.1
 ddgs==9.14.4; python_version >= "3.10"
 ddgs==9.8.0; python_version < "3.10"

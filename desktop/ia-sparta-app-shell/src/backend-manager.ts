@@ -107,6 +107,31 @@ export class BackendManager {
     onProgress("Instalando dependencias del motor local...");
     await this.run(venvPython, ["-m", "pip", "install", "-r", requirements], backendDir, onProgress);
 
+    // GGUF models from LM Studio and Ollama run through llama.cpp.  The backend
+    // intentionally has its own writable state directory, so installing the
+    // runner under a global Unsloth directory leaves a packaged Sparta unable
+    // to discover it.  Provision the official prebuilt into this runtime once
+    // during bootstrap instead.
+    const llamaRoot = path.join(runtimeDir, "studio-data", "llama.cpp");
+    if (this.hasLlamaServer(llamaRoot)) {
+      onProgress("Motor GGUF (llama.cpp) ya está instalado.");
+    } else {
+      onProgress("Instalando soporte local para modelos GGUF (LM Studio y Ollama)...");
+      // The installer is distributed with Unsloth.  It selects the correct
+      // CPU/GPU prebuilt for the host, so do not hard-code CUDA or a platform
+      // asset here.
+      await this.run(venvPython, ["-m", "pip", "install", "unsloth"], backendDir, onProgress);
+      await this.run(
+        venvPython,
+        ["-m", "studio.install_llama_prebuilt", "--install-dir", llamaRoot],
+        backendDir,
+        onProgress,
+      );
+      if (!this.hasLlamaServer(llamaRoot)) {
+        throw new Error("No se pudo validar el motor GGUF instalado. Revisa la conexión y el espacio disponible e inténtalo de nuevo.");
+      }
+    }
+
     onProgress("Verificando dependencias críticas del motor...");
     await this.run(
       venvPython,
@@ -208,5 +233,14 @@ export class BackendManager {
       process.platform === "win32" ? "python.exe" : "python",
     );
     return existsSync(python) ? { command: python, args: [] } : undefined;
+  }
+
+  private hasLlamaServer(llamaRoot: string): boolean {
+    const binary = process.platform === "win32" ? "llama-server.exe" : "llama-server";
+    return [
+      path.join(llamaRoot, binary),
+      path.join(llamaRoot, "build", "bin", binary),
+      path.join(llamaRoot, "build", "bin", "Release", binary),
+    ].some(existsSync);
   }
 }
