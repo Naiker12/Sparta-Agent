@@ -72,6 +72,9 @@ export async function getStoredChatThreadReadResult(
   if (isChatThreadDeleted(threadId)) {
     return { thread: undefined, cacheable: true };
   }
+  if (isAssistantLocalThreadId(threadId)) {
+    return { thread: undefined, cacheable: false };
+  }
 
   // Intentar consultar al backend
   let backendThread: ThreadRecord | null = null;
@@ -119,6 +122,7 @@ export async function ensureStoredChatThread(
 ): Promise<ThreadRecord | undefined> {
   if (isThreadIncognito(threadId)) return undefined;
   if (isChatThreadDeleted(threadId)) return undefined;
+  if (isAssistantLocalThreadId(threadId)) return fallback;
 
   await awaitStoredChatThreadWrites(threadId);
 

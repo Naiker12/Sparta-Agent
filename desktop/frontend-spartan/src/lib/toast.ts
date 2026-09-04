@@ -60,19 +60,36 @@ function localizeOptions(options?: ExternalToast): ExternalToast | undefined {
   return { ...options, description: localizeToast(options.description) };
 }
 
-export const toast = Object.assign(sonnerToast, {
+const rawSuccess = sonnerToast.success.bind(sonnerToast);
+const rawError = sonnerToast.error.bind(sonnerToast);
+const rawWarning = sonnerToast.warning.bind(sonnerToast);
+const rawInfo = sonnerToast.info.bind(sonnerToast);
+const rawMessage = sonnerToast.message.bind(sonnerToast);
+const rawLoading = sonnerToast.loading.bind(sonnerToast);
+const rawDismiss = sonnerToast.dismiss.bind(sonnerToast);
+const rawCustom = sonnerToast.custom.bind(sonnerToast);
+
+const baseToast = (message: string | React.ReactNode, data?: ExternalToast) =>
+  sonnerToast(localizeToast(message), localizeOptions(data));
+
+export const toast = Object.assign(baseToast, {
+  ...sonnerToast,
   success: (message: string | React.ReactNode, options?: ExternalToast) =>
-    sonnerToast.success(localizeToast(message), localizeOptions(options)),
+    rawSuccess(localizeToast(message), localizeOptions(options)),
   error: (message: string | React.ReactNode, options?: ExternalToast) =>
-    sonnerToast.error(localizeToast(message), localizeOptions(options)),
+    rawError(localizeToast(message), localizeOptions(options)),
   warning: (message: string | React.ReactNode, options?: ExternalToast) =>
-    sonnerToast.warning(localizeToast(message), localizeOptions(options)),
+    rawWarning(localizeToast(message), localizeOptions(options)),
   info: (message: string | React.ReactNode, options?: ExternalToast) =>
-    sonnerToast.info(localizeToast(message), localizeOptions(options)),
+    rawInfo(localizeToast(message), localizeOptions(options)),
   message: (message: string | React.ReactNode, options?: ExternalToast) =>
-    sonnerToast.message(localizeToast(message), localizeOptions(options)),
+    rawMessage(localizeToast(message), localizeOptions(options)),
   loading: (message: string | React.ReactNode, options?: ExternalToast) =>
-    sonnerToast.loading(localizeToast(message), localizeOptions(options)),
+    rawLoading(localizeToast(message), localizeOptions(options)),
+  dismiss: rawDismiss,
+  custom: rawCustom,
+  promise: sonnerToast.promise.bind(sonnerToast),
+  getHistory: sonnerToast.getHistory ? sonnerToast.getHistory.bind(sonnerToast) : () => [],
 });
 
 function createLoadingToastIcon() {

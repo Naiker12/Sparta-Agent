@@ -1,4 +1,5 @@
 import { authFetch } from "@/features/auth";
+import { isAssistantLocalThreadId } from "../../utils/thread-ids";
 import type { MessageRecord } from "../../types";
 import {
   notifyChatHistoryUpdated,
@@ -9,6 +10,7 @@ import {
 export async function listChatMessages(
   threadId: string,
 ): Promise<MessageRecord[]> {
+  if (isAssistantLocalThreadId(threadId)) return [];
   const response = await authFetch(
     `/api/chat/threads/${encodeURIComponent(threadId)}/messages`,
   );

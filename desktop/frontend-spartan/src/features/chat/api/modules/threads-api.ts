@@ -1,4 +1,5 @@
 import { authFetch } from "@/features/auth";
+import { isAssistantLocalThreadId } from "../../utils/thread-ids";
 import {
   combineAbortSignals,
   disposableTimeoutSignal,
@@ -45,6 +46,9 @@ export async function getChatThread(
   threadId: string,
   options: { bounded?: boolean; timeoutMs?: number; signal?: AbortSignal } = {},
 ): Promise<ThreadRecord | null> {
+  if (isAssistantLocalThreadId(threadId)) {
+    return null;
+  }
   const timeout =
     options.bounded || options.timeoutMs !== undefined
       ? disposableTimeoutSignal(options.timeoutMs ?? THREAD_WRITE_TIMEOUT_MS)
