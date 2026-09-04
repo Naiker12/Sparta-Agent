@@ -1,6 +1,7 @@
 """Pydantic schemas and dataclasses for settings API."""
 
 import re
+from urllib.parse import unquote, urlsplit
 from typing import Any, List, Literal, Optional, get_args
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, ValidationError, field_validator
 

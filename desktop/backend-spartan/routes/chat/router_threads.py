@@ -49,6 +49,7 @@ def list_threads(
     pair_id: Optional[str] = Query(None),
     project_id: Optional[str] = Query(None),
     include_archived: bool = Query(True),
+    require_messages: bool = Query(False),
     current_subject: str = Depends(get_current_subject),
 ):
     threads = list_chat_threads(
@@ -56,6 +57,7 @@ def list_threads(
         pair_id = pair_id,
         project_id = project_id,
         include_archived = include_archived,
+        require_messages = require_messages,
     )
     return ChatThreadListResponse(threads = [thread_from_row(t) for t in threads])
 

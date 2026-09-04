@@ -63,7 +63,7 @@ function chatCount(n: number): string {
 }
 
 export function ManageChatsView() {
-  const { items } = useChatSidebarItems({ requireMessages: false });
+  const { items } = useChatSidebarItems({ requireMessages: true });
   const { projects } = useChatProjects();
   const navigate = useNavigate();
   const closeSettings = useSettingsDialogStore((s) => s.closeDialog);

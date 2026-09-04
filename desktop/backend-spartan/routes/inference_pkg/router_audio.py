@@ -20,6 +20,8 @@ from auth import get_current_subject
 from core.inference.api_monitor import api_monitor
 from core.inference.llama_cpp import LlamaCppBackend
 from models.inference import AudioSpeechRequest, ChatCompletionRequest
+from core.inference.audio_errors import AudioBackendUnsupportedError, AudioGenerationCancelledError
+from utils.utils import safe_error_detail
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +37,55 @@ def _get_inf_attr(name: str, fallback=None):
     if mod and hasattr(mod, name):
         return getattr(mod, name)
     return fallback
+
+def get_inference_backend():
+    fn = _get_inf_attr("get_inference_backend")
+    return fn() if fn else None
+
+def public_model_id(model_id):
+    fn = _get_inf_attr("public_model_id")
+    return fn(model_id) if fn else model_id
+
+def _fill_recommended_sampling_openai(payload, model_id):
+    fn = _get_inf_attr("_fill_recommended_sampling_openai")
+    if fn:
+        fn(payload, model_id)
+
+class _TrackedCancelProxy:
+    def __call__(self, *args, **kwargs):
+        cls = _get_inf_attr("_TrackedCancel")
+        if cls:
+            return cls(*args, **kwargs)
+        from contextlib import nullcontext
+        return nullcontext()
+
+    def for_payload(self, *args, **kwargs):
+        cls = _get_inf_attr("_TrackedCancel")
+        if cls and hasattr(cls, "for_payload"):
+            return cls.for_payload(*args, **kwargs)
+        from contextlib import nullcontext
+        return nullcontext()
+
+_TrackedCancel = _TrackedCancelProxy()
+
+async def _await_disconnect_then_cancel(*args, **kwargs):
+    fn = _get_inf_attr("_await_disconnect_then_cancel")
+    if fn:
+        return await fn(*args, **kwargs)
+
+async def _direct_llama_request(*args, **kwargs):
+    fn = _get_inf_attr("_direct_llama_request")
+    if fn:
+        return await fn(*args, **kwargs)
+
+async def _stop_local_disconnect_cancel_watcher(*args, **kwargs):
+    fn = _get_inf_attr("_stop_local_disconnect_cancel_watcher")
+    if fn:
+        return await fn(*args, **kwargs)
+
+def _tts_max_new_tokens(voice, text):
+    fn = _get_inf_attr("_tts_max_new_tokens")
+    return fn(voice, text) if fn else 4096
 
 
 def get_llama_cpp_backend():

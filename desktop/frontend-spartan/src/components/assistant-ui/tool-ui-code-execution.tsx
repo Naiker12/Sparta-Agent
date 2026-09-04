@@ -12,6 +12,7 @@ import { CopyIcon, FileTextIcon, TerminalIcon } from "lucide-react";
 import { Tick02Icon } from "@/lib/tick-icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Spinner } from "@/components/ui/spinner";
+import { useT } from "@/i18n";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ToolFallbackContent,
@@ -61,6 +62,7 @@ function truncateResult(text: string): string {
 }
 
 function CopyBtn({ text }: { text: string }) {
+  const t = useT();
   const [copied, setCopied] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -94,7 +96,7 @@ function CopyBtn({ text }: { text: string }) {
       ) : (
         <CopyIcon className="size-3" />
       )}
-      {copied ? "Copied" : "Copy"}
+      {copied ? t("chat.tools.codeExecution.copied") : t("chat.tools.codeExecution.copy")}
     </button>
   );
 }
@@ -130,6 +132,7 @@ const CodeExecutionToolUIImpl: ToolCallMessagePartComponent = ({
   result,
   status,
 }) => {
+  const t = useT();
   const parsedArgs = (args as CodeExecutionArgs) ?? {};
   const kind = parsedArgs.kind ?? "bash";
   const command = parsedArgs.command ?? "";
@@ -144,21 +147,35 @@ const CodeExecutionToolUIImpl: ToolCallMessagePartComponent = ({
   if (kind === "text_editor") {
     Icon = FileTextIcon;
     if (command === "view") {
-      runningLabel = path ? `Viewing ${path}…` : "Viewing file…";
-      completedLabel = path ? `Viewed ${path}` : "Viewed file";
+      runningLabel = path
+        ? t("chat.tools.codeExecution.viewing", { path })
+        : t("chat.tools.codeExecution.viewingFile");
+      completedLabel = path
+        ? t("chat.tools.codeExecution.viewed", { path })
+        : t("chat.tools.codeExecution.viewedFile");
     } else if (command === "create") {
-      runningLabel = path ? `Writing ${path}…` : "Writing file…";
-      completedLabel = path ? `Wrote ${path}` : "Wrote file";
+      runningLabel = path
+        ? t("chat.tools.codeExecution.writing", { path })
+        : t("chat.tools.codeExecution.writingFile");
+      completedLabel = path
+        ? t("chat.tools.codeExecution.wrote", { path })
+        : t("chat.tools.codeExecution.wroteFile");
     } else if (command === "str_replace") {
-      runningLabel = path ? `Editing ${path}…` : "Editing file…";
-      completedLabel = path ? `Edited ${path}` : "Edited file";
+      runningLabel = path
+        ? t("chat.tools.codeExecution.editing", { path })
+        : t("chat.tools.codeExecution.editingFile");
+      completedLabel = path
+        ? t("chat.tools.codeExecution.edited", { path })
+        : t("chat.tools.codeExecution.editedFile");
     } else {
-      runningLabel = "Running file operation…";
-      completedLabel = "File operation";
+      runningLabel = t("chat.tools.codeExecution.runningOp");
+      completedLabel = t("chat.tools.codeExecution.fileOp");
     }
   } else {
-    runningLabel = "Running command…";
-    completedLabel = commandLabel ? `Ran \`${commandLabel}\`` : "Ran command";
+    runningLabel = t("chat.tools.codeExecution.runningCommand");
+    completedLabel = commandLabel
+      ? t("chat.tools.codeExecution.ranCommand", { command: commandLabel })
+      : t("chat.tools.codeExecution.ran");
   }
 
   // Collapse the card once the model resumes streaming prose after the tool

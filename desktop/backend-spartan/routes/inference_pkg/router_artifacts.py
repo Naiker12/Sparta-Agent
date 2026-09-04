@@ -7,6 +7,7 @@ from __future__ import annotations
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Request, Response, status
+from auth.authentication import get_current_subject
 
 studio_router = APIRouter()
 router = studio_router

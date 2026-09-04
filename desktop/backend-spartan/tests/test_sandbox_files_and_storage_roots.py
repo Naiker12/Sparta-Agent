@@ -390,6 +390,59 @@ def test_a_file_in_a_subdirectory_is_reported_and_servable(tmp_path, monkeypatch
     assert "top.txt" in sentinels
 
 
+def test_an_invalid_spreadsheet_is_not_advertised_as_a_download(tmp_path, monkeypatch):
+    """A model can write text and call it .xlsx; the card must not lie."""
+    monkeypatch.setenv("UNSLOTH_STUDIO_SANDBOX_HOME", str(tmp_path / "sb"))
+
+    from core.inference import tools
+
+    tools._workdirs.clear()
+    workdir = Path(tools.get_sandbox_workdir("__LOCALID_invalidxlsx"))
+    before = tools._snapshot_workdir_files(str(workdir))
+    (workdir / "report.xlsx").write_text("this is not an Excel workbook", encoding = "utf-8")
+
+    sentinels = tools._created_file_sentinels(str(workdir), before)
+    files = json.loads(sentinels.split("__FILES__:", 1)[1].split("\n", 1)[0])
+    assert files == []
+    assert "Document validation failed" in sentinels
+    assert "report.xlsx" in sentinels
+
+
+def test_a_valid_spreadsheet_is_advertised_as_a_download(tmp_path, monkeypatch):
+    monkeypatch.setenv("UNSLOTH_STUDIO_SANDBOX_HOME", str(tmp_path / "sb"))
+
+    import openpyxl
+    from core.inference import tools
+
+    tools._workdirs.clear()
+    workdir = Path(tools.get_sandbox_workdir("__LOCALID_validxlsx"))
+    before = tools._snapshot_workdir_files(str(workdir))
+    workbook = openpyxl.Workbook()
+    workbook.active.append(["Project", "Status"])
+    workbook.save(workdir / "report.xlsx")
+    workbook.close()
+
+    sentinels = tools._created_file_sentinels(str(workdir), before)
+    files = json.loads(sentinels.split("__FILES__:", 1)[1].split("\n", 1)[0])
+    assert [entry["name"] for entry in files] == ["report.xlsx"]
+
+
+def test_an_invalid_pdf_is_not_advertised_as_a_download(tmp_path, monkeypatch):
+    monkeypatch.setenv("UNSLOTH_STUDIO_SANDBOX_HOME", str(tmp_path / "sb"))
+
+    from core.inference import tools
+
+    tools._workdirs.clear()
+    workdir = Path(tools.get_sandbox_workdir("__LOCALID_invalidpdf"))
+    before = tools._snapshot_workdir_files(str(workdir))
+    (workdir / "report.pdf").write_bytes(b"not a PDF")
+
+    sentinels = tools._created_file_sentinels(str(workdir), before)
+    files = json.loads(sentinels.split("__FILES__:", 1)[1].split("\n", 1)[0])
+    assert files == []
+    assert "Document validation failed" in sentinels
+
+
 def test_the_walk_is_bounded(tmp_path, monkeypatch):
     """A chat that unpacked an archive must not turn a tool call into a crawl."""
     monkeypatch.setenv("UNSLOTH_STUDIO_SANDBOX_HOME", str(tmp_path / "sb"))

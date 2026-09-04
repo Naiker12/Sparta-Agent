@@ -18,6 +18,7 @@ import {
   DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useChatRuntimeStore } from "@/features/chat/stores/chat-runtime-store";
+import { useT } from "@/i18n";
 import {
   FULL_ACCESS_WARNING,
   PermissionModeMenuItems,
@@ -25,6 +26,7 @@ import {
 
 // Tool permissions entry for the composer "+" menu.
 export function BypassPermissionsMenuItem() {
+  const t = useT();
   const permissionMode = useChatRuntimeStore((s) => s.permissionMode);
   const setBypassConfirmOpen = useChatRuntimeStore(
     (s) => s.setBypassConfirmOpen,
@@ -38,7 +40,7 @@ export function BypassPermissionsMenuItem() {
         }
       >
         <HugeiconsIcon icon={ShieldBanIcon} strokeWidth={2} />
-        Tool permissions
+        {t("chat.composer.permissions.toolPermissions")}
       </DropdownMenuSubTrigger>
       <DropdownMenuSubContent className="unsloth-plus-menu w-[300px]">
         <PermissionModeMenuItems
@@ -59,6 +61,7 @@ export function BypassPermissionsMenuItem() {
 // the main and shared composers, never duplicates in Compare mode, and confirming
 // or cancelling never leaves the composer "+"/More popovers frozen open.
 export function BypassPermissionsConfirmDialog() {
+  const t = useT();
   const open = useChatRuntimeStore((s) => s.bypassConfirmOpen);
   const setOpen = useChatRuntimeStore((s) => s.setBypassConfirmOpen);
   const setPermissionMode = useChatRuntimeStore((s) => s.setPermissionMode);
@@ -67,13 +70,17 @@ export function BypassPermissionsConfirmDialog() {
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogContent size="sm">
         <AlertDialogHeader>
-          <AlertDialogTitle>Enable Full access?</AlertDialogTitle>
+          <AlertDialogTitle>
+            {t("chat.composer.permissions.fullAccessDialog.title")}
+          </AlertDialogTitle>
           <AlertDialogDescription>
-            {FULL_ACCESS_WARNING}
+            {t("chat.composer.permissions.fullAccessDialog.warning")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>
+            {t("chat.composer.permissions.fullAccessDialog.cancel")}
+          </AlertDialogCancel>
           <AlertDialogAction
             variant="destructive"
             className="!bg-destructive !text-destructive-foreground hover:!bg-destructive/90"
@@ -82,7 +89,7 @@ export function BypassPermissionsConfirmDialog() {
               setOpen(false);
             }}
           >
-            I understand
+            {t("chat.composer.permissions.fullAccessDialog.confirm")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

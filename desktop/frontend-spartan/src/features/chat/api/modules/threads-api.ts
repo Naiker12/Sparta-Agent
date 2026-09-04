@@ -27,6 +27,7 @@ export async function listChatThreads(
     pairId?: string;
     projectId?: string | null;
     includeArchived?: boolean;
+    requireMessages?: boolean;
   } = {},
 ): Promise<ThreadRecord[]> {
   const params = new URLSearchParams();
@@ -35,6 +36,9 @@ export async function listChatThreads(
   if (args.projectId) params.set("project_id", args.projectId);
   if (args.includeArchived !== undefined) {
     params.set("include_archived", String(args.includeArchived));
+  }
+  if (args.requireMessages !== undefined) {
+    params.set("require_messages", String(args.requireMessages));
   }
   const qs = params.toString();
   const response = await authFetch(`/api/chat/threads${qs ? `?${qs}` : ""}`);

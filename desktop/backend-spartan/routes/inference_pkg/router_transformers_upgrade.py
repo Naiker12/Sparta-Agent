@@ -15,6 +15,7 @@ from pydantic import BaseModel
 from auth import get_current_subject
 from core.inference import get_inference_backend
 from models.inference import (
+    TransformersUpgradeInfo,
     InstallLatestTransformersRequest,
     InstallLatestTransformersResponse,
     TransformersUpgradeCheckRequest,
@@ -25,6 +26,31 @@ logger = logging.getLogger(__name__)
 
 studio_router = APIRouter()
 router = studio_router
+
+import sys
+
+def _get_inference_module():
+    return sys.modules.get("routes.inference")
+
+def _get_inf_attr(name: str, fallback=None):
+    mod = _get_inference_module()
+    if mod and hasattr(mod, name):
+        return getattr(mod, name)
+    return fallback
+
+def _offline_guarded(targets, fn, /, *args, **kwargs):
+    real_fn = _get_inf_attr("_offline_guarded")
+    return real_fn(targets, fn, *args, **kwargs) if real_fn else fn(*args, **kwargs)
+
+def _requires_trust_remote_code_for_model(model_name: str) -> bool:
+    fn = _get_inf_attr("_requires_trust_remote_code_for_model")
+    return fn(model_name) if fn else False
+
+async def _cancel_and_drain_for_sidecar_swap():
+    fn = _get_inf_attr("_cancel_and_drain_for_sidecar_swap")
+    if fn:
+        return await fn()
+
 
 
 

@@ -167,6 +167,14 @@ body {
   background: radial-gradient(circle at center, rgba(255, 99, 99, 0.18) 0%, rgba(255, 99, 99, 0) 70%);
 }
 
+/* The network canvas is global. Let it remain fully visible behind every
+   landing section instead of covering it with opaque section backgrounds. */
+.landing-shell > main > section,
+.landing-shell > footer,
+.landing-shell #producto {
+  background-color: transparent !important;
+}
+
 @keyframes marquee {
   0% {
     transform: translateX(0%);

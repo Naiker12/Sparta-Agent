@@ -3281,7 +3281,7 @@ const Composer: FC<{
             // attachment drops in Tauri once Phase 1d adds token bridging.
             <div className="aui-composer-attachment-dropzone unsloth-composer-surface relative z-10">
               {modelSelector ? (
-                <div className="flex min-w-0 items-center px-1.5 pb-2">
+                <div className="flex min-w-0 items-center px-0.5 pb-1">
                   {modelSelector}
                 </div>
               ) : null}
@@ -3290,7 +3290,7 @@ const Composer: FC<{
           ) : (
             <ComposerPrimitive.AttachmentDropzone className="group/dropzone aui-composer-attachment-dropzone unsloth-composer-surface relative z-10">
               {modelSelector ? (
-                <div className="flex min-w-0 items-center px-1.5 pb-2">
+                <div className="flex min-w-0 items-center px-0.5 pb-1">
                   {modelSelector}
                 </div>
               ) : null}
@@ -3300,7 +3300,7 @@ const Composer: FC<{
               no layout shift and the drop still lands. */}
               <div
                 className={cn(
-                  "aui-composer-drop-overlay pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center gap-1 overflow-hidden rounded-[32px] bg-background/90 opacity-0 backdrop-blur-sm transition-opacity duration-150 group-data-[dragging=true]/dropzone:opacity-100 dark:bg-card/90",
+                  "aui-composer-drop-overlay pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center gap-1 overflow-hidden rounded-[22px] bg-background/90 opacity-0 backdrop-blur-sm transition-opacity duration-150 group-data-[dragging=true]/dropzone:opacity-100 dark:bg-card/90",
                   pageDragging && "opacity-100",
                 )}
               >

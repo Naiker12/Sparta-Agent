@@ -11,15 +11,18 @@ import {
   useIsThreadAtBottom,
   useScrollThreadToBottom,
 } from "@/components/assistant-ui/use-intent-aware-autoscroll";
+import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
 
 export const ThreadScrollToBottom: FC = () => {
+  const t = useT();
   const isAtBottom = useIsThreadAtBottom();
   const scrollToBottom = useScrollThreadToBottom();
 
   return (
     <TooltipIconButton
-      tooltip="Scroll to bottom"
+      tooltip={t("chat.composer.scrollToBottom")}
+      aria-label={t("chat.composer.scrollToBottom")}
       variant="outline"
       onClick={() => scrollToBottom("auto")}
       className={cn(

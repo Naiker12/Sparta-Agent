@@ -54,6 +54,7 @@ import {
   subscribeForkCounts,
 } from "@/features/chat/utils/fork-count-store";
 import { useVoiceSettingsStore } from "@/features/settings/stores/voice-settings-store";
+import { useT } from "@/i18n";
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
 import { cn } from "@/lib/utils";
 import {
@@ -67,6 +68,7 @@ import {
 export const COPY_RESET_MS = 2000;
 
 export const ForkCountBadge: FC = () => {
+  const t = useT();
   const remoteId =
     useAuiState(({ threadListItem }) => threadListItem.remoteId) ?? null;
   const messageId = useAuiState(({ message }) => message.id);
@@ -85,7 +87,11 @@ export const ForkCountBadge: FC = () => {
   return (
     <span
       className="mx-1 inline-flex items-center gap-1 rounded-sm bg-primary/10 px-1.5 py-0.5 text-ui-10 font-medium text-primary"
-      title={`${count} fork${count === 1 ? "" : "s"} from this message`}
+      title={
+        count === 1
+          ? t("chat.actions.forkCount", { count })
+          : t("chat.actions.forkCountPlural", { count })
+      }
     >
       <GitBranchIcon strokeWidth={1.75} className="size-3" />
       {count}
@@ -94,11 +100,13 @@ export const ForkCountBadge: FC = () => {
 };
 
 export const ForkMessageButton: FC = () => {
+  const t = useT();
   const { forkMessage, forkDisabled } = useForkMessageAction();
 
   return (
     <TooltipIconButton
-      tooltip="Fork from here"
+      tooltip={t("chat.actions.forkFromHere")}
+      aria-label={t("chat.actions.forkFromHere")}
       disabled={forkDisabled}
       onClick={forkMessage}
     >
@@ -108,6 +116,7 @@ export const ForkMessageButton: FC = () => {
 };
 
 export const DeleteMessageButton: FC = () => {
+  const t = useT();
   const aui = useAui();
   const messageId = useAuiState(({ message }) => message.id);
   const isRunning = useAuiState(({ thread }) => thread.isRunning);
@@ -147,7 +156,7 @@ export const DeleteMessageButton: FC = () => {
       });
     } catch (error) {
       console.error("Failed to delete message", error);
-      toast.error("Failed to delete message");
+      toast.error(t("chat.actions.deleteFailed"));
     }
   };
 
@@ -157,7 +166,8 @@ export const DeleteMessageButton: FC = () => {
 
   return (
     <TooltipIconButton
-      tooltip="Delete message"
+      tooltip={t("chat.actions.delete")}
+      aria-label={t("chat.actions.delete")}
       disabled={isRunning}
       onClick={handleDelete}
       className="text-chat-icon-fg hover:text-destructive"
@@ -172,6 +182,7 @@ export const DeleteMessageButton: FC = () => {
 };
 
 export const CopyButton: FC = () => {
+  const t = useT();
   const aui = useAui();
   const [copied, setCopied] = useState(false);
   const resetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -194,7 +205,11 @@ export const CopyButton: FC = () => {
   };
 
   return (
-    <TooltipIconButton tooltip="Copy" onClick={handleCopy}>
+    <TooltipIconButton
+      tooltip={copied ? t("chat.actions.copied") : t("chat.actions.copy")}
+      aria-label={copied ? t("chat.actions.copied") : t("chat.actions.copy")}
+      onClick={handleCopy}
+    >
       <HugeiconsIcon
         icon={copied ? Tick02Icon : Copy01Icon}
         strokeWidth={1.75}
@@ -205,6 +220,7 @@ export const CopyButton: FC = () => {
 };
 
 export const EditAssistantMessageButton: FC = () => {
+  const t = useT();
   const messageId = useAuiState(({ message }) => message.id);
   const researchRunId = useResearchMessageRunId();
   const isRunning = useAuiState(({ thread }) => thread.isRunning);
@@ -215,7 +231,8 @@ export const EditAssistantMessageButton: FC = () => {
 
   return (
     <TooltipIconButton
-      tooltip="Edit response"
+      tooltip={t("chat.actions.editResponse")}
+      aria-label={t("chat.actions.editResponse")}
       disabled={isRunning || researchActive}
       onClick={() => setEditingId(messageId)}
     >
@@ -229,6 +246,7 @@ export const EditAssistantMessageButton: FC = () => {
 };
 
 export const AssistantActionBar: FC = () => {
+  const t = useT();
   const aui = useAui();
   const { forkMessage, forkDisabled } = useForkMessageAction();
   const researchRunId = useResearchMessageRunId();
@@ -249,7 +267,7 @@ export const AssistantActionBar: FC = () => {
         <EditAssistantMessageButton />
         {!researchRunId && !researchActive && (
           <ActionBarPrimitive.Reload asChild={true}>
-            <TooltipIconButton tooltip="Refresh">
+            <TooltipIconButton tooltip={t("chat.actions.refresh")} aria-label={t("chat.actions.refresh")}>
               <RefreshCwIcon strokeWidth={1.75} className="size-icon" />
             </TooltipIconButton>
           </ActionBarPrimitive.Reload>
@@ -259,7 +277,7 @@ export const AssistantActionBar: FC = () => {
         {ttsEnabled && (
           <MessagePrimitive.If speaking={false}>
             <ActionBarPrimitive.Speak asChild={true}>
-              <TooltipIconButton tooltip="Read aloud" aria-label="Read aloud">
+              <TooltipIconButton tooltip={t("chat.actions.readAloud")} aria-label={t("chat.actions.readAloud")}>
                 <Volume2Icon strokeWidth={1.75} className="size-icon" />
               </TooltipIconButton>
             </ActionBarPrimitive.Speak>
@@ -268,8 +286,8 @@ export const AssistantActionBar: FC = () => {
         <MessagePrimitive.If speaking={true}>
           <ActionBarPrimitive.StopSpeaking asChild={true}>
             <TooltipIconButton
-              tooltip="Stop reading"
-              aria-label="Stop reading"
+              tooltip={t("chat.actions.stopReading")}
+              aria-label={t("chat.actions.stopReading")}
               className="text-destructive"
             >
               <VolumeXIcon strokeWidth={1.75} className="size-icon" />
@@ -279,7 +297,8 @@ export const AssistantActionBar: FC = () => {
         <ActionBarMorePrimitive.Root modal={false}>
           <ActionBarMorePrimitive.Trigger asChild={true}>
             <TooltipIconButton
-              tooltip="More"
+              tooltip={t("chat.actions.more")}
+              aria-label={t("chat.actions.more")}
               className="data-[state=open]:bg-accent"
             >
               <MoreHorizontalIcon strokeWidth={1.75} className="size-icon" />
@@ -297,7 +316,7 @@ export const AssistantActionBar: FC = () => {
               className="aui-action-bar-more-item flex cursor-pointer select-none items-center gap-2 rounded-[12px] px-3 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
             >
               <GitBranchIcon strokeWidth={1.75} className="size-icon" />
-              Fork in new chat
+              {t("chat.actions.forkInNewChat")}
             </ActionBarMorePrimitive.Item>
             <ActionBarPrimitive.ExportMarkdown
               asChild={true}
@@ -309,7 +328,7 @@ export const AssistantActionBar: FC = () => {
                   strokeWidth={1.75}
                   className="size-icon"
                 />
-                Export as markdown
+                {t("chat.actions.exportMarkdown")}
               </ActionBarMorePrimitive.Item>
             </ActionBarPrimitive.ExportMarkdown>
             {activeProjectId && (
@@ -320,7 +339,7 @@ export const AssistantActionBar: FC = () => {
                     toolResultModelText,
                   );
                   if (!text.trim()) {
-                    toast.info("No content to save.");
+                    toast.info(t("chat.actions.noContentToSave"));
                     return;
                   }
                   const state = aui.threadListItem().getState();
@@ -335,7 +354,7 @@ export const AssistantActionBar: FC = () => {
                       ? await getStoredChatThread(remoteId).catch(() => null)
                       : null;
                     if (!thread?.projectId) {
-                      toast.info("This chat isn't in a project.");
+                      toast.info(t("chat.actions.notInProject"));
                       return;
                     }
                     await saveMarkdownAsProjectSource(
@@ -352,7 +371,7 @@ export const AssistantActionBar: FC = () => {
                   strokeWidth={1.75}
                   className="size-icon"
                 />
-                Save to project sources
+                {t("chat.actions.saveToProjectSources")}
               </ActionBarMorePrimitive.Item>
             )}
             <ActionBarMorePrimitive.Item
@@ -364,7 +383,7 @@ export const AssistantActionBar: FC = () => {
                 strokeWidth={1.75}
                 className="size-icon"
               />
-              See response details
+              {t("chat.actions.seeResponseDetails")}
             </ActionBarMorePrimitive.Item>
           </ActionBarMorePrimitive.Content>
         </ActionBarMorePrimitive.Root>
@@ -379,6 +398,7 @@ export const AssistantActionBar: FC = () => {
 };
 
 export const UserActionBar: FC = () => {
+  const t = useT();
   const ownsResearchMessage = useOwnsResearchMessage();
   const researchActive = useThreadResearchActive();
   return (
@@ -389,7 +409,11 @@ export const UserActionBar: FC = () => {
       <CopyButton />
       {!ownsResearchMessage && !researchActive && (
         <ActionBarPrimitive.Edit asChild={true}>
-          <TooltipIconButton tooltip="Edit" className="aui-user-action-edit">
+          <TooltipIconButton
+            tooltip={t("chat.actions.edit")}
+            aria-label={t("chat.actions.edit")}
+            className="aui-user-action-edit"
+          >
             <HugeiconsIcon
               icon={Edit03Icon}
               strokeWidth={1.75}
@@ -409,6 +433,7 @@ export const BranchPicker: FC<BranchPickerPrimitive.Root.Props> = ({
   className,
   ...rest
 }) => {
+  const t = useT();
   return (
     <BranchPickerPrimitive.Root
       hideWhenSingleBranch={true}
@@ -421,7 +446,7 @@ export const BranchPicker: FC<BranchPickerPrimitive.Root.Props> = ({
       <BranchPickerPrimitive.Previous asChild={true}>
         <button
           type="button"
-          aria-label="Previous"
+          aria-label={t("chat.actions.previousBranch")}
           className="aui-branch-chevron-btn"
         >
           <ChevronLeftIcon strokeWidth={1.25} className="size-[36px]" />
@@ -433,7 +458,7 @@ export const BranchPicker: FC<BranchPickerPrimitive.Root.Props> = ({
       <BranchPickerPrimitive.Next asChild={true}>
         <button
           type="button"
-          aria-label="Next"
+          aria-label={t("chat.actions.nextBranch")}
           className="aui-branch-chevron-btn"
         >
           <ChevronRightIcon strokeWidth={1.25} className="size-[36px]" />

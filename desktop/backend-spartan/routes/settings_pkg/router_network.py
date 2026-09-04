@@ -3,6 +3,7 @@
 import functools
 from fastapi import APIRouter, Depends, HTTPException, Request
 from loggers import get_logger
+from utils.utils import log_and_http_error, safe_error_detail
 
 from auth.authentication import (
     authenticated_via_api_key,

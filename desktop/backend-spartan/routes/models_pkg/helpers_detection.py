@@ -16,6 +16,7 @@ from loggers import get_logger
 
 from models.models import ModelType
 from routes.models_pkg.schemas import CachedModelRepo
+from utils.paths import is_local_path
 from utils.utils import canonical_model_repo_id
 from utils.models.model_config import (
     _extract_quant_label,

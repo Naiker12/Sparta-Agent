@@ -9,6 +9,7 @@ import type {
   ToolCallMessagePartStatus,
 } from "@assistant-ui/react";
 import { useCallback, useEffect, useState } from "react";
+import { useT } from "@/i18n";
 
 /**
  * Allow / Always allow / Deny controls for a tool call paused awaiting the
@@ -51,6 +52,7 @@ export function ToolConfirmationControls({
   const [decided, setDecided] = useState(false);
   const [pending, setPending] = useState<"allow" | "deny" | null>(null);
   const [failed, setFailed] = useState(false);
+  const t = useT();
 
   // Still awaiting our decision: a gated pending entry exists, the tool has
   // not produced a result, and the card is in its running state.
@@ -107,7 +109,7 @@ export function ToolConfirmationControls({
         disabled={pending !== null}
         onClick={() => void resolve("allow")}
       >
-        Allow
+        {t("chat.tools.confirmation.allow")}
       </Button>
       <Button
         size="xs"
@@ -118,7 +120,7 @@ export function ToolConfirmationControls({
           void resolve("allow");
         }}
       >
-        Always allow
+        {t("chat.tools.confirmation.alwaysAllow")}
       </Button>
       <Button
         size="xs"
@@ -126,11 +128,11 @@ export function ToolConfirmationControls({
         disabled={pending !== null}
         onClick={() => void resolve("deny")}
       >
-        Deny
+        {t("chat.tools.confirmation.deny")}
       </Button>
       {failed ? (
         <span className="text-xs text-destructive">
-          Could not send your decision. Try again.
+          {t("chat.tools.confirmation.failed")}
         </span>
       ) : null}
     </div>

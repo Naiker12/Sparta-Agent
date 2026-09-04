@@ -13,7 +13,7 @@ from loggers import get_logger
 from auth.authentication import get_current_subject
 from hub.dependencies import get_hf_token
 from utils.utils import log_and_http_error
-from utils.paths import is_local_path, normalize_path
+from utils.paths import is_local_path, normalize_path, resolve_cached_repo_id_case
 from routes.models_pkg.helpers_paths import (
     _normalize_hf_token,
     _is_valid_repo_id,

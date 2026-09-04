@@ -224,7 +224,7 @@ function ModelSelectorTrigger({
             "rounded-full bg-muted hover:bg-muted/80 has-[[data-eject-hit]:hover]:!bg-muted",
           // More left padding than right; the chevron is pulled close to the label so the trigger reads
           // balanced around the text. Height stays pinned to --studio-chat-control-height.
-          size === "sm" && "h-8 pl-3 pr-1.5 text-xs",
+          size === "sm" && "h-7 pl-2.5 pr-1.5 text-xs gap-1.5",
           size === "default" && "h-9 pl-4 pr-2 text-sm",
           size === "lg" && "h-10 pl-4.5 pr-2.5 text-sm",
           className,
@@ -270,7 +270,8 @@ function ModelSelectorTrigger({
         <span className="flex min-w-0 flex-1 items-baseline">
           <span
             className={cn(
-              "min-w-0 flex flex-1 items-baseline truncate font-heading text-ui-16 font-medium leading-tight text-black dark:text-white",
+              "min-w-0 flex flex-1 items-baseline truncate font-heading font-medium leading-tight text-black dark:text-white",
+              size === "sm" ? "text-ui-13" : "text-ui-16",
               triggerLabelClassName,
             )}
           >

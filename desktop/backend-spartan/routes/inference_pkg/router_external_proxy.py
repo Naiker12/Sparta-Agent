@@ -20,22 +20,28 @@ from fastapi.responses import StreamingResponse
 from core.inference.api_monitor import api_monitor
 from core.inference.external_provider import ExternalProviderClient
 from core.inference.external_tool_transport import OAICompatTransport
-from core.inference.providers import provider_model_runs_local_tools
+from core.inference.providers import (
+    get_base_url,
+    get_provider_info,
+    hosted_only_tools,
+    provider_model_runs_local_tools,
+    validate_provider_base_url,
+)
 from core.inference.studio_tool_loop import (
     ToolLoopPolicy,
     ToolLoopRun,
     stream_with_studio_tools,
 )
 from models.inference import ChatCompletionRequest
+from routes.provider_credentials import resolve_provider_api_key_or_400
 from storage import providers_db
 from utils.api_errors import openai_error_body
 
-logger = logging.getLogger(__name__)
-
+from loggers import get_logger
+logger = get_logger(__name__)
 
 def _get_inference_module():
     return sys.modules.get("routes.inference")
-
 
 def _get_inf_attr(name: str, fallback=None):
     mod = _get_inference_module()
@@ -44,18 +50,23 @@ def _get_inf_attr(name: str, fallback=None):
     return fallback
 
 
-# Dynamic delegators to inference engine state
-def _friendly_error(e):
-    fn = _get_inf_attr("_friendly_error")
-    return fn(e) if fn else str(e)
 
+class _TrackedCancelProxy:
+    def __call__(self, *args, **kwargs):
+        cls = _get_inf_attr("_TrackedCancel")
+        if cls:
+            return cls(*args, **kwargs)
+        from contextlib import nullcontext
+        return nullcontext()
 
-def _TrackedCancel(*args, **kwargs):
-    cls = _get_inf_attr("_TrackedCancel")
-    if cls:
-        return cls(*args, **kwargs)
-    from contextlib import nullcontext
-    return nullcontext()
+    def for_payload(self, *args, **kwargs):
+        cls = _get_inf_attr("_TrackedCancel")
+        if cls and hasattr(cls, "for_payload"):
+            return cls.for_payload(*args, **kwargs)
+        from contextlib import nullcontext
+        return nullcontext()
+
+_TrackedCancel = _TrackedCancelProxy()
 
 
 def _request_has_api_key(request: Any) -> bool:
@@ -68,6 +79,11 @@ def _request_used_api_key(request: Any) -> bool:
     return fn(request) if fn else False
 
 
+def _friendly_error(e):
+    fn = _get_inf_attr("_friendly_error")
+    return fn(e) if fn else str(e)
+
+
 def _request_is_saved_credential_workflow(request: Any) -> bool:
     fn = _get_inf_attr("_request_is_saved_credential_workflow")
     return fn(request) if fn else False
@@ -78,16 +94,15 @@ def _monitor_prompt_from_messages(messages: list) -> str:
     return fn(messages) if fn else ""
 
 
-def _monitor_openai_chunk(monitor_id: str, chunk: dict, *, first_token_time: Optional[float] = None) -> None:
+def _monitor_openai_chunk(*args, **kwargs):
     fn = _get_inf_attr("_monitor_openai_chunk")
     if fn:
-        fn(monitor_id, chunk, first_token_time=first_token_time)
+        return fn(*args, **kwargs)
 
 
-def _monitor_openai_sse_line(monitor_id: str, line: str, *, first_token_time: Optional[float] = None) -> None:
+def _monitor_openai_sse_line(*args, **kwargs):
     fn = _get_inf_attr("_monitor_openai_sse_line")
-    if fn:
-        fn(monitor_id, line, first_token_time=first_token_time)
+    return fn(*args, **kwargs) if fn else None
 
 
 def _extract_response_format(payload):
@@ -105,9 +120,36 @@ def _effective_enable_tools(payload):
     return fn(payload) if fn else True
 
 
-def _select_request_tools(payload, *, current_subject=None):
+def _confirm_gate_needs_stream(payload) -> bool:
+    fn = _get_inf_attr("_confirm_gate_needs_stream")
+    return bool(fn(payload)) if fn else False
+
+
+def _permission_mode_confirm(payload) -> bool:
+    fn = _get_inf_attr("_permission_mode_confirm")
+    return bool(fn(payload)) if fn else False
+
+
+def _explicit_studio_tool_loop_requested(payload) -> bool:
+    fn = _get_inf_attr("_explicit_studio_tool_loop_requested")
+    return bool(fn(payload)) if fn else bool(
+        getattr(payload, "enable_tools", False) or getattr(payload, "mcp_enabled", False)
+    )
+
+
+def _selects_only_provider_hosted_tools(payload, provider_type: str) -> bool:
+    fn = _get_inf_attr("_selects_only_provider_hosted_tools")
+    return bool(fn(payload, provider_type)) if fn else False
+
+
+async def _select_request_tools(payload, **kwargs):
     fn = _get_inf_attr("_select_request_tools")
-    return fn(payload, current_subject=current_subject) if fn else ([], None, False)
+    if not fn:
+        return []
+    result = fn(payload, **kwargs)
+    if hasattr(result, "__await__"):
+        return await result
+    return result
 
 
 def _continue_final_message(payload) -> bool:
@@ -117,7 +159,7 @@ def _continue_final_message(payload) -> bool:
 
 def _build_tool_action_nudge(*args, **kwargs):
     fn = _get_inf_attr("_build_tool_action_nudge")
-    return fn(*args, **kwargs) if fn else None
+    return fn(*args, **kwargs) if fn else ""
 
 
 def _codex_full_access_nudge(*args, **kwargs):
@@ -132,12 +174,26 @@ def _wants_stream_usage(payload) -> bool:
 
 def _is_openai_usage_only_sse(line: str) -> bool:
     fn = _get_inf_attr("_is_openai_usage_only_sse")
-    return fn(line) if fn else False
+    if fn:
+        return bool(fn(line))
+    if not line.startswith("data:"):
+        return False
+    data_str = line[5:].strip()
+    if not data_str or data_str == "[DONE]":
+        return False
+    try:
+        obj = json.loads(data_str)
+        return isinstance(obj, dict) and "usage" in obj and not obj.get("choices")
+    except Exception:
+        return False
 
 
 def _is_openai_sse_done(line: str) -> bool:
-    fn = _get_inf_attr("_is_openai_sse_done")
-    return fn(line) if fn else (line.strip() == "data: [DONE]")
+    fn = _get_inf_attr("_is_openai_sse_done") or _get_inf_attr("_is_sse_done_line")
+    if fn:
+        return bool(fn(line))
+    stripped = line.strip()
+    return stripped == "data: [DONE]" or (stripped.startswith("data:") and stripped[5:].strip() == "[DONE]")
 
 
 def _openai_responses_part(item: dict) -> Optional[dict]:
@@ -145,14 +201,32 @@ def _openai_responses_part(item: dict) -> Optional[dict]:
     return fn(item) if fn else None
 
 
-def _append_to_codex_instructions(*args, **kwargs):
-    fn = _get_inf_attr("_append_to_codex_instructions")
-    return fn(*args, **kwargs) if fn else None
+def _append_to_codex_instructions(messages: list[dict], addition: str) -> list[dict]:
+    if not addition:
+        return messages
+    copied = [dict(msg) for msg in messages]
+    for msg in copied:
+        if msg.get("role") != "system":
+            continue
+        content = msg.get("content", "")
+        if isinstance(content, str):
+            msg["content"] = content.rstrip() + "\n\n" + addition
+            return copied
+    return [{"role": "system", "content": addition}, *copied]
 
 
-def _append_to_system_message(*args, **kwargs):
-    fn = _get_inf_attr("_append_to_system_message")
-    return fn(*args, **kwargs) if fn else None
+def _append_to_system_message(messages: list[dict], addition: str) -> list[dict]:
+    if not addition:
+        return messages
+    copied = [dict(msg) for msg in messages]
+    for msg in copied:
+        if msg.get("role") not in ("system", "developer"):
+            continue
+        content = msg.get("content", "")
+        if isinstance(content, str):
+            msg["content"] = content.rstrip() + "\n\n" + addition
+            return copied
+    return [{"role": "system", "content": addition}, *copied]
 
 
 def _is_marked_server_builtin_tool_call(*args, **kwargs):
@@ -186,9 +260,9 @@ def _prune_pending(*args, **kwargs):
         fn(*args, **kwargs)
 
 
-@property
-def _SERVER_BUILTIN_TOOL_NAMES():
-    return _get_inf_attr("_SERVER_BUILTIN_TOOL_NAMES", frozenset())
+_SERVER_BUILTIN_TOOL_NAMES = frozenset(
+    {"web_search", "web_fetch", "code_execution", "image_generation"}
+)
 
 
 # Accessors for cancel registry
@@ -779,7 +853,7 @@ async def _proxy_to_external_provider(
                 now = time.monotonic()
                 _prune_pending(now)
                 for key in cancel_keys:
-                    _CANCEL_REGISTRY.setdefault(key, set()).add(cancel_event)
+                    _get_cancel_registry().setdefault(key, set()).add(cancel_event)
                 if payload.cancel_id and _get_pending_cancels().pop(payload.cancel_id, None) is not None:
                     should_cancel = True
             if should_cancel:
@@ -900,7 +974,7 @@ async def _proxy_to_external_provider(
 
                 with _get_cancel_lock():
                     for key in cancel_keys:
-                        bucket = _CANCEL_REGISTRY.get(key)
+                        bucket = _get_cancel_registry().get(key)
                         if bucket:
                             bucket.discard(cancel_event)
                             if not bucket:

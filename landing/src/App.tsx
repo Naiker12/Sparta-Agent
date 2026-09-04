@@ -981,7 +981,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#040506] text-white selection:bg-[#ff6363]/20 selection:text-white font-sans antialiased overflow-x-hidden relative">
+    <div className="landing-shell min-h-screen bg-[#040506] text-white selection:bg-[#ff6363]/20 selection:text-white font-sans antialiased overflow-x-hidden relative">
       <InteractiveSpiderWeb />
       <Navbar onOpenDocs={openDocs} />
       <main className="relative z-10">

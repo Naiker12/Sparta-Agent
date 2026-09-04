@@ -535,6 +535,7 @@ def list_chat_threads(
     pair_id: str | None = None,
     project_id: str | None = None,
     include_archived: bool = True,
+    require_messages: bool = False,
 ) -> list[dict]:
     clauses = []
     values: list[object] = []
@@ -549,6 +550,8 @@ def list_chat_threads(
         values.append(project_id)
     if not include_archived:
         clauses.append("archived = 0")
+    if require_messages:
+        clauses.append("EXISTS (SELECT 1 FROM chat_messages cm WHERE cm.thread_id = chat_threads.id)")
     where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
     conn = get_connection()
     try:

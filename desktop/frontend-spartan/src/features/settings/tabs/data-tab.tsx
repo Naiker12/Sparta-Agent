@@ -113,7 +113,7 @@ export function DataTab() {
   const [exporting, setExporting] = useState(false);
   const [archivedExporting, setArchivedExporting] = useState(false);
   // Gates the archived subpage Export button.
-  const { archivedItems } = useChatSidebarItems({ requireMessages: false });
+  const { archivedItems } = useChatSidebarItems({ requireMessages: true });
   const [clearing, setClearing] = useState(false);
   const [archiving, setArchiving] = useState(false);
   const [fineTuneExporting, setFineTuneExporting] = useState(false);

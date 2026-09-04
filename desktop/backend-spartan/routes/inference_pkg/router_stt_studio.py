@@ -5,7 +5,31 @@ Extracted from monolithic routes/inference.py to preserve SRP and clean architec
 from __future__ import annotations
 
 import asyncio
+import base64
 import logging
+import sys
+import threading
+from utils.utils import safe_error_detail
+
+def _get_inference_module():
+    return sys.modules.get('routes.inference')
+
+def _get_inf_attr(name: str, fallback=None):
+    mod = _get_inference_module()
+    if mod and hasattr(mod, name):
+        return getattr(mod, name)
+    return fallback
+
+async def _await_stt_disconnect_then_cancel(*args, **kwargs):
+    fn = _get_inf_attr('_await_stt_disconnect_then_cancel')
+    if fn:
+        return await fn(*args, **kwargs)
+
+async def _stop_local_disconnect_cancel_watcher(*args, **kwargs):
+    fn = _get_inf_attr('_stop_local_disconnect_cancel_watcher')
+    if fn:
+        return await fn(*args, **kwargs)
+
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Response, UploadFile
@@ -22,6 +46,7 @@ router = APIRouter()
 studio_router = router  # alias for backward-compatibility with decorators
 
 _MAX_AUDIO_RAW_BYTES = STT_AUDIO_RAW_MAX_BYTES
+_MAX_AUDIO_B64_CHARS = STT_AUDIO_B64_MAX_CHARS
 
 # =====================================================================
 # Speech-to-text (STT) sidecar  (/audio/transcribe, /audio/stt/*)

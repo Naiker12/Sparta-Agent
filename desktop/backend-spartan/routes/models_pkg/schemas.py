@@ -28,9 +28,11 @@ class CachedModelsResponse(BaseModel):
 
 
 class _CompatLocalInventorySources(NamedTuple):
-    trained: tuple[str, ...]
-    exported: tuple[str, ...]
-    scan_folders: tuple[str, ...]
+    hf_cache_dir: Path
+    legacy_hf: Path
+    hf_default: Path
+    lm_dirs: tuple[Path, ...]
+    known_hf_caches: tuple[Path, ...]
 
 
 _CompatLocalInventoryKey = tuple[Path, _CompatLocalInventorySources, tuple[str, ...], int]

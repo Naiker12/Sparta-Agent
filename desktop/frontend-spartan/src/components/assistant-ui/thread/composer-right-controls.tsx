@@ -31,6 +31,7 @@ import {
   ingestResearchUpdate,
   useResearchRunStore,
 } from "@/features/chat/stores/research-run-store";
+import { useT } from "@/i18n";
 import { findPromptQueueEntry } from "./prompt-queue-manager";
 import { ReasoningToggle } from "./reasoning-toggle";
 
@@ -133,19 +134,21 @@ export const ComposerRightControls: FC<ComposerRightControlsProps> = ({
     }
   };
 
+  const t = useT();
+
   return (
     <div className="aui-composer-action-wrapper flex shrink-0 items-center gap-1.5">
       <ReasoningToggle side={menuSide} />
       <ComposerPrimitive.If dictation={false}>
         <TooltipIconButton
-          tooltip="Dictate"
-          aria-label="Dictate"
+          tooltip={t("chat.composer.dictate")}
+          aria-label={t("chat.composer.dictate")}
           type="button"
           variant="ghost"
-          className="size-8 rounded-full text-foreground"
+          className="size-7.5 rounded-full text-foreground"
           onClick={startDictation}
         >
-          <MicIcon className="unsloth-dictate-icon size-[22px]" />
+          <MicIcon className="unsloth-dictate-icon size-[17px]" />
         </TooltipIconButton>
       </ComposerPrimitive.If>
       <AuiIf
@@ -155,20 +158,20 @@ export const ComposerRightControls: FC<ComposerRightControlsProps> = ({
       >
         <ComposerPrimitive.Send asChild={true}>
           <TooltipIconButton
-            tooltip={pendingSend ? "Waiting for documents…" : "Send message"}
+            tooltip={pendingSend ? t("chat.composer.waitingDocs") : t("chat.composer.sendMessage")}
             side="bottom"
             type="submit"
             variant="default"
             size="icon"
             disabled={disabled || pendingSend}
             onClick={(event) => onSendClick?.(event)}
-            className="aui-composer-send ml-1.5 size-9 rounded-full"
-            aria-label="Send message"
+            className="aui-composer-send ml-1 size-7.5 rounded-full"
+            aria-label={t("chat.composer.sendMessage")}
           >
             {pendingSend ? (
-              <Spinner className="size-[18px]" />
+              <Spinner className="size-3.5" />
             ) : (
-              <ArrowUpIcon className="unsloth-send-icon aui-composer-send-icon size-[21px] stroke-2" />
+              <ArrowUpIcon className="unsloth-send-icon aui-composer-send-icon size-4 stroke-2" />
             )}
           </TooltipIconButton>
         </ComposerPrimitive.Send>
@@ -180,25 +183,25 @@ export const ComposerRightControls: FC<ComposerRightControlsProps> = ({
               type="button"
               variant="default"
               size="icon"
-              className="aui-composer-cancel ml-1.5 size-9 rounded-full"
-              aria-label="Stop queued message"
+              className="aui-composer-cancel ml-1 size-7.5 rounded-full"
+              aria-label={t("chat.composer.stopQueued")}
               onClick={stop}
             >
-              <SquareIcon className="aui-composer-cancel-icon size-3 fill-current" />
+              <SquareIcon className="aui-composer-cancel-icon size-2.5 fill-current" />
             </Button>
           ) : (
             <TooltipIconButton
-              tooltip="Queue message"
+              tooltip={t("chat.composer.queueMessage")}
               side="bottom"
               type="button"
               variant="default"
               size="icon"
               disabled={disabled || queueDisabled}
               onClick={onQueueClick}
-              className="aui-composer-send ml-1.5 size-9 rounded-full"
-              aria-label="Queue message"
+              className="aui-composer-send ml-1 size-7.5 rounded-full"
+              aria-label={t("chat.composer.queueMessage")}
             >
-              <ArrowUpIcon className="unsloth-send-icon aui-composer-send-icon size-[21px] stroke-2" />
+              <ArrowUpIcon className="unsloth-send-icon aui-composer-send-icon size-4 stroke-2" />
             </TooltipIconButton>
           )}
         </AuiIf>
@@ -208,46 +211,46 @@ export const ComposerRightControls: FC<ComposerRightControlsProps> = ({
           type="button"
           variant="default"
           size="icon"
-          className="aui-composer-cancel ml-1.5 size-9 rounded-full"
-          aria-label={researchStopping ? "Stopping research" : "Stop research"}
+          className="aui-composer-cancel ml-1 size-7.5 rounded-full"
+          aria-label={researchStopping ? t("chat.composer.stoppingResearch") : t("chat.composer.stopResearch")}
           disabled={researchStopping}
           onClick={stop}
         >
           {researchStopping ? (
             <Spinner className="size-3.5" />
           ) : (
-            <SquareIcon className="aui-composer-cancel-icon size-3 fill-current" />
+            <SquareIcon className="aui-composer-cancel-icon size-2.5 fill-current" />
           )}
         </Button>
       ) : (
         <AuiIf condition={({ thread }) => thread.isRunning}>
-          <div className="ml-1.5 flex items-center">
+          <div className="ml-1 flex items-center">
             {queueDisabled ? (
               <ComposerPrimitive.Cancel asChild={true}>
                 <Button
                   type="button"
                   variant="default"
                   size="icon"
-                  className="aui-composer-cancel size-9 rounded-full"
-                  aria-label="Stop generating"
+                  className="aui-composer-cancel size-7.5 rounded-full"
+                  aria-label={t("chat.composer.stopGenerating")}
                   onClick={stop}
                 >
-                  <SquareIcon className="aui-composer-cancel-icon size-3 fill-current" />
+                  <SquareIcon className="aui-composer-cancel-icon size-2.5 fill-current" />
                 </Button>
               </ComposerPrimitive.Cancel>
             ) : (
               <TooltipIconButton
-                tooltip="Queue message"
+                tooltip={t("chat.composer.queueMessage")}
                 side="bottom"
                 type="button"
                 variant="default"
                 size="icon"
                 disabled={queueDisabled}
                 onClick={onQueueClick}
-                className="aui-composer-send size-9 rounded-full"
-                aria-label="Queue message"
+                className="aui-composer-send size-7.5 rounded-full"
+                aria-label={t("chat.composer.queueMessage")}
               >
-                <ArrowUpIcon className="unsloth-send-icon aui-composer-send-icon size-[21px] stroke-2" />
+                <ArrowUpIcon className="unsloth-send-icon aui-composer-send-icon size-4 stroke-2" />
               </TooltipIconButton>
             )}
           </div>

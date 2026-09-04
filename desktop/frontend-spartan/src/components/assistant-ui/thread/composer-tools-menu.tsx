@@ -441,7 +441,7 @@ export const ComposerToolsMenu: FC<ComposerToolsMenuProps> = ({
             className="unsloth-composer-plus"
             data-tour="chat-plus-menu"
           >
-            <PlusIcon className="size-[22px] stroke-[1.75px]" />
+            <PlusIcon className="size-4 stroke-2" />
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent

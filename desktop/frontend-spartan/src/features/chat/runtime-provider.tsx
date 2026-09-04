@@ -1,4 +1,4 @@
-
+﻿
 import { authFetch } from "@/features/auth";
 import { chatModelLoaded } from "./lib/chat-model-loaded";
 import {
@@ -754,6 +754,16 @@ function createStudioDbAdapter(
 ): unstable_RemoteThreadListAdapter {
   return {
     async fetch(remoteId: string) {
+      // assistant-ui assigns a __LOCALID_* while a new conversation only lives
+      // in the runtime. It has no storage record yet, so treating it as a
+      // remote thread produces a deterministic "Thread … not found" error.
+      if (isAssistantLocalThreadId(remoteId)) {
+        return {
+          remoteId,
+          status: "regular" as const,
+          title: DEFAULT_CHAT_TITLE,
+        };
+      }
       const thread = await getStoredChatThread(remoteId);
       if (!thread) {
         throw new Error(`Thread ${remoteId} not found`);
@@ -2179,6 +2189,55 @@ export function useChatActive(): boolean {
 }
 
 export function ChatRuntimeProvider({
+  children,
+  modelType = "base",
+  pairId,
+  projectId,
+  initialThreadId,
+  newThreadNonce,
+  syncActiveThreadId = true,
+  listThreads = true,
+}: {
+  children: ReactNode;
+  modelType?: ModelType;
+  pairId?: string;
+  projectId?: string | null;
+  initialThreadId?: string;
+  newThreadNonce?: string;
+  syncActiveThreadId?: boolean;
+  listThreads?: boolean;
+}): ReactElement {
+  // When the backing runtime changes, @assistant-ui/react starts its internal
+  // version counter at 0. This happens not only for model/compare changes, but
+  // also when router navigation selects a different persisted thread. Components
+  // already committed to a higher version (notably the
+  // composer mention popover) otherwise receive a downward version jump.
+  // Components already committed to a higher version (e.g. ComposerPrimitive.
+  // TriggerPopover via useResource) throw "Version is less than committed version".
+  // Giving the inner tree a new key forces React to fully unmount before mounting
+  // the new runtime so no component ever sees a downward version jump.
+  const runtimeKey = [
+    modelType,
+    pairId ?? "",
+    initialThreadId ?? "",
+  ].join(":");
+  return (
+    <ChatRuntimeProviderImpl
+      key={runtimeKey}
+      modelType={modelType}
+      pairId={pairId}
+      projectId={projectId}
+      initialThreadId={initialThreadId}
+      newThreadNonce={newThreadNonce}
+      syncActiveThreadId={syncActiveThreadId}
+      listThreads={listThreads}
+    >
+      {children}
+    </ChatRuntimeProviderImpl>
+  );
+}
+
+function ChatRuntimeProviderImpl({
   children,
   modelType = "base",
   pairId,

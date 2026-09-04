@@ -29,7 +29,7 @@ import {
 } from "../think-aria-label";
 import { cn } from "@/lib/utils";
 
-export const ThinkIcon: FC = () => <BulbIcon className="size-[15.5px]" />;
+export const ThinkIcon: FC = () => <BulbIcon className="size-3.5" />;
 
 export const PillGlyph: FC<{ children: ReactNode }> = ({ children }) => (
   <span className="composer-pill-glyph">
@@ -164,7 +164,7 @@ export const ReasoningToggle: FC<ReasoningToggleProps> = ({ side = "bottom" }) =
                 {isEffort ? `Thinking · ${effortLabel}` : "Thinking"}
               </span>
             ) : null}
-            <ArrowDownStandardIcon className="unsloth-thinking-caret size-[15px]" />
+            <ArrowDownStandardIcon className="unsloth-thinking-caret size-3.5" />
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent

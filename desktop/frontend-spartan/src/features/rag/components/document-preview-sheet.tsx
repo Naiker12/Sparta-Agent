@@ -1,11 +1,13 @@
 "use client";
 
 import {
+  Component,
   useCallback,
   useEffect,
   useLayoutEffect,
   useRef,
   useState,
+  type ReactNode,
 } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import {
@@ -245,7 +247,7 @@ function PdfPreview({
             className="size-7"
             disabled={scale <= ZOOM_MIN}
             onClick={() => zoomBy(-ZOOM_STEP)}
-            aria-label="Zoom out"
+            aria-label={t("chat.preview.zoomOut")}
           >
             <ZoomOutIcon className="size-4" />
           </Button>
@@ -253,7 +255,7 @@ function PdfPreview({
             type="button"
             onClick={() => setScale(1)}
             className="w-11 text-center tabular-nums text-muted-foreground hover:text-foreground"
-            aria-label="Reset zoom"
+            aria-label={t("chat.preview.resetZoom")}
           >
             {Math.round(scale * 100)}%
           </button>
@@ -263,7 +265,7 @@ function PdfPreview({
             className="size-7"
             disabled={scale >= ZOOM_MAX}
             onClick={() => zoomBy(ZOOM_STEP)}
-            aria-label="Zoom in"
+            aria-label={t("chat.preview.zoomIn")}
           >
             <ZoomInIcon className="size-4" />
           </Button>
@@ -276,12 +278,12 @@ function PdfPreview({
               className="size-7"
               disabled={page <= 1}
               onClick={() => setPage((p) => Math.max(1, p - 1))}
-              aria-label="Previous page"
+              aria-label={t("chat.preview.previousPage")}
             >
               <ChevronLeftIcon className="size-4" />
             </Button>
             <span className="tabular-nums text-muted-foreground">
-              Page {page} / {numPages}
+              {t("chat.preview.pageOf", { page, total: numPages })}
             </span>
             <Button
               variant="ghost"
@@ -289,7 +291,7 @@ function PdfPreview({
               className="size-7"
               disabled={page >= numPages}
               onClick={() => setPage((p) => Math.min(numPages, p + 1))}
-              aria-label="Next page"
+              aria-label={t("chat.preview.nextPage")}
             >
               <ChevronRightIcon className="size-4" />
             </Button>
@@ -387,13 +389,25 @@ function LocalSpreadsheetPreview({ blob }: { blob: Blob }) {
     void (async () => {
       const XLSX = await import("xlsx");
       const workbook = XLSX.read(await blob.arrayBuffer(), { type: "array" });
-      const name = workbook.SheetNames[0];
-      if (!name) throw new Error("No sheets");
-      const rows = XLSX.utils.sheet_to_json<unknown[]>(workbook.Sheets[name], {
-        header: 1,
-        defval: "",
-      });
-      if (!cancelled) setSheet({ blob, name, rows: rows.slice(0, 500) });
+      const sheets = workbook.SheetNames.map((name) => ({
+        name,
+        rows: XLSX.utils.sheet_to_json<unknown[]>(workbook.Sheets[name], {
+          header: 1,
+          defval: "",
+        }),
+      }));
+      // openpyxl and other generators often leave the initial "Sheet" empty
+      // and write the actual report to the next worksheet. Preview the first
+      // sheet with cells instead of showing an apparently blank panel.
+      const selected = sheets.find(({ rows }) => rows.length > 0) ?? sheets[0];
+      if (!selected) throw new Error("No sheets");
+      if (!cancelled) {
+        setSheet({
+          blob,
+          name: selected.name,
+          rows: selected.rows.slice(0, 500),
+        });
+      }
     })().catch((reason: unknown) => {
       if (cancelled) return;
       setSheet({ blob, name: "", rows: [] });
@@ -423,6 +437,14 @@ function LocalSpreadsheetPreview({ blob }: { blob: Blob }) {
             error?.blob === blob
               ? error.message
               : t("chat.preview.unknownError"),
+        })}
+      </div>
+    );
+  if (sheet.rows.length === 0)
+    return (
+      <div className="p-6 text-sm text-muted-foreground">
+        {t("chat.preview.spreadsheetError", {
+          error: t("chat.preview.emptySpreadsheet"),
         })}
       </div>
     );
@@ -485,6 +507,39 @@ function LocalPreviewContent({ preview }: { preview: LocalPreview }) {
   }
 }
 
+/**
+ * A parser or renderer must never take down the whole chat. Local files are
+ * untrusted output from a tool, so contain a rendering exception to the panel
+ * and leave the streamed download path available to the user.
+ */
+class LocalPreviewErrorBoundary extends Component<
+  { preview: LocalPreview; message: string; children: ReactNode },
+  { failed: boolean }
+> {
+  state = { failed: false };
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  componentDidUpdate(previous: { preview: LocalPreview }) {
+    if (previous.preview !== this.props.preview && this.state.failed) {
+      this.setState({ failed: false });
+    }
+  }
+
+  render() {
+    if (this.state.failed) {
+      return (
+        <div className="p-6 text-sm text-muted-foreground">
+          {this.props.message}
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 // Resizable preview width (px). Default matches the prior fixed 44rem; drag the
 // left edge to widen. Persisted so it survives reopen.
 const PREVIEW_WIDTH_KEY = "unsloth-rag-preview-width";
@@ -516,6 +571,7 @@ function persistPreviewWidth(w: number) {
 }
 
 export function DocumentPreviewSheet() {
+  const t = useT();
   const {
     open,
     documentId,
@@ -596,7 +652,7 @@ export function DocumentPreviewSheet() {
   }, [open, documentId, chunkId]);
 
   const headerName =
-    localPreview?.filename ?? target?.filename ?? filename ?? "Document";
+    localPreview?.filename ?? target?.filename ?? filename ?? t("chat.preview.document");
   const headerPage = target?.targetPage ?? page ?? null;
 
   return (
@@ -614,7 +670,7 @@ export function DocumentPreviewSheet() {
         <div
           role="separator"
           aria-orientation="vertical"
-          aria-label="Resize document preview"
+          aria-label={t("chat.preview.resize")}
           onMouseDown={onResizeStart}
           onDoubleClick={() => {
             setPreviewWidth(DEFAULT_PREVIEW_WIDTH);
@@ -632,7 +688,7 @@ export function DocumentPreviewSheet() {
               <span className="min-w-0 truncate">{headerName}</span>
               {headerPage != null && (
                 <span className="shrink-0 text-muted-foreground">
-                  · page {headerPage}
+                  · {t("chat.preview.page", { page: headerPage })}
                 </span>
               )}
             </SheetTitle>
@@ -643,14 +699,19 @@ export function DocumentPreviewSheet() {
         <div className="min-h-0 flex-1">
           {loading ? (
             <div className="flex items-center gap-2 p-6 text-sm text-muted-foreground">
-              <Spinner className="size-3.5" /> Resolving source…
+              <Spinner className="size-3.5" /> {t("chat.preview.resolvingSource")}
             </div>
           ) : error ? (
             <div className="p-6 text-sm text-muted-foreground">
-              Could not open this document ({error}).
+              {t("chat.preview.openError", { error })}
             </div>
           ) : localPreview ? (
-            <LocalPreviewContent preview={localPreview} />
+            <LocalPreviewErrorBoundary
+              preview={localPreview}
+              message={t("chat.preview.localSafetyError")}
+            >
+              <LocalPreviewContent preview={localPreview} />
+            </LocalPreviewErrorBoundary>
           ) : target && target.mediaKind === "pdf" && fileUrl ? (
             <PdfPreview
               fileUrl={fileUrl}
@@ -665,7 +726,7 @@ export function DocumentPreviewSheet() {
             </div>
           ) : (
             <div className="p-6 text-sm text-muted-foreground">
-              No preview available for this source.
+              {t("chat.preview.noSourcePreview")}
             </div>
           )}
         </div>

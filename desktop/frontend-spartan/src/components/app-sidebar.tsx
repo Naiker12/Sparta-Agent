@@ -47,6 +47,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
@@ -129,6 +139,7 @@ import {
   archiveChatItem,
   ChatSearchDialog,
   clearNewChatDraft,
+  clearAllChats,
   deleteChatProject,
   deleteChatItem,
   isDefaultChatTitle,
@@ -466,7 +477,7 @@ export function AppSidebar() {
     loaded: chatItemsLoaded,
   } = useChatSidebarItems({
     enabled: !isStudioRoute,
-    requireMessages: false,
+    requireMessages: true,
   });
   const pinnedIds = usePinnedChatsStore((s) => s.pinnedIds);
   const togglePinnedChat = usePinnedChatsStore((s) => s.togglePin);
@@ -1334,6 +1345,19 @@ export function AppSidebar() {
     null,
   );
   const [deleteFilesOnDelete, setDeleteFilesOnDelete] = useState(false);
+  const [confirmingClearAll, setConfirmingClearAll] = useState(false);
+
+  async function handleClearAllChats() {
+    try {
+      await clearAllChats({ deleteFiles: alwaysDeleteChatFiles });
+      navigate({ to: "/chat", search: { new: createNavigationNonce() } });
+      toast(t("shell.organize.clearAllChatsSuccess"));
+    } catch (err) {
+      toast.error(t("shell.organize.clearAllChatsFailed"), {
+        description: err instanceof Error ? err.message : undefined,
+      });
+    }
+  }
 
   /** Always through here: a stale switch would delete an unrelated sandbox. */
   function openDeleteDialog(target: DeleteTarget) {
@@ -2281,6 +2305,8 @@ export function AppSidebar() {
                     onSortChange={setChatSort}
                     organizeBy={organizeBy}
                     onOrganizeByChange={setOrganizeBy}
+                    onManageChats={() => useSettingsDialogStore.getState().openArchivedChats()}
+                    onClearAllChats={() => setConfirmingClearAll(true)}
                   />}
                   {/* Starts a chat outside any project, whatever page is open. */}
                   <button
@@ -2370,6 +2396,27 @@ export function AppSidebar() {
         projectCreateMoveTarget={projectCreateMoveTarget}
         onAfterCreateProject={afterCreateProject}
       />
+      <AlertDialog open={confirmingClearAll} onOpenChange={setConfirmingClearAll}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("shell.organize.clearAllChatsTitle")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("shell.organize.clearAllChatsDescription")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => void handleClearAllChats()}
+            >
+              {t("shell.organize.clearAllChatsConfirm")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

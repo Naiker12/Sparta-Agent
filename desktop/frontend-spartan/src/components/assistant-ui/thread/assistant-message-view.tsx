@@ -24,6 +24,10 @@ import { UserMessageAttachments } from "@/components/assistant-ui/attachment";
 import { MarkdownText } from "@/components/assistant-ui/markdown-text";
 import { MessageHtmlArtifacts } from "@/components/assistant-ui/message-html-artifacts";
 import { MessageResponseModelBadge } from "@/components/assistant-ui/message-response-details-sheet";
+import {
+  Reasoning,
+  ReasoningGroup,
+} from "@/components/assistant-ui/reasoning";
 import { RagSourcesGroup } from "@/components/assistant-ui/rag-sources";
 import { Sources, SourcesGroup } from "@/components/assistant-ui/sources";
 import {
@@ -50,6 +54,7 @@ import {
 } from "@/features/chat/api/chat-adapter";
 import { ResearchMessage } from "@/features/chat/components/research-message";
 import { useChatRuntimeStore } from "@/features/chat/stores/chat-runtime-store";
+import { useT } from "@/i18n";
 import {
   CONTINUATION_RUN_CONFIG_KEY,
   incompleteLabel,
@@ -73,6 +78,7 @@ import {
 import { useImeComposerInputHandlers } from "./use-ime-composer";
 
 export const MessageError: FC = () => {
+  const t = useT();
   const researchRunId = useResearchMessageRunId();
   const researchActive = useThreadResearchActive();
   return (
@@ -86,7 +92,7 @@ export const MessageError: FC = () => {
               className="aui-message-error-retry inline-flex shrink-0 items-center gap-1.5 rounded-md border border-destructive/40 px-2.5 py-1 text-xs font-medium transition-colors hover:bg-destructive/15"
             >
               <RefreshCwIcon strokeWidth={1.75} className="size-3.5" />
-              Retry
+              {t("chat.actions.retry")}
             </button>
           </ActionBarPrimitive.Reload>
         )}
@@ -96,9 +102,17 @@ export const MessageError: FC = () => {
 };
 
 export const GeneratingIndicator: FC = () => {
+  const t = useT();
   const show = useAuiState(
-    ({ message }) =>
-      message.content.length === 0 && message.status?.type === "running",
+    ({ message }) => {
+      if (message.status?.type !== "running") return false;
+      // A tool call makes `content` non-empty, which used to hide the only
+      // live indicator while the assistant was still generating a document.
+      // Keep it visible until either answer text or a reasoning stream exists.
+      return !message.parts.some(
+        (part) => part.type === "text" || part.type === "reasoning",
+      );
+    },
   );
   if (!show) {
     return null;
@@ -113,12 +127,13 @@ export const GeneratingIndicator: FC = () => {
         size={24}
         fallback={<Spinner className="size-4" />}
       />
-      Generating...
+      {t("chat.actions.generating")}
     </span>
   );
 };
 
 export const CancelledIndicator: FC = () => {
+  const t = useT();
   const show = useAuiState(
     ({ message }) =>
       message.content.length === 0 &&
@@ -130,7 +145,7 @@ export const CancelledIndicator: FC = () => {
   }
   return (
     <span className="aui-cancelled-indicator text-sm italic text-muted-foreground">
-      Cancelled.
+      {t("chat.actions.cancelled")}
     </span>
   );
 };
@@ -160,6 +175,7 @@ export const ContinueMessageBar: FC = () => {
 };
 
 export const ContinueMessageBarForLastMessage: FC = () => {
+  const t = useT();
   const aui = useAui();
   const messageId = useAuiState(({ message }) => message.id);
   const isLast = useAuiState(({ message }) => message.isLast);
@@ -225,10 +241,19 @@ export const ContinueMessageBarForLastMessage: FC = () => {
     });
   };
 
+  const incompleteText =
+    reason === "length"
+      ? t("chat.actions.incompleteLength")
+      : reason === "cancelled"
+        ? t("chat.actions.incompleteCancelled")
+        : reason === "interrupted"
+          ? t("chat.actions.incompleteInterrupted")
+          : incompleteLabel(reason);
+
   return (
     <div className="aui-continue-bar mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-border/70 bg-muted/50 p-2.5 text-sm">
       <span className="min-w-0 flex-1 text-muted-foreground">
-        {incompleteLabel(reason)}.
+        {incompleteText}.
       </span>
       <Button
         type="button"
@@ -238,7 +263,7 @@ export const ContinueMessageBarForLastMessage: FC = () => {
         onClick={handleContinue}
       >
         <FastForwardIcon strokeWidth={1.75} className="size-3.5" />
-        Continue
+        {t("chat.actions.continue")}
       </Button>
     </div>
   );
@@ -261,8 +286,8 @@ export const ToolFallbackConfirmable = withToolConfirmation(ToolFallback);
 
 export const ASSISTANT_PART_COMPONENTS = {
   Text: MarkdownText,
-  Reasoning: () => null,
-  ReasoningGroup: () => null,
+  Reasoning,
+  ReasoningGroup,
   Source: Sources,
   ToolGroup: ToolGroup,
   tools: {
@@ -311,6 +336,7 @@ export const DiffusionCanvas: FC = () => {
 };
 
 export const AssistantMessage: FC = () => {
+  const t = useT();
   const aui = useAui();
   const focusReveal = useActionBarFocusReveal();
   const messageId = useAuiState(({ message }) => message.id);
@@ -350,7 +376,7 @@ export const AssistantMessage: FC = () => {
       useChatRuntimeStore.getState().activeThreadId;
 
     if (!remoteId || remoteId === "" || remoteId === "/") {
-      toast.error("Save failed: No thread ID found.");
+      toast.error(t("chat.actions.noThreadFound"));
       setEditingId(null);
       return;
     }
@@ -368,7 +394,7 @@ export const AssistantMessage: FC = () => {
       });
     } catch (error) {
       console.error("UI: Error during save:", error);
-      toast.error("Failed to save message edits.");
+      toast.error(t("chat.actions.saveFailed"));
     } finally {
       setEditingId(null);
     }
@@ -409,10 +435,10 @@ export const AssistantMessage: FC = () => {
                 onClick={() => setEditingId(null)}
                 className="h-8 text-xs"
               >
-                Cancel
+                {t("chat.actions.cancel")}
               </Button>
               <Button size="sm" onClick={handleSave} className="h-8 text-xs">
-                Save
+                {t("chat.actions.save")}
               </Button>
             </div>
           </div>
@@ -496,6 +522,7 @@ export const UserMessage: FC = () => {
 };
 
 export const EditComposer: FC = () => {
+  const t = useT();
   const aui = useAui();
   const { inputProps, isComposingRef } = useImeComposerInputHandlers();
   const resendAfterCancelRef = useRef(false);
@@ -521,7 +548,7 @@ export const EditComposer: FC = () => {
         <div className="aui-edit-composer-footer mx-3 mb-3 flex items-center gap-2 self-end">
           <ComposerPrimitive.Cancel asChild={true}>
             <Button type="button" variant="ghost" size="sm">
-              Cancel
+              {t("chat.actions.cancel")}
             </Button>
           </ComposerPrimitive.Cancel>
           <Button
@@ -549,7 +576,7 @@ export const EditComposer: FC = () => {
               aui.composer().send();
             }}
           >
-            Update
+            {t("chat.actions.update")}
           </Button>
         </div>
       </ComposerPrimitive.Root>

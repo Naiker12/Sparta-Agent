@@ -1,6 +1,7 @@
 import { FolderAddIcon, Folder01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useState } from "react";
+import { useT } from "@/i18n";
 
 import { toast } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
@@ -53,6 +54,7 @@ function label(path: string): string {
 
 /** The visible workspace capability for the currently open chat. */
 export function ThreadWorkspaceChip() {
+  const t = useT();
   const threadId = useChatRuntimeStore((state) => state.activeThreadId);
   const [binding, setBinding] = useState<ThreadWorkspaceBinding | null>(null);
   const [pending, setPending] = useState<PendingWorkspace | null>(pendingWorkspace);
@@ -95,12 +97,12 @@ export function ThreadWorkspaceChip() {
         setPending(null);
         setBinding(next);
       } catch (error) {
-        toast.error("No se pudo preparar la carpeta de trabajo", {
+        toast.error(t("chat.workspace.errorPrepare"), {
           description: error instanceof Error ? error.message : undefined,
         });
       }
     })();
-  }, [threadId]);
+  }, [threadId, t]);
 
   async function selectFolder() {
     try {
@@ -109,7 +111,7 @@ export function ThreadWorkspaceChip() {
       setSelectedAccess("read");
       setSelectedFolder(folder);
     } catch (error) {
-      toast.error("No se pudo seleccionar la carpeta de trabajo", {
+      toast.error(t("chat.workspace.errorSelect"), {
         description: error instanceof Error ? error.message : undefined,
       });
     }
@@ -138,7 +140,7 @@ export function ThreadWorkspaceChip() {
       setBinding(next);
       setSelectedFolder(null);
     } catch (error) {
-      toast.error("No se pudo conectar la carpeta de trabajo", {
+      toast.error(t("chat.workspace.errorConnect"), {
         description: error instanceof Error ? error.message : undefined,
       });
     }
@@ -157,7 +159,7 @@ export function ThreadWorkspaceChip() {
       await bridge?.clearWorkspaceBinding?.(binding.bindingId);
       setBinding(null);
     } catch (error) {
-      toast.error("No se pudo desconectar la carpeta de trabajo", {
+      toast.error(t("chat.workspace.errorDisconnect"), {
         description: error instanceof Error ? error.message : undefined,
       });
     }
@@ -179,12 +181,12 @@ export function ThreadWorkspaceChip() {
       <span className="composer-pill-glyph">
         <HugeiconsIcon
           icon={binding || pending ? Folder01Icon : FolderAddIcon}
-          className="size-[15px]"
+          className="size-3.5"
           strokeWidth={1.8}
         />
       </span>
       <span className="whitespace-nowrap">
-        {currentPath ? label(currentPath) : "Trabajar en una carpeta"}
+        {currentPath ? label(currentPath) : t("chat.workspace.chipLabel")}
       </span>
       {currentAccess ? (
         <span className="text-[10px] uppercase text-muted-foreground">
@@ -205,9 +207,9 @@ export function ThreadWorkspaceChip() {
     >
       <DialogContent className="max-w-lg" showCloseButton>
         <DialogHeader>
-          <DialogTitle>Conectar carpeta de trabajo</DialogTitle>
+          <DialogTitle>{t("chat.workspace.connectTitle")}</DialogTitle>
           <DialogDescription>
-            Elige qué puede hacer Sparta Agent dentro de esta carpeta. Este acceso solo pertenece a este chat.
+            {t("chat.workspace.connectDescription")}
           </DialogDescription>
         </DialogHeader>
         <p className="break-all rounded-2xl bg-muted px-4 py-3 text-sm text-foreground">
@@ -216,33 +218,33 @@ export function ThreadWorkspaceChip() {
         <RadioGroup
           value={selectedAccess}
           onValueChange={(value) => setSelectedAccess(value as WorkspaceAccess)}
-          aria-label="Permiso de carpeta"
+          aria-label={t("chat.workspace.permissionAria")}
         >
           <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-border px-4 py-3 has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-primary/5">
-            <RadioGroupItem value="read" aria-label="Solo lectura" />
+            <RadioGroupItem value="read" aria-label={t("chat.workspace.readOnly")} />
             <span className="flex flex-col gap-1">
-              <span className="font-medium">Solo lectura</span>
-              <span className="text-sm text-muted-foreground">Puede revisar archivos, pero no modificarlos.</span>
+              <span className="font-medium">{t("chat.workspace.readOnly")}</span>
+              <span className="text-sm text-muted-foreground">{t("chat.workspace.readOnlyDesc")}</span>
             </span>
           </label>
           <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-border px-4 py-3 has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-primary/5">
-            <RadioGroupItem value="write_no_delete" aria-label="Editar sin eliminar" />
+            <RadioGroupItem value="write_no_delete" aria-label={t("chat.workspace.editNoDelete")} />
             <span className="flex flex-col gap-1">
-              <span className="font-medium">Editar sin eliminar</span>
-              <span className="text-sm text-muted-foreground">Puede crear y editar; no puede borrar archivos.</span>
+              <span className="font-medium">{t("chat.workspace.editNoDelete")}</span>
+              <span className="text-sm text-muted-foreground">{t("chat.workspace.editNoDeleteDesc")}</span>
             </span>
           </label>
           <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-border px-4 py-3 has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-primary/5">
-            <RadioGroupItem value="write" aria-label="Permitir ediciones" />
+            <RadioGroupItem value="write" aria-label={t("chat.workspace.allowEdits")} />
             <span className="flex flex-col gap-1">
-              <span className="font-medium">Permitir ediciones</span>
-              <span className="text-sm text-muted-foreground">Puede crear, editar y eliminar archivos cuando se lo pidas.</span>
+              <span className="font-medium">{t("chat.workspace.allowEdits")}</span>
+              <span className="text-sm text-muted-foreground">{t("chat.workspace.allowEditsDesc")}</span>
             </span>
           </label>
         </RadioGroup>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setSelectedFolder(null)}>Cancelar</Button>
-          <Button onClick={() => void confirmFolderAccess()}>Conectar carpeta</Button>
+          <Button variant="outline" onClick={() => setSelectedFolder(null)}>{t("chat.workspace.cancel")}</Button>
+          <Button onClick={() => void confirmFolderAccess()}>{t("chat.workspace.connect")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -259,10 +261,10 @@ export function ThreadWorkspaceChip() {
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onSelect={() => void selectFolder()}>
-            Cambiar carpeta
+            {t("chat.workspace.changeFolder")}
           </DropdownMenuItem>
           <DropdownMenuItem onSelect={() => void disconnect()}>
-            Desconectar carpeta
+            {t("chat.workspace.disconnectFolder")}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

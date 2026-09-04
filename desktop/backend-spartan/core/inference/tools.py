@@ -9454,9 +9454,10 @@ def _build_sandbox_paths_note() -> str:
     # Without this a model assumes its output vanished into a scratch dir and
     # says so, which reads as "the file was not really created".
     created = (
-        " Any file you create here is kept and shown to the user with a download "
-        "link, so name the files you created in your reply -- by file name only, "
-        "since you do not know their absolute path."
+        " Any file you create here is kept and shown to the user with a verified download "
+        "link, so name the files you created in your reply in plain text only -- by file "
+        "name only, since you do not know their absolute path. Never invent a Markdown "
+        "link for a generated file."
     )
     if sys.platform != "win32":
         return (
@@ -13711,22 +13712,37 @@ def _created_file_sentinels(
         return ""
 
     import json as _json
+    from core.documents.artifact_validation import validate_generated_artifact
 
     # Same cap on both: a script writing a frame per step would otherwise put
     # every name in the result and the stored chat, and the UI would render them all.
     images = [n for n in changed if os.path.splitext(n)[1].lower() in _IMAGE_EXTS]
     images = images[:_MAX_REPORTED_FILES]
     entries = []
+    rejected_documents = []
     for name in changed[:_MAX_REPORTED_FILES]:
+        path = os.path.join(workdir, name)
         try:
-            size = os.stat(os.path.join(workdir, name)).st_size
+            size = os.stat(path).st_size
         except OSError:
             size = None
+        # A name and byte count are not enough evidence for an Office document
+        # or PDF.  Do not hand the UI a "download" card for malformed output.
+        # Ordinary file types remain available exactly as before.
+        validation = validate_generated_artifact(path)
+        if not validation.valid:
+            rejected_documents.append(f"{name} ({validation.reason or 'invalid document'})")
+            continue
         entries.append({"name": name, "size": size})
 
     # __IMAGES__ stays LAST: older clients slice from it to the end of the
     # string, so anything after would land inside their JSON.
-    out = f"\n__FILES__:{_json.dumps(entries)}"
+    warning = ""
+    if rejected_documents:
+        shown = "; ".join(rejected_documents[:5])
+        more = "" if len(rejected_documents) <= 5 else "; additional invalid documents omitted"
+        warning = f"\nDocument validation failed; no download was offered: {shown}{more}"
+    out = warning + f"\n__FILES__:{_json.dumps(entries)}"
     if images:
         out += f"\n__IMAGES__:{_json.dumps(images)}"
     return out

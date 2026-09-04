@@ -3,6 +3,7 @@
 from urllib.parse import unquote, urlsplit
 from fastapi import APIRouter, Depends, HTTPException
 from loggers import get_logger
+from utils.utils import log_and_http_error, safe_error_detail
 
 from auth.authentication import get_current_subject
 from utils.personalization_settings import (

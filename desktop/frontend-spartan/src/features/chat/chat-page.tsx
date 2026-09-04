@@ -284,6 +284,10 @@ export function ChatPage({
     if (!active) return;
     const threadId = search.thread;
     if (!threadId) return;
+    // Local threads (__LOCALID_*) exist only in memory and are not persisted to
+    // the backend. getStoredChatThread returns undefined for them, which would
+    // incorrectly trigger the "Chat not found" toast when a provider is selected.
+    if (isAssistantLocalThreadId(threadId)) return;
 
     let canceled = false;
     void getStoredChatThread(threadId)

@@ -20,6 +20,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useT } from "@/i18n";
 
 import {
   type McpServerConfig,
@@ -91,6 +92,7 @@ export function McpComposerButton({
 }: {
   side?: "top" | "bottom";
 } = {}) {
+  const t = useT();
   const modelLoaded = useChatRuntimeStore(
     (s) => !!s.params.checkpoint && !s.modelLoading,
   );
@@ -310,7 +312,9 @@ export function McpComposerButton({
             {availablePresets.length > 0 ? <DropdownMenuSeparator /> : null}
             {availablePresets.length > 0 ? (
               <DropdownMenuGroup>
-                <DropdownMenuLabel>Quick connections</DropdownMenuLabel>
+                <DropdownMenuLabel>
+                  {t("chat.mcp.quickConnections")}
+                </DropdownMenuLabel>
                 {availablePresets.map((preset) => {
               const norm = normalizeMcpUrl(preset.url);
               return renderRow({
@@ -329,7 +333,9 @@ export function McpComposerButton({
             {disabledCustomServers.length > 0 ? <DropdownMenuSeparator /> : null}
             {disabledCustomServers.length > 0 ? (
               <DropdownMenuGroup>
-                <DropdownMenuLabel>Configured, disabled</DropdownMenuLabel>
+                <DropdownMenuLabel>
+                  {t("chat.mcp.configuredDisabled")}
+                </DropdownMenuLabel>
                 {disabledCustomServers.map((server) =>
                   renderRow({
                     key: server.id,
@@ -349,7 +355,7 @@ export function McpComposerButton({
                 setDialogOpen(true);
               }}
             >
-              Explore and manage MCP servers
+              {t("chat.mcp.exploreAndManage")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -373,7 +379,7 @@ export function McpComposerButton({
             </button>
           </TooltipTrigger>
           <TooltipContent>
-            MCP works with local tool-capable models
+            {t("chat.mcp.tooltip")}
           </TooltipContent>
         </Tooltip>
       )}

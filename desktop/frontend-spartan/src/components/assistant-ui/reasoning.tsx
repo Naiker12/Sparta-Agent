@@ -17,6 +17,7 @@ import {
   useChatPreferencesStore,
 } from "@/features/chat";
 import { useCollapseScrollLock } from "@/hooks/use-collapse-scroll-lock";
+import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
 import {
   type ReasoningGroupComponent,
@@ -125,6 +126,7 @@ function ReasoningTrigger({
   active?: boolean;
   duration?: number;
 }) {
+  const t = useT();
   return (
     <CollapsibleTrigger
       data-slot="reasoning-trigger"
@@ -140,9 +142,17 @@ function ReasoningTrigger({
         className="aui-reasoning-trigger-label-wrapper relative inline-block leading-none"
       >
         {active ? (
-          <span className="text-sm">Thinking...</span>
+          <span className="inline-flex items-center gap-1 text-sm">
+            {t("chat.reasoning.thinking")} <ThinkingDots />
+          </span>
         ) : (
-          <span>Thought for {duration ?? 0} {duration === 1 ? "second" : "seconds"}</span>
+          <span>
+            {duration === 1
+              ? t("chat.reasoning.thoughtForOneSecond", { duration: 1 })
+              : t("chat.reasoning.thoughtForSeconds", {
+                  duration: duration ?? 0,
+                })}
+          </span>
         )}
       </span>
       <ChevronDownIcon
@@ -155,6 +165,16 @@ function ReasoningTrigger({
         )}
       />
     </CollapsibleTrigger>
+  );
+}
+
+function ThinkingDots() {
+  return (
+    <span aria-hidden={true} className="inline-flex items-center gap-0.5">
+      <span className="size-1 animate-bounce rounded-full bg-current [animation-delay:-0.2s] motion-reduce:animate-none" />
+      <span className="size-1 animate-bounce rounded-full bg-current [animation-delay:-0.1s] motion-reduce:animate-none" />
+      <span className="size-1 animate-bounce rounded-full bg-current motion-reduce:animate-none" />
+    </span>
   );
 }
 
@@ -274,6 +294,7 @@ const ReasoningImpl: ReasoningMessagePartComponent = () => <MarkdownText />;
 const COPY_RESET_MS = 2000;
 
 function ReasoningCopyButton({ startIndex, endIndex }: { startIndex: number; endIndex: number }) {
+  const t = useT();
   const [copied, setCopied] = useState(false);
   const resetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -298,14 +319,14 @@ function ReasoningCopyButton({ startIndex, endIndex }: { startIndex: number; end
       type="button"
       onClick={handleCopy}
       className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-muted-foreground transition-colors hover:text-foreground hover:bg-muted"
-      aria-label="Copy reasoning"
+      aria-label={t("chat.reasoning.copy")}
     >
       {copied ? (
         <HugeiconsIcon icon={Tick02Icon} strokeWidth={2} className="size-3" />
       ) : (
         <CopyIcon className="size-3" />
       )}
-      {copied ? "Copied" : "Copy"}
+      {copied ? t("chat.reasoning.copied") : t("chat.reasoning.copy")}
     </button>
   );
 }

@@ -5,6 +5,7 @@ import threading
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 from loggers import get_logger
+from utils.utils import safe_error_detail
 
 from auth.authentication import get_current_subject
 from utils.coding_agents import CODING_AGENTS, detect_installed_coding_agents

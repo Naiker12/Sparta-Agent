@@ -47,12 +47,25 @@ def _friendly_error(e):
     return fn(e) if fn else str(e)
 
 
-def _TrackedCancel(*args, **kwargs):
-    cls = _get_inf_attr("_TrackedCancel")
-    if cls:
-        return cls(*args, **kwargs)
-    from contextlib import nullcontext
-    return nullcontext()
+def _raw_body_model(body):
+    return body.get('model') if isinstance(body, dict) else None
+
+class _TrackedCancelProxy:
+    def __call__(self, *args, **kwargs):
+        cls = _get_inf_attr("_TrackedCancel")
+        if cls:
+            return cls(*args, **kwargs)
+        from contextlib import nullcontext
+        return nullcontext()
+
+    def for_payload(self, *args, **kwargs):
+        cls = _get_inf_attr("_TrackedCancel")
+        if cls and hasattr(cls, "for_payload"):
+            return cls.for_payload(*args, **kwargs)
+        from contextlib import nullcontext
+        return nullcontext()
+
+_TrackedCancel = _TrackedCancelProxy()
 
 
 def _send_stream_with_preheader_cancel(*args, **kwargs):

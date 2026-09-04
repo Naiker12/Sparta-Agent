@@ -171,3 +171,5 @@ app.whenReady().then(async () => {
 })
 
 app.on('before-quit', () => backend.stop())
+
+

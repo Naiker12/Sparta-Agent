@@ -201,6 +201,35 @@ export function useImeComposerInputHandlers({
         onModEnter(e);
         return;
       }
+
+      // Tab or Enter when a trigger popover (@ mention or / slash command) is open:
+      // select the currently highlighted item or category instead of sending the prompt or blurring.
+      if (
+        (e.key === "Tab" || (submitOnEnter && e.key === "Enter")) &&
+        !e.shiftKey
+      ) {
+        const form = e.currentTarget.form ?? e.currentTarget.closest("form");
+        const listbox =
+          form?.querySelector('[role="listbox"][data-state="open"]') ||
+          form?.querySelector('[role="listbox"]') ||
+          document.querySelector('.aui-composer-root [role="listbox"]');
+
+        if (listbox) {
+          e.preventDefault();
+          const highlighted = listbox.querySelector<HTMLElement>(
+            '[data-highlighted], [aria-selected="true"]',
+          );
+          if (highlighted) {
+            const textarea = e.currentTarget;
+            highlighted.click();
+            requestAnimationFrame(() => {
+              textarea.focus();
+            });
+          }
+          return;
+        }
+      }
+
       if (submitOnEnter && e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         e.currentTarget.form?.requestSubmit();

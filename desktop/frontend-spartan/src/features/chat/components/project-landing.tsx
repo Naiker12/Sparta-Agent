@@ -792,7 +792,7 @@ export function ProjectLanding({
                               strokeWidth={1.75}
                               className="size-icon"
                             />
-                            <span>Save to project sources</span>
+                            <span>{t("chat.menu.saveToProjectSources")}</span>
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
@@ -803,7 +803,7 @@ export function ProjectLanding({
                               strokeWidth={1.75}
                               className="size-icon"
                             />
-                            <span>Archive</span>
+                            <span>{t("chat.menu.archive")}</span>
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             variant="destructive"
@@ -814,7 +814,7 @@ export function ProjectLanding({
                               strokeWidth={1.75}
                               className="size-icon"
                             />
-                            <span>Delete</span>
+                            <span>{t("chat.menu.delete")}</span>
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

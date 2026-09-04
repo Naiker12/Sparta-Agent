@@ -38,7 +38,7 @@ function formatCreatedAt(ms: number): string {
 }
 
 export function ArchivedChatsView() {
-  const { archivedItems } = useChatSidebarItems({ requireMessages: false });
+  const { archivedItems } = useChatSidebarItems({ requireMessages: true });
   const navigate = useNavigate();
   const closeSettings = useSettingsDialogStore((s) => s.closeDialog);
   const storeThreadId = useChatRuntimeStore((s) => s.activeThreadId);

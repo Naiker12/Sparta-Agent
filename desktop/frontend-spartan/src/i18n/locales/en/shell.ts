@@ -104,6 +104,13 @@ export const shell = {
     organizeChats: "Organize chats",
     organizeProjects: "Organize projects",
     sortPinnedChats: "Sort pinned chats",
+    manageChats: "Manage chats...",
+    clearAllChats: "Delete all chats...",
+    clearAllChatsTitle: "Delete all chats",
+    clearAllChatsDescription: "Delete all chats? This action cannot be undone.",
+    clearAllChatsConfirm: "Delete all",
+    clearAllChatsSuccess: "All chats deleted",
+    clearAllChatsFailed: "Failed to delete all chats",
   },
   dialog: {
     project: {

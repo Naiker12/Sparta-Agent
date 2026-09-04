@@ -1,5 +1,6 @@
 
 import { authFetch } from "@/features/auth";
+import { isAssistantLocalThreadId } from "../utils/thread-ids";
 import { mirrorHfTokenInto, useHfTokenStore } from "@/features/hub";
 import {
   cachedPinnableGpuIndexKind,
@@ -1003,6 +1004,8 @@ export function replayUnconfirmedThreadSettings(): void {
   }
   const sent: Promise<unknown>[] = [];
   for (const [threadId, body] of Object.entries(pending)) {
+    // Skip local-only thread IDs that have never been persisted to the backend.
+    if (isAssistantLocalThreadId(threadId)) continue;
     // Bounded: every settings write in the session waits for these, so a socket that
     // never settles would leave the whole session unable to persist anything.
     const timeout = new AbortController();
@@ -1081,6 +1084,8 @@ function sendThreadScopedSettingsBeacon(
   snapshot: ThreadScopedSettings | null,
   merge = false,
 ): void {
+  // Never beacon to the backend for local-only threads that haven't been persisted.
+  if (isAssistantLocalThreadId(threadId)) return;
   // A merge carries only what the user touched, for the chat whose own snapshot was
   // never read; sending a replacement built from the defaults on screen would erase
   // the rest of its row. Everything else replaces, as the debounced write does.

@@ -39,7 +39,15 @@ from core.inference.llama_admission import (
     LlamaAdmissionQueueFull,
     LlamaAdmissionTimeout,
 )
-from core.inference.passthrough_healing import heal_gate, heal_openai_message_events
+from core.inference.passthrough_healing import (
+    heal_gate,
+    heal_openai_message_events,
+    nudge_messages,
+    nudge_enabled,
+    nudge_should_retry,
+    response_has_promotable_calls,
+)
+from state import active_generations
 from models.inference import (
     AnthropicMessagesRequest,
     AnthropicMessagesResponse,
@@ -65,6 +73,90 @@ def _get_inf_attr(name: str, fallback=None):
         return getattr(mod, name)
     return fallback
 
+def _request_has_image(payload):
+    fn = _get_inf_attr("_request_has_image")
+    return bool(fn(payload)) if fn else False
+
+def _takes_tool_passthrough(payload, llama_backend):
+    fn = _get_inf_attr("_takes_tool_passthrough")
+    return bool(fn(payload, llama_backend)) if fn else False
+
+def _passthrough_client_tools(payload):
+    fn = _get_inf_attr("_passthrough_client_tools")
+    return fn(payload) if fn else []
+
+def _explicit_studio_tool_loop_requested(payload):
+    fn = _get_inf_attr("_explicit_studio_tool_loop_requested")
+    return bool(fn(payload)) if fn else False
+
+def _display_tool_name_gate(name):
+    fn = _get_inf_attr("_display_tool_name_gate")
+    return fn(name) if fn else name
+
+def _llama_status_checkpoint_id():
+    fn = _get_inf_attr("_llama_status_checkpoint_id")
+    return fn() if fn else None
+
+def _anthropic_request_has_image(payload):
+    fn = _get_inf_attr("_anthropic_request_has_image")
+    return bool(fn(payload)) if fn else False
+
+def _automatic_model_load_may_run():
+    fn = _get_inf_attr("_automatic_model_load_may_run")
+    return bool(fn()) if fn else False
+
+def _monitor_prompt_from_messages(messages):
+    fn = _get_inf_attr("_monitor_prompt_from_messages")
+    return fn(messages) if fn else ""
+
+def _monitor_anthropic_response(*args, **kwargs):
+    fn = _get_inf_attr("_monitor_anthropic_response")
+    if fn:
+        return fn(*args, **kwargs)
+
+def _monitor_perf_callback(*args, **kwargs):
+    fn = _get_inf_attr("_monitor_perf_callback")
+    if fn:
+        return fn(*args, **kwargs)
+
+async def _await_disconnect_then_cancel(*args, **kwargs):
+    fn = _get_inf_attr("_await_disconnect_then_cancel")
+    if fn:
+        return await fn(*args, **kwargs)
+
+async def _stop_local_disconnect_cancel_watcher(*args, **kwargs):
+    fn = _get_inf_attr("_stop_local_disconnect_cancel_watcher")
+    if fn:
+        return await fn(*args, **kwargs)
+
+async def _drain_pending_next_task(*args, **kwargs):
+    fn = _get_inf_attr("_drain_pending_next_task")
+    if fn:
+        return await fn(*args, **kwargs)
+
+async def _await_cancel_then_close(*args, **kwargs):
+    fn = _get_inf_attr("_await_cancel_then_close")
+    if fn:
+        return await fn(*args, **kwargs)
+
+async def _await_disconnect_then_close(*args, **kwargs):
+    fn = _get_inf_attr("_await_disconnect_then_close")
+    if fn:
+        return await fn(*args, **kwargs)
+
+def _cancelable_nonstreaming_client():
+    fn = _get_inf_attr("_cancelable_nonstreaming_client")
+    if fn:
+        return fn()
+    import httpx
+    return httpx.AsyncClient(limits=httpx.Limits(max_connections=1, max_keepalive_connections=0), trust_env=False)
+
+async def _await_cancel_or_disconnect_then_close_client(*args, **kwargs):
+    fn = _get_inf_attr("_await_cancel_or_disconnect_then_close_client")
+    if fn:
+        return await fn(*args, **kwargs)
+
+
 
 def get_llama_cpp_backend():
     fn = _get_inf_attr("get_llama_cpp_backend")
@@ -84,12 +176,22 @@ def _friendly_upstream_error(text: str) -> str:
     return fn(text) if fn else text
 
 
-def _TrackedCancel(*args, **kwargs):
-    cls = _get_inf_attr("_TrackedCancel")
-    if cls:
-        return cls(*args, **kwargs)
-    from contextlib import nullcontext
-    return nullcontext()
+class _TrackedCancelProxy:
+    def __call__(self, *args, **kwargs):
+        cls = _get_inf_attr("_TrackedCancel")
+        if cls:
+            return cls(*args, **kwargs)
+        from contextlib import nullcontext
+        return nullcontext()
+
+    def for_payload(self, *args, **kwargs):
+        cls = _get_inf_attr("_TrackedCancel")
+        if cls and hasattr(cls, "for_payload"):
+            return cls.for_payload(*args, **kwargs)
+        from contextlib import nullcontext
+        return nullcontext()
+
+_TrackedCancel = _TrackedCancelProxy()
 
 
 def _send_stream_with_preheader_cancel(*args, **kwargs):

@@ -177,19 +177,24 @@ export function FullAccessConfirmDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useT();
   const setPermissionMode = useChatRuntimeStore((s) => s.setPermissionMode);
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent size="sm">
         <AlertDialogHeader>
-          <AlertDialogTitle>Enable Full access?</AlertDialogTitle>
+          <AlertDialogTitle>
+            {t("chat.composer.permissions.fullAccessDialog.title")}
+          </AlertDialogTitle>
           <AlertDialogDescription>
-            {FULL_ACCESS_WARNING}
+            {t("chat.composer.permissions.fullAccessDialog.warning")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>
+            {t("chat.composer.permissions.fullAccessDialog.cancel")}
+          </AlertDialogCancel>
           <AlertDialogAction
             variant="destructive"
             className="!bg-destructive !text-destructive-foreground hover:!bg-destructive/90"
@@ -198,7 +203,7 @@ export function FullAccessConfirmDialog({
               onOpenChange(false);
             }}
           >
-            I understand
+            {t("chat.composer.permissions.fullAccessDialog.confirm")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -311,13 +316,13 @@ export function PermissionModeComposerPill({
           title={`${active.label}: ${active.description}`}
         >
           <span className="composer-pill-glyph">
-            <ActiveIcon className="size-[15px]" strokeWidth={2} />
+            <ActiveIcon className="size-3.5" strokeWidth={2} />
           </span>
           <span>{active.label}</span>
           <HugeiconsIcon
             icon={ChevronDownStandardIcon}
             strokeWidth={1.5}
-            className="composer-pill-caret size-[15px]"
+            className="composer-pill-caret size-3.5"
           />
         </button>
       </DropdownMenuTrigger>

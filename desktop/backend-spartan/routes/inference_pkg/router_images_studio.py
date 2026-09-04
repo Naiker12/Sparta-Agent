@@ -5,6 +5,9 @@ Extracted from monolithic routes/inference.py to preserve SRP and modularity.
 from __future__ import annotations
 
 import asyncio
+from concurrent.futures import ThreadPoolExecutor
+
+_CANCEL_EXECUTOR = ThreadPoolExecutor(max_workers = 2, thread_name_prefix = "image-cancel")
 import hashlib as _hashlib
 import hmac as _hmac
 import io

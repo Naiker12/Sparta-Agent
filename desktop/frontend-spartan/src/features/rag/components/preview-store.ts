@@ -65,5 +65,15 @@ export const useDocumentPreviewStore = create<DocumentPreviewState>((set) => ({
       page: null,
       localPreview,
     }),
-  closePreview: () => set({ open: false }),
+  // The rendered preview can hold a large Blob (and parsers often create an
+  // ArrayBuffer copy). Clear every local reference as soon as it closes.
+  closePreview: () =>
+    set({
+      open: false,
+      documentId: null,
+      chunkId: null,
+      filename: null,
+      page: null,
+      localPreview: null,
+    }),
 }));

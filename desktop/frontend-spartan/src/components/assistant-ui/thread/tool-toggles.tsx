@@ -30,6 +30,7 @@ import { PillGlyph } from "./reasoning-toggle";
 
 export const WebSearchToggle: FC = () => {
   const t = useT();
+  const toolsEnabled = useChatRuntimeStore((s) => s.toolsEnabled);
   const modelLoaded = useChatRuntimeStore(
     (s) => !!s.params.checkpoint && !s.modelLoading,
   );
@@ -38,7 +39,6 @@ export const WebSearchToggle: FC = () => {
   const supportsBuiltinWebSearch = useChatRuntimeStore(
     (s) => s.supportsBuiltinWebSearch,
   );
-  const toolsEnabled = useChatRuntimeStore((s) => s.toolsEnabled);
   const setToolsEnabled = useChatRuntimeStore((s) => s.setToolsEnabled);
   const setReasoningEnabled = useChatRuntimeStore((s) => s.setReasoningEnabled);
   const connectionsEnabled = useExternalProvidersStore(
@@ -53,6 +53,10 @@ export const WebSearchToggle: FC = () => {
       : undefined;
   const isKimiExternal = selectedExternalProvider?.providerType === "kimi";
   const disabled = modelLoaded && !(supportsTools || supportsBuiltinWebSearch);
+
+  if (!toolsEnabled) {
+    return null;
+  }
 
   return (
     <button
@@ -72,7 +76,7 @@ export const WebSearchToggle: FC = () => {
       aria-label={toolsEnabled ? "Disable web search" : "Enable web search"}
     >
       <PillGlyph>
-        <GlobeIcon className="size-[15px]" />
+        <GlobeIcon className="size-3.5" />
       </PillGlyph>
       <span>{t("chat.composer.searchPill")}</span>
     </button>
@@ -81,6 +85,7 @@ export const WebSearchToggle: FC = () => {
 
 export const CodeToolsToggle: FC = () => {
   const t = useT();
+  const codeToolsEnabled = useChatRuntimeStore((s) => s.codeToolsEnabled);
   const modelLoaded = useChatRuntimeStore(
     (s) => !!s.params.checkpoint && !s.modelLoading,
   );
@@ -88,10 +93,13 @@ export const CodeToolsToggle: FC = () => {
   const supportsBuiltinCodeExecution = useChatRuntimeStore(
     (s) => s.supportsBuiltinCodeExecution,
   );
-  const codeToolsEnabled = useChatRuntimeStore((s) => s.codeToolsEnabled);
   const setCodeToolsEnabled = useChatRuntimeStore((s) => s.setCodeToolsEnabled);
   const disabled =
     modelLoaded && !(supportsTools || supportsBuiltinCodeExecution);
+
+  if (!codeToolsEnabled) {
+    return null;
+  }
 
   return (
     <button
@@ -108,7 +116,7 @@ export const CodeToolsToggle: FC = () => {
       <PillGlyph>
         <HugeiconsIcon
           icon={CodeIcon}
-          className="size-[18.5px]"
+          className="size-3.5"
           strokeWidth={2}
         />
       </PillGlyph>
@@ -118,6 +126,7 @@ export const CodeToolsToggle: FC = () => {
 };
 
 export const ImagesToggle: FC = () => {
+  const t = useT();
   const modelLoaded = useChatRuntimeStore(
     (s) => !!s.params.checkpoint && !s.modelLoading,
   );
@@ -128,7 +137,7 @@ export const ImagesToggle: FC = () => {
   const setImageToolsEnabled = useChatRuntimeStore(
     (s) => s.setImageToolsEnabled,
   );
-  if (!supportsBuiltinImageGeneration) {
+  if (!supportsBuiltinImageGeneration || !imageToolsEnabled) {
     return null;
   }
   const disabled = !modelLoaded;
@@ -138,7 +147,7 @@ export const ImagesToggle: FC = () => {
       disabled={disabled}
       onClick={() => setImageToolsEnabled(!imageToolsEnabled)}
       className="composer-pill-btn"
-      data-pill-label="Images"
+      data-pill-label={t("chat.composer.imagesPill")}
       data-active={imageToolsEnabled && !disabled ? "true" : "false"}
       aria-label={
         imageToolsEnabled
@@ -153,7 +162,7 @@ export const ImagesToggle: FC = () => {
           strokeWidth={2}
         />
       </PillGlyph>
-      <span>Images</span>
+      <span>{t("chat.composer.imagesPill")}</span>
     </button>
   );
 };
@@ -175,7 +184,7 @@ export const ArtifactsToggle: FC = () => {
       <PillGlyph>
         <HugeiconsIcon
           icon={PencilRulerIcon}
-          className="size-[15.5px]"
+          className="size-3.5"
           strokeWidth={2}
         />
       </PillGlyph>
@@ -240,18 +249,18 @@ export const ToolStatusDisplay: FC = () => {
   return (
     <div
       data-testid="composer-tool-status"
-      className="mb-2 flex w-full flex-row items-center gap-2 px-1.5 pt-0.5 pb-1"
+      className="mb-1 flex w-full flex-row items-center gap-1.5 px-1 pt-0 pb-0.5"
     >
       <div
         className={cn(
-          "flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs text-primary",
+          "flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-2.5 py-0.5 text-[11px] text-primary leading-tight",
           !isNudging && "animate-pulse",
         )}
       >
         {isNudging ? (
-          <Spinner className="size-3.5" label={toolStatus} />
+          <Spinner className="size-3" label={toolStatus} />
         ) : (
-          <StatusIcon className="size-3.5" />
+          <StatusIcon className="size-3" />
         )}
         <span>{toolStatus}</span>
         <span className="tabular-nums opacity-60">{elapsed}s</span>

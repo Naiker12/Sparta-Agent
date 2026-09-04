@@ -1,6 +1,7 @@
 """Path resolution, allowlisting and filesystem helpers for model management."""
 
 import hashlib
+import json
 import os
 import re as _re
 import shutil

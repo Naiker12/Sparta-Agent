@@ -16,6 +16,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -51,6 +52,8 @@ export function SidebarHeaderMenu({
   includeOrganize,
   organizeBy,
   onOrganizeByChange,
+  onManageChats,
+  onClearAllChats,
 }: {
   ariaLabel: string;
   sortLabel: string;
@@ -59,6 +62,8 @@ export function SidebarHeaderMenu({
   includeOrganize?: boolean;
   organizeBy?: SidebarOrganizeBy;
   onOrganizeByChange?: (next: SidebarOrganizeBy) => void;
+  onManageChats?: () => void;
+  onClearAllChats?: () => void;
 }): ReactElement {
   const t = useT();
 
@@ -123,6 +128,24 @@ export function SidebarHeaderMenu({
             </DropdownMenuRadioItem>
           ))}
         </DropdownMenuRadioGroup>
+        {(onManageChats || onClearAllChats) && (
+          <>
+            <DropdownMenuSeparator />
+            {onManageChats && (
+              <DropdownMenuItem onSelect={onManageChats}>
+                {t("shell.organize.manageChats")}
+              </DropdownMenuItem>
+            )}
+            {onClearAllChats && (
+              <DropdownMenuItem
+                onSelect={onClearAllChats}
+                className="text-destructive focus:text-destructive"
+              >
+                {t("shell.organize.clearAllChats")}
+              </DropdownMenuItem>
+            )}
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

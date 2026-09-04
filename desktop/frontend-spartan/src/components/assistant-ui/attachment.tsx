@@ -2,6 +2,7 @@
 
 // Avatar removed — caused circular crop on image thumbnails
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button";
+import { useT } from "@/i18n";
 import {
   Dialog,
   DialogClose,
@@ -485,10 +486,12 @@ const AttachmentUI: FC = () => {
 };
 
 const AttachmentRemove: FC = () => {
+  const t = useT();
   return (
     <AttachmentPrimitive.Remove asChild={true}>
       <TooltipIconButton
-        tooltip="Remove file"
+        tooltip={t("chat.composer.removeFile")}
+        aria-label={t("chat.composer.removeFile")}
         className="aui-attachment-tile-remove absolute top-1.5 right-1.5 size-3.5 rounded-full bg-white text-muted-foreground opacity-100 shadow-sm hover:bg-white! [&_svg]:text-black hover:[&_svg]:text-destructive"
         side="top"
       >
@@ -517,15 +520,16 @@ export const ComposerAttachments: FC = () => {
 };
 
 export const ComposerAddAttachment: FC = () => {
+  const t = useT();
   return (
     <ComposerPrimitive.AddAttachment asChild={true}>
       <TooltipIconButton
-        tooltip="Add Attachment"
+        tooltip={t("chat.composer.addAttachment")}
+        aria-label={t("chat.composer.addAttachment")}
         side="bottom"
         variant="ghost"
         size="icon"
         className="aui-composer-add-attachment size-8.5 rounded-full p-1 font-semibold text-xs hover:bg-muted-foreground/15 dark:hover:bg-muted-foreground/30"
-        aria-label="Add Attachment"
       >
         <PlusIcon className="aui-attachment-add-icon size-5 stroke-[1.5px]" />
       </TooltipIconButton>

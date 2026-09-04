@@ -20,6 +20,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 
 from auth import get_current_subject
 from core.inference.api_monitor import api_monitor
+from core.inference.passthrough_healing import heal_gate
 from core.inference.llama_cpp import LlamaCppBackend
 from core.inference.passthrough_healing import StreamToolCallHealer
 from models.inference import (
@@ -60,6 +61,37 @@ def _get_inf_attr(name: str, fallback=None):
         return getattr(mod, name)
     return fallback
 
+def _messages_have_image(messages) -> bool:
+    fn = _get_inf_attr("_messages_have_image")
+    return bool(fn(messages)) if fn else False
+
+def _monitor_prompt_from_messages(messages):
+    fn = _get_inf_attr("_monitor_prompt_from_messages")
+    return fn(messages) if fn else ""
+
+def _monitor_perf_sink(*args, **kwargs):
+    fn = _get_inf_attr("_monitor_perf_sink")
+    if fn:
+        return fn(*args, **kwargs)
+
+def _monitor_tool_calls_text(*args, **kwargs):
+    fn = _get_inf_attr("_monitor_tool_calls_text")
+    return fn(*args, **kwargs) if fn else ""
+
+def _monitor_usage(*args, **kwargs):
+    fn = _get_inf_attr("_monitor_usage")
+    if fn:
+        return fn(*args, **kwargs)
+
+def _monitor_call_text(*args, **kwargs):
+    fn = _get_inf_attr("_monitor_call_text")
+    return fn(*args, **kwargs) if fn else ""
+
+async def _await_disconnect_then_close(*args, **kwargs):
+    fn = _get_inf_attr("_await_disconnect_then_close")
+    if fn:
+        return await fn(*args, **kwargs)
+
 
 def get_llama_cpp_backend():
     fn = _get_inf_attr("get_llama_cpp_backend")
@@ -78,12 +110,22 @@ def _friendly_upstream_error(text: str) -> str:
     return fn(text) if fn else text
 
 
-def _TrackedCancel(*args, **kwargs):
-    cls = _get_inf_attr("_TrackedCancel")
-    if cls:
-        return cls(*args, **kwargs)
-    from contextlib import nullcontext
-    return nullcontext()
+class _TrackedCancelProxy:
+    def __call__(self, *args, **kwargs):
+        cls = _get_inf_attr("_TrackedCancel")
+        if cls:
+            return cls(*args, **kwargs)
+        from contextlib import nullcontext
+        return nullcontext()
+
+    def for_payload(self, *args, **kwargs):
+        cls = _get_inf_attr("_TrackedCancel")
+        if cls and hasattr(cls, "for_payload"):
+            return cls.for_payload(*args, **kwargs)
+        from contextlib import nullcontext
+        return nullcontext()
+
+_TrackedCancel = _TrackedCancelProxy()
 
 
 def _SameTaskStreamingResponse(*args, **kwargs):

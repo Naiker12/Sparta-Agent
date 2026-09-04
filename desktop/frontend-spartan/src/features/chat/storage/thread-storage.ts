@@ -16,6 +16,7 @@ import {
 } from "../utils/chat-thread-tombstones";
 import { listStoredChatMessages } from "./message-storage";
 import { isAssistantLocalThreadId } from "../utils/thread-ids";
+import { useChatRuntimeStore } from "../stores/chat-runtime-store";
 import {
   awaitStoredChatThreadWrites,
   failedThreadRecordByThreadId,
@@ -34,6 +35,7 @@ type ThreadListArgs = {
   pairId?: string;
   projectId?: string | null;
   includeArchived?: boolean;
+  requireMessages?: boolean;
 };
 
 function matchesThreadListArgs(
@@ -205,7 +207,7 @@ export async function deleteStoredChatThreads(
 export async function listStoredChatThreadsWithMessages(
   args: ThreadListArgs = {},
 ): Promise<ThreadRecord[]> {
-  const threads = await listStoredChatThreads(args);
+  const threads = await listStoredChatThreads({ ...args, requireMessages: true });
   if (threads.length === 0) return [];
   const threadIds = threads.map((t) => t.id);
   let backendByThread: Map<string, MessageRecord[]>;
@@ -214,16 +216,32 @@ export async function listStoredChatThreadsWithMessages(
   } catch {
     backendByThread = new Map();
   }
+  const activeThreadId = useChatRuntimeStore.getState().activeThreadId;
+  const orphanDexieIds: string[] = [];
+
   const entries = await Promise.all(
     threads.map(async (thread) => {
       const backendMessages = backendByThread.get(thread.id) ?? [];
       if (backendMessages.length > 0) {
         return { thread, hasContent: true };
       }
-      const legacy = await listStoredChatMessages(thread.id).catch(() => null);
-      return { thread, hasContent: legacy === null || legacy.length > 0 };
+      const legacy = await listStoredChatMessages(thread.id).catch(() => []);
+      const hasContent = Array.isArray(legacy) && legacy.length > 0;
+      if (
+        !hasContent &&
+        thread.id !== activeThreadId &&
+        !isAssistantLocalThreadId(thread.id)
+      ) {
+        orphanDexieIds.push(thread.id);
+      }
+      return { thread, hasContent };
     }),
   );
+
+  if (orphanDexieIds.length > 0) {
+    // Purge empty orphan threads from Dexie so phantom rows never accumulate
+    Promise.all(orphanDexieIds.map((id) => db.threads.delete(id).catch(() => {}))).catch(() => {});
+  }
+
   return entries.filter((e) => e.hasContent).map((e) => e.thread);
 }
-

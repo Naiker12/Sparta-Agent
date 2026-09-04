@@ -1,6 +1,7 @@
 """Hardware, storage, memory, VRAM budget and cache settings."""
 
 import functools
+import hashlib
 import threading
 import time
 from typing import Optional
