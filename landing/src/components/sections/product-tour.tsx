@@ -134,7 +134,7 @@ const TERMINAL_SCRIPTS: TerminalScript[] = [
   {
     command: 'sparta build --target=sidecar-rust --release',
     lines: [
-      { text: '[00:01] ⚡ Compilando sparta-core v0.2.17 (Tokio runtime + C-ABI)...', color: 'text-[#6a6b6c]' },
+      { text: '[00:01] ⚡ Compilando sparta-core v0.2.19 (Tokio runtime + C-ABI)...', color: 'text-[#6a6b6c]' },
       { text: '[00:02] ✓ Target release [optimizado] finalizado en 1.24s', color: 'text-[#59d499]' },
       { text: '[00:03] 📦 Binario nativo generado: /dist/sparta-sidecar.exe', color: 'text-[#ff6363]' },
     ],

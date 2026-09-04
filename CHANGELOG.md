@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.19] - 2026-09-03
+
+### Añadido y mejorado
+
+- **Modularización Profunda de Inferencia**: Se desacopló el monolito `routes/inference.py` reduciéndolo en más de 9,180 líneas hacia 16 módulos especializados en `routes/inference_pkg/`.
+- **Desacoplamiento de Base de Datos SQLite**: Se modularizó `storage/studio_db.py` en subpaquetes especializados en `storage/studio/` con fachada transparente y 100% de compatibilidad hacia atrás.
+- **Rutas Modulares**: Routers de Modelos, Chat, Configuración y RAG completamente modularizados.
+- **Sincronización Total del Ecosistema**: Actualización unificada de versiones y artefactos de descarga en la Landing Page, App Shell y Releases.
+
+### Corregido
+
+- Se solucionó la advertencia de React `Function components cannot be given refs` envolviendo `DialogOverlay`, `DialogContent`, `DialogTitle` y `DialogDescription` con `React.forwardRef()`.
+- Se removieron las etiquetas de navegación obsoletas en el panel de Configuración.
+
 ## [0.2.17] - 2026-09-02
 
 ### Añadido y mejorado

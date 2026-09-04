@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import os
 import secrets
@@ -24,6 +25,7 @@ from routes.rag_pkg.helpers import (
     _sign_document,
     _verify_document_token,
     _CONTENT_TYPES,
+    _remove_stored_upload,
 )
 
 router = APIRouter()

@@ -18,6 +18,7 @@ from routes.rag_pkg.helpers import (
     _folder_job_view,
     _scope_for_owner,
     _require_scope_owner,
+    _rag_unavailable_as_503,
 )
 
 router = APIRouter()

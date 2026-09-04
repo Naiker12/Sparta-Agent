@@ -10,7 +10,7 @@
 // in one direction -- the monitor is placed by the user, the API panel steps
 // around the monitor, and the stack steps around both.
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { create } from "zustand";
 
 export type MonitorFrame = {
@@ -431,7 +431,22 @@ export function useStackGeometry(): StackPlacement {
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
+
+  const cleanupRef = useRef<(() => void) | null>(null);
+  useEffect(() => {
+    return () => {
+      if (cleanupRef.current) {
+        cleanupRef.current();
+        cleanupRef.current = null;
+      }
+    };
+  }, []);
+
   const ref = useCallback((node: HTMLElement | null) => {
+    if (cleanupRef.current) {
+      cleanupRef.current();
+      cleanupRef.current = null;
+    }
     if (node === null || typeof ResizeObserver === "undefined") return;
     const measure = () => {
       // An empty stack asks for nothing, so nothing is dodged for it.
@@ -588,7 +603,7 @@ export function useStackGeometry(): StackPlacement {
       measure();
     });
     mutations.observe(node, { childList: true, subtree: true });
-    return () => {
+    cleanupRef.current = () => {
       observer.disconnect();
       observed.clear();
       mutations.disconnect();

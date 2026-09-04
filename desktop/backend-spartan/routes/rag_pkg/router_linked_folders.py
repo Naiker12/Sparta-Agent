@@ -15,6 +15,7 @@ from routes.rag_pkg.helpers import (
     _require_rag,
     _rag_connection,
     _folder_view,
+    _folder_job_view,
     _scope_for_owner,
     _require_scope_owner,
 )

@@ -20,6 +20,9 @@ from routes.rag_pkg.helpers import (
     _doc_view,
     _remove_stored_upload,
     _raise_if_scope_retired,
+    _require_scope_owner,
+    _rag_unavailable_as_503,
+    _discard_document,
 )
 
 router = APIRouter()

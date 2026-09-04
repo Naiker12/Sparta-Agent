@@ -15,6 +15,7 @@ from routes.rag_pkg.helpers import (
     _require_rag,
     _rag_connection,
     _doc_view,
+    _require_scope_owner,
 )
 
 router = APIRouter()
