@@ -1,4 +1,3 @@
-
 import { mlxRuntimeStateFrom } from "./lib/mlx-runtime-state";
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button";
 import {
@@ -14,34 +13,13 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { applyQwenThinkingParams } from "@/features/chat/utils/qwen-params";
-import { DRAFT_N_MAX_SPEC_TYPES } from "@/lib/speculative-modes";
-import {
-  StudioDictationAdapter,
-  isStudioDictationAvailable,
-  notifyStudioDictationUnavailable,
-} from "@/features/chat/adapters/studio-dictation-adapter";
-import type { StudioDictationSession } from "@/features/chat/adapters/studio-web-speech-dictation-adapter";
-import { useVoiceSettingsStore } from "@/features/settings/stores/voice-settings-store";
-import {
-  AUDIO_ACCEPT,
-  fileToBase64,
-  getAudioSizeError,
-} from "@/lib/audio-utils";
+import { AUDIO_ACCEPT } from "@/lib/audio-utils";
 import { isTauri } from "@/lib/api-base";
-import { isVideoFile } from "@/lib/video-utils";
-import { isDownloadCancelled } from "@/lib/native-files";
 import { isMultimodalResponse } from "./types/api";
 import { getImageInputUnavailableReason } from "./utils/image-input-support";
-import { CONVERSATION_MARKDOWN_LABEL } from "./utils/conversation-markdown";
-import { pasteClipboardFiles } from "./utils/clipboard-files";
 import { confirmStopRunningChatsIfNeeded } from "./utils/confirm-stop-running-chats";
 import { requestLocalPromptQueueStop } from "./utils/prompt-queue-boundary";
 import { cancelPreStreamRunReservations } from "./utils/pre-stream-run-reservation";
@@ -52,20 +30,14 @@ import {
   Columns2Icon,
   GlobeIcon,
   HeadphonesIcon,
-  MoreHorizontalIcon,
-  PlusIcon,
   SquareIcon,
   XIcon,
 } from "lucide-react";
 import {
   AttachmentIcon,
-  Bookmark02Icon,
   CodeIcon,
   Download01Icon,
-  Folder01Icon,
-  FolderAddIcon,
   Image03Icon,
-  McpServerIcon,
   PencilRulerIcon,
 } from "@hugeicons/core-free-icons";
 import { useNavigate } from "@tanstack/react-router";
@@ -73,21 +45,15 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { toast } from "@/lib/toast";
 import { useSettingsDialogStore } from "@/features/settings/stores/settings-dialog-store";
 import { loadExternalProviders } from "./external-providers";
-import {
-  PromptStorageDialog,
-  exportConversationShareGPT,
-  exportConversationRawJsonl,
-  exportConversationCsv,
-  exportConversationMarkdown,
-} from "./prompt-storage/prompt-storage-dialog";
+import { PromptStorageDialog } from "./prompt-storage/prompt-storage-dialog";
 import { listPromptEntries, type PromptEntry } from "./api/prompts-api";
 import { McpComposerButton } from "./mcp-composer-button";
-import { BypassPermissionsMenuItem } from "./bypass-permissions-menu-item";
 import { PermissionModeComposerPill } from "./permission-mode-select";
 import { reasoningCapsFromLoad } from "./lib/apply-inference-status-to-store";
 import { NewProjectDialog } from "./components/new-project-dialog";
 import { ThreadWorkspaceChip } from "./components/thread-workspace-chip";
 import { useChatProjects } from "./hooks/use-chat-projects";
+import { usePlusMenuPrefsStore } from "./stores/plus-menu-prefs-store";
 import { useT } from "@/i18n";
 import { confirmRemoteCodeIfNeeded } from "@/features/security";
 import {
@@ -114,17 +80,11 @@ import { ensureGpuDeviceCache } from "@/hooks/use-gpu-info";
 import {
   parseExternalModelId,
   providerModelSupportsVision,
-
 } from "./external-providers";
 import { compareModelDisplayName } from "./lib/external-model-label";
 import { useExternalProvidersStore } from "./stores/external-providers-store";
 import { useComposerPillFit } from "@/hooks/use-composer-pill-fit";
 import { useIsMobile } from "@/hooks/use-mobile";
-import {
-  PLUS_MENU_ORDER,
-  type PlusMenuItemId,
-  usePlusMenuPrefsStore,
-} from "./stores/plus-menu-prefs-store";
 import {
   resolveComparePlacement,
   shouldPinDiffusionPlacement,
@@ -163,347 +123,54 @@ import {
   useState,
 } from "react";
 
-export type CompareMessagePart =
-  | { type: "text"; text: string }
-  | { type: "image"; image: string }
-  | { type: "audio"; audio: string; name: string };
+// ---------------------------------------------------------------------------
+// Imports desde submódulos de shared-composer/
+// ---------------------------------------------------------------------------
+import {
+  type CompareMessagePart,
+  type CompareHandle,
+  type CompareHandles,
+  CompareHandlesContext,
+  CompareHandlesProvider,
+  RegisterCompareHandle,
+} from "./shared-composer/compare-handles";
+export type { CompareMessagePart, CompareHandle, CompareHandles };
+export { CompareHandlesProvider, RegisterCompareHandle };
 
-export interface CompareHandle {
-  append: (content: CompareMessagePart[]) => void;
-  /** Append a user message without triggering generation. */
-  appendMessage: (content: CompareMessagePart[]) => void;
-  /** Trigger generation on the current thread (after appendMessage). */
-  startRun: () => void;
-  cancel: () => void;
-  isRunning: () => boolean;
-  /** Returns a promise that resolves when the current or next run finishes. */
-  waitForRunEnd: () => Promise<void>;
-}
+import { useDictation } from "./shared-composer/use-dictation";
 
-const IMAGE_ACCEPT = "image/jpeg,image/png,image/webp,image/gif";
-const MAX_IMAGE_SIZE = 20 * 1024 * 1024;
+import {
+  formatReasoningEffortLabel,
+  formatReasoningDisabledLabel,
+} from "./shared-composer/reasoning-labels";
 
-// Inlined to avoid a new icon dep. Kept in sync with the main composer.
-const ArrowDownStandardIcon: FC<{ className?: string }> = ({ className }) => (
-  <svg
-    className={className}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={1.5}
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    xmlns="http://www.w3.org/2000/svg"
-    aria-hidden={true}
-  >
-    <path d="M5.99977 9.00005L11.9998 15L17.9998 9" />
-  </svg>
-);
+import {
+  IMAGE_ACCEPT,
+  MAX_IMAGE_SIZE,
+  IME_STUCK_TIMEOUT_MS,
+  isNativeComposing,
+  ArrowDownStandardIcon,
+  fileToBase64DataURL,
+  type PendingImage,
+  PendingImageThumb,
+  PillGlyph,
+} from "./shared-composer/composer-ui-helpers";
 
-function isNativeComposing(event: Event) {
-  return "isComposing" in event && (event as InputEvent).isComposing === true;
-}
+import {
+  type CompareModelSelection,
+  cleanCompareChatTemplate,
+  resolveCompareSpecDraftNMax,
+} from "./shared-composer/compare-model-types";
+import { SharedComposerToolsMenu } from "./shared-composer/shared-composer-tools-menu";
+import { useComparePromptQueue } from "./shared-composer/use-compare-prompt-queue";
+import { useCompareAttachments } from "./shared-composer/use-compare-attachments";
 
-// Mirrors the threshold in thread.tsx. Chrome on Windows-over-WSL (#5546)
-// never fires `compositionend` after IME commit, so the compose flag would
-// otherwise stay true forever.
-const IME_STUCK_TIMEOUT_MS = 2500;
 
-function fileToBase64DataURL(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(new Error("Failed to read image file"));
-    reader.readAsDataURL(file);
-  });
-}
-
-function formatReasoningEffortLabel(
-  level: ReasoningEffort,
-  modelId?: string,
-): string {
-  if (level === "max") return "Max";
-  if (level === "xhigh") {
-    const normalized = modelId?.trim().toLowerCase() ?? "";
-    if (
-      normalized.startsWith("claude-opus-4-6") ||
-      normalized.startsWith("claude-sonnet-4-6")
-    ) {
-      return "Max";
-    }
-    return "Extra High";
-  }
-  return level.charAt(0).toUpperCase() + level.slice(1);
-}
-
-function formatReasoningDisabledLabel(
-  supportsReasoningOff: boolean,
-  isExternalOpenAIReasoning: boolean,
-  modelId?: string,
-): string {
-  const normalized = modelId?.trim().toLowerCase() ?? "";
-  // Magistral keeps the "none" wire value, but UX presents this floor as
-  // "Medium" rather than a disabled-state label.
-  if (normalized.includes("magistral-medium-latest")) return "Medium";
-  return supportsReasoningOff && isExternalOpenAIReasoning ? "None" : "Off";
-}
-
-function useDictation(
-  setText: (value: string | ((prev: string) => string)) => void,
-) {
-  // Re-render support state when the user switches recognition engines.
-  const dictationEngine = useVoiceSettingsStore((s) => s.dictationEngine);
-  const [isDictating, setIsDictating] = useState(false);
-  // True while a stopped recording's final audio is still transcribing; a
-  // second click then cancels the pending transcription instead of re-stopping.
-  const [isFinalizing, setIsFinalizing] = useState(false);
-  const sessionRef = useRef<StudioDictationSession | null>(null);
-  const startingRef = useRef(false);
-  const finalizingRef = useRef(false);
-
-  const start = useCallback(async () => {
-    if (startingRef.current || sessionRef.current) return;
-    // Unsupported engine (e.g. Firefox): explain and steer to the local model.
-    if (!isStudioDictationAvailable()) {
-      notifyStudioDictationUnavailable();
-      return;
-    }
-    startingRef.current = true;
-
-    let session: StudioDictationSession;
-    try {
-      // Routes to the engine chosen in Voice settings (browser or STT model),
-      // honoring the selected microphone, language, and dictionary. Compare
-      // feeds two panes, so recent dictations must not link the unrelated
-      // single-chat active thread.
-      session = new StudioDictationAdapter({ chatId: null }).listen();
-    } catch {
-      startingRef.current = false;
-      notifyStudioDictationUnavailable();
-      return;
-    }
-    sessionRef.current = session;
-    setIsDictating(true);
-
-    // Append final transcripts; the adapter has already applied the dictionary
-    // and records the session in Recent dictations.
-    session.onSpeech((result) => {
-      if (!result.isFinal) return;
-      const transcript = result.transcript?.trim() ?? "";
-      if (transcript) {
-        setText((prev) => (prev ? `${prev} ${transcript}` : transcript));
-      }
-    });
-    session.onEnd?.(() => {
-      if (sessionRef.current === session) sessionRef.current = null;
-      finalizingRef.current = false;
-      setIsFinalizing(false);
-      setIsDictating(false);
-    });
-    startingRef.current = false;
-  }, [setText]);
-
-  const stop = useCallback(() => {
-    const session = sessionRef.current;
-    if (!session) return;
-    // A second click while the final segment is transcribing discards the
-    // pending transcription instead of leaving the pane stuck until timeout.
-    if (finalizingRef.current) {
-      session.cancel();
-      if (sessionRef.current === session) sessionRef.current = null;
-      finalizingRef.current = false;
-      setIsFinalizing(false);
-      setIsDictating(false);
-      return;
-    }
-    finalizingRef.current = true;
-    setIsFinalizing(true);
-    // Keep the session and dictation state alive while its final audio segment
-    // is transcribed. onEnd clears both after the transcript callbacks run.
-    void session.stop().catch((error) => {
-      console.error("Could not stop dictation:", error);
-      session.cancel();
-      if (sessionRef.current === session) sessionRef.current = null;
-      finalizingRef.current = false;
-      setIsFinalizing(false);
-      setIsDictating(false);
-    });
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      sessionRef.current?.cancel();
-      sessionRef.current = null;
-    };
-  }, []);
-
-  const supported = StudioDictationAdapter.isSupported(dictationEngine);
-
-  return { isDictating, isFinalizing, start, stop, supported };
-}
-
-export type CompareHandles = MutableRefObject<Record<string, CompareHandle>>;
-
-const CompareHandlesContext = createContext<CompareHandles | null>(null);
-
-export function CompareHandlesProvider({
-  handlesRef,
-  children,
-}: {
-  handlesRef: CompareHandles;
-  children: ReactNode;
-}): ReactElement {
-  return (
-    <CompareHandlesContext.Provider value={handlesRef}>
-      {children}
-    </CompareHandlesContext.Provider>
-  );
-}
-
-export function RegisterCompareHandle({
-  name,
-}: {
-  name: string;
-}): ReactElement | null {
-  const handlesRef = useContext(CompareHandlesContext);
-  const aui = useAui();
-
-  useEffect(() => {
-    if (!handlesRef) {
-      return;
-    }
-    const currentHandles = handlesRef.current;
-    currentHandles[name] = {
-      // fixes occasional reorder on reload.
-      append: (content) =>
-        aui
-          .thread()
-          .append({ role: "user", content, createdAt: new Date() } as never),
-      appendMessage: (content) =>
-        aui
-          .thread()
-          .append({
-            role: "user",
-            content,
-            createdAt: new Date(),
-            startRun: false,
-          } as never),
-      startRun: () => {
-        const msgs = aui.thread().getState().messages;
-        const lastId = msgs.length > 0 ? msgs[msgs.length - 1].id : null;
-        aui.thread().startRun({ parentId: lastId });
-      },
-      cancel: () => aui.thread().cancelRun(),
-      isRunning: () => aui.thread().getState().isRunning,
-      waitForRunEnd: () =>
-        new Promise<void>((resolve, reject) => {
-          const runtime =
-            aui.threads().__internal_getAssistantRuntime?.();
-          const itemState = aui.threadListItem().getState();
-          const threadIds = Array.from(
-            new Set(
-              [itemState.id, itemState.remoteId].filter(
-                (id): id is string => Boolean(id),
-              ),
-            ),
-          );
-          let thread = null;
-          for (const threadId of threadIds) {
-            try {
-              thread = runtime?.threads.getById(threadId) ?? null;
-              if (thread) break;
-            } catch {
-              // Thread hydration can retire an alias; try the next one.
-            }
-          }
-          if (!thread) {
-            reject(new Error("Comparison thread is unavailable"));
-            return;
-          }
-          let wasRunning = thread.getState().isRunning;
-          let unsubscribe = () => {};
-          unsubscribe = thread.subscribe(() => {
-            const isRunning = thread.getState().isRunning;
-            if (isRunning) wasRunning = true;
-            if (wasRunning && !isRunning) {
-              unsubscribe();
-              resolve();
-            }
-          });
-        }),
-    };
-    return () => {
-      delete currentHandles[name];
-    };
-  }, [handlesRef, name, aui]);
-
-  return null;
-}
-
-type PendingImage = { id: string; file: File };
-
-function PendingImageThumb({
-  file,
-  onRemove,
-}: {
-  file: File;
-  onRemove: () => void;
-}): ReactElement {
-  const [src, setSrc] = useState<string | null>(null);
-  useEffect(() => {
-    const url = URL.createObjectURL(file);
-    setSrc(url);
-    return () => URL.revokeObjectURL(url);
-  }, [file]);
-  if (!src)
-    return <div className="size-14 animate-pulse rounded-[14px] bg-muted" />;
-  return (
-    <div className="relative size-14 shrink-0 overflow-hidden rounded-[14px] border border-foreground/20 bg-muted">
-      <img src={src} alt={file.name} className="h-full w-full object-cover" />
-      <button
-        type="button"
-        onClick={onRemove}
-        className="absolute top-1 right-1 flex size-5 items-center justify-center rounded-full bg-white text-muted-foreground shadow-sm hover:bg-destructive hover:text-destructive-foreground"
-        aria-label="Remove attachment"
-      >
-        <XIcon className="size-3" />
-      </button>
-    </div>
-  );
-}
-
-type CompareModelSelection = {
-  id: string;
-  isLora: boolean;
-  ggufVariant?: string;
-  isDiffusion?: boolean;
-  config?: PerModelConfig;
-};
-
-function cleanCompareChatTemplate(
-  value: string | null | undefined,
-): string | null {
-  return value?.trim() ? value : null;
-}
-
-function resolveCompareSpecDraftNMax(
-  speculativeType: string | null,
-  value: number | null,
-): number | null {
-  return speculativeType != null && DRAFT_N_MAX_SPEC_TYPES.has(speculativeType)
-    ? value
-    : null;
-}
-
-// Tool icon plus an X overlay CSS reveals on hover when the pill is active.
-function PillGlyph({ children }: { children: ReactNode }) {
-  return (
-    <span className="composer-pill-glyph">
-      {children}
-      <XIcon className="composer-pill-x" />
-    </span>
-  );
-}
+// ---------------------------------------------------------------------------
+// SharedComposer — orquestador principal
+// (useDictation, PendingImageThumb, PillGlyph, reasoning labels
+//  y compare-handle types se importan desde ./shared-composer/)
+// ---------------------------------------------------------------------------
 
 export function SharedComposer({
   handlesRef,
@@ -533,20 +200,7 @@ export function SharedComposer({
   const [text, setText] = useState("");
   const [running, setRunning] = useState(false);
   const [comparing, setComparing] = useState(false);
-  const [pendingImages, setPendingImages] = useState<PendingImage[]>([]);
-  const [pendingAudio, setPendingAudio] = useState<{
-    name: string;
-    base64: string;
-    contentType: string;
-  } | null>(null);
   const textRef = useRef(text);
-  const pendingImagesRef = useRef(pendingImages);
-  const pendingAudioRef = useRef(pendingAudio);
-  useEffect(() => {
-    textRef.current = text;
-    pendingImagesRef.current = pendingImages;
-    pendingAudioRef.current = pendingAudio;
-  }, [text, pendingImages, pendingAudio]);
   const [dragging, setDragging] = useState(false);
   const [isComposing, setIsComposing] = useState(false);
   const [newProjectOpen, setNewProjectOpen] = useState(false);
@@ -563,14 +217,6 @@ export function SharedComposer({
     } catch {
     }
   }, []);
-  const plusPins = usePlusMenuPrefsStore((s) => s.pins);
-  const [isQueueRunning, setIsQueueRunning] = useState(false);
-  const [queueProgress, setQueueProgress] = useState({ current: 0, total: 0 });
-  const queueRef = useRef<string[]>([]);
-  const queueIndexRef = useRef(0);
-  const isQueueRunningRef = useRef(false);
-  const prevRunningRef = useRef(false);
-  const prevComparingRef = useRef(false);
   const compareStepSucceededRef = useRef(false);
   const sendRef = useRef<(() => void) | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -814,10 +460,25 @@ export function SharedComposer({
   // Backwards-compatible alias for call sites still referencing
   // `toolsDisabled` (rare; both pills used it before).
   const toolsDisabled = codeDisabled;
-  const setPendingAudioStore = useChatRuntimeStore((s) => s.setPendingAudio);
-  const clearPendingAudioStore = useChatRuntimeStore(
-    (s) => s.clearPendingAudio,
-  );
+  const {
+    pendingImages,
+    setPendingImages,
+    pendingAudio,
+    setPendingAudio,
+    addFiles,
+    removePendingImage,
+    removePendingAudio,
+    clearAttachments,
+    handleFilePaste,
+  } = useCompareAttachments({ attachUnavailableReason });
+
+  const pendingImagesRef = useRef(pendingImages);
+  const pendingAudioRef = useRef(pendingAudio);
+  useEffect(() => {
+    textRef.current = text;
+    pendingImagesRef.current = pendingImages;
+    pendingAudioRef.current = pendingAudio;
+  }, [text, pendingImages, pendingAudio]);
 
   const {
     isDictating,
@@ -835,57 +496,18 @@ export function SharedComposer({
     return () => clearInterval(id);
   }, [handlesRef]);
 
-  function resetPromptQueue() {
-    if (!isQueueRunningRef.current && queueRef.current.length === 0) {
-      return;
-    }
-    isQueueRunningRef.current = false;
-    setIsQueueRunning(false);
-    queueRef.current = [];
-    queueIndexRef.current = 0;
-    setQueueProgress({ current: 0, total: 0 });
-  }
-
-  function advanceQueue() {
-    const nextIndex = queueIndexRef.current + 1;
-    if (nextIndex >= queueRef.current.length) {
-      resetPromptQueue();
-      toast.success("Prompt queue complete");
-      return;
-    }
-    queueIndexRef.current = nextIndex;
-    setQueueProgress({ current: nextIndex + 1, total: queueRef.current.length });
-    const next = queueRef.current[nextIndex];
-    toast(`Prompt ${nextIndex + 1} / ${queueRef.current.length}`, {
-      description: next.length > 80 ? next.slice(0, 80) + "…" : next,
-    });
-    setText(next);
-    setTimeout(() => { sendRef.current?.(); }, 100);
-  }
-
-  // Compare mode: advance the queue on cycle end, but stop on a failed step so we
-  // don't burn prompts on incomplete results.
-  useEffect(() => {
-    const wasComparing = prevComparingRef.current;
-    prevComparingRef.current = comparing;
-    if (!isQueueRunningRef.current || !wasComparing || comparing) return;
-    if (!compareStepSucceededRef.current) {
-      resetPromptQueue();
-      toast.error("Prompt queue stopped", {
-        description: "A compare step failed; remaining prompts were not sent.",
-      });
-      return;
-    }
-    prevRunningRef.current = false;
-    advanceQueue();
-  }, [comparing]);
-
-  useEffect(() => {
-    const wasRunning = prevRunningRef.current;
-    prevRunningRef.current = running;
-    if (!isQueueRunningRef.current || !wasRunning || running || comparing) return;
-    advanceQueue();
-  }, [running, comparing]);
+  const {
+    isQueueRunning,
+    queueProgress,
+    startQueue,
+    resetPromptQueue,
+  } = useComparePromptQueue({
+    running,
+    comparing,
+    setText,
+    sendRef,
+    compareStepSucceededRef,
+  });
 
   // Auto-expand textarea up to 6 rows, then scroll (matches regular chat composer).
   useEffect(() => {
@@ -904,87 +526,6 @@ export function SharedComposer({
     ta.style.overflowY = ta.scrollHeight > maxHeight ? "auto" : "hidden";
   }, [text]);
 
-  const addFiles = useCallback(
-    (files: FileList | readonly File[] | null) => {
-      if (!files?.length) return;
-      const next: PendingImage[] = [];
-      let droppedImageForUnavailable = false;
-      let audioSizeError: string | null = null;
-      let videoUnsupported = false;
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        if (!file) continue;
-        // Handle audio files
-        if (file.type.match(/^audio\//i)) {
-          const sizeError = getAudioSizeError(file.size);
-          if (sizeError) {
-            audioSizeError ??= sizeError;
-            continue;
-          }
-          fileToBase64(file).then((base64) => {
-            setPendingAudio({ name: file.name, base64, contentType: file.type });
-            setPendingAudioStore(base64, file.name);
-          });
-          continue;
-        }
-        // video_base64 targets the single loaded GGUF, so at most one side of
-        // a compare could answer. Say that rather than drop the file.
-        if (isVideoFile(file)) {
-          videoUnsupported = true;
-          continue;
-        }
-        // Handle image files
-        if (!file.type.match(/^image\/(jpeg|png|webp|gif)$/i)) continue;
-        if (file.size > MAX_IMAGE_SIZE) continue;
-        if (attachUnavailableReason) {
-          droppedImageForUnavailable = true;
-          continue;
-        }
-        next.push({ id: crypto.randomUUID(), file });
-      }
-      if (droppedImageForUnavailable && attachUnavailableReason) {
-        toast.error(attachUnavailableReason);
-      }
-      if (audioSizeError) {
-        toast.error(audioSizeError);
-      }
-      if (videoUnsupported) {
-        toast.error("Video can't be attached in compare mode", {
-          description: "Open a single chat with a video-capable model instead.",
-        });
-      }
-      setPendingImages((prev) => [...prev, ...next]);
-    },
-    [setPendingAudioStore, attachUnavailableReason],
-  );
-
-  const handleFilePaste = useCallback(
-    (event: ClipboardEvent<HTMLTextAreaElement>) => {
-      pasteClipboardFiles(
-        event,
-        async (files) => {
-          // Let addFiles report audio size errors.
-          const supported = files.some(
-            (file) =>
-              file.type.match(/^audio\//i) ||
-              (file.type.match(/^image\/(jpeg|png|webp|gif)$/i) &&
-                file.size <= MAX_IMAGE_SIZE),
-          );
-          if (!supported) throw new Error("Unsupported compare attachment");
-          addFiles(files);
-        },
-        () =>
-          toast.error("Could not paste files.", {
-            description: "Compare supports images and audio within the attachment size limits.",
-          }),
-      );
-    },
-    [addFiles],
-  );
-
-  const removePendingImage = useCallback((id: string) => {
-    setPendingImages((prev) => prev.filter((p) => p.id !== id));
-  }, []);
 
   function clearStuckImeTimer() {
     if (stuckImeTimerRef.current) {
@@ -1155,9 +696,7 @@ export function SharedComposer({
     };
     const clearSubmittedDraft = () => {
       setText("");
-      setPendingImages([]);
-      setPendingAudio(null);
-      clearPendingAudioStore();
+      clearAttachments();
       textareaRef.current?.focus();
     };
 
@@ -1854,151 +1393,6 @@ export function SharedComposer({
     !isComposing &&
     !isDictating;
 
-  // Adjustable "+" menu items, keyed by id. Pinned ones render at the top
-  // level; the rest fall into the "More" overflow submenu. Core items (photos,
-  // web search, code) and "More" itself live outside this map.
-  const plusMenuNodes: Record<PlusMenuItemId, ReactNode> = {
-    mcp: (
-      <DropdownMenuItem
-        disabled={!supportsTools}
-        className={mcpEnabledForChat ? "text-primary font-medium" : undefined}
-        onSelect={() => setMcpEnabledForChat(!mcpEnabledForChat)}
-      >
-        <HugeiconsIcon icon={McpServerIcon} strokeWidth={2} />
-        {t("chat.composer.mcp")}
-        {mcpEnabledForChat ? (
-          <HugeiconsIcon icon={Tick02Icon} strokeWidth={2} className="ml-auto" />
-        ) : null}
-      </DropdownMenuItem>
-    ),
-    savedPrompts: (
-      <DropdownMenuSub>
-        <DropdownMenuSubTrigger>
-          <HugeiconsIcon icon={Bookmark02Icon} strokeWidth={2} />
-          {t("chat.composer.savedPrompts")}
-        </DropdownMenuSubTrigger>
-        <DropdownMenuSubContent
-          collisionPadding={16}
-          className="unsloth-plus-menu w-[208px]"
-        >
-          {recentPrompts.map((p) => (
-            <DropdownMenuItem
-              key={p.id}
-              onSelect={() => {
-                setText(p.text);
-                requestAnimationFrame(() => textareaRef.current?.focus());
-              }}
-            >
-              <span className="truncate">{p.name}</span>
-            </DropdownMenuItem>
-          ))}
-          {recentPrompts.length > 0 ? <DropdownMenuSeparator /> : null}
-          <DropdownMenuItem onSelect={() => setPromptStorageOpen(true)}>
-            {t("chat.composer.allSavedPrompts")}
-          </DropdownMenuItem>
-        </DropdownMenuSubContent>
-      </DropdownMenuSub>
-    ),
-    compareChat: (
-      // Always active: this menu only renders in compare mode. Click exits.
-      <DropdownMenuItem
-        className="text-primary font-medium"
-        onSelect={handleExitCompare}
-      >
-        <Columns2Icon />
-        {t("chat.composer.compareChat")}
-        <HugeiconsIcon icon={Tick02Icon} strokeWidth={2} className="ml-auto" />
-      </DropdownMenuItem>
-    ),
-    exportChat: (
-      <DropdownMenuSub>
-        <DropdownMenuSubTrigger disabled={exportThreadIds.length === 0}>
-          <HugeiconsIcon icon={Download01Icon} strokeWidth={2} />
-          {t("chat.composer.exportChat")}
-        </DropdownMenuSubTrigger>
-        <DropdownMenuSubContent
-          collisionPadding={16}
-          className="unsloth-plus-menu w-[208px]"
-        >
-          {[
-            { label: "Raw JSONL", fn: exportConversationRawJsonl },
-            { label: "CSV", fn: exportConversationCsv },
-            { label: "ShareGPT JSONL", fn: exportConversationShareGPT },
-            {
-              label: CONVERSATION_MARKDOWN_LABEL,
-              fn: exportConversationMarkdown,
-            },
-          ].map(({ label, fn }) => (
-            <DropdownMenuItem
-              key={label}
-              disabled={exportThreadIds.length === 0}
-              onSelect={() => {
-                if (!exportThreadIds.length) {
-                  toast.error("No conversation to export yet.");
-                  return;
-                }
-                (async () => {
-                  for (const id of exportThreadIds) {
-                    await fn(id);
-                  }
-                })().catch((error) => {
-                  if (!isDownloadCancelled(error)) toast.error("Export failed.");
-                });
-              }}
-            >
-              {label}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuSubContent>
-      </DropdownMenuSub>
-    ),
-    // Hidden by default; enabled from Settings > Chat > Canvas.
-    canvas: showCanvasMenuItem ? (
-      <DropdownMenuItem
-        className={artifactsEnabled ? "text-primary font-medium" : undefined}
-        onSelect={() => setArtifactsEnabled(!artifactsEnabled)}
-      >
-        <HugeiconsIcon icon={PencilRulerIcon} strokeWidth={2} />
-        {t("chat.composer.canvas")}
-        {artifactsEnabled ? (
-          <HugeiconsIcon icon={Tick02Icon} strokeWidth={2} className="ml-auto" />
-        ) : null}
-      </DropdownMenuItem>
-    ) : null,
-    bypassPermissions: <BypassPermissionsMenuItem />,
-    projects: (
-      <DropdownMenuSub>
-        <DropdownMenuSubTrigger>
-          <HugeiconsIcon icon={Folder01Icon} strokeWidth={2} />
-          {t("chat.composer.projects")}
-        </DropdownMenuSubTrigger>
-        <DropdownMenuSubContent className="unsloth-plus-menu w-[232px]">
-          <DropdownMenuItem onSelect={() => setNewProjectOpen(true)}>
-            <HugeiconsIcon icon={FolderAddIcon} strokeWidth={2} />
-            {t("chat.composer.newProject")}
-          </DropdownMenuItem>
-          <DropdownMenuLabel>{t("chat.composer.recents")}</DropdownMenuLabel>
-          {recentProjects.length > 0 ? (
-            recentProjects.map((project) => (
-              <DropdownMenuItem
-                key={project.id}
-                onSelect={() => openProject(project.id)}
-              >
-                <HugeiconsIcon icon={Folder01Icon} strokeWidth={2} />
-                <span className="truncate">{project.name}</span>
-              </DropdownMenuItem>
-            ))
-          ) : (
-            <DropdownMenuItem disabled={true}>
-              {t("chat.composer.noRecentProjects")}
-            </DropdownMenuItem>
-          )}
-        </DropdownMenuSubContent>
-      </DropdownMenuSub>
-    ),
-  };
-  const pinnedPlusItems = PLUS_MENU_ORDER.filter((id) => plusPins[id]);
-  const overflowPlusItems = PLUS_MENU_ORDER.filter((id) => !plusPins[id]);
 
   return (
     <div
@@ -2026,8 +1420,6 @@ export function SharedComposer({
           requestAnimationFrame(() => textareaRef.current?.focus());
         }}
         onRunList={(items) => {
-          const filtered = items.filter((p) => p.trim());
-          if (!filtered.length) return;
           const hasCompareHandles = Boolean(
             handlesRef.current["model1"] || handlesRef.current["model2"],
           );
@@ -2041,16 +1433,7 @@ export function SharedComposer({
             return;
           }
           setPromptStorageOpen(false);
-          queueRef.current = filtered;
-          queueIndexRef.current = 0;
-          isQueueRunningRef.current = true;
-          setIsQueueRunning(true);
-          setQueueProgress({ current: 1, total: filtered.length });
-          toast(`Prompt 1 / ${filtered.length}`, {
-            description: filtered[0].length > 80 ? filtered[0].slice(0, 80) + "…" : filtered[0],
-          });
-          setText(filtered[0]);
-          setTimeout(() => { sendRef.current?.(); }, 100);
+          startQueue(items);
         }}
       />
       {/* Gemini-style drop affordance, mirrored from the single composer. */}
@@ -2079,10 +1462,7 @@ export function SharedComposer({
               <span className="max-w-48 truncate">{pendingAudio.name}</span>
               <button
                 type="button"
-                onClick={() => {
-                  setPendingAudio(null);
-                  clearPendingAudioStore();
-                }}
+                onClick={removePendingAudio}
                 className="flex size-4 items-center justify-center rounded-full hover:bg-destructive hover:text-destructive-foreground"
                 aria-label="Remove audio"
               >
@@ -2163,132 +1543,44 @@ export function SharedComposer({
           />
           {/* Same + menu as single-chat (ComposerToolsMenu), wired to the
               compare composer's own file/audio inputs and tools. */}
-          <DropdownMenu
-            onOpenChange={(open) => {
-              if (open) void refreshRecentPrompts();
+          <SharedComposerToolsMenu
+            onOpenPlusMenu={() => void refreshRecentPrompts()}
+            onSelectImageFiles={() => fileInputRef.current?.click()}
+            onSelectAudioFiles={() => audioInputRef.current?.click()}
+            hasAudioInput={Boolean(activeModel?.hasAudioInput)}
+            searchDisabled={searchDisabled}
+            toolsEnabled={toolsEnabled}
+            onToggleSearch={() => {
+              const next = !toolsEnabled;
+              setToolsEnabled(next);
+              if (isKimiExternal) {
+                setReasoningEnabled(!next, { persist: false });
+                applyQwenThinkingParams(!next);
+              }
             }}
-          >
-            <DropdownMenuTrigger asChild={true}>
-              <button
-                type="button"
-                aria-label="Tools and attachments"
-                className="unsloth-composer-plus"
-              >
-                <PlusIcon className="size-[22px] stroke-[1.75px]" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              side="top"
-              align="start"
-              sideOffset={0}
-              avoidCollisions={true}
-              className="unsloth-plus-menu w-[244px]"
-              onCloseAutoFocus={(event) => event.preventDefault()}
-            >
-              <DropdownMenuItem onSelect={() => fileInputRef.current?.click()}>
-                <HugeiconsIcon icon={AttachmentIcon} strokeWidth={2} />
-                {t("chat.composer.addPhotosAndFiles")}
-              </DropdownMenuItem>
-              {activeModel?.hasAudioInput && (
-                <DropdownMenuItem
-                  onSelect={() => audioInputRef.current?.click()}
-                >
-                  <HeadphonesIcon />
-                  Upload audio
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuItem
-                disabled={searchDisabled}
-                className={
-                  toolsEnabled && !searchDisabled
-                    ? "text-primary font-medium"
-                    : undefined
-                }
-                onSelect={() => {
-                  const next = !toolsEnabled;
-                  setToolsEnabled(next);
-                  // Mirror the Search pill: Kimi forbids search + thinking together.
-                  if (isKimiExternal) {
-                    setReasoningEnabled(!next, { persist: false });
-                    applyQwenThinkingParams(!next);
-                  }
-                }}
-              >
-                <GlobeIcon />
-                {t("chat.composer.webSearch")}
-                {toolsEnabled && !searchDisabled ? (
-                  <HugeiconsIcon
-                    icon={Tick02Icon}
-                    strokeWidth={2}
-                    className="ml-auto"
-                  />
-                ) : null}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                disabled={codeDisabled}
-                className={
-                  codeToolsEnabled && !codeDisabled
-                    ? "text-primary font-medium"
-                    : undefined
-                }
-                onSelect={() => setCodeToolsEnabled(!codeToolsEnabled)}
-              >
-                {/* Scale, not width: an oversized box pushed the label out of
-                    line. */}
-                <HugeiconsIcon
-                  icon={CodeIcon}
-                  strokeWidth={2}
-                  className="scale-[1.12]"
-                />
-                {t("chat.composer.code")}
-                {codeToolsEnabled && !codeDisabled ? (
-                  <HugeiconsIcon
-                    icon={Tick02Icon}
-                    strokeWidth={2}
-                    className="ml-auto"
-                  />
-                ) : null}
-              </DropdownMenuItem>
-              {showImagePill && (
-                <DropdownMenuItem
-                  disabled={imageDisabled}
-                  className={
-                    imageToolsEnabled && !imageDisabled
-                      ? "text-primary font-medium"
-                      : undefined
-                  }
-                  onSelect={() => setImageToolsEnabled(!imageToolsEnabled)}
-                >
-                  <HugeiconsIcon icon={Image03Icon} strokeWidth={2} />
-                  Images
-                  {imageToolsEnabled && !imageDisabled ? (
-                    <HugeiconsIcon
-                      icon={Tick02Icon}
-                      strokeWidth={2}
-                      className="ml-auto"
-                    />
-                  ) : null}
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuSeparator />
-              {pinnedPlusItems.map((id) => (
-                <Fragment key={id}>{plusMenuNodes[id]}</Fragment>
-              ))}
-              {overflowPlusItems.length > 0 ? (
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>
-                    <MoreHorizontalIcon className="size-4" />
-                    {t("chat.composer.more")}
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent className="unsloth-plus-menu w-[248px]">
-                    {overflowPlusItems.map((id) => (
-                      <Fragment key={id}>{plusMenuNodes[id]}</Fragment>
-                    ))}
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
-              ) : null}
-            </DropdownMenuContent>
-          </DropdownMenu>
+            codeDisabled={codeDisabled}
+            codeToolsEnabled={codeToolsEnabled}
+            onToggleCode={() => setCodeToolsEnabled(!codeToolsEnabled)}
+            showImagePill={Boolean(showImagePill)}
+            imageDisabled={imageDisabled}
+            imageToolsEnabled={imageToolsEnabled}
+            onToggleImages={() => setImageToolsEnabled(!imageToolsEnabled)}
+            supportsTools={supportsTools}
+            mcpEnabledForChat={mcpEnabledForChat}
+            setMcpEnabledForChat={setMcpEnabledForChat}
+            recentPrompts={recentPrompts}
+            setText={setText}
+            textareaRef={textareaRef}
+            setPromptStorageOpen={setPromptStorageOpen}
+            handleExitCompare={handleExitCompare}
+            exportThreadIds={exportThreadIds}
+            showCanvasMenuItem={showCanvasMenuItem}
+            artifactsEnabled={artifactsEnabled}
+            setArtifactsEnabled={setArtifactsEnabled}
+            setNewProjectOpen={setNewProjectOpen}
+            recentProjects={recentProjects}
+            openProject={openProject}
+          />
           {/* Active in compare mode; sits first. Click to exit back to single chat. */}
           <button
             type="button"

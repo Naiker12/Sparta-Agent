@@ -39,6 +39,11 @@ import {
   ThreadAutosaveHandle,
   createOpenAIStreamAdapter,
 } from "./api/chat-adapter";
+import {
+  cloneAttachments,
+  cloneContent,
+  toThreadMessage,
+} from "./runtime/message-converters";
 import { CHAT_HISTORY_UPDATED_EVENT } from "./api/chat-api";
 import { getResearchThreadState } from "./api/research-api";
 import { sanitizeThreadScopedSettings } from "./utils/thread-scoped-settings";
@@ -118,7 +123,11 @@ import {
   markChatThreadDeleted,
 } from "./utils/chat-thread-tombstones";
 import { chatHistoryClearBoundary } from "./utils/chat-history-clear-boundary";
-import { fallbackTitleFromUserText } from "./utils/chat-title";
+import {
+  DEFAULT_CHAT_TITLE,
+  fallbackTitleFromUserText,
+  isDefaultChatTitle,
+} from "./utils/chat-title";
 import { syncExportedRepositoryToBackend } from "./utils/delete-thread-message";
 import { getImageInputUnavailableReason } from "./utils/image-input-support";
 import { isAssistantLocalThreadId } from "./utils/thread-ids";
@@ -273,6 +282,11 @@ class PDFAttachmentAdapter implements AttachmentAdapter {
   accept = "application/pdf";
 
   add({ file }: { file: File }): Promise<PendingAttachment> {
+    const maxSize = 50 * 1024 * 1024; // 50MB limit
+    if (file.size > maxSize) {
+      toast.error("PDF exceeds 50MB limit");
+      throw new Error("PDF size exceeds 50MB limit");
+    }
     return Promise.resolve({
       id: crypto.randomUUID(),
       type: "document",
@@ -284,20 +298,31 @@ class PDFAttachmentAdapter implements AttachmentAdapter {
   }
 
   async send(attachment: PendingAttachment): Promise<CompleteAttachment> {
-    const [{ extractText, getDocumentProxy }, buffer] = await Promise.all([
-      import("unpdf"),
-      attachment.file.arrayBuffer().then((bytes) => new Uint8Array(bytes)),
-    ]);
-    const pdf = await getDocumentProxy(buffer);
-    const { text } = await extractText(pdf, { mergePages: true });
-    return {
-      id: attachment.id,
-      type: "document",
-      name: attachment.name,
-      contentType: attachment.contentType,
-      content: [{ type: "text", text: `[PDF: ${attachment.name}]\n${text}` }],
-      status: { type: "complete" },
-    };
+    try {
+      const [{ extractText, getDocumentProxy }, buffer] = await Promise.all([
+        import("unpdf"),
+        attachment.file.arrayBuffer().then((bytes) => new Uint8Array(bytes)),
+      ]);
+      const pdf = await getDocumentProxy(buffer);
+      const { text } = await extractText(pdf, { mergePages: true });
+      const trimmed = (text || "").trim();
+      const contentText = trimmed
+        ? `[PDF: ${attachment.name}]\n${trimmed}`
+        : `[PDF: ${attachment.name}]\n(No extractable text found in this document. It may be scanned, image-only, or protected.)`;
+
+      return {
+        id: attachment.id,
+        type: "document",
+        name: attachment.name,
+        contentType: attachment.contentType,
+        content: [{ type: "text", text: contentText }],
+        status: { type: "complete" },
+      };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      toast.error(`Couldn't process ${attachment.name}`, { description: msg });
+      throw new Error(`Failed to extract text from ${attachment.name}: ${msg}`);
+    }
   }
 
   remove(): Promise<void> {
@@ -643,66 +668,7 @@ function clonePersistedValue<T>(value: T, fallback: T): T {
   }
 }
 
-function cloneContent(
-  content: ThreadMessage["content"],
-): ThreadMessage["content"] {
-  if (typeof content === "string") {
-    return content;
-  }
-  return Array.isArray(content) ? clonePersistedValue(content, content) : [];
-}
 
-function cloneAttachments(
-  attachments: readonly CompleteAttachment[] | undefined,
-): readonly CompleteAttachment[] {
-  if (!Array.isArray(attachments)) {
-    return [];
-  }
-  return clonePersistedValue(attachments, attachments);
-}
-
-function toThreadMessage(m: MessageRecord): ThreadMessage {
-  const rawContent: unknown = m.content;
-  const content =
-    typeof rawContent === "string"
-      ? [{ type: "text" as const, text: rawContent }]
-      : Array.isArray(rawContent) && rawContent.length > 0
-        ? cloneContent(rawContent as ThreadMessage["content"])
-        : [{ type: "text" as const, text: "" }];
-
-  if (m.role === "user") {
-    return {
-      id: m.id,
-      createdAt: new Date(m.createdAt),
-      role: "user" as const,
-      content: content as Extract<ThreadMessage, { role: "user" }>["content"],
-      attachments: cloneAttachments(m.attachments),
-      metadata: { custom: {} },
-    };
-  }
-  const custom = (m.metadata as Record<string, unknown>) ?? {};
-  const savedTiming = custom.timing as
-    | import("@assistant-ui/react").MessageTiming
-    | undefined;
-  return {
-    id: m.id,
-    createdAt: new Date(m.createdAt),
-    role: "assistant" as const,
-    content: content as Extract<
-      ThreadMessage,
-      { role: "assistant" }
-    >["content"],
-    status: { type: "complete" as const, reason: "unknown" as const },
-    metadata: {
-      custom,
-      ...(savedTiming ? { timing: savedTiming } : {}),
-      steps: [],
-      unstable_annotations: [],
-      unstable_data: [],
-      unstable_state: null,
-    },
-  };
-}
 
 export async function ensureThreadRecord({
   threadId,
@@ -755,7 +721,7 @@ export async function ensureThreadRecord({
 
   const record: ThreadRecord = {
     id: threadId,
-    title: "New Chat",
+    title: DEFAULT_CHAT_TITLE,
     modelType,
     modelId: modelIdAtInit,
     pairId,
@@ -884,7 +850,7 @@ function createStudioDbAdapter(
       // temporarily missing row does not permanently skip first-turn title generation. A title is
       // cosmetic, so a row that never landed falls back to the default rather than rejecting here.
       const thread = await ensureStoredChatThread(remoteId).catch(() => undefined);
-      const defaultTitle = "New Chat";
+      const defaultTitle = DEFAULT_CHAT_TITLE;
 
       function streamTitle(title: string) {
         return createAssistantStream((c) => {
@@ -910,8 +876,8 @@ function createStudioDbAdapter(
         return streamTitle(defaultTitle);
       }
 
-      // Only generate once per thread/pair.
-      if (thread.title && thread.title !== "New Chat") {
+      // Only generate once per thread/pair if a non-default title is already set.
+      if (thread.title && !isDefaultChatTitle(thread.title)) {
         return streamTitle(thread.title);
       }
 
@@ -1319,7 +1285,18 @@ function useStudioRuntimeAdapters(
   const history = useMemo<ThreadHistoryAdapter>(
     () => ({
       async load() {
-        const { remoteId } = aui.threadListItem().getState();
+        const itemState = aui.threadListItem().getState();
+        const searchThreadId =
+          typeof window !== "undefined"
+            ? new URLSearchParams(window.location.search).get("thread")
+            : null;
+        const remoteId =
+          itemState.remoteId ||
+          (itemState.id && !isAssistantLocalThreadId(itemState.id) ? itemState.id : undefined) ||
+          useChatRuntimeStore.getState().activeThreadId ||
+          searchThreadId ||
+          undefined;
+
         if (!remoteId) {
           return { messages: [] };
         }
@@ -1372,18 +1349,18 @@ function useStudioRuntimeAdapters(
         });
 
         // Repair existing rows created while the opening title path could not
-        // read a plain-string message. This also makes a restored "Nuevo
-        // chat" adopt its first prompt as soon as it is opened.
+        // read a plain-string message. This also makes a restored default
+        // title (e.g. "Nuevo chat" / "New Chat") adopt its first prompt as soon as it is opened.
         const storedThread = await ensureStoredChatThread(remoteId).catch(
           () => undefined,
         );
-        if (storedThread?.title === "New Chat") {
+        if (isDefaultChatTitle(storedThread?.title)) {
           const openingUser = msgs.find((message) => message.role === "user");
           if (openingUser) {
             const title = fallbackTitleFromUserText(
               titleTextOf(toThreadMessage(openingUser)),
             );
-            if (title !== "New Chat") {
+            if (!isDefaultChatTitle(title)) {
               await updateStoredChatThread(remoteId, { title });
             }
           }
@@ -1556,7 +1533,7 @@ function useStudioRuntimeAdapters(
           });
           // Give every new conversation a useful name as soon as the opening
           // prompt is safely stored. assistant-ui may request generateTitle
-          // only after a model response, which left "New Chat" behind when a
+          // only after a model response, which left default titles behind when a
           // run was interrupted, the tab changed, or the model was still
           // loading. The later title generator honours this title instead of
           // replacing it, so this is also the deterministic fallback.
@@ -1564,9 +1541,9 @@ function useStudioRuntimeAdapters(
             const thread = await ensureStoredChatThread(remoteId).catch(
               () => undefined,
             );
-            if (thread?.title === "New Chat") {
+            if (isDefaultChatTitle(thread?.title)) {
               const title = fallbackTitleFromUserText(titleTextOf(message));
-              if (title !== "New Chat") {
+              if (!isDefaultChatTitle(title)) {
                 await updateStoredChatThread(remoteId, { title });
               }
             }

@@ -323,3 +323,10 @@ export {
   curateSystemVoices,
   generateStudioTtsAudio,
 } from "./adapters/studio-speech-synthesis-adapter";
+export {
+  DEFAULT_CHAT_TITLE,
+  FALLBACK_TITLE_MAX,
+  KNOWN_DEFAULT_CHAT_TITLES,
+  fallbackTitleFromUserText,
+  isDefaultChatTitle,
+} from "./utils/chat-title";

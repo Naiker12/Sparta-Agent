@@ -82,70 +82,84 @@ import type { ResearchWebsitePolicy } from "../types/research";
 import { useExternalProvidersStore } from "./external-providers-store";
 import { PLUS_MENU_PINS_STORAGE_KEY } from "./plus-menu-prefs-store";
 
-export const CHAT_REASONING_ENABLED_KEY = "unsloth_chat_reasoning_enabled";
-export const CHAT_TOOLS_ENABLED_KEY = "unsloth_chat_tools_enabled";
-export const CHAT_CODE_TOOLS_ENABLED_KEY = "unsloth_chat_code_tools_enabled";
-export const CHAT_IMAGE_TOOLS_ENABLED_KEY = "unsloth_chat_image_tools_enabled";
-export const CHAT_DEEP_RESEARCH_ENABLED_KEY =
-  "unsloth_chat_deep_research_enabled";
-export const CHAT_DEEP_RESEARCH_WEBSITE_POLICY_KEY =
-  "unsloth_chat_deep_research_website_policy";
-export const CHAT_DEEP_RESEARCH_MODEL_TIMEOUT_KEY =
-  "unsloth_chat_deep_research_model_timeout";
-export const CHAT_ARTIFACTS_ENABLED_KEY = "unsloth_chat_artifacts_enabled";
-export const CHAT_SHOW_CANVAS_MENU_ITEM_KEY =
-  "unsloth_chat_show_canvas_menu_item";
-export const CHAT_COLLAPSE_HTML_ARTIFACTS_KEY =
-  "unsloth_chat_collapse_html_artifacts";
-export const CHAT_ALLOW_ARTIFACT_NETWORK_ACCESS_KEY =
-  "unsloth_chat_allow_artifact_network_access";
-export const CHAT_MCP_ENABLED_KEY = "unsloth_chat_mcp_enabled";
-export const CHAT_CONFIRM_TOOL_CALLS_KEY = "unsloth_chat_confirm_tool_calls";
-export const CHAT_EXPAND_QUANTIZATIONS_KEY =
-  "unsloth_chat_expand_quantizations";
-export const CHAT_SHOW_ALL_QUANTIZATIONS_KEY =
-  "unsloth_chat_show_all_quantizations";
-export const MODELS_FIT_ON_DEVICE_ONLY_KEY =
-  "unsloth_models_fit_on_device_only";
-export const CHAT_BYPASS_PERMISSIONS_KEY = "unsloth_chat_bypass_permissions";
-export const CHAT_PERMISSION_MODE_KEY = "unsloth_chat_permission_mode";
-
-/**
- * Permission level for local tool calls:
- * - "ask": always ask before every tool call runs.
- * - "auto" ("Approve for me", the default): only ask for calls the backend
- *   detects as high risk; ordinary dev commands run immediately. Sandbox stays on.
- * - "off": never ask; tool calls run automatically inside the sandbox
- *   (the original default before permission levels existed).
- * - "full" ("Full access"): no confirmations and the python/terminal sandbox
- *   is disabled. Session-only; never restored from storage.
- */
-export type PermissionMode = "ask" | "auto" | "off" | "full";
-export const CHAT_WEB_FETCH_TOOLS_ENABLED_KEY =
-  "unsloth_chat_web_fetch_tools_enabled";
-export const CHAT_RAG_SOURCE_KEY = "unsloth_chat_rag_source";
-export const CHAT_RAG_MODE_KEY = "unsloth_chat_rag_mode";
-export const CHAT_RAG_TOP_K_KEY = "unsloth_chat_rag_top_k";
-export const CHAT_RAG_AUTOINJECT_KEY = "unsloth_chat_rag_autoinject";
-export const CHAT_RAG_AUTOINJECT_MIN_SCORE_KEY =
-  "unsloth_chat_rag_autoinject_min_score";
-export const CHAT_RAG_OCR_KEY = "unsloth_chat_rag_ocr_scanned";
-export const CHAT_RAG_CAPTION_KEY = "unsloth_chat_rag_caption_figures";
-export const CHAT_SPECULATIVE_TYPE_KEY = "unsloth_chat_speculative_type";
-export const CHAT_GPU_MEMORY_MODE_KEY = "unsloth_chat_gpu_memory_mode";
-
-// Persist only the model-agnostic intents (auto/ngram/off). The model-specific
-// drafter modes (mtp/mtp+ngram/dspark/dflash) and spec_draft_n_max stay session-only:
-// a persisted choice would silently no-op on a model with no MTP head or no
-// DSpark sidecar. Unknown -> auto.
-const PERSISTED_SPEC_MODES = new Set(["auto", "ngram", "off"]);
-
-export type RagSource = { type: "thread" } | { type: "kb"; kbId: string };
+export * from "./chat-runtime-store/index";
+import {
+  CHAT_REASONING_ENABLED_KEY,
+  CHAT_TOOLS_ENABLED_KEY,
+  CHAT_CODE_TOOLS_ENABLED_KEY,
+  CHAT_IMAGE_TOOLS_ENABLED_KEY,
+  CHAT_DEEP_RESEARCH_ENABLED_KEY,
+  CHAT_DEEP_RESEARCH_WEBSITE_POLICY_KEY,
+  CHAT_DEEP_RESEARCH_MODEL_TIMEOUT_KEY,
+  CHAT_ARTIFACTS_ENABLED_KEY,
+  CHAT_SHOW_CANVAS_MENU_ITEM_KEY,
+  CHAT_COLLAPSE_HTML_ARTIFACTS_KEY,
+  CHAT_ALLOW_ARTIFACT_NETWORK_ACCESS_KEY,
+  CHAT_MCP_ENABLED_KEY,
+  CHAT_CONFIRM_TOOL_CALLS_KEY,
+  CHAT_EXPAND_QUANTIZATIONS_KEY,
+  CHAT_SHOW_ALL_QUANTIZATIONS_KEY,
+  MODELS_FIT_ON_DEVICE_ONLY_KEY,
+  CHAT_BYPASS_PERMISSIONS_KEY,
+  CHAT_PERMISSION_MODE_KEY,
+  CHAT_WEB_FETCH_TOOLS_ENABLED_KEY,
+  CHAT_RAG_SOURCE_KEY,
+  CHAT_RAG_MODE_KEY,
+  CHAT_RAG_TOP_K_KEY,
+  CHAT_RAG_AUTOINJECT_KEY,
+  CHAT_RAG_AUTOINJECT_MIN_SCORE_KEY,
+  CHAT_RAG_OCR_KEY,
+  CHAT_RAG_CAPTION_KEY,
+  CHAT_SPECULATIVE_TYPE_KEY,
+  CHAT_GPU_MEMORY_MODE_KEY,
+  LAST_EXTERNAL_CHECKPOINT_KEY,
+  PENDING_CHAT_ATTACHMENT_KEY,
+  PERSISTED_SPEC_MODES,
+  ATOMIC_SETTING_KEYS,
+  DEFAULT_RAG_SOURCE,
+  DEFAULT_RAG_MODE,
+  DEFAULT_RAG_TOP_K,
+  DEFAULT_RAG_AUTOINJECT,
+  DEFAULT_RAG_AUTOINJECT_MIN_SCORE,
+  DEFAULT_RAG_OCR,
+  DEFAULT_RAG_CAPTION,
+  DEFAULT_RESEARCH_WEBSITE_POLICY,
+  DEFAULT_RESEARCH_MODEL_TIMEOUT_SECONDS,
+  SETTINGS_DEBOUNCE_MS,
+  type PermissionMode,
+  type RagSource,
+  type RagMode,
+  type RagAutoInject,
+  type ReasoningStyle,
+  type ReasoningEffort,
+  type DiffusionCanvasFrame,
+  type PendingImageEditReference,
+  type LoadingModelPick,
+  type ThreadRunOwner,
+  type ToolStatusEntry,
+  type ContextUsageSnapshot,
+  type SettingsPatch,
+  saveSettingsPatch,
+  flushSettingsPatch,
+  cancelPendingFlushTimer,
+  warnSettingsPersistenceFailure,
+  isPlainObject,
+  mergePatch,
+  mergePreHydrationPatch,
+  flushPendingSettingsNow,
+  rebalanceSplit,
+  reconcilePersistedGpuIds,
+  reconcilePersistedGpuSelection,
+  requestedGpuIdsFromResponse,
+  hasGgufSource,
+  isLocalModelPath,
+  isDownloadableHubRepo,
+  createThreadLifecycleSlice,
+  createToolsStatusSlice,
+  createModelCatalogSlice,
+} from "./chat-runtime-store/index";
 
 /** Where the composer files an attachment in a project chat. `project` indexes
-
-/** Key a choice made in a chat that has no id yet lives under until it gets one. */
-export const PENDING_CHAT_ATTACHMENT_KEY = "__pending__";
 
 /** Bumped whenever the pending entry changes hands, so a composer that read it
  * can tell whether the one sitting there afterwards is still its own. */
@@ -155,26 +169,6 @@ export function readPendingAttachmentTargetClaim(): number {
   return pendingAttachmentTargetClaim;
 }
 
-export type RagMode = "hybrid" | "lexical" | "dense";
-
-export const DEFAULT_RAG_SOURCE: RagSource = { type: "thread" };
-export const DEFAULT_RAG_MODE: RagMode = "hybrid";
-export const DEFAULT_RAG_TOP_K = 5;
-// `auto` forces retrieval for smaller models (<=9B); `on`/`off` force it.
-export type RagAutoInject = "auto" | "on" | "off";
-export const DEFAULT_RAG_AUTOINJECT: RagAutoInject = "auto";
-export const DEFAULT_RAG_AUTOINJECT_MIN_SCORE = 0.7;
-// OCR scanned/image-only PDF pages at ingest time. On by default; off skips the
-// extra vision pass (only matters when the loaded chat model has vision).
-export const DEFAULT_RAG_OCR = true;
-// Describe figures/charts in PDFs at ingest time so they become searchable. On by
-// default (no-op without a vision model); off skips the per-figure vision calls.
-export const DEFAULT_RAG_CAPTION = true;
-export const DEFAULT_RESEARCH_WEBSITE_POLICY: ResearchWebsitePolicy = {
-  allowedDomains: [],
-  blockedDomains: [],
-};
-export const DEFAULT_RESEARCH_MODEL_TIMEOUT_SECONDS = 900;
 
 /** 0 (unlimited) or a finite budget the settings patch and the run route both accept.
  * Anything else would be dropped from the patch and 400 the run, so the default stands in. */
@@ -302,7 +296,6 @@ function loadRagNumber(
 // /api/inference/status.active_model. External selections have no such mirror,
 // so without explicit localStorage persistence here the user's external pick
 // is reset to the default on every refresh.
-const LAST_EXTERNAL_CHECKPOINT_KEY = "unsloth_chat_last_external_checkpoint";
 
 function loadLastExternalCheckpoint(): string | null {
   if (typeof window === "undefined") return null;
@@ -330,155 +323,17 @@ function saveLastExternalCheckpoint(value: string | null): void {
   }
 }
 
-// "enable_thinking_effort" is a hybrid: an on/off gate (enable_thinking) plus an
-// effort level among a discrete set (e.g. GLM-5.2's high|max). It reuses the
-// reasoning_effort dropdown UI but, unlike gpt-oss, can be fully disabled.
-export type ReasoningStyle =
-  | "enable_thinking"
-  | "reasoning_effort"
-  | "enable_thinking_effort";
-/** One live DiffusionGemma denoising snapshot: the current canvas text at a
- *  given step of a given block (block/step are 0-based; total = steps in block). */
-export type DiffusionCanvasFrame = {
-  block: number;
-  step: number;
-  total: number;
-  text: string;
-};
-export type PendingImageEditReference = {
-  threadId: string | null;
-  openaiImageGenerationCallId: string;
-  openaiResponseId?: string;
-  openaiReasoningItem?: unknown;
-};
-export type LoadingModelPick = {
-  id: string;
-  ggufVariant: string | null;
-  nativePathToken: string | null;
-};
-export type ReasoningEffort =
-  | "none"
-  | "minimal"
-  | "low"
-  | "medium"
-  | "high"
-  | "max"
-  | "xhigh";
-
 let hasShownSettingsPersistenceWarning = false;
 let customPresetsMutationVersion = 0;
 let activePresetMutationVersion = 0;
 let activePresetSourceMutationVersion = 0;
 let settingsHydrationPromise: Promise<void> | null = null;
 
-function warnSettingsPersistenceFailure(): void {
-  if (hasShownSettingsPersistenceWarning) {
-    return;
-  }
-  hasShownSettingsPersistenceWarning = true;
-  toast.warning("Chat settings could not be persisted", {
-    description: "Your changes apply now, but may reset after refresh.",
-  });
-}
-
-// Coalesce setting writes into one pendingPatch (deep merge for nested keys),
-// flush on a trailing-edge debounce and on beforeunload so a pending patch
-// survives tab close. Slider drags produce one HTTP write per quiet window.
-type SettingsPatch = Parameters<typeof savePersistedChatSettingsPatch>[0];
-
-const SETTINGS_DEBOUNCE_MS = 400;
-let pendingPatch: SettingsPatch = {};
-let pendingTimer: ReturnType<typeof setTimeout> | null = null;
-let inflightFlush: Promise<void> = Promise.resolve();
-
-function isPlainObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-// Discriminated unions, not partial patches: merging a `thread` pick into a
-// stored `kb` one keeps `kbId`, which the backend's thread variant forbids.
-const ATOMIC_SETTING_KEYS = new Set<string>(["ragSource"]);
-
-// Maps of per-model objects, merged a level further in: two edits to different
-// fields inside one debounce window must not replace each other.
-const NESTED_MAP_SETTING_KEYS = new Set<string>(["inferenceParamsByModel"]);
-
-function mergePatch(into: SettingsPatch, more: SettingsPatch): void {
-  for (const [key, value] of Object.entries(more)) {
-    const intoAny = into as Record<string, unknown>;
-    const prev = intoAny[key];
-    if (ATOMIC_SETTING_KEYS.has(key)) {
-      intoAny[key] = value;
-      continue;
-    }
-    if (!isPlainObject(prev) || !isPlainObject(value)) {
-      intoAny[key] = value;
-      continue;
-    }
-    if (!NESTED_MAP_SETTING_KEYS.has(key)) {
-      intoAny[key] = { ...prev, ...value };
-      continue;
-    }
-    const merged: Record<string, unknown> = { ...prev };
-    for (const [id, entry] of Object.entries(value)) {
-      const existing = merged[id];
-      merged[id] =
-        isPlainObject(existing) && isPlainObject(entry)
-          ? { ...existing, ...entry }
-          : entry;
-    }
-    intoAny[key] = merged;
-  }
-}
-
-async function flushSettingsPatch(keepalive = false): Promise<void> {
-  if (Object.keys(pendingPatch).length === 0) return;
-  const patch = pendingPatch;
-  pendingPatch = {};
-  try {
-    await savePersistedChatSettingsPatch(patch, { keepalive });
-  } catch (error) {
-    // A rejected patch is NOT requeued as it stands. The endpoint is
-    // extra="forbid" and refuses the whole body on one bad field, so a patch the
-    // server will never accept, requeued forever, makes every later save fail
-    // too and the tab can no longer persist any chat setting. Keep the fields
-    // the server did not name, drop the ones it did, and only reschedule when
-    // the patch actually got smaller so the retry chain is bounded.
-    const { patch: retryable, progressed } = retryablePatchAfterFailure(
-      patch,
-      error,
-    );
-    const retryPatch: SettingsPatch = {};
-    mergePatch(retryPatch, retryable);
-    mergePatch(retryPatch, pendingPatch);
-    pendingPatch = retryPatch;
-    warnSettingsPersistenceFailure();
-    if (progressed && !keepalive && Object.keys(pendingPatch).length > 0) {
-      scheduleSettingsFlush();
-    }
-  }
-}
-
-function scheduleSettingsFlush(): void {
-  if (pendingTimer !== null) clearTimeout(pendingTimer);
-  pendingTimer = setTimeout(() => {
-    pendingTimer = null;
-    inflightFlush = inflightFlush
-      .catch(() => undefined)
-      .then(() => flushSettingsPatch());
-  }, SETTINGS_DEBOUNCE_MS);
-}
-
-function saveSettingsPatch(patch: SettingsPatch): void {
-  mergePatch(pendingPatch, patch);
-  scheduleSettingsFlush();
-}
-
 // Best-effort flush of any pending patch when the page is going away. keepalive
 // lets the PUT outlive the unload; without it the browser cancels the fetch and
 // the user's last slider drag is dropped.
 function flushSettingsOnPageHidden(terminal: boolean): void {
-  if (pendingTimer !== null) clearTimeout(pendingTimer);
+  cancelPendingFlushTimer();
   // A captured edit lives only in the debounce, so send it before the tab goes.
   // Only on a terminal event, though: the beacon PATCHes the row directly and a
   // thread whose row has not been created yet answers 404, where the normal path
@@ -505,10 +360,7 @@ function flushSettingsOnPageHidden(terminal: boolean): void {
   // An edit still waiting on hydration is a user edit like any other, and the
   // tab is going away, so send it rather than let the next session hydrate over it.
   drainPreHydrationPatch();
-  if (Object.keys(pendingPatch).length === 0) return;
-  inflightFlush = inflightFlush
-    .catch(() => undefined)
-    .then(() => flushSettingsPatch(true));
+  flushPendingSettingsNow(true);
 }
 
 if (typeof window !== "undefined") {
@@ -735,7 +587,7 @@ function mirrorSettingToBackend(key: string, raw: string): void {
 /** Move any held startup edits onto the outgoing patch. */
 function drainPreHydrationPatch(): void {
   if (!preHydrationPatch) return;
-  mergePatch(pendingPatch, preHydrationPatch);
+  mergePreHydrationPatch(preHydrationPatch);
   preHydrationPatch = null;
 }
 
@@ -2086,69 +1938,7 @@ export function distributeByWeight(total: number, weights: number[]): number[] {
   );
 }
 
-// Set GPU `index` to `value` and rebalance the rest so per-GPU counts still sum
-// to `total`; others absorb the remainder in proportion to their counts (evenly
-// if all zero). The --tensor-split editor: counts are sent verbatim, and
-// llama.cpp gives each GPU exactly its count when gpu_layers == sum(counts).
-export function rebalanceSplit(
-  total: number,
-  counts: number[],
-  index: number,
-  value: number,
-): number[] {
-  const v = Math.max(0, Math.min(value, total));
-  const out = counts.slice();
-  const otherIdx = counts.map((_, i) => i).filter((i) => i !== index);
-  // No other GPU to absorb the remainder: this one holds everything.
-  if (otherIdx.length === 0) {
-    out[index] = total;
-    return out;
-  }
-  out[index] = v;
-  const dist = distributeByWeight(
-    total - v,
-    otherIdx.map((i) => counts[i]),
-  );
-  otherIdx.forEach((i, k) => (out[i] = dist[k]));
-  return out;
-}
 
-// Validate a persisted gpu_ids pick against the GPUs present right now, before
-// restoring it from remembered settings. Returns null (= automatic) when the
-// pick is stale (none of the saved ids exist, or the host can't pin a multi-GPU
-// set), so a saved [1] on a now-1-GPU host doesn't get sent and rejected with no
-// way to clear it. A null pick (= automatic) passes through unchanged, and an
-// unpopulated device cache leaves the pick alone (the backend still guards).
-// An explicit null namespace means discovery had not completed when the live
-// state was captured, while an absent namespace is a legacy physical-ID pick.
-export function reconcilePersistedGpuIds(
-  ids: number[] | null,
-  savedIndexKind?: GpuIndexKind | null,
-  forDiffusion = false,
-): number[] | null {
-  return reconcilePersistedGpuSelection(
-    ids,
-    savedIndexKind,
-    forDiffusion,
-  ).ids;
-}
-
-export function reconcilePersistedGpuSelection(
-  ids: number[] | null,
-  savedIndexKind?: GpuIndexKind | null,
-  forDiffusion = false,
-): ReconciledGpuSelection {
-  return reconcileCachedGpuSelection(ids, savedIndexKind, forDiffusion);
-}
-
-export function requestedGpuIdsFromResponse(resp: {
-  gpu_ids?: number[] | null;
-  requested_gpu_ids?: number[] | null;
-}): number[] | null {
-  return Object.prototype.hasOwnProperty.call(resp, "requested_gpu_ids")
-    ? (resp.requested_gpu_ids ?? null)
-    : (resp.gpu_ids ?? null);
-}
 
 // Store fields derived from a load/status response's GPU-memory settings.
 // Shared by every load path so the manual-knob round-trip can't drift.
@@ -2287,67 +2077,10 @@ export function loadedGpuMemoryFields(resp: {
   };
 }
 
-/** A pick is a GGUF: HF variant, native file, or a direct local .gguf. */
-export function hasGgufSource(x: {
-  ggufVariant?: string;
-  nativePathToken?: string;
-  isGguf?: boolean;
-}): boolean {
-  return (
-    x.ggufVariant != null || x.nativePathToken != null || x.isGguf === true
-  );
-}
 
-/** A local-disk model id: Unix absolute (/), relative (./ ../), tilde (~/),
- *  Windows drive (C:\) or UNC (\\server). Shared so the loader and the
- *  hub-repo predicate classify ids identically. */
-export function isLocalModelPath(id: string): boolean {
-  return /^(\/|\.{1,2}[\\/]|~[\\/]|[A-Za-z]:[\\/]|\\\\)/.test(id);
-}
 
-/** An uncached HF hub repo we can download as a full snapshot (non-GGUF
- *  safetensors / MLX). Excludes GGUF sources, local paths, native files, LoRA,
- *  and external provider models so none are mis-routed into a snapshot. */
-export function isDownloadableHubRepo(x: {
-  id: string;
-  source?: string;
-  isLora?: boolean;
-  ggufVariant?: string;
-  nativePathToken?: string;
-  isGguf?: boolean;
-}): boolean {
-  return (
-    x.source === "hub" &&
-    !hasGgufSource(x) &&
-    x.isLora !== true &&
-    x.nativePathToken == null &&
-    !isLocalModelPath(x.id)
-  );
-}
 
-type ContextUsageSnapshot = {
-  promptTokens: number;
-  completionTokens: number;
-  totalTokens: number;
-  cachedTokens: number;
-  // Anthropic-only; optional so pre-cache-stats persisted entries load.
-  cacheWriteTokens?: number;
-};
 
-/**
- * One live run behind `runningByThreadId[id]`, with the `local` flag it started with so the
- * model-swap gate can tell llama-server runs from external ones when runs share a key.
- */
-type ThreadRunOwner = {
-  owner: () => void;
-  local: boolean;
-};
-
-type ToolStatusEntry = {
-  status: string;
-  startedAt: number;
-  owner?: () => void;
-};
 
 type ChatRuntimeStore = {
   settingsHydrated: boolean;
@@ -3571,6 +3304,9 @@ function setScalarSettingVersion<K extends ScalarSettingKey>(
 }
 
 export const useChatRuntimeStore = create<ChatRuntimeStore>((set, get) => ({
+  ...createThreadLifecycleSlice(set, get),
+  ...createToolsStatusSlice(set),
+  ...createModelCatalogSlice(set),
   settingsHydrated: false,
   threadScopedSettingsPending: false,
   // Hydrate the last external checkpoint so the external picker survives a
@@ -3588,20 +3324,8 @@ export const useChatRuntimeStore = create<ChatRuntimeStore>((set, get) => ({
   customPresets: [],
   activePreset: "Default",
   activePresetSource: getPresetSource("Default"),
-  models: [],
-  loras: [],
-  runningByThreadId: {},
-  localRunByThreadId: {},
-  runOwnerByThreadId: {},
-  cancelByThreadId: {},
-  serverCancelByThreadId: {},
   autoTitle: false,
   hfToken: useHfTokenStore.getState().token,
-  modelsError: null,
-  lastModelLoadError: null,
-  activeGgufVariant: null,
-  residentCheckpoint: undefined,
-  activeModelIsLocal: false,
   ggufContextLength: null,
   ggufMaxContextLength: null,
   ggufNativeContextLength: null,
@@ -3663,11 +3387,6 @@ export const useChatRuntimeStore = create<ChatRuntimeStore>((set, get) => ({
   ),
   ragOcrScanned: loadBool(CHAT_RAG_OCR_KEY, DEFAULT_RAG_OCR),
   ragCaptionFigures: loadBool(CHAT_RAG_CAPTION_KEY, DEFAULT_RAG_CAPTION),
-  toolStatusByThreadId: {},
-  toolLiveOutput: {},
-  toolFullOutput: {},
-  generatingStatus: null,
-  activeDiffusionCanvasByThreadId: {},
   autoHealToolCalls: true,
   nudgeToolCalls: true,
   maxToolCallsPerMessage: 25,
@@ -3942,141 +3661,12 @@ export const useChatRuntimeStore = create<ChatRuntimeStore>((set, get) => ({
       saveSettingsPatch({ activePresetSource });
       return { activePresetSource };
     }),
-  setModels: (models) => set({ models }),
-  setLoras: (loras) => set({ loras }),
-  setThreadRunning: (threadId, running, options) =>
-    set((state) => {
-      const next = { ...state.runningByThreadId };
-      const nextLocal = { ...state.localRunByThreadId };
-      const nextOwner = { ...state.runOwnerByThreadId };
-      const owners = state.runOwnerByThreadId[threadId] ?? [];
-      const local = options?.local !== false;
-      if (running) {
-        next[threadId] = true;
-        if (options?.owner) {
-          nextOwner[threadId] = [...owners, { owner: options.owner, local }];
-        }
-        // Any local owner keeps the key counted by the model-swap gate, so an external run
-        // joining a shared key must not clear a sibling's flag.
-        if (local) {
-          nextLocal[threadId] = true;
-        } else if (!owners.some((o) => o.local)) {
-          delete nextLocal[threadId];
-        }
-      } else {
-        const remaining = options?.owner
-          ? owners.filter((o) => o.owner !== options.owner)
-          : [];
-        // An owner missing from the list was already cleared, or the key belongs to siblings
-        // only: either way this run must change nothing.
-        if (options?.owner && remaining.length === owners.length) return state;
-        // An ownerless clear predates per-run tracking, so it must not speak for runs that
-        // own the key: leave them to clear themselves.
-        if (!options?.owner && owners.length > 0) return state;
-        if (remaining.length > 0) {
-          nextOwner[threadId] = remaining;
-          if (remaining.some((o) => o.local)) {
-            nextLocal[threadId] = true;
-          } else {
-            delete nextLocal[threadId];
-          }
-        } else {
-          delete next[threadId];
-          delete nextLocal[threadId];
-          delete nextOwner[threadId];
-        }
-      }
-      return {
-        runningByThreadId: next,
-        localRunByThreadId: nextLocal,
-        runOwnerByThreadId: nextOwner,
-      };
-    }),
-  adoptDefaultThreadRun: (threadId) =>
-    set((state) => {
-      const key = "__default";
-      if (!threadId || threadId === key) return state;
-      // Two first turns can share "__default", and nothing links a run there to the thread being
-      // persisted. Moving the arrays wholesale handed this thread the sibling's owner and stop
-      // handle too, so stopping one aborted both. Adopt only when the key holds a single run.
-      if ((state.runOwnerByThreadId[key]?.length ?? 0) > 1) return state;
-      // Only the transient run maps move. Anything already filed under the real id wins,
-      // since that is a later, better-identified run.
-      const moved: Partial<ChatRuntimeStore> = {};
-      const move = <T,>(
-        map: Record<string, T>,
-        name: keyof ChatRuntimeStore,
-      ) => {
-        const entry = map[key];
-        if (entry === undefined || map[threadId] !== undefined) return;
-        const next = { ...map };
-        delete next[key];
-        next[threadId] = entry;
-        (moved as Record<string, unknown>)[name as string] = next;
-      };
-      move(state.runningByThreadId, "runningByThreadId");
-      move(state.localRunByThreadId, "localRunByThreadId");
-      move(state.runOwnerByThreadId, "runOwnerByThreadId");
-      move(state.cancelByThreadId, "cancelByThreadId");
-      move(state.serverCancelByThreadId, "serverCancelByThreadId");
-      move(state.toolStatusByThreadId, "toolStatusByThreadId");
-      move(
-        state.activeDiffusionCanvasByThreadId,
-        "activeDiffusionCanvasByThreadId",
-      );
-      return Object.keys(moved).length > 0 ? moved : state;
-    }),
-  runKeyForOwner: (fallbackKey, owner) => {
-    for (const [key, entries] of Object.entries(get().runOwnerByThreadId)) {
-      if (entries.some((e) => e.owner === owner)) return key;
-    }
-    return fallbackKey;
-  },
-  registerThreadCancel: (threadId, cancel) =>
-    set((state) => {
-      const next = { ...state.cancelByThreadId };
-      next[threadId] = cancel;
-      return { cancelByThreadId: next };
-    }),
-  clearThreadCancel: (threadId, cancel) =>
-    set((state) => {
-      if (!(threadId in state.cancelByThreadId)) return state;
-      if (cancel && state.cancelByThreadId[threadId] !== cancel) return state;
-      const next = { ...state.cancelByThreadId };
-      delete next[threadId];
-      return { cancelByThreadId: next };
-    }),
-  registerThreadServerCancel: (threadId, cancel) =>
-    set((state) => {
-      const next = { ...state.serverCancelByThreadId };
-      next[threadId] = [...(state.serverCancelByThreadId[threadId] ?? []), cancel];
-      return { serverCancelByThreadId: next };
-    }),
-  // `cancel` narrows removal to the run that registered it: unresolved thread ids share the
-  // "__default" key, so a blind delete would drop a live sibling.
-  clearThreadServerCancel: (threadId, cancel) =>
-    set((state) => {
-      const current = state.serverCancelByThreadId[threadId];
-      if (current === undefined) return state;
-      const remaining =
-        cancel === undefined ? [] : current.filter((c) => c !== cancel);
-      if (remaining.length === current.length) return state;
-      const next = { ...state.serverCancelByThreadId };
-      if (remaining.length > 0) {
-        next[threadId] = remaining;
-      } else {
-        delete next[threadId];
-      }
-      return { serverCancelByThreadId: next };
-    }),
   setAutoTitle: (autoTitle) =>
     set((state) => {
       setScalarSettingVersion("autoTitle", autoTitle, state.autoTitle);
       return { autoTitle };
     }),
   setHfToken: (hfToken) => useHfTokenStore.getState().setToken(hfToken),
-  setModelsError: (modelsError) => set({ modelsError }),
-  setLastModelLoadError: (lastModelLoadError) => set({ lastModelLoadError }),
   setCheckpoint: (modelId, ggufVariant, options) =>
     set((state) => {
       // Persist external selections so they survive a refresh. Local ids are
@@ -4929,84 +4519,6 @@ export const useChatRuntimeStore = create<ChatRuntimeStore>((set, get) => ({
       saveBool(CHAT_RAG_CAPTION_KEY, ragCaptionFigures);
       return { ragCaptionFigures };
     }),
-  setToolStatus: (threadId, status, owner) =>
-    set((state) => {
-      const next = { ...state.toolStatusByThreadId };
-      const entries = state.toolStatusByThreadId[threadId] ?? [];
-      const mine = entries.find((e) => e.owner === owner);
-      if (!status) {
-        // Drop only this run's entry: a sibling behind the same key may still be running a tool,
-        // and its status has to survive this clear.
-        if (mine === undefined) return state;
-        const rest = entries.filter((e) => e !== mine);
-        if (rest.length > 0) {
-          next[threadId] = rest;
-        } else {
-          delete next[threadId];
-        }
-      } else {
-        // Same text from the same run means the same call, so keep startedAt: only a new tool restarts it.
-        if (mine?.status === status) return state;
-        const entry = { status, startedAt: Date.now(), owner };
-        next[threadId] = mine
-          ? entries.map((e) => (e === mine ? entry : e))
-          : [...entries, entry];
-      }
-      return { toolStatusByThreadId: next };
-    }),
-  appendToolLiveOutput: (toolCallId, text) =>
-    set((state) => ({
-      toolLiveOutput: {
-        ...state.toolLiveOutput,
-        [toolCallId]: (state.toolLiveOutput[toolCallId] ?? "") + text,
-      },
-    })),
-  setToolFullOutput: (toolCallId, text) =>
-    set((state) => ({
-      toolFullOutput: {
-        ...state.toolFullOutput,
-        [toolCallId]: text,
-      },
-    })),
-  clearToolFullOutput: (toolCallId) =>
-    set((state) => {
-      if (!(toolCallId in state.toolFullOutput)) {
-        return {};
-      }
-      const next = { ...state.toolFullOutput };
-      delete next[toolCallId];
-      return { toolFullOutput: next };
-    }),
-  clearToolLiveOutput: (toolCallId) =>
-    set((state) => {
-      if (toolCallId === undefined) {
-        return Object.keys(state.toolLiveOutput).length
-          ? { toolLiveOutput: {} }
-          : {};
-      }
-      if (!(toolCallId in state.toolLiveOutput)) {
-        return {};
-      }
-      const next = { ...state.toolLiveOutput };
-      delete next[toolCallId];
-      return { toolLiveOutput: next };
-    }),
-  setActiveDiffusionCanvas: (threadId, canvas) =>
-    set((state) => ({
-      activeDiffusionCanvasByThreadId: {
-        ...state.activeDiffusionCanvasByThreadId,
-        [threadId || "__default"]: canvas,
-      },
-    })),
-  clearActiveDiffusionCanvasForThread: (threadId) =>
-    set((state) => {
-      const key = threadId || "__default";
-      if (state.activeDiffusionCanvasByThreadId[key] === undefined) return state;
-      const next = { ...state.activeDiffusionCanvasByThreadId };
-      delete next[key];
-      return { activeDiffusionCanvasByThreadId: next };
-    }),
-  setGeneratingStatus: (generatingStatus) => set({ generatingStatus }),
   setAutoHealToolCalls: (autoHealToolCalls) =>
     set((state) => {
       setScalarSettingVersion(

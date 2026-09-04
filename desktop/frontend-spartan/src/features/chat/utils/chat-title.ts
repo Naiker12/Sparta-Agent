@@ -6,6 +6,34 @@ import type { MessageRecord, ThreadRecord } from "../types";
  *  included. */
 export const FALLBACK_TITLE_MAX = 120;
 
+export const DEFAULT_CHAT_TITLE = "New Chat";
+
+export const KNOWN_DEFAULT_CHAT_TITLES = new Set<string>([
+  "New Chat",
+  "Nuevo chat",
+  "Nouveau chat",
+  "Neuer Chat",
+  "Nuova chat",
+  "Novo chat",
+  "Новый чат",
+  "新对话",
+  "新規チャット",
+  "New chat",
+  "nuevo chat",
+]);
+
+export function isDefaultChatTitle(title: string | null | undefined): boolean {
+  if (typeof title !== "string") return true;
+  const trimmed = title.trim();
+  if (!trimmed) return true;
+  return (
+    KNOWN_DEFAULT_CHAT_TITLES.has(title) ||
+    KNOWN_DEFAULT_CHAT_TITLES.has(trimmed) ||
+    trimmed.toLowerCase() === "new chat" ||
+    trimmed.toLowerCase() === "nuevo chat"
+  );
+}
+
 /** Older titles were stored pre-cut at 48 chars with a literal "...". Kept to
  *  find and rewrite those rows. */
 export const LEGACY_FALLBACK_TITLE_MAX = 48;
@@ -43,7 +71,7 @@ function cutToUnits(text: string, maxUnits: number): string {
 
 export function fallbackTitleFromUserText(userText: string): string {
   const cleaned = firstLineOf(userText);
-  if (!cleaned) return "New Chat";
+  if (!cleaned) return DEFAULT_CHAT_TITLE;
   if (cleaned.length <= FALLBACK_TITLE_MAX) return cleaned;
   // The ellipsis takes one of the budget, so the title still fits the input.
   return cutToUnits(cleaned, FALLBACK_TITLE_MAX - 1).trimEnd() + "…";

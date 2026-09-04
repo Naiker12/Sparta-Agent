@@ -452,10 +452,19 @@ export function ThreadDocumentsBar({
   // whose own attachment was still indexing lists nothing until it lands either.
   const hasIndexing =
     threadIndexing || threadListLoading || projectIndexing || projectListLoading;
+  const lastEmittedIndexingRef = useRef<boolean | null>(null);
   useEffect(() => {
-    onIndexingChange?.(hasIndexing);
+    if (lastEmittedIndexingRef.current !== hasIndexing) {
+      lastEmittedIndexingRef.current = hasIndexing;
+      onIndexingChange?.(hasIndexing);
+    }
   }, [hasIndexing, onIndexingChange]);
-  useEffect(() => () => onIndexingChange?.(false), [onIndexingChange]);
+  useEffect(() => () => {
+    if (lastEmittedIndexingRef.current !== false) {
+      lastEmittedIndexingRef.current = false;
+      onIndexingChange?.(false);
+    }
+  }, [onIndexingChange]);
 
   // Materialize the thread id on first use; ref-deduped so a double-click can't
   // start two threads. A thread switch gets separate work even if the prior request is pending.

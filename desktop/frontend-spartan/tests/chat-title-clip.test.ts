@@ -6,7 +6,9 @@ import type {
   ThreadRecord,
 } from "../src/features/chat/types.ts";
 import {
+  DEFAULT_CHAT_TITLE,
   fallbackTitleFromUserText,
+  isDefaultChatTitle,
   isLegacyClippedTitle,
   planLegacyTitleRepairs,
   selectLegacyRepairPage,
@@ -35,11 +37,29 @@ function userMessage(threadId: string, text: string): MessageRecord {
 const UNPAIRED_SURROGATE =
   /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/;
 
+test("isDefaultChatTitle correctly identifies default/empty titles in multiple languages", () => {
+  assert.equal(isDefaultChatTitle("New Chat"), true);
+  assert.equal(isDefaultChatTitle("New chat"), true);
+  assert.equal(isDefaultChatTitle("Nuevo chat"), true);
+  assert.equal(isDefaultChatTitle("nuevo chat"), true);
+  assert.equal(isDefaultChatTitle("Nouveau chat"), true);
+  assert.equal(isDefaultChatTitle("Neuer Chat"), true);
+  assert.equal(isDefaultChatTitle("   "), true);
+  assert.equal(isDefaultChatTitle(""), true);
+  assert.equal(isDefaultChatTitle(undefined), true);
+  assert.equal(isDefaultChatTitle(null), true);
+
+  // Custom user titles must never match
+  assert.equal(isDefaultChatTitle("hola"), false);
+  assert.equal(isDefaultChatTitle("My Custom Project"), false);
+  assert.equal(isDefaultChatTitle("Pregunta sobre Python"), false);
+});
+
 test("a title the sidebar can clip keeps the whole first line", () => {
   assert.equal(fallbackTitleFromUserText(LONG), LONG);
   assert.equal(fallbackTitleFromUserText("  spaced   out  "), "spaced out");
   assert.equal(fallbackTitleFromUserText("first\nsecond"), "first");
-  assert.equal(fallbackTitleFromUserText("   "), "New Chat");
+  assert.equal(fallbackTitleFromUserText("   "), DEFAULT_CHAT_TITLE);
 });
 
 test("only a pasted wall of text is cut, and with a real ellipsis", () => {
