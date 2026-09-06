@@ -23,8 +23,8 @@ Las pruebas de interfaz montan los cuerpos de los componentes reales con React y
 
 ## Trabajo pendiente
 
-1. A04: permitir lectura/edición/relectura sin perder la prevención de bucles.
-2. A02: clasificar la suite completa y conectar sus pruebas válidas y smoke tests de aplicación al CI.
+1. A04 corregido: la revisión del workspace invalida resultados anteriores después de acciones potencialmente mutantes, incluso fallidas. Los 30 casos del controlador pasan.
+2. A02 clasificado: [suite completa](audit/suite-classification.md), 3.321 aprobados y 166 fallidos en frontend; 224 errores de colección en backend. Falta adaptar contratos y conectar las pruebas válidas y smoke tests de aplicación al CI.
 3. A06–A11 y A13: cerrar contratos heredados, persistencia, terminal y ciclo de vida del runtime. El buffer de arranque se acotó al introducir el intercambio, pero todavía falta el timeout y el cierre completo de procesos.
 4. A12 y A14: presupuesto del bundle, exportación/restauración y conservación de datos al desinstalar.
 5. Checkpoints, contexto de proyecto y tareas reanudables después de estabilizar el ejecutor.

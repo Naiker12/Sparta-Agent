@@ -1,26 +1,20 @@
 ---
-title: Introducción a Model Context Protocol (MCP)
-description: Estándar abierto para la conexión segura entre agentes de IA y herramientas o fuentes de datos.
+title: "Qué es MCP"
+description: "Conecta herramientas externas mediante Model Context Protocol."
 ---
 
-import { Callout } from 'fumadocs-ui/components/callout';
+## Cliente, servidor y herramienta
 
-# Introducción a Model Context Protocol (MCP)
+Sparta actúa como cliente de servidores MCP. Cada servidor publica herramientas y define los argumentos que necesita. Las capacidades dependen de la implementación del servidor.
 
-**Model Context Protocol (MCP)** es el protocolo estándar de código abierto diseñado para estandarizar la forma en que los modelos de inteligencia artificial se comunican con fuentes de datos externas, APIs, bases de datos y sistemas de archivos.
+## Conexiones locales y remotas
 
-Sparta Agent incorpora soporte nativo como **Cliente MCP completo**, permitiendo orquestar múltiples servidores locales y remotos bajo una misma interfaz de ejecución segura.
+Un servidor local puede ejecutar un proceso en tu equipo. Un servidor remoto utiliza su transporte de red y autenticación. Elige la modalidad que soporte el servicio.
 
----
+## Permisos
 
-## Arquitectura de Conexión MCP en Sparta Agent
+Conectar una cuenta puede dar acceso a datos o permitir modificaciones. Revisa las herramientas disponibles y la política de aprobación antes de utilizarlas.
 
-<McpArchitectureDiagram />
+## Siguiente paso
 
----
-
-## Principios del Protocolo MCP en Sparta Agent
-
-1. **Transporte Estandarizado (JSON-RPC 2.0)**: Comunicación tipada sobre `stdio` o `SSE` (Server-Sent Events) con manejo de errores uniforme.
-2. **Descubrimiento Dinámico de Capacidades**: El agente descubre dinámicamente las herramientas (`tools`), recursos (`resources`) y plantillas de prompts expuestos por cada servidor.
-3. **Control de Permisos Intermediado**: Cualquier llamada a una herramienta MCP que realice mutaciones en un servicio externo debe ser aprobada explícitamente mediante el diálogo de permisos.
+Configura una conexión con alcance pequeño siguiendo [Configurar MCP](/docs/mcp/configuration). El [estándar oficial MCP](https://modelcontextprotocol.io/docs/getting-started/intro) describe sus componentes y transportes.

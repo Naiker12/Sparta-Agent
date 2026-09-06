@@ -1,0 +1,62 @@
+/* Keep the documentation's reading scale independent of the marketing page. */
+html.docs-mode {
+  --spacing-8: 2rem; --spacing-16: 4rem; --spacing-24: 6rem; --spacing-32: 8rem;
+  --spacing-40: 10rem; --spacing-48: 12rem; --spacing-56: 14rem; --spacing-64: 16rem;
+  --spacing-80: 20rem; --spacing-96: 24rem; --spacing-120: 30rem; --spacing-224: 56rem;
+  --fd-layout-width: 1440px;
+  --color-fd-background: #fafaf9;
+  --color-fd-foreground: #252521;
+  --color-fd-card: #f5f5f2;
+  --color-fd-card-foreground: #252521;
+  --color-fd-muted: #f0f0eb;
+  --color-fd-muted-foreground: #66665e;
+  --color-fd-border: #e3e3dc;
+  --color-fd-primary: #716523;
+  --color-fd-primary-foreground: #ffffff;
+  --color-fd-accent: #eeecd9;
+  --color-fd-accent-foreground: #655922;
+  --color-fd-popover: #fafaf9;
+  --color-fd-popover-foreground: #252521;
+  scroll-padding-top: 80px;
+}
+html.docs-mode.dark {
+  --color-fd-background: #111210;
+  --color-fd-foreground: #ededE7;
+  --color-fd-card: #191a17;
+  --color-fd-card-foreground: #edede7;
+  --color-fd-muted: #20211d;
+  --color-fd-muted-foreground: #a1a399;
+  --color-fd-border: #2c2d27;
+  --color-fd-primary: #dfd68b;
+  --color-fd-primary-foreground: #1a1a12;
+  --color-fd-accent: #2b2b20;
+  --color-fd-accent-foreground: #e7dc90;
+  --color-fd-popover: #1a1b17;
+  --color-fd-popover-foreground: #edede7;
+}
+html.docs-mode, .docs-mode body, .docs-mode #root { background: var(--color-fd-background); color: var(--color-fd-foreground); overflow-x: clip; }
+.docs-shell { min-height: 100vh; font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; font-size: 14px; line-height: 1.65; }
+.docs-brand { display: flex; align-items: center; gap: 10px; font-size: 18px; letter-spacing: -.5px; }
+.docs-brand img { width: 26px; height: 26px; }
+.docs-brand > span { font-size: 14px; color: var(--color-fd-muted-foreground); font-weight: 400; border-left: 1px solid var(--color-fd-border); padding-left: 10px; letter-spacing: 0; }
+.docs-sidebar-banner { display: flex; align-items: center; gap: 10px; border: 1px solid var(--color-fd-border); background: var(--color-fd-muted); border-radius: 7px; padding: 9px 11px; margin-top: 6px; }
+.docs-version { margin-left: auto; font-size: 11px; color: var(--color-fd-muted-foreground); }
+.docs-help { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 11px; color: var(--color-fd-muted-foreground); padding: 8px 0; }
+.docs-eyebrow { display: flex; align-items: center; gap: 8px; color: var(--color-fd-muted-foreground); font-size: 10px; letter-spacing: 1.6px; font-weight: 600; margin-bottom: 6px; }
+.docs-status-dot { width: 5px; height: 5px; background: var(--color-fd-primary); border-radius: 50%; }
+.docs-page-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 20px; font-size: 11px; color: var(--color-fd-muted-foreground); padding-bottom: 24px; border-bottom: 1px solid var(--color-fd-border); margin: 0 0 16px; }
+.docs-page-meta span { display: inline-flex; align-items: center; gap: 6px; }
+.docs-shell article h1 { font-size: clamp(28px, 3vw, 36px); line-height: 1.22; letter-spacing: -1px; font-weight: 600; }
+.docs-shell article .prose { font-size: 15px; line-height: 1.8; }
+.docs-shell article .prose h2 { font-size: 21px; letter-spacing: -.45px; margin-top: 2.3em; font-weight: 600; }
+.docs-shell article .prose h3 { font-size: 16px; margin-top: 1.8em; font-weight: 600; }
+.docs-shell article .prose p { color: var(--color-fd-foreground); }
+.docs-shell #nd-sidebar { background: var(--color-fd-card); }
+.docs-shell [data-active='true'] { color: var(--color-fd-accent-foreground); }
+.docs-shell pre { font-size: 12px; }
+.docs-loading { padding: 80px 48px; color: var(--color-fd-muted-foreground); }
+.docs-skip { position: fixed; top: -80px; left: 16px; padding: 10px 16px; background: var(--color-fd-primary); color: var(--color-fd-primary-foreground); }
+.docs-skip:focus { top: 12px; z-index: 100; }
+.docs-shell :focus-visible { outline: 2px solid var(--color-fd-primary); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { html.docs-mode { scroll-behavior: auto; } .docs-shell *, .docs-shell *::before, .docs-shell *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+@media (max-width: 767px) { .docs-page-meta { gap: 12px; } .docs-shell article h1 { font-size: 29px; } .docs-shell article .prose { font-size: 14px; } }

@@ -1,26 +1,24 @@
 ---
-title: Gestión de Archivos y Adjuntos
-description: Unificación de documentos, esquemas y código fuente en una sola sesión de trabajo.
+title: "Archivos y adjuntos"
+description: "Añade contexto a una conversación y distingue el archivo de su contenido procesado."
 ---
 
-import { Callout } from 'fumadocs-ui/components/callout';
+## Adjunta lo relevante
 
-# Gestión de Archivos y Adjuntos
+Añade los documentos que necesita la tarea y explica para qué debe utilizarlos el modelo. El tipo de archivo y las capacidades del proveedor determinan cómo se procesa el contenido.
 
-Sparta Agent permite arrastrar, soltar e indexar archivos directamente en el hilo de conversación, permitiendo al agente comprender el contexto exacto del problema sin necesidad de copiar y pegar fragmentos manualmente.
+## Carpeta vinculada y adjunto
 
----
+Una carpeta de proyecto define un contexto de trabajo. Un adjunto aporta un archivo concreto a una conversación. No asumas que vincular una carpeta significa que todos sus archivos ya están leídos o indexados.
 
-## Modos de Incorporación de Contexto
+## Comprueba el procesamiento
 
-### 1. Adjuntos Directos en el Chat
-Arrastra archivos (PDFs, imágenes de capturas de pantalla, archivos JSON o scripts) directamente a la caja de entrada para que el modelo los analice de forma inmediata.
+Si una extracción o indexación falla, revisa el mensaje correspondiente. Un archivo añadido a la interfaz puede seguir pendiente de procesamiento.
 
-### 2. Vinculación de Espacios de Trabajo (Workspaces)
-Al seleccionar una carpeta como workspace activo:
-- Sparta Agent indexa la estructura jerárquica de archivos.
-- Reconoce automáticamente archivos de reglas (`.agents/AGENTS.md`).
-- Rastrea el estado de `git` para identificar archivos modificados o pendientes de commit.
+## Datos que llegan al modelo
 
-### 3. Presupuesto Inteligente de Tokens
-El sistema administra de forma dinámica el contexto inyectado para evitar saturar la ventana de atención del modelo, priorizando fragmentos relevantes y resúmenes estructurados cuando los archivos son extensos.
+El contenido recuperado puede incluirse en la petición al proveedor. Usa un modelo y una conexión adecuados para la sensibilidad de los documentos.
+
+## Borrado
+
+Revisa si la acción elimina solo la conversación, su referencia o también archivos asociados. Conserva una copia antes de borrar material que necesites reutilizar.

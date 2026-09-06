@@ -31,7 +31,9 @@ jobs:
         run: npm --prefix landing ci
 
       - name: Build Static Site
-        run: npm --prefix landing run build:gh
+        run: |
+          npm --prefix landing run docs:check
+          npm --prefix landing run build:gh
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4

@@ -1,0 +1,30 @@
+---
+title: "Rendimiento"
+description: "Mide dónde se consume el tiempo y reduce trabajo innecesario."
+---
+
+## Separa los tiempos
+
+| Tramo | Qué medir |
+|---|---|
+| Escritorio | Desde abrir la app hasta ver la interfaz |
+| Motor | Hasta que la API está disponible |
+| Modelo | Tiempo de carga y memoria utilizada |
+| Respuesta | Latencia al primer token y velocidad posterior |
+| Herramientas | Duración de procesos y servicios externos |
+
+## Empieza con menos contexto
+
+Prueba un mensaje corto y una sola herramienta. Añade archivos relevantes, evita adjuntos repetidos y mantén cerradas las vistas que no necesitas.
+
+## Modelos locales
+
+Reduce el tamaño del modelo o del contexto cuando falte memoria. Comprueba el dispositivo utilizado: un fallback a CPU puede explicar una generación mucho más lenta. Cambiar el presupuesto de VRAM puede requerir recargar el modelo.
+
+## Conexiones remotas
+
+Compara la latencia con una petición pequeña. La red, las cuotas y el proveedor pueden dominar el tiempo total aunque la interfaz funcione correctamente.
+
+## Para desarrolladores
+
+Mide el JavaScript cargado al inicio, las tareas largas y las suscripciones del streaming antes de optimizar. Los kilobytes del build no equivalen a RAM ni a tiempo de arranque. Mantén un presupuesto verificable para el build que realmente usa Electron.

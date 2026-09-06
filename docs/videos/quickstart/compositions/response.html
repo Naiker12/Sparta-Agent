@@ -1,0 +1,30 @@
+<!doctype html><html lang="es"><body><template><style>#response{position:absolute;width:1920px;height:1080px;inset:0}
+*{box-sizing:border-box} .layout{position:absolute;inset:0;color:#edede7;font-family:Inter,sans-serif}
+.copy{position:absolute;left:100px;top:215px;width:740px}.kicker{font-size:24px;letter-spacing:4px;color:#dfd68b;margin:0 0 25px;font-weight:600}
+h1{font-size:88px;line-height:1.04;letter-spacing:-4px;margin:0 0 32px;font-weight:650}h1 span{display:block}.lead{font-size:32px;line-height:1.5;color:#bfc1b5;margin:0;max-width:690px}
+.panel{position:absolute;left:970px;top:240px;width:850px;min-height:570px;padding:40px;background:#191a17;border:2px solid #36382f;border-radius:20px}
+.file{display:flex;justify-content:space-between;align-items:center;font-size:27px;color:#edede7;padding-bottom:26px;border-bottom:2px solid #36382f;font-weight:600}.file span{font-size:24px;color:#bfc1b5;font-weight:400}
+.doc-title{font-size:40px;margin:38px 0 28px;font-weight:600}
+.line{height:12px;margin:24px 0;background:#36382f;border-radius:6px;width:90%}
+.focus{font-size:30px;padding:22px 20px;background:#333326;color:#dfd68b;border-radius:10px;margin:28px 0;text-align:center;font-weight:550}
+.mode-pill{display:flex;justify-content:space-between;align-items:center;padding:24px;border-radius:12px;margin-top:28px;background:#242620;border:2px solid #36382f;font-size:30px;font-weight:600;color:#edede7}
+.mode-pill span{font-size:24px;font-weight:400;color:#bfc1b5}
+.mode-pill.active{background:#333326;border-color:#77774e;color:#dfd68b}
+.mode-pill.active span{color:#dfd68b}
+.quote{font-size:35px;line-height:1.45;color:#dfd68b;margin:32px 0}
+.rule{height:2px;background:#36382f;margin:25px 0}
+.detail{display:flex;justify-content:space-between;font-size:27px;margin-top:22px;gap:20px}.detail span{color:#bfc1b5}.detail strong{font-weight:500}
+.check{display:flex;gap:24px;align-items:center;margin-top:34px}.check b{display:grid;place-items:center;flex-shrink:0;width:52px;height:52px;border-radius:50%;border:2px solid #77774e;color:#dfd68b;font-size:26px;font-weight:500}.check strong{font-size:32px;font-weight:550}.check p{font-size:26px;color:#bfc1b5;margin:8px 0 0}
+.diff{font-size:30px;line-height:1.35;padding:20px;border-radius:8px;margin:24px 0}
+.fresh{background:#333326;color:#dfd68b}
+.small-note{font-size:25px;margin-top:26px;color:#bfc1b5}
+.note{position:absolute;left:100px;top:860px;width:1720px;font-size:28px;line-height:1.4;color:#bfc1b5;padding-top:22px;border-top:2px solid #36382f}
+</style><div id="response" data-composition-id="response" data-width="1920" data-height="1080" data-duration="10"><div class="layout"><div class="copy"><div class="kicker">05 / VERIFICACIÓN DE CONEXIÓN</div><h1><span>El modelo</span><span>responde con</span><span>éxito.</span></h1><p class="lead">Observa la velocidad de generación y la calidad de la respuesta.</p></div><div class="panel"><div class="file">SPARTA <span>Respuesta generada</span></div><div class="diff fresh">«¡Hola! Estoy listo para trabajar con tus archivos y proyectos.»</div><div class="rule"></div><div class="check"><b>✓</b><div><strong>Conexión establecida</strong><p>Inferencia operativa y lista.</p></div></div></div><div class="note">El motor está preparado para asociar proyectos y carpetas.</div></div></div><script>
+{ const tl=gsap.timeline({paused:true});
+tl.fromTo('#response .copy',{y:25,opacity:0},{y:0,opacity:1,duration:.55,ease:'power3.out'},0);
+tl.fromTo('#response .panel',{x:45,opacity:0},{x:0,opacity:1,duration:.7,ease:'power2.out'},.15);
+tl.fromTo('#response .note',{opacity:0},{opacity:1,duration:.45},.65);
+tl.fromTo('#response .panel > :not(.file)',{opacity:0,y:10},{opacity:1,y:0,duration:.5,stagger:.18,ease:'power2.out'},.65);
+tl.to('#response .layout',{opacity:0,duration:.25},9.75);
+window.__timelines['response']=tl; }
+</script></template></body></html>

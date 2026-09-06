@@ -1,43 +1,20 @@
 ---
-title: Búsqueda Profunda (Deep Research)
-description: Agente autónomo de investigación web con descomposición recursiva de consultas y síntesis estructurada.
+title: "Investigación"
+description: "Organiza preguntas, fuentes y resultados de una investigación."
 ---
 
-import { Callout } from 'fumadocs-ui/components/callout';
+## Define el alcance
 
-# Búsqueda Profunda (Deep Research)
+Describe la pregunta, el periodo relevante y el formato de salida. Si esperas citas, pide enlaces que sustenten las afirmaciones principales.
 
-El subsistema **Deep Research** de Sparta Agent es un agente especializado capaz de planificar, ejecutar y sintetizar investigaciones complejas que requieren contrastar múltiples fuentes de información en la web.
+## Durante la investigación
 
----
+Revisa el progreso y las herramientas utilizadas. El backend conserva información de ejecuciones y sus estados; la continuidad depende del punto de interrupción y de los recursos disponibles.
 
-## Flujo de Ejecución del Agente de Investigación
+## Evalúa el resultado
 
-<DeepResearchDiagram />
+Distingue hechos respaldados, inferencias y preguntas abiertas. Verifica las fechas de las fuentes cuando investigues productos, APIs o información cambiante.
 
----
+## Presupuesto y cancelación
 
-## Características Principales
-
-### 1. Descomposición Recursiva de Consultas
-En lugar de realizar una sola búsqueda genérica, el planificador formula hipótesis, desglosa la intención en temas específicos y ejecuta búsquedas paralelas hacia documentación oficial, especificaciones técnicas y repositorios.
-
-### 2. Extracción Limpia de Contenido
-- Convierte páginas HTML complejas a Markdown limpio, eliminando cabeceras, anuncios y scripts no informativos.
-- Lee documentos técnicos y artículos sin necesidad de renderizar JavaScript innecesario.
-
-### 3. Citación Estructurada y Enlaces Verificables
-Todo reporte generado mediante Deep Research incluye:
-- Referencias canónicas numeradas con enlaces directos hacia las fuentes originales.
-- Tablas comparativas cuando se contrastan librerías o enfoques de arquitectura.
-- Alertas para señalar información obsoleta o versiones discontinuadas.
-
----
-
-## Ejemplo de Instrucción de Investigación
-
-```text
-Investiga los cambios de rendimiento y breaking changes introducidos en Tokio 1.40+ y su impacto en arquitecturas asíncronas con Rust y Electron IPC.
-```
-
-El agente investigará la documentación de Tokio, los changelogs oficiales y generará un resumen estructurado listo para la toma de decisiones técnicas.
+Las ejecuciones tienen límites de herramientas. Los costes dependen del proveedor y no siempre pueden calcularse con precisión. Cancelar una tarea no implica que un servicio externo pueda revertir una acción ya completada.

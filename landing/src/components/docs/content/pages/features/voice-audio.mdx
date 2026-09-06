@@ -1,30 +1,20 @@
 ---
-title: Entrada de Voz y Transcripción Whisper
-description: Dictado por voz en lenguaje natural con procesamiento Whisper local para agilizar prompts.
+title: "Voz y audio"
+description: "Comprueba la capacidad del modelo antes de transcribir o generar audio."
 ---
 
-import { Callout } from 'fumadocs-ui/components/callout';
+## Capacidades diferentes
 
-# Entrada de Voz y Transcripción Whisper
+Transcripción, entrada de audio y síntesis de voz son capacidades distintas. El modelo seleccionado debe admitir la operación solicitada; disponer de un archivo de audio no implica soporte de todas ellas.
 
-Sparta Agent incorpora soporte nativo para **dictado por voz e interacción multimodal de audio**, permitiendo redactar instrucciones complejas, explicaciones arquitectónicas o refactorizaciones simplemente hablando.
+## Permisos del equipo
 
----
+Para grabar, revisa el permiso del micrófono en el sistema y en la aplicación. Comprueba el dispositivo de entrada antes de diagnosticar el modelo.
 
-## Modos de Transcripción
+## Modelos locales
 
-### 1. Whisper Local (100% Offline)
-- Utiliza modelos `whisper.cpp` cuantizados (`tiny`, `base`, `small`) ejecutados en tu procesador o acelerador neural (NPU / Metal).
-- Transcripción instantánea en español, inglés y más de 90 idiomas con cero latencia de red.
+La carga depende del formato y del motor disponible. Revisa el estado de la carga y evita iniciar varias operaciones pesadas mientras se prepara el modelo.
 
-### 2. Speech Recognition Nativo del Sistema Operativo
-- Integración directa con las APIs de reconocimiento de voz de Windows, macOS y Linux para menor consumo de batería en portátiles.
+## Datos y proveedores
 
----
-
-## Formateo Inteligente de Código
-
-El agente procesa el audio transcribiendo la intención del usuario y aplicando post-procesamiento para:
-- Corregir términos técnicos y nombres de paquetes (`npm`, `zustand`, `postgresql`, `docker`).
-- Insertar bloques de código automáticamente cuando se dictan funciones o comandos de terminal.
-- Eliminar muletillas y ruidos ambientales antes de enviar el prompt al LLM.
+Si utilizas un servicio remoto, el audio necesario para la petición se envía a ese servicio. Selecciona la conexión según la privacidad requerida.

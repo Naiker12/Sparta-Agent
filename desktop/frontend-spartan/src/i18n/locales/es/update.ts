@@ -15,7 +15,20 @@ export const update = {
   "remindLater": "Recordar más tarde",
   "dismiss": "Cerrar aviso de actualización",
   "update": "Actualizar",
-  "openReleasePage": "Abrir página de lanzamiento"
+  "openReleasePage": "Abrir página de lanzamiento",
+  "llama": {
+    "newUpdate": "Nueva actualización de {component}",
+    "updating": "Actualizando {component}...",
+    "downloadSize": "{size} de descarga · ",
+    "noRestartNeeded": "No se requiere reiniciar tras actualizar",
+    "dismissAria": "Cerrar notificación de actualización de {component}",
+    "updatingAria": "Actualizando {component}",
+    "updatedSuccess": "{component} actualizado a {version}.{reloadHint}",
+    "reloadHint": " Recarga tu modelo para usarlo.",
+    "updateFailed": "Falló la actualización de {component}: {error}",
+    "unknownError": "error desconocido",
+    "unknownTag": "desconocido"
+  }
   ,"screen": {
     "updatingBackend": "Actualizando el servicio...",
     "downloading": "Descargando la actualización...",

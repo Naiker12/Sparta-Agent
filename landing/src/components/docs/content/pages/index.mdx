@@ -1,90 +1,40 @@
 ---
-title: Introducción a Sparta Agent
-description: Entorno de desarrollo agéntico local-first, privado y autónomo con soporte para RAG multimodal, Deep Research y protocolo MCP.
+title: "Documentación de Sparta"
+description: "De tu primera conversación a una tarea verificada. Aprende a configurar modelos, trabajar con archivos y conectar herramientas."
 ---
 
-import { Bot, Shield, Zap, Database, Search, Layers, Terminal, Cpu, Lock } from 'lucide-react';
 import { Card, Cards } from 'fumadocs-ui/components/card';
 import { Callout } from 'fumadocs-ui/components/callout';
 
-# Sparta Agent
+Sparta Agent reúne conversaciones, modelos y herramientas en una aplicación de escritorio. Puedes trabajar con un modelo local o conectar un proveedor remoto, incorporar documentos al contexto y ejecutar tareas con herramientas habilitadas.
 
-**Sparta Agent** es un entorno de desarrollo integrado (IDE) y agente de inteligencia artificial de escritorio diseñado bajo tres principios fundamentales: **control total del usuario, privacidad absoluta local-first y ejecución autónoma verificable**.
+## Empieza con una tarea pequeña
 
-A diferencia de los entornos basados en la nube tradicionales, Sparta Agent opera con un motor de ejecución híbrido: la indexación de código, la terminal, el almacenamiento de secretos y la máquina de estados agéntica residen **100% en tu máquina local**.
-
----
-
-## Pilares de Arquitectura
+La mejor forma de conocer Sparta es completar un cambio que puedas revisar: conectar un modelo, elegir una carpeta y pedir una explicación antes de solicitar una edición.
 
 <Cards>
-  <Card
-    icon={<Shield className="size-5 text-[#e6e6e6]" />}
-    title="Privacidad y Aislamiento Local-First"
-    href="/docs/core-concepts/security-and-sandbox"
-  >
-    Tus conversaciones, documentos y claves nunca salen de tu equipo. Compatibilidad nativa con modelos locales mediante Ollama, LM Studio y vLLM.
-  </Card>
-
-  <Card
-    icon={<Bot className="size-5 text-[#e6e6e6]" />}
-    title="Diferenciación Estricta de Modos"
-    href="/docs/core-concepts/chat-vs-agent-mode"
-  >
-    Modo Chat para consultas de solo lectura y Modo Agente con diálogo modal de autorización previa explícita para cada cambio en disco o terminal.
-  </Card>
-
-  <Card
-    icon={<Search className="size-5 text-[#e6e6e6]" />}
-    title="Búsqueda Profunda (Deep Research)"
-    href="/docs/features/deep-research"
-  >
-    Investigaciones web autónomas de múltiples pasos con síntesis recursiva, planificación de subpreguntas y citas estructuradas.
-  </Card>
-
-  <Card
-    icon={<Database className="size-5 text-[#e6e6e6]" />}
-    title="RAG Local Híbrido Multimodal"
-    href="/docs/features/multimodal-rag"
-  >
-    Búsqueda híbrida (vectorial con SQLite-vec + FTS5 léxica) sobre PDFs, Excel, Word, CSV y repositorios completos de código fuente.
-  </Card>
-
-  <Card
-    icon={<Layers className="size-5 text-[#e6e6e6]" />}
-    title="Protocolo MCP Nativo (Model Context Protocol)"
-    href="/docs/mcp/introduction"
-  >
-    Integración directa con herramientas como Notion, Google Drive, Slack, GitHub, PostgreSQL y Filesystem mediante el estándar abierto MCP.
-  </Card>
-
-  <Card
-    icon={<Terminal className="size-5 text-[#e6e6e6]" />}
-    title="Motor de Ejecución y Terminal Multi-Shell"
-    href="/docs/features/code-execution"
-  >
-    Ejecución nativa de comandos en PowerShell, Zsh y Bash con streaming en vivo, timeout configurable y aislamiento en segundo plano.
-  </Card>
+<Card title="Inicio rápido" href="/docs/quickstart">Instala la aplicación, prepara el motor y conecta tu primer modelo.</Card>
+<Card title="Tu primera tarea" href="/docs/guides/first-task">Recorre el flujo de contexto, aprobación, ejecución y verificación.</Card>
 </Cards>
 
----
+## Elige qué quieres hacer
 
-## Tabla Comparativa de Capacidades
+<Cards>
+<Card title="Trabajar con archivos" href="/docs/features/attachments-and-files">Adjunta documentos y delimita la carpeta de tu proyecto.</Card>
+<Card title="Conectar un modelo" href="/docs/core-concepts/models-and-providers">Configura un proveedor cloud o un servidor local compatible.</Card>
+<Card title="Investigar con fuentes" href="/docs/features/deep-research">Organiza una investigación y revisa sus resultados.</Card>
+<Card title="Añadir herramientas MCP" href="/docs/mcp/introduction">Conecta servicios externos y controla sus permisos.</Card>
+</Cards>
 
-| Característica | Sparta Agent | IDEs Cloud Tradicionales | Extensiones Genéricas |
-| :--- | :--- | :--- | :--- |
-| **Residencia del Código** | 100% en tu máquina (Local-First) | Servidores de terceros | Servidores de terceros |
-| **Modelos Locales (Ollama / vLLM)** | Soportado sin conexión | No disponible | Limitado |
-| **Control de Permisos** | Diálogo modal obligatorio por acción | Automático sin aviso | No configurable |
-| **Soporte MCP** | Nativo (Cliente IPC completo) | Parcial / Cerrado | Requiere plugins externos |
-| **Almacenamiento de Secretos** | Vault local cifrado con AES-256 | Nube del proveedor | Texto plano / Variables de entorno |
-| **RAG Multimodal** | Base de datos vectorial SQLite local | Indexación remota | No incluido |
+## Cómo se organiza el trabajo
 
----
+1. **Contexto:** eliges el modelo, la conversación y los archivos relevantes.
+2. **Acciones:** el modelo propone herramientas; la política activa decide cuáles requieren aprobación.
+3. **Resultados:** Sparta muestra estados y salidas de las herramientas.
+4. **Verificación:** revisas los archivos y ejecutas las comprobaciones adecuadas.
 
-## Guía de Navegación
+<Callout title="Local y remoto" type="info">El escritorio y su motor se ejecutan en tu equipo. Al usar un proveedor cloud o un conector externo, parte del contenido puede enviarse a ese servicio. Elige el modelo y las herramientas según los datos de tu tarea.</Callout>
 
-- Para configurar tu entorno en menos de 3 minutos, consulta la [Guía de Inicio Rápido](/docs/quickstart).
-- Comprende el modelo de permisos en [Modo Chat vs Modo Agente](/docs/core-concepts/chat-vs-agent-mode).
-- Aprende a conectar tus servidores de datos en [Servidores MCP Soportados](/docs/mcp/supported-servers).
-- Revisa los detalles técnicos del motor en [Arquitectura del Backend y Rust Sidecar](/docs/architecture/backend-architecture).
+## Cuando algo no funciona
+
+Consulta [Diagnóstico y reparación](/docs/guides/troubleshooting) si el motor no inicia o una petición falla. Para tareas lentas, empieza por la [guía de rendimiento](/docs/guides/performance).

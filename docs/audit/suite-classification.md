@@ -1,17 +1,17 @@
 # Clasificación de suites
 
-Snapshot de la ejecución local completa del frontend: **3487 resultados, 3312 aprobados y 175 fallidos**. Los fallos de carga de un archivo cuentan como un resultado, no como sus casos internos.
+Snapshot de la ejecución local completa del frontend: **3487 resultados, 3321 aprobados y 166 fallidos**. Los fallos de carga de un archivo cuentan como un resultado, no como sus casos internos.
 
 Cada fallo tiene clasificación y evidencia en [suite-classification.json](./suite-classification.json). Clasificar no significa corregir: las aserciones estáticas no demuestran por sí solas una regresión del producto y las diferencias de comportamiento requieren confirmar el requisito. No se desactivó ni eliminó ninguna prueba.
 
 | Categoría | Resultados |
 |---|---:|
-| Entorno o fixture incompleto | 9 |
+| Entorno o fixture incompleto | 0 |
 | Contrato retirado: idiomas distintos de EN/ES | 25 |
 | Archivo o export ausente tras la migración | 29 |
 | Aserción estática sobre una ubicación antigua | 46 |
-| Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento | 66 |
-| Diferencia de comportamiento: validar el requisito vigente | 0 |
+| Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento | 60 |
+| Diferencia de comportamiento: validar el requisito vigente | 6 |
 
 ## Archivos afectados
 
@@ -24,14 +24,13 @@ Cada fallo tiene clasificación y evidencia en [suite-classification.json](./sui
 | auto-load-cpu-fallback-toast.test.ts | 1 | Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento |
 | chat-adapter-scan-cost.test.ts | 3 | Aserción estática sobre una ubicación antigua |
 | chat-adapter-scan-cost.test.ts | 2 | Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento |
-| chat-only-route-guard.test.ts | 2 | Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento |
+| chat-only-route-guard.test.ts | 2 | Diferencia de comportamiento: validar el requisito vigente |
 | chat-remembers-its-model.test.ts | 1 | Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento |
 | chat-stream-publish-gate.test.ts | 11 | Aserción estática sobre una ubicación antigua |
 | chat-stream-publish-gate.test.ts | 1 | Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento |
 | code-tool-placement.test.ts | 2 | Aserción estática sobre una ubicación antigua |
 | composer-keystroke-subscription-budget.test.ts | 2 | Aserción estática sobre una ubicación antigua |
 | connections-empty-opens-form.test.ts | 1 | Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento |
-| copy-to-clipboard.test.ts | 9 | Entorno o fixture incompleto |
 | dataset-data-recipes-navigation.test.ts | 1 | Archivo o export ausente tras la migración |
 | delete-chat-files-preference.test.ts | 3 | Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento |
 | delete-chat-files-preference.test.ts | 1 | Aserción estática sobre una ubicación antigua |
@@ -80,11 +79,11 @@ Cada fallo tiene clasificación y evidencia en [suite-classification.json](./sui
 | sandbox-reveal-path.test.ts | 2 | Aserción estática sobre una ubicación antigua |
 | sandbox-reveal-path.test.ts | 1 | Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento |
 | settings-finetune-action-loading.test.ts | 1 | Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento |
-| settings-panel-prefs.test.ts | 2 | Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento |
+| settings-panel-prefs.test.ts | 2 | Diferencia de comportamiento: validar el requisito vigente |
 | settings-search.test.ts | 1 | Archivo o export ausente tras la migración |
 | sidebar-action-rows-inert.test.ts | 4 | Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento |
 | sidebar-nav-backend-parity.test.ts | 2 | Archivo o export ausente tras la migración |
-| sidebar-nav-migration.test.ts | 2 | Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento |
+| sidebar-nav-migration.test.ts | 2 | Diferencia de comportamiento: validar el requisito vigente |
 | sidebar-scroll-fade-deps.test.ts | 1 | Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento |
 | sidebar-selection-coverage.test.ts | 4 | Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento |
 | sidebar-spinner-column.test.ts | 4 | Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento |

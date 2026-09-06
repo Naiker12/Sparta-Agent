@@ -1,39 +1,24 @@
 ---
-title: Servidores MCP Soportados
-description: Catálogo oficial de conectores y servidores Model Context Protocol validados para Sparta Agent.
+title: "Elegir un servidor"
+description: "Evalúa compatibilidad y permisos antes de añadir una integración."
 ---
 
-# Servidores MCP Soportados
+## Compatibilidad real
 
-Sparta Agent ha sido validado exhaustivamente con el ecosistema oficial y comunitario de servidores MCP. A continuación se detallan los principales servidores soportados:
+MCP es un protocolo, no una garantía de que cualquier servidor funcione con cualquier cliente. Comprueba el transporte, la autenticación y los requisitos de la versión que vas a instalar.
 
----
+## Qué revisar
 
-## Catálogo de Servidores Validados
+| Aspecto | Comprobación |
+|---|---|
+| Mantenedor | Repositorio y documentación oficiales |
+| Transporte | Compatible con la configuración de Sparta |
+| Permisos | Lectura y escritura que necesita la tarea |
+| Dependencias | Ejecutable y runtime disponibles |
+| Credenciales | Alcance mínimo y método de revocación |
 
-### 1. Filesystem MCP Server
-Permite al agente explorar directorios, leer metadatos y operar sobre archivos con límites de ruta estrictos.
-- **Paquete**: `@modelcontextprotocol/server-filesystem`
-- **Operaciones**: `read_file`, `write_file`, `list_directory`, `get_file_info`.
+## Prueba de aceptación
 
-### 2. PostgreSQL & SQLite MCP Servers
-Inspección de esquemas relacionales, ejecución de consultas SQL y análisis de rendimiento de índices.
-- **Paquete**: `@modelcontextprotocol/server-postgres`, `mcp-server-sqlite`
-- **Operaciones**: `query`, `list_tables`, `describe_table`.
+Lista las herramientas, ejecuta una lectura conocida y comprueba el resultado. Después prueba una escritura reversible solo si la necesitas y está autorizada.
 
-### 3. Git & GitHub MCP Server
-Gestión de repositorios, creación de commits, inspección de diffs y gestión de issues y pull requests.
-- **Paquete**: `@modelcontextprotocol/server-github`
-- **Operaciones**: `create_or_update_file`, `push_files`, `create_pull_request`, `search_repositories`.
-
-### 4. Notion MCP Server
-Lectura y actualización de bases de datos, páginas y documentación de equipo en Notion.
-- **Operaciones**: `search_notion`, `append_block_children`, `create_database_item`.
-
-### 5. Slack MCP Server
-Consulta de canales, búsqueda de hilos y envío de notificaciones y resúmenes de despliegue a tu equipo.
-- **Operaciones**: `post_message`, `list_channels`, `get_channel_history`.
-
-### 6. Google Drive & Gmail MCP Server
-Búsqueda y lectura de documentos en la nube de Google, descarga de adjuntos y redacción de borradores.
-- **Operaciones**: `search_files`, `download_file`, `create_draft`.
+No existe en esta guía una certificación universal de conectores. Registra la versión y el resultado de tu propia prueba.

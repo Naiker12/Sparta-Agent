@@ -1,36 +1,20 @@
 ---
-title: Visión General de Skills y Reglas
-description: Sistema modular de habilidades y personalización de directivas de equipo en Sparta Agent.
+title: "Skills y reglas"
+description: "Añade instrucciones de trabajo reutilizables sin confundirlas con herramientas."
 ---
 
-# Visión General de Skills y Reglas
+## Qué aporta una skill
 
-Sparta Agent permite extender las capacidades del agente y personalizar sus directivas de comportamiento mediante **Skills modulares** y **archivos de Reglas de Proyecto**.
+Una skill reúne instrucciones y recursos para una clase de tarea. Puede orientar cómo investigar, producir un documento o utilizar una herramienta disponible.
 
----
+## Instrucciones y ejecución
 
-## Reglas de Proyecto (`.agents/AGENTS.md`)
+Una skill no instala automáticamente las dependencias de una herramienta ni concede permisos sobre una cuenta. Comprueba los requisitos antes de pedir una tarea que dependa de un servicio externo.
 
-Puedes definir directivas estrictas de estilo de código, convenciones de arquitectura y restricciones de seguridad creando un archivo `AGENTS.md` dentro de la carpeta `.agents` de tu repositorio.
+## Reglas de proyecto
 
-### Ejemplo de Archivo `AGENTS.md`:
-```markdown
-# Reglas de Proyecto — Backend API
+Mantén instrucciones concretas: carpetas relevantes, comandos de comprobación y convenciones del equipo. Evita reglas contradictorias o que prometan capacidades no disponibles.
 
-1. **Convenciones de Código**:
-   - Todo nuevo endpoint debe implementar esquemas de validación Zod / Pydantic.
-   - Prohibido utilizar `any` explícito en TypeScript.
+## Mantenimiento
 
-2. **Seguridad y Permisos**:
-   - Nunca modificar archivos de migración de base de datos ya ejecutados en producción.
-   - Ejecutar la suite de tests (`npm test`) antes de considerar completa cualquier tarea.
-```
-
----
-
-## Skills Modulares (`skills/<nombre>/SKILL.md`)
-
-Las **Skills** son carpetas autocontenidas que enseñan al agente flujos de trabajo especializados:
-- **`SKILL.md`**: Instrucciones principales con metadatos en YAML frontmatter (nombre, descripción y directivas).
-- **`scripts/`**: Scripts auxiliares en Python, Node o Bash que el agente puede invocar.
-- **`references/`**: Documentación técnica complementaria que el agente consulta bajo demanda.
+Activa las habilidades relevantes y revisa las que apuntan a rutas o herramientas retiradas. La calidad del contexto importa más que el tamaño del catálogo.

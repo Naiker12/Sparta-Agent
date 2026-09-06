@@ -1,44 +1,32 @@
 ---
-title: Seguridad y Sandbox
-description: Modelo de aislamiento de procesos, cifrado local y protección contra fugas de datos en Sparta Agent.
+title: "Seguridad y permisos"
+description: "Comprende la autenticación, las aprobaciones y los límites del acceso local."
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
 
-# Seguridad y Sandbox
+## Autenticación del motor
 
-La seguridad de Sparta Agent está fundamentada en el principio de **cero confianza no autorizada (Zero-Trust Local Engine)**. A diferencia de los asistentes que transmiten tu espacio de trabajo a servidores remotos, Sparta Agent implementa múltiples capas de contención.
+Las rutas protegidas requieren credenciales. Electron obtiene una sesión intercambiando un secreto local con el backend. El secreto permanece en el proceso principal; el renderer recibe tokens de sesión.
 
----
+El acceso web utiliza contraseña. La renovación consume el token de refresh y entrega uno nuevo. Un token ausente, inválido o expirado no debe conceder una identidad válida.
 
-## Arquitectura de Aislamiento en Capas
+## Permisos de herramientas
 
-<SecurityIsolationDiagram />
+Las aprobaciones se vinculan a llamadas y sesiones. Revisa el comando y su destino cuando la aplicación solicite permiso. Las herramientas que acceden a servicios externos pueden operar con las capacidades de la cuenta conectada.
 
----
+## Archivos y procesos
 
-## Principios de Seguridad Fundamentales
+El proyecto incluye validadores de rutas y separación entre renderer, Electron y Python. La ejecución de un comando local no equivale a una máquina virtual ni a un aislamiento total del sistema operativo.
 
-### 1. Invariantes del Sistema de Archivos
-- **Rutas Relativas al Workspace**: Toda operación de lectura o modificación debe circunscribirse al directorio del workspace activo seleccionado por el usuario.
-- **Prohibición de Sobreescrituras Ciegas**: El agente debe inspeccionar el contenido existente antes de aplicar cualquier modificación incremental.
-- **Preservación de Integridad**: Si una edición genera errores sintácticos detectados por el parser de AST, la operación puede revertirse inmediatamente.
+<Callout title="Límite importante">Una herramienta de terminal puede modificar archivos accesibles al proceso. Utiliza carpetas delimitadas y revisa los argumentos antes de autorizar operaciones sensibles.</Callout>
 
-### 2. Sandbox de Ejecución de Comandos
-- Los comandos de terminal se ejecutan en subprocesos aislados con variables de entorno restringidas.
-- **Paginación Desactivada**: Se fuerza `PAGER=cat` para evitar bloqueos interactivos no gestionados.
-- **Gestión de Procesos en Segundo Plano**: Cada tarea asíncrona cuenta con identificadores únicos, temporizadores de cancelación y aislamiento de streams `stdout`/`stderr`.
+## Credenciales y datos
 
-### 3. Cero Telemetría de Código Fuente
-<Callout type="info">
-  Sparta Agent no recopila fragmentos de tu código, historiales de conversación ni nombres de variables. La única conexión externa es la que el usuario configure explícitamente hacia su proveedor de IA o servidores MCP.
-</Callout>
+El backend utiliza almacenamiento cifrado para credenciales de proveedores. Existen rutas heredadas de persistencia en revisión; no atribuyas la misma garantía a todos los archivos locales.
 
----
+Si usas modelos cloud, los mensajes y archivos incluidos en la petición pueden salir del equipo. Revisa también las políticas del proveedor.
 
-## Políticas de Auditoría en Tiempo Real
+## Acceso remoto
 
-Cada acción ejecutada por el agente genera un registro inmutable en formato JSON Lines (`transcript.jsonl`) almacenado en el directorio de la aplicación, permitiendo:
-1. Inspeccionar cada llamada a herramientas y sus argumentos exactos.
-2. Comprobar la respuesta devuelta por el sistema.
-3. Auditar la cronología completa de cambios para trazabilidad de equipo.
+No confundas CORS con autenticación. Antes de habilitar LAN o túneles, verifica credenciales, alcance de red y sesiones. Consulta [Acceso remoto](/docs/features/remote-access).

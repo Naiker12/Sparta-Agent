@@ -1,22 +1,24 @@
 ---
-title: Arquitectura del Backend y Rust Sidecar
-description: Motor de ejecución híbrido con Rust, Tokio runtime y máquina de estados finitos LangGraph.
+title: "Backend Python"
+description: "El motor de API, autenticación, herramientas y persistencia."
 ---
 
-# Arquitectura del Backend y Rust Sidecar
+## Responsabilidades
 
-El backend de Sparta Agent implementa un motor híbrido que combina la velocidad y seguridad de memoria de **Rust** con la flexibilidad de orquestación agéntica de **LangGraph**.
+El backend reside en `desktop/backend-spartan`. Expone rutas FastAPI, integra proveedores y modelos y conserva estado de ejecuciones y documentos.
 
----
+## Arranque administrado
 
-## Máquina de Estados Finitos y Checkpointing
+Electron inicia `desktop_bootstrap.py`, que crea la credencial local antes de ejecutar `run.py`. El backend anuncia el puerto después de completar su arranque. El escritorio utiliza loopback para intercambiar la credencial por una sesión.
 
-<LangGraphFlowDiagram />
+## Ciclo de herramientas
 
----
+`ToolLoopController` decide si una llamada puede ejecutarse y registra el resultado. La deduplicación se invalida después de una posible modificación del workspace; las restricciones de una sola ejecución se conservan durante la respuesta.
 
-## Ventajas del Sidecar en Rust
+## Persistencia
 
-1. **Latencia Sub-milisegundo**: Las operaciones de escaneo del workspace, cálculo de hashes y búsqueda con `ripgrep` se ejecutan en código nativo compiled sin sobrecarga de recolección de basura.
-2. **Seguridad de Memoria**: Aislamiento estricto de hilos de ejecución mediante el sistema de tipos y borrow checker de Rust.
-3. **Consumo de Memoria Optimizado**: El sidecar en segundo plano mantiene un footprint de RAM inferior a 45 MB en reposo.
+Las credenciales, investigaciones y documentos tienen módulos de almacenamiento propios. Conviene seguir sus contratos y transacciones al añadir funciones, en lugar de crear un segundo almacén con la misma responsabilidad.
+
+## Pruebas por perfil
+
+La autenticación puede probarse con SQLite temporal y sin GPU. Las pruebas de inferencia requieren otras dependencias; las pruebas con modelos necesitan una matriz de hardware y disponibilidad separada.

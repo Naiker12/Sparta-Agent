@@ -74,18 +74,6 @@ function SvgPython() {
   )
 }
 
-function SvgRust() {
-  return (
-    <div className="flex items-center gap-2 text-[#9c9c9d] hover:text-white transition-colors">
-      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#DEA584">
-        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" />
-        <path d="M8 8h8M8 12h8M8 16h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      </svg>
-      <span className="font-mono text-[11px] font-medium tracking-wider">RUST CORE</span>
-    </div>
-  )
-}
-
 function SvgElectron() {
   return (
     <div className="flex items-center gap-2 text-[#9c9c9d] hover:text-white transition-colors">
@@ -338,7 +326,7 @@ function Navbar({ onOpenDocs }: { onOpenDocs: () => void }) {
 
 // ── 2. Hero Section (Raycast Style — 56px Inter 400 & Atmospheric Wash) ───────
 function HeroSection() {
-  const techLogos = [SvgReact, SvgTypeScript, SvgPython, SvgRust, SvgElectron, SvgPostgres]
+  const techLogos = [SvgReact, SvgTypeScript, SvgPython, SvgElectron, SvgPostgres]
   const marqueeLogos = [...techLogos, ...techLogos, ...techLogos, ...techLogos]
 
   return (
@@ -361,8 +349,8 @@ function HeroSection() {
         {/* Subheadline in Ash */}
         <FadeInUp delay={160}>
           <p className="mt-5 max-w-xl text-base font-normal leading-relaxed text-[#9c9c9d]">
-            Un entorno de ingeniería autónomo con LangGraph, Sidecar de Rust y soporte para Model
-            Context Protocol. Tu código permanece 100% en tu máquina.
+            Un entorno de trabajo con Electron, Python y soporte para Model
+            Context Protocol. Elige modelos locales o proveedores remotos según tu tarea.
           </p>
         </FadeInUp>
 
@@ -785,12 +773,12 @@ function FooterSection({ onOpenDocs }: { onOpenDocs?: () => void }) {
               <div className="mt-8 flex flex-wrap items-center justify-center gap-3 sm:gap-6 font-mono text-[11px] text-[#6a6b6c] pt-4">
                 <span className="flex items-center gap-1.5 text-[#9c9c9d]">
                   <CheckCircle2 className="size-3.5 text-[#59d499]" />
-                  100% Local-First
+                  Escritorio local
                 </span>
                 <span>•</span>
                 <span className="flex items-center gap-1.5 text-[#9c9c9d]">
                   <CheckCircle2 className="size-3.5 text-[#59d499]" />
-                  Protocolo MCP Seguro
+                  Conectores MCP
                 </span>
                 <span>•</span>
                 <span className="flex items-center gap-1.5 text-[#9c9c9d]">
@@ -820,7 +808,7 @@ function FooterSection({ onOpenDocs }: { onOpenDocs?: () => void }) {
                 </div>
 
                 <p className="text-xs text-[#9c9c9d] leading-relaxed">
-                  IDE Agéntico Local-First con LangGraph, Rust, soporte MCP y privacidad absoluta.
+                  Escritorio con Electron, Python y soporte MCP para trabajar con modelos locales o remotos.
                 </p>
               </div>
 
@@ -916,7 +904,7 @@ function FooterSection({ onOpenDocs }: { onOpenDocs?: () => void }) {
               <span>© 2026 Sparta Agent. Licencia de Código Abierto</span>
 
               <div className="flex items-center gap-3">
-                <span>Electron + Rust + LangGraph</span>
+                <span>Electron + Python + LangGraph</span>
                 <span>•</span>
                 <span>Model Context Protocol</span>
               </div>

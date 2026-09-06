@@ -1,65 +1,29 @@
 ---
-title: Modo Chat vs Modo Agente
-description: Separación estricta de seguridad operativa y protocolo de permisos explícitos en Sparta Agent.
+title: "Chat y modo agente"
+description: "Elige cómo conversar y cuándo permitir que el modelo utilice herramientas."
 ---
 
-import { Callout } from 'fumadocs-ui/components/callout';
+## Conversación y ejecución
 
-# Modo Chat vs Modo Agente
+Una conversación puede explicar un problema, planificar un cambio o invocar herramientas disponibles. El comportamiento depende del modo seleccionado, del proveedor y de la política de herramientas activa.
 
-Sparta Agent implementa una separación estricta entre dos modos de trabajo para garantizar que ninguna acción de modificación, escritura en disco o ejecución de comandos se realice sin tu consentimiento expreso.
+Usa el modo de consulta para revisar información y pedir propuestas. Para realizar cambios, selecciona el modo agente y confirma que la tarea, la carpeta y las herramientas están delimitadas.
 
----
+<DocsVideo id="chat-vs-agent-mode" />
 
-## Modo Chat (Solo Lectura y Consulta)
+## Antes de una acción
 
-El **Modo Chat** está concebido para la exploración analítica, auditoría de código y consultas sin efectos secundarios en el sistema.
+- Comprueba el nombre y los argumentos de la herramienta.
+- Revisa el comando completo si se utiliza la terminal.
+- Identifica los archivos o servicios externos afectados.
+- Acepta o rechaza las solicitudes de aprobación que muestre la aplicación.
 
-### Capacidades Permitidas en Modo Chat:
-- **Búsqueda Web en Tiempo Real**: Ejecución de consultas web sintéticas y verificación de documentación oficial (`web_search`, `read_url_content`).
-- **Lectura e Indexación del Workspace**: Listar carpetas, obtener metadatos y leer archivos de código (`list_files`, `search_files`, `read_file`).
-- **Consultas al RAG Local**: Búsqueda semántica y recuperación de fragmentos sobre PDFs, documentos y repositorios.
-- **Consultas en Servidores MCP**: Listar páginas de Notion, leer mensajes en canales de Slack o consultar eventos de Google Calendar.
+## Durante la ejecución
 
-### Restricciones del Modo Chat:
-<Callout type="warn">
-  En Modo Chat **queda estrictamente prohibido crear, modificar, editar o borrar recursos en disco o terminal**. Si solicitas una acción de escritura, el asistente indicará:
-  
-  *"Debes activar el Modo Agente en el selector de modo para crear, editar o borrar recursos."*
-</Callout>
+Distingue la escritura de argumentos, la espera de aprobación y la ejecución real. Una herramienta solicitada todavía puede estar pendiente. La salida de la terminal aporta evidencia de lo que ocurrió.
 
----
+## Al terminar
 
-## Modo Agente (Modificación con Autorización)
+Pide una comprobación concreta: releer un archivo, ejecutar una prueba o revisar un diff. El texto final del modelo no sustituye esa evidencia.
 
-El **Modo Agente** habilita capacidades completas de ingeniería de software autónoma: generación de código, refactorización multi-archivo, ejecución de pruebas en consola y operaciones en herramientas externas.
-
-### Capacidades Habilitadas en Modo Agente:
-- **Operaciones de Archivo**: Creación, sustitución parcial y eliminación de archivos en el workspace (`write_to_file`, `replace_file_content`, `multi_replace_file_content`).
-- **Ejecución de Comandos**: Ejecución controlada en PowerShell, Zsh o Bash con gestión de procesos en segundo plano (`run_command`, `manage_task`).
-- **Mutaciones en Servidores MCP**: Creación y actualización de páginas en Notion, subida de documentos a Google Drive, apertura de pull requests en GitHub y emisión de mensajes en Slack.
-- **Gestión de Skills y Tareas Programadas**: Creación y activación de flujos especializados.
-
----
-
-## Diálogo Modal de Permisos (Permission Request Dialog)
-
-En Modo Agente, el subsistema **Permission Broker** intercepta cualquier llamada a herramientas de modificación antes de su ejecución:
-
-1. **Inspección de Parámetros**: Muestra la ruta exacta del archivo, las líneas a sustituir o el comando de consola completo.
-2. **Revisión del Diff**: Presenta el código agregado o eliminado antes de guardarse en el disco.
-3. **Decisión Explícita**: El usuario debe presionar **Aprobar** o **Rechazar**. Ninguna herramienta puede eludir este paso.
-
----
-
-## Matriz Comparativa de Seguridad
-
-| Capacidad Operativa | Modo Chat | Modo Agente |
-| :--- | :--- | :--- |
-| **Lectura de código y archivos locales** | Permitido | Permitido |
-| **Búsqueda web y Deep Research** | Permitido | Permitido |
-| **Consultas a bases de datos (solo lectura)** | Permitido | Permitido |
-| **Creación o edición de archivos en disco** | Bloqueado | Requiere Aprobación Modal |
-| **Ejecución de scripts y comandos de terminal** | Bloqueado | Requiere Aprobación Modal |
-| **Mutaciones en servidores MCP (Notion, Drive)** | Bloqueado | Requiere Aprobación Modal |
-| **Auditoría de cambios en tiempo real** | Activa | Activa |
+Consulta [Seguridad y permisos](/docs/core-concepts/security-and-sandbox) para conocer los límites de las herramientas locales y remotas.

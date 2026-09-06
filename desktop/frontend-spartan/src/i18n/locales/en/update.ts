@@ -15,7 +15,20 @@ export const update = {
   "remindLater": "Remind me later",
   "dismiss": "Dismiss update notification",
   "update": "Update",
-  "openReleasePage": "Open release page"
+  "openReleasePage": "Open release page",
+  "llama": {
+    "newUpdate": "New {component} update",
+    "updating": "Updating {component}...",
+    "downloadSize": "{size} download · ",
+    "noRestartNeeded": "No restart needed after update",
+    "dismissAria": "Dismiss {component} update notification",
+    "updatingAria": "Updating {component}",
+    "updatedSuccess": "{component} updated to {version}.{reloadHint}",
+    "reloadHint": " Reload your model to use it.",
+    "updateFailed": "{component} update failed: {error}",
+    "unknownError": "unknown error",
+    "unknownTag": "unknown"
+  }
   ,"screen": {
     "updatingBackend": "Updating backend...",
     "downloading": "Downloading app update...",

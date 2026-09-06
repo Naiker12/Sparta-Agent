@@ -1,46 +1,27 @@
 ---
-title: RAG Local Híbrido Multimodal
-description: Indexación vectorial y búsqueda léxica sobre documentos, bases de código y archivos adjuntos.
+title: "Conocimiento y RAG"
+description: "Recupera fragmentos de documentos para fundamentar una respuesta."
 ---
 
-import { Callout } from 'fumadocs-ui/components/callout';
-import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+## Qué hace la recuperación
 
-# RAG Local Híbrido Multimodal
+El sistema procesa fuentes y recupera fragmentos relevantes para una consulta. Reutiliza la infraestructura de documentos e índices del backend para complementar el contexto del modelo.
 
-Sparta Agent cuenta con un motor de **Recuperación Aumentada por Generación (RAG)** híbrido que combina búsqueda vectorial de alta dimensionalidad con indexación léxica de texto completo (**BM25 / FTS5**), ejecutado de forma 100% local en una base de datos **SQLite-vec**.
+## Prepara las fuentes
 
----
+Selecciona documentos relacionados con la tarea y espera a que termine su procesamiento. Comprueba el estado de indexación antes de evaluar la calidad de una respuesta.
 
-## Mecanismo de Búsqueda Híbrida
+## Formula una consulta verificable
 
-<HybridRagDiagram />
+```text
+Busca en los documentos del proyecto cómo se configura la autenticación.
+Indica los archivos y fragmentos que sustentan la respuesta.
+```
 
----
+## Revisa la evidencia
 
-## Formatos de Archivo Soportados
+Recuperar fragmentos no equivale a leer todo el repositorio. Contrasta rutas y contenido, especialmente si los archivos cambiaron después de indexarse.
 
-<Tabs items={['Documentos', 'Hojas de Cálculo', 'Bases de Código', 'Imágenes / OCR']}>
-  <Tab value="Documentos">
-    - **PDFs**: Extracción de texto y análisis estructural de tablas y columnas.
-    - **Word (.docx)**: Procesamiento jerárquico de títulos, listas y párrafos.
-    - **Markdown / Text (.md, .txt)**: Indexación con preservación de bloques de código.
-  </Tab>
-  <Tab value="Hojas de Cálculo">
-    - **Excel (.xlsx, .xls)** y **CSV**: Conversión inteligente de esquemas tabulares a estructuras consultables por el agente.
-  </Tab>
-  <Tab value="Bases de Código">
-    - **TypeScript, JavaScript, Python, Rust, Go, SQL, JSON**: Indexación basada en árboles sintácticos (AST) con reconocimiento de funciones, clases e imports.
-  </Tab>
-  <Tab value="Imágenes / OCR">
-    - **PNG, JPG, WebP**: Reconocimiento óptico de caracteres y análisis visual mediante modelos con capacidades de visión por computadora.
-  </Tab>
-</Tabs>
+## Si falta información
 
----
-
-## Ventajas de la Arquitectura Local
-
-<Callout type="info">
-  La base de datos vectorial y los embeddings se calculan en tu hardware local. Ninguna página de tus contratos, hojas financieras o código propietario se envía a servicios externos para su vectorización.
-</Callout>
+Comprueba que la fuente pertenece al proyecto correcto, que el procesamiento terminó y que la consulta describe el concepto que buscas. Si necesitas el estado exacto de un archivo editado, utiliza una lectura directa.

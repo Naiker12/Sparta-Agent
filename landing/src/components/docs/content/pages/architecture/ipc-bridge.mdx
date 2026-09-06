@@ -1,16 +1,22 @@
 ---
-title: Puente IPC Seguro
-description: Protocolo de comunicación inter-procesos tipado entre Electron y el motor nativo de Sparta Agent.
+title: "Puente de escritorio"
+description: "La frontera entre el renderer, Electron y el motor local."
 ---
 
-# Puente IPC Seguro
+## Dos canales con responsabilidades distintas
 
-La comunicación entre el proceso de renderizado de Electron, el proceso principal y el sidecar de Rust se realiza a través de un canal de **comunicación inter-procesos (IPC)** tipado y validado criptográficamente.
+**IPC:** operaciones del escritorio, como ventana, archivos y acceso al proceso principal mediante el preload.
 
----
+**HTTP:** peticiones al backend Python para funcionalidades como chat, proveedores y conexiones actuales.
 
-## Principios del Puente IPC
+## Autenticación del renderer
 
-1. **Esquemas Tipados (Type-Safe RPC)**: Cada método IPC expuesto cuenta con definiciones de tipos TypeScript y Rust sincronizadas, evitando fallos de serialización en tiempo de ejecución.
-2. **ContextBridge de Electron**: El renderer no tiene acceso a Node.js nativo ni a APIs de sockets directas; interactúa exclusivamente a través de métodos seguros expuestos en `window.spartaAPI`.
-3. **Validación de Payloads**: Cada solicitud se valida contra esquemas de datos antes de transmitirse al ejecutor de herramientas o al permission broker.
+El renderer solicita una sesión mediante `backend:authenticate`. El proceso principal comprueba la ventana y el origen, intercambia su secreto con el backend y devuelve únicamente tokens de sesión.
+
+## Contratos heredados
+
+Hay canales de compatibilidad cuyo nombre o estado no demuestra una implementación funcional. Antes de añadir un consumidor, comprueba que el canal tenga un handler real y que devuelva errores explícitos cuando no esté disponible.
+
+## Al cambiar un canal
+
+Actualiza el handler, la API del preload y sus consumidores juntos. Añade una prueba de la operación y de su rechazo cuando el origen o los argumentos no son válidos.

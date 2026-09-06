@@ -1,19 +1,19 @@
 {
   "summary": {
     "tests": 3487,
-    "pass": 3312,
-    "fail": 175,
+    "pass": 3321,
+    "fail": 166,
     "cancelled": 0,
     "skipped": 0,
     "todo": 0
   },
   "counts": {
-    "environment": 9,
+    "environment": 0,
     "removed_locale": 25,
     "missing_contract": 29,
     "moved_source": 46,
-    "source_review": 66,
-    "product_review": 0
+    "source_review": 60,
+    "product_review": 6
   },
   "frontendFailures": [
     {
@@ -100,16 +100,16 @@
       "test": "a measured chat-only host reaches /video and its own explanation",
       "file": "chat-only-route-guard.test.ts",
       "location": "D:/sparta-agent/desktop/frontend-spartan/tests/chat-only-route-guard.test.ts:60:1",
-      "category": "source_review",
-      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "category": "product_review",
+      "classification": "Diferencia de comportamiento: validar el requisito vigente",
       "evidence": "|-\n    a direct link or a reload at /video bounces to /chat, so the no-GPU, no-PyTorch and macOS explanations on VideoPage are unreachable on every host that has one\n    \n    true !== false"
     },
     {
       "test": "an unmeasured verdict still lets both pages wait it out",
       "file": "chat-only-route-guard.test.ts",
       "location": "D:/sparta-agent/desktop/frontend-spartan/tests/chat-only-route-guard.test.ts:83:1",
-      "category": "source_review",
-      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "category": "product_review",
+      "classification": "Diferencia de comportamiento: validar el requisito vigente",
       "evidence": "|-\n    /video is redirected on the pre-measurement guess, which is one-way\n    \n    true !== false"
     },
     {
@@ -255,78 +255,6 @@
       "category": "source_review",
       "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
       "evidence": "|-\n    The input did not match the regular expression /No connections yet/. Input:\n    \n    '\\n' +\n      'import { Button } from \"@/components/ui/button\";\\n' +\n      'import { Checkbox } from \"@/components/ui/checkbox\";\\n' +\n      'import {\\n' +\n      '  Dialog,\\n' +\n      '  DialogContent,\\n' +\n      '  DialogDescription,\\n' +\n      '  DialogHeader,\\n' +\n      '  DialogTitle,\\n' +\n      '} from \"@/components/ui/dialog\";\\n' +\n      'import { Input } from \"@/components/ui/input\";\\n' +\n      'import { Label } from \"@/components/ui/label\";\\n' +\n      'import {\\n' +\n      '  Select,\\n' +\n      '  SelectContent,\\n' +\n      '  SelectGroup,\\n' +\n   "
-    },
-    {
-      "test": "web build writes through navigator.clipboard before yielding",
-      "file": "copy-to-clipboard.test.ts",
-      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/copy-to-clipboard.test.ts:143:1",
-      "category": "environment",
-      "classification": "Entorno o fixture incompleto",
-      "evidence": "\"Cannot read properties of undefined (reading 'includes')\""
-    },
-    {
-      "test": "web build reaches execCommand in the same tick when clipboard is absent",
-      "file": "copy-to-clipboard.test.ts",
-      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/copy-to-clipboard.test.ts:166:1",
-      "category": "environment",
-      "classification": "Entorno o fixture incompleto",
-      "evidence": "\"Cannot read properties of undefined (reading 'includes')\""
-    },
-    {
-      "test": "Tauri build copies natively and never touches navigator.clipboard",
-      "file": "copy-to-clipboard.test.ts",
-      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/copy-to-clipboard.test.ts:185:1",
-      "category": "environment",
-      "classification": "Entorno o fixture incompleto",
-      "evidence": "\"Cannot read properties of undefined (reading 'includes')\""
-    },
-    {
-      "test": "Tauri build does not resolve the native writer before the first await",
-      "file": "copy-to-clipboard.test.ts",
-      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/copy-to-clipboard.test.ts:195:1",
-      "category": "environment",
-      "classification": "Entorno o fixture incompleto",
-      "evidence": "\"Cannot read properties of undefined (reading 'includes')\""
-    },
-    {
-      "test": "execCommand fallback runs when navigator.clipboard.writeText rejects",
-      "file": "copy-to-clipboard.test.ts",
-      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/copy-to-clipboard.test.ts:211:1",
-      "category": "environment",
-      "classification": "Entorno o fixture incompleto",
-      "evidence": "\"Cannot read properties of undefined (reading 'includes')\""
-    },
-    {
-      "test": "copyToClipboard reports failure when every writer fails",
-      "file": "copy-to-clipboard.test.ts",
-      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/copy-to-clipboard.test.ts:222:1",
-      "category": "environment",
-      "classification": "Entorno o fixture incompleto",
-      "evidence": "\"Cannot read properties of undefined (reading 'includes')\""
-    },
-    {
-      "test": "a failed native write still falls through to the web writers",
-      "file": "copy-to-clipboard.test.ts",
-      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/copy-to-clipboard.test.ts:234:1",
-      "category": "environment",
-      "classification": "Entorno o fixture incompleto",
-      "evidence": "\"Cannot read properties of undefined (reading 'includes')\""
-    },
-    {
-      "test": "an install without the clipboard plugin falls through to the web writers",
-      "file": "copy-to-clipboard.test.ts",
-      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/copy-to-clipboard.test.ts:245:1",
-      "category": "environment",
-      "classification": "Entorno o fixture incompleto",
-      "evidence": "\"Cannot read properties of undefined (reading 'includes')\""
-    },
-    {
-      "test": "empty and non-string input returns false and touches no writer",
-      "file": "copy-to-clipboard.test.ts",
-      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/copy-to-clipboard.test.ts:256:1",
-      "category": "environment",
-      "classification": "Entorno o fixture incompleto",
-      "evidence": "\"Cannot read properties of undefined (reading 'includes')\""
     },
     {
       "test": "tests\\\\dataset-data-recipes-navigation.test.ts",
@@ -1068,16 +996,16 @@
       "test": "a non-string model is refused rather than handed to the tab",
       "file": "settings-panel-prefs.test.ts",
       "location": "D:/sparta-agent/desktop/frontend-spartan/tests/settings-panel-prefs.test.ts:75:1",
-      "category": "source_review",
-      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "category": "product_review",
+      "classification": "Diferencia de comportamiento: validar el requisito vigente",
       "evidence": "|-\n    Expected values to be strictly equal:\n    \n    'recipes' !== 'train'"
     },
     {
       "test": "an unreadable record leaves the defaults",
       "file": "settings-panel-prefs.test.ts",
       "location": "D:/sparta-agent/desktop/frontend-spartan/tests/settings-panel-prefs.test.ts:197:1",
-      "category": "source_review",
-      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "category": "product_review",
+      "classification": "Diferencia de comportamiento: validar el requisito vigente",
       "evidence": "|-\n    Expected values to be strictly equal:\n    \n    'recipes' !== 'train'"
     },
     {
@@ -1140,16 +1068,16 @@
       "test": "a customized version-5 sidebar keeps its order and only gains Audio",
       "file": "sidebar-nav-migration.test.ts",
       "location": "D:/sparta-agent/desktop/frontend-spartan/tests/sidebar-nav-migration.test.ts:83:1",
-      "category": "source_review",
-      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "category": "product_review",
+      "classification": "Diferencia de comportamiento: validar el requisito vigente",
       "evidence": "|-\n    Expected values to be strictly deep-equal:\n    + actual - expected\n    \n      [\n        'projects',\n        'hub',\n        'images',\n    -   'video',\n        'recipes',\n        'export',\n        'api',\n        'audio'\n      ]"
     },
     {
       "test": "an install sitting on the version-6 default picks Video up",
       "file": "sidebar-nav-migration.test.ts",
       "location": "D:/sparta-agent/desktop/frontend-spartan/tests/sidebar-nav-migration.test.ts:118:1",
-      "category": "source_review",
-      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "category": "product_review",
+      "classification": "Diferencia de comportamiento: validar el requisito vigente",
       "evidence": "|-\n    Expected values to be strictly deep-equal:\n    + actual - expected\n    \n      [\n        'hub',\n        'projects',\n        'images',\n    -   'video'\n      ]"
     },
     {
@@ -2257,7 +2185,11 @@
     },
     {
       "file": "tests/test_tunnel_safe_long_post.py",
-      "reason": "ModuleNotFoundError: No module named 'fastapi.responses'; 'fastapi' is not a package ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+      "reason": "ModuleNotFoundError: No module named 'fastapi.responses'; 'fastapi' is not a package"
+    },
+    {
+      "file": "tests/test_unsupported_hint_reads_only_our_diagnosis.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
     },
     {
       "file": "tests/test_uvicorn_exception_dedup.py",

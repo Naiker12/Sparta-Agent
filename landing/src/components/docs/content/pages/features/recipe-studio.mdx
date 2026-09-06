@@ -1,58 +1,20 @@
 ---
-title: Recipe Studio y Data Recipes
-description: Diseñador de flujos de trabajo agénticos reutilizables y pipelines de transformación de datos.
+title: "Recetas y datos"
+description: "Organiza procesos de datos y comprueba las dependencias de cada receta."
 ---
 
-import { Callout } from 'fumadocs-ui/components/callout';
+## Qué prepara una receta
 
-# Recipe Studio y Data Recipes
+Una receta describe un proceso de datos y sus configuraciones. Revisa entradas, modelos y destino antes de ejecutar un trabajo.
 
-**Recipe Studio** es el entorno visual y declarativo integrado en Sparta Agent para crear, parametrizar y ejecutar **Recetas Agénticas (Data Recipes)**: secuencias estructuradas de prompts, transformaciones de datos y llamadas a herramientas MCP diseñadas para tareas repetitivas.
+## Antes de ejecutar
 
----
+Comprueba el formato del dataset y empieza con una muestra pequeña. Las capacidades de entrenamiento y generación de datos pueden necesitar dependencias y hardware adicionales al chat.
 
-## Conceptos Clave de las Recetas
+## Resultados
 
-```
-┌────────────────────────────────────────────────────────┐
-│                   Input del Usuario                    │
-└───────────────────────────┬────────────────────────────┘
-                            │
-┌───────────────────────────▼────────────────────────────┐
-│      Etapa 1: Extracción & Parsing (PDF / SQL / Git)   │
-└───────────────────────────┬────────────────────────────┘
-                            │
-┌───────────────────────────▼────────────────────────────┐
-│      Etapa 2: Transformación Agéntica (Prompt Chain)   │
-└───────────────────────────┬────────────────────────────┘
-                            │
-┌───────────────────────────▼────────────────────────────┐
-│      Etapa 3: Exportación & Notificación (Notion/Slack) │
-└────────────────────────────────────────────────────────┘
-```
+Revisa el estado del trabajo y el artefacto producido. Que una configuración se guarde correctamente no significa que el proceso haya terminado.
 
----
+## Reproducibilidad
 
-## Capacidades de Recipe Studio
-
-### 1. Plantillas Parametrizadas
-Define variables de entrada (ej. `${PROJECT_PATH}`, `${TARGET_BRANCH}`, `${AUDIT_LEVEL}`) que el usuario completa mediante un formulario dinámico antes de disparar la receta.
-
-### 2. Encadenamiento de Herramientas MCP
-Una receta puede coordinar herramientas de múltiples servidores:
-1. Extraer un diff de GitHub con `mcp-server-git`.
-2. Analizar vulnerabilidades y patrones de concurrencia.
-3. Crear un ticket detallado en Notion con `mcp.notion.com`.
-4. Enviar un resumen al canal de ingeniería en Slack con `mcp.slack.com`.
-
-### 3. Modos de Ejecución
-- **Paso a Paso con Aprobación**: El usuario revisa la salida de cada etapa antes de continuar a la siguiente.
-- **Batch Autónomo**: Ejecuta la receta completa sobre múltiples archivos o ramas de forma desatendida.
-
----
-
-## Almacenamiento y Portabilidad
-
-<Callout type="info">
-  Las recetas se guardan en formato JSON / YAML dentro de tu workspace (`.sparta/recipes/`), permitiendo versionarlas con Git y compartirlas con el resto del equipo de ingeniería.
-</Callout>
+Conserva la configuración, la versión del modelo y una referencia a las entradas. No registres credenciales dentro de recetas compartidas.

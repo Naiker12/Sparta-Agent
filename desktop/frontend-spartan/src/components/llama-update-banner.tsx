@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { resyncInferenceStatusAfterServerModelChange } from "@/features/chat";
 import { useLlamaUpdateCheck } from "@/hooks/use-llama-update-check";
 import { useShowLlamaUpdateBanner } from "@/hooks/use-llama-update-pref";
+import { useT } from "@/i18n";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { Download } from "lucide-react";
@@ -79,6 +80,7 @@ export function LlamaUpdateBanner({
   enabled = true,
   positioned = true,
 }: LlamaUpdateBannerProps): ReactElement | null {
+  const t = useT();
   const showBannerPref = useShowLlamaUpdateBanner();
   // Not gated on showBannerPref: this hook instance is the app-wide listener
   // for a cross-tab reload_required resync (the settings-sheet's own instance
@@ -96,12 +98,21 @@ export function LlamaUpdateBanner({
     if (result?.ok) {
       const updatedTag = result.tag ?? status?.latest_tag ?? "the latest build";
       const reloadHint = result.reloadRequired
-        ? " Reload your model to use it."
+        ? t("update.llama.reloadHint")
         : "";
-      toast.success(`${component} updated to ${updatedTag}.${reloadHint}`);
+      toast.success(
+        t("update.llama.updatedSuccess", {
+          component,
+          version: updatedTag,
+          reloadHint,
+        }),
+      );
     } else if (result) {
       toast.error(
-        `${component} update failed: ${result.error ?? "unknown error"}`,
+        t("update.llama.updateFailed", {
+          component,
+          error: result.error ?? t("update.llama.unknownError"),
+        }),
       );
     }
   }
@@ -149,7 +160,7 @@ export function LlamaUpdateBanner({
             type="button"
             onClick={dismiss}
             className="absolute top-2.5 right-3 flex size-6 items-center justify-center rounded-full text-muted-foreground/60 transition-colors hover:bg-muted hover:text-foreground"
-            aria-label={`Dismiss ${component} update notification`}
+            aria-label={t("update.llama.dismissAria", { component })}
           >
             <svg
               aria-hidden="true"
@@ -178,18 +189,18 @@ export function LlamaUpdateBanner({
           <div className="min-w-0">
             <p className="font-heading text-base font-medium text-foreground">
               {applying
-                ? `Updating ${component}...`
-                : `New ${component} update`}
+                ? t("update.llama.updating", { component })
+                : t("update.llama.newUpdate", { component })}
             </p>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              {status?.installed_tag ?? "unknown"} &rarr;{" "}
+              {status?.installed_tag ?? t("update.llama.unknownTag")} &rarr;{" "}
               <span className="font-medium text-foreground">
                 {status?.latest_tag ?? ""}
               </span>
             </p>
             <p className="mt-1 text-ui-11 text-muted-foreground/70">
-              {sizeLabel ? `${sizeLabel} download · ` : ""}No restart needed
-              after update
+              {sizeLabel ? t("update.llama.downloadSize", { size: sizeLabel }) : ""}
+              {t("update.llama.noRestartNeeded")}
             </p>
           </div>
         </div>
@@ -198,7 +209,7 @@ export function LlamaUpdateBanner({
           <div
             className="mb-1.5 mt-4 h-1 overflow-hidden rounded-full bg-muted"
             role="progressbar"
-            aria-label={`Updating ${component}`}
+            aria-label={t("update.llama.updatingAria", { component })}
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={
@@ -222,7 +233,7 @@ export function LlamaUpdateBanner({
               onClick={snooze}
               data-testid="llama-update-snooze-button"
             >
-              Remind me later
+              {t("update.remindLater")}
             </Button>
             <Button
               size="sm"
@@ -231,7 +242,7 @@ export function LlamaUpdateBanner({
               onClick={handleUpdate}
               data-testid="llama-update-button"
             >
-              Update
+              {t("update.update")}
             </Button>
           </div>
         )}

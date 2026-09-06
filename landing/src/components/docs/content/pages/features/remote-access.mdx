@@ -1,40 +1,22 @@
 ---
-title: Acceso Remoto, LAN y Puente GPU Colab
-description: Control remoto cifrado mediante LAN, Cloudflare Tunnel y aceleración GPU gratuita con Google Colab.
+title: "Acceso remoto"
+description: "Distingue una conexión local de una API disponible en la red."
 ---
 
-import { Callout } from 'fumadocs-ui/components/callout';
-import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+## Alcance de la conexión
 
-# Acceso Remoto, LAN y Puente GPU Colab
+Loopback permite que procesos del mismo equipo se comuniquen. LAN y túneles amplían el alcance a otros clientes y necesitan una configuración explícita.
 
-Sparta Agent permite extender tu entorno de ingeniería más allá de tu estación de trabajo principal mediante módulos de conectividad remota segura y aceleración por GPU distribuida.
+## Antes de habilitarlo
 
----
+Verifica que las rutas protegidas rechazan peticiones sin credenciales. Usa un transporte seguro para redes que no controles y evita publicar secretos en enlaces o capturas.
 
-## Modos de Acceso Remoto
+## Motor remoto
 
-<Tabs items={['Acceso LAN Local', 'Túnel Cloudflare', 'Puente GPU Colab']}>
-  <Tab value="Acceso LAN Local">
-    - **Uso**: Controla Sparta Agent desde tu tablet, smartphone o laptop secundaria en la misma red Wi-Fi.
-    - **Seguridad**: Autenticación mediante código QR / PIN temporal con cifrado TLS local.
-    - **Activación**: Activa el conmutador *Acceso LAN* en Ajustes para generar la URL interna (ej. `http://192.168.1.50:8000`).
-  </Tab>
-  <Tab value="Túnel Cloudflare">
-    - **Uso**: Acceso seguro a tu agente desde cualquier lugar del mundo sin abrir puertos en tu router ni configurar DDNS.
-    - **Tecnología**: Utiliza `cloudflared` para crear un túnel TLS seguro hacia tu subdominio de Cloudflare.
-    - **Protección**: Integración con Cloudflare Zero Trust y autenticación de doble factor.
-  </Tab>
-  <Tab value="Puente GPU Colab">
-    - **Uso**: ¿Tu máquina local no tiene GPU potente? Conecta un notebook de **Google Colab (T4 / A100)** gratuito o de bajo costo para procesar modelos pesados de 70B parámetros.
-    - **Integración**: Sparta Agent se conecta mediante un WebSocket cifrado al runtime de Colab, enviando los tensores y recibiendo el streaming de tokens a velocidad completa.
-  </Tab>
-</Tabs>
+Un servidor de modelos remoto y el backend de Sparta son componentes diferentes. Configura la dirección y autenticación del servicio que realmente quieras utilizar.
 
----
+## Sesiones y disponibilidad
 
-## Privacidad en Conexiones Remotas
+Los entornos temporales pueden cambiar de URL o detenerse. Comprueba que el proceso sigue activo antes de atribuir el fallo al modelo.
 
-<Callout type="info">
-  Incluso cuando se utiliza el túnel remoto o el puente de Colab, tu código fuente permanece exclusivamente en tu máquina anfitriona; únicamente se transmiten los fragmentos de contexto requeridos para la inferencia del modelo.
-</Callout>
+La revisión local del código no valida por sí sola una instalación expuesta a internet. Consulta [Seguridad y permisos](/docs/core-concepts/security-and-sandbox).

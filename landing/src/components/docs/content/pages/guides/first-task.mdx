@@ -1,0 +1,36 @@
+---
+title: "Tu primera tarea"
+description: "Un recorrido práctico para revisar contexto, herramientas, cambios y pruebas."
+---
+
+## Define un resultado observable
+
+Elige una carpeta de trabajo pequeña. Evita empezar con una migración completa: una corrección de texto o una función sencilla permite revisar todo el recorrido.
+
+```text
+Lee el README de esta carpeta, explica su estructura y propone un cambio pequeño.
+No edites todavía. Indica cómo comprobarías el resultado.
+```
+
+<DocsVideo id="first-task" />
+
+## Revisa el contexto
+
+Comprueba la carpeta, el modelo y las herramientas habilitadas. Si el archivo no está disponible, adjúntalo o vincula la carpeta correspondiente. Una respuesta sin lectura de archivos no demuestra que el agente haya inspeccionado tu proyecto.
+
+## Solicita el cambio
+
+Indica el archivo y el resultado esperado. Cuando una herramienta requiera aprobación, revisa el comando completo, su destino y el efecto esperado antes de decidir.
+
+## Verifica el resultado
+
+Solicita volver a leer el archivo y ejecutar una prueba relevante. El controlador permite repetir una lectura después de una posible modificación. Si una herramienta falla, revisa su salida antes de reintentar.
+
+```text
+Vuelve a leer el archivo modificado. Muestra qué cambió y ejecuta la comprobación
+acordada. Distingue lo ejecutado de lo que no pudiste verificar.
+```
+
+## Cierra la tarea
+
+Revisa el diff en tu herramienta de control de versiones. Guarda o revierte los cambios según el resultado. No asumas que existe una restauración automática por archivo: conserva tus propios commits o copias cuando los necesites.

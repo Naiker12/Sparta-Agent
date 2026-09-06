@@ -1,185 +1,115 @@
-import React, { useState, useEffect, lazy, Suspense, useMemo, type ComponentType } from 'react';
+import { Component, lazy, Suspense, useEffect, useMemo, type ComponentType, type ReactNode, type ComponentProps } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { FrameworkProvider } from 'fumadocs-core/framework';
+import type { Root } from 'fumadocs-core/page-tree';
+import { RootProvider } from 'fumadocs-ui/provider/base';
 import { DocsBody, DocsDescription, DocsPage as FumadocsPage, DocsTitle } from 'fumadocs-ui/page';
 import defaultMdxComponents from 'fumadocs-ui/mdx';
 import { DocsLayout } from 'fumadocs-ui/layouts/docs';
-import type { Root } from 'fumadocs-core/page-tree';
-import { DocsPagination } from './docs-pagination';
+import { BookOpen, ExternalLink, FileText, ChevronRight } from 'lucide-react';
+import { catalog } from './lib/catalog.generated';
+import { canonicalSlug, docsHref, docsPath, groups } from './lib/navigation';
+import './docs.css';
+import type { SharedProps } from 'fumadocs-ui/components/dialog/search';
 
+import { DocsVideo } from './docs-video';
+
+const LazySearchDialog = lazy(() => import('./docs-search'));
+function SearchDialog(props: SharedProps) {
+  return <Suspense fallback={null}><LazySearchDialog {...props} /></Suspense>;
+}
 const documents = import.meta.glob('./content/pages/**/*.mdx');
-const legacySlugs: Record<string, string> = {
-  inicio: 'index',
-  instalacion: 'quickstart',
-  'desarrollo-local': 'quickstart',
-  modos: 'core-concepts/chat-vs-agent-mode',
-  permisos: 'core-concepts/security-and-sandbox',
-  proveedores: 'core-concepts/models-and-providers',
-  arquitectura: 'architecture/frontend-ui',
-  terminal: 'features/code-execution',
-  'deep-research': 'features/deep-research',
-  'rag-multimodal': 'features/multimodal-rag',
-  'recipe-studio': 'features/recipe-studio',
-  'api-monitor': 'features/api-monitor',
-  'remote-access': 'features/remote-access',
-  'voice-audio': 'features/voice-audio',
-  adjuntos: 'features/attachments-and-files',
-  herramientas: 'features/live-tools',
-  mcp: 'mcp/introduction',
-  skills: 'skills/overview',
-};
-const href = (slug: string) => `?docs=${slug}`;
-const page = (name: string, slug: string) => ({ type: 'page' as const, name, url: href(slug) });
+const mdxComponents = { ...defaultMdxComponents, DocsVideo };
 const tree: Root = {
-  name: 'Sparta Agent',
-  children: [
-    page('Introducción', 'inicio'),
-    {
-      type: 'folder',
-      name: 'Primeros pasos',
-      defaultOpen: true,
-      children: [page('Inicio rápido', 'instalacion')],
-    },
-    {
-      type: 'folder',
-      name: 'Conceptos',
-      children: [
-        page('Chat y modo agente', 'modos'),
-        page('Seguridad y sandbox', 'permisos'),
-        page('Modelos y proveedores', 'proveedores'),
-      ],
-    },
-    {
-      type: 'folder',
-      name: 'Funciones',
-      children: [
-        page('Deep Research', 'deep-research'),
-        page('RAG multimodal', 'rag-multimodal'),
-        page('Recipe Studio & Recipes', 'recipe-studio'),
-        page('Monitor de APIs y Costos', 'api-monitor'),
-        page('Acceso Remoto & GPU Colab', 'remote-access'),
-        page('Entrada de Voz y Whisper', 'voice-audio'),
-        page('Adjuntos y archivos', 'adjuntos'),
-        page('Herramientas en vivo', 'herramientas'),
-        page('Ejecución de código', 'terminal'),
-      ],
-    },
-    {
-      type: 'folder',
-      name: 'Arquitectura',
-      children: [
-        page('Frontend', 'arquitectura'),
-        page('Backend y Sidecar', 'architecture/backend-architecture'),
-        page('Puente IPC', 'architecture/ipc-bridge'),
-      ],
-    },
-    {
-      type: 'folder',
-      name: 'MCP',
-      children: [
-        page('Introducción', 'mcp'),
-        page('Configuración', 'mcp/configuration'),
-        page('Servidores soportados', 'mcp/supported-servers'),
-      ],
-    },
-    { type: 'folder', name: 'Skills', children: [page('Visión general', 'skills')] },
-  ],
+  name: 'Documentación',
+  children: groups.flatMap(group => [
+    { type: 'separator' as const, name: group.title },
+    ...group.pages.flatMap(slug => {
+      const page = catalog.find(item => item.slug === slug);
+      return page ? [{ type: 'page' as const, name: page.title, url: docsPath(slug) }] : [];
+    }),
+  ]),
 };
 
-import {
-  SecurityIsolationDiagram,
-  LangGraphFlowDiagram,
-  DeepResearchDiagram,
-  HybridRagDiagram,
-  McpArchitectureDiagram,
-} from './diagrams/architectural-diagrams';
+function DocsLink({ href = '', prefetch: _prefetch, onClick, ...props }: ComponentProps<'a'> & { prefetch?: boolean }) {
+  const navigate = useNavigate();
+  const mapped = href.startsWith('/docs/') ? docsHref(href.slice(6).split('#')[0]) + (href.includes('#') ? '#' + href.split('#')[1] : '') : href === '/' ? import.meta.env.BASE_URL : href;
+  return <a {...props} href={mapped} onClick={event => {
+    onClick?.(event);
+    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || props.target === '_blank' || props.download) return;
+    if (href.startsWith('/docs/') || href === '/') { event.preventDefault(); navigate(mapped); }
+  }} />;
+}
 
-const customMdxComponents = {
-  ...defaultMdxComponents,
-  SecurityIsolationDiagram,
-  LangGraphFlowDiagram,
-  DeepResearchDiagram,
-  HybridRagDiagram,
-  McpArchitectureDiagram,
-};
+class DocumentBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  render() {
+    return this.state.failed ? <div role="alert"><h2>No se pudo cargar esta guía</h2><p>Comprueba la conexión y vuelve a intentarlo.</p><button type="button" onClick={() => window.location.reload()}>Recargar</button></div> : this.props.children;
+  }
+}
 
-export function DocsPage({ onBackToLanding }: { onBackToLanding?: () => void }) {
-  const [currentPage, setCurrentPage] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return new URLSearchParams(window.location.search).get('docs') || 'inicio';
-    }
-    return 'inicio';
-  });
+export function DocsPage({ slug }: { slug: string }) {
+  const current = canonicalSlug(slug);
+  const page = catalog.find(item => item.slug === current);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const loader = documents[`./content/pages/${current}.mdx`];
+  const Content = useMemo(() => lazy(async () => {
+    if (!loader) return { default: () => <p>La guía no existe. Elige una página de la navegación o utiliza la búsqueda.</p> };
+    const module = await loader() as { default: ComponentType<{ components?: unknown }>; toc?: { title: string; url: string; depth: number }[] };
+    return { default: () => <FumadocsPage toc={module.toc?.filter(item => item.depth > 1)} tableOfContent={{ style: 'clerk' }}
+      editOnGithub={{ owner: 'Naiker12', repo: 'Sparta-Agent', sha: 'main', path: `landing/src/components/docs/content/pages/${current}.mdx` }}>
+      <div className="docs-eyebrow"><span className="docs-status-dot" /> GUÍA DE SPARTA AGENT</div>
+      <DocsTitle>{page?.title}</DocsTitle>
+      <DocsDescription>{page?.description}</DocsDescription>
+      <div className="docs-page-meta"><span><FileText size={13} /> Lectura: {Math.max(1, Math.ceil((page?.text.split(' ').length ?? 0) / 220))} min</span><span>Escritorio · v0.2.19</span></div>
+      <DocsBody><module.default components={mdxComponents} /></DocsBody>
+    </FumadocsPage> };
+  }), [loader, current, page]);
 
   useEffect(() => {
-    const handlePopState = () => {
-      const slug = new URLSearchParams(window.location.search).get('docs') || 'inicio';
-      setCurrentPage(slug);
+    document.documentElement.classList.add('docs-mode');
+    const previousTitle = document.title;
+    return () => {
+      document.documentElement.classList.remove('docs-mode');
+      document.title = previousTitle;
     };
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
   }, []);
+  useEffect(() => {
+    document.title = `${page?.title ?? 'Guía no encontrada'} · Sparta Docs`;
+    const description = document.querySelector('meta[name="description"]');
+    const previous = description?.getAttribute('content');
+    if (page) description?.setAttribute('content', page.description);
+    if (!location.hash) window.scrollTo(0, 0);
+    return () => { if (previous) description?.setAttribute('content', previous); };
+  }, [page, location.hash]);
 
-  const navigateToDoc = (slug: string) => {
-    window.history.pushState(null, '', `?docs=${slug}`);
-    setCurrentPage(slug);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  const framework = useMemo(() => ({
+    usePathname: () => docsPath(current),
+    useParams: () => ({ slug: current.split('/') }),
+    useRouter: () => ({ push: (url: string) => {
+      const [path, hash] = url.split('#');
+      navigate(path.startsWith('/docs/') ? docsHref(path.slice(6)) + (hash ? `#${hash}` : '') : url);
+    }, refresh: () => window.location.reload() }),
+    Link: DocsLink,
+  }), [current, navigate]);
 
-  const documentPath = `./content/pages/${legacySlugs[currentPage] ?? currentPage}.mdx`;
-  const loader = documents[documentPath];
-  const MDX = useMemo(() => lazy<ComponentType<{ components?: unknown }>>(async () => {
-    if (!loader) return { default: () => <p className="text-white p-6">Documento no encontrado.</p> };
-    const module = await loader() as { default: ComponentType<{ components?: unknown }> };
-    return { default: module.default };
-  }), [loader]);
-
-  const handleGlobalClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const target = (e.target as HTMLElement).closest('a');
-    if (!target) return;
-    const href = target.getAttribute('href');
-    if (href && href.startsWith('?docs=')) {
-      e.preventDefault();
-      const slug = href.replace('?docs=', '');
-      navigateToDoc(slug);
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-[#040506] text-white" onClick={handleGlobalClick}>
-      <DocsLayout
-        tree={tree}
-        nav={{
-          title: (
-            <div
-              onClick={onBackToLanding}
-              className="flex items-center gap-2.5 cursor-pointer select-none group"
-            >
-              <img
-                src="/favicon.svg"
-                alt="Sparta Agent Logo"
-                className="size-6 object-contain drop-shadow-[0_0_8px_rgba(234,179,8,0.4)] group-hover:scale-105 transition-transform"
-              />
-              <span className="font-medium text-sm text-white tracking-tight">Sparta Agent</span>
-            </div>
-          ),
-          url: '#',
-          enabled: true,
-        }}
-        links={[
-          { text: '← Volver a la Landing', url: '/' },
-          { text: 'GitHub', url: 'https://github.com/Naiker12/Sparta-Agent', external: true },
-        ]}
-      >
-        <main className="min-w-0">
-          <FumadocsPage>
-            <DocsBody>
-              <Suspense fallback={<p className="text-[#9c9c9d] text-sm">Cargando documentación…</p>}>
-                <MDX components={customMdxComponents} />
-              </Suspense>
-              <DocsPagination currentSlug={currentPage} onNavigate={navigateToDoc} />
-            </DocsBody>
-          </FumadocsPage>
-        </main>
-      </DocsLayout>
-    </div>
-  );
+  return <FrameworkProvider {...framework}>
+    <RootProvider theme={{ defaultTheme: 'dark', storageKey: 'sparta-docs-theme' }} search={{ SearchDialog, preload: false }} i18n={{ locale: 'es', translations: {
+      search: 'Buscar documentación', searchNoResult: 'Sin resultados', toc: 'En esta página', tocNoHeadings: 'Sin secciones', lastUpdate: 'Actualizado', nextPage: 'Siguiente', previousPage: 'Anterior', chooseTheme: 'Cambiar tema', editOnGithub: 'Editar en GitHub',
+    } }}>
+      <div className="docs-shell">
+        <a className="docs-skip" href="#nd-page">Saltar al contenido</a>
+        <DocsLayout tree={tree} nav={{ title: <span className="docs-brand"><img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" /><strong>Sparta</strong><span>docs</span></span>, url: '/' }}
+          githubUrl="https://github.com/Naiker12/Sparta-Agent"
+          sidebar={{ defaultOpenLevel: 1, banner: <div className="docs-sidebar-banner"><BookOpen size={16} /><span>Documentación</span><span className="docs-version">0.2</span></div>, footer: <a className="docs-help" href="https://github.com/Naiker12/Sparta-Agent/issues" target="_blank" rel="noreferrer">¿Encontraste un problema?<ExternalLink size={13} /></a> }}
+          links={[{ text: 'Ir al sitio', url: '/', active: 'none' }]}>
+          <DocumentBoundary key={current}><Suspense fallback={<div className="docs-loading" role="status">Cargando guía…</div>}>
+            {page ? <Content /> : <FumadocsPage><DocsTitle>Guía no encontrada</DocsTitle><DocsDescription>Esta dirección no corresponde a una página disponible.</DocsDescription><DocsLink href="/docs/index">Volver a la introducción <ChevronRight size={16} /></DocsLink></FumadocsPage>}
+          </Suspense></DocumentBoundary>
+        </DocsLayout>
+      </div>
+    </RootProvider>
+  </FrameworkProvider>;
 }

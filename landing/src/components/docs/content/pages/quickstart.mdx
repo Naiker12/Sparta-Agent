@@ -1,86 +1,45 @@
 ---
-title: Inicio Rápido
-description: Configura y comienza a utilizar Sparta Agent en menos de 3 minutos.
+title: "Inicio rápido"
+description: "Prepara el escritorio, conecta un modelo y comprueba que puedes conversar."
 ---
 
 import { Steps } from 'fumadocs-ui/components/steps';
-import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 import { Callout } from 'fumadocs-ui/components/callout';
 
-# Guía de Inicio Rápido
+## Antes de empezar
 
-Aprende a instalar, configurar y ejecutar tu primera tarea autónoma con Sparta Agent.
+Necesitas una instalación compatible con tu sistema y conexión a internet para descargar el motor o utilizar proveedores remotos. El espacio en disco y la memoria necesarios dependen del modelo; no todos requieren GPU.
 
----
+<DocsVideo id="quickstart" />
 
 <Steps>
+### Instala Sparta
+Descarga el archivo correspondiente a tu plataforma desde las [versiones del repositorio](https://github.com/Naiker12/Sparta-Agent/releases). Usa el nombre del archivo publicado en esa versión; no reutilices enlaces de una versión antigua.
 
-### 1. Descarga e Instalación
+### Prepara el motor local
+Abre Sparta y sigue la preparación del motor. El escritorio crea un entorno Python en su directorio de datos. La primera preparación puede tardar mientras descarga dependencias. Abre los detalles si necesitas revisar un error.
 
-Descarga el instalador oficial correspondiente a tu sistema operativo desde la sección de descargas o compílalo desde el código fuente:
+### Conecta un proveedor
+En la configuración de modelos y conexiones, añade tu proveedor y sus credenciales o la URL de un servidor local compatible. Comprueba que el modelo aparece y puede responder antes de habilitar herramientas.
 
-<Tabs items={['Windows', 'macOS', 'Linux']}>
-  <Tab value="Windows">
-    1. Descarga el instalador `Sparta-Agent-Windows-0.2.15-Setup.exe`.
-    2. Ejecuta el asistente de instalación.
-    3. Sparta Agent se integrará en tu menú de inicio y configurará el canal IPC local de Windows.
-  </Tab>
-  <Tab value="macOS">
-    1. Descarga el paquete `Sparta-Agent-Mac-0.2.15-Installer.dmg` (Apple Silicon o Intel, según tu equipo).
-    2. Arrastra `Sparta Agent.app` a tu carpeta de **Aplicaciones**.
-    3. Otorga permisos de terminal cuando el sistema lo solicite para la ejecución de comandos locales.
-  </Tab>
-  <Tab value="Linux">
-    1. Descarga el binario portable `Sparta-Agent-Linux-0.2.15.AppImage`.
-    2. Otorga permisos de ejecución:
-    ```bash
-    chmod +x Sparta-Agent-Linux-0.2.15.AppImage
-    ./Sparta-Agent-Linux-0.2.15.AppImage
-    ```
-  </Tab>
-</Tabs>
-
----
-
-### 2. Configuración del Proveedor de Modelos
-
-En la barra de estado o en la ventana de **Ajustes**, selecciona tu motor de inferencia preferido:
-
-- **Modelos Locales (Privacidad 100% Offline)**:
-  - **Ollama**: Sparta Agent detecta automáticamente instancias de Ollama corriendo en `http://localhost:11434`.
-  - **LM Studio / vLLM**: Compatible con cualquier endpoint compatible con OpenAI en tu red local.
-  - **Modelos recomendados**: `qwen2.5-coder:7b`, `llama3.3:70b`, `deepseek-r1:14b`.
-
-- **Proveedores en la Nube**:
-  - Introduce tu API Key de Anthropic (Claude 3.7 / 3.5 Sonnet), OpenAI (GPT-4o), Google Gemini, DeepSeek o Groq.
-  - Tus claves se almacenan cifradas localmente en tu sistema con **AES-256-GCM**.
-
----
-
-### 3. Selección del Modo de Operación
-
-En el selector inferior de la interfaz:
-- **Modo Chat**: Para análisis exploratorio, lectura de archivos, búsqueda web y preguntas técnicas sin riesgo de modificación.
-- **Modo Agente**: Para tareas de desarrollo activo (creación de archivos, refactorización, ejecución de suites de tests). Cada acción activará una tarjeta de confirmación en pantalla antes de aplicarse.
-
----
-
-### 4. Ejecución de tu Primera Tarea
-
-Escribe una instrucción en lenguaje natural para comprobar la capacidad del agente:
-
-```text
-Analiza la estructura del proyecto en esta carpeta, localiza posibles cuellos de botella en las consultas SQL y propón un plan de refactorización por etapas.
-```
-
-El agente generará un **plan visible por pasos** y esperará tu aprobación antes de realizar modificaciones.
-
+### Envía una conversación de prueba
+Escribe: «Responde con una frase y explica qué información necesitas para ayudarme con un proyecto». Una respuesta confirma el flujo básico del proveedor, pero no comprueba todavía la ejecución de herramientas.
 </Steps>
 
----
+## Comprueba el flujo completo
 
-## Recursos Relacionados
+Continúa con [Tu primera tarea](/docs/guides/first-task). Utiliza una carpeta pequeña de prueba, solicita una lectura y después un cambio acotado que puedas revisar.
 
-- [Modo Chat vs Modo Agente](/docs/core-concepts/chat-vs-agent-mode): Comprende el flujo de trabajo y la seguridad de permisos.
-- [RAG Local Multimodal](/docs/features/multimodal-rag): Indexa repositorios y documentación técnica.
-- [Servidores MCP](/docs/mcp/supported-servers): Conecta bases de datos, APIs y herramientas de terceros.
+<Callout title="No compartas secretos en el chat">Introduce las credenciales en la configuración del proveedor. No las incluyas en prompts, capturas o informes de diagnóstico.</Callout>
+
+## Desarrollo desde el repositorio
+
+```bash
+git clone https://github.com/Naiker12/Sparta-Agent.git
+cd Sparta-Agent
+npm ci
+npm --prefix desktop/frontend-spartan ci
+npm run dev
+```
+
+El comando inicia Vite y Electron. La preparación del backend y sus modelos es un paso separado; instalar dependencias JavaScript no prepara el entorno Python.

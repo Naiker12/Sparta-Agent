@@ -1,30 +1,26 @@
 ---
-title: Herramientas en Vivo y Subagentes
-description: Catálogo de herramientas del sistema, subagentes especializados e inspección en tiempo real.
+title: "Herramientas en vivo"
+description: "Distingue las herramientas disponibles, las llamadas propuestas y sus resultados."
 ---
 
-# Herramientas en Vivo y Subagentes
+## Disponibilidad
 
-Sparta Agent incluye un conjunto de herramientas internas de alta fidelidad que complementan el razonamiento del modelo y permiten interactuar con el entorno local y la web.
+Las herramientas disponibles dependen del modo, la configuración, el proveedor y las conexiones activas. Un nombre visible en un catálogo no garantiza que la herramienta esté conectada o autorizada.
 
----
+## Estados que debes revisar
 
-## Catálogo de Herramientas Principales
+| Estado | Qué significa |
+|---|---|
+| Preparando | Se están formando los argumentos |
+| Esperando aprobación | Falta una decisión del usuario |
+| Ejecutando | La llamada está en curso |
+| Resultado | Hay una salida para inspeccionar |
+| Fallo o cancelación | La acción no terminó normalmente |
 
-### 1. Navegación e Inspección Web (`read_url_content`)
-Extrae el contenido textual limpio de páginas web públicas, documentación técnica y repositorios sin renderizar scripts pesados ni consumir recursos innecesarios.
+## Acciones con archivos
 
-### 2. Gestión de Tareas Asíncronas (`manage_task` / `schedule`)
-Permite pausar, cancelar, enviar entradas de teclado a comandos activos y programar recordatorios o rutinas recurrentes de verificación de despliegue o pruebas.
+Comprueba siempre la ruta y el alcance. Después de una escritura, solicita una lectura o una prueba para verificar el estado actual.
 
-### 3. Edición Precisa de Código (`replace_file_content` / `multi_replace_file_content`)
-Aplica modificaciones quirúrgicas bloque por bloque en archivos existentes sin reescribir el archivo entero, reduciendo la latencia de generación de tokens y previniendo la pérdida accidental de código adyacente.
+## Servicios externos
 
-### 4. Búsqueda Rápida de Patrones (`grep_search` / ripgrep)
-Integración nativa con `ripgrep` para localizar símbolos, funciones o referencias en cuestión de milisegundos en repositorios con miles de archivos.
-
----
-
-## Subagentes de Propósito Específico
-
-Cuando una tarea requiere una investigación autónoma o una ejecución paso a paso que excede una sola interacción, Sparta Agent puede instanciar subagentes especializados con contexto aislado y herramientas dedicadas.
+Para las herramientas MCP, consulta la [configuración de conexiones](/docs/mcp/configuration). Mantén activas solo las conexiones necesarias para tu tarea.

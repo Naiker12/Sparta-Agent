@@ -1,27 +1,28 @@
 ---
-title: Arquitectura del Frontend y UI
-description: Pila tecnológica de la interfaz de usuario basada en Electron 34, React 19 y Monaco Editor.
+title: "Frontend"
+description: "Cómo se conectan la interfaz, el estado de conversación y los eventos del motor."
 ---
 
-# Arquitectura del Frontend y UI
+## Interfaz vigente
 
-La interfaz de usuario de Sparta Agent está diseñada para ofrecer una experiencia de escritorio de alto rendimiento, baja latencia y estética sobria tipo power-tool.
+El renderer principal vive en `desktop/frontend-spartan`. React presenta conversaciones, modelos, configuraciones y tarjetas de herramientas. Electron carga su build mediante un preload con aislamiento de contexto.
 
----
+## Flujo de datos
 
-## Pila Tecnológica del Frontend
+```text
+Interfaz React → API autenticada → Backend Python
+       ↑                              ↓
+Estado y tarjetas ← eventos y resultados
+```
 
-- **Shell de Escritorio**: **Electron 34** con aislamiento de contexto (`contextIsolation: true`) y desactivación de integración directa de Node en el renderer (`nodeIntegration: false`).
-- **Framework de UI**: **React 19** con renderizado concurrente y gestión reactiva de estado.
-- **Motor de Estilos**: **Tailwind CSS v4** integrado con el sistema de diseño Raycast (paleta acromática profunda, elevación táctil *keyboard-key* y tipografía técnica en Inter y Geist Mono).
-- **Editor de Código**: **Monaco Editor** (el mismo núcleo de VS Code) para visualización de sintaxis, diff de cambios en vivo e inspección de AST.
-- **Animaciones**: **Framer Motion** para microinteracciones fluidas a 60 FPS sin bloquear el hilo principal.
+## Estado y suscripciones
 
----
+El estado de conversación y ejecución se concentra en stores y módulos de características. Las actualizaciones de streaming deben evitar renders innecesarios de componentes que no cambiaron.
 
-## Componentes Clave de la Interfaz
+## Comprobaciones
 
-1. **Cockpit Central de Conversación**: Renderizado de mensajes con soporte para bloques Markdown, tablas interactivas con vista expandida y visualización de planes de trabajo.
-2. **Inspector de Diffs en Vivo**: Comparador visual antes/después para cambios propuestos en archivos de código.
-3. **Panel de Herramientas y Estado MCP**: Monitor de conectividad en tiempo real de servidores MCP activos.
-4. **Terminal Integrada**: Consola nativa con soporte de streaming ANSI y gestión de procesos.
+El tipado no sustituye las pruebas de comportamiento. La suite contiene pruebas funcionales y aserciones sobre código fuente; estas últimas necesitan adaptación cuando se divide un módulo.
+
+## Entrada de escritorio
+
+Consulta [Puente de escritorio](/docs/architecture/ipc-bridge) para conocer qué operaciones pasan por Electron y cuáles usan HTTP.

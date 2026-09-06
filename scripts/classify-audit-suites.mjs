@@ -25,17 +25,22 @@ for (const match of tap.matchAll(/^not ok (\d+) - (.*)\n([\s\S]*?)(?=^# Subtest:
   else if (file === 'lazy-locale-loading.test.ts') category = 'removed_locale';
   else if (/ENOENT|ERR_MODULE_NOT_FOUND/.test(block) || /tests\\\\.*\.test\.ts$/.test(match[2])) category = 'missing_contract';
   else if (/gone|no longer defined|needs rewriting|moved|renamed|Missing source marker|not found:/.test(block.slice(0, 700)) || /Barrel|chat-adapter\/index/.test(block.slice(0, 2500))) category = 'moved_source';
+  else if (['chat-only-route-guard.test.ts', 'sidebar-nav-migration.test.ts', 'settings-panel-prefs.test.ts'].includes(file)) category = 'product_review';
   else if (/readFileSync|readFile\(/.test(source)) category = 'source_review';
   const error = block.match(/error: ([\s\S]*?)(?=\n  (?:code|name|operator|expected|actual|stack):)/)?.[1]?.trim() ?? 'Error de carga; consultar el archivo de prueba y sus imports.';
   records.push({ test: match[2], file, location: location.replaceAll('\\\\', '/'), category, classification: labels[category], evidence: error.slice(0, 650) });
 }
 const summary = Object.fromEntries([...tap.matchAll(/^# (tests|pass|fail|cancelled|skipped|todo) (\d+)$/gm)].map(m => [m[1], Number(m[2])]));
 if (records.length !== summary.fail) throw new Error(`Incomplete classification: ${records.length}/${summary.fail}`);
-const backendErrors = [...backend.matchAll(/^_{3,} (?:ERROR collecting )?([^\n]+?) _{3,}\n([\s\S]*?)(?=^_{3,} |^=|$(?![\s\S]))/gm)].map(m => ({
+const backendErrors = [...backend.matchAll(/^_{2,} (?:ERROR collecting )?([^\n]+?) _{2,}\n([\s\S]*?)(?=^_{2,} |^=|$(?![\s\S]))/gm)].map(m => ({
   file: m[1],
   reason: [...m[2].matchAll(/^E\s+(.+)$/gm)].map(v => v[1]).slice(-2).join(' '),
 }));
 const counts = Object.fromEntries(Object.keys(labels).map(key => [key, records.filter(r => r.category === key).length]));
+const reportedBackendErrors = Number(backend.match(/\d+ tests collected, (\d+) errors/)?.[1]);
+if (Number.isFinite(reportedBackendErrors) && backendErrors.length !== reportedBackendErrors) {
+  throw new Error(`Incomplete backend classification: ${backendErrors.length}/${reportedBackendErrors}`);
+}
 mkdirSync(destination, { recursive: true });
 writeFileSync(path.join(destination, 'suite-classification.json'), JSON.stringify({ summary, counts, frontendFailures: records, backendCollection: backend.match(/\d+ tests collected, \d+ errors[^\n]*/)?.[0], backendErrors }, null, 2) + '\n');
 const groups = new Map();
