@@ -266,7 +266,7 @@ export function ChatMcpServersDialog({
     }
   }
 
-  function useCatalogTemplate(template: McpCatalogTemplate) {
+  function applyCatalogTemplate(template: McpCatalogTemplate) {
     const address =
       template.url ??
       [template.command, ...template.args].filter(Boolean).join(" ");
@@ -546,7 +546,7 @@ export function ChatMcpServersDialog({
                       type="button"
                       size="sm"
                       variant="outline"
-                      onClick={() => useCatalogTemplate(template)}
+                      onClick={() => applyCatalogTemplate(template)}
                     >
                       Use template
                     </Button>

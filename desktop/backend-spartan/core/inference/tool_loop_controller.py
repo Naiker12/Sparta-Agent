@@ -24,6 +24,12 @@ _CANONICAL_HEAL_ARG = {
     "render_html": "code",
 }
 _ONE_SHOT_TOOLS = frozenset({"render_html"})
+# Only built-in observations known not to change the workspace. Arbitrary shell,
+# Python and MCP calls may mutate it, including before returning an error.
+_READ_ONLY_TOOLS = frozenset({
+    "web_search", "search_knowledge_base", "list_mcp_servers",
+    "search_mcp_catalog", "list_skills", "search_skill_catalog",
+})
 
 NoopReason = Literal["duplicate", "disabled", "render_html_repeat"]
 ToolAction = Literal["execute", "duplicate", "disabled", "render_html_repeat"]
@@ -49,6 +55,7 @@ class ToolCallDecision:
     provenance: dict[str, Any] = field(default_factory = dict)
     status_text: str = ""
     noop_result: str = ""
+    workspace_revision: int = 0
 
     @property
     def should_execute(self) -> bool:
@@ -438,6 +445,7 @@ class ToolLoopController:
         self._one_shot_tools = one_shot_tools
         self._completed_one_shot_tools: set[str] = set()
         self._successful_keys: set[str] = set()
+        self._workspace_revision = 0
         self._duplicate_noop_counts: dict[str, int] = {}
         self._duplicate_noop_limit = max(1, duplicate_noop_limit)
         self._history: list[_ToolCallRecord] = []
@@ -509,12 +517,20 @@ class ToolLoopController:
             provenance = provenance,
             status_text = status_for_tool(tool_name, coerced.arguments),
             noop_result = noop,
+            workspace_revision = self._workspace_revision,
         )
 
     def record_result(self, decision: ToolCallDecision, result: Any) -> ToolCallCompletion:
         """Record a real tool execution and return model/frontend payload helpers."""
         result_text = result if isinstance(result, str) else str(result)
         failed = is_tool_error(result_text)
+        if decision.tool_name not in _READ_ONLY_TOOLS:
+            # A result from before a possible mutation is no longer evidence of
+            # the current state. Keep one-shot constraints and the global history;
+            # only the epoch-local deduplication and recovery nudges expire.
+            self._workspace_revision += 1
+            self._successful_keys.clear()
+            self._duplicate_noop_counts.clear()
         self._history.append(
             _ToolCallRecord(
                 key = decision.key,
@@ -524,7 +540,8 @@ class ToolLoopController:
             )
         )
         if not failed:
-            self._successful_keys.add(decision.key)
+            if decision.tool_name not in _READ_ONLY_TOOLS or decision.workspace_revision == self._workspace_revision:
+                self._successful_keys.add(decision.key)
             if decision.tool_name in self._one_shot_tools:
                 self._completed_one_shot_tools.add(decision.tool_name)
         return ToolCallCompletion(

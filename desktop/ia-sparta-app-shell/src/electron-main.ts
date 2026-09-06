@@ -1,7 +1,8 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import path from 'node:path'
 import { BackendManager } from './backend-manager'
+import { isDesktopAuthOrigin } from './desktop-auth-origin'
 import { setupAutoUpdater } from './auto-updater'
 import { registerAllIPC } from 'ia-sparta-ipc-bridge'
 
@@ -126,6 +127,16 @@ app.whenReady().then(async () => {
   // ask for the port during its first frame, before the handler exists, then
   // fall back to Vite's HTML response for /api requests.
   ipcMain.handle('backend:get-port', () => backend.getPort())
+  ipcMain.handle('backend:authenticate', (event) => {
+    if (!win || event.sender !== win.webContents || event.senderFrame !== win.webContents.mainFrame) {
+      throw new Error('Desktop authentication is only available to the main window')
+    }
+    const rendererUrl = VITE_DEV_SERVER_URL ?? pathToFileURL(path.join(RENDERER_DIST, 'index.html')).href
+    if (!isDesktopAuthOrigin(event.senderFrame.url, rendererUrl)) {
+      throw new Error('Desktop authentication is unavailable to this page')
+    }
+    return backend.authenticate()
+  })
   ipcMain.handle('backend:get-status', () => ({
     port: backend.getPort(),
     error: backendStartupError,
@@ -171,5 +182,3 @@ app.whenReady().then(async () => {
 })
 
 app.on('before-quit', () => backend.stop())
-
-

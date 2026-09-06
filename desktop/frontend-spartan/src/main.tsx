@@ -14,6 +14,7 @@ declare global {
   interface Window {
     electronAPI?: {
       getBackendPort?: () => Promise<number | null>;
+      authenticateBackend?: () => Promise<{ access_token: string; refresh_token: string }>;
       getBackendStatus?: () => Promise<{ port?: number; error?: string }>;
       onBackendReady?: (listener: (port: number) => void) => () => void;
       bootstrapBackend?: () => Promise<{ ok: boolean; error?: string }>;

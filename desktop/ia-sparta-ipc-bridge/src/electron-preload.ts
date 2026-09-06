@@ -40,6 +40,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
   },
   getBackendPort: () =>
     ipcRenderer.invoke("backend:get-port") as Promise<number | undefined>,
+  authenticateBackend: () =>
+    ipcRenderer.invoke("backend:authenticate") as Promise<{ access_token: string; refresh_token: string }>,
   getBackendStatus: () =>
     ipcRenderer.invoke("backend:get-status") as Promise<{
       port?: number;

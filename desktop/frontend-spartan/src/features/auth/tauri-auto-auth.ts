@@ -1,5 +1,5 @@
 
-import { isTauri } from "@/lib/api-base";
+import { isElectron, isTauri } from "@/lib/api-base";
 import {
   hasAuthToken,
   hasRefreshToken,
@@ -24,7 +24,7 @@ let pending: { promise: Promise<boolean>; force: boolean } | null = null;
 let lastTauriAuthFailure: string | null = null;
 
 const TAURI_AUTH_FAILURE_FALLBACK =
-  "Desktop authentication failed. Update or repair the managed Unsloth install, then restart Unsloth.";
+  "Desktop authentication failed. Repair the local Sparta runtime, then restart Sparta.";
 const BACKEND_NOT_READY_MESSAGE = "Backend is not ready";
 
 function authFailureMessage(error: unknown): string {
@@ -53,7 +53,7 @@ function isBackendNotReady(error: unknown): boolean {
 }
 
 async function doTauriAutoAuth(options: TauriAutoAuthOptions): Promise<boolean> {
-  // Desktop must handle password-change state internally in Rust.
+  // The desktop bridge exchanges its local credential independently of the web password.
   if (!options.force && hasAuthToken() && !mustChangePassword()) {
     clearTauriAuthFailure();
     return true;
@@ -69,8 +69,10 @@ async function doTauriAutoAuth(options: TauriAutoAuthOptions): Promise<boolean> 
   }
 
   try {
-    const { invoke } = await import("@tauri-apps/api/core");
-    const tokens = await invoke<DesktopAuthResponse>("desktop_auth");
+    const tokens = isElectron
+      ? await window.electronAPI?.authenticateBackend?.()
+      : await (await import("@tauri-apps/api/core")).invoke<DesktopAuthResponse>("desktop_auth");
+    if (!tokens) throw new Error("Desktop authentication bridge is unavailable");
     storeAuthTokens(tokens.access_token, tokens.refresh_token);
     setMustChangePassword(false);
     clearTauriAuthFailure();
@@ -83,9 +85,9 @@ async function doTauriAutoAuth(options: TauriAutoAuthOptions): Promise<boolean> 
 }
 
 /**
- * Silently authenticate in Tauri desktop mode.
+ * Silently authenticate through the Electron or Tauri desktop bridge.
  *
- * Delegates bootstrap/password handling to Rust and only stores returned tokens.
+ * Keeps the local bootstrap secret in the host process and stores only session tokens.
  *
  * Returns true if authentication succeeded.
  * Concurrent calls are coalesced into a single in-flight attempt.
@@ -93,7 +95,7 @@ async function doTauriAutoAuth(options: TauriAutoAuthOptions): Promise<boolean> 
 export function tauriAutoAuth(
   options: TauriAutoAuthOptions = {},
 ): Promise<boolean> {
-  if (!isTauri) return Promise.resolve(false);
+  if (!isTauri && !isElectron) return Promise.resolve(false);
   const force = options.force === true;
   if (!pending || (force && !pending.force)) {
     let promise: Promise<boolean>;

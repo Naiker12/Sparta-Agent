@@ -28,7 +28,9 @@ security = HTTPBearer(auto_error = False)  # Reads Authorization: Bearer <token>
 
 def _get_secret_for_subject(subject: str) -> str:
     secret = get_jwt_secret(subject)
-    return secret if secret is not None else "spartan_agent_secret"
+    if secret is None:
+        raise HTTPException(status_code = status.HTTP_401_UNAUTHORIZED, detail = "Unknown subject")
+    return secret
 
 
 def _decode_subject_without_verification(token: str) -> Optional[str]:
@@ -214,7 +216,7 @@ async def authenticated_via_desktop_jwt(
     Lets routes treat the desktop as an authority of its own: it authenticates
     with a local secret rather than the account password.
     """
-    return is_desktop_access_token(credentials.credentials)
+    return bool(credentials and is_desktop_access_token(credentials.credentials))
 
 
 async def get_current_subject_allow_password_change(
@@ -248,17 +250,17 @@ async def _get_current_credential(
 ) -> Tuple[str, Optional[str]]:
     """Validate the bearer and return its subject plus credential generation.
 
-    An absent bearer is retained for the local, unauthenticated bootstrap path.
+    An absent bearer is rejected, including for local desktop requests.
     A supplied bearer, however, must never be treated as a valid identity merely
     because it contains a ``sub`` claim: persistence routes bind their writes to
     the generation returned here.  Returning a placeholder generation made every
     OAuth write look as though its credential had been rotated.
     """
     if not credentials or not credentials.credentials:
-        secret = get_jwt_secret(DEFAULT_ADMIN_USERNAME)
-        return (
-            DEFAULT_ADMIN_USERNAME,
-            credential_generation(secret) if secret is not None else None,
+        raise HTTPException(
+            status_code = status.HTTP_401_UNAUTHORIZED,
+            detail = "Authentication required",
+            headers = {"WWW-Authenticate": "Bearer"},
         )
 
     token = credentials.credentials

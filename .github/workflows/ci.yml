@@ -46,5 +46,24 @@ jobs:
       - name: Install desktop frontend dependencies
         run: npm --prefix desktop/frontend-spartan ci
 
-      - name: Unit tests
+      - name: Install browser for UI regression tests
+        # The UI regressions mount React in a real browser.
+        run: npx playwright install --with-deps chromium
+
+      - name: Unit and browser regression tests
         run: npm test
+
+  auth:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install CPU-only auth test dependencies
+        run: pip install pytest fastapi==0.141.1 PyJWT httpx structlog cryptography python-multipart
+      - name: Authentication boundary and credential rotation
+        working-directory: desktop/backend-spartan
+        env:
+          PYTHONPATH: .
+        run: python -m pytest --noconftest tests/test_auth_access_boundary.py tests/test_credential_rotation_race.py -q

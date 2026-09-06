@@ -42,7 +42,7 @@ module.exports = {
     'no-inner-declarations': 'off',
     'no-control-regex': 'off',
     'prefer-const': 'off',
-    'react-hooks/rules-of-hooks': 'warn',
+    'react-hooks/rules-of-hooks': 'error',
     'react-hooks/exhaustive-deps': 'off',
   },
 }

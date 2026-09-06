@@ -201,6 +201,54 @@ def test_failed_call_does_not_block_retry():
     assert retry.action == "execute"
 
 
+@pytest.mark.parametrize("mutation,result", [
+    ("edit_file", "Updated app.py"),
+    ("python", "Updated app.py"),
+    ("terminal", "Updated app.py"),
+    ("mcp__files__write", "Updated app.py"),
+    ("edit_file", "Error: wrote one file before failing"),
+])
+def test_read_edit_same_read_refreshes_workspace(mutation, result):
+    controller = ToolLoopController(tools = None)
+    read = _call("terminal", {"command": "cat app.py"})
+    first = controller.prepare_call(read)
+    controller.record_result(first, "old content")
+    duplicate = controller.prepare_call(read)
+    assert duplicate.action == "duplicate"
+    controller.record_noop(duplicate)
+    change = controller.prepare_call(_call(mutation, {"path": "app.py", "content": "new content"}))
+    controller.record_result(change, result)
+    refreshed = controller.prepare_call(read)
+    assert refreshed.should_execute
+    controller.record_result(refreshed, "new content")
+    duplicate = controller.prepare_call(read)
+    assert duplicate.action == "duplicate"
+    controller.record_noop(duplicate)
+    assert not controller.force_final_answer  # old epoch's nudge did not carry over
+
+
+def test_observations_keep_deduplication_and_mutations_keep_one_shot_constraints():
+    controller = ToolLoopController(tools = None)
+    search = _call("web_search", {"query": "docs"})
+    controller.record_result(controller.prepare_call(search), "docs")
+    controller.record_result(controller.prepare_call(_call("list_skills", {})), "skills")
+    assert controller.prepare_call(search).action == "duplicate"
+    html = _call("render_html", {"code": "<h1>Done</h1>"})
+    controller.record_result(controller.prepare_call(html), "Rendered")
+    controller.record_result(controller.prepare_call(_call("edit_file", {"path": "app.py"})), "Edited")
+    assert controller.prepare_call(html).action == "render_html_repeat"
+    assert controller.prepare_call(search).should_execute
+
+
+def test_late_observation_does_not_cache_a_previous_workspace_revision():
+    controller = ToolLoopController(tools = None)
+    call = _call("search_knowledge_base", {"query": "app"})
+    observation = controller.prepare_call(call)
+    controller.record_result(controller.prepare_call(_call("edit_file", {"path": "app.py"})), "Edited")
+    controller.record_result(observation, "old indexed result")
+    assert controller.prepare_call(call).should_execute
+
+
 def test_empty_enabled_tool_list_blocks_all_tool_calls():
     controller = ToolLoopController(tools = [])
     decision = controller.prepare_call(_call("web_search", {"query": "gpu prices"}))

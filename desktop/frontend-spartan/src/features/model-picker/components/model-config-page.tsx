@@ -418,6 +418,7 @@ function AdvancedGpuSlider({
 // it to, and the label says so. Driven in whole percent so a dragged value
 // round-trips exactly; the fraction is rebuilt at the API boundary.
 function VramBudgetRow() {
+  const t = useT();
   // The caller already gates on a discrete GPU and non-Manual mode. macOS is gated
   // here too: it reports no discrete GPUs, so the Metal path sizes itself from
   // _APPLE_UNIFIED_MEMORY_FRACTION and fits with budget_frac = 1.0. Showing the
@@ -564,7 +565,6 @@ function VramBudgetRow() {
     }, 400);
   };
 
-  const t = useT();
   return (
     <div className="space-y-2">
       <AdvancedGpuSlider

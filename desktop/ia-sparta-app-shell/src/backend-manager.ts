@@ -7,6 +7,24 @@ const PORT_LINE = /^TAURI_PORT=(\d+)\s*$/m;
 export class BackendManager {
   private process: ChildProcess | undefined;
   private port: number | undefined;
+  private desktopSecret: string | undefined;
+
+  async authenticate(): Promise<{ access_token: string; refresh_token: string }> {
+    if (!this.port || !this.desktopSecret) throw new Error("Backend is not ready");
+    const response = await fetch(`http://127.0.0.1:${this.port}/api/auth/desktop-login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ secret: this.desktopSecret }),
+      signal: AbortSignal.timeout(10_000),
+      redirect: "error",
+    });
+    if (!response.ok) throw new Error(`Desktop authentication failed (${response.status})`);
+    const tokens = await response.json();
+    if (typeof tokens.access_token !== "string" || typeof tokens.refresh_token !== "string") {
+      throw new Error("Invalid desktop authentication response");
+    }
+    return { access_token: tokens.access_token, refresh_token: tokens.refresh_token };
+  }
 
   getPort(): number | undefined {
     return this.port;
@@ -41,7 +59,7 @@ export class BackendManager {
       // belong to Sparta. Never inherit C:\\Users\\...\\.unsloth from another app.
       childEnv.UNSLOTH_STUDIO_HOME = path.join(runtimeDir ?? backendDir, "studio-data");
       childEnv.UNSLOTH_STUDIO_DESKTOP_OWNER_PID = String(process.pid);
-      const child = spawn(python.command, [...python.args, "run.py", "--api-only", "--port", "0"], {
+      const child = spawn(python.command, [...python.args, "desktop_bootstrap.py", "--api-only", "--port", "0"], {
         cwd: backendDir,
         env: { ...childEnv, PYTHONPATH: backendDir },
         stdio: ["ignore", "pipe", "pipe"],
@@ -49,23 +67,45 @@ export class BackendManager {
       });
       this.process = child;
       let output = "";
-      const read = (chunk: Buffer) => {
-        output += chunk.toString();
+      let stdoutPending = "";
+      let announcedPort: number | undefined;
+      const resolveWhenReady = () => {
+        if (this.process !== child || this.port || !announcedPort || !this.desktopSecret) return;
+        this.port = announcedPort;
+        resolve(this.port);
+      };
+      const read = (text: string) => {
+        output = (output + text).slice(-8192);
         const port = PORT_LINE.exec(output)?.[1];
-        if (port && !this.port) {
-          this.port = Number(port);
-          resolve(this.port);
+        if (port && Number(port) > 0 && Number(port) <= 65535) {
+          announcedPort = Number(port);
+          resolveWhenReady();
         }
       };
-      child.stdout?.on("data", read);
-      child.stderr?.on("data", read);
+      child.stdout?.on("data", (chunk: Buffer) => {
+        stdoutPending += chunk.toString();
+        let newline: number;
+        while ((newline = stdoutPending.indexOf("\n")) !== -1) {
+          const line = stdoutPending.slice(0, newline).trimEnd();
+          stdoutPending = stdoutPending.slice(newline + 1);
+          if (line.startsWith("SPARTA_DESKTOP_SECRET=")) {
+            this.desktopSecret = line.slice("SPARTA_DESKTOP_SECRET=".length);
+            resolveWhenReady();
+          } else read(line + "\n");
+        }
+        // Bound unfinished log lines without ever including a secret in diagnostics.
+        if (stdoutPending.length > 8192) stdoutPending = "";
+      });
+      child.stderr?.on("data", (chunk: Buffer) => read(chunk.toString()));
       child.once("error", reject);
       child.once("exit", (code) => {
+        if (this.process !== child) return;
         if (!this.port) {
           reject(new Error(`El backend terminó antes de iniciar (código ${code ?? "desconocido"}).\n${output.slice(-2000)}`));
         }
         this.process = undefined;
         this.port = undefined;
+        this.desktopSecret = undefined;
       });
     });
   }
@@ -145,6 +185,7 @@ export class BackendManager {
     const child = this.process;
     this.process = undefined;
     this.port = undefined;
+    this.desktopSecret = undefined;
     if (child && !child.killed) {
       child.kill();
     }

@@ -417,25 +417,35 @@ def identity(nonce: str, request: Request) -> dict:
 
 @router.get("/status", response_model = AuthStatusResponse)
 async def auth_status() -> AuthStatusResponse:
-    """Auth initialization state; always initialized and never requiring password change."""
+    """Report the persisted account state."""
     return AuthStatusResponse(
-        initialized = True,
-        default_username = "spartan_agent",
-        requires_password_change = False,
+        initialized = storage.is_initialized(),
+        default_username = storage.DEFAULT_ADMIN_USERNAME,
+        requires_password_change = storage.requires_password_change(storage.DEFAULT_ADMIN_USERNAME),
     )
 
 
 @router.post("/login", response_model = Token)
 async def login(payload: AuthLoginRequest, request: Request) -> Token:
-    """Login without password restrictions for direct Spartan Agent access."""
-    username = payload.username or "spartan_agent"
-    access_token = create_access_token(subject = username)
-    refresh_token = create_refresh_token(subject = username)
+    """Verify the password before issuing a credential-bound session."""
+    username = payload.username
+    record = storage.get_user_and_secret(username)
+    key = _bucket_key(request, username) if record else _unknown_user_key(request)
+    blocked = _login_blocked(key)
+    if blocked:
+        raise HTTPException(status_code = 429, detail = "Too many login attempts", headers = {"Retry-After": str(blocked)})
+    if record is None or not hashing.verify_password(payload.password, record[0], record[1]):
+        _record_login_failure(key)
+        raise HTTPException(status_code = 401, detail = "Invalid username or password")
+    _clear_login_bucket(key)
+    _, _, credential_secret, must_change = record
+    access_token = create_access_token(subject = username, secret = credential_secret)
+    refresh_token = create_refresh_token(subject = username, secret = credential_secret)
     return Token(
         access_token = access_token,
         refresh_token = refresh_token,
         token_type = "bearer",
-        must_change_password = False,
+        must_change_password = must_change,
     )
 
 
@@ -471,12 +481,16 @@ async def desktop_login(payload: DesktopLoginRequest) -> Token:
 
 @router.post("/refresh", response_model = Token)
 async def refresh(payload: RefreshTokenRequest) -> Token:
-    """Refresh tokens directly without locking out the session."""
+    """Atomically rotate a valid refresh token and preserve its scope."""
+    verified = storage.consume_refresh_token(payload.refresh_token)
+    if verified is None:
+        raise HTTPException(status_code = 401, detail = "Invalid or expired refresh token")
+    subject, desktop, credential_secret = verified
     return Token(
-        access_token = create_access_token(subject = "spartan_agent"),
-        refresh_token = create_refresh_token(subject = "spartan_agent"),
+        access_token = create_access_token(subject = subject, desktop = desktop, secret = credential_secret),
+        refresh_token = create_refresh_token(subject = subject, desktop = desktop, secret = credential_secret),
         token_type = "bearer",
-        must_change_password = False,
+        must_change_password = not desktop and storage.requires_password_change(subject),
     )
 
 

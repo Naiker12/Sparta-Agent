@@ -1,0 +1,2315 @@
+{
+  "summary": {
+    "tests": 3487,
+    "pass": 3312,
+    "fail": 175,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "counts": {
+    "environment": 9,
+    "removed_locale": 25,
+    "missing_contract": 29,
+    "moved_source": 46,
+    "source_review": 66,
+    "product_review": 0
+  },
+  "frontendFailures": [
+    {
+      "test": "every message action menu is non-modal",
+      "file": "action-menu-modal-layer.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/action-menu-modal-layer.test.ts:56:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "'no ActionBarMorePrimitive.Root in thread.tsx'"
+    },
+    {
+      "test": "leaving Audio cancels an owned TTS load without touching a pre-request prompt",
+      "file": "audio-page-policy.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/audio-page-policy.test.ts:314:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "|-\n    The input did not match the regular expression /if \\(options\\?\\.signal\\?\\.aborted\\)[\\s\\S]*options\\?\\.onRequestStart\\?\\.\\(\\);[\\s\\S]*authFetch\\(\"\\/api\\/inference\\/load\", \\{[\\s\\S]*signal: options\\?\\.signal/. Input:\n    \n    '/**\\n' +\n      ' * Sparta Agent - Chat API Barrel\\n' +\n      ' * Re-exporta de forma centralizada todas las APIs de Chat modularizadas:\\n' +\n      ' * - base: Utilidades de petición, errores y eventos de sincronización.\\n' +\n      ' * - threads: Gestión y ciclo de vida de conversaciones/hilos.\\n' +\n      ' * - messages: Persistencia, streaming y recuperación de mensajes.\\n' +\n      ' * - projects: Espacios de trabajo "
+    },
+    {
+      "test": "a local Whisper checkpoint is not advertised as a routable ASR row",
+      "file": "audio-picker-policy.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/audio-picker-policy.test.ts:521:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "|-\n    The input did not match the regular expression /if \\(audioType === \"whisper\"\\)\\s*\\n?\\s*return isLocalCheckpoint \\? undefined : \"automatic-speech-recognition\";/. Input:\n    \n    '\\n' +\n      'import { shouldRefreshPickerInventoryOnMount } from \"@/components/resource-picker/picker-tab-policy\";\\n' +\n      'import { Checkbox } from \"@/components/ui/checkbox\";\\n' +\n      'import { Input } from \"@/components/ui/input\";\\n' +\n      'import { Spinner } from \"@/components/ui/spinner\";\\n' +\n      'import {\\n' +\n      '  Tooltip,\\n' +\n      '  TooltipContent,\\n' +\n      '  TooltipTrigger,\\n' +\n      '} from \"@/components/ui/tooltip\";\\n' +\n      'i"
+    },
+    {
+      "test": "the auto-load toast is driven by that verdict, not by its own copy of it",
+      "file": "auto-load-cpu-fallback-toast.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/auto-load-cpu-fallback-toast.test.ts:59:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "'showAutoLoadSuccess is no longer defined'"
+    },
+    {
+      "test": "every auto-load path forwards the load response's fallback reason",
+      "file": "auto-load-cpu-fallback-toast.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/auto-load-cpu-fallback-toast.test.ts:68:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "'no showAutoLoadSuccess call sites found'"
+    },
+    {
+      "test": "the adapter strips the trailing fragment through the bounded scan",
+      "file": "chat-adapter-scan-cost.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/chat-adapter-scan-cost.test.ts:386:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "|-\n    The input did not match the regular expression /stripTrailingTemplatePlaceholder\\(cumulativeText\\)/. Input:\n    \n    '\\n\\nexport * from \"./chat-adapter/index\";\\n'"
+    },
+    {
+      "test": "the reply only grows through the one call that keeps the trackers in step",
+      "file": "chat-adapter-scan-cost.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/chat-adapter-scan-cost.test.ts:401:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "|-\n    the reply is appended to in 0 places; every append has to go through appendCumulative so the trackers see it\n    \n    0 !== 1"
+    },
+    {
+      "test": "the arrival loop touches the reply only in ways that cannot flatten it",
+      "file": "chat-adapter-scan-cost.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/chat-adapter-scan-cost.test.ts:465:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "'\"for await (const chunk of stream) {\" is gone; this test needs rewriting'"
+    },
+    {
+      "test": "nothing on the arrival path is handed the accumulated reply",
+      "file": "chat-adapter-scan-cost.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/chat-adapter-scan-cost.test.ts:528:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "'the strip is running unconditionally again'"
+    },
+    {
+      "test": "the trailing strip runs on the finished reply, not on every arrival",
+      "file": "chat-adapter-scan-cost.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/chat-adapter-scan-cost.test.ts:578:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "|-\n    one call site: the finished reply is stripped once, and a second site would be a second chance to cut a prefix\n    \n    0 !== 1"
+    },
+    {
+      "test": "a measured chat-only host reaches /video and its own explanation",
+      "file": "chat-only-route-guard.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/chat-only-route-guard.test.ts:60:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "|-\n    a direct link or a reload at /video bounces to /chat, so the no-GPU, no-PyTorch and macOS explanations on VideoPage are unreachable on every host that has one\n    \n    true !== false"
+    },
+    {
+      "test": "an unmeasured verdict still lets both pages wait it out",
+      "file": "chat-only-route-guard.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/chat-only-route-guard.test.ts:83:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "|-\n    /video is redirected on the pre-measurement guess, which is one-way\n    \n    true !== false"
+    },
+    {
+      "test": "the sidebar label cannot collide with the spinner or the unread dot",
+      "file": "chat-remembers-its-model.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/chat-remembers-its-model.test.ts:255:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "|-\n    The input did not match the regular expression /\\{item\\.modelId && !showWorkSpinner && !hasUnreadActivity && \\(/. Input:\n    \n    'import {\\n' +\n      '  Sidebar,\\n' +\n      '  SidebarContent,\\n' +\n      '  SidebarFooter,\\n' +\n      '  SidebarGroup,\\n' +\n      '  SidebarGroupContent,\\n' +\n      '  SidebarGroupLabel,\\n' +\n      '  SidebarHeader,\\n' +\n      '  SidebarMenu,\\n' +\n      '  SidebarMenuButton,\\n' +\n      '  SidebarMenuItem,\\n' +\n      '  useSidebar,\\n' +\n      '} from \"@/components/ui/sidebar\";\\n' +\n      'import {\\n' +\n      '  Collapsible,\\n' +\n      '  CollapsibleContent,\\n' +\n      '  CollapsibleTrigger,\\n' +\n      '} fro"
+    },
+    {
+      "test": "the gate paces the publish, not the bookkeeping before it",
+      "file": "chat-stream-publish-gate.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/chat-stream-publish-gate.test.ts:284:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "'\"for await (const chunk of stream) {\" is gone; this test needs rewriting'"
+    },
+    {
+      "test": "no gate timestamp is threaded through the reasoning tracker",
+      "file": "chat-stream-publish-gate.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/chat-stream-publish-gate.test.ts:416:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "'finishGroup is being given a timestamp again'"
+    },
+    {
+      "test": "the run creates one gate, not one per chunk",
+      "file": "chat-stream-publish-gate.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/chat-stream-publish-gate.test.ts:441:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "'the gate is gone'"
+    },
+    {
+      "test": "the live tool-argument preview shares the gate",
+      "file": "chat-stream-publish-gate.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/chat-stream-publish-gate.test.ts:456:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "'\"if (toolEvent.type === \"tool_args\") {\" is gone; this test needs rewriting'"
+    },
+    {
+      "test": "the gate is fed a counter that only grows",
+      "file": "chat-stream-publish-gate.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/chat-stream-publish-gate.test.ts:480:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "'the counter is gone'"
+    },
+    {
+      "test": "streaming tool-call argument deltas are paced like the text path",
+      "file": "chat-stream-publish-gate.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/chat-stream-publish-gate.test.ts:499:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "'\"for await (const chunk of stream) {\" is gone; this test needs rewriting'"
+    },
+    {
+      "test": "the gate is fed every arrival, not only the tool-call ones",
+      "file": "chat-stream-publish-gate.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/chat-stream-publish-gate.test.ts:526:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "'\"for await (const chunk of stream) {\" is gone; this test needs rewriting'"
+    },
+    {
+      "test": "the backend tool events publish ungated",
+      "file": "chat-stream-publish-gate.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/chat-stream-publish-gate.test.ts:556:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "'\"for await (const chunk of stream) {\" is gone; this test needs rewriting'"
+    },
+    {
+      "test": "a state-bearing provider delta is never held by the gate",
+      "file": "chat-stream-publish-gate.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/chat-stream-publish-gate.test.ts:591:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "'\"for await (const chunk of stream) {\" is gone; this test needs rewriting'"
+    },
+    {
+      "test": "a content-free replay delta still reaches the message",
+      "file": "chat-stream-publish-gate.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/chat-stream-publish-gate.test.ts:607:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "'\"for await (const chunk of stream) {\" is gone; this test needs rewriting'"
+    },
+    {
+      "test": "a per-call thought signature forces a publish",
+      "file": "chat-stream-publish-gate.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/chat-stream-publish-gate.test.ts:628:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "'the existing-call update path is gone'"
+    },
+    {
+      "test": "a chunk with nothing new to show does not spend a gate cycle",
+      "file": "chat-stream-publish-gate.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/chat-stream-publish-gate.test.ts:657:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "'\"for await (const chunk of stream) {\" is gone; this test needs rewriting'"
+    },
+    {
+      "test": "the Studio branch never hardcodes local code tools",
+      "file": "code-tool-placement.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/code-tool-placement.test.ts:114:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "'the Studio-tools enabled_tools list moved'"
+    },
+    {
+      "test": "the branch is only taken when a tool Studio itself can run is on",
+      "file": "code-tool-placement.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/code-tool-placement.test.ts:128:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "'the Studio-tools gate moved'"
+    },
+    {
+      "test": "the continue bar subscribes once on a message that is not the newest",
+      "file": "composer-keystroke-subscription-budget.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/composer-keystroke-subscription-budget.test.ts:72:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "'const ContinueMessageBar: FC = () => { is gone; this test needs rewriting'"
+    },
+    {
+      "test": "the newest message still gets the whole continue bar",
+      "file": "composer-keystroke-subscription-budget.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/composer-keystroke-subscription-budget.test.ts:101:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "'const ContinueMessageBarForLastMessage: FC = () => { is gone; this test needs rewriting'"
+    },
+    {
+      "test": "the form's back arrow still returns to the list",
+      "file": "connections-empty-opens-form.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/connections-empty-opens-form.test.ts:46:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "|-\n    The input did not match the regular expression /No connections yet/. Input:\n    \n    '\\n' +\n      'import { Button } from \"@/components/ui/button\";\\n' +\n      'import { Checkbox } from \"@/components/ui/checkbox\";\\n' +\n      'import {\\n' +\n      '  Dialog,\\n' +\n      '  DialogContent,\\n' +\n      '  DialogDescription,\\n' +\n      '  DialogHeader,\\n' +\n      '  DialogTitle,\\n' +\n      '} from \"@/components/ui/dialog\";\\n' +\n      'import { Input } from \"@/components/ui/input\";\\n' +\n      'import { Label } from \"@/components/ui/label\";\\n' +\n      'import {\\n' +\n      '  Select,\\n' +\n      '  SelectContent,\\n' +\n      '  SelectGroup,\\n' +\n   "
+    },
+    {
+      "test": "web build writes through navigator.clipboard before yielding",
+      "file": "copy-to-clipboard.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/copy-to-clipboard.test.ts:143:1",
+      "category": "environment",
+      "classification": "Entorno o fixture incompleto",
+      "evidence": "\"Cannot read properties of undefined (reading 'includes')\""
+    },
+    {
+      "test": "web build reaches execCommand in the same tick when clipboard is absent",
+      "file": "copy-to-clipboard.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/copy-to-clipboard.test.ts:166:1",
+      "category": "environment",
+      "classification": "Entorno o fixture incompleto",
+      "evidence": "\"Cannot read properties of undefined (reading 'includes')\""
+    },
+    {
+      "test": "Tauri build copies natively and never touches navigator.clipboard",
+      "file": "copy-to-clipboard.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/copy-to-clipboard.test.ts:185:1",
+      "category": "environment",
+      "classification": "Entorno o fixture incompleto",
+      "evidence": "\"Cannot read properties of undefined (reading 'includes')\""
+    },
+    {
+      "test": "Tauri build does not resolve the native writer before the first await",
+      "file": "copy-to-clipboard.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/copy-to-clipboard.test.ts:195:1",
+      "category": "environment",
+      "classification": "Entorno o fixture incompleto",
+      "evidence": "\"Cannot read properties of undefined (reading 'includes')\""
+    },
+    {
+      "test": "execCommand fallback runs when navigator.clipboard.writeText rejects",
+      "file": "copy-to-clipboard.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/copy-to-clipboard.test.ts:211:1",
+      "category": "environment",
+      "classification": "Entorno o fixture incompleto",
+      "evidence": "\"Cannot read properties of undefined (reading 'includes')\""
+    },
+    {
+      "test": "copyToClipboard reports failure when every writer fails",
+      "file": "copy-to-clipboard.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/copy-to-clipboard.test.ts:222:1",
+      "category": "environment",
+      "classification": "Entorno o fixture incompleto",
+      "evidence": "\"Cannot read properties of undefined (reading 'includes')\""
+    },
+    {
+      "test": "a failed native write still falls through to the web writers",
+      "file": "copy-to-clipboard.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/copy-to-clipboard.test.ts:234:1",
+      "category": "environment",
+      "classification": "Entorno o fixture incompleto",
+      "evidence": "\"Cannot read properties of undefined (reading 'includes')\""
+    },
+    {
+      "test": "an install without the clipboard plugin falls through to the web writers",
+      "file": "copy-to-clipboard.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/copy-to-clipboard.test.ts:245:1",
+      "category": "environment",
+      "classification": "Entorno o fixture incompleto",
+      "evidence": "\"Cannot read properties of undefined (reading 'includes')\""
+    },
+    {
+      "test": "empty and non-string input returns false and touches no writer",
+      "file": "copy-to-clipboard.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/copy-to-clipboard.test.ts:256:1",
+      "category": "environment",
+      "classification": "Entorno o fixture incompleto",
+      "evidence": "\"Cannot read properties of undefined (reading 'includes')\""
+    },
+    {
+      "test": "tests\\\\dataset-data-recipes-navigation.test.ts",
+      "file": "dataset-data-recipes-navigation.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/dataset-data-recipes-navigation.test.ts:1:1",
+      "category": "missing_contract",
+      "classification": "Archivo o export ausente tras la migración",
+      "evidence": "'test failed'"
+    },
+    {
+      "test": "every chat delete path honours the preference",
+      "file": "delete-chat-files-preference.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/delete-chat-files-preference.test.ts:36:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "'../src/features/chat/chat-page.tsx deletes chats without reading the preference'"
+    },
+    {
+      "test": "every confirmation discloses the file deletion and can undo it",
+      "file": "delete-chat-files-preference.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/delete-chat-files-preference.test.ts:57:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "'../src/components/app-sidebar.tsx deletes files without a switch to turn it off'"
+    },
+    {
+      "test": "the confirmed delete follows the switch, not the preference",
+      "file": "delete-chat-files-preference.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/delete-chat-files-preference.test.ts:93:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "'../src/features/chat/chat-page.tsx does not take the confirmed value'"
+    },
+    {
+      "test": "the clear-all chain carries deleteFiles to the request",
+      "file": "delete-chat-files-preference.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/delete-chat-files-preference.test.ts:120:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "|-\n    The input did not match the regular expression /deleteFiles: options\\.deleteFiles/. Input:\n    \n    '/**\\n' +\n      ' * Sparta Agent - Chat History Storage Barrel\\n' +\n      ' * Re-exporta la persistencia de historial modularizada:\\n' +\n      ' * - storage-coordinator: Coordinación de concurrencia y sesiones incógnito.\\n' +\n      ' * - thread-storage: Consulta y persistencia de hilos (soporta IDs locales y backend).\\n' +\n      ' * - message-storage: Consulta y persistencia de mensajes.\\n' +\n      ' * - project-storage: Proyectos en workspace.\\n' +\n      ' * - clear-storage: Vaciado seguro de historial.\\n' +\n      ' * - export-storage: "
+    },
+    {
+      "test": "a quit with no window on screen raises no overlay",
+      "file": "desktop-closing-overlay.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/desktop-closing-overlay.test.ts:169:1",
+      "category": "missing_contract",
+      "classification": "Archivo o export ausente tras la migración",
+      "evidence": "\"ENOENT: no such file or directory, open 'D:\\\\sparta-agent\\\\desktop\\\\src-tauri\\\\src\\\\main.rs'\""
+    },
+    {
+      "test": "the overlay names the wait it is covering",
+      "file": "desktop-closing-overlay.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/desktop-closing-overlay.test.ts:189:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "|-\n    The input did not match the regular expression /Closing (?:Spartan Agent|Unsloth|Spartan Agent) Desktop\\.\\.\\./. Input:\n    \n    'function ClosingContent() {\\n' +\n      '  return (\\n' +\n      '    <div className=\"flex h-full w-full flex-col items-center\">\\n' +\n      '      <div className=\"flex flex-1 items-center\">\\n' +\n      '        <Logo />\\n' +\n      '      </div>\\n' +\n      '      <div className=\"mb-10 flex w-full flex-col items-center gap-2\">\\n' +\n      '        <Spinner className=\"size-6 text-primary\" />\\n' +\n      '        <p className=\"text-sm font-bold text-foreground\" aria-live=\"polite\">\\n' +\n      '          {translate(\"shel"
+    },
+    {
+      "test": "both sides agree on the event names",
+      "file": "desktop-closing-overlay.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/desktop-closing-overlay.test.ts:199:1",
+      "category": "missing_contract",
+      "classification": "Archivo o export ausente tras la migración",
+      "evidence": "\"ENOENT: no such file or directory, open 'D:\\\\sparta-agent\\\\desktop\\\\src-tauri\\\\src\\\\main.rs'\""
+    },
+    {
+      "test": "the chat page feeds the picker the connections behind the options",
+      "file": "external-model-selection-label.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/external-model-selection-label.test.ts:416:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "'externalConnections must reach the picker on both the chat and compare paths'"
+    },
+    {
+      "test": "the dropped-model strings are translated everywhere",
+      "file": "external-model-selection-label.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/external-model-selection-label.test.ts:465:1",
+      "category": "missing_contract",
+      "classification": "Archivo o export ausente tras la migración",
+      "evidence": "\"Cannot find module 'D:\\\\sparta-agent\\\\desktop\\\\frontend-spartan\\\\src\\\\i18n\\\\locales\\\\ar.ts' imported from D:\\\\sparta-agent\\\\desktop\\\\frontend-spartan\\\\tests\\\\external-model-selection-label.test.ts\""
+    },
+    {
+      "test": "the badge no longer owns a listener or a per-message request",
+      "file": "fork-count-batching.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/fork-count-batching.test.ts:164:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "|-\n    The input did not match the regular expression /subscribeForkCounts\\(remoteId, onChange\\)/. Input:\n    \n    'import {\\n' +\n      '  ComposerAttachments,\\n' +\n      '  UserMessageAttachments,\\n' +\n      '} from \"@/components/assistant-ui/attachment\";\\n' +\n      'import {\\n' +\n      '  GeneratedImageOverlayProvider,\\n' +\n      '  useGeneratedImageOverlay,\\n' +\n      '} from \"@/components/assistant-ui/generated-image-overlay-context\";\\n' +\n      'import { downloadImagePart } from \"@/components/assistant-ui/image\";\\n' +\n      'import { threadHasResearchMessage } from \"@/components/assistant-ui/thread-research-presence\";\\n' +\n      'import "
+    },
+    {
+      "test": "the Studio-tools branch still asks for the hosted tools Studio cannot run",
+      "file": "hosted-image-tool-with-studio-tools.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/hosted-image-tool-with-studio-tools.test.ts:32:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "'the Studio-tools enabled_tools list moved'"
+    },
+    {
+      "test": "it does not ask the provider for the tools Studio is running locally",
+      "file": "hosted-image-tool-with-studio-tools.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/hosted-image-tool-with-studio-tools.test.ts:47:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "'the Studio-tools enabled_tools list moved'"
+    },
+    {
+      "test": "the sidebar hints render the bound chord, not the shipped default",
+      "file": "keyboard-shortcuts.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/keyboard-shortcuts.test.ts:324:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "|-\n    The expression evaluated to a falsy value:\n    \n      assert.ok(source.includes(\"{searchShortcutLabel && (\"))"
+    },
+    {
+      "test": "initialization waits for the saved locale catalog before committing it",
+      "file": "lazy-locale-loading.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/lazy-locale-loading.test.ts:68:1",
+      "category": "removed_locale",
+      "classification": "Contrato retirado: idiomas distintos de EN/ES",
+      "evidence": "|-\n    Expected \"actual\" to be strictly unequal to:\n    \n    'string'"
+    },
+    {
+      "test": "concurrent requests share one catalog load",
+      "file": "lazy-locale-loading.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/lazy-locale-loading.test.ts:82:1",
+      "category": "removed_locale",
+      "classification": "Contrato retirado: idiomas distintos de EN/ES",
+      "evidence": "'localeLoaders[locale] is not a function'"
+    },
+    {
+      "test": "concurrent language loads keep the latest selection",
+      "file": "lazy-locale-loading.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/lazy-locale-loading.test.ts:92:1",
+      "category": "removed_locale",
+      "classification": "Contrato retirado: idiomas distintos de EN/ES",
+      "evidence": "'localeLoaders[locale] is not a function'"
+    },
+    {
+      "test": "a selection is shown as pending and persisted only after loading",
+      "file": "lazy-locale-loading.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/lazy-locale-loading.test.ts:109:1",
+      "category": "removed_locale",
+      "classification": "Contrato retirado: idiomas distintos de EN/ES",
+      "evidence": "|-\n    Expected values to be strictly equal:\n    \n    'auto' !== 'ja'"
+    },
+    {
+      "test": "a failed selection keeps the active and persisted language",
+      "file": "lazy-locale-loading.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/lazy-locale-loading.test.ts:133:1",
+      "category": "removed_locale",
+      "classification": "Contrato retirado: idiomas distintos de EN/ES",
+      "evidence": "|-\n    Expected values to be strictly equal:\n    \n    'auto' !== 'ko'"
+    },
+    {
+      "test": "cancelling a pending selection prevents a late commit",
+      "file": "lazy-locale-loading.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/lazy-locale-loading.test.ts:149:1",
+      "category": "removed_locale",
+      "classification": "Contrato retirado: idiomas distintos de EN/ES",
+      "evidence": "|-\n    Expected values to be strictly equal:\n    \n    'auto' !== 'de'"
+    },
+    {
+      "test": "a browser language change cannot supersede a pending explicit choice",
+      "file": "lazy-locale-loading.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/lazy-locale-loading.test.ts:175:1",
+      "category": "removed_locale",
+      "classification": "Contrato retirado: idiomas distintos de EN/ES",
+      "evidence": "|-\n    Expected values to be strictly equal:\n    \n    null !== 'de'"
+    },
+    {
+      "test": "a catalog timeout preserves the preference and finishes later",
+      "file": "lazy-locale-loading.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/lazy-locale-loading.test.ts:235:1",
+      "category": "removed_locale",
+      "classification": "Contrato retirado: idiomas distintos de EN/ES",
+      "evidence": "|-\n    Expected values to be strictly equal:\n    \n    'auto' !== 'de'"
+    },
+    {
+      "test": "a late initial catalog cannot replace a newer language selection",
+      "file": "lazy-locale-loading.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/lazy-locale-loading.test.ts:265:1",
+      "category": "removed_locale",
+      "classification": "Contrato retirado: idiomas distintos de EN/ES",
+      "evidence": "|-\n    Expected values to be strictly equal:\n    \n    'en' !== 'it'"
+    },
+    {
+      "test": "a failed initial catalog falls back to English",
+      "file": "lazy-locale-loading.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/lazy-locale-loading.test.ts:290:1",
+      "category": "removed_locale",
+      "classification": "Contrato retirado: idiomas distintos de EN/ES",
+      "evidence": "|-\n    Expected values to be strictly equal:\n    \n    'auto' !== 'fr'"
+    },
+    {
+      "test": "a synchronous initial catalog failure preserves the preference",
+      "file": "lazy-locale-loading.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/lazy-locale-loading.test.ts:305:1",
+      "category": "removed_locale",
+      "classification": "Contrato retirado: idiomas distintos de EN/ES",
+      "evidence": "|-\n    Expected values to be strictly equal:\n    \n    'auto' !== 'ko'"
+    },
+    {
+      "test": "hydration adopts a preference whose catalog failed, rendering English",
+      "file": "lazy-locale-loading.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/lazy-locale-loading.test.ts:321:1",
+      "category": "removed_locale",
+      "classification": "Contrato retirado: idiomas distintos de EN/ES",
+      "evidence": "|-\n    Expected values to be strictly equal:\n    \n    'auto' !== 'de'"
+    },
+    {
+      "test": "a synchronous loader throw leaves an in-flight request pending",
+      "file": "lazy-locale-loading.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/lazy-locale-loading.test.ts:368:1",
+      "category": "removed_locale",
+      "classification": "Contrato retirado: idiomas distintos de EN/ES",
+      "evidence": "|-\n    Expected values to be strictly equal:\n    \n    'auto' !== 'fr'"
+    },
+    {
+      "test": "a cross-tab language change is adopted even when its catalog fails",
+      "file": "lazy-locale-loading.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/lazy-locale-loading.test.ts:393:1",
+      "category": "removed_locale",
+      "classification": "Contrato retirado: idiomas distintos de EN/ES",
+      "evidence": "|-\n    Expected values to be strictly equal:\n    \n    'auto' !== 'ru'"
+    },
+    {
+      "test": "the language menu shows the language in effect after a catalog failure",
+      "file": "lazy-locale-loading.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/lazy-locale-loading.test.ts:500:1",
+      "category": "removed_locale",
+      "classification": "Contrato retirado: idiomas distintos de EN/ES",
+      "evidence": "|-\n    Expected values to be strictly equal:\n    \n    'auto' !== 'de'"
+    },
+    {
+      "test": "accepting the fallback after a catalog failure is a real choice",
+      "file": "lazy-locale-loading.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/lazy-locale-loading.test.ts:523:1",
+      "category": "removed_locale",
+      "classification": "Contrato retirado: idiomas distintos de EN/ES",
+      "evidence": "|-\n    Expected values to be strictly equal:\n    \n    'auto' !== 'de'"
+    },
+    {
+      "test": "the language menu shows the preference once it is the one in effect",
+      "file": "lazy-locale-loading.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/lazy-locale-loading.test.ts:551:1",
+      "category": "removed_locale",
+      "classification": "Contrato retirado: idiomas distintos de EN/ES",
+      "evidence": "|-\n    Expected values to be strictly equal:\n    \n    'en' !== 'de'"
+    },
+    {
+      "test": "the language menu shows a pending choice while its catalog loads",
+      "file": "lazy-locale-loading.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/lazy-locale-loading.test.ts:574:1",
+      "category": "removed_locale",
+      "classification": "Contrato retirado: idiomas distintos de EN/ES",
+      "evidence": "|-\n    Expected values to be strictly equal:\n    \n    'auto' !== 'it'"
+    },
+    {
+      "test": "auto detection stays retryable when its detected catalog fails",
+      "file": "lazy-locale-loading.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/lazy-locale-loading.test.ts:588:1",
+      "category": "removed_locale",
+      "classification": "Contrato retirado: idiomas distintos de EN/ES",
+      "evidence": "|-\n    Expected values to be strictly equal:\n    \n    'en' !== 'de'"
+    },
+    {
+      "test": "a refreshed auto whose new catalog fails is still retryable",
+      "file": "lazy-locale-loading.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/lazy-locale-loading.test.ts:631:1",
+      "category": "removed_locale",
+      "classification": "Contrato retirado: idiomas distintos de EN/ES",
+      "evidence": "|-\n    Expected values to be strictly equal:\n    \n    'auto' !== ''"
+    },
+    {
+      "test": "a catalog that never settles does not hold the caller forever",
+      "file": "lazy-locale-loading.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/lazy-locale-loading.test.ts:685:1",
+      "category": "removed_locale",
+      "classification": "Contrato retirado: idiomas distintos de EN/ES",
+      "evidence": "|-\n    Expected values to be strictly equal:\n    \n    'auto' !== 'hi'"
+    },
+    {
+      "test": "a catalog that arrives after the timeout still commits",
+      "file": "lazy-locale-loading.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/lazy-locale-loading.test.ts:705:1",
+      "category": "removed_locale",
+      "classification": "Contrato retirado: idiomas distintos de EN/ES",
+      "evidence": "|-\n    Expected values to be strictly equal:\n    \n    'en' !== 'ar'"
+    },
+    {
+      "test": "a pick that names no bound of its own is still bounded",
+      "file": "lazy-locale-loading.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/lazy-locale-loading.test.ts:731:1",
+      "category": "removed_locale",
+      "classification": "Contrato retirado: idiomas distintos de EN/ES",
+      "evidence": "|-\n    Expected values to be strictly equal:\n    \n    'auto' !== 'ko'"
+    },
+    {
+      "test": "a timed out catalog is evicted so the next pick asks for it again",
+      "file": "lazy-locale-loading.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/lazy-locale-loading.test.ts:761:1",
+      "category": "removed_locale",
+      "classification": "Contrato retirado: idiomas distintos de EN/ES",
+      "evidence": "|-\n    Expected values to be strictly equal:\n    + actual - expected\n    \n    + 'applied'\n    - 'failed'"
+    },
+    {
+      "test": "a timed out startup catalog is evicted so the first pick asks for it again",
+      "file": "lazy-locale-loading.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/lazy-locale-loading.test.ts:797:1",
+      "category": "removed_locale",
+      "classification": "Contrato retirado: idiomas distintos de EN/ES",
+      "evidence": "|-\n    Expected values to be strictly equal:\n    + actual - expected\n    \n    + 'applied'\n    - 'failed'"
+    },
+    {
+      "test": "tests\\\\linked-folders-lease-gate.test.ts",
+      "file": "linked-folders-lease-gate.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/linked-folders-lease-gate.test.ts:1:1",
+      "category": "missing_contract",
+      "classification": "Archivo o export ausente tras la migración",
+      "evidence": "'test failed'"
+    },
+    {
+      "test": "hydration is not gated behind the advanced disclosure",
+      "file": "llama-extra-args-diagnostics.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/llama-extra-args-diagnostics.test.ts:625:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "|-\n    The input was expected to not match the regular expression /fetchLoadExtraArgs/. Input:\n    \n    'function ExtraArgsRow({\\r\\n' +\n      '  config,\\r\\n' +\n      '  update,\\r\\n' +\n      '  onLoadableChange,\\r\\n' +\n      '}: {\\r\\n' +\n      '  config: PerModelConfig;\\r\\n' +\n      '  update: (patch: Partial<PerModelConfig>) => void;\\r\\n' +\n      '  onLoadableChange: (loadable: boolean) => void;\\r\\n' +\n      '}) {\\r\\n' +\n      '  const t = useT();\\r\\n' +\n      '  const [catalog, setCatalog] = useState<LlamaFlagCatalog | null>(null);\\r\\n' +\n      '  // What is typed, which is not what is stored: the stored value is argv tokens, so\\r\\n' +\n     "
+    },
+    {
+      "test": "a background auto-load hydrates a server-only override",
+      "file": "llama-extra-args-panel-hydration.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/llama-extra-args-panel-hydration.test.ts:46:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "|-\n    The input did not match the regular expression /let resolvedExtraArgs = config\\.llamaExtraArgs;/. Input:\n    \n    '/**\\n' +\n      ' * Sparta Agent - Fachada Principal de Adaptador de Chat\\n' +\n      ' *\\n' +\n      ' * Este archivo actúa como punto de entrada y fachada de compatibilidad para el\\n' +\n      ' * módulo modularizado ubicado en `./chat-adapter/`.\\n' +\n      ' * Todos los componentes y utilidades han sido desacoplados respetando el Principio\\n' +\n      ' * de Responsabilidad Única (SRP) y Clean Code.\\n' +\n      ' */\\n' +\n      '\\n' +\n      'export * from \"./chat-adapter/index\";\\n'"
+    },
+    {
+      "test": "a collapsed section stops objecting once nothing is left to object to",
+      "file": "llama-extra-args-panel-hydration.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/llama-extra-args-panel-hydration.test.ts:83:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "|-\n    The input did not match the regular expression /setExtraArgsLoadable\\(true\\);\\n\\s*return;/. Input:\n    \n    '\\r\\n' +\n      'import { Button } from \"@/components/ui/button\";\\r\\n' +\n      'import { Checkbox } from \"@/components/ui/checkbox\";\\r\\n' +\n      'import { InfoHint } from \"@/components/ui/info-hint\";\\r\\n' +\n      'import {\\r\\n' +\n      '  Select,\\r\\n' +\n      '  SelectContent,\\r\\n' +\n      '  SelectItem,\\r\\n' +\n      '  SelectTrigger,\\r\\n' +\n      '  SelectValue,\\r\\n' +\n      '} from \"@/components/ui/select\";\\r\\n' +\n      'import { Slider } from \"@/components/ui/slider\";\\r\\n' +\n      'import { Switch } from \"@/components/ui/switc"
+    },
+    {
+      "test": "the hidden revalidation can only tighten the verdict",
+      "file": "llama-extra-args-panel-hydration.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/llama-extra-args-panel-hydration.test.ts:102:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "|-\n    The input did not match the regular expression /if \\(!loadable\\) \\{\\n\\s*setExtraArgsLoadable\\(false\\);/. Input:\n    \n    '\\r\\n' +\n      'import { Button } from \"@/components/ui/button\";\\r\\n' +\n      'import { Checkbox } from \"@/components/ui/checkbox\";\\r\\n' +\n      'import { InfoHint } from \"@/components/ui/info-hint\";\\r\\n' +\n      'import {\\r\\n' +\n      '  Select,\\r\\n' +\n      '  SelectContent,\\r\\n' +\n      '  SelectItem,\\r\\n' +\n      '  SelectTrigger,\\r\\n' +\n      '  SelectValue,\\r\\n' +\n      '} from \"@/components/ui/select\";\\r\\n' +\n      'import { Slider } from \"@/components/ui/slider\";\\r\\n' +\n      'import { Switch } from \"@/compon"
+    },
+    {
+      "test": "the hidden validation re-runs when the binary changes",
+      "file": "llama-extra-args-panel-hydration.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/llama-extra-args-panel-hydration.test.ts:116:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "|-\n    The input did not match the regular expression /hiddenCatalogEpoch,\\n\\s*\\]\\);/. Input:\n    \n    '\\r\\n' +\n      'import { Button } from \"@/components/ui/button\";\\r\\n' +\n      'import { Checkbox } from \"@/components/ui/checkbox\";\\r\\n' +\n      'import { InfoHint } from \"@/components/ui/info-hint\";\\r\\n' +\n      'import {\\r\\n' +\n      '  Select,\\r\\n' +\n      '  SelectContent,\\r\\n' +\n      '  SelectItem,\\r\\n' +\n      '  SelectTrigger,\\r\\n' +\n      '  SelectValue,\\r\\n' +\n      '} from \"@/components/ui/select\";\\r\\n' +\n      'import { Slider } from \"@/components/ui/slider\";\\r\\n' +\n      'import { Switch } from \"@/components/ui/switch\";\\r\\n' +\n "
+    },
+    {
+      "test": "a build that serves one slot does not raise the floor",
+      "file": "llama-extra-args-panel-hydration.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/llama-extra-args-panel-hydration.test.ts:149:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "|-\n    The input did not match the regular expression /if \\(limits\\?\\.parallelSlotsClamped\\) \\{\\n\\s*return 2;/. Input:\n    \n    '\\r\\n' +\n      'import { Button } from \"@/components/ui/button\";\\r\\n' +\n      'import { Checkbox } from \"@/components/ui/checkbox\";\\r\\n' +\n      'import { InfoHint } from \"@/components/ui/info-hint\";\\r\\n' +\n      'import {\\r\\n' +\n      '  Select,\\r\\n' +\n      '  SelectContent,\\r\\n' +\n      '  SelectItem,\\r\\n' +\n      '  SelectTrigger,\\r\\n' +\n      '  SelectValue,\\r\\n' +\n      '} from \"@/components/ui/select\";\\r\\n' +\n      'import { Slider } from \"@/components/ui/slider\";\\r\\n' +\n      'import { Switch } from \"@/compon"
+    },
+    {
+      "test": "an auto-load records what it launched with",
+      "file": "llama-extra-args-panel-hydration.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/llama-extra-args-panel-hydration.test.ts:165:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "|-\n    The input did not match the regular expression /loadedLlamaExtraArgs:\\s*\\n?\\s*loadResp\\.requested_llama_extra_args !== undefined/. Input:\n    \n    '/**\\n' +\n      ' * Sparta Agent - Fachada Principal de Adaptador de Chat\\n' +\n      ' *\\n' +\n      ' * Este archivo actúa como punto de entrada y fachada de compatibilidad para el\\n' +\n      ' * módulo modularizado ubicado en `./chat-adapter/`.\\n' +\n      ' * Todos los componentes y utilidades han sido desacoplados respetando el Principio\\n' +\n      ' * de Responsabilidad Única (SRP) y Clean Code.\\n' +\n      ' */\\n' +\n      '\\n' +\n      'export * from \"./chat-adapter/index\";\\n'"
+    },
+    {
+      "test": "a stored empty list hydrates as a clear, not as nothing stored",
+      "file": "llama-extra-args-panel-hydration.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/llama-extra-args-panel-hydration.test.ts:185:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "|-\n    The input did not match the regular expression /\\} else if \\(stored\\.explicit\\) \\{/. Input:\n    \n    '/**\\n' +\n      ' * Sparta Agent - Fachada Principal de Adaptador de Chat\\n' +\n      ' *\\n' +\n      ' * Este archivo actúa como punto de entrada y fachada de compatibilidad para el\\n' +\n      ' * módulo modularizado ubicado en `./chat-adapter/`.\\n' +\n      ' * Todos los componentes y utilidades han sido desacoplados respetando el Principio\\n' +\n      ' * de Responsabilidad Única (SRP) y Clean Code.\\n' +\n      ' */\\n' +\n      '\\n' +\n      'export * from \"./chat-adapter/index\";\\n'"
+    },
+    {
+      "test": "a launch that only applies the remembered config still carries its arguments",
+      "file": "llama-extra-args-panel-hydration.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/llama-extra-args-panel-hydration.test.ts:203:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "|-\n    The input did not match the regular expression /const remembered = rememberedConfigFor\\(selection\\);/. Input:\n    \n    '\\r\\n' +\n      'import {\\r\\n' +\n      '  applyModelLoadConfigToRuntime,\\r\\n' +\n      '  currentRuntimePerModelConfig,\\r\\n' +\n      '  type DeletedModelRef,\\r\\n' +\n      '  type ExternalConnectionRef,\\r\\n' +\n      '  type ExternalModelOption,\\r\\n' +\n      '  type LoraModelOption,\\r\\n' +\n      '  missingExternalModel,\\r\\n' +\n      '  type ModelOption,\\r\\n' +\n      '  ModelSelector,\\r\\n' +\n      '  type ModelSelectorChangeMeta,\\r\\n' +\n      '  type PerModelConfig,\\r\\n' +\n      '  resolveInitialConfig,\\r\\n' +\n      '  Side"
+    },
+    {
+      "test": "the Memory recipe row renders on an offload with no memory mode",
+      "file": "loaded-build-panel-rows.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/loaded-build-panel-rows.test.ts:19:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "'the Memory row must render when EITHER field conveys placement'"
+    },
+    {
+      "test": "sd.cpp attention is not reported as Native SDPA",
+      "file": "loaded-build-panel-rows.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/loaded-build-panel-rows.test.ts:29:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "'the fallback must distinguish the native engine before naming SDPA'"
+    },
+    {
+      "test": "tests\\\\loaded-models-backcompat.test.ts",
+      "file": "loaded-models-backcompat.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/loaded-models-backcompat.test.ts:1:1",
+      "category": "missing_contract",
+      "classification": "Archivo o export ausente tras la migración",
+      "evidence": "'test failed'"
+    },
+    {
+      "test": "tests\\\\loaded-models-platform-matrix.test.ts",
+      "file": "loaded-models-platform-matrix.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/loaded-models-platform-matrix.test.ts:1:1",
+      "category": "missing_contract",
+      "classification": "Archivo o export ausente tras la migración",
+      "evidence": "'test failed'"
+    },
+    {
+      "test": "tests\\\\loaded-models-sources.test.ts",
+      "file": "loaded-models-sources.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/loaded-models-sources.test.ts:1:1",
+      "category": "missing_contract",
+      "classification": "Archivo o export ausente tras la migración",
+      "evidence": "'test failed'"
+    },
+    {
+      "test": "mac chat and media headers share the lowered control row",
+      "file": "mac-titlebar-optical-alignment.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/mac-titlebar-optical-alignment.test.ts:24:1",
+      "category": "missing_contract",
+      "classification": "Archivo o export ausente tras la migración",
+      "evidence": "\"ENOENT: no such file or directory, open 'D:\\\\sparta-agent\\\\desktop\\\\frontend-spartan\\\\src\\\\features\\\\video\\\\video-page.tsx'\""
+    },
+    {
+      "test": "tests\\\\media-eject-busy-state.test.ts",
+      "file": "media-eject-busy-state.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/media-eject-busy-state.test.ts:1:1",
+      "category": "missing_contract",
+      "classification": "Archivo o export ausente tras la migración",
+      "evidence": "'test failed'"
+    },
+    {
+      "test": "tests\\\\media-generation-preset-claims.test.ts",
+      "file": "media-generation-preset-claims.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/media-generation-preset-claims.test.ts:1:1",
+      "category": "missing_contract",
+      "classification": "Archivo o export ausente tras la migración",
+      "evidence": "'test failed'"
+    },
+    {
+      "test": "tests\\\\media-idle-unload-api-only.test.ts",
+      "file": "media-idle-unload-api-only.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/media-idle-unload-api-only.test.ts:1:1",
+      "category": "missing_contract",
+      "classification": "Archivo o export ausente tras la migración",
+      "evidence": "'test failed'"
+    },
+    {
+      "test": "tests\\\\media-load-cancel.test.ts",
+      "file": "media-load-cancel.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/media-load-cancel.test.ts:1:1",
+      "category": "missing_contract",
+      "classification": "Archivo o export ausente tras la migración",
+      "evidence": "'test failed'"
+    },
+    {
+      "test": "the video page lets only the newest status read write",
+      "file": "media-status-sequencing.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/media-status-sequencing.test.ts:27:3",
+      "category": "missing_contract",
+      "classification": "Archivo o export ausente tras la migración",
+      "evidence": "\"ENOENT: no such file or directory, open 'D:\\\\sparta-agent\\\\desktop\\\\frontend-spartan\\\\src\\\\features\\\\video\\\\video-page.tsx'\""
+    },
+    {
+      "test": "the video page claims its ticket before awaiting, not after",
+      "file": "media-status-sequencing.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/media-status-sequencing.test.ts:53:3",
+      "category": "missing_contract",
+      "classification": "Archivo o export ausente tras la migración",
+      "evidence": "\"ENOENT: no such file or directory, open 'D:\\\\sparta-agent\\\\desktop\\\\frontend-spartan\\\\src\\\\features\\\\video\\\\video-page.tsx'\""
+    },
+    {
+      "test": "attachment and send gates forward projector fallback state",
+      "file": "mmproj-fallback.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/mmproj-fallback.test.ts:86:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "'Missing source marker: const imageGateReason = getImageInputUnavailableReason({'"
+    },
+    {
+      "test": "the picker's droppable formats match the native path policy",
+      "file": "native-drop-targets.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/native-drop-targets.test.ts:176:1",
+      "category": "missing_contract",
+      "classification": "Archivo o export ausente tras la migración",
+      "evidence": "\"ENOENT: no such file or directory, open 'D:\\\\sparta-agent\\\\desktop\\\\src-tauri\\\\src\\\\native_path_policy.rs'\""
+    },
+    {
+      "test": "only the two padded routes require a payload",
+      "file": "padded-response.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/padded-response.test.ts:53:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "|-\n    Expected values to be strictly deep-equal:\n    + actual - expected\n    \n    + []\n    - [\n    -   'Model load',\n    -   'Model unload'\n    - ]"
+    },
+    {
+      "test": "a remembered budget is capped by a non-GGUF load",
+      "file": "per-model-params-hydration.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/per-model-params-hydration.test.ts:553:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "|-\n    The input did not match the regular expression /\\? \\(loadResp\\.context_length \\?\\? undefined\\)\\s*: effectiveMaxSeqLength,/. Input:\n    \n    '/**\\n' +\n      ' * Sparta Agent - Fachada Principal de Adaptador de Chat\\n' +\n      ' *\\n' +\n      ' * Este archivo actúa como punto de entrada y fachada de compatibilidad para el\\n' +\n      ' * módulo modularizado ubicado en `./chat-adapter/`.\\n' +\n      ' * Todos los componentes y utilidades han sido desacoplados respetando el Principio\\n' +\n      ' * de Responsabilidad Única (SRP) y Clean Code.\\n' +\n      ' */\\n' +\n      '\\n' +\n      'export * from \"./chat-adapter/index\";\\n'"
+    },
+    {
+      "test": "tests\\\\pr9057-video-simulation.test.ts",
+      "file": "pr9057-video-simulation.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/pr9057-video-simulation.test.ts:1:1",
+      "category": "missing_contract",
+      "classification": "Archivo o export ausente tras la migración",
+      "evidence": "'test failed'"
+    },
+    {
+      "test": "every load and status writer resolves rather than taking the raw default",
+      "file": "preserve-thinking-user-preference.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/preserve-thinking-user-preference.test.ts:93:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "'../src/features/chat/api/chat-adapter.ts'"
+    },
+    {
+      "test": "the run keeps the project it started in",
+      "file": "project-attachment-target-adoption.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/project-attachment-target-adoption.test.ts:135:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "'captured before the first await'"
+    },
+    {
+      "test": "the project composer's choice survives the swap to a thread",
+      "file": "project-attachment-target-adoption.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/project-attachment-target-adoption.test.ts:238:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "|-\n    The input did not match the regular expression /\\{pendingNewThreadId \\? \\(/. Input:\n    \n    '\\r\\n' +\n      'import {\\r\\n' +\n      '  applyModelLoadConfigToRuntime,\\r\\n' +\n      '  currentRuntimePerModelConfig,\\r\\n' +\n      '  type DeletedModelRef,\\r\\n' +\n      '  type ExternalConnectionRef,\\r\\n' +\n      '  type ExternalModelOption,\\r\\n' +\n      '  type LoraModelOption,\\r\\n' +\n      '  missingExternalModel,\\r\\n' +\n      '  type ModelOption,\\r\\n' +\n      '  ModelSelector,\\r\\n' +\n      '  type ModelSelectorChangeMeta,\\r\\n' +\n      '  type PerModelConfig,\\r\\n' +\n      '  resolveInitialConfig,\\r\\n' +\n      '  SidebarModelConfig,\\r\\n' +\n   "
+    },
+    {
+      "test": "the reply is saved to its own thread's project, not the selected one",
+      "file": "project-source-reply-destination.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/project-source-reply-destination.test.ts:30:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "'the reply action is gone or was renamed'"
+    },
+    {
+      "test": "a thread with no project is refused rather than sent somewhere",
+      "file": "project-source-reply-destination.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/project-source-reply-destination.test.ts:48:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "'the reply action is gone or was renamed'"
+    },
+    {
+      "test": "the thread id is resolved before the menu can close",
+      "file": "project-source-reply-destination.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/project-source-reply-destination.test.ts:56:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "'the reply action is gone or was renamed'"
+    },
+    {
+      "test": "the item is only rendered while a project is selected",
+      "file": "project-source-reply-destination.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/project-source-reply-destination.test.ts:75:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "'the reply action is offered outside a project'"
+    },
+    {
+      "test": "the reply action saves through this conversion",
+      "file": "project-source-reply-markdown.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/project-source-reply-markdown.test.ts:85:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "'the reply action is gone or was renamed'"
+    },
+    {
+      "test": "all max-output cap callers pass the selected connection override",
+      "file": "provider-max-output-tokens.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/provider-max-output-tokens.test.ts:13:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "|-\n    The input did not match the regular expression /getExternalMaxOutputTokens\\([\\s\\S]*?externalProvider\\?\\.maxOutputTokens/. Input:\n    \n    '/**\\n' +\n      ' * Sparta Agent - Fachada Principal de Adaptador de Chat\\n' +\n      ' *\\n' +\n      ' * Este archivo actúa como punto de entrada y fachada de compatibilidad para el\\n' +\n      ' * módulo modularizado ubicado en `./chat-adapter/`.\\n' +\n      ' * Todos los componentes y utilidades han sido desacoplados respetando el Principio\\n' +\n      ' * de Responsabilidad Única (SRP) y Clean Code.\\n' +\n      ' */\\n' +\n      '\\n' +\n      'export * from \"./chat-adapter/index\";\\n'"
+    },
+    {
+      "test": "the sidebar gates Train and Video on a measured verdict",
+      "file": "provisional-hardware-verdict.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/provisional-hardware-verdict.test.ts:345:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "'the rows still read chatOnly directly, so the UA guess disables them'"
+    },
+    {
+      "test": "the route guard waits out an unknown verdict on Train and Video",
+      "file": "provisional-hardware-verdict.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/provisional-hardware-verdict.test.ts:377:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "'/video is still redirected on the guess'"
+    },
+    {
+      "test": "the Video page gates on the backend's own capability answer",
+      "file": "provisional-hardware-verdict.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/provisional-hardware-verdict.test.ts:403:1",
+      "category": "missing_contract",
+      "classification": "Archivo o export ausente tras la migración",
+      "evidence": "\"ENOENT: no such file or directory, open 'D:\\\\sparta-agent\\\\desktop\\\\frontend-spartan\\\\src\\\\features\\\\video\\\\video-page.tsx'\""
+    },
+    {
+      "test": "the Video row is disabled exactly when the hint has something to say",
+      "file": "provisional-hardware-verdict.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/provisional-hardware-verdict.test.ts:477:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "'the Video hint no longer comes from the shared derivation'"
+    },
+    {
+      "test": "all four copies of the gate pattern stay in sync",
+      "file": "qwen-thinking-size-gate.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/qwen-thinking-size-gate.test.ts:81:1",
+      "category": "missing_contract",
+      "classification": "Archivo o export ausente tras la migración",
+      "evidence": "\"ENOENT: no such file or directory, open 'D:\\\\sparta-agent\\\\desktop\\\\backend\\\\core\\\\inference\\\\llama_cpp.py'\""
+    },
+    {
+      "test": "a queued prompt is not held forever by a probe that can never succeed",
+      "file": "rag-availability-marker.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/rag-availability-marker.test.ts:309:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "'targetHasIndexingDocuments is gone or was renamed'"
+    },
+    {
+      "test": "a background prompt queue checks the project it will send to",
+      "file": "rag-refresh-sequencing.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/rag-refresh-sequencing.test.ts:806:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "|-\n    The input did not match the regular expression /\\? await resolveProjectId\\(threadId, undefined, \\{/. Input:\n    \n    'import {\\n' +\n      '  ComposerAttachments,\\n' +\n      '  UserMessageAttachments,\\n' +\n      '} from \"@/components/assistant-ui/attachment\";\\n' +\n      'import {\\n' +\n      '  GeneratedImageOverlayProvider,\\n' +\n      '  useGeneratedImageOverlay,\\n' +\n      '} from \"@/components/assistant-ui/generated-image-overlay-context\";\\n' +\n      'import { downloadImagePart } from \"@/components/assistant-ui/image\";\\n' +\n      'import { threadHasResearchMessage } from \"@/components/assistant-ui/thread-research-presence\";\\n' +\n     "
+    },
+    {
+      "test": "a queue in a chat with no row still waits on its project",
+      "file": "rag-refresh-sequencing.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/rag-refresh-sequencing.test.ts:831:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "|-\n    The input did not match the regular expression /const queueProjectId = item\\.target\\.getQueueProjectId\\(\\);\\s*const projectId = threadId\\s*\\?\\s*await resolveProjectId\\(threadId, undefined, \\{\\s*rethrowReadFailure: true,\\s*composerProjectId: queueProjectId,\\s*\\}\\)\\s*:\\s*queueProjectId;/. Input:\n    \n    'import {\\n' +\n      '  ComposerAttachments,\\n' +\n      '  UserMessageAttachments,\\n' +\n      '} from \"@/components/assistant-ui/attachment\";\\n' +\n      'import {\\n' +\n      '  GeneratedImageOverlayProvider,\\n' +\n      '  useGeneratedImageOverlay,\\n' +\n      '} from \"@/components/assistant-ui/generated-image-overlay-context\";\\n' +\n      "
+    },
+    {
+      "test": "a failed row read holds a queued prompt instead of releasing it",
+      "file": "rag-refresh-sequencing.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/rag-refresh-sequencing.test.ts:899:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "|-\n    The input did not match the regular expression /opts\\?: \\{ rethrowReadFailure\\?: boolean;/. Input:\n    \n    '/**\\n' +\n      ' * Sparta Agent - Fachada Principal de Adaptador de Chat\\n' +\n      ' *\\n' +\n      ' * Este archivo actúa como punto de entrada y fachada de compatibilidad para el\\n' +\n      ' * módulo modularizado ubicado en `./chat-adapter/`.\\n' +\n      ' * Todos los componentes y utilidades han sido desacoplados respetando el Principio\\n' +\n      ' * de Responsabilidad Única (SRP) y Clean Code.\\n' +\n      ' */\\n' +\n      '\\n' +\n      'export * from \"./chat-adapter/index\";\\n'"
+    },
+    {
+      "test": "a knowledge-base queue does not wait on project sources",
+      "file": "rag-refresh-sequencing.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/rag-refresh-sequencing.test.ts:928:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "|-\n    The input did not match the regular expression /if \\(item\\.target\\.usesKnowledgeBase\\) \\{\\s*return false;\\s*\\}[\\s\\S]{0,900}?const projectId = threadId/. Input:\n    \n    'import {\\n' +\n      '  ComposerAttachments,\\n' +\n      '  UserMessageAttachments,\\n' +\n      '} from \"@/components/assistant-ui/attachment\";\\n' +\n      'import {\\n' +\n      '  GeneratedImageOverlayProvider,\\n' +\n      '  useGeneratedImageOverlay,\\n' +\n      '} from \"@/components/assistant-ui/generated-image-overlay-context\";\\n' +\n      'import { downloadImagePart } from \"@/components/assistant-ui/image\";\\n' +\n      'import { threadHasResearchMessage } from \"@/component"
+    },
+    {
+      "test": "a queue with no row yet falls back to its own project, not the store",
+      "file": "rag-refresh-sequencing.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/rag-refresh-sequencing.test.ts:982:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "|-\n    The input did not match the regular expression /opts\\?: \\{ rethrowReadFailure\\?: boolean; composerProjectId\\?: string \\| null \\}/. Input:\n    \n    '/**\\n' +\n      ' * Sparta Agent - Fachada Principal de Adaptador de Chat\\n' +\n      ' *\\n' +\n      ' * Este archivo actúa como punto de entrada y fachada de compatibilidad para el\\n' +\n      ' * módulo modularizado ubicado en `./chat-adapter/`.\\n' +\n      ' * Todos los componentes y utilidades han sido desacoplados respetando el Principio\\n' +\n      ' * de Responsabilidad Única (SRP) y Clean Code.\\n' +\n      ' */\\n' +\n      '\\n' +\n      'export * from \"./chat-adapter/index\";\\n'"
+    },
+    {
+      "test": "tests\\\\read-aloud-tts-model-row.test.ts",
+      "file": "read-aloud-tts-model-row.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/read-aloud-tts-model-row.test.ts:1:1",
+      "category": "missing_contract",
+      "classification": "Archivo o export ausente tras la migración",
+      "evidence": "'test failed'"
+    },
+    {
+      "test": "chat-page derives the research pane from strings",
+      "file": "research-render-budget.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/research-render-budget.test.ts:38:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "|-\n    The input did not match the regular expression /state\\.sessions\\[openResearchRunId\\]\\?\\.run\\.threadId/. Input:\n    \n    '\\r\\n' +\n      'import {\\r\\n' +\n      '  applyModelLoadConfigToRuntime,\\r\\n' +\n      '  currentRuntimePerModelConfig,\\r\\n' +\n      '  type DeletedModelRef,\\r\\n' +\n      '  type ExternalConnectionRef,\\r\\n' +\n      '  type ExternalModelOption,\\r\\n' +\n      '  type LoraModelOption,\\r\\n' +\n      '  missingExternalModel,\\r\\n' +\n      '  type ModelOption,\\r\\n' +\n      '  ModelSelector,\\r\\n' +\n      '  type ModelSelectorChangeMeta,\\r\\n' +\n      '  type PerModelConfig,\\r\\n' +\n      '  resolveInitialConfig,\\r\\n' +\n      '  Sid"
+    },
+    {
+      "test": "a failed history read is reported, not mistaken for a chat that ran no tools",
+      "file": "sandbox-reveal-path.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/sandbox-reveal-path.test.ts:105:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "'the read block moved'"
+    },
+    {
+      "test": "the legacy probe runs only for a chat now inside a project",
+      "file": "sandbox-reveal-path.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/sandbox-reveal-path.test.ts:155:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "|-\n    The expression evaluated to a falsy value:\n    \n      assert.ok(block.includes(\"distinct.length === 0 && item.projectId\"))"
+    },
+    {
+      "test": "a sandbox tool result is wrapped even when it carries no envelope",
+      "file": "sandbox-reveal-path.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/sandbox-reveal-path.test.ts:166:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "'the sandbox result branch moved'"
+    },
+    {
+      "test": "both Data tab fine-tuning actions defer their workflow import",
+      "file": "settings-finetune-action-loading.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/settings-finetune-action-loading.test.ts:16:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "|-\n    Expected values to be strictly equal:\n    \n    1 !== 2"
+    },
+    {
+      "test": "a non-string model is refused rather than handed to the tab",
+      "file": "settings-panel-prefs.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/settings-panel-prefs.test.ts:75:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "|-\n    Expected values to be strictly equal:\n    \n    'recipes' !== 'train'"
+    },
+    {
+      "test": "an unreadable record leaves the defaults",
+      "file": "settings-panel-prefs.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/settings-panel-prefs.test.ts:197:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "|-\n    Expected values to be strictly equal:\n    \n    'recipes' !== 'train'"
+    },
+    {
+      "test": "tests\\\\settings-search.test.ts",
+      "file": "settings-search.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/settings-search.test.ts:1:1",
+      "category": "missing_contract",
+      "classification": "Archivo o export ausente tras la migración",
+      "evidence": "'test failed'"
+    },
+    {
+      "test": "desktop branding clears the titlebar actions",
+      "file": "sidebar-action-rows-inert.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/sidebar-action-rows-inert.test.ts:53:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "|-\n    The input did not match the regular expression /shrink-0 p-0 pt-\\[calc\\(var\\(--studio-desktop-titlebar-height,34px\\)\\+17px\\)\\]/. Input:\n    \n    'import {\\n' +\n      '  Sidebar,\\n' +\n      '  SidebarContent,\\n' +\n      '  SidebarFooter,\\n' +\n      '  SidebarGroup,\\n' +\n      '  SidebarGroupContent,\\n' +\n      '  SidebarGroupLabel,\\n' +\n      '  SidebarHeader,\\n' +\n      '  SidebarMenu,\\n' +\n      '  SidebarMenuButton,\\n' +\n      '  SidebarMenuItem,\\n' +\n      '  useSidebar,\\n' +\n      '} from \"@/components/ui/sidebar\";\\n' +\n      'import {\\n' +\n      '  Collapsible,\\n' +\n      '  CollapsibleContent,\\n' +\n      '  CollapsibleTrigger,\\n'"
+    },
+    {
+      "test": "footer profile sits 11px above the sidebar edge",
+      "file": "sidebar-action-rows-inert.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/sidebar-action-rows-inert.test.ts:66:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "|-\n    The input did not match the regular expression /relative pb-\\[11px\\] group-data-\\[collapsible=icon\\]:px-0/. Input:\n    \n    'import {\\n' +\n      '  Sidebar,\\n' +\n      '  SidebarContent,\\n' +\n      '  SidebarFooter,\\n' +\n      '  SidebarGroup,\\n' +\n      '  SidebarGroupContent,\\n' +\n      '  SidebarGroupLabel,\\n' +\n      '  SidebarHeader,\\n' +\n      '  SidebarMenu,\\n' +\n      '  SidebarMenuButton,\\n' +\n      '  SidebarMenuItem,\\n' +\n      '  useSidebar,\\n' +\n      '} from \"@/components/ui/sidebar\";\\n' +\n      'import {\\n' +\n      '  Collapsible,\\n' +\n      '  CollapsibleContent,\\n' +\n      '  CollapsibleTrigger,\\n' +\n      '} from \"@/c"
+    },
+    {
+      "test": "every sidebar row pill sits in one shared box",
+      "file": "sidebar-action-rows-inert.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/sidebar-action-rows-inert.test.ts:74:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "|-\n    Expected values to be strictly equal:\n    \n    4 !== 5"
+    },
+    {
+      "test": "the sidebar list measures its scroll rail",
+      "file": "sidebar-action-rows-inert.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/sidebar-action-rows-inert.test.ts:95:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "|-\n    The input did not match the regular expression /ref=\\{attachScroller\\}/. Input:\n    \n    'import {\\n' +\n      '  Sidebar,\\n' +\n      '  SidebarContent,\\n' +\n      '  SidebarFooter,\\n' +\n      '  SidebarGroup,\\n' +\n      '  SidebarGroupContent,\\n' +\n      '  SidebarGroupLabel,\\n' +\n      '  SidebarHeader,\\n' +\n      '  SidebarMenu,\\n' +\n      '  SidebarMenuButton,\\n' +\n      '  SidebarMenuItem,\\n' +\n      '  useSidebar,\\n' +\n      '} from \"@/components/ui/sidebar\";\\n' +\n      'import {\\n' +\n      '  Collapsible,\\n' +\n      '  CollapsibleContent,\\n' +\n      '  CollapsibleTrigger,\\n' +\n      '} from \"@/components/ui/collapsible\";\\n' +\n   "
+    },
+    {
+      "test": "the backend sidebar nav defaults match the frontend",
+      "file": "sidebar-nav-backend-parity.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/sidebar-nav-backend-parity.test.ts:11:1",
+      "category": "missing_contract",
+      "classification": "Archivo o export ausente tras la migración",
+      "evidence": "\"ENOENT: no such file or directory, open 'D:\\\\sparta-agent\\\\desktop\\\\backend\\\\routes\\\\settings.py'\""
+    },
+    {
+      "test": "Train and Video are still the capability-gated rows",
+      "file": "sidebar-nav-backend-parity.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/sidebar-nav-backend-parity.test.ts:30:1",
+      "category": "missing_contract",
+      "classification": "Archivo o export ausente tras la migración",
+      "evidence": "\"ENOENT: no such file or directory, open 'D:\\\\sparta-agent\\\\desktop\\\\backend\\\\routes\\\\settings.py'\""
+    },
+    {
+      "test": "a customized version-5 sidebar keeps its order and only gains Audio",
+      "file": "sidebar-nav-migration.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/sidebar-nav-migration.test.ts:83:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "|-\n    Expected values to be strictly deep-equal:\n    + actual - expected\n    \n      [\n        'projects',\n        'hub',\n        'images',\n    -   'video',\n        'recipes',\n        'export',\n        'api',\n        'audio'\n      ]"
+    },
+    {
+      "test": "an install sitting on the version-6 default picks Video up",
+      "file": "sidebar-nav-migration.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/sidebar-nav-migration.test.ts:118:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "|-\n    Expected values to be strictly deep-equal:\n    + actual - expected\n    \n      [\n        'hub',\n        'projects',\n        'images',\n    -   'video'\n      ]"
+    },
+    {
+      "test": "the bottom fade re-measures on every row-count input",
+      "file": "sidebar-scroll-fade-deps.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/sidebar-scroll-fade-deps.test.ts:11:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "'runItems.length is missing from the bottom-fade deps, so the fade goes stale when it changes'"
+    },
+    {
+      "test": "folder rows select too, and open their own bulk menu",
+      "file": "sidebar-selection-coverage.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/sidebar-selection-coverage.test.ts:28:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "|-\n    The input did not match the regular expression /handleProjectSelectionClick\\(event, project\\.id\\)/. Input:\n    \n    'import {\\n' +\n      '  Sidebar,\\n' +\n      '  SidebarContent,\\n' +\n      '  SidebarFooter,\\n' +\n      '  SidebarGroup,\\n' +\n      '  SidebarGroupContent,\\n' +\n      '  SidebarGroupLabel,\\n' +\n      '  SidebarHeader,\\n' +\n      '  SidebarMenu,\\n' +\n      '  SidebarMenuButton,\\n' +\n      '  SidebarMenuItem,\\n' +\n      '  useSidebar,\\n' +\n      '} from \"@/components/ui/sidebar\";\\n' +\n      'import {\\n' +\n      '  Collapsible,\\n' +\n      '  CollapsibleContent,\\n' +\n      '  CollapsibleTrigger,\\n' +\n      '} from \"@/component"
+    },
+    {
+      "test": "picking one kind of row drops the other",
+      "file": "sidebar-selection-coverage.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/sidebar-selection-coverage.test.ts:44:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "'no handleSelectionClick'"
+    },
+    {
+      "test": "a right-click drops the other kind even on an already-selected row",
+      "file": "sidebar-selection-coverage.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/sidebar-selection-coverage.test.ts:62:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "'no selectForContextMenu'"
+    },
+    {
+      "test": "dropping a selection clears its anchor too",
+      "file": "sidebar-selection-coverage.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/sidebar-selection-coverage.test.ts:83:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "|-\n    The input did not match the regular expression /const dropChatSelection = useCallback\\(\\(\\) => \\{\\s*selectionAnchorRef\\.current = null;/. Input:\n    \n    'import {\\n' +\n      '  Sidebar,\\n' +\n      '  SidebarContent,\\n' +\n      '  SidebarFooter,\\n' +\n      '  SidebarGroup,\\n' +\n      '  SidebarGroupContent,\\n' +\n      '  SidebarGroupLabel,\\n' +\n      '  SidebarHeader,\\n' +\n      '  SidebarMenu,\\n' +\n      '  SidebarMenuButton,\\n' +\n      '  SidebarMenuItem,\\n' +\n      '  useSidebar,\\n' +\n      '} from \"@/components/ui/sidebar\";\\n' +\n      'import {\\n' +\n      '  Collapsible,\\n' +\n      '  CollapsibleContent,\\n' +\n      '  CollapsibleTr"
+    },
+    {
+      "test": "nav and Recents spinners land on one trailing column",
+      "file": "sidebar-spinner-column.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/sidebar-spinner-column.test.ts:22:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "'could not find NavItem spinner in app-sidebar.tsx'"
+    },
+    {
+      "test": "a working Recents row clears the kebab on hover",
+      "file": "sidebar-spinner-column.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/sidebar-spinner-column.test.ts:63:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "'could not find the showWorkSpinner padding branch in app-sidebar.tsx'"
+    },
+    {
+      "test": "the expanded row and the flyout both show a pending tooltip",
+      "file": "sidebar-spinner-column.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/sidebar-spinner-column.test.ts:152:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "'MoreMenuItem drops a pending title'"
+    },
+    {
+      "test": "capability rows carry a pending tooltip",
+      "file": "sidebar-spinner-column.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/sidebar-spinner-column.test.ts:177:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "'the video row spins without saying why'"
+    },
+    {
+      "test": "rows that reorder can open their menu on touch",
+      "file": "sidebar-touch-reorder.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/sidebar-touch-reorder.test.ts:37:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "'no button renders aria-label=\"Project options\"'"
+    },
+    {
+      "test": "the unread dot is grey",
+      "file": "sidebar-unread-dot.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/sidebar-unread-dot.test.ts:14:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "|-\n    The input did not match the regular expression /size-2 rounded-full bg-muted-foreground\\/60/. Input:\n    \n    'import {\\n' +\n      '  Sidebar,\\n' +\n      '  SidebarContent,\\n' +\n      '  SidebarFooter,\\n' +\n      '  SidebarGroup,\\n' +\n      '  SidebarGroupContent,\\n' +\n      '  SidebarGroupLabel,\\n' +\n      '  SidebarHeader,\\n' +\n      '  SidebarMenu,\\n' +\n      '  SidebarMenuButton,\\n' +\n      '  SidebarMenuItem,\\n' +\n      '  useSidebar,\\n' +\n      '} from \"@/components/ui/sidebar\";\\n' +\n      'import {\\n' +\n      '  Collapsible,\\n' +\n      '  CollapsibleContent,\\n' +\n      '  CollapsibleTrigger,\\n' +\n      '} from \"@/components/ui/c"
+    },
+    {
+      "test": "training run status dots are untouched",
+      "file": "sidebar-unread-dot.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/sidebar-unread-dot.test.ts:25:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "|-\n    The input did not match the regular expression /runStatusDotClass\\(run\\.status\\)/. Input:\n    \n    'import {\\n' +\n      '  Sidebar,\\n' +\n      '  SidebarContent,\\n' +\n      '  SidebarFooter,\\n' +\n      '  SidebarGroup,\\n' +\n      '  SidebarGroupContent,\\n' +\n      '  SidebarGroupLabel,\\n' +\n      '  SidebarHeader,\\n' +\n      '  SidebarMenu,\\n' +\n      '  SidebarMenuButton,\\n' +\n      '  SidebarMenuItem,\\n' +\n      '  useSidebar,\\n' +\n      '} from \"@/components/ui/sidebar\";\\n' +\n      'import {\\n' +\n      '  Collapsible,\\n' +\n      '  CollapsibleContent,\\n' +\n      '  CollapsibleTrigger,\\n' +\n      '} from \"@/components/ui/collapsible\""
+    },
+    {
+      "test": "Tauri detail toggles put a custom down chevron after their labels",
+      "file": "tauri-details-toggle.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/tauri-details-toggle.test.ts:23:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "'Show installation details toggle is missing'"
+    },
+    {
+      "test": "the render prop is built once, at module scope",
+      "file": "thread-delete-render-budget.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/thread-delete-render-budget.test.ts:40:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "|-\n    The input did not match the regular expression /^const renderThreadMessage = proplessSlot\\(ThreadMessage\\);$/m. Input:\n    \n    'import {\\n' +\n      '  ComposerAttachments,\\n' +\n      '  UserMessageAttachments,\\n' +\n      '} from \"@/components/assistant-ui/attachment\";\\n' +\n      'import {\\n' +\n      '  GeneratedImageOverlayProvider,\\n' +\n      '  useGeneratedImageOverlay,\\n' +\n      '} from \"@/components/assistant-ui/generated-image-overlay-context\";\\n' +\n      'import { downloadImagePart } from \"@/components/assistant-ui/image\";\\n' +\n      'import { threadHasResearchMessage } from \"@/components/assistant-ui/thread-research-presence\";"
+    },
+    {
+      "test": "ThreadMessage sends each kind to the component that names it",
+      "file": "thread-delete-render-budget.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/thread-delete-render-budget.test.ts:50:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "'thread.tsx no longer contains const ThreadMessage: FC = () => {'"
+    },
+    {
+      "test": "research-reply ownership is selected as an answer, not as the message list",
+      "file": "thread-delete-render-budget.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/thread-delete-render-budget.test.ts:59:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "'thread.tsx no longer contains const useOwnsResearchMessage = () => {'"
+    },
+    {
+      "test": "the assistant part components are a single module-scope object",
+      "file": "thread-part-components-stable.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/thread-part-components-stable.test.ts:41:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "'ASSISTANT_PART_COMPONENTS must be declared at module scope, so that every render passes the identical object'"
+    },
+    {
+      "test": "every run waits for the chat's settings, not just the composer",
+      "file": "thread-scoped-pairing-invariants.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/thread-scoped-pairing-invariants.test.ts:266:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "'not found: await useChatRuntimeStore.getState().hydratePersistedSettings();'"
+    },
+    {
+      "test": "forking settles a held edit, not just the debounce",
+      "file": "thread-scoped-pairing-invariants.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/thread-scoped-pairing-invariants.test.ts:293:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "|-\n    The input did not match the regular expression /await settleThreadScopedSettingsForCopy\\(remoteId\\)/. Input:\n    \n    'import {\\n' +\n      '  ComposerAttachments,\\n' +\n      '  UserMessageAttachments,\\n' +\n      '} from \"@/components/assistant-ui/attachment\";\\n' +\n      'import {\\n' +\n      '  GeneratedImageOverlayProvider,\\n' +\n      '  useGeneratedImageOverlay,\\n' +\n      '} from \"@/components/assistant-ui/generated-image-overlay-context\";\\n' +\n      'import { downloadImagePart } from \"@/components/assistant-ui/image\";\\n' +\n      'import { threadHasResearchMessage } from \"@/components/assistant-ui/thread-research-presence\";\\n' +\n    "
+    },
+    {
+      "test": "the run's wait is bound to the run's own chat",
+      "file": "thread-scoped-pairing-invariants.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/thread-scoped-pairing-invariants.test.ts:303:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "|-\n    The input did not match the regular expression /await awaitThreadScopedPairing\\(runThreadId\\)/. Input:\n    \n    '/**\\n' +\n      ' * Sparta Agent - Fachada Principal de Adaptador de Chat\\n' +\n      ' *\\n' +\n      ' * Este archivo actúa como punto de entrada y fachada de compatibilidad para el\\n' +\n      ' * módulo modularizado ubicado en `./chat-adapter/`.\\n' +\n      ' * Todos los componentes y utilidades han sido desacoplados respetando el Principio\\n' +\n      ' * de Responsabilidad Única (SRP) y Clean Code.\\n' +\n      ' */\\n' +\n      '\\n' +\n      'export * from \"./chat-adapter/index\";\\n'"
+    },
+    {
+      "test": "a read nobody is waiting for any more is cancelled",
+      "file": "thread-scoped-pairing-invariants.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/thread-scoped-pairing-invariants.test.ts:367:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "'not found: export async function getChatThread'"
+    },
+    {
+      "test": "the ensure step in front of a settings write is bounded too",
+      "file": "thread-scoped-pairing-invariants.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/thread-scoped-pairing-invariants.test.ts:376:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "'not found: export async function updateStoredChatThread'"
+    },
+    {
+      "test": "a fork stops when the chat's settings could not be saved",
+      "file": "thread-scoped-pairing-invariants.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/thread-scoped-pairing-invariants.test.ts:456:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "|-\n    The input did not match the regular expression /Could not fork this chat/. Input:\n    \n    'import {\\n' +\n      '  ComposerAttachments,\\n' +\n      '  UserMessageAttachments,\\n' +\n      '} from \"@/components/assistant-ui/attachment\";\\n' +\n      'import {\\n' +\n      '  GeneratedImageOverlayProvider,\\n' +\n      '  useGeneratedImageOverlay,\\n' +\n      '} from \"@/components/assistant-ui/generated-image-overlay-context\";\\n' +\n      'import { downloadImagePart } from \"@/components/assistant-ui/image\";\\n' +\n      'import { threadHasResearchMessage } from \"@/components/assistant-ui/thread-research-presence\";\\n' +\n      'import { ChatDictationBa"
+    },
+    {
+      "test": "a run whose pairing never settled is refused, not run on another chat's settings",
+      "file": "thread-scoped-pairing-invariants.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/thread-scoped-pairing-invariants.test.ts:476:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "|-\n    The input did not match the regular expression /if \\(!\\(await awaitThreadScopedPairing\\(runThreadId\\)\\)\\) \\{/. Input:\n    \n    '/**\\n' +\n      ' * Sparta Agent - Fachada Principal de Adaptador de Chat\\n' +\n      ' *\\n' +\n      ' * Este archivo actúa como punto de entrada y fachada de compatibilidad para el\\n' +\n      ' * módulo modularizado ubicado en `./chat-adapter/`.\\n' +\n      ' * Todos los componentes y utilidades han sido desacoplados respetando el Principio\\n' +\n      ' * de Responsabilidad Única (SRP) y Clean Code.\\n' +\n      ' */\\n' +\n      '\\n' +\n      'export * from \"./chat-adapter/index\";\\n'"
+    },
+    {
+      "test": "the corpus is run through the placement the adapter actually ships",
+      "file": "trailing-placeholder-prefix-safety.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/trailing-placeholder-prefix-safety.test.ts:341:1",
+      "category": "moved_source",
+      "classification": "Aserción estática sobre una ubicación antigua",
+      "evidence": "'the SSE loop anchors are gone; this test needs rewriting'"
+    },
+    {
+      "test": "the two update cards do not drift apart",
+      "file": "update-banner-flex-priority.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/update-banner-flex-priority.test.ts:113:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "|-\n    the headers differ between the desktop and browser cards\n    + actual - expected\n    \n    + 'flex min-w-0 shrink-0 items-start gap-4 pr-6'\n    - 'flex min-w-0 shrink-0 items-start gap-3.5 pr-6'"
+    },
+    {
+      "test": "tests\\\\verdict-poll-stall-guard.test.ts",
+      "file": "verdict-poll-stall-guard.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/verdict-poll-stall-guard.test.ts:1:1",
+      "category": "missing_contract",
+      "classification": "Archivo o export ausente tras la migración",
+      "evidence": "'test failed'"
+    },
+    {
+      "test": "every mapper that writes hasAudioInput writes hasVideoInput too",
+      "file": "video-capability-plumbing.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/video-capability-plumbing.test.ts:33:1",
+      "category": "source_review",
+      "classification": "Aserción estática de UI/contrato: requiere adaptación y prueba de comportamiento",
+      "evidence": "|-\n    Expected values to be strictly deep-equal:\n    + actual - expected\n    \n    + [\n    +   'features\\\\chat\\\\shared-composer\\\\shared-composer-tools-menu.tsx'\n    + ]\n    - []"
+    },
+    {
+      "test": "tests\\\\video-download-plan-payload.test.ts",
+      "file": "video-download-plan-payload.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/video-download-plan-payload.test.ts:1:1",
+      "category": "missing_contract",
+      "classification": "Archivo o export ausente tras la migración",
+      "evidence": "'test failed'"
+    },
+    {
+      "test": "tests\\\\video-gallery-clear-confirmation.test.ts",
+      "file": "video-gallery-clear-confirmation.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/video-gallery-clear-confirmation.test.ts:1:1",
+      "category": "missing_contract",
+      "classification": "Archivo o export ausente tras la migración",
+      "evidence": "'test failed'"
+    },
+    {
+      "test": "tests\\\\video-generate-refusal-resync.test.ts",
+      "file": "video-generate-refusal-resync.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/video-generate-refusal-resync.test.ts:1:1",
+      "category": "missing_contract",
+      "classification": "Archivo o export ausente tras la migración",
+      "evidence": "'test failed'"
+    },
+    {
+      "test": "tests\\\\video-h3-task-dialog.test.ts",
+      "file": "video-h3-task-dialog.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/video-h3-task-dialog.test.ts:1:1",
+      "category": "missing_contract",
+      "classification": "Archivo o export ausente tras la migración",
+      "evidence": "'test failed'"
+    },
+    {
+      "test": "tests\\\\video-keyframe-canvas.test.ts",
+      "file": "video-keyframe-canvas.test.ts",
+      "location": "D:/sparta-agent/desktop/frontend-spartan/tests/video-keyframe-canvas.test.ts:1:1",
+      "category": "missing_contract",
+      "classification": "Archivo o export ausente tras la migración",
+      "evidence": "'test failed'"
+    }
+  ],
+  "backendCollection": "23462 tests collected, 224 errors in 52.30s",
+  "backendErrors": [
+    {
+      "file": "hub/tests/test_companion_assets.py",
+      "reason": "ModuleNotFoundError: No module named 'yaml'"
+    },
+    {
+      "file": "tests/test_anthropic_admission.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_anthropic_messages.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_anthropic_passthrough_respawn.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_api_key_expiry.py",
+      "reason": "ModuleNotFoundError: No module named 'fastapi.security'; 'fastapi' is not a package"
+    },
+    {
+      "file": "tests/test_api_monitor.py",
+      "reason": "ImportError: cannot import name 'FastAPI' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_api_perf_serialization.py",
+      "reason": "ModuleNotFoundError: No module named 'fastapi.responses'; 'fastapi' is not a package"
+    },
+    {
+      "file": "tests/test_artifact_preview_frame_csp.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_audio_sampling_fill.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_audio_token_detection.py",
+      "reason": "ModuleNotFoundError: No module named 'yaml'"
+    },
+    {
+      "file": "tests/test_audio_tts_cancellation.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_audio_type_inconclusive.py",
+      "reason": "ModuleNotFoundError: No module named 'torch'"
+    },
+    {
+      "file": "tests/test_auth_access_boundary.py",
+      "reason": "ImportError: cannot import name 'FastAPI' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_batch_sizes_per_load.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_bootstrap_timeout.py",
+      "reason": "ImportError: cannot import name 'status' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_browse_folders_route.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_cached_gguf_routes.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_capability_detection.py",
+      "reason": "ModuleNotFoundError: No module named 'yaml'"
+    },
+    {
+      "file": "tests/test_change_password_policy.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_chat_attachments.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_chat_history_routes.py",
+      "reason": "ImportError: cannot import name 'ValidationError' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_chat_load_during_training.py",
+      "reason": "FileNotFoundError: [Errno 2] No such file or directory: 'D:\\\\sparta-agent\\\\desktop\\\\backend-spartan\\\\routes\\\\training_vram.py'"
+    },
+    {
+      "file": "tests/test_chat_settings_payload.py",
+      "reason": "ImportError: cannot import name 'ValidationError' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_chat_thread_settings.py",
+      "reason": "ImportError: cannot import name 'ValidationError' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_checkpoints_scan.py",
+      "reason": "ModuleNotFoundError: No module named 'yaml'"
+    },
+    {
+      "file": "tests/test_consent_gate.py",
+      "reason": "ModuleNotFoundError: No module named 'huggingface_hub'"
+    },
+    {
+      "file": "tests/test_context_overflow_truncation.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_credential_rotation_race.py",
+      "reason": "ImportError: cannot import name 'status' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_credential_routes.py",
+      "reason": "ImportError: cannot import name 'ValidationError' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_credential_secrets.py",
+      "reason": "ImportError: cannot import name 'status' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_data_recipe_github_progress.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_dataset_check_format_missing.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_dataset_upload_limits.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_debug_log_routes.py",
+      "reason": "ImportError: cannot import name 'FastAPI' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_debug_log_self_feedback.py",
+      "reason": "ImportError: cannot import name 'FastAPI' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_deep_research_resilience.py",
+      "reason": "ImportError: cannot import name 'status' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_delete_finetuned_diffusion_guard.py",
+      "reason": "ImportError: cannot import name 'FastAPI' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_desktop_auth.py",
+      "reason": "ImportError: cannot import name 'FastAPI' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_detect_mmproj_file.py",
+      "reason": "ModuleNotFoundError: No module named 'yaml'"
+    },
+    {
+      "file": "tests/test_diffusion_backend.py",
+      "reason": "ModuleNotFoundError: No module named 'torch'"
+    },
+    {
+      "file": "tests/test_diffusion_base_precision.py",
+      "reason": "ModuleNotFoundError: No module named 'torch'"
+    },
+    {
+      "file": "tests/test_diffusion_checkpoint_resume.py",
+      "reason": "ModuleNotFoundError: No module named 'torch'"
+    },
+    {
+      "file": "tests/test_diffusion_cond_cache.py",
+      "reason": "ModuleNotFoundError: No module named 'torch'"
+    },
+    {
+      "file": "tests/test_diffusion_dataset_api.py",
+      "reason": "ImportError: cannot import name 'FastAPI' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_diffusion_dataset_clips.py",
+      "reason": "ImportError: cannot import name 'FastAPI' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_diffusion_dit_trainer_ltx2.py",
+      "reason": "ModuleNotFoundError: No module named 'torch'"
+    },
+    {
+      "file": "tests/test_diffusion_routes.py",
+      "reason": "ImportError: cannot import name 'FastAPI' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_diffusion_train_extras.py",
+      "reason": "ModuleNotFoundError: No module named 'torch'"
+    },
+    {
+      "file": "tests/test_diffusion_train_perf.py",
+      "reason": "ModuleNotFoundError: No module named 'torch'"
+    },
+    {
+      "file": "tests/test_diffusion_train_picker_clip_families.py",
+      "reason": "ImportError: cannot import name 'FastAPI' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_diffusion_training.py",
+      "reason": "ImportError: cannot import name 'FastAPI' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_disconnect_watcher_teardown.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_embedding_model_security_gate.py",
+      "reason": "ImportError: cannot import name 'FastAPI' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_exception_log_truncation.py",
+      "reason": "ImportError: cannot import name 'config' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_export_imatrix_compressed.py",
+      "reason": "ImportError: cannot import name 'ValidationError' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_external_provider_route_wiring.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_full_access_tool_prompt.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_generation_timing.py",
+      "reason": "ModuleNotFoundError: No module named 'torch'"
+    },
+    {
+      "file": "tests/test_gguf_bpw_variant_rows.py",
+      "reason": "ModuleNotFoundError: No module named 'yaml'"
+    },
+    {
+      "file": "tests/test_gguf_completion_usage.py",
+      "reason": "ImportError: cannot import name 'FastAPI' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_gguf_load_cache_reuse.py",
+      "reason": "ModuleNotFoundError: No module named 'huggingface_hub'"
+    },
+    {
+      "file": "tests/test_gguf_routing.py",
+      "reason": "ModuleNotFoundError: No module named 'yaml'"
+    },
+    {
+      "file": "tests/test_gguf_stream_slot_release.py",
+      "reason": "ImportError: cannot import name 'FastAPI' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_gguf_stream_slot_release_ordering.py",
+      "reason": "ImportError: cannot import name 'FastAPI' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_gguf_tool_non_streaming.py",
+      "reason": "ImportError: cannot import name 'FastAPI' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_gguf_variant_preflight.py",
+      "reason": "ModuleNotFoundError: No module named 'huggingface_hub'"
+    },
+    {
+      "file": "tests/test_gguf_variant_rows.py",
+      "reason": "ModuleNotFoundError: No module named 'yaml'"
+    },
+    {
+      "file": "tests/test_gguf_xet_fallback_integration.py",
+      "reason": "ModuleNotFoundError: No module named 'huggingface_hub'"
+    },
+    {
+      "file": "tests/test_gpu_init_crash_message.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_gpu_memory_mode.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_gpu_selection.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_grouped_mm_rdna4_fallback.py",
+      "reason": "ModuleNotFoundError: No module named 'torch'"
+    },
+    {
+      "file": "tests/test_hf_token_validation.py",
+      "reason": "ModuleNotFoundError: No module named 'huggingface_hub'"
+    },
+    {
+      "file": "tests/test_hf_xet_fallback.py",
+      "reason": "ModuleNotFoundError: No module named 'huggingface_hub'"
+    },
+    {
+      "file": "tests/test_history_delete_is_atomic.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_hub_download_ambient_token.py",
+      "reason": "ImportError: cannot import name 'FastAPI' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_identity.py",
+      "reason": "ImportError: cannot import name 'FastAPI' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_inference_model_validation.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_inference_status_loaded_gguf.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_inference_status_route.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_install_resolve_prebuilt.py",
+      "reason": "ModuleNotFoundError: No module named 'install_llama_prebuilt'"
+    },
+    {
+      "file": "tests/test_install_whisper_prebuilt_checksums.py",
+      "reason": "ModuleNotFoundError: No module named 'install_whisper_prebuilt'"
+    },
+    {
+      "file": "tests/test_lan_access_settings.py",
+      "reason": "ImportError: cannot import name 'FastAPI' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_last_local_model_setting.py",
+      "reason": "ImportError: cannot import name 'FastAPI' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_llama_backend_double.py",
+      "reason": "ImportError: cannot import name 'FastAPI' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_llama_backend_marker.py",
+      "reason": "ModuleNotFoundError: No module named 'install_llama_prebuilt'"
+    },
+    {
+      "file": "tests/test_llama_backend_selection.py",
+      "reason": "ModuleNotFoundError: No module named 'install_llama_prebuilt'"
+    },
+    {
+      "file": "tests/test_llama_route_timeouts.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_llm_assist_startup_opt_in.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_load_progress_throttle.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_local_model_format.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_local_options_match_start_validation.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_log_filter_no_truncation.py",
+      "reason": "ModuleNotFoundError: No module named 'loggers.handlers'; 'loggers' is not a package"
+    },
+    {
+      "file": "tests/test_logging_middleware.py",
+      "reason": "ImportError: cannot import name 'FastAPI' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_mcp_server.py",
+      "reason": "ModuleNotFoundError: No module named 'fastmcp'"
+    },
+    {
+      "file": "tests/test_media_auto_switch.py",
+      "reason": "ImportError: cannot import name 'FastAPI' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_media_generation_preset_settings.py",
+      "reason": "ImportError: cannot import name 'FastAPI' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_middleware.py",
+      "reason": "ImportError: cannot import name 'FastAPI' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_mlx_stop_checkpoint.py",
+      "reason": "ModuleNotFoundError: No module named 'numpy'"
+    },
+    {
+      "file": "tests/test_model_defaults_aliases_resolve.py",
+      "reason": "ModuleNotFoundError: No module named 'yaml'"
+    },
+    {
+      "file": "tests/test_model_defaults_log_once.py",
+      "reason": "ModuleNotFoundError: No module named 'yaml'"
+    },
+    {
+      "file": "tests/test_model_defaults_none_guard.py",
+      "reason": "ModuleNotFoundError: No module named 'yaml'"
+    },
+    {
+      "file": "tests/test_model_identity.py",
+      "reason": "ModuleNotFoundError: No module named 'yaml'"
+    },
+    {
+      "file": "tests/test_model_identity_peft_handoff.py",
+      "reason": "ModuleNotFoundError: No module named 'yaml'"
+    },
+    {
+      "file": "tests/test_model_picker_regression.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_model_routes_snapshot_targets.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_models_get_model_config_case_resolution.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_models_list_resident_gguf_label.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_mtp_drafter_companion.py",
+      "reason": "ModuleNotFoundError: No module named 'yaml'"
+    },
+    {
+      "file": "tests/test_native_context_length.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_native_gguf_companion.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_nvfp4_load_error_message.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_offline_gguf_cache_fallback.py",
+      "reason": "ModuleNotFoundError: No module named 'huggingface_hub'"
+    },
+    {
+      "file": "tests/test_offline_inference_parent.py",
+      "reason": "ModuleNotFoundError: No module named 'yaml'"
+    },
+    {
+      "file": "tests/test_openai_audio_speech_route.py",
+      "reason": "ImportError: cannot import name 'FastAPI' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_openai_audio_transcriptions_route.py",
+      "reason": "ImportError: cannot import name 'FastAPI' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_openai_audio_upload_bound.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_openai_auto_download.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_openai_auto_switch.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_openai_catalog.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_openai_codex_subscription.py",
+      "reason": "ModuleNotFoundError: No module named 'filelock'"
+    },
+    {
+      "file": "tests/test_openai_images_generations_route.py",
+      "reason": "ImportError: cannot import name 'FastAPI' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_openai_models_path_leak.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_openai_passthrough_respawn.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_openai_tool_passthrough.py",
+      "reason": "ImportError: cannot import name 'ValidationError' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_parallel_slots_per_load.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_passthrough_healing.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_password_prompt.py",
+      "reason": "ImportError: cannot import name 'status' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_password_prompt_backstop.py",
+      "reason": "ImportError: cannot import name 'install_uvicorn_duplicate_exception_filter' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_permission_mode.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_personalization_settings.py",
+      "reason": "ImportError: cannot import name 'FastAPI' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_picker_service.py",
+      "reason": "ModuleNotFoundError: No module named 'yaml'"
+    },
+    {
+      "file": "tests/test_pr7699_worker_audio_mirror.py",
+      "reason": "ModuleNotFoundError: No module named 'yaml'"
+    },
+    {
+      "file": "tests/test_presence_penalty.py",
+      "reason": "ModuleNotFoundError: No module named 'torch'"
+    },
+    {
+      "file": "tests/test_preview.py",
+      "reason": "ModuleNotFoundError: No module named 'yaml'"
+    },
+    {
+      "file": "tests/test_preview_routes.py",
+      "reason": "ImportError: cannot import name 'FastAPI' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_preview_sharing_settings.py",
+      "reason": "ImportError: cannot import name 'FastAPI' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_preview_token.py",
+      "reason": "ImportError: cannot import name 'status' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_provider_max_output_tokens_contract.py",
+      "reason": "ImportError: cannot import name 'status' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_providers_api.py",
+      "reason": "ModuleNotFoundError: No module named 'requests'"
+    },
+    {
+      "file": "tests/test_public_check_optout.py",
+      "reason": "ImportError: cannot import name 'install_uvicorn_duplicate_exception_filter' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_rag_embed_llama_server.py",
+      "reason": "ModuleNotFoundError: No module named 'numpy'"
+    },
+    {
+      "file": "tests/test_rag_embeddings.py",
+      "reason": "ModuleNotFoundError: No module named 'numpy'"
+    },
+    {
+      "file": "tests/test_rag_native_drop_upload.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_rag_ocr_fallback.py",
+      "reason": "ModuleNotFoundError: No module named 'pymupdf'"
+    },
+    {
+      "file": "tests/test_rag_project_source_upload.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_readable_traceback_logging.py",
+      "reason": "ImportError: cannot import name 'config' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_recommended_folders_has_model.py",
+      "reason": "AssertionError: helpers missing from source: {'_dir_has_downloaded_model', '_safe_is_dir', '_is_weight_bin'} assert set() == {'_dir_has_downloaded_model', '_is_weight_bin', '_safe_is_dir'}"
+    },
+    {
+      "file": "tests/test_recommended_folders_permission.py",
+      "reason": "StopIteration"
+    },
+    {
+      "file": "tests/test_remote_access_settings.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_research_internal_call_tool_gate.py",
+      "reason": "ImportError: cannot import name 'FastAPI' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_research_internal_key_monitor.py",
+      "reason": "ImportError: cannot import name 'status' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_research_runs_hardening.py",
+      "reason": "ImportError: cannot import name 'status' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_resolve_quant_gguf.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_responses_api.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_responses_tool_passthrough.py",
+      "reason": "ModuleNotFoundError: No module named 'fastapi.responses'; 'fastapi' is not a package"
+    },
+    {
+      "file": "tests/test_resume_blocked_reason_surfaces.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_resume_pin_load_subdirs.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_resume_reason_matches_cause.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_s3_dataset.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_safetensors_reasoning_stream.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_sampling_resolution.py",
+      "reason": "ModuleNotFoundError: No module named 'yaml'"
+    },
+    {
+      "file": "tests/test_saved_image_metadata_precision_contract.py",
+      "reason": "ImportError: cannot import name 'FastAPI' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_scan_loras_off_event_loop.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_sd_cpp_backend.py",
+      "reason": "ModuleNotFoundError: No module named 'PIL'"
+    },
+    {
+      "file": "tests/test_sd_cpp_install.py",
+      "reason": "ModuleNotFoundError: No module named 'install_sd_cpp_prebuilt'"
+    },
+    {
+      "file": "tests/test_sd_cpp_server.py",
+      "reason": "ModuleNotFoundError: No module named 'PIL'"
+    },
+    {
+      "file": "tests/test_secure_tunnel_gate.py",
+      "reason": "ImportError: cannot import name 'install_uvicorn_duplicate_exception_filter' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_server_disk_logging.py",
+      "reason": "ImportError: cannot import name 'install_uvicorn_duplicate_exception_filter' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_server_disk_logging_outstream.py",
+      "reason": "ImportError: cannot import name 'install_uvicorn_duplicate_exception_filter' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_sf_client_tools_passthrough.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_sse_streaming_headers.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_startup_llama_probe_non_blocking.py",
+      "reason": "ImportError: cannot import name 'FastAPI' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_stt_download_validation.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_stt_ggml_sidecar.py",
+      "reason": "ModuleNotFoundError: No module named 'numpy'"
+    },
+    {
+      "file": "tests/test_stt_sidecar.py",
+      "reason": "ModuleNotFoundError: No module named 'numpy'"
+    },
+    {
+      "file": "tests/test_stt_transcription_cancellation.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_stt_transformers_worker.py",
+      "reason": "ModuleNotFoundError: No module named 'numpy'"
+    },
+    {
+      "file": "tests/test_studio_pid_files.py",
+      "reason": "ImportError: cannot import name 'install_uvicorn_duplicate_exception_filter' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_studio_train_validation.py",
+      "reason": "ImportError: cannot import name 'ValidationError' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_system_vulkan_gpu_info.py",
+      "reason": "ImportError: cannot import name 'FastAPI' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_tensor_parallel.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_thinking_parameter.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_third_party_progress_bars.py",
+      "reason": "ImportError: cannot import name 'config' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_third_party_source.py",
+      "reason": "ModuleNotFoundError: No module named 'filelock'"
+    },
+    {
+      "file": "tests/test_tool_confirm_stream.py",
+      "reason": "ModuleNotFoundError: No module named 'uvicorn'"
+    },
+    {
+      "file": "tests/test_tool_message_empty_content.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_tool_policy_gates.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_tool_stream_generator_drain.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_train_precision_scheme_contract.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_trained_model_scan.py",
+      "reason": "ModuleNotFoundError: No module named 'yaml'"
+    },
+    {
+      "file": "tests/test_trainer_stdout_quiet.py",
+      "reason": "ModuleNotFoundError: No module named 'torch'"
+    },
+    {
+      "file": "tests/test_training_cached_start.py",
+      "reason": "ImportError: cannot import name 'ValidationError' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_training_history_delete.py",
+      "reason": "FileNotFoundError: [Errno 2] No such file or directory: 'D:\\\\sparta-agent\\\\desktop\\\\backend-spartan\\\\routes\\\\training_history.py'"
+    },
+    {
+      "file": "tests/test_training_history_update.py",
+      "reason": "ImportError: cannot import name 'ValidationError' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_training_preflight_offline_guard.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_training_progress_callback.py",
+      "reason": "ModuleNotFoundError: No module named 'torch'"
+    },
+    {
+      "file": "tests/test_training_progress_job_scope.py",
+      "reason": "FileNotFoundError: [Errno 2] No such file or directory: 'D:\\\\sparta-agent\\\\desktop\\\\backend-spartan\\\\routes\\\\training.py'"
+    },
+    {
+      "file": "tests/test_training_progress_prep_timeout.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_training_progress_stream_nan.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_training_raw_support.py",
+      "reason": "ModuleNotFoundError: No module named 'datasets'"
+    },
+    {
+      "file": "tests/test_training_resume.py",
+      "reason": "ModuleNotFoundError: No module named 'torch'"
+    },
+    {
+      "file": "tests/test_training_runs.py",
+      "reason": "ImportError: cannot import name '_extract_project_name_from_config_json' from 'storage.studio_db' (D:\\sparta-agent\\desktop\\backend-spartan\\storage\\studio_db.py)"
+    },
+    {
+      "file": "tests/test_training_start_idempotency.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_training_start_offload.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_training_status_terminal.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_training_streaming.py",
+      "reason": "ImportError: cannot import name 'ValidationError' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_training_streaming_mlx_warm.py",
+      "reason": "ImportError: cannot import name 'FastAPI' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_training_vram_coexistence.py",
+      "reason": "FileNotFoundError: [Errno 2] No such file or directory: 'D:\\\\sparta-agent\\\\desktop\\\\backend-spartan\\\\routes\\\\training_vram.py'"
+    },
+    {
+      "file": "tests/test_tunnel_safe_long_post.py",
+      "reason": "ModuleNotFoundError: No module named 'fastapi.responses'; 'fastapi' is not a package ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_uvicorn_exception_dedup.py",
+      "reason": "ImportError: cannot import name 'handlers' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_uvicorn_h11_shutdown_quiet.py",
+      "reason": "ModuleNotFoundError: No module named 'uvicorn'"
+    },
+    {
+      "file": "tests/test_validate_diffusion_extra_args.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_validate_diffusion_unknown.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_validate_gguf_runtime_message.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_validate_model_error.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_validation_error_binary_body.py",
+      "reason": "ImportError: cannot import name 'FastAPI' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_video_minimax_h3_adaln.py",
+      "reason": "ModuleNotFoundError: No module named 'torch'"
+    },
+    {
+      "file": "tests/test_video_resolution_preset_contract.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_vision_cache.py",
+      "reason": "ModuleNotFoundError: No module named 'yaml'"
+    },
+    {
+      "file": "tests/test_web_access_policy.py",
+      "reason": "ImportError: cannot import name 'ConfigDict' from '<unknown module name>' (unknown location)"
+    },
+    {
+      "file": "tests/test_web_rank.py",
+      "reason": "ModuleNotFoundError: No module named 'numpy'"
+    },
+    {
+      "file": "tests/test_yaml_trust_remote_code_removed.py",
+      "reason": "ModuleNotFoundError: No module named 'yaml'"
+    }
+  ]
+}

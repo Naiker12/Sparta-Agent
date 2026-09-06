@@ -86,7 +86,7 @@ const pageSource = readFileSync(
     ),
   ),
   "utf8",
-);
+).replace(/\r\n/g, "\n");
 
 function vramBudgetRowSource(): string {
   const start = pageSource.indexOf("function VramBudgetRow()");

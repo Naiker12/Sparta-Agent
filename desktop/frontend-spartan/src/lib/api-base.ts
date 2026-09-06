@@ -16,7 +16,7 @@ function detectElectron(): boolean {
   if (typeof window === 'undefined') return false
   return (
     'electronAPI' in window ||
-    navigator.userAgent.includes('Electron')
+    (typeof navigator !== 'undefined' && navigator.userAgent?.includes('Electron') === true)
   )
 }
 

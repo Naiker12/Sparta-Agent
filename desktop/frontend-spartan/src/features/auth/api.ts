@@ -222,7 +222,7 @@ export async function authFetch(
   }
 
   if (await isPasswordChangeRequiredResponse(response)) {
-    if (isTauri) {
+    if (isTauri || isElectron) {
       return (
         (await retryWithTauriAutoAuth(
           resolvedInput,
@@ -239,7 +239,7 @@ export async function authFetch(
   const refreshToken = getRefreshToken();
   const refreshed = await refreshSession();
   if (!refreshed) {
-    if (isTauri) {
+    if (isTauri || isElectron) {
       return (
         (await retryWithTauriAutoAuth(
           resolvedInput,
@@ -254,7 +254,7 @@ export async function authFetch(
   }
 
   if (mustChangePassword()) {
-    if (isTauri) {
+    if (isTauri || isElectron) {
       return (
         (await retryWithTauriAutoAuth(
           resolvedInput,

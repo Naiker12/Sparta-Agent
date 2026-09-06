@@ -2,6 +2,8 @@ import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { getTauriAuthFailure, tauriAutoAuth } from "@/features/auth/tauri-auto-auth";
+import { setApiBase } from "@/lib/api-base";
 
 type StartupState = "checking" | "needs_setup" | "installing" | "ready";
 
@@ -27,8 +29,25 @@ export function StartupGate({ children }: { children: ReactNode }) {
       return;
     }
 
+    let active = true;
+    let revision = 0;
+    const authenticate = async (port: number) => {
+      const attempt = ++revision;
+      setApiBase(port);
+      setState("checking");
+      const authenticated = await tauriAutoAuth({ force: true });
+      if (!active || attempt !== revision) return;
+      if (authenticated) {
+        setError(null);
+        setState("ready");
+      } else {
+        setError(getTauriAuthFailure() ?? "No se pudo autenticar el motor local. Reinicia Sparta.");
+        setState("needs_setup");
+      }
+    };
     void api.getBackendStatus?.().then((status) => {
-      if (typeof status.port === "number") setState("ready");
+      if (!active || revision > 0) return;
+      if (typeof status.port === "number") void authenticate(status.port);
       else if (status.error) {
         setError(status.error);
         setState("needs_setup");
@@ -37,24 +56,24 @@ export function StartupGate({ children }: { children: ReactNode }) {
       }
     });
 
-    const removeReady = api.onBackendReady?.(() => setState("ready"));
+    const removeReady = api.onBackendReady?.((port) => void authenticate(port));
     const removeError = api.onBackendError?.((message) => {
+      revision++;
       appendLog(message);
       setError(message);
       setState("needs_setup");
     });
     const removeProgress = api.onBackendInstallProgress?.(appendLog);
-    const removeComplete = api.onBackendInstallComplete?.(() => setState("ready"));
     const removeInstallError = api.onBackendInstallError?.((message) => {
       appendLog(message);
       setError(message);
       setState("needs_setup");
     });
     return () => {
+      active = false;
       removeReady?.();
       removeError?.();
       removeProgress?.();
-      removeComplete?.();
       removeInstallError?.();
     };
   }, []);
