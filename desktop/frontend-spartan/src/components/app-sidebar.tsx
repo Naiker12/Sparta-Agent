@@ -1142,6 +1142,22 @@ export function AppSidebar() {
         preloadSilently(router.preloadRoute({ to: "/api-monitor" }));
       },
     },
+    memory: {
+      icon: BookOpen01Icon,
+      label: t("shell.navigation.memory"),
+      badge: t("shell.navigation.newBadge"),
+      active: pathname === "/memory" || pathname.startsWith("/memory/"),
+      onClick: () => { navigate({ to: "/memory" }); closeMobileIfOpen(); },
+      onIntent: () => { preloadSilently(router.preloadRoute({ to: "/memory" })); },
+    },
+    tasks: {
+      icon: Message01Icon,
+      label: t("shell.navigation.tasks"),
+      badge: t("shell.navigation.newBadge"),
+      active: pathname === "/tasks" || pathname.startsWith("/tasks/"),
+      onClick: () => { navigate({ to: "/tasks" }); closeMobileIfOpen(); },
+      onIntent: () => { preloadSilently(router.preloadRoute({ to: "/tasks" })); },
+    },
   };
   const unpinnedNavIds = sidebarNav
     .filter((item) => item.id !== "recipes" && !item.pinned)

@@ -13,6 +13,7 @@ export type ChatSearch = {
   compare?: string;
   new?: string;
   project?: string;
+  review?: string;
 };
 
 export function validateChatSearch(search: Record<string, unknown>): ChatSearch {
@@ -21,6 +22,7 @@ export function validateChatSearch(search: Record<string, unknown>): ChatSearch 
     compare: typeof search.compare === "string" ? search.compare : undefined,
     new: typeof search.new === "string" ? search.new : undefined,
     project: typeof search.project === "string" ? search.project : undefined,
+    review: typeof search.review === "string" ? search.review : undefined,
   };
 }
 

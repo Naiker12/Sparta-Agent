@@ -2,6 +2,9 @@ import { ipcMain, dialog, shell } from "electron";
 import fs from "node:fs";
 import fsPromises from "node:fs/promises";
 import path from "node:path";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
+import { readWorkspacePreview } from "../lib/read-workspace-preview";
 import {
   startFileWatcher,
   stopFileWatcher,
@@ -29,6 +32,113 @@ const workspaceRoots = new Map<
   string,
   { root: string; access: "read" | "write" | "write_no_delete" }
 >();
+const execGit = promisify(execFile);
+
+type WorkspaceGitStatus = {
+  isRepository: boolean;
+  branch?: string;
+  upstream?: string;
+  ahead?: number;
+  behind?: number;
+  changed?: number;
+  added?: number;
+  modified?: number;
+  deleted?: number;
+  untracked?: number;
+  insertions?: number;
+  deletions?: number;
+};
+
+type WorkspaceGitChange = { path: string; status: string };
+
+async function readWorkspaceGitStatus(root: string): Promise<WorkspaceGitStatus> {
+  try {
+    const { stdout } = await execGit("git", ["-C", root, "--no-optional-locks", "status", "--porcelain=v2", "--branch"], {
+      windowsHide: true,
+      timeout: 4_000,
+      maxBuffer: 512 * 1024,
+    });
+    const status: WorkspaceGitStatus = { isRepository: true, changed: 0, added: 0, modified: 0, deleted: 0, untracked: 0, ahead: 0, behind: 0, insertions: 0, deletions: 0 };
+    for (const line of stdout.split(/\r?\n/)) {
+      if (line.startsWith("# branch.head ")) status.branch = line.slice(14);
+      else if (line.startsWith("# branch.upstream ")) status.upstream = line.slice(18);
+      else if (line.startsWith("# branch.ab ")) {
+        const [, ahead = "0", behind = "0"] = line.match(/\+(\d+)\s+-(\d+)/) ?? [];
+        status.ahead = Number(ahead); status.behind = Number(behind);
+      } else if (line.startsWith("1 ") || line.startsWith("2 ")) {
+        status.changed! += 1;
+        const xy = line.split(" ")[1] ?? "..";
+        if (xy.includes("A")) status.added! += 1;
+        if (xy.includes("M")) status.modified! += 1;
+        if (xy.includes("D")) status.deleted! += 1;
+      } else if (line.startsWith("? ")) { status.changed! += 1; status.untracked! += 1; }
+    }
+    try {
+      const totals = await execGit("git", ["-C", root, "--no-optional-locks", "diff", "--numstat", "HEAD"], {
+        windowsHide: true, timeout: 4_000, maxBuffer: 512 * 1024,
+      });
+      for (const line of totals.stdout.split(/\r?\n/)) {
+        const [added, removed] = line.split("\t");
+        if (/^\d+$/.test(added)) status.insertions! += Number(added);
+        if (/^\d+$/.test(removed)) status.deletions! += Number(removed);
+      }
+    } catch { /* A repository without HEAD can still report status. */ }
+    return status;
+  } catch { return { isRepository: false }; }
+}
+
+async function readWorkspaceGitChanges(root: string): Promise<WorkspaceGitChange[]> {
+  try {
+    const { stdout } = await execGit("git", ["-C", root, "--no-optional-locks", "status", "--porcelain=v1", "-z"], {
+      windowsHide: true, timeout: 4_000, maxBuffer: 512 * 1024, encoding: "buffer",
+    });
+    const entries = stdout.toString("utf8").split("\0");
+    const changes: WorkspaceGitChange[] = [];
+    for (let index = 0; index < entries.length; index += 1) {
+      const entry = entries[index];
+      if (!entry) continue;
+      const xy = entry.slice(0, 2);
+      const file = entry.slice(3);
+      if (!/^[ MADRCU?!]{2}$/.test(xy) || !file) continue;
+      changes.push({ path: file, status: xy === "??" ? "untracked" : xy });
+      if (xy.includes("R") || xy.includes("C")) index += 1;
+    }
+    return changes;
+  } catch { return []; }
+}
+
+async function readWorkspaceGitDiff(root: string, relativePath: string): Promise<string> {
+  const candidate = path.resolve(root, relativePath);
+  if (!relativePath || relativePath.includes("\0") || !isWithinRoot(candidate, root))
+    throw new Error("Path is outside workspace root");
+  const { stdout } = await execGit("git", ["-C", root, "--no-optional-locks", "diff", "--no-ext-diff", "--no-color", "--unified=3", "HEAD", "--", relativePath], {
+    windowsHide: true, timeout: 6_000, maxBuffer: 2 * 1024 * 1024,
+  });
+  return stdout.slice(0, 2 * 1024 * 1024);
+}
+
+async function readWorkspaceGitConflicts(root: string): Promise<string[]> {
+  try {
+    const { stdout } = await execGit("git", ["-C", root, "--no-optional-locks", "diff", "--name-only", "--diff-filter=U"], { windowsHide: true, timeout: 4_000, maxBuffer: 256 * 1024 });
+    return stdout.split(/\r?\n/).filter(Boolean);
+  } catch { return []; }
+}
+
+async function runWorkspaceGit(root: string, args: string[]): Promise<{ success: true; output: string; conflicts: string[] } | { success: false; error: string; conflicts: string[] }> {
+  try {
+    const { stdout, stderr } = await execGit("git", ["-C", root, "--no-optional-locks", ...args], { windowsHide: true, timeout: 30_000, maxBuffer: 2 * 1024 * 1024 });
+    return { success: true, output: `${stdout}${stderr}`.trim().slice(0, 8_000), conflicts: await readWorkspaceGitConflicts(root) };
+  } catch (error) {
+    const detail = error as Error & { stderr?: string; stdout?: string };
+    return { success: false, error: `${detail.stderr ?? detail.stdout ?? detail.message}`.trim().slice(0, 8_000), conflicts: await readWorkspaceGitConflicts(root) };
+  }
+}
+
+function workspaceGitWriteError(projectId: string): string | null {
+  const workspace = workspaceRoots.get(projectId);
+  if (!workspace) return "No workspace folder is connected";
+  return assertWorkspaceWrite(projectId, workspace.root);
+}
 
 export function getWorkspaceRoot(): string | null {
   return _workspaceRoot;
@@ -121,6 +231,94 @@ function setWorkspaceBinding(
 }
 
 export function registerFilesystemIPC() {
+  ipcMain.handle("fs:getGitStatus", async (_event, projectId: string) => {
+    const workspace = workspaceRoots.get(projectId);
+    if (!workspace) return { success: false, error: "No workspace folder is connected" };
+    return { success: true, ...(await readWorkspaceGitStatus(workspace.root)) };
+  });
+  ipcMain.handle("fs:getGitChanges", async (_event, projectId: string) => {
+    const workspace = workspaceRoots.get(projectId);
+    if (!workspace) return { success: false, error: "No workspace folder is connected", changes: [] };
+    const status = await readWorkspaceGitStatus(workspace.root);
+    if (!status.isRepository) return { success: true, isRepository: false, changes: [], conflicts: [] };
+    return { success: true, isRepository: true, changes: await readWorkspaceGitChanges(workspace.root), conflicts: await readWorkspaceGitConflicts(workspace.root) };
+  });
+  ipcMain.handle("fs:getGitDiff", async (_event, projectId: string, relativePath: string) => {
+    const workspace = workspaceRoots.get(projectId);
+    if (!workspace) return { success: false, error: "No workspace folder is connected" };
+    try { return { success: true, diff: await readWorkspaceGitDiff(workspace.root, relativePath) }; }
+    catch (error) { return { success: false, error: error instanceof Error ? error.message : "Could not read diff" }; }
+  });
+  ipcMain.handle("fs:getGitBranches", async (_event, projectId: string) => {
+    const workspace = workspaceRoots.get(projectId);
+    if (!workspace) return { success: false, error: "No workspace folder is connected", branches: [] };
+    try {
+      const { stdout } = await execGit("git", ["-C", workspace.root, "branch", "--format=%(refname:short)"], { windowsHide: true, timeout: 4_000, maxBuffer: 256 * 1024 });
+      return { success: true, branches: stdout.split(/\r?\n/).filter(Boolean) };
+    } catch (error) { return { success: false, error: error instanceof Error ? error.message : "Could not list branches", branches: [] }; }
+  });
+  ipcMain.handle("fs:switchGitBranch", async (_event, projectId: string, branch: string) => {
+    const workspace = workspaceRoots.get(projectId);
+    const writeError = workspaceGitWriteError(projectId);
+    if (!workspace || writeError) return { success: false, error: writeError ?? "No workspace folder is connected", conflicts: [] };
+    if (!branch || /[\0\r\n]/.test(branch)) return { success: false, error: "Invalid branch", conflicts: [] };
+    const { stdout } = await execGit("git", ["-C", workspace.root, "branch", "--format=%(refname:short)"], { windowsHide: true, timeout: 4_000, maxBuffer: 256 * 1024 }).catch(() => ({ stdout: "" }));
+    if (!stdout.split(/\r?\n/).includes(branch)) return { success: false, error: "Unknown local branch", conflicts: [] };
+    return runWorkspaceGit(workspace.root, ["switch", "--", branch]);
+  });
+  ipcMain.handle("fs:stageGitPaths", async (_event, projectId: string, paths: string[]) => {
+    const workspace = workspaceRoots.get(projectId);
+    const writeError = workspaceGitWriteError(projectId);
+    if (!workspace || writeError) return { success: false, error: writeError ?? "No workspace folder is connected", conflicts: [] };
+    const safe = Array.isArray(paths) ? paths.filter(itemPath => typeof itemPath === "string" && !itemPath.includes("\0") && isWithinRoot(path.resolve(workspace.root, itemPath), workspace.root)) : [];
+    if (!safe.length) return { success: false, error: "No valid files selected", conflicts: [] };
+    return runWorkspaceGit(workspace.root, ["add", "--", ...safe]);
+  });
+  ipcMain.handle("fs:unstageGitPaths", async (_event, projectId: string, paths: string[]) => {
+    const workspace = workspaceRoots.get(projectId);
+    const writeError = workspaceGitWriteError(projectId);
+    if (!workspace || writeError) return { success: false, error: writeError ?? "No workspace folder is connected", conflicts: [] };
+    const safe = Array.isArray(paths) ? paths.filter(itemPath => typeof itemPath === "string" && !itemPath.includes("\0") && isWithinRoot(path.resolve(workspace.root, itemPath), workspace.root)) : [];
+    if (!safe.length) return { success: false, error: "No valid files selected", conflicts: [] };
+    return runWorkspaceGit(workspace.root, ["restore", "--staged", "--", ...safe]);
+  });
+  ipcMain.handle("fs:commitGit", async (_event, projectId: string, message: string) => {
+    const workspace = workspaceRoots.get(projectId);
+    const writeError = workspaceGitWriteError(projectId);
+    if (!workspace || writeError) return { success: false, error: writeError ?? "No workspace folder is connected", conflicts: [] };
+    if (typeof message !== "string" || !message.trim() || message.length > 5000) return { success: false, error: "A commit message is required", conflicts: [] };
+    return runWorkspaceGit(workspace.root, ["commit", "-m", message.trim()]);
+  });
+  ipcMain.handle("fs:pullGit", async (_event, projectId: string) => {
+    const workspace = workspaceRoots.get(projectId);
+    const writeError = workspaceGitWriteError(projectId);
+    if (!workspace || writeError) return { success: false, error: writeError ?? "No workspace folder is connected", conflicts: [] };
+    return runWorkspaceGit(workspace.root, ["pull", "--no-rebase"]);
+  });
+  ipcMain.handle("fs:pushGit", async (_event, projectId: string) => {
+    const workspace = workspaceRoots.get(projectId);
+    const writeError = workspaceGitWriteError(projectId);
+    if (!workspace || writeError) return { success: false, error: writeError ?? "No workspace folder is connected", conflicts: [] };
+    return runWorkspaceGit(workspace.root, ["push"]);
+  });
+  ipcMain.handle("fs:resolveGitConflict", async (_event, projectId: string, relativePath: string, choice: "ours" | "theirs") => {
+    const workspace = workspaceRoots.get(projectId);
+    const writeError = workspaceGitWriteError(projectId);
+    if (!workspace || writeError) return { success: false, error: writeError ?? "No workspace folder is connected", conflicts: [] };
+    if (!relativePath || !["ours", "theirs"].includes(choice) || !isWithinRoot(path.resolve(workspace.root, relativePath), workspace.root)) return { success: false, error: "Invalid conflict resolution", conflicts: [] };
+    const resolved = await runWorkspaceGit(workspace.root, ["checkout", `--${choice}`, "--", relativePath]);
+    if (!resolved.success) return resolved;
+    return runWorkspaceGit(workspace.root, ["add", "--", relativePath]);
+  });
+  ipcMain.handle("fs:readPreview", async (_event, projectId: string, filePath: string) => {
+    const workspace = workspaceRoots.get(projectId);
+    if (!workspace || typeof filePath !== "string") return { success: false, error: "No workspace folder is connected" };
+    try {
+      return { success: true, bytes: await readWorkspacePreview(workspace.root, filePath) };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : "Could not preview file" };
+    }
+  });
   ipcMain.handle("fs:openFolderDialog", async () => {
     const result = await dialog.showOpenDialog({
       properties: ["openDirectory"],

@@ -39,6 +39,8 @@ export const shell = {
     recipes: "Recetas",
     images: "Imágenes",
     channels: "Canales",
+    memory: "Memoria",
+    tasks: "Tareas",
     comingSoon: "Próximo",
     channelsComingSoon: "Canales estará disponible próximamente.",
     video: "Vídeo",

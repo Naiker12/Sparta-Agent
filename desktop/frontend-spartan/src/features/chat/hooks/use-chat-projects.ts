@@ -144,6 +144,17 @@ export async function updateChatProjectInstructions(
 }
 
 type NativeFilesystem = {
+  getGitStatus?: (projectId: string) => Promise<{ success: boolean; error?: string; isRepository?: boolean; branch?: string; upstream?: string; ahead?: number; behind?: number; changed?: number; added?: number; modified?: number; deleted?: number; untracked?: number; insertions?: number; deletions?: number }>;
+  getGitChanges?: (projectId: string) => Promise<{ success: boolean; error?: string; isRepository?: boolean; changes: Array<{ path: string; status: string }>; conflicts?: string[] }>;
+  getGitDiff?: (projectId: string, path: string) => Promise<{ success: boolean; error?: string; diff?: string }>;
+  getGitBranches?: (projectId: string) => Promise<{ success: boolean; error?: string; branches: string[] }>;
+  switchGitBranch?: (projectId: string, branch: string) => Promise<GitOperationResult>;
+  stageGitPaths?: (projectId: string, paths: string[]) => Promise<GitOperationResult>;
+  unstageGitPaths?: (projectId: string, paths: string[]) => Promise<GitOperationResult>;
+  commitGit?: (projectId: string, message: string) => Promise<GitOperationResult>;
+  pullGit?: (projectId: string) => Promise<GitOperationResult>;
+  pushGit?: (projectId: string) => Promise<GitOperationResult>;
+  resolveGitConflict?: (projectId: string, path: string, choice: "ours" | "theirs") => Promise<GitOperationResult>;
   openFolderDialog: () => Promise<string | null>;
   confirmWorkspaceAccess?: (
     folderPath: string,
@@ -165,6 +176,7 @@ type NativeFilesystem = {
     nodes: Array<{ name: string; path: string; type: "file" | "directory" }>;
     error?: string;
   }>;
+  readPreview?: (projectId: string, path: string) => Promise<{ success: boolean; bytes?: Uint8Array; error?: string }>;
   readFile?: (
     projectId: string,
     path: string,
@@ -183,6 +195,8 @@ type NativeFilesystem = {
     error?: string;
   }>;
 };
+
+type GitOperationResult = { success: boolean; error?: string; output?: string; conflicts: string[] };
 
 function nativeFilesystem(): NativeFilesystem | null {
   if (typeof window === "undefined") return null;

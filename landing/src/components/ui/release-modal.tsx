@@ -19,7 +19,7 @@ export function ReleaseModal() {
 
   useEffect(() => {
     // Show the announcement once for this specific release.
-    const hasSeen = localStorage.getItem('sparta_release_v0.2.19_seen');
+    const hasSeen = localStorage.getItem('sparta_release_v0.2.20_seen');
     if (!hasSeen) {
       const timer = setTimeout(() => setIsOpen(true), 600);
       return () => clearTimeout(timer);
@@ -27,7 +27,7 @@ export function ReleaseModal() {
   }, []);
 
   const handleClose = () => {
-    localStorage.setItem('sparta_release_v0.2.19_seen', 'true');
+    localStorage.setItem('sparta_release_v0.2.20_seen', 'true');
     setIsOpen(false);
   };
 
@@ -41,27 +41,27 @@ export function ReleaseModal() {
 
   const releaseFeatures = [
     {
-      title: 'Actualizaciones confiables en macOS',
+      title: 'Memoria Cognitiva con Red Neuronal',
       summary:
-        'Los releases de macOS incluyen el ZIP necesario para que Electron encuentre, descargue e instale nuevas versiones.',
+        'Nuevo espacio interactivo en /memory con visualizador espacial en Canvas 2D, extracción semántica de recuerdos y estado de carga en tiempo real.',
       details: [
-        'El empaquetado genera instaladores DMG para descarga manual y ZIP para Squirrel.Mac.',
-        'El workflow publica el ZIP junto con latest-mac.yml y los demás artefactos.',
-        'La comprobación de versiones vuelve a funcionar en instalaciones empaquetadas de macOS.',
+        'Exploración visual en red neuronal con física de resortes, órbitas, halos cuánticos e inspección de relaciones.',
+        'Extracción semántica automática de directrices, preferencias y hechos a partir de las conversaciones de chat.',
+        'Indicador de carga interactivo y micro-animaciones en el botón de actualización de recuerdos.',
       ],
       docSlug: 'quickstart',
-      icon: Workflow,
+      icon: Sparkles,
       iconColor: 'text-[#ff6363]',
       iconBg: 'bg-[#ff6363]/10 border-[#ff6363]/25',
     },
     {
-      title: 'Aviso de actualización minimizable',
+      title: 'Previsualizador Nativo de Documentos y Planillas',
       summary:
-        'El aviso ya no bloquea permanentemente la interfaz y puede reducirse a un indicador flotante.',
+        'Visor integrado en el workspace para explorar archivos PDF y hojas de cálculo (Excel, CSV, TSV) sin salir del chat.',
       details: [
-        'Cada versión puede minimizarse y volver a abrirse sin perder el estado.',
-        'Durante una descarga minimizada se mantiene visible el porcentaje de progreso.',
-        'Una versión nueva vuelve a mostrar el aviso aunque la anterior se hubiera minimizado.',
+        'Procesamiento en segundo plano mediante Web Workers para una navegación fluida sin bloqueos.',
+        'Soporte multihoja, lectura estructurada de fórmulas y metadatos tabulares.',
+        'Retención de estado de previsualización al alternar entre diferentes conversaciones y carpetas.',
       ],
       docSlug: 'quickstart',
       icon: BookOpen,
@@ -69,13 +69,13 @@ export function ReleaseModal() {
       iconBg: 'bg-[#63a1ff]/10 border-[#63a1ff]/25',
     },
     {
-      title: 'Notas de versión más resistentes',
+      title: 'Dictado por Voz e i18n Adaptativo',
       summary:
-        'Las novedades aparecen de inmediato y ya no dependen únicamente del arranque del backend local.',
+        'Localización y diagnóstico integral de errores de micrófono y servicios de voz adaptados al idioma del usuario.',
       details: [
-        'El texto incluido en el manifiesto del actualizador funciona como respaldo inmediato.',
-        'La consulta enriquecida de novedades reintenta automáticamente los fallos transitorios.',
-        'Las notas se conservan al finalizar la descarga y al preparar la instalación.',
+        'Mensajes dinámicos en español e inglés para permisos bloqueados, dispositivos ocupados o no encontrados.',
+        'Paridad del 100% en los catálogos de traducción de voz y dictado.',
+        'Compatibilidad optimizada para transcripción en navegadores y modelos locales Whisper.',
       ],
       docSlug: 'quickstart',
       icon: Cpu,
@@ -83,16 +83,16 @@ export function ReleaseModal() {
       iconBg: 'bg-[#fbbf24]/10 border-[#fbbf24]/25',
     },
     {
-      title: 'Instalación segura en Linux',
+      title: 'Estabilidad de Inferencia y Chat',
       summary:
-        'Sparta comprueba que se esté ejecutando desde un AppImage válido antes de intentar reemplazarlo.',
+        'Corrección de desbordamientos en notificaciones y bypass de peticiones de hilos temporales.',
       details: [
-        'Se evita cerrar la aplicación con una instalación automática que no puede completarse.',
-        'Los entornos incompatibles reciben una explicación y pueden descargar el AppImage manualmente.',
-        'El flujo compatible conserva la descarga, instalación y reinicio administrados por Electron.',
+        'Se eliminó la recursión de llamadas en la pila de toasts informativos del chat.',
+        'Bypass de consultas al backend para hilos locales temporales previniendo errores de red.',
+        'Mayor fluidez en el renderizado y streaming de respuestas complejas.',
       ],
       docSlug: 'quickstart',
-      icon: Sparkles,
+      icon: Workflow,
       iconColor: 'text-[#59d499]',
       iconBg: 'bg-[#59d499]/10 border-[#59d499]/25',
     },
@@ -115,7 +115,7 @@ export function ReleaseModal() {
             alt="Sparta Agent"
             className="size-4 object-contain drop-shadow-[0_0_6px_rgba(234,179,8,0.5)] group-hover:scale-110 transition-transform duration-200"
           />
-          <span className="font-mono text-[11px] text-[#e6e6e6]">v0.2.19 disponible</span>
+          <span className="font-mono text-[11px] text-[#e6e6e6]">v0.2.20 disponible</span>
           <Sparkles className="w-3.5 h-3.5 text-[#ff6363]" />
         </motion.button>
       )}
@@ -154,12 +154,12 @@ export function ReleaseModal() {
                     className="size-3.5 object-contain drop-shadow-[0_0_4px_rgba(234,179,8,0.5)]"
                   />
                   <span className="text-[11px] font-mono font-medium tracking-[0.08em] text-[#9c9c9d] uppercase">
-                    Lanzamiento oficial v0.2.19
+                    Lanzamiento oficial v0.2.20
                   </span>
                 </div>
 
                 <h2 className="text-2xl sm:text-3xl font-medium tracking-tight text-white">
-                  Sparta Agent v0.2.19
+                  Sparta Agent v0.2.20
                 </h2>
 
                 <p className="text-xs sm:text-sm text-[#9c9c9d] leading-relaxed font-normal">
@@ -263,18 +263,18 @@ export function ReleaseModal() {
               {/* Action Buttons Group */}
               <div className="relative z-10 flex flex-col sm:flex-row items-center gap-2.5 pt-1">
                 <a
-                  href="https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Windows-0.2.19-Setup.exe"
+                  href="https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Windows-0.2.20-Setup.exe"
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={handleClose}
                   className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#e6e6e6] hover:bg-white text-[#454647] hover:text-[#111214] text-xs font-medium shadow-button-neutral transition-all active:scale-[0.98] cursor-pointer"
                 >
                   <Download className="w-3.5 h-3.5" />
-                  <span>Descargar Sparta v0.2.19 (.exe)</span>
+                  <span>Descargar Sparta v0.2.20 (.exe)</span>
                 </a>
 
                 <a
-                  href="https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.2.19"
+                  href="https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.2.20"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#111214] hover:bg-[#1b1c1e] border border-[#363739] text-[#9c9c9d] hover:text-white text-xs font-medium transition-all shadow-key cursor-pointer"

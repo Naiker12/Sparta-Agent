@@ -319,6 +319,17 @@ contextBridge.exposeInMainWorld("agent", {
 });
 
 contextBridge.exposeInMainWorld("fs", {
+  getGitStatus: (projectId: string) => ipcRenderer.invoke("fs:getGitStatus", projectId) as Promise<{ success: boolean; error?: string; isRepository?: boolean; branch?: string; upstream?: string; ahead?: number; behind?: number; changed?: number; added?: number; modified?: number; deleted?: number; untracked?: number; insertions?: number; deletions?: number }>,
+  getGitChanges: (projectId: string) => ipcRenderer.invoke("fs:getGitChanges", projectId) as Promise<{ success: boolean; error?: string; isRepository?: boolean; changes: Array<{ path: string; status: string }>; conflicts?: string[] }>,
+  getGitDiff: (projectId: string, path: string) => ipcRenderer.invoke("fs:getGitDiff", projectId, path) as Promise<{ success: boolean; error?: string; diff?: string }>,
+  getGitBranches: (projectId: string) => ipcRenderer.invoke("fs:getGitBranches", projectId) as Promise<{ success: boolean; error?: string; branches: string[] }>,
+  switchGitBranch: (projectId: string, branch: string) => ipcRenderer.invoke("fs:switchGitBranch", projectId, branch) as Promise<{ success: boolean; error?: string; output?: string; conflicts: string[] }>,
+  stageGitPaths: (projectId: string, paths: string[]) => ipcRenderer.invoke("fs:stageGitPaths", projectId, paths) as Promise<{ success: boolean; error?: string; output?: string; conflicts: string[] }>,
+  unstageGitPaths: (projectId: string, paths: string[]) => ipcRenderer.invoke("fs:unstageGitPaths", projectId, paths) as Promise<{ success: boolean; error?: string; output?: string; conflicts: string[] }>,
+  commitGit: (projectId: string, message: string) => ipcRenderer.invoke("fs:commitGit", projectId, message) as Promise<{ success: boolean; error?: string; output?: string; conflicts: string[] }>,
+  pullGit: (projectId: string) => ipcRenderer.invoke("fs:pullGit", projectId) as Promise<{ success: boolean; error?: string; output?: string; conflicts: string[] }>,
+  pushGit: (projectId: string) => ipcRenderer.invoke("fs:pushGit", projectId) as Promise<{ success: boolean; error?: string; output?: string; conflicts: string[] }>,
+  resolveGitConflict: (projectId: string, path: string, choice: "ours" | "theirs") => ipcRenderer.invoke("fs:resolveGitConflict", projectId, path, choice) as Promise<{ success: boolean; error?: string; output?: string; conflicts: string[] }>,
   openFolderDialog: () =>
     ipcRenderer.invoke("fs:openFolderDialog") as Promise<string | null>,
   confirmWorkspaceAccess: (folderPath: string, locale?: string) =>
@@ -334,6 +345,7 @@ contextBridge.exposeInMainWorld("fs", {
       return null;
     }
   },
+  readPreview: (projectId: string, filePath: string) => ipcRenderer.invoke("fs:readPreview", projectId, filePath) as Promise<{ success: boolean; bytes?: Uint8Array; error?: string }>,
   readDirLevel: (projectId: string, dirPath: string) =>
     ipcRenderer.invoke("fs:readDirLevel", projectId, dirPath) as Promise<{
       nodes: FileTreeNode[];

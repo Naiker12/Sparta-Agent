@@ -4,18 +4,14 @@ import {
   Component,
   useCallback,
   useEffect,
-  useLayoutEffect,
   useRef,
   useState,
   type ReactNode,
 } from "react";
-import { Document, Page, pdfjs } from "react-pdf";
+
 import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  FileTextIcon,
-  ZoomInIcon,
-  ZoomOutIcon,
+  DownloadIcon,
+  Maximize2Icon,
 } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { useT } from "@/i18n";
@@ -28,289 +24,25 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
+import { LocalSpreadsheetPreview } from "./spreadsheet-preview";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { getAttachmentIcon } from "@/lib/attachment-file-kind";
+import { PreviewWorkspace } from "./preview-workspace";
+import { lazy, Suspense } from "react";
+const PdfPreview = lazy(() => import("./pdf-preview").then(m => ({ default: m.PdfPreview })));
+const RichPreview = lazy(() => import("@/components/markdown/markdown-preview").then(m => ({ default: m.MarkdownPreview })));
 import { cn } from "@/lib/utils";
 import { getDocumentFileUrl, getPreviewTarget } from "../api/rag-api";
-import type { PdfRegion, PreviewTarget } from "../types/rag";
+import type { PreviewTarget } from "../types/rag";
 import { type LocalPreview, useDocumentPreviewStore } from "./preview-store";
 
-// Serve the pdf.js worker from the app origin.
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  "pdfjs-dist/build/pdf.worker.min.mjs",
-  import.meta.url,
-).toString();
-
-// Highlight rects; coords are 0..1 of the page box.
-function RegionOverlay({ regions }: { regions: PdfRegion[] }) {
-  if (regions.length === 0) return null;
-  return (
-    <>
-      {regions.map((r, i) => (
-        <div
-          key={i}
-          className="pointer-events-none absolute rounded-sm bg-amber-300/35 ring-1 ring-amber-500/70 mix-blend-multiply"
-          style={{
-            left: `${r.x * 100}%`,
-            top: `${r.y * 100}%`,
-            width: `${r.width * 100}%`,
-            height: `${r.height * 100}%`,
-          }}
-        />
-      ))}
-    </>
-  );
-}
-
-// Zoom multiplies fit-to-panel width: 1 = fit.
-const ZOOM_MIN = 0.5;
-const ZOOM_MAX = 3;
-const ZOOM_STEP = 0.25;
-
-const clampZoom = (z: number) =>
-  Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Number(z.toFixed(2))));
-
-function PdfPreview({
-  fileUrl,
-  initialPage,
-  regions,
-}: {
-  fileUrl: string;
-  initialPage: number;
-  regions: PdfRegion[];
-}) {
+function LocalTextPreview({ blob, filename, kind }: { blob: Blob; filename: string; kind: string }) {
   const t = useT();
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const [width, setWidth] = useState(0);
-  const [numPages, setNumPages] = useState(0);
-  const [page, setPage] = useState(initialPage);
-  const [scale, setScale] = useState(1);
-  const [error, setError] = useState<string | null>(null);
-  const [grabbing, setGrabbing] = useState(false);
-  const [scrollable, setScrollable] = useState(false);
-  const panRef = useRef<{
-    x: number;
-    y: number;
-    left: number;
-    top: number;
-  } | null>(null);
-
-  // Reset page/zoom when a new citation reuses this viewer.
-  useEffect(() => setPage(initialPage), [initialPage, fileUrl]);
-
-  useEffect(() => setScale(1), [fileUrl]);
-
-  useLayoutEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const measure = () => setWidth(el.clientWidth);
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-
-  // Non-passive wheel listener so preventDefault can stop the panel scrolling.
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const onWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      setScale((s) => clampZoom(s - Math.sign(e.deltaY) * ZOOM_STEP));
-    };
-    el.addEventListener("wheel", onWheel, { passive: false });
-    return () => el.removeEventListener("wheel", onWheel);
-  }, []);
-
-  const onLoad = useCallback(({ numPages: n }: { numPages: number }) => {
-    setNumPages(n);
-    setPage((p) => Math.min(Math.max(p, 1), n));
-  }, []);
-
-  const zoomBy = useCallback(
-    (delta: number) => setScale((s) => clampZoom(s + delta)),
-    [],
-  );
-
-  // Whether the page overflows the panel (so panning matters).
-  const recheckScrollable = useCallback(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    setScrollable(
-      el.scrollWidth > el.clientWidth + 1 ||
-        el.scrollHeight > el.clientHeight + 1,
-    );
-  }, []);
-
-  useEffect(() => {
-    recheckScrollable();
-  }, [recheckScrollable, width, scale, page, numPages]);
-
-  // Grab-to-pan; listen on window so the drag tracks past the panel edge.
-  useEffect(() => {
-    if (!grabbing) return;
-    const onMove = (e: MouseEvent) => {
-      const el = containerRef.current;
-      const start = panRef.current;
-      if (!el || !start) return;
-      el.scrollLeft = start.left - (e.clientX - start.x);
-      el.scrollTop = start.top - (e.clientY - start.y);
-    };
-    const onUp = () => {
-      setGrabbing(false);
-      panRef.current = null;
-    };
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup", onUp);
-    return () => {
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("mouseup", onUp);
-    };
-  }, [grabbing]);
-
-  const onPanStart = useCallback(
-    (e: React.MouseEvent) => {
-      const el = containerRef.current;
-      if (!el || e.button !== 0 || !scrollable) return;
-      panRef.current = {
-        x: e.clientX,
-        y: e.clientY,
-        left: el.scrollLeft,
-        top: el.scrollTop,
-      };
-      setGrabbing(true);
-      e.preventDefault(); // stop canvas image-drag / selection
-    },
-    [scrollable],
-  );
-
-  const pageRegions = regions.filter(
-    (r) => r.pageNumber === page || r.pageIndex === page - 1,
-  );
-
-  if (error) {
-    return (
-      <div className="p-6 text-sm text-muted-foreground">
-        {t("chat.preview.pdfError", { error: error.slice(0, 240) })}
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex h-full flex-col">
-      <div
-        ref={containerRef}
-        onMouseDown={onPanStart}
-        className={cn(
-          "flex-1 overflow-auto bg-muted/30 px-4 py-3",
-          grabbing
-            ? "cursor-grabbing select-none"
-            : scrollable
-              ? "cursor-grab"
-              : "",
-        )}
-      >
-        <Document
-          file={fileUrl}
-          onLoadSuccess={onLoad}
-          onSourceError={(e) => setError(e.message)}
-          onLoadError={(e) => setError(e.message)}
-          loading={
-            <div className="flex items-center gap-2 p-6 text-sm text-muted-foreground">
-              <Spinner className="size-3.5" /> {t("chat.preview.loadingPdf")}
-            </div>
-          }
-        >
-          {width > 0 && (
-            // min-w-fit lets the zoomed row grow past the panel so the page stays
-            // centered and reachable on both sides.
-            <div className="flex min-w-fit justify-center">
-              <div className="relative w-fit shadow-sm">
-                <Page
-                  pageNumber={page}
-                  width={(width - 8) * scale}
-                  renderTextLayer={false}
-                  renderAnnotationLayer={false}
-                  onRenderSuccess={recheckScrollable}
-                  onRenderError={(e) => setError(e.message)}
-                />
-                <RegionOverlay regions={pageRegions} />
-              </div>
-            </div>
-          )}
-        </Document>
-      </div>
-      <div className="grid grid-cols-[1fr_auto_1fr] items-center border-t px-3 py-2 text-xs">
-        <div className="flex items-center gap-0.5 justify-self-start">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-7"
-            disabled={scale <= ZOOM_MIN}
-            onClick={() => zoomBy(-ZOOM_STEP)}
-            aria-label={t("chat.preview.zoomOut")}
-          >
-            <ZoomOutIcon className="size-4" />
-          </Button>
-          <button
-            type="button"
-            onClick={() => setScale(1)}
-            className="w-11 text-center tabular-nums text-muted-foreground hover:text-foreground"
-            aria-label={t("chat.preview.resetZoom")}
-          >
-            {Math.round(scale * 100)}%
-          </button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-7"
-            disabled={scale >= ZOOM_MAX}
-            onClick={() => zoomBy(ZOOM_STEP)}
-            aria-label={t("chat.preview.zoomIn")}
-          >
-            <ZoomInIcon className="size-4" />
-          </Button>
-        </div>
-        {numPages > 1 ? (
-          <div className="flex items-center gap-3 justify-self-center">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-7"
-              disabled={page <= 1}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              aria-label={t("chat.preview.previousPage")}
-            >
-              <ChevronLeftIcon className="size-4" />
-            </Button>
-            <span className="tabular-nums text-muted-foreground">
-              {t("chat.preview.pageOf", { page, total: numPages })}
-            </span>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-7"
-              disabled={page >= numPages}
-              onClick={() => setPage((p) => Math.min(numPages, p + 1))}
-              aria-label={t("chat.preview.nextPage")}
-            >
-              <ChevronRightIcon className="size-4" />
-            </Button>
-          </div>
-        ) : (
-          <span />
-        )}
-        <span aria-hidden />
-      </div>
-    </div>
-  );
-}
-
-function LocalTextPreview({ blob }: { blob: Blob }) {
-  const t = useT();
+  const [source, setSource] = useState(false);
   const [text, setText] = useState<string | null>(null);
   useEffect(() => {
     let cancelled = false;
-    void blob
+    void blob.slice(0, 1024 * 1024)
       .text()
       .then((value) => !cancelled && setText(value))
       .catch(() => !cancelled && setText(t("chat.preview.textError")));
@@ -318,10 +50,18 @@ function LocalTextPreview({ blob }: { blob: Blob }) {
       cancelled = true;
     };
   }, [blob, t]);
+  const markdown = /\.(md|markdown)$/i.test(filename);
+  if (!source && text !== null && (markdown || kind === "code") && blob.size <= 256 * 1024) {
+    const extension = filename.split(".").pop()?.toLowerCase() ?? "text";
+    const languages: Record<string,string> = { py: "python", ts: "typescript", tsx: "tsx", js: "javascript", jsx: "jsx", json: "json", rs: "rust", sh: "bash", yml: "yaml", yaml: "yaml", html: "html", css: "css" };
+    const fence = "`".repeat(Math.max(3, ...Array.from(text.matchAll(/`+/g), match => match[0].length + 1)));
+    const content = markdown ? text : `${fence}${languages[extension] ?? "text"}\n${text}\n${fence}`;
+    return <div className="flex h-full flex-col"><div className="flex justify-end border-b px-3 py-1"><Button size="sm" variant="ghost" onClick={()=>setSource(true)}>{t("chat.preview.source")}</Button></div><div className="min-h-0 flex-1"><Suspense fallback={<p className="p-5">{t("chat.preview.loading")}</p>}><RichPreview markdown={content} className="h-full max-h-none rounded-none border-0 bg-background p-6 text-sm" /></Suspense></div></div>;
+  }
   return (
-    <pre className="h-full overflow-auto whitespace-pre-wrap break-words p-5 font-mono text-xs leading-relaxed">
+    <div className="flex h-full flex-col">{source && <div className="flex justify-end border-b px-3 py-1"><Button size="sm" variant="ghost" onClick={()=>setSource(false)}>{t("chat.files.preview")}</Button></div>}{blob.size > 1024 * 1024 && <p className="border-b p-2 text-xs text-muted-foreground">{t("chat.preview.textLimit")}</p>}<pre className="min-h-0 flex-1 overflow-auto whitespace-pre-wrap break-words p-5 font-mono text-xs leading-relaxed">
       {text ?? t("chat.preview.loading")}
-    </pre>
+    </pre></div>
   );
 }
 
@@ -374,118 +114,25 @@ function LocalWordPreview({ blob }: { blob: Blob }) {
   );
 }
 
-function LocalSpreadsheetPreview({ blob }: { blob: Blob }) {
-  const t = useT();
-  const [sheet, setSheet] = useState<{
-    blob: Blob;
-    name: string;
-    rows: unknown[][];
-  } | null>(null);
-  const [error, setError] = useState<{ blob: Blob; message: string } | null>(
-    null,
-  );
-  useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      const XLSX = await import("xlsx");
-      const workbook = XLSX.read(await blob.arrayBuffer(), { type: "array" });
-      const sheets = workbook.SheetNames.map((name) => ({
-        name,
-        rows: XLSX.utils.sheet_to_json<unknown[]>(workbook.Sheets[name], {
-          header: 1,
-          defval: "",
-        }),
-      }));
-      // openpyxl and other generators often leave the initial "Sheet" empty
-      // and write the actual report to the next worksheet. Preview the first
-      // sheet with cells instead of showing an apparently blank panel.
-      const selected = sheets.find(({ rows }) => rows.length > 0) ?? sheets[0];
-      if (!selected) throw new Error("No sheets");
-      if (!cancelled) {
-        setSheet({
-          blob,
-          name: selected.name,
-          rows: selected.rows.slice(0, 500),
-        });
-      }
-    })().catch((reason: unknown) => {
-      if (cancelled) return;
-      setSheet({ blob, name: "", rows: [] });
-      setError({
-        blob,
-        message: (reason instanceof Error && reason.message
-          ? reason.message
-          : t("chat.preview.unsupportedSpreadsheet")
-        ).slice(0, 240),
-      });
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [blob, t]);
-  if (!sheet || sheet.blob !== blob)
-    return (
-      <div className="p-6 text-sm text-muted-foreground">
-        {t("chat.preview.loading")}
-      </div>
-    );
-  if (!sheet.name)
-    return (
-      <div className="p-6 text-sm text-muted-foreground">
-        {t("chat.preview.spreadsheetError", {
-          error:
-            error?.blob === blob
-              ? error.message
-              : t("chat.preview.unknownError"),
-        })}
-      </div>
-    );
-  if (sheet.rows.length === 0)
-    return (
-      <div className="p-6 text-sm text-muted-foreground">
-        {t("chat.preview.spreadsheetError", {
-          error: t("chat.preview.emptySpreadsheet"),
-        })}
-      </div>
-    );
-  return (
-    <div className="h-full overflow-auto p-5">
-      <p className="mb-3 text-sm text-muted-foreground">
-        {sheet.name}
-        {sheet.rows.length === 500
-          ? ` · ${t("chat.preview.firstRows", { count: 500 })}`
-          : ""}
-      </p>
-      <Table className="text-xs">
-        <TableBody>
-          {sheet.rows.map((row, rowIndex) => (
-            <TableRow key={rowIndex}>
-              {row.map((cell, cellIndex) => (
-                <TableCell
-                  key={cellIndex}
-                  className="max-w-72 truncate p-2 align-top"
-                >
-                  {String(cell ?? "")}
-                </TableCell>
-              ))}
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
-  );
-}
-
 function LocalPreviewContent({ preview }: { preview: LocalPreview }) {
   const t = useT();
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
-    if (preview.kind !== "pdf") return;
+    if (!["pdf", "image", "video", "audio"].includes(preview.kind)) return;
     const objectUrl = URL.createObjectURL(preview.blob);
+    // An object URL is an external resource owned and released by this effect.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setUrl(objectUrl);
     return () => URL.revokeObjectURL(objectUrl);
   }, [preview]);
+  if (preview.blob.size > 25 * 1024 * 1024) return <p className="p-6 text-sm text-muted-foreground">{t("chat.preview.localSafetyError")}</p>;
   switch (preview.kind) {
+    case "image":
+      return url ? <div className="flex h-full items-center justify-center overflow-auto p-4"><img src={url} alt={preview.filename} className="max-h-full max-w-full object-contain" /></div> : null;
+    case "video":
+      return url ? <video src={url} controls playsInline preload="metadata" className="h-full w-full object-contain" /> : null;
+    case "audio":
+      return url ? <div className="flex h-full items-center justify-center p-6"><audio src={url} controls preload="metadata" className="w-full" /></div> : null;
     case "pdf":
       return url ? (
         <PdfPreview key={url} fileUrl={url} initialPage={1} regions={[]} />
@@ -497,7 +144,7 @@ function LocalPreviewContent({ preview }: { preview: LocalPreview }) {
       return <LocalSpreadsheetPreview blob={preview.blob} />;
     case "code":
     case "text":
-      return <LocalTextPreview blob={preview.blob} />;
+      return <LocalTextPreview key={preview.filename} blob={preview.blob} filename={preview.filename} kind={preview.kind} />;
     default:
       return (
         <div className="p-6 text-sm text-muted-foreground">
@@ -556,7 +203,8 @@ const clampPreviewWidth = (w: number) =>
 
 function readStoredPreviewWidth(): number {
   if (typeof window === "undefined") return DEFAULT_PREVIEW_WIDTH;
-  const raw = Number(window.localStorage.getItem(PREVIEW_WIDTH_KEY));
+  let raw = 0;
+  try { raw = Number(window.localStorage.getItem(PREVIEW_WIDTH_KEY)); } catch { return DEFAULT_PREVIEW_WIDTH; }
   return Number.isFinite(raw) && raw > 0
     ? clampPreviewWidth(raw)
     : DEFAULT_PREVIEW_WIDTH;
@@ -574,6 +222,7 @@ export function DocumentPreviewSheet() {
   const t = useT();
   const {
     open,
+    revision,
     documentId,
     chunkId,
     filename,
@@ -581,19 +230,33 @@ export function DocumentPreviewSheet() {
     localPreview,
     closePreview,
   } = useDocumentPreviewStore();
+  const [wide, setWide] = useState(() => window.innerWidth >= 1400);
+  useEffect(() => {
+    const query = window.matchMedia("(min-width: 1400px)");
+    const update = () => setWide(query.matches);
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
   const [target, setTarget] = useState<PreviewTarget | null>(null);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Reserve room for the conversation on desktop; mobile remains modal.
   // Left-edge drag resizing of the panel.
   const [previewWidth, setPreviewWidth] = useState<number>(
     readStoredPreviewWidth,
   );
+  useEffect(() => {
+    if (!open || !wide) return;
+    const root = document.documentElement;
+    root.style.setProperty("--document-preview-width", `${previewWidth}px`);
+    return () => { root.style.removeProperty("--document-preview-width"); };
+  }, [open, wide, previewWidth]);
   const [resizing, setResizing] = useState(false);
   const resizeRef = useRef<{ startX: number; startWidth: number } | null>(null);
   const widthRef = useRef(previewWidth);
-  widthRef.current = previewWidth;
+  useEffect(() => { widthRef.current = previewWidth; }, [previewWidth]);
 
   const onResizeStart = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -625,7 +288,9 @@ export function DocumentPreviewSheet() {
   }, [resizing]);
 
   useEffect(() => {
-    if (!open || !documentId) return;
+    // Reset the remote request state when the source changes or closes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (!open || !documentId) { setLoading(false); setError(null); setTarget(null); setFileUrl(null); return; }
     let cancelled = false;
     setLoading(true);
     setError(null);
@@ -656,9 +321,11 @@ export function DocumentPreviewSheet() {
   const headerPage = target?.targetPage ?? page ?? null;
 
   return (
-    <Sheet open={open} onOpenChange={(o) => !o && closePreview()}>
+    <Sheet modal={!wide} open={open} onOpenChange={(o) => !o && closePreview()}>
       <SheetContent
         side="right"
+        aria-describedby={undefined}
+        onInteractOutside={event => { if (wide) event.preventDefault(); }}
         style={{ width: previewWidth, maxWidth: "95vw" }}
         className={cn(
           "flex w-full flex-col gap-0 p-0",
@@ -671,6 +338,16 @@ export function DocumentPreviewSheet() {
           role="separator"
           aria-orientation="vertical"
           aria-label={t("chat.preview.resize")}
+          tabIndex={0}
+          aria-valuemin={Math.min(MIN_PREVIEW_WIDTH, maxPreviewWidth())}
+          aria-valuemax={maxPreviewWidth()}
+          aria-valuenow={previewWidth}
+          onKeyDown={event => {
+            if (!["ArrowLeft", "ArrowRight", "Home"].includes(event.key)) return;
+            event.preventDefault();
+            const width = event.key === "Home" ? clampPreviewWidth(DEFAULT_PREVIEW_WIDTH) : clampPreviewWidth(previewWidth + (event.key === "ArrowLeft" ? 32 : -32));
+            setPreviewWidth(width); persistPreviewWidth(width);
+          }}
           onMouseDown={onResizeStart}
           onDoubleClick={() => {
             setPreviewWidth(DEFAULT_PREVIEW_WIDTH);
@@ -681,10 +358,10 @@ export function DocumentPreviewSheet() {
             resizing && "bg-primary/40",
           )}
         />
-        <SheetHeader className="gap-1 border-b p-4">
-          <div className="relative">
-            <SheetTitle className="flex items-center gap-2 pr-10 text-sm">
-              <FileTextIcon className="size-4 shrink-0" />
+        <SheetHeader className="flex-row items-center gap-2 border-b px-3 py-2">
+          <div className="min-w-0 flex-1">
+            <SheetTitle className="flex items-center gap-2 text-sm">
+              <HugeiconsIcon icon={getAttachmentIcon(headerName)} className="size-4 shrink-0" />
               <span className="min-w-0 truncate">{headerName}</span>
               {headerPage != null && (
                 <span className="shrink-0 text-muted-foreground">
@@ -692,11 +369,22 @@ export function DocumentPreviewSheet() {
                 </span>
               )}
             </SheetTitle>
-            <SheetCloseButton className="absolute top-1/2 right-0 -translate-y-1/2" />
           </div>
+          <div className="flex shrink-0 items-center gap-1">
+            <div className="ml-auto flex items-center gap-1">
+              {localPreview && <Button variant="ghost" size="icon-sm" aria-label={t("chat.files.download")} onClick={() => {
+                const url = URL.createObjectURL(localPreview.blob);
+                const anchor = document.createElement("a"); anchor.href = url; anchor.download = localPreview.filename; anchor.click();
+                window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+              }}><DownloadIcon data-icon="inline-start" /></Button>}
+              <Button variant="ghost" size="icon-sm" aria-label={t("chat.preview.resize")} onClick={()=>setPreviewWidth(current => current > DEFAULT_PREVIEW_WIDTH ? clampPreviewWidth(DEFAULT_PREVIEW_WIDTH) : maxPreviewWidth())}><Maximize2Icon data-icon="inline-start" /></Button>
+            </div>
+          </div>
+          <SheetCloseButton className="static shrink-0" />
         </SheetHeader>
+        <PreviewWorkspace />
 
-        <div className="min-h-0 flex-1">
+        <div className="min-h-0 flex-1"><Suspense fallback={<p className="p-6" role="status">{t("chat.preview.loading")}</p>}>
           {loading ? (
             <div className="flex items-center gap-2 p-6 text-sm text-muted-foreground">
               <Spinner className="size-3.5" /> {t("chat.preview.resolvingSource")}
@@ -710,10 +398,11 @@ export function DocumentPreviewSheet() {
               preview={localPreview}
               message={t("chat.preview.localSafetyError")}
             >
-              <LocalPreviewContent preview={localPreview} />
+              <LocalPreviewContent key={revision} preview={localPreview} />
             </LocalPreviewErrorBoundary>
           ) : target && target.mediaKind === "pdf" && fileUrl ? (
             <PdfPreview
+              key={`${fileUrl}:${target.targetPage ?? 1}`}
               fileUrl={fileUrl}
               initialPage={target.targetPage ?? 1}
               regions={target.pdfRegions ?? []}
@@ -729,7 +418,7 @@ export function DocumentPreviewSheet() {
               {t("chat.preview.noSourcePreview")}
             </div>
           )}
-        </div>
+        </Suspense></div>
       </SheetContent>
     </Sheet>
   );

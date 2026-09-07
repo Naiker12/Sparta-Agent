@@ -549,6 +549,7 @@ export const Thread: FC<{
         <ThreadPrimitive.Root
           className="aui-root aui-thread-root @container relative flex min-h-0 min-w-0 flex-1 basis-0 flex-col overflow-hidden"
           style={{
+            marginRight: "var(--document-preview-width, 0px)",
             ["--thread-max-width" as string]: "48rem",
             ["--thread-content-max-width" as string]:
               "calc(var(--thread-max-width) - 1.5rem)",

@@ -25,6 +25,7 @@ import {
 } from "./dictation-outcome";
 import {
   type StudioDictationSession,
+  describeMediaError,
   isMissingDeviceError,
   resolveDictationChatId,
 } from "./studio-web-speech-dictation-adapter";
@@ -722,9 +723,7 @@ export class StudioModelDictationAdapter implements DictationAdapter {
         session.status = { type: "running" };
         for (const callback of speechStartCallbacks) callback();
       } catch (error) {
-        const message = isMissingDeviceError(error)
-          ? "No microphone was found for dictation."
-          : "Dictation could not access the microphone.";
+        const message = describeMediaError(error);
         console.error("STT microphone error:", error);
         toast.error(message);
         finishSession("error");

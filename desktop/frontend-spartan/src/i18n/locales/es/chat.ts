@@ -80,6 +80,9 @@ export const chat = {
     deleteFailed: "No se pudieron eliminar los archivos.",
   },
   preview: {
+    source: "Código fuente",
+    textLimit: "Vista limitada al primer MB.",
+    spreadsheetLimit: "Vista limitada a 500 filas, 64 columnas y 32 hojas.",
     loading: "Cargando…",
     loadingPdf: "Cargando PDF…",
     textError: "No se pudo leer este archivo.",

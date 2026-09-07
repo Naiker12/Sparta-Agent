@@ -52,7 +52,7 @@ import {
   clampChatSettingsWidth,
   useChatSettingsWidth,
 } from "@/hooks/use-chat-settings-width";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsCompactLayout, useIsMobile } from "@/hooks/use-mobile";
 import { useT } from "@/i18n";
 import { ChevronDownStandardIcon } from "@/lib/chevron-icons";
 import { toast } from "@/lib/toast";
@@ -498,6 +498,7 @@ export function ChatSettingsPanel({
   const showPresencePenalty =
     !isExternalModel || Boolean(providerCapabilities?.presencePenalty);
   const isMobile = useIsMobile();
+  const isCompactLayout = useIsCompactLayout();
   const isLoadedGguf = useChatRuntimeStore((s) => s.activeGgufVariant) != null;
   const currentCheckpoint = params.checkpoint;
   const activeModelIsLocal = useChatRuntimeStore(
@@ -1658,10 +1659,13 @@ export function ChatSettingsPanel({
     </>
   );
 
-  if (isMobile) {
+  if (isMobile || isCompactLayout) {
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="right" className="w-[18rem] p-0 font-heading">
+        <SheetContent
+          side="right"
+          className="w-[min(22rem,calc(100vw-1rem))] p-0 font-heading"
+        >
           <SheetHeader className="sr-only">
             <SheetTitle>{t("runSettings.title")}</SheetTitle>
             <SheetDescription>{t("chat.systemPromptEditor.settingsDescription")}</SheetDescription>

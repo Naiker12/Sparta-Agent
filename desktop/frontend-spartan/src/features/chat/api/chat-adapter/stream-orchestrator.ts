@@ -209,7 +209,7 @@ import {
   type LastLocalModelKind,
 } from "../../utils/last-local-model-load";
 import { createRetryableSharedRead } from "../../utils/retryable-shared-read";
-import { getThreadWorkspace } from "../chat-api";
+import { ensureThreadWorkspace } from "../../utils/pending-workspace";
 import { getImageInputUnavailableReason } from "../../utils/image-input-support";
 import {
   createThinkTagTracker,
@@ -927,7 +927,10 @@ export function createOpenAIStreamAdapter(
         : liveRuntime;
       const { params } = runtime;
       await persistResolvedQueuedModel(params.checkpoint);
-      const sandboxSessionId = await resolveSandboxSessionId(
+      const threadWorkspace = resolvedThreadId
+        ? await ensureThreadWorkspace(resolvedThreadId)
+        : null;
+      const sandboxSessionId = threadWorkspace ? resolvedThreadId : await resolveSandboxSessionId(
         resolvedThreadId,
         readThreadRecord,
       );
@@ -962,9 +965,7 @@ export function createOpenAIStreamAdapter(
       const projectRagEnabled = ragProjectId
         ? await projectHasSources(ragProjectId)
         : false;
-      const workspaceEnabled = resolvedThreadId
-        ? Boolean(await getThreadWorkspace(resolvedThreadId).catch(() => null))
-        : false;
+      const workspaceEnabled = Boolean(threadWorkspace);
       const externalSelection = parseExternalModelId(params.checkpoint);
       const isExternalRequest = externalSelection !== null;
       if (

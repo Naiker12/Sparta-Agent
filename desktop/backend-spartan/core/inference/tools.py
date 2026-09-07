@@ -4537,6 +4537,8 @@ _ALWAYS_SAFE_TOOLS = frozenset({
     "test_mcp_server",
     "get_current_datetime",
     "get_weather",
+    "memory_search",
+    "memory_save",
     "list_skills",
     "search_skill_catalog",
     "list_directory",
@@ -10126,6 +10128,42 @@ GET_WEATHER_TOOL = {
     },
 }
 
+MEMORY_SEARCH_TOOL = {
+    "type": "function",
+    "function": {
+        "name": "memory_search",
+        "description": "Search long-term memory for prior facts and preferences only when relevant.",
+        "parameters": {"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]},
+    },
+}
+
+MEMORY_SAVE_TOOL = {
+    "type": "function",
+    "function": {
+        "name": "memory_save",
+        "description": "Save an important fact, user preference, entity (person, tool, project), or event into Sparta's durable memory graph so it is recalled in future conversations.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "enum": ["fact", "preference", "entity", "event"],
+                    "description": "The category of the memory: 'fact' for objective statements/knowledge, 'preference' for user tastes/habits/preferences, 'entity' for important entities, 'event' for occurrences.",
+                },
+                "label": {
+                    "type": "string",
+                    "description": "Concise title or name for the memory (e.g., 'Ubicación preferida', 'Nombre del usuario', 'Stack favorito').",
+                },
+                "content": {
+                    "type": "string",
+                    "description": "Detailed description of the fact or preference to remember.",
+                },
+            },
+            "required": ["type", "label", "content"],
+        },
+    },
+}
+
 IMPORT_MCP_CONFIG_TOOL = {
     "type": "function",
     "function": {
@@ -10259,6 +10297,8 @@ ALL_TOOLS = [
     TEST_MCP_SERVER_TOOL,
     GET_CURRENT_DATETIME_TOOL,
     GET_WEATHER_TOOL,
+    MEMORY_SEARCH_TOOL,
+    MEMORY_SAVE_TOOL,
     IMPORT_MCP_CONFIG_TOOL,
     LIST_SKILLS_TOOL,
     SEARCH_SKILL_CATALOG_TOOL,
@@ -10561,6 +10601,12 @@ def execute_tool(
     if name == "get_weather":
         from core.inference.weather_actions import get_weather_for_model
         return get_weather_for_model(arguments)
+    if name == "memory_search":
+        from core.inference.memory_actions import search_memory_for_model
+        return search_memory_for_model(arguments)
+    if name == "memory_save":
+        from core.inference.memory_actions import save_memory_for_model
+        return save_memory_for_model(arguments)
     if name == "list_skills":
         from core.inference.skill_actions import list_skills_for_model
         return list_skills_for_model(arguments)

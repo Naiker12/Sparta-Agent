@@ -72,40 +72,44 @@ export const isMissingDeviceError = (error: unknown): boolean => {
   return name === "OverconstrainedError" || name === "NotFoundError";
 };
 
+import { getLocale, translate } from "@/i18n";
+
 export const describeMediaError = (error: unknown): string => {
+  const locale = getLocale();
   const name = mediaErrorName(error);
   if (name === "NotAllowedError" || name === "SecurityError") {
     // The desktop WebView has no site-permission UI, so Settings is the only way back.
     return isTauri
-      ? "Microphone access is blocked. Open Settings > Voice and click Allow microphone."
-      : "Microphone access is blocked. Allow microphone access for this Unsloth page, then try again.";
+      ? translate("settings.voice.dictation.micAccessBlockedDesktop", undefined, locale)
+      : translate("settings.voice.dictation.micAccessBlocked", undefined, locale);
   }
   if (name === "NotFoundError" || name === "OverconstrainedError") {
-    return "No microphone was found for dictation.";
+    return translate("settings.voice.dictation.micNotFound", undefined, locale);
   }
   if (name === "NotReadableError" || name === "AbortError") {
-    return "The microphone is already in use or unavailable.";
+    return translate("settings.voice.dictation.micInUse", undefined, locale);
   }
   return error instanceof Error && error.message
     ? error.message
-    : "Dictation could not access the microphone.";
+    : translate("settings.voice.dictation.micGeneralError", undefined, locale);
 };
 
 export const describeSpeechError = (
   error: string,
   message?: string,
 ): string => {
+  const locale = getLocale();
   if (error === "not-allowed") {
-    return "Speech recognition was blocked by the browser. Check microphone permissions for this Unsloth page.";
+    return translate("settings.voice.dictation.speechBlocked", undefined, locale);
   }
   if (error === "service-not-allowed") {
-    return "Speech recognition is blocked by the browser speech service.";
+    return translate("settings.voice.dictation.speechServiceBlocked", undefined, locale);
   }
   if (error === "network") {
-    return "Speech recognition could not reach the browser speech service.";
+    return translate("settings.voice.dictation.speechNetwork", undefined, locale);
   }
   if (error === "language-not-supported") {
-    return "Speech recognition does not support the current language.";
+    return translate("settings.voice.dictation.speechLangUnsupported", undefined, locale);
   }
   return message || `Speech recognition failed: ${error}`;
 };

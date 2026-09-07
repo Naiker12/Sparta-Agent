@@ -10,6 +10,8 @@ from pathlib import Path
 import pytest
 
 from storage import studio_db
+from storage.studio import connection as studio_connection
+from storage.studio.project_workspace import _denied_path_prefixes
 from utils.paths import studio_db_path
 
 
@@ -23,7 +25,7 @@ def _reset_studio_db(
         "UNSLOTH_STUDIO_PROJECTS_HOME",
         str(projects_home if projects_home is not None else tmp_path / "Projects"),
     )
-    monkeypatch.setattr(studio_db, "_schema_ready", False)
+    monkeypatch.setattr(studio_connection, "_schema_ready", False)
 
 
 @pytest.fixture
@@ -36,7 +38,7 @@ def workspace_projects_home(tmp_path):
     candidate = tmp_path / "Projects"
     resolved = str(candidate.resolve())
     check = os.path.normcase(resolved) if platform.system() == "Windows" else resolved
-    denied = studio_db._denied_path_prefixes()
+    denied = _denied_path_prefixes()
     if any(check == p or check.startswith(p + os.sep) for p in denied):
         candidate = Path.home() / ".unsloth-studio-tests" / uuid.uuid4().hex
     candidate.mkdir(parents = True, exist_ok = True)
@@ -1200,3 +1202,19 @@ def test_a_workspace_binding_is_private_to_its_thread_and_can_be_replaced(tmp_pa
     assert replaced["access"] == "write"
     assert studio_db.unbind_chat_thread_workspace("thread-a") is True
     assert studio_db.get_thread_workspace_binding("thread-a") is None
+
+
+def test_workspace_binding_survives_thread_save_and_database_reopen(tmp_path, monkeypatch):
+    _reset_studio_db(tmp_path, monkeypatch)
+    thread = _thread("persistent-workspace")
+    studio_db.upsert_chat_thread(thread)
+    binding = studio_db.bind_chat_thread_workspace(
+        thread["id"], str(tmp_path / "work"), "work", "1:10", "read", 100,
+    )
+    # Saving conversation metadata must not cascade-delete its folder grant.
+    studio_db.upsert_chat_thread(thread)
+    # Each storage read opens a new database connection.
+    restored = studio_db.get_thread_workspace_binding(thread["id"])
+    assert restored["bindingId"] == binding["bindingId"]
+    assert restored["canonicalPath"] == binding["canonicalPath"]
+    assert restored["access"] == "read"

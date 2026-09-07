@@ -23,7 +23,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   bindThreadWorkspace,
-  getThreadWorkspace,
   unbindThreadWorkspace,
   type ThreadWorkspaceBinding,
   type WorkspaceAccess,
@@ -33,6 +32,7 @@ import {
 } from "../hooks/use-chat-projects";
 import { useChatRuntimeStore } from "../stores/chat-runtime-store";
 import { isAssistantLocalThreadId } from "../utils/thread-ids";
+import { ensureThreadWorkspace, getPendingWorkspace, setPendingWorkspace, type PendingWorkspace } from "../utils/pending-workspace";
 
 type NativeWorkspaceBridge = {
   setWorkspaceBinding?: (
@@ -45,8 +45,6 @@ type NativeWorkspaceBridge = {
   ) => Promise<{ success: boolean; error?: string }>;
 };
 
-type PendingWorkspace = { folder: string; access: WorkspaceAccess };
-let pendingWorkspace: PendingWorkspace | null = null;
 
 function label(path: string): string {
   return path.replace(/[\\/]+$/, "").split(/[\\/]/).pop() || path;
@@ -57,7 +55,7 @@ export function ThreadWorkspaceChip() {
   const t = useT();
   const threadId = useChatRuntimeStore((state) => state.activeThreadId);
   const [binding, setBinding] = useState<ThreadWorkspaceBinding | null>(null);
-  const [pending, setPending] = useState<PendingWorkspace | null>(pendingWorkspace);
+  const [pending, setPending] = useState<PendingWorkspace | null>(getPendingWorkspace);
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
   const [selectedAccess, setSelectedAccess] = useState<WorkspaceAccess>("read");
 
@@ -66,12 +64,16 @@ export function ThreadWorkspaceChip() {
       setBinding(null);
       return;
     }
-    void getThreadWorkspace(threadId)
+    let cancelled = false;
+    void ensureThreadWorkspace(threadId)
       .then(async (next) => {
+        if (cancelled) return;
         if (!next) {
           setBinding(null);
           return;
         }
+        setBinding(next);
+        setPending(null);
         const bridge = (window as Window & { fs?: NativeWorkspaceBridge }).fs;
         const configured = await bridge?.setWorkspaceBinding?.(
           next.bindingId,
@@ -79,29 +81,15 @@ export function ThreadWorkspaceChip() {
           next.access,
         );
         if (configured && !configured.success) throw new Error(configured.error);
-        setBinding(next);
+        if (cancelled) return;
       })
-      .catch(() => setBinding(null));
-  }, [threadId]);
-
-  useEffect(() => {
-    if (!threadId || isAssistantLocalThreadId(threadId) || !pendingWorkspace) return;
-    const staged = pendingWorkspace;
-    void (async () => {
-      try {
-        const next = await bindThreadWorkspace(threadId, staged.folder, staged.access);
-        const bridge = (window as Window & { fs?: NativeWorkspaceBridge }).fs;
-        const configured = await bridge?.setWorkspaceBinding?.(next.bindingId, next.canonicalPath, next.access);
-        if (configured && !configured.success) throw new Error(configured.error);
-        if (pendingWorkspace === staged) pendingWorkspace = null;
-        setPending(null);
-        setBinding(next);
-      } catch (error) {
+      .catch((error) => {
+        if (cancelled) return;
         toast.error(t("chat.workspace.errorPrepare"), {
           description: error instanceof Error ? error.message : undefined,
         });
-      }
-    })();
+      });
+    return () => { cancelled = true; };
   }, [threadId, t]);
 
   async function selectFolder() {
@@ -124,8 +112,8 @@ export function ThreadWorkspaceChip() {
     try {
       const activeThreadId = threadId;
       if (!activeThreadId || isAssistantLocalThreadId(activeThreadId)) {
-        pendingWorkspace = { folder, access };
-        setPending(pendingWorkspace);
+        setPendingWorkspace({ folder, access });
+        setPending({ folder, access });
         setSelectedFolder(null);
         return;
       }
@@ -147,7 +135,7 @@ export function ThreadWorkspaceChip() {
   }
 
   async function disconnect() {
-    pendingWorkspace = null;
+    setPendingWorkspace(null);
     setPending(null);
     if (!threadId || isAssistantLocalThreadId(threadId) || !binding) {
       setBinding(null);
@@ -165,8 +153,9 @@ export function ThreadWorkspaceChip() {
     }
   }
 
-  const currentPath = binding?.canonicalPath ?? pending?.folder;
-  const currentAccess = binding?.access ?? pending?.access;
+  const visibleBinding = binding?.threadId === threadId ? binding : null;
+  const currentPath = visibleBinding?.canonicalPath ?? pending?.folder;
+  const currentAccess = visibleBinding?.access ?? pending?.access;
 
   const chip = (
     <button

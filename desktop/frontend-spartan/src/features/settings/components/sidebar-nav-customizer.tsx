@@ -10,6 +10,7 @@ import {
   Image03Icon,
   MoreHorizontalIcon,
   PencilEdit02Icon,
+  BookOpen01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Reorder, useDragControls } from "motion/react";
@@ -31,6 +32,8 @@ const ITEM_META: Record<
   recipes: { icon: ChefHatIcon, labelKey: "shell.navigation.recipes" },
   export: { icon: DownloadSquare01Icon, labelKey: "shell.navigation.export" },
   api: { icon: Globe02Icon, labelKey: "shell.navigation.api" },
+  memory: { icon: BookOpen01Icon, labelKey: "shell.navigation.memory" },
+  tasks: { icon: PencilEdit02Icon, labelKey: "shell.navigation.tasks" },
 };
 
 function FixedRow({ icon, label }: { icon: IconSvgElement; label: string }) {

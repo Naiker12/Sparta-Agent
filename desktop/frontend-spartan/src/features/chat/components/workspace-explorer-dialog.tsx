@@ -8,6 +8,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { getAttachmentFileKind } from "@/lib/attachment-file-kind";
+import { useDocumentPreviewStore } from "@/features/rag/components/preview-store";
 import { Textarea } from "@/components/ui/textarea";
 import { useT } from "@/i18n";
 
@@ -75,6 +77,15 @@ export function WorkspaceExplorerDialog({
   const openFile = useCallback(
     async (path: string) => {
       const filesystem = getProjectNativeFilesystem();
+      if (filesystem?.readPreview && project && !["text", "code"].includes(getAttachmentFileKind(path))) {
+        const result = await filesystem.readPreview(project.id, path);
+        if (!result.success || !result.bytes) { setError(result.error ?? "Could not preview file"); return; }
+        const filename = path.split(/[\\/]/).pop() ?? path;
+        const bytes = new Uint8Array(result.bytes);
+        useDocumentPreviewStore.getState().openLocalPreview({ blob: new Blob([bytes]), filename, kind: getAttachmentFileKind(filename), workspaceSource: { projectId: project.id, path } });
+        onOpenChange(false);
+        return;
+      }
       if (!filesystem?.readFile || !project) {
         setError(t("projectsPage.folderBrowserDesktopOnly"));
         return;
@@ -88,7 +99,7 @@ export function WorkspaceExplorerDialog({
       setSelectedFile(path);
       setContent(result.content ?? "");
     },
-    [project, t],
+    [project, t, onOpenChange],
   );
 
   const saveFile = useCallback(async () => {

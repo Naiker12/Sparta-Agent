@@ -17,6 +17,8 @@ import { Route as changePasswordRoute } from "./routes/change-password";
 import { Route as settingsRoute } from "./routes/settings";
 import { Route as dataRecipesRoute } from "./routes/data-recipes";
 import { Route as editRecipeRoute } from "./routes/data-recipes.$recipeId";
+import { Route as memoryRoute } from "./routes/memory";
+import { Route as tasksRoute } from "./routes/tasks";
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
@@ -32,6 +34,8 @@ const routeTree = rootRoute.addChildren([
   imagesRoute,
   audioRoute,
   apiMonitorRoute,
+  memoryRoute,
+  tasksRoute,
 ]);
 
 function DefaultNotFound() {

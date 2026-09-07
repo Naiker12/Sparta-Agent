@@ -327,6 +327,8 @@ from hub.utils.download_registry import (
 from routes.settings import router as settings_router
 from routes.prompts import router as prompts_router
 from routes.profile_stats import router as profile_stats_router
+from routes.memory import router as memory_router
+from routes.tasks import router as tasks_router
 from auth import storage
 from auth.authentication import get_current_subject
 from utils.hardware import (
@@ -1364,6 +1366,8 @@ app.include_router(settings_router, prefix = "/api/settings", tags = ["settings"
 app.include_router(mcp_servers_router, prefix = "/api/mcp/servers", tags = ["mcp"])
 app.include_router(skills_router, prefix = "/api/skills", tags = ["skills"])
 app.include_router(prompts_router, prefix = "/api/prompts", tags = ["prompts"])
+app.include_router(memory_router, prefix = "/api/memory", tags = ["memory"])
+app.include_router(tasks_router, prefix = "/api/tasks", tags = ["tasks"])
 app.include_router(profile_stats_router, prefix = "/api/profile", tags = ["profile"])
 app.include_router(llama_router, prefix = "/api/llama", tags = ["llama"])
 app.include_router(whisper_router, prefix = "/api/whisper", tags = ["whisper"])

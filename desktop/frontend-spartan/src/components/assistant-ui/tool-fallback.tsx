@@ -133,7 +133,9 @@ function ToolFallbackTrigger({
 
   const StatusIcon = statusIconMap[statusType];
   const label = isCancelled ? "Cancelled tool" : "Used tool";
-  const displayName = formatMcpToolName(toolName, mcpServer) ?? toolName;
+  const displayName = toolName === "memory_search"
+    ? (isRunning ? "Buscando en memoria…" : "Memoria consultada")
+    : (formatMcpToolName(toolName, mcpServer) ?? toolName);
 
   return (
     <CollapsibleTrigger

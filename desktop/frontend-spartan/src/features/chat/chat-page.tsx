@@ -185,6 +185,7 @@ import {
 } from "./runtime-provider";
 import { CompareContent, modelMatchesDeleted } from "./components/compare-content";
 import { ProjectLanding } from "./components/project-landing";
+import { WorkspaceGitReviewSheet } from "./components/workspace-git-review-sheet";
 import { SingleContent } from "./components/single-content";
 import {
   type ChatSearch,
@@ -272,7 +273,13 @@ export function ChatPage({
   const online = useOnlineStatus();
   const remoteModelsAvailable = connectionsEnabled && online;
   const setExternalProviders = useExternalProvidersStore((s) => s.setProviders);
-  const externalProvidersForChat = remoteModelsAvailable ? externalProviders : [];
+  // Effects below normalize provider capabilities into the runtime store.
+  // A fresh [] while offline would retrigger those effects on every store
+  // update, indefinitely, when a hosted model is still selected.
+  const externalProvidersForChat = useMemo(
+    () => remoteModelsAvailable ? externalProviders : [],
+    [remoteModelsAvailable, externalProviders],
+  );
 
   useEffect(() => {
     void hydratePersistedSettings();
@@ -705,9 +712,10 @@ export function ChatPage({
     let canceled = false;
 
     async function resolveProjectId(): Promise<void> {
-      if (search.project) {
-        setCurrentProjectId(search.project);
-        useChatRuntimeStore.getState().setActiveProjectId(search.project);
+      if (search.project || search.review) {
+        const projectId = search.project ?? search.review!;
+        setCurrentProjectId(projectId);
+        useChatRuntimeStore.getState().setActiveProjectId(projectId);
         return;
       }
 
@@ -744,10 +752,11 @@ export function ChatPage({
     return () => {
       canceled = true;
     };
-  }, [search.compare, search.project, search.thread]);
+  }, [search.compare, search.project, search.review, search.thread]);
 
   // Derive view from URL search params
   const view = useMemo<ChatView>(() => {
+    if (search.review) return { mode: "review", projectId: search.review };
     if (search.compare) {
       return {
         mode: "compare",
@@ -788,6 +797,7 @@ export function ChatPage({
     search.compare,
     search.new,
     search.project,
+    search.review,
     persistedActiveThreadId,
     currentProjectId,
   ]);
@@ -1932,7 +1942,9 @@ export function ChatPage({
             />
           )}
 
-          {view.mode === "project" ? (
+          {view.mode === "review" ? (
+            currentProject ? <WorkspaceGitReviewSheet project={currentProject} open={true} onOpenChange={(open) => { if (!open) navigate({ to: "/chat", search: { project: currentProject.id } }); }} /> : null
+          ) : view.mode === "project" ? (
             <ProjectLanding
               key={view.projectId}
               projectId={view.projectId}

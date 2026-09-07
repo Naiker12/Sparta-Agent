@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.2.20] - 2026-09-07
+
+### Añadido y mejorado
+
+- **Módulo de Memoria Cognitiva con Red Neuronal (`/memory`)**: Nuevo espacio visual en Canvas 2D con física de resortes, órbitas, halos y selección contextual de recuerdos. Extracción semántica automática de directrices, preferencias y hechos desde las conversaciones hacia SQLite Studio.
+- **Feedback en Tiempo Real de Extracción de Memoria**: Indicador de carga interactivo y micro-animaciones en el botón "Actualizar recuerdos" durante el proceso de extracción.
+- **Previsualizador Nativo de Documentos y Hojas de Cálculo**: Visor multihoja para archivos PDF y planillas tabulares (Excel, CSV, TSV) en el workspace mediante Web Workers sin interrumpir el hilo principal.
+- **Retención Persistente de Previsualizaciones**: El estado y archivo previsualizado se mantienen al alternar entre hilos o navegar por las carpetas del proyecto.
+- **Internacionalización Integral de Voz y Reconocimiento**: Diagnóstico y alertas de error para micrófonos y dictado adaptados dinámicamente al idioma del usuario (español e inglés) con paridad total de claves i18n (`settings.voice.dictation.*`).
+- **Sincronización Total de la Landing Page**: Actualización unificada de enlaces de descarga, badges de versión y notas de versión del modal interactivo a v0.2.20.
+
+### Corregido
+
+- **Recursión de Notificaciones**: Se eliminó el error de desbordamiento en la pila de llamadas de toasts informativos del chat.
+- **Hilos Temporales Locales**: Bypass de consultas al backend para IDs de hilos temporales, evitando llamadas de red fallidas en borradores.
+
 ## [0.2.19] - 2026-09-03
 
 ### Añadido y mejorado

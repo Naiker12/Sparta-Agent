@@ -1,5 +1,5 @@
 import { existsSync, readdirSync, statSync } from 'node:fs'
-import { join } from 'node:path'
+import { join, dirname } from 'node:path'
 import { extractFile, listPackage } from '@electron/asar'
 import packageJson from '../package.json' with { type: 'json' }
 
@@ -21,6 +21,11 @@ if (archives.length === 0) {
 }
 
 for (const archive of archives) {
+  for (const required of ['install_llama_prebuilt.py', 'install_whisper_prebuilt.py', 'vendor/unsloth-installers/install_llama_prebuilt.py', 'vendor/unsloth-installers/install_whisper_prebuilt.py', 'vendor/unsloth-installers/prebuilt_core.py', 'vendor/unsloth-installers/LICENSE.AGPL-3.0']) {
+    if (!existsSync(join(dirname(archive), 'backend', required))) {
+      throw new Error(`Missing packaged backend installer resource: ${required}`)
+    }
+  }
   const entries = listPackage(archive).map((entry) => entry.replaceAll('\\', '/'))
   for (const required of ['/dist/index.html', '/dist-electron/electron-main.js', '/package.json']) {
     if (!entries.some((entry) => entry.endsWith(required))) {

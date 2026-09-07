@@ -7,7 +7,7 @@ const scenes = [
     tag: 'PRIMER ARRANQUE',
     title: ['Bienvenido', 'a Sparta', 'Agent.'],
     lead: 'Instala la aplicación de escritorio y prepara tu entorno de trabajo.',
-    panel: `<div class="file">SPARTA AGENT <span>v0.2.19</span></div><div class="doc-title">Inicio rápido</div><div class="check"><b>✓</b><div><strong>Aplicación instalada</strong><p>Escritorio listo para iniciar.</p></div></div><div class="small-note">Inicia el asistente para configurar tu motor local.</div>`,
+    panel: `<div class="file">SPARTA AGENT <span>v0.2.20</span></div><div class="doc-title">Inicio rápido</div><div class="check"><b>✓</b><div><strong>Aplicación instalada</strong><p>Escritorio listo para iniciar.</p></div></div><div class="small-note">Inicia el asistente para configurar tu motor local.</div>`,
     note: 'Descarga siempre la versión compatible desde las releases oficiales.'
   },
   {

@@ -621,6 +621,38 @@ def _ensure_schema(conn: sqlite3.Connection) -> None:
         "CREATE INDEX IF NOT EXISTS idx_research_document_sources_run "
         "ON research_document_sources(run_id, id)"
     )
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS memory_nodes (
+            id TEXT PRIMARY KEY, type TEXT NOT NULL, label TEXT NOT NULL,
+            content TEXT NOT NULL, source_thread_id TEXT, confidence REAL NOT NULL DEFAULT 1,
+            created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, last_accessed_at INTEGER
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS memory_edges (
+            id TEXT PRIMARY KEY, source_node_id TEXT NOT NULL REFERENCES memory_nodes(id) ON DELETE CASCADE,
+            target_node_id TEXT NOT NULL REFERENCES memory_nodes(id) ON DELETE CASCADE,
+            relation TEXT NOT NULL, created_at INTEGER NOT NULL,
+            UNIQUE(source_node_id, target_node_id, relation)
+        )
+    """)
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_memory_nodes_updated ON memory_nodes(updated_at DESC)")
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS agent_tasks (
+            id TEXT PRIMARY KEY, title TEXT NOT NULL, prompt TEXT NOT NULL,
+            schedule_type TEXT NOT NULL, interval_seconds INTEGER, run_at INTEGER,
+            channel TEXT NOT NULL DEFAULT 'chat', thread_id TEXT, enabled INTEGER NOT NULL DEFAULT 1,
+            status TEXT NOT NULL DEFAULT 'idle', last_run_at INTEGER, next_run_at INTEGER,
+            last_error TEXT, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS agent_task_runs (
+            id TEXT PRIMARY KEY, task_id TEXT NOT NULL REFERENCES agent_tasks(id) ON DELETE CASCADE,
+            started_at INTEGER NOT NULL, finished_at INTEGER, status TEXT NOT NULL, output TEXT, error TEXT
+        )
+    """)
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_agent_tasks_due ON agent_tasks(enabled, next_run_at)")
     inventory_state = conn.execute(
         """
         SELECT inventory_version, dirty
@@ -634,6 +666,10 @@ def _ensure_schema(conn: sqlite3.Connection) -> None:
         or inventory_state[0] != _CHAT_ATTACHMENT_INVENTORY_VERSION
         or inventory_state[1]
     ):
+        from storage.studio.chat_attachments import (
+            _rebuild_chat_attachment_inventory,
+            _mark_chat_attachment_inventory_clean,
+        )
         _rebuild_chat_attachment_inventory(conn)
         _mark_chat_attachment_inventory_clean(conn)
     conn.commit()

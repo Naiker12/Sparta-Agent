@@ -63,7 +63,7 @@ export function DocsPage({ slug }: { slug: string }) {
       <div className="docs-eyebrow"><span className="docs-status-dot" /> GUÍA DE SPARTA AGENT</div>
       <DocsTitle>{page?.title}</DocsTitle>
       <DocsDescription>{page?.description}</DocsDescription>
-      <div className="docs-page-meta"><span><FileText size={13} /> Lectura: {Math.max(1, Math.ceil((page?.text.split(' ').length ?? 0) / 220))} min</span><span>Escritorio · v0.2.19</span></div>
+      <div className="docs-page-meta"><span><FileText size={13} /> Lectura: {Math.max(1, Math.ceil((page?.text.split(' ').length ?? 0) / 220))} min</span><span>Escritorio · v0.2.20</span></div>
       <DocsBody><module.default components={mdxComponents} /></DocsBody>
     </FumadocsPage> };
   }), [loader, current, page]);

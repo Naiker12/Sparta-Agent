@@ -83,6 +83,7 @@ export async function resolveProjectWorkspaceContext(
   return [
     "<thread_workspace>",
     `The user connected a ${workspace.access.replace(/_/g, "-")} workspace folder to this chat.`,
+    "For questions about this project, start with list_directory (path: .), then read_file or search_in_files. These tools access the connected folder without enabling Code. A hosted code sandbox is separate and cannot inspect this local folder.",
     canWrite
       ? "Use file tools only inside this workspace when the user requests file changes. Do not reveal or request its absolute local path."
       : "This workspace is read-only. Do not modify, create, rename, or delete its files. Do not reveal or request its absolute local path.",

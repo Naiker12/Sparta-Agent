@@ -12,6 +12,7 @@ export type ChatView =
       newThreadNonce?: string;
       projectId?: string | null;
     }
+  | { mode: "review"; projectId: string }
   | { mode: "compare"; pairId: string; projectId?: string | null };
 
 export interface ProjectRecord {

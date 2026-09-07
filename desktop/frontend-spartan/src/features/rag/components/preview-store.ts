@@ -18,12 +18,15 @@ export interface LocalPreview {
   blob: Blob;
   filename: string;
   kind: LocalPreviewKind;
+  /** Present only for files read from a connected project workspace. */
+  workspaceSource?: { projectId: string; path: string };
 }
 
 // Global store for the shared preview Sheet, so any citation drives the one viewer
 // without prop-drilling.
 interface DocumentPreviewState {
   open: boolean;
+  revision: number;
   documentId: string | null;
   /** Chunk to highlight; null opens at page 1. */
   chunkId: string | null;
@@ -42,29 +45,32 @@ interface DocumentPreviewState {
 
 export const useDocumentPreviewStore = create<DocumentPreviewState>((set) => ({
   open: false,
+  revision: 0,
   documentId: null,
   chunkId: null,
   filename: null,
   page: null,
   localPreview: null,
   openPreview: ({ documentId, chunkId, filename, page }) =>
-    set({
+    set((state) => ({
+      revision: state.revision + 1,
       open: true,
       documentId,
       chunkId: chunkId ?? null,
       filename: filename ?? null,
       page: page ?? null,
       localPreview: null,
-    }),
+    })),
   openLocalPreview: (localPreview) =>
-    set({
+    set((state) => ({
+      revision: state.revision + 1,
       open: true,
       documentId: null,
       chunkId: null,
       filename: localPreview.filename,
       page: null,
       localPreview,
-    }),
+    })),
   // The rendered preview can hold a large Blob (and parsers often create an
   // ArrayBuffer copy). Clear every local reference as soon as it closes.
   closePreview: () =>

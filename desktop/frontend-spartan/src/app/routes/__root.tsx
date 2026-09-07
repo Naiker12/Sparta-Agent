@@ -176,6 +176,10 @@ const CHAT_ONLY_ALLOWED = new Set([
   // Chat-only hosts serve the API like any other, so the monitor must be reachable there
   // or the overlay's "Expand" and the Settings API card redirect to /chat.
   "/api-monitor",
+  // These are durable chat features backed by the local Studio database; they
+  // neither train nor generate media, so chat-only machines must keep access.
+  "/memory",
+  "/tasks",
 ]);
 
 // /studio renders its own "still checking" state and self-gates once the verdict lands.

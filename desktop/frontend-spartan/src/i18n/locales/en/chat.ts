@@ -80,6 +80,9 @@ export const chat = {
     deleteFailed: "Could not delete the files.",
   },
   preview: {
+    source: "Source",
+    textLimit: "Preview limited to the first 1 MB.",
+    spreadsheetLimit: "Preview limited to 500 rows, 64 columns and 32 sheets.",
     loading: "Loading…",
     loadingPdf: "Loading PDF…",
     textError: "Unable to read this file.",
