@@ -35,7 +35,7 @@ landing/public/*.dmg
 landing/public/*.AppImage
 
 # Embedded Python runtime (downloaded by scripts/fetch-embedded-python.js)
-vendor/
+/vendor/
 
 # Electron build output
 dist-electron/
