@@ -8,16 +8,17 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
   NODE_OPTIONS: "--max-old-space-size=8192"
 
 jobs:
   build:
     # electron-builder writes one latest-mac.yml for both macOS architectures.
-    # Serializing the matrix prevents concurrent uploads from overwriting it.
-    concurrency:
-      group: release-${{ github.ref }}
-      cancel-in-progress: false
+    # Serializing the matrix via max-parallel: 1 prevents concurrent uploads from overwriting it.
     strategy:
       fail-fast: false
       max-parallel: 1
