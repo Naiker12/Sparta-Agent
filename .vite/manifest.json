@@ -1,0 +1,387 @@
+{
+  "_bundle-mjs-BvdbG6LC.js": {
+    "file": "assets/bundle-mjs-BvdbG6LC.js",
+    "name": "bundle-mjs",
+    "imports": [
+      "index.html"
+    ]
+  },
+  "_chunk-OTD7MV33-qJr9DjGl.js": {
+    "file": "assets/chunk-OTD7MV33-qJr9DjGl.js",
+    "name": "chunk-OTD7MV33"
+  },
+  "_chunk-ZMWYLUDP-oajMeTFk.js": {
+    "file": "assets/chunk-ZMWYLUDP-oajMeTFk.js",
+    "name": "chunk-ZMWYLUDP"
+  },
+  "_docs-page-B1GAWEGe.css": {
+    "file": "assets/docs-page-B1GAWEGe.css",
+    "src": "_docs-page-B1GAWEGe.css"
+  },
+  "_docs-page-DguStyJH.js": {
+    "file": "assets/docs-page-DguStyJH.js",
+    "name": "docs-page",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html",
+      "_bundle-mjs-BvdbG6LC.js"
+    ],
+    "dynamicImports": [
+      "node_modules/fumadocs-ui/dist/components/dialog/search-default.js",
+      "src/components/docs/docs-search.tsx",
+      "src/components/docs/content/pages/architecture/backend-architecture.mdx",
+      "src/components/docs/content/pages/architecture/frontend-ui.mdx",
+      "src/components/docs/content/pages/architecture/ipc-bridge.mdx",
+      "src/components/docs/content/pages/core-concepts/chat-vs-agent-mode.mdx",
+      "src/components/docs/content/pages/core-concepts/models-and-providers.mdx",
+      "src/components/docs/content/pages/core-concepts/security-and-sandbox.mdx",
+      "src/components/docs/content/pages/features/api-monitor.mdx",
+      "src/components/docs/content/pages/features/attachments-and-files.mdx",
+      "src/components/docs/content/pages/features/code-execution.mdx",
+      "src/components/docs/content/pages/features/deep-research.mdx",
+      "src/components/docs/content/pages/features/live-tools.mdx",
+      "src/components/docs/content/pages/features/multimodal-rag.mdx",
+      "src/components/docs/content/pages/features/recipe-studio.mdx",
+      "src/components/docs/content/pages/features/remote-access.mdx",
+      "src/components/docs/content/pages/features/voice-audio.mdx",
+      "src/components/docs/content/pages/guides/first-task.mdx",
+      "src/components/docs/content/pages/guides/performance.mdx",
+      "src/components/docs/content/pages/guides/troubleshooting.mdx",
+      "src/components/docs/content/pages/index.mdx",
+      "src/components/docs/content/pages/mcp/configuration.mdx",
+      "src/components/docs/content/pages/mcp/introduction.mdx",
+      "src/components/docs/content/pages/mcp/supported-servers.mdx",
+      "src/components/docs/content/pages/quickstart.mdx",
+      "src/components/docs/content/pages/skills/overview.mdx"
+    ],
+    "css": [
+      "assets/docs-page-B1GAWEGe.css"
+    ]
+  },
+  "_search-CERIWgGr.js": {
+    "file": "assets/search-CERIWgGr.js",
+    "name": "search",
+    "imports": [
+      "index.html",
+      "_docs-page-DguStyJH.js",
+      "_bundle-mjs-BvdbG6LC.js"
+    ]
+  },
+  "index.html": {
+    "file": "assets/index-BA-okXlV.js",
+    "name": "index",
+    "src": "index.html",
+    "isEntry": true,
+    "dynamicImports": [
+      "src/landing-page.tsx",
+      "_docs-page-DguStyJH.js"
+    ],
+    "css": [
+      "assets/index-C8r0F3Jo.css"
+    ]
+  },
+  "node_modules/fumadocs-core/dist/algolia-IZEDLPHE.js": {
+    "file": "assets/algolia-IZEDLPHE-2120h3C3.js",
+    "name": "algolia-IZEDLPHE",
+    "src": "node_modules/fumadocs-core/dist/algolia-IZEDLPHE.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-OTD7MV33-qJr9DjGl.js"
+    ]
+  },
+  "node_modules/fumadocs-core/dist/fetch-2XFMBLBA.js": {
+    "file": "assets/fetch-2XFMBLBA-F2YKbHTa.js",
+    "name": "fetch-2XFMBLBA",
+    "src": "node_modules/fumadocs-core/dist/fetch-2XFMBLBA.js",
+    "isDynamicEntry": true
+  },
+  "node_modules/fumadocs-core/dist/mixedbread-RAHDVXGJ.js": {
+    "file": "assets/mixedbread-RAHDVXGJ-CzPXDEJ6.js",
+    "name": "mixedbread-RAHDVXGJ",
+    "src": "node_modules/fumadocs-core/dist/mixedbread-RAHDVXGJ.js",
+    "isDynamicEntry": true
+  },
+  "node_modules/fumadocs-core/dist/orama-cloud-74FM25SB.js": {
+    "file": "assets/orama-cloud-74FM25SB-DUBH_knx.js",
+    "name": "orama-cloud-74FM25SB",
+    "src": "node_modules/fumadocs-core/dist/orama-cloud-74FM25SB.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-ZMWYLUDP-oajMeTFk.js",
+      "_chunk-OTD7MV33-qJr9DjGl.js"
+    ]
+  },
+  "node_modules/fumadocs-core/dist/static-A2YJ5TXV.js": {
+    "file": "assets/static-A2YJ5TXV-Dz2sNxfD.js",
+    "name": "static-A2YJ5TXV",
+    "src": "node_modules/fumadocs-core/dist/static-A2YJ5TXV.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-ZMWYLUDP-oajMeTFk.js",
+      "_chunk-OTD7MV33-qJr9DjGl.js"
+    ]
+  },
+  "node_modules/fumadocs-ui/dist/components/dialog/search-default.js": {
+    "file": "assets/search-default-BAnXwWy1.js",
+    "name": "search-default",
+    "src": "node_modules/fumadocs-ui/dist/components/dialog/search-default.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html",
+      "_docs-page-DguStyJH.js",
+      "_search-CERIWgGr.js",
+      "_bundle-mjs-BvdbG6LC.js"
+    ],
+    "dynamicImports": [
+      "node_modules/fumadocs-core/dist/fetch-2XFMBLBA.js",
+      "node_modules/fumadocs-core/dist/algolia-IZEDLPHE.js",
+      "node_modules/fumadocs-core/dist/orama-cloud-74FM25SB.js",
+      "node_modules/fumadocs-core/dist/static-A2YJ5TXV.js",
+      "node_modules/fumadocs-core/dist/mixedbread-RAHDVXGJ.js"
+    ]
+  },
+  "src/components/docs/content/pages/architecture/backend-architecture.mdx": {
+    "file": "assets/backend-architecture-CyyfJBWH.js",
+    "name": "backend-architecture",
+    "src": "src/components/docs/content/pages/architecture/backend-architecture.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/architecture/frontend-ui.mdx": {
+    "file": "assets/frontend-ui-U9OzIifc.js",
+    "name": "frontend-ui",
+    "src": "src/components/docs/content/pages/architecture/frontend-ui.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/architecture/ipc-bridge.mdx": {
+    "file": "assets/ipc-bridge-DsWNxPDv.js",
+    "name": "ipc-bridge",
+    "src": "src/components/docs/content/pages/architecture/ipc-bridge.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/core-concepts/chat-vs-agent-mode.mdx": {
+    "file": "assets/chat-vs-agent-mode-CLeQyvXX.js",
+    "name": "chat-vs-agent-mode",
+    "src": "src/components/docs/content/pages/core-concepts/chat-vs-agent-mode.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/core-concepts/models-and-providers.mdx": {
+    "file": "assets/models-and-providers-uDjhE5ho.js",
+    "name": "models-and-providers",
+    "src": "src/components/docs/content/pages/core-concepts/models-and-providers.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/core-concepts/security-and-sandbox.mdx": {
+    "file": "assets/security-and-sandbox-CfI9jUh9.js",
+    "name": "security-and-sandbox",
+    "src": "src/components/docs/content/pages/core-concepts/security-and-sandbox.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html",
+      "_docs-page-DguStyJH.js",
+      "_bundle-mjs-BvdbG6LC.js"
+    ]
+  },
+  "src/components/docs/content/pages/features/api-monitor.mdx": {
+    "file": "assets/api-monitor-DPq3MVca.js",
+    "name": "api-monitor",
+    "src": "src/components/docs/content/pages/features/api-monitor.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/features/attachments-and-files.mdx": {
+    "file": "assets/attachments-and-files-BHUw5MbN.js",
+    "name": "attachments-and-files",
+    "src": "src/components/docs/content/pages/features/attachments-and-files.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/features/code-execution.mdx": {
+    "file": "assets/code-execution-XPkWnqNa.js",
+    "name": "code-execution",
+    "src": "src/components/docs/content/pages/features/code-execution.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/features/deep-research.mdx": {
+    "file": "assets/deep-research-BltivNv_.js",
+    "name": "deep-research",
+    "src": "src/components/docs/content/pages/features/deep-research.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/features/live-tools.mdx": {
+    "file": "assets/live-tools-Cs21td2r.js",
+    "name": "live-tools",
+    "src": "src/components/docs/content/pages/features/live-tools.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/features/multimodal-rag.mdx": {
+    "file": "assets/multimodal-rag-ChwUwpUh.js",
+    "name": "multimodal-rag",
+    "src": "src/components/docs/content/pages/features/multimodal-rag.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/features/recipe-studio.mdx": {
+    "file": "assets/recipe-studio-C0OA8V2-.js",
+    "name": "recipe-studio",
+    "src": "src/components/docs/content/pages/features/recipe-studio.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/features/remote-access.mdx": {
+    "file": "assets/remote-access-B-LwOj_y.js",
+    "name": "remote-access",
+    "src": "src/components/docs/content/pages/features/remote-access.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/features/voice-audio.mdx": {
+    "file": "assets/voice-audio-B_FPKrCr.js",
+    "name": "voice-audio",
+    "src": "src/components/docs/content/pages/features/voice-audio.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/guides/first-task.mdx": {
+    "file": "assets/first-task-CTt8G2zW.js",
+    "name": "first-task",
+    "src": "src/components/docs/content/pages/guides/first-task.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/guides/performance.mdx": {
+    "file": "assets/performance-CR7kV_jW.js",
+    "name": "performance",
+    "src": "src/components/docs/content/pages/guides/performance.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/guides/troubleshooting.mdx": {
+    "file": "assets/troubleshooting-BFh6LuL6.js",
+    "name": "troubleshooting",
+    "src": "src/components/docs/content/pages/guides/troubleshooting.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/index.mdx": {
+    "file": "assets/index-BfhcTfZL.js",
+    "name": "index",
+    "src": "src/components/docs/content/pages/index.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html",
+      "_docs-page-DguStyJH.js",
+      "_bundle-mjs-BvdbG6LC.js"
+    ]
+  },
+  "src/components/docs/content/pages/mcp/configuration.mdx": {
+    "file": "assets/configuration-CRxZCG6w.js",
+    "name": "configuration",
+    "src": "src/components/docs/content/pages/mcp/configuration.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/mcp/introduction.mdx": {
+    "file": "assets/introduction-BnSyUkjM.js",
+    "name": "introduction",
+    "src": "src/components/docs/content/pages/mcp/introduction.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/mcp/supported-servers.mdx": {
+    "file": "assets/supported-servers-BGgm-bhn.js",
+    "name": "supported-servers",
+    "src": "src/components/docs/content/pages/mcp/supported-servers.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/quickstart.mdx": {
+    "file": "assets/quickstart-BBrR-9Zw.js",
+    "name": "quickstart",
+    "src": "src/components/docs/content/pages/quickstart.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html",
+      "_docs-page-DguStyJH.js",
+      "_bundle-mjs-BvdbG6LC.js"
+    ]
+  },
+  "src/components/docs/content/pages/skills/overview.mdx": {
+    "file": "assets/overview-BPcE1AHG.js",
+    "name": "overview",
+    "src": "src/components/docs/content/pages/skills/overview.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html"
+    ]
+  },
+  "src/components/docs/docs-search.tsx": {
+    "file": "assets/docs-search-Bhat12g6.js",
+    "name": "docs-search",
+    "src": "src/components/docs/docs-search.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html",
+      "_search-CERIWgGr.js",
+      "_docs-page-DguStyJH.js",
+      "_bundle-mjs-BvdbG6LC.js"
+    ]
+  },
+  "src/landing-page.tsx": {
+    "file": "assets/landing-page-DmoymUah.js",
+    "name": "landing-page",
+    "src": "src/landing-page.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html",
+      "_bundle-mjs-BvdbG6LC.js"
+    ]
+  }
+}
