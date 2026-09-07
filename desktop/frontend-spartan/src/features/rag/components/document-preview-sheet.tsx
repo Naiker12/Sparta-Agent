@@ -121,7 +121,6 @@ function LocalPreviewContent({ preview }: { preview: LocalPreview }) {
     if (!["pdf", "image", "video", "audio"].includes(preview.kind)) return;
     const objectUrl = URL.createObjectURL(preview.blob);
     // An object URL is an external resource owned and released by this effect.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setUrl(objectUrl);
     return () => URL.revokeObjectURL(objectUrl);
   }, [preview]);
@@ -289,7 +288,6 @@ export function DocumentPreviewSheet() {
 
   useEffect(() => {
     // Reset the remote request state when the source changes or closes.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!open || !documentId) { setLoading(false); setError(null); setTarget(null); setFileUrl(null); return; }
     let cancelled = false;
     setLoading(true);

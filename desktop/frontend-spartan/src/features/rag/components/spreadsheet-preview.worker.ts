@@ -20,6 +20,6 @@ export async function parseSpreadsheetPreview(blob: Blob) {
   } catch (error) {
     return { error: error instanceof Error ? error.message.slice(0, 200) : "Invalid workbook", sheets: [] };
   }
-};
+}
 
 if (typeof self !== "undefined") self.onmessage = async (event: MessageEvent<Blob>) => { self.postMessage(await parseSpreadsheetPreview(event.data)); };
