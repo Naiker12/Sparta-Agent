@@ -30,6 +30,7 @@ import {
 } from "@/features/settings";
 import { SttDownloadPrompt } from "@/features/settings/components/stt-download-prompt";
 import { TauriUpdateContext } from "@/hooks/tauri-update-context";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useSidebarPin } from "@/hooks/use-sidebar-pin";
 import { useSidebarWidth } from "@/hooks/use-sidebar-width";
 import { type BackendStatus, useTauriBackend } from "@/hooks/use-tauri-backend";
@@ -533,25 +534,37 @@ function DesktopChromeVarsEffect({
   return null;
 }
 
-/** Mirrors the dynamic sidebar geometry for Electron's native titlebar seam. */
+/**
+ * Frame the workspace, not the brand header. The corner joins the horizontal
+ * seam to the sidebar edge and follows its live width during resizing.
+ */
 function ElectronTitlebarDivider() {
   const { pinned } = useSidebarPin();
   const { width } = useSidebarWidth();
-  // Match WindowTitlebar: the live CSS variable updates while the user drags
-  // the sidebar edge; the store value is the settled fallback.
-  const sidebarWidth = pinned
-    ? `var(--studio-sidebar-live-width, ${width}px)`
-    : "var(--studio-sidebar-collapsed-width,3rem)";
-  const contentBorderLeft = pinned ? sidebarWidth : "0px";
+  const isMobile = useIsMobile();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const hasSidebar = !isMobile && !HIDDEN_TITLEBAR_SIDEBAR_ROUTES.has(pathname);
+  const left = !hasSidebar
+    ? "0px"
+    : pinned
+      ? `var(--studio-sidebar-live-width, ${width}px)`
+      : "var(--studio-sidebar-collapsed-width,3rem)";
 
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none fixed inset-x-0 top-[38px] z-[9999] h-3"
+      data-slot="electron-workspace-seam"
+      className="pointer-events-none fixed right-0 top-[var(--studio-custom-titlebar-height,38px)] z-[45] h-3"
+      style={{ left }}
     >
+      {hasSidebar && (
+        <div className="absolute left-0 top-0 size-3 bg-sidebar">
+          <div className="size-3 rounded-tl-xl border-l border-t border-sidebar-border bg-background" />
+        </div>
+      )}
       <div
-        className="absolute top-0 h-px bg-sidebar-border"
-        style={{ left: contentBorderLeft, right: 0 }}
+        className="absolute right-0 top-0 h-px bg-sidebar-border"
+        style={{ left: hasSidebar ? 12 : 0 }}
       />
     </div>
   );

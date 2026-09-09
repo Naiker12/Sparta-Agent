@@ -93,9 +93,9 @@ def _display_tool_name_gate(name):
     fn = _get_inf_attr("_display_tool_name_gate")
     return fn(name) if fn else name
 
-def _llama_status_checkpoint_id():
+def _llama_status_checkpoint_id(llama_backend):
     fn = _get_inf_attr("_llama_status_checkpoint_id")
-    return fn() if fn else None
+    return fn(llama_backend) if fn else None
 
 def _anthropic_request_has_image(payload):
     fn = _get_inf_attr("_anthropic_request_has_image")

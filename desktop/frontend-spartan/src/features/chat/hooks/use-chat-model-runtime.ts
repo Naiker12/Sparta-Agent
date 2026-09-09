@@ -637,10 +637,10 @@ export function useChatModelRuntime() {
     clearCheckpoint();
     if (tid != null) toast.dismiss(tid);
     const isCachedOrLocal = model.isDownloaded || model.isCachedLora;
-    toast.info("Stopped loading model", {
+    toast.info(t("picker.stoppedLoadingModel"), {
       description: isCachedOrLocal
         ? undefined
-        : "The current download may still finish in the background.",
+        : t("picker.downloadMayContinue"),
     });
     cancelUnloadPendingRef.current = true;
     void (async () => {
@@ -664,7 +664,7 @@ export function useChatModelRuntime() {
         }
       }
     })();
-  }, [clearCheckpoint, setLoadToastDismissedState]);
+  }, [clearCheckpoint, setLoadToastDismissedState, t]);
 
   const selectModel = useCallback(
     async (selection: string | SelectedModelInput) => {
@@ -1033,10 +1033,10 @@ export function useChatModelRuntime() {
       const isLocal = isLocalModelPath(modelId);
       const isCachedLora = isLora && isLocal;
       const loadingDescription = [
-        currentCheckpoint ? "Switching models." : null,
+        currentCheckpoint ? t("picker.switchingModels") : null,
         extraLoadingDescription ?? null,
-        isDownloaded ? "Loading cached model into memory." : null,
-        !isDownloaded && isCachedLora ? "Loading trained model into memory." : null,
+        isDownloaded ? t("picker.cachingModelInMemory") : null,
+        !isDownloaded && isCachedLora ? t("picker.loadingTrainedModelInMemory") : null,
       ]
         .filter(Boolean)
         .join(" ");
@@ -1056,7 +1056,7 @@ export function useChatModelRuntime() {
       setLoadProgress(
         isDownloaded || isCachedLora
           ? { percent: null, label: null, phase: "starting" }
-          : { percent: 0, label: "Preparing download", phase: "downloading" },
+          : { percent: 0, label: t("picker.preparingDownload"), phase: "downloading" },
       );
       loadingModelRef.current = loadInfo;
       const abortCtrl = new AbortController();
@@ -1953,13 +1953,15 @@ export function useChatModelRuntime() {
         }
 
         const isCachedLoad = isDownloaded || isCachedLora;
-        const toastTitle = isCachedLoad ? "Starting model…" : "Downloading model…";
+        const toastTitle = isCachedLoad
+          ? t("picker.startingModel")
+          : t("picker.downloadingModel");
         const modelLoadToastOptions = (description: ReturnType<typeof renderLoadDescription>) => ({
           description,
           duration: Infinity,
           closeButton: true,
           cancel: {
-            label: "Cancel",
+            label: t("picker.cancel"),
             onClick: cancelLoading,
           },
           classNames: MODEL_LOAD_TOAST_CLASSNAMES,
@@ -1977,7 +1979,7 @@ export function useChatModelRuntime() {
               toastTitle,
               loadingDescription,
               isCachedLoad ? null : 0,
-              isCachedLoad ? null : "Preparing download",
+              isCachedLoad ? null : t("picker.preparingDownload"),
             ),
           ),
         );

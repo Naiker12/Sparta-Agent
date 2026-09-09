@@ -13672,6 +13672,7 @@ from routes.inference_pkg.router_anthropic import (
     _build_passthrough_payload,
     _anthropic_passthrough_stream,
     _anthropic_passthrough_non_streaming,
+    _normalize_anthropic_openai_images,
 )
 
 for r in _anthropic_router.routes:
