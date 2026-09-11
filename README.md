@@ -123,4 +123,4 @@ Los problemas, ideas y propuestas son bienvenidos en los [issues](https://github
 
 ## Licencia
 
-Sparta Agent se distribuye bajo la licencia [MIT](LICENSE).
+Sparta Agent se distribuye bajo la licencia [MIT](LICENSE)..
