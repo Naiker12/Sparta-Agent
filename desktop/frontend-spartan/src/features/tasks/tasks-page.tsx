@@ -224,7 +224,7 @@ export function TasksPage() {
             </h1>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
-            Automatiza agentes autónomos para ejecutar análisis, recordatorios y reportes periódicos en segundo plano.
+            Guarda y organiza rutinas de análisis, recordatorios y reportes. La ejecución se habilita cuando el motor local esté disponible.
           </p>
         </div>
 
@@ -289,8 +289,8 @@ export function TasksPage() {
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Canal de Notificación</p>
-            <p className="mt-0.5 text-sm font-semibold">Chat Spartan</p>
-            <p className="text-[11px] text-muted-foreground">Resultados directos en el feed</p>
+            <p className="mt-0.5 text-sm font-semibold">Preparado para Chat Spartan</p>
+            <p className="text-[11px] text-muted-foreground">Los resultados aparecerán aquí al activar el ejecutor</p>
           </div>
         </div>
 
@@ -300,8 +300,8 @@ export function TasksPage() {
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Modo Agente</p>
-            <p className="mt-0.5 text-sm font-semibold">Autónomo seguro</p>
-            <p className="text-[11px] text-muted-foreground">Permisos requeridos en cambios</p>
+            <p className="mt-0.5 text-sm font-semibold">Programación guardada</p>
+            <p className="text-[11px] text-muted-foreground">No se ejecutan acciones sin un motor configurado</p>
           </div>
         </div>
       </section>

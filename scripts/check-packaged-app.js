@@ -1,9 +1,15 @@
 import { existsSync, readdirSync, statSync } from 'node:fs'
-import { join, dirname } from 'node:path'
+import { join, dirname, resolve } from 'node:path'
 import { extractFile, listPackage } from '@electron/asar'
 import packageJson from '../package.json' with { type: 'json' }
 
-const releaseRoot = join(process.cwd(), 'release', packageJson.version)
+// Accept either a concrete app.asar or a release directory. CI passes the
+// directory produced by electron-builder, which prevents an old local release
+// from being mistaken for the artifact about to be published.
+const requestedTarget = process.argv[2] || process.env.SPARTA_PACKAGED_OUTPUT
+const releaseRoot = requestedTarget
+  ? resolve(process.cwd(), requestedTarget)
+  : join(process.cwd(), 'release', packageJson.version)
 
 function findAsarFiles(directory) {
   if (!existsSync(directory)) return []
@@ -14,9 +20,11 @@ function findAsarFiles(directory) {
   })
 }
 
-const archives = findAsarFiles(releaseRoot)
+const archives = existsSync(releaseRoot) && statSync(releaseRoot).isFile()
+  ? [releaseRoot]
+  : findAsarFiles(releaseRoot)
 if (archives.length === 0) {
-  console.error(`ERROR DE EMPAQUETADO: no se encontrÃ³ app.asar en ${releaseRoot}`)
+  console.error(`ERROR DE EMPAQUETADO: no se encontró app.asar en ${releaseRoot}`)
   process.exit(1)
 }
 

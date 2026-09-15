@@ -2093,7 +2093,7 @@ html[data-chat-font] .aui-root {
 	   defaults to Hellix. Restored on the element because the base h1 rule
 	   reads --font-heading with !important and .aui-thread-root resets
 	   that var to sans for chat prose. */
-	.unsloth-welcome-title {
+	.sparta-welcome-title {
 		--font-heading: var(
 			--custom-heading-font,
 			"Hellix",

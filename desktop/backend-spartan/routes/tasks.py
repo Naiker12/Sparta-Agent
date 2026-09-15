@@ -14,21 +14,24 @@ class TaskInput(BaseModel):
     enabled: bool = True
 
 @router.get('')
-def tasks(current_subject: str = Depends(get_current_subject)): return {'tasks': list_tasks()}
+def tasks(current_subject: str = Depends(get_current_subject)): return {'tasks': list_tasks(current_subject)}
 
 @router.post('')
-def create(body: TaskInput, current_subject: str = Depends(get_current_subject)): return upsert_task(body.model_dump())
+def create(body: TaskInput, current_subject: str = Depends(get_current_subject)): return upsert_task(body.model_dump(), owner_subject=current_subject)
 
 @router.get('/{task_id}')
 def detail(task_id: str, current_subject: str = Depends(get_current_subject)):
-    task = get_task(task_id)
+    task = get_task(task_id, current_subject)
     if not task: raise HTTPException(404, 'Task not found')
     return task
 
 @router.patch('/{task_id}')
-def update(task_id: str, body: TaskInput, current_subject: str = Depends(get_current_subject)): return upsert_task(body.model_dump(), task_id)
+def update(task_id: str, body: TaskInput, current_subject: str = Depends(get_current_subject)):
+    task = upsert_task(body.model_dump(), task_id, current_subject)
+    if not task: raise HTTPException(404, 'Task not found')
+    return task
 
 @router.delete('/{task_id}')
 def remove(task_id: str, current_subject: str = Depends(get_current_subject)):
-    if not delete_task(task_id): raise HTTPException(404, 'Task not found')
+    if not delete_task(task_id, current_subject): raise HTTPException(404, 'Task not found')
     return {'ok': True}

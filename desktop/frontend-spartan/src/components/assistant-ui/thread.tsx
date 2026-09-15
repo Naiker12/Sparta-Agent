@@ -37,7 +37,7 @@ import {
   GeneratedAvatar,
   ThinkingAvatar,
 } from "@/components/ui/blobatar-avatar";
-import { publicAssetUrl } from "@/components/mascot-img";
+import { publicAssetUrl } from "@/lib/public-asset-url";
 import { Spinner } from "@/components/ui/spinner";
 import {
   DropdownMenu,

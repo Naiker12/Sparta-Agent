@@ -14,13 +14,12 @@ import { preprocessLaTeX } from "@/lib/latex";
 import { downloadFile, isDownloadCancelled } from "@/lib/native-files";
 import { openLink } from "@/lib/open-link";
 import { safeMarkdownUrl } from "@/lib/safe-markdown-url";
+import { markdownPluginNeeds } from "@/lib/markdown-plugins";
 import { Tick02Icon } from "@/lib/tick-icon";
 import { toast } from "@/lib/toast";
 import { INTERNAL, useAuiState, useMessagePartText } from "@assistant-ui/react";
 import { Copy01Icon, Download01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { createMathPlugin } from "@streamdown/math";
-import { mermaid } from "@streamdown/mermaid";
 import {
   type ComponentProps,
   createContext,
@@ -38,23 +37,61 @@ import {
   Streamdown,
   type StreamdownProps,
 } from "streamdown";
-import { createCodePlugin } from "./code-plugin";
-import "katex/dist/katex.min.css";
 import { AudioPlayer } from "./audio-player";
-import { unslothDarkTheme, unslothLightTheme } from "./code-themes";
 import { stabilizeStreamingMarkdown } from "./streaming-markdown";
 import {
   IncrementalMarkdownCache,
   withoutStreamdownAnimationPlugin,
 } from "./streaming-render-schedule";
 
-const math = createMathPlugin({ singleDollarTextMath: true });
-const code = createCodePlugin({
-  themes: [unslothLightTheme, unslothDarkTheme],
-});
-const STREAMDOWN_PLUGINS = { code, math, mermaid } satisfies NonNullable<
-  StreamdownProps["plugins"]
->;
+type StreamdownPlugins = NonNullable<StreamdownProps["plugins"]>;
+type CodePlugin = NonNullable<StreamdownPlugins["code"]>;
+type MathPlugin = NonNullable<StreamdownPlugins["math"]>;
+type MermaidPlugin = NonNullable<StreamdownPlugins["mermaid"]>;
+type ShikiTheme = NonNullable<StreamdownProps["shikiTheme"]>;
+type CodeRenderer = { plugin: CodePlugin; shikiTheme: ShikiTheme };
+
+// Syntax renderers bring Shiki, KaTeX and Mermaid with them. Their module-level
+// imports used to make every chat load those libraries, including a new blank
+// thread. Cache each optional renderer after first use so later messages do not
+// recreate highlighters or download the same chunk again.
+let codePluginPromise: Promise<CodeRenderer> | null = null;
+let mathPluginPromise: Promise<MathPlugin> | null = null;
+let mermaidPluginPromise: Promise<MermaidPlugin> | null = null;
+
+function loadCodePlugin(): Promise<CodeRenderer> {
+  codePluginPromise ??= Promise.all([
+    import("./code-plugin"),
+    import("./code-themes"),
+  ]).then(([{ createCodePlugin }, { unslothDarkTheme, unslothLightTheme }]) => {
+    const shikiTheme = [
+      unslothLightTheme,
+      unslothDarkTheme,
+    ] satisfies ShikiTheme;
+    return {
+      plugin: createCodePlugin({ themes: shikiTheme }),
+      shikiTheme,
+    };
+  });
+  return codePluginPromise;
+}
+
+function loadMathPlugin(): Promise<MathPlugin> {
+  mathPluginPromise ??= Promise.all([
+    import("@streamdown/math"),
+    import("katex/dist/katex.min.css"),
+  ]).then(([{ createMathPlugin }]) =>
+    createMathPlugin({ singleDollarTextMath: true }),
+  );
+  return mathPluginPromise;
+}
+
+function loadMermaidPlugin(): Promise<MermaidPlugin> {
+  mermaidPluginPromise ??= import("@streamdown/mermaid").then(
+    ({ mermaid }) => mermaid,
+  );
+  return mermaidPluginPromise;
+}
 const STREAMDOWN_CONTROLS = {
   code: false,
   mermaid: {
@@ -64,10 +101,6 @@ const STREAMDOWN_CONTROLS = {
     panZoom: true,
   },
 } satisfies NonNullable<StreamdownProps["controls"]>;
-const STREAMDOWN_SHIKI_THEME = [
-  unslothLightTheme,
-  unslothDarkTheme,
-] satisfies NonNullable<StreamdownProps["shikiTheme"]>;
 const { withSmoothContextProvider } = INTERNAL;
 
 // Streamdown 2.5 schedules ordinary streaming blocks in an interruptible React
@@ -473,6 +506,72 @@ function useCoalescedStreamingText(
   return text;
 }
 
+// Chat has supported inline `$x$` since its first renderer. The shared detector
+// deliberately ignores it for document previews because prices are common
+// there; preserve the chat behaviour while still avoiding KaTeX for prose with
+// a lone currency symbol.
+const CHAT_INLINE_MATH_RE = /(?:^|[^\\$])\$(?![\s$])[^$\n]+?\$(?!\$)/;
+
+function useOptionalMarkdownPlugins(markdown: string): {
+  plugins: StreamdownPlugins;
+  shikiTheme?: ShikiTheme;
+} {
+  const needs = useMemo(() => {
+    const base = markdownPluginNeeds(markdown);
+    return {
+      ...base,
+      math: base.math || CHAT_INLINE_MATH_RE.test(markdown),
+    };
+  }, [markdown]);
+  const key = `${needs.code}:${needs.math}:${needs.mermaid}`;
+  const [loaded, setLoaded] = useState<{
+    key: string;
+    plugins: StreamdownPlugins;
+    shikiTheme?: ShikiTheme;
+  }>({ key: "", plugins: {} });
+
+  useEffect(() => {
+    let cancelled = false;
+    const plugins: StreamdownPlugins = {};
+    let shikiTheme: ShikiTheme | undefined;
+    const loaders: Promise<void>[] = [];
+
+    if (needs.code) {
+      loaders.push(loadCodePlugin().then((renderer) => {
+        plugins.code = renderer.plugin;
+        shikiTheme = renderer.shikiTheme;
+      }));
+    }
+    if (needs.math) {
+      loaders.push(loadMathPlugin().then((plugin) => {
+        plugins.math = plugin;
+      }));
+    }
+    if (needs.mermaid) {
+      loaders.push(loadMermaidPlugin().then((plugin) => {
+        plugins.mermaid = plugin;
+      }));
+    }
+
+    void Promise.all(loaders)
+      .then(() => {
+        if (!cancelled) setLoaded({ key, plugins, shikiTheme });
+      })
+      .catch(() => {
+        // A response remains readable when an optional renderer fails to load.
+        if (!cancelled) setLoaded({ key, plugins: {} });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [key, needs.code, needs.math, needs.mermaid]);
+
+  return loaded.key === key
+    ? { plugins: loaded.plugins, shikiTheme: loaded.shikiTheme }
+    : { plugins: {} };
+}
+
 const MarkdownTextImpl = () => {
   const { text, status } = useMessagePartText();
   // Parts are keyed by index, so switching conversations hands this instance a
@@ -490,6 +589,7 @@ const MarkdownTextImpl = () => {
     () => stabilizeStreamingMarkdown(preprocessLaTeX(displayText), isStreaming),
     [displayText, isStreaming],
   );
+  const markdownRenderers = useOptionalMarkdownPlugins(processedText);
   const incrementalCacheRef = useRef({
     messageId,
     cache: new IncrementalMarkdownCache(),
@@ -522,11 +622,11 @@ const MarkdownTextImpl = () => {
           parseMarkdownIntoBlocksFn={incrementalRender?.parseMarkdownIntoBlocks}
           isAnimating={isStreaming}
           animated={STREAMDOWN_IMMEDIATE_UPDATES}
-          plugins={STREAMDOWN_PLUGINS}
+          plugins={markdownRenderers.plugins}
           components={STREAMDOWN_COMPONENTS}
           urlTransform={safeMarkdownUrl}
           controls={STREAMDOWN_CONTROLS}
-          shikiTheme={STREAMDOWN_SHIKI_THEME}
+          shikiTheme={markdownRenderers.shikiTheme}
           BlockComponent={StreamdownBlock}
         >
           {incrementalRender?.markdown ?? processedText}

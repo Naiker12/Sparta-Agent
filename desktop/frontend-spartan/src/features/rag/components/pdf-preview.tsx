@@ -42,11 +42,11 @@ const clampZoom = (z: number) =>
   Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Number(z.toFixed(2))));
 
 export function PdfPreview({
-  fileUrl,
+  file,
   initialPage,
   regions,
 }: {
-  fileUrl: string;
+  file: string | ArrayBuffer;
   initialPage: number;
   regions: PdfRegion[];
 }) {
@@ -177,7 +177,7 @@ export function PdfPreview({
         )}
       >
         <Document
-          file={fileUrl}
+          file={file}
           onLoadSuccess={onLoad}
           onSourceError={(e) => setError(e.message)}
           onLoadError={(e) => setError(e.message)}

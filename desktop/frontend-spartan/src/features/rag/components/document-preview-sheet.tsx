@@ -114,11 +114,47 @@ function LocalWordPreview({ blob }: { blob: Blob }) {
   );
 }
 
+/**
+ * PDF.js can fetch a blob: URL through its worker. Electron's renderer does
+ * not consistently expose those requests to the worker, which turns a valid
+ * local file into an "Unexpected server response (0)" error. Give it the
+ * downloaded bytes instead, while server-backed previews keep using a URL.
+ */
+function LocalPdfPreview({ blob }: { blob: Blob }) {
+  const t = useT();
+  const [data, setData] = useState<ArrayBuffer | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void blob
+      .arrayBuffer()
+      .then((buffer) => {
+        if (!cancelled) setData(buffer);
+      })
+      .catch(() => {
+        if (!cancelled) setData(new ArrayBuffer(0));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [blob]);
+
+  if (data === null) {
+    return (
+      <div className="flex items-center gap-2 p-6 text-sm text-muted-foreground">
+        <Spinner className="size-3.5" /> {t("chat.preview.loadingPdf")}
+      </div>
+    );
+  }
+
+  return <PdfPreview file={data} initialPage={1} regions={[]} />;
+}
+
 function LocalPreviewContent({ preview }: { preview: LocalPreview }) {
   const t = useT();
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
-    if (!["pdf", "image", "video", "audio"].includes(preview.kind)) return;
+    if (!["image", "video", "audio"].includes(preview.kind)) return;
     const objectUrl = URL.createObjectURL(preview.blob);
     // An object URL is an external resource owned and released by this effect.
     setUrl(objectUrl);
@@ -133,9 +169,7 @@ function LocalPreviewContent({ preview }: { preview: LocalPreview }) {
     case "audio":
       return url ? <div className="flex h-full items-center justify-center p-6"><audio src={url} controls preload="metadata" className="w-full" /></div> : null;
     case "pdf":
-      return url ? (
-        <PdfPreview key={url} fileUrl={url} initialPage={1} regions={[]} />
-      ) : null;
+      return <LocalPdfPreview blob={preview.blob} />;
     case "word":
       return <LocalWordPreview blob={preview.blob} />;
     case "excel":
@@ -401,7 +435,7 @@ export function DocumentPreviewSheet() {
           ) : target && target.mediaKind === "pdf" && fileUrl ? (
             <PdfPreview
               key={`${fileUrl}:${target.targetPage ?? 1}`}
-              fileUrl={fileUrl}
+              file={fileUrl}
               initialPage={target.targetPage ?? 1}
               regions={target.pdfRegions ?? []}
             />

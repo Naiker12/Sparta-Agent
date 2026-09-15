@@ -54,9 +54,13 @@ def sync_from_chats(current_subject: str = Depends(get_current_subject)):
     from storage.studio.connection import get_connection
     conn = get_connection()
     try:
-        threads = conn.execute("SELECT id, title, created_at FROM chat_threads ORDER BY updated_at DESC LIMIT 40").fetchall()
+        # Archived conversations are deliberately excluded: they are no longer
+        # active context and must not reintroduce facts into the visible graph.
+        threads = conn.execute(
+            "SELECT id, title, created_at FROM chat_threads WHERE archived = 0 "
+            "ORDER BY updated_at DESC LIMIT 40"
+        ).fetchall()
         saved_count = 0
-        node_ids = []
         for thread in threads:
             title = (thread["title"] or "").strip()
             if not title or title.lower() in {"new chat", "nuevo chat"}:
@@ -106,15 +110,7 @@ def sync_from_chats(current_subject: str = Depends(get_current_subject)):
                 "confidence": 0.95
             })
             if node and node.get("id"):
-                node_ids.append(node["id"])
                 saved_count += 1
-
-        if len(node_ids) >= 2:
-            try:
-                for i in range(len(node_ids) - 1):
-                    upsert_memory_edge(node_ids[i], node_ids[i + 1], "conversación relacionada")
-            except Exception:
-                pass
 
         return {"synced": saved_count, "graph": list_memory()}
     finally:

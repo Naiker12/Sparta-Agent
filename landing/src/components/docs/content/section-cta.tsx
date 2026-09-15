@@ -1,4 +1,5 @@
-import { ArrowRight, Github } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
+import { GithubIcon } from '../../icons/github-icon';
 
 interface SectionCtaProps {
   title?: string;
@@ -19,7 +20,7 @@ export function SectionCta({
         rel="noreferrer"
         className="mt-6 inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-zinc-950 transition hover:bg-zinc-200"
       >
-        <Github className="size-4" /> Abrir repositorio <ArrowRight className="size-4" />
+        <GithubIcon className="size-4" /> Abrir repositorio <ArrowRight className="size-4" />
       </a>
     </section>
   );

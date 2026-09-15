@@ -1,7 +1,6 @@
 
 import { Link, createRouter, useRouterState } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { MascotImg } from "@/components/mascot-img";
 import { useT } from "@/i18n";
 import { Route as rootRoute } from "./routes/__root";
 import { Route as apiMonitorRoute } from "./routes/api";
@@ -44,7 +43,11 @@ function DefaultNotFound() {
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
-      <MascotImg src="Sloth emojis/sloth shy large.png" className="size-24" />
+      <img
+        src={`${import.meta.env.BASE_URL}spartan-logo.svg`}
+        alt="Sparta Agent"
+        className="size-20 object-contain"
+      />
       <div className="flex flex-col items-center gap-1">
         <h1 className="font-heading font-semibold text-2xl tracking-tight">
           {t("shell.notFound.title")}

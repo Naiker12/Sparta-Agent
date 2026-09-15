@@ -77,7 +77,7 @@ import { WORKFLOW_TABS, type WorkflowId } from "@/features/images/workflows";
 /* eslint-enable no-restricted-imports */
 import { cn } from "@/lib/utils";
 import { isTauri } from "@/lib/api-base";
-import { publicAssetUrl } from "@/components/mascot-img";
+import { publicAssetUrl } from "@/lib/public-asset-url";
 import { useWebUpdateCheck } from "@/hooks/use-web-update-check";
 import {
   Archive03Icon,

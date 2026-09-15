@@ -22,6 +22,7 @@ import {
   AiMagicIcon,
   AlertCircleIcon,
   BookOpen01Icon,
+  CheckmarkCircle02Icon,
   Clock01Icon,
   Delete02Icon,
   Idea01Icon,
@@ -50,6 +51,7 @@ type MemoryNode = {
   type: string;
   label: string;
   content: string;
+  sourceThreadId: string | null;
   confidence: number;
 };
 type MemoryEdge = {
@@ -217,6 +219,7 @@ export function MemoryPage() {
   const [targetId, setTargetId] = useState("");
   const [relation, setRelation] = useState("relacionado con");
   const [error, setError] = useState<string | null>(null);
+  const [syncNotice, setSyncNotice] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -279,6 +282,7 @@ export function MemoryPage() {
   const handleSyncFromChats = async () => {
     setIsSyncing(true);
     setError(null);
+    setSyncNotice(null);
     try {
       const response = await authFetch("/api/memory/sync-from-chats", {
         method: "POST",
@@ -295,6 +299,11 @@ export function MemoryPage() {
       } else {
         await refresh();
       }
+      setSyncNotice(
+        data.synced > 0
+          ? `Se actualizaron ${data.synced} recuerdos desde conversaciones activas.`
+          : "No se encontraron conversaciones activas con información para guardar."
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error sincronizando desde chats");
     } finally {
@@ -450,6 +459,16 @@ export function MemoryPage() {
         </div>
       )}
 
+      {syncNotice && !error && (
+        <div className="flex items-start gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm text-emerald-900 dark:text-emerald-100">
+          <HugeiconsIcon icon={CheckmarkCircle02Icon} strokeWidth={1.75} className="mt-0.5 size-5 shrink-0" />
+          <div className="flex-1">
+            <p className="font-medium">Memoria sincronizada</p>
+            <p className="mt-0.5 text-xs opacity-90">{syncNotice}</p>
+          </div>
+        </div>
+      )}
+
       {/* Quick Stats */}
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="flex items-center gap-4 rounded-3xl border border-foreground/10 bg-card p-4 ring-1 ring-foreground/5 shadow-xs">
@@ -595,6 +614,11 @@ export function MemoryPage() {
                 </h3>
                 <p className="mt-2 text-xs text-muted-foreground leading-relaxed bg-muted/40 p-3 rounded-2xl border">
                   {selected.content}
+                </p>
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  {selected.sourceThreadId
+                    ? `Origen: conversación ${selected.sourceThreadId.slice(0, 8)}`
+                    : "Origen: añadido manualmente"}
                 </p>
               </div>
 

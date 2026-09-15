@@ -1,6 +1,5 @@
 
 import { useState } from "react";
-import fallbackMascot from "@/assets/mascot-fallback.webp?inline";
 import { GeneratedAvatar } from "@/components/ui/blobatar-avatar";
 import { cn } from "@/lib/utils";
 import {
@@ -54,7 +53,11 @@ export function UserAvatar({
         )}
       >
         <img
-          src={imageFailed ? fallbackMascot : imageUrl}
+          src={
+            imageFailed
+              ? `${import.meta.env.BASE_URL}spartan-logo.svg`
+              : imageUrl
+          }
           alt=""
           className="size-full object-cover"
           onError={() => setImageFailed(true)}

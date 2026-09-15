@@ -4,13 +4,28 @@ import { beforeEach, afterEach, expect, test, vi } from 'vitest'
 import { BackendManager } from '../desktop/ia-sparta-app-shell/src/backend-manager'
 import { isDesktopAuthOrigin } from '../desktop/ia-sparta-app-shell/src/desktop-auth-origin'
 
-const mocks = vi.hoisted(() => ({ spawn: vi.fn() }))
+const mocks = vi.hoisted(() => ({ spawn: vi.fn(), readFileSync: vi.fn(), writeFileSync: vi.fn() }))
 vi.mock('node:child_process', () => ({ spawn: mocks.spawn, execSync: vi.fn() }))
-vi.mock('node:fs', () => ({ existsSync: () => true }))
+vi.mock('node:fs', () => ({
+  existsSync: () => true,
+  readFileSync: mocks.readFileSync,
+  mkdirSync: vi.fn(),
+  renameSync: vi.fn(),
+  writeFileSync: mocks.writeFileSync,
+}))
+vi.mock('node:crypto', () => ({
+  createHash: () => ({ update: () => undefined, digest: () => 'test-fingerprint' }),
+}))
 let child: EventEmitter & { stdout: PassThrough; stderr: PassThrough; kill: ReturnType<typeof vi.fn> }
 beforeEach(() => {
+  mocks.spawn.mockClear()
+  mocks.readFileSync.mockClear()
+  mocks.writeFileSync.mockClear()
   child = Object.assign(new EventEmitter(), { stdout: new PassThrough(), stderr: new PassThrough(), kill: vi.fn() })
   mocks.spawn.mockReturnValue(child)
+  mocks.readFileSync.mockImplementation((path: string) => path.endsWith('sparta-runtime.json')
+    ? JSON.stringify({ backendFingerprint: 'test-fingerprint', createdAt: '2026-01-01T00:00:00.000Z' })
+    : 'test-backend-file')
 })
 afterEach(() => { vi.unstubAllGlobals() })
 
@@ -51,6 +66,32 @@ test('startup errors never include the desktop secret', async () => {
   expect(error.message).toContain('backend failed')
   expect(error.message).not.toContain('desktop-private')
   await expect(manager.authenticate()).rejects.toThrow('Backend is not ready')
+})
+
+test('rejects a runtime built for a different bundled backend', async () => {
+  mocks.readFileSync.mockImplementation((path: string) => {
+    if (String(path).endsWith('sparta-runtime.json')) {
+      return JSON.stringify({ backendFingerprint: 'outdated-runtime', createdAt: '2026-01-01T00:00:00.000Z' })
+    }
+    return 'test-backend-file'
+  })
+  const manager = new BackendManager()
+  await expect(manager.start('/backend', '/runtime')).rejects.toThrow('pertenece a otra versión')
+  expect(mocks.spawn).not.toHaveBeenCalled()
+})
+
+test('adopts a legacy runtime after its authenticated ready handshake', async () => {
+  mocks.readFileSync.mockImplementation((path: string) => {
+    if (String(path).endsWith('sparta-runtime.json')) {
+      throw Object.assign(new Error('missing'), { code: 'ENOENT' })
+    }
+    return 'test-backend-file'
+  })
+  const manager = new BackendManager()
+  const ready = manager.start('/backend', '/runtime')
+  child.stdout.write('SPARTA_DESKTOP_SECRET=desktop-test\nTAURI_PORT=12345\n')
+  await expect(ready).resolves.toBe(12345)
+  expect(mocks.writeFileSync).toHaveBeenCalled()
 })
 
 test('does not return tokens from a rejected exchange', async () => {

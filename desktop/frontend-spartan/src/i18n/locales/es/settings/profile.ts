@@ -21,8 +21,8 @@ export const profile = {
   "uploadPhoto": "Subir foto",
   "removePhoto": "Quitar",
   "pictureOptions": "Opciones de la foto de perfil",
-  "greetingSloth": "Perezoso en el saludo",
-  "greetingSlothDescription": "Muestra el perezoso en el saludo del chat.",
+  "greetingSloth": "Avatar en el saludo",
+  "greetingSlothDescription": "Muestra un avatar de Sparta en el saludo del chat.",
   "noPicture": "Sin foto de perfil",
   "noneLabel": "Ninguno",
   "stats": {

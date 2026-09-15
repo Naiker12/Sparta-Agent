@@ -18,7 +18,7 @@ import { useT, type TranslationKey } from "@/i18n";
 export const pickRandom = <T,>(arr: T[]): T =>
   arr[Math.floor(Math.random() * arr.length)];
 
-export type Welcome = { text: string; sloth: string };
+export type Welcome = { text: string };
 
 export function buildWelcome(
   t: (key: TranslationKey, vars?: Record<string, string | number>) => string,
@@ -27,25 +27,22 @@ export function buildWelcome(
 ): Welcome {
   const g = (
     key: TranslationKey,
-    sloth: string,
     vars?: Record<string, string | number>,
-  ): Welcome => ({ text: t(key, vars), sloth });
+  ): Welcome => ({ text: t(key, vars) });
 
   const base: Welcome[] = [
     g(
       name ? "chat.welcome.goodToSeeYouNamed" : "chat.welcome.goodToSeeYou",
-      "large sloth wave.png",
       name ? { name } : undefined,
     ),
-    g("chat.welcome.readyWhenYouAre", "large sloth thumbs.png"),
-    g("chat.welcome.default", "sloth magnify final.png"),
-    g("chat.welcome.howCanIHelp", "sloth sir large.png"),
+    g("chat.welcome.readyWhenYouAre"),
+    g("chat.welcome.default"),
+    g("chat.welcome.howCanIHelp"),
   ];
 
   if (hour >= 4 && hour < 9) {
     const morning = g(
       name ? "chat.welcome.goodMorningNamed" : "chat.welcome.goodMorning",
-      "large sloth drink.png",
       name ? { name } : undefined,
     );
     return pickRandom([...base, morning]);
@@ -54,23 +51,21 @@ export function buildWelcome(
     const evening: Welcome[] = [
       g(
         name ? "chat.welcome.goodEveningNamed" : "chat.welcome.goodEvening",
-        "sloth shy large.png",
         name ? { name } : undefined,
       ),
-      g("chat.welcome.whatsOnTonight", "large sloth glasses.png"),
+      g("chat.welcome.whatsOnTonight"),
     ];
     return pickRandom(Math.random() < 0.75 ? evening : base);
   }
   if (hour >= 23 || hour < 4) {
     return pickRandom([
-      g("chat.welcome.nightOwlMode", "large sloth glasses.png"),
-      g("chat.welcome.lateNightIdeas", "large sloth yay.png"),
-      g("chat.welcome.upLateWithAnIdea", "large sloth heart.png"),
+      g("chat.welcome.nightOwlMode"),
+      g("chat.welcome.lateNightIdeas"),
+      g("chat.welcome.upLateWithAnIdea"),
       g(
         name
           ? "chat.welcome.nightShiftBeginsNamed"
           : "chat.welcome.nightShiftBegins",
-        "large sloth drink.png",
         name ? { name } : undefined,
       ),
     ]);
@@ -133,7 +128,6 @@ export const ThreadWelcome: FC<ThreadWelcomeProps> = ({
   const showGreetingSloth = useUserProfileStore((s) => s.showGreetingSloth);
   const [welcome, setWelcome] = useState<Welcome>({
     text: t("chat.welcome.default"),
-    sloth: "sloth magnify final.png",
   });
 
   useEffect(() => {
@@ -153,7 +147,7 @@ export const ThreadWelcome: FC<ThreadWelcomeProps> = ({
             {incognito && (
               <RotatingWelcomeAvatar prefix="sparta-temporary-chat" />
             )}
-            <h1 className="aui-thread-welcome-message-inner unsloth-welcome-title fade-in slide-in-from-bottom-1 animate-in text-3xl tracking-[-0.02em] duration-200">
+            <h1 className="aui-thread-welcome-message-inner sparta-welcome-title fade-in slide-in-from-bottom-1 animate-in text-3xl tracking-[-0.02em] duration-200">
               {incognito ? t("chat.welcome.temporaryChat") : welcome.text}
             </h1>
           </div>

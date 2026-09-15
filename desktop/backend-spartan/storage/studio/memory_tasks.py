@@ -40,11 +40,20 @@ def upsert_memory(data: dict, node_id: str | None = None) -> dict:
     if kind not in _MEMORY_TYPES: raise ValueError("Invalid memory type")
     label, content = str(data.get("label", "")).strip(), str(data.get("content", "")).strip()
     if not label or not content: raise ValueError("Memory label and content are required")
-    now, node_id = _now(), node_id or str(uuid.uuid4())
+    now = _now()
     conn = get_connection()
     try:
+        # Synchronization can run repeatedly after restarts. Preserve one
+        # durable node for the same fact and its original chat source.
+        if node_id is None:
+            duplicate = conn.execute(
+                "SELECT id FROM memory_nodes WHERE type=? AND label=? AND content=? "
+                "AND COALESCE(source_thread_id, '')=COALESCE(?, '')",
+                (kind, label, content, data.get("sourceThreadId")),
+            ).fetchone()
+            node_id = duplicate["id"] if duplicate else str(uuid.uuid4())
         exists = conn.execute("SELECT 1 FROM memory_nodes WHERE id=?", (node_id,)).fetchone()
-        if exists: conn.execute("UPDATE memory_nodes SET type=?, label=?, content=?, confidence=?, updated_at=? WHERE id=?", (kind, label, content, float(data.get("confidence", 1)), now, node_id))
+        if exists: conn.execute("UPDATE memory_nodes SET type=?, label=?, content=?, source_thread_id=?, confidence=?, updated_at=? WHERE id=?", (kind, label, content, data.get("sourceThreadId"), float(data.get("confidence", 1)), now, node_id))
         else: conn.execute("INSERT INTO memory_nodes(id,type,label,content,source_thread_id,confidence,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)", (node_id, kind, label, content, data.get("sourceThreadId"), float(data.get("confidence", 1)), now, now))
         conn.commit(); return get_memory_node(node_id) or {}
     finally: conn.close()
@@ -97,20 +106,21 @@ def delete_memory_edge(edge_id: str) -> bool:
     finally:
         conn.close()
 
-def list_tasks() -> list[dict]:
+def list_tasks(owner_subject: str) -> list[dict]:
     conn = get_connection()
-    try: return [_task(row) for row in conn.execute("SELECT * FROM agent_tasks ORDER BY enabled DESC, next_run_at ASC, created_at DESC").fetchall()]
+    try: return [_task(row) for row in conn.execute("SELECT * FROM agent_tasks WHERE owner_subject=? OR owner_subject IS NULL ORDER BY enabled DESC, next_run_at ASC, created_at DESC", (owner_subject,)).fetchall()]
     finally: conn.close()
 
-def get_task(task_id: str) -> dict | None:
+def get_task(task_id: str, owner_subject: str | None = None) -> dict | None:
     conn = get_connection()
     try:
-        row = conn.execute("SELECT * FROM agent_tasks WHERE id=?", (task_id,)).fetchone()
+        where, values = ("id=?", (task_id,)) if owner_subject is None else ("id=? AND (owner_subject=? OR owner_subject IS NULL)", (task_id, owner_subject))
+        row = conn.execute(f"SELECT * FROM agent_tasks WHERE {where}", values).fetchone()
         if not row: return None
         task = _task(row); task["runs"] = [dict(run) for run in conn.execute("SELECT id, started_at AS startedAt, finished_at AS finishedAt, status, output, error FROM agent_task_runs WHERE task_id=? ORDER BY started_at DESC LIMIT 50", (task_id,)).fetchall()]; return task
     finally: conn.close()
 
-def upsert_task(data: dict, task_id: str | None = None) -> dict:
+def upsert_task(data: dict, task_id: str | None = None, owner_subject: str | None = None) -> dict:
     title, prompt = str(data.get("title", "")).strip(), str(data.get("prompt", "")).strip()
     schedule = data.get("scheduleType", "interval")
     if not title or not prompt or schedule not in _SCHEDULE_TYPES: raise ValueError("Invalid task")
@@ -119,14 +129,20 @@ def upsert_task(data: dict, task_id: str | None = None) -> dict:
     now, task_id = _now(), task_id or str(uuid.uuid4()); enabled = bool(data.get("enabled", True)); next_run = now + interval * 1000 if enabled and interval else data.get("runAt")
     conn = get_connection()
     try:
-        if conn.execute("SELECT 1 FROM agent_tasks WHERE id=?", (task_id,)).fetchone(): conn.execute("UPDATE agent_tasks SET title=?,prompt=?,schedule_type=?,interval_seconds=?,run_at=?,thread_id=?,enabled=?,next_run_at=?,updated_at=? WHERE id=?", (title,prompt,schedule,interval,data.get("runAt"),data.get("threadId"),enabled,next_run,now,task_id))
-        else: conn.execute("INSERT INTO agent_tasks(id,title,prompt,schedule_type,interval_seconds,run_at,thread_id,enabled,next_run_at,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)", (task_id,title,prompt,schedule,interval,data.get("runAt"),data.get("threadId"),enabled,next_run,now,now))
-        conn.commit(); return get_task(task_id) or {}
+        existing = conn.execute("SELECT owner_subject FROM agent_tasks WHERE id=?", (task_id,)).fetchone()
+        if existing and existing["owner_subject"] not in {None, owner_subject}:
+            return {}
+        if existing: conn.execute("UPDATE agent_tasks SET title=?,prompt=?,schedule_type=?,interval_seconds=?,run_at=?,thread_id=?,enabled=?,next_run_at=?,updated_at=? WHERE id=?", (title,prompt,schedule,interval,data.get("runAt"),data.get("threadId"),enabled,next_run,now,task_id))
+        else: conn.execute("INSERT INTO agent_tasks(id,title,prompt,schedule_type,interval_seconds,run_at,thread_id,owner_subject,enabled,next_run_at,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)", (task_id,title,prompt,schedule,interval,data.get("runAt"),data.get("threadId"),owner_subject,enabled,next_run,now,now))
+        conn.commit(); return get_task(task_id, owner_subject) or {}
     finally: conn.close()
 
-def delete_task(task_id: str) -> bool:
+def delete_task(task_id: str, owner_subject: str) -> bool:
     conn = get_connection()
     try:
+        owned = conn.execute("SELECT 1 FROM agent_tasks WHERE id=? AND (owner_subject=? OR owner_subject IS NULL)", (task_id, owner_subject)).fetchone()
+        if not owned:
+            return False
         conn.execute("DELETE FROM agent_task_runs WHERE task_id=?", (task_id,))
         result = conn.execute("DELETE FROM agent_tasks WHERE id=?", (task_id,))
         conn.commit()

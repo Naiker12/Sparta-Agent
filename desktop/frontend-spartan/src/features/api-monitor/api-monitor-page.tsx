@@ -679,7 +679,7 @@ export function ApiMonitorPage(): ReactElement {
         : t("apiPage.statusNoModelLoaded");
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 pb-10 pt-12 font-heading sm:px-10">
+    <main className="mx-auto flex w-full max-w-screen-2xl flex-col gap-5 px-4 pb-8 pt-7 font-heading sm:gap-6 sm:px-6 sm:pb-10 sm:pt-10 lg:px-8 xl:px-10">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex min-w-0 flex-col gap-1">
           <h1 className="text-ui-30 font-semibold leading-[1.04] tracking-[-0.028em] text-foreground sm:text-ui-34">

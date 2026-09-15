@@ -1,6 +1,7 @@
 import React from 'react';
-import { Github, Menu } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { getPublicUrl } from '@/lib/utils';
+import { GithubIcon } from '../../icons/github-icon';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -68,7 +69,7 @@ export function DocsHeader({
             rel="noreferrer"
             className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-3 py-1.5 text-white transition hover:bg-white/10"
           >
-            <Github className="size-4" /> GitHub
+            <GithubIcon className="size-4" /> GitHub
           </a>
         </div>
         <button

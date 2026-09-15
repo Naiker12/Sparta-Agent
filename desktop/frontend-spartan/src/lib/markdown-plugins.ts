@@ -14,6 +14,7 @@ const NEEDS_MATH = /\$\$|\\\(|\\\[/;
 // anchored to the line start, so a fence nested in a list item still counts: over-matching costs
 // one unused plugin, under-matching costs a diagram.
 const NEEDS_MERMAID = /(?:`{3,}|~{3,})[ \t]*mermaid\b/;
+const NEEDS_CODE_BLOCK = /(?:`{3,}|~{3,})[^\n]*\n/;
 
 /** Past this a document stays plain monospace: shiki is not worth the main-thread time. */
 export const MAX_HIGHLIGHT_CHARS = 20_000;
@@ -28,6 +29,6 @@ export function markdownPluginNeeds(markdown: string): MarkdownPluginNeeds {
   return {
     math: NEEDS_MATH.test(markdown),
     mermaid: NEEDS_MERMAID.test(markdown),
-    code: markdown.length <= MAX_HIGHLIGHT_CHARS,
+    code: markdown.length <= MAX_HIGHLIGHT_CHARS && NEEDS_CODE_BLOCK.test(markdown),
   };
 }

@@ -1,8 +1,13 @@
 import { ChildProcess, spawn, execSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 import path from "node:path";
 
 const PORT_LINE = /^TAURI_PORT=(\d+)\s*$/m;
+const RUNTIME_MANIFEST = "sparta-runtime.json";
+const RUNTIME_FINGERPRINT_FILES = ["requirements.txt", "run.py", "main.py", "desktop_bootstrap.py"];
+
+type RuntimeManifest = { backendFingerprint: string; createdAt: string };
 
 export class BackendManager {
   private process: ChildProcess | undefined;
@@ -44,6 +49,10 @@ export class BackendManager {
       throw new Error("No se encontró Python. Sparta Agent puede operar directamente con modelos cloud y herramientas locales.");
     }
 
+    const migrateLegacyRuntime = runtimeDir
+      ? this.assertRuntimeMatchesBackend(backendDir, runtimeDir)
+      : false;
+
     const runScript = path.join(backendDir, "run.py");
     if (!existsSync(runScript)) {
       console.warn("[backend-manager] run.py no encontrado en backendDir:", backendDir);
@@ -72,6 +81,15 @@ export class BackendManager {
       const resolveWhenReady = () => {
         if (this.process !== child || this.port || !announcedPort || !this.desktopSecret) return;
         this.port = announcedPort;
+        if (migrateLegacyRuntime && runtimeDir) {
+          try {
+            // The process reached its ready handshake, so this old environment
+            // is known-good for the bundled backend and can be adopted once.
+            this.writeRuntimeManifest(backendDir, runtimeDir);
+          } catch (error) {
+            console.warn("[backend-manager] No se pudo migrar la huella del motor:", error);
+          }
+        }
         resolve(this.port);
       };
       const read = (text: string) => {
@@ -179,6 +197,8 @@ export class BackendManager {
       backendDir,
       onProgress,
     );
+
+    this.writeRuntimeManifest(backendDir, runtimeDir);
   }
 
   stop(): void {
@@ -274,6 +294,59 @@ export class BackendManager {
       process.platform === "win32" ? "python.exe" : "python",
     );
     return existsSync(python) ? { command: python, args: [] } : undefined;
+  }
+
+  /**
+   * A virtualenv is writable and survives app upgrades.  Its dependencies must
+   * never silently be reused with a different bundled backend tree.
+   */
+  private assertRuntimeMatchesBackend(backendDir: string, runtimeDir: string): boolean {
+    const manifestPath = path.join(runtimeDir, RUNTIME_MANIFEST);
+    const expected = this.backendFingerprint(backendDir);
+    let stored: RuntimeManifest | undefined;
+    try {
+      const parsed = JSON.parse(readFileSync(manifestPath, "utf8")) as Partial<RuntimeManifest>;
+      if (typeof parsed.backendFingerprint === "string") {
+        stored = { backendFingerprint: parsed.backendFingerprint, createdAt: String(parsed.createdAt ?? "") };
+      }
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+        // Version 0.2.20 introduced the marker. A legacy venv that completes
+        // the authenticated ready handshake is safe to adopt once; future
+        // changes will be checked against the newly written fingerprint.
+        return true;
+      }
+      throw new Error("No se pudo leer la versión del motor local. Actualízalo para reconstruir su entorno aislado.");
+    }
+    if (!stored || stored.backendFingerprint !== expected) {
+      throw new Error("El motor local pertenece a otra versión de Sparta. Actualízalo para reconstruir su entorno aislado.");
+    }
+    return false;
+  }
+
+  private writeRuntimeManifest(backendDir: string, runtimeDir: string): void {
+    mkdirSync(runtimeDir, { recursive: true });
+    const target = path.join(runtimeDir, RUNTIME_MANIFEST);
+    const temporary = `${target}.tmp`;
+    const manifest: RuntimeManifest = {
+      backendFingerprint: this.backendFingerprint(backendDir),
+      createdAt: new Date().toISOString(),
+    };
+    writeFileSync(temporary, JSON.stringify(manifest), "utf8");
+    renameSync(temporary, target);
+  }
+
+  private backendFingerprint(backendDir: string): string {
+    const hash = createHash("sha256");
+    for (const filename of RUNTIME_FINGERPRINT_FILES) {
+      const file = path.join(backendDir, filename);
+      if (!existsSync(file)) throw new Error(`No se pudo verificar el motor local: falta ${filename}.`);
+      hash.update(filename);
+      hash.update("\0");
+      hash.update(readFileSync(file));
+      hash.update("\0");
+    }
+    return hash.digest("hex");
   }
 
   private hasLlamaServer(llamaRoot: string): boolean {

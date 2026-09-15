@@ -1,7 +1,6 @@
 
 import { apiUrl } from "@/lib/api-base";
 import { Button } from "@/components/ui/button";
-import { MascotImg } from "@/components/mascot-img";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link, useNavigate } from "@tanstack/react-router";
@@ -314,9 +313,10 @@ export function AuthForm({ mode }: AuthFormProps): ReactElement | null {
   return (
     <div className="w-full max-w-sm space-y-6">
       <div className="space-y-1.5 text-center">
-        <MascotImg
-          src="Sloth emojis/large sloth wave.png"
-          className="mx-auto mb-2 h-20 w-20 object-contain"
+        <img
+          src={`${import.meta.env.BASE_URL}spartan-logo.svg`}
+          alt="Sparta Agent"
+          className="mx-auto mb-2 h-16 w-16 object-contain"
         />
         <h2 className="text-2xl font-semibold text-foreground">{title}</h2>
         <p className="text-muted-foreground">{subtitle}</p>

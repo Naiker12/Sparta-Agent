@@ -1,6 +1,6 @@
-import { Github } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
+import { GithubIcon } from '../../icons/github-icon';
 import { navigation } from '../content/docs-nav.config';
 
 interface DocsSidebarProps {
@@ -54,7 +54,7 @@ export function DocsSidebar({ currentPage, docsHref }: DocsSidebarProps) {
           rel="noreferrer"
           className="flex items-center gap-2 rounded-md px-2 py-2 text-sm text-zinc-400 hover:bg-white/5 hover:text-white transition-colors"
         >
-          <Github className="size-4" /> Código fuente
+          <GithubIcon className="size-4" /> Código fuente
         </a>
       </div>
     </aside>

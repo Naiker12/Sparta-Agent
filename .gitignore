@@ -34,6 +34,9 @@ landing/public/*.exe
 landing/public/*.dmg
 landing/public/*.AppImage
 
+# Fumadocs MDX generates typed source helpers during local builds.
+landing/.source/
+
 # Embedded Python runtime (downloaded by scripts/fetch-embedded-python.js)
 /vendor/
 

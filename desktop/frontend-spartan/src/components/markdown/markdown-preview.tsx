@@ -4,9 +4,6 @@ import { openLink } from "@/lib/open-link";
 import { safeMarkdownUrl } from "@/lib/safe-markdown-url";
 import { scheduleIdleTask } from "@/lib/schedule-idle-task";
 import { cn } from "@/lib/utils";
-import { code } from "@streamdown/code";
-import { math } from "@streamdown/math";
-import { mermaid } from "@streamdown/mermaid";
 import {
   type ComponentProps,
   type ReactElement,
@@ -16,7 +13,6 @@ import {
   useState,
 } from "react";
 import { Streamdown } from "streamdown";
-import "katex/dist/katex.min.css";
 
 type MarkdownPlugins = NonNullable<
   ComponentProps<typeof Streamdown>["plugins"]
@@ -57,16 +53,53 @@ function MarkdownPreviewImpl({
   plain = false,
   defer = false,
 }: MarkdownPreviewProps): ReactElement {
-  // Math and mermaid over a document with neither still cost a pass per node, and shiki over a
-  // very long one costs more than it is worth; the report lands in one synchronous commit.
-  const plugins = useMemo<MarkdownPlugins>(() => {
-    const needs = markdownPluginNeeds(markdown);
+  const needs = useMemo(() => markdownPluginNeeds(markdown), [markdown]);
+  const [plugins, setPlugins] = useState<MarkdownPlugins | null>(null);
+  const requiresPlugin = needs.code || needs.math || needs.mermaid;
+
+  // Shiki, KaTeX and Mermaid are sizeable and only useful for messages that
+  // actually contain their syntax. Keep them out of the initial chat bundle;
+  // a new message receives a small placeholder until its required renderers
+  // arrive, then renders once with the complete plugin set.
+  useEffect(() => {
+    let cancelled = false;
     const next: MarkdownPlugins = {};
-    if (needs.code) next.code = code;
-    if (needs.math) next.math = math;
-    if (needs.mermaid) next.mermaid = mermaid;
-    return next;
-  }, [markdown]);
+    const loaders: Promise<void>[] = [];
+
+    if (needs.code) {
+      loaders.push(import("@streamdown/code").then(({ code }) => {
+        next.code = code;
+      }));
+    }
+    if (needs.math) {
+      loaders.push(
+        Promise.all([import("@streamdown/math"), import("katex/dist/katex.min.css")])
+          .then(([{ math }]) => {
+            next.math = math;
+          }),
+      );
+    }
+    if (needs.mermaid) {
+      loaders.push(import("@streamdown/mermaid").then(({ mermaid }) => {
+        next.mermaid = mermaid;
+      }));
+    }
+
+    setPlugins(null);
+    void Promise.all(loaders)
+      .then(() => {
+        if (!cancelled) setPlugins(next);
+      })
+      .catch(() => {
+        // Markdown remains readable without an optional renderer. Do not make
+        // a failed syntax highlighter block the rest of the conversation.
+        if (!cancelled) setPlugins({});
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [needs.code, needs.math, needs.mermaid]);
   // Readiness belongs to the markdown value, not the component: resetting it from an effect is
   // one commit late, so the new document is parsed synchronously and thrown away - the stall
   // `defer` exists to avoid, paid twice. Deriving it during render keeps it out of Streamdown.
@@ -90,10 +123,10 @@ function MarkdownPreviewImpl({
         className,
       )}
     >
-      {ready ? (
+      {ready && (!requiresPlugin || plugins !== null) ? (
         <Streamdown
           mode="static"
-          plugins={plugins}
+          plugins={plugins ?? undefined}
           components={MARKDOWN_COMPONENTS}
           urlTransform={safeMarkdownUrl}
           controls={false}
@@ -102,7 +135,10 @@ function MarkdownPreviewImpl({
           {markdown.trim() ? markdown : "_Empty note_"}
         </Streamdown>
       ) : (
-        <div className={markdownClassName} aria-busy="true" />
+        <div
+          className="h-12 w-2/3 animate-pulse rounded-md bg-muted/60"
+          aria-busy="true"
+        />
       )}
     </div>
   );

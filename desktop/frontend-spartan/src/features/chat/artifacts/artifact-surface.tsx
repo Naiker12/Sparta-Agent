@@ -7,7 +7,6 @@ import {
   unslothDarkTheme,
   unslothLightTheme,
 } from "@/components/assistant-ui/code-themes";
-import { MascotImg } from "@/components/mascot-img";
 import { Button } from "@/components/ui/button";
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
 import { downloadFile, isDownloadCancelled } from "@/lib/native-files";
@@ -75,10 +74,11 @@ function ArtifactGeneratingPanel() {
   return (
     <div className="flex h-full min-h-0 flex-col items-center justify-center bg-muted/10 px-6 text-center">
       <div className="max-w-[30ch] space-y-1.5">
-        <MascotImg
-          src="Sloth emojis/sloth w pc transparent.png"
+        <img
+          src={`${import.meta.env.BASE_URL}spartan-logo.svg`}
+          alt=""
           aria-hidden={true}
-          className="mx-auto mb-3 size-20 object-contain"
+          className="mx-auto mb-3 size-14 object-contain opacity-80"
         />
         <p className="text-sm font-medium text-foreground">
           Building canvas preview…

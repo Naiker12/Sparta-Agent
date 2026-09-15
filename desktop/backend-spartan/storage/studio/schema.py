@@ -641,11 +641,14 @@ def _ensure_schema(conn: sqlite3.Connection) -> None:
         CREATE TABLE IF NOT EXISTS agent_tasks (
             id TEXT PRIMARY KEY, title TEXT NOT NULL, prompt TEXT NOT NULL,
             schedule_type TEXT NOT NULL, interval_seconds INTEGER, run_at INTEGER,
-            channel TEXT NOT NULL DEFAULT 'chat', thread_id TEXT, enabled INTEGER NOT NULL DEFAULT 1,
+            channel TEXT NOT NULL DEFAULT 'chat', thread_id TEXT, owner_subject TEXT, enabled INTEGER NOT NULL DEFAULT 1,
             status TEXT NOT NULL DEFAULT 'idle', last_run_at INTEGER, next_run_at INTEGER,
             last_error TEXT, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
         )
     """)
+    task_columns = {row[1] for row in conn.execute("PRAGMA table_info(agent_tasks)").fetchall()}
+    if "owner_subject" not in task_columns:
+        conn.execute("ALTER TABLE agent_tasks ADD COLUMN owner_subject TEXT")
     conn.execute("""
         CREATE TABLE IF NOT EXISTS agent_task_runs (
             id TEXT PRIMARY KEY, task_id TEXT NOT NULL REFERENCES agent_tasks(id) ON DELETE CASCADE,
@@ -653,6 +656,7 @@ def _ensure_schema(conn: sqlite3.Connection) -> None:
         )
     """)
     conn.execute("CREATE INDEX IF NOT EXISTS idx_agent_tasks_due ON agent_tasks(enabled, next_run_at)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_agent_tasks_owner ON agent_tasks(owner_subject, updated_at DESC)")
     inventory_state = conn.execute(
         """
         SELECT inventory_version, dirty

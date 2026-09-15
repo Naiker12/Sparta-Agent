@@ -21,10 +21,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -145,64 +141,66 @@ function SandboxFileRow({
   }, [file.name, sessionId, t]);
 
   return (
-    <Card size="sm" className="w-full max-w-sm gap-2 py-3!">
-      <CardHeader className="px-3 [.border-b]:pb-3">
-        <div className="flex min-w-0 items-center gap-2.5">
+    <Card size="sm" className="w-full max-w-xl gap-0 rounded-2xl py-0!">
+      <CardHeader className="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-3">
+        <div className="flex min-w-0 flex-1 items-center gap-2.5">
           <div
             aria-hidden={true}
-            className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"
+            className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"
           >
-            <HugeiconsIcon icon={File02Icon} className="size-3.5" />
+            <HugeiconsIcon icon={File02Icon} className="size-4" />
           </div>
-          <div className="min-w-0">
-            <CardTitle className="truncate font-mono text-ui-13p5">{file.name}</CardTitle>
-            <CardDescription className="mt-0 text-xs">
+          <div className="min-w-0 flex-1">
+            <CardTitle className="select-none truncate text-sm font-semibold">
+              {file.name}
+            </CardTitle>
+            <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
+              <span className="truncate">
               {fileTypeLabel(t, file.name)}
               {file.size !== null ? ` · ${formatSize(file.size)}` : ""}
-            </CardDescription>
+              </span>
+              <span aria-hidden="true">·</span>
+              <SandboxFolderLabel sessionId={sessionId} label={t("chat.files.showFolder")} />
+            </div>
           </div>
         </div>
-        <CardAction>
-          <Badge variant="secondary">
+
+        <div className="ml-auto flex shrink-0 items-center gap-1.5">
+          <Badge variant="secondary" className="hidden shrink-0 sm:inline-flex">
             <HugeiconsIcon icon={CheckmarkCircle01Icon} data-icon="inline-start" />
             {t("chat.files.ready")}
           </Badge>
-        </CardAction>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={preview}
+            disabled={previewing}
+            aria-label={t("chat.files.previewFile", { filename: file.name })}
+          >
+            {previewing ? (
+              <Spinner data-icon="inline-start" />
+            ) : (
+              <HugeiconsIcon icon={ViewIcon} data-icon="inline-start" />
+            )}
+            {t("chat.files.preview")}
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            onClick={save}
+            disabled={busy}
+            aria-label={t("chat.files.downloadFile", { filename: file.name })}
+          >
+            {busy ? (
+              <Spinner data-icon="inline-start" />
+            ) : (
+              <HugeiconsIcon icon={Download01Icon} data-icon="inline-start" />
+            )}
+            {t("chat.files.download")}
+          </Button>
+        </div>
       </CardHeader>
-      <CardContent className="px-3">
-        <SandboxFolderLabel sessionId={sessionId} label={t("chat.files.showFolder")} />
-      </CardContent>
-      <CardFooter className="gap-2 border-t pt-2">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={preview}
-          disabled={previewing}
-          aria-label={t("chat.files.previewFile", { filename: file.name })}
-        >
-          {previewing ? (
-            <Spinner data-icon="inline-start" />
-          ) : (
-            <HugeiconsIcon icon={ViewIcon} data-icon="inline-start" />
-          )}
-          {t("chat.files.preview")}
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          onClick={save}
-          disabled={busy}
-          aria-label={t("chat.files.downloadFile", { filename: file.name })}
-        >
-          {busy ? (
-            <Spinner data-icon="inline-start" />
-          ) : (
-            <HugeiconsIcon icon={Download01Icon} data-icon="inline-start" />
-          )}
-          {t("chat.files.download")}
-        </Button>
-      </CardFooter>
     </Card>
   );
 }
@@ -229,7 +227,7 @@ function SandboxFolderLabel({
   if (!isTauri) {
     return (
       <span
-        className="text-xs font-medium text-muted-foreground"
+        className="shrink-0 text-xs font-medium text-muted-foreground"
         title={t("chat.files.folderBrowserOnly")}
       >
         {label}
@@ -241,7 +239,7 @@ function SandboxFolderLabel({
       type="button"
       onClick={open}
       title={t("chat.files.openFolder")}
-      className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+      className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
     >
       <HugeiconsIcon icon={FolderOpenIcon} className="size-3.5 shrink-0" />
       {label}

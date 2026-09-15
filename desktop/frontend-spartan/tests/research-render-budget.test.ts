@@ -37,8 +37,12 @@ test("no research subscriber selects the whole run object", () => {
 
 test("chat-page derives the research pane from strings", () => {
   const page = source("features/chat/chat-page.tsx");
-  assert.match(page, /state\.sessions\[openResearchRunId\]\?\.run\.threadId/);
+  assert.match(
+    page,
+    /activeThreadId \? state\.latestRunByThreadId\[activeThreadId\] : undefined/,
+  );
   assert.match(page, /state\.sessions\[latestResearchRunId\]\?\.run\.status/);
+  assert.match(page, /state\.openRunId/);
 });
 
 test("Thread is memoized", () => {
@@ -57,6 +61,17 @@ test("the report renderer is deferred and its plugins are conditional", () => {
   assert.match(message, /markdown=\{run\.report\}[\s\S]*?defer=\{true\}/);
 });
 
+test("chat markdown loads syntax renderers only when a message needs them", () => {
+  const chatMarkdown = source("components/assistant-ui/markdown-text.tsx");
+  assert.match(chatMarkdown, /import\("\.\/code-plugin"\)/);
+  assert.match(chatMarkdown, /import\("@streamdown\/math"\)/);
+  assert.match(chatMarkdown, /import\("@streamdown\/mermaid"\)/);
+  assert.match(chatMarkdown, /import\("katex\/dist\/katex\.min\.css"\)/);
+  assert.doesNotMatch(chatMarkdown, /from "@streamdown\/math"/);
+  assert.doesNotMatch(chatMarkdown, /from "@streamdown\/mermaid"/);
+  assert.doesNotMatch(chatMarkdown, /import "katex\/dist\/katex\.min\.css"/);
+});
+
 test("deferred readiness belongs to a markdown value, not to the component", () => {
   // Blanking readiness from a passive effect lands one commit late, so the parse is paid twice.
   // Measured on a 202KB report: a wasted 576ms parse, then a second one, ~1.11s blocked against
@@ -66,15 +81,19 @@ test("deferred readiness belongs to a markdown value, not to the component", () 
   assert.match(preview, /scheduleIdleTask\(\(\) => setReadyMarkdown\(markdown\), 200\)/);
   assert.doesNotMatch(preview, /useState\(!defer\)/);
   assert.doesNotMatch(preview, /setReady\(false\)/);
-  assert.match(preview, /\{ready \? \(\s*<Streamdown/);
+  assert.match(
+    preview,
+    /\{ready && \(!requiresPlugin \|\| plugins !== null\) \? \(\s*<Streamdown/,
+  );
 });
 
 test("plugin needs follow the document", () => {
   assert.deepEqual(markdownPluginNeeds("plain prose with `code` spans"), {
     math: false,
     mermaid: false,
-    code: true,
+    code: false,
   });
+  assert.equal(markdownPluginNeeds("```ts\nconst answer = 42;\n```").code, true);
   assert.equal(markdownPluginNeeds("a $$x^2$$ b").math, true);
   assert.equal(markdownPluginNeeds("\\(x\\)").math, true);
   assert.equal(markdownPluginNeeds("\\[x\\]").math, true);
@@ -87,7 +106,7 @@ test("plugin needs follow the document", () => {
   assert.equal(markdownPluginNeeds("the area is $x^2$ per unit").math, false);
   assert.match(
     source("components/markdown/markdown-preview.tsx"),
-    /import \{ math \} from "@streamdown\/math";/,
+    /import\("@streamdown\/math"\)/,
   );
   assert.equal(markdownPluginNeeds("```mermaid\ngraph TD;\n```").mermaid, true);
   assert.equal(markdownPluginNeeds("```python\npass\n```").mermaid, false);
@@ -103,9 +122,9 @@ test("plugin needs follow the document", () => {
 });
 
 test("highlighting is capped, and the cap is one constant", () => {
-  assert.equal(markdownPluginNeeds("x".repeat(MAX_HIGHLIGHT_CHARS)).code, true);
+  assert.equal(markdownPluginNeeds(`\`\`\`ts\n${"x".repeat(MAX_HIGHLIGHT_CHARS - 10)}\n\`\`\``).code, true);
   assert.equal(
-    markdownPluginNeeds("x".repeat(MAX_HIGHLIGHT_CHARS + 1)).code,
+    markdownPluginNeeds(`\`\`\`ts\n${"x".repeat(MAX_HIGHLIGHT_CHARS)}\n\`\`\``).code,
     false,
   );
   const cell = source("components/assistant-ui/tool-code-cell.tsx");
