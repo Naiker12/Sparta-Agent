@@ -7,11 +7,6 @@
  */
 
 import {
-  PLUS_MENU_ORDER,
-  type PlusMenuItemId,
-  usePlusMenuPrefsStore,
-} from "@/features/chat/stores/plus-menu-prefs-store";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -22,17 +17,24 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import type { PromptEntry } from "@/features/chat/api/prompts-api";
+import { BypassPermissionsMenuItem } from "@/features/chat/bypass-permissions-menu-item";
 import {
-  exportConversationShareGPT,
-  exportConversationRawJsonl,
   exportConversationCsv,
   exportConversationMarkdown,
+  exportConversationRawJsonl,
+  exportConversationShareGPT,
 } from "@/features/chat/prompt-storage/prompt-storage-dialog";
+import {
+  PLUS_MENU_ORDER,
+  type PlusMenuItemId,
+  usePlusMenuPrefsStore,
+} from "@/features/chat/stores/plus-menu-prefs-store";
 import { CONVERSATION_MARKDOWN_LABEL } from "@/features/chat/utils/conversation-markdown";
-import { isDownloadCancelled } from "@/lib/native-files";
-import { toast } from "@/lib/toast";
 import { useT } from "@/i18n";
-import { HugeiconsIcon } from "@hugeicons/react";
+import { isDownloadCancelled } from "@/lib/native-files";
+import { Tick02Icon } from "@/lib/tick-icon";
+import { toast } from "@/lib/toast";
 import {
   AttachmentIcon,
   Bookmark02Icon,
@@ -44,11 +46,15 @@ import {
   McpServerIcon,
   PencilRulerIcon,
 } from "@hugeicons/core-free-icons";
-import { Columns2Icon, GlobeIcon, HeadphonesIcon, MoreHorizontalIcon, PlusIcon } from "lucide-react";
-import { Tick02Icon } from "@/lib/tick-icon";
-import { BypassPermissionsMenuItem } from "@/features/chat/bypass-permissions-menu-item";
-import type { PromptEntry } from "@/features/chat/api/prompts-api";
-import { Fragment, type FC, type ReactNode, type RefObject } from "react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Columns2Icon,
+  GlobeIcon,
+  HeadphonesIcon,
+  MoreHorizontalIcon,
+  PlusIcon,
+} from "lucide-react";
+import { type FC, Fragment, type ReactNode, type RefObject } from "react";
 
 export interface SharedComposerToolsMenuProps {
   onOpenPlusMenu: () => void;
@@ -126,7 +132,11 @@ export const SharedComposerToolsMenu: FC<SharedComposerToolsMenuProps> = ({
         <HugeiconsIcon icon={McpServerIcon} strokeWidth={2} />
         {t("chat.composer.mcp")}
         {mcpEnabledForChat ? (
-          <HugeiconsIcon icon={Tick02Icon} strokeWidth={2} className="ml-auto" />
+          <HugeiconsIcon
+            icon={Tick02Icon}
+            strokeWidth={2}
+            className="ml-auto"
+          />
         ) : null}
       </DropdownMenuItem>
     ),
@@ -191,7 +201,7 @@ export const SharedComposerToolsMenu: FC<SharedComposerToolsMenuProps> = ({
               key={label}
               disabled={exportThreadIds.length === 0}
               onSelect={() => {
-                if (!exportThreadIds.length) {
+                if (exportThreadIds.length === 0) {
                   toast.error("No conversation to export yet.");
                   return;
                 }
@@ -200,7 +210,9 @@ export const SharedComposerToolsMenu: FC<SharedComposerToolsMenuProps> = ({
                     await fn(id);
                   }
                 })().catch((error) => {
-                  if (!isDownloadCancelled(error)) toast.error("Export failed.");
+                  if (!isDownloadCancelled(error)) {
+                    toast.error("Export failed.");
+                  }
                 });
               }}
             >
@@ -218,7 +230,11 @@ export const SharedComposerToolsMenu: FC<SharedComposerToolsMenuProps> = ({
         <HugeiconsIcon icon={PencilRulerIcon} strokeWidth={2} />
         {t("chat.composer.canvas")}
         {artifactsEnabled ? (
-          <HugeiconsIcon icon={Tick02Icon} strokeWidth={2} className="ml-auto" />
+          <HugeiconsIcon
+            icon={Tick02Icon}
+            strokeWidth={2}
+            className="ml-auto"
+          />
         ) : null}
       </DropdownMenuItem>
     ) : null,
@@ -261,7 +277,9 @@ export const SharedComposerToolsMenu: FC<SharedComposerToolsMenuProps> = ({
   return (
     <DropdownMenu
       onOpenChange={(open) => {
-        if (open) onOpenPlusMenu();
+        if (open) {
+          onOpenPlusMenu();
+        }
       }}
     >
       <DropdownMenuTrigger asChild={true}>

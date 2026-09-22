@@ -1,4 +1,3 @@
-
 import type { ReactElement } from "react";
 
 type ExecutionRawTabProps = {

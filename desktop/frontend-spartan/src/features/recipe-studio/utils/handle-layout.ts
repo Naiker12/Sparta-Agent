@@ -1,4 +1,3 @@
-
 export const NODE_HANDLE_CLASS =
   "pointer-events-auto !size-2.5 !border-border/80 !bg-muted shadow-sm hover:!border-primary/70 hover:!bg-primary/20";
 

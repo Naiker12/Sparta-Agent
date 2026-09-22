@@ -1,4 +1,3 @@
-
 import { authFetch } from "@/features/auth";
 import { readFastApiError } from "@/lib/format-fastapi-error";
 import { DebugLogRequestError } from "../lib/debug-log-error";
@@ -79,8 +78,12 @@ export async function loadDebugLog(
   } = {},
 ): Promise<DebugLogPage> {
   const params = new URLSearchParams();
-  if (options.sourceId) params.set("source", options.sourceId);
-  if (options.cursor) params.set("cursor", options.cursor);
+  if (options.sourceId) {
+    params.set("source", options.sourceId);
+  }
+  if (options.cursor) {
+    params.set("cursor", options.cursor);
+  }
   const query = params.toString();
   const response = await authFetch(
     `/api/settings/debug/logs${query ? `?${query}` : ""}`,

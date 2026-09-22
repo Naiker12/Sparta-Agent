@@ -1,4 +1,3 @@
-
 import { validateChatSearch } from "@/features/chat";
 import { createRoute } from "@tanstack/react-router";
 import { requireAuth } from "../auth-guards";
@@ -11,6 +10,7 @@ export const Route = createRoute({
   path: "/chat",
   staticData: { title: "Chat" },
   beforeLoad: () => requireAuth(),
-  validateSearch: (search: Record<string, unknown>) => validateChatSearch(search),
+  validateSearch: (search: Record<string, unknown>) =>
+    validateChatSearch(search),
   component: () => null,
 });

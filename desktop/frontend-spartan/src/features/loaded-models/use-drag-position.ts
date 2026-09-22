@@ -1,4 +1,3 @@
-
 // Pointer drag for the indicator, in the Live monitor's idiom: anchored to its
 // corner until the user moves it, then kept where they left it. Absolute
 // viewport coordinates rather than a transform, so the position survives a
@@ -54,7 +53,9 @@ function viewport(): Viewport {
 function readStored(key: string): DragPosition | null {
   try {
     const raw = localStorage.getItem(key);
-    if (!raw) return null;
+    if (!raw) {
+      return null;
+    }
     const parsed = JSON.parse(raw) as Partial<DragPosition>;
     return typeof parsed.left === "number" && typeof parsed.top === "number"
       ? { left: parsed.left, top: parsed.top }
@@ -90,10 +91,11 @@ export type UseDragPosition = {
   justDragged: () => boolean;
 };
 
-
 export function useDragPosition(storageKey: string): UseDragPosition {
   const [position, setPosition] = useState<DragPosition | null>(() => {
-    if (typeof window === "undefined") return null;
+    if (typeof window === "undefined") {
+      return null;
+    }
     const stored = readStored(storageKey);
     // Clamp on read as well as on resize. The observer below cannot fire until
     // after the first paint, so a position saved on a wider screen would flash
@@ -136,7 +138,9 @@ export function useDragPosition(storageKey: string): UseDragPosition {
   // a ResizeObserver, and a fresh object every time would re-render forever.
   const reclamp = useCallback((width: number, height: number) => {
     setPosition((current) => {
-      if (!current) return current;
+      if (!current) {
+        return current;
+      }
       const next = clampToViewport(current, width, height, viewport());
       return next.left === current.left && next.top === current.top
         ? current
@@ -152,7 +156,9 @@ export function useDragPosition(storageKey: string): UseDragPosition {
   // which forced a synchronous layout each time. reclamp is a no-op until the
   // panel has a position, so attaching on mount costs nothing.
   useEffect(() => {
-    if (!panelEl) return;
+    if (!panelEl) {
+      return;
+    }
     const measure = () => {
       const box = panelEl.getBoundingClientRect();
       reclamp(box.width, box.height);
@@ -165,41 +171,42 @@ export function useDragPosition(storageKey: string): UseDragPosition {
     observer?.observe(panelEl);
     // No observer (an engine old enough to lack it) still gets the resize path,
     // plus this one measurement of whatever is on screen right now.
-    if (!observer) measure();
+    if (!observer) {
+      measure();
+    }
     return () => {
       window.removeEventListener("resize", measure);
       observer?.disconnect();
     };
   }, [panelEl, reclamp]);
 
-  const startDrag = useCallback(
-    (event: React.PointerEvent<HTMLElement>) => {
-      const panel = panelRef.current;
-      if (event.button !== 0 || !panel) return;
-      // Without capture a pointerup over another window is never delivered, so
-      // the card would keep tracking the cursor. Same as the Live monitor's drag.
-      try {
-        event.currentTarget.setPointerCapture(event.pointerId);
-      } catch {
-        // Capture is best effort; the window listeners below still drive the drag.
-      }
-      const box = panel.getBoundingClientRect();
-      sessionRef.current = {
-        pointerId: event.pointerId,
-        startX: event.clientX,
-        startY: event.clientY,
-        left: box.left,
-        top: box.top,
-        width: box.width,
-        height: box.height,
-        lastLeft: box.left,
-        lastTop: box.top,
-      };
-      movedRef.current = false;
-      setPressing(true);
-    },
-    [],
-  );
+  const startDrag = useCallback((event: React.PointerEvent<HTMLElement>) => {
+    const panel = panelRef.current;
+    if (event.button !== 0 || !panel) {
+      return;
+    }
+    // Without capture a pointerup over another window is never delivered, so
+    // the card would keep tracking the cursor. Same as the Live monitor's drag.
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch {
+      // Capture is best effort; the window listeners below still drive the drag.
+    }
+    const box = panel.getBoundingClientRect();
+    sessionRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      left: box.left,
+      top: box.top,
+      width: box.width,
+      height: box.height,
+      lastLeft: box.left,
+      lastTop: box.top,
+    };
+    movedRef.current = false;
+    setPressing(true);
+  }, []);
 
   // One paint per frame, off the offset pointermove last recorded. A trackpad
   // reports faster than the display refreshes, so a move-per-event was work the
@@ -279,7 +286,9 @@ export function useDragPosition(storageKey: string): UseDragPosition {
   const onMove = useCallback(
     (event: PointerEvent) => {
       const session = sessionRef.current;
-      if (!session || session.pointerId !== event.pointerId) return;
+      if (!session || session.pointerId !== event.pointerId) {
+        return;
+      }
       // The button was released somewhere we never saw it: end the drag rather
       // than following the cursor around.
       if (event.buttons === 0) {
@@ -289,7 +298,9 @@ export function useDragPosition(storageKey: string): UseDragPosition {
       const dx = event.clientX - session.startX;
       const dy = event.clientY - session.startY;
       if (!movedRef.current) {
-        if (!passedDragThreshold(dx, dy)) return;
+        if (!passedDragThreshold(dx, dy)) {
+          return;
+        }
         beginDrag(session.left, session.top);
       }
       // Text selection would otherwise start mid-drag on the pill's label.
@@ -305,14 +316,18 @@ export function useDragPosition(storageKey: string): UseDragPosition {
   const onEnd = useCallback(
     (event: PointerEvent) => {
       const session = sessionRef.current;
-      if (session && session.pointerId !== event.pointerId) return;
+      if (session && session.pointerId !== event.pointerId) {
+        return;
+      }
       settle();
     },
     [settle],
   );
 
   useEffect(() => {
-    if (!pressing) return;
+    if (!pressing) {
+      return;
+    }
     window.addEventListener("pointermove", onMove, { passive: false });
     window.addEventListener("pointerup", onEnd);
     window.addEventListener("pointercancel", onEnd);

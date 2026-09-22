@@ -1,4 +1,10 @@
-
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { useCallback, useEffect, useMemo } from "react";
+import { create } from "zustand";
+import { useShallow } from "zustand/react/shallow";
+import { ensureHiddenModelMatchers } from "../lib/hidden-models";
+import { fingerprintToken } from "../lib/token-fingerprint";
+import { useInventoryVersion } from "../stores/inventory-events";
 import {
   type CachedDatasetRepo,
   type CachedGgufRepo,
@@ -11,13 +17,6 @@ import {
   listLocalDatasets,
   listLocalModels,
 } from "./api";
-import { useDebouncedValue } from "@/hooks/use-debounced-value";
-import { ensureHiddenModelMatchers } from "../lib/hidden-models";
-import { fingerprintToken } from "../lib/token-fingerprint";
-import { useInventoryVersion } from "../stores/inventory-events";
-import { useCallback, useEffect, useMemo } from "react";
-import { create } from "zustand";
-import { useShallow } from "zustand/react/shallow";
 import {
   inventoryRefreshDecision,
   nextRevalidationStamp,
@@ -139,13 +138,12 @@ function fetchErrorMessage(
 }
 
 function logInventorySourceFailure(
-  source: DeviceInventorySource,
-  error: unknown,
+  _source: DeviceInventorySource,
+  _error: unknown,
 ): void {
   if (!import.meta.env?.DEV) {
     return;
   }
-  console.warn(`Inventory source "${source}" failed to refresh:`, error);
 }
 
 async function runSourceFetch<K extends DeviceInventorySource>(
@@ -153,17 +151,20 @@ async function runSourceFetch<K extends DeviceInventorySource>(
   hfToken?: string | null,
 ): Promise<DeviceInventoryRows[K]> {
   switch (source) {
-    case "cachedGguf":
+    case "cachedGguf": {
       await ensureHiddenModelMatchers();
       return (await listCachedGguf(hfToken)) as DeviceInventoryRows[K];
-    case "cachedModels":
+    }
+    case "cachedModels": {
       await ensureHiddenModelMatchers();
       return (await listCachedModels(hfToken)) as DeviceInventoryRows[K];
+    }
     case "cachedDatasets":
       return (await listCachedDatasets()) as DeviceInventoryRows[K];
-    case "localModels":
+    case "localModels": {
       await ensureHiddenModelMatchers();
       return (await listLocalModels()).models as DeviceInventoryRows[K];
+    }
     case "localDatasets":
       return (await listLocalDatasets()).datasets as DeviceInventoryRows[K];
     default:
@@ -391,7 +392,9 @@ export function useDeviceInventorySources<
         );
         const current = useDeviceInventoryStore.getState()[source];
         const decision = inventoryRefreshDecision(current, key, now, maxAgeMs);
-        if (decision === "reuse") return [];
+        if (decision === "reuse") {
+          return [];
+        }
         return [
           {
             source,
@@ -410,7 +413,9 @@ export function useDeviceInventorySources<
       for (const [index, result] of results.entries()) {
         if (result.status === "rejected") {
           const source = requests[index]?.source;
-          if (source) logInventorySourceFailure(source, result.reason);
+          if (source) {
+            logInventorySourceFailure(source, result.reason);
+          }
         }
       }
     },

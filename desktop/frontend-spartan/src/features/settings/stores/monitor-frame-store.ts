@@ -1,4 +1,3 @@
-
 // What the bottom-right overlay stack has to keep clear of, in viewport
 // coordinates. The Live monitor is draggable and resizable and defaults to that
 // same corner; the chat composer docks to the bottom of the same column once a
@@ -52,7 +51,9 @@ interface MonitorFrameState {
 }
 
 function sameFrame(a: MonitorFrame | null, b: MonitorFrame | null): boolean {
-  if (a === null || b === null) return a === b;
+  if (a === null || b === null) {
+    return a === b;
+  }
   return (
     a.left === b.left &&
     a.top === b.top &&
@@ -68,12 +69,16 @@ export const useMonitorFrameStore = create<MonitorFrameState>((set) => ({
   // notify: the overlay stack re-renders on this.
   setFrame: (publisher, frame) =>
     set((state) => {
-      if (sameFrame(state.frames.get(publisher) ?? null, frame)) return state;
+      if (sameFrame(state.frames.get(publisher) ?? null, frame)) {
+        return state;
+      }
       return { frames: new Map(state.frames).set(publisher, frame) };
     }),
   clearFrame: (publisher) =>
     set((state) => {
-      if (!state.frames.has(publisher)) return state;
+      if (!state.frames.has(publisher)) {
+        return state;
+      }
       const frames = new Map(state.frames);
       frames.delete(publisher);
       return { frames };
@@ -201,7 +206,9 @@ export function stackBottomInset(
   neededRoom: number = ASSUMED_STACK_HEIGHT,
   floorRoom: number = neededRoom,
 ): number {
-  if (!frame) return STACK_INSET;
+  if (!frame) {
+    return STACK_INSET;
+  }
   // Only dodge a box that is in the stack's column and crowds its corner; one
   // parked anywhere else, or one leaving room underneath itself, leaves that
   // corner free.
@@ -235,10 +242,14 @@ export function stackMaxHeight(
   floorRoom: number = neededRoom,
 ): number {
   const ownMargin = viewportHeight - bottomInset - STACK_INSET;
-  if (!frame || !inStackColumn(frame, viewportWidth)) return ownMargin;
+  if (!(frame && inStackColumn(frame, viewportWidth))) {
+    return ownMargin;
+  }
   if (reachesStack(frame, viewportHeight, bottomInset, neededRoom, floorRoom)) {
     // Lifted over: bottomInset already cleared it.
-    if (liftFits(frame, viewportHeight)) return ownMargin;
+    if (liftFits(frame, viewportHeight)) {
+      return ownMargin;
+    }
     // Seated inside it instead. Stop below its header, or the Close button goes
     // back under the stack the inset has just moved off it. Floored, because a
     // box taller than the room the header leaves would ask for a negative cap
@@ -363,7 +374,9 @@ function place(
         next = Math.max(next, dodgeInset(frame, viewportHeight));
       }
     }
-    if (next === bottom) break;
+    if (next === bottom) {
+      break;
+    }
     bottom = next;
   }
   return {
@@ -447,7 +460,9 @@ export function useStackGeometry(): StackPlacement {
       cleanupRef.current();
       cleanupRef.current = null;
     }
-    if (node === null || typeof ResizeObserver === "undefined") return;
+    if (node === null || typeof ResizeObserver === "undefined") {
+      return;
+    }
     const measure = () => {
       // An empty stack asks for nothing, so nothing is dodged for it.
       if (node.childElementCount === 0) {
@@ -479,7 +494,7 @@ export function useStackGeometry(): StackPlacement {
       // reader was in jumps. The rail's cap comes back, but a clamped
       // descendant does not come back with it, so each one is noted here and
       // put back below.
-      const scrollers: Array<[Element, number]> = [];
+      const scrollers: [Element, number][] = [];
       for (const child of node.querySelectorAll("*")) {
         if (child.scrollTop > 0) {
           scrollers.push([child, child.scrollTop]);
@@ -499,7 +514,9 @@ export function useStackGeometry(): StackPlacement {
       let tail = 0;
       for (let i = node.children.length - 1; i >= 0; i -= 1) {
         const child = node.children[i];
-        if (child.hasAttribute("data-overlay-dismissible")) break;
+        if (child.hasAttribute("data-overlay-dismissible")) {
+          break;
+        }
         tail += child.getBoundingClientRect().height + STACK_GAP;
       }
       const persistent = Math.round(tail);
@@ -577,7 +594,9 @@ export function useStackGeometry(): StackPlacement {
           moved = true;
         }
       }
-      if (moved) measure();
+      if (moved) {
+        measure();
+      }
     });
     const observed = new Set<Element>();
     const syncObserved = () => {

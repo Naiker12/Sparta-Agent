@@ -1,9 +1,9 @@
-
 // Floating API monitor: opens itself when API traffic arrives, summarises it
 // without taking over the window, and links through to the full page.
 
 import { getApiMonitor } from "@/features/chat/api/chat-api";
 import type { ApiMonitorEntry } from "@/features/chat/types/api";
+import { useT } from "@/i18n";
 import {
   useFloatingPanelOrderStore,
   useFloatingPanelZIndex,
@@ -17,7 +17,6 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { XIcon } from "lucide-react";
-import { useT } from "@/i18n";
 import {
   AnimatePresence,
   motion,
@@ -135,7 +134,7 @@ export function ApiMonitorOverlay(): ReactElement | null {
   // Stands down on the full page, which polls itself.
   useEffect(() => {
     // Opted out and closed: nothing to open or show, so polling is pure load.
-    if (onFullPage || (!autoOpen && !isOpen)) {
+    if (onFullPage || !(autoOpen || isOpen)) {
       // Standing down for the opt out leaves the same backlog behind it as the full page
       // does, so write it off the same way: turning automatic opening back on waits for
       // the next call rather than popping with the burst that ran while it was off.
@@ -164,21 +163,29 @@ export function ApiMonitorOverlay(): ReactElement | null {
       }
       getApiMonitor()
         .then((next) => {
-          if (!cancelled) setData(next);
+          if (!cancelled) {
+            setData(next);
+          }
         })
         .catch(() => {
           // An unreachable server is the full page's story to tell.
-          if (!cancelled) setData(null);
+          if (!cancelled) {
+            setData(null);
+          }
         })
         .finally(() => {
-          if (!cancelled) schedule();
+          if (!cancelled) {
+            schedule();
+          }
         });
     }
 
     poll();
     return () => {
       cancelled = true;
-      if (timer !== undefined) window.clearTimeout(timer);
+      if (timer !== undefined) {
+        window.clearTimeout(timer);
+      }
     };
   }, [isOpen, onFullPage, autoOpen]);
 
@@ -352,7 +359,10 @@ export function ApiMonitorOverlay(): ReactElement | null {
                 value={stats.active.toLocaleString()}
                 tone={stats.active > 0 ? "active" : undefined}
               />
-              <StatCell label={t("apiPage.overlay.requests")} value={stats.total.toLocaleString()} />
+              <StatCell
+                label={t("apiPage.overlay.requests")}
+                value={stats.total.toLocaleString()}
+              />
               <StatCell
                 label={t("apiPage.overlay.errors")}
                 value={stats.errors.toLocaleString()}

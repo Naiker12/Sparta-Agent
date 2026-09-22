@@ -1,4 +1,3 @@
-
 import { PICKER_FOCUS_VISIBLE_CLASS } from "@/components/resource-picker/picker-focus";
 import {
   Tooltip,

@@ -17,8 +17,11 @@ from pydantic import (
     model_validator,
 )
 
-from core.inference.llama_server_args import BATCH_MAX, BATCH_MIN, PARALLEL_MAX, PARALLEL_MIN
-from core.inference.video_families import MAX_VIDEO_NUM_FRAMES
+BATCH_MIN = 1
+BATCH_MAX = 32768
+PARALLEL_MIN = 1
+PARALLEL_MAX = 64
+MAX_VIDEO_NUM_FRAMES = 257
 from picker.schemas import MAX_CHAT_TEMPLATE_BYTES
 
 

@@ -1,8 +1,7 @@
-
-import { create } from "zustand";
 // eslint-disable-next-line no-restricted-imports -- Avoid the auth barrel's React login page.
 import { AUTH_SESSION_CLEARED_EVENT } from "@/features/auth/session";
-import { followResearchRun, type ResearchRunUpdate } from "../api/research-api";
+import { create } from "zustand";
+import { type ResearchRunUpdate, followResearchRun } from "../api/research-api";
 import type {
   ResearchAction,
   ResearchEvent,
@@ -152,7 +151,9 @@ function findLastActivityIndex(
   predicate: (activity: ResearchActivity) => boolean,
 ): number {
   for (let index = activities.length - 1; index >= 0; index -= 1) {
-    if (predicate(activities[index])) return index;
+    if (predicate(activities[index])) {
+      return index;
+    }
   }
   return -1;
 }
@@ -184,12 +185,16 @@ function phaseActivityId(attempt: number, callId: string): string {
 export function runningResearchActivityTitle(
   activities: ResearchActivity[] | undefined,
 ): string | null {
-  if (!activities) return null;
+  if (!activities) {
+    return null;
+  }
   const index = findLastActivityIndex(
     activities,
     (activity) => activity.state === "running",
   );
-  if (index < 0) return null;
+  if (index < 0) {
+    return null;
+  }
   const activity = activities[index];
   const latestLabel = activity.previewLabels?.at(-1);
   return latestLabel ? `${activity.title} · ${latestLabel}` : activity.title;
@@ -238,13 +243,16 @@ export function researchProgressSummary(
   return parts.join(" · ");
 }
 
-
 function syncPlanReviewState(
   current: ResearchPlanReviewState | undefined,
   run: ResearchRun,
 ): ResearchPlanReviewState | undefined {
-  if (!run.plan || run.status !== "awaiting_approval") return current;
-  if (current?.revision === run.planRevision) return current;
+  if (!run.plan || run.status !== "awaiting_approval") {
+    return current;
+  }
+  if (current?.revision === run.planRevision) {
+    return current;
+  }
   return {
     revision: run.planRevision,
     open: true,
@@ -265,7 +273,10 @@ function reduceActivity(
   const snapshotIsSameAttempt = attempt === (event.run.retryCount ?? 0);
 
   // runs recorded before phase events carry no phase.ended, so close their rows as before.
-  if (!event.event.startsWith("phase.") && event.event !== "reasoning.updated") {
+  if (
+    !event.event.startsWith("phase.") &&
+    event.event !== "reasoning.updated"
+  ) {
     const unbracketed = findLastActivityIndex(
       next,
       (activity) =>
@@ -289,9 +300,13 @@ function reduceActivity(
     const existingIndex = next.findIndex((activity) => activity.id === id);
     if (event.event === "phase.progress") {
       const label = event.data.label?.trim();
-      if (existingIndex < 0 || !label) return next;
+      if (existingIndex < 0 || !label) {
+        return next;
+      }
       const existing = next[existingIndex];
-      if (existing.previewLabels?.includes(label)) return next;
+      if (existing.previewLabels?.includes(label)) {
+        return next;
+      }
       next[existingIndex] = {
         ...existing,
         seq: event.id,
@@ -309,7 +324,9 @@ function reduceActivity(
       }
       return next;
     }
-    if (existingIndex >= 0) return next;
+    if (existingIndex >= 0) {
+      return next;
+    }
     // phase.ended is best-effort (_note_phase swallows append failures), so a new phase also
     // closes the previous one; otherwise a dropped end leaves that row spinning all run.
     const stale = findLastActivityIndex(
@@ -429,8 +446,11 @@ function reduceActivity(
       sources: [],
     };
     const existingIndex = next.findIndex((item) => item.id === activity.id);
-    if (existingIndex >= 0) next[existingIndex] = activity;
-    else next.push(activity);
+    if (existingIndex >= 0) {
+      next[existingIndex] = activity;
+    } else {
+      next.push(activity);
+    }
     return next;
   }
 
@@ -501,7 +521,8 @@ function reduceActivity(
       (activity) =>
         activity.kind === "reasoning" &&
         activity.attempt === attempt &&
-        (activity.phase === "synthesis" || activity.phase === "synthesis_recovery"),
+        (activity.phase === "synthesis" ||
+          activity.phase === "synthesis_recovery"),
     );
     if (synthesisIndex >= 0) {
       const existing = next[synthesisIndex];
@@ -565,7 +586,9 @@ function reduceActivity(
         next[index] = { ...activity, seq: event.id, state: "complete" };
         continue;
       }
-      if (activity.kind !== "step" || activity.attempt !== attempt) continue;
+      if (activity.kind !== "step" || activity.attempt !== attempt) {
+        continue;
+      }
       const snapshot = event.run.steps.find(
         (step) => step.position === activity.stepPosition,
       );
@@ -584,7 +607,9 @@ function reduceActivity(
   }
 
   const status = statusActivity(event);
-  if (status) next.push(status);
+  if (status) {
+    next.push(status);
+  }
   return next;
 }
 
@@ -598,8 +623,9 @@ export const useResearchRunStore = create<ResearchRunState>((set) => ({
   ingest: (run, event) =>
     set((state) => {
       const previous = state.sessions[run.id];
-      if (event && previous && event.id <= previous.lastAppliedSeq)
+      if (event && previous && event.id <= previous.lastAppliedSeq) {
         return state;
+      }
       if (
         !event &&
         previous &&
@@ -669,7 +695,9 @@ export const useResearchRunStore = create<ResearchRunState>((set) => ({
   ) =>
     set((state) => {
       const session = state.sessions[runId];
-      if (!session) return state;
+      if (!session) {
+        return state;
+      }
       if (
         session.following === following &&
         session.connection === connection
@@ -686,7 +714,9 @@ export const useResearchRunStore = create<ResearchRunState>((set) => ({
   setConnectionError: (runId, error) =>
     set((state) => {
       const session = state.sessions[runId];
-      if (!session) return state;
+      if (!session) {
+        return state;
+      }
       return {
         sessions: {
           ...state.sessions,
@@ -703,7 +733,9 @@ export const useResearchRunStore = create<ResearchRunState>((set) => ({
   setActivityOpen: (runId, activityId, open) =>
     set((state) => {
       const current = state.activityOpenByRunId[runId] ?? {};
-      if (current[activityId] === open) return state;
+      if (current[activityId] === open) {
+        return state;
+      }
       return {
         activityOpenByRunId: {
           ...state.activityOpenByRunId,
@@ -714,7 +746,9 @@ export const useResearchRunStore = create<ResearchRunState>((set) => ({
   setPlanReviewOpen: (runId, open) =>
     set((state) => {
       const current = state.planReviewByRunId[runId];
-      if (!current || current.open === open) return state;
+      if (!current || current.open === open) {
+        return state;
+      }
       return {
         planReviewByRunId: {
           ...state.planReviewByRunId,
@@ -725,7 +759,9 @@ export const useResearchRunStore = create<ResearchRunState>((set) => ({
   setPlanReviewEditing: (runId, editing) =>
     set((state) => {
       const current = state.planReviewByRunId[runId];
-      if (!current || current.editing === editing) return state;
+      if (!current || current.editing === editing) {
+        return state;
+      }
       return {
         planReviewByRunId: {
           ...state.planReviewByRunId,
@@ -736,7 +772,9 @@ export const useResearchRunStore = create<ResearchRunState>((set) => ({
   setPlanReviewDraft: (runId, draft) =>
     set((state) => {
       const current = state.planReviewByRunId[runId];
-      if (!current || current.draft === draft) return state;
+      if (!current || current.draft === draft) {
+        return state;
+      }
       return {
         planReviewByRunId: {
           ...state.planReviewByRunId,
@@ -760,7 +798,9 @@ const STREAM_EVENT_FLUSH_MS = 80;
 
 function flushPendingStreamEvent(runId: string): void {
   const pending = pendingStreamEvents.get(runId);
-  if (!pending) return;
+  if (!pending) {
+    return;
+  }
   clearTimeout(pending.timer);
   pendingStreamEvents.delete(runId);
   useResearchRunStore.getState().ingest(pending.run, pending.event);
@@ -770,8 +810,12 @@ function canCoalesceStreamEvent(
   previous: ResearchEvent,
   next: ResearchEvent,
 ): boolean {
-  if (previous.event !== next.event) return false;
-  if (next.event === "report.updated") return true;
+  if (previous.event !== next.event) {
+    return false;
+  }
+  if (next.event === "report.updated") {
+    return true;
+  }
   return (
     next.event === "reasoning.updated" &&
     previous.data.callId === next.data.callId &&
@@ -819,10 +863,14 @@ function hydrateResearchReplay(
   updates: ResearchRunUpdate[],
   connection?: ResearchConnectionState,
 ): void {
-  if (!updates.length) return;
+  if (updates.length === 0) {
+    return;
+  }
   useResearchRunStore.setState((state) => {
     const previous = state.sessions[runId];
-    if (!previous) return state;
+    if (!previous) {
+      return state;
+    }
     const compacted = compactReplayUpdates(
       updates.filter(
         (update) => update.event && update.event.id > previous.lastAppliedSeq,
@@ -832,7 +880,9 @@ function hydrateResearchReplay(
     let lastAppliedSeq = previous.lastAppliedSeq;
     let run = previous.run;
     for (const update of compacted) {
-      if (!update.event || update.event.id <= lastAppliedSeq) continue;
+      if (!update.event || update.event.id <= lastAppliedSeq) {
+        continue;
+      }
       activities = reduceActivity(activities, update.event);
       lastAppliedSeq = update.event.id;
       if (
@@ -843,11 +893,10 @@ function hydrateResearchReplay(
         run = update.run;
       }
     }
-    if (lastAppliedSeq === previous.lastAppliedSeq) return state;
-    const planReview = syncPlanReviewState(
-      state.planReviewByRunId[runId],
-      run,
-    );
+    if (lastAppliedSeq === previous.lastAppliedSeq) {
+      return state;
+    }
+    const planReview = syncPlanReviewState(state.planReviewByRunId[runId], run);
     const settled = isSettledResearchRun(run, lastAppliedSeq);
     return {
       sessions: {
@@ -941,7 +990,9 @@ export function beginExternalResearchFollow(
   return () => {
     const currentStops = externalFollowerStops.get(run.id);
     currentStops?.delete(stop);
-    if (currentStops?.size === 0) externalFollowerStops.delete(run.id);
+    if (currentStops?.size === 0) {
+      externalFollowerStops.delete(run.id);
+    }
   };
 }
 
@@ -968,11 +1019,15 @@ export async function* watchResearchRun(
         throw new Error(session.error);
       }
       // Nothing to watch: returning beats spinning the microtask queue on an absent session.
-      if (!session) return;
+      if (!session) {
+        return;
+      }
       if (dirty) {
         dirty = false;
         yield session.run;
-        if (isSettledResearchRun(session.run, session.lastAppliedSeq)) return;
+        if (isSettledResearchRun(session.run, session.lastAppliedSeq)) {
+          return;
+        }
         continue;
       }
       await new Promise<void>((resolve) => {
@@ -994,19 +1049,22 @@ export function ensureResearchRunFollowed(
   runId: string,
   initialRun?: ResearchRun,
 ): void {
-  if (initialRun) ingestResearchUpdate(initialRun);
+  if (initialRun) {
+    ingestResearchUpdate(initialRun);
+  }
   const state = useResearchRunStore.getState();
   const session = state.sessions[runId];
-  if (
-    session &&
-    isSettledResearchRun(session.run, session.lastAppliedSeq)
-  ) {
+  if (session && isSettledResearchRun(session.run, session.lastAppliedSeq)) {
     state.setConnectionError(runId, null);
     state.setFollowing(runId, false, "idle");
     return;
   }
-  if (session?.error) return;
-  if (state.sessions[runId]?.following || ownedFollowers.has(runId)) return;
+  if (session?.error) {
+    return;
+  }
+  if (state.sessions[runId]?.following || ownedFollowers.has(runId)) {
+    return;
+  }
   const controller = new AbortController();
   ownedFollowers.set(runId, controller);
   state.setFollowing(runId, true, "connecting");
@@ -1015,7 +1073,7 @@ export function ensureResearchRunFollowed(
     let replaying = true;
     const replayUpdates: ResearchRunUpdate[] = [];
     const flushReplay = (markConnected = true) => {
-      if (replayUpdates.length) {
+      if (replayUpdates.length > 0) {
         hydrateResearchReplay(
           runId,
           replayUpdates.splice(0),
@@ -1047,19 +1105,27 @@ export function ensureResearchRunFollowed(
             update.run.lastEventSeq,
           );
           ingestResearchUpdate(update.run);
-          if (replayThroughSeq === 0) flushReplay();
+          if (replayThroughSeq === 0) {
+            flushReplay();
+          }
           continue;
         }
         if (replaying && update.event && update.event.id <= replayThroughSeq) {
           replayUpdates.push(update);
-          if (update.event.id >= replayThroughSeq) flushReplay();
+          if (update.event.id >= replayThroughSeq) {
+            flushReplay();
+          }
           continue;
         }
-        if (replaying) flushReplay();
+        if (replaying) {
+          flushReplay();
+        }
         ingestResearchUpdate(update.run, update.event);
         useResearchRunStore.getState().setFollowing(runId, true, "connected");
       }
-      if (replaying) flushReplay();
+      if (replaying) {
+        flushReplay();
+      }
       useResearchRunStore.getState().setConnectionError(runId, null);
     } catch (error) {
       if (!controller.signal.aborted) {
@@ -1073,11 +1139,14 @@ export function ensureResearchRunFollowed(
           );
       }
     } finally {
-      if (replaying) flushReplay(false);
+      if (replaying) {
+        flushReplay(false);
+      }
       flushPendingStreamEvent(runId);
       const stillOwnsFollow = ownedFollowers.get(runId) === controller;
-      if (stillOwnsFollow)
+      if (stillOwnsFollow) {
         ownedFollowers.delete(runId);
+      }
       if (stillOwnsFollow) {
         const run = useResearchRunStore.getState().sessions[runId]?.run;
         useResearchRunStore
@@ -1093,13 +1162,19 @@ export function ensureResearchRunFollowed(
 }
 
 export function resetResearchRunState(): void {
-  for (const controller of ownedFollowers.values()) controller.abort();
+  for (const controller of ownedFollowers.values()) {
+    controller.abort();
+  }
   ownedFollowers.clear();
   for (const stops of externalFollowerStops.values()) {
-    for (const stop of stops) stop();
+    for (const stop of stops) {
+      stop();
+    }
   }
   externalFollowerStops.clear();
-  for (const pending of pendingStreamEvents.values()) clearTimeout(pending.timer);
+  for (const pending of pendingStreamEvents.values()) {
+    clearTimeout(pending.timer);
+  }
   pendingStreamEvents.clear();
   useResearchRunStore.setState({
     sessions: {},

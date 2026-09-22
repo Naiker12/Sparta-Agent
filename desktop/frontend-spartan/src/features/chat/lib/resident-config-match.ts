@@ -1,12 +1,11 @@
-
 import type { PerModelConfig } from "@/features/model-picker";
 
+import type { GpuIndexKind } from "@/hooks/gpu-selection";
 import {
   parseGpuLayersOverride,
   resolveTensorParallel,
   stripManagedOffloadFlags,
 } from "./llama-extra-args-normalize";
-import type { GpuIndexKind } from "@/hooks/gpu-selection";
 
 import type { InferenceStatusResponse } from "../types/api";
 
@@ -217,8 +216,10 @@ export function residentSpeculativeNeedsRepair(
     return true;
   }
   if (
-    !RETRYABLE_SPEC_FALLBACKS.has(status.spec_fallback_reason ?? "") ||
-    !SPECULATIVE_MODES.has(mode)
+    !(
+      RETRYABLE_SPEC_FALLBACKS.has(status.spec_fallback_reason ?? "") &&
+      SPECULATIVE_MODES.has(mode)
+    )
   ) {
     return false;
   }
@@ -417,7 +418,7 @@ const SETTING_CHECKS: SettingCheck[] = [
       // its lowest id and the status reports only that. Comparing the configured set
       // rejected a runtime the backend would have called identical.
       const pick =
-        s.is_diffusion === true && reconciled?.length
+        s.is_diffusion === true && reconciled && reconciled.length > 0
           ? [Math.min(...reconciled)]
           : reconciled;
       if (sameGpuSet(pick, s.requested_gpu_ids)) {
@@ -428,7 +429,7 @@ const SETTING_CHECKS: SettingCheck[] = [
       // reload. Comparing only the raw request prompted for a load that dedupes. Guarded on
       // a non-empty echo, since an absent one is no placement rather than Automatic, and
       // reading it as Automatic would make an unpinned pick match every pinned server.
-      return Boolean(s.gpu_ids?.length) && sameGpuSet(pick, s.gpu_ids);
+      return Boolean(s.gpu_ids && s.gpu_ids.length > 0 && sameGpuSet(pick, s.gpu_ids));
     },
   },
   {
@@ -526,14 +527,14 @@ function cpuFallbackPlacementPreserved(
   const layers = config.gpuLayers ?? standing.gpuLayers;
   return (
     (mode === "auto" || (mode === "manual" && layers === 0)) &&
-    !standing.reconcileGpuIds(
+    standing.reconcileGpuIds(
       config.selectedGpuIds ?? null,
       config.selectedGpuIndexKind,
-    )?.length &&
+    )?.length === 0 &&
     !config.tensorParallel &&
-    !standing.splitRatio?.length &&
+    standing.splitRatio?.length === 0 &&
     (config.nCpuMoe ?? standing.nCpuMoe) === 0 &&
-    !config.llamaExtraArgs?.length
+    config.llamaExtraArgs?.length === 0
   );
 }
 

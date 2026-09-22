@@ -1,14 +1,5 @@
-
-import type {
-  LlmConfig,
-  Score,
-  ScoreOption,
-} from "../../../types";
-import {
-  isRecord,
-  normalizeOutputFormat,
-  readString,
-} from "../helpers";
+import type { LlmConfig, Score, ScoreOption } from "../../../types";
+import { isRecord, normalizeOutputFormat, readString } from "../helpers";
 
 function parseTraceMode(value: unknown): LlmConfig["with_trace"] {
   const traceRaw = readString(value) ?? "none";

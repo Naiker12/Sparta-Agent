@@ -1,8 +1,7 @@
-
 import { authFetch } from "@/features/auth";
 import { formatFastApiDetail } from "@/lib/format-fastapi-error";
-import { hubTokenHeader } from "../lib/hub-token-header";
 import { abortError, withAbort } from "../lib/abort-signals";
+import { hubTokenHeader } from "../lib/hub-token-header";
 import type { TransportMode } from "./constants";
 
 function parseErrorText(status: number, body: unknown): string {
@@ -12,9 +11,13 @@ function parseErrorText(status: number, body: unknown): string {
     if (status === 405) {
       return `${formatted || "Method Not Allowed"} - the Unsloth backend did not accept this API method. Restart Unsloth so the frontend and backend are on the same build.`;
     }
-    if (formatted) return formatted;
+    if (formatted) {
+      return formatted;
+    }
     const message = (body as { message?: unknown }).message;
-    if (typeof message === "string" && message) return message;
+    if (typeof message === "string" && message) {
+      return message;
+    }
   }
   if (status === 405) {
     return "Method Not Allowed - the Unsloth backend did not accept this API method. Restart Unsloth so the frontend and backend are on the same build.";
@@ -101,11 +104,15 @@ const activeModelDownloadsCache = new Map<
 
 function pruneActiveModelDownloadsCache(now = Date.now()): void {
   for (const [key, entry] of activeModelDownloadsCache) {
-    if (entry.expiresAt <= now) activeModelDownloadsCache.delete(key);
+    if (entry.expiresAt <= now) {
+      activeModelDownloadsCache.delete(key);
+    }
   }
   while (activeModelDownloadsCache.size > ACTIVE_MODEL_DOWNLOADS_CACHE_MAX) {
     const oldest = activeModelDownloadsCache.keys().next().value;
-    if (oldest === undefined) break;
+    if (oldest === undefined) {
+      break;
+    }
     activeModelDownloadsCache.delete(oldest);
   }
 }
@@ -167,12 +174,14 @@ let downloadTransportCapabilitiesCache: {
 let downloadTransportCapabilitiesInFlight: Promise<DownloadTransportCapabilities> | null =
   null;
 
-export async function getDownloadTransportCapabilities(options: {
-  force?: boolean;
-  // Reach for the Xet endpoint instead of answering from the cached verdict. Only the
-  // download-start path sets this; the UI polls on render and must not connect per poll.
-  probe?: boolean;
-} = {}): Promise<DownloadTransportCapabilities> {
+export async function getDownloadTransportCapabilities(
+  options: {
+    force?: boolean;
+    // Reach for the Xet endpoint instead of answering from the cached verdict. Only the
+    // download-start path sets this; the UI polls on render and must not connect per poll.
+    probe?: boolean;
+  } = {},
+): Promise<DownloadTransportCapabilities> {
   const cached = downloadTransportCapabilitiesCache;
   // No cached answer satisfies a probe, not even an earlier probe's. This request IS the Auto
   // admission decision for one download, and the backend's verdict subtracts the RAM already
@@ -186,7 +195,10 @@ export async function getDownloadTransportCapabilities(options: {
   if (!options.force && cacheUsable) {
     return cached.capabilities;
   }
-  if (!options.force && !options.probe && downloadTransportCapabilitiesInFlight) {
+  if (
+    !(options.force || options.probe) &&
+    downloadTransportCapabilitiesInFlight
+  ) {
     return downloadTransportCapabilitiesInFlight;
   }
   const request = authFetch(
@@ -256,7 +268,9 @@ export async function getModelDownloadStatus(
   signal?: AbortSignal,
 ): Promise<DownloadJobStatus> {
   const params = new URLSearchParams({ repo_id: repoId });
-  if (ggufVariant) params.set("gguf_variant", ggufVariant);
+  if (ggufVariant) {
+    params.set("gguf_variant", ggufVariant);
+  }
   const response = await authFetch(`/api/hub/download-status?${params}`, {
     signal,
   });
@@ -285,19 +299,27 @@ async function getActiveModelDownloadsForKey(
 ): Promise<readonly ActiveModelDownload[]> {
   const trimmedRepoId = repoId?.trim() ?? "";
   const key = trimmedRepoId ? trimmedRepoId.toLowerCase() : "*";
-  if (signal?.aborted) return Promise.reject(abortError(signal));
+  if (signal?.aborted) {
+    return Promise.reject(abortError(signal));
+  }
   const useCachedResult = !options.fresh;
-  const cached = useCachedResult ? activeModelDownloadsCache.get(key) : undefined;
+  const cached = useCachedResult
+    ? activeModelDownloadsCache.get(key)
+    : undefined;
   const now = Date.now();
   if (cached && cached.expiresAt > now) {
     return withAbort(Promise.resolve(cached.downloads), signal);
   }
 
-  let request = useCachedResult ? activeModelDownloadsInFlight.get(key) : undefined;
+  let request = useCachedResult
+    ? activeModelDownloadsInFlight.get(key)
+    : undefined;
   if (!request) {
     const fetchRequest = (async () => {
       const params = new URLSearchParams();
-      if (trimmedRepoId) params.set("repo_id", trimmedRepoId);
+      if (trimmedRepoId) {
+        params.set("repo_id", trimmedRepoId);
+      }
       const query = params.toString();
       const response = await authFetch(
         `/api/hub/active-downloads${query ? `?${query}` : ""}`,
@@ -332,9 +354,12 @@ export async function getActiveDatasetDownloads(
   // No repo id lists every active dataset download, which is what hydration
   // wants; one narrows it, which is what a single repo view wants.
   const params = repoId ? `?${new URLSearchParams({ repo_id: repoId })}` : "";
-  const response = await authFetch(`/api/hub/datasets/active-downloads${params}`, {
-    signal,
-  });
+  const response = await authFetch(
+    `/api/hub/datasets/active-downloads${params}`,
+    {
+      signal,
+    },
+  );
   const data = await parseJsonOrThrow<{
     downloads: ActiveDatasetDownload[];
   }>(response);
@@ -380,9 +405,12 @@ export async function getDatasetDownloadStatus(
   signal?: AbortSignal,
 ): Promise<DownloadJobStatus> {
   const params = new URLSearchParams({ repo_id: repoId });
-  const response = await authFetch(`/api/hub/datasets/download-status?${params}`, {
-    signal,
-  });
+  const response = await authFetch(
+    `/api/hub/datasets/download-status?${params}`,
+    {
+      signal,
+    },
+  );
   return parseJsonOrThrow<DownloadJobStatus>(response);
 }
 
@@ -393,7 +421,9 @@ export async function getModelTransportStatus(
   signal?: AbortSignal,
 ): Promise<TransportStatus> {
   const params = new URLSearchParams({ repo_id: repoId });
-  if (ggufVariant) params.set("gguf_variant", ggufVariant);
+  if (ggufVariant) {
+    params.set("gguf_variant", ggufVariant);
+  }
   const response = await authFetch(`/api/hub/transport-status?${params}`, {
     headers: hubTokenHeader(hfToken),
     signal,
@@ -406,9 +436,12 @@ export async function getDatasetTransportStatus(
   signal?: AbortSignal,
 ): Promise<TransportStatus> {
   const params = new URLSearchParams({ repo_id: repoId });
-  const response = await authFetch(`/api/hub/datasets/transport-status?${params}`, {
-    signal,
-  });
+  const response = await authFetch(
+    `/api/hub/datasets/transport-status?${params}`,
+    {
+      signal,
+    },
+  );
   return parseJsonOrThrow<TransportStatus>(response);
 }
 
@@ -422,10 +455,13 @@ export async function getGgufDownloadProgress(
     variant,
     expected_bytes: String(expectedBytes),
   });
-  const response = await authFetch(`/api/hub/gguf-download-progress?${params}`, {
-    headers: hubTokenHeader(hfToken),
-    signal,
-  });
+  const response = await authFetch(
+    `/api/hub/gguf-download-progress?${params}`,
+    {
+      headers: hubTokenHeader(hfToken),
+      signal,
+    },
+  );
   return parseJsonOrThrow(response);
 }
 
@@ -435,7 +471,9 @@ export async function getDownloadProgress(
 ): Promise<DownloadProgressResponse> {
   const { expectedBytes = 0, hfToken, signal } = options;
   const params = new URLSearchParams({ repo_id: repoId });
-  if (expectedBytes > 0) params.set("expected_bytes", String(expectedBytes));
+  if (expectedBytes > 0) {
+    params.set("expected_bytes", String(expectedBytes));
+  }
   const response = await authFetch(`/api/hub/download-progress?${params}`, {
     headers: hubTokenHeader(hfToken),
     signal,
@@ -449,10 +487,15 @@ export async function getDatasetDownloadProgress(
 ): Promise<DownloadProgressResponse> {
   const { expectedBytes = 0, hfToken, signal } = options;
   const params = new URLSearchParams({ repo_id: repoId });
-  if (expectedBytes > 0) params.set("expected_bytes", String(expectedBytes));
-  const response = await authFetch(`/api/hub/datasets/download-progress?${params}`, {
-    headers: hubTokenHeader(hfToken),
-    signal,
-  });
+  if (expectedBytes > 0) {
+    params.set("expected_bytes", String(expectedBytes));
+  }
+  const response = await authFetch(
+    `/api/hub/datasets/download-progress?${params}`,
+    {
+      headers: hubTokenHeader(hfToken),
+      signal,
+    },
+  );
   return parseJsonOrThrow(response);
 }

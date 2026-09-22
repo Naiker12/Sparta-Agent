@@ -1,4 +1,3 @@
-
 import { create } from "zustand";
 
 type Resolver = (confirmed: boolean) => void;

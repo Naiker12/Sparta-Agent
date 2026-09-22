@@ -1,9 +1,8 @@
-
 import { Input } from "@/components/ui/input";
 import type { ReactElement } from "react";
 import type { SamplerConfig } from "../../types";
-import { NameField } from "../shared/name-field";
 import { FieldLabel } from "../shared/field-label";
+import { NameField } from "../shared/name-field";
 
 type BernoulliDialogProps = {
   config: SamplerConfig;

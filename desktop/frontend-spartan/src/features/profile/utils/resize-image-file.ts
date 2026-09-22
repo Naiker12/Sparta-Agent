@@ -1,4 +1,3 @@
-
 const MAX_EDGE = 256;
 // Smallest edge we shrink a transparent image to before giving up on WebP.
 const MIN_EDGE = 96;
@@ -33,7 +32,9 @@ function canvasHasTransparency(
 ): boolean {
   const { data } = ctx.getImageData(0, 0, width, height);
   for (let i = 3; i < data.length; i += 4) {
-    if (data[i] < 255) return true;
+    if (data[i] < 255) {
+      return true;
+    }
   }
   return false;
 }
@@ -45,7 +46,9 @@ function encodeCanvasWithinLimit(
 ): string | null {
   let quality = startQuality;
   let dataUrl = canvas.toDataURL(mimeType, quality);
-  if (!dataUrl.startsWith(`data:${mimeType}`)) return null;
+  if (!dataUrl.startsWith(`data:${mimeType}`)) {
+    return null;
+  }
 
   while (dataUrl.length > MAX_DATA_URL_LENGTH && quality > MIN_QUALITY) {
     quality -= QUALITY_STEP;
@@ -59,7 +62,9 @@ function encodeCanvasWithinLimit(
 // (Safari cannot encode WebP). Size is controlled only by dimensions.
 function encodePngWithinLimit(canvas: HTMLCanvasElement): string | null {
   const dataUrl = canvas.toDataURL("image/png");
-  if (!dataUrl.startsWith("data:image/png")) return null;
+  if (!dataUrl.startsWith("data:image/png")) {
+    return null;
+  }
   return dataUrl.length <= MAX_DATA_URL_LENGTH ? dataUrl : null;
 }
 
@@ -82,7 +87,9 @@ function drawScaled(
   canvas.width = cw;
   canvas.height = ch;
   const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("Canvas not available");
+  if (!ctx) {
+    throw new Error("Canvas not available");
+  }
   ctx.drawImage(img, 0, 0, cw, ch);
   return { canvas, ctx, cw, ch };
 }
@@ -92,7 +99,9 @@ export async function resizeImageFileToDataUrl(file: File): Promise<string> {
   const img = await loadImage(file);
   const w = img.naturalWidth;
   const h = img.naturalHeight;
-  if (!w || !h) throw new Error("Invalid image dimensions");
+  if (!(w && h)) {
+    throw new Error("Invalid image dimensions");
+  }
 
   const base = drawScaled(img, w, h, MAX_EDGE);
   const hasTransparency = canvasHasTransparency(base.ctx, base.cw, base.ch);
@@ -108,9 +117,13 @@ export async function resizeImageFileToDataUrl(file: File): Promise<string> {
         "image/webp",
         WEBP_QUALITY_START,
       );
-      if (webpDataUrl) return webpDataUrl;
+      if (webpDataUrl) {
+        return webpDataUrl;
+      }
       const pngDataUrl = encodePngWithinLimit(canvas);
-      if (pngDataUrl) return pngDataUrl;
+      if (pngDataUrl) {
+        return pngDataUrl;
+      }
     }
     throw new Error(
       "Image is still too large after compression. Try a smaller file.",
@@ -122,7 +135,9 @@ export async function resizeImageFileToDataUrl(file: File): Promise<string> {
     "image/jpeg",
     JPEG_QUALITY_START,
   );
-  if (jpegDataUrl) return jpegDataUrl;
+  if (jpegDataUrl) {
+    return jpegDataUrl;
+  }
 
   throw new Error(
     "Image is still too large after compression. Try a smaller file.",

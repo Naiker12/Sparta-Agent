@@ -1,10 +1,10 @@
-
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useSettingsDialogStore } from "@/features/settings";
+import { useT } from "@/i18n";
 import {
   ChipIcon,
   CpuIcon,
@@ -18,7 +18,6 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { HfTokenIndicator } from "../components/hf-token-indicator";
 import { PageHeading } from "../components/page-heading";
 import { TransportToggle } from "./transport-toggle";
-import { useT } from "@/i18n";
 
 function StatPill({
   icon,
@@ -69,9 +68,7 @@ export function ModelsHeader({
         title={isDataset ? t("hub.datasetsTitle") : t("hub.title")}
         onTitleClick={onTitleClick}
         subtitle={
-          isDataset
-            ? t("hub.datasetsSubtitle")
-            : t("hub.modelsSubtitle")
+          isDataset ? t("hub.datasetsSubtitle") : t("hub.modelsSubtitle")
         }
       />
 

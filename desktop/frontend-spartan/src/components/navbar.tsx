@@ -1,4 +1,3 @@
-
 import {
   DesktopTitlebarNavigation,
   shouldUseCustomWindowTitlebar,
@@ -19,7 +18,7 @@ export function Navbar() {
         <header className="pointer-events-none absolute inset-x-0 top-0 z-40 h-[48px]">
           {usesNativeMacTitlebar && (
             <div
-              data-tauri-drag-region
+              data-tauri-drag-region={true}
               aria-hidden="true"
               className="pointer-events-auto absolute inset-x-0 top-0 h-[var(--studio-mac-titlebar-height,34px)] select-none"
             />

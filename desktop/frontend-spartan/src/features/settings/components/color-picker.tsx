@@ -1,4 +1,3 @@
-
 import {
   Popover,
   PopoverContent,
@@ -23,11 +22,17 @@ function hexToHsv(hex: string): Hsv {
   const d = max - min;
   let h = 0;
   if (d !== 0) {
-    if (max === r) h = ((g - b) / d) % 6;
-    else if (max === g) h = (b - r) / d + 2;
-    else h = (r - g) / d + 4;
+    if (max === r) {
+      h = ((g - b) / d) % 6;
+    } else if (max === g) {
+      h = (b - r) / d + 2;
+    } else {
+      h = (r - g) / d + 4;
+    }
     h *= 60;
-    if (h < 0) h += 360;
+    if (h < 0) {
+      h += 360;
+    }
   }
   return { h, s: max === 0 ? 0 : d / max, v: max };
 }
@@ -37,12 +42,19 @@ function hsvToHex({ h, s, v }: Hsv): string {
   const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
   const m = v - c;
   let rgb: [number, number, number];
-  if (h < 60) rgb = [c, x, 0];
-  else if (h < 120) rgb = [x, c, 0];
-  else if (h < 180) rgb = [0, c, x];
-  else if (h < 240) rgb = [0, x, c];
-  else if (h < 300) rgb = [x, 0, c];
-  else rgb = [c, 0, x];
+  if (h < 60) {
+    rgb = [c, x, 0];
+  } else if (h < 120) {
+    rgb = [x, c, 0];
+  } else if (h < 180) {
+    rgb = [0, c, x];
+  } else if (h < 240) {
+    rgb = [0, x, c];
+  } else if (h < 300) {
+    rgb = [x, 0, c];
+  } else {
+    rgb = [c, 0, x];
+  }
   const channel = (value: number) =>
     Math.round((value + m) * 255)
       .toString(16)
@@ -105,7 +117,9 @@ export function ColorPickerSwatch({
 
   const moveFromPointer = (e: React.PointerEvent) => {
     const area = areaRef.current;
-    if (!area) return;
+    if (!area) {
+      return;
+    }
     const rect = area.getBoundingClientRect();
     const s = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
     const v =
@@ -125,12 +139,13 @@ export function ColorPickerSwatch({
     onChange(hex);
   };
 
-  const eyeDropperCtor = (
-    globalThis as { EyeDropper?: EyeDropperConstructor }
-  ).EyeDropper;
+  const eyeDropperCtor = (globalThis as { EyeDropper?: EyeDropperConstructor })
+    .EyeDropper;
 
   const pickFromScreen = async () => {
-    if (!eyeDropperCtor) return;
+    if (!eyeDropperCtor) {
+      return;
+    }
     try {
       const result = await new eyeDropperCtor().open();
       const hex = result.sRGBHex.toLowerCase();
@@ -149,7 +164,7 @@ export function ColorPickerSwatch({
 
   return (
     <Popover open={open} onOpenChange={setOpen} modal={true}>
-      <PopoverTrigger asChild>
+      <PopoverTrigger asChild={true}>
         <button
           type="button"
           aria-label={label}
@@ -188,21 +203,24 @@ export function ColorPickerSwatch({
               moveFromPointer(e);
             }}
             onPointerMove={(e) => {
-              if (e.buttons === 1) moveFromPointer(e);
+              if (e.buttons === 1) {
+                moveFromPointer(e);
+              }
             }}
             onKeyDown={(e) => {
               // Arrow keys move the saturation (x) / value (y) selection so the
               // area is operable without a pointer; Shift takes coarser steps.
               const step = e.shiftKey ? 0.1 : 0.01;
               let next: Hsv | null = null;
-              if (e.key === "ArrowLeft")
+              if (e.key === "ArrowLeft") {
                 next = { ...hsv, s: Math.max(0, hsv.s - step) };
-              else if (e.key === "ArrowRight")
+              } else if (e.key === "ArrowRight") {
                 next = { ...hsv, s: Math.min(1, hsv.s + step) };
-              else if (e.key === "ArrowDown")
+              } else if (e.key === "ArrowDown") {
                 next = { ...hsv, v: Math.max(0, hsv.v - step) };
-              else if (e.key === "ArrowUp")
+              } else if (e.key === "ArrowUp") {
                 next = { ...hsv, v: Math.min(1, hsv.v + step) };
+              }
               if (next) {
                 e.preventDefault();
                 emit(next);

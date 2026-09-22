@@ -1,4 +1,3 @@
-
 // Which rows of a monitor snapshot are traffic this session has not shown yet.
 // Split out of the overlay so it can be driven without a browser.
 

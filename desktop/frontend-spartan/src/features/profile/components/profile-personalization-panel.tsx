@@ -1,4 +1,3 @@
-
 import { GeneratedAvatar } from "@/components/ui/blobatar-avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,8 +8,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { getAuthToken } from "@/features/auth";
-import { cn } from "@/lib/utils";
 import { useT } from "@/i18n";
+import { cn } from "@/lib/utils";
 import { toastError, toastSuccess } from "@/shared/toast";
 import {
   Delete02Icon,
@@ -25,12 +24,12 @@ import {
   blobatarAvatarValue,
   blobatarSeedFromValue,
 } from "../blobatar-avatars";
-import { decodeJwtSubject } from "../utils/jwt-subject";
-import { resizeImageFileToDataUrl } from "../utils/resize-image-file";
 import {
   PROFILE_TEXT_MAX_LENGTH,
   useUserProfileStore,
 } from "../stores/user-profile-store";
+import { decodeJwtSubject } from "../utils/jwt-subject";
+import { resizeImageFileToDataUrl } from "../utils/resize-image-file";
 import { UserAvatar } from "./user-avatar";
 
 const PROFILE_STORAGE_KEY = "unsloth_user_profile";
@@ -42,14 +41,20 @@ function readPersistedProfile(): {
 } | null {
   try {
     const raw = window.localStorage.getItem(PROFILE_STORAGE_KEY);
-    if (!raw) return null;
+    if (!raw) {
+      return null;
+    }
     const parsed = JSON.parse(raw) as unknown;
-    if (!parsed || typeof parsed !== "object") return null;
+    if (!parsed || typeof parsed !== "object") {
+      return null;
+    }
 
     // Zustand persist shape: { state: {...}, version }
     const maybeState =
       "state" in parsed ? (parsed as { state?: unknown }).state : parsed;
-    if (!maybeState || typeof maybeState !== "object") return null;
+    if (!maybeState || typeof maybeState !== "object") {
+      return null;
+    }
     const state = maybeState as {
       displayName?: unknown;
       nickname?: unknown;
@@ -106,7 +111,9 @@ export function ProfilePersonalizationPanel() {
   // field is a single row like the rest of Settings.
   const saveName = () => {
     const trimmed = draftName.trim();
-    if (trimmed !== draftName) setDraftName(trimmed);
+    if (trimmed !== draftName) {
+      setDraftName(trimmed);
+    }
     if (trimmed !== displayName) {
       setDisplayName(trimmed);
       const persisted = readPersistedProfile();
@@ -123,7 +130,9 @@ export function ProfilePersonalizationPanel() {
 
   const saveNickname = () => {
     const trimmed = draftNickname.trim();
-    if (trimmed !== draftNickname) setDraftNickname(trimmed);
+    if (trimmed !== draftNickname) {
+      setDraftNickname(trimmed);
+    }
     if (trimmed !== nickname) {
       setNickname(trimmed);
       const persisted = readPersistedProfile();
@@ -164,7 +173,9 @@ export function ProfilePersonalizationPanel() {
   };
 
   const onPickFile = async (file: File | undefined) => {
-    if (!file) return;
+    if (!file) {
+      return;
+    }
     setImageError(null);
     try {
       applyAvatar(await resizeImageFileToDataUrl(file));
@@ -319,7 +330,8 @@ export function ProfilePersonalizationPanel() {
                 <div className="grid grid-cols-7 gap-2">
                   {BLOBATAR_AVATARS.map((seed, index) => {
                     const value = blobatarAvatarValue(seed);
-                    const selected = blobatarSeedFromValue(shownAvatar) === seed;
+                    const selected =
+                      blobatarSeedFromValue(shownAvatar) === seed;
                     const label = `${t("settings.profile.chooseAvatar")} ${index + 1}`;
                     return (
                       <button
@@ -338,7 +350,9 @@ export function ProfilePersonalizationPanel() {
                         <GeneratedAvatar
                           name={seed}
                           className="size-full"
-                          fallback={<span className="block size-full bg-muted" />}
+                          fallback={
+                            <span className="block size-full bg-muted" />
+                          }
                         />
                       </button>
                     );

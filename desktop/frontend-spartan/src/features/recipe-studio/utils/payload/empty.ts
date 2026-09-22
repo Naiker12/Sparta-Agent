@@ -1,4 +1,3 @@
-
 import type { RecipePayload } from "./types";
 
 export function createEmptyRecipePayload(): RecipePayload {

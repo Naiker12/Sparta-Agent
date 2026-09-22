@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -117,7 +116,9 @@ export function KeyboardShortcutsTab() {
   // Capture phase, so the chord being recorded reaches this listener before the
   // shortcut it is replacing fires and before Radix's Escape-to-close.
   useEffect(() => {
-    if (!recordingId) return;
+    if (!recordingId) {
+      return;
+    }
     const onKeyDown = (event: KeyboardEvent) => {
       event.preventDefault();
       event.stopPropagation();
@@ -134,7 +135,9 @@ export function KeyboardShortcutsTab() {
       }
       const binding = bindingFromEvent(event);
       // Modifier held on its own: the user is still assembling the chord.
-      if (!binding) return;
+      if (!binding) {
+        return;
+      }
       if (!isAcceptableBinding(binding)) {
         setRecordingError(t("settings.keyboardShortcuts.needsModifier"));
         return;
@@ -150,11 +153,15 @@ export function KeyboardShortcutsTab() {
 
   const matches = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return null;
+    if (!q) {
+      return null;
+    }
     return new Set(
       SHORTCUT_DEFS.filter((def) => {
         const haystack = `${t(def.labelKey)} ${t(def.descriptionKey)}`;
-        if (haystack.toLowerCase().includes(q)) return true;
+        if (haystack.toLowerCase().includes(q)) {
+          return true;
+        }
         const value = resolveBinding(overrides, def.id);
         const parsed = parseBinding(value);
         return parsed

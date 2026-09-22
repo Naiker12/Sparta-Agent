@@ -1,4 +1,3 @@
-
 import type { CachedInventoryRow, LocalInventoryRow } from "./types";
 
 function repoFormatKey(
@@ -41,14 +40,20 @@ export function partialSetFromRows<T extends { partial?: boolean }>(
   const complete = new Set<string>();
   for (const row of rows) {
     const repoId = getRepoId(row);
-    if (repoId && !row.partial) complete.add(repoId.toLowerCase());
+    if (repoId && !row.partial) {
+      complete.add(repoId.toLowerCase());
+    }
   }
   const partial = new Set<string>();
   for (const row of rows) {
     const repoId = getRepoId(row);
-    if (!repoId) continue;
+    if (!repoId) {
+      continue;
+    }
     const key = repoId.toLowerCase();
-    if (row.partial && !complete.has(key)) partial.add(key);
+    if (row.partial && !complete.has(key)) {
+      partial.add(key);
+    }
   }
   return partial;
 }
@@ -104,7 +109,9 @@ export function dedupeSameSourceHubCacheRows({
   for (const row of uniqueCachedRows) {
     if (row.partial && row.modelFormat === "gguf") {
       const repo = repoKey(row.repoId);
-      if (repo) partialGgufRepos.add(repo);
+      if (repo) {
+        partialGgufRepos.add(repo);
+      }
     }
     if (row.partial) {
       continue;
@@ -119,7 +126,9 @@ export function dedupeSameSourceHubCacheRows({
   for (const row of localRows) {
     if (row.partial && row.modelFormat === "gguf") {
       const repo = repoKey(row.repoId);
-      if (repo) partialGgufRepos.add(repo);
+      if (repo) {
+        partialGgufRepos.add(repo);
+      }
     }
     if (row.source !== "hf_cache" || row.partial) {
       continue;

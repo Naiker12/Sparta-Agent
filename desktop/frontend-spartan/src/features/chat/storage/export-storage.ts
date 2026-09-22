@@ -2,7 +2,10 @@ import { buildBackendChatExport } from "../api/chat-api";
 import { db } from "../db";
 import type { MessageRecord, ThreadRecord } from "../types";
 import { isChatThreadDeleted } from "../utils/chat-thread-tombstones";
-import { listStoredChatThreads, updateStoredChatThread } from "./thread-storage";
+import {
+  listStoredChatThreads,
+  updateStoredChatThread,
+} from "./thread-storage";
 
 export interface ExportedChat {
   exportedAt: string;
@@ -44,7 +47,9 @@ export async function buildStoredChatExport(): Promise<ExportedChat> {
     legacyMessages.some((message) => !isChatThreadDeleted(message.threadId));
 
   const backend = await buildBackendChatExport().catch((error) => {
-    if (hasLegacyData) return null;
+    if (hasLegacyData) {
+      return null;
+    }
     throw error;
   });
 
@@ -53,12 +58,16 @@ export async function buildStoredChatExport(): Promise<ExportedChat> {
   const messagesById = new Map<string, unknown>();
 
   for (const thread of backend?.threads ?? []) {
-    if (isChatThreadDeleted(thread.id)) continue;
+    if (isChatThreadDeleted(thread.id)) {
+      continue;
+    }
     backendThreadIds.add(thread.id);
     threadsById.set(thread.id, thread);
   }
   for (const message of backend?.messages ?? []) {
-    if (isChatThreadDeleted(message.threadId)) continue;
+    if (isChatThreadDeleted(message.threadId)) {
+      continue;
+    }
     messagesById.set(message.id, message);
   }
 
@@ -69,7 +78,9 @@ export async function buildStoredChatExport(): Promise<ExportedChat> {
     threadsById.set(thread.id, thread);
   }
   for (const message of legacyMessages as MessageRecord[]) {
-    if (isChatThreadDeleted(message.threadId)) continue;
+    if (isChatThreadDeleted(message.threadId)) {
+      continue;
+    }
     if (!messagesById.has(message.id)) {
       messagesById.set(message.id, message);
     }

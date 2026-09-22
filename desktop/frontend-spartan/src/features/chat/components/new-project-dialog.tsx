@@ -14,17 +14,19 @@ import {
   type StagedSource,
   uploadStagedSources,
 } from "@/features/rag/components/project-source-dropzone";
+import { useT } from "@/i18n";
 import { toast } from "@/lib/toast";
 import { Folder02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { useT } from "@/i18n";
 
 import { createChatProject } from "../hooks/use-chat-projects";
 import { useChatRuntimeStore } from "../stores/chat-runtime-store";
 import type { ProjectRecord } from "../types";
 
 function currentRoute(): string {
-  if (typeof window === "undefined") return "";
+  if (typeof window === "undefined") {
+    return "";
+  }
   return window.location.pathname + window.location.search;
 }
 
@@ -79,14 +81,18 @@ export function NewProjectDialog({
   // Every close path routes through here: callers keep this mounted, so a draft
   // left behind would resurface (and upload) on the next project.
   function close() {
-    if (busy) return;
+    if (busy) {
+      return;
+    }
     reset();
     onOpenChange(false);
   }
 
   async function commitCreate() {
     const trimmed = name.trim();
-    if (!trimmed || busy || stagingDrop) return;
+    if (!trimmed || busy || stagingDrop) {
+      return;
+    }
     setBusy(true);
     // Sidebar callers keep this mounted across routes, so unmounting alone
     // cannot tell whether the user has moved on during a slow upload.
@@ -95,7 +101,9 @@ export function NewProjectDialog({
       const project = await createChatProject(trimmed);
       // Upload before closing so the Sources panel lists them on first fetch.
       await uploadStagedSources(project.id, staged);
-      if (!mounted.current) return;
+      if (!mounted.current) {
+        return;
+      }
       const stayedOnRoute = currentRoute() === origin;
       onOpenChange(false);
       reset();
@@ -103,7 +111,9 @@ export function NewProjectDialog({
         await onCreated(project, { stayedOnRoute });
         return;
       }
-      if (!stayedOnRoute) return;
+      if (!stayedOnRoute) {
+        return;
+      }
       const runtime = useChatRuntimeStore.getState();
       runtime.setActiveThreadId(null);
       runtime.setActiveProjectId(project.id);
@@ -151,7 +161,6 @@ export function NewProjectDialog({
                 void commitCreate();
               }
             }}
-            autoFocus={true}
             disabled={busy}
             maxLength={120}
             placeholder={t("projectsPage.projectNamePlaceholder")}

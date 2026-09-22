@@ -1,4 +1,3 @@
-
 // The "the user stopped the server on purpose" marker.
 //
 // sessionStorage outlives webview reloads but not the app process, so an explicit stop

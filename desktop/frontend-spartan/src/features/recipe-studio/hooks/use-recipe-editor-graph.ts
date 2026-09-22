@@ -1,4 +1,3 @@
-
 import type {
   Edge,
   EdgeChange,
@@ -13,8 +12,12 @@ import {
   useCallback,
   useMemo,
 } from "react";
-import { RECIPE_BLOCK_DND_MIME, type RecipeBlockDragPayload } from "../components/block-sheet";
 import type { SeedBlockType } from "../blocks/registry";
+import {
+  RECIPE_BLOCK_DND_MIME,
+  type RecipeBlockDragPayload,
+} from "../components/block-sheet";
+import type { RecipeGraphAuxNodeData } from "../components/recipe-graph-aux-node";
 import type {
   LlmType,
   NodeConfig,
@@ -22,8 +25,11 @@ import type {
   RecipeNodeData,
   SamplerType,
 } from "../types";
-import { applyAuxNodeChanges, filterEdgeChangesByIds, filterNodeChangesByIds } from "../utils/reactflow-changes";
-import type { RecipeGraphAuxNodeData } from "../components/recipe-graph-aux-node";
+import {
+  applyAuxNodeChanges,
+  filterEdgeChangesByIds,
+  filterNodeChangesByIds,
+} from "../utils/reactflow-changes";
 
 const SUPPORTED_DRAG_KINDS: RecipeBlockDragPayload["kind"][] = [
   "sampler",
@@ -34,13 +40,21 @@ const SUPPORTED_DRAG_KINDS: RecipeBlockDragPayload["kind"][] = [
   "note",
 ];
 
-function parseRecipeBlockDragPayload(raw: string): RecipeBlockDragPayload | null {
+function parseRecipeBlockDragPayload(
+  raw: string,
+): RecipeBlockDragPayload | null {
   try {
     const parsed = JSON.parse(raw) as {
       kind?: RecipeBlockDragPayload["kind"];
       type?: RecipeBlockDragPayload["type"];
     };
-    if (!parsed.kind || !parsed.type || !SUPPORTED_DRAG_KINDS.includes(parsed.kind)) {
+    if (
+      !(
+        parsed.kind &&
+        parsed.type &&
+        SUPPORTED_DRAG_KINDS.includes(parsed.kind)
+      )
+    ) {
       return null;
     }
     return {
@@ -56,16 +70,31 @@ type UseRecipeEditorGraphArgs = {
   nodes: RecipeBuilderNode[];
   edges: Edge[];
   configs: Record<string, NodeConfig>;
-  reactFlowInstance: ReactFlowInstance<Node<RecipeNodeData | RecipeGraphAuxNodeData>, Edge> | null;
+  reactFlowInstance: ReactFlowInstance<
+    Node<RecipeNodeData | RecipeGraphAuxNodeData>,
+    Edge
+  > | null;
   flowContainerRef: RefObject<HTMLDivElement | null>;
   selectConfig: (id: string) => void;
   openConfig: (id: string) => void;
   onNodesChange: (changes: NodeChange<RecipeBuilderNode>[]) => void;
   onEdgesChange: (changes: EdgeChange<Edge>[]) => void;
   setAuxNodePosition: (id: string, position: XYPosition) => void;
-  addSamplerNode: (type: SamplerType, position?: XYPosition, openDialog?: boolean) => void;
-  addSeedNode: (type: SeedBlockType, position?: XYPosition, openDialog?: boolean) => void;
-  addLlmNode: (type: LlmType, position?: XYPosition, openDialog?: boolean) => void;
+  addSamplerNode: (
+    type: SamplerType,
+    position?: XYPosition,
+    openDialog?: boolean,
+  ) => void;
+  addSeedNode: (
+    type: SeedBlockType,
+    position?: XYPosition,
+    openDialog?: boolean,
+  ) => void;
+  addLlmNode: (
+    type: LlmType,
+    position?: XYPosition,
+    openDialog?: boolean,
+  ) => void;
   addModelProviderNode: (position?: XYPosition, openDialog?: boolean) => void;
   addModelConfigNode: (position?: XYPosition, openDialog?: boolean) => void;
   addToolProfileNode: (position?: XYPosition, openDialog?: boolean) => void;
@@ -79,8 +108,14 @@ type UseRecipeEditorGraphArgs = {
 };
 
 type UseRecipeEditorGraphResult = {
-  handleNodeClick: (_: unknown, node: Node<RecipeNodeData | RecipeGraphAuxNodeData>) => void;
-  handleNodeDoubleClick: (_: unknown, node: Node<RecipeNodeData | RecipeGraphAuxNodeData>) => void;
+  handleNodeClick: (
+    _: unknown,
+    node: Node<RecipeNodeData | RecipeGraphAuxNodeData>,
+  ) => void;
+  handleNodeDoubleClick: (
+    _: unknown,
+    node: Node<RecipeNodeData | RecipeGraphAuxNodeData>,
+  ) => void;
   handleNodesChange: (
     changes: NodeChange<Node<RecipeNodeData | RecipeGraphAuxNodeData>>[],
   ) => void;
@@ -121,8 +156,14 @@ export function useRecipeEditorGraph({
   addValidatorNode,
   addMarkdownNoteNode,
 }: UseRecipeEditorGraphArgs): UseRecipeEditorGraphResult {
-  const baseNodeIds = useMemo(() => new Set(nodes.map((node) => node.id)), [nodes]);
-  const baseEdgeIds = useMemo(() => new Set(edges.map((edge) => edge.id)), [edges]);
+  const baseNodeIds = useMemo(
+    () => new Set(nodes.map((node) => node.id)),
+    [nodes],
+  );
+  const baseEdgeIds = useMemo(
+    () => new Set(edges.map((edge) => edge.id)),
+    [edges],
+  );
 
   const handleNodeClick = useCallback(
     (_: unknown, node: Node<RecipeNodeData | RecipeGraphAuxNodeData>) => {
@@ -154,7 +195,7 @@ export function useRecipeEditorGraph({
         changes as NodeChange<RecipeBuilderNode>[],
         baseNodeIds,
       );
-      if (next.length) {
+      if (next.length > 0) {
         onNodesChange(next);
       }
     },
@@ -164,23 +205,28 @@ export function useRecipeEditorGraph({
   const handleEdgesChange = useCallback(
     (changes: EdgeChange<Edge>[]) => {
       const next = filterEdgeChangesByIds(changes, baseEdgeIds);
-      if (next.length) {
+      if (next.length > 0) {
         onEdgesChange(next);
       }
     },
     [baseEdgeIds, onEdgesChange],
   );
 
-  const handleDragOver = useCallback((event: ReactDragEvent<HTMLDivElement>) => {
-    if (
-      !event.dataTransfer.types.includes(RECIPE_BLOCK_DND_MIME) &&
-      !event.dataTransfer.types.includes("text/plain")
-    ) {
-      return;
-    }
-    event.preventDefault();
-    event.dataTransfer.dropEffect = "copy";
-  }, []);
+  const handleDragOver = useCallback(
+    (event: ReactDragEvent<HTMLDivElement>) => {
+      if (
+        !(
+          event.dataTransfer.types.includes(RECIPE_BLOCK_DND_MIME) ||
+          event.dataTransfer.types.includes("text/plain")
+        )
+      ) {
+        return;
+      }
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "copy";
+    },
+    [],
+  );
 
   const handleDrop = useCallback(
     (event: ReactDragEvent<HTMLDivElement>) => {
@@ -217,7 +263,10 @@ export function useRecipeEditorGraph({
       }
       if (payload.kind === "validator") {
         addValidatorNode(
-          payload.type as "validator_python" | "validator_sql" | "validator_oxc",
+          payload.type as
+            | "validator_python"
+            | "validator_sql"
+            | "validator_oxc",
           position,
           false,
         );
@@ -256,7 +305,7 @@ export function useRecipeEditorGraph({
   );
 
   const getViewportCenterPosition = useCallback(() => {
-    if (!reactFlowInstance || !flowContainerRef.current) {
+    if (!(reactFlowInstance && flowContainerRef.current)) {
       return undefined;
     }
     const rect = flowContainerRef.current.getBoundingClientRect();

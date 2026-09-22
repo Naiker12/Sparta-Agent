@@ -1,4 +1,3 @@
-
 import type { Citation } from "@/components/assistant-ui/citation-utils";
 import { DocumentSourcesGroup } from "@/components/assistant-ui/rag-sources";
 import {
@@ -21,7 +20,6 @@ import {
   useResearchRunStore,
 } from "../stores/research-run-store";
 import type { ResearchMessageMetadata } from "../types/research";
-import { researchStatusLabel } from "./research-activity-panel";
 
 export function ResearchMessage(): ReactElement {
   const metadata = useAuiState(
@@ -172,7 +170,8 @@ export function ResearchMessage(): ReactElement {
             variant={needsApproval ? "default" : "secondary"}
             className={cn(
               "mt-3.5 inline-flex items-center justify-center rounded-full px-4 py-1.5 text-xs font-medium transition-all shadow-sm",
-              !needsApproval && "bg-muted/80 hover:bg-muted text-foreground border border-border/40",
+              !needsApproval &&
+                "bg-muted/80 hover:bg-muted text-foreground border border-border/40",
             )}
             onClick={() => openPanel(run.id)}
           >

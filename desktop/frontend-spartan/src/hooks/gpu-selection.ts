@@ -1,4 +1,3 @@
-
 export type GpuIndexKind = "physical" | "vulkan";
 
 export interface SystemGpuDevice {
@@ -23,9 +22,15 @@ export function sameGpuSelection(
   left: ReconciledGpuSelection,
   right: ReconciledGpuSelection,
 ): boolean {
-  if (left.indexKind !== right.indexKind) return false;
-  if (left.ids === right.ids) return true;
-  if (left.ids === null || right.ids === null) return false;
+  if (left.indexKind !== right.indexKind) {
+    return false;
+  }
+  if (left.ids === right.ids) {
+    return true;
+  }
+  if (left.ids === null || right.ids === null) {
+    return false;
+  }
   return (
     left.ids.length === right.ids.length &&
     left.ids.every((id, index) => id === right.ids?.[index])
@@ -134,7 +139,9 @@ export function pickLoadDevice<
         : pick,
     );
   }
-  if (devices.length === 0) return undefined;
+  if (devices.length === 0) {
+    return undefined;
+  }
   return devices.reduce(
     (pick, d) => ((d.index ?? 0) < (pick.index ?? 0) ? d : pick),
     devices[0],

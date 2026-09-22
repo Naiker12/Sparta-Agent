@@ -1,4 +1,3 @@
-
 import { authFetch } from "@/features/auth";
 import { useEffect, useState } from "react";
 import {
@@ -192,11 +191,6 @@ export function useHfDatasetSplits(
               : typeof err === "string"
                 ? err
                 : "Failed to fetch dataset splits";
-          console.warn("[useHfDatasetSplits] Failed to fetch dataset splits", {
-            datasetName,
-            message: rawErrorMessage,
-            error: err,
-          });
           setError(normalizeDatasetSplitsError(rawErrorMessage));
           setEntries([]);
         }

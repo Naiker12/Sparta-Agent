@@ -1,4 +1,3 @@
-
 import type { InventoryHint } from "./types";
 
 export type PendingInventoryHints = Record<

@@ -1,4 +1,3 @@
-
 export type LogicalWindowSize = {
   width: number;
   height: number;
@@ -36,7 +35,9 @@ const FIRST_WINDOW_HEIGHT_RATIO = 0.85;
 const FIRST_WINDOW_ASPECT_RATIO = 1.618;
 
 function relaxMinimum(preferred: number, maximum: number): number {
-  if (preferred <= maximum) return preferred;
+  if (preferred <= maximum) {
+    return preferred;
+  }
   return Math.max(1, Math.floor(maximum * RELAXED_MINIMUM_RATIO));
 }
 
@@ -61,7 +62,9 @@ export function fitWindowSize(
   size: LogicalWindowSize,
   maximum?: LogicalWindowSize,
 ): LogicalWindowSize {
-  if (!maximum) return size;
+  if (!maximum) {
+    return size;
+  }
   return {
     width: Math.min(size.width, maximum.width),
     height: Math.min(size.height, maximum.height),
@@ -72,7 +75,9 @@ export function calculateFirstAppWindowSize(
   { minimum, maximum }: WindowSizeBounds,
   cssSafeLogicalWidth?: number,
 ): LogicalWindowSize {
-  if (!maximum) return minimum;
+  if (!maximum) {
+    return minimum;
+  }
 
   const width = Math.max(
     minimum.width,

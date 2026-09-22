@@ -7,7 +7,7 @@
  * - Diálogo de creación y reubicación de proyectos (NewProjectDialog)
  */
 
-import { useT } from "@/i18n";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -17,10 +17,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { NewProjectDialog } from "@/features/chat/components/new-project-dialog";
 import type { ProjectRecord, SidebarItem } from "@/features/chat";
+import { NewProjectDialog } from "@/features/chat/components/new-project-dialog";
+import { useT } from "@/i18n";
 import { renderEmphasizedTranslation } from "./sidebar-types-and-constants";
 
 export type DeleteTarget =
@@ -171,7 +171,9 @@ export function SidebarDialogs({
       <Dialog
         open={renamingTarget?.kind === "project"}
         onOpenChange={(open) => {
-          if (!open) onRenamingTargetChange(null);
+          if (!open) {
+            onRenamingTargetChange(null);
+          }
         }}
       >
         <DialogContent className="corner-squircle dialog-soft-surface sm:max-w-md">
@@ -191,7 +193,7 @@ export function SidebarDialogs({
                 void onCommitRename();
               }
             }}
-            autoFocus
+            autoFocus={true}
             maxLength={120}
             placeholder={
               renamingTarget?.kind === "project"

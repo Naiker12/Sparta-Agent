@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { useTauriUpdateController } from "@/hooks/tauri-update-context";
 import { useT } from "@/i18n";
@@ -13,7 +12,9 @@ function formatDesktopVersion(version: string): string {
 export function DesktopUpdateNote(): ReactElement | null {
   const t = useT();
   const update = useTauriUpdateController();
-  if (!update) return null;
+  if (!update) {
+    return null;
+  }
   return (
     <p className="pb-1 text-xs text-muted-foreground leading-relaxed">
       {t("settings.about.update.desktopManaged")}
@@ -27,7 +28,9 @@ export function DesktopUpdateNote(): ReactElement | null {
 export function DesktopUpdateControl(): ReactElement | null {
   const t = useT();
   const update = useTauriUpdateController();
-  if (!update) return null;
+  if (!update) {
+    return null;
+  }
 
   const checking = update.status === "checking";
   // A running install owns the update screen; no second "Update now".

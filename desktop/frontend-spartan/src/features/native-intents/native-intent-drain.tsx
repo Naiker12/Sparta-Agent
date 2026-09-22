@@ -7,14 +7,20 @@ export function NativeIntentDrain() {
   const addIntent = useNativeIntentStore((state) => state.addIntent);
 
   useEffect(() => {
-    if (!isTauri) return;
+    if (!isTauri) {
+      return;
+    }
     let disposed = false;
     let unlisten: (() => void) | undefined;
 
     async function drain() {
       const intents = await drainNativeIntents().catch(() => []);
-      if (disposed) return;
-      for (const intent of intents) addIntent(intent);
+      if (disposed) {
+        return;
+      }
+      for (const intent of intents) {
+        addIntent(intent);
+      }
     }
 
     void drain();

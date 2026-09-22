@@ -1,4 +1,3 @@
-
 import { ChevronDown } from "lucide-react";
 
 import { InfoHint } from "@/components/ui/info-hint";

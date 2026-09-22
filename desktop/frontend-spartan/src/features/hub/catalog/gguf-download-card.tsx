@@ -17,9 +17,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { usePlatformStore } from "@/config/env";
-import { useT } from "@/i18n";
 import { getCachedModelPath, revealCachedModel } from "@/features/chat";
 import { pinKey, usePinnedModelsStore } from "@/features/model-picker";
+import { useT } from "@/i18n";
 import { ChevronDownStandardIcon } from "@/lib/chevron-icons";
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
 import { toast } from "@/lib/toast";
@@ -54,11 +54,11 @@ import {
 } from "../download-manager";
 import { useOnlineStatus } from "../hooks/use-online-status";
 import { type GgufVariantDetail, deleteCachedModel } from "../inventory";
-import { type GgufFitClass, classifyGgufFit } from "../lib/gguf-fit";
 import {
   ggufFilenamesMatch,
   ggufSelectionOverrideMatchesIntent,
 } from "../lib/gguf-filename";
+import { type GgufFitClass, classifyGgufFit } from "../lib/gguf-fit";
 import {
   ggufVariantDisplayLabel,
   ggufVariantTransferLabel,
@@ -70,6 +70,7 @@ import {
   normalizeGgufVariantIdentity,
 } from "../lib/model-identity";
 import { useHfTokenStore } from "../stores/hf-token-store";
+import { DeleteImpactSummary, useDeleteImpact } from "./delete-impact";
 import { DotTag } from "./dot-tag";
 import { DownloadStopIndicator } from "./download-cancel-indicator";
 import {
@@ -87,7 +88,6 @@ import {
   GgufDownloadStatusCard,
   GgufDownloadingFallbackCard,
 } from "./gguf-status-cards";
-import { DeleteImpactSummary, useDeleteImpact } from "./delete-impact";
 import { useDeleteConfirmAction } from "./use-delete-confirm-action";
 import { useDownloadCardState } from "./use-download-card-state";
 import { useGgufVariantFetchState } from "./use-gguf-variant-fetch-state";
@@ -149,7 +149,9 @@ function QuantBadge({
   const [tooltipOpen, setTooltipOpen] = useState(false);
   const armTooltip = useCallback(() => {
     setTooltipArmed((armed) => (armed ? armed : true));
-    if (tooltipMode === "lazy") setTooltipOpen(true);
+    if (tooltipMode === "lazy") {
+      setTooltipOpen(true);
+    }
   }, [tooltipMode]);
   const tooltipActive = tooltipMode === "eager" || tooltipArmed;
   const inner =
@@ -193,7 +195,9 @@ function QuantBadge({
         <span>{quant}</span>
       </span>
     );
-  if (!showFit || tooltipMode === "none") return inner;
+  if (!showFit || tooltipMode === "none") {
+    return inner;
+  }
   if (!tooltipActive) {
     return (
       <span
@@ -239,7 +243,9 @@ function createGgufVariantMenuItems(
   variants: readonly GgufVariantDetail[] | null,
   resources: { gpuGb?: number; systemRamGb?: number },
 ): GgufVariantMenuItem[] {
-  if (!variants) return [];
+  if (!variants) {
+    return [];
+  }
   return variants.map((variant) => ({
     filename: variant.filename,
     key: normalizeGgufVariantIdentity(variant.quant),
@@ -453,7 +459,9 @@ const GgufVariantMenuRow = memo(function GgufVariantMenuRow({
   }, [item.quant, onSelect]);
   const handleKeyDown = useCallback<KeyboardEventHandler<HTMLDivElement>>(
     (e) => {
-      if (e.target !== e.currentTarget) return;
+      if (e.target !== e.currentTarget) {
+        return;
+      }
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
         selectVariant();
@@ -626,7 +634,9 @@ export function GgufDownloadCard({
   >(() => new Set<string>());
 
   const rawSortedVariants = useMemo(() => {
-    if (!variants) return null;
+    if (!variants) {
+      return null;
+    }
     return sortDownloadableGgufVariants(variants, { gpuGb, systemRamGb });
   }, [variants, gpuGb, systemRamGb]);
   const selectLiveGgufVariantStates = useMemo(
@@ -637,12 +647,16 @@ export function GgufDownloadCard({
     selectLiveGgufVariantStates,
   );
   const sortedVariants = useMemo(() => {
-    if (!rawSortedVariants) return null;
+    if (!rawSortedVariants) {
+      return null;
+    }
     const withLive = applyLiveGgufVariantStates(
       rawSortedVariants,
       liveVariantStates,
     );
-    if (completedVariantKeys.size === 0) return withLive;
+    if (completedVariantKeys.size === 0) {
+      return withLive;
+    }
     return withLive.map((v) =>
       completedVariantKeys.has(normalizeGgufVariantIdentity(v.quant))
         ? { ...v, downloaded: true, partial: false, update_available: false }
@@ -668,7 +682,9 @@ export function GgufDownloadCard({
     repoId,
     activeVariant: selectedQuant ?? undefined,
     onComplete: (variant) => {
-      if (!variant) return;
+      if (!variant) {
+        return;
+      }
       const key = normalizeGgufVariantIdentity(variant);
       setCompletedVariantKeys((prev) =>
         prev.has(key) ? prev : new Set(prev).add(key),
@@ -686,7 +702,9 @@ export function GgufDownloadCard({
       includeVariants: true,
       fresh: true,
       onModelAdopt: (active) => {
-        if (controller.signal.aborted) return;
+        if (controller.signal.aborted) {
+          return;
+        }
         if (active.variant) {
           setSelectedQuantState((prev) =>
             prev.repoId === repoId && prev.userPicked
@@ -702,11 +720,15 @@ export function GgufDownloadCard({
   }, [repoId]);
 
   useEffect(() => {
-    if (!variants || !progress?.variant) return;
+    if (!(variants && progress?.variant)) {
+      return;
+    }
     const knownVariant = variants.find((variant) =>
       ggufVariantsMatch(variant.quant, progress.variant),
     );
-    if (!knownVariant) return;
+    if (!knownVariant) {
+      return;
+    }
     const expectedBytes =
       knownVariant.download_size_bytes ?? knownVariant.size_bytes ?? 0;
     if (expectedBytes > progress.expectedBytes) {
@@ -719,7 +741,9 @@ export function GgufDownloadCard({
   }, [repoId]);
 
   useEffect(() => {
-    if (loading || error || refreshError || !variants) return;
+    if (loading || error || refreshError || !variants) {
+      return;
+    }
     setCompletedVariantKeys((prev) =>
       prev.size === 0 ? prev : new Set<string>(),
     );
@@ -810,7 +834,9 @@ export function GgufDownloadCard({
   );
   const { deleting, runDelete } = useDeleteConfirmAction({
     action: async () => {
-      if (!deleteTarget) return;
+      if (!deleteTarget) {
+        return;
+      }
       await deleteCachedModel(
         repoId,
         deleteTarget,
@@ -847,7 +873,9 @@ export function GgufDownloadCard({
   // new revision lands. Completion refreshes the variant list, whose metadata
   // carries the "Update available" cue.
   const handleConfirmUpdate = useCallback(() => {
-    if (!updateTarget) return;
+    if (!updateTarget) {
+      return;
+    }
     const variant = updateTarget;
     const expectedBytes =
       updateTargetVariant?.download_size_bytes ??
@@ -918,7 +946,9 @@ export function GgufDownloadCard({
             <DeleteConfirmDialog
               open={deleteTarget !== null}
               onOpenChange={(o) => {
-                if (!o && !deleting) setDeleteTarget(null);
+                if (!(o || deleting)) {
+                  setDeleteTarget(null);
+                }
               }}
               title={t("hub.gguf.deleteTitle")}
               deleting={deleting}
@@ -938,7 +968,9 @@ export function GgufDownloadCard({
             <UpdateConfirmDialog
               open={updateTarget !== null}
               onOpenChange={(o) => {
-                if (!o) setUpdateTarget(null);
+                if (!o) {
+                  setUpdateTarget(null);
+                }
               }}
               title="Update quantization?"
               updating={false}
@@ -1118,7 +1150,9 @@ export function GgufDownloadCard({
               onEject?.();
               return;
             }
-            if (!selected) return;
+            if (!selected) {
+              return;
+            }
             if (selected.downloaded) {
               onLoad({
                 ggufVariant: selected.quant,
@@ -1141,10 +1175,12 @@ export function GgufDownloadCard({
             downloadingThisVariant &&
               !cancelling &&
               "hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-400",
-            !HUB_GGUF_RUN_ACTIONS_VISIBLE &&
-              !downloadingThisVariant &&
-              !cancelling &&
-              !isLoadingThisModel &&
+            !(
+              HUB_GGUF_RUN_ACTIONS_VISIBLE ||
+              downloadingThisVariant ||
+              cancelling ||
+              isLoadingThisModel
+            ) &&
               (selectedIsActive || selected?.downloaded) &&
               "hidden",
           )}

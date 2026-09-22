@@ -1,6 +1,7 @@
-import { useEffect, useState, useSyncExternalStore } from "react";
 import { getLocale } from "@/i18n";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { CHAT_PROJECTS_UPDATED_EVENT } from "../api/chat-api";
+import { updateChatProjectWorkspace } from "../api/chat-api";
 import type { ProjectRecord } from "../types";
 import {
   createStoredChatProject,
@@ -10,7 +11,6 @@ import {
   moveStoredChatItemToProject,
   updateStoredChatProject,
 } from "../utils/chat-history-storage";
-import { updateChatProjectWorkspace } from "../api/chat-api";
 import { offerToDeleteKeptSandboxes } from "../utils/offer-kept-sandbox-files";
 import type { SidebarItem } from "./use-chat-sidebar-items";
 
@@ -33,7 +33,9 @@ function getProjectsSnapshot(): ProjectRecord[] {
 function publishProjects(projects: ProjectRecord[]): void {
   cachedProjects = projects;
   projectsLoaded = true;
-  for (const onStoreChange of projectSubscribers) onStoreChange();
+  for (const onStoreChange of projectSubscribers) {
+    onStoreChange();
+  }
 }
 
 function loadProjects(
@@ -41,7 +43,9 @@ function loadProjects(
   followUpIfPending = false,
 ): Promise<ProjectRecord[]> {
   if (projectsRequest) {
-    if (followUpIfPending) projectsRefreshPending = true;
+    if (followUpIfPending) {
+      projectsRefreshPending = true;
+    }
     return projectsRequest;
   }
   if (!force && projectsLoaded) {
@@ -56,11 +60,15 @@ function loadProjects(
         const next = await listStoredChatProjects({ includeArchived: false });
         nextProjects = Array.isArray(next) ? next : [];
       } catch (error) {
-        if (!isExpectedBackgroundChatStorageError(error)) throw error;
+        if (!isExpectedBackgroundChatStorageError(error)) {
+          throw error;
+        }
         nextProjects = null;
       }
     } while (projectsRefreshPending);
-    if (nextProjects !== null) publishProjects(nextProjects);
+    if (nextProjects !== null) {
+      publishProjects(nextProjects);
+    }
     return cachedProjects;
   }
 
@@ -88,8 +96,12 @@ export function useChatProjects(): {
     let cancelled = false;
 
     async function refresh(force = false, followUpIfPending = false) {
-      if (!force && projectsLoaded) return;
-      if (!cancelled && !projectsLoaded) setIsLoading(true);
+      if (!force && projectsLoaded) {
+        return;
+      }
+      if (!(cancelled || projectsLoaded)) {
+        setIsLoading(true);
+      }
       try {
         await loadProjects(force, followUpIfPending);
       } finally {
@@ -130,7 +142,9 @@ export async function renameChatProject(
   name: string,
 ): Promise<void> {
   const trimmed = name.trim();
-  if (!trimmed) throw new Error("Project name is required.");
+  if (!trimmed) {
+    throw new Error("Project name is required.");
+  }
   await updateStoredChatProject(projectId, { name: trimmed });
 }
 
@@ -144,17 +158,59 @@ export async function updateChatProjectInstructions(
 }
 
 type NativeFilesystem = {
-  getGitStatus?: (projectId: string) => Promise<{ success: boolean; error?: string; isRepository?: boolean; branch?: string; upstream?: string; ahead?: number; behind?: number; changed?: number; added?: number; modified?: number; deleted?: number; untracked?: number; insertions?: number; deletions?: number }>;
-  getGitChanges?: (projectId: string) => Promise<{ success: boolean; error?: string; isRepository?: boolean; changes: Array<{ path: string; status: string }>; conflicts?: string[] }>;
-  getGitDiff?: (projectId: string, path: string) => Promise<{ success: boolean; error?: string; diff?: string }>;
-  getGitBranches?: (projectId: string) => Promise<{ success: boolean; error?: string; branches: string[] }>;
-  switchGitBranch?: (projectId: string, branch: string) => Promise<GitOperationResult>;
-  stageGitPaths?: (projectId: string, paths: string[]) => Promise<GitOperationResult>;
-  unstageGitPaths?: (projectId: string, paths: string[]) => Promise<GitOperationResult>;
-  commitGit?: (projectId: string, message: string) => Promise<GitOperationResult>;
+  getGitStatus?: (projectId: string) => Promise<{
+    success: boolean;
+    error?: string;
+    isRepository?: boolean;
+    branch?: string;
+    upstream?: string;
+    ahead?: number;
+    behind?: number;
+    changed?: number;
+    added?: number;
+    modified?: number;
+    deleted?: number;
+    untracked?: number;
+    insertions?: number;
+    deletions?: number;
+  }>;
+  getGitChanges?: (projectId: string) => Promise<{
+    success: boolean;
+    error?: string;
+    isRepository?: boolean;
+    changes: Array<{ path: string; status: string }>;
+    conflicts?: string[];
+  }>;
+  getGitDiff?: (
+    projectId: string,
+    path: string,
+  ) => Promise<{ success: boolean; error?: string; diff?: string }>;
+  getGitBranches?: (
+    projectId: string,
+  ) => Promise<{ success: boolean; error?: string; branches: string[] }>;
+  switchGitBranch?: (
+    projectId: string,
+    branch: string,
+  ) => Promise<GitOperationResult>;
+  stageGitPaths?: (
+    projectId: string,
+    paths: string[],
+  ) => Promise<GitOperationResult>;
+  unstageGitPaths?: (
+    projectId: string,
+    paths: string[],
+  ) => Promise<GitOperationResult>;
+  commitGit?: (
+    projectId: string,
+    message: string,
+  ) => Promise<GitOperationResult>;
   pullGit?: (projectId: string) => Promise<GitOperationResult>;
   pushGit?: (projectId: string) => Promise<GitOperationResult>;
-  resolveGitConflict?: (projectId: string, path: string, choice: "ours" | "theirs") => Promise<GitOperationResult>;
+  resolveGitConflict?: (
+    projectId: string,
+    path: string,
+    choice: "ours" | "theirs",
+  ) => Promise<GitOperationResult>;
   openFolderDialog: () => Promise<string | null>;
   confirmWorkspaceAccess?: (
     folderPath: string,
@@ -176,7 +232,10 @@ type NativeFilesystem = {
     nodes: Array<{ name: string; path: string; type: "file" | "directory" }>;
     error?: string;
   }>;
-  readPreview?: (projectId: string, path: string) => Promise<{ success: boolean; bytes?: Uint8Array; error?: string }>;
+  readPreview?: (
+    projectId: string,
+    path: string,
+  ) => Promise<{ success: boolean; bytes?: Uint8Array; error?: string }>;
   readFile?: (
     projectId: string,
     path: string,
@@ -196,10 +255,17 @@ type NativeFilesystem = {
   }>;
 };
 
-type GitOperationResult = { success: boolean; error?: string; output?: string; conflicts: string[] };
+type GitOperationResult = {
+  success: boolean;
+  error?: string;
+  output?: string;
+  conflicts: string[];
+};
 
 function nativeFilesystem(): NativeFilesystem | null {
-  if (typeof window === "undefined") return null;
+  if (typeof window === "undefined") {
+    return null;
+  }
   return (window as Window & { fs?: NativeFilesystem }).fs ?? null;
 }
 
@@ -208,9 +274,13 @@ export async function connectChatProjectWorkspace(
   workspaceAccess?: "read" | "write",
 ): Promise<string | null> {
   const selected = await chooseProjectWorkspaceFolder();
-  if (!selected) return null;
+  if (!selected) {
+    return null;
+  }
   const access = workspaceAccess ?? (await requestWorkspaceAccess(selected));
-  if (!access) return null;
+  if (!access) {
+    return null;
+  }
   return setChatProjectWorkspace(projectId, selected, access);
 }
 
@@ -218,7 +288,9 @@ export async function requestWorkspaceAccess(
   folder: string,
 ): Promise<"read" | "write" | null> {
   const filesystem = nativeFilesystem();
-  if (!filesystem) return null;
+  if (!filesystem) {
+    return null;
+  }
   if (filesystem.confirmWorkspaceAccess) {
     const access = await filesystem.confirmWorkspaceAccess(folder, getLocale());
     return access === "write_no_delete" ? "write" : access;
@@ -230,9 +302,12 @@ export async function requestThreadWorkspaceAccess(
   folder: string,
 ): Promise<"read" | "write" | "write_no_delete" | null> {
   const filesystem = nativeFilesystem();
-  if (!filesystem) return null;
-  if (filesystem.confirmWorkspaceAccess)
+  if (!filesystem) {
+    return null;
+  }
+  if (filesystem.confirmWorkspaceAccess) {
     return filesystem.confirmWorkspaceAccess(folder, getLocale());
+  }
   return "read";
 }
 

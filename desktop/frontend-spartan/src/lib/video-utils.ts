@@ -1,4 +1,3 @@
-
 /** Containers llama-server can decode. It shells out to ffmpeg, so this is
  * what ffmpeg reads, not what the webview can play. Extensions ride along
  * because MIME is unreliable for mkv and some mov files. */
@@ -42,10 +41,14 @@ const VIDEO_MIME_RE = /^video\//i;
  * browser did not say video.
  */
 export function videoMimeForFile(file: File): string {
-  if (VIDEO_MIME_RE.test(file.type)) return file.type;
+  if (VIDEO_MIME_RE.test(file.type)) {
+    return file.type;
+  }
   const name = file.name.toLowerCase();
   for (const [ext, mime] of Object.entries(VIDEO_MIME_BY_EXTENSION)) {
-    if (name.endsWith(ext)) return mime;
+    if (name.endsWith(ext)) {
+      return mime;
+    }
   }
   return "video/mp4";
 }

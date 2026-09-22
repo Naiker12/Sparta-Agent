@@ -1,4 +1,3 @@
-
 // How an inventory row maps onto the identity its saved settings are keyed by.
 
 import type { CachedInventoryRow, LocalInventoryRow } from "./types";

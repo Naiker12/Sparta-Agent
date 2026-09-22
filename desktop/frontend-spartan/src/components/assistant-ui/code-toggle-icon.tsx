@@ -1,4 +1,3 @@
-
 import type { FC } from "react";
 
 export const CodeToggleIcon: FC<{ className?: string }> = ({ className }) => {

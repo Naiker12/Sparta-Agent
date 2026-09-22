@@ -1,10 +1,3 @@
-
-// The Audio page: Generate (TTS via the main inference slot) and Transcribe (STT
-// via the dictation sidecar). Training lives on the Train page. The page stays
-// mounted across tab switches (see __root.tsx), so `active` gates polling,
-// popovers and the recorder rather than lifecycle.
-
-import { TestTubeOutlineIcon } from "@/lib/hugeicons-derived";
 import {
   AudioWave01Icon,
   Copy01Icon,
@@ -76,11 +69,11 @@ import {
 import { sttModelSize } from "@/features/settings/stores/stt-model-catalog";
 import { usePersistedToggle } from "@/hooks/use-persisted-toggle";
 import { useScrollFades } from "@/hooks/use-scroll-fades";
+import { useT } from "@/i18n";
 import { BlobUrlCache } from "@/lib/blob-url-cache";
 import { subscribeModelLifecycle } from "@/lib/model-lifecycle-events";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
-import { useT } from "@/i18n";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 
 import {
@@ -129,7 +122,9 @@ const MODELS_BY_MODE: Record<CreateMode, ModelOption[]> = {
 /** What to call a model on screen. A Hub repo is its id; a checkpoint trained here
  *  is an output directory, and the full path in a toast reads as a bug. */
 function audioModelLabel(id: string): string {
-  if (!/^(?:[a-zA-Z]:[\\/]|[\\/]|~)/.test(id)) return id;
+  if (!/^(?:[a-zA-Z]:[\\/]|[\\/]|~)/.test(id)) {
+    return id;
+  }
   const leaf = id.split(/[\\/]/).filter(Boolean).pop() ?? id;
   // Training stamps the output directory with an epoch; it means nothing to a reader.
   return leaf.replace(/_\d{10,}$/, "");
@@ -137,7 +132,9 @@ function audioModelLabel(id: string): string {
 
 function deviceSizeBytes(label: string): number {
   const match = label.trim().match(/^(\d+(?:\.\d+)?)\s*(MB|GB)$/i);
-  if (!match) return 0;
+  if (!match) {
+    return 0;
+  }
   const value = Number(match[1]);
   return value * (match[2].toUpperCase() === "GB" ? 1024 ** 3 : 1024 ** 2);
 }
@@ -259,7 +256,9 @@ function ClipRowMenu({
 }
 
 function formatClipDuration(seconds: number): string {
-  if (!Number.isFinite(seconds) || seconds <= 0) return "0:00";
+  if (!Number.isFinite(seconds) || seconds <= 0) {
+    return "0:00";
+  }
   const whole = Math.round(seconds);
   const minutes = Math.floor(whole / 60);
   const rest = whole % 60;
@@ -383,8 +382,9 @@ export function AudioPage({ active = true }: { active?: boolean }) {
   const transcriptionAbort = useRef<AbortController | null>(null);
 
   const stopRecordStream = useCallback(() => {
-    for (const track of recordStreamRef.current?.getTracks() ?? [])
+    for (const track of recordStreamRef.current?.getTracks() ?? []) {
       track.stop();
+    }
     recordStreamRef.current = null;
   }, []);
   const stopAndDiscardRecording = useCallback(() => {
@@ -396,7 +396,9 @@ export function AudioPage({ active = true }: { active?: boolean }) {
     const recorder = recorderRef.current;
     if (recorder) {
       discardRecordingRef.current = true;
-      if (recorder.state !== "inactive") recorder.stop();
+      if (recorder.state !== "inactive") {
+        recorder.stop();
+      }
       recorderRef.current = null;
       setIsRecording(false);
     }
@@ -426,10 +428,14 @@ export function AudioPage({ active = true }: { active?: boolean }) {
     const generation = ++ttsStatusRefreshGeneration.current;
     try {
       const next = await getInferenceStatus();
-      if (generation !== ttsStatusRefreshGeneration.current) return;
+      if (generation !== ttsStatusRefreshGeneration.current) {
+        return;
+      }
       setStatus(next);
     } catch {
-      if (generation !== ttsStatusRefreshGeneration.current) return;
+      if (generation !== ttsStatusRefreshGeneration.current) {
+        return;
+      }
       // Do not leave Generate enabled against residency the backend can no
       // longer confirm. A later refresh adopts the recovered runtime.
       setStatus(null);
@@ -450,7 +456,9 @@ export function AudioPage({ active = true }: { active?: boolean }) {
           ? (selectedKey ?? undefined)
           : undefined,
       );
-      if (generation !== sttStatusRefreshGeneration.current) return;
+      if (generation !== sttStatusRefreshGeneration.current) {
+        return;
+      }
       const nextDownloadedArtifacts = sttDownloadedArtifacts(
         stt,
         sttRepoIdForSidecarKey,
@@ -495,7 +503,9 @@ export function AudioPage({ active = true }: { active?: boolean }) {
       selectedSttRepoRef.current = reconciled;
       setSelectedSttRepo(reconciled);
     } catch {
-      if (generation !== sttStatusRefreshGeneration.current) return;
+      if (generation !== sttStatusRefreshGeneration.current) {
+        return;
+      }
       setSttLoadedModel(null);
       setSttLoadedEngine(null);
     }
@@ -515,7 +525,10 @@ export function AudioPage({ active = true }: { active?: boolean }) {
     const selected = selectedSttRepoRef.current;
     const claim = sttLoadedByThisPage.current;
     const owned =
-      sttReady && selected !== null && claim !== null && claim === sttLoadedModel;
+      sttReady &&
+      selected !== null &&
+      claim !== null &&
+      claim === sttLoadedModel;
     const forget = () => {
       deferredSttLoad.current = null;
       selectedSttRepoRef.current = null;
@@ -561,7 +574,9 @@ export function AudioPage({ active = true }: { active?: boolean }) {
       try {
         const page = await listAudioGallery(0, PAGE_SIZE);
         // The caller's own fetch: a generation whose clip persisted must not be told otherwise.
-        if (generation !== galleryRefreshGeneration.current) return page.audio;
+        if (generation !== galleryRefreshGeneration.current) {
+          return page.audio;
+        }
         const { clips: merged, stitched } = mergeGalleryPage(
           page.audio,
           galleryCache.clips,
@@ -597,8 +612,7 @@ export function AudioPage({ active = true }: { active?: boolean }) {
           setSelectedId(galleryCache.selectedId);
         }
         if (
-          !galleryCache.selectedId &&
-          !fallbackClipRef.current &&
+          !(galleryCache.selectedId || fallbackClipRef.current) &&
           merged.length > 0
         ) {
           galleryCache.selectedId = merged[0].id;
@@ -616,7 +630,9 @@ export function AudioPage({ active = true }: { active?: boolean }) {
   const loadMore = useCallback(async () => {
     // Repeated scroll events near the bottom would otherwise each fire with the
     // same offset and append the same page, duplicating clips and React keys.
-    if (loadingMoreRef.current) return;
+    if (loadingMoreRef.current) {
+      return;
+    }
     loadingMoreRef.current = true;
     const refreshGeneration = galleryRefreshGeneration.current;
     try {
@@ -625,7 +641,9 @@ export function AudioPage({ active = true }: { active?: boolean }) {
         PAGE_SIZE,
         galleryCache.nextCursor,
       );
-      if (refreshGeneration !== galleryRefreshGeneration.current) return;
+      if (refreshGeneration !== galleryRefreshGeneration.current) {
+        return;
+      }
       galleryCache.nextCursor =
         page.next_before_mtime !== null && page.next_before_id !== null
           ? { mtime: page.next_before_mtime, id: page.next_before_id }
@@ -647,7 +665,9 @@ export function AudioPage({ active = true }: { active?: boolean }) {
 
   // Resync on activation: another tab may have loaded/unloaded models meanwhile.
   useEffect(() => {
-    if (!active) return;
+    if (!active) {
+      return;
+    }
     void refreshStatus();
     void refreshSttStatus();
     void refreshGallery();
@@ -657,18 +677,28 @@ export function AudioPage({ active = true }: { active?: boolean }) {
   // out from under a page that stays active, leaving Generate enabled against an empty
   // slot. Same reason Images and Video listen here.
   useEffect(() => {
-    if (!active) return;
+    if (!active) {
+      return;
+    }
     return subscribeModelLifecycle(({ runtime, loading }) => {
-      if (loading) return;
-      if (runtime === "chat") void refreshStatus();
-      if (runtime === "stt") void refreshSttStatus();
+      if (loading) {
+        return;
+      }
+      if (runtime === "chat") {
+        void refreshStatus();
+      }
+      if (runtime === "stt") {
+        void refreshSttStatus();
+      }
     });
   }, [active, refreshStatus, refreshSttStatus]);
 
   // The selected clip needs its bytes before the player can play it.
   useEffect(() => {
     const clip = clips.find((c) => c.id === selectedId);
-    if (clip) void ensureClipSrc(clip);
+    if (clip) {
+      void ensureClipSrc(clip);
+    }
   }, [clips, selectedId, ensureClipSrc]);
 
   /** `keepFallback` is for the one case where the id is not in `clips` yet: the server
@@ -677,7 +707,9 @@ export function AudioPage({ active = true }: { active?: boolean }) {
   const selectClip = useCallback((id: string, keepFallback = false) => {
     galleryCache.selectedId = id;
     setSelectedId(id);
-    if (!keepFallback) setFallbackClip(null);
+    if (!keepFallback) {
+      setFallbackClip(null);
+    }
   }, []);
 
   // --- Model selection ----------------------------------------------------
@@ -780,7 +812,9 @@ export function AudioPage({ active = true }: { active?: boolean }) {
             },
           },
         );
-        if (!isCurrent()) return;
+        if (!isCurrent()) {
+          return;
+        }
         if (res.is_audio && isTtsAudioType(res.audio_type)) {
           toast.success(`Model loaded (${res.audio_type ?? "audio"})`, {
             id: toastId,
@@ -800,19 +834,24 @@ export function AudioPage({ active = true }: { active?: boolean }) {
           toast.dismiss(toastId);
         }
       } finally {
-        if (pendingTtsLoad.current?.generation === generation)
+        if (pendingTtsLoad.current?.generation === generation) {
           pendingTtsLoad.current = null;
+        }
         ttsLoadInFlight.current = false;
         // Before the replay below, which needs the gate for its own attempt.
         releaseLifecycle();
         busyRef.current = null;
         setBusy(null);
-        if (activeRef.current) void refreshStatus();
+        if (activeRef.current) {
+          void refreshStatus();
+        }
         // Only while Audio is visible. Replaying unconditionally started a load with
         // activeRef already false, and since the deactivation effect had run it never saw
         // that attempt to cancel it, so a hidden page could replace the model Chat had
         // loaded. The pick stays queued instead and the activation effect replays it.
-        if (activeRef.current) replayQueuedTtsPick();
+        if (activeRef.current) {
+          replayQueuedTtsPick();
+        }
       }
     },
     [refreshStatus],
@@ -826,9 +865,15 @@ export function AudioPage({ active = true }: { active?: boolean }) {
    *  a load started while hidden outlives the deactivation effect that would cancel it. */
   const replayQueuedTtsPick = useCallback(() => {
     const queued = pendingRoutedTtsPick.current;
-    if (!queued) return;
+    if (!queued) {
+      return;
+    }
     pendingRoutedTtsPick.current = null;
-    void loadTtsModelRef.current(queued.repoId, queued.ggufFilename, queued.loadId);
+    void loadTtsModelRef.current(
+      queued.repoId,
+      queued.ggufFilename,
+      queued.loadId,
+    );
   }, []);
   const invalidatePendingStagedTts = useCallback(() => {
     stagedTtsGeneration.current += 1;
@@ -838,7 +883,9 @@ export function AudioPage({ active = true }: { active?: boolean }) {
   const transitionMode = useCallback(
     (nextMode: CreateMode) => {
       if (nextMode === mode) {
-        if (nextMode === "transcribe") invalidatePendingStagedTts();
+        if (nextMode === "transcribe") {
+          invalidatePendingStagedTts();
+        }
         return true;
       }
       if (!canTransitionAudioMode(busyRef.current)) {
@@ -848,8 +895,12 @@ export function AudioPage({ active = true }: { active?: boolean }) {
         return false;
       }
 
-      if (nextMode === "transcribe") invalidatePendingStagedTts();
-      if (busyRef.current === "generating") generateAbort.current?.abort();
+      if (nextMode === "transcribe") {
+        invalidatePendingStagedTts();
+      }
+      if (busyRef.current === "generating") {
+        generateAbort.current?.abort();
+      }
       stopAndDiscardRecording();
       setMode(nextMode);
       // Held through Generate, the sidecar keeps a dictation model in VRAM beside the speech one.
@@ -872,12 +923,16 @@ export function AudioPage({ active = true }: { active?: boolean }) {
         // still holds its model is what OOMs a device that fits either one alone.
         pendingTranscribeRelease.current = release;
         void release.then((released) => {
-          if (pendingTranscribeRelease.current !== release) return;
+          if (pendingTranscribeRelease.current !== release) {
+            return;
+          }
           pendingTranscribeRelease.current = null;
           // The sidecar is still holding its model, so the page must not sit in Speak
           // claiming otherwise: back to Transcribe, where Eject can retry the unload.
           // Only if nothing has moved on since, so a user who switched again wins.
-          if (!released && modeRef.current === "speak") setMode("transcribe");
+          if (!released && modeRef.current === "speak") {
+            setMode("transcribe");
+          }
         });
       }
       return true;
@@ -894,11 +949,13 @@ export function AudioPage({ active = true }: { active?: boolean }) {
     onReady: () => {
       const pending = pendingStagedTtsLoad.current;
       if (
-        !pending ||
-        !stagedTtsLoadIsOwned(
-          pending.generation,
-          stagedTtsGeneration.current,
-          modeRef.current,
+        !(
+          pending &&
+          stagedTtsLoadIsOwned(
+            pending.generation,
+            stagedTtsGeneration.current,
+            modeRef.current,
+          )
         )
       ) {
         pendingStagedTtsLoad.current = null;
@@ -917,15 +974,19 @@ export function AudioPage({ active = true }: { active?: boolean }) {
   });
 
   useEffect(() => {
-    if (!active || busy !== null || !stagedTtsLoadDeferred.current) return;
+    if (!active || busy !== null || !stagedTtsLoadDeferred.current) {
+      return;
+    }
     stagedTtsLoadDeferred.current = false;
     const pending = pendingStagedTtsLoad.current;
     if (
-      !pending ||
-      !stagedTtsLoadIsOwned(
-        pending.generation,
-        stagedTtsGeneration.current,
-        modeRef.current,
+      !(
+        pending &&
+        stagedTtsLoadIsOwned(
+          pending.generation,
+          stagedTtsGeneration.current,
+          modeRef.current,
+        )
       )
     ) {
       pendingStagedTtsLoad.current = null;
@@ -995,8 +1056,12 @@ export function AudioPage({ active = true }: { active?: boolean }) {
           await loadSttModel(sidecarKey, engine, controller.signal);
           sttLoadedByThisPage.current = sidecarKey;
         } catch (error) {
-          if (!(error instanceof SttModelNotDownloadedError)) throw error;
-          if (!isCurrent()) return;
+          if (!(error instanceof SttModelNotDownloadedError)) {
+            throw error;
+          }
+          if (!isCurrent()) {
+            return;
+          }
           await startSttDownload(sidecarKey, hfApiToken(getHfToken()), engine);
           // STT owns its specialized transfer, but the existing mirror gives
           // it the same global Downloads row, progress and Cancel action as
@@ -1019,28 +1084,41 @@ export function AudioPage({ active = true }: { active?: boolean }) {
           // sidecar when its poll finally finishes.
           for (;;) {
             await new Promise((resolve) => setTimeout(resolve, 1000));
-            if (!isCurrent()) return;
+            if (!isCurrent()) {
+              return;
+            }
             const stt = await fetchSttStatus(
               undefined,
               engine === "transformers" ? sidecarKey : undefined,
             );
-            if (!isCurrent()) return;
+            if (!isCurrent()) {
+              return;
+            }
             const block = sttEngineStatusFor(stt, sidecarKey, engine);
             const download = block?.download;
             // Cancel comes from the shared Downloads row. It is terminal for
             // this preparation attempt, not permission to try loading a
             // partial checkpoint.
-            if (download?.cancelled) return;
-            if (download?.error) throw new Error(download.error);
-            if (!download?.downloading) break;
+            if (download?.cancelled) {
+              return;
+            }
+            if (download?.error) {
+              throw new Error(download.error);
+            }
+            if (!download?.downloading) {
+              break;
+            }
           }
-          if (!isCurrent()) return;
+          if (!isCurrent()) {
+            return;
+          }
           toast.loading(`Loading ${sidecarKey}…`, { id: toastId });
           await loadSttModel(sidecarKey, engine, controller.signal);
           sttLoadedByThisPage.current = sidecarKey;
         }
-        if (isCurrent())
+        if (isCurrent()) {
           toast.success("Transcription model ready", { id: toastId });
+        }
       } catch (error) {
         if (isCurrent()) {
           toast.error(
@@ -1063,7 +1141,9 @@ export function AudioPage({ active = true }: { active?: boolean }) {
         } else {
           toast.dismiss(toastId);
         }
-        if (sttLoadAbort.current === controller) sttLoadAbort.current = null;
+        if (sttLoadAbort.current === controller) {
+          sttLoadAbort.current = null;
+        }
       }
     },
     [refreshSttStatus],
@@ -1080,11 +1160,12 @@ export function AudioPage({ active = true }: { active?: boolean }) {
         ttsLoadGeneration.current += 1;
         pendingTtsLoad.current = null;
         pending.controller.abort();
-        if (pending.requestStarted)
+        if (pending.requestStarted) {
           void unloadModel({
             model_path: pending.loadTarget,
             cancel_load_request_id: pending.loadRequestId,
           }).catch(() => {});
+        }
       }
       if (ttsInspectionGeneration.current !== null) {
         ttsInspectionGeneration.current = null;
@@ -1137,17 +1218,22 @@ export function AudioPage({ active = true }: { active?: boolean }) {
           if (
             download?.cancelled &&
             (download.model ?? download.cancelled_model) === deferred.sidecarKey
-          )
+          ) {
             return;
+          }
         } catch {
           // Status is advisory here; the normal preparation path reports errors.
         }
-        if (activeRef.current && selectedSttRepoRef.current === deferred.repoId)
+        if (
+          activeRef.current &&
+          selectedSttRepoRef.current === deferred.repoId
+        ) {
           void ensureSttLoaded(
             deferred.repoId,
             deferred.sidecarKey,
             deferred.engine,
           );
+        }
       })();
     }
   }, [active, ensureSttLoaded]);
@@ -1158,7 +1244,9 @@ export function AudioPage({ active = true }: { active?: boolean }) {
 
   const handleModelSelect = useCallback(
     async (id: string, meta: ModelSelectorChangeMeta) => {
-      if (busyRef.current !== null) return;
+      if (busyRef.current !== null) {
+        return;
+      }
       // Selecting a different artifact while recording is a lifecycle change
       // even when it stays in Transcribe mode; never let the old capture submit
       // against a sidecar that this pick is replacing.
@@ -1170,7 +1258,9 @@ export function AudioPage({ active = true }: { active?: boolean }) {
       const task = resolveAudioPickTask(audioTaskFor(id), meta.pipelineTag);
       if (task === "stt") {
         // An STT pick owns Transcribe: it runs on the sidecar, not the main slot.
-        if (!transitionMode("transcribe")) return;
+        if (!transitionMode("transcribe")) {
+          return;
+        }
         const sidecarKey = sttSidecarKeyFor(id);
         const engine = sttEngineForRepoId(id);
         deferredSttLoad.current = null;
@@ -1180,7 +1270,9 @@ export function AudioPage({ active = true }: { active?: boolean }) {
         return;
       }
       // TTS (or an uncurated repo the user pasted, which /load will validate).
-      if (!transitionMode("speak")) return;
+      if (!transitionMode("speak")) {
+        return;
+      }
       // Serialize against a Transcribe release started by that transition.
       const releaseInFlight = pendingTranscribeRelease.current;
       // A release that failed leaves the sidecar resident, so do not stack a speech model
@@ -1189,7 +1281,9 @@ export function AudioPage({ active = true }: { active?: boolean }) {
         setMode("transcribe");
         return;
       }
-      if (ttsPickGeneration.current !== selectionGeneration) return;
+      if (ttsPickGeneration.current !== selectionGeneration) {
+        return;
+      }
       const exactGguf = exactGgufLoadSelector(meta);
       const isGguf = Boolean(
         meta.isGguf ||
@@ -1222,7 +1316,9 @@ export function AudioPage({ active = true }: { active?: boolean }) {
             ggufSibling,
             hfApiToken(getHfToken()),
           );
-          if (selectionGeneration !== ttsPickGeneration.current) return;
+          if (selectionGeneration !== ttsPickGeneration.current) {
+            return;
+          }
           const variant = selectAutoGgufVariant(
             listing.variants,
             listing.default_variant,
@@ -1248,7 +1344,9 @@ export function AudioPage({ active = true }: { active?: boolean }) {
             expectedBytes: expectedGgufDownloadBytes(variant),
           });
         } catch (error) {
-          if (selectionGeneration !== ttsPickGeneration.current) return;
+          if (selectionGeneration !== ttsPickGeneration.current) {
+            return;
+          }
           toast.error(
             error instanceof Error
               ? error.message
@@ -1284,26 +1382,36 @@ export function AudioPage({ active = true }: { active?: boolean }) {
   };
   const handledRouteModel = useRef<string | null>(null);
   useEffect(() => {
-    if (!active) return;
+    if (!active) {
+      return;
+    }
     const wanted = routeSearch.model;
     if (!wanted) {
       handledRouteModel.current = null;
       // A task with no model is a mode intent from Settings; without it the page keeps
       // whatever mode it was left in.
       const task = routeSearch.task;
-      if (!task) return;
+      if (!task) {
+        return;
+      }
       const intended =
         task === "automatic-speech-recognition" ? "transcribe" : "speak";
       // Left in the URL when the switch is refused, so it retries once busy releases.
-      if (intended !== mode && !transitionMode(intended)) return;
+      if (intended !== mode && !transitionMode(intended)) {
+        return;
+      }
       void navigateSelf({ to: "/audio", search: {}, replace: true });
       return;
     }
     const key = `${wanted}|${routeSearch.quant ?? ""}|${routeSearch.ggufQuant ?? ""}|${routeSearch.task ?? ""}`;
-    if (handledRouteModel.current === key) return;
+    if (handledRouteModel.current === key) {
+      return;
+    }
     // The persistent Audio page may still be finishing hidden work. Keep the
     // handoff in the URL and retry it when that work releases the lifecycle.
-    if (busyRef.current !== null) return;
+    if (busyRef.current !== null) {
+      return;
+    }
     handledRouteModel.current = key;
     handleModelSelect(wanted, {
       source: "hub",
@@ -1346,7 +1454,9 @@ export function AudioPage({ active = true }: { active?: boolean }) {
     stopAndDiscardRecording();
 
     if (mode === "transcribe") {
-      if (!selectedSttRepo) return;
+      if (!selectedSttRepo) {
+        return;
+      }
       // A selection can exist before its sidecar is resident, so an unowned pick is only forgotten.
       if (!sttReady) {
         sttStatusRefreshGeneration.current += 1;
@@ -1378,7 +1488,9 @@ export function AudioPage({ active = true }: { active?: boolean }) {
     }
 
     const activeModel = status?.active_model;
-    if (!activeModel) return;
+    if (!activeModel) {
+      return;
+    }
 
     // Chat's gate, taken before the question so a queue cannot materialize while the
     // dialog is open and then be stopped by the blanket queue stop below.
@@ -1448,7 +1560,9 @@ export function AudioPage({ active = true }: { active?: boolean }) {
 
   const handleGenerate = useCallback(async () => {
     const text = prompt.trim();
-    if (!text) return;
+    if (!text) {
+      return;
+    }
     // Same gate the TTS load path uses. Switching straight from Transcribe with a speech
     // model already resident needs no load, so nothing else waits for the sidecar
     // teardown, and generating beside a dictation model OOMs a device that fits either
@@ -1458,7 +1572,9 @@ export function AudioPage({ active = true }: { active?: boolean }) {
     // a slow release let several clicks through and each resumed into its own
     // generateAudio while generateAbort tracked only the last, and either finally
     // cleared the busy state out from under the other.
-    if (busyRef.current) return;
+    if (busyRef.current) {
+      return;
+    }
     busyRef.current = "generating";
     setBusy("generating");
     const releaseInFlight = pendingTranscribeRelease.current;
@@ -1544,7 +1660,9 @@ export function AudioPage({ active = true }: { active?: boolean }) {
 
   const runTranscription = useCallback(
     async (blob: Blob, name: string) => {
-      if (!selectedSttRepo) return;
+      if (!selectedSttRepo) {
+        return;
+      }
       const key = sttSidecarKeyFor(selectedSttRepo);
       const engine = sttEngineForRepoId(selectedSttRepo);
       if (sttLoadedModel !== key || sttLoadedEngine !== engine) {
@@ -1563,11 +1681,17 @@ export function AudioPage({ active = true }: { active?: boolean }) {
           language: "",
           signal: controller.signal,
         });
-        if (controller.signal.aborted || !activeRef.current) return;
+        if (controller.signal.aborted || !activeRef.current) {
+          return;
+        }
         setTranscript(text);
-        if (!text) toast.info("The model heard no speech in that audio.");
+        if (!text) {
+          toast.info("The model heard no speech in that audio.");
+        }
       } catch (error) {
-        if (controller.signal.aborted) return;
+        if (controller.signal.aborted) {
+          return;
+        }
         toast.error(
           error instanceof Error ? error.message : "Transcription failed.",
         );
@@ -1575,7 +1699,9 @@ export function AudioPage({ active = true }: { active?: boolean }) {
         if (transcriptionAbort.current === controller) {
           transcriptionAbort.current = null;
           setBusy(null);
-          if (activeRef.current) void refreshSttStatus();
+          if (activeRef.current) {
+            void refreshSttStatus();
+          }
         }
       }
     },
@@ -1585,10 +1711,14 @@ export function AudioPage({ active = true }: { active?: boolean }) {
   const handleRecordToggle = useCallback(async () => {
     if (isRecording) {
       const recorder = recorderRef.current;
-      if (recorder && recorder.state !== "inactive") recorder.stop();
+      if (recorder && recorder.state !== "inactive") {
+        recorder.stop();
+      }
       return;
     }
-    if (micPendingGeneration.current !== null) return;
+    if (micPendingGeneration.current !== null) {
+      return;
+    }
     const requestGeneration = ++micRequestGeneration.current;
     micPendingGeneration.current = requestGeneration;
     setMicRequestPending(true);
@@ -1603,7 +1733,9 @@ export function AudioPage({ active = true }: { active?: boolean }) {
           activeRef.current,
         )
       ) {
-        for (const track of stream.getTracks()) track.stop();
+        for (const track of stream.getTracks()) {
+          track.stop();
+        }
         return;
       }
       recordStreamRef.current = stream;
@@ -1615,7 +1747,9 @@ export function AudioPage({ active = true }: { active?: boolean }) {
       // our array rather than inside the browser, so an over-long recording can be stopped
       // at the limit instead of being buffered whole and refused after the upload.
       const stopAtLimit = (reason: "duration" | "size") => {
-        if (limitHit) return;
+        if (limitHit) {
+          return;
+        }
         limitHit = reason;
         toast.warning(
           reason === "duration"
@@ -1654,7 +1788,9 @@ export function AudioPage({ active = true }: { active?: boolean }) {
         const blob = new Blob(chunks, {
           type: recorder.mimeType || "audio/webm",
         });
-        if (!discard && blob.size > 0) void runTranscription(blob, "Recording");
+        if (!discard && blob.size > 0) {
+          void runTranscription(blob, "Recording");
+        }
       });
       recorderRef.current = recorder;
       // A timeslice is what makes the byte cap observable: with none, some browsers hold
@@ -1674,8 +1810,9 @@ export function AudioPage({ active = true }: { active?: boolean }) {
           micRequestGeneration.current,
           activeRef.current,
         )
-      )
+      ) {
         toast.error("Could not access the microphone.");
+      }
     } finally {
       if (micPendingGeneration.current === requestGeneration) {
         micPendingGeneration.current = null;
@@ -1700,7 +1837,9 @@ export function AudioPage({ active = true }: { active?: boolean }) {
 
   const handleTranscribeFile = useCallback(
     (file: File | undefined) => {
-      if (!file) return;
+      if (!file) {
+        return;
+      }
       void runTranscription(file, file.name);
     },
     [runTranscription],
@@ -1736,7 +1875,9 @@ export function AudioPage({ active = true }: { active?: boolean }) {
         // Drop the row now, as the clear-all path does: refreshGallery swallows a failed
         // GET and returns the cache without calling setClips, which left the deleted clip
         // on screen against an object URL that has already been revoked.
-        galleryCache.clips = galleryCache.clips.filter((clip) => clip.id !== id);
+        galleryCache.clips = galleryCache.clips.filter(
+          (clip) => clip.id !== id,
+        );
         setClips(galleryCache.clips);
         if (galleryCache.selectedId === id) {
           galleryCache.selectedId = null;
@@ -1777,7 +1918,9 @@ export function AudioPage({ active = true }: { active?: boolean }) {
   const handleDownloadClip = useCallback(
     (clip: AudioGalleryClip) => {
       const src = srcById[clip.id];
-      if (!src) return;
+      if (!src) {
+        return;
+      }
       const anchor = document.createElement("a");
       anchor.href = src;
       anchor.download = `${clip.id}.wav`;
@@ -1787,7 +1930,9 @@ export function AudioPage({ active = true }: { active?: boolean }) {
   );
 
   const handleDownloadFallbackClip = useCallback(() => {
-    if (!fallbackClip) return;
+    if (!fallbackClip) {
+      return;
+    }
     const anchor = document.createElement("a");
     anchor.href = fallbackClip.url;
     anchor.download = "generated-audio.wav";
@@ -1835,11 +1980,15 @@ export function AudioPage({ active = true }: { active?: boolean }) {
   // you just fine-tuned here is unreachable.
   const [trainedTtsModels, setTrainedTtsModels] = useState<ModelOption[]>([]);
   useEffect(() => {
-    if (!active) return;
+    if (!active) {
+      return;
+    }
     let cancelled = false;
     listLoras()
       .then((res) => {
-        if (cancelled) return;
+        if (cancelled) {
+          return;
+        }
         setTrainedTtsModels(
           res.loras
             // MLX has no TTS decoder, so a trained LoRA or merged safetensors checkpoint
@@ -1860,7 +2009,9 @@ export function AudioPage({ active = true }: { active?: boolean }) {
       })
       .catch(() => {
         // Listing trained models is additive; the catalog rows still work without it.
-        if (!cancelled) setTrainedTtsModels([]);
+        if (!cancelled) {
+          setTrainedTtsModels([]);
+        }
       });
     return () => {
       cancelled = true;
@@ -1977,7 +2128,9 @@ export function AudioPage({ active = true }: { active?: boolean }) {
                   icon={mode === "speak" ? AudioWave01Icon : Mic01Icon}
                   className="size-[18px] shrink-0"
                 />
-                {mode === "speak" ? t("audioPage.generateAudio") : t("audioPage.transcribe")}
+                {mode === "speak"
+                  ? t("audioPage.generateAudio")
+                  : t("audioPage.transcribe")}
               </h2>
               {/* The always-on capability line: which task the selected model actually does. */}
               <p className="text-xs leading-snug text-muted-foreground">
@@ -2302,7 +2455,9 @@ export function AudioPage({ active = true }: { active?: boolean }) {
                             void handleCopyPrompt(clip.prompt)
                           }
                           onUseAsText={() => {
-                            if (transitionMode("speak")) setPrompt(clip.prompt);
+                            if (transitionMode("speak")) {
+                              setPrompt(clip.prompt);
+                            }
                           }}
                           onDelete={() => void handleDeleteClip(clip.id)}
                         />

@@ -8,7 +8,9 @@ import { savePersistedChatSettingsPatch } from "../../utils/chat-settings-storag
 import { retryablePatchAfterFailure } from "../../utils/settings-retry";
 import { ATOMIC_SETTING_KEYS, SETTINGS_DEBOUNCE_MS } from "./constants";
 
-export type SettingsPatch = Parameters<typeof savePersistedChatSettingsPatch>[0];
+export type SettingsPatch = Parameters<
+  typeof savePersistedChatSettingsPatch
+>[0];
 
 let hasShownSettingsPersistenceWarning = false;
 let pendingPatch: SettingsPatch = {};
@@ -25,11 +27,15 @@ export function warnSettingsPersistenceFailure(): void {
   });
 }
 
-export function isPlainObject(value: unknown): value is Record<string, unknown> {
+export function isPlainObject(
+  value: unknown,
+): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-export const NESTED_MAP_SETTING_KEYS = new Set<string>(["inferenceParamsByModel"]);
+export const NESTED_MAP_SETTING_KEYS = new Set<string>([
+  "inferenceParamsByModel",
+]);
 
 export function mergePatch(into: SettingsPatch, more: SettingsPatch): void {
   for (const [key, value] of Object.entries(more)) {
@@ -39,7 +45,7 @@ export function mergePatch(into: SettingsPatch, more: SettingsPatch): void {
       intoAny[key] = value;
       continue;
     }
-    if (!isPlainObject(prev) || !isPlainObject(value)) {
+    if (!(isPlainObject(prev) && isPlainObject(value))) {
       intoAny[key] = value;
       continue;
     }
@@ -60,7 +66,9 @@ export function mergePatch(into: SettingsPatch, more: SettingsPatch): void {
 }
 
 export async function flushSettingsPatch(keepalive = false): Promise<void> {
-  if (Object.keys(pendingPatch).length === 0) return;
+  if (Object.keys(pendingPatch).length === 0) {
+    return;
+  }
   const patch = pendingPatch;
   pendingPatch = {};
   try {
@@ -82,7 +90,9 @@ export async function flushSettingsPatch(keepalive = false): Promise<void> {
 }
 
 export function scheduleSettingsFlush(): void {
-  if (pendingTimer !== null) clearTimeout(pendingTimer);
+  if (pendingTimer !== null) {
+    clearTimeout(pendingTimer);
+  }
   pendingTimer = setTimeout(() => {
     pendingTimer = null;
     inflightFlush = inflightFlush
@@ -108,7 +118,9 @@ export function mergePreHydrationPatch(patch: SettingsPatch): void {
 }
 
 export function flushPendingSettingsNow(keepalive = false): void {
-  if (Object.keys(pendingPatch).length === 0) return;
+  if (Object.keys(pendingPatch).length === 0) {
+    return;
+  }
   inflightFlush = inflightFlush
     .catch(() => undefined)
     .then(() => flushSettingsPatch(keepalive));

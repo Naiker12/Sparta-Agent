@@ -1,4 +1,3 @@
-
 import { Badge } from "@/components/ui/badge";
 import { ChevronDownStandardIcon } from "@/lib/chevron-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -39,7 +38,9 @@ export function AvailableVariables({
     [variableNames],
   );
 
-  if (vars.length === 0) return null;
+  if (vars.length === 0) {
+    return null;
+  }
 
   return (
     <div className="corner-squircle rounded-2xl border border-border/60 px-3 py-2">

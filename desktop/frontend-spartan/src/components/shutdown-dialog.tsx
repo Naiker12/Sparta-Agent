@@ -1,7 +1,3 @@
-
-import { authFetch } from "@/features/auth";
-import { toastError } from "@/shared/toast";
-import { useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,6 +8,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { authFetch } from "@/features/auth";
+import { toastError } from "@/shared/toast";
+import { useState } from "react";
 
 interface ShutdownDialogProps {
   open: boolean;

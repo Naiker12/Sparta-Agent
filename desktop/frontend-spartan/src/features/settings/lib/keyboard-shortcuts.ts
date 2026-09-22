@@ -1,4 +1,3 @@
-
 import type { TranslationKey } from "@/i18n";
 
 /**
@@ -114,8 +113,12 @@ export function isModifierCode(code: string): boolean {
 let macPlatform: boolean | null = null;
 
 export function isMacPlatform(): boolean {
-  if (macPlatform !== null) return macPlatform;
-  if (typeof navigator === "undefined") return false;
+  if (macPlatform !== null) {
+    return macPlatform;
+  }
+  if (typeof navigator === "undefined") {
+    return false;
+  }
   // `platform` is deprecated but still the only synchronous signal in Safari,
   // which is the browser most likely to be rendering ⌘ here.
   const source = `${navigator.platform ?? ""} ${navigator.userAgent ?? ""}`;
@@ -126,10 +129,18 @@ export function isMacPlatform(): boolean {
 /** Serialize to the stored form, e.g. "Mod+Shift+KeyO". */
 export function formatBindingValue(binding: ShortcutBinding): string {
   const parts: string[] = [];
-  if (binding.mod) parts.push("Mod");
-  if (binding.ctrl) parts.push("Ctrl");
-  if (binding.alt) parts.push("Alt");
-  if (binding.shift) parts.push("Shift");
+  if (binding.mod) {
+    parts.push("Mod");
+  }
+  if (binding.ctrl) {
+    parts.push("Ctrl");
+  }
+  if (binding.alt) {
+    parts.push("Alt");
+  }
+  if (binding.shift) {
+    parts.push("Shift");
+  }
   parts.push(binding.code);
   return parts.join("+");
 }
@@ -138,11 +149,17 @@ export function formatBindingValue(binding: ShortcutBinding): string {
 export function parseBinding(
   value: string | null | undefined,
 ): ShortcutBinding | null {
-  if (!value) return null;
+  if (!value) {
+    return null;
+  }
   const parts = value.split("+").filter(Boolean);
-  if (parts.length === 0) return null;
+  if (parts.length === 0) {
+    return null;
+  }
   const code = parts[parts.length - 1];
-  if (!code || isModifierCode(code)) return null;
+  if (!code || isModifierCode(code)) {
+    return null;
+  }
   const binding: ShortcutBinding = {
     code,
     mod: false,
@@ -184,13 +201,17 @@ export function bindingFromEvent(
   mac = isMacPlatform(),
 ): ShortcutBinding | null {
   const code = event.code || keyToCode(event.key ?? "");
-  if (!code || isModifierCode(code)) return null;
+  if (!code || isModifierCode(code)) {
+    return null;
+  }
   // Off macOS there is nowhere to put Meta: matchesBinding rejects an event
   // carrying it, so recording Super+Alt+K would drop the Super and persist plain
   // Alt+K -- a chord the user did not choose, which then fires on Alt+K alone
   // while the one they pressed never matches. Record nothing instead, the same
   // answer the recorder already gets while only modifiers are held.
-  if (!mac && event.metaKey) return null;
+  if (!mac && event.metaKey) {
+    return null;
+  }
   // Cmd on macOS and Ctrl elsewhere both record as Mod, so one binding reads
   // naturally on either platform. A macOS user pressing Ctrl means Ctrl.
   return {
@@ -204,9 +225,15 @@ export function bindingFromEvent(
 
 /** Last-resort code for engines that report an empty `code` (some IMEs). */
 function keyToCode(key: string): string {
-  if (!key) return "";
-  if (/^[a-z]$/i.test(key)) return `Key${key.toUpperCase()}`;
-  if (/^[0-9]$/.test(key)) return `Digit${key}`;
+  if (!key) {
+    return "";
+  }
+  if (/^[a-z]$/i.test(key)) {
+    return `Key${key.toUpperCase()}`;
+  }
+  if (/^[0-9]$/.test(key)) {
+    return `Digit${key}`;
+  }
   const punctuation: Record<string, string> = {
     ",": "Comma",
     ".": "Period",
@@ -236,14 +263,20 @@ export function matchesBinding(
   mac = isMacPlatform(),
 ): boolean {
   const code = event.code || keyToCode(event.key ?? "");
-  if (code !== binding.code) return false;
+  if (code !== binding.code) {
+    return false;
+  }
   const modHeld = mac ? event.metaKey : event.ctrlKey;
   // Off-platform modifier: on macOS a bare Ctrl must not satisfy a Mod binding,
   // and on Windows/Linux the Meta (Windows) key must not either.
   const otherModHeld = mac ? event.ctrlKey : event.metaKey;
-  if (modHeld !== binding.mod) return false;
+  if (modHeld !== binding.mod) {
+    return false;
+  }
   if (mac) {
-    if (event.ctrlKey !== binding.ctrl) return false;
+    if (event.ctrlKey !== binding.ctrl) {
+      return false;
+    }
   } else if (otherModHeld) {
     return false;
   }
@@ -252,8 +285,12 @@ export function matchesBinding(
 
 /** Human label for a code: "KeyO" -> "O", "Comma" -> ",", "ArrowUp" -> "↑". */
 export function formatCode(code: string): string {
-  if (code.startsWith("Key") && code.length === 4) return code.slice(3);
-  if (code.startsWith("Digit") && code.length === 6) return code.slice(5);
+  if (code.startsWith("Key") && code.length === 4) {
+    return code.slice(3);
+  }
+  if (code.startsWith("Digit") && code.length === 6) {
+    return code.slice(5);
+  }
   const named: Record<string, string> = {
     Comma: ",",
     Period: ".",
@@ -291,16 +328,30 @@ export function formatBindingLabel(
   const key = formatCode(binding.code);
   if (mac) {
     let out = "";
-    if (binding.ctrl) out += "⌃";
-    if (binding.alt) out += "⌥";
-    if (binding.shift) out += "⇧";
-    if (binding.mod) out += "⌘";
+    if (binding.ctrl) {
+      out += "⌃";
+    }
+    if (binding.alt) {
+      out += "⌥";
+    }
+    if (binding.shift) {
+      out += "⇧";
+    }
+    if (binding.mod) {
+      out += "⌘";
+    }
     return `${out}${key}`;
   }
   const parts: string[] = [];
-  if (binding.mod || binding.ctrl) parts.push("Ctrl");
-  if (binding.alt) parts.push("Alt");
-  if (binding.shift) parts.push("Shift");
+  if (binding.mod || binding.ctrl) {
+    parts.push("Ctrl");
+  }
+  if (binding.alt) {
+    parts.push("Alt");
+  }
+  if (binding.shift) {
+    parts.push("Shift");
+  }
   parts.push(key);
   return parts.join("+");
 }
@@ -319,6 +370,8 @@ export function formatBindingValueLabel(
  * recorder refuses it. Function keys and Escape are self-contained.
  */
 export function isAcceptableBinding(binding: ShortcutBinding): boolean {
-  if (binding.mod || binding.ctrl || binding.alt) return true;
+  if (binding.mod || binding.ctrl || binding.alt) {
+    return true;
+  }
   return /^F\d{1,2}$/.test(binding.code) || binding.code === "Escape";
 }

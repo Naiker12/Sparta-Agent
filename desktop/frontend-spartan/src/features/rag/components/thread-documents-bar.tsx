@@ -1,32 +1,13 @@
-
-import { useCallback, useEffect, useRef, useState } from "react";
-import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  AttachmentIcon,
-  FileDatabaseIcon,
-  Folder02Icon,
-} from "@hugeicons/core-free-icons";
-import { Tick02Icon } from "@/lib/tick-icon";
-import { useAui } from "@assistant-ui/react";
-import { cn } from "@/lib/utils";
-import {
-  PENDING_CHAT_ATTACHMENT_KEY,
-  readPendingAttachmentTargetClaim,
-  useChatRuntimeStore,
-} from "@/features/chat/stores/chat-runtime-store";
-import type { ProjectAttachmentTarget } from "@/features/chat/utils/project-attachment-target";
-import {
-  chatHistoryClearBoundary,
-  ChatThreadDeletedError,
-  ensureStoredChatThread,
-  getStoredChatThread,
-  isThreadIncognito,
-} from "@/features/chat";
-import {
-  useNativeAttachmentTargetKey,
-  useNativeIntentStore,
-} from "@/features/native-intents";
-import { toast } from "@/lib/toast";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,6 +15,34 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  ChatThreadDeletedError,
+  chatHistoryClearBoundary,
+  ensureStoredChatThread,
+  getStoredChatThread,
+  isThreadIncognito,
+} from "@/features/chat";
+import {
+  PENDING_CHAT_ATTACHMENT_KEY,
+  readPendingAttachmentTargetClaim,
+  useChatRuntimeStore,
+} from "@/features/chat/stores/chat-runtime-store";
+import type { ProjectAttachmentTarget } from "@/features/chat/utils/project-attachment-target";
+import {
+  useNativeAttachmentTargetKey,
+  useNativeIntentStore,
+} from "@/features/native-intents";
+import { Tick02Icon } from "@/lib/tick-icon";
+import { toast } from "@/lib/toast";
+import { cn } from "@/lib/utils";
+import { useAui } from "@assistant-ui/react";
+import {
+  AttachmentIcon,
+  FileDatabaseIcon,
+  Folder02Icon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   announceProjectSourcesUpdated,
   invalidateProjectSources,
@@ -48,16 +57,6 @@ import {
   type RagDocument,
   isLinkedFolderManaged,
 } from "../types/rag";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { DocumentStatusChip } from "./document-status-chip";
 import { useRagDocuments } from "./use-rag-documents";
 
@@ -68,10 +67,14 @@ function KnowledgeBaseSourceChip({ kbId }: { kbId: string }) {
     let cancelled = false;
     listKnowledgeBases()
       .then((rows) => {
-        if (!cancelled) setName(rows.find((kb) => kb.id === kbId)?.name ?? null);
+        if (!cancelled) {
+          setName(rows.find((kb) => kb.id === kbId)?.name ?? null);
+        }
       })
       .catch(() => {
-        if (!cancelled) setName(null);
+        if (!cancelled) {
+          setName(null);
+        }
       });
     return () => {
       cancelled = true;
@@ -95,13 +98,15 @@ function KnowledgeBaseSourceChip({ kbId }: { kbId: string }) {
 }
 
 /**
-* Confirm a thread is stored before documents are indexed against it. An id reaches this
-* component before its row write lands, from a cached initialize() or from activeThreadId, and
-* upload_thread_document does not check the thread itself. A transport failure is not proof the
-* row is missing, so only a definitive miss blocks the upload.
-*/
+ * Confirm a thread is stored before documents are indexed against it. An id reaches this
+ * component before its row write lands, from a cached initialize() or from activeThreadId, and
+ * upload_thread_document does not check the thread itself. A transport failure is not proof the
+ * row is missing, so only a definitive miss blocks the upload.
+ */
 async function requireStoredThread(threadId: string): Promise<void> {
-  if (isThreadIncognito(threadId)) return;
+  if (isThreadIncognito(threadId)) {
+    return;
+  }
   let stored: Awaited<ReturnType<typeof ensureStoredChatThread>>;
   try {
     stored = await ensureStoredChatThread(threadId);
@@ -131,7 +136,11 @@ function InheritedProjectSources({
         className="composer-pill-btn shrink-0 cursor-default !text-foreground/60"
         title="This chat retrieves from its project's sources. Manage them in the project's Sources tab."
       >
-        <HugeiconsIcon icon={Folder02Icon} strokeWidth={2} className="size-3.5" />
+        <HugeiconsIcon
+          icon={Folder02Icon}
+          strokeWidth={2}
+          className="size-3.5"
+        />
         <span>Project sources</span>
       </span>
       {/* Same cap as the editable list: a linked folder can carry hundreds of
@@ -183,16 +192,26 @@ function useThreadProjectId(
       for (let attempt = 0; attempt < PROJECT_LOOKUP_RETRIES; attempt += 1) {
         try {
           const thread = await getStoredChatThread(threadId);
-          if (cancelled) return;
+          if (cancelled) {
+            return;
+          }
           // No row yet: initialize() does not await the write, so the composer's
           // project is the answer that row is about to record.
-          const projectId = thread ? (thread.projectId ?? null) : activeProjectId;
+          const projectId = thread
+            ? (thread.projectId ?? null)
+            : activeProjectId;
           setResolved({ threadId, trigger: activeProjectId, projectId });
           return;
         } catch {
-          if (cancelled) return;
-          await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)));
-          if (cancelled) return;
+          if (cancelled) {
+            return;
+          }
+          await new Promise((resolve) =>
+            setTimeout(resolve, 500 * (attempt + 1)),
+          );
+          if (cancelled) {
+            return;
+          }
         }
       }
     })();
@@ -365,7 +384,9 @@ export function ThreadDocumentsBar({
     // A plain send creates the chat too, without ensureThreadId. Hand the
     // earlier choice to the chat that just got an id, or the next one inherits it.
     if (!hadThreadId) {
-      useChatRuntimeStore.getState().adoptPendingProjectAttachmentTarget(threadId);
+      useChatRuntimeStore
+        .getState()
+        .adoptPendingProjectAttachmentTarget(threadId);
     }
     setMaterializedId(null);
     initGenerationRef.current += 1;
@@ -451,7 +472,10 @@ export function ThreadDocumentsBar({
   // Both scopes hold on their first list, for the same reason: reopening a chat
   // whose own attachment was still indexing lists nothing until it lands either.
   const hasIndexing =
-    threadIndexing || threadListLoading || projectIndexing || projectListLoading;
+    threadIndexing ||
+    threadListLoading ||
+    projectIndexing ||
+    projectListLoading;
   const lastEmittedIndexingRef = useRef<boolean | null>(null);
   useEffect(() => {
     if (lastEmittedIndexingRef.current !== hasIndexing) {
@@ -459,12 +483,15 @@ export function ThreadDocumentsBar({
       onIndexingChange?.(hasIndexing);
     }
   }, [hasIndexing, onIndexingChange]);
-  useEffect(() => () => {
-    if (lastEmittedIndexingRef.current !== false) {
-      lastEmittedIndexingRef.current = false;
-      onIndexingChange?.(false);
-    }
-  }, [onIndexingChange]);
+  useEffect(
+    () => () => {
+      if (lastEmittedIndexingRef.current !== false) {
+        lastEmittedIndexingRef.current = false;
+        onIndexingChange?.(false);
+      }
+    },
+    [onIndexingChange],
+  );
 
   // Materialize the thread id on first use; ref-deduped so a double-click can't
   // start two threads. A thread switch gets separate work even if the prior request is pending.
@@ -528,8 +555,8 @@ export function ThreadDocumentsBar({
         invalidateProjectSources(projectId);
         // Explicit scope: a desktop drop enables RAG and attaches in the same
         // tick, so the hook's own scope is still null on this render.
-        void uploadToProject(items, { type: "project", projectId }).finally(() =>
-          announceProjectSourcesUpdated(projectId),
+        void uploadToProject(items, { type: "project", projectId }).finally(
+          () => announceProjectSourcesUpdated(projectId),
         );
         return;
       }
@@ -553,7 +580,7 @@ export function ThreadDocumentsBar({
     ),
   );
   useEffect(() => {
-    if (!hasPendingAttachments || !nativeAttachmentTargetKey) {
+    if (!(hasPendingAttachments && nativeAttachmentTargetKey)) {
       return;
     }
     // Hold the batch rather than draining it into the wrong scope. The intents
@@ -564,7 +591,9 @@ export function ThreadDocumentsBar({
     // A KB-scoped chat uploads through the KB dialog, so a thread upload here would
     // index into something this bar never shows.
     if (ragEnabled && ragSource.type === "kb") {
-      useNativeIntentStore.getState().takeAttachments(nativeAttachmentTargetKey);
+      useNativeIntentStore
+        .getState()
+        .takeAttachments(nativeAttachmentTargetKey);
       toast.error("This chat retrieves from a knowledge base", {
         description: "Add these files to the knowledge base instead.",
       });
@@ -573,7 +602,9 @@ export function ThreadDocumentsBar({
     const intents = useNativeIntentStore
       .getState()
       .takeAttachments(nativeAttachmentTargetKey);
-    if (intents.length === 0) return;
+    if (intents.length === 0) {
+      return;
+    }
     // A stale KB preference is inactive while RAG is off; use thread retrieval.
     if (!ragEnabled) {
       setRagSource({ type: "thread" });
@@ -603,10 +634,14 @@ export function ThreadDocumentsBar({
   const [chipsOverflow, setChipsOverflow] = useState(false);
   // Removing a project source here deletes it for every chat, beside a chat chip
   // whose X is undoable. Confirm, as the Sources tab and Settings do.
-  const [removingShared, setRemovingShared] = useState<RagDocument | null>(null);
+  const [removingShared, setRemovingShared] = useState<RagDocument | null>(
+    null,
+  );
   const updateChipFade = useCallback(() => {
     const el = chipScrollRef.current;
-    if (!el) return;
+    if (!el) {
+      return;
+    }
     setChipsOverflow(el.scrollHeight - el.scrollTop - el.clientHeight > 1);
   }, []);
   useEffect(() => {
@@ -659,13 +694,15 @@ export function ThreadDocumentsBar({
       <input
         ref={fileInputRef}
         type="file"
-        multiple
+        multiple={true}
         accept={RAG_UPLOAD_ACCEPT}
         className="hidden"
         onChange={(e) => {
           const files = Array.from(e.target.files ?? []);
           e.target.value = "";
-          if (files.length === 0) return;
+          if (files.length === 0) {
+            return;
+          }
           attach(files);
         }}
       />
@@ -712,7 +749,9 @@ export function ThreadDocumentsBar({
       <AlertDialog
         open={removingShared !== null}
         onOpenChange={(open) => {
-          if (!open) setRemovingShared(null);
+          if (!open) {
+            setRemovingShared(null);
+          }
         }}
       >
         <AlertDialogContent>
@@ -730,7 +769,9 @@ export function ThreadDocumentsBar({
               onClick={() => {
                 const doc = removingShared;
                 setRemovingShared(null);
-                if (doc) void removeFromProject(doc.id);
+                if (doc) {
+                  void removeFromProject(doc.id);
+                }
               }}
             >
               Remove

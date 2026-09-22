@@ -1,7 +1,6 @@
-
+import { usePlatformStore } from "@/config/env";
 import { isExternalModelId, useChatRuntimeStore } from "@/features/chat";
 import { useMemo } from "react";
-import { usePlatformStore } from "@/config/env";
 import type { PerModelConfig } from "../model-config/per-model-config";
 import { isServedByMlx } from "../model-config/per-model-config";
 

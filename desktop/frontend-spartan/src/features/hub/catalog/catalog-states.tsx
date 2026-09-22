@@ -1,4 +1,4 @@
-
+import type { HubFailure } from "@/features/hub/lib/network";
 import {
   CloudOffIcon,
   CubeIcon,
@@ -10,7 +10,6 @@ import type { IconSvgElement } from "@hugeicons/react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { ReactNode } from "react";
 import { useLayoutEffect, useRef, useState } from "react";
-import type { HubFailure } from "@/features/hub/lib/network";
 
 // Only a browser reporting itself offline earns "You're offline". Calling a DNS
 // filter or extension block "offline" is what made these bugs undiagnosable.
@@ -235,7 +234,11 @@ export function InventoryErrorState({
   return (
     <div className="flex min-h-[260px] flex-col items-center justify-center gap-3 px-6 text-center">
       <div className="inline-flex size-11 items-center justify-center rounded-[12px] bg-amber-500/10 text-amber-700 dark:text-amber-300">
-        <HugeiconsIcon icon={CloudOffIcon} strokeWidth={1.6} className="size-5" />
+        <HugeiconsIcon
+          icon={CloudOffIcon}
+          strokeWidth={1.6}
+          className="size-5"
+        />
       </div>
       <div className="space-y-1">
         <p className="text-ui-14 font-semibold tracking-tight text-foreground">
@@ -252,7 +255,11 @@ export function InventoryErrorState({
         onClick={onRetry}
         className="inline-flex h-8 items-center gap-1.5 rounded-full bg-transparent px-3 text-ui-12 font-medium text-foreground transition-colors hover:bg-foreground/[0.04] dark:hover:bg-white/[0.05]"
       >
-        <HugeiconsIcon icon={Refresh01Icon} strokeWidth={1.75} className="size-3.5" />
+        <HugeiconsIcon
+          icon={Refresh01Icon}
+          strokeWidth={1.75}
+          className="size-3.5"
+        />
         Try again
       </button>
     </div>
@@ -306,7 +313,9 @@ const MAX_SKELETON_ROWS = 24;
 const DEFAULT_SKELETON_ROWS = 6;
 
 function clampSkeletonCount(height: number): number {
-  if (!Number.isFinite(height) || height <= 0) return DEFAULT_SKELETON_ROWS;
+  if (!Number.isFinite(height) || height <= 0) {
+    return DEFAULT_SKELETON_ROWS;
+  }
   return Math.max(
     MIN_SKELETON_ROWS,
     Math.min(MAX_SKELETON_ROWS, Math.ceil(height / SKELETON_ROW_ESTIMATE_PX)),
@@ -319,9 +328,13 @@ export function SkeletonList({ count }: { count?: number }) {
   const rowCount = count ?? autoCount;
 
   useLayoutEffect(() => {
-    if (count != null) return;
+    if (count != null) {
+      return;
+    }
     const container = ref.current?.parentElement;
-    if (!container || typeof window === "undefined") return;
+    if (!container || typeof window === "undefined") {
+      return;
+    }
 
     let frame: number | null = null;
     const update = () => {
@@ -329,7 +342,9 @@ export function SkeletonList({ count }: { count?: number }) {
       setAutoCount(clampSkeletonCount(container.clientHeight));
     };
     const schedule = () => {
-      if (frame !== null) return;
+      if (frame !== null) {
+        return;
+      }
       frame = window.requestAnimationFrame(update);
     };
     schedule();
@@ -337,7 +352,9 @@ export function SkeletonList({ count }: { count?: number }) {
     if (typeof ResizeObserver === "undefined") {
       window.addEventListener("resize", schedule);
       return () => {
-        if (frame !== null) window.cancelAnimationFrame(frame);
+        if (frame !== null) {
+          window.cancelAnimationFrame(frame);
+        }
         window.removeEventListener("resize", schedule);
       };
     }
@@ -345,7 +362,9 @@ export function SkeletonList({ count }: { count?: number }) {
     const observer = new ResizeObserver(schedule);
     observer.observe(container);
     return () => {
-      if (frame !== null) window.cancelAnimationFrame(frame);
+      if (frame !== null) {
+        window.cancelAnimationFrame(frame);
+      }
       observer.disconnect();
     };
   }, [count]);

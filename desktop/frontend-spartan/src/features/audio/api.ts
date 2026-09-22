@@ -1,4 +1,3 @@
-
 import { authFetch } from "@/features/auth";
 import { readFastApiError } from "@/lib/format-fastapi-error";
 
@@ -83,7 +82,9 @@ export async function deleteAudioClip(id: string): Promise<void> {
     `/api/inference/audio/gallery/${encodeURIComponent(id)}`,
     { method: "DELETE" },
   );
-  if (!response.ok) throw new Error(await readFastApiError(response));
+  if (!response.ok) {
+    throw new Error(await readFastApiError(response));
+  }
 }
 
 export async function clearAudioGallery(): Promise<number> {
@@ -98,7 +99,9 @@ export async function fetchClipObjectUrl(
   url: string,
 ): Promise<{ url: string; bytes: number }> {
   const response = await authFetch(url);
-  if (!response.ok) throw new Error(await readFastApiError(response));
+  if (!response.ok) {
+    throw new Error(await readFastApiError(response));
+  }
   const blob = await response.blob();
   return { url: URL.createObjectURL(blob), bytes: blob.size };
 }

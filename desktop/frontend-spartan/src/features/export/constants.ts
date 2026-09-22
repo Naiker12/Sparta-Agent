@@ -1,4 +1,3 @@
-
 export type ExportMethod = "merged" | "lora" | "gguf";
 
 export const EXPORT_METHODS: {
@@ -198,7 +197,9 @@ export const MERGED_FORMATS: MergedFormatOption[] = [
 ];
 
 /** Look up a merged format option by its stable value. */
-export function findMergedFormat(value: string): MergedFormatOption | undefined {
+export function findMergedFormat(
+  value: string,
+): MergedFormatOption | undefined {
   return MERGED_FORMATS.find((f) => f.value === value);
 }
 

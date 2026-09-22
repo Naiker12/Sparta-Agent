@@ -1,4 +1,3 @@
-
 // Picking the .gguf a repo-level pick means. No app deps so it stays testable; the request lives in diffusion-gguf-filename.ts.
 
 /** A row of the repo's GGUF listing. Loose so an older response still resolves. */
@@ -51,7 +50,11 @@ export function pickGgufFilename(
   }
   // No label: only a lone file names itself. Downloaded first, so a fully listed remote repo resolves to the quant on disk.
   const downloaded = listed.filter((v) => v.downloaded);
-  if (downloaded.length === 1) return downloaded[0].filename;
-  if (listed.length === 1) return listed[0].filename;
+  if (downloaded.length === 1) {
+    return downloaded[0].filename;
+  }
+  if (listed.length === 1) {
+    return listed[0].filename;
+  }
   return null;
 }

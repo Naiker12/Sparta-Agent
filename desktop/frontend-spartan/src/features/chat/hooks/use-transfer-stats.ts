@@ -1,4 +1,3 @@
-
 /**
  * Compute rate (bytes/sec) and ETA (seconds) from a time-series of cumulative
  * ``bytes`` values, using a rolling window of recent samples.

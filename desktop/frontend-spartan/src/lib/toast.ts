@@ -1,10 +1,9 @@
-
 // Re-export of sonner. Swipe blocking lives on the Toaster via
 // `swipeDirections={[]}`, so no per-toast dismissible override.
 
 import { Spinner } from "@/components/ui/spinner";
 import { getLocale } from "@/i18n";
-import { createElement } from "react";
+import { type ReactNode, createElement } from "react";
 import { toast as sonnerToast } from "sonner";
 import type { ExternalToast } from "sonner";
 
@@ -50,13 +49,17 @@ const SPANISH_TOASTS: Record<string, string> = {
   "Connections disabled": "Las conexiones están desactivadas",
 };
 
-function localizeToast(message: string | React.ReactNode): string | React.ReactNode {
-  if (typeof message !== "string" || getLocale() !== "es") return message;
+function localizeToast(message: string | ReactNode): string | ReactNode {
+  if (typeof message !== "string" || getLocale() !== "es") {
+    return message;
+  }
   return SPANISH_TOASTS[message] ?? message;
 }
 
 function localizeOptions(options?: ExternalToast): ExternalToast | undefined {
-  if (!options || typeof options.description !== "string") return options;
+  if (!options || typeof options.description !== "string") {
+    return options;
+  }
   return { ...options, description: localizeToast(options.description) };
 }
 
@@ -69,27 +72,29 @@ const rawLoading = sonnerToast.loading.bind(sonnerToast);
 const rawDismiss = sonnerToast.dismiss.bind(sonnerToast);
 const rawCustom = sonnerToast.custom.bind(sonnerToast);
 
-const baseToast = (message: string | React.ReactNode, data?: ExternalToast) =>
+const baseToast = (message: string | ReactNode, data?: ExternalToast) =>
   sonnerToast(localizeToast(message), localizeOptions(data));
 
 export const toast = Object.assign(baseToast, {
   ...sonnerToast,
-  success: (message: string | React.ReactNode, options?: ExternalToast) =>
+  success: (message: string | ReactNode, options?: ExternalToast) =>
     rawSuccess(localizeToast(message), localizeOptions(options)),
-  error: (message: string | React.ReactNode, options?: ExternalToast) =>
+  error: (message: string | ReactNode, options?: ExternalToast) =>
     rawError(localizeToast(message), localizeOptions(options)),
-  warning: (message: string | React.ReactNode, options?: ExternalToast) =>
+  warning: (message: string | ReactNode, options?: ExternalToast) =>
     rawWarning(localizeToast(message), localizeOptions(options)),
-  info: (message: string | React.ReactNode, options?: ExternalToast) =>
+  info: (message: string | ReactNode, options?: ExternalToast) =>
     rawInfo(localizeToast(message), localizeOptions(options)),
-  message: (message: string | React.ReactNode, options?: ExternalToast) =>
+  message: (message: string | ReactNode, options?: ExternalToast) =>
     rawMessage(localizeToast(message), localizeOptions(options)),
-  loading: (message: string | React.ReactNode, options?: ExternalToast) =>
+  loading: (message: string | ReactNode, options?: ExternalToast) =>
     rawLoading(localizeToast(message), localizeOptions(options)),
   dismiss: rawDismiss,
   custom: rawCustom,
   promise: sonnerToast.promise.bind(sonnerToast),
-  getHistory: sonnerToast.getHistory ? sonnerToast.getHistory.bind(sonnerToast) : () => [],
+  getHistory: sonnerToast.getHistory
+    ? sonnerToast.getHistory.bind(sonnerToast)
+    : () => [],
 });
 
 function createLoadingToastIcon() {

@@ -5,12 +5,9 @@
  * soporte de indicadores visuales (drop cues) y menú alternativo para teclados/pantallas táctiles.
  */
 
-import { useState } from "react";
 import { dropEdgeFor, moveIdBy, reorderIds } from "@/features/chat";
-import {
-  DROP_CUE_BOTTOM,
-  DROP_CUE_TOP,
-} from "./sidebar-types-and-constants";
+import { type DragEvent, useState } from "react";
+import { DROP_CUE_BOTTOM, DROP_CUE_TOP } from "./sidebar-types-and-constants";
 
 export function useSidebarDragAndDrop({
   setManualOrder,
@@ -48,13 +45,15 @@ export function useSidebarDragAndDrop({
     delta: number,
   ) {
     const next = moveIdBy(orderedIds, rowId, delta);
-    if (next !== orderedIds) setManualOrder(scope, next);
+    if (next !== orderedIds) {
+      setManualOrder(scope, next);
+    }
   }
 
   function rowDragProps(scope: string, orderedIds: string[], rowId: string) {
     return {
       draggable: true,
-      onDragStart: (event: React.DragEvent) => {
+      onDragStart: (event: DragEvent) => {
         event.dataTransfer.effectAllowed = "move";
         event.dataTransfer.setData("text/plain", rowId);
         setDraggingRow({ id: rowId, scope });
@@ -63,23 +62,31 @@ export function useSidebarDragAndDrop({
         setDraggingRow(null);
         setDropTargetRowId(null);
       },
-      onDragOver: (event: React.DragEvent) => {
-        if (draggingRow?.scope !== scope) return;
+      onDragOver: (event: DragEvent) => {
+        if (draggingRow?.scope !== scope) {
+          return;
+        }
         event.preventDefault();
         event.dataTransfer.dropEffect = "move";
-        if (dropTargetRowId !== rowId) setDropTargetRowId(rowId);
+        if (dropTargetRowId !== rowId) {
+          setDropTargetRowId(rowId);
+        }
       },
       onDragLeave: () => {
         setDropTargetRowId((prev) => (prev === rowId ? null : prev));
       },
-      onDrop: (event: React.DragEvent) => {
+      onDrop: (event: DragEvent) => {
         event.preventDefault();
         const dragged = draggingRow;
         setDraggingRow(null);
         setDropTargetRowId(null);
-        if (!dragged || dragged.scope !== scope) return;
+        if (!dragged || dragged.scope !== scope) {
+          return;
+        }
         const next = reorderIds(orderedIds, dragged.id, rowId);
-        if (next !== orderedIds) setManualOrder(scope, next);
+        if (next !== orderedIds) {
+          setManualOrder(scope, next);
+        }
       },
     };
   }

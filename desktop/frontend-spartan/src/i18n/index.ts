@@ -1,4 +1,3 @@
-
 import { useCallback } from "react";
 import { useLocale } from "./locale-store";
 import { translate } from "./messages";

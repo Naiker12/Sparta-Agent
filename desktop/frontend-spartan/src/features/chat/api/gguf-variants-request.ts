@@ -1,4 +1,3 @@
-
 // How the chat side asks for a repo's GGUF quants. Split out of chat-api so it imports
 // without the auth barrel. The picker's expander and chat auto-load both block on this
 // listing, so an unbounded request leaves the expander on "Loading variants…" forever.

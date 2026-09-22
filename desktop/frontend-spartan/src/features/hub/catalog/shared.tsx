@@ -1,4 +1,3 @@
-
 import {
   Tooltip,
   TooltipContent,
@@ -85,7 +84,9 @@ function AccessGlyph({
       <HugeiconsIcon icon={icon} strokeWidth={1.75} className="size-3" />
     </span>
   );
-  if (!tooltip) return glyph;
+  if (!tooltip) {
+    return glyph;
+  }
   return (
     <Tooltip>
       <TooltipTrigger asChild={true}>{glyph}</TooltipTrigger>
@@ -106,7 +107,9 @@ export function AccessGlyphs({
   tooltip?: boolean;
 }) {
   const gatedAccess = isGatedAccess(gated);
-  if (!gatedAccess && !isPrivate) return null;
+  if (!(gatedAccess || isPrivate)) {
+    return null;
+  }
   return (
     <>
       {isPrivate && (
@@ -155,7 +158,9 @@ export function CapabilityPill({
       {!iconOnly && capability.label}
     </span>
   );
-  if (!iconOnly || !tooltip) return pill;
+  if (!(iconOnly && tooltip)) {
+    return pill;
+  }
   return (
     <Tooltip>
       <TooltipTrigger asChild={true}>{pill}</TooltipTrigger>

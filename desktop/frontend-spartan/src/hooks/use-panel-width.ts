@@ -1,4 +1,3 @@
-
 import { useCallback, useSyncExternalStore } from "react";
 
 /** Never let one panel eat more than this share of a narrow window. */
@@ -34,14 +33,21 @@ export function createPanelWidthStore({
   fallback: number;
 }): PanelWidthStore {
   function maxWidth(): number {
-    if (typeof window === "undefined") return max;
+    if (typeof window === "undefined") {
+      return max;
+    }
     // The floor wins on a narrow window; collapsing is the escape.
-    return Math.max(min, Math.min(max, window.innerWidth * MAX_VIEWPORT_FRACTION));
+    return Math.max(
+      min,
+      Math.min(max, window.innerWidth * MAX_VIEWPORT_FRACTION),
+    );
   }
 
   /** Clamps to the absolute range, ignoring the viewport. */
   function clampStored(px: number): number {
-    if (!Number.isFinite(px)) return fallback;
+    if (!Number.isFinite(px)) {
+      return fallback;
+    }
     return Math.min(max, Math.max(min, Math.round(px)));
   }
 
@@ -50,10 +56,14 @@ export function createPanelWidthStore({
   }
 
   function load(): number {
-    if (typeof window === "undefined") return fallback;
+    if (typeof window === "undefined") {
+      return fallback;
+    }
     try {
       const raw = window.localStorage.getItem(key);
-      if (raw === null) return fallback;
+      if (raw === null) {
+        return fallback;
+      }
       return clampStored(Number.parseFloat(raw));
     } catch {
       return fallback;
@@ -122,11 +132,23 @@ export function createPanelWidthStore({
   }
 
   function useWidth() {
-    const width = useSyncExternalStore(subscribe, () => effectiveWidth, () => fallback);
+    const width = useSyncExternalStore(
+      subscribe,
+      () => effectiveWidth,
+      () => fallback,
+    );
     // What the viewport actually allows right now, for aria-valuemax.
-    const panelMax = useSyncExternalStore(subscribe, () => effectiveMax, () => max);
+    const panelMax = useSyncExternalStore(
+      subscribe,
+      () => effectiveMax,
+      () => max,
+    );
     // The uncapped preference, so a capped drag can avoid lowering it.
-    const preference = useSyncExternalStore(subscribe, () => storedWidth, () => fallback);
+    const preference = useSyncExternalStore(
+      subscribe,
+      () => storedWidth,
+      () => fallback,
+    );
     const setWidth = useCallback((value: number) => setWidthGlobal(value), []);
     const resetWidth = useCallback(() => setWidthGlobal(fallback), []);
     return { width, max: panelMax, stored: preference, setWidth, resetWidth };

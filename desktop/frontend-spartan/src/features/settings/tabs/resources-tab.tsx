@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
@@ -8,33 +7,29 @@ import {
   openModelsDir,
   pickHuggingFaceCacheDir,
 } from "@/features/native-intents";
+import { gpuVramUsedIsPerDevice, resolveGpuVramUsedGb } from "@/hooks/gpu-vram";
 import {
-  gpuVramUsedIsPerDevice,
-  resolveGpuVramUsedGb,
-} from "@/hooks/gpu-vram";
-import {
+  type GpuDevice,
   aggregateGpuMemoryTotalGb,
   useSystemInfo,
-  type GpuDevice,
 } from "@/hooks/use-system";
+import { useT } from "@/i18n";
 import { isTauri } from "@/lib/api-base";
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
-import { useT } from "@/i18n";
+import { CopyIcon, FolderOpenIcon, LayersIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import {
   type HuggingFaceCacheSettings,
   loadHuggingFaceCacheSettings,
   updateHuggingFaceCacheSettings,
 } from "../api/hugging-face-cache";
-import { LlamaBackendSection } from "../components/llama-backend-section";
 import { ModelMemorySection } from "../components/model-memory-section";
 import { SettingsRow } from "../components/settings-row";
 import { SettingsSection } from "../components/settings-section";
 import { useMonitorOverlayStore } from "../stores/monitor-overlay-store";
 import { useSettingsPanelPrefsStore } from "../stores/settings-panel-prefs-store";
-import { CopyIcon, FolderOpenIcon, LayersIcon } from "lucide-react";
 
 const POLL_MS = 3000;
 
@@ -43,19 +38,29 @@ function isFiniteNumber(value: number | null | undefined): value is number {
 }
 
 function clampPercent(value: number | null | undefined): number {
-  if (!isFiniteNumber(value)) return 0;
+  if (!isFiniteNumber(value)) {
+    return 0;
+  }
   return Math.max(0, Math.min(100, value));
 }
 
 function usageIndicatorClass(percent: number): string {
-  if (percent >= 90) return "bg-destructive";
-  if (percent >= 70) return "bg-amber-500";
+  if (percent >= 90) {
+    return "bg-destructive";
+  }
+  if (percent >= 70) {
+    return "bg-amber-500";
+  }
   return "bg-control-accent";
 }
 
 function usageTextClass(percent: number): string {
-  if (percent >= 90) return "text-destructive";
-  if (percent >= 70) return "text-amber-600 dark:text-amber-400";
+  if (percent >= 90) {
+    return "text-destructive";
+  }
+  if (percent >= 70) {
+    return "text-amber-600 dark:text-amber-400";
+  }
   return "text-primary";
 }
 
@@ -66,7 +71,9 @@ function formatGb(value: number | null | undefined): string {
 }
 
 function formatBytes(value: number | null): string | null {
-  if (value === null || !Number.isFinite(value)) return null;
+  if (value === null || !Number.isFinite(value)) {
+    return null;
+  }
   const gib = value / 1024 ** 3;
   return `${gib >= 10 ? gib.toFixed(1) : gib.toFixed(2)} GiB`;
 }
@@ -93,18 +100,28 @@ function formatPercent(value: number | null | undefined): string {
 }
 
 function formatFrequency(mhz: number | null | undefined): string | null {
-  if (!isFiniteNumber(mhz) || mhz <= 0) return null;
-  if (mhz >= 1000) return `${(mhz / 1000).toFixed(2)} GHz`;
+  if (!isFiniteNumber(mhz) || mhz <= 0) {
+    return null;
+  }
+  if (mhz >= 1000) {
+    return `${(mhz / 1000).toFixed(2)} GHz`;
+  }
   return `${Math.round(mhz)} MHz`;
 }
 
 function formatUptime(seconds: number | null | undefined): string {
-  if (!isFiniteNumber(seconds) || seconds <= 0) return "0m";
+  if (!isFiniteNumber(seconds) || seconds <= 0) {
+    return "0m";
+  }
   const minutes = Math.floor(seconds / 60);
   const hours = Math.floor(minutes / 60);
   const days = Math.floor(hours / 24);
-  if (days > 0) return `${days}d ${hours % 24}h`;
-  if (hours > 0) return `${hours}h ${minutes % 60}m`;
+  if (days > 0) {
+    return `${days}d ${hours % 24}h`;
+  }
+  if (hours > 0) {
+    return `${hours}h ${minutes % 60}m`;
+  }
   return `${Math.max(1, minutes)}m`;
 }
 
@@ -219,12 +236,16 @@ export function ResourcesTab() {
     let cancelled = false;
     void loadHuggingFaceCacheSettings()
       .then((settings) => {
-        if (cancelled) return;
+        if (cancelled) {
+          return;
+        }
         setHfCache(settings);
         setHfCacheLoaded(true);
       })
       .catch(() => {
-        if (cancelled) return;
+        if (cancelled) {
+          return;
+        }
         setHfCacheLoaded(true);
       });
     return () => {
@@ -284,7 +305,9 @@ export function ResourcesTab() {
   }, [displayedGpu, systemInfo]);
 
   const handleCacheFolder = async () => {
-    if (!hfCache) return;
+    if (!hfCache) {
+      return;
+    }
     if (isTauri) {
       try {
         await openModelsDir(hfCache.cacheHome);
@@ -324,7 +347,9 @@ export function ResourcesTab() {
     }
     try {
       const path = await pickHuggingFaceCacheDir();
-      if (path) await saveCacheFolder(path);
+      if (path) {
+        await saveCacheFolder(path);
+      }
     } catch (error) {
       toast.error(t("settings.resources.storage.cachePickerError"), {
         description: error instanceof Error ? error.message : undefined,
@@ -547,11 +572,17 @@ export function ResourcesTab() {
                     <span className="min-w-0 truncate">
                       {t("settings.resources.gpu.used", { value: usedText })}
                     </span>
-                    <span aria-hidden className="h-3 w-px shrink-0 bg-border" />
+                    <span
+                      aria-hidden={true}
+                      className="h-3 w-px shrink-0 bg-border"
+                    />
                     <span className="min-w-0 truncate">
                       {t("settings.resources.gpu.free", { value: freeText })}
                     </span>
-                    <span aria-hidden className="h-3 w-px shrink-0 bg-border" />
+                    <span
+                      aria-hidden={true}
+                      className="h-3 w-px shrink-0 bg-border"
+                    />
                     <span className="min-w-0 truncate">
                       {t("settings.resources.gpu.total", {
                         value: totalText,
@@ -575,10 +606,6 @@ export function ResourcesTab() {
         )}
       </SettingsSection>
 
-      {/* Below the GPU section it describes, above the memory settings that
-          apply to whichever backend is selected. */}
-      <LlamaBackendSection />
-
       <ModelMemorySection />
 
       <SettingsSection title={t("settings.resources.storage.title")}>
@@ -601,7 +628,7 @@ export function ResourcesTab() {
           <div className="grid w-[392px] min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-x-2 gap-y-1.5 max-[840px]:w-full">
             <div className="relative min-w-0">
               <Input
-                readOnly
+                readOnly={true}
                 aria-label={t("settings.resources.storage.modelsFolder")}
                 value={modelsFolderPath}
                 title={hfCache?.cacheHome}

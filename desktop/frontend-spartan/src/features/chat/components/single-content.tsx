@@ -5,30 +5,22 @@
  * de artefactos y panel lateral de ejecución de investigación (Deep Research).
  */
 
-import {
-  memo,
-  useEffect,
-  useRef,
-  useState,
-  type ReactElement,
-} from "react";
-import type { PanelImperativeHandle } from "react-resizable-panels";
-import { cn } from "@/lib/utils";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { Thread } from "@/components/assistant-ui/thread";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import { Thread } from "@/components/assistant-ui/thread";
-import {
-  ChatRuntimeProvider,
-  useChatActive,
-} from "../runtime-provider";
-import { useChatRuntimeStore } from "../stores/chat-runtime-store";
+import { WorkspacePanelContainer } from "@/components/workspace-rail";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
+import { type ReactElement, memo, useEffect, useRef, useState } from "react";
+import type { PanelImperativeHandle } from "react-resizable-panels";
+import { ArtifactSurface } from "../artifacts/artifact-surface";
 import { useChatArtifactsStore } from "../artifacts/store";
 import type { ChatArtifact, ChatArtifactSurface } from "../artifacts/types";
-import { ArtifactSurface } from "../artifacts/artifact-surface";
+import { ChatRuntimeProvider, useChatActive } from "../runtime-provider";
+import { useChatRuntimeStore } from "../stores/chat-runtime-store";
 import { useResearchRunStore } from "../stores/research-run-store";
 import {
   ResearchActivityPanel,
@@ -61,10 +53,14 @@ export const SingleContent = memo(function SingleContent({
   const openResearchRunId = useResearchRunStore((state) => state.openRunId);
   const closeResearchPanel = useResearchRunStore((state) => state.closePanel);
   useEffect(() => {
-    if (!activeThreadId || !openResearchRunId) return;
+    if (!(activeThreadId && openResearchRunId)) {
+      return;
+    }
     const openRun =
       useResearchRunStore.getState().sessions[openResearchRunId]?.run;
-    if (openRun && openRun.threadId !== activeThreadId) closeResearchPanel();
+    if (openRun && openRun.threadId !== activeThreadId) {
+      closeResearchPanel();
+    }
   }, [activeThreadId, openResearchRunId, closeResearchPanel]);
   // A string, not the run: report deltas replace the run ~12x/s, and this owns the thread pane.
   const openResearchThreadId = useResearchRunStore((state) =>
@@ -82,17 +78,19 @@ export const SingleContent = memo(function SingleContent({
     useState(false);
   const researchMatchesThread = Boolean(
     openResearchThreadId &&
-    openResearchThreadId === (threadId ?? activeThreadId),
+      openResearchThreadId === (threadId ?? activeThreadId),
   );
   const showResearchPanel = researchMatchesThread && !isMobile;
   // Without a URL threadId the artifact must belong to the active thread.
-  const showArtifactPanel = !showResearchPanel && Boolean(
-    artifact &&
-    artifactSurface === "panel" &&
-    (threadId
-      ? !artifact.threadId || artifact.threadId === threadId
-      : Boolean(artifact.threadId && artifact.threadId === activeThreadId)),
-  );
+  const showArtifactPanel =
+    !showResearchPanel &&
+    Boolean(
+      artifact &&
+        artifactSurface === "panel" &&
+        (threadId
+          ? !artifact.threadId || artifact.threadId === threadId
+          : Boolean(artifact.threadId && artifact.threadId === activeThreadId)),
+    );
   const showContextPanel = showResearchPanel || showArtifactPanel;
 
   const artifactLayoutActive = showContextPanel || isArtifactPanelLayoutActive;
@@ -103,7 +101,9 @@ export const SingleContent = memo(function SingleContent({
 
   useEffect(() => {
     const panel = artifactPanelRef.current;
-    if (!panel) return;
+    if (!panel) {
+      return;
+    }
 
     setIsArtifactSurfaceVisible(false);
 
@@ -125,8 +125,8 @@ export const SingleContent = memo(function SingleContent({
     });
     const surfaceTimerId = showContextPanel
       ? window.setTimeout(() => {
-        setIsArtifactSurfaceVisible(true);
-      }, ARTIFACT_SURFACE_POP_DELAY_MS)
+          setIsArtifactSurfaceVisible(true);
+        }, ARTIFACT_SURFACE_POP_DELAY_MS)
       : 0;
     const timeoutId = window.setTimeout(() => {
       setIsArtifactLayoutAnimating(false);
@@ -147,7 +147,9 @@ export const SingleContent = memo(function SingleContent({
   }, [showContextPanel]);
 
   useEffect(() => {
-    if (!researchMatchesThread) return;
+    if (!researchMatchesThread) {
+      return;
+    }
     onCloseArtifact();
     useChatRuntimeStore.getState().setSettingsPanelOpen(false);
   }, [researchMatchesThread, onCloseArtifact]);
@@ -166,90 +168,90 @@ export const SingleContent = memo(function SingleContent({
       projectId={projectId}
       listThreads={false}
     >
-      <ResizablePanelGroup
-        orientation="horizontal"
-        data-artifact-layout-animating={
-          isArtifactLayoutAnimating ? "true" : "false"
-        }
-        className="chat-artifact-split min-h-0 min-w-0 flex-1 basis-0 overflow-hidden"
-      >
-        <ResizablePanel
-          id="chat-thread"
-          defaultSize="100%"
-          minSize={artifactLayoutActive ? "42%" : "100%"}
-          className="h-full min-h-0 min-w-0 overflow-hidden"
-        >
-          <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
-            {threadPane}
-          </div>
-        </ResizablePanel>
-        <ResizableHandle
-          withHandle={false}
-          className={cn(
-            "relative z-30 -ml-1 -mr-4 w-5 bg-transparent transition-[width,margin] duration-[260ms] ease-[var(--ease-out-cubic)] hover:bg-transparent hover:shadow-none active:bg-transparent active:shadow-none focus-visible:bg-transparent focus-visible:shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none",
-            !artifactLayoutActive &&
-            "pointer-events-none -ml-0 -mr-0 w-0",
-          )}
-        />
-        <ResizablePanel
-          panelRef={artifactPanelRef}
-          id="chat-artifact"
-          defaultSize="0%"
-          minSize={
-            showResearchPanel
-              ? "30%"
-              : artifactPanelSettledOpen
-                ? "30%"
-                : "0%"
+      <div className="flex h-full w-full min-h-0 min-w-0 flex-1 overflow-hidden">
+        <ResizablePanelGroup
+          orientation="horizontal"
+          data-artifact-layout-animating={
+            isArtifactLayoutAnimating ? "true" : "false"
           }
-          maxSize={
-            showResearchPanel
-              ? "58%"
-              : artifactLayoutActive
-                ? "58%"
-                : "0%"
-          }
-          collapsible={showArtifactPanel}
-          collapsedSize="0%"
-          className={cn(
-            "h-full min-h-0 min-w-0 overflow-visible",
-            !showContextPanel && "pointer-events-none",
-          )}
+          className="chat-artifact-split min-h-0 min-w-0 flex-1 basis-0 overflow-hidden"
         >
-          <div
-            data-artifact-surface-visible={
-              isArtifactSurfaceVisible ? "true" : "false"
-            }
+          <ResizablePanel
+            id="chat-thread"
+            defaultSize="100%"
+            minSize={artifactLayoutActive ? "42%" : "100%"}
+            className="h-full min-h-0 min-w-0 overflow-hidden"
+          >
+            <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
+              {threadPane}
+            </div>
+          </ResizablePanel>
+          <ResizableHandle
+            withHandle={false}
             className={cn(
-              "chat-artifact-pop-surface flex h-full min-h-0 min-w-0 flex-col overflow-visible",
-              showResearchPanel && "border-l border-border/70",
+              "relative z-30 -ml-1 -mr-4 w-5 bg-transparent transition-[width,margin] duration-[260ms] ease-[var(--ease-out-cubic)] hover:bg-transparent hover:shadow-none active:bg-transparent active:shadow-none focus-visible:bg-transparent focus-visible:shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none",
+              !artifactLayoutActive && "pointer-events-none -ml-0 -mr-0 w-0",
+            )}
+          />
+          <ResizablePanel
+            panelRef={artifactPanelRef}
+            id="chat-artifact"
+            defaultSize="0%"
+            minSize={
+              showResearchPanel
+                ? "30%"
+                : artifactPanelSettledOpen
+                  ? "30%"
+                  : "0%"
+            }
+            maxSize={
+              showResearchPanel ? "58%" : artifactLayoutActive ? "58%" : "0%"
+            }
+            collapsible={showArtifactPanel}
+            collapsedSize="0%"
+            className={cn(
+              "h-full min-h-0 min-w-0 overflow-visible",
+              !showContextPanel && "pointer-events-none",
             )}
           >
-            {showResearchPanel && openResearchRunId ? (
-              <ResearchActivityPanel
-                key={openResearchRunId}
-                runId={openResearchRunId}
-                onClose={closeResearchPanel}
-              />
-            ) : showArtifactPanel && artifact ? (
-              <ArtifactSurface
-                artifact={artifact}
-                variant="panel"
-                onClose={onCloseArtifact}
-                onOpenFullscreen={() =>
-                  openArtifact(artifact, { surface: "overlay" })
-                }
-              />
-            ) : null}
-          </div>
-        </ResizablePanel>
-      </ResizablePanelGroup>
+            <div
+              data-artifact-surface-visible={
+                isArtifactSurfaceVisible ? "true" : "false"
+              }
+              className={cn(
+                "chat-artifact-pop-surface flex h-full min-h-0 min-w-0 flex-col overflow-visible",
+                showResearchPanel && "border-l border-border/70",
+              )}
+            >
+              {showResearchPanel && openResearchRunId ? (
+                <ResearchActivityPanel
+                  key={openResearchRunId}
+                  runId={openResearchRunId}
+                  onClose={closeResearchPanel}
+                />
+              ) : showArtifactPanel && artifact ? (
+                <ArtifactSurface
+                  artifact={artifact}
+                  variant="panel"
+                  onClose={onCloseArtifact}
+                  onOpenFullscreen={() =>
+                    openArtifact(artifact, { surface: "overlay" })
+                  }
+                />
+              ) : null}
+            </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
+        {!isMobile && <WorkspacePanelContainer projectId={projectId} />}
+      </div>
       {openResearchRunId && researchMatchesThread ? (
         <ResearchActivitySheet
           runId={openResearchRunId}
           open={chatActive && isMobile}
           onOpenChange={(open) => {
-            if (!open) closeResearchPanel();
+            if (!open) {
+              closeResearchPanel();
+            }
           }}
         />
       ) : null}

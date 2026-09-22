@@ -1,4 +1,3 @@
-
 import type { LoadModelResponse } from "../types/api";
 
 type MlxRuntimeResponse = Pick<

@@ -1,4 +1,4 @@
-import type { ExportedMessageRepository, ThreadMessage } from "@assistant-ui/react";
+import type { ExportedMessageRepository } from "@assistant-ui/react";
 import { saveChatMessage } from "../api/chat-api";
 
 type ThreadImportExport = {
@@ -13,35 +13,44 @@ type ContentPart = { type: "text" | "reasoning" | "tool"; text: string };
  * ignoring structured parts like tool calls that cannot be edited as plain text.
  */
 export function extractTaggedText(content: any): string {
-  if (typeof content === 'string') return content;
-  if (!Array.isArray(content)) return "";
+  if (typeof content === "string") {
+    return content;
+  }
+  if (!Array.isArray(content)) {
+    return "";
+  }
 
   const open = "\u003C"; // <
   const close = "\u003E"; // >
 
   return content
     .map((part: any) => {
-      if (typeof part === 'string') return part;
-      if (!part) return "";
+      if (typeof part === "string") {
+        return part;
+      }
+      if (!part) {
+        return "";
+      }
 
       // Only extract text from 'text' or 'reasoning' parts.
       // Tool calls/responses are ignored here so they aren't accidentally
       // deleted or corrupted by the user in the textarea.
       const text = part.text || part.content || "";
-      if (!text) return "";
+      if (!text) {
+        return "";
+      }
 
       switch (part.type) {
-        case 'reasoning':
+        case "reasoning":
           // Trim the text first so we don't accumulate newlines
           // around the tags on every save.
           return `${open}THINK${close}\n${text.trim()}\n${open}/THINK${close}`;
-        case 'text':
         default:
           return text;
       }
     })
     .filter(Boolean)
-    .join('\n\n');
+    .join("\n\n");
 }
 
 function parseTaggedTextToContent(text: string): ContentPart[] {
@@ -60,16 +69,24 @@ function parseTaggedTextToContent(text: string): ContentPart[] {
       // Trim the extracted content to remove any leading/trailing
       // newlines created by the tag wrapping process.
       const content = text.substring(lastIndex, index).trim();
-      if (content) parts.push({ type: currentType, text: content });
+      if (content) {
+        parts.push({ type: currentType, text: content });
+      }
     }
 
-    currentType = fullTag.startsWith("</") ? "text" : (tagName === "THINK" ? "reasoning" : "tool");
+    currentType = fullTag.startsWith("</")
+      ? "text"
+      : tagName === "THINK"
+        ? "reasoning"
+        : "tool";
     lastIndex = index + fullTag.length;
   }
 
   if (lastIndex < text.length) {
     const remainingText = text.substring(lastIndex).trim();
-    if (remainingText) parts.push({ type: currentType, text: remainingText });
+    if (remainingText) {
+      parts.push({ type: currentType, text: remainingText });
+    }
   }
 
   return parts;
@@ -86,7 +103,9 @@ export async function updateThreadMessage(args: {
   const parsedEditableContent = parseTaggedTextToContent(newText);
   const currentExport = thread.export();
 
-  const targetMessageEntry = currentExport.messages.find(m => m.message.id === messageId);
+  const targetMessageEntry = currentExport.messages.find(
+    (m) => m.message.id === messageId,
+  );
   if (!targetMessageEntry) {
     throw new Error(`Message with ID ${messageId} not found in thread.`);
   }
@@ -95,26 +114,30 @@ export async function updateThreadMessage(args: {
   const { createdAt: originalCreatedAt } = targetMessageEntry.message;
 
   const updatedMessages = currentExport.messages.map((m) => {
-    if (m.message.id !== messageId) return m;
+    if (m.message.id !== messageId) {
+      return m;
+    }
 
     const originalContent = m.message.content;
     let finalContent: any[] = [];
 
     if (Array.isArray(originalContent)) {
-      const firstEditableIndex = originalContent.findIndex((part: any) =>
-        part.type === 'text' || part.type === 'reasoning'
+      const firstEditableIndex = originalContent.findIndex(
+        (part: any) => part.type === "text" || part.type === "reasoning",
       );
 
       if (firstEditableIndex === -1) {
-        const nonEditableParts = originalContent.filter((part: any) =>
-          part.type !== 'text' && part.type !== 'reasoning'
+        const nonEditableParts = originalContent.filter(
+          (part: any) => part.type !== "text" && part.type !== "reasoning",
         );
         finalContent = [...parsedEditableContent, ...nonEditableParts];
       } else {
         const before = originalContent.slice(0, firstEditableIndex);
-        const after = originalContent.slice(firstEditableIndex + 1).filter((part: any) =>
-          part.type !== 'text' && part.type !== 'reasoning'
-        );
+        const after = originalContent
+          .slice(firstEditableIndex + 1)
+          .filter(
+            (part: any) => part.type !== "text" && part.type !== "reasoning",
+          );
         finalContent = [...before, ...parsedEditableContent, ...after];
       }
     } else {
@@ -141,15 +164,19 @@ export async function updateThreadMessage(args: {
         threadId: remoteId,
         parentId: originalParentId,
         role: "assistant",
-        content: (updatedMessages.find(m => m.message.id === messageId)?.message.content) || [],
+        content:
+          updatedMessages.find((m) => m.message.id === messageId)?.message
+            .content || [],
         createdAt: originalCreatedAt ? Number(originalCreatedAt) : Date.now(),
       });
     } catch (e) {
       thread.import(originalExport);
-      console.error("Backend sync failed for message update. Rolling back UI.", e);
       throw e;
     }
   }
 
-  return (updatedMessages.find(m => m.message.id === messageId)?.message.content) || [];
+  return (
+    updatedMessages.find((m) => m.message.id === messageId)?.message.content ||
+    []
+  );
 }

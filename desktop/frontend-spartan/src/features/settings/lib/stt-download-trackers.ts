@@ -1,4 +1,3 @@
-
 /**
  * The live download pollers, one per dictation model. Each STT engine owns its
  * own download state, so a Qwen transfer and a Whisper one really do run at the

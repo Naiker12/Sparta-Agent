@@ -1,6 +1,5 @@
-
-import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "@/lib/toast";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type DeleteSuccessMessage = string | (() => string);
 type DeleteErrorToast =
@@ -43,7 +42,9 @@ export function useDeleteConfirmAction({
   }, []);
 
   const runDelete = useCallback(async () => {
-    if (inFlightRef.current) return;
+    if (inFlightRef.current) {
+      return;
+    }
     inFlightRef.current = true;
     setDeleting(true);
     try {
@@ -55,7 +56,9 @@ export function useDeleteConfirmAction({
       toast.error(resolved.title, { description: resolved.description });
     } finally {
       inFlightRef.current = false;
-      if (mountedRef.current) setDeleting(false);
+      if (mountedRef.current) {
+        setDeleting(false);
+      }
       onSettled?.();
     }
   }, [action, errorToast, onSettled, onSuccess, successMessage]);

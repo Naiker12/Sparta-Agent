@@ -1,4 +1,3 @@
-
 import { create } from "zustand";
 
 /**
@@ -26,7 +25,7 @@ export type SettingsTab = (typeof SETTINGS_TABS)[number];
 export type SettingsScrollTarget = "about-updates" | "appearance-sidebar-nav";
 
 /** Which archive the Data tab should open straight into. */
-export type ArchivedShelf = "chats" | "images";
+export type ArchivedShelf = "chats";
 
 interface OpenDialogOptions {
   scrollTarget?: SettingsScrollTarget;
@@ -47,7 +46,6 @@ interface SettingsDialogState {
   archivedRequested: ArchivedShelf | null;
   openDialog: (tab?: SettingsTab, options?: OpenDialogOptions) => void;
   openArchivedChats: () => void;
-  openArchivedMedia: (shelf: "images") => void;
   consumeArchivedChatsRequest: () => void;
   consumeScrollTarget: (target: SettingsScrollTarget) => void;
   closeDialog: () => void;
@@ -65,7 +63,9 @@ function captureOpener(): HTMLElement | null {
 const ACTIVE_TAB_KEY = "unsloth_settings_active_tab";
 
 function loadInitialTab(): SettingsTab {
-  if (typeof window === "undefined") return "general";
+  if (typeof window === "undefined") {
+    return "general";
+  }
   let stored: string | null = null;
   try {
     stored = window.localStorage.getItem(ACTIVE_TAB_KEY);
@@ -127,14 +127,6 @@ export const useSettingsDialogStore = create<SettingsDialogState>((set) => ({
       activeTab: "data",
       scrollTarget: null,
       archivedRequested: "chats",
-      opener: captureOpener(),
-    }),
-  openArchivedMedia: (shelf) =>
-    set({
-      open: true,
-      activeTab: "data",
-      scrollTarget: null,
-      archivedRequested: shelf,
       opener: captureOpener(),
     }),
   consumeArchivedChatsRequest: () => set({ archivedRequested: null }),

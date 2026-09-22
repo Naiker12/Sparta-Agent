@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
@@ -78,20 +77,27 @@ export function ConfigDialog({
             )}
             <ValidationBanner config={config} />
             <div
-              className={readOnly ? "pointer-events-none min-w-0 opacity-75" : "min-w-0"}
+              className={
+                readOnly ? "pointer-events-none min-w-0 opacity-75" : "min-w-0"
+              }
             >
               {showDropToggle && (
                 <div className="mb-2 flex items-center corner-squircle justify-between gap-3 rounded-2xl border border-border/60 px-3 pt-2 pb-4">
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold">Keep out of final dataset</p>
+                    <p className="text-sm font-semibold">
+                      Keep out of final dataset
+                    </p>
                     <p className="break-words text-xs text-muted-foreground">
-                      Use this step while generating, but leave it out of exported rows.
+                      Use this step while generating, but leave it out of
+                      exported rows.
                     </p>
                   </div>
                   <Switch
                     checked={config.drop ?? false}
                     disabled={readOnly}
-                    onCheckedChange={(value) => onUpdate(config.id, { drop: value })}
+                    onCheckedChange={(value) =>
+                      onUpdate(config.id, { drop: value })
+                    }
                   />
                 </div>
               )}

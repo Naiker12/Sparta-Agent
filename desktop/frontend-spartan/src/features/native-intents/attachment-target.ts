@@ -1,4 +1,3 @@
-
 import { createContext, useContext } from "react";
 
 export const NativeAttachmentTargetContext = createContext<string | null>(null);

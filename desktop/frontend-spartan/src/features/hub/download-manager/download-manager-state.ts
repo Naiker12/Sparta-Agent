@@ -1,4 +1,3 @@
-
 import { isTauri } from "@/lib/api-base";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
@@ -17,10 +16,10 @@ import {
   ACTIVE_STATES,
   MAX_PROGRESS_FRACTION,
 } from "./download-manager-config";
-import {
-  type DownloadManagerState,
-  type JobListeners,
-  type ManagedDownload,
+import type {
+  DownloadManagerState,
+  JobListeners,
+  ManagedDownload,
 } from "./download-manager-types";
 import {
   clearRuntimeTimer,
@@ -52,11 +51,15 @@ function sanitizePersistedJob(
   value: unknown,
   legacy = false,
 ): ManagedDownload | null {
-  if (!isRecord(value)) return null;
+  if (!isRecord(value)) {
+    return null;
+  }
   const kind = isDownloadKind(value.kind) ? value.kind : null;
   const repoId = typeof value.repoId === "string" ? value.repoId : null;
   const state = value.state as DownloadJobState;
-  if (!kind || !repoId || !ACTIVE_STATES.has(state)) return null;
+  if (!(kind && repoId && ACTIVE_STATES.has(state))) {
+    return null;
+  }
 
   const variant = typeof value.variant === "string" ? value.variant : null;
   const key = jobKeyOf(kind, repoId, variant);
@@ -110,13 +113,15 @@ function sanitizePersistedState(
   persisted: unknown,
   legacy = false,
 ): Partial<DownloadManagerState> {
-  if (!isRecord(persisted) || !isRecord(persisted.jobs)) {
+  if (!(isRecord(persisted) && isRecord(persisted.jobs))) {
     return { jobs: {}, conflicts: {} };
   }
   const jobs: Record<string, ManagedDownload> = {};
   for (const value of Object.values(persisted.jobs)) {
     const job = sanitizePersistedJob(value, legacy);
-    if (job) jobs[job.key] = job;
+    if (job) {
+      jobs[job.key] = job;
+    }
   }
   return {
     jobs,
@@ -196,7 +201,9 @@ function completedInventoryHintKind(
 function liveCompletedInventoryHintKeys(): Set<string> {
   const keys = new Set<string>();
   for (const job of Object.values(getState().jobs)) {
-    if (job.state !== "complete") continue;
+    if (job.state !== "complete") {
+      continue;
+    }
     keys.add(
       inventoryHintKey(
         completedInventoryHintKind(job.kind, job.variant),
@@ -211,11 +218,15 @@ function collectCompletedInventoryHints(
   jobs: Record<string, ManagedDownload>,
 ): InventoryHint[] {
   return Object.values(jobs).flatMap((job) => {
-    if (job.state !== "complete") return [];
+    if (job.state !== "complete") {
+      return [];
+    }
     // A dictation download is not a chat model arriving. A custom Whisper repo
     // is only hidden once the backend has scanned its config, so an optimistic
     // hint would surface it in the chat inventory for the hint's whole TTL.
-    if (job.external) return [];
+    if (job.external) {
+      return [];
+    }
     const kind = completedInventoryHintKind(job.kind, job.variant);
     if (
       runtimeRegistry.suppressedCompletedInventoryHints.has(
@@ -294,7 +305,9 @@ export function hasActiveDownloadJob(
 }
 
 function publishDownloadsActive(active: boolean): void {
-  if (!isTauri) return;
+  if (!isTauri) {
+    return;
+  }
   void import("@tauri-apps/api/core")
     .then(({ invoke }) =>
       invoke("set_renderer_activity", { kind: "downloads", active }),
@@ -307,7 +320,9 @@ let lastPublishedDownloadsActive: boolean | null = null;
 
 function syncDownloadsActivity(state: DownloadManagerState): void {
   const active = hasActiveDownloadJob(state.jobs);
-  if (active === lastPublishedDownloadsActive) return;
+  if (active === lastPublishedDownloadsActive) {
+    return;
+  }
   lastPublishedDownloadsActive = active;
   publishDownloadsActive(active);
 }
@@ -323,7 +338,9 @@ function withCompletedHintSignature(
   const completedHintSignature = buildCompletedHintSignature(
     completedInventoryHints,
   );
-  if (state.completedHintSignature === completedHintSignature) return state;
+  if (state.completedHintSignature === completedHintSignature) {
+    return state;
+  }
   return { ...state, completedHintSignature, completedInventoryHints };
 }
 
@@ -331,7 +348,9 @@ function isPreferredRepoActiveJob(
   candidate: ManagedDownload,
   current: ManagedDownload | null | undefined,
 ): boolean {
-  if (!current || !ACTIVE_STATES.has(current.state)) return true;
+  if (!(current && ACTIVE_STATES.has(current.state))) {
+    return true;
+  }
   if (candidate.startedAt !== current.startedAt) {
     return candidate.startedAt > current.startedAt;
   }
@@ -346,9 +365,15 @@ export function findActiveJobForRepo(
   let selected: ManagedDownload | null = null;
   const repoIdentity = normalizeRepoIdentity(repoId);
   for (const job of Object.values(jobs)) {
-    if (job.kind !== kind || normalizeRepoIdentity(job.repoId) !== repoIdentity)
+    if (
+      job.kind !== kind ||
+      normalizeRepoIdentity(job.repoId) !== repoIdentity
+    ) {
       continue;
-    if (!ACTIVE_STATES.has(job.state)) continue;
+    }
+    if (!ACTIVE_STATES.has(job.state)) {
+      continue;
+    }
     if (isPreferredRepoActiveJob(job, selected)) {
       selected = job;
     }
@@ -363,9 +388,15 @@ function hasRuntimePeerForRepo(
 ): boolean {
   const repoIdentity = normalizeRepoIdentity(repoId);
   for (const [runtimeKey, runtime] of runtimeRegistry.runtimes) {
-    if (runtimeKey === key) continue;
-    if (runtime.kind === kind && normalizeRepoIdentity(runtime.repoId) === repoIdentity)
+    if (runtimeKey === key) {
+      continue;
+    }
+    if (
+      runtime.kind === kind &&
+      normalizeRepoIdentity(runtime.repoId) === repoIdentity
+    ) {
       return true;
+    }
   }
   return false;
 }
@@ -381,14 +412,26 @@ export function hasVariantRepoActivity(
 ): boolean {
   const state = getState();
   const own = state.jobs[key];
-  if (own && ACTIVE_STATES.has(own.state)) return true;
-  if (selectActiveJob(state, kind, repoId, null)) return true;
+  if (own && ACTIVE_STATES.has(own.state)) {
+    return true;
+  }
+  if (selectActiveJob(state, kind, repoId, null)) {
+    return true;
+  }
   const snapshotKey = jobKeyOf(kind, repoId, null);
-  if (runtimeRegistry.runtimes.has(snapshotKey)) return true;
-  if (opts.includeOwnRuntime && runtimeRegistry.runtimes.has(key)) return true;
+  if (runtimeRegistry.runtimes.has(snapshotKey)) {
+    return true;
+  }
+  if (opts.includeOwnRuntime && runtimeRegistry.runtimes.has(key)) {
+    return true;
+  }
   if (opts.includePending) {
-    if (runtimeRegistry.pendingStartRepoKeys.has(key)) return true;
-    if (runtimeRegistry.pendingStartRepoKeys.has(snapshotKey)) return true;
+    if (runtimeRegistry.pendingStartRepoKeys.has(key)) {
+      return true;
+    }
+    if (runtimeRegistry.pendingStartRepoKeys.has(snapshotKey)) {
+      return true;
+    }
   }
   return false;
 }
@@ -406,7 +449,9 @@ export function hasActiveRepoPeer(
     });
   }
   const active = findActiveJobForRepo(getState().jobs, kind, repoId);
-  if (active && active.key !== key) return true;
+  if (active && active.key !== key) {
+    return true;
+  }
   return hasRuntimePeerForRepo(kind, repoId, key);
 }
 
@@ -417,7 +462,9 @@ function refreshCompletedHintSignature(): void {
 export function patchJob(key: string, patch: Partial<ManagedDownload>): void {
   setState((state) => {
     const job = state.jobs[key];
-    if (!job) return state;
+    if (!job) {
+      return state;
+    }
     const nextJob = { ...job, ...patch };
     const nextState = {
       ...state,
@@ -471,11 +518,15 @@ export function removeJob(key: string): void {
   }
   runtimeRegistry.clearRemovalTimer(key);
   setState((state) => {
-    if (!(key in state.jobs)) return state;
+    if (!(key in state.jobs)) {
+      return state;
+    }
     const next = { ...state.jobs };
     delete next[key];
     const nextState = { ...state, jobs: next };
-    if (!suppressionChanged && job?.state !== "complete") return nextState;
+    if (!suppressionChanged && job?.state !== "complete") {
+      return nextState;
+    }
     return withCompletedHintSignature(nextState);
   });
 }
@@ -486,8 +537,11 @@ export function setConflict(
 ): void {
   setState((state) => {
     const next = { ...state.conflicts };
-    if (entry) next[key] = entry;
-    else delete next[key];
+    if (entry) {
+      next[key] = entry;
+    } else {
+      delete next[key];
+    }
     return { ...state, conflicts: next };
   });
 }
@@ -499,11 +553,15 @@ export function isCurrent(key: string, epoch: number): boolean {
 
 export function scheduleRemoval(key: string, delayMs: number): void {
   const existing = runtimeRegistry.removalTimers.get(key);
-  if (existing != null) clearRuntimeTimer(existing);
+  if (existing != null) {
+    clearRuntimeTimer(existing);
+  }
   const startedAt = getState().jobs[key]?.startedAt;
   const timer = window.setTimeout(() => {
     runtimeRegistry.removalTimers.delete(key);
-    if (getState().jobs[key]?.startedAt === startedAt) removeJob(key);
+    if (getState().jobs[key]?.startedAt === startedAt) {
+      removeJob(key);
+    }
   }, delayMs);
   runtimeRegistry.removalTimers.set(key, timer);
 }
@@ -543,9 +601,13 @@ export function subscribeJobListeners(
   set.add(handlers);
   return () => {
     const current = runtimeRegistry.listeners.get(key);
-    if (!current) return;
+    if (!current) {
+      return;
+    }
     current.delete(handlers);
-    if (current.size === 0) runtimeRegistry.listeners.delete(key);
+    if (current.size === 0) {
+      runtimeRegistry.listeners.delete(key);
+    }
   };
 }
 
@@ -556,7 +618,9 @@ export function setExpectedBytesForJob(
   bytes: number,
 ): void {
   const job = selectActiveJob(getState(), kind, repoId, variant);
-  if (!job || job.state !== "running" || bytes <= job.expectedBytes) return;
+  if (!job || job.state !== "running" || bytes <= job.expectedBytes) {
+    return;
+  }
   patchJob(job.key, {
     expectedBytes: bytes,
     fraction:

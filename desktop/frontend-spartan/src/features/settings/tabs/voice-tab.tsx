@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -198,7 +197,9 @@ function SttModelPicker({
       open={open}
       onOpenChange={(next) => {
         setOpen(next);
-        if (!next) setQuery("");
+        if (!next) {
+          setQuery("");
+        }
       }}
     >
       <PopoverTrigger asChild={true}>
@@ -308,7 +309,9 @@ function useAudioInputDevices() {
   const [hasLabels, setHasLabels] = useState(false);
 
   const refresh = useCallback(async () => {
-    if (!navigator.mediaDevices?.enumerateDevices) return;
+    if (!navigator.mediaDevices?.enumerateDevices) {
+      return;
+    }
     try {
       const all = await navigator.mediaDevices.enumerateDevices();
       const inputs = all.filter((d) => d.kind === "audioinput");
@@ -383,7 +386,9 @@ function useSystemVoices() {
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
 
   useEffect(() => {
-    if (typeof window === "undefined" || !window.speechSynthesis) return;
+    if (typeof window === "undefined" || !window.speechSynthesis) {
+      return;
+    }
     const synth = window.speechSynthesis;
     const load = () => setVoices(synth.getVoices());
     load();
@@ -504,7 +509,7 @@ export function VoiceTab() {
       ? sttDownloadAvailability.state
       : "checking";
   useEffect(() => {
-    if (!isLocalEngine || !modelSttSupported) {
+    if (!(isLocalEngine && modelSttSupported)) {
       return;
     }
     let cancelled = false;
@@ -514,7 +519,9 @@ export function VoiceTab() {
       setSttPhase((phase) => (phase === "idle" ? "checking" : phase));
       try {
         const status = await fetchSttStatus(statusNonce, sttModel);
-        if (cancelled) return;
+        if (cancelled) {
+          return;
+        }
         // A curated model prefers the GGUF (whisper.cpp) engine, but without
         // whisper-server the backend serves it through Transformers instead of
         // failing. Fall back to the Transformers status here too, or the model
@@ -557,7 +564,9 @@ export function VoiceTab() {
           downloadRateSampleRef.current = { bytes, at: now };
           // Keep the download progress fresh.
           window.setTimeout(() => {
-            if (!cancelled) setStatusNonce((n) => n + 1);
+            if (!cancelled) {
+              setStatusNonce((n) => n + 1);
+            }
           }, 800);
         } else {
           const finished = watchedDownloadRef.current;
@@ -577,7 +586,9 @@ export function VoiceTab() {
         if (engineStatus.loading) {
           setSttPhase("loading");
           window.setTimeout(() => {
-            if (!cancelled) setStatusNonce((n) => n + 1);
+            if (!cancelled) {
+              setStatusNonce((n) => n + 1);
+            }
           }, 600);
           return;
         }
@@ -586,7 +597,9 @@ export function VoiceTab() {
           setSttPhase("ready");
           window.setTimeout(
             () => {
-              if (!cancelled) setStatusNonce((n) => n + 1);
+              if (!cancelled) {
+                setStatusNonce((n) => n + 1);
+              }
             },
             Math.max(
               1000,
@@ -600,7 +613,9 @@ export function VoiceTab() {
         setSttDevice(null);
         setSttPhase("on-demand");
       } catch {
-        if (!cancelled) setSttPhase("error");
+        if (!cancelled) {
+          setSttPhase("error");
+        }
       }
     })();
     return () => {
@@ -753,7 +768,9 @@ export function VoiceTab() {
     previewingRef.current = value;
     setPreviewing(value);
     // Every exit from the generate await clears previewing, so clear both here.
-    if (!value) setPreparingPreview(false);
+    if (!value) {
+      setPreparingPreview(false);
+    }
   }, []);
 
   const releasePreviewAudio = useCallback(() => {
@@ -765,7 +782,9 @@ export function VoiceTab() {
   }, []);
 
   const stopPreview = useCallback(() => {
-    if (!previewingRef.current) return;
+    if (!previewingRef.current) {
+      return;
+    }
     if (ownsSystemPreviewRef.current) {
       window.speechSynthesis?.cancel();
       ownsSystemPreviewRef.current = false;
@@ -777,7 +796,9 @@ export function VoiceTab() {
   }, [markPreviewing, releasePreviewAudio]);
 
   const previewTts = async () => {
-    if (!ttsSupported) return;
+    if (!ttsSupported) {
+      return;
+    }
     // Ref, not state: a double-click before rerender still reads previewing
     // as false and would start a second request that orphans the first.
     if (previewingRef.current) {
@@ -795,7 +816,9 @@ export function VoiceTab() {
           TTS_PREVIEW_TEXT,
           controller.signal,
         );
-        if (controller.signal.aborted) return;
+        if (controller.signal.aborted) {
+          return;
+        }
         setPreparingPreview(false);
         const audio = new Audio(url);
         audio.playbackRate = ttsRate;

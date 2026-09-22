@@ -1,4 +1,3 @@
-
 /**
  * Copy for a scan folder the backend could not read.
  *
@@ -20,8 +19,12 @@ export interface ScanFolderStatusCopy {
 
 /** Rough host detection: only picks which settings screen to name. */
 function hostPlatform(userAgent: string): "mac" | "windows" | "other" {
-  if (/Mac|iPhone|iPad/i.test(userAgent)) return "mac";
-  if (/Win/i.test(userAgent)) return "windows";
+  if (/Mac|iPhone|iPad/i.test(userAgent)) {
+    return "mac";
+  }
+  if (/Win/i.test(userAgent)) {
+    return "windows";
+  }
   return "other";
 }
 
@@ -38,7 +41,9 @@ function permissionHint(userAgent: string): string {
 
 export function scanFolderStatusCopy(
   status: ScanFolderStatus | undefined,
-  userAgent: string = typeof navigator === "undefined" ? "" : navigator.userAgent,
+  userAgent: string = typeof navigator === "undefined"
+    ? ""
+    : navigator.userAgent,
 ): ScanFolderStatusCopy | null {
   switch (status) {
     case "permission_denied":

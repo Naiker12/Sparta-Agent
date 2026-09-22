@@ -1,4 +1,3 @@
-
 // Pure identity helpers for picker rows: id and quant comparison, and the
 // selected/loaded state of a row that stands for one exact quant. No
 // React/DOM deps so they stay easy to test.

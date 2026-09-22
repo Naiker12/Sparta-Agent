@@ -1,4 +1,3 @@
-
 export type RecipePayload = {
   recipe: {
     // biome-ignore lint/style/useNamingConvention: api schema

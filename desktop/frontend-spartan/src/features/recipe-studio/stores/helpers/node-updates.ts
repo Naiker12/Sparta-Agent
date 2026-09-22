@@ -1,13 +1,8 @@
-
 import type { XYPosition } from "@xyflow/react";
-import { DEFAULT_NODE_WIDTH } from "../../constants";
-import type {
-  RecipeNode,
-  LayoutDirection,
-  NodeConfig,
-} from "../../types";
-import { nodeDataFromConfig } from "../../utils";
 import { getConfigUiMode } from "../../components/inline/inline-policy";
+import { DEFAULT_NODE_WIDTH } from "../../constants";
+import type { LayoutDirection, NodeConfig, RecipeNode } from "../../types";
+import { nodeDataFromConfig } from "../../utils";
 
 export type NodeUpdateState = {
   configs: Record<string, NodeConfig>;

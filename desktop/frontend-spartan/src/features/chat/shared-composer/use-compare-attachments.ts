@@ -5,16 +5,13 @@
  * en el compositor compartido (modo compare).
  */
 
-import { useCallback, useState } from "react";
-import { toast } from "@/lib/toast";
-import { fileToBase64, getAudioSizeError } from "@/lib/audio-utils";
-import { isVideoFile } from "@/lib/video-utils";
-import { pasteClipboardFiles } from "@/features/chat/utils/clipboard-files";
 import { useChatRuntimeStore } from "@/features/chat/stores/chat-runtime-store";
-import {
-  MAX_IMAGE_SIZE,
-  type PendingImage,
-} from "./composer-ui-helpers";
+import { pasteClipboardFiles } from "@/features/chat/utils/clipboard-files";
+import { fileToBase64, getAudioSizeError } from "@/lib/audio-utils";
+import { toast } from "@/lib/toast";
+import { isVideoFile } from "@/lib/video-utils";
+import { useCallback, useState } from "react";
+import { MAX_IMAGE_SIZE, type PendingImage } from "./composer-ui-helpers";
 
 export interface PendingAudio {
   name: string;
@@ -33,7 +30,9 @@ export function useCompareAttachments({
   const [pendingAudio, setPendingAudio] = useState<PendingAudio | null>(null);
 
   const setPendingAudioStore = useChatRuntimeStore((s) => s.setPendingAudio);
-  const clearPendingAudioStore = useChatRuntimeStore((s) => s.clearPendingAudio);
+  const clearPendingAudioStore = useChatRuntimeStore(
+    (s) => s.clearPendingAudio,
+  );
 
   const removePendingImage = useCallback((id: string) => {
     setPendingImages((prev) => prev.filter((p) => p.id !== id));
@@ -52,7 +51,9 @@ export function useCompareAttachments({
 
   const addFiles = useCallback(
     (files: FileList | readonly File[] | null) => {
-      if (!files?.length) return;
+      if (!files || files.length === 0) {
+        return;
+      }
       const next: PendingImage[] = [];
       let droppedImageForUnavailable = false;
       let audioSizeError: string | null = null;
@@ -60,7 +61,9 @@ export function useCompareAttachments({
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        if (!file) continue;
+        if (!file) {
+          continue;
+        }
 
         // Archivos de audio
         if (file.type.match(/^audio\//i)) {
@@ -70,7 +73,11 @@ export function useCompareAttachments({
             continue;
           }
           fileToBase64(file).then((base64) => {
-            setPendingAudio({ name: file.name, base64, contentType: file.type });
+            setPendingAudio({
+              name: file.name,
+              base64,
+              contentType: file.type,
+            });
             setPendingAudioStore(base64, file.name);
           });
           continue;
@@ -83,8 +90,12 @@ export function useCompareAttachments({
         }
 
         // Archivos de imagen
-        if (!file.type.match(/^image\/(jpeg|png|webp|gif)$/i)) continue;
-        if (file.size > MAX_IMAGE_SIZE) continue;
+        if (!file.type.match(/^image\/(jpeg|png|webp|gif)$/i)) {
+          continue;
+        }
+        if (file.size > MAX_IMAGE_SIZE) {
+          continue;
+        }
         if (attachUnavailableReason) {
           droppedImageForUnavailable = true;
           continue;
@@ -119,7 +130,9 @@ export function useCompareAttachments({
               (file.type.match(/^image\/(jpeg|png|webp|gif)$/i) &&
                 file.size <= MAX_IMAGE_SIZE),
           );
-          if (!supported) throw new Error("Unsupported compare attachment");
+          if (!supported) {
+            throw new Error("Unsupported compare attachment");
+          }
           addFiles(files);
         },
         () =>

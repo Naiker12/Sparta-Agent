@@ -1,4 +1,3 @@
-
 /**
  * Which messages own a research reply, answered once per thread revision instead of once per
  * message.

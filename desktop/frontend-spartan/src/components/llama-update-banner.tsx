@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { resyncInferenceStatusAfterServerModelChange } from "@/features/chat";
 import { useLlamaUpdateCheck } from "@/hooks/use-llama-update-check";
@@ -199,13 +198,16 @@ export function LlamaUpdateBanner({
               </span>
             </p>
             <p className="mt-1 text-ui-11 text-muted-foreground/70">
-              {sizeLabel ? t("update.llama.downloadSize", { size: sizeLabel }) : ""}
+              {sizeLabel
+                ? t("update.llama.downloadSize", { size: sizeLabel })
+                : ""}
               {t("update.llama.noRestartNeeded")}
             </p>
           </div>
         </div>
 
         {applying ? (
+          // biome-ignore lint/a11y/useFocusableInteractive: read-only progress indicator
           <div
             className="mb-1.5 mt-4 h-1 overflow-hidden rounded-full bg-muted"
             role="progressbar"

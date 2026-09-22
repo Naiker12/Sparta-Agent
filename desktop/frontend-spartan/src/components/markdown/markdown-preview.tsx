@@ -1,4 +1,3 @@
-
 import { markdownPluginNeeds } from "@/lib/markdown-plugins";
 import { openLink } from "@/lib/open-link";
 import { safeMarkdownUrl } from "@/lib/safe-markdown-url";
@@ -67,33 +66,43 @@ function MarkdownPreviewImpl({
     const loaders: Promise<void>[] = [];
 
     if (needs.code) {
-      loaders.push(import("@streamdown/code").then(({ code }) => {
-        next.code = code;
-      }));
+      loaders.push(
+        import("@streamdown/code").then(({ code }) => {
+          next.code = code;
+        }),
+      );
     }
     if (needs.math) {
       loaders.push(
-        Promise.all([import("@streamdown/math"), import("katex/dist/katex.min.css")])
-          .then(([{ math }]) => {
-            next.math = math;
-          }),
+        Promise.all([
+          import("@streamdown/math"),
+          import("katex/dist/katex.min.css"),
+        ]).then(([{ math }]) => {
+          next.math = math;
+        }),
       );
     }
     if (needs.mermaid) {
-      loaders.push(import("@streamdown/mermaid").then(({ mermaid }) => {
-        next.mermaid = mermaid;
-      }));
+      loaders.push(
+        import("@streamdown/mermaid").then(({ mermaid }) => {
+          next.mermaid = mermaid;
+        }),
+      );
     }
 
     setPlugins(null);
     void Promise.all(loaders)
       .then(() => {
-        if (!cancelled) setPlugins(next);
+        if (!cancelled) {
+          setPlugins(next);
+        }
       })
       .catch(() => {
         // Markdown remains readable without an optional renderer. Do not make
         // a failed syntax highlighter block the rest of the conversation.
-        if (!cancelled) setPlugins({});
+        if (!cancelled) {
+          setPlugins({});
+        }
       });
 
     return () => {

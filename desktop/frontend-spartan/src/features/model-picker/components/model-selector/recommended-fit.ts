@@ -1,4 +1,3 @@
-
 // Pure helpers for the Recommended list: which formats to surface and whether a
 // model fits the device. No React/DOM deps so they are easy to test.
 
@@ -29,7 +28,9 @@ export function isRecommendableFormat(
   hintedIsGguf: boolean | undefined,
   isMac: boolean,
 ): boolean {
-  if (isGgufId(id, hintedIsGguf)) return true;
+  if (isGgufId(id, hintedIsGguf)) {
+    return true;
+  }
   return isMac;
 }
 
@@ -48,7 +49,7 @@ export function matchesFormatFilter(
     case "mlx":
       return isMlxId(id);
     case "safetensors":
-      return !isGgufId(id, hintedIsGguf) && !isMlxId(id);
+      return !(isGgufId(id, hintedIsGguf) || isMlxId(id));
     default:
       return true;
   }
@@ -63,8 +64,10 @@ const PARAM_RE = /(?:^|[-_/. ])[eE]?(\d+(?:\.\d+)?)\s*[bB](?=$|[-_./ ])/;
  * when the id has no size token (so callers can treat the size as unknown). */
 export function paramsFromId(id: string): number | undefined {
   const match = PARAM_RE.exec(id);
-  if (!match) return undefined;
-  const billions = parseFloat(match[1]);
+  if (!match) {
+    return undefined;
+  }
+  const billions = Number.parseFloat(match[1]);
   return Number.isFinite(billions) && billions > 0 ? billions * 1e9 : undefined;
 }
 
@@ -100,15 +103,18 @@ export function fitsDevice(opts: {
   } = opts;
   // Unified-memory hosts (Mac / no discrete GPU) report system RAM but no GPU,
   // so the budget must include RAM. Only an entirely unknown budget fits freely.
-  const budgetGb = Math.max(0, gpuGb ?? 0) * 0.7 + Math.max(0, systemRamGb ?? 0) * 0.7;
-  if (budgetGb <= 0) return !budgetKnown;
+  const budgetGb =
+    Math.max(0, gpuGb ?? 0) * 0.7 + Math.max(0, systemRamGb ?? 0) * 0.7;
+  if (budgetGb <= 0) {
+    return !budgetKnown;
+  }
   if (sizeBytes && sizeBytes > 0) {
     return sizeBytes / 1024 ** 3 <= budgetGb;
   }
   if (estimatedVramGb && estimatedVramGb > 0) {
     return estimatedVramGb <= budgetGb;
   }
-  return requireKnown ? false : true;
+  return !requireKnown;
 }
 
 /** Fit predicate for one Hub listing row, shared by the chat model selector
@@ -138,8 +144,9 @@ export function hfModelFitsDevice(
     gpu.memoryTotalGb <= 0 &&
     gpu.systemRamAvailableGb <= 0 &&
     !gpu.budgetKnown
-  )
+  ) {
     return true;
+  }
   const params = model.totalParams ?? paramsFromId(model.id);
   const quantBytes = params ? estimateQuantBytes(params) : undefined;
   const sizeBytes =
@@ -168,7 +175,9 @@ export function loadScopedGpu<
     loadDeviceMemoryGb: number;
   },
 >(gpu: T, taskScoped: boolean): T {
-  if (!taskScoped || !gpu.available) return gpu;
+  if (!(taskScoped && gpu.available)) {
+    return gpu;
+  }
   const deviceGb = gpu.loadDeviceMemoryGb || gpu.maxDeviceMemoryGb;
   return deviceGb > 0 ? { ...gpu, memoryTotalGb: deviceGb } : gpu;
 }
@@ -232,7 +241,9 @@ export function searchableRecommendedIds(
   const out: string[] = [];
   for (const id of [...seedIds, ...listingIds]) {
     const key = id.toLowerCase();
-    if (seen.has(key)) continue;
+    if (seen.has(key)) {
+      continue;
+    }
     seen.add(key);
     out.push(id);
   }
@@ -267,7 +278,9 @@ export function orderRecommendedRows<
   const curated: T[] = [];
   for (const seed of seeds) {
     const row = byId.get(seed.id) ?? seed;
-    if (!deviceFiltered || fits(row)) curated.push(row);
+    if (!deviceFiltered || fits(row)) {
+      curated.push(row);
+    }
   }
   const curatedIds = new Set(curated.map((r) => r.id));
   const rest = (deviceFiltered ? rows.filter(fits) : rows).filter(

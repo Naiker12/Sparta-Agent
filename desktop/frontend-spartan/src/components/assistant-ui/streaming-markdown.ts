@@ -1,4 +1,3 @@
-
 import { fromMarkdown } from "mdast-util-from-markdown";
 import { gfmFromMarkdown } from "mdast-util-gfm";
 import { mathFromMarkdown } from "mdast-util-math";
@@ -53,7 +52,7 @@ function ambiguousMarkerIndex(text: string): number {
 // this frame into a list, so unrepaired text is the wrong thing to test.
 function rendersTrailingThematicBreak(block: string): boolean {
   let node = parse(block);
-  while (node.children?.length) {
+  while (node.children && node.children.length > 0) {
     node = node.children[node.children.length - 1];
   }
   return node.type === "thematicBreak";

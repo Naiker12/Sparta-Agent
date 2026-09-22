@@ -1,4 +1,3 @@
-
 import {
   BalanceScaleIcon,
   Clock01Icon,
@@ -11,10 +10,10 @@ import {
   FingerPrintIcon,
   FunctionIcon,
   GithubIcon,
-  Plug01Icon,
   Parabola02Icon,
   PencilEdit02Icon,
   Plant01Icon,
+  Plug01Icon,
   Shield02Icon,
   Tag01Icon,
   TagsIcon,
@@ -32,9 +31,9 @@ import {
   makeMarkdownNoteConfig,
   makeModelConfig,
   makeModelProviderConfig,
-  makeToolProfileConfig,
   makeSamplerConfig,
   makeSeedConfig,
+  makeToolProfileConfig,
   makeValidatorConfig,
 } from "../utils";
 
@@ -128,7 +127,8 @@ export const BLOCK_GROUPS: BlockGroup[] = [
   {
     kind: "validator",
     title: "Checks",
-    description: "Lint or filter generated code as it moves through the recipe.",
+    description:
+      "Lint or filter generated code as it moves through the recipe.",
     icon: Shield02Icon,
   },
   {
@@ -171,13 +171,15 @@ const BLOCK_DEFINITIONS: BlockDefinition[] = [
     description: "Upload PDF, DOCX, or TXT and turn it into source rows.",
     icon: DocumentAttachmentIcon,
     dialogKey: "seed",
-    createConfig: (id, existing) => makeSeedConfig(id, existing, "unstructured"),
+    createConfig: (id, existing) =>
+      makeSeedConfig(id, existing, "unstructured"),
   },
   {
     kind: "seed",
     type: "seed_github",
     title: "GitHub repositories",
-    description: "Crawl issues, pull requests, and commits from one or more GitHub repos.",
+    description:
+      "Crawl issues, pull requests, and commits from one or more GitHub repos.",
     icon: GithubIcon,
     dialogKey: "seed",
     createConfig: (id, existing) => makeSeedConfig(id, existing, "github_repo"),
@@ -186,7 +188,8 @@ const BLOCK_DEFINITIONS: BlockDefinition[] = [
     kind: "sampler",
     type: "category",
     title: "Category",
-    description: "Generate values from a list you define, with optional weights or rules.",
+    description:
+      "Generate values from a list you define, with optional weights or rules.",
     icon: Tag01Icon,
     dialogKey: "category",
     createConfig: (id, existing) => makeSamplerConfig(id, "category", existing),
@@ -198,7 +201,8 @@ const BLOCK_DEFINITIONS: BlockDefinition[] = [
     description: "Generate values from groups you define for each category.",
     icon: TagsIcon,
     dialogKey: "subcategory",
-    createConfig: (id, existing) => makeSamplerConfig(id, "subcategory", existing),
+    createConfig: (id, existing) =>
+      makeSamplerConfig(id, "subcategory", existing),
   },
   {
     kind: "sampler",
@@ -225,7 +229,8 @@ const BLOCK_DEFINITIONS: BlockDefinition[] = [
     description: "Generate a binary result from a probability.",
     icon: EqualSignIcon,
     dialogKey: "bernoulli",
-    createConfig: (id, existing) => makeSamplerConfig(id, "bernoulli", existing),
+    createConfig: (id, existing) =>
+      makeSamplerConfig(id, "bernoulli", existing),
   },
   {
     kind: "sampler",
@@ -243,7 +248,8 @@ const BLOCK_DEFINITIONS: BlockDefinition[] = [
     description: "Generate a time difference from another date field.",
     icon: Clock01Icon,
     dialogKey: "timedelta",
-    createConfig: (id, existing) => makeSamplerConfig(id, "timedelta", existing),
+    createConfig: (id, existing) =>
+      makeSamplerConfig(id, "timedelta", existing),
   },
   {
     kind: "sampler",
@@ -350,7 +356,8 @@ const BLOCK_DEFINITIONS: BlockDefinition[] = [
     kind: "validator",
     type: "validator_oxc",
     title: "JS/TS check",
-    description: "Lint generated JavaScript or TypeScript and filter out rows that fail.",
+    description:
+      "Lint generated JavaScript or TypeScript and filter out rows that fail.",
     icon: Shield02Icon,
     dialogKey: "validator",
     createConfig: (id, existing) =>
@@ -385,8 +392,9 @@ export function getBlockDefinition(
   type: BlockType,
 ): BlockDefinition | null {
   return (
-    BLOCK_DEFINITIONS.find((block) => block.kind === kind && block.type === type) ??
-    null
+    BLOCK_DEFINITIONS.find(
+      (block) => block.kind === kind && block.type === type,
+    ) ?? null
   );
 }
 
@@ -403,11 +411,16 @@ export function getBlockDefinitionForConfig(
       unstructured: "seed_unstructured",
       github_repo: "seed_github",
     };
-    return getBlockDefinition("seed", seedType[config.seed_source_type ?? "hf"]);
+    return getBlockDefinition(
+      "seed",
+      seedType[config.seed_source_type ?? "hf"],
+    );
   }
   if (config.kind === "sampler") {
     const samplerType =
-      config.sampler_type === "person_from_faker" ? "person" : config.sampler_type;
+      config.sampler_type === "person_from_faker"
+        ? "person"
+        : config.sampler_type;
     return getBlockDefinition("sampler", samplerType);
   }
   if (config.kind === "llm") {

@@ -1,4 +1,3 @@
-
 import {
   Combobox,
   ComboboxContent,
@@ -8,8 +7,8 @@ import {
   ComboboxList,
 } from "@/components/ui/combobox";
 import { Spinner } from "@/components/ui/spinner";
-import { useDebouncedValue } from "@/hooks";
 import { useHubDatasetSearch } from "@/features/hub/hooks/use-hub-dataset-search";
+import { useDebouncedValue } from "@/hooks";
 import { type ReactElement, useEffect, useMemo, useRef, useState } from "react";
 
 type HfDatasetComboboxProps = {
@@ -56,8 +55,12 @@ export function HfDatasetCombobox({
       ref={anchorRef}
       className={className}
       onKeyDown={(event) => {
-        if (event.key !== "Enter") return;
-        if (!(event.target instanceof HTMLInputElement)) return;
+        if (event.key !== "Enter") {
+          return;
+        }
+        if (!(event.target instanceof HTMLInputElement)) {
+          return;
+        }
         event.preventDefault();
         if (items.length > 0) {
           onValueChange(items[0]);
@@ -114,11 +117,7 @@ export function HfDatasetCombobox({
           </ComboboxList>
         </ComboboxContent>
       </Combobox>
-      {error && (
-        <p className="mt-1 text-xs text-destructive">
-          {error}
-        </p>
-      )}
+      {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
     </div>
   );
 }

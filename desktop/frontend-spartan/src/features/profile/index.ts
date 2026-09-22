@@ -1,4 +1,3 @@
-
 export { ProfilePersonalizationPanel } from "./components/profile-personalization-panel";
 export { ProfileStatsPanel } from "./components/stats/profile-stats-panel";
 export { UserAvatar } from "./components/user-avatar";

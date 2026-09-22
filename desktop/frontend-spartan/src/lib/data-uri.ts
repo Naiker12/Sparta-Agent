@@ -1,4 +1,3 @@
-
 // Only a trailing `;base64` marks the payload as base64. A segment named
 // `base64` anywhere else is an ordinary parameter, so
 // `data:text/plain;base64;charset=utf-8,SGVsbG8=` stays literal text.

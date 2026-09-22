@@ -1,4 +1,3 @@
-
 import { authFetch } from "@/features/auth";
 import { readFastApiError } from "@/lib/format-fastapi-error";
 
@@ -302,7 +301,9 @@ function parseSseMessage(raw: string): ParsedSseMessage | null {
   const dataLines: string[] = [];
 
   for (const line of lines) {
-    if (!line) continue;
+    if (!line) {
+      continue;
+    }
     if (line.startsWith("event:")) {
       event = line.slice(6).trim();
       continue;
@@ -314,12 +315,13 @@ function parseSseMessage(raw: string): ParsedSseMessage | null {
     }
     if (line.startsWith("data:")) {
       dataLines.push(line.slice(5).trimStart());
-      continue;
     }
     // Comment lines (":heartbeat" etc.) are ignored per SSE spec.
   }
 
-  if (dataLines.length === 0) return null;
+  if (dataLines.length === 0) {
+    return null;
+  }
   return { event, id, data: dataLines.join("\n") };
 }
 
@@ -365,7 +367,9 @@ export async function streamExportLogs(options: {
   try {
     while (true) {
       const { value, done } = await reader.read();
-      if (done) return;
+      if (done) {
+        return;
+      }
 
       buffer += decoder.decode(value, { stream: true });
 
@@ -411,7 +415,9 @@ export async function streamExportLogs(options: {
             let errorMessage = "Export log stream error";
             try {
               const payload = JSON.parse(parsed.data) as { error?: string };
-              if (payload.error) errorMessage = payload.error;
+              if (payload.error) {
+                errorMessage = payload.error;
+              }
             } catch {
               // fall through with default message
             }
@@ -422,7 +428,9 @@ export async function streamExportLogs(options: {
             });
           }
         } catch (err) {
-          if (isAbortError(err)) return;
+          if (isAbortError(err)) {
+            return;
+          }
           // Ignore malformed events, keep reading.
         }
 
@@ -430,7 +438,9 @@ export async function streamExportLogs(options: {
       }
     }
   } catch (err) {
-    if (isAbortError(err)) return;
+    if (isAbortError(err)) {
+      return;
+    }
     throw err;
   } finally {
     // Release the stream lock now instead of leaking the reader until GC.

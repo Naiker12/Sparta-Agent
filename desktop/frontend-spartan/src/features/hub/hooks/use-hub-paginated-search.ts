@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { sanitizeHubErrorMessage } from "../lib/network";
 
@@ -79,9 +78,7 @@ function isAbortError(err: unknown): boolean {
 // The SDK appends the request URL to its message, and for a proxied request
 // that URL carries the user's search query, which some pickers render raw.
 function hubErrorText(err: unknown, fallback: string): string {
-  return err instanceof Error
-    ? sanitizeHubErrorMessage(err.message)
-    : fallback;
+  return err instanceof Error ? sanitizeHubErrorMessage(err.message) : fallback;
 }
 
 function isDocumentHidden(): boolean {
@@ -229,7 +226,9 @@ export function useHubPaginatedSearch<T>(
 
     pullBatch(iter, mapItem, BATCH)
       .then(({ items, done, scanned }) => {
-        if (versionRef.current !== v) return;
+        if (versionRef.current !== v) {
+          return;
+        }
         loadedAtRef.current = Date.now();
         setState({
           results: items,
@@ -242,7 +241,9 @@ export function useHubPaginatedSearch<T>(
         });
       })
       .catch((err) => {
-        if (versionRef.current !== v || isAbortError(err)) return;
+        if (versionRef.current !== v || isAbortError(err)) {
+          return;
+        }
         setState({
           results: [],
           scannedCount: 0,
@@ -263,14 +264,7 @@ export function useHubPaginatedSearch<T>(
     return () => {
       clearDeferredFetch();
     };
-  }, [
-    createIter,
-    mapItem,
-    enabled,
-    retryNonce,
-    queryKey,
-    clearDeferredFetch,
-  ]);
+  }, [createIter, mapItem, enabled, retryNonce, queryKey, clearDeferredFetch]);
 
   // A thrown generator is closed, so continuing needs a new one.
   const needsRestart = useCallback(() => iterDeadRef.current, []);
@@ -279,132 +273,141 @@ export function useHubPaginatedSearch<T>(
     setRetryNonce((n) => n + 1);
   }, []);
 
-  const fetchMore = useCallback(function fetchMoreInner(): boolean {
-    if (!enabled) {
-      queuedAfterBusyRef.current = false;
-      queuedWhileHiddenRef.current = false;
-      return false;
-    }
-    // Synchronous in-flight gate before any setState so concurrent fires from
-    // sibling observers all see the same truth and only one proceeds, closing
-    // the race window React's batched commit opens.
-    if (busyRef.current) {
-      if (busyKindRef.current === "more" && stateRef.current.isLoadingMore) {
-        if (queuedAfterBusyRef.current) return false;
-        queuedAfterBusyRef.current = true;
+  const fetchMore = useCallback(
+    function fetchMoreInner(): boolean {
+      if (!enabled) {
+        queuedAfterBusyRef.current = false;
+        queuedWhileHiddenRef.current = false;
+        return false;
+      }
+      // Synchronous in-flight gate before any setState so concurrent fires from
+      // sibling observers all see the same truth and only one proceeds, closing
+      // the race window React's batched commit opens.
+      if (busyRef.current) {
+        if (busyKindRef.current === "more" && stateRef.current.isLoadingMore) {
+          if (queuedAfterBusyRef.current) {
+            return false;
+          }
+          queuedAfterBusyRef.current = true;
+          return true;
+        }
+        return false;
+      }
+
+      // A generator that threw is finished; hasMore stays true only to keep the
+      // footer and its error. Pulling again returns done, which clears both, so
+      // the auto-fill would swallow the failure. Only a restart resumes.
+      if (iterDeadRef.current) {
+        queuedAfterBusyRef.current = false;
+        queuedWhileHiddenRef.current = false;
+        return false;
+      }
+
+      const iter = iterRef.current;
+      const { hasMore } = stateRef.current;
+      if (!(iter && hasMore)) {
+        queuedAfterBusyRef.current = false;
+        queuedWhileHiddenRef.current = false;
+        return false;
+      }
+
+      if (isDocumentHidden()) {
+        queuedAfterBusyRef.current = false;
+        if (queuedWhileHiddenRef.current) {
+          return false;
+        }
+        queuedWhileHiddenRef.current = true;
         return true;
       }
-      return false;
-    }
 
-    // A generator that threw is finished; hasMore stays true only to keep the
-    // footer and its error. Pulling again returns done, which clears both, so
-    // the auto-fill would swallow the failure. Only a restart resumes.
-    if (iterDeadRef.current) {
-      queuedAfterBusyRef.current = false;
-      queuedWhileHiddenRef.current = false;
-      return false;
-    }
+      const now = Date.now();
+      const elapsed = now - lastFireAtRef.current;
 
-    const iter = iterRef.current;
-    const { hasMore } = stateRef.current;
-    if (!iter || !hasMore) {
-      queuedAfterBusyRef.current = false;
-      queuedWhileHiddenRef.current = false;
-      return false;
-    }
-
-    if (isDocumentHidden()) {
-      queuedAfterBusyRef.current = false;
-      if (queuedWhileHiddenRef.current) return false;
-      queuedWhileHiddenRef.current = true;
-      return true;
-    }
-
-    const now = Date.now();
-    const elapsed = now - lastFireAtRef.current;
-
-    if (elapsed < MIN_FETCH_INTERVAL_MS) {
-      // Trailing-edge schedule: calls during the window collapse to one timer.
-      if (trailingTimerRef.current === null) {
-        trailingTimerRef.current = setTimeout(
-          () => {
+      if (elapsed < MIN_FETCH_INTERVAL_MS) {
+        // Trailing-edge schedule: calls during the window collapse to one timer.
+        if (trailingTimerRef.current === null) {
+          trailingTimerRef.current = setTimeout(() => {
             trailingTimerRef.current = null;
             fetchMoreInner();
-          },
-          MIN_FETCH_INTERVAL_MS - elapsed,
-        );
-        return true;
-      }
-      return false;
-    }
-
-    cancelTrailing();
-    queuedAfterBusyRef.current = false;
-    queuedWhileHiddenRef.current = false;
-    const busyToken = ++busyTokenRef.current;
-    busyRef.current = true;
-    busyKindRef.current = "more";
-    lastFireAtRef.current = now;
-
-    const v = versionRef.current;
-    let shouldScheduleFollowUp = false;
-    setState((prev) => ({ ...prev, isLoadingMore: true }));
-
-    pullBatch(iter, mapItem, BATCH)
-      .then(({ items, done, scanned }) => {
-        if (versionRef.current !== v) return;
-        shouldScheduleFollowUp = !done && queuedAfterBusyRef.current;
-        loadedAtRef.current = Date.now();
-        setState((prev) => ({
-          ...prev,
-          results: [...prev.results, ...items],
-          scannedCount: prev.scannedCount + scanned,
-          isLoadingMore: false,
-          hasMore: !done,
-          // Clear any error left by a prior failed page.
-          error: null,
-        }));
-      })
-      .catch((err) => {
-        if (versionRef.current !== v || isAbortError(err)) return;
-        shouldScheduleFollowUp = false;
-        // The generator threw, so it is finished. Keep the rows and hasMore so
-        // the footer survives, but record that continuing now needs a restart.
-        iterDeadRef.current = true;
-        setState((prev) => ({
-          ...prev,
-          isLoadingMore: false,
-          error: hubErrorText(err, "Failed to load more"),
-        }));
-      })
-      .finally(() => {
-        if (busyTokenRef.current === busyToken) {
-          busyRef.current = false;
-          busyKindRef.current = null;
-          if (
-            shouldScheduleFollowUp &&
-            trailingTimerRef.current === null
-          ) {
-            queuedAfterBusyRef.current = false;
-            const elapsed = Date.now() - lastFireAtRef.current;
-            trailingTimerRef.current = setTimeout(
-              () => {
-                trailingTimerRef.current = null;
-                fetchMoreInner();
-              },
-              Math.max(0, MIN_FETCH_INTERVAL_MS - elapsed),
-            );
-          }
+          }, MIN_FETCH_INTERVAL_MS - elapsed);
+          return true;
         }
-      });
-    return true;
-  }, [enabled, mapItem, cancelTrailing]);
+        return false;
+      }
+
+      cancelTrailing();
+      queuedAfterBusyRef.current = false;
+      queuedWhileHiddenRef.current = false;
+      const busyToken = ++busyTokenRef.current;
+      busyRef.current = true;
+      busyKindRef.current = "more";
+      lastFireAtRef.current = now;
+
+      const v = versionRef.current;
+      let shouldScheduleFollowUp = false;
+      setState((prev) => ({ ...prev, isLoadingMore: true }));
+
+      pullBatch(iter, mapItem, BATCH)
+        .then(({ items, done, scanned }) => {
+          if (versionRef.current !== v) {
+            return;
+          }
+          shouldScheduleFollowUp = !done && queuedAfterBusyRef.current;
+          loadedAtRef.current = Date.now();
+          setState((prev) => ({
+            ...prev,
+            results: [...prev.results, ...items],
+            scannedCount: prev.scannedCount + scanned,
+            isLoadingMore: false,
+            hasMore: !done,
+            // Clear any error left by a prior failed page.
+            error: null,
+          }));
+        })
+        .catch((err) => {
+          if (versionRef.current !== v || isAbortError(err)) {
+            return;
+          }
+          shouldScheduleFollowUp = false;
+          // The generator threw, so it is finished. Keep the rows and hasMore so
+          // the footer survives, but record that continuing now needs a restart.
+          iterDeadRef.current = true;
+          setState((prev) => ({
+            ...prev,
+            isLoadingMore: false,
+            error: hubErrorText(err, "Failed to load more"),
+          }));
+        })
+        .finally(() => {
+          if (busyTokenRef.current === busyToken) {
+            busyRef.current = false;
+            busyKindRef.current = null;
+            if (shouldScheduleFollowUp && trailingTimerRef.current === null) {
+              queuedAfterBusyRef.current = false;
+              const elapsed = Date.now() - lastFireAtRef.current;
+              trailingTimerRef.current = setTimeout(
+                () => {
+                  trailingTimerRef.current = null;
+                  fetchMoreInner();
+                },
+                Math.max(0, MIN_FETCH_INTERVAL_MS - elapsed),
+              );
+            }
+          }
+        });
+      return true;
+    },
+    [enabled, mapItem, cancelTrailing],
+  );
 
   useEffect(() => {
-    if (!enabled || typeof document === "undefined") return;
+    if (!enabled || typeof document === "undefined") {
+      return;
+    }
     const handleVisibilityChange = () => {
-      if (document.hidden || !queuedWhileHiddenRef.current) return;
+      if (document.hidden || !queuedWhileHiddenRef.current) {
+        return;
+      }
       queuedWhileHiddenRef.current = false;
       fetchMore();
     };

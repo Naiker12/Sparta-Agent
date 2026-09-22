@@ -1,23 +1,23 @@
 "use client";
 
-import { openLink } from "@/lib/open-link";
-import {
-  memo,
-  useState,
-  useRef,
-  useEffect,
-  useCallback,
-  type ComponentProps,
-  type FC,
-} from "react";
-import { useMessage } from "@assistant-ui/react";
-import { cn } from "@/lib/utils";
-import { Badge, badgeVariants, type BadgeProps } from "./badge";
 import {
   HoverCard,
-  HoverCardTrigger,
   HoverCardContent,
+  HoverCardTrigger,
 } from "@/components/ui/hover-card";
+import { openLink } from "@/lib/open-link";
+import { cn } from "@/lib/utils";
+import { useMessage } from "@assistant-ui/react";
+import {
+  type ComponentProps,
+  type FC,
+  memo,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import { Badge, type BadgeProps, badgeVariants } from "./badge";
 
 // ── Helpers ──────────────────────────────────────────────────
 
@@ -42,11 +42,19 @@ function SourceIcon({
   size = 3,
   allowRemoteIcons = true,
   ...props
-}: ComponentProps<"span"> & { url: string; size?: number; allowRemoteIcons?: boolean }) {
+}: ComponentProps<"span"> & {
+  url: string;
+  size?: number;
+  allowRemoteIcons?: boolean;
+}) {
   const [hasError, setHasError] = useState(false);
   const domain = extractDomain(url);
-  const SIZE_CLASSES: Record<number, string> = { 3: "size-3", 4: "size-4", 5: "size-5" };
-  const sizeClass = SIZE_CLASSES[size] ?? "size-3";
+  const sizeClasses: Record<number, string> = {
+    3: "size-3",
+    4: "size-4",
+    5: "size-5",
+  };
+  const sizeClass = sizeClasses[size] ?? "size-3";
 
   // When disabled, render the letter fallback instead of fetching a third-party favicon.
   if (hasError || !allowRemoteIcons) {
@@ -102,7 +110,7 @@ function Source({
 }: SourceProps) {
   return (
     <Badge
-      asChild
+      asChild={true}
       variant={variant}
       size={size}
       className={cn(
@@ -148,7 +156,7 @@ const SourceBadge: FC<{ source: SourceData; allowRemoteIcons?: boolean }> = ({
 
   return (
     <HoverCard openDelay={0} closeDelay={0}>
-      <HoverCardTrigger asChild>
+      <HoverCardTrigger asChild={true}>
         <span className="inline-block">
           <Source href={source.url}>
             <SourceIcon url={source.url} allowRemoteIcons={allowRemoteIcons} />
@@ -188,10 +196,10 @@ const SourceBadge: FC<{ source: SourceData; allowRemoteIcons?: boolean }> = ({
 
 // ── Grouped sources with 2-row collapse ─────────────────────
 
-const SourcesGroup: FC<{ sources?: SourceData[]; allowRemoteIcons?: boolean }> = ({
-  sources: suppliedSources,
-  allowRemoteIcons = true,
-}) => {
+const SourcesGroup: FC<{
+  sources?: SourceData[];
+  allowRemoteIcons?: boolean;
+}> = ({ sources: suppliedSources, allowRemoteIcons = true }) => {
   const message = useMessage();
   const containerRef = useRef<HTMLDivElement>(null);
   const [visibleCount, setVisibleCount] = useState<number | null>(null);
@@ -210,7 +218,7 @@ const SourcesGroup: FC<{ sources?: SourceData[]; allowRemoteIcons?: boolean }> =
         const url = part.url as string;
         const partId =
           typeof (part as { id?: unknown }).id === "string"
-            ? ((part as { id: string }).id)
+            ? (part as { id: string }).id
             : url;
         messageSources.push({
           id: partId,
@@ -227,10 +235,14 @@ const SourcesGroup: FC<{ sources?: SourceData[]; allowRemoteIcons?: boolean }> =
   // Measure how many badges fit in 2 rows
   const measure = useCallback(() => {
     const container = containerRef.current;
-    if (!container || sources.length === 0) return;
+    if (!container || sources.length === 0) {
+      return;
+    }
 
     const children = Array.from(container.children) as HTMLElement[];
-    if (children.length === 0) return;
+    if (children.length === 0) {
+      return;
+    }
 
     const firstTop = children[0].offsetTop;
     let rowCount = 1;
@@ -259,13 +271,17 @@ const SourcesGroup: FC<{ sources?: SourceData[]; allowRemoteIcons?: boolean }> =
   // Re-measure on resize
   useEffect(() => {
     const container = containerRef.current;
-    if (!container) return;
+    if (!container) {
+      return;
+    }
     const observer = new ResizeObserver(measure);
     observer.observe(container);
     return () => observer.disconnect();
   }, [measure]);
 
-  if (sources.length === 0) return null;
+  if (sources.length === 0) {
+    return null;
+  }
 
   const shouldCollapse = visibleCount !== null && visibleCount < sources.length;
   const displayedSources =
@@ -281,7 +297,7 @@ const SourcesGroup: FC<{ sources?: SourceData[]; allowRemoteIcons?: boolean }> =
           below the message. offsetTop reads correctly because the wrapper is
           positioned (absolute) and the flex-wrapped children measure against it. */}
       <div
-        aria-hidden
+        aria-hidden={true}
         className="absolute pointer-events-none overflow-hidden h-0 w-full left-0 top-0"
       >
         <div
@@ -291,8 +307,13 @@ const SourcesGroup: FC<{ sources?: SourceData[]; allowRemoteIcons?: boolean }> =
           {sources.map((source) => (
             <span key={source.id} className="inline-block">
               <Source href={source.url}>
-                <SourceIcon url={source.url} allowRemoteIcons={allowRemoteIcons} />
-                <SourceTitle>{source.title || extractDomain(source.url)}</SourceTitle>
+                <SourceIcon
+                  url={source.url}
+                  allowRemoteIcons={allowRemoteIcons}
+                />
+                <SourceTitle>
+                  {source.title || extractDomain(source.url)}
+                </SourceTitle>
               </Source>
             </span>
           ))}
@@ -302,7 +323,11 @@ const SourcesGroup: FC<{ sources?: SourceData[]; allowRemoteIcons?: boolean }> =
       {/* Visible container */}
       <div className="flex flex-wrap gap-1">
         {displayedSources.map((source) => (
-          <SourceBadge key={source.id} source={source} allowRemoteIcons={allowRemoteIcons} />
+          <SourceBadge
+            key={source.id}
+            source={source}
+            allowRemoteIcons={allowRemoteIcons}
+          />
         ))}
         {shouldCollapse && !expanded && (
           <button

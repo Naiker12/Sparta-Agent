@@ -1,20 +1,19 @@
-
 import {
-  getChatSettings,
-  saveChatSettingsPatch,
   type PersistedChatPreset,
   type PersistedChatSettings,
   type PersistedInferenceParams,
+  getChatSettings,
+  saveChatSettingsPatch,
 } from "../api/chat-settings-api";
 import { normalizePresetLoadConfig } from "../presets/preset-load-config";
 import {
   BUILTIN_PRESETS,
+  type ChatPresetSource,
+  type Preset,
   defaultInferenceParams,
   getPresetOwnedConfigKey,
   getUniquePresetName,
   normalizeCustomPresets,
-  type ChatPresetSource,
-  type Preset,
 } from "../presets/preset-policy";
 import type { ReasoningEffort } from "../stores/chat-runtime-store";
 import {
@@ -85,7 +84,9 @@ function hasKeys(value: object): boolean {
 }
 
 function getStorageItem(key: string): string | null {
-  if (!canUseStorage()) return null;
+  if (!canUseStorage()) {
+    return null;
+  }
   try {
     return localStorage.getItem(key);
   } catch {
@@ -98,7 +99,9 @@ function isLegacySettingsImportDone(): boolean {
 }
 
 function markLegacySettingsImportDone(): void {
-  if (!canUseStorage()) return;
+  if (!canUseStorage()) {
+    return;
+  }
   try {
     localStorage.setItem(LEGACY_CHAT_SETTINGS_IMPORT_KEY, "true");
   } catch {
@@ -107,7 +110,9 @@ function markLegacySettingsImportDone(): void {
 }
 
 function parseJson(value: string | null): unknown {
-  if (!value) return undefined;
+  if (!value) {
+    return undefined;
+  }
   try {
     return JSON.parse(value) as unknown;
   } catch {
@@ -117,14 +122,20 @@ function parseJson(value: string | null): unknown {
 
 function loadBool(key: string): boolean | undefined {
   const raw = getStorageItem(key);
-  if (raw === "true") return true;
-  if (raw === "false") return false;
+  if (raw === "true") {
+    return true;
+  }
+  if (raw === "false") {
+    return false;
+  }
   return undefined;
 }
 
 function loadInt(key: string, min: number): number | undefined {
   const raw = getStorageItem(key);
-  if (raw == null || raw.trim() === "") return undefined;
+  if (raw == null || raw.trim() === "") {
+    return undefined;
+  }
   const value = Number(raw);
   return Number.isInteger(value) && value >= min ? value : undefined;
 }
@@ -132,7 +143,9 @@ function loadInt(key: string, min: number): number | undefined {
 function sanitizeInferenceParams(
   value: unknown,
 ): PersistedInferenceParams | undefined {
-  if (!isRecord(value)) return undefined;
+  if (!isRecord(value)) {
+    return undefined;
+  }
 
   const params: PersistedInferenceParams = {};
   for (const field of NUMERIC_INFERENCE_FIELDS) {
@@ -161,12 +174,18 @@ function sanitizeInferenceParams(
 function sanitizeInferenceParamsByModel(
   value: unknown,
 ): Record<string, PersistedInferenceParams> | undefined {
-  if (!isRecord(value)) return undefined;
+  if (!isRecord(value)) {
+    return undefined;
+  }
   const byModel: Record<string, PersistedInferenceParams> = {};
   for (const [modelId, params] of Object.entries(value)) {
-    if (!modelId) continue;
+    if (!modelId) {
+      continue;
+    }
     const sanitized = sanitizeInferenceParams(params);
-    if (sanitized) byModel[modelId] = sanitized;
+    if (sanitized) {
+      byModel[modelId] = sanitized;
+    }
   }
   return hasKeys(byModel) ? byModel : undefined;
 }
@@ -187,14 +206,22 @@ function toFullPreset(preset: PersistedChatPreset): Preset {
 function sanitizeCustomPresets(
   value: unknown,
 ): PersistedChatPreset[] | undefined {
-  if (!Array.isArray(value)) return undefined;
-  if (value.length === 0) return [];
+  if (!Array.isArray(value)) {
+    return undefined;
+  }
+  if (value.length === 0) {
+    return [];
+  }
 
   const presets = value
     .map((item): PersistedChatPreset | null => {
-      if (!isRecord(item) || typeof item.name !== "string") return null;
+      if (!isRecord(item) || typeof item.name !== "string") {
+        return null;
+      }
       const name = item.name.trim();
-      if (!name) return null;
+      if (!name) {
+        return null;
+      }
       const params = sanitizeInferenceParams(item.params);
       const loadConfig = normalizePresetLoadConfig(item.loadConfig);
       return {
@@ -205,7 +232,9 @@ function sanitizeCustomPresets(
     })
     .filter((preset): preset is PersistedChatPreset => preset !== null);
 
-  if (presets.length === 0) return [];
+  if (presets.length === 0) {
+    return [];
+  }
   return normalizeCustomPresets(presets.map(toFullPreset)).map(
     (preset, index) => ({
       name: preset.name,
@@ -238,7 +267,9 @@ function sanitizeInt(value: unknown, min: number): number | undefined {
 }
 
 function sanitizeChatSettings(value: unknown): PersistedChatSettings {
-  if (!isRecord(value)) return {};
+  if (!isRecord(value)) {
+    return {};
+  }
 
   const settings: PersistedChatSettings = {};
   const inferenceParams = sanitizeInferenceParams(value.inferenceParams);
@@ -260,22 +291,33 @@ function sanitizeChatSettings(value: unknown): PersistedChatSettings {
   const maxToolCallsPerMessage = sanitizeInt(value.maxToolCallsPerMessage, 1);
   const toolCallTimeout = sanitizeInt(value.toolCallTimeout, 1);
 
-  if (inferenceParams) settings.inferenceParams = inferenceParams;
+  if (inferenceParams) {
+    settings.inferenceParams = inferenceParams;
+  }
   if (inferenceParamsByModel) {
     settings.inferenceParamsByModel = inferenceParamsByModel;
   }
   if (rememberParamsPerModel !== undefined) {
     settings.rememberParamsPerModel = rememberParamsPerModel;
   }
-  if (customPresets !== undefined) settings.customPresets = customPresets;
+  if (customPresets !== undefined) {
+    settings.customPresets = customPresets;
+  }
   if (typeof value.activePreset === "string" && value.activePreset.trim()) {
     settings.activePreset = value.activePreset.trim();
   }
-  if (activePresetSource) settings.activePresetSource = activePresetSource;
-  if (autoTitle !== undefined) settings.autoTitle = autoTitle;
-  if (reasoningEffort) settings.reasoningEffort = reasoningEffort;
-  if (preserveThinking !== undefined)
+  if (activePresetSource) {
+    settings.activePresetSource = activePresetSource;
+  }
+  if (autoTitle !== undefined) {
+    settings.autoTitle = autoTitle;
+  }
+  if (reasoningEffort) {
+    settings.reasoningEffort = reasoningEffort;
+  }
+  if (preserveThinking !== undefined) {
     settings.preserveThinking = preserveThinking;
+  }
   if (collapseHtmlArtifacts !== undefined) {
     settings.collapseHtmlArtifacts = collapseHtmlArtifacts;
   }
@@ -291,7 +333,9 @@ function sanitizeChatSettings(value: unknown): PersistedChatSettings {
   if (maxToolCallsPerMessage !== undefined) {
     settings.maxToolCallsPerMessage = maxToolCallsPerMessage;
   }
-  if (toolCallTimeout !== undefined) settings.toolCallTimeout = toolCallTimeout;
+  if (toolCallTimeout !== undefined) {
+    settings.toolCallTimeout = toolCallTimeout;
+  }
   assignSanitizedMirroredSettings(value, settings);
 
   return settings;
@@ -301,7 +345,9 @@ function loadLegacySystemPromptPresets(
   existingPresets: PersistedChatPreset[],
 ): PersistedChatPreset[] {
   const parsed = parseJson(getStorageItem(LEGACY_CHAT_SYSTEM_PROMPTS_KEY));
-  if (!Array.isArray(parsed)) return [];
+  if (!Array.isArray(parsed)) {
+    return [];
+  }
 
   const usedNames = new Set([
     ...BUILTIN_PRESETS.map((preset) => preset.name),
@@ -315,7 +361,9 @@ function loadLegacySystemPromptPresets(
 
   return parsed
     .filter((item): item is LegacySystemPromptTemplate => {
-      if (!isRecord(item)) return false;
+      if (!isRecord(item)) {
+        return false;
+      }
       return typeof item.name === "string" && typeof item.content === "string";
     })
     .map((template) => ({
@@ -327,7 +375,9 @@ function loadLegacySystemPromptPresets(
     }))
     .filter(({ params }) => {
       const configKey = getPresetOwnedConfigKey(params);
-      if (seenConfigKeys.has(configKey)) return false;
+      if (seenConfigKeys.has(configKey)) {
+        return false;
+      }
       seenConfigKeys.add(configKey);
       return true;
     })
@@ -339,7 +389,7 @@ function loadLegacySystemPromptPresets(
 
 export function isEmptyChatSettings(settings: PersistedChatSettings): boolean {
   return (
-    (!settings.inferenceParams || !hasKeys(settings.inferenceParams)) &&
+    !(settings.inferenceParams && hasKeys(settings.inferenceParams)) &&
     settings.inferenceParamsByModel === undefined &&
     settings.rememberParamsPerModel === undefined &&
     settings.customPresets === undefined &&
@@ -381,7 +431,9 @@ export function loadLegacyChatSettings(): PersistedChatSettings {
   const autoTitle = loadBool(AUTO_TITLE_KEY);
   const preserveThinking = loadBool(PRESERVE_THINKING_KEY);
   const collapseHtmlArtifacts = loadBool(COLLAPSE_HTML_ARTIFACTS_KEY);
-  const allowArtifactNetworkAccess = loadBool(ALLOW_ARTIFACT_NETWORK_ACCESS_KEY);
+  const allowArtifactNetworkAccess = loadBool(
+    ALLOW_ARTIFACT_NETWORK_ACCESS_KEY,
+  );
   const autoHealToolCalls = loadBool(AUTO_HEAL_TOOL_CALLS_KEY);
   const nudgeToolCalls = loadBool(NUDGE_TOOL_CALLS_KEY);
   const maxToolCallsPerMessage = loadInt(MAX_TOOL_CALLS_KEY, 1);
@@ -391,16 +443,27 @@ export function loadLegacyChatSettings(): PersistedChatSettings {
     ...legacyPromptPresets,
   ]);
 
-  if (inferenceParams) settings.inferenceParams = inferenceParams;
+  if (inferenceParams) {
+    settings.inferenceParams = inferenceParams;
+  }
   if (hasLegacyPresetStorage && allCustomPresets !== undefined) {
     settings.customPresets = allCustomPresets;
   }
-  if (activePreset?.trim()) settings.activePreset = activePreset.trim();
-  if (activePresetSource) settings.activePresetSource = activePresetSource;
-  if (autoTitle !== undefined) settings.autoTitle = autoTitle;
-  if (reasoningEffort) settings.reasoningEffort = reasoningEffort;
-  if (preserveThinking !== undefined)
+  if (activePreset?.trim()) {
+    settings.activePreset = activePreset.trim();
+  }
+  if (activePresetSource) {
+    settings.activePresetSource = activePresetSource;
+  }
+  if (autoTitle !== undefined) {
+    settings.autoTitle = autoTitle;
+  }
+  if (reasoningEffort) {
+    settings.reasoningEffort = reasoningEffort;
+  }
+  if (preserveThinking !== undefined) {
     settings.preserveThinking = preserveThinking;
+  }
   if (collapseHtmlArtifacts !== undefined) {
     settings.collapseHtmlArtifacts = collapseHtmlArtifacts;
   }
@@ -416,7 +479,9 @@ export function loadLegacyChatSettings(): PersistedChatSettings {
   if (maxToolCallsPerMessage !== undefined) {
     settings.maxToolCallsPerMessage = maxToolCallsPerMessage;
   }
-  if (toolCallTimeout !== undefined) settings.toolCallTimeout = toolCallTimeout;
+  if (toolCallTimeout !== undefined) {
+    settings.toolCallTimeout = toolCallTimeout;
+  }
 
   return settings;
 }

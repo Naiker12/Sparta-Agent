@@ -1,8 +1,13 @@
-
-import { useCallback, useEffect, useRef } from "react";
+import {
+  type HubFailure,
+  clearRemoteBackoff,
+} from "@/features/hub/lib/network";
 import { toast } from "@/lib/toast";
-import { clearRemoteBackoff, type HubFailure } from "@/features/hub/lib/network";
-import { useHubAvailability } from "./use-online-status";
+import { useCallback, useEffect, useRef } from "react";
+import {
+  type HfDatasetResult,
+  useHubDatasetSearch,
+} from "./use-hub-dataset-search";
 import {
   type HfModelResult,
   type HfModelSearchChannel,
@@ -10,10 +15,7 @@ import {
   type HfSortKey,
   useHubModelSearch,
 } from "./use-hub-model-search";
-import {
-  type HfDatasetResult,
-  useHubDatasetSearch,
-} from "./use-hub-dataset-search";
+import { useHubAvailability } from "./use-online-status";
 
 export interface DiscoverSearch {
   results: HfModelResult[];
@@ -42,7 +44,9 @@ function classifyDiscoverError(
   message: string,
   online: boolean,
 ): DiscoverErrorKind {
-  if (!online) return "offline";
+  if (!online) {
+    return "offline";
+  }
   const lower = message.toLowerCase();
   if (
     lower.includes("429") ||
@@ -139,7 +143,9 @@ export function useDiscoverSearch({
   });
 
   const results = isDatasetMode ? [] : modelSearch.results;
-  const isLoading = isDatasetMode ? datasetSearch.isLoading : modelSearch.isLoading;
+  const isLoading = isDatasetMode
+    ? datasetSearch.isLoading
+    : modelSearch.isLoading;
   const isLoadingMore = isDatasetMode
     ? datasetSearch.isLoadingMore
     : modelSearch.isLoadingMore;
@@ -151,7 +157,9 @@ export function useDiscoverSearch({
     ? datasetSearch.fetchMore
     : modelSearch.fetchMore;
   // Already sanitized in useHubPaginatedSearch, where every consumer reads it.
-  const rawSearchError = isDatasetMode ? datasetSearch.error : modelSearch.error;
+  const rawSearchError = isDatasetMode
+    ? datasetSearch.error
+    : modelSearch.error;
   const retrySearch = isDatasetMode ? datasetSearch.retry : modelSearch.retry;
   const needsRestart = isDatasetMode
     ? datasetSearch.needsRestart
@@ -160,7 +168,9 @@ export function useDiscoverSearch({
   const searchError = isDiscoverTab ? rawSearchError : null;
   const searchFailure = isDiscoverTab ? failure : null;
   const fetchMore = useCallback(() => {
-    if (!canProbe || !hasMore) return false;
+    if (!(canProbe && hasMore)) {
+      return false;
+    }
     // A page that failed took the iterator with it, so resuming would resolve
     // done and quietly end pagination, leaving Load more inert on screen.
     if (needsRestart()) {
@@ -191,7 +201,9 @@ export function useDiscoverSearch({
       return;
     }
     const errorKind = classifyDiscoverError(searchError, online);
-    if (lastErrorRef.current === errorKind) return;
+    if (lastErrorRef.current === errorKind) {
+      return;
+    }
     lastErrorRef.current = errorKind;
     toast.error(discoverErrorTitle(errorKind), {
       // The classified failure names the cause; the raw message covers HTTP
@@ -229,7 +241,9 @@ export function useDiscoverSearch({
         // Only when something else proved the Hub reachable. Our own successful
         // request is what usually clears the window, and its results are already
         // rendered, so retrying would discard them and re-issue the same call.
-        if (!selfProbed) retrySearch();
+        if (!selfProbed) {
+          retrySearch();
+        }
       }
     }
     wasUnavailableRef.current = !online;

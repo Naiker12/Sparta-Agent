@@ -1,4 +1,3 @@
-
 import { ShutdownDialog } from "@/components/shutdown-dialog";
 import { Button } from "@/components/ui/button";
 import { usePlatformStore } from "@/config/env";
@@ -19,10 +18,7 @@ import { useEffect, useRef, useState } from "react";
 import { SettingsRow } from "../components/settings-row";
 import { SettingsSection } from "../components/settings-section";
 import { StudioVersionSection } from "../components/studio-version-section";
-import {
-  type UpdateInstallSource,
-  UpdateStudioInstructions,
-} from "../components/update-studio-instructions";
+import type { UpdateInstallSource } from "../components/update-studio-instructions";
 import { loadDesktopAppVersion } from "../desktop-app-version";
 import { useSettingsDialogStore } from "../stores/settings-dialog-store";
 
@@ -93,7 +89,7 @@ function acceleratorRuntimes(hw: HardwareInfo): RuntimeRow[] {
 export function AboutTab() {
   const t = useT();
   const deviceType = usePlatformStore((s) => s.deviceType);
-  const defaultShell = deviceType === "windows" ? "windows" : "unix";
+  const _defaultShell = deviceType === "windows" ? "windows" : "unix";
   const hw = useHardwareInfo();
   const runtimes = acceleratorRuntimes(hw);
   const updateSectionRef = useRef<HTMLDivElement | null>(null);
@@ -102,7 +98,7 @@ export function AboutTab() {
     (s) => s.consumeScrollTarget,
   );
   const [shutdownOpen, setShutdownOpen] = useState(false);
-  const [installSource, setInstallSource] = useState<
+  const [_installSource, setInstallSource] = useState<
     UpdateInstallSource | "loading"
   >("loading");
   const [desktopAppVersion, setDesktopAppVersion] = useState<string | null>();
@@ -151,12 +147,7 @@ export function AboutTab() {
         </p>
       </header>
 
-      {/* llama.cpp row lives in the shared version section so it sits with the
-          Unsloth/Package rows; the prop keeps it About-only (General passes none). */}
-      <StudioVersionSection
-        llamaCppVersion={hw.llamaCpp}
-        desktopAppVersion={desktopAppVersion}
-      />
+      <StudioVersionSection desktopAppVersion={desktopAppVersion} />
 
       {hw.gpus.length > 0 || runtimes.length > 0 ? (
         <SettingsSection title={t("settings.about.hardware")}>
@@ -283,10 +274,7 @@ export function AboutTab() {
       )}
 
       {!isTauri && (
-        <ShutdownDialog
-          open={shutdownOpen}
-          onOpenChange={setShutdownOpen}
-        />
+        <ShutdownDialog open={shutdownOpen} onOpenChange={setShutdownOpen} />
       )}
     </div>
   );

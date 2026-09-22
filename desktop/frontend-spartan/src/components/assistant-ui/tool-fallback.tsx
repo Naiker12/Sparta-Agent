@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -7,25 +6,25 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Spinner } from "@/components/ui/spinner";
-import { useCollapseScrollLock } from "@/hooks/use-collapse-scroll-lock";
 import {
   formatMcpToolName,
   mcpServerFromProvenance,
 } from "@/features/chat/utils/mcp-tool-name";
-import { stripAnsi, stringifyToolResult } from "@/lib/strip-ansi";
+import { useCollapseScrollLock } from "@/hooks/use-collapse-scroll-lock";
+import { stringifyToolResult, stripAnsi } from "@/lib/strip-ansi";
+import { Tick02Icon } from "@/lib/tick-icon";
 import { cn } from "@/lib/utils";
-import {
-  type ToolCallMessagePartComponent,
-  type ToolCallMessagePartStatus,
+import type {
+  ToolCallMessagePartComponent,
+  ToolCallMessagePartStatus,
 } from "@assistant-ui/react";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
   AlertCircleIcon,
   ChevronDownIcon,
   LoaderIcon,
   XCircleIcon,
 } from "lucide-react";
-import { Tick02Icon } from "@/lib/tick-icon";
-import { HugeiconsIcon } from "@hugeicons/react";
 import {
   type CSSProperties,
   type ComponentProps,
@@ -102,7 +101,9 @@ type ToolStatus = ToolCallMessagePartStatus["type"];
 
 // The shared app tick is icon data, not a component; wrap it to slot into the
 // status map alongside the lucide icons.
-function CompleteTickIcon(props: Omit<ComponentProps<typeof HugeiconsIcon>, "icon">) {
+function CompleteTickIcon(
+  props: Omit<ComponentProps<typeof HugeiconsIcon>, "icon">,
+) {
   return <HugeiconsIcon icon={Tick02Icon} strokeWidth={2} {...props} />;
 }
 
@@ -133,9 +134,12 @@ function ToolFallbackTrigger({
 
   const StatusIcon = statusIconMap[statusType];
   const label = isCancelled ? "Cancelled tool" : "Used tool";
-  const displayName = toolName === "memory_search"
-    ? (isRunning ? "Buscando en memoria…" : "Memoria consultada")
-    : (formatMcpToolName(toolName, mcpServer) ?? toolName);
+  const displayName =
+    toolName === "memory_search"
+      ? isRunning
+        ? "Buscando en memoria…"
+        : "Memoria consultada"
+      : (formatMcpToolName(toolName, mcpServer) ?? toolName);
 
   return (
     <CollapsibleTrigger
@@ -191,7 +195,9 @@ function ToolFallbackTrigger({
             )}
           >
             {label}:{" "}
-            <span className="font-medium text-foreground/85">{displayName}</span>
+            <span className="font-medium text-foreground/85">
+              {displayName}
+            </span>
           </span>
         )}
       </span>
@@ -363,7 +369,9 @@ interface McpServerEntry {
 }
 
 function isMcpServerArray(val: unknown): val is McpServerEntry[] {
-  if (!Array.isArray(val)) return false;
+  if (!Array.isArray(val)) {
+    return false;
+  }
   return (
     val.length > 0 &&
     val.every(
@@ -387,7 +395,9 @@ function renderMcpServerList(result: unknown): ReactNode | null {
       return null; // Fall back to default rendering
     }
   }
-  if (!isMcpServerArray(parsed)) return null;
+  if (!isMcpServerArray(parsed)) {
+    return null;
+  }
 
   return (
     <div className="mt-1 overflow-x-auto">
@@ -402,9 +412,7 @@ function renderMcpServerList(result: unknown): ReactNode | null {
         <tbody>
           {parsed.map((server) => (
             <tr key={server.id} className="border-b border-border/50">
-              <td className="py-1.5 pr-4 font-medium">
-                {server.display_name}
-              </td>
+              <td className="py-1.5 pr-4 font-medium">{server.display_name}</td>
               <td className="max-w-[300px] truncate py-1.5 pr-4 font-mono text-xs text-muted-foreground">
                 {server.url}
               </td>
@@ -493,7 +501,9 @@ const ToolFallbackImpl: ToolCallMessagePartComponent = ({
           argsText={argsText}
           className={cn(isCancelled && "opacity-60")}
         />
-        {!isCancelled && <ToolFallbackResult result={result} toolName={toolName} />}
+        {!isCancelled && (
+          <ToolFallbackResult result={result} toolName={toolName} />
+        )}
       </ToolFallbackContent>
     </ToolFallbackRoot>
   );

@@ -1,4 +1,3 @@
-
 import { create } from "zustand";
 
 export type PromptQueueUIEntry = {
@@ -10,11 +9,7 @@ export type PromptQueueUIEntry = {
   dispatched: boolean;
 };
 
-export type PromptQueueUIItemStatus =
-  | "queued"
-  | "next"
-  | "waiting"
-  | "running";
+export type PromptQueueUIItemStatus = "queued" | "next" | "waiting" | "running";
 
 export type PromptQueueUIItem = {
   id: string;

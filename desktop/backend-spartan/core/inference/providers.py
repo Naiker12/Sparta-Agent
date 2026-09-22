@@ -362,6 +362,41 @@ PROVIDER_REGISTRY: dict[str, dict[str, Any]] = {
         ),
         "hidden": True,
     },
+    "lmstudio": {
+        "display_name": "LM Studio",
+        "base_url": "http://localhost:1234/v1",
+        "default_models": [],
+        "supports_streaming": True,
+        "supports_vision": True,
+        "supports_tool_calling": True,
+        "studio_tools": True,
+        "auth_header": "Authorization",
+        "auth_prefix": "Bearer ",
+        "notes": (
+            "Local LM Studio server. OpenAI-compatible "
+            "/v1/chat/completions. Surfaced via CUSTOM_PROVIDER_PRESETS."
+        ),
+        "hidden": True,
+    },
+    "groq": {
+        "display_name": "Groq",
+        "base_url": "https://api.groq.com/openai/v1",
+        "default_models": [
+            "llama-3.3-70b-versatile",
+            "llama-3.1-8b-instant",
+            "mixtral-8x7b-32768",
+            "gemma2-9b-it",
+            "deepseek-r1-distill-llama-70b",
+        ],
+        "supports_streaming": True,
+        "supports_vision": True,
+        "supports_tool_calling": True,
+        "studio_tools": True,
+        "auth_header": "Authorization",
+        "auth_prefix": "Bearer ",
+        "notes": "Ultra-fast inference on LPUs. API key from https://console.groq.com/keys",
+        "model_list_mode": "remote",
+    },
     "openrouter": {
         "display_name": "OpenRouter",
         "base_url": "https://openrouter.ai/api/v1",

@@ -1,29 +1,25 @@
-
-import { useEffect, useMemo, useRef, useState, type ReactElement } from "react";
-import type { ColumnDef } from "@tanstack/react-table";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 import {
   CheckmarkCircle02Icon,
   Flag02Icon,
   Share08Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import type { ColumnDef } from "@tanstack/react-table";
+import { type ReactElement, useEffect, useMemo, useRef, useState } from "react";
 import { publishRecipeJob } from "../../api";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { cn } from "@/lib/utils";
-import { resolveImagePreview } from "../../utils/image-preview";
-import type {
-  RecipeExecutionRecord,
-} from "../../execution-types";
+import type { RecipeExecutionRecord } from "../../execution-types";
 import { isExecutionInProgress } from "../../executions/execution-helpers";
+import { resolveImagePreview } from "../../utils/image-preview";
 import { ExecutionColumnsTab } from "./execution-columns-tab";
 import { ExecutionDataTab } from "./execution-data-tab";
 import { ExecutionOverviewTab } from "./execution-overview-tab";
 import { ExecutionRawTab } from "./execution-raw-tab";
 import { ExecutionSidebar } from "./execution-sidebar";
-import { PublishExecutionDialog } from "./publish-execution-dialog";
 import {
   PREVIEW_DATASET_PAGE_SIZE,
   TERMINAL_STICKY_BOTTOM_THRESHOLD_PX,
@@ -34,6 +30,7 @@ import {
   parseAnalysisColumns,
   parseModelUsageRows,
 } from "./executions-view-helpers";
+import { PublishExecutionDialog } from "./publish-execution-dialog";
 
 type ExecutionsViewProps = {
   executions: RecipeExecutionRecord[];
@@ -57,12 +54,10 @@ export function ExecutionsView({
       ? `${value.toLocaleString()} s`
       : "--";
   const [detailTab, setDetailTab] = useState("data");
-  const [hiddenDatasetColumnsByExecution, setHiddenDatasetColumnsByExecution] = useState<
-    Record<string, string[]>
-  >({});
-  const [previewDatasetPageByExecution, setPreviewDatasetPageByExecution] = useState<
-    Record<string, number>
-  >({});
+  const [hiddenDatasetColumnsByExecution, setHiddenDatasetColumnsByExecution] =
+    useState<Record<string, string[]>>({});
+  const [previewDatasetPageByExecution, setPreviewDatasetPageByExecution] =
+    useState<Record<string, number>>({});
   const [publishDialogOpen, setPublishDialogOpen] = useState(false);
   const terminalRef = useRef<HTMLDivElement | null>(null);
   const shouldStickTerminalToBottomRef = useRef(true);
@@ -100,9 +95,7 @@ export function ExecutionsView({
 
   const visibleDatasetColumnNames = useMemo(
     () =>
-      datasetColumnNames.filter(
-        (name) => !hiddenDatasetColumns.includes(name),
-      ),
+      datasetColumnNames.filter((name) => !hiddenDatasetColumns.includes(name)),
     [datasetColumnNames, hiddenDatasetColumns],
   );
 
@@ -203,7 +196,7 @@ export function ExecutionsView({
   const datasetPageSize = selectedExecution?.datasetPageSize ?? 20;
   const datasetTotal = selectedExecution?.datasetTotal ?? 0;
   const previewPageRaw = selectedExecutionIdSafe
-    ? previewDatasetPageByExecution[selectedExecutionIdSafe] ?? 1
+    ? (previewDatasetPageByExecution[selectedExecutionIdSafe] ?? 1)
     : 1;
   const previewTotalPages = useMemo(() => {
     if (!selectedExecution || selectedExecution.kind !== "preview") {
@@ -230,9 +223,13 @@ export function ExecutionsView({
       return selectedExecution.dataset;
     }
     const start = (previewPage - 1) * PREVIEW_DATASET_PAGE_SIZE;
-    return selectedExecution.dataset.slice(start, start + PREVIEW_DATASET_PAGE_SIZE);
+    return selectedExecution.dataset.slice(
+      start,
+      start + PREVIEW_DATASET_PAGE_SIZE,
+    );
   }, [previewPage, selectedExecution]);
-  const currentDatasetPage = selectedExecution?.kind === "preview" ? previewPage : datasetPage;
+  const currentDatasetPage =
+    selectedExecution?.kind === "preview" ? previewPage : datasetPage;
   const recordsMetric = useMemo(() => {
     if (!selectedExecution || selectedExecution.status !== "completed") {
       return null;
@@ -269,7 +266,8 @@ export function ExecutionsView({
   const totalNulls = useMemo(
     () =>
       analysisColumns.reduce(
-        (acc, column) => acc + (typeof column.num_null === "number" ? column.num_null : 0),
+        (acc, column) =>
+          acc + (typeof column.num_null === "number" ? column.num_null : 0),
         0,
       ),
     [analysisColumns],
@@ -300,37 +298,44 @@ export function ExecutionsView({
     if (!selectedExecution) {
       return "--";
     }
-    return formatDuration(selectedExecution.createdAt, selectedExecution.finishedAt);
+    return formatDuration(
+      selectedExecution.createdAt,
+      selectedExecution.finishedAt,
+    );
   }, [selectedExecution]);
   const showSummaryCards = selectedExecution?.status === "completed";
-  const hasProgressSnapshot = Boolean(
-    selectedExecution?.progress &&
-      (typeof selectedExecution.progress.done === "number" ||
-        typeof selectedExecution.progress.total === "number" ||
-        typeof selectedExecution.progress.percent === "number" ||
-        typeof selectedExecution.progress.rate === "number" ||
-        typeof selectedExecution.progress.eta_sec === "number"),
-  ) || Boolean(
-    selectedExecution?.column_progress &&
-      (typeof selectedExecution.column_progress.done === "number" ||
-        typeof selectedExecution.column_progress.total === "number" ||
-        typeof selectedExecution.column_progress.percent === "number"),
-  ) || Boolean(
-    selectedExecution?.batch &&
-      (typeof selectedExecution.batch.idx === "number" ||
-        typeof selectedExecution.batch.total === "number"),
-  );
+  const hasProgressSnapshot =
+    Boolean(
+      selectedExecution?.progress &&
+        (typeof selectedExecution.progress.done === "number" ||
+          typeof selectedExecution.progress.total === "number" ||
+          typeof selectedExecution.progress.percent === "number" ||
+          typeof selectedExecution.progress.rate === "number" ||
+          typeof selectedExecution.progress.eta_sec === "number"),
+    ) ||
+    Boolean(
+      selectedExecution?.column_progress &&
+        (typeof selectedExecution.column_progress.done === "number" ||
+          typeof selectedExecution.column_progress.total === "number" ||
+          typeof selectedExecution.column_progress.percent === "number"),
+    ) ||
+    Boolean(
+      selectedExecution?.batch &&
+        (typeof selectedExecution.batch.idx === "number" ||
+          typeof selectedExecution.batch.total === "number"),
+    );
   const selectedStatus = selectedExecution?.status ?? null;
   const isSelectedExecutionInProgress = selectedStatus
     ? isExecutionInProgress(selectedStatus)
     : false;
-  const showProgressPanel = Boolean(selectedExecution) && (
-    selectedStatus === "completed" ||
-    isSelectedExecutionInProgress ||
-    hasProgressSnapshot
-  );
+  const showProgressPanel =
+    Boolean(selectedExecution) &&
+    (selectedStatus === "completed" ||
+      isSelectedExecutionInProgress ||
+      hasProgressSnapshot);
   const progressComplete = selectedExecution?.status === "completed";
-  const progressPercent = selectedExecution?.progress?.percent ?? (progressComplete ? 100 : 0);
+  const progressPercent =
+    selectedExecution?.progress?.percent ?? (progressComplete ? 100 : 0);
   const batchTotal = selectedExecution?.batch?.total ?? null;
   const batchIdx = selectedExecution?.batch?.idx ?? null;
   const showBatchProgress = typeof batchTotal === "number" && batchTotal > 1;
@@ -340,8 +345,8 @@ export function ExecutionsView({
       return null;
     }
     const next = { ...selectedExecution } as Record<string, unknown>;
-    delete next.dataset;
-    delete next.log_lines;
+    next.dataset = undefined;
+    next.log_lines = undefined;
     return next;
   }, [selectedExecution]);
 
@@ -375,18 +380,16 @@ export function ExecutionsView({
         onSelectExecution={onSelectExecution}
       />
       <section className="min-w-0 flex-1 overflow-auto p-4">
-        {!selectedExecution ? (
-          <div className="rounded-xl border border-dashed border-border/60 p-4 text-sm text-muted-foreground">
-            Select an execution.
-          </div>
-        ) : (
+        {selectedExecution ? (
           <div className="space-y-4">
             {showProgressPanel && (
               <div className="space-y-3 rounded-2xl border shadow-border border-border/60 bg-card/55 p-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <HugeiconsIcon
-                      icon={progressComplete ? CheckmarkCircle02Icon : Flag02Icon}
+                      icon={
+                        progressComplete ? CheckmarkCircle02Icon : Flag02Icon
+                      }
                       className={cn(
                         "size-4",
                         progressComplete
@@ -398,37 +401,55 @@ export function ExecutionsView({
                       Progress
                     </p>
                   </div>
-                  <p className="text-xs text-muted-foreground">{formatPercent(progressPercent)}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatPercent(progressPercent)}
+                  </p>
                 </div>
                 <Progress value={progressPercent} className="h-1" />
                 <div className="grid gap-2 text-xs md:grid-cols-4">
                   <p className="text-muted-foreground">
-                    Done: <span className="text-foreground">{selectedExecution.progress?.done ?? "--"}</span>
+                    Done:{" "}
+                    <span className="text-foreground">
+                      {selectedExecution.progress?.done ?? "--"}
+                    </span>
                   </p>
                   <p className="text-muted-foreground">
-                    Total: <span className="text-foreground">{selectedExecution.progress?.total ?? "--"}</span>
+                    Total:{" "}
+                    <span className="text-foreground">
+                      {selectedExecution.progress?.total ?? "--"}
+                    </span>
                   </p>
                   <p className="text-muted-foreground">
-                    Rate: <span className="text-foreground">{selectedExecution.progress?.rate ?? "--"} rec/s</span>
+                    Rate:{" "}
+                    <span className="text-foreground">
+                      {selectedExecution.progress?.rate ?? "--"} rec/s
+                    </span>
                   </p>
                   <p className="text-muted-foreground">
-                    ETA: <span className="text-foreground">{formatEta(selectedExecution.progress?.eta_sec)}</span>
+                    ETA:{" "}
+                    <span className="text-foreground">
+                      {formatEta(selectedExecution.progress?.eta_sec)}
+                    </span>
                   </p>
                 </div>
-                {selectedExecution.current_column && selectedExecution.column_progress && (
-                  <p className="text-xs text-muted-foreground">
-                    Column {selectedExecution.current_column}:{" "}
-                    {selectedExecution.column_progress.done ?? "--"}/
-                    {selectedExecution.column_progress.total ?? "--"} (
-                    {formatPercent(selectedExecution.column_progress.percent)})
-                  </p>
-                )}
+                {selectedExecution.current_column &&
+                  selectedExecution.column_progress && (
+                    <p className="text-xs text-muted-foreground">
+                      Column {selectedExecution.current_column}:{" "}
+                      {selectedExecution.column_progress.done ?? "--"}/
+                      {selectedExecution.column_progress.total ?? "--"} (
+                      {formatPercent(selectedExecution.column_progress.percent)}
+                      )
+                    </p>
+                  )}
                 {showBatchProgress && (
                   <p className="text-xs text-muted-foreground">
                     Processed batch: {batchIdx ?? "--"}/{batchTotal}
                   </p>
                 )}
-                {isStale && <Badge variant="outline">Recipe changed since this run</Badge>}
+                {isStale && (
+                  <Badge variant="outline">Recipe changed since this run</Badge>
+                )}
               </div>
             )}
 
@@ -462,7 +483,10 @@ export function ExecutionsView({
                       variant="outline"
                       onClick={() => setPublishDialogOpen(true)}
                     >
-                      <HugeiconsIcon icon={Share08Icon} className="mr-2 size-4" />
+                      <HugeiconsIcon
+                        icon={Share08Icon}
+                        className="mr-2 size-4"
+                      />
                       Publish to Hugging Face
                     </Button>
                   )}
@@ -498,7 +522,9 @@ export function ExecutionsView({
                   onTerminalScroll={(event) => {
                     const element = event.currentTarget;
                     const distanceFromBottom =
-                      element.scrollHeight - element.scrollTop - element.clientHeight;
+                      element.scrollHeight -
+                      element.scrollTop -
+                      element.clientHeight;
                     shouldStickTerminalToBottomRef.current =
                       distanceFromBottom <= TERMINAL_STICKY_BOTTOM_THRESHOLD_PX;
                   }}
@@ -537,18 +563,27 @@ export function ExecutionsView({
                       }));
                       return;
                     }
-                    onLoadDatasetPage(selectedExecution.id, currentDatasetPage - 1);
+                    onLoadDatasetPage(
+                      selectedExecution.id,
+                      currentDatasetPage - 1,
+                    );
                   }}
                   onNextPage={() => {
                     if (selectedExecution.kind === "preview") {
                       const selectedId = selectedExecution.id;
                       setPreviewDatasetPageByExecution((current) => ({
                         ...current,
-                        [selectedId]: Math.min(totalPages, currentDatasetPage + 1),
+                        [selectedId]: Math.min(
+                          totalPages,
+                          currentDatasetPage + 1,
+                        ),
                       }));
                       return;
                     }
-                    onLoadDatasetPage(selectedExecution.id, currentDatasetPage + 1);
+                    onLoadDatasetPage(
+                      selectedExecution.id,
+                      currentDatasetPage + 1,
+                    );
                   }}
                 />
               </TabsContent>
@@ -556,6 +591,10 @@ export function ExecutionsView({
                 <ExecutionRawTab rawExecution={rawExecution} />
               </TabsContent>
             </Tabs>
+          </div>
+        ) : (
+          <div className="rounded-xl border border-dashed border-border/60 p-4 text-sm text-muted-foreground">
+            Select an execution.
           </div>
         )}
       </section>
@@ -567,7 +606,10 @@ export function ExecutionsView({
           if (!selectedExecution?.jobId) {
             throw new Error("This run is missing a job id.");
           }
-          const response = await publishRecipeJob(selectedExecution.jobId, payload);
+          const response = await publishRecipeJob(
+            selectedExecution.jobId,
+            payload,
+          );
           return { url: response.url };
         }}
       />

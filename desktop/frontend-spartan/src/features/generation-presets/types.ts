@@ -1,4 +1,3 @@
-
 export type MediaGenerationKind = "image" | "video";
 
 // A preset is a generation recipe and nothing else. Model-load options are deliberately absent:

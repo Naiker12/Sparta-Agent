@@ -1,4 +1,3 @@
-
 import {
   AlertDialog,
   AlertDialogAction,
@@ -71,7 +70,9 @@ export function ManageChatsView() {
   // Open chat id from the route: compare panes only live in the search params.
   const openChatId = useRouterState({
     select: (s) => {
-      if (!s.location.pathname.startsWith("/chat")) return undefined;
+      if (!s.location.pathname.startsWith("/chat")) {
+        return undefined;
+      }
       const search = s.location.search as Record<string, string | undefined>;
       return search.thread ?? search.compare ?? storeThreadId ?? undefined;
     },
@@ -115,8 +116,11 @@ export function ManageChatsView() {
     setSelectedIds((prev) => {
       const next = new Set(prev);
       for (const id of ids) {
-        if (target) next.add(id);
-        else next.delete(id);
+        if (target) {
+          next.add(id);
+        } else {
+          next.delete(id);
+        }
       }
       return next;
     });
@@ -220,7 +224,9 @@ export function ManageChatsView() {
         await exportBulkConversationsSeparate(threadIds, format, basename);
       }
     } catch (error) {
-      if (!isDownloadCancelled(error)) toast.error("Export failed.");
+      if (!isDownloadCancelled(error)) {
+        toast.error("Export failed.");
+      }
     }
   }
 
@@ -411,7 +417,9 @@ export function ManageChatsView() {
       <AlertDialog
         open={confirmingDelete}
         onOpenChange={(o) => {
-          if (!o) setConfirmingDelete(false);
+          if (!o) {
+            setConfirmingDelete(false);
+          }
         }}
       >
         <AlertDialogContent>

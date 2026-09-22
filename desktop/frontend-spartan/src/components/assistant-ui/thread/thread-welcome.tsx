@@ -4,16 +4,11 @@
  * avatar animado rotativo y contenedor del composer inicial.
  */
 
-import {
-  useEffect,
-  useState,
-  type FC,
-  type ReactNode,
-} from "react";
 import { GeneratedAvatar } from "@/components/ui/blobatar-avatar";
 import { useChatRuntimeStore } from "@/features/chat/stores/chat-runtime-store";
 import { useUserProfileStore } from "@/features/profile/stores/user-profile-store";
-import { useT, type TranslationKey } from "@/i18n";
+import { type TranslationKey, useT } from "@/i18n";
+import { type FC, type ReactNode, useEffect, useState } from "react";
 
 export const pickRandom = <T,>(arr: T[]): T =>
   arr[Math.floor(Math.random() * arr.length)];
@@ -90,7 +85,9 @@ export const RotatingWelcomeAvatar: FC<{ prefix: string }> = ({ prefix }) => {
 
   useEffect(() => {
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    if (reducedMotion.matches) return;
+    if (reducedMotion.matches) {
+      return;
+    }
     const timer = window.setInterval(
       () =>
         setVariant((current) => (current + 1) % WELCOME_AVATAR_VARIANTS.length),
@@ -137,7 +134,7 @@ export const ThreadWelcome: FC<ThreadWelcomeProps> = ({
   }, [t, displayName, nickname]);
 
   return (
-    <div className="aui-thread-welcome-root mx-auto my-auto flex w-full max-w-(--thread-max-width) grow flex-col">
+    <div className="aui-thread-welcome-root mx-auto my-auto flex w-full max-w-[42rem] grow flex-col">
       <div className="aui-thread-welcome-center flex w-full grow flex-col items-center justify-start pt-[27.5dvh]">
         <div className="aui-thread-welcome-message flex w-full flex-col justify-center gap-9 px-4">
           <div className="flex flex-col items-center justify-center gap-4">

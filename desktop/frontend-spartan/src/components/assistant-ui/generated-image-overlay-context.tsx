@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -43,7 +42,10 @@ export function GeneratedImageOverlayProvider({
 
   const openOverlay = useCallback(
     (nextOverlay: GeneratedImageOverlayState) => {
-      setOverlay({ ...nextOverlay, threadId: nextOverlay.threadId ?? threadId });
+      setOverlay({
+        ...nextOverlay,
+        threadId: nextOverlay.threadId ?? threadId,
+      });
     },
     [threadId],
   );

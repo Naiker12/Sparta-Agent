@@ -1,4 +1,3 @@
-
 import { ChevronDown, CircleAlert, Hand, ShieldCheck } from "lucide-react";
 import type { ComponentType } from "react";
 import { useState } from "react";
@@ -228,8 +227,7 @@ export function PermissionModeDropdown({
   const permissionMode = useChatRuntimeStore((s) => s.permissionMode);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const options = usePermissionModeOptions();
-  const active =
-    options.find((o) => o.value === permissionMode) ?? options[1];
+  const active = options.find((o) => o.value === permissionMode) ?? options[1];
   const ActiveIcon = active.icon;
 
   return (
@@ -298,8 +296,7 @@ export function PermissionModeComposerPill({
     (s) => s.setBypassConfirmOpen,
   );
   const options = usePermissionModeOptions();
-  const active =
-    options.find((o) => o.value === permissionMode) ?? options[1];
+  const active = options.find((o) => o.value === permissionMode) ?? options[1];
   const ActiveIcon = active.icon;
   const fullAccess = permissionMode === "full";
 

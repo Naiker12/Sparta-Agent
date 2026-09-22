@@ -6,6 +6,7 @@ import {
   listProjectDocuments,
   listThreadDocuments,
 } from "@/features/rag/api/rag-api";
+import { useT } from "@/i18n";
 import {
   ComposerPrimitive,
   unstable_useMentionAdapter,
@@ -20,7 +21,6 @@ import {
 } from "lucide-react";
 import { Component, useEffect, useMemo, useState } from "react";
 import type { ErrorInfo, ReactNode } from "react";
-import { useT } from "@/i18n";
 
 type Mention = {
   id: string;
@@ -71,9 +71,7 @@ class ComposerMentionsBoundary extends Component<
     return { failed: true };
   }
 
-  componentDidCatch(error: Error, info: ErrorInfo): void {
-    console.warn("Mention picker was disabled after a render error", error, info);
-  }
+  componentDidCatch(_error: Error, _info: ErrorInfo): void {}
 
   render(): ReactNode {
     return this.state.failed ? null : this.props.children;
@@ -129,10 +127,14 @@ function ComposerMentionsContent({ threadId }: { threadId: string | null }) {
     const requests = [
       threadId ? listThreadDocuments(threadId) : Promise.resolve([]),
     ];
-    if (activeProjectId) requests.push(listProjectDocuments(activeProjectId));
+    if (activeProjectId) {
+      requests.push(listProjectDocuments(activeProjectId));
+    }
     void Promise.all(requests)
       .then((groups) => {
-        if (cancelled) return;
+        if (cancelled) {
+          return;
+        }
         const byId = new Map(groups.flat().map((file) => [file.id, file]));
         setFiles(
           [...byId.values()].map((file) => ({

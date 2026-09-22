@@ -1,4 +1,3 @@
-
 import { isTauri } from "@/lib/api-base";
 import { MAX_AUDIO_SIZE } from "@/lib/audio-utils";
 import {
@@ -38,8 +37,12 @@ function canvasPng(canvas: HTMLCanvasElement): Promise<Blob | null> {
 }
 
 function isLinuxDesktop(): boolean {
-  if (typeof navigator === "undefined") return false;
-  return `${navigator.platform} ${navigator.userAgent}`.toLowerCase().includes("linux");
+  if (typeof navigator === "undefined") {
+    return false;
+  }
+  return `${navigator.platform} ${navigator.userAgent}`
+    .toLowerCase()
+    .includes("linux");
 }
 
 async function readNativeClipboardFiles(): Promise<File[]> {
@@ -47,12 +50,16 @@ async function readNativeClipboardFiles(): Promise<File[]> {
   const nativeFiles = await invoke<NativeClipboardFile[]>(
     "read_native_clipboard_files",
   );
-  if (nativeFiles.length > MAX_CLIPBOARD_FILES) return [];
+  if (nativeFiles.length > MAX_CLIPBOARD_FILES) {
+    return [];
+  }
 
   let totalBytes = 0;
   const files: File[] = [];
   for (const file of nativeFiles) {
-    if (file.base64.length === 0) continue;
+    if (file.base64.length === 0) {
+      continue;
+    }
     if (
       !file.name ||
       file.name.length > 255 ||
@@ -72,9 +79,13 @@ async function readNativeClipboardFiles(): Promise<File[]> {
     for (let index = 0; index < binary.length; index += 1) {
       bytes[index] = binary.charCodeAt(index);
     }
-    if (bytes.byteLength > maxFileBytes) return [];
+    if (bytes.byteLength > maxFileBytes) {
+      return [];
+    }
     totalBytes += bytes.byteLength;
-    if (totalBytes > MAX_CLIPBOARD_BYTES) return [];
+    if (totalBytes > MAX_CLIPBOARD_BYTES) {
+      return [];
+    }
     files.push(
       new File([bytes], file.name, {
         type: file.mimeType || "application/octet-stream",
@@ -87,8 +98,12 @@ async function readNativeClipboardFiles(): Promise<File[]> {
 
 async function readLinuxClipboardImage(): Promise<File | null> {
   const { invoke } = await import("@tauri-apps/api/core");
-  const raw = await invoke<ArrayBuffer | Uint8Array>("read_native_clipboard_png");
-  const png = Uint8Array.from(raw instanceof Uint8Array ? raw : new Uint8Array(raw));
+  const raw = await invoke<ArrayBuffer | Uint8Array>(
+    "read_native_clipboard_png",
+  );
+  const png = Uint8Array.from(
+    raw instanceof Uint8Array ? raw : new Uint8Array(raw),
+  );
   if (png.byteLength === 0 || png.byteLength > MAX_CLIPBOARD_NON_AUDIO_BYTES) {
     return null;
   }
@@ -99,29 +114,39 @@ async function readLinuxClipboardImage(): Promise<File | null> {
 }
 
 async function readNativeClipboardImage(): Promise<File | null> {
-  let image: Awaited<ReturnType<
-    typeof import("@tauri-apps/plugin-clipboard-manager").readImage
-  >> | null = null;
+  let image: Awaited<
+    ReturnType<typeof import("@tauri-apps/plugin-clipboard-manager").readImage>
+  > | null = null;
 
   try {
-    if (isLinuxDesktop()) return await readLinuxClipboardImage();
+    if (isLinuxDesktop()) {
+      return await readLinuxClipboardImage();
+    }
     const { readImage } = await import("@tauri-apps/plugin-clipboard-manager");
     image = await readImage();
     const { width, height } = await image.size();
-    if (!validDimension(width) || !validDimension(height)) return null;
+    if (!(validDimension(width) && validDimension(height))) {
+      return null;
+    }
 
     const expectedRgbaBytes = width * height * 4;
-    if (expectedRgbaBytes > MAX_NATIVE_IMAGE_RGBA_BYTES) return null;
+    if (expectedRgbaBytes > MAX_NATIVE_IMAGE_RGBA_BYTES) {
+      return null;
+    }
 
     const rgba = await image.rgba();
-    if (rgba.byteLength !== expectedRgbaBytes) return null;
+    if (rgba.byteLength !== expectedRgbaBytes) {
+      return null;
+    }
 
     const canvas = document.createElement("canvas");
     canvas.width = width;
     canvas.height = height;
     try {
       const context = canvas.getContext("2d");
-      if (!context) return null;
+      if (!context) {
+        return null;
+      }
       const pixels = new Uint8ClampedArray(
         rgba.buffer as ArrayBuffer,
         rgba.byteOffset,
@@ -129,7 +154,11 @@ async function readNativeClipboardImage(): Promise<File | null> {
       );
       context.putImageData(new ImageData(pixels, width, height), 0, 0);
       const blob = await canvasPng(canvas);
-      if (!blob || blob.size === 0 || blob.size > MAX_CLIPBOARD_NON_AUDIO_BYTES) {
+      if (
+        !blob ||
+        blob.size === 0 ||
+        blob.size > MAX_CLIPBOARD_NON_AUDIO_BYTES
+      ) {
         return null;
       }
       return new File([blob], "pasted-image.png", {
@@ -168,15 +197,20 @@ function addNativeClipboardFiles(
   void (async () => {
     try {
       const files = await readNativeClipboardFiles();
-      if (files.length > 0) return files;
+      if (files.length > 0) {
+        return files;
+      }
     } catch {
       // The clipboard may contain image pixels instead of file paths.
     }
     const image = await readNativeClipboardImage();
     return image ? [image] : [];
   })().then((files) => {
-    if (files.length > 0) addClipboardFiles(files, addFiles, onError);
-    else onError?.();
+    if (files.length > 0) {
+      addClipboardFiles(files, addFiles, onError);
+    } else {
+      onError?.();
+    }
   });
 }
 
@@ -195,15 +229,21 @@ export function pasteClipboardFiles(
     }
   }
 
-  if (!isTauri || !event.isTrusted || event.defaultPrevented) return;
+  if (!(isTauri && event.isTrusted) || event.defaultPrevented) {
+    return;
+  }
   if (!clipboardData) {
     addNativeClipboardFiles(addFiles, onError);
     return;
   }
 
   const advertisesFiles = clipboardAdvertisesFiles(clipboardData);
-  if (!advertisesFiles && clipboardHasPlainText(clipboardData)) return;
+  if (!advertisesFiles && clipboardHasPlainText(clipboardData)) {
+    return;
+  }
 
-  if (advertisesFiles) event.preventDefault();
+  if (advertisesFiles) {
+    event.preventDefault();
+  }
   addNativeClipboardFiles(addFiles, onError);
 }

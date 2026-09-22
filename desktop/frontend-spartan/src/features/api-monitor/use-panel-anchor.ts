@@ -1,4 +1,3 @@
-
 // Keeps the API monitor panel clear of the other floating panels, and publishes
 // its own box so the notification stack keeps clear of it in turn. The geometry
 // is in panel-placement.ts; this is the wiring.
@@ -6,11 +5,11 @@
 import { useMonitorFrameStore } from "@/features/settings";
 import { useCallback, useLayoutEffect, useMemo, useState } from "react";
 import {
-  clampPanelToViewport,
-  isFullyCovered,
   type PanelAnchor,
   type PanelRect,
   type PanelSize,
+  clampPanelToViewport,
+  isFullyCovered,
   placeFloatingPanel,
 } from "./panel-placement";
 

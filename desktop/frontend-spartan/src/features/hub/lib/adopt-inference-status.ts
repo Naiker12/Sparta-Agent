@@ -1,4 +1,3 @@
-
 // Adopting the resident model into the chat runtime store from the Hub. Landing straight on /hub
 // is the one entry point where nothing has applied /api/inference/status yet, and pinning only
 // the checkpoint leaves every other useActiveModelConfig field at its default, which the settings

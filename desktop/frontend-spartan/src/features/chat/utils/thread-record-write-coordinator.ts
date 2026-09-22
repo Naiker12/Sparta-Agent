@@ -1,4 +1,3 @@
-
 export class ThreadRecordWriteCoordinator {
   private readonly pending = new Map<string, Set<Promise<unknown>>>();
   private readonly unconfirmed = new Map<string, Set<symbol>>();

@@ -3,26 +3,10 @@
  * Vista de aterrizaje para proyectos de chat (Landing con pestañas de chats y fuentes).
  */
 
-import {
-  type CSSProperties,
-  type ReactElement,
-  lazy,
-  memo,
-  Suspense,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import { useNavigate } from "@tanstack/react-router";
 import { useT } from "@/i18n";
-import { Tooltip as TooltipPrimitive } from "radix-ui";
-import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Archive03Icon,
   BookOpen01Icon,
-  BubbleChatTemporaryIcon,
   Delete02Icon,
   Download01Icon,
   Edit03Icon,
@@ -33,20 +17,22 @@ import {
   MoreVerticalIcon,
   PinIcon,
   PinOffIcon,
-  PencilEdit02Icon,
-  Telescope02Icon,
 } from "@hugeicons/core-free-icons";
-
+import { HugeiconsIcon } from "@hugeicons/react";
+import { useNavigate } from "@tanstack/react-router";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  type CSSProperties,
+  type ReactElement,
+  Suspense,
+  lazy,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+
+import { ProjectComposer, Thread } from "@/components/assistant-ui/thread";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -65,27 +51,25 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
-import { ProjectComposer, Thread } from "@/components/assistant-ui/thread";
-import { toast } from "@/lib/toast";
-import { cn } from "@/lib/utils";
 import { isDownloadCancelled } from "@/lib/native-files";
+import { toast } from "@/lib/toast";
 
+import {
+  consumeProjectSourcesPending,
+  hasProjectSourcesPending,
+} from "@/features/rag/components/project-source-dropzone";
 import { notifyChatHistoryUpdated } from "../api/chat-api";
-import { DeleteChatFilesSwitch } from "./delete-chat-files-switch";
-import {
-  ChatRuntimeProvider,
-  useChatActive,
-} from "../runtime-provider";
-import {
-  PENDING_CHAT_ATTACHMENT_KEY,
-  readPendingAttachmentTargetClaim,
-  useChatRuntimeStore,
-} from "../stores/chat-runtime-store";
-import { useChatPreferencesStore } from "../stores/chat-preferences-store";
-import { usePinnedChatsStore } from "../stores/pinned-chats-store";
-import { usePinnedProjectsStore } from "../stores/pinned-projects-store";
 import {
   deleteChatProject,
   moveChatItemToProject,
@@ -98,24 +82,29 @@ import {
   deleteChatItem,
   renameChatItem,
 } from "../hooks/use-chat-sidebar-items";
+import { ChatRuntimeProvider, useChatActive } from "../runtime-provider";
+import { useChatPreferencesStore } from "../stores/chat-preferences-store";
+import {
+  PENDING_CHAT_ATTACHMENT_KEY,
+  readPendingAttachmentTargetClaim,
+  useChatRuntimeStore,
+} from "../stores/chat-runtime-store";
+import { usePinnedChatsStore } from "../stores/pinned-chats-store";
+import { usePinnedProjectsStore } from "../stores/pinned-projects-store";
 import {
   listStoredChatMessages,
   listStoredChatThreads,
 } from "../utils/chat-history-storage";
 import { attachmentsSample } from "../utils/pasted-text";
-import type { ChatView } from "../types";
+import { DeleteChatFilesSwitch } from "./delete-chat-files-switch";
 import {
-  consumeProjectSourcesPending,
-  hasProjectSourcesPending,
-} from "@/features/rag/components/project-source-dropzone";
-import {
+  PROJECT_CHAT_EXPORT_OPTIONS,
+  type ProjectChatExportFormat,
   createThreadNonce,
   exportProjectChatItem,
   exportProjectConversation,
   extractMessageText,
   formatProjectChatDate,
-  PROJECT_CHAT_EXPORT_OPTIONS,
-  type ProjectChatExportFormat,
   saveProjectChatItemAsSource,
 } from "./project-chat-helpers";
 
@@ -137,7 +126,7 @@ export function ProjectLanding({
   const t = useT();
   const navigate = useNavigate();
   const { projects: projectRecords } = useChatProjects();
-  const project = projectRecords.find((item) => item.id === projectId) ?? null;
+  const _project = projectRecords.find((item) => item.id === projectId) ?? null;
   // Gates body-portaled surfaces so they can't linger or act while the landing
   // is off-route (e.g. behind another tab).
   const active = useChatActive();
@@ -191,16 +180,22 @@ export function ProjectLanding({
         includeArchived: false,
       });
       const ids = [...new Set(threads.map((t) => t.id))];
-      for (const id of ids) await exportProjectConversation(id, format);
+      for (const id of ids) {
+        await exportProjectConversation(id, format);
+      }
     } catch (error) {
-      if (!isDownloadCancelled(error)) toast.error("Export failed.");
+      if (!isDownloadCancelled(error)) {
+        toast.error("Export failed.");
+      }
     }
   }
 
   async function commitProjectRename(): Promise<void> {
     const name = projectNameDraft.trim();
     setRenamingProject(false);
-    if (!name || name === projectName) return;
+    if (!name || name === projectName) {
+      return;
+    }
     try {
       await renameChatProject(projectId, name);
     } catch (err) {
@@ -238,9 +233,13 @@ export function ProjectLanding({
   }, [projectId]);
 
   useEffect(() => {
-    if (!pendingRename) return;
+    if (!pendingRename) {
+      return;
+    }
     const match = items.find((item) => item.id === pendingRename.id);
-    if (match && match.title === pendingRename.title) setPendingRename(null);
+    if (match && match.title === pendingRename.title) {
+      setPendingRename(null);
+    }
   }, [items, pendingRename]);
 
   const openRename = useCallback((item: SidebarItem) => {
@@ -253,7 +252,9 @@ export function ProjectLanding({
     async (item: SidebarItem) => {
       const trimmed = renameDraft.trim();
       setRenamingId(null);
-      if (!trimmed || trimmed === item.title) return;
+      if (!trimmed || trimmed === item.title) {
+        return;
+      }
       setPendingRename({ id: item.id, title: trimmed });
       try {
         await renameChatItem(item, trimmed);
@@ -290,7 +291,7 @@ export function ProjectLanding({
 
   // Landing has no active thread selected, so the onView callback here is a
   // no-op; the items list refreshes itself once storage emits its update.
-  const noopView = useCallback(() => { }, []);
+  const noopView = useCallback(() => {}, []);
 
   const handleArchive = useCallback(
     async (item: SidebarItem) => {
@@ -351,7 +352,9 @@ export function ProjectLanding({
       try {
         await exportProjectChatItem(item, format);
       } catch (error) {
-        if (!isDownloadCancelled(error)) toast.error("Export failed.");
+        if (!isDownloadCancelled(error)) {
+          toast.error("Export failed.");
+        }
       }
     },
     [],
@@ -370,7 +373,7 @@ export function ProjectLanding({
 
   // No composer ever records under this, so passing it refuses the adoption.
   // (adoptPendingProjectAttachmentTarget only adopts on an exact claim match.)
-  const NO_SUCH_CLAIM = -1;
+  const noSuchClaim = -1;
 
   // The claim the composer on screen recorded its attach choice under: every
   // fresh composer shares one pending key, so only the claim tells them apart.
@@ -382,7 +385,9 @@ export function ProjectLanding({
     return useChatRuntimeStore.subscribe((state) => {
       const pending =
         state.projectAttachmentTargetByThread[PENDING_CHAT_ATTACHMENT_KEY];
-      if (pending === undefined) return;
+      if (pending === undefined) {
+        return;
+      }
       // By claim, not by value: picking the same destination twice rewrites the
       // same string under a new claim, and skipping it reads as somebody else's.
       const claim = readPendingAttachmentTargetClaim();
@@ -417,7 +422,7 @@ export function ProjectLanding({
       .getState()
       .adoptPendingProjectAttachmentTarget(
         activeThreadId,
-        captured?.nonce === newThreadNonce ? captured.claim : NO_SUCH_CLAIM,
+        captured?.nonce === newThreadNonce ? captured.claim : noSuchClaim,
       );
     setPendingNewThreadId(activeThreadId);
   }, [activeThreadId, pendingNewThreadId, newThreadNonce]);
@@ -449,7 +454,7 @@ export function ProjectLanding({
               // the row would otherwise be blank.
               snippet: firstUserMessage
                 ? extractMessageText(firstUserMessage.content) ||
-                attachmentsSample(firstUserMessage.attachments)
+                  attachmentsSample(firstUserMessage.attachments)
                 : "",
               date: formatProjectChatDate(item.createdAt),
             },
@@ -507,7 +512,11 @@ export function ProjectLanding({
                     aria-label={t("projectsPage.projectOptionsAria")}
                     className="inline-flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring data-[state=open]:bg-muted data-[state=open]:text-foreground"
                   >
-                    <HugeiconsIcon icon={MoreHorizontalIcon} strokeWidth={1.75} className="size-5" />
+                    <HugeiconsIcon
+                      icon={MoreHorizontalIcon}
+                      strokeWidth={1.75}
+                      className="size-5"
+                    />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
@@ -522,16 +531,36 @@ export function ProjectLanding({
                       setRenamingProject(true);
                     }}
                   >
-                    <HugeiconsIcon icon={Edit03Icon} strokeWidth={1.75} className="size-icon" />
+                    <HugeiconsIcon
+                      icon={Edit03Icon}
+                      strokeWidth={1.75}
+                      className="size-icon"
+                    />
                     <span>{t("projectsPage.renameTitle")}</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => togglePinProject(projectId)}>
-                    <HugeiconsIcon icon={projectPinned ? PinOffIcon : PinIcon} strokeWidth={1.75} className="size-icon" />
-                    <span>{t(projectPinned ? "projectsPage.unpinProject" : "projectsPage.pinProject")}</span>
+                  <DropdownMenuItem
+                    onSelect={() => togglePinProject(projectId)}
+                  >
+                    <HugeiconsIcon
+                      icon={projectPinned ? PinOffIcon : PinIcon}
+                      strokeWidth={1.75}
+                      className="size-icon"
+                    />
+                    <span>
+                      {t(
+                        projectPinned
+                          ? "projectsPage.unpinProject"
+                          : "projectsPage.pinProject",
+                      )}
+                    </span>
                   </DropdownMenuItem>
                   <DropdownMenuSub>
                     <DropdownMenuSubTrigger>
-                      <HugeiconsIcon icon={Download01Icon} strokeWidth={1.75} className="size-icon" />
+                      <HugeiconsIcon
+                        icon={Download01Icon}
+                        strokeWidth={1.75}
+                        className="size-icon"
+                      />
                       <span>{t("projectsPage.export")}</span>
                     </DropdownMenuSubTrigger>
                     <DropdownMenuSubContent className="unsloth-plus-menu w-48">
@@ -550,7 +579,11 @@ export function ProjectLanding({
                     variant="destructive"
                     onSelect={() => setDeletingProject(true)}
                   >
-                    <HugeiconsIcon icon={Delete02Icon} strokeWidth={1.75} className="size-icon" />
+                    <HugeiconsIcon
+                      icon={Delete02Icon}
+                      strokeWidth={1.75}
+                      className="size-icon"
+                    />
                     <span>{t("projectsPage.deleteTitle")}</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -607,7 +640,6 @@ export function ProjectLanding({
                       >
                         <div className="min-w-0 flex-1">
                           <input
-                            autoFocus
                             value={renameDraft}
                             onChange={(event) =>
                               setRenameDraft(event.target.value)
@@ -621,8 +653,9 @@ export function ProjectLanding({
                               if (
                                 event.nativeEvent.isComposing ||
                                 event.keyCode === 229
-                              )
+                              ) {
                                 return;
+                              }
                               if (event.key === "Enter") {
                                 event.preventDefault();
                                 skipRenameBlurRef.current = true;
@@ -678,7 +711,7 @@ export function ProjectLanding({
                         </span>
                       </button>
                       <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
+                        <DropdownMenuTrigger asChild={true}>
                           <button
                             type="button"
                             onClick={(event) => event.stopPropagation()}
@@ -829,7 +862,9 @@ export function ProjectLanding({
       <AlertDialog
         open={active && confirmingDelete !== null}
         onOpenChange={(open) => {
-          if (!open) setConfirmingDelete(null);
+          if (!open) {
+            setConfirmingDelete(null);
+          }
         }}
       >
         <AlertDialogContent>
@@ -852,7 +887,9 @@ export function ProjectLanding({
                 const target = confirmingDelete;
                 const deleteFiles = deleteFilesOnDelete;
                 setConfirmingDelete(null);
-                if (target) void runDelete(target, deleteFiles);
+                if (target) {
+                  void runDelete(target, deleteFiles);
+                }
               }}
             >
               Delete
@@ -863,7 +900,9 @@ export function ProjectLanding({
       <Dialog
         open={active && renamingProject}
         onOpenChange={(open) => {
-          if (!open) setRenamingProject(false);
+          if (!open) {
+            setRenamingProject(false);
+          }
         }}
       >
         <DialogContent className="corner-squircle dialog-soft-surface sm:max-w-md">
@@ -886,14 +925,19 @@ export function ProjectLanding({
             className="focus-visible:border-input focus-visible:ring-0"
           />
           <DialogFooter className="flex-wrap gap-2 sm:justify-end">
-            <Button type="button" variant="ghost" onClick={() => setRenamingProject(false)}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setRenamingProject(false)}
+            >
               Cancel
             </Button>
             <Button
               type="button"
               onClick={() => void commitProjectRename()}
               disabled={
-                !projectNameDraft.trim() || projectNameDraft.trim() === projectName
+                !projectNameDraft.trim() ||
+                projectNameDraft.trim() === projectName
               }
             >
               Save
@@ -904,7 +948,9 @@ export function ProjectLanding({
       <AlertDialog
         open={active && deletingProject}
         onOpenChange={(open) => {
-          if (!open) setDeletingProject(false);
+          if (!open) {
+            setDeletingProject(false);
+          }
         }}
       >
         <AlertDialogContent>
@@ -925,4 +971,3 @@ export function ProjectLanding({
     </ChatRuntimeProvider>
   );
 }
-

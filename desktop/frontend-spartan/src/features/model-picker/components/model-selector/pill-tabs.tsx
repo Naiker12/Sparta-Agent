@@ -1,4 +1,3 @@
-
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 
@@ -69,7 +68,9 @@ export function PillTabs({
           // is left to bubble so the picker's "enter the list" handler still runs.
           tabIndex={value === tab.value ? 0 : -1}
           onKeyDown={(e) => {
-            if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+            if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") {
+              return;
+            }
             e.preventDefault();
             const next =
               (index + (e.key === "ArrowRight" ? 1 : -1) + tabs.length) %

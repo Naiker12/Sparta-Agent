@@ -1,4 +1,3 @@
-
 import { authFetch, hasAuthToken } from "@/features/auth";
 import { apiUrl } from "@/lib/api-base";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -92,7 +91,9 @@ async function fetchReleaseNotesWithRetry(
     } catch (error) {
       lastError = error;
       const delay = FETCH_RETRY_DELAYS_MS[attempt];
-      if (delay === undefined) break;
+      if (delay === undefined) {
+        break;
+      }
       await new Promise<void>((resolve) => window.setTimeout(resolve, delay));
     }
   }
@@ -136,7 +137,7 @@ export function useReleaseNotes({
   }, []);
 
   useEffect(() => {
-    if (!enabled || !version || requestedVersionRef.current === version) {
+    if (!(enabled && version) || requestedVersionRef.current === version) {
       return;
     }
     if (hasAuthToken()) {

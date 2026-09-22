@@ -1,4 +1,3 @@
-
 const RAG_SOURCES_SENTINEL = "__RAG_SOURCES__:";
 
 export interface Citation {
@@ -17,9 +16,13 @@ function asNumber(value: unknown): number | null {
 
 // null if absent so callers fall back to generic JSON shapes.
 function parseSentinelSources(result: unknown): Citation[] | null {
-  if (typeof result !== "string") return null;
+  if (typeof result !== "string") {
+    return null;
+  }
   const idx = result.indexOf(RAG_SOURCES_SENTINEL);
-  if (idx < 0) return null;
+  if (idx < 0) {
+    return null;
+  }
   const payload = result.slice(idx + RAG_SOURCES_SENTINEL.length).trim();
   let rows: unknown;
   try {
@@ -27,7 +30,9 @@ function parseSentinelSources(result: unknown): Citation[] | null {
   } catch {
     return [];
   }
-  if (!Array.isArray(rows)) return [];
+  if (!Array.isArray(rows)) {
+    return [];
+  }
   return rows.map((row, i) => {
     const r = (row ?? {}) as Record<string, unknown>;
     const documentId = typeof r.documentId === "string" ? r.documentId : null;
@@ -48,7 +53,9 @@ function parseSentinelSources(result: unknown): Citation[] | null {
 
 export function parseCitations(result: unknown): Citation[] {
   const sentinel = parseSentinelSources(result);
-  if (sentinel !== null) return sentinel;
+  if (sentinel !== null) {
+    return sentinel;
+  }
 
   let rows: unknown[] | null = null;
   if (Array.isArray(result)) {
@@ -58,22 +65,33 @@ export function parseCitations(result: unknown): Citation[] {
     if (trimmed.startsWith("[") || trimmed.startsWith("{")) {
       try {
         const parsed = JSON.parse(trimmed);
-        if (Array.isArray(parsed)) rows = parsed;
-        else if (parsed && Array.isArray((parsed as { results?: unknown }).results)) {
+        if (Array.isArray(parsed)) {
+          rows = parsed;
+        } else if (
+          parsed &&
+          Array.isArray((parsed as { results?: unknown }).results)
+        ) {
           rows = (parsed as { results: unknown[] }).results;
         }
       } catch {
         rows = null;
       }
     }
-  } else if (result && Array.isArray((result as { results?: unknown }).results)) {
+  } else if (
+    result &&
+    Array.isArray((result as { results?: unknown }).results)
+  ) {
     rows = (result as { results: unknown[] }).results;
   }
-  if (!rows) return [];
+  if (!rows) {
+    return [];
+  }
 
   const citations: Citation[] = [];
   rows.forEach((row, i) => {
-    if (!row || typeof row !== "object") return;
+    if (!row || typeof row !== "object") {
+      return;
+    }
     const r = row as Record<string, unknown>;
     const text =
       typeof r.text === "string"

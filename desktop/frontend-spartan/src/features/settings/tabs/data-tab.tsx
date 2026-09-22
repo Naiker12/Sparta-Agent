@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -20,22 +19,21 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
-import { usePlatformStore } from "@/config/env";
 import {
+  DeleteChatFilesSwitch,
   EXPORT_FORMATS_LIST,
   type FineTuneFormat,
+  type ImportSource,
   archiveAllChatItems,
   bulkExportConversationsByScope,
   clearAllChats,
   countAllChats,
-  DeleteChatFilesSwitch,
   downloadArchivedChatExport,
   downloadChatExport,
   exportFineTuneJsonl,
+  fileImportSource,
   importConversationsFromSource,
   nativeImportSource,
-  fileImportSource,
-  type ImportSource,
   offerToDeleteKeptSandboxes,
   useChatPreferencesStore,
   useChatRuntimeStore,
@@ -67,7 +65,6 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { ArchivedChatsView } from "../components/archived-chats-dialog";
-import { ArchivedMediaView } from "../components/archived-media-dialog";
 import { ManageChatsView } from "../components/manage-chats-view";
 import { SettingsRow } from "../components/settings-row";
 import { SettingsSection } from "../components/settings-section";
@@ -84,15 +81,12 @@ const FINE_TUNE_ACTIONS: FineTuneAction[] = ["export", "recipes"];
 // Which subpage an "open the archive" request lands on.
 const SUBPAGE_FOR_SHELF = {
   chats: "archived",
-  images: "archived-images",
 } as const;
 
 export function DataTab() {
   const t = useT();
   const navigate = useNavigate();
-  const archivedRequested = useSettingsDialogStore(
-    (s) => s.archivedRequested,
-  );
+  const archivedRequested = useSettingsDialogStore((s) => s.archivedRequested);
   const consumeArchivedChatsRequest = useSettingsDialogStore(
     (s) => s.consumeArchivedChatsRequest,
   );
@@ -103,7 +97,7 @@ export function DataTab() {
   const [archiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
   // Subpages swap the Data tab body instead of opening nested dialogs.
   const [subpage, setSubpage] = useState<
-    "main" | "manage" | "archived" | "archived-images" | "files"
+    "main" | "manage" | "archived" | "files"
   >(
     archivedRequested && archivedRequested in SUBPAGE_FOR_SHELF
       ? SUBPAGE_FOR_SHELF[archivedRequested]
@@ -136,10 +130,14 @@ export function DataTab() {
   // Requests can arrive after Data is already mounted (for example from the
   // archive-all toast), so always switch before consuming the flag.
   useEffect(() => {
-    if (!archivedRequested) return;
+    if (!archivedRequested) {
+      return;
+    }
     let cancelled = false;
     queueMicrotask(() => {
-      if (cancelled) return;
+      if (cancelled) {
+        return;
+      }
       if (archivedRequested in SUBPAGE_FOR_SHELF) {
         setSubpage(SUBPAGE_FOR_SHELF[archivedRequested]);
       }
@@ -151,7 +149,9 @@ export function DataTab() {
   }, [archivedRequested, consumeArchivedChatsRequest]);
 
   useEffect(() => {
-    if (!ragAvailabilityUnknown) return;
+    if (!ragAvailabilityUnknown) {
+      return;
+    }
     let cancelled = false;
     let retryTimer: number | undefined;
     let retryDelayMs = 1_000;
@@ -160,7 +160,9 @@ export function DataTab() {
       try {
         await listKnowledgeBases();
       } catch {
-        if (cancelled) return;
+        if (cancelled) {
+          return;
+        }
         retryTimer = window.setTimeout(() => {
           retryDelayMs = Math.min(retryDelayMs * 2, 30_000);
           void probeAvailability();
@@ -171,7 +173,9 @@ export function DataTab() {
     void probeAvailability();
     return () => {
       cancelled = true;
-      if (retryTimer !== undefined) window.clearTimeout(retryTimer);
+      if (retryTimer !== undefined) {
+        window.clearTimeout(retryTimer);
+      }
     };
   }, [ragAvailabilityUnknown]);
 
@@ -193,7 +197,9 @@ export function DataTab() {
   // ArchivedChatsView: compare panes only live in the search params.
   const openChatId = useRouterState({
     select: (s) => {
-      if (!s.location.pathname.startsWith("/chat")) return undefined;
+      if (!s.location.pathname.startsWith("/chat")) {
+        return undefined;
+      }
       const search = s.location.search as Record<string, string | undefined>;
       return search.thread ?? search.compare ?? storeThreadId ?? undefined;
     },
@@ -273,13 +279,19 @@ export function DataTab() {
         // Nothing was created, so however the count is phrased this is a failure.
         toast.error(t("settings.chat.importFailed"), {
           id: toastId,
-          description: t("settings.chat.importedChatCountPartial", { count: 0, failed }),
+          description: t("settings.chat.importedChatCountPartial", {
+            count: 0,
+            failed,
+          }),
         });
         return;
       }
       toast.success(
         failed > 0
-          ? t("settings.chat.importedChatCountPartial", { count: imported, failed })
+          ? t("settings.chat.importedChatCountPartial", {
+              count: imported,
+              failed,
+            })
           : imported === 1
             ? t("settings.chat.importedOneChat")
             : t("settings.chat.importedChatCount", { count: imported }),
@@ -529,41 +541,6 @@ export function DataTab() {
     );
   }
 
-  if (subpage === "archived-images") {
-    return (
-      <div className="flex flex-col gap-6">
-        <header className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setSubpage("main")}
-            aria-label={t("settings.data.backToData")}
-            className="inline-flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          >
-            <HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" />
-          </button>
-          <h1 className="text-xl font-semibold font-heading">
-            {t("settings.data.title")}
-          </h1>
-        </header>
-        <div className="flex flex-col gap-1">
-          <h2 className="text-sm font-semibold">
-            {t("settings.data.archivedImages")}
-          </h2>
-          <p className="text-xs text-muted-foreground">
-            {t("settings.data.archivedImagesDescription")}
-          </p>
-        </div>
-        {/* Keyed by kind: switching shelves on an already-mounted tab otherwise keeps the
-            instance, and a showMore still awaiting the old shelf appends its rows to the new one,
-            which then drives restore and delete through the wrong media API. */}
-        <ArchivedMediaView
-          key={subpage}
-          kind="images"
-        />
-      </div>
-    );
-  }
-
   if (subpage === "files") {
     return (
       <div className="flex flex-col gap-6">
@@ -691,20 +668,6 @@ export function DataTab() {
             {t("settings.data.manageAction")}
           </Button>
         </SettingsRow>
-
-        <SettingsRow
-          label={t("settings.data.archivedImages")}
-          description={t("settings.data.archivedImagesDescription")}
-        >
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setSubpage("archived-images")}
-          >
-            {t("settings.data.manageAction")}
-          </Button>
-        </SettingsRow>
-
 
         <SettingsRow
           label={t("settings.data.archiveAllChats")}
@@ -872,7 +835,9 @@ export function DataTab() {
             onChange={(e) => {
               const file = e.target.files?.[0];
               e.target.value = "";
-              if (file) void handleImport(fileImportSource(file));
+              if (file) {
+                void handleImport(fileImportSource(file));
+              }
             }}
           />
         </SettingsRow>
@@ -891,11 +856,11 @@ export function DataTab() {
             {t("settings.data.manageAction")}
           </Button>
         </SettingsRow>
-        {!ragAvailabilityUnknown && !ragUnavailable ? (
+        {ragAvailabilityUnknown || ragUnavailable ? null : (
           <div className="py-3">
             <LinkedFoldersManager />
           </div>
-        ) : null}
+        )}
       </SettingsSection>
 
       <Dialog open={archiveConfirmOpen} onOpenChange={setArchiveConfirmOpen}>

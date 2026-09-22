@@ -4,10 +4,10 @@
  */
 
 import {
+  type GpuIndexKind,
+  type ReconciledGpuSelection,
   cachedPinnableGpuIndexKind,
   reconcileCachedGpuSelection,
-  type ReconciledGpuSelection,
-  type GpuIndexKind,
 } from "@/hooks/use-gpu-info";
 import {
   GPU_LAYERS_AUTO,
@@ -19,7 +19,9 @@ import { CHAT_GPU_MEMORY_MODE_KEY } from "./constants";
 export { GPU_LAYERS_AUTO };
 
 export function readPersistedGpuMemoryMode(): "auto" | "manual" {
-  if (typeof window === "undefined") return "auto";
+  if (typeof window === "undefined") {
+    return "auto";
+  }
   try {
     const raw = window.localStorage.getItem(CHAT_GPU_MEMORY_MODE_KEY);
     return raw === "manual" ? "manual" : "auto";
@@ -32,7 +34,9 @@ export function saveGpuMemoryMode(
   value: "auto" | "manual",
   onPersist?: (key: string, value: string) => void,
 ): void {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined") {
+    return;
+  }
   try {
     window.localStorage.setItem(CHAT_GPU_MEMORY_MODE_KEY, value);
     onPersist?.(CHAT_GPU_MEMORY_MODE_KEY, value);
@@ -57,12 +61,16 @@ export function largestRemainder(shares: number[], total: number): number[] {
   const byFrac = shares
     .map((x, i) => ({ i, frac: x - Math.floor(x) }))
     .sort((a, b) => b.frac - a.frac);
-  for (let k = 0; rem > 0 && k < byFrac.length; k++, rem--) out[byFrac[k].i] += 1;
+  for (let k = 0; rem > 0 && k < byFrac.length; k++, rem--) {
+    out[byFrac[k].i] += 1;
+  }
   return out;
 }
 
 export function distributeByWeight(total: number, weights: number[]): number[] {
-  if (weights.length === 0) return [];
+  if (weights.length === 0) {
+    return [];
+  }
   const t = Math.max(0, Math.floor(total));
   const sum = weights.reduce((a, b) => a + b, 0);
   const w = sum > 0 ? weights : weights.map(() => 1);
@@ -100,11 +108,7 @@ export function reconcilePersistedGpuIds(
   savedIndexKind?: GpuIndexKind | null,
   forDiffusion = false,
 ): number[] | null {
-  return reconcilePersistedGpuSelection(
-    ids,
-    savedIndexKind,
-    forDiffusion,
-  ).ids;
+  return reconcilePersistedGpuSelection(ids, savedIndexKind, forDiffusion).ids;
 }
 
 export function reconcilePersistedGpuSelection(

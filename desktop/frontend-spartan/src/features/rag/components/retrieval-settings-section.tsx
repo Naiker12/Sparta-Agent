@@ -1,4 +1,3 @@
-
 import {
   Select,
   SelectContent,
@@ -236,9 +235,9 @@ export function RetrievalSettingsSection() {
           <span className="flex items-center gap-1.5 text-ui-13 font-medium leading-[1.25] tracking-nav text-nav-fg">
             Describe figures &amp; charts
             <InfoHint>
-              Caption PDF figures, charts, tables and diagrams at upload with the
-              loaded model's vision, so their content becomes searchable. Needs a
-              vision model; adds vision calls for detected figures.
+              Caption PDF figures, charts, tables and diagrams at upload with
+              the loaded model's vision, so their content becomes searchable.
+              Needs a vision model; adds vision calls for detected figures.
             </InfoHint>
           </span>
           <span className="text-ui-12 leading-[1.3] text-muted-foreground">

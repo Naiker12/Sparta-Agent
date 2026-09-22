@@ -1,4 +1,3 @@
-
 export interface KnowledgeBase {
   id: string;
   name: string;
@@ -106,7 +105,9 @@ export function linkedFolderSourcesChanged(
   previous: LinkedFolder[] | null,
   current: LinkedFolder[],
 ): boolean {
-  if (!previous) return false;
+  if (!previous) {
+    return false;
+  }
   const previousById = new Map(previous.map((folder) => [folder.id, folder]));
   if (
     previous.length !== current.length ||
@@ -154,7 +155,9 @@ export function retainActiveFolderJobs(
   const retained: Record<string, FolderSyncJob> = {};
   for (const folder of folders) {
     const job = jobs[folder.id];
-    if (job && folder.activeJobId === job.id) retained[folder.id] = job;
+    if (job && folder.activeJobId === job.id) {
+      retained[folder.id] = job;
+    }
   }
   return retained;
 }
@@ -178,4 +181,5 @@ export interface PreviewTarget {
   text?: string | null;
 }
 
-export const RAG_UPLOAD_ACCEPT = ".pdf,.txt,.md,.markdown,.docx,.xlsx,.csv,.tsv,.pptx,.odt,.rtf,.epub,.json,.html,.htm";
+export const RAG_UPLOAD_ACCEPT =
+  ".pdf,.txt,.md,.markdown,.docx,.xlsx,.csv,.tsv,.pptx,.odt,.rtf,.epub,.json,.html,.htm";

@@ -1,4 +1,3 @@
-
 // WebView-compatibility shims. AbortSignal.timeout (WebKitGTK < 2.38) and
 // AbortSignal.any (WebKitGTK < 2.44) are missing on older engines Tauri embeds
 // and throw synchronously if called. These ponyfills delegate to the native
@@ -39,7 +38,9 @@ export function combineAbortSignals(signals: AbortSignal[]): PollSignal {
     }
   };
   const abort = (reason: unknown) => {
-    if (!controller.signal.aborted) controller.abort(reason);
+    if (!controller.signal.aborted) {
+      controller.abort(reason);
+    }
     dispose();
   };
   for (const input of signals) {
@@ -78,8 +79,12 @@ export function withAbort<T>(
   promise: Promise<T>,
   signal?: AbortSignal,
 ): Promise<T> {
-  if (!signal) return promise;
-  if (signal.aborted) return Promise.reject(abortError(signal));
+  if (!signal) {
+    return promise;
+  }
+  if (signal.aborted) {
+    return Promise.reject(abortError(signal));
+  }
   return new Promise<T>((resolve, reject) => {
     const onAbort = () => reject(abortError(signal));
     signal.addEventListener("abort", onAbort, { once: true });

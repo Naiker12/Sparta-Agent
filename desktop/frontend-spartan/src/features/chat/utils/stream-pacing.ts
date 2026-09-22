@@ -1,4 +1,3 @@
-
 // A janked window may not paint for a while, so do not wait on frames alone.
 // A scheduled fallback, not a deadline: a hidden page pauses frames and
 // throttles this timer too, which is why the cap below is in arrivals.

@@ -1,12 +1,9 @@
-
 "use client";
 
 import { Spinner } from "@/components/ui/spinner";
-import { useT } from "@/i18n";
 import { authFetch } from "@/features/auth";
+import { useT } from "@/i18n";
 
-import { SandboxFiles } from "./sandbox-files-view";
-import { isSandboxFileList, type SandboxFile } from "./sandbox-files";
 import {
   preferSanitizedFullToolOutput,
   useChatRuntimeStore,
@@ -20,6 +17,8 @@ import { useToolArgsStatus } from "@assistant-ui/react";
 import { AlertCircleIcon, CodeIcon, LoaderIcon } from "lucide-react";
 import { memo, useEffect, useRef, useState } from "react";
 import { pythonToolImagePath } from "./python-tool-image-path";
+import { type SandboxFile, isSandboxFileList } from "./sandbox-files";
+import { SandboxFiles } from "./sandbox-files-view";
 import { CopyBtn, ToolCodeCell } from "./tool-code-cell";
 import {
   ToolFallbackContent,
@@ -37,7 +36,9 @@ interface StructuredResult {
 }
 
 function isStructuredResult(val: unknown): val is StructuredResult {
-  if (typeof val !== "object" || val === null) return false;
+  if (typeof val !== "object" || val === null) {
+    return false;
+  }
   const v = val as { files?: unknown };
   return (
     "text" in val &&
@@ -209,7 +210,11 @@ const PythonToolUIImpl: ToolCallMessagePartComponent = ({
     // command is not the artifact a user comes back for, a script is.
     <ToolFallbackRoot defaultOpen={isRunning}>
       <ToolFallbackTrigger
-        toolName={firstLine ? `${t("chat.tools.python")}: ${firstLine}` : t("chat.tools.python")}
+        toolName={
+          firstLine
+            ? `${t("chat.tools.python")}: ${firstLine}`
+            : t("chat.tools.python")
+        }
         status={status}
         icon={CodeIcon}
       />

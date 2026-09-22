@@ -35,11 +35,7 @@
         "drop": false,
         "sampler_type": "category",
         "params": {
-          "values": [
-            "web",
-            "mobile",
-            "cli"
-          ]
+          "values": ["web", "mobile", "cli"]
         }
       },
       {
@@ -48,11 +44,7 @@
         "drop": false,
         "sampler_type": "category",
         "params": {
-          "values": [
-            "single_user",
-            "team",
-            "org_wide"
-          ]
+          "values": ["single_user", "team", "org_wide"]
         }
       },
       {
@@ -80,12 +72,7 @@
         "output_format": {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "issue_title",
-            "issue_summary",
-            "category",
-            "priority"
-          ],
+          "required": ["issue_title", "issue_summary", "category", "priority"],
           "properties": {
             "issue_title": {
               "type": "string",
@@ -97,21 +84,12 @@
             },
             "category": {
               "type": "string",
-              "enum": [
-                "account",
-                "billing",
-                "api",
-                "infra"
-              ],
+              "enum": ["account", "billing", "api", "infra"],
               "description": "Issue category"
             },
             "priority": {
               "type": "string",
-              "enum": [
-                "P1",
-                "P2",
-                "P3"
-              ],
+              "enum": ["P1", "P2", "P3"],
               "description": "Urgency level"
             }
           }
@@ -135,10 +113,7 @@
         "output_format": {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "response",
-            "next_action"
-          ],
+          "required": ["response", "next_action"],
           "properties": {
             "response": {
               "type": "string",
@@ -163,9 +138,7 @@
   "run": {
     "rows": 5,
     "preview": true,
-    "output_formats": [
-      "jsonl"
-    ]
+    "output_formats": ["jsonl"]
   },
   "ui": {
     "nodes": [

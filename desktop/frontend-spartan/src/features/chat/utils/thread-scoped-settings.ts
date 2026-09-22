@@ -1,4 +1,3 @@
-
 // The chat settings that describe one conversation rather than the installation: the composer
 // pills, the permission level, the retrieval controls and the sampling params. Editing one with
 // a chat open writes this snapshot onto the thread, and reopening that thread applies it back.
@@ -160,10 +159,14 @@ export function sanitizeThreadScopedSettings(
   value: unknown,
 ): ThreadScopedSettings {
   const settings: ThreadScopedSettings = {};
-  if (!isRecord(value)) return settings;
+  if (!isRecord(value)) {
+    return settings;
+  }
   const target = settings as Record<string, unknown>;
   for (const key of THREAD_SCOPED_BOOLEAN_KEYS) {
-    if (typeof value[key] === "boolean") target[key] = value[key];
+    if (typeof value[key] === "boolean") {
+      target[key] = value[key];
+    }
   }
   for (const [key, allowed] of Object.entries(THREAD_SCOPED_ENUM_VALUES)) {
     const candidate = value[key];
@@ -176,13 +179,19 @@ export function sanitizeThreadScopedSettings(
   }
   for (const [key, bounds] of Object.entries(THREAD_SCOPED_NUMBER_BOUNDS)) {
     const sanitized = sanitizeBoundedNumber(value[key], bounds);
-    if (sanitized !== undefined) target[key] = sanitized;
+    if (sanitized !== undefined) {
+      target[key] = sanitized;
+    }
   }
   for (const key of THREAD_SCOPED_STRING_KEYS) {
-    if (typeof value[key] === "string") target[key] = value[key];
+    if (typeof value[key] === "string") {
+      target[key] = value[key];
+    }
   }
   const ragSource = sanitizeRagSource(value.ragSource);
-  if (ragSource) settings.ragSource = ragSource;
+  if (ragSource) {
+    settings.ragSource = ragSource;
+  }
   return settings;
 }
 
@@ -190,6 +199,8 @@ export function sanitizeThreadScopedSettings(
 export function hasThreadScopedSettings(
   settings: ThreadScopedSettings | null | undefined,
 ): boolean {
-  if (!settings) return false;
+  if (!settings) {
+    return false;
+  }
   return THREAD_SCOPED_SETTING_KEYS.some((key) => settings[key] !== undefined);
 }

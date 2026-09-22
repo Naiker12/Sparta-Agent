@@ -1,4 +1,3 @@
-
 import { isTauri } from "@/lib/api-base";
 
 /**
@@ -12,11 +11,11 @@ import { isTauri } from "@/lib/api-base";
  * runtime has no permission API, but getUserMedia is still worth trying in both.
  */
 export async function resetMicrophonePermission(): Promise<void> {
-  if (!isTauri) return;
+  if (!isTauri) {
+    return;
+  }
   try {
     const { invoke } = await import("@tauri-apps/api/core");
     await invoke("reset_microphone_permission");
-  } catch (error) {
-    console.warn("Could not reset the saved microphone permission:", error);
-  }
+  } catch (_error) {}
 }

@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { useNativeFileDrop } from "@/features/native-intents";
 import type { NativeIntent } from "@/features/native-intents";
@@ -34,7 +33,9 @@ export function ProjectSourcesPanel({ projectId }: { projectId: string }) {
   // would refetch and resurrect the row this panel has already dropped.
   const handleItems = useCallback(
     async (items: RagUploadItem[]) => {
-      if (items.length === 0) return;
+      if (items.length === 0) {
+        return;
+      }
       invalidateProjectSources(projectId);
       await upload(items);
       announceProjectSourcesUpdated(projectId);
@@ -87,7 +88,11 @@ export function ProjectSourcesPanel({ projectId }: { projectId: string }) {
 
   // Tauri suppresses webview drop events, so the plain `onDrop` this panel
   // carried never fired on desktop: no border, file ignored (#9036).
-  const { ref: dropRef, dragging, dragHandlers } = useNativeFileDrop({
+  const {
+    ref: dropRef,
+    dragging,
+    dragHandlers,
+  } = useNativeFileDrop({
     onFiles: handleFiles,
     onNativeIntents: handleNativeIntents,
     accept: RAG_UPLOAD_ACCEPT,

@@ -1,4 +1,3 @@
-
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,7 +48,9 @@ export function StopRunningChatsDialog() {
       open={open}
       onOpenChange={(next) => {
         // Escape / overlay click must resolve, or the caller's await hangs.
-        if (!next) resolve(false);
+        if (!next) {
+          resolve(false);
+        }
       }}
     >
       <AlertDialogContent>

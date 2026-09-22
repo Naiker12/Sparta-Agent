@@ -1,6 +1,5 @@
-
-import { createRoute, useParams } from "@tanstack/react-router";
 import { EditRecipePage } from "@/features/data-recipes/pages/edit-recipe-page";
+import { createRoute, useParams } from "@tanstack/react-router";
 import { requireAuth } from "../auth-guards";
 import { Route as rootRoute } from "./__root";
 

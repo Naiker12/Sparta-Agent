@@ -1,4 +1,3 @@
-
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
@@ -8,6 +7,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { HfSortKey } from "@/features/hub/hooks/use-hub-model-search";
+import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
 import {
   AiChipIcon,
@@ -38,7 +38,6 @@ import type {
 } from "../types";
 import { type HubOption, HubOptionMenu } from "./hub-option-menu";
 import { RecentSearches } from "./recent-searches";
-import { useT } from "@/i18n";
 
 // Widened so the format dropdown can carry the "Fine-tune ready" pseudo-option,
 // which opens the curated channel instead of becoming the active format filter.
@@ -87,7 +86,10 @@ export const ModelsToolbar = memo(function ModelsToolbar({
   onOpenFineTune: () => void;
 }) {
   const t = useT();
-  const filterLabel = (value: string) => t(`hub.filters.${value === "all" ? "allCapabilities" : value === "embedding" ? "embeddings" : value === "diffusion" ? "imageGeneration" : value}` as never);
+  const filterLabel = (value: string) =>
+    t(
+      `hub.filters.${value === "all" ? "allCapabilities" : value === "embedding" ? "embeddings" : value === "diffusion" ? "imageGeneration" : value}` as never,
+    );
   // Recent searches surface while the empty search field is focused, only on
   // Discover (on-device search is a local filter and isn't recorded).
   const recentSearches = useRecentSearches();
@@ -179,7 +181,20 @@ export const ModelsToolbar = memo(function ModelsToolbar({
   );
   const sortOptions = useMemo<HubOption<HfSortKey>[]>(
     () =>
-      (["createdAt", "trendingScore", "downloads", "lastModified", "likes"] as HfSortKey[]).map((value) => ({ value, label: t(`hub.filters.${({ createdAt: "newest", trendingScore: "trending", downloads: "mostDownloads", lastModified: "recentlyUpdated", likes: "mostLikes" } as Record<HfSortKey, string>)[value]}` as never) })),
+      (
+        [
+          "createdAt",
+          "trendingScore",
+          "downloads",
+          "lastModified",
+          "likes",
+        ] as HfSortKey[]
+      ).map((value) => ({
+        value,
+        label: t(
+          `hub.filters.${({ createdAt: "newest", trendingScore: "trending", downloads: "mostDownloads", lastModified: "recentlyUpdated", likes: "mostLikes" } as Record<HfSortKey, string>)[value]}` as never,
+        ),
+      })),
     [t],
   );
   const triggerBase = cn(
@@ -276,7 +291,9 @@ export const ModelsToolbar = memo(function ModelsToolbar({
           }}
           placeholder={
             tab === "downloaded"
-              ? isDataset ? t("hub.searchDeviceDatasets") : t("hub.searchDeviceModels")
+              ? isDataset
+                ? t("hub.searchDeviceDatasets")
+                : t("hub.searchDeviceModels")
               : isDataset
                 ? t("hub.searchDatasets")
                 : t("hub.searchModels")

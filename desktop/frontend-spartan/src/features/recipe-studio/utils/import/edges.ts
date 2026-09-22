@@ -1,4 +1,3 @@
-
 import type { Edge } from "@xyflow/react";
 import type { LayoutDirection, NodeConfig } from "../../types";
 import {
@@ -41,15 +40,13 @@ function isSemanticConnection(source: NodeConfig, target: NodeConfig): boolean {
 export function buildEdges(
   configs: NodeConfig[],
   nameToId: Map<string, string>,
-  uiEdges:
-    | Array<{
-        from: string;
-        to: string;
-        type?: string;
-        sourceHandle?: string;
-        targetHandle?: string;
-      }>
-    | null,
+  uiEdges: Array<{
+    from: string;
+    to: string;
+    type?: string;
+    sourceHandle?: string;
+    targetHandle?: string;
+  }> | null,
   layoutDirection: LayoutDirection,
 ): Edge[] {
   const edges: Edge[] = [];
@@ -94,19 +91,21 @@ export function buildEdges(
       sourceHandle =
         isSemanticSourceHandle(sourceHandleNormalized) ||
         isDataSourceHandle(sourceHandleNormalized)
-          ? sourceHandleNormalized ?? semanticSourceDefault
+          ? (sourceHandleNormalized ?? semanticSourceDefault)
           : semanticSourceDefault;
       targetHandle =
         isSemanticTargetHandle(targetHandleNormalized) ||
         isDataTargetHandle(targetHandleNormalized)
-          ? targetHandleNormalized ?? semanticTargetDefault
+          ? (targetHandleNormalized ?? semanticTargetDefault)
           : semanticTargetDefault;
     } else {
       sourceHandle = isDataSourceHandle(sourceHandleNormalized)
-        ? sourceHandleNormalized ?? getDefaultDataSourceHandle(layoutDirection)
+        ? (sourceHandleNormalized ??
+          getDefaultDataSourceHandle(layoutDirection))
         : getDefaultDataSourceHandle(layoutDirection);
       targetHandle = isDataTargetHandle(targetHandleNormalized)
-        ? targetHandleNormalized ?? getDefaultDataTargetHandle(layoutDirection)
+        ? (targetHandleNormalized ??
+          getDefaultDataTargetHandle(layoutDirection))
         : getDefaultDataTargetHandle(layoutDirection);
     }
     edges.push({
@@ -121,12 +120,7 @@ export function buildEdges(
 
   if (uiEdges && uiEdges.length > 0) {
     for (const edge of uiEdges) {
-      addEdgeByName(
-        edge.from,
-        edge.to,
-        edge.sourceHandle,
-        edge.targetHandle,
-      );
+      addEdgeByName(edge.from, edge.to, edge.sourceHandle, edge.targetHandle);
     }
     if (edges.length > 0) {
       return edges;

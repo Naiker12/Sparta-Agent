@@ -26,7 +26,9 @@ export function ModelIdleUnloadSection() {
     let cancelled = false;
     void loadOpenAIAutoSwitchSettings()
       .then((settings) => {
-        if (!cancelled) setSeconds(String(settings.autoUnloadIdleSeconds));
+        if (!cancelled) {
+          setSeconds(String(settings.autoUnloadIdleSeconds));
+        }
       })
       .catch((cause: unknown) => {
         if (!cancelled) {
@@ -71,7 +73,9 @@ export function ModelIdleUnloadSection() {
     <SettingsSection title={t("settings.general.modelAutoSwitch.idleUnload")}>
       <SettingsRow
         label={t("settings.general.modelAutoSwitch.idleUnload")}
-        description={t("settings.general.modelAutoSwitch.idleUnloadDescription")}
+        description={t(
+          "settings.general.modelAutoSwitch.idleUnloadDescription",
+        )}
       >
         <div className="flex flex-col items-end gap-1">
           <div className="flex items-center gap-2">
@@ -81,12 +85,19 @@ export function ModelIdleUnloadSection() {
               step={1}
               value={seconds}
               disabled={saving}
-              aria-label={t("settings.general.modelAutoSwitch.idleSecondsAriaLabel")}
+              aria-label={t(
+                "settings.general.modelAutoSwitch.idleSecondsAriaLabel",
+              )}
               onChange={(event) => setSeconds(event.target.value)}
               className="h-8 w-24"
             />
             <span className="text-xs font-medium text-muted-foreground">s</span>
-            <Button variant="outline" size="sm" disabled={saving} onClick={save}>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={saving}
+              onClick={save}
+            >
               {saving ? t("common.saving") : t("common.save")}
             </Button>
           </div>

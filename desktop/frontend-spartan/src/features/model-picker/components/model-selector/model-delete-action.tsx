@@ -1,4 +1,3 @@
-
 import { DeleteConfirmDialog } from "@/features/hub";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
@@ -54,7 +53,9 @@ export function ModelDeleteAction({
         type="button"
         onClick={(e) => {
           e.stopPropagation();
-          if (disabled) return;
+          if (disabled) {
+            return;
+          }
           setOpen(true);
         }}
         aria-label={ariaLabel}
@@ -77,7 +78,9 @@ export function ModelDeleteAction({
       <DeleteConfirmDialog
         open={open}
         onOpenChange={(nextOpen) => {
-          if (!nextOpen && deleting) return;
+          if (!nextOpen && deleting) {
+            return;
+          }
           setOpen(nextOpen);
         }}
         title={title}

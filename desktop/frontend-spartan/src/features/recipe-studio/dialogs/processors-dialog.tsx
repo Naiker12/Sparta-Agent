@@ -1,6 +1,10 @@
-
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogFooter, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
@@ -33,7 +37,9 @@ export function ProcessorsDialog({
     [processors],
   );
   const schemaProcessor = schemaIndex >= 0 ? processors[schemaIndex] : null;
-  const nameId = schemaProcessor ? `${schemaProcessor.id}-name` : "schema-transform-name";
+  const nameId = schemaProcessor
+    ? `${schemaProcessor.id}-name`
+    : "schema-transform-name";
   const templateId = schemaProcessor
     ? `${schemaProcessor.id}-template`
     : "schema-transform-template";
@@ -101,7 +107,9 @@ export function ProcessorsDialog({
                   id={nameId}
                   className="nodrag"
                   value={schemaProcessor.name}
-                  onChange={(event) => updateSchema({ name: event.target.value })}
+                  onChange={(event) =>
+                    updateSchema({ name: event.target.value })
+                  }
                 />
               </div>
               <div className="grid gap-1.5">

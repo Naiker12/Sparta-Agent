@@ -1,8 +1,7 @@
-
-import { fetchWithTimeout } from "../lib/network";
-import type { HubModelType } from "../types";
 import { listDatasets } from "@huggingface/hub";
 import { useCallback, useMemo } from "react";
+import { fetchWithTimeout } from "../lib/network";
+import type { HubModelType } from "../types";
 import { useHubPaginatedSearch } from "./use-hub-paginated-search";
 
 interface DatasetInfoSplit {
@@ -211,58 +210,57 @@ const OCR_OR_VISION_TEXT_TASKS = new Set([
   "document-question-answering",
 ]);
 
-const CURATED_EMPTY_QUERY_DATASET_IDS: Partial<Record<HubModelType, string[]>> = {
-  text: [
-    "unsloth/alpaca-cleaned",
-    "unsloth/OpenMathReasoning-mini",
-    "mlabonne/FineTome-100k",
-    "openai/gsm8k",
-    "philschmid/guanaco-sharegpt-style",
-    "open-r1/DAPO-Math-17k-Processed",
-    "HuggingFaceH4/Multilingual-Thinking",
-    "HuggingFaceH4/ultrafeedback_binarized",
-    "reciperesearch/dolphin-sft-v0.1-preference",
-    "roneneldan/TinyStories",
-    "FreedomIntelligence/alpaca-gpt4-korean",
-    "Goedel-LM/SFT_dataset_v2",
-    "allenai/tulu-3-sft-mixture",
-    "HuggingFaceH4/no_robots",
-    "Magpie-Align/Magpie-Air-300K-Filtered",
-    "teknium/OpenHermes-2.5",
-    "databricks/databricks-dolly-15k",
-    "tatsu-lab/alpaca",
-    "garage-bAInd/Open-Platypus",
-    "microsoft/orca-math-word-problems-200k",
-    "Open-Orca/OpenOrca",
-    "openbmb/UltraInteract_sft",
-  ],
-  vision: [
-    "unsloth/LaTeX_OCR",
-    "unsloth/llava-instruct-mix-vsft-mini",
-    "unsloth/Radiology_mini",
-    "AI4Math/MathVista",
-    "AI4Math/MathVerse",
-    "ChongyanChen/VQAonline",
-    "lmms-lab/VQAv2",
-    "hezarai/parsynth-ocr-200k",
-  ],
-  audio: [
-    "MrDragonFox/Elise",
-    "keithito/lj_speech",
-    "parler-tts/mls_eng_10k",
-    "parler-tts/libritts-r-filtered-speaker-descriptions",
-    "openslr/librispeech_asr",
-    "MikhailT/hifi-tts",
-    "mozilla-foundation/common_voice_17_0",
-    "facebook/voxpopuli",
-    "speechcolab/gigaspeech",
-    "kth-tmh/vctk",
-    "Wenetspeech4TTS/WenetSpeech4TTS",
-  ],
-  embeddings: [
-    "electroglyph/technical",
-  ],
-};
+const CURATED_EMPTY_QUERY_DATASET_IDS: Partial<Record<HubModelType, string[]>> =
+  {
+    text: [
+      "unsloth/alpaca-cleaned",
+      "unsloth/OpenMathReasoning-mini",
+      "mlabonne/FineTome-100k",
+      "openai/gsm8k",
+      "philschmid/guanaco-sharegpt-style",
+      "open-r1/DAPO-Math-17k-Processed",
+      "HuggingFaceH4/Multilingual-Thinking",
+      "HuggingFaceH4/ultrafeedback_binarized",
+      "reciperesearch/dolphin-sft-v0.1-preference",
+      "roneneldan/TinyStories",
+      "FreedomIntelligence/alpaca-gpt4-korean",
+      "Goedel-LM/SFT_dataset_v2",
+      "allenai/tulu-3-sft-mixture",
+      "HuggingFaceH4/no_robots",
+      "Magpie-Align/Magpie-Air-300K-Filtered",
+      "teknium/OpenHermes-2.5",
+      "databricks/databricks-dolly-15k",
+      "tatsu-lab/alpaca",
+      "garage-bAInd/Open-Platypus",
+      "microsoft/orca-math-word-problems-200k",
+      "Open-Orca/OpenOrca",
+      "openbmb/UltraInteract_sft",
+    ],
+    vision: [
+      "unsloth/LaTeX_OCR",
+      "unsloth/llava-instruct-mix-vsft-mini",
+      "unsloth/Radiology_mini",
+      "AI4Math/MathVista",
+      "AI4Math/MathVerse",
+      "ChongyanChen/VQAonline",
+      "lmms-lab/VQAv2",
+      "hezarai/parsynth-ocr-200k",
+    ],
+    audio: [
+      "MrDragonFox/Elise",
+      "keithito/lj_speech",
+      "parler-tts/mls_eng_10k",
+      "parler-tts/libritts-r-filtered-speaker-descriptions",
+      "openslr/librispeech_asr",
+      "MikhailT/hifi-tts",
+      "mozilla-foundation/common_voice_17_0",
+      "facebook/voxpopuli",
+      "speechcolab/gigaspeech",
+      "kth-tmh/vctk",
+      "Wenetspeech4TTS/WenetSpeech4TTS",
+    ],
+    embeddings: ["electroglyph/technical"],
+  };
 
 const INCOMPATIBLE_TASKS_BY_MODEL: Record<HubModelType, Set<string>> = {
   text: new Set([
@@ -333,13 +331,17 @@ const INCOMPATIBLE_TASKS_BY_MODEL: Record<HubModelType, Set<string>> = {
 };
 
 function isPretrainingDataset(dataset: HfDatasetResult): boolean {
-  if (dataset.plainTags.some((t) => PRETRAINING_PLAIN_TAGS.has(t.toLowerCase())))
+  if (
+    dataset.plainTags.some((t) => PRETRAINING_PLAIN_TAGS.has(t.toLowerCase()))
+  ) {
     return true;
+  }
   if (
     dataset.sizeCategory &&
     PRETRAINING_SIZE_CATEGORIES.has(dataset.sizeCategory)
-  )
+  ) {
     return true;
+  }
   return false;
 }
 
@@ -347,7 +349,9 @@ function rankDatasetRelevance(
   dataset: HfDatasetResult,
   modelType: HubModelType,
 ): DatasetRelevance {
-  if (isPretrainingDataset(dataset)) return "incompatible";
+  if (isPretrainingDataset(dataset)) {
+    return "incompatible";
+  }
 
   // Keep OCR / vision-text corpora out of non-vision defaults.
   if (modelType !== "vision") {
@@ -360,18 +364,23 @@ function rankDatasetRelevance(
   }
 
   const { taskCategories } = dataset;
-  if (taskCategories.length === 0) return "neutral";
+  if (taskCategories.length === 0) {
+    return "neutral";
+  }
 
   const boosted = BOOSTED_TASK_CATEGORIES[modelType];
   const modelIncompat = INCOMPATIBLE_TASKS_BY_MODEL[modelType];
 
-  if (taskCategories.some((t) => boosted.has(t))) return "boosted";
+  if (taskCategories.some((t) => boosted.has(t))) {
+    return "boosted";
+  }
   if (
     taskCategories.every(
       (t) => INCOMPATIBLE_TASKS_ALL_MODELS.has(t) || modelIncompat.has(t),
     )
-  )
+  ) {
     return "incompatible";
+  }
   return "neutral";
 }
 
@@ -436,7 +445,9 @@ export function useHubDatasetSearch(
   });
 
   const results = useMemo(() => {
-    if (!enabled) return [];
+    if (!enabled) {
+      return [];
+    }
     const hideOcr = modelType !== "vision";
     const baseResults = hideOcr
       ? search.results.filter((ds) => !isOcrOrVisionTextDataset(ds))
@@ -447,15 +458,20 @@ export function useHubDatasetSearch(
       return curatedIds.map(toCuratedDatasetResult);
     }
 
-    if (!modelType) return baseResults;
+    if (!modelType) {
+      return baseResults;
+    }
 
     const boosted: HfDatasetResult[] = [];
     const neutral: HfDatasetResult[] = [];
 
     for (const ds of baseResults) {
       const relevance = rankDatasetRelevance(ds, modelType);
-      if (relevance === "boosted") boosted.push(ds);
-      else if (relevance !== "incompatible") neutral.push(ds);
+      if (relevance === "boosted") {
+        boosted.push(ds);
+      } else if (relevance !== "incompatible") {
+        neutral.push(ds);
+      }
     }
 
     return [...boosted, ...neutral];

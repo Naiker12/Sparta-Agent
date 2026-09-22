@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -61,7 +60,9 @@ export function MediaGenerationPresetControl({
   }
   const changeOpen = (nextOpen: boolean) => {
     setOpen(nextOpen);
-    if (!nextOpen) setDraftName(null);
+    if (!nextOpen) {
+      setDraftName(null);
+    }
   };
 
   const save = async () => {

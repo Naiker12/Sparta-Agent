@@ -1,4 +1,3 @@
-
 import { getModelConfig } from "./models-api";
 
 export async function fetchModelMaxPositionEmbeddings(

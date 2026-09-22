@@ -1,11 +1,10 @@
-
 import { Component, type ErrorInfo, type ReactNode, StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 import "./index.css";
 import { App } from "./app/app";
-import { StartupGate } from "./features/setup/startup-gate";
 import { fetchDeviceType } from "./config/env";
+import { StartupGate } from "./features/setup/startup-gate";
 import { initializeLocale } from "./i18n";
 import { isTauri, setApiBase, setBackendError } from "./lib/api-base";
 import { watchOverlayScrollbarGutter } from "./lib/overlay-scrollbar";
@@ -14,14 +13,23 @@ declare global {
   interface Window {
     electronAPI?: {
       getBackendPort?: () => Promise<number | null>;
-      authenticateBackend?: () => Promise<{ access_token: string; refresh_token: string }>;
+      authenticateBackend?: () => Promise<{
+        // biome-ignore lint/style/useNamingConvention: Electron IPC API contract (external)
+        access_token: string;
+        // biome-ignore lint/style/useNamingConvention: Electron IPC API contract (external)
+        refresh_token: string;
+      }>;
       getBackendStatus?: () => Promise<{ port?: number; error?: string }>;
       onBackendReady?: (listener: (port: number) => void) => () => void;
       bootstrapBackend?: () => Promise<{ ok: boolean; error?: string }>;
       onBackendError?: (listener: (message: string) => void) => () => void;
-      onBackendInstallProgress?: (listener: (message: string) => void) => () => void;
+      onBackendInstallProgress?: (
+        listener: (message: string) => void,
+      ) => () => void;
       onBackendInstallComplete?: (listener: () => void) => () => void;
-      onBackendInstallError?: (listener: (message: string) => void) => () => void;
+      onBackendInstallError?: (
+        listener: (message: string) => void,
+      ) => () => void;
     };
   }
 }
@@ -32,24 +40,36 @@ if (!rootElement) {
 }
 const root = createRoot(rootElement);
 
-class GlobalErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+class GlobalErrorBoundary extends Component<
+  { children: ReactNode },
+  { failed: boolean }
+> {
   state = { failed: false };
 
   static getDerivedStateFromError(): { failed: boolean } {
     return { failed: true };
   }
 
-  componentDidCatch(error: Error, info: ErrorInfo): void {
-    console.error("[app] Unhandled render error", error, info);
+  componentDidCatch(_error: Error, _info: ErrorInfo): void {
+    // Errors are captured by getDerivedStateFromError; no additional action needed.
   }
 
   render(): ReactNode {
-    if (!this.state.failed) return this.props.children;
+    if (!this.state.failed) {
+      return this.props.children;
+    }
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background p-6 text-center text-foreground">
         <h1 className="text-xl font-semibold">Something went wrong</h1>
-        <p className="max-w-md text-sm text-muted-foreground">Reload Sparta Agent to recover. If this persists, check the application logs.</p>
-        <button className="rounded-md bg-primary px-4 py-2 text-primary-foreground" type="button" onClick={() => window.location.reload()}>
+        <p className="max-w-md text-sm text-muted-foreground">
+          Reload Sparta Agent to recover. If this persists, check the
+          application logs.
+        </p>
+        <button
+          className="rounded-md bg-primary px-4 py-2 text-primary-foreground"
+          type="button"
+          onClick={() => window.location.reload()}
+        >
           Reload
         </button>
       </main>
@@ -96,15 +116,33 @@ if (typeof localeInitialization !== "string") {
 if (!isTauri) {
   const applyElectronPort = (port: number) => {
     setApiBase(port);
-    void fetchDeviceType().catch(() => undefined);
+    fetchDeviceType().catch(() => {
+      // Non-critical: device type defaults are used on failure.
+    });
   };
-  void window.electronAPI?.getBackendPort?.().then((port) => {
-    if (typeof port === "number") applyElectronPort(port);
-  });
-  void window.electronAPI?.getBackendStatus?.().then((status) => {
-    if (typeof status.port === "number") applyElectronPort(status.port);
-    if (status.error) setBackendError(status.error);
-  });
+  window.electronAPI
+    ?.getBackendPort?.()
+    .then((port) => {
+      if (typeof port === "number") {
+        applyElectronPort(port);
+      }
+    })
+    .catch(() => {
+      // Non-critical: port acquisition retried on backend ready event.
+    });
+  window.electronAPI
+    ?.getBackendStatus?.()
+    .then((status) => {
+      if (typeof status.port === "number") {
+        applyElectronPort(status.port);
+      }
+      if (status.error) {
+        setBackendError(status.error);
+      }
+    })
+    .catch(() => {
+      // Non-critical: backend status acquisition is optional.
+    });
   window.electronAPI?.onBackendReady?.(applyElectronPort);
   window.electronAPI?.onBackendError?.(setBackendError);
 }

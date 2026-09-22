@@ -1,6 +1,5 @@
-
-import type { DownloadJob } from "../download-manager";
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { DownloadJob } from "../download-manager";
 import type { DownloadStopMode } from "./download-cancel-indicator";
 
 /** What the button on a partial row does. Never "Redownload": whichever
@@ -54,8 +53,12 @@ export function downloadActionAriaLabel(
   cancelling: boolean,
   stopMode: DownloadStopMode = "cancel",
 ): string | undefined {
-  if (cancelling) return "Cancelling…";
-  if (!downloading) return undefined;
+  if (cancelling) {
+    return "Cancelling…";
+  }
+  if (!downloading) {
+    return undefined;
+  }
   return stopMode === "pause" ? "Pause download" : "Cancel download";
 }
 
@@ -110,14 +113,18 @@ export function useDownloadCardState({
       : null;
   const effectiveDisabled = disabled || starting;
   const onClick = useCallback(() => {
-    if (disabled || cancelling || starting) return;
+    if (disabled || cancelling || starting) {
+      return;
+    }
     if (downloading) {
       void job.cancelDownload(variant);
       return;
     }
     setStarting(true);
     void job.requestStartDownload(variant, expectedBytes).finally(() => {
-      if (mountedRef.current) setStarting(false);
+      if (mountedRef.current) {
+        setStarting(false);
+      }
     });
   }, [
     cancelling,

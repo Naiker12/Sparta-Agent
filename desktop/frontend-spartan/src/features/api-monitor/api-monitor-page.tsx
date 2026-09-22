@@ -1,4 +1,3 @@
-
 // Full-page monitor for Unsloth's OpenAI-compatible API server. Settings still owns
 // configuration (keys, auto-switch, examples); this page owns observability.
 
@@ -13,14 +12,15 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fetchDeviceType, usePlatformStore } from "@/config/env";
+import type { ApiMonitorEntry } from "@/features/chat";
 import { getInferenceStatus, unloadModel } from "@/features/chat/api/chat-api";
+import { isExternalModelId } from "@/features/chat/external-providers";
 import { resolveInferenceCheckpointId } from "@/features/chat/lib/apply-inference-status-to-store";
 import { useChatRuntimeStore } from "@/features/chat/stores/chat-runtime-store";
-import type { ApiMonitorEntry } from "@/features/chat";
-import { isExternalModelId } from "@/features/chat/external-providers";
 import { modelIdsMatch } from "@/features/hub/lib/model-identity";
 import { useSettingsDialogStore } from "@/features/settings";
 import { remoteApiOrigin } from "@/features/settings/api/remote-access-state";
+import { useT } from "@/i18n";
 import { getApiBase, isTauri } from "@/lib/api-base";
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
 import { Tick02Icon } from "@/lib/tick-icon";
@@ -37,7 +37,6 @@ import {
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { type ReactElement, useEffect, useMemo, useRef, useState } from "react";
-import { useT } from "@/i18n";
 import { SavedModelSettingsPanel } from "./components/saved-model-settings";
 import { isLifecycleEntry, lifecycleLabel } from "./lifecycle";
 import { unloadResident } from "./unload-resident";
@@ -160,7 +159,9 @@ function CopyButton({
   const timerRef = useRef<number | undefined>(undefined);
   useEffect(
     () => () => {
-      if (timerRef.current !== undefined) window.clearTimeout(timerRef.current);
+      if (timerRef.current !== undefined) {
+        window.clearTimeout(timerRef.current);
+      }
     },
     [],
   );
@@ -238,7 +239,9 @@ function RequestRow({
     entry.error ||
     entry.reply_preview ||
     entry.prompt_preview ||
-    (entry.status === "running" ? t("apiPage.waitingForOutput") : t("apiPage.noPreview"));
+    (entry.status === "running"
+      ? t("apiPage.waitingForOutput")
+      : t("apiPage.noPreview"));
   // A lifecycle row has no payload, so it reads as a status line.
   if (isLifecycleEntry(entry)) {
     return (
@@ -346,7 +349,12 @@ function PayloadBlock({
             </span>
           ) : null}
           {body ? (
-            <CopyButton value={body} label={t("apiPage.copyPayloadTitle", { title: title.toLowerCase() })} />
+            <CopyButton
+              value={body}
+              label={t("apiPage.copyPayloadTitle", {
+                title: title.toLowerCase(),
+              })}
+            />
           ) : null}
         </div>
       </div>
@@ -417,7 +425,10 @@ function RequestDetail({
       <dl className="grid grid-cols-2 gap-x-4 gap-y-3 rounded-xl border border-border/60 bg-card px-4 py-3 sm:grid-cols-3">
         {[
           { label: t("apiPage.started"), value: formatTime(entry.started_at) },
-          { label: t("apiPage.duration"), value: formatDuration(entry.duration_ms) },
+          {
+            label: t("apiPage.duration"),
+            value: formatDuration(entry.duration_ms),
+          },
           {
             label: t("apiPage.promptTokens"),
             value:
@@ -453,7 +464,8 @@ function RequestDetail({
           // Duration minus this is the queue wait, not slow decoding.
           {
             label: t("apiPage.generating"),
-            value: entry.decode_ms != null ? formatDuration(entry.decode_ms) : "–",
+            value:
+              entry.decode_ms != null ? formatDuration(entry.decode_ms) : "–",
           },
           {
             label: t("apiPage.promptSpeed"),
@@ -489,7 +501,11 @@ function RequestDetail({
       ) : null}
 
       {entry.error ? (
-        <PayloadBlock title={t("apiPage.errorSection")} body={entry.error} tone="error" />
+        <PayloadBlock
+          title={t("apiPage.errorSection")}
+          body={entry.error}
+          tone="error"
+        />
       ) : null}
 
       <PayloadBlock
@@ -595,13 +611,18 @@ export function ApiMonitorPage(): ReactElement {
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const statusFilters = useMemo<{ value: MonitorStatusFilter; label: string }[]>(() => [
-    { value: "all", label: t("apiPage.filterAll") },
-    { value: "running", label: t("apiPage.filterInFlight") },
-    { value: "completed", label: t("apiPage.filterCompleted") },
-    { value: "error", label: t("apiPage.filterErrors") },
-    { value: "cancelled", label: t("apiPage.filterCancelled") },
-  ], [t]);
+  const statusFilters = useMemo<
+    { value: MonitorStatusFilter; label: string }[]
+  >(
+    () => [
+      { value: "all", label: t("apiPage.filterAll") },
+      { value: "running", label: t("apiPage.filterInFlight") },
+      { value: "completed", label: t("apiPage.filterCompleted") },
+      { value: "error", label: t("apiPage.filterErrors") },
+      { value: "cancelled", label: t("apiPage.filterCancelled") },
+    ],
+    [t],
+  );
 
   const visible = useMemo(
     () => filterEntries(entries, statusFilter, query),
@@ -826,8 +847,13 @@ export function ApiMonitorPage(): ReactElement {
                 data.queue.queued > 0 && "text-amber-700 dark:text-amber-500",
               )}
             >
-              {t("apiPage.slotsBusy", { active: data.queue.active, capacity: data.queue.capacity })}
-              {data.queue.queued > 0 ? t("apiPage.slotsQueued", { queued: data.queue.queued }) : ""}
+              {t("apiPage.slotsBusy", {
+                active: data.queue.active,
+                capacity: data.queue.capacity,
+              })}
+              {data.queue.queued > 0
+                ? t("apiPage.slotsQueued", { queued: data.queue.queued })
+                : ""}
             </span>
           </div>
         ) : null}
@@ -864,16 +890,25 @@ export function ApiMonitorPage(): ReactElement {
         <StatCard
           label={t("apiPage.requests")}
           value={formatCount(stats.total)}
-          hint={loggingDisabled ? t("apiPage.recordingOff") : t("apiPage.recentWindow")}
+          hint={
+            loggingDisabled
+              ? t("apiPage.recordingOff")
+              : t("apiPage.recentWindow")
+          }
         />
-        <StatCard label={t("apiPage.completed")} value={formatCount(stats.completed)} />
+        <StatCard
+          label={t("apiPage.completed")}
+          value={formatCount(stats.completed)}
+        />
         <StatCard
           label={t("apiPage.errors")}
           value={formatCount(stats.errors)}
           tone={stats.errors > 0 ? "error" : "default"}
           hint={
             stats.errorRate != null
-              ? t("apiPage.pctOfFinished", { pct: Math.round(stats.errorRate * 100) })
+              ? t("apiPage.pctOfFinished", {
+                  pct: Math.round(stats.errorRate * 100),
+                })
               : undefined
           }
         />
@@ -886,7 +921,9 @@ export function ApiMonitorPage(): ReactElement {
           }
           hint={
             stats.maxDurationMs != null
-              ? t("apiPage.maxDuration", { duration: formatDuration(stats.maxDurationMs) })
+              ? t("apiPage.maxDuration", {
+                  duration: formatDuration(stats.maxDurationMs),
+                })
               : undefined
           }
         />
@@ -897,7 +934,9 @@ export function ApiMonitorPage(): ReactElement {
               ? "–"
               : `${stats.tokensPerSecond.toFixed(1)} tok/s`
           }
-          hint={t("apiPage.tokensGenerationOnly", { count: formatCount(stats.totalTokens) })}
+          hint={t("apiPage.tokensGenerationOnly", {
+            count: formatCount(stats.totalTokens),
+          })}
         />
       </section>
 
@@ -931,7 +970,10 @@ export function ApiMonitorPage(): ReactElement {
             </SelectContent>
           </Select>
           <span className="ml-auto shrink-0 text-ui-11 text-muted-foreground">
-            {t("apiPage.countOfTotal", { count: formatCount(visible.length), total: formatCount(entries.length) })}
+            {t("apiPage.countOfTotal", {
+              count: formatCount(visible.length),
+              total: formatCount(entries.length),
+            })}
           </span>
         </div>
 

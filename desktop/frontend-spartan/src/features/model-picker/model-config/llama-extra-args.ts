@@ -1,4 +1,3 @@
-
 /**
  * Turning what the user types into the argv tokens the API takes.
  *
@@ -127,7 +126,8 @@ export function windowsCommandLength(tokens: readonly string[]): number {
     }
     // Quoted only for whitespace or emptiness, as CPython does: a token that merely
     // contains a quote is not quoted, though its backslashes still double.
-    const needQuote = token.includes(" ") || token.includes("\t") || token === "";
+    const needQuote =
+      token.includes(" ") || token.includes("\t") || token === "";
     if (needQuote) {
       result.push('"');
     }
@@ -272,7 +272,11 @@ export function sanitizeStoredExtraArgs(
     // normalized name against the raw token left "--grammar_file" standing after its
     // value was trimmed. The backend cannot infer an ordinary flag's arity, so the
     // orphan reaches llama-server and the load fails after the teardown.
-    if (last !== undefined && lastFlag !== null && !valueIsAttached(last, lastFlag)) {
+    if (
+      last !== undefined &&
+      lastFlag !== null &&
+      !valueIsAttached(last, lastFlag)
+    ) {
       bounded.pop();
     }
     // Re-applied after every cut, exactly as the backend re-validates after its own:
@@ -327,7 +331,7 @@ function dropUnusableValues(tokens: readonly string[]): string[] {
     }
     // The value goes with the flag, or it is left as a bare token, which is the
     // one thing llama-server would read as a model path.
-    skipNext = !attached && !missing;
+    skipNext = !(attached || missing);
   }
   return out;
 }
@@ -729,7 +733,6 @@ const INTEGER_VALUE_MINIMUM: Record<string, number> = {
   "-ngl": -1,
 };
 
-
 /** Values the backend parses as integers, and refuses the load over. */
 /**
  * Flags whose value the backend reads with _last_flag_value, which raises when it is
@@ -971,8 +974,7 @@ export function diagnoseExtraArgs(
       const missing =
         value === undefined ||
         value === "" ||
-        (!attached &&
-          !valueIndices.has(index + 1) &&
+        (!(attached || valueIndices.has(index + 1)) &&
           extraArgFlagName(value) !== null);
       const minimum = INTEGER_VALUE_MINIMUM[flag];
       const numeric = INTEGER_VALUE_FLAGS.has(flag);

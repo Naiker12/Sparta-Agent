@@ -1,4 +1,3 @@
-
 const ESC = 0x1b;
 const BEL = 0x07;
 
@@ -31,7 +30,9 @@ function isEscStringControlIntroducer(code: number): boolean {
 }
 
 function isC1StringControlIntroducer(code: number): boolean {
-  return code === C1_DCS || code === C1_SOS || code === C1_PM || code === C1_APC;
+  return (
+    code === C1_DCS || code === C1_SOS || code === C1_PM || code === C1_APC
+  );
 }
 
 /** Advance past an OSC / DCS / SOS / PM / APC payload. */
@@ -155,7 +156,6 @@ export function stripAnsi(text: string): string {
   }
   return out;
 }
-
 
 /** Tail-line cap so a huge output never mounts a megabyte <pre> block. */
 const TAIL_LINES = 2000;

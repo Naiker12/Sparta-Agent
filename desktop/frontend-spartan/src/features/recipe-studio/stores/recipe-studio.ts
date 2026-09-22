@@ -1,4 +1,3 @@
-
 import {
   type Connection,
   type Edge,
@@ -25,6 +24,7 @@ import type {
   SamplerType,
   SeedSourceType,
 } from "../types";
+import { makeUnstructuredUploadUid } from "../utils/config-factories";
 import { applyRecipeConnection, isValidRecipeConnection } from "../utils/graph";
 import { deriveDisplayGraph } from "../utils/graph/derive-display-graph";
 import {
@@ -34,7 +34,6 @@ import {
 } from "../utils/handles";
 import type { RecipeSnapshot } from "../utils/import";
 import { getLayoutedElements } from "../utils/layout";
-import { makeUnstructuredUploadUid } from "../utils/config-factories";
 import {
   centerModelInfraNodes,
   optimizeModelInfraEdgeHandles,
@@ -284,7 +283,13 @@ function seedUploadCleanupUid(config: NodeConfig | undefined): string | null {
     return null;
   }
   const uid = config.unstructured_upload_uid?.trim();
-  if (!uid || !config.unstructured_file_ids?.length) {
+  if (
+    !(
+      uid &&
+      config.unstructured_file_ids &&
+      config.unstructured_file_ids.length > 0
+    )
+  ) {
     return null;
   }
   return uid;

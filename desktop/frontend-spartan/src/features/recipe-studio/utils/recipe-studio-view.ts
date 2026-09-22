@@ -1,4 +1,3 @@
-
 import type { NodeConfig, SamplerConfig } from "../types";
 
 export type DialogOptions = {

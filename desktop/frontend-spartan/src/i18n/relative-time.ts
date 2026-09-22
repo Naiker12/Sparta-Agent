@@ -1,4 +1,3 @@
-
 import type { Locale } from "./messages";
 
 const relativeTimeFormatters = new Map<string, Intl.RelativeTimeFormat>();

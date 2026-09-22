@@ -1,8 +1,7 @@
-
-import { XIcon } from "lucide-react";
 import { Tick02Icon } from "@/lib/tick-icon";
-import { HugeiconsIcon } from "@hugeicons/react";
 import { FileDatabaseIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { XIcon } from "lucide-react";
 import { type FC, useCallback, useEffect, useState } from "react";
 
 import {
@@ -84,7 +83,9 @@ export function KnowledgeBaseComposerButton({
     }
   }, [kbs, kbsLoaded, ragSource, setRagSource]);
 
-  if (!ragEnabled) return null;
+  if (!ragEnabled) {
+    return null;
+  }
 
   return (
     <>
@@ -92,7 +93,9 @@ export function KnowledgeBaseComposerButton({
         open={menuOpen}
         onOpenChange={(open) => {
           setMenuOpen(open);
-          if (open) void refresh();
+          if (open) {
+            void refresh();
+          }
         }}
       >
         <DropdownMenuTrigger asChild={true}>
@@ -112,11 +115,15 @@ export function KnowledgeBaseComposerButton({
               aria-label="Turn off retrieval"
               tabIndex={-1}
               onPointerDown={(e) => {
-                if (e.currentTarget.closest('[data-pill-compact="true"]')) return;
+                if (e.currentTarget.closest('[data-pill-compact="true"]')) {
+                  return;
+                }
                 e.stopPropagation();
               }}
               onClick={(e) => {
-                if (e.currentTarget.closest('[data-pill-compact="true"]')) return;
+                if (e.currentTarget.closest('[data-pill-compact="true"]')) {
+                  return;
+                }
                 e.stopPropagation();
                 setRagEnabled(false);
               }}
@@ -196,7 +203,9 @@ export function KnowledgeBaseComposerButton({
         open={dialogOpen}
         onOpenChange={(next) => {
           setDialogOpen(next);
-          if (!next) void refresh();
+          if (!next) {
+            void refresh();
+          }
         }}
       />
     </>

@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { type ChannelId, findChannel } from "../lib/channels";
 import { fingerprintToken } from "../lib/token-fingerprint";
@@ -97,9 +96,13 @@ export function useHubFeed(opts: {
 
   const runChannel = useCallback(
     (id: ChannelId) => {
-      if (inFlightRefs.current[id]) return;
+      if (inFlightRefs.current[id]) {
+        return;
+      }
       const preset = findChannel(id);
-      if (!preset) return;
+      if (!preset) {
+        return;
+      }
 
       const hadCache =
         (useHubFeedStore.getState().channels[id]?.results.length ?? 0) > 0;
@@ -115,7 +118,9 @@ export function useHubFeed(opts: {
       const settle = (status: FeedStatus, message: string | null) => {
         inFlightRefs.current[id] = false;
         setStatus(id, status);
-        if (status === "error") setError(id, message);
+        if (status === "error") {
+          setError(id, message);
+        }
       };
 
       const scheduleRetry = (attempt: number, message: string | null) => {
@@ -166,7 +171,9 @@ export function useHubFeed(opts: {
             deviceType,
             keepUnsupportedTags: true,
           });
-          if (isStale()) return;
+          if (isStale()) {
+            return;
+          }
           if (results.length > 0) {
             setChannelEntry(id, results, tokenFingerprint);
             settle("ready", null);
@@ -174,7 +181,9 @@ export function useHubFeed(opts: {
           }
           settle("ready", null);
         } catch (err) {
-          if (isStale() || isAbortError(err)) return;
+          if (isStale() || isAbortError(err)) {
+            return;
+          }
           scheduleRetry(
             attempt,
             err instanceof Error ? err.message : "Failed to load",
@@ -201,20 +210,28 @@ export function useHubFeed(opts: {
         abortRefs.current[id]?.abort();
         abortRefs.current[id] = null;
         const timer = timerRefs.current[id];
-        if (timer) clearTimeout(timer);
+        if (timer) {
+          clearTimeout(timer);
+        }
         timerRefs.current[id] = null;
         inFlightRefs.current[id] = false;
         versionRefs.current[id] += 1;
       }
     };
-    if (!enabled) return cleanup;
+    if (!enabled) {
+      return cleanup;
+    }
     if (useHubFeedStore.getState().tokenFingerprint !== tokenFingerprint) {
       clearForToken(tokenFingerprint);
     }
-    if (!online) return cleanup;
+    if (!online) {
+      return cleanup;
+    }
     for (const id of CHANNEL_IDS) {
       const entry = useHubFeedStore.getState().channels[id];
-      if (isChannelEntryFresh(entry, id, tokenFingerprint)) continue;
+      if (isChannelEntryFresh(entry, id, tokenFingerprint)) {
+        continue;
+      }
       runChannel(id);
     }
     return cleanup;

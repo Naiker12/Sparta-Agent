@@ -1,4 +1,3 @@
-
 import { Badge } from "@/components/assistant-ui/badge";
 import { Spinner } from "@/components/ui/spinner";
 import { getAttachmentIcon } from "@/lib/attachment-file-kind";

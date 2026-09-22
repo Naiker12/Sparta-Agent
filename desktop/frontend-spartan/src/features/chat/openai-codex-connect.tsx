@@ -1,17 +1,16 @@
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useT } from "@/i18n";
 import { openLink } from "@/lib/open-link";
 import { useEffect, useRef, useState } from "react";
 import {
+  type CodexOAuthFlow,
+  type ProviderAuthStatus,
   cancelCodexOAuthFlow,
   completeCodexOAuth,
   disconnectCodexOAuth,
   getCodexOAuthFlow,
   startCodexOAuth,
-  type CodexOAuthFlow,
-  type ProviderAuthStatus,
 } from "./api/providers-api";
 
 export function isTrustedCodexAuthUrl(raw: string): boolean {
@@ -19,7 +18,8 @@ export function isTrustedCodexAuthUrl(raw: string): boolean {
     const url = new URL(raw);
     return (
       url.origin === "https://auth.openai.com" &&
-      (url.pathname === "/oauth/authorize" || url.pathname === "/codex/device") &&
+      (url.pathname === "/oauth/authorize" ||
+        url.pathname === "/codex/device") &&
       url.username === "" &&
       url.password === ""
     );
@@ -60,29 +60,49 @@ export function OpenAICodexConnect({
     };
   }, []);
   useEffect(() => {
-    if (providerId) setActiveProviderId(providerId);
+    if (providerId) {
+      setActiveProviderId(providerId);
+    }
   }, [providerId]);
   useEffect(() => {
-    if (!flow || flow.status !== "pending" || !activeProviderId) return;
+    if (!flow || flow.status !== "pending" || !activeProviderId) {
+      return;
+    }
     const delay = flow.method === "device" ? 2500 : 1500;
     const timer = window.setInterval(() => {
       if (Date.now() >= flow.expires_at * 1000) {
-        setFlow((current) => current ? {
-          ...current,
-          status: "error",
-          message: t("chat.providersDialog.authorizationExpired"),
-        } : current);
+        setFlow((current) =>
+          current
+            ? {
+                ...current,
+                status: "error",
+                message: t("chat.providersDialog.authorizationExpired"),
+              }
+            : current,
+        );
         setError(t("chat.providersDialog.authorizationExpired"));
         return;
       }
       void getCodexOAuthFlow(activeProviderId, flow.flow_id)
         .then((next) => {
-          if (!mounted.current) return;
+          if (!mounted.current) {
+            return;
+          }
           setFlow(next);
-          if (next.status === "connected") void onChanged();
-          if (next.status === "error") setError(next.message || "Authorization failed.");
+          if (next.status === "connected") {
+            void onChanged();
+          }
+          if (next.status === "error") {
+            setError(next.message || "Authorization failed.");
+          }
         })
-        .catch((cause) => mounted.current && setError(cause instanceof Error ? cause.message : "Authorization failed."));
+        .catch(
+          (cause) =>
+            mounted.current &&
+            setError(
+              cause instanceof Error ? cause.message : "Authorization failed.",
+            ),
+        );
     }, delay);
     return () => window.clearInterval(timer);
   }, [flow, activeProviderId, onChanged, t]);
@@ -93,7 +113,7 @@ export function OpenAICodexConnect({
 
     setLocallyDisconnected(false);
     try {
-      const resolvedProviderId = activeProviderId ?? await ensureProvider?.();
+      const resolvedProviderId = activeProviderId ?? (await ensureProvider?.());
       if (!resolvedProviderId) {
         throw new Error("Could not create the ChatGPT connection.");
       }
@@ -102,40 +122,58 @@ export function OpenAICodexConnect({
       setFlow(next);
       const url = next.authorization_url || next.verification_url;
       if (url) {
-        if (!isTrustedCodexAuthUrl(url)) throw new Error("The authorization URL was not trusted.");
+        if (!isTrustedCodexAuthUrl(url)) {
+          throw new Error("The authorization URL was not trusted.");
+        }
         openLink(url);
       }
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Authorization failed.");
+      setError(
+        cause instanceof Error ? cause.message : "Authorization failed.",
+      );
     } finally {
       setBusy(false);
     }
   }
 
   async function complete() {
-    if (!flow || !activeProviderId || !callbackUrl.trim()) return;
+    if (!(flow && activeProviderId && callbackUrl.trim())) {
+      return;
+    }
     setBusy(true);
     setError("");
     try {
-      const next = await completeCodexOAuth(activeProviderId, flow.flow_id, callbackUrl.trim());
+      const next = await completeCodexOAuth(
+        activeProviderId,
+        flow.flow_id,
+        callbackUrl.trim(),
+      );
       setFlow(next);
 
       setLocallyDisconnected(false);
       setCallbackUrl("");
       await onChanged();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Authorization failed.");
+      setError(
+        cause instanceof Error ? cause.message : "Authorization failed.",
+      );
     } finally {
       setBusy(false);
     }
   }
   async function cancel() {
-    if (!flow || !activeProviderId || flow.status !== "pending") return;
+    if (!(flow && activeProviderId) || flow.status !== "pending") {
+      return;
+    }
     setBusy(true);
     setError("");
     try {
       await cancelCodexOAuthFlow(activeProviderId, flow.flow_id);
-      setFlow({ ...flow, status: "cancelled", message: "Authorization cancelled." });
+      setFlow({
+        ...flow,
+        status: "cancelled",
+        message: "Authorization cancelled.",
+      });
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Cancellation failed.");
     } finally {
@@ -143,10 +181,10 @@ export function OpenAICodexConnect({
     }
   }
 
-
-
   async function disconnect() {
-    if (!activeProviderId) return;
+    if (!activeProviderId) {
+      return;
+    }
     setBusy(true);
     setError("");
     try {
@@ -166,14 +204,20 @@ export function OpenAICodexConnect({
     !locallyDisconnected &&
     (authStatus === "connected" || flow?.status === "connected");
 
-  const rawError = error || (flow?.status === "error" ? flow.message || "Authorization failed." : "");
-  const visibleError = rawError.toLowerCase().includes("invalid or expired token")
+  const rawError =
+    error ||
+    (flow?.status === "error" ? flow.message || "Authorization failed." : "");
+  const visibleError = rawError
+    .toLowerCase()
+    .includes("invalid or expired token")
     ? t("chat.providersDialog.invalidOrExpiredToken")
     : rawError;
   return (
     <section className="space-y-3 rounded-[8px] border border-border/70 bg-background/45 p-4">
       <div>
-        <p className="text-sm font-medium">{t("chat.providersDialog.chatgptSubscription")}</p>
+        <p className="text-sm font-medium">
+          {t("chat.providersDialog.chatgptSubscription")}
+        </p>
         <p className="text-xs text-muted-foreground">
           {connected
             ? t("chat.providersDialog.chatgptConnected")
@@ -185,52 +229,108 @@ export function OpenAICodexConnect({
       {flow?.method === "device" && flow.status === "pending" ? (
         <div className="space-y-2 text-sm">
           <p>{t("chat.providersDialog.deviceCodeInstruction")}</p>
-          <code className="block w-fit rounded bg-muted px-3 py-2 font-mono text-base">{flow.user_code}</code>
-          <p className="text-xs text-muted-foreground">{t("chat.providersDialog.deviceCodeHelp")}</p>
+          <code className="block w-fit rounded bg-muted px-3 py-2 font-mono text-base">
+            {flow.user_code}
+          </code>
+          <p className="text-xs text-muted-foreground">
+            {t("chat.providersDialog.deviceCodeHelp")}
+          </p>
 
           <Button
             type="button"
             size="sm"
             variant="outline"
-            onClick={() => void navigator.clipboard.writeText(flow.user_code || "")}
+            onClick={() =>
+              void navigator.clipboard.writeText(flow.user_code || "")
+            }
           >
             {t("chat.providersDialog.copyCode")}
           </Button>
 
           <p className="text-xs text-muted-foreground">
-            {t("chat.providersDialog.expiresAt", { time: new Date(flow.expires_at * 1000).toLocaleTimeString() })}
+            {t("chat.providersDialog.expiresAt", {
+              time: new Date(flow.expires_at * 1000).toLocaleTimeString(),
+            })}
           </p>
         </div>
       ) : null}
       {flow?.method === "browser" && flow.status === "pending" ? (
         <div className="space-y-2">
-          <p className="text-xs text-muted-foreground">{t("chat.providersDialog.callbackHelp")}</p>
+          <p className="text-xs text-muted-foreground">
+            {t("chat.providersDialog.callbackHelp")}
+          </p>
           <div className="flex gap-2">
-            <Input value={callbackUrl} onChange={(event) => setCallbackUrl(event.target.value)} placeholder="http://localhost:1455/auth/callback?..." />
-            <Button type="button" variant="outline" disabled={busy || !callbackUrl.trim()} onClick={() => void complete()}>{t("chat.providersDialog.complete")}</Button>
+            <Input
+              value={callbackUrl}
+              onChange={(event) => setCallbackUrl(event.target.value)}
+              placeholder="http://localhost:1455/auth/callback?..."
+            />
+            <Button
+              type="button"
+              variant="outline"
+              disabled={busy || !callbackUrl.trim()}
+              onClick={() => void complete()}
+            >
+              {t("chat.providersDialog.complete")}
+            </Button>
           </div>
         </div>
       ) : null}
       {flow?.status === "cancelled" ? (
-        <p className="text-xs text-muted-foreground">Authorization cancelled.</p>
+        <p className="text-xs text-muted-foreground">
+          Authorization cancelled.
+        </p>
       ) : null}
 
-      {visibleError ? <p role="alert" className="text-xs text-destructive">{visibleError}</p> : null}
+      {visibleError ? (
+        <p role="alert" className="text-xs text-destructive">
+          {visibleError}
+        </p>
+      ) : null}
       <div className="flex flex-wrap gap-2">
-        {!connected ? (
+        {connected ? (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={busy}
+            onClick={() => void disconnect()}
+          >
+            Disconnect locally
+          </Button>
+        ) : (
           <>
-            <Button type="button" size="sm" disabled={busy} onClick={() => void start("browser")}>
+            <Button
+              type="button"
+              size="sm"
+              disabled={busy}
+              onClick={() => void start("browser")}
+            >
               {authStatus === "reauthorization_required"
                 ? t("chat.providersDialog.reconnectInBrowser")
                 : t("chat.providersDialog.connectInBrowser")}
             </Button>
-            <Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => void start("device")}>{t("chat.providersDialog.useDeviceCode")}</Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              disabled={busy}
+              onClick={() => void start("device")}
+            >
+              {t("chat.providersDialog.useDeviceCode")}
+            </Button>
             {flow?.status === "pending" ? (
-              <Button type="button" size="sm" variant="ghost" disabled={busy} onClick={() => void cancel()}>{t("chat.providersDialog.cancelAuthorization")}</Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                disabled={busy}
+                onClick={() => void cancel()}
+              >
+                {t("chat.providersDialog.cancelAuthorization")}
+              </Button>
             ) : null}
           </>
-        ) : (
-          <Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => void disconnect()}>Disconnect locally</Button>
         )}
       </div>
     </section>

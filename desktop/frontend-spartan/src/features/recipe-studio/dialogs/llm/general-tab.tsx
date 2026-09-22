@@ -1,4 +1,3 @@
-
 import {
   Collapsible,
   CollapsibleContent,
@@ -29,8 +28,8 @@ import type { LlmConfig } from "../../types";
 import { isLikelyImageValue } from "../../utils/image-preview";
 import { findInvalidJinjaReferences } from "../../utils/refs";
 import { getAvailableVariables } from "../../utils/variables";
-import { CollapsibleSectionTriggerButton } from "../shared/collapsible-section-trigger";
 import { AvailableVariables } from "../shared/available-variables";
+import { CollapsibleSectionTriggerButton } from "../shared/collapsible-section-trigger";
 import { FieldLabel } from "../shared/field-label";
 import { NameField } from "../shared/name-field";
 
@@ -167,7 +166,7 @@ export function LlmGeneralTab({
   const reasoningToggleId = `${config.id}-reasoning-content`;
   const advancedOpen = config.advancedOpen === true;
   const toolAliasAnchorRef = useRef<HTMLDivElement>(null);
-  const needsSetupHelp = !hasModelConfigs || !hasModelProviders;
+  const needsSetupHelp = !(hasModelConfigs && hasModelProviders);
   const needsModelChoice = !config.model_alias?.trim();
 
   return (
@@ -188,7 +187,9 @@ export function LlmGeneralTab({
                   icon={ArrowRight01Icon}
                   className="mt-0.5 size-3.5 shrink-0 text-primary"
                 />
-                <span>Add a Provider connection step in AI generation → Setup.</span>
+                <span>
+                  Add a Provider connection step in AI generation → Setup.
+                </span>
               </p>
             )}
             {!hasModelConfigs && (
@@ -197,7 +198,9 @@ export function LlmGeneralTab({
                   icon={ArrowRight01Icon}
                   className="mt-0.5 size-3.5 shrink-0 text-primary"
                 />
-                <span>Add a Model preset step, connect it, then choose it below.</span>
+                <span>
+                  Add a Model preset step, connect it, then choose it below.
+                </span>
               </p>
             )}
           </div>

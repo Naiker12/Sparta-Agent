@@ -1,4 +1,3 @@
-
 // Full-page settings for one model, opened from the Hub. The same controls exist in the
 // chat picker's popover, but a popover is a poor place to work through every knob.
 
@@ -39,7 +38,9 @@ export function HubModelSettingsView({
 
   useEffect(() => {
     const el = scrollRef.current;
-    if (!el) return;
+    if (!el) {
+      return;
+    }
     const onScroll = () => {
       const next = el.scrollTop > 0;
       setScrolled((current) => (current === next ? current : next));

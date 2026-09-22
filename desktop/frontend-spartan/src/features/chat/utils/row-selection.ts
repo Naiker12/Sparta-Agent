@@ -1,4 +1,3 @@
-
 /**
  * Multi-select for sidebar rows: cmd or ctrl click toggles one row, shift click
  * takes the block between the anchor and the clicked row.
@@ -14,7 +13,9 @@ export function rangeBetween(
   const to = ids.indexOf(targetId);
   // A missing anchor means the list changed under the selection, so the click
   // stands on its own rather than selecting an arbitrary block.
-  if (from === -1 || to === -1) return to === -1 ? [] : [targetId];
+  if (from === -1 || to === -1) {
+    return to === -1 ? [] : [targetId];
+  }
   return from <= to ? ids.slice(from, to + 1) : ids.slice(to, from + 1);
 }
 
@@ -24,6 +25,8 @@ export function toggleSelected(
   id: string,
 ): Set<string> {
   const next = new Set(selected);
-  if (!next.delete(id)) next.add(id);
+  if (!next.delete(id)) {
+    next.add(id);
+  }
   return next;
 }

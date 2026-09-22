@@ -1,5 +1,5 @@
-
 import { isElectron, isTauri } from "@/lib/api-base";
+import { refreshSession } from "./api";
 import {
   hasAuthToken,
   hasRefreshToken,
@@ -7,7 +7,6 @@ import {
   setMustChangePassword,
   storeAuthTokens,
 } from "./session";
-import { refreshSession } from "./api";
 
 type DesktopAuthResponse = {
   access_token: string;
@@ -28,8 +27,12 @@ const TAURI_AUTH_FAILURE_FALLBACK =
 const BACKEND_NOT_READY_MESSAGE = "Backend is not ready";
 
 function authFailureMessage(error: unknown): string {
-  if (typeof error === "string" && error) return error;
-  if (error instanceof Error && error.message) return error.message;
+  if (typeof error === "string" && error) {
+    return error;
+  }
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
   return TAURI_AUTH_FAILURE_FALLBACK;
 }
 
@@ -52,7 +55,9 @@ function isBackendNotReady(error: unknown): boolean {
   return authFailureMessage(error).includes(BACKEND_NOT_READY_MESSAGE);
 }
 
-async function doTauriAutoAuth(options: TauriAutoAuthOptions): Promise<boolean> {
+async function doTauriAutoAuth(
+  options: TauriAutoAuthOptions,
+): Promise<boolean> {
   // The desktop bridge exchanges its local credential independently of the web password.
   if (!options.force && hasAuthToken() && !mustChangePassword()) {
     clearTauriAuthFailure();
@@ -71,14 +76,20 @@ async function doTauriAutoAuth(options: TauriAutoAuthOptions): Promise<boolean> 
   try {
     const tokens = isElectron
       ? await window.electronAPI?.authenticateBackend?.()
-      : await (await import("@tauri-apps/api/core")).invoke<DesktopAuthResponse>("desktop_auth");
-    if (!tokens) throw new Error("Desktop authentication bridge is unavailable");
+      : await (
+          await import("@tauri-apps/api/core")
+        ).invoke<DesktopAuthResponse>("desktop_auth");
+    if (!tokens) {
+      throw new Error("Desktop authentication bridge is unavailable");
+    }
     storeAuthTokens(tokens.access_token, tokens.refresh_token);
     setMustChangePassword(false);
     clearTauriAuthFailure();
     return true;
   } catch (error) {
-    if (isBackendNotReady(error)) return false;
+    if (isBackendNotReady(error)) {
+      return false;
+    }
     setTauriAuthFailure(error);
     return false;
   }
@@ -95,12 +106,15 @@ async function doTauriAutoAuth(options: TauriAutoAuthOptions): Promise<boolean> 
 export function tauriAutoAuth(
   options: TauriAutoAuthOptions = {},
 ): Promise<boolean> {
-  if (!isTauri && !isElectron) return Promise.resolve(false);
+  if (!(isTauri || isElectron)) {
+    return Promise.resolve(false);
+  }
   const force = options.force === true;
   if (!pending || (force && !pending.force)) {
-    let promise: Promise<boolean>;
-    promise = doTauriAutoAuth({ force }).finally(() => {
-      if (pending?.promise === promise) pending = null;
+    const promise: Promise<boolean> = doTauriAutoAuth({ force }).finally(() => {
+      if (pending?.promise === promise) {
+        pending = null;
+      }
     });
     pending = { promise, force };
   }

@@ -1,4 +1,3 @@
-
 export type LlamaJobState = "idle" | "running" | "success" | "error";
 export type LlamaJobOperation = "update" | "switch" | null;
 

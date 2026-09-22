@@ -1,9 +1,12 @@
-import type { ReactNode } from "react";
-import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { getTauriAuthFailure, tauriAutoAuth } from "@/features/auth/tauri-auto-auth";
+import {
+  getTauriAuthFailure,
+  tauriAutoAuth,
+} from "@/features/auth/tauri-auto-auth";
 import { setApiBase } from "@/lib/api-base";
+import type { ReactNode } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type StartupState = "checking" | "needs_setup" | "installing" | "ready";
 
@@ -19,7 +22,9 @@ export function StartupGate({ children }: { children: ReactNode }) {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const logText = useMemo(() => logs.slice(-80).join("\n"), [logs]);
   const appendLog = (line: string) => {
-    if (line.trim()) setLogs((current) => [...current, line].slice(-300));
+    if (line.trim()) {
+      setLogs((current) => [...current, line].slice(-300));
+    }
   };
 
   useEffect(() => {
@@ -36,19 +41,27 @@ export function StartupGate({ children }: { children: ReactNode }) {
       setApiBase(port);
       setState("checking");
       const authenticated = await tauriAutoAuth({ force: true });
-      if (!active || attempt !== revision) return;
+      if (!active || attempt !== revision) {
+        return;
+      }
       if (authenticated) {
         setError(null);
         setState("ready");
       } else {
-        setError(getTauriAuthFailure() ?? "No se pudo autenticar el motor local. Reinicia Sparta.");
+        setError(
+          getTauriAuthFailure() ??
+            "No se pudo autenticar el motor local. Reinicia Sparta.",
+        );
         setState("needs_setup");
       }
     };
     void api.getBackendStatus?.().then((status) => {
-      if (!active || revision > 0) return;
-      if (typeof status.port === "number") void authenticate(status.port);
-      else if (status.error) {
+      if (!active || revision > 0) {
+        return;
+      }
+      if (typeof status.port === "number") {
+        void authenticate(status.port);
+      } else if (status.error) {
         setError(status.error);
         setState("needs_setup");
       } else {
@@ -79,16 +92,22 @@ export function StartupGate({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (state !== "installing" || installStartedAt === null) return;
+    if (state !== "installing" || installStartedAt === null) {
+      return;
+    }
     const updateElapsed = () =>
-      setElapsedSeconds(Math.max(0, Math.floor((Date.now() - installStartedAt) / 1000)));
+      setElapsedSeconds(
+        Math.max(0, Math.floor((Date.now() - installStartedAt) / 1000)),
+      );
     updateElapsed();
     const timer = window.setInterval(updateElapsed, 1000);
     return () => window.clearInterval(timer);
   }, [state, installStartedAt]);
 
   useEffect(() => {
-    if (!isEntering || state === "checking") return;
+    if (!isEntering || state === "checking") {
+      return;
+    }
     const timer = window.setTimeout(() => setHasEntered(true), 350);
     return () => window.clearTimeout(timer);
   }, [isEntering, state]);
@@ -98,11 +117,20 @@ export function StartupGate({ children }: { children: ReactNode }) {
       <main className="fixed inset-0 grid place-items-center overflow-hidden bg-background p-6 text-foreground">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,var(--primary)/18%,transparent_28%),radial-gradient(circle_at_82%_78%,var(--accent)/70%,transparent_35%)]" />
         <section className="relative w-full max-w-lg px-6 py-10 text-center sm:px-10">
-          <img alt="Logo de Sparta Agent" className="mx-auto size-28 object-contain brightness-0" src={`${import.meta.env.BASE_URL}spartan-logo.svg`} />
-          <p className="mt-7 text-sm font-semibold tracking-wide text-primary">SPARTA AGENT</p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Tu espacio de trabajo local</h1>
+          <img
+            alt="Logo de Sparta Agent"
+            className="mx-auto size-28 object-contain brightness-0"
+            src={`${import.meta.env.BASE_URL}spartan-logo.svg`}
+          />
+          <p className="mt-7 text-sm font-semibold tracking-wide text-primary">
+            SPARTA AGENT
+          </p>
+          <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
+            Tu espacio de trabajo local
+          </h1>
           <p className="mt-4 text-pretty leading-7 text-muted-foreground">
-            Conversa, crea y trabaja con tus modelos en un entorno privado preparado en tu equipo.
+            Conversa, crea y trabaja con tus modelos en un entorno privado
+            preparado en tu equipo.
           </p>
           <Button
             className="mt-8 h-11 rounded-xl px-6"
@@ -111,7 +139,9 @@ export function StartupGate({ children }: { children: ReactNode }) {
             size="lg"
             type="button"
           >
-            {isEntering && <Spinner data-icon="inline-start" label="Cargando Sparta" />}
+            {isEntering && (
+              <Spinner data-icon="inline-start" label="Cargando Sparta" />
+            )}
             {isEntering ? "Cargando Sparta…" : "Entrar a Sparta"}
           </Button>
           <p className="mt-5 text-xs leading-5 text-muted-foreground">
@@ -124,7 +154,9 @@ export function StartupGate({ children }: { children: ReactNode }) {
     );
   }
 
-  if (state === "ready") return <>{children}</>;
+  if (state === "ready") {
+    return <>{children}</>;
+  }
 
   const installing = state === "installing";
   const checking = state === "checking";
@@ -134,7 +166,9 @@ export function StartupGate({ children }: { children: ReactNode }) {
       ? "El motor local aún no está instalado en este equipo."
       : "Instala el motor local una vez para poder usar todas las funciones de Sparta.";
   const install = async () => {
-    if (!window.electronAPI?.bootstrapBackend) return;
+    if (!window.electronAPI?.bootstrapBackend) {
+      return;
+    }
     setLogs(["[Sparta] Preparando motor local..."]);
     setError(null);
     setShowDetails(false);
@@ -153,35 +187,67 @@ export function StartupGate({ children }: { children: ReactNode }) {
     <main className="fixed inset-0 grid place-items-center overflow-auto bg-muted/40 p-6 text-foreground">
       <section className="w-full max-w-2xl rounded-3xl border bg-card p-7 shadow-2xl sm:p-10">
         <div className="flex items-center gap-4">
-          <img alt="Logo de Sparta Agent" className="size-14 rounded-2xl border bg-background p-2 object-contain brightness-0" src={`${import.meta.env.BASE_URL}spartan-logo.svg`} />
+          <img
+            alt="Logo de Sparta Agent"
+            className="size-14 rounded-2xl border bg-background p-2 object-contain brightness-0"
+            src={`${import.meta.env.BASE_URL}spartan-logo.svg`}
+          />
           <div>
-            <p className="text-sm font-semibold text-primary">CONFIGURACIÓN INICIAL</p>
-            <h1 className="mt-1 text-2xl font-semibold tracking-tight">Prepara Sparta Agent</h1>
+            <p className="text-sm font-semibold text-primary">
+              CONFIGURACIÓN INICIAL
+            </p>
+            <h1 className="mt-1 text-2xl font-semibold tracking-tight">
+              Prepara Sparta Agent
+            </h1>
           </div>
         </div>
 
         <div className="mt-8 rounded-2xl border bg-muted/50 p-5">
-          <p className="font-medium">{checking ? "Comprobando el motor local…" : installing ? "Instalando el motor local…" : "Motor local pendiente"}</p>
+          <p className="font-medium">
+            {checking
+              ? "Comprobando el motor local…"
+              : installing
+                ? "Instalando el motor local…"
+                : "Motor local pendiente"}
+          </p>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            {checking ? "Estamos verificando si este equipo ya tiene todo lo necesario." : friendlyMessage}
+            {checking
+              ? "Estamos verificando si este equipo ya tiene todo lo necesario."
+              : friendlyMessage}
           </p>
 
           {installing && (
             <>
               <div className="mt-5 flex items-center justify-between gap-4 text-sm">
-                <span className="font-medium">Tiempo transcurrido: {installElapsed}</span>
-                <span className="text-muted-foreground">Puede tardar varios minutos</span>
+                <span className="font-medium">
+                  Tiempo transcurrido: {installElapsed}
+                </span>
+                <span className="text-muted-foreground">
+                  Puede tardar varios minutos
+                </span>
               </div>
-              <pre className="mt-3 max-h-64 overflow-auto rounded-xl bg-foreground p-4 font-mono text-xs leading-5 text-background whitespace-pre-wrap">{logText || "[Sparta] Esperando salida del instalador..."}</pre>
+              <pre className="mt-3 max-h-64 overflow-auto rounded-xl bg-foreground p-4 font-mono text-xs leading-5 text-background whitespace-pre-wrap">
+                {logText || "[Sparta] Esperando salida del instalador..."}
+              </pre>
             </>
           )}
 
-          {!checking && !installing && error && (
+          {!(checking || installing) && error && (
             <>
-              <button className="mt-4 text-sm font-medium text-primary underline underline-offset-4" onClick={() => setShowDetails((visible) => !visible)} type="button">
-                {showDetails ? "Ocultar detalles técnicos" : "Ver detalles técnicos"}
+              <button
+                className="mt-4 text-sm font-medium text-primary underline underline-offset-4"
+                onClick={() => setShowDetails((visible) => !visible)}
+                type="button"
+              >
+                {showDetails
+                  ? "Ocultar detalles técnicos"
+                  : "Ver detalles técnicos"}
               </button>
-              {showDetails && <pre className="mt-3 max-h-48 overflow-auto rounded-xl bg-foreground p-4 font-mono text-xs leading-5 text-background whitespace-pre-wrap">{error}</pre>}
+              {showDetails && (
+                <pre className="mt-3 max-h-48 overflow-auto rounded-xl bg-foreground p-4 font-mono text-xs leading-5 text-background whitespace-pre-wrap">
+                  {error}
+                </pre>
+              )}
             </>
           )}
         </div>
@@ -196,7 +262,12 @@ export function StartupGate({ children }: { children: ReactNode }) {
             {installing ? "Instalando…" : "Instalar motor local"}
           </button>
         </div>
-        {!installing && <p className="mt-4 text-center text-xs text-muted-foreground">La instalación se realiza una sola vez y Sparta queda listo para abrir.</p>}
+        {!installing && (
+          <p className="mt-4 text-center text-xs text-muted-foreground">
+            La instalación se realiza una sola vez y Sparta queda listo para
+            abrir.
+          </p>
+        )}
       </section>
     </main>
   );

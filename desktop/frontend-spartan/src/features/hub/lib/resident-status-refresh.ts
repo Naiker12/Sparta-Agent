@@ -1,4 +1,3 @@
-
 // When the Hub has to re-read /api/inference/status. An API request can auto-switch the resident
 // model at any moment and nothing else on /hub reads status, so a mount-only read leaves every
 // "loaded" marker (and the settings page's live config) pinned to whatever was resident when the
@@ -29,7 +28,9 @@ export function subscribeResidentStatusRefresh(
   // Focus alone misses a backgrounded tab, visibility alone a window that never hid;
   // a redundant pair of reads is cheaper than a missed switch.
   const onVisibility = () => {
-    if (!targets.document.hidden) refresh();
+    if (!targets.document.hidden) {
+      refresh();
+    }
   };
   targets.window.addEventListener("focus", onFocus);
   targets.document.addEventListener("visibilitychange", onVisibility);

@@ -1,4 +1,3 @@
-
 import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
@@ -22,7 +21,12 @@ interface MethodPickerProps {
   disabledReason?: string;
 }
 
-export function MethodPicker({ value, onChange, disabledMethods = [], disabledReason }: MethodPickerProps) {
+export function MethodPicker({
+  value,
+  onChange,
+  disabledMethods = [],
+  disabledReason,
+}: MethodPickerProps) {
   return (
     <div data-tour="export-method" className="flex flex-col gap-3">
       <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">

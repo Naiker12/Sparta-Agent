@@ -7,18 +7,25 @@
  * - Menú contextual con acciones de eliminación y configuración de inferencia.
  */
 
-import { type Dispatch, type SetStateAction } from "react";
 import { deleteFineTunedModel } from "@/features/chat";
+import type { Dispatch, SetStateAction } from "react";
 import { ModelDeleteAction } from "./model-delete-action";
 import { ModelLoadSettingsAction } from "./model-load-settings-action";
 import { ModelRow, ROW_ACTIONS_CLASS } from "./model-row";
-import { focusFirstChildOption, makeModelOptionKey, type useRovingModelList } from "./use-roving-model-list";
+import {
+  ggufVariantsMatchForPicker,
+  modelIdsMatchForPicker,
+} from "./row-identity";
 import type {
   DeletedModelRef,
   LoraModelOption,
   ModelSelectorChangeMeta,
 } from "./types";
-import { modelIdsMatchForPicker, ggufVariantsMatchForPicker } from "./row-identity";
+import {
+  focusFirstChildOption,
+  makeModelOptionKey,
+  type useRovingModelList,
+} from "./use-roving-model-list";
 
 import { GgufVariantExpander } from "./gguf-variant-expander";
 
@@ -43,9 +50,12 @@ export function audioPipelineTagFor(
   audioType?: string | null,
   isLocalCheckpoint = false,
 ): string | undefined {
-  if (!audioType) return undefined;
-  if (audioType === "whisper")
+  if (!audioType) {
+    return undefined;
+  }
+  if (audioType === "whisper") {
     return isLocalCheckpoint ? undefined : "automatic-speech-recognition";
+  }
   return TTS_CODECS.has(audioType) ? "text-to-speech" : undefined;
 }
 
@@ -55,8 +65,12 @@ export function isRuntimeLoadedModel(
   modelId: string,
   variantPolicy: "none" | "required" | "ignore",
 ): boolean {
-  if (!modelIdsMatchForPicker(loadedModelId, modelId)) return false;
-  if (variantPolicy === "ignore") return true;
+  if (!modelIdsMatchForPicker(loadedModelId, modelId)) {
+    return false;
+  }
+  if (variantPolicy === "ignore") {
+    return true;
+  }
   const hasActiveGgufVariant = !ggufVariantsMatchForPicker(
     activeGgufVariant,
     null,
@@ -113,7 +127,7 @@ export function FineTunedRows({
           isLocal && (isGgufRepo(adapter.id) || isGgufRepo(adapter.name));
         const selectionMeta: ModelSelectorChangeMeta = {
           source: isLocal ? "local" : isExported ? "exported" : "lora",
-          isLora: !isLocal && !isMerged && !isGguf,
+          isLora: !(isLocal || isMerged || isGguf),
           isDownloaded: true,
           isGguf: false,
           pipelineTag: audioPipelineTagFor(adapter.audioType, true),

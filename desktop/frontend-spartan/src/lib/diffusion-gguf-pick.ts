@@ -1,4 +1,3 @@
-
 // Ownership of a diffusion page's model pick across an await: resolving is a slow listing request and neither page sets
 // `busy` for it. No app deps, so both pages share this and the ordering is testable.
 
@@ -57,7 +56,9 @@ export async function runGgufRepoPick(
 ): Promise<boolean> {
   const filename = await handlers.resolve();
   // Silent, not just load-free: a toast would blame a model the user has moved on from.
-  if (!handlers.isCurrent()) return false;
+  if (!handlers.isCurrent()) {
+    return false;
+  }
   if (!filename) {
     handlers.onAmbiguous();
     handlers.onNotStarted();
@@ -66,6 +67,8 @@ export async function runGgufRepoPick(
   handlers.onResolved(filename);
   const started = await handlers.load(filename);
   // `quantRevert` is one slot, so only the pick that set the label may take it back.
-  if (!started && handlers.isCurrent()) handlers.onNotStarted();
+  if (!started && handlers.isCurrent()) {
+    handlers.onNotStarted();
+  }
   return started;
 }

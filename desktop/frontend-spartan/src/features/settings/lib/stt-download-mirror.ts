@@ -1,4 +1,3 @@
-
 import {
   type SttEngine,
   cancelSttDownload,
@@ -106,7 +105,9 @@ async function poll(
     return;
   }
   const key = trackerKey(model, engine);
-  if (!trackers.has(key)) return;
+  if (!trackers.has(key)) {
+    return;
+  }
 
   const engineStatus = sttEngineStatusFor(status, model, engine);
   const download = engineStatus?.download;
@@ -167,8 +168,9 @@ export function trackSttDownload(
   // Starting/adopting the same transfer from another surface must not reset
   // its visible progress or replace its poller/completion policy.
   if (trackers.has(key)) {
-    if (options.warmSelectedVoiceModelOnComplete !== false)
+    if (options.warmSelectedVoiceModelOnComplete !== false) {
       warmSelectedVoiceModelOnComplete.set(key, true);
+    }
     return;
   }
   warmSelectedVoiceModelOnComplete.set(

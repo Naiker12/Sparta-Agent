@@ -1,4 +1,3 @@
-
 import { apiUrl, getBackendError, isElectron, isTauri } from "@/lib/api-base";
 import {
   clearAuthTokens,
@@ -38,7 +37,9 @@ function wait(ms: number): Promise<void> {
 }
 
 function clearAuthTokensIfCurrent(refreshToken: string | null): void {
-  if (!refreshToken || getRefreshToken() === refreshToken) clearAuthTokens();
+  if (!refreshToken || getRefreshToken() === refreshToken) {
+    clearAuthTokens();
+  }
 }
 
 async function fetchWithTauriNetworkRetry(
@@ -51,9 +52,7 @@ async function fetchWithTauriNetworkRetry(
       return await fetch(input, init);
     } catch (error) {
       if (
-        !isTauri ||
-        !retryNetworkErrors ||
-        !(error instanceof TypeError) ||
+        !(isTauri && retryNetworkErrors && error instanceof TypeError) ||
         attempt >= TAURI_FETCH_RETRY_DELAYS_MS.length
       ) {
         throw error;
@@ -63,8 +62,12 @@ async function fetchWithTauriNetworkRetry(
   }
 }
 
-async function isPasswordChangeRequiredResponse(response: Response): Promise<boolean> {
-  if (response.status !== 403) return false;
+async function isPasswordChangeRequiredResponse(
+  response: Response,
+): Promise<boolean> {
+  if (response.status !== 403) {
+    return false;
+  }
 
   try {
     const payload = (await response.clone().json()) as { detail?: string };
@@ -75,7 +78,9 @@ async function isPasswordChangeRequiredResponse(response: Response): Promise<boo
 }
 
 async function redirectToAuth(): Promise<void> {
-  if (isRedirecting) return;
+  if (isRedirecting) {
+    return;
+  }
   isRedirecting = true;
 
   let target = "/login";
@@ -87,7 +92,9 @@ async function redirectToAuth(): Promise<void> {
       if (data.requires_password_change !== mustChangePassword()) {
         setMustChangePassword(data.requires_password_change);
       }
-      if (data.requires_password_change) target = "/change-password";
+      if (data.requires_password_change) {
+        target = "/change-password";
+      }
     }
   } catch {
     // Fall through to /login on error
@@ -101,12 +108,20 @@ async function redirectToAuth(): Promise<void> {
 }
 
 function asTransportFailure(err: unknown): unknown {
-  if (!(err instanceof TypeError)) return err;
+  if (!(err instanceof TypeError)) {
+    return err;
+  }
   const knownBackendError = isElectron ? getBackendError() : null;
   if (knownBackendError) {
-    return Object.assign(new Error(knownBackendError), { unslothTransportFailure: true });
+    return Object.assign(new Error(knownBackendError), {
+      unslothTransportFailure: true,
+    });
   }
-  if (!isTauri && typeof navigator !== "undefined" && navigator.onLine === false) {
+  if (
+    !isTauri &&
+    typeof navigator !== "undefined" &&
+    navigator.onLine === false
+  ) {
     return Object.assign(
       new Error(
         "Parece que no tienes conexión a internet. Verifica tu red e intenta de nuevo.",
@@ -115,7 +130,9 @@ function asTransportFailure(err: unknown): unknown {
     );
   }
   return Object.assign(
-    new Error("El motor local de Sparta Agent se está iniciando. Por favor, espera un momento o reintenta."),
+    new Error(
+      "El motor local de Sparta Agent se está iniciando. Por favor, espera un momento o reintenta.",
+    ),
     { unslothTransportFailure: true },
   );
 }
@@ -127,7 +144,9 @@ async function retryWithCurrentToken(
 ): Promise<Response> {
   const retryHeaders = new Headers(init?.headers);
   const token = getAuthToken();
-  if (token) retryHeaders.set("Authorization", `Bearer ${token}`);
+  if (token) {
+    retryHeaders.set("Authorization", `Bearer ${token}`);
+  }
   // Retries are tagged like the first attempt; an untagged TypeError reads as a rejection.
   try {
     return await fetchWithTauriNetworkRetry(
@@ -153,7 +172,9 @@ async function retryWithTauriAutoAuth(
 
 export async function refreshSession(): Promise<boolean> {
   const refreshToken = getRefreshToken();
-  if (!refreshToken) return false;
+  if (!refreshToken) {
+    return false;
+  }
   if (refreshInflight && refreshInflightToken === refreshToken) {
     return refreshInflight;
   }
@@ -174,8 +195,12 @@ export async function refreshSession(): Promise<boolean> {
         return false;
       }
       const payload = (await response.json()) as RefreshResponse;
-      if (startGeneration !== logoutGeneration) return false;
-      if (getRefreshToken() !== refreshToken) return false;
+      if (startGeneration !== logoutGeneration) {
+        return false;
+      }
+      if (getRefreshToken() !== refreshToken) {
+        return false;
+      }
       storeAuthTokens(payload.access_token, payload.refresh_token);
       setMustChangePassword(payload.must_change_password ?? false);
       return true;
@@ -200,7 +225,7 @@ export async function authFetch(
   init?: RequestInit,
   options?: { retryNetworkErrors?: boolean },
 ): Promise<Response> {
-  const resolvedInput = typeof input === 'string' ? apiUrl(input) : input;
+  const resolvedInput = typeof input === "string" ? apiUrl(input) : input;
   const headers = new Headers(init?.headers);
   const accessToken = getAuthToken();
   if (accessToken) {
@@ -234,7 +259,9 @@ export async function authFetch(
     void redirectToAuth();
     return response;
   }
-  if (response.status !== 401) return response;
+  if (response.status !== 401) {
+    return response;
+  }
 
   const refreshToken = getRefreshToken();
   const refreshed = await refreshSession();
@@ -267,7 +294,9 @@ export async function authFetch(
     return response;
   }
 
-  if (!getAuthToken()) clearAuthTokens();
+  if (!getAuthToken()) {
+    clearAuthTokens();
+  }
   return retryWithCurrentToken(
     resolvedInput,
     init,
@@ -275,7 +304,9 @@ export async function authFetch(
   );
 }
 
-async function postLogout(accessToken: string | null): Promise<Response | null> {
+async function postLogout(
+  accessToken: string | null,
+): Promise<Response | null> {
   try {
     return await fetchWithTauriNetworkRetry(apiUrl("/api/auth/logout"), {
       method: "POST",
@@ -296,7 +327,9 @@ export async function logout(): Promise<void> {
     let response = await postLogout(getAuthToken());
     if (response && response.status === 401 && getRefreshToken()) {
       const refreshed = await refreshSession();
-      if (refreshed) response = await postLogout(getAuthToken());
+      if (refreshed) {
+        response = await postLogout(getAuthToken());
+      }
     }
   } finally {
     logoutGeneration += 1;

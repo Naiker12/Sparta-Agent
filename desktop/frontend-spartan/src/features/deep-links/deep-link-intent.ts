@@ -1,4 +1,3 @@
-
 export function createDeepLinkIntentGate(
   deduplicationWindowMs: number,
   now: () => number = Date.now,

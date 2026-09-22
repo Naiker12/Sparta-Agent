@@ -1,4 +1,3 @@
-
 // Derived HugeIcons shared between the sidebar and page tabs, so the same visual language appears everywhere.
 
 import { TestTube01Icon } from "@hugeicons/core-free-icons";

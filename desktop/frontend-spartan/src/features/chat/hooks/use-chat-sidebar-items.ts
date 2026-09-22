@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import {
   CHAT_HISTORY_UPDATED_EVENT,
@@ -14,15 +13,15 @@ import {
   listStoredChatThreadsWithMessages,
   updateStoredChatThread,
 } from "../utils/chat-history-storage";
-import { clearComposerDraft } from "../utils/composer-draft";
-import { offerToDeleteKeptSandboxes } from "../utils/offer-kept-sandbox-files";
-import { stopChatThread } from "../utils/stop-chat-thread";
 import {
   markChatThreadsDeleted,
   removeChatThreadTombstones,
 } from "../utils/chat-thread-tombstones";
+import { clearComposerDraft } from "../utils/composer-draft";
+import { offerToDeleteKeptSandboxes } from "../utils/offer-kept-sandbox-files";
 import { requestPromptQueueStop } from "../utils/prompt-queue-boundary";
 import { repairLegacyChatTitles } from "../utils/repair-legacy-chat-titles";
+import { stopChatThread } from "../utils/stop-chat-thread";
 
 export interface SidebarItem {
   type: "single" | "compare";
@@ -132,7 +131,9 @@ export function useChatSidebarItems(options?: {
         });
         // Discard the response if a newer request was scheduled while we
         // were in flight, or if the effect was torn down.
-        if (cancelled || seq !== requestSeq) return;
+        if (cancelled || seq !== requestSeq) {
+          return;
+        }
         setAllThreads(threads);
         setLoaded(true);
         // Pre-cut legacy titles cannot grow with the sidebar. The repair reads
@@ -142,12 +143,16 @@ export function useChatSidebarItems(options?: {
         if (isExpectedBackgroundChatStorageError(error)) {
           return;
         }
-        if (!cancelled) throw error;
+        if (!cancelled) {
+          throw error;
+        }
       }
     }
 
     function load() {
-      if (pendingTimer !== null) clearTimeout(pendingTimer);
+      if (pendingTimer !== null) {
+        clearTimeout(pendingTimer);
+      }
       pendingTimer = setTimeout(() => {
         pendingTimer = null;
         requestSeq += 1;
@@ -162,7 +167,9 @@ export function useChatSidebarItems(options?: {
     window.addEventListener(CHAT_HISTORY_UPDATED_EVENT, load);
     return () => {
       cancelled = true;
-      if (pendingTimer !== null) clearTimeout(pendingTimer);
+      if (pendingTimer !== null) {
+        clearTimeout(pendingTimer);
+      }
       window.removeEventListener(CHAT_HISTORY_UPDATED_EVENT, load);
     };
   }, [enabled, options?.projectId, requireMessages]);
@@ -185,7 +192,9 @@ export async function renameChatItem(
   nextTitle: string,
 ): Promise<void> {
   const trimmed = nextTitle.trim();
-  if (!trimmed || trimmed === item.title) return;
+  if (!trimmed || trimmed === item.title) {
+    return;
+  }
 
   if (item.type === "single") {
     await updateStoredChatThread(item.id, { title: trimmed });
@@ -213,7 +222,9 @@ async function collectItemThreadIds(
       continue;
     }
     const pair = await listStoredChatThreads({ pairId: item.id, ...args });
-    for (const thread of pair) ids.add(thread.id);
+    for (const thread of pair) {
+      ids.add(thread.id);
+    }
   }
   return Array.from(ids);
 }
@@ -261,10 +272,14 @@ export async function archiveAllChatItems(
   // Boolean() mirrors groupThreads: legacy records may have archived
   // undefined/null, which must count as "not archived".
   const toArchive = threads.filter((t) => !t.archived);
-  if (toArchive.length === 0) return 0;
+  if (toArchive.length === 0) {
+    return 0;
+  }
 
   requestPromptQueueStop(toArchive.map((thread) => thread.id));
-  for (const t of toArchive) cancelIfRunning(t.id);
+  for (const t of toArchive) {
+    cancelIfRunning(t.id);
+  }
 
   await Promise.all(
     toArchive.map((t) => updateStoredChatThread(t.id, { archived: true })),
@@ -322,10 +337,14 @@ export async function deleteChatItems(
   }
 
   // Drop saved composer drafts so deleted threads leave no orphan keys.
-  for (const id of threadIds) clearComposerDraft(id);
+  for (const id of threadIds) {
+    clearComposerDraft(id);
+  }
 
   const artifactStore = useChatArtifactsStore.getState();
-  for (const id of threadIds) artifactStore.clearArtifactsForThread(id);
+  for (const id of threadIds) {
+    artifactStore.clearArtifactsForThread(id);
+  }
   artifactStore.clearOrphanedArtifacts();
 
   // Optimistic tombstone: hide immediately; roll back on backend error.

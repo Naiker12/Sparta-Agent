@@ -1,4 +1,4 @@
-
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -7,16 +7,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { translate, useT } from "@/i18n";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useState } from "react";
-import { fetchApiKeys, revokeApiKey, type ApiKey } from "../api/api-keys";
-import { MonitorLink } from "../components/monitor-link";
+import { type ApiKey, fetchApiKeys, revokeApiKey } from "../api/api-keys";
 import { ApiKeyRow } from "../components/api-key-row";
 import { CreateKeyForm } from "../components/create-key-form";
-import { ModelIdleUnloadSection } from "../components/model-idle-unload-section";
 import { KeyRevealCard } from "../components/key-reveal-card";
+import { ModelIdleUnloadSection } from "../components/model-idle-unload-section";
+import { MonitorLink } from "../components/monitor-link";
 
 export function ApiKeysTab() {
   const t = useT();
@@ -51,14 +50,20 @@ export function ApiKeysTab() {
     async function loadInitialApiKeys() {
       try {
         const apiKeys = await fetchApiKeys();
-        if (cancelled) return;
+        if (cancelled) {
+          return;
+        }
         setKeys(apiKeys);
         setError(null);
       } catch {
-        if (cancelled) return;
+        if (cancelled) {
+          return;
+        }
         setError(translate("settings.apiKeys.loadError"));
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     }
 
@@ -69,7 +74,9 @@ export function ApiKeysTab() {
   }, []);
 
   const confirmRevoke = async () => {
-    if (!revokeTarget) return;
+    if (!revokeTarget) {
+      return;
+    }
     setRevoking(true);
     try {
       await revokeApiKey(revokeTarget.id);
@@ -111,10 +118,7 @@ export function ApiKeysTab() {
             exit={{ opacity: 0, y: -4 }}
             transition={transition}
           >
-            <KeyRevealCard
-              rawKey={revealed}
-              onDone={() => setRevealed(null)}
-            />
+            <KeyRevealCard rawKey={revealed} onDone={() => setRevealed(null)} />
           </motion.div>
         ) : (
           <motion.div
@@ -171,7 +175,10 @@ export function ApiKeysTab() {
 
       <ModelIdleUnloadSection />
 
-      <Dialog open={revokeTarget !== null} onOpenChange={(o) => !o && setRevokeTarget(null)}>
+      <Dialog
+        open={revokeTarget !== null}
+        onOpenChange={(o) => !o && setRevokeTarget(null)}
+      >
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>

@@ -1,4 +1,3 @@
-
 /**
  * An HTML comment written mid-sentence is inline raw HTML, not a block, so it
  * belongs to its paragraph: the `-->` may arrive on a later line of that same

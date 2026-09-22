@@ -1,4 +1,3 @@
-
 import type { ModelSelectorChangeMeta } from "@/features/model-picker/components/model-selector/types";
 
 export type AudioBusy =
@@ -59,7 +58,9 @@ export function sttDownloadedArtifacts(
     for (const sidecarKey of block?.downloaded_models ?? []) {
       const repoId = repoIdForSidecarKey(sidecarKey, engine);
       const normalized = repoId.trim().toLowerCase();
-      if (!normalized || seen.has(normalized)) continue;
+      if (!normalized || seen.has(normalized)) {
+        continue;
+      }
       seen.add(normalized);
       artifacts.push({ repoId, sidecarKey, engine });
     }
@@ -122,7 +123,9 @@ export function macTtsPickAction({
   isGguf: boolean;
   ggufSibling: string | null;
 }): MacTtsPickAction {
-  if (!isMac || isGguf) return "allow";
+  if (!isMac || isGguf) {
+    return "allow";
+  }
   return ggufSibling ? "use-gguf-sibling" : "reject";
 }
 
@@ -145,11 +148,15 @@ export function selectAutoGgufVariant<T extends AutoGgufVariant>(
   const exact = variants.filter(
     (variant) => variant.filename.trim().length > 0,
   );
-  if (exact.length === 0) return null;
+  if (exact.length === 0) {
+    return null;
+  }
   const downloaded = exact.find(
     (variant) => variant.downloaded === true && variant.partial !== true,
   );
-  if (downloaded) return downloaded;
+  if (downloaded) {
+    return downloaded;
+  }
   const normalizedDefault = defaultVariant?.trim().toLowerCase();
   if (normalizedDefault) {
     const preferred = exact.find(
@@ -157,7 +164,9 @@ export function selectAutoGgufVariant<T extends AutoGgufVariant>(
         variant.quant.trim().toLowerCase() === normalizedDefault ||
         variant.filename.trim().toLowerCase() === normalizedDefault,
     );
-    if (preferred) return preferred;
+    if (preferred) {
+      return preferred;
+    }
   }
   return exact[0];
 }
@@ -186,11 +195,15 @@ export function mergeGalleryPage<T extends { id: string }>(
 ): { clips: T[]; stitched: boolean } {
   const inPage = new Set(page.map((clip) => clip.id));
   // An empty page means the server holds nothing: a clear from anywhere, not scrollback.
-  if (page.length === 0) return { clips: [], stitched: false };
+  if (page.length === 0) {
+    return { clips: [], stitched: false };
+  }
   // A complete first page IS everything the server holds, so there is no scrollback to
   // keep: a cached clip below it was deleted by another client or pruned by the size cap,
   // and stitching it back rendered a row that could never be played again.
-  if (hasMore === false) return { clips: [...page], stitched: false };
+  if (hasMore === false) {
+    return { clips: [...page], stitched: false };
+  }
   // The page is authoritative over the window it covers, so a cached clip inside that
   // window and absent from the page was deleted by another client and must go. Only what
   // sits BELOW the page's oldest entry is scrollback. Keying on the position of that
@@ -202,9 +215,12 @@ export function mergeGalleryPage<T extends { id: string }>(
   // stitching would render a gap as contiguous and no cursor could ever reach it.
   if (oldestInPage === -1) {
     const overlaps = cached.some((clip) => inPage.has(clip.id));
-    if (!overlaps && cached.length > 0) return { clips: [...page], stitched: false };
+    if (!overlaps && cached.length > 0) {
+      return { clips: [...page], stitched: false };
+    }
   }
-  const scrollback = oldestInPage === -1 ? cached : cached.slice(oldestInPage + 1);
+  const scrollback =
+    oldestInPage === -1 ? cached : cached.slice(oldestInPage + 1);
   const tail = scrollback.filter(
     (clip) => !inPage.has(clip.id) && clip.id !== removedId,
   );
@@ -230,7 +246,7 @@ export function sttSelectionReady(
   return Boolean(
     selectedRepo &&
       loadedModel === sidecarKeyFor(selectedRepo) &&
-      (!selectedEngine || !loadedEngine || selectedEngine === loadedEngine),
+      (!(selectedEngine && loadedEngine) || selectedEngine === loadedEngine),
   );
 }
 
@@ -293,8 +309,9 @@ export function resolveSttResidency(
   }
   const transformersModel =
     status.transformers?.loaded_model ?? status.loaded_model;
-  if (transformersModel)
+  if (transformersModel) {
     return { model: transformersModel, engine: "transformers" };
+  }
   if (status.gguf?.loaded_model) {
     return { model: status.gguf.loaded_model, engine: "gguf" };
   }
@@ -327,8 +344,7 @@ export function reconcileSttSelection({
     if (
       selectedRepo &&
       sidecarKeyFor(selectedRepo) === loadedModel &&
-      (!loadedEngine ||
-        !engineForRepo ||
+      (!(loadedEngine && engineForRepo) ||
         engineForRepo(selectedRepo) === loadedEngine)
     ) {
       return selectedRepo;

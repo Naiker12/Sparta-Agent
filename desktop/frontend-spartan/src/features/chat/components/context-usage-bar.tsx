@@ -17,8 +17,12 @@ function getSeverityColor(percent: number): {
   bar: string;
   text: string;
 } {
-  if (percent > 85) return { bar: "bg-red-500", text: "text-red-500" };
-  if (percent > 65) return { bar: "bg-amber-500", text: "text-amber-500" };
+  if (percent > 85) {
+    return { bar: "bg-red-500", text: "text-red-500" };
+  }
+  if (percent > 65) {
+    return { bar: "bg-amber-500", text: "text-amber-500" };
+  }
   return { bar: "bg-control-accent", text: "text-control-accent" };
 }
 
@@ -41,14 +45,16 @@ export const ContextUsageBar: FC<
     promptTokens,
     completionTokens,
   });
-  if (!state) return null;
+  if (!state) {
+    return null;
+  }
 
   const { percent } = state;
   const severity = getSeverityColor(percent ?? 0);
 
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
+      <TooltipTrigger asChild={true}>
         <button
           type="button"
           aria-label={state.label}
@@ -61,7 +67,10 @@ export const ContextUsageBar: FC<
           {percent !== null ? (
             <div className="h-1.5 w-16 rounded-full bg-black/10 dark:bg-white/15 overflow-hidden">
               <div
-                className={cn("h-full rounded-full transition-all", severity.bar)}
+                className={cn(
+                  "h-full rounded-full transition-all",
+                  severity.bar,
+                )}
                 style={{ width: `${percent}%` }}
               />
             </div>
@@ -78,7 +87,12 @@ export const ContextUsageBar: FC<
           {percent !== null ? (
             <div className="flex items-center justify-between gap-4">
               <span className="text-muted-foreground">Context usage</span>
-              <span className={cn("font-mono tabular-nums font-medium", severity.text)}>
+              <span
+                className={cn(
+                  "font-mono tabular-nums font-medium",
+                  severity.text,
+                )}
+              >
                 {percent.toFixed(1)}%
               </span>
             </div>
@@ -120,13 +134,15 @@ export const ContextUsageBar: FC<
           ) : null}
           <div className="flex items-center justify-between gap-4">
             <span className="text-muted-foreground">{state.totalRowName}</span>
-            <span className="font-mono tabular-nums">{state.totalRowValue}</span>
+            <span className="font-mono tabular-nums">
+              {state.totalRowValue}
+            </span>
           </div>
           {percent !== null && percent > 85 ? (
             <div className="mt-1 max-w-64 text-ui-11 leading-snug text-muted-foreground/90">
-              Close to the context limit. Generation will stop at 100%.
-              Increase <span className="font-medium">Context Length</span> in
-              the chat Settings panel to keep going.
+              Close to the context limit. Generation will stop at 100%. Increase{" "}
+              <span className="font-medium">Context Length</span> in the chat
+              Settings panel to keep going.
             </div>
           ) : null}
         </div>

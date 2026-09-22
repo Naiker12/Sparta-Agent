@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -9,7 +8,7 @@ import {
 } from "@/components/ui/empty";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { type ReactElement } from "react";
+import type { ReactElement } from "react";
 import type { LlmConfig, Score } from "../../types";
 import { FieldLabel } from "../shared/field-label";
 

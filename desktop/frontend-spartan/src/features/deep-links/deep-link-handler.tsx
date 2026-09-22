@@ -1,4 +1,3 @@
-
 import { isTauri } from "@/lib/api-base";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
@@ -18,14 +17,18 @@ export function DeepLinkHandler() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!isTauri) return;
+    if (!isTauri) {
+      return;
+    }
 
     let disposed = false;
     let receivedLiveIntent = false;
     let unlisten: (() => void) | undefined;
 
     const handleUrls = (urls: string[]): boolean => {
-      if (disposed) return false;
+      if (disposed) {
+        return false;
+      }
 
       let hasValidIntent = false;
       let intent: ReturnType<typeof parseUnslothDeepLink> = null;
@@ -33,7 +36,9 @@ export function DeepLinkHandler() {
       let intentSequence: number | null = null;
       for (const rawUrl of urls) {
         const parsed = parseUnslothDeepLink(rawUrl);
-        if (!parsed) continue;
+        if (!parsed) {
+          continue;
+        }
         hasValidIntent = true;
         const sequence = acceptIntent(parsed.model, parsed.file);
         if (sequence !== null) {
@@ -41,30 +46,27 @@ export function DeepLinkHandler() {
           intentSequence = sequence;
         }
       }
-      if (!intent || intentSequence === null) return hasValidIntent;
+      if (!intent || intentSequence === null) {
+        return hasValidIntent;
+      }
 
       void restoreMainWindow().catch(() => undefined);
-      void navigate({
-        to: "/hub",
-        search: {
-          tab: "discover",
-          kind: "models",
-          model: intent.model,
-          file: intent.file,
-
-          intent: intentSequence,
-        },
-      });
+      void navigate({ to: "/chat" });
       return true;
     };
 
     async function subscribe() {
-      const { getCurrent, onOpenUrl } =
-        await import("@tauri-apps/plugin-deep-link");
-      if (disposed) return;
+      const { getCurrent, onOpenUrl } = await import(
+        "@tauri-apps/plugin-deep-link"
+      );
+      if (disposed) {
+        return;
+      }
 
       const cleanup = await onOpenUrl((urls) => {
-        if (handleUrls(urls)) receivedLiveIntent = true;
+        if (handleUrls(urls)) {
+          receivedLiveIntent = true;
+        }
       });
       if (disposed) {
         cleanup();
@@ -73,7 +75,9 @@ export function DeepLinkHandler() {
       unlisten = cleanup;
 
       const currentUrls = await getCurrent();
-      if (currentUrls && !receivedLiveIntent) handleUrls(currentUrls);
+      if (currentUrls && !receivedLiveIntent) {
+        handleUrls(currentUrls);
+      }
     }
 
     void subscribe().catch(() => undefined);

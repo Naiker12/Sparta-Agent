@@ -1,6 +1,5 @@
 // Copyright 2026-present the Spartan Agent AI team. All rights reserved.
 
-import { cn } from "@/lib/utils";
 import {
   AUTO_LOCALE,
   setLocale,
@@ -8,6 +7,7 @@ import {
   usePendingLocalePreference,
   useT,
 } from "@/i18n";
+import { cn } from "@/lib/utils";
 import { motion, useReducedMotion } from "motion/react";
 import { LanguageSelect } from "./language-select";
 
@@ -50,7 +50,12 @@ export function LanguageControls() {
                   transition={
                     reduced
                       ? { duration: 0 }
-                      : { type: "spring", stiffness: 500, damping: 35, mass: 0.5 }
+                      : {
+                          type: "spring",
+                          stiffness: 500,
+                          damping: 35,
+                          mass: 0.5,
+                        }
                   }
                 />
               )}

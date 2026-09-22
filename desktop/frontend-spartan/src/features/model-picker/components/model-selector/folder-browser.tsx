@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -35,7 +34,9 @@ export interface FolderBrowserProps {
 }
 
 function splitBreadcrumb(path: string): { label: string; value: string }[] {
-  if (!path) return [];
+  if (!path) {
+    return [];
+  }
   // Detect path style BEFORE normalizing: on POSIX `\` is a valid filename char,
   // so rewriting `\` -> `/` would mangle names like `my\backup`. Only Windows
   // paths (drive letter or UNC) convert.
@@ -52,7 +53,9 @@ function splitBreadcrumb(path: string): { label: string; value: string }[] {
     parts.push({ label: "/", value: "/" });
     let cur = "";
     for (const seg of segments.slice(1)) {
-      if (!seg) continue;
+      if (!seg) {
+        continue;
+      }
       cur = `${cur}/${seg}`;
       parts.push({ label: seg, value: cur });
     }
@@ -66,7 +69,9 @@ function splitBreadcrumb(path: string): { label: string; value: string }[] {
     let cur = driveRoot;
     parts.push({ label: segments[0], value: driveRoot });
     for (const seg of segments.slice(1)) {
-      if (!seg) continue;
+      if (!seg) {
+        continue;
+      }
       cur = cur.endsWith("/") ? `${cur}${seg}` : `${cur}/${seg}`;
       parts.push({ label: seg, value: cur });
     }
@@ -109,12 +114,16 @@ export function FolderBrowser({
     // enumeration, not just the response.
     browseFolders(target, hidden, ctrl.signal)
       .then((res) => {
-        if (ctrl.signal.aborted) return;
+        if (ctrl.signal.aborted) {
+          return;
+        }
         setData(res);
         setPath(res.current);
       })
       .catch((err) => {
-        if (ctrl.signal.aborted) return;
+        if (ctrl.signal.aborted) {
+          return;
+        }
         // Surface the error; if the first request (e.g. a bad initialPath)
         // fails, fall back to HOME so the modal stays navigable.
         const message = err instanceof Error ? err.message : String(err);
@@ -126,7 +135,9 @@ export function FolderBrowser({
         }
       })
       .finally(() => {
-        if (!ctrl.signal.aborted) setLoading(false);
+        if (!ctrl.signal.aborted) {
+          setLoading(false);
+        }
       });
   }
 
@@ -134,7 +145,9 @@ export function FolderBrowser({
   // so `path` is deliberately kept out of the dependency list.
   // biome-ignore lint/correctness/useExhaustiveDependencies: only reopening resets navigation to the initial path
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      return;
+    }
     // fallbackOnError: recover into HOME if initialPath is bad, rather than
     // showing an empty modal.
     navigate(initialPath, showHidden, { fallbackOnError: true });
@@ -142,7 +155,9 @@ export function FolderBrowser({
   }, [open]);
 
   const handleConfirm = useCallback(() => {
-    if (!path) return;
+    if (!path) {
+      return;
+    }
     onSelect(path);
     onOpenChange(false);
   }, [onSelect, onOpenChange, path]);
@@ -215,7 +230,7 @@ export function FolderBrowser({
           {error && (
             <div className="px-6 py-3 text-xs text-destructive">{error}</div>
           )}
-          {!error && !data && loading && (
+          {!(error || data) && loading && (
             <div className="flex items-center gap-2 px-6 py-3">
               <Spinner className="size-3 text-muted-foreground" />
               <span className="text-xs text-muted-foreground">
@@ -245,8 +260,11 @@ export function FolderBrowser({
                 </button>
               )}
               {data.entries.length === 0 &&
-                (!showModelHints ||
-                  !(data.model_files_here && data.model_files_here > 0)) && (
+                !(
+                  showModelHints &&
+                  data.model_files_here &&
+                  data.model_files_here > 0
+                ) && (
                   <div className="px-6 py-3 text-xs text-muted-foreground/60">
                     (empty directory)
                   </div>

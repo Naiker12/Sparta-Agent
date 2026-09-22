@@ -6,7 +6,9 @@
  * Detecta si un mensaje de error indica que se excedió la ventana de contexto KV.
  */
 export function isContextLimitError(message: string): boolean {
-  if (!message) return false;
+  if (!message) {
+    return false;
+  }
   const m = message.toLowerCase();
   return (
     m.includes("context size") ||
@@ -22,9 +24,13 @@ export function isContextLimitError(message: string): boolean {
  * Valida que una URL de fuente sea segura para navegación (http/https).
  */
 export function isSafeNavigableSourceUrl(raw: unknown): string {
-  if (typeof raw !== "string") return "";
+  if (typeof raw !== "string") {
+    return "";
+  }
   const value = raw.trim();
-  if (!value || /[\r\n]/.test(value)) return "";
+  if (!value || /[\r\n]/.test(value)) {
+    return "";
+  }
   try {
     const parsed = new URL(value);
     if (parsed.protocol === "http:" || parsed.protocol === "https:") {
@@ -101,7 +107,9 @@ export function parseSourcesFromResult(raw: string): {
   title: string;
   metadata?: { description: string };
 }[] {
-  if (!raw) return [];
+  if (!raw) {
+    return [];
+  }
   const blocks = raw.split(/\n---\n/).filter(Boolean);
   const sources: {
     type: "source";
@@ -123,7 +131,9 @@ export function parseSourcesFromResult(raw: string): {
         id: url,
         url,
         title: titleMatch[1].trim(),
-        ...(snippetMatch ? { metadata: { description: snippetMatch[1].trim() } } : {}),
+        ...(snippetMatch
+          ? { metadata: { description: snippetMatch[1].trim() } }
+          : {}),
       });
     }
   }

@@ -1,4 +1,3 @@
-
 import { TestTube01Icon } from "@hugeicons/core-free-icons";
 
 // Slice to the first 3 paths to drop TestTube01Icon's two interior bubbles,

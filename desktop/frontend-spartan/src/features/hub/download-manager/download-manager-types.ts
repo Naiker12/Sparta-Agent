@@ -1,4 +1,3 @@
-
 import type { TransferSample } from "@/lib/transfer-stats";
 import type { InventoryHint } from "../inventory/types";
 import type { DownloadJobState } from "./api";

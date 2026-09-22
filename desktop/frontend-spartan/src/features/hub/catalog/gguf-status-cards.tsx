@@ -1,4 +1,3 @@
-
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 import {
@@ -58,7 +57,7 @@ export function GgufDownloadStatusCard({
         ) : (
           <button
             type="button"
-            disabled
+            disabled={true}
             className="hub-action-btn w-28 opacity-70"
           >
             {loading ? (
@@ -96,13 +95,15 @@ export function GgufDownloadingFallbackCard({
       <DownloadCard job={job} progress={progress}>
         <div className="relative flex h-9 min-w-0 flex-1 items-center pl-3 pr-2">
           <span className="flex min-w-0 items-center gap-2 text-ui-12p5 text-muted-foreground">
-            {progress.variant && <DotTag tone="gguf" label={progress.variant} />}
+            {progress.variant && (
+              <DotTag tone="gguf" label={progress.variant} />
+            )}
             <span className="truncate">Downloading…</span>
           </span>
         </div>
         <CardDivider />
         <DownloadActionButton
-          downloading
+          downloading={true}
           cancelling={cancelling}
           progressPercent={Math.round(Math.min(progress.fraction, 1) * 100)}
           stopMode={downloadStopMode(

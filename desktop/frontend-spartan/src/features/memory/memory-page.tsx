@@ -2,20 +2,32 @@ import {
   Background,
   BaseEdge,
   Controls,
-  EdgeLabelRenderer,
-  getBezierPath,
-  Handle,
-  MiniMap,
-  Position,
-  ReactFlow,
   type Edge,
+  EdgeLabelRenderer,
   type EdgeProps,
   type Node as FlowNode,
+  Handle,
+  MiniMap,
   type NodeProps,
+  Position,
+  ReactFlow,
+  getBezierPath,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { HugeiconsIcon } from "@hugeicons/react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { authFetch } from "@/features/auth";
+import { useT } from "@/i18n";
+import { cn } from "@/lib/utils";
 import {
   Add01Icon,
   AiBrain01Icon,
@@ -31,20 +43,8 @@ import {
   Search01Icon,
   Share01Icon,
 } from "@hugeicons/core-free-icons";
-import { authFetch } from "@/features/auth";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { useT } from "@/i18n";
-import { cn } from "@/lib/utils";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 type MemoryNode = {
   id: string;
@@ -129,16 +129,40 @@ function CustomMemoryNode({ data }: NodeProps) {
         config.nodeBg,
         config.nodeBorder,
         isSelected
-          ? cn("ring-2 ring-primary ring-offset-2 scale-105 shadow-xl border-primary", config.glow)
-          : "hover:scale-103 hover:shadow-lg"
+          ? cn(
+              "ring-2 ring-primary ring-offset-2 scale-105 shadow-xl border-primary",
+              config.glow,
+            )
+          : "hover:scale-103 hover:shadow-lg",
       )}
     >
-      <Handle type="target" position={Position.Top} className="!opacity-0 !size-1 !border-0 !pointer-events-none" />
-      <Handle type="source" position={Position.Bottom} className="!opacity-0 !size-1 !border-0 !pointer-events-none" />
-      <Handle type="target" position={Position.Left} className="!opacity-0 !size-1 !border-0 !pointer-events-none" />
-      <Handle type="source" position={Position.Right} className="!opacity-0 !size-1 !border-0 !pointer-events-none" />
+      <Handle
+        type="target"
+        position={Position.Top}
+        className="!opacity-0 !size-1 !border-0 !pointer-events-none"
+      />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        className="!opacity-0 !size-1 !border-0 !pointer-events-none"
+      />
+      <Handle
+        type="target"
+        position={Position.Left}
+        className="!opacity-0 !size-1 !border-0 !pointer-events-none"
+      />
+      <Handle
+        type="source"
+        position={Position.Right}
+        className="!opacity-0 !size-1 !border-0 !pointer-events-none"
+      />
 
-      <div className={cn("flex size-8 shrink-0 items-center justify-center rounded-full shadow-xs", config.iconBadge)}>
+      <div
+        className={cn(
+          "flex size-8 shrink-0 items-center justify-center rounded-full shadow-xs",
+          config.iconBadge,
+        )}
+      >
         <HugeiconsIcon icon={Icon} strokeWidth={2} className="size-4" />
       </div>
 
@@ -147,7 +171,9 @@ function CustomMemoryNode({ data }: NodeProps) {
           <span className="text-[9px] font-bold uppercase tracking-wider opacity-75">
             {config.label}
           </span>
-          <span className="text-[9px] opacity-50">· {Math.round((nodeData.confidence ?? 1) * 100)}%</span>
+          <span className="text-[9px] opacity-50">
+            · {Math.round((nodeData.confidence ?? 1) * 100)}%
+          </span>
         </div>
         <p className="max-w-[200px] truncate text-xs font-semibold text-foreground tracking-tight">
           {nodeData.label}
@@ -233,23 +259,27 @@ export function MemoryPage() {
       setError(null);
       try {
         const response = await authFetch(
-          `/api/memory/graph${q ? `?q=${encodeURIComponent(q)}` : ""}`
+          `/api/memory/graph${q ? `?q=${encodeURIComponent(q)}` : ""}`,
         );
         if (!response.ok) {
           throw new Error(
             response.status === 404
               ? "El módulo de memoria aún no está activo en el backend. Reinicia la aplicación para conectarlo."
-              : `Error al cargar la memoria (HTTP ${response.status})`
+              : `Error al cargar la memoria (HTTP ${response.status})`,
           );
         }
         setGraph(await response.json());
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Error al conectar con la memoria");
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Error al conectar con la memoria",
+        );
       } finally {
         setIsLoading(false);
       }
     },
-    [query]
+    [query],
   );
 
   useEffect(() => {
@@ -257,23 +287,33 @@ export function MemoryPage() {
   }, [refresh]);
 
   const add = async () => {
-    if (!label.trim() || !content.trim() || isSaving) return;
+    if (!(label.trim() && content.trim()) || isSaving) {
+      return;
+    }
     setIsSaving(true);
     setError(null);
     try {
       const response = await authFetch("/api/memory/nodes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: kind, label: label.trim(), content: content.trim() }),
+        body: JSON.stringify({
+          type: kind,
+          label: label.trim(),
+          content: content.trim(),
+        }),
       });
       if (!response.ok) {
-        throw new Error("No se pudo guardar el recuerdo en la memoria de Sparta");
+        throw new Error(
+          "No se pudo guardar el recuerdo en la memoria de Sparta",
+        );
       }
       setLabel("");
       setContent("");
       await refresh("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al guardar recuerdo");
+      setError(
+        err instanceof Error ? err.message : "Error al guardar recuerdo",
+      );
     } finally {
       setIsSaving(false);
     }
@@ -289,9 +329,13 @@ export function MemoryPage() {
       });
       if (!response.ok) {
         if (response.status === 404) {
-          throw new Error("El nuevo endpoint de sincronización requiere reiniciar la aplicación para que el motor local lo cargue.");
+          throw new Error(
+            "El nuevo endpoint de sincronización requiere reiniciar la aplicación para que el motor local lo cargue.",
+          );
         }
-        throw new Error(`Error al sincronizar recuerdos desde los chats (HTTP ${response.status})`);
+        throw new Error(
+          `Error al sincronizar recuerdos desde los chats (HTTP ${response.status})`,
+        );
       }
       const data = await response.json();
       if (data.graph) {
@@ -302,10 +346,12 @@ export function MemoryPage() {
       setSyncNotice(
         data.synced > 0
           ? `Se actualizaron ${data.synced} recuerdos desde conversaciones activas.`
-          : "No se encontraron conversaciones activas con información para guardar."
+          : "No se encontraron conversaciones activas con información para guardar.",
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error sincronizando desde chats");
+      setError(
+        err instanceof Error ? err.message : "Error sincronizando desde chats",
+      );
     } finally {
       setIsSyncing(false);
     }
@@ -314,31 +360,43 @@ export function MemoryPage() {
   const remove = async (id: string) => {
     try {
       await authFetch(`/api/memory/nodes/${id}`, { method: "DELETE" });
-      if (selectedId === id) setSelectedId(null);
+      if (selectedId === id) {
+        setSelectedId(null);
+      }
       await refresh();
-    } catch (err) {
-      console.error("Error removing memory node:", err);
-    }
+    } catch (_err) {}
   };
 
   const connect = async () => {
-    if (!selectedId || !targetId || !relation.trim()) return;
+    if (!(selectedId && targetId && relation.trim())) {
+      return;
+    }
     try {
       const response = await authFetch("/api/memory/edges", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ source: selectedId, target: targetId, relation }),
+        body: JSON.stringify({
+          source: selectedId,
+          target: targetId,
+          relation,
+        }),
       });
-      if (!response.ok) return setError("No se pudo guardar la relación en el grafo");
+      if (!response.ok) {
+        return setError("No se pudo guardar la relación en el grafo");
+      }
       setTargetId("");
       await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al conectar recuerdos");
+      setError(
+        err instanceof Error ? err.message : "Error al conectar recuerdos",
+      );
     }
   };
 
   const filteredNodes = useMemo(() => {
-    if (activeFilter === "all") return graph.nodes;
+    if (activeFilter === "all") {
+      return graph.nodes;
+    }
     return graph.nodes.filter((node) => node.type === activeFilter);
   }, [graph.nodes, activeFilter]);
 
@@ -384,7 +442,7 @@ export function MemoryPage() {
         animated: true,
         label: edge.relation,
       })),
-    [graph.edges]
+    [graph.edges],
   );
 
   const selected = graph.nodes.find((node) => node.id === selectedId) ?? null;
@@ -396,14 +454,19 @@ export function MemoryPage() {
         <div>
           <div className="flex items-center gap-2.5">
             <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <HugeiconsIcon icon={AiBrain01Icon} strokeWidth={1.75} className="size-5" />
+              <HugeiconsIcon
+                icon={AiBrain01Icon}
+                strokeWidth={1.75}
+                className="size-5"
+              />
             </div>
             <h1 className="text-3xl font-semibold tracking-tight">
               {t("shell.navigation.memory") || "Memoria Agéntica"}
             </h1>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
-            Consulta, conecta y edita el grafo de conocimientos y hechos que Sparta recupera cuando son relevantes.
+            Consulta, conecta y edita el grafo de conocimientos y hechos que
+            Sparta recupera cuando son relevantes.
           </p>
         </div>
 
@@ -433,7 +496,10 @@ export function MemoryPage() {
             <HugeiconsIcon
               icon={ReloadIcon}
               strokeWidth={1.75}
-              className={cn("size-3.5", isLoading && "animate-spin text-primary")}
+              className={cn(
+                "size-3.5",
+                isLoading && "animate-spin text-primary",
+              )}
             />
             {isLoading ? "Cargando..." : "Actualizar"}
           </Button>
@@ -443,7 +509,11 @@ export function MemoryPage() {
       {/* Error Banner */}
       {error && (
         <div className="flex items-start gap-3 rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
-          <HugeiconsIcon icon={AlertCircleIcon} strokeWidth={1.75} className="mt-0.5 size-5 shrink-0" />
+          <HugeiconsIcon
+            icon={AlertCircleIcon}
+            strokeWidth={1.75}
+            className="mt-0.5 size-5 shrink-0"
+          />
           <div className="flex-1">
             <p className="font-medium">Atención con el servicio de memoria</p>
             <p className="mt-0.5 text-xs opacity-90">{error}</p>
@@ -461,7 +531,11 @@ export function MemoryPage() {
 
       {syncNotice && !error && (
         <div className="flex items-start gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm text-emerald-900 dark:text-emerald-100">
-          <HugeiconsIcon icon={CheckmarkCircle02Icon} strokeWidth={1.75} className="mt-0.5 size-5 shrink-0" />
+          <HugeiconsIcon
+            icon={CheckmarkCircle02Icon}
+            strokeWidth={1.75}
+            className="mt-0.5 size-5 shrink-0"
+          />
           <div className="flex-1">
             <p className="font-medium">Memoria sincronizada</p>
             <p className="mt-0.5 text-xs opacity-90">{syncNotice}</p>
@@ -473,30 +547,50 @@ export function MemoryPage() {
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="flex items-center gap-4 rounded-3xl border border-foreground/10 bg-card p-4 ring-1 ring-foreground/5 shadow-xs">
           <div className="flex size-10 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-            <HugeiconsIcon icon={Idea01Icon} strokeWidth={1.75} className="size-5" />
+            <HugeiconsIcon
+              icon={Idea01Icon}
+              strokeWidth={1.75}
+              className="size-5"
+            />
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Recuerdos Guardados</p>
-            <p className="mt-0.5 text-xl font-bold tracking-tight">{graph.nodes.length}</p>
+            <p className="mt-0.5 text-xl font-bold tracking-tight">
+              {graph.nodes.length}
+            </p>
           </div>
         </div>
 
         <div className="flex items-center gap-4 rounded-3xl border border-foreground/10 bg-card p-4 ring-1 ring-foreground/5 shadow-xs">
           <div className="flex size-10 items-center justify-center rounded-2xl bg-sky-500/10 text-sky-600 dark:text-sky-400">
-            <HugeiconsIcon icon={Share01Icon} strokeWidth={1.75} className="size-5" />
+            <HugeiconsIcon
+              icon={Share01Icon}
+              strokeWidth={1.75}
+              className="size-5"
+            />
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">Relaciones del Grafo</p>
-            <p className="mt-0.5 text-xl font-bold tracking-tight">{graph.edges.length}</p>
+            <p className="text-xs text-muted-foreground">
+              Relaciones del Grafo
+            </p>
+            <p className="mt-0.5 text-xl font-bold tracking-tight">
+              {graph.edges.length}
+            </p>
           </div>
         </div>
 
         <div className="flex items-center gap-4 rounded-3xl border border-foreground/10 bg-card p-4 ring-1 ring-foreground/5 shadow-xs">
           <div className="flex size-10 items-center justify-center rounded-2xl bg-violet-500/10 text-violet-600 dark:text-violet-400">
-            <HugeiconsIcon icon={BookOpen01Icon} strokeWidth={1.75} className="size-5" />
+            <HugeiconsIcon
+              icon={BookOpen01Icon}
+              strokeWidth={1.75}
+              className="size-5"
+            />
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">Recuperación Semántica</p>
+            <p className="text-xs text-muted-foreground">
+              Recuperación Semántica
+            </p>
             <p className="mt-0.5 text-sm font-semibold">Integrada al Chat</p>
           </div>
         </div>
@@ -536,7 +630,7 @@ export function MemoryPage() {
                 "rounded-xl px-3 py-1.5 text-xs font-medium border transition-all cursor-pointer",
                 activeFilter === f.id
                   ? "border-primary bg-primary text-primary-foreground shadow-xs"
-                  : "border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground"
+                  : "border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground",
               )}
             >
               {f.label}
@@ -555,28 +649,43 @@ export function MemoryPage() {
               edges={flowEdges}
               nodeTypes={nodeTypes}
               edgeTypes={edgeTypes}
-              fitView
+              fitView={true}
               minZoom={0.2}
               maxZoom={2}
               onNodeClick={(_, node) => setSelectedId(node.id)}
             >
-              <Background gap={28} size={1.2} color="hsl(var(--foreground)/0.08)" />
-              <Controls showInteractive={false} className="rounded-2xl overflow-hidden border bg-card/80 backdrop-blur-md shadow-xs" />
+              <Background
+                gap={28}
+                size={1.2}
+                color="hsl(var(--foreground)/0.08)"
+              />
+              <Controls
+                showInteractive={false}
+                className="rounded-2xl overflow-hidden border bg-card/80 backdrop-blur-md shadow-xs"
+              />
               <MiniMap
                 nodeStrokeWidth={3}
-                zoomable
-                pannable
+                zoomable={true}
+                pannable={true}
                 className="!rounded-2xl !overflow-hidden !border !border-foreground/10 !bg-card/75 !backdrop-blur-md !shadow-xs !bottom-4 !right-4"
               />
             </ReactFlow>
           ) : (
             <div className="flex h-full flex-col items-center justify-center p-8 text-center">
               <div className="flex size-14 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
-                <HugeiconsIcon icon={AiBrain01Icon} strokeWidth={1.75} className="size-7 opacity-70" />
+                <HugeiconsIcon
+                  icon={AiBrain01Icon}
+                  strokeWidth={1.75}
+                  className="size-7 opacity-70"
+                />
               </div>
-              <h3 className="mt-3.5 text-base font-medium">Aún no hay recuerdos guardados</h3>
+              <h3 className="mt-3.5 text-base font-medium">
+                Aún no hay recuerdos guardados
+              </h3>
               <p className="mt-1 max-w-sm text-xs text-muted-foreground">
-                Agrega tu primer hecho o preferencia en el panel inferior, o sincroniza automáticamente los temas clave de tus conversaciones recientes.
+                Agrega tu primer hecho o preferencia en el panel inferior, o
+                sincroniza automáticamente los temas clave de tus conversaciones
+                recientes.
               </p>
               <Button
                 variant="outline"
@@ -588,9 +697,14 @@ export function MemoryPage() {
                 <HugeiconsIcon
                   icon={AiMagicIcon}
                   strokeWidth={1.75}
-                  className={cn("size-3.5 text-primary", isSyncing && "animate-spin")}
+                  className={cn(
+                    "size-3.5 text-primary",
+                    isSyncing && "animate-spin",
+                  )}
                 />
-                {isSyncing ? "Extrayendo de conversaciones..." : "Sincronizar recuerdos desde mis chats"}
+                {isSyncing
+                  ? "Extrayendo de conversaciones..."
+                  : "Sincronizar recuerdos desde mis chats"}
               </Button>
             </div>
           )}
@@ -602,7 +716,10 @@ export function MemoryPage() {
             <div className="space-y-4">
               <div>
                 <div className="flex items-center justify-between">
-                  <Badge variant="outline" className="text-[10px] uppercase tracking-wider">
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] uppercase tracking-wider"
+                  >
                     {TYPE_CONFIG[selected.type]?.label ?? selected.type}
                   </Badge>
                   <span className="text-[11px] text-muted-foreground">
@@ -625,7 +742,11 @@ export function MemoryPage() {
               {/* Connect to Another Memory */}
               <div className="space-y-2.5 border-t border-border/60 pt-4">
                 <div className="flex items-center gap-1.5 text-xs font-medium">
-                  <HugeiconsIcon icon={Link01Icon} strokeWidth={1.75} className="size-3.5 text-primary" />
+                  <HugeiconsIcon
+                    icon={Link01Icon}
+                    strokeWidth={1.75}
+                    className="size-3.5 text-primary"
+                  />
                   <span>Conectar con otro recuerdo</span>
                 </div>
                 <select
@@ -652,7 +773,7 @@ export function MemoryPage() {
                   className="w-full rounded-xl text-xs"
                   size="sm"
                   onClick={() => void connect()}
-                  disabled={!targetId || !relation.trim()}
+                  disabled={!(targetId && relation.trim())}
                 >
                   Guardar Relación
                 </Button>
@@ -665,16 +786,26 @@ export function MemoryPage() {
                   onClick={() => void remove(selected.id)}
                   className="w-full gap-1.5 rounded-xl text-xs"
                 >
-                  <HugeiconsIcon icon={Delete02Icon} strokeWidth={1.75} className="size-3.5" /> Eliminar Recuerdo
+                  <HugeiconsIcon
+                    icon={Delete02Icon}
+                    strokeWidth={1.75}
+                    className="size-3.5"
+                  />{" "}
+                  Eliminar Recuerdo
                 </Button>
               </div>
             </div>
           ) : (
             <div className="flex h-full flex-col items-center justify-center text-center p-6 text-muted-foreground">
-              <HugeiconsIcon icon={Idea01Icon} strokeWidth={1.75} className="size-8 opacity-40 mb-2" />
+              <HugeiconsIcon
+                icon={Idea01Icon}
+                strokeWidth={1.75}
+                className="size-8 opacity-40 mb-2"
+              />
               <p className="text-sm font-medium">Detalle del Recuerdo</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Haz clic en cualquier nodo del grafo para explorar sus detalles, editar sus relaciones o eliminarlo.
+                Haz clic en cualquier nodo del grafo para explorar sus detalles,
+                editar sus relaciones o eliminarlo.
               </p>
             </div>
           )}
@@ -686,12 +817,17 @@ export function MemoryPage() {
         <CardHeader>
           <div className="flex items-center gap-2">
             <div className="flex size-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <HugeiconsIcon icon={Add01Icon} strokeWidth={1.75} className="size-4" />
+              <HugeiconsIcon
+                icon={Add01Icon}
+                strokeWidth={1.75}
+                className="size-4"
+              />
             </div>
             <CardTitle className="text-lg">Agregar Recuerdo a Sparta</CardTitle>
           </div>
           <CardDescription>
-            Enseña hechos, preferencias o entidades fijas que Spartan Agent recordará y aplicará en futuros chats.
+            Enseña hechos, preferencias o entidades fijas que Spartan Agent
+            recordará y aplicará en futuros chats.
           </CardDescription>
         </CardHeader>
 
@@ -740,16 +876,26 @@ export function MemoryPage() {
         <div className="flex items-center justify-end border-t border-border/60 px-6 py-4">
           <Button
             onClick={() => void add()}
-            disabled={!label.trim() || !content.trim() || isSaving}
+            disabled={!(label.trim() && content.trim()) || isSaving}
             className="gap-2 rounded-full px-5"
           >
             {isSaving ? (
               <>
-                <HugeiconsIcon icon={ReloadIcon} strokeWidth={1.75} className="size-4 animate-spin" /> Guardando...
+                <HugeiconsIcon
+                  icon={ReloadIcon}
+                  strokeWidth={1.75}
+                  className="size-4 animate-spin"
+                />{" "}
+                Guardando...
               </>
             ) : (
               <>
-                <HugeiconsIcon icon={Add01Icon} strokeWidth={1.75} className="size-4" /> Guardar Recuerdo
+                <HugeiconsIcon
+                  icon={Add01Icon}
+                  strokeWidth={1.75}
+                  className="size-4"
+                />{" "}
+                Guardar Recuerdo
               </>
             )}
           </Button>

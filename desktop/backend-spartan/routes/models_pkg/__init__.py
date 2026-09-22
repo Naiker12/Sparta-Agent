@@ -169,13 +169,6 @@ from routes.models_pkg.router_loras import (
     delete_finetuned_model,
     get_lora_base_model,
 )
-from routes.models_pkg.router_gguf import (
-    router as _router_gguf,
-    get_kv_cache_estimate,
-    get_gguf_variants,
-    get_gguf_download_progress,
-    get_download_progress,
-)
 from routes.models_pkg.router_cached import (
     router as _router_cached,
     list_cached_gguf,
@@ -193,7 +186,6 @@ for sub_router in (
     _router_catalog,
     _router_security,
     _router_loras,
-    _router_gguf,
     _router_cached,
 ):
     for r in sub_router.routes:

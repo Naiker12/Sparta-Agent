@@ -1,4 +1,3 @@
-
 import { authFetch } from "@/features/auth/api";
 
 export interface ApiKey {
@@ -13,7 +12,9 @@ export interface ApiKey {
 
 export async function fetchApiKeys(): Promise<ApiKey[]> {
   const res = await authFetch("/api/auth/api-keys");
-  if (!res.ok) throw new Error("Failed to load API access");
+  if (!res.ok) {
+    throw new Error("Failed to load API access");
+  }
   const data = (await res.json()) as { api_keys: ApiKey[] };
   return data.api_keys.filter((k) => k.is_active);
 }
@@ -27,7 +28,9 @@ export async function createApiKey(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name, expires_in_days: expiresInDays }),
   });
-  if (!res.ok) throw new Error("Failed to create access token");
+  if (!res.ok) {
+    throw new Error("Failed to create access token");
+  }
   return res.json();
 }
 
@@ -35,5 +38,7 @@ export async function revokeApiKey(keyId: number): Promise<void> {
   const res = await authFetch(`/api/auth/api-keys/${keyId}`, {
     method: "DELETE",
   });
-  if (!res.ok) throw new Error("Failed to revoke access token");
+  if (!res.ok) {
+    throw new Error("Failed to revoke access token");
+  }
 }

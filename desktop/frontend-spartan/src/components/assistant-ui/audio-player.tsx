@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -7,7 +6,7 @@ import { toast } from "@/lib/toast";
 import { Download01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { PauseIcon, PlayIcon } from "lucide-react";
-import { type FC, useRef, useState } from "react";
+import { type ChangeEvent, type FC, useRef, useState } from "react";
 
 interface AudioPlayerProps {
   src: string;
@@ -21,7 +20,9 @@ export const AudioPlayer: FC<AudioPlayerProps> = ({ src }) => {
 
   const togglePlay = () => {
     const audio = audioRef.current;
-    if (!audio) return;
+    if (!audio) {
+      return;
+    }
     if (isPlaying) {
       audio.pause();
     } else {
@@ -32,13 +33,17 @@ export const AudioPlayer: FC<AudioPlayerProps> = ({ src }) => {
 
   const handleTimeUpdate = () => {
     const audio = audioRef.current;
-    if (!audio) return;
+    if (!audio) {
+      return;
+    }
     setProgress(audio.currentTime);
   };
 
   const handleLoadedMetadata = () => {
     const audio = audioRef.current;
-    if (!audio) return;
+    if (!audio) {
+      return;
+    }
     setDuration(audio.duration);
   };
 
@@ -47,16 +52,18 @@ export const AudioPlayer: FC<AudioPlayerProps> = ({ src }) => {
     setProgress(0);
   };
 
-  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSeek = (e: ChangeEvent<HTMLInputElement>) => {
     const audio = audioRef.current;
-    if (!audio) return;
-    const time = parseFloat(e.target.value);
+    if (!audio) {
+      return;
+    }
+    const time = Number.parseFloat(e.target.value);
     audio.currentTime = time;
     setProgress(time);
   };
 
   const handleDownload = () => {
-    void downloadUrl(src, "generated-audio.wav").catch((error) => {
+    downloadUrl(src, "generated-audio.wav").catch((error) => {
       if (!isDownloadCancelled(error)) {
         toast.error("Could not save audio.");
       }
@@ -78,7 +85,9 @@ export const AudioPlayer: FC<AudioPlayerProps> = ({ src }) => {
         onLoadedMetadata={handleLoadedMetadata}
         onEnded={handleEnded}
         preload="metadata"
-      />
+      >
+        <track kind="captions" />
+      </audio>
       <Button
         variant="ghost"
         size="icon"

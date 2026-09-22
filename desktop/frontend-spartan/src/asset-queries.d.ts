@@ -1,4 +1,3 @@
-
 // Vite `?inline` imports (data URIs); vite/client only types bare extensions.
 declare module "*?inline" {
   const src: string;

@@ -1,4 +1,3 @@
-
 import { authFetch } from "@/features/auth";
 
 export type OpenAIModel = {

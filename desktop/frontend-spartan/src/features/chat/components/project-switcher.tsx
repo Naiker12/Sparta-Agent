@@ -5,11 +5,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Folder01Icon } from "@hugeicons/core-free-icons";
-import { Tick02Icon } from "@/lib/tick-icon";
-import { ChevronDownStandardIcon } from "@/lib/chevron-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import { useT } from "@/i18n";
+import { ChevronDownStandardIcon } from "@/lib/chevron-icons";
+import { Tick02Icon } from "@/lib/tick-icon";
+import { Folder01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { type ReactElement, useState } from "react";
 import { useChatActive } from "../runtime-provider";
 import type { ProjectRecord } from "../types";

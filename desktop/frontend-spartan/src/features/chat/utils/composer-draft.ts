@@ -1,4 +1,3 @@
-
 // Per-thread composer drafts persisted in localStorage. New (unsaved) chats
 // share the NEW_CHAT_DRAFT_ID slot; callers clear it when a fresh chat starts
 // so one new chat's draft never bleeds into the next.
@@ -27,10 +26,14 @@ export function readPasteDraft(key: string): string[] {
   } catch {
     return [];
   }
-  if (!raw) return [];
+  if (!raw) {
+    return [];
+  }
   try {
     const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
     return parsed.filter((entry): entry is string => typeof entry === "string");
   } catch {
     return [];
@@ -63,8 +66,11 @@ export function readComposerDraft(key: string): string | null {
 
 export function writeComposerDraft(key: string, text: string): void {
   try {
-    if (text.length > 0) window.localStorage.setItem(key, text);
-    else window.localStorage.removeItem(key);
+    if (text.length > 0) {
+      window.localStorage.setItem(key, text);
+    } else {
+      window.localStorage.removeItem(key);
+    }
   } catch {
     // ignore write failures
   }

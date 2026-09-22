@@ -1,4 +1,3 @@
-
 import type {
   RecipeExecutionAnalysis,
   RecipeExecutionRecord,
@@ -30,7 +29,9 @@ export function toErrorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
-export function normalizeDatasetRows(value: unknown): Record<string, unknown>[] {
+export function normalizeDatasetRows(
+  value: unknown,
+): Record<string, unknown>[] {
   if (!Array.isArray(value)) {
     return [];
   }
@@ -40,14 +41,18 @@ export function normalizeDatasetRows(value: unknown): Record<string, unknown>[] 
   );
 }
 
-export function normalizeObject(value: unknown): Record<string, unknown> | null {
+export function normalizeObject(
+  value: unknown,
+): Record<string, unknown> | null {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
     return null;
   }
   return value as Record<string, unknown>;
 }
 
-export function normalizeAnalysis(value: unknown): RecipeExecutionAnalysis | null {
+export function normalizeAnalysis(
+  value: unknown,
+): RecipeExecutionAnalysis | null {
   const normalized = normalizeObject(value);
   if (!normalized) {
     return null;
@@ -108,10 +113,13 @@ function executionSortWeight(status: RecipeExecutionStatus): number {
   return 1;
 }
 
-export function sortExecutions(records: RecipeExecutionRecord[]): RecipeExecutionRecord[] {
+export function sortExecutions(
+  records: RecipeExecutionRecord[],
+): RecipeExecutionRecord[] {
   const next = [...records];
   next.sort((a, b) => {
-    const statusDelta = executionSortWeight(a.status) - executionSortWeight(b.status);
+    const statusDelta =
+      executionSortWeight(a.status) - executionSortWeight(b.status);
     if (statusDelta !== 0) {
       return statusDelta;
     }
@@ -125,7 +133,9 @@ export function withExecutionDefaults(
 ): RecipeExecutionRecord {
   const dataset = Array.isArray(record.dataset) ? record.dataset : [];
   const logLines = Array.isArray(record.log_lines)
-    ? record.log_lines.filter((line): line is string => typeof line === "string")
+    ? record.log_lines.filter(
+        (line): line is string => typeof line === "string",
+      )
     : [];
   const datasetPageSize =
     typeof record.datasetPageSize === "number" && record.datasetPageSize > 0
@@ -150,7 +160,8 @@ export function withExecutionDefaults(
     datasetPageSize,
     completed_columns: Array.isArray(record.completed_columns)
       ? record.completed_columns.filter(
-          (value): value is string => typeof value === "string" && value.trim().length > 0,
+          (value): value is string =>
+            typeof value === "string" && value.trim().length > 0,
         )
       : [],
     column_progress: record.column_progress ?? null,

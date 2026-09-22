@@ -1,4 +1,3 @@
-
 // Which failed settings writes are worth keeping, and which have to be let go.
 //
 // The settings queue coalesces every change into one patch and requeues it when the
@@ -34,9 +33,13 @@ export class ChatSettingsRequestError extends Error {
  * are the two 4xx that explicitly mean "later", so they stay retryable.
  */
 export function isTerminalSettingsRejection(error: unknown): boolean {
-  if (!(error instanceof ChatSettingsRequestError)) return false;
+  if (!(error instanceof ChatSettingsRequestError)) {
+    return false;
+  }
   const { status } = error;
-  if (status === 408 || status === 429) return false;
+  if (status === 408 || status === 429) {
+    return false;
+  }
   return status >= 400 && status < 500;
 }
 
@@ -52,14 +55,22 @@ export function isTerminalSettingsRejection(error: unknown): boolean {
  * patch outright rather than guessing.
  */
 export function rejectedSettingKeys(detail: unknown): string[] {
-  if (!Array.isArray(detail)) return [];
+  if (!Array.isArray(detail)) {
+    return [];
+  }
   const keys = new Set<string>();
   for (const entry of detail) {
-    if (entry == null || typeof entry !== "object") continue;
+    if (entry == null || typeof entry !== "object") {
+      continue;
+    }
     const loc = (entry as { loc?: unknown }).loc;
-    if (!Array.isArray(loc) || loc.length === 0) continue;
+    if (!Array.isArray(loc) || loc.length === 0) {
+      continue;
+    }
     const field = loc[0];
-    if (typeof field === "string" && field.length > 0) keys.add(field);
+    if (typeof field === "string" && field.length > 0) {
+      keys.add(field);
+    }
   }
   return [...keys];
 }
@@ -90,7 +101,9 @@ export function retryablePatchAfterFailure<T extends object>(
   }
   const kept: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(patch)) {
-    if (!rejected.includes(key)) kept[key] = value;
+    if (!rejected.includes(key)) {
+      kept[key] = value;
+    }
   }
   return {
     patch: kept as Partial<T>,
@@ -111,6 +124,10 @@ const KEEPALIVE_BODY_BUDGET_BYTES = 60 * 1024;
 export function isUnderKeepaliveBudget(body: string): boolean {
   // A JSON body is at least one byte per UTF-16 unit, so this cheap check settles
   // every ordinary patch without encoding a copy of a large one.
-  if (body.length <= KEEPALIVE_BODY_BUDGET_BYTES / 3) return true;
-  return new TextEncoder().encode(body).byteLength <= KEEPALIVE_BODY_BUDGET_BYTES;
+  if (body.length <= KEEPALIVE_BODY_BUDGET_BYTES / 3) {
+    return true;
+  }
+  return (
+    new TextEncoder().encode(body).byteLength <= KEEPALIVE_BODY_BUDGET_BYTES
+  );
 }

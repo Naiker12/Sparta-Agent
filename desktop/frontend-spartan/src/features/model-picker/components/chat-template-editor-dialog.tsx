@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -119,7 +118,9 @@ export function ChatTemplateEditorDialog({
         <Textarea
           value={renderedDraft}
           onChange={(event) => {
-            if (readOnly) return;
+            if (readOnly) {
+              return;
+            }
             setDraft(event.target.value);
             setError(null);
           }}

@@ -1,5 +1,5 @@
-
 import { Spinner } from "@/components/ui/spinner";
+import type { HubFailure } from "@/features/hub/lib/network";
 import {
   makePinRank,
   pinKey,
@@ -13,7 +13,6 @@ import {
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { Ref } from "react";
-import type { HubFailure } from "@/features/hub/lib/network";
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   inventoryRowMatches,
@@ -374,7 +373,9 @@ export function DownloadedList({
     useState<HTMLDivElement | null>(null);
   const [scrollMargin, setScrollMargin] = useState(0);
   useLayoutEffect(() => {
-    if (!virtualRowsWrapper || !scrollElement) return;
+    if (!(virtualRowsWrapper && scrollElement)) {
+      return;
+    }
     const measure = () => {
       const margin = Math.max(
         0,
@@ -411,7 +412,7 @@ export function DownloadedList({
     />
   );
 
-  if (!downloadedReady && !hasInventoryRows) {
+  if (!(downloadedReady || hasInventoryRows)) {
     return (
       <div className="flex min-h-[240px] items-center justify-center gap-3 text-ui-13 text-muted-foreground">
         <Spinner className="size-4" />
@@ -517,7 +518,9 @@ export function DownloadedList({
                   }}
                   draggable={itemPinKey != null}
                   onDragStart={(event) => {
-                    if (!itemPinKey) return;
+                    if (!itemPinKey) {
+                      return;
+                    }
                     event.dataTransfer.effectAllowed = "move";
                     // Firefox will not start a drag without data.
                     event.dataTransfer.setData("text/plain", itemPinKey);
@@ -536,7 +539,9 @@ export function DownloadedList({
                     endPinnedDrag(false);
                   }}
                   onDragOver={(event) => {
-                    if (dragPinKeyRef.current) event.preventDefault();
+                    if (dragPinKeyRef.current) {
+                      event.preventDefault();
+                    }
                   }}
                   onDragEnter={() => {
                     const dragKey = dragPinKeyRef.current;

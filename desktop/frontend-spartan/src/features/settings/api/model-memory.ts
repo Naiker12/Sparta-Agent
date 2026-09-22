@@ -1,9 +1,8 @@
-
 import { authFetch } from "@/features/auth";
 import { readFastApiError } from "@/lib/format-fastapi-error";
 
-import { SettingsRouteAbsentError } from "./settings-route-absent";
 import { invalidateOpenAIAutoSwitchSettings } from "./openai-auto-switch";
+import { SettingsRouteAbsentError } from "./settings-route-absent";
 
 const MODEL_MEMORY_EVENT = "unsloth-model-memory-change";
 

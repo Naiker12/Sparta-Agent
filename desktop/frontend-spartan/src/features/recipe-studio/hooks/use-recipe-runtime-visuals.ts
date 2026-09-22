@@ -1,4 +1,3 @@
-
 import {
   BalanceScaleIcon,
   Clock01Icon,
@@ -8,22 +7,18 @@ import {
   EqualSignIcon,
   FingerPrintIcon,
   FunctionIcon,
-  Plug01Icon,
   Parabola02Icon,
   PencilEdit02Icon,
   Plant01Icon,
+  Plug01Icon,
   Shield02Icon,
   Tag01Icon,
   TagsIcon,
   UserAccountIcon,
 } from "@hugeicons/core-free-icons";
-import { useMemo } from "react";
 import type { Edge } from "@xyflow/react";
-import { deriveDisplayGraph } from "../utils/graph/derive-display-graph";
-import {
-  deriveGraphRuntimeVisualState,
-  pickLatestActiveExecution,
-} from "../utils/graph/runtime-visual-state";
+import { useMemo } from "react";
+import type { RecipeExecutionRecord } from "../execution-types";
 import type {
   LayoutDirection,
   LlmType,
@@ -31,7 +26,11 @@ import type {
   RecipeNode as RecipeBuilderNode,
   SamplerType,
 } from "../types";
-import type { RecipeExecutionRecord } from "../execution-types";
+import { deriveDisplayGraph } from "../utils/graph/derive-display-graph";
+import {
+  deriveGraphRuntimeVisualState,
+  pickLatestActiveExecution,
+} from "../utils/graph/runtime-visual-state";
 
 type IconType = typeof CodeIcon;
 

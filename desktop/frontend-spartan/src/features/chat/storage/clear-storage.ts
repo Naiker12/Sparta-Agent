@@ -1,15 +1,12 @@
-import {
-  clearBackendChats,
-  notifyChatHistoryUpdated,
-} from "../api/chat-api";
+import { clearBackendChats, notifyChatHistoryUpdated } from "../api/chat-api";
 import { db } from "../db";
 import { markChatThreadsDeleted } from "../utils/chat-thread-tombstones";
-import { listStoredChatThreads } from "./thread-storage";
 import {
   bumpThreadRecordClearEpoch,
   failedThreadRecordByThreadId,
   threadRecordWrites,
 } from "./storage-coordinator";
+import { listStoredChatThreads } from "./thread-storage";
 
 export interface ClearStoredChatsResult {
   backend: "cleared" | "failed" | "skipped";
@@ -28,7 +25,9 @@ export async function countStoredChats(): Promise<number> {
 export function clearStoredChats(
   options: { deleteFiles?: boolean } = {},
 ): Promise<ClearStoredChatsResult> {
-  if (clearStoredChatsPromise) return clearStoredChatsPromise;
+  if (clearStoredChatsPromise) {
+    return clearStoredChatsPromise;
+  }
 
   bumpThreadRecordClearEpoch();
   failedThreadRecordByThreadId.clear();
@@ -44,9 +43,9 @@ export function clearStoredChats(
   return tracked;
 }
 
-async function clearStoredChatsWithAdmissionClosed(
-  options: { deleteFiles?: boolean },
-): Promise<ClearStoredChatsResult> {
+async function clearStoredChatsWithAdmissionClosed(options: {
+  deleteFiles?: boolean;
+}): Promise<ClearStoredChatsResult> {
   const pendingThreadIds = threadRecordWrites.idsRequiringFence();
   const operationId = crypto.randomUUID();
   const legacyThreads = await db.threads.toArray().catch(() => []);
@@ -80,9 +79,8 @@ async function clearStoredChatsWithAdmissionClosed(
     result.sandboxesKept = backendResult.sandboxesKept;
     result.backend = "cleared";
     threadRecordWrites.confirmFinalState(idsToFence);
-  } catch (error) {
+  } catch (_error) {
     result.backend = "failed";
-    console.error("clearStoredChats: backend clear failed", error);
   }
 
   try {
@@ -91,9 +89,8 @@ async function clearStoredChatsWithAdmissionClosed(
       await db.threads.clear();
     });
     result.legacy = "cleared";
-  } catch (error) {
+  } catch (_error) {
     result.legacy = "failed";
-    console.error("clearStoredChats: legacy Dexie clear failed", error);
   }
 
   const allThreadIds = Array.from(

@@ -1,14 +1,10 @@
-
+import { resetDownloadApiAdapterState } from "./download-api-adapter";
 import {
   createDownloadManagerInitialState,
   removeJob,
   setState,
 } from "./download-manager-state";
-import { resetDownloadApiAdapterState } from "./download-api-adapter";
-import {
-  hydrateDownloadManager,
-  resetHydrationState,
-} from "./hydration";
+import { hydrateDownloadManager, resetHydrationState } from "./hydration";
 import { cancelJob, probeAndAdopt, setExpected } from "./poll-loop";
 import { runtimeRegistry } from "./runtime-registry";
 import {
@@ -62,7 +58,6 @@ export const downloadManager: DownloadManagerController = {
   cancelConflict,
   dismiss: removeJob,
 };
-
 
 if (import.meta.hot) {
   import.meta.hot.dispose(() => {

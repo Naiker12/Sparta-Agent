@@ -1,13 +1,5 @@
-
-import type {
-  SamplerConfig,
-  SamplerType,
-} from "../../../types";
-import {
-  isRecord,
-  readNumberString,
-  readString,
-} from "../helpers";
+import type { SamplerConfig, SamplerType } from "../../../types";
+import { isRecord, readNumberString, readString } from "../helpers";
 
 const SAMPLER_TYPES: SamplerType[] = [
   "category",
@@ -31,7 +23,9 @@ function parseCategoryConditionalParams(
     return undefined;
   }
   const conditional: NonNullable<SamplerConfig["conditional_params"]> = {};
-  for (const [condition, rawParams] of Object.entries(column.conditional_params)) {
+  for (const [condition, rawParams] of Object.entries(
+    column.conditional_params,
+  )) {
     if (!isRecord(rawParams)) {
       continue;
     }
@@ -45,7 +39,9 @@ function parseCategoryConditionalParams(
       continue;
     }
     const weights = Array.isArray(rawParams.weights)
-      ? rawParams.weights.map((item) => (typeof item === "number" ? item : null))
+      ? rawParams.weights.map((item) =>
+          typeof item === "number" ? item : null,
+        )
       : undefined;
     conditional[condition] = {
       // biome-ignore lint/style/useNamingConvention: api schema
@@ -65,7 +61,7 @@ export function parseSampler(
 ): SamplerConfig | null {
   const drop = column.drop === true;
   const samplerType = readString(column.sampler_type);
-  if (!samplerType || !SAMPLER_TYPES.includes(samplerType as SamplerType)) {
+  if (!(samplerType && SAMPLER_TYPES.includes(samplerType as SamplerType))) {
     errors.push(`Sampler ${name}: unsupported sampler_type.`);
     return null;
   }
@@ -236,7 +232,7 @@ export function parseSampler(
     params.age_range.length === 2 &&
     params.age_range.every((item) => typeof item === "number")
       ? `${params.age_range[0]}-${params.age_range[1]}`
-      : readString(params.age_range) ?? "";
+      : (readString(params.age_range) ?? "");
 
   const base: SamplerConfig = {
     id,

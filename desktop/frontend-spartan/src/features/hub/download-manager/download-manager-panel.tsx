@@ -1,4 +1,3 @@
-
 import {
   Tooltip,
   TooltipContent,
@@ -53,13 +52,17 @@ function selectActiveJobCount(state: {
 }): number {
   let count = 0;
   for (const job of Object.values(state.jobs)) {
-    if (job.state === "running" || job.state === "cancelling") count += 1;
+    if (job.state === "running" || job.state === "cancelling") {
+      count += 1;
+    }
   }
   return count;
 }
 
 function canUseDownloadManager(pathname: string): boolean {
-  if (isTauri) return true;
+  if (isTauri) {
+    return true;
+  }
   if (
     pathname === "/login" ||
     pathname === "/change-password" ||
@@ -107,7 +110,9 @@ function StatusLine({ job }: { job: ManagedDownload }) {
 
 function DownloadRow({ jobKey }: { jobKey: string }) {
   const job = useDownloadManagerStore((state) => state.jobs[jobKey]);
-  if (!job) return null;
+  if (!job) {
+    return null;
+  }
   const active = job.state === "running" || job.state === "cancelling";
   const terminal =
     job.state === "complete" ||
@@ -189,7 +194,9 @@ export function DownloadManagerPanel({
   const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled) {
+      return;
+    }
     hydrateDownloadManager();
   }, [enabled]);
 
@@ -197,7 +204,9 @@ export function DownloadManagerPanel({
   const jobKeys = useDownloadManagerStore(selectOrderedJobKeys);
   const activeCount = useDownloadManagerStore(selectActiveJobCount);
 
-  if (!enabled || jobKeys.length === 0) return null;
+  if (!enabled || jobKeys.length === 0) {
+    return null;
+  }
 
   const headerLabel =
     activeCount > 0

@@ -1,4 +1,3 @@
-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -130,9 +129,7 @@ export function RecipeStudioHeader({
       <div className="justify-self-center">
         <Tabs value={activeView} onValueChange={handleViewValueChange}>
           <TabsList>
-            {supportsEasyMode && (
-              <TabsTrigger value="easy">Easy</TabsTrigger>
-            )}
+            {supportsEasyMode && <TabsTrigger value="easy">Easy</TabsTrigger>}
             <TabsTrigger value="editor">
               {supportsEasyMode ? "Advanced" : "Editor"}
             </TabsTrigger>

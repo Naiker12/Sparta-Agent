@@ -1,4 +1,3 @@
-
 export type DevicePickerItemResolution<T> =
   | { kind: "match"; item: T }
   | { kind: "ambiguous"; firstItem: T }

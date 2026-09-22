@@ -1,4 +1,3 @@
-
 export const MODEL_PROVIDER_TYPE_OPTIONS = [
   { value: "openai", label: "OpenAI-compatible" },
   { value: "anthropic", label: "Anthropic" },

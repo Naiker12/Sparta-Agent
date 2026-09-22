@@ -1,4 +1,3 @@
-
 export { TransformersUpgradeDialog } from "./components/transformers-upgrade-dialog";
 export { confirmTransformersUpgradeIfNeeded } from "./hooks/use-transformers-upgrade-consent";
 export {

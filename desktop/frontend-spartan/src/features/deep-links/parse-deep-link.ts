@@ -1,4 +1,3 @@
-
 const MAX_REPO_ID_SEGMENT_LENGTH = 96;
 const MAX_GGUF_FILE_LENGTH = 512;
 const REPO_SEGMENT = /^[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?$/;
@@ -73,7 +72,7 @@ export function parseUnslothDeepLink(
 
   const keys = [...url.searchParams.keys()];
   if (
-    keys.length < 1 ||
+    keys.length === 0 ||
     keys.length > 2 ||
     !keys.includes("model") ||
     new Set(keys).size !== keys.length ||
@@ -93,7 +92,9 @@ export function parseUnslothDeepLink(
   }
 
   const file = url.searchParams.get("file");
-  if (file !== null && !isValidGgufFile(file)) return null;
+  if (file !== null && !isValidGgufFile(file)) {
+    return null;
+  }
 
   return file === null ? { model } : { model, file };
 }

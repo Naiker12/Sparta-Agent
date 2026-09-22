@@ -36,12 +36,16 @@ export async function pickNativeDocumentFolder(): Promise<NativeDocumentFolderSe
 }
 
 export async function drainNativeIntents(): Promise<NativeIntent[]> {
-  if (!isTauri) return [];
+  if (!isTauri) {
+    return [];
+  }
   return invokeNative<NativeIntent[]>("drain_native_intents");
 }
 
 export async function pickHuggingFaceCacheDir(): Promise<string | null> {
-  if (!isTauri) return null;
+  if (!isTauri) {
+    return null;
+  }
   return invokeNative<string | null>("pick_hugging_face_cache_dir");
 }
 

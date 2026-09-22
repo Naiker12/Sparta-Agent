@@ -1,31 +1,30 @@
-
 "use client";
 
+import { Spinner } from "@/components/ui/spinner";
+import { useChatRuntimeStore } from "@/features/chat/stores/chat-runtime-store";
+import { useT } from "@/i18n";
 import type { ToolCallMessagePartComponent } from "@assistant-ui/react";
 import { useToolArgsStatus } from "@assistant-ui/react";
 import { TerminalIcon } from "lucide-react";
-import { Spinner } from "@/components/ui/spinner";
-import { useT } from "@/i18n";
 import { memo } from "react";
+import { type SandboxFile, isSandboxToolResult } from "./sandbox-files";
+import { SandboxFiles } from "./sandbox-files-view";
+import { CopyBtn, ToolCodeCell } from "./tool-code-cell";
 import {
   ToolFallbackContent,
   ToolFallbackRoot,
   ToolFallbackTrigger,
 } from "./tool-fallback";
-import { CopyBtn, ToolCodeCell } from "./tool-code-cell";
 import { ToolLiveOutput } from "./tool-live-output";
 import { ToolResultOutput } from "./tool-result-output";
-import { SandboxFiles } from "./sandbox-files-view";
-import { isSandboxToolResult, type SandboxFile } from "./sandbox-files";
-import { useChatRuntimeStore } from "@/features/chat/stores/chat-runtime-store";
 
-import { stringifyToolResult } from "@/lib/strip-ansi";
 import {
   preferSanitizedFullToolOutput,
   useToolAwaitingApproval,
   useToolOutputFor,
   useToolPaneScope,
 } from "@/features/chat";
+import { stringifyToolResult } from "@/lib/strip-ansi";
 
 const TerminalToolUIImpl: ToolCallMessagePartComponent = ({
   toolCallId,
@@ -44,7 +43,11 @@ const TerminalToolUIImpl: ToolCallMessagePartComponent = ({
   // The same test the adapter applies: a foreign result that merely has text
   // would otherwise be rendered as that field alone.
   const structured = isSandboxToolResult(result)
-    ? (result as unknown as { text: string; sessionId?: string; files?: SandboxFile[] })
+    ? (result as unknown as {
+        text: string;
+        sessionId?: string;
+        files?: SandboxFile[];
+      })
     : null;
   const files = structured?.files ?? [];
   const sessionId = structured?.sessionId ?? "";
@@ -74,9 +77,14 @@ const TerminalToolUIImpl: ToolCallMessagePartComponent = ({
 
   return (
     // Open mid-run so command and live output show, collapsed from history.
-    <ToolFallbackRoot defaultOpen={isRunning} {...(awaitingApproval ? { open: true } : {})}>
+    <ToolFallbackRoot
+      defaultOpen={isRunning}
+      {...(awaitingApproval ? { open: true } : {})}
+    >
       <ToolFallbackTrigger
-        toolName={command ? `$ ${command.slice(0, 60)}` : t("chat.tools.terminal")}
+        toolName={
+          command ? `$ ${command.slice(0, 60)}` : t("chat.tools.terminal")
+        }
         status={status}
         icon={TerminalIcon}
       />
@@ -109,7 +117,9 @@ const TerminalToolUIImpl: ToolCallMessagePartComponent = ({
           ) : displayOutput ? (
             <div>
               <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-muted-foreground">{t("chat.tools.output")}</span>
+                <span className="text-xs font-medium text-muted-foreground">
+                  {t("chat.tools.output")}
+                </span>
                 <CopyBtn text={displayOutput} />
               </div>
               <ToolResultOutput text={displayOutput} />

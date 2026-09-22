@@ -1,4 +1,4 @@
-import { mlxRuntimeStateFrom } from "../../lib/mlx-runtime-state";
+import { usePlatformStore } from "@/config/env";
 import { prepareHfTokenForUse } from "@/features/hf-auth";
 import { DOWNLOAD_KIND } from "@/features/hub/download-manager/constants";
 import {
@@ -14,30 +14,52 @@ import {
 } from "@/features/hub/inventory/api";
 import { isHiddenModelId } from "@/features/hub/lib/hidden-models";
 import { resolveInitialConfig } from "@/features/model-picker";
-import { isMlxId } from "@/features/model-picker/components/model-selector/recommended-fit";
 import { loadManagedLlamaFlags } from "@/features/model-picker/api/llama-flags";
 import { fetchLoadExtraArgs } from "@/features/model-picker/api/model-overrides";
+import { isMlxId } from "@/features/model-picker/components/model-selector/recommended-fit";
 import { sanitizeStoredExtraArgs } from "@/features/model-picker/model-config/llama-extra-args";
-import { usePlatformStore } from "@/config/env";
-import { createLoadingToastIcon, toast } from "@/lib/toast";
 import { useSettingsDialogStore } from "@/features/settings/stores/settings-dialog-store";
-import { snapshotQueuedChatRunSettings } from "../../utils/queued-chat-run-settings";
-import type { QueuedModelCapabilities } from "../../utils/queued-model-capabilities";
+import { ensureGpuDeviceCache } from "@/hooks/use-gpu-info";
+import { createLoadingToastIcon, toast } from "@/lib/toast";
 import { isExternalModelId } from "../../external-providers";
+import { syncModelCapabilities } from "../../hooks/use-chat-model-runtime";
 import {
   reasoningCapsFromLoad,
   resolveInferenceCheckpointId,
   tryAdoptServerActiveModel,
 } from "../../lib/apply-inference-status-to-store";
-import { syncModelCapabilities } from "../../hooks/use-chat-model-runtime";
-import { ensureGpuDeviceCache } from "@/hooks/use-gpu-info";
+import { mlxRuntimeStateFrom } from "../../lib/mlx-runtime-state";
+import {
+  resolveFitMaxSeqLength,
+  resolveLoadMaxSeqLength,
+  resolveManualAutoCtxPin,
+} from "../../presets/preset-policy";
+import {
+  GPU_LAYERS_AUTO,
+  loadedGpuMemoryFields,
+  persistGpuMemoryModeOnLoad,
+  reconcilePersistedGpuIds,
+  resolveLoadedSpeculativeSettings,
+  resolvePreserveThinkingOnLoad,
+  resolveSpeculativeSettingsForLoad,
+  resolveToolsEnabledOnLoad,
+  saveSpeculativeType,
+} from "../../stores/chat-runtime-store";
+import { useChatRuntimeStore } from "../../stores/chat-runtime-store";
 import type {
   CpuFallbackReason,
-  MmprojFallbackReason,
   GgufVariantDetail,
+  MmprojFallbackReason,
 } from "../../types/api";
 import { isMultimodalResponse } from "../../types/api";
+import {
+  type LastLocalModelKind,
+  readLastLocalModelLoad,
+  recordLastLocalModelLoad,
+} from "../../utils/last-local-model-load";
 import { loadFallbackNotice } from "../../utils/mmproj-fallback";
+import { snapshotQueuedChatRunSettings } from "../../utils/queued-chat-run-settings";
+import type { QueuedModelCapabilities } from "../../utils/queued-model-capabilities";
 import {
   type CachedGgufRepo,
   type CachedModelRepo,
@@ -50,33 +72,11 @@ import {
   validateModel,
 } from "../chat-api";
 import {
-  readLastLocalModelLoad,
-  recordLastLocalModelLoad,
-  type LastLocalModelKind,
-} from "../../utils/last-local-model-load";
-import {
-  GPU_LAYERS_AUTO,
-  loadedGpuMemoryFields,
-  reconcilePersistedGpuIds,
-  resolveLoadedSpeculativeSettings,
-  resolveSpeculativeSettingsForLoad,
-  persistGpuMemoryModeOnLoad,
-  resolvePreserveThinkingOnLoad,
-  resolveToolsEnabledOnLoad,
-  saveSpeculativeType,
-} from "../../stores/chat-runtime-store";
-import {
-  resolveFitMaxSeqLength,
-  resolveLoadMaxSeqLength,
-  resolveManualAutoCtxPin,
-} from "../../presets/preset-policy";
-import { useChatRuntimeStore } from "../../stores/chat-runtime-store";
-import {
+  type AutoLoadSource,
   autoLoadSourceKey,
   isRememberedAutoLoadSource,
   normalizeAutoLoadTarget,
   orderAutoLoadSources,
-  type AutoLoadSource,
 } from "./model-autoload-selection";
 
 export const MAX_AUTO_LOAD_ATTEMPTS = 3;
@@ -198,7 +198,9 @@ export function snapshotVisibleModelState(
   };
 }
 
-export function restoreVisibleModelState(snapshot: VisibleModelStateSnapshot): void {
+export function restoreVisibleModelState(
+  snapshot: VisibleModelStateSnapshot,
+): void {
   const liveUsage = useChatRuntimeStore.getState();
   liveUsage.setCheckpoint(snapshot.settings.params.checkpoint, undefined, {
     trackQueuedSettings: false,
@@ -302,14 +304,16 @@ export function hasBigEndianGgufMarker(
     const tail = stem
       .slice((match.index ?? 0) + match[0].length)
       .replace(/^[._-]+/, "");
-    if (!tail || !GGUF_KNOWN_QUANT_RE.test(tail)) {
+    if (!(tail && GGUF_KNOWN_QUANT_RE.test(tail))) {
       return !quantInParentOnly;
     }
   }
   return false;
 }
 
-export function isAutoLoadableGgufVariant(variant: GgufVariantDetail | null): boolean {
+export function isAutoLoadableGgufVariant(
+  variant: GgufVariantDetail | null,
+): boolean {
   if (!variant?.filename) {
     return false;
   }
@@ -354,7 +358,9 @@ export function isGgufLocalRow(row: LocalModelInfo): boolean {
 
 export function runsOnThisPlatform(row: LocalModelInfo): boolean {
   const platform = usePlatformStore.getState();
-  if (!platform.fetched || !platform.isChatOnly()) return true;
+  if (!(platform.fetched && platform.isChatOnly())) {
+    return true;
+  }
   if (isGgufLocalRow(row)) {
     return true;
   }
@@ -368,7 +374,7 @@ export function runsOnThisPlatform(row: LocalModelInfo): boolean {
 
 export function cachedModelsRunOnThisPlatform(): boolean {
   const platform = usePlatformStore.getState();
-  return !platform.fetched || !platform.isChatOnly();
+  return !(platform.fetched && platform.isChatOnly());
 }
 
 export function isAutoLoadableLocalRow(
@@ -462,7 +468,9 @@ export async function resolveAutoLoadCandidate(
     return isSkipped(candidate) ? null : candidate;
   }
   type VariantType = GgufVariantDetail;
-  const downloaded: VariantType[] = ((await source.listVariants()) as VariantType[])
+  const downloaded: VariantType[] = (
+    (await source.listVariants()) as VariantType[]
+  )
     .filter(
       (variant: VariantType) =>
         variant.downloaded &&
@@ -473,13 +481,19 @@ export async function resolveAutoLoadCandidate(
   const wanted = rememberedVariant?.trim().toLowerCase();
   const ordered = wanted
     ? [
-        ...downloaded.filter((v: VariantType) => v.quant?.toLowerCase() === wanted),
-        ...downloaded.filter((v: VariantType) => v.quant?.toLowerCase() !== wanted),
+        ...downloaded.filter(
+          (v: VariantType) => v.quant?.toLowerCase() === wanted,
+        ),
+        ...downloaded.filter(
+          (v: VariantType) => v.quant?.toLowerCase() !== wanted,
+        ),
       ]
     : downloaded;
   for (const variant of ordered) {
     const candidate = build(variant.quant);
-    if (!isSkipped(candidate)) return candidate;
+    if (!isSkipped(candidate)) {
+      return candidate;
+    }
   }
   return null;
 }
@@ -489,7 +503,9 @@ export const DEFAULT_CHAT_MODEL_VARIANT = "UD-Q4_K_XL";
 export const DEFAULT_CHAT_MODEL_LABEL = "Gemma 4 E2B";
 
 export function formatDownloadBytes(bytes: number): string {
-  if (!(bytes > 0)) return "";
+  if (!(bytes > 0)) {
+    return "";
+  }
   const gb = bytes / 1024 ** 3;
   return gb >= 1
     ? `${gb.toFixed(1)} GB`
@@ -510,7 +526,9 @@ export async function ensureDefaultModelDownloaded(
     const variant = listing.variants.find(
       (entry) => entry.quant?.toLowerCase() === variantKey,
     );
-    if (variant?.downloaded && variant.partial !== true) return "ready";
+    if (variant?.downloaded && variant.partial !== true) {
+      return "ready";
+    }
     expectedBytes = variant?.download_size_bytes || variant?.size_bytes || 0;
   } catch {
     // Sizing is cosmetic
@@ -519,7 +537,9 @@ export async function ensureDefaultModelDownloaded(
 
   const prepared = await prepareHfTokenForUse(hfToken);
   abortSignal?.throwIfAborted();
-  if (!prepared.proceed) return "cancelled";
+  if (!prepared.proceed) {
+    return "cancelled";
+  }
 
   const request = {
     kind: DOWNLOAD_KIND.MODEL,
@@ -539,8 +559,12 @@ export async function ensureDefaultModelDownloaded(
       request.repoId,
       request.variant,
     );
-    if (!active) return false;
-    if (cancelInFlight || active.state === "cancelling") return true;
+    if (!active) {
+      return false;
+    }
+    if (cancelInFlight || active.state === "cancelling") {
+      return true;
+    }
     cancelInFlight = true;
     cancelEverIssued = true;
     void downloadManager.cancel(active.key).finally(() => {
@@ -553,10 +577,7 @@ export async function ensureDefaultModelDownloaded(
     issueCancel();
   };
   const totalLabel = formatDownloadBytes(expectedBytes);
-  const description =
-    `Sparta couldn’t find an existing model. Sparta is now getting ` +
-    `${DEFAULT_CHAT_MODEL_LABEL} ready for use. You can stop the download or ` +
-    `manage models later in the 'Model hub'`;
+  const description = `Sparta couldn’t find an existing model. Sparta is now getting ${DEFAULT_CHAT_MODEL_LABEL} ready for use. You can stop the download or manage models later in the 'Model hub'`;
   setToast(
     `Getting ${DEFAULT_CHAT_MODEL_LABEL} ready`,
     description,
@@ -570,9 +591,13 @@ export async function ensureDefaultModelDownloaded(
     let settled = false;
     const cleanups: Array<() => void> = [];
     const finish = (outcome: "ready" | "cancelled" | "failed"): void => {
-      if (settled) return;
+      if (settled) {
+        return;
+      }
       settled = true;
-      for (const cleanup of cleanups) cleanup();
+      for (const cleanup of cleanups) {
+        cleanup();
+      }
       resolve(outcome);
     };
 
@@ -589,15 +614,23 @@ export async function ensureDefaultModelDownloaded(
     cleanups.push(
       useDownloadManagerStore.subscribe((state) => {
         const job = state.jobs[jobKey];
-        if (!job) return;
-        if (cancelRequested) {
-          if (!cancelEverIssued) issueCancel();
+        if (!job) {
           return;
         }
-        if (job.state === "cancelling") return;
+        if (cancelRequested) {
+          if (!cancelEverIssued) {
+            issueCancel();
+          }
+          return;
+        }
+        if (job.state === "cancelling") {
+          return;
+        }
         const done = formatDownloadBytes(job.downloadedBytes);
         const total = formatDownloadBytes(job.expectedBytes) || totalLabel;
-        if (!done || !total) return;
+        if (!(done && total)) {
+          return;
+        }
         setToast(
           `Getting ${DEFAULT_CHAT_MODEL_LABEL} ready (${done} of ${total})`,
           description,
@@ -615,7 +648,9 @@ export async function ensureDefaultModelDownloaded(
     void downloadManager.requestStart(request).then(
       (outcome) => {
         if (outcome === "started") {
-          if (cancelRequested && !issueCancel()) finish("cancelled");
+          if (cancelRequested && !issueCancel()) {
+            finish("cancelled");
+          }
           return;
         }
         if (cancelRequested) {
@@ -646,7 +681,9 @@ export function waitForModelReady(abortSignal?: AbortSignal): Promise<void> {
   });
 }
 
-export async function autoLoadSmallestModel(options?: AutoLoadOptions): Promise<{
+export async function autoLoadSmallestModel(
+  options?: AutoLoadOptions,
+): Promise<{
   loaded: boolean;
   blockedByTrustRemoteCode: boolean;
   loadFailureReported?: boolean;
@@ -682,7 +719,9 @@ export async function autoLoadSmallestModel(options?: AutoLoadOptions): Promise<
     description: string,
     onCancel?: () => void,
   ): void => {
-    if (autoLoadToastDismissed) return;
+    if (autoLoadToastDismissed) {
+      return;
+    }
     toast.message(message, {
       id: toastId,
       description,
@@ -1156,7 +1195,9 @@ export async function autoLoadSmallestModel(options?: AutoLoadOptions): Promise<
     const inventoryIncomplete = inventory.some((r) => r.status === "rejected");
     const cachedInventoryFailed =
       ggufSettled.status === "rejected" || modelsSettled.status === "rejected";
-    if (inventoryIncomplete) hadNonTrustFailure = true;
+    if (inventoryIncomplete) {
+      hadNonTrustFailure = true;
+    }
 
     const sources = orderAutoLoadSources(
       buildAutoLoadSources(
@@ -1175,9 +1216,13 @@ export async function autoLoadSmallestModel(options?: AutoLoadOptions): Promise<
 
     const candidateResolvedFor = new Set<string>();
     for (const source of sources) {
-      if (autoLoadCancelled || loadAttempts >= MAX_AUTO_LOAD_ATTEMPTS) break;
+      if (autoLoadCancelled || loadAttempts >= MAX_AUTO_LOAD_ATTEMPTS) {
+        break;
+      }
       const sourceKey = autoLoadSourceKey(source);
-      if (candidateResolvedFor.has(sourceKey)) continue;
+      if (candidateResolvedFor.has(sourceKey)) {
+        continue;
+      }
       const isRemembered = lastLoaded
         ? isRememberedAutoLoadSource(source, lastLoaded)
         : false;
@@ -1197,7 +1242,9 @@ export async function autoLoadSmallestModel(options?: AutoLoadOptions): Promise<
             isTried,
           );
           options?.abortSignal?.throwIfAborted();
-          if (!candidate) break;
+          if (!candidate) {
+            break;
+          }
           candidateResolvedFor.add(sourceKey);
           updateAutoLoadToast(
             isRemembered ? "Loading last used model…" : "Loading a model…",
@@ -1226,7 +1273,7 @@ export async function autoLoadSmallestModel(options?: AutoLoadOptions): Promise<
       }
     }
 
-    if (!autoLoadCancelled && !inventoryIncomplete && sources.length === 0) {
+    if (!(autoLoadCancelled || inventoryIncomplete) && sources.length === 0) {
       const outcome = await ensureDefaultModelDownloaded(
         hfToken,
         options?.abortSignal,
@@ -1287,7 +1334,9 @@ export async function autoLoadSmallestModel(options?: AutoLoadOptions): Promise<
   }
 }
 
-export async function resolveQueuedEmptyLocalModel(abortSignal: AbortSignal): Promise<{
+export async function resolveQueuedEmptyLocalModel(
+  abortSignal: AbortSignal,
+): Promise<{
   loaded: boolean;
   blockedByTrustRemoteCode: boolean;
   loadFailureReported?: boolean;

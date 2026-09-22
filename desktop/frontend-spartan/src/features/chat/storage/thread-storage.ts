@@ -1,28 +1,28 @@
 import {
+  type ChatThreadWritePatch,
+  type UpdateChatThreadOptions,
   batchListChatMessages,
   deleteChatThreads,
   getChatThread,
   listChatThreads,
   saveChatThread,
   updateChatThread,
-  type ChatThreadWritePatch,
-  type UpdateChatThreadOptions,
 } from "../api/chat-api";
 import { db } from "../db";
+import { useChatRuntimeStore } from "../stores/chat-runtime-store";
 import type { MessageRecord, ModelType, ThreadRecord } from "../types";
 import {
   isChatThreadDeleted,
   markChatThreadsDeleted,
 } from "../utils/chat-thread-tombstones";
-import { listStoredChatMessages } from "./message-storage";
 import { isAssistantLocalThreadId } from "../utils/thread-ids";
-import { useChatRuntimeStore } from "../stores/chat-runtime-store";
+import { listStoredChatMessages } from "./message-storage";
 import {
   awaitStoredChatThreadWrites,
   failedThreadRecordByThreadId,
   isThreadIncognito,
-  trackStoredChatThreadRecord,
   threadRecordWrites,
+  trackStoredChatThreadRecord,
 } from "./storage-coordinator";
 
 export type StoredChatThreadReadResult = {
@@ -89,7 +89,9 @@ export async function getStoredChatThreadReadResult(
   } catch (error) {
     // Si no es un ID local, buscar en legacy Dexie
     if (!isAssistantLocalThreadId(threadId)) {
-      const legacyThread = await db.threads.get(threadId).catch(() => undefined);
+      const legacyThread = await db.threads
+        .get(threadId)
+        .catch(() => undefined);
       if (legacyThread && !isChatThreadDeleted(legacyThread.id)) {
         return { thread: legacyThread, cacheable: false };
       }
@@ -122,9 +124,15 @@ export async function ensureStoredChatThread(
   fallback?: ThreadRecord,
   options: { bounded?: boolean; signal?: AbortSignal } = {},
 ): Promise<ThreadRecord | undefined> {
-  if (isThreadIncognito(threadId)) return undefined;
-  if (isChatThreadDeleted(threadId)) return undefined;
-  if (isAssistantLocalThreadId(threadId)) return fallback;
+  if (isThreadIncognito(threadId)) {
+    return undefined;
+  }
+  if (isChatThreadDeleted(threadId)) {
+    return undefined;
+  }
+  if (isAssistantLocalThreadId(threadId)) {
+    return fallback;
+  }
 
   await awaitStoredChatThreadWrites(threadId);
 
@@ -134,7 +142,9 @@ export async function ensureStoredChatThread(
       bounded: options.bounded,
       signal: options.signal,
     });
-    if (backendThread) return backendThread;
+    if (backendThread) {
+      return backendThread;
+    }
   } catch (error) {
     if (fallback && !isChatThreadDeleted(fallback.id)) {
       return fallback;
@@ -160,7 +170,7 @@ async function retryFailedThreadRecord(
   threadId: string,
 ): Promise<ThreadRecord | undefined> {
   const createRecord = failedThreadRecordByThreadId.get(threadId);
-  if (!createRecord && !threadRecordWrites.hasPending(threadId)) {
+  if (!(createRecord || threadRecordWrites.hasPending(threadId))) {
     return undefined;
   }
   if (createRecord) {
@@ -175,7 +185,9 @@ async function retryFailedThreadRecord(
 export async function saveStoredChatThread(
   thread: ThreadRecord,
 ): Promise<ThreadRecord> {
-  if (isThreadIncognito(thread.id)) return thread;
+  if (isThreadIncognito(thread.id)) {
+    return thread;
+  }
   const saved = await saveChatThread(thread);
   await db.threads.put(saved).catch(() => {});
   return saved;
@@ -186,9 +198,13 @@ export async function updateStoredChatThread(
   patch: ChatThreadWritePatch,
   options: UpdateChatThreadOptions = {},
 ): Promise<ThreadRecord | undefined> {
-  if (isThreadIncognito(threadId)) return undefined;
+  if (isThreadIncognito(threadId)) {
+    return undefined;
+  }
   const updated = await updateChatThread(threadId, patch, options);
-  await db.threads.update(threadId, patch as Partial<ThreadRecord>).catch(() => {});
+  await db.threads
+    .update(threadId, patch as Partial<ThreadRecord>)
+    .catch(() => {});
   return updated;
 }
 
@@ -207,8 +223,13 @@ export async function deleteStoredChatThreads(
 export async function listStoredChatThreadsWithMessages(
   args: ThreadListArgs = {},
 ): Promise<ThreadRecord[]> {
-  const threads = await listStoredChatThreads({ ...args, requireMessages: true });
-  if (threads.length === 0) return [];
+  const threads = await listStoredChatThreads({
+    ...args,
+    requireMessages: true,
+  });
+  if (threads.length === 0) {
+    return [];
+  }
   const threadIds = threads.map((t) => t.id);
   let backendByThread: Map<string, MessageRecord[]>;
   try {
@@ -240,7 +261,9 @@ export async function listStoredChatThreadsWithMessages(
 
   if (orphanDexieIds.length > 0) {
     // Purge empty orphan threads from Dexie so phantom rows never accumulate
-    Promise.all(orphanDexieIds.map((id) => db.threads.delete(id).catch(() => {}))).catch(() => {});
+    Promise.all(
+      orphanDexieIds.map((id) => db.threads.delete(id).catch(() => {})),
+    ).catch(() => {});
   }
 
   return entries.filter((e) => e.hasContent).map((e) => e.thread);

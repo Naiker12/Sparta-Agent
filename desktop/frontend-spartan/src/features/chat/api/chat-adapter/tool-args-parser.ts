@@ -10,13 +10,17 @@ export function parseLiveToolArgs(
   let candidate = raw.trimStart();
   if (!candidate.startsWith("{")) {
     const brace = candidate.indexOf("{");
-    if (brace < 0) return null;
+    if (brace < 0) {
+      return null;
+    }
     candidate = candidate.slice(brace);
   }
   const parsed = parsePartialJsonObject(candidate) as
     | Record<string, unknown>
     | undefined;
-  if (!parsed || typeof parsed !== "object") return null;
+  if (!parsed || typeof parsed !== "object") {
+    return null;
+  }
 
   const inner = parsed.arguments ?? parsed.parameters;
   if (typeof parsed.name === "string" && inner !== undefined) {

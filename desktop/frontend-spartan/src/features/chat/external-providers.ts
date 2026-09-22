@@ -1,8 +1,4 @@
-
-import type {
-  ProviderAuthKind,
-  ProviderAuthStatus,
-} from "./api/providers-api";
+import type { ProviderAuthKind, ProviderAuthStatus } from "./api/providers-api";
 
 export interface ExternalProviderConfig {
   id: string;
@@ -62,7 +58,9 @@ const PROMPT_CACHING_PROVIDER_TYPES = new Set(["openai", "anthropic"]);
 export function supportsProviderPromptCaching(
   providerType: string | null | undefined,
 ): boolean {
-  return providerType != null && PROMPT_CACHING_PROVIDER_TYPES.has(providerType);
+  return (
+    providerType != null && PROMPT_CACHING_PROVIDER_TYPES.has(providerType)
+  );
 }
 
 /**
@@ -83,7 +81,10 @@ export function supportsProviderPromptCacheTtl(
 const PROMPT_CACHE_TTL_VALUES = new Set<"5m" | "1h">(["5m", "1h"]);
 
 export function isPromptCacheTtl(value: unknown): value is "5m" | "1h" {
-  return typeof value === "string" && PROMPT_CACHE_TTL_VALUES.has(value as "5m" | "1h");
+  return (
+    typeof value === "string" &&
+    PROMPT_CACHE_TTL_VALUES.has(value as "5m" | "1h")
+  );
 }
 
 // Provider types exposing the connection-level "reasoning model" toggle.
@@ -116,12 +117,17 @@ const VISION_CAPABLE_PROVIDER_TYPES = new Set<string>([
 export function providerTypeSupportsVision(
   providerType: string | null | undefined,
 ): boolean | null {
-  if (providerType == null) return null;
-  if (NON_VISION_PROVIDER_TYPES.has(providerType)) return false;
-  if (VISION_CAPABLE_PROVIDER_TYPES.has(providerType)) return true;
+  if (providerType == null) {
+    return null;
+  }
+  if (NON_VISION_PROVIDER_TYPES.has(providerType)) {
+    return false;
+  }
+  if (VISION_CAPABLE_PROVIDER_TYPES.has(providerType)) {
+    return true;
+  }
   return null;
 }
-
 
 const REGISTRY_MODEL_CAPABILITIES = new Map<
   string,
@@ -133,9 +139,13 @@ const REGISTRY_MODEL_CAPABILITIES_KEY =
 let registryCapabilitiesHydrated = false;
 
 function hydrateProviderModelCapabilities(): void {
-  if (registryCapabilitiesHydrated) return;
+  if (registryCapabilitiesHydrated) {
+    return;
+  }
   registryCapabilitiesHydrated = true;
-  if (!canUseStorage()) return;
+  if (!canUseStorage()) {
+    return;
+  }
   try {
     const parsed = JSON.parse(
       localStorage.getItem(REGISTRY_MODEL_CAPABILITIES_KEY) ?? "{}",
@@ -154,7 +164,9 @@ function hydrateProviderModelCapabilities(): void {
 }
 
 function persistProviderModelCapabilities(): void {
-  if (!canUseStorage()) return;
+  if (!canUseStorage()) {
+    return;
+  }
   try {
     localStorage.setItem(
       REGISTRY_MODEL_CAPABILITIES_KEY,
@@ -167,11 +179,16 @@ function persistProviderModelCapabilities(): void {
 
 export function setProviderModelCapabilities(
   providerType: string,
-  capabilities: Record<string, { vision?: boolean; studio_tools?: boolean }> | undefined,
+  capabilities:
+    | Record<string, { vision?: boolean; studio_tools?: boolean }>
+    | undefined,
 ): void {
   hydrateProviderModelCapabilities();
-  if (capabilities) REGISTRY_MODEL_CAPABILITIES.set(providerType, capabilities);
-  else REGISTRY_MODEL_CAPABILITIES.delete(providerType);
+  if (capabilities) {
+    REGISTRY_MODEL_CAPABILITIES.set(providerType, capabilities);
+  } else {
+    REGISTRY_MODEL_CAPABILITIES.delete(providerType);
+  }
   persistProviderModelCapabilities();
 }
 
@@ -189,7 +206,9 @@ export function setProviderModelCapabilities(
  * is the safe direction anyway (an unknown capability reads as null, which every
  * caller treats as "not capable").
  */
-export function pruneProviderModelCapabilities(knownProviderTypes: Iterable<string>): void {
+export function pruneProviderModelCapabilities(
+  knownProviderTypes: Iterable<string>,
+): void {
   hydrateProviderModelCapabilities();
   const known = new Set(knownProviderTypes);
   let removed = false;
@@ -199,23 +218,24 @@ export function pruneProviderModelCapabilities(knownProviderTypes: Iterable<stri
       removed = true;
     }
   }
-  if (removed) persistProviderModelCapabilities();
+  if (removed) {
+    persistProviderModelCapabilities();
+  }
 }
-
 
 export function providerModelSupportsVision(
   providerType: string | null | undefined,
   modelId: string | null | undefined,
 ): boolean | null {
-
   hydrateProviderModelCapabilities();
   if (providerType && modelId) {
     const capability = REGISTRY_MODEL_CAPABILITIES.get(providerType)?.[modelId];
-    if (typeof capability?.vision === "boolean") return capability.vision;
+    if (typeof capability?.vision === "boolean") {
+      return capability.vision;
+    }
   }
   return providerTypeSupportsVision(providerType);
 }
-
 
 /** Provider-level capability key. Self-hosted model ids are user-supplied, so
  * there is no per-model entry to look up: the registry declares the capability
@@ -226,14 +246,19 @@ export function providerModelSupportsStudioTools(
   providerType: string | null | undefined,
   modelId: string | null | undefined,
 ): boolean | null {
-  if (!providerType) return null;
+  if (!providerType) {
+    return null;
+  }
   hydrateProviderModelCapabilities();
   const capabilities = REGISTRY_MODEL_CAPABILITIES.get(providerType);
   if (modelId) {
     const value = capabilities?.[modelId]?.studio_tools;
-    if (typeof value === "boolean") return value;
+    if (typeof value === "boolean") {
+      return value;
+    }
   }
-  const providerDefault = capabilities?.[PROVIDER_CAPABILITY_WILDCARD]?.studio_tools;
+  const providerDefault =
+    capabilities?.[PROVIDER_CAPABILITY_WILDCARD]?.studio_tools;
   return typeof providerDefault === "boolean" ? providerDefault : null;
 }
 
@@ -247,13 +272,20 @@ export function externalModelSupportsStudioTools(
   checkpoint: string | null | undefined,
 ): boolean {
   const selection = parseExternalModelId(checkpoint);
-  if (!selection) return false;
+  if (!selection) {
+    return false;
+  }
   const provider = loadExternalProviders().find(
     (candidate) => candidate.id === selection.providerId,
   );
-  if (!provider) return false;
+  if (!provider) {
+    return false;
+  }
   return (
-    providerModelSupportsStudioTools(provider.providerType, selection.modelId) === true
+    providerModelSupportsStudioTools(
+      provider.providerType,
+      selection.modelId,
+    ) === true
   );
 }
 
@@ -288,7 +320,9 @@ export function supportsProviderMaxOutputTokens(
   uiProviderType: string | null | undefined,
   backendProviderType: string | null | undefined,
 ): boolean {
-  if (!uiProviderType) return false;
+  if (!uiProviderType) {
+    return false;
+  }
   return (
     uiProviderType !== OPENAI_CODEX_PROVIDER_TYPE &&
     backendProviderType !== OPENAI_CODEX_PROVIDER_TYPE
@@ -296,6 +330,18 @@ export function supportsProviderMaxOutputTokens(
 }
 
 export const CUSTOM_PROVIDER_PRESETS = [
+  {
+    providerType: "ollama",
+    displayName: "Ollama",
+    baseUrlPlaceholder: "http://localhost:11434/v1",
+    modelIdsPlaceholder: "llama3.2\nqwen2.5-coder:7b",
+  },
+  {
+    providerType: "lmstudio",
+    displayName: "LM Studio",
+    baseUrlPlaceholder: "http://localhost:1234/v1",
+    modelIdsPlaceholder: "local-model-id",
+  },
   {
     providerType: "llama_cpp",
     displayName: "llama.cpp",
@@ -307,12 +353,6 @@ export const CUSTOM_PROVIDER_PRESETS = [
     displayName: "vLLM",
     baseUrlPlaceholder: "https://my-vllm-server.com/v1",
     modelIdsPlaceholder: "openai/gpt-oss-20b\nQwen/Qwen3-14B",
-  },
-  {
-    providerType: "ollama",
-    displayName: "Ollama",
-    baseUrlPlaceholder: "http://localhost:11434/v1",
-    modelIdsPlaceholder: "gpt-oss:20b\nqwen3:14b",
   },
 ] as const;
 
@@ -349,7 +389,9 @@ const CUSTOM_PROVIDER_MODEL_IDS_PLACEHOLDERS: Record<string, string> = {
 export function isCustomProviderType(
   providerType: string | null | undefined,
 ): boolean {
-  if (!providerType) return false;
+  if (!providerType) {
+    return false;
+  }
   return providerType in CUSTOM_PROVIDER_LABELS;
 }
 
@@ -357,6 +399,7 @@ export function isCustomProviderType(
 const REMOTE_MODEL_CATALOG_CUSTOM_PROVIDER_TYPES = new Set([
   LEGACY_CUSTOM_PROVIDER_TYPE,
   "ollama",
+  "lmstudio",
   "vllm",
   "llama_cpp",
 ]);
@@ -375,22 +418,28 @@ export function supportsRemoteModelCatalog(
 export function customPresetSkipsApiKeyField(
   providerType: string | null | undefined,
 ): boolean {
-  return providerType === "llama_cpp";
+  return providerType === "llama_cpp" || providerType === "lmstudio";
 }
 
 /** Catalog load plus optional manual model IDs. */
 export function allowsManualModelIdsWithCatalog(
   providerType: string | null | undefined,
 ): boolean {
-  if (!providerType) return false;
-  if (providerType === "openrouter") return true;
+  if (!providerType) {
+    return false;
+  }
+  if (providerType === "openrouter") {
+    return true;
+  }
   return supportsRemoteModelCatalog(providerType);
 }
 
 export function customProviderDisplayName(
   providerType: string | null | undefined,
 ): string {
-  if (!providerType) return CUSTOM_PROVIDER_DISPLAY_NAME;
+  if (!providerType) {
+    return CUSTOM_PROVIDER_DISPLAY_NAME;
+  }
   return CUSTOM_PROVIDER_LABELS[providerType] ?? providerType;
 }
 
@@ -428,13 +477,21 @@ export function toExternalBackendProviderType(
 export function toExternalBackendProviderType(
   providerType: string | null | undefined,
 ): string | undefined {
-  if (!providerType) return undefined;
+  if (!providerType) {
+    return undefined;
+  }
   // vLLM's /v1/responses applies the loaded model's chat template, which 400s on
   // strict-alternation templates (e.g. Gemma 3). Pass the type through so the
   // backend routes vLLM to /v1/chat/completions instead of the Responses path.
-  if (providerType === "vllm") return "vllm";
-  if (providerType === "ollama") return "ollama";
-  if (providerType === "llama_cpp") return "llama_cpp";
+  if (providerType === "vllm") {
+    return "vllm";
+  }
+  if (providerType === "ollama") {
+    return "ollama";
+  }
+  if (providerType === "llama_cpp") {
+    return "llama_cpp";
+  }
   // Generic custom servers are OpenAI-compatible, but should still use the
   // chat-completions backend path instead of OpenAI's Responses API route.
   if (providerType === LEGACY_CUSTOM_PROVIDER_TYPE) {
@@ -460,20 +517,29 @@ export function isExternalModelId(
   return typeof value === "string" && value.startsWith(EXTERNAL_MODEL_PREFIX);
 }
 
-export function buildExternalModelId(providerId: string, modelId: string): string {
+export function buildExternalModelId(
+  providerId: string,
+  modelId: string,
+): string {
   return `${EXTERNAL_MODEL_PREFIX}${providerId}::${encodeURIComponent(modelId)}`;
 }
 
 export function parseExternalModelId(
   value: string | null | undefined,
 ): { providerId: string; modelId: string } | null {
-  if (!isExternalModelId(value)) return null;
+  if (!isExternalModelId(value)) {
+    return null;
+  }
   const payload = value.slice(EXTERNAL_MODEL_PREFIX.length);
   const separator = payload.indexOf("::");
-  if (separator < 0) return null;
+  if (separator < 0) {
+    return null;
+  }
   const providerId = payload.slice(0, separator);
   const encodedModelId = payload.slice(separator + 2);
-  if (!providerId || !encodedModelId) return null;
+  if (!(providerId && encodedModelId)) {
+    return null;
+  }
   try {
     return { providerId, modelId: decodeURIComponent(encodedModelId) };
   } catch {
@@ -481,8 +547,12 @@ export function parseExternalModelId(
   }
 }
 
-function isExternalProviderConfig(value: unknown): value is ExternalProviderConfig {
-  if (!value || typeof value !== "object") return false;
+function isExternalProviderConfig(
+  value: unknown,
+): value is ExternalProviderConfig {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
   const maybe = value as Partial<ExternalProviderConfig>;
   return (
     typeof maybe.id === "string" &&
@@ -494,11 +564,15 @@ function isExternalProviderConfig(value: unknown): value is ExternalProviderConf
 }
 
 function mapLegacyPresetToProviderType(presetId: string): string {
-  if (presetId === "google") return "gemini";
+  if (presetId === "google") {
+    return "gemini";
+  }
   return presetId;
 }
 
-function normalizeProvider(raw: ExternalProviderConfig): ExternalProviderConfig {
+function normalizeProvider(
+  raw: ExternalProviderConfig,
+): ExternalProviderConfig {
   const providerType = raw.providerType.trim();
   return {
     ...raw,
@@ -539,7 +613,9 @@ function normalizeProvider(raw: ExternalProviderConfig): ExternalProviderConfig 
 }
 
 function isCompleteProvider(provider: ExternalProviderConfig): boolean {
-  if (!provider.id || !provider.name || !provider.providerType) return false;
+  if (!(provider.id && provider.name && provider.providerType)) {
+    return false;
+  }
   return true;
 }
 
@@ -554,16 +630,22 @@ type LegacyProviderConfig = {
 };
 
 function fromUnknownProvider(value: unknown): ExternalProviderConfig | null {
-  if (!value || typeof value !== "object") return null;
+  if (!value || typeof value !== "object") {
+    return null;
+  }
   if (isExternalProviderConfig(value)) {
     return value;
   }
   const legacy = value as LegacyProviderConfig;
   const id = typeof legacy.id === "string" ? legacy.id : "";
   const presetId = typeof legacy.presetId === "string" ? legacy.presetId : "";
-  if (!id || !presetId || presetId === "custom") return null;
+  if (!(id && presetId) || presetId === "custom") {
+    return null;
+  }
   const providerType = mapLegacyPresetToProviderType(presetId);
-  if (!providerType) return null;
+  if (!providerType) {
+    return null;
+  }
   return {
     id,
     providerType,
@@ -572,16 +654,22 @@ function fromUnknownProvider(value: unknown): ExternalProviderConfig | null {
     models: Array.isArray(legacy.models)
       ? legacy.models.filter((item): item is string => typeof item === "string")
       : [],
-    createdAt: typeof legacy.createdAt === "number" ? legacy.createdAt : Date.now(),
-    updatedAt: typeof legacy.updatedAt === "number" ? legacy.updatedAt : Date.now(),
+    createdAt:
+      typeof legacy.createdAt === "number" ? legacy.createdAt : Date.now(),
+    updatedAt:
+      typeof legacy.updatedAt === "number" ? legacy.updatedAt : Date.now(),
   };
 }
 
 export function loadConnectionsEnabled(): boolean {
-  if (!canUseStorage()) return true;
+  if (!canUseStorage()) {
+    return true;
+  }
   try {
     const raw = localStorage.getItem(CONNECTIONS_ENABLED_KEY);
-    if (raw == null) return true;
+    if (raw == null) {
+      return true;
+    }
     return raw === "true";
   } catch {
     return true;
@@ -589,7 +677,9 @@ export function loadConnectionsEnabled(): boolean {
 }
 
 export function saveConnectionsEnabled(enabled: boolean): void {
-  if (!canUseStorage()) return;
+  if (!canUseStorage()) {
+    return;
+  }
   try {
     localStorage.setItem(CONNECTIONS_ENABLED_KEY, enabled ? "true" : "false");
   } catch {
@@ -598,15 +688,23 @@ export function saveConnectionsEnabled(enabled: boolean): void {
 }
 
 export function loadExternalProviders(): ExternalProviderConfig[] {
-  if (!canUseStorage()) return [];
+  if (!canUseStorage()) {
+    return [];
+  }
   try {
     const raw = localStorage.getItem(EXTERNAL_PROVIDERS_KEY);
-    if (!raw) return [];
+    if (!raw) {
+      return [];
+    }
     const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) return [];
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
     return parsed
       .map(fromUnknownProvider)
-      .filter((provider): provider is ExternalProviderConfig => provider !== null)
+      .filter(
+        (provider): provider is ExternalProviderConfig => provider !== null,
+      )
       .map(normalizeProvider)
       .filter(isCompleteProvider);
   } catch {
@@ -614,16 +712,20 @@ export function loadExternalProviders(): ExternalProviderConfig[] {
   }
 }
 
-
-
 /** Load legacy browser keys for retry-safe backend migration. */
 function loadRawKeyMap(): Record<string, string> {
-  if (!canUseStorage()) return {};
+  if (!canUseStorage()) {
+    return {};
+  }
   try {
     const raw = localStorage.getItem(EXTERNAL_PROVIDER_KEYS_KEY);
-    if (!raw) return {};
+    if (!raw) {
+      return {};
+    }
     const parsed = JSON.parse(raw) as unknown;
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return {};
+    }
     const out: Record<string, string> = {};
     for (const [providerId, value] of Object.entries(parsed)) {
       if (typeof providerId === "string" && typeof value === "string") {
@@ -637,7 +739,9 @@ function loadRawKeyMap(): Record<string, string> {
 }
 
 function saveRawKeyMap(map: Record<string, string>): void {
-  if (!canUseStorage()) return;
+  if (!canUseStorage()) {
+    return;
+  }
   try {
     localStorage.setItem(EXTERNAL_PROVIDER_KEYS_KEY, JSON.stringify(map));
   } catch {
@@ -648,7 +752,9 @@ function saveRawKeyMap(map: Record<string, string>): void {
 export function saveExternalProviders(
   providers: ExternalProviderConfig[],
 ): void {
-  if (!canUseStorage()) return;
+  if (!canUseStorage()) {
+    return;
+  }
   try {
     localStorage.setItem(EXTERNAL_PROVIDERS_KEY, JSON.stringify(providers));
     // Legacy keys are migration input. Preserve unmatched entries until the
@@ -659,42 +765,49 @@ export function saveExternalProviders(
 }
 
 /** Retrieve a legacy provider key used only as migration/request fallback. */
-export function getExternalProviderApiKey(
-  providerId: string,
-): string {
-
+export function getExternalProviderApiKey(providerId: string): string {
   const keys = loadRawKeyMap();
   return keys[providerId] ?? "";
 }
 
-export function pruneExternalProviderApiKeys(providerIds: Iterable<string>): void {
-  if (!canUseStorage()) return;
+export function pruneExternalProviderApiKeys(
+  providerIds: Iterable<string>,
+): void {
+  if (!canUseStorage()) {
+    return;
+  }
   const retainedIds = new Set(providerIds);
   try {
     const keys = loadRawKeyMap();
     let changed = false;
     for (const providerId of Object.keys(keys)) {
-      if (retainedIds.has(providerId)) continue;
+      if (retainedIds.has(providerId)) {
+        continue;
+      }
       delete keys[providerId];
       changed = true;
     }
-    if (changed) saveRawKeyMap(keys);
+    if (changed) {
+      saveRawKeyMap(keys);
+    }
   } catch {
     // Keep legacy data untouched when storage is unavailable.
   }
 }
 
-
-
 export function removeExternalProviderApiKey(
   providerId: string,
   expectedApiKey?: string,
 ): void {
-  if (!canUseStorage()) return;
+  if (!canUseStorage()) {
+    return;
+  }
   try {
     const keys = loadRawKeyMap();
 
-    if (expectedApiKey !== undefined && keys[providerId] !== expectedApiKey) return;
+    if (expectedApiKey !== undefined && keys[providerId] !== expectedApiKey) {
+      return;
+    }
     delete keys[providerId];
     saveRawKeyMap(keys);
   } catch {

@@ -1,4 +1,3 @@
-
 /** A leaf module with no imports, so the recovery rule can be tested without
  * pulling the auth client (and the assets behind it) into the test runner. */
 

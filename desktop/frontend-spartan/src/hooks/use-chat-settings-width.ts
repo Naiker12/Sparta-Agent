@@ -1,4 +1,3 @@
-
 import { createPanelWidthStore } from "./use-panel-width.ts";
 
 /** The previous fixed 17rem, at a 16px root font size. */

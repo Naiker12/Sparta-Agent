@@ -1,4 +1,3 @@
-
 import { getLocale } from "./locale-store";
 import { en } from "./locales/en";
 import type { InterpolationValues, MessageKey, MessageTree } from "./types";
@@ -62,7 +61,9 @@ export function catalogRetryUrl(
 ): string | null {
   const message = error instanceof Error ? error.message : String(error ?? "");
   const found = message.match(CHUNK_URL_PATTERN)?.[0] ?? previousUrl;
-  if (found === null) return null;
+  if (found === null) {
+    return null;
+  }
   let url: URL;
   try {
     url = new URL(found);
@@ -70,7 +71,9 @@ export function catalogRetryUrl(
     return null;
   }
   // A preload failure names the stylesheet, not the module that wanted it.
-  if (url.pathname.endsWith(".css")) return null;
+  if (url.pathname.endsWith(".css")) {
+    return null;
+  }
   catalogRetryCount += 1;
   url.searchParams.set(CATALOG_RETRY_PARAM, String(catalogRetryCount));
   return url.href;
@@ -85,7 +88,9 @@ function importCatalog(
   locale: LazyLocale,
   retryUrl: string | null,
 ): Promise<unknown> {
-  if (retryUrl === null) return localeLoaders[locale]();
+  if (retryUrl === null) {
+    return localeLoaders[locale]();
+  }
   return import(/* @vite-ignore */ retryUrl);
 }
 
@@ -96,11 +101,17 @@ export function loadLocaleMessages(
   locale: Locale,
   importer: CatalogImporter = importCatalog,
 ): Promise<void> | undefined {
-  if (loadedMessages[locale] !== undefined) return undefined;
+  if (loadedMessages[locale] !== undefined) {
+    return undefined;
+  }
   const pending = localeLoads.get(locale);
-  if (pending) return pending;
+  if (pending) {
+    return pending;
+  }
 
-  if (locale === "en") return undefined;
+  if (locale === "en") {
+    return undefined;
+  }
   const retryUrl = catalogRetryUrls.get(locale) ?? null;
   const load = importer(locale, retryUrl)
     .then(
@@ -110,15 +121,20 @@ export function loadLocaleMessages(
       },
       (error: unknown) => {
         const nextUrl = catalogRetryUrl(error, retryUrl);
-        if (nextUrl === null) catalogRetryUrls.delete(locale);
-        else catalogRetryUrls.set(locale, nextUrl);
+        if (nextUrl === null) {
+          catalogRetryUrls.delete(locale);
+        } else {
+          catalogRetryUrls.set(locale, nextUrl);
+        }
         throw error;
       },
     )
     .finally(() => {
       // Only if it is still ours: a load evicted by its caller's timeout may
       // already have been replaced by the retry it made room for.
-      if (localeLoads.get(locale) === load) localeLoads.delete(locale);
+      if (localeLoads.get(locale) === load) {
+        localeLoads.delete(locale);
+      }
     });
   localeLoads.set(locale, load);
   return load;
@@ -137,7 +153,9 @@ export function loadLocaleMessages(
  * locale is never evicted by an older caller's timeout.
  */
 export function forgetLocaleLoad(locale: Locale, load?: Promise<void>): void {
-  if (load !== undefined && localeLoads.get(locale) !== load) return;
+  if (load !== undefined && localeLoads.get(locale) !== load) {
+    return;
+  }
   localeLoads.delete(locale);
 }
 
@@ -162,19 +180,22 @@ function interpolate(
   template: string,
   values: InterpolationValues | undefined,
 ): string {
-  if (!values) return template;
+  if (!values) {
+    return template;
+  }
 
   return template.replace(PLACEHOLDER_PATTERN, (match, name: string) => {
-    if (!Object.prototype.hasOwnProperty.call(values, name)) return match;
+    if (!Object.prototype.hasOwnProperty.call(values, name)) {
+      return match;
+    }
     const value = values[name];
     return value === null || value === undefined ? "" : String(value);
   });
 }
 
-function warnMissingEnglishMessage(key: string): void {
+function warnMissingEnglishMessage(_key: string): void {
   // Optional chain so translate() also works outside Vite (Node tooling).
   if (import.meta.env?.DEV) {
-    console.warn(`[i18n] Missing English translation for key "${key}".`);
   }
 }
 

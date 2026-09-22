@@ -5,14 +5,46 @@
  */
 
 import {
-  Fragment,
-  useCallback,
-  useContext,
-  useState,
-  type FC,
-  type ReactNode,
-} from "react";
-import { Columns2Icon, GlobeIcon, MoreHorizontalIcon, PlusIcon } from "lucide-react";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  CONVERSATION_MARKDOWN_LABEL,
+  PLUS_MENU_ORDER,
+  type PlusMenuItemId,
+  usePlusMenuPrefsStore,
+} from "@/features/chat";
+import {
+  type PromptEntry,
+  listPromptEntries,
+} from "@/features/chat/api/prompts-api";
+import { BypassPermissionsMenuItem } from "@/features/chat/bypass-permissions-menu-item";
+import { NewProjectDialog } from "@/features/chat/components/new-project-dialog";
+import {
+  parseExternalModelId,
+  providerModelSupportsStudioTools,
+} from "@/features/chat/external-providers";
+import { useChatProjects } from "@/features/chat/hooks/use-chat-projects";
+import {
+  PromptStorageDialog,
+  exportConversationCsv,
+  exportConversationMarkdown,
+  exportConversationRawJsonl,
+  exportConversationShareGPT,
+} from "@/features/chat/prompt-storage/prompt-storage-dialog";
+import { useChatRuntimeStore } from "@/features/chat/stores/chat-runtime-store";
+import { useExternalProvidersStore } from "@/features/chat/stores/external-providers-store";
+import { applyQwenThinkingParams } from "@/features/chat/utils/qwen-params";
+import { useT } from "@/i18n";
+import { isDownloadCancelled } from "@/lib/native-files";
+import { useAui, useAuiState } from "@assistant-ui/react";
 import {
   AttachmentIcon,
   Bookmark02Icon,
@@ -27,50 +59,22 @@ import {
   Tick02Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { useAui, useAuiState } from "@assistant-ui/react";
 import { useNavigate } from "@tanstack/react-router";
+import {
+  Columns2Icon,
+  GlobeIcon,
+  MoreHorizontalIcon,
+  PlusIcon,
+} from "lucide-react";
+import {
+  type FC,
+  Fragment,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useState,
+} from "react";
 import { toast } from "sonner";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  CONVERSATION_MARKDOWN_LABEL,
-  PLUS_MENU_ORDER,
-  usePlusMenuPrefsStore,
-  type PlusMenuItemId,
-} from "@/features/chat";
-import {
-  listPromptEntries,
-  type PromptEntry,
-} from "@/features/chat/api/prompts-api";
-import { BypassPermissionsMenuItem } from "@/features/chat/bypass-permissions-menu-item";
-import { NewProjectDialog } from "@/features/chat/components/new-project-dialog";
-import {
-  parseExternalModelId,
-  providerModelSupportsStudioTools,
-} from "@/features/chat/external-providers";
-import { useChatProjects } from "@/features/chat/hooks/use-chat-projects";
-import { useRagToolDisabled } from "@/features/chat/hooks/use-rag-tool-disabled";
-import {
-  PromptStorageDialog,
-  exportConversationCsv,
-  exportConversationMarkdown,
-  exportConversationRawJsonl,
-  exportConversationShareGPT,
-} from "@/features/chat/prompt-storage/prompt-storage-dialog";
-import { useChatRuntimeStore } from "@/features/chat/stores/chat-runtime-store";
-import { useExternalProvidersStore } from "@/features/chat/stores/external-providers-store";
-import { isDownloadCancelled } from "@/lib/native-files";
-import { applyQwenThinkingParams } from "@/features/chat/utils/qwen-params";
-import { useT } from "@/i18n";
 import { PromptQueueContext } from "./prompt-queue-manager";
 
 export const AUDIO_ACCEPT_TOKEN_RE =
@@ -315,9 +319,13 @@ export const ComposerToolsMenu: FC<ComposerToolsMenuProps> = ({
         >
           <DropdownMenuItem
             onSelect={() => {
-              if (!activeThreadId) return;
+              if (!activeThreadId) {
+                return;
+              }
               exportConversationRawJsonl(activeThreadId).catch((error) => {
-                if (!isDownloadCancelled(error)) toast.error("Export failed.");
+                if (!isDownloadCancelled(error)) {
+                  toast.error("Export failed.");
+                }
               });
             }}
           >
@@ -325,9 +333,13 @@ export const ComposerToolsMenu: FC<ComposerToolsMenuProps> = ({
           </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={() => {
-              if (!activeThreadId) return;
+              if (!activeThreadId) {
+                return;
+              }
               exportConversationCsv(activeThreadId).catch((error) => {
-                if (!isDownloadCancelled(error)) toast.error("Export failed.");
+                if (!isDownloadCancelled(error)) {
+                  toast.error("Export failed.");
+                }
               });
             }}
           >
@@ -335,9 +347,13 @@ export const ComposerToolsMenu: FC<ComposerToolsMenuProps> = ({
           </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={() => {
-              if (!activeThreadId) return;
+              if (!activeThreadId) {
+                return;
+              }
               exportConversationShareGPT(activeThreadId).catch((error) => {
-                if (!isDownloadCancelled(error)) toast.error("Export failed.");
+                if (!isDownloadCancelled(error)) {
+                  toast.error("Export failed.");
+                }
               });
             }}
           >
@@ -345,9 +361,13 @@ export const ComposerToolsMenu: FC<ComposerToolsMenuProps> = ({
           </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={() => {
-              if (!activeThreadId) return;
+              if (!activeThreadId) {
+                return;
+              }
               exportConversationMarkdown(activeThreadId).catch((error) => {
-                if (!isDownloadCancelled(error)) toast.error("Export failed.");
+                if (!isDownloadCancelled(error)) {
+                  toast.error("Export failed.");
+                }
               });
             }}
           >
@@ -431,7 +451,9 @@ export const ComposerToolsMenu: FC<ComposerToolsMenuProps> = ({
       />
       <DropdownMenu
         onOpenChange={(open) => {
-          if (open) void refreshRecentPrompts();
+          if (open) {
+            void refreshRecentPrompts();
+          }
         }}
       >
         <DropdownMenuTrigger asChild={true}>

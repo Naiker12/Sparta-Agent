@@ -1,4 +1,3 @@
-
 /** Wire shape of `transformers_upgrade` from /api/inference/validate. */
 export interface TransformersUpgradeInfo {
   /** config.json model_type unknown to installed transformers. */

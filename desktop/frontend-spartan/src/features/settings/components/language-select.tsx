@@ -1,4 +1,3 @@
-
 import {
   Select,
   SelectContent,
@@ -43,7 +42,9 @@ export function LanguageSelect() {
     <Select
       value={pendingPreference ?? (catalogFailed ? "" : preference)}
       onValueChange={(value) => {
-        if (isLocalePreference(value)) setLocale(value);
+        if (isLocalePreference(value)) {
+          setLocale(value);
+        }
       }}
     >
       <SelectTrigger

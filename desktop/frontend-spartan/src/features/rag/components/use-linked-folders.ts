@@ -1,4 +1,3 @@
-
 import {
   pickNativeDocumentFolder,
   useNativePathLeasesSupported,
@@ -58,7 +57,9 @@ export function useLinkedFolders(
   const projectWorkScopeId = scopeType === "project" ? scopeId : null;
   const withProjectWork = useCallback(
     async <T>(run: () => Promise<T>): Promise<T> => {
-      if (!projectWorkScopeId) return run();
+      if (!projectWorkScopeId) {
+        return run();
+      }
       noteProjectWork(projectWorkScopeId, 1);
       try {
         return await run();
@@ -73,14 +74,18 @@ export function useLinkedFolders(
    * showing by the time the response lands. */
   const watchStartedJob = useCallback(
     (jobId: string) => {
-      if (projectWorkScopeId) watchProjectFolderJob(projectWorkScopeId, jobId);
+      if (projectWorkScopeId) {
+        watchProjectFolderJob(projectWorkScopeId, jobId);
+      }
     },
     [projectWorkScopeId],
   );
 
   const notifySourcesChanged = useCallback(
     (job: FolderSyncJob) => {
-      if (notifiedJobs.current.has(job.id)) return;
+      if (notifiedJobs.current.has(job.id)) {
+        return;
+      }
       notifiedJobs.current.add(job.id);
       onSourcesChanged?.();
     },
@@ -89,7 +94,9 @@ export function useLinkedFolders(
 
   const trackJob = useCallback(
     (initial: FolderSyncJob) => {
-      if (controllers.current.has(initial.id)) return;
+      if (controllers.current.has(initial.id)) {
+        return;
+      }
       // A sync reports at start and completion only, so the composer has nothing
       // to gate on in between. The count follows the job, not this component:
       // leaving the Sources tab aborts the stream below but not the sync.
@@ -113,11 +120,15 @@ export function useLinkedFolders(
         }
       };
       const apply = (job: FolderSyncJob) => {
-        if (controller.signal.aborted) return;
+        if (controller.signal.aborted) {
+          return;
+        }
         setJobs((current) => ({ ...current, [job.linkedFolderId]: job }));
       };
       const finish = (job: FolderSyncJob) => {
-        if (controller.signal.aborted) return;
+        if (controller.signal.aborted) {
+          return;
+        }
         apply(job);
         releaseController();
         notifySourcesChanged(job);
@@ -135,7 +146,9 @@ export function useLinkedFolders(
             initial.id,
             controller.signal,
           )) {
-            if (controller.signal.aborted) return;
+            if (controller.signal.aborted) {
+              return;
+            }
             latest = {
               ...latest,
               ...event,
@@ -153,12 +166,16 @@ export function useLinkedFolders(
             }
           }
         } catch {
-          if (controller.signal.aborted) return;
+          if (controller.signal.aborted) {
+            return;
+          }
         }
 
         try {
           for (let attempt = 0; attempt < 600; attempt += 1) {
-            if (controller.signal.aborted) return;
+            if (controller.signal.aborted) {
+              return;
+            }
             latest = await getFolderSyncJob(initial.id);
             apply(latest);
             if (latest.status === "completed" || latest.status === "failed") {
@@ -180,7 +197,9 @@ export function useLinkedFolders(
 
   const refresh = useCallback(
     (options?: { quiet?: boolean }): Promise<boolean> => {
-      if (!options?.quiet) setLoading(true);
+      if (!options?.quiet) {
+        setLoading(true);
+      }
       return refreshGate.current.run(scopeKey, async (signal) => {
         const isCurrent = () =>
           !signal.aborted && currentScopeKey.current === scopeKey;
@@ -188,7 +207,9 @@ export function useLinkedFolders(
           const rows = await listLinkedFolders(
             scopeType && scopeId ? { type: scopeType, id: scopeId } : undefined,
           );
-          if (!isCurrent()) return false;
+          if (!isCurrent()) {
+            return false;
+          }
           const sourcesChanged = linkedFolderSourcesChanged(
             folderSnapshot.current,
             rows,
@@ -197,7 +218,9 @@ export function useLinkedFolders(
           setStateScopeKey(scopeKey);
           setFolders(rows);
           setJobs((current) => retainActiveFolderJobs(rows, current));
-          if (sourcesChanged) onSourcesChanged?.();
+          if (sourcesChanged) {
+            onSourcesChanged?.();
+          }
           for (const folder of rows) {
             if (
               !folder.activeJobId ||
@@ -207,13 +230,18 @@ export function useLinkedFolders(
             }
             try {
               const job = await getFolderSyncJob(folder.activeJobId);
-              if (!isCurrent()) return false;
+              if (!isCurrent()) {
+                return false;
+              }
               if (job.status === "pending" || job.status === "running") {
                 trackJob(job);
               } else {
                 setJobs((current) => ({ ...current, [folder.id]: job }));
-                if (sourcesChanged) notifiedJobs.current.add(job.id);
-                else notifySourcesChanged(job);
+                if (sourcesChanged) {
+                  notifiedJobs.current.add(job.id);
+                } else {
+                  notifySourcesChanged(job);
+                }
               }
             } catch {
               // The next refresh can reconcile a job that disappeared mid-request.
@@ -229,7 +257,9 @@ export function useLinkedFolders(
           }
           return false;
         } finally {
-          if (isCurrent() && !options?.quiet) setLoading(false);
+          if (isCurrent() && !options?.quiet) {
+            setLoading(false);
+          }
         }
       });
     },
@@ -256,18 +286,24 @@ export function useLinkedFolders(
     return () => {
       window.clearTimeout(initialRefresh);
       window.clearInterval(interval);
-      for (const controller of activeControllers.values()) controller.abort();
+      for (const controller of activeControllers.values()) {
+        controller.abort();
+      }
       activeControllers.clear();
     };
   }, [refresh, scopeKey]);
 
   const link = useCallback(async () => {
-    if (!scopeType || !scopeId || !isTauri || !nativePathLeasesSupported) return;
+    if (!(scopeType && scopeId && isTauri && nativePathLeasesSupported)) {
+      return;
+    }
     const operationScopeKey = scopeKey;
     setMutating(true);
     try {
       const selected = await pickNativeDocumentFolder();
-      if (!selected || currentScopeKey.current !== operationScopeKey) return;
+      if (!selected || currentScopeKey.current !== operationScopeKey) {
+        return;
+      }
       const result = await withProjectWork(async () => {
         const created = await createLinkedFolder(
           { type: scopeType, id: scopeId },
@@ -277,7 +313,9 @@ export function useLinkedFolders(
         watchStartedJob(created.job.id);
         return created;
       });
-      if (currentScopeKey.current !== operationScopeKey) return;
+      if (currentScopeKey.current !== operationScopeKey) {
+        return;
+      }
       setStateScopeKey(operationScopeKey);
       setFolders((current) => [
         ...current.filter((folder) => folder.id !== result.linkedFolder.id),
@@ -319,7 +357,9 @@ export function useLinkedFolders(
           watchStartedJob(started.job.id);
           return started;
         });
-        if (currentScopeKey.current !== operationScopeKey) return;
+        if (currentScopeKey.current !== operationScopeKey) {
+          return;
+        }
         trackJob(job);
         onSourcesChanged?.();
       } catch (error) {
@@ -353,8 +393,12 @@ export function useLinkedFolders(
         // The rows are gone whatever this hook shows by now, and every other
         // composer on that project still lists them. Announce for the project
         // the unlink was for, not for the scope on screen.
-        if (unlinkedProjectId) announceProjectSourcesUpdated(unlinkedProjectId);
-        if (currentScopeKey.current !== operationScopeKey) return;
+        if (unlinkedProjectId) {
+          announceProjectSourcesUpdated(unlinkedProjectId);
+        }
+        if (currentScopeKey.current !== operationScopeKey) {
+          return;
+        }
         onSourcesChanged?.();
         setJobs((current) => {
           const next = { ...current };
@@ -362,7 +406,9 @@ export function useLinkedFolders(
           return next;
         });
       } catch (error) {
-        if (currentScopeKey.current !== operationScopeKey) return;
+        if (currentScopeKey.current !== operationScopeKey) {
+          return;
+        }
         setFolders(previous);
         if (
           activeJob &&

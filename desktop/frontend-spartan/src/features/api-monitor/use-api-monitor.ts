@@ -1,4 +1,3 @@
-
 import {
   clearApiMonitor,
   getApiMonitor,
@@ -117,16 +116,22 @@ export function useApiMonitor({
     function poll(): void {
       getApiMonitor()
         .then((next) => {
-          if (cancelled) return;
+          if (cancelled) {
+            return;
+          }
           setData(next);
           setError(null);
         })
         .catch((err: unknown) => {
-          if (cancelled) return;
+          if (cancelled) {
+            return;
+          }
           setError(err instanceof Error ? err.message : "Monitor unavailable");
         })
         .finally(() => {
-          if (cancelled) return;
+          if (cancelled) {
+            return;
+          }
           setLoading(false);
           timer = window.setTimeout(poll, intervalMs);
         });
@@ -156,7 +161,9 @@ export function useApiMonitor({
       .catch(() => {
         // Aged out of the ring buffer: drop the stale copy so the row previews show.
         setDetails((prev) => {
-          if (!(id in prev)) return prev;
+          if (!(id in prev)) {
+            return prev;
+          }
           const next = { ...prev };
           delete next[id];
           return next;

@@ -1,4 +1,3 @@
-
 import type { CategoryConditionalParams, SamplerConfig } from "../../types";
 import { isValidSex, parseAgeRange, parseNumber } from "./parse";
 
@@ -20,23 +19,30 @@ function buildCategoryConditionalParams(
   for (const [rawCondition, params] of Object.entries(conditional)) {
     const condition = rawCondition.trim();
     if (!condition) {
-      errors.push(`Sampler ${config.name}: conditional rule needs condition text.`);
+      errors.push(
+        `Sampler ${config.name}: conditional rule needs condition text.`,
+      );
       continue;
     }
     const values = (params.values ?? [])
       .map((value) => value.trim())
       .filter(Boolean);
     if (values.length === 0) {
-      errors.push(`Sampler ${config.name}: conditional '${condition}' needs values.`);
+      errors.push(
+        `Sampler ${config.name}: conditional '${condition}' needs values.`,
+      );
       continue;
     }
     const weights = params.weights ?? [];
     const hasWeights = weights.some((weight) => weight !== null);
     if (
       hasWeights &&
-      (weights.length !== values.length || weights.some((weight) => weight === null))
+      (weights.length !== values.length ||
+        weights.some((weight) => weight === null))
     ) {
-      errors.push(`Sampler ${config.name}: conditional '${condition}' weights invalid.`);
+      errors.push(
+        `Sampler ${config.name}: conditional '${condition}' weights invalid.`,
+      );
       continue;
     }
     output[condition] = {

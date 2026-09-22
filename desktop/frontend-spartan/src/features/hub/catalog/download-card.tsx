@@ -1,5 +1,3 @@
-
-import type { ReactNode } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,14 +22,15 @@ import {
   Settings02Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import type { ReactNode } from "react";
 import {
-  DownloadProgressBar,
   type DownloadJob,
   type DownloadJobProgress,
+  DownloadProgressBar,
 } from "../download-manager";
 import {
-  type DownloadStopMode,
   DownloadStopIndicator,
+  type DownloadStopMode,
 } from "./download-cancel-indicator";
 import { TransportConflictDialog } from "./transport-conflict-dialog";
 import {
@@ -101,7 +100,7 @@ export function CardSettingsButton({
 }) {
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
+      <TooltipTrigger asChild={true}>
         <button
           type="button"
           aria-label={label}
@@ -134,7 +133,7 @@ export function CardDeleteButton({
 }) {
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
+      <TooltipTrigger asChild={true}>
         <button
           type="button"
           aria-label={label}
@@ -175,7 +174,7 @@ export function CardUpdateButton({
   if (emphasized) {
     return (
       <Tooltip>
-        <TooltipTrigger asChild>
+        <TooltipTrigger asChild={true}>
           <button
             type="button"
             aria-label={label}
@@ -201,7 +200,7 @@ export function CardUpdateButton({
   }
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
+      <TooltipTrigger asChild={true}>
         <button
           type="button"
           aria-label={label}

@@ -1,4 +1,3 @@
-
 import type { RemoteCodeSeverity } from "../types";
 
 /** Tailwind classes for a severity badge. */

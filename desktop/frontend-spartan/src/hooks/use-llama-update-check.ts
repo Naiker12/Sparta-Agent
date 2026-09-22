@@ -1,4 +1,3 @@
-
 import { authFetch, getAuthToken } from "@/features/auth";
 import { refreshHardwareInfo } from "@/hooks/use-hardware-info";
 import {
@@ -77,7 +76,9 @@ function parseJob(value: unknown): LlamaUpdateJob {
 }
 
 function parseStatus(value: unknown): LlamaUpdateStatus | null {
-  if (!value || typeof value !== "object") return null;
+  if (!value || typeof value !== "object") {
+    return null;
+  }
   const s = value as Record<string, unknown>;
   const component =
     s.update_component === "whisper" ? "whisper.cpp" : "llama.cpp";
@@ -121,7 +122,9 @@ function getHandledReloadAt(): string | null {
 }
 
 function setHandledReloadAt(finishedAt: string | null): void {
-  if (!finishedAt) return;
+  if (!finishedAt) {
+    return;
+  }
   try {
     localStorage.setItem(HANDLED_RELOAD_STORAGE_KEY, finishedAt);
   } catch {
@@ -132,12 +135,16 @@ function setHandledReloadAt(finishedAt: string | null): void {
 async function fetchStatus(
   forceRefresh = false,
 ): Promise<LlamaUpdateStatus | null> {
-  if (!getAuthToken()) return null;
+  if (!getAuthToken()) {
+    return null;
+  }
   try {
     const res = await authFetch(
       `/api/llama/update-status${forceRefresh ? "?force_refresh=true" : ""}`,
     );
-    if (!res.ok) return null;
+    if (!res.ok) {
+      return null;
+    }
     return parseStatus(await res.json());
   } catch {
     return null;
@@ -227,12 +234,16 @@ export function useLlamaUpdateCheck({
       clearPollTimer();
       pollTimer.current = setInterval(async () => {
         const s = await fetchStatus();
-        if (!s) return;
+        if (!s) {
+          return;
+        }
         setStatus(s);
         const presentation = llamaUpdatePresentation(s.update_available, s.job);
         setApplying(presentation.applying);
         setVisible(presentation.visible);
-        if (presentation.running) return;
+        if (presentation.running) {
+          return;
+        }
         clearPollTimer();
         if (s.job.state === "success") {
           void refreshHardwareInfo();
@@ -262,7 +273,9 @@ export function useLlamaUpdateCheck({
 
   const surfaceIfAvailable = useCallback(
     (next: LlamaUpdateStatus | null) => {
-      if (!next) return;
+      if (!next) {
+        return;
+      }
       setStatus(next);
       const presentation = llamaUpdatePresentation(
         next.update_available,
@@ -271,7 +284,9 @@ export function useLlamaUpdateCheck({
       setApplying(presentation.applying);
       setVisible(presentation.visible);
       if (presentation.running) {
-        if (!pollTimer.current) startJobPoll();
+        if (!pollTimer.current) {
+          startJobPoll();
+        }
         return;
       }
       // A completed job persists as "success" until the next update starts, so
@@ -292,13 +307,17 @@ export function useLlamaUpdateCheck({
 
     const firstTimer = setTimeout(() => {
       recheckStatus().then((s) => {
-        if (!canceled) surfaceIfAvailable(s);
+        if (!canceled) {
+          surfaceIfAvailable(s);
+        }
       });
     }, FIRST_CHECK_DELAY_MS);
 
     const reminder = setInterval(() => {
       recheckStatus().then((s) => {
-        if (!canceled) surfaceIfAvailable(s);
+        if (!canceled) {
+          surfaceIfAvailable(s);
+        }
       });
     }, REMINDER_INTERVAL_MS);
 
@@ -320,7 +339,9 @@ export function useLlamaUpdateCheck({
   // (never the one that wrote it), so this recheck fires promptly there
   // without this tab redundantly re-triggering itself.
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled) {
+      return;
+    }
     const onStorage = (event: StorageEvent) => {
       if (
         event.key === HANDLED_RELOAD_STORAGE_KEY &&
@@ -335,7 +356,9 @@ export function useLlamaUpdateCheck({
   }, [enabled, surfaceIfAvailable]);
 
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled) {
+      return;
+    }
     return subscribeToLlamaJobStarted(() => {
       fetchStatus().then(surfaceIfAvailable);
     });
@@ -347,7 +370,9 @@ export function useLlamaUpdateCheck({
 
   const snooze = useCallback(() => {
     setVisible(false);
-    if (snoozeTimer.current) clearTimeout(snoozeTimer.current);
+    if (snoozeTimer.current) {
+      clearTimeout(snoozeTimer.current);
+    }
     snoozeTimer.current = setTimeout(() => {
       snoozeTimer.current = null;
       recheckStatus().then(surfaceIfAvailable);
@@ -355,7 +380,9 @@ export function useLlamaUpdateCheck({
   }, [surfaceIfAvailable]);
 
   const apply = useCallback(async (): Promise<LlamaApplyResult> => {
-    if (applying) return { ok: false, error: "already running" };
+    if (applying) {
+      return { ok: false, error: "already running" };
+    }
     setApplying(true);
     setVisible(true);
     let action: {

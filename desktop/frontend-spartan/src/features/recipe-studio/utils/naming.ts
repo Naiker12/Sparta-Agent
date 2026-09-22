@@ -1,4 +1,3 @@
-
 import type { NodeConfig } from "../types";
 
 export function nextName(existing: NodeConfig[], prefix: string): string {

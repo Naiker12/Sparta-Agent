@@ -1,4 +1,3 @@
-
 // Open/closed rules for a reasoning group, kept out of the component so the
 // streaming and preference interplay stays testable.
 export interface ReasoningOpenStateInput {

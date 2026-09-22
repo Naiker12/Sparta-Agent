@@ -1,21 +1,20 @@
-
 "use client";
 
 import { createCodePlugin } from "@/components/assistant-ui/code-plugin";
-import { CodeToggleIcon } from "@/components/assistant-ui/code-toggle-icon";
 import {
   unslothDarkTheme,
   unslothLightTheme,
 } from "@/components/assistant-ui/code-themes";
+import { CodeToggleIcon } from "@/components/assistant-ui/code-toggle-icon";
 import { Button } from "@/components/ui/button";
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
 import { downloadFile, isDownloadCancelled } from "@/lib/native-files";
+import { Tick02Icon } from "@/lib/tick-icon";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
-import { CopyIcon, EyeIcon, Maximize2Icon, XIcon } from "lucide-react";
 import { Download01Icon } from "@hugeicons/core-free-icons";
-import { Tick02Icon } from "@/lib/tick-icon";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { CopyIcon, EyeIcon, Maximize2Icon, XIcon } from "lucide-react";
 import {
   type KeyboardEvent,
   useEffect,
@@ -120,7 +119,9 @@ export function ArtifactSurface({
 
   useEffect(() => {
     return () => {
-      if (copyResetRef.current) clearTimeout(copyResetRef.current);
+      if (copyResetRef.current) {
+        clearTimeout(copyResetRef.current);
+      }
     };
   }, []);
 
@@ -129,11 +130,15 @@ export function ArtifactSurface({
   }, [artifact.id, requestedView]);
 
   useEffect(() => {
-    if (variant !== "overlay") return;
+    if (variant !== "overlay") {
+      return;
+    }
     previousFocusRef.current = document.activeElement;
     const timeoutId = window.setTimeout(() => {
       const surface = surfaceRef.current;
-      if (!surface) return;
+      if (!surface) {
+        return;
+      }
       const firstFocusable = getFocusableElements(surface)[0];
       if (firstFocusable) {
         firstFocusable.focus();
@@ -144,14 +149,20 @@ export function ArtifactSurface({
     return () => {
       window.clearTimeout(timeoutId);
       const previousFocus = previousFocusRef.current;
-      if (previousFocus instanceof HTMLElement) previousFocus.focus();
+      if (previousFocus instanceof HTMLElement) {
+        previousFocus.focus();
+      }
     };
   }, [variant]);
 
   const handleCopy = async () => {
-    if (!(await copyToClipboard(artifact.code))) return;
+    if (!(await copyToClipboard(artifact.code))) {
+      return;
+    }
     setCopied(true);
-    if (copyResetRef.current) clearTimeout(copyResetRef.current);
+    if (copyResetRef.current) {
+      clearTimeout(copyResetRef.current);
+    }
     copyResetRef.current = setTimeout(() => {
       setCopied(false);
       copyResetRef.current = null;
@@ -159,13 +170,17 @@ export function ArtifactSurface({
   };
 
   const handleDialogKeyDown = (event: KeyboardEvent<HTMLElement>) => {
-    if (variant !== "overlay") return;
+    if (variant !== "overlay") {
+      return;
+    }
     if (event.key === "Escape") {
       event.preventDefault();
       onClose();
       return;
     }
-    if (event.key !== "Tab") return;
+    if (event.key !== "Tab") {
+      return;
+    }
     const focusable = getFocusableElements(event.currentTarget);
     if (focusable.length === 0) {
       event.preventDefault();
@@ -204,7 +219,8 @@ export function ArtifactSurface({
         variant === "panel"
           ? {
               marginTop: "calc(90px + var(--studio-chat-notice-height, 0px))",
-              height: "calc(100% - 122px - var(--studio-chat-notice-height, 0px))",
+              height:
+                "calc(100% - 122px - var(--studio-chat-notice-height, 0px))",
             }
           : undefined
       }
@@ -240,9 +256,7 @@ export function ArtifactSurface({
                     !isPreview &&
                     "cursor-not-allowed opacity-50",
                 )}
-                aria-label={
-                  isPreview ? "Preview canvas" : "View canvas source"
-                }
+                aria-label={isPreview ? "Preview canvas" : "View canvas source"}
                 aria-selected={effectiveViewMode === mode}
                 aria-pressed={effectiveViewMode === mode}
                 title={
@@ -292,7 +306,11 @@ export function ArtifactSurface({
             aria-label="Copy canvas HTML"
           >
             {copied ? (
-              <HugeiconsIcon icon={Tick02Icon} strokeWidth={2} className="size-4" />
+              <HugeiconsIcon
+                icon={Tick02Icon}
+                strokeWidth={2}
+                className="size-4"
+              />
             ) : (
               <CopyIcon className="size-4" />
             )}
@@ -366,7 +384,9 @@ export function ArtifactSurface({
       <div
         className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm"
         onMouseDown={(event) => {
-          if (event.target === event.currentTarget) onClose();
+          if (event.target === event.currentTarget) {
+            onClose();
+          }
         }}
       >
         {content}

@@ -1,4 +1,3 @@
-
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,7 +54,9 @@ export function TransportConflictDialog({
     <AlertDialog
       open={conflict !== null}
       onOpenChange={(o) => {
-        if (!o) onCancel();
+        if (!o) {
+          onCancel();
+        }
       }}
     >
       <AlertDialogContent className="sm:!max-w-[22rem]">

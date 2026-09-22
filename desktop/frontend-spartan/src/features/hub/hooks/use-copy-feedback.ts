@@ -1,6 +1,5 @@
-
-import { useCallback, useEffect, useRef, useState } from "react";
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export function useCopyFeedback(resetMs = 1500) {
   const [copied, setCopied] = useState(false);
@@ -8,7 +7,9 @@ export function useCopyFeedback(resetMs = 1500) {
 
   useEffect(
     () => () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
     },
     [],
   );
@@ -16,9 +17,13 @@ export function useCopyFeedback(resetMs = 1500) {
   const copy = useCallback(
     async (value: string) => {
       const ok = await copyToClipboard(value);
-      if (!ok) return;
+      if (!ok) {
+        return;
+      }
       setCopied(true);
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
       timeoutRef.current = setTimeout(() => setCopied(false), resetMs);
     },
     [resetMs],

@@ -1,4 +1,3 @@
-
 /**
  * CommonMark measures a block's indentation from its container, not the left
  * margin: four spaces at document level and four under a bullet mean different

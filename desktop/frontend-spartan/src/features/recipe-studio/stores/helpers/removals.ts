@@ -1,8 +1,10 @@
-
 import type { Edge } from "@xyflow/react";
 import type { NodeConfig } from "../../types";
 import { isCategoryConfig, isSubcategoryConfig } from "../../utils";
-import { applyRemovalToConfig, applyRemovalToConfigs } from "../recipe-studio-helpers";
+import {
+  applyRemovalToConfig,
+  applyRemovalToConfigs,
+} from "../recipe-studio-helpers";
 
 export function applyNodeRemovals(
   input: { edges: Edge[]; configs: Record<string, NodeConfig> },
@@ -13,7 +15,8 @@ export function applyNodeRemovals(
   }
 
   const edges = input.edges.filter(
-    (edge) => !(removedIds.includes(edge.source) || removedIds.includes(edge.target)),
+    (edge) =>
+      !(removedIds.includes(edge.source) || removedIds.includes(edge.target)),
   );
   let configs: Record<string, NodeConfig> = { ...input.configs };
   const removedNames: string[] = [];

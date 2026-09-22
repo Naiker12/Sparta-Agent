@@ -1,19 +1,37 @@
-
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { useT } from "@/i18n";
+import { cn } from "@/lib/utils";
+import {
+  ArrowLeft01Icon,
+  ArrowRight01Icon,
+  Cancel01Icon,
+  CheckmarkCircle01Icon,
+} from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { ArrowLeft01Icon, ArrowRight01Icon, Cancel01Icon, CheckmarkCircle01Icon } from "@hugeicons/core-free-icons";
-import { Dialog as DialogPrimitive } from "radix-ui";
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { cssEscape, toRect } from "../lib/dom";
+import { Dialog as DialogPrimitive } from "radix-ui";
+import {
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { fireConfettiFireworks } from "../lib/confetti-fireworks";
+import { cssEscape, toRect } from "../lib/dom";
 import { computeCardPos, padded, pickPlacement } from "../lib/layout";
-import { SpotlightOverlay } from "./spotlight-overlay";
 import type { Placement, Rect, TourStep } from "../types";
+import { SpotlightOverlay } from "./spotlight-overlay";
 
-type GuidedTourProps = { open: boolean; onOpenChange: (open: boolean) => void; steps: TourStep[]; onSkip: () => void; onComplete: () => void; celebrate?: boolean }; // confetti on complete only
+type GuidedTourProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  steps: TourStep[];
+  onSkip: () => void;
+  onComplete: () => void;
+  celebrate?: boolean;
+}; // confetti on complete only
 
 export function GuidedTour({
   open,
@@ -45,13 +63,17 @@ export function GuidedTour({
   const isLast = idx === total - 1;
 
   const spotlightRect = useMemo(() => {
-    if (!targetRect || !vw || !vh) return null;
+    if (!(targetRect && vw && vh)) {
+      return null;
+    }
     const pad = step?.target === "navbar" ? 4 : 14;
     return padded(targetRect, pad, vw, vh);
   }, [step?.target, targetRect, vw, vh]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      return;
+    }
     const prev = activeStepRef.current;
     if (prev && prev.id !== step?.id) {
       void prev.onExit?.();
@@ -63,7 +85,9 @@ export function GuidedTour({
   }, [open, step?.id]); // run before target lookup effect below
 
   useEffect(() => {
-    if (open) return;
+    if (open) {
+      return;
+    }
     const prev = activeStepRef.current;
     activeStepRef.current = null;
     if (prev) {
@@ -72,7 +96,9 @@ export function GuidedTour({
   }, [open]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      return;
+    }
     setIdx(0);
     setTargetRect(null);
     closeLockRef.current = false;
@@ -80,7 +106,9 @@ export function GuidedTour({
   }, [open]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      return;
+    }
     function onResize() {
       setVw(window.innerWidth);
       setVh(window.innerHeight);
@@ -91,7 +119,9 @@ export function GuidedTour({
   }, [open]);
 
   useEffect(() => {
-    if (!open || !step) return;
+    if (!(open && step)) {
+      return;
+    }
 
     const sel = `[data-tour="${cssEscape(step.target)}"]`;
     let el: HTMLElement | null = null;
@@ -104,7 +134,9 @@ export function GuidedTour({
 
     function findTarget(): HTMLElement | null {
       const found = document.querySelector(sel);
-      if (!(found instanceof HTMLElement)) return null;
+      if (!(found instanceof HTMLElement)) {
+        return null;
+      }
       return found;
     }
 
@@ -114,7 +146,9 @@ export function GuidedTour({
     }
 
     function rectChanged(a: Rect | null, b: Rect): boolean {
-      if (!a) return true;
+      if (!a) {
+        return true;
+      }
       return (
         Math.abs(a.x - b.x) > 0.5 ||
         Math.abs(a.y - b.y) > 0.5 ||
@@ -134,10 +168,14 @@ export function GuidedTour({
     }
 
     function schedule() {
-      if (rafRef.current != null) return;
+      if (rafRef.current != null) {
+        return;
+      }
       rafRef.current = window.requestAnimationFrame(() => {
         rafRef.current = null;
-        if (el) read(el);
+        if (el) {
+          read(el);
+        }
       });
     }
 
@@ -157,14 +195,21 @@ export function GuidedTour({
 
       ro = new ResizeObserver(() => schedule());
       ro.observe(el);
-      window.addEventListener("scroll", schedule, { capture: true, passive: true });
+      window.addEventListener("scroll", schedule, {
+        capture: true,
+        passive: true,
+      });
       window.addEventListener("resize", schedule, { passive: true });
     }
 
     function tryAttach(): boolean {
       const candidate = findTarget();
-      if (!candidate) return false;
-      if (!isUsableTarget(candidate)) return false;
+      if (!candidate) {
+        return false;
+      }
+      if (!isUsableTarget(candidate)) {
+        return false;
+      }
       attach(candidate);
       return true;
     }
@@ -182,7 +227,9 @@ export function GuidedTour({
     return () => {
       window.cancelAnimationFrame(raf);
       window.clearTimeout(t);
-      if (retryTimer) window.clearInterval(retryTimer);
+      if (retryTimer) {
+        window.clearInterval(retryTimer);
+      }
       ro?.disconnect();
       window.removeEventListener("scroll", schedule, true);
       window.removeEventListener("resize", schedule);
@@ -194,12 +241,22 @@ export function GuidedTour({
   }, [open, step?.id]);
 
   useLayoutEffect(() => {
-    if (!open || !spotlightRect || !vw || !vh) return;
+    if (!(open && spotlightRect && vw && vh)) {
+      return;
+    }
     const card = cardRef.current?.getBoundingClientRect();
-    if (!card) return;
+    if (!card) {
+      return;
+    }
 
     const gap = 14;
-    const picked = pickPlacement(spotlightRect, { w: card.width, h: card.height }, vw, vh, gap);
+    const picked = pickPlacement(
+      spotlightRect,
+      { w: card.width, h: card.height },
+      vw,
+      vh,
+      gap,
+    );
     setPlacement(picked);
     setCardPos(
       computeCardPos(
@@ -214,12 +271,16 @@ export function GuidedTour({
   }, [open, spotlightRect, vw, vh, idx]);
 
   function requestClose(reason: "skip" | "complete") {
-    if (closeLockRef.current) return;
+    if (closeLockRef.current) {
+      return;
+    }
     closeLockRef.current = true;
     if (reason === "skip") {
       onSkip();
     } else {
-      if (celebrate) void fireConfettiFireworks();
+      if (celebrate) {
+        void fireConfettiFireworks();
+      }
       onComplete();
     }
     onOpenChange(false);
@@ -229,8 +290,11 @@ export function GuidedTour({
     <DialogPrimitive.Root
       open={open}
       onOpenChange={(v) => {
-        if (v) onOpenChange(true);
-        else requestClose("skip");
+        if (v) {
+          onOpenChange(true);
+        } else {
+          requestClose("skip");
+        }
       }}
       modal={true}
     >
@@ -238,7 +302,7 @@ export function GuidedTour({
         <AnimatePresence>
           {open && (
             <>
-              <DialogPrimitive.Overlay asChild>
+              <DialogPrimitive.Overlay asChild={true}>
                 <motion.div
                   className="fixed inset-0 z-50"
                   initial={{ opacity: 0 }}
@@ -246,7 +310,12 @@ export function GuidedTour({
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.18 }}
                 >
-                  <SpotlightOverlay rect={spotlightRect} vw={vw} vh={vh} maskId={maskId} />
+                  <SpotlightOverlay
+                    rect={spotlightRect}
+                    vw={vw}
+                    vh={vh}
+                    maskId={maskId}
+                  />
                   {spotlightRect && (
                     <motion.div
                       className="fixed z-[51] pointer-events-none rounded-[22px] ring-1 ring-white/10"
@@ -259,7 +328,11 @@ export function GuidedTour({
                         boxShadow:
                           "0 0 0 1px rgba(34, 211, 238, 0.12), 0 0 0 6px rgba(16, 185, 129, 0.08), 0 18px 90px rgba(0,0,0,0.55)",
                       }}
-                      transition={{ type: "spring", stiffness: 260, damping: 30 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 260,
+                        damping: 30,
+                      }}
                     />
                   )}
                 </motion.div>
@@ -356,7 +429,10 @@ export function GuidedTour({
                           disabled={idx === 0}
                           onClick={() => setIdx((i) => Math.max(0, i - 1))}
                         >
-                          <HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" />
+                          <HugeiconsIcon
+                            icon={ArrowLeft01Icon}
+                            className="size-4"
+                          />
                           {t("tour.back")}
                         </Button>
                         {isLast ? (
@@ -365,17 +441,25 @@ export function GuidedTour({
                             className="bg-control-accent text-control-accent-foreground hover:bg-control-accent/90"
                             onClick={() => requestClose("complete")}
                           >
-                            <HugeiconsIcon icon={CheckmarkCircle01Icon} className="size-4" />
+                            <HugeiconsIcon
+                              icon={CheckmarkCircle01Icon}
+                              className="size-4"
+                            />
                             {t("tour.done")}
                           </Button>
                         ) : (
                           <Button
                             variant="dark"
                             className="bg-control-accent text-control-accent-foreground hover:bg-control-accent/90"
-                            onClick={() => setIdx((i) => Math.min(total - 1, i + 1))}
+                            onClick={() =>
+                              setIdx((i) => Math.min(total - 1, i + 1))
+                            }
                           >
                             {t("tour.next")}
-                            <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
+                            <HugeiconsIcon
+                              icon={ArrowRight01Icon}
+                              className="size-4"
+                            />
                           </Button>
                         )}
                       </div>

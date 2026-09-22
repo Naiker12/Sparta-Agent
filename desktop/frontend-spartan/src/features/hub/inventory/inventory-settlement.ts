@@ -1,4 +1,3 @@
-
 export function resolveInventorySettlement({
   downloadedReady,
   emptyRevalidationFresh,

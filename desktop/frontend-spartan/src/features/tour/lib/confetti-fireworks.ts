@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { CreateTypes as ConfettiInstance } from "canvas-confetti";
@@ -20,15 +19,20 @@ let _sharedFire: ConfettiInstance | null = null;
 // Cache the init promise so concurrent callers share one import + canvas.
 let _sharedFirePromise: Promise<ConfettiInstance | null> | null = null;
 function getSharedFire(): Promise<ConfettiInstance | null> {
-  if (typeof document === "undefined") return Promise.resolve(null);
-  if (_sharedFire) return Promise.resolve(_sharedFire);
-  if (_sharedFirePromise) return _sharedFirePromise;
+  if (typeof document === "undefined") {
+    return Promise.resolve(null);
+  }
+  if (_sharedFire) {
+    return Promise.resolve(_sharedFire);
+  }
+  if (_sharedFirePromise) {
+    return _sharedFirePromise;
+  }
   _sharedFirePromise = (async () => {
     try {
       const confetti = (await import("canvas-confetti")).default;
       const canvas = document.createElement("canvas");
-      canvas.style.cssText =
-        `position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:${DEFAULT_FIREWORKS_Z_INDEX}`;
+      canvas.style.cssText = `position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:${DEFAULT_FIREWORKS_Z_INDEX}`;
       document.body.appendChild(canvas);
       _sharedCanvas = canvas;
       _sharedFire = confetti.create(canvas, {
@@ -46,16 +50,24 @@ function getSharedFire(): Promise<ConfettiInstance | null> {
 
 export async function fireConfettiFireworks(opts: FireworksOpts = {}) {
   try {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined") {
+      return;
+    }
 
     // Honor Appearance > Reduce motion (on/off) first, then the OS preference.
-    if (prefersReducedMotion()) return;
+    if (prefersReducedMotion()) {
+      return;
+    }
 
     const fire = await getSharedFire();
-    if (!fire || !_sharedCanvas) return;
+    if (!(fire && _sharedCanvas)) {
+      return;
+    }
 
     // Per-fire zIndex is ignored on a shared canvas; drive stacking via CSS.
-    _sharedCanvas.style.zIndex = String(opts.zIndex ?? DEFAULT_FIREWORKS_Z_INDEX);
+    _sharedCanvas.style.zIndex = String(
+      opts.zIndex ?? DEFAULT_FIREWORKS_Z_INDEX,
+    );
 
     const duration = opts.durationMs ?? 1200;
     const intervalMs = opts.intervalMs ?? 240;

@@ -1,4 +1,3 @@
-
 import { requestSttDownload } from "@/features/settings/stores/stt-download-prompt-store";
 import {
   type DictationEngine,
@@ -77,14 +76,18 @@ export class StudioDictationAdapter implements DictationAdapter {
     const { dictationEngine } = useVoiceSettingsStore.getState();
     if (usesModelRecording(dictationEngine)) {
       if (StudioModelDictationAdapter.isSupported()) {
-        return new StudioModelDictationAdapter({ chatId: this.chatId }).listen();
+        return new StudioModelDictationAdapter({
+          chatId: this.chatId,
+        }).listen();
       }
       throw new Error(
         "Local model dictation is not supported in this browser.",
       );
     }
     if (StudioWebSpeechDictationAdapter.isSupported()) {
-      return new StudioWebSpeechDictationAdapter({ chatId: this.chatId }).listen();
+      return new StudioWebSpeechDictationAdapter({
+        chatId: this.chatId,
+      }).listen();
     }
     throw new Error("Browser dictation is not supported in this browser.");
   }

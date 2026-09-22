@@ -1,4 +1,3 @@
-
 import { create } from "zustand";
 import { installLatestTransformers } from "../api/transformers-upgrade-api";
 import type {
@@ -82,13 +81,17 @@ export const useTransformersUpgradeDialogStore =
       }),
     consumeServerUnloadedChat: () => {
       const value = get().serverUnloadedChat;
-      if (value) set({ serverUnloadedChat: false });
+      if (value) {
+        set({ serverUnloadedChat: false });
+      }
       return value;
     },
     install: async () => {
       const { upgrade, phase, forceCancelActive } = get();
       const version = upgrade?.pypi_version;
-      if (!version || phase === "installing") return;
+      if (!version || phase === "installing") {
+        return;
+      }
       const requestResolver = pendingResolver;
       set({ phase: "installing", errorMessage: null });
       let result: Awaited<ReturnType<typeof installLatestTransformers>>;

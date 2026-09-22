@@ -1,7 +1,6 @@
-
+import { cn } from "@/lib/utils";
 import { ArrowLeft01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { cn } from "@/lib/utils";
 import { type ComponentProps, useEffect, useRef, useState } from "react";
 import { ModelInspector } from "./model-inspector";
 
@@ -21,7 +20,9 @@ export function HubDetailView({
 
   useEffect(() => {
     const el = scrollRef.current;
-    if (!el) return;
+    if (!el) {
+      return;
+    }
     const onScroll = () => {
       const next = el.scrollTop > 0;
       setScrolled((current) => (current === next ? current : next));

@@ -1,4 +1,3 @@
-
 // What a remote load will apply, otherwise unanswerable from outside the process. Read
 // only: the model's settings page is the only place that owns this and the local store.
 
@@ -51,13 +50,13 @@ function describeOverride(override: ApiModelOverride): string[] {
   if (override.n_cpu_moe) {
     parts.push(`${override.n_cpu_moe} MoE layers on CPU`);
   }
-  if (override.gpu_ids?.length) {
+  if (override.gpu_ids && override.gpu_ids.length > 0) {
     parts.push(`GPU ${override.gpu_ids.join(", ")}`);
   }
   if (override.chat_template_override) {
     parts.push("custom chat template");
   }
-  if (override.llama_extra_args?.length) {
+  if (override.llama_extra_args && override.llama_extra_args.length > 0) {
     parts.push(override.llama_extra_args.join(" "));
   }
   return parts;
@@ -126,7 +125,9 @@ export function SavedModelSettingsPanel(): ReactElement {
                     {modelId}
                   </span>
                   <span className="min-w-0 break-words text-ui-11 text-muted-foreground">
-                    {summary.length > 0 ? summary.join(" · ") : t("apiPage.savedModelSettings.appDefaults")}
+                    {summary.length > 0
+                      ? summary.join(" · ")
+                      : t("apiPage.savedModelSettings.appDefaults")}
                   </span>
                 </div>
               </li>

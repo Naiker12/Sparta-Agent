@@ -1,4 +1,3 @@
-
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import type { HfModelResult } from "../hooks/use-hub-model-search";
@@ -40,9 +39,15 @@ export function isChannelEntryFresh(
   tokenFingerprint: string,
   now: number = Date.now(),
 ): boolean {
-  if (!entry) return false;
-  if (entry.tokenFingerprint !== tokenFingerprint) return false;
-  if (entry.results.length === 0) return false;
+  if (!entry) {
+    return false;
+  }
+  if (entry.tokenFingerprint !== tokenFingerprint) {
+    return false;
+  }
+  if (entry.results.length === 0) {
+    return false;
+  }
   return now - entry.fetchedAt < FEED_TTL_MS[id];
 }
 
@@ -51,8 +56,12 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function sanitizeEntry(value: unknown): ChannelFeedEntry | null {
-  if (!isRecord(value)) return null;
-  if (!Array.isArray(value.results)) return null;
+  if (!isRecord(value)) {
+    return null;
+  }
+  if (!Array.isArray(value.results)) {
+    return null;
+  }
   if (
     typeof value.fetchedAt !== "number" ||
     !Number.isFinite(value.fetchedAt)
@@ -67,7 +76,9 @@ function sanitizeEntry(value: unknown): ChannelFeedEntry | null {
     (item): item is HfModelResult =>
       isRecord(item) && typeof item.id === "string",
   );
-  if (results.length === 0) return null;
+  if (results.length === 0) {
+    return null;
+  }
   return {
     results: results.slice(0, FEED_CACHE_CAP),
     fetchedAt: value.fetchedAt,
@@ -76,14 +87,18 @@ function sanitizeEntry(value: unknown): ChannelFeedEntry | null {
 }
 
 function sanitizeFeedState(persisted: unknown): Partial<HubFeedState> {
-  if (!isRecord(persisted) || !isRecord(persisted.channels)) {
+  if (!(isRecord(persisted) && isRecord(persisted.channels))) {
     return { channels: {}, tokenFingerprint: "anon" };
   }
   const channels: Partial<Record<ChannelId, ChannelFeedEntry>> = {};
   for (const [key, value] of Object.entries(persisted.channels)) {
-    if (!findChannel(key as ChannelId)) continue;
+    if (!findChannel(key as ChannelId)) {
+      continue;
+    }
     const entry = sanitizeEntry(value);
-    if (entry) channels[key as ChannelId] = entry;
+    if (entry) {
+      channels[key as ChannelId] = entry;
+    }
   }
   const tokenFingerprint =
     typeof persisted.tokenFingerprint === "string"

@@ -1,4 +1,3 @@
-
 import { isTauri } from "@/lib/api-base";
 import { toast } from "@/lib/toast";
 import type React from "react";
@@ -18,7 +17,9 @@ function nativeFileName(path: string): string {
 
 /** Extensions from an `accept` list (".pdf,.md"), lowercased with their dot. */
 function acceptedExts(accept: string | undefined): string[] {
-  if (!accept) return [];
+  if (!accept) {
+    return [];
+  }
   return accept
     .split(",")
     .map((entry) => entry.trim().toLowerCase())
@@ -154,7 +155,9 @@ export function useNativeFileDrop(
 
   const deliver = useCallback((files: File[]) => {
     const current = latest.current;
-    if (files.length === 0) return;
+    if (files.length === 0) {
+      return;
+    }
     void current.onFiles(
       current.multiple === false ? files.slice(0, 1) : files,
     );
@@ -217,22 +220,34 @@ export function useNativeFileDrop(
   // navigates to the dropped file.
   const dragHandlers = {
     onDragEnter: (event: React.DragEvent) => {
-      if (!isFileDrag(event)) return;
+      if (!isFileDrag(event)) {
+        return;
+      }
       event.preventDefault();
-      if (isTauri || latest.current.disabled) return;
+      if (isTauri || latest.current.disabled) {
+        return;
+      }
       dragDepth.current += 1;
       setDragging(true);
     },
     onDragOver: (event: React.DragEvent) => {
-      if (!isFileDrag(event)) return;
+      if (!isFileDrag(event)) {
+        return;
+      }
       event.preventDefault();
-      if (isTauri || latest.current.disabled) return;
+      if (isTauri || latest.current.disabled) {
+        return;
+      }
       event.dataTransfer.dropEffect = "copy";
     },
     onDragLeave: (event: React.DragEvent) => {
-      if (isTauri || !isFileDrag(event)) return;
+      if (isTauri || !isFileDrag(event)) {
+        return;
+      }
       dragDepth.current = Math.max(0, dragDepth.current - 1);
-      if (dragDepth.current === 0) setDragging(false);
+      if (dragDepth.current === 0) {
+        setDragging(false);
+      }
     },
     onDrop: (event: React.DragEvent) => {
       if (!isFileDrag(event)) {

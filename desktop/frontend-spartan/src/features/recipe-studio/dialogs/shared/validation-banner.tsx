@@ -1,4 +1,3 @@
-
 import type { ReactElement } from "react";
 import type { NodeConfig } from "../../types";
 import { getConfigErrors } from "../../utils";

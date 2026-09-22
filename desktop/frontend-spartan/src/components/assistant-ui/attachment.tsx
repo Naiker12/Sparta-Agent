@@ -2,7 +2,6 @@
 
 // Avatar removed — caused circular crop on image thumbnails
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button";
-import { useT } from "@/i18n";
 import {
   Dialog,
   DialogClose,
@@ -24,6 +23,12 @@ import {
   pastedTextPreview,
 } from "@/features/chat";
 import { formatBytes } from "@/features/hub";
+import { useDocumentPreviewStore } from "@/features/rag/components/preview-store";
+import { useT } from "@/i18n";
+import {
+  getAttachmentFileKind,
+  getAttachmentIcon,
+} from "@/lib/attachment-file-kind";
 import { cn } from "@/lib/utils";
 import {
   AttachmentPrimitive,
@@ -32,13 +37,8 @@ import {
   useAui,
   useAuiState,
 } from "@assistant-ui/react";
-import { File02Icon, TextAlignLeft01Icon } from "@hugeicons/core-free-icons";
+import { TextAlignLeft01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import {
-  getAttachmentFileKind,
-  getAttachmentIcon,
-} from "@/lib/attachment-file-kind";
-import { useDocumentPreviewStore } from "@/features/rag/components/preview-store";
 import { ChevronRightIcon, PlusIcon, XIcon } from "lucide-react";
 import {
   type FC,
@@ -189,7 +189,9 @@ type PastedTextAttachment = {
 const usePastedTextAttachment = (): PastedTextAttachment | null => {
   return useAuiState(
     useShallow(({ attachment }): PastedTextAttachment | null => {
-      if (attachment.type !== "document") return null;
+      if (attachment.type !== "document") {
+        return null;
+      }
       const file = (attachment as { file?: File }).file;
       const sentText = attachment.content?.flatMap((part) =>
         part.type === "text" ? [part.text] : [],
@@ -197,7 +199,9 @@ const usePastedTextAttachment = (): PastedTextAttachment | null => {
       const pasted = file
         ? isPastedTextFile(file)
         : isPastedTextContent(sentText);
-      if (!pasted) return null;
+      if (!pasted) {
+        return null;
+      }
       return { file, sentText, sentBytes: pastedTextContentBytes(sentText) };
     }),
   );
@@ -227,16 +231,22 @@ const PastedTextPreviewDialog: FC<
   } | null>(null);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      return;
+    }
     let cancelled = false;
     // Laying out megabytes in one text node locks the page, so show an
     // opening. The attachment itself still holds everything.
     readPastedTextPreview(attachment)
       .then((value) => {
-        if (!cancelled) setPreview(value);
+        if (!cancelled) {
+          setPreview(value);
+        }
       })
       .catch(() => {
-        if (!cancelled) setPreview({ text: "", remaining: 0 });
+        if (!cancelled) {
+          setPreview({ text: "", remaining: 0 });
+        }
       });
     return () => {
       cancelled = true;
@@ -282,13 +292,17 @@ const PastedTextAttachmentUI: FC<{
 
   // Clicking the chip pours the text back into the composer.
   const showInTextField = useCallback(() => {
-    if (inlining) return;
+    if (inlining) {
+      return;
+    }
     setInlining(true);
     void readPastedText(attachment)
       .then((text) => {
         // Reading a big file is slow enough to outlive the send that cleared
         // the composer, which would leave the text behind as a stray draft.
-        if (!mountedRef.current || text.length === 0) return;
+        if (!mountedRef.current || text.length === 0) {
+          return;
+        }
         const composer = aui.composer();
         if (
           !composer
@@ -303,7 +317,9 @@ const PastedTextAttachmentUI: FC<{
       })
       .catch(() => undefined)
       .finally(() => {
-        if (mountedRef.current) setInlining(false);
+        if (mountedRef.current) {
+          setInlining(false);
+        }
       });
   }, [attachment, attachmentId, aui, inlining]);
 
@@ -403,7 +419,9 @@ const AttachmentUI: FC = () => {
     ? `${typeLabel} attachment: ${name}`
     : `${typeLabel} attachment`;
   const handlePreview = useCallback(() => {
-    if (isImage || !name) return;
+    if (isImage || !name) {
+      return;
+    }
     const kind = getAttachmentFileKind(
       name,
       previewAttachment.file?.type ??
@@ -415,7 +433,9 @@ const AttachmentUI: FC = () => {
       return;
     }
     const data = previewAttachment.content?.data;
-    if (!data) return;
+    if (!data) {
+      return;
+    }
     fetch(data)
       .then((response) => response.blob())
       .then((blob) => openLocalPreview({ blob, filename: name, kind }))

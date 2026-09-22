@@ -1,14 +1,17 @@
-import { useCallback, useEffect, useRef } from "react";
-import { consumeNativePathToken, useNativeFileDrop } from "@/features/native-intents";
+import { Spinner } from "@/components/ui/spinner";
 import {
-  CloudUploadIcon,
+  consumeNativePathToken,
+  useNativeFileDrop,
+} from "@/features/native-intents";
+import {
+  Alert02Icon,
   Cancel01Icon,
   CheckmarkCircle02Icon,
-  Alert02Icon,
+  CloudUploadIcon,
 } from "@hugeicons/core-free-icons";
-import { Spinner } from "@/components/ui/spinner";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { uploadUnstructuredFile, removeUnstructuredFile } from "../../api";
+import { useCallback, useEffect, useRef } from "react";
+import { removeUnstructuredFile, uploadUnstructuredFile } from "../../api";
 import {
   UNSTRUCTURED_RECIPE_UPLOAD_MAX_BYTES,
   UNSTRUCTURED_RECIPE_UPLOAD_MAX_LABEL,
@@ -44,8 +47,12 @@ type UnstructuredDropZoneProps = {
 };
 
 function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024) {
+    return `${bytes} B`;
+  }
+  if (bytes < 1024 * 1024) {
+    return `${(bytes / 1024).toFixed(1)} KB`;
+  }
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
@@ -69,26 +76,39 @@ export function UnstructuredDropZone({
     filesRef.current = files;
     blockIdRef.current = blockId;
   }, [files, blockId]);
-  useEffect(() => () => {
-    mountedRef.current = false;
-  }, []);
+  useEffect(
+    () => () => {
+      mountedRef.current = false;
+    },
+    [],
+  );
 
   const totalSize = files.reduce((sum, f) => sum + f.size, 0);
 
   const uploadCandidates = useCallback(
     async (candidates: UploadCandidate[]) => {
       const valid = candidates.filter((f) => {
-        if (!isValidExtension(f.name)) return false;
-        if (f.size > UNSTRUCTURED_RECIPE_UPLOAD_MAX_BYTES) return false;
+        if (!isValidExtension(f.name)) {
+          return false;
+        }
+        if (f.size > UNSTRUCTURED_RECIPE_UPLOAD_MAX_BYTES) {
+          return false;
+        }
         return true;
       });
 
-      if (valid.length === 0) return;
+      if (valid.length === 0) {
+        return;
+      }
 
       const addedSize = valid.reduce((s, f) => s + f.size, 0);
       const currentTotal = filesRef.current.reduce((sum, f) => sum + f.size, 0);
-      if (currentTotal + addedSize > UNSTRUCTURED_RECIPE_UPLOAD_TOTAL_MAX_BYTES)
+      if (
+        currentTotal + addedSize >
+        UNSTRUCTURED_RECIPE_UPLOAD_TOTAL_MAX_BYTES
+      ) {
         return;
+      }
 
       const entries: FileEntry[] = valid.map((f) => ({
         id: "",
@@ -113,7 +133,10 @@ export function UnstructuredDropZone({
               ? candidate.source
               : {
                   nativePathLease: (
-                    await consumeNativePathToken(candidate.source.token, "attach")
+                    await consumeNativePathToken(
+                      candidate.source.token,
+                      "attach",
+                    )
                   ).nativePathLease,
                   name: candidate.name,
                   size: candidate.size,
@@ -166,7 +189,9 @@ export function UnstructuredDropZone({
   const handleRemove = useCallback(
     (index: number) => {
       const entry = filesRef.current[index];
-      if (!entry) return;
+      if (!entry) {
+        return;
+      }
       if (entry.status === "uploading" && entry.abortController) {
         entry.abortController.abort();
       }
@@ -175,12 +200,16 @@ export function UnstructuredDropZone({
         entry.status === "ok" &&
         !deletedIdsRef.current.has(entry.id);
       onFilesChange((prev) => prev.filter((_, i) => i !== index));
-      if (!needsServerRemove) return;
+      if (!needsServerRemove) {
+        return;
+      }
       deletedIdsRef.current.add(entry.id);
       removeUnstructuredFile(blockId, entry.id).catch(() => {
         // Skip if the drop zone unmounted or its block changed: the id no
         // longer belongs here and restoring would leak it into another block.
-        if (!mountedRef.current || blockIdRef.current !== blockId) return;
+        if (!mountedRef.current || blockIdRef.current !== blockId) {
+          return;
+        }
         // Still exists server-side (counts toward quota); restore it at its
         // original position.
         deletedIdsRef.current.delete(entry.id);
@@ -202,7 +231,11 @@ export function UnstructuredDropZone({
 
   // Tauri suppresses webview drop events, so the plain `onDrop` this zone
   // carried was dead on desktop (#9036).
-  const { ref: dropRef, dragging: isDragOver, dragHandlers } = useNativeFileDrop({
+  const {
+    ref: dropRef,
+    dragging: isDragOver,
+    dragHandlers,
+  } = useNativeFileDrop({
     onFiles: handleFiles,
     // A seed corpus can run to hundreds of MB, so the backend redeems the
     // signed path itself rather than routing bytes through the webview.
@@ -220,7 +253,9 @@ export function UnstructuredDropZone({
   });
 
   const handleClick = useCallback(() => {
-    if (!disabled) inputRef.current?.click();
+    if (!disabled) {
+      inputRef.current?.click();
+    }
   }, [disabled]);
 
   const handleInputChange = useCallback(
@@ -266,7 +301,7 @@ export function UnstructuredDropZone({
         ref={inputRef}
         type="file"
         accept={ACCEPTED_EXTENSIONS.join(",")}
-        multiple
+        multiple={true}
         className="hidden"
         onChange={handleInputChange}
       />

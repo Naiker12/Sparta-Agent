@@ -1,7 +1,6 @@
-
-import type { ReactElement } from "react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import type { ReactElement } from "react";
 import type { RecipeExecutionRecord } from "../../execution-types";
 import {
   executionLabel,
@@ -59,22 +58,26 @@ export function ExecutionSidebar({
                 )}
               >
                 <div className="mb-2 flex items-center justify-between gap-2">
-                  <p className="truncate text-sm font-medium">
-                    {title}
-                  </p>
+                  <p className="truncate text-sm font-medium">{title}</p>
                   <Badge
                     variant="outline"
-                    className={cn("capitalize text-ui-11", statusTone(execution.status))}
+                    className={cn(
+                      "capitalize text-ui-11",
+                      statusTone(execution.status),
+                    )}
                   >
                     {formatStatus(execution.status)}
                   </Badge>
                 </div>
-                <p className="text-xs text-muted-foreground">{execution.rows} rows</p>
+                <p className="text-xs text-muted-foreground">
+                  {execution.rows} rows
+                </p>
                 {isExecutionInProgress(execution.status) &&
                   typeof execution.batch?.total === "number" &&
                   execution.batch.total > 1 && (
                     <p className="text-xs text-muted-foreground">
-                      Batch {execution.batch.idx ?? "--"}/{execution.batch.total}
+                      Batch {execution.batch.idx ?? "--"}/
+                      {execution.batch.total}
                     </p>
                   )}
                 <p className="text-xs text-muted-foreground">

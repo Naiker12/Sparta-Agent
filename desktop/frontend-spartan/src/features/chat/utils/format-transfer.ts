@@ -1,15 +1,22 @@
-
 /**
  * Format a byte-per-second rate (e.g. 1_234_567 → "1.2 MB/s"). Returns `"--"`
  * for non-finite or non-positive inputs so the label renders safely before the
  * first stable sample.
  */
 export function formatRate(bytesPerSecond: number): string {
-  if (!Number.isFinite(bytesPerSecond) || bytesPerSecond <= 0) return "--";
+  if (!Number.isFinite(bytesPerSecond) || bytesPerSecond <= 0) {
+    return "--";
+  }
   const bps = bytesPerSecond;
-  if (bps < 1024) return `${bps.toFixed(0)} B/s`;
-  if (bps < 1024 ** 2) return `${(bps / 1024).toFixed(1)} KB/s`;
-  if (bps < 1024 ** 3) return `${(bps / 1024 ** 2).toFixed(1)} MB/s`;
+  if (bps < 1024) {
+    return `${bps.toFixed(0)} B/s`;
+  }
+  if (bps < 1024 ** 2) {
+    return `${(bps / 1024).toFixed(1)} KB/s`;
+  }
+  if (bps < 1024 ** 3) {
+    return `${(bps / 1024 ** 2).toFixed(1)} MB/s`;
+  }
   return `${(bps / 1024 ** 3).toFixed(2)} GB/s`;
 }
 
@@ -18,9 +25,13 @@ export function formatRate(bytesPerSecond: number): string {
  * "1h 2m"). Returns `"--"` for non-finite or non-positive inputs.
  */
 export function formatEta(seconds: number): string {
-  if (!Number.isFinite(seconds) || seconds <= 0) return "--";
+  if (!Number.isFinite(seconds) || seconds <= 0) {
+    return "--";
+  }
   const s = Math.round(seconds);
-  if (s < 60) return `${s}s`;
+  if (s < 60) {
+    return `${s}s`;
+  }
   if (s < 3600) {
     const m = Math.floor(s / 60);
     const rem = s % 60;

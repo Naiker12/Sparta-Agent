@@ -1,18 +1,17 @@
-
 "use client";
 
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
 
+import { Spinner } from "@/components/ui/spinner";
+import { useT } from "@/i18n";
 import { stringifyToolResult } from "@/lib/strip-ansi";
+import { Tick02Icon } from "@/lib/tick-icon";
 import {
   type ToolCallMessagePartComponent,
   useAuiState,
 } from "@assistant-ui/react";
-import { CopyIcon, FileTextIcon, TerminalIcon } from "lucide-react";
-import { Tick02Icon } from "@/lib/tick-icon";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Spinner } from "@/components/ui/spinner";
-import { useT } from "@/i18n";
+import { CopyIcon, FileTextIcon, TerminalIcon } from "lucide-react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ToolFallbackContent,
@@ -96,7 +95,9 @@ function CopyBtn({ text }: { text: string }) {
       ) : (
         <CopyIcon className="size-3" />
       )}
-      {copied ? t("chat.tools.codeExecution.copied") : t("chat.tools.codeExecution.copy")}
+      {copied
+        ? t("chat.tools.codeExecution.copied")
+        : t("chat.tools.codeExecution.copy")}
     </button>
   );
 }
@@ -124,8 +125,6 @@ export function CodeExecutionResultOutput({ result }: { result: unknown }) {
     </div>
   );
 }
-
-
 
 const CodeExecutionToolUIImpl: ToolCallMessagePartComponent = ({
   args,

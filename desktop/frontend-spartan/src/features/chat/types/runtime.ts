@@ -1,4 +1,3 @@
-
 export interface InferenceParams {
   temperature: number;
   topP: number;

@@ -1,4 +1,3 @@
-
 import {
   DocumentAttachmentIcon,
   PlusSignIcon,
@@ -201,19 +200,28 @@ export function RecipeStudioPage({
   const flowContainerRef = useRef<HTMLDivElement | null>(null);
   const supportsEasyMode =
     initialPayload?.ui?.seed_source_type === "github_repo" ||
-    (initialPayload?.recipe?.seed_config as { source?: { seed_type?: string } } | undefined)
-      ?.source?.seed_type === "github_repo";
+    (
+      initialPayload?.recipe?.seed_config as
+        | { source?: { seed_type?: string } }
+        | undefined
+    )?.source?.seed_type === "github_repo";
   const viewModeStorageKey = `recipe-studio:view-mode:${recipeId}`;
   const [activeView, setActiveViewState] = useState<RecipeStudioView>(() => {
     if (typeof window !== "undefined") {
       const stored = window.localStorage.getItem(viewModeStorageKey);
-      if (stored === "easy" && supportsEasyMode) return "easy";
-      if (stored === "editor" || stored === "executions") return stored;
+      if (stored === "easy" && supportsEasyMode) {
+        return "easy";
+      }
+      if (stored === "editor" || stored === "executions") {
+        return stored;
+      }
     }
     return supportsEasyMode ? "easy" : "editor";
   });
   const setActiveView = useCallback(
-    (next: RecipeStudioView | ((prev: RecipeStudioView) => RecipeStudioView)) => {
+    (
+      next: RecipeStudioView | ((prev: RecipeStudioView) => RecipeStudioView),
+    ) => {
       setActiveViewState((prev) => {
         const resolved = typeof next === "function" ? next(prev) : next;
         if (typeof window !== "undefined") {
@@ -398,9 +406,15 @@ export function RecipeStudioPage({
   // requires a non-empty fullRunName. The Easy form has no run-name input, so
   // seed a default once Easy is active; user can rename from Advanced/Runs.
   useEffect(() => {
-    if (!supportsEasyMode) return;
-    if (activeView !== "easy") return;
-    if (fullRunName.trim()) return;
+    if (!supportsEasyMode) {
+      return;
+    }
+    if (activeView !== "easy") {
+      return;
+    }
+    if (fullRunName.trim()) {
+      return;
+    }
     const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 16);
     const base = workflowName.trim() || "Easy run";
     setFullRunName(`${base} ${stamp}`);

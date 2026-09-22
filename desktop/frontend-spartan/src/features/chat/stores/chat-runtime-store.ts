@@ -1,68 +1,67 @@
-
 import { authFetch } from "@/features/auth";
-import { isAssistantLocalThreadId } from "../utils/thread-ids";
 import { mirrorHfTokenInto, useHfTokenStore } from "@/features/hub";
 import {
-  cachedPinnableGpuIndexKind,
-  reconcileCachedGpuSelection,
-  type ReconciledGpuSelection,
   type GpuIndexKind,
+  cachedPinnableGpuIndexKind,
 } from "@/hooks/use-gpu-info";
-import { toast } from "@/lib/toast";
 import { DRAFT_N_MAX_SPEC_TYPES } from "@/lib/speculative-modes";
 import { create } from "zustand";
-import {
-  GPU_LAYERS_AUTO,
-  recoverDroppedDiffusionSplit,
-  shouldHydrateGpuPlacementControls,
-} from "../lib/gpu-placement";
 import {
   externalModelSupportsStudioTools,
   isExternalModelId,
   parseExternalModelId,
 } from "../external-providers";
 import {
-  type ChatPresetSource,
-  type Preset,
-  getPresetSource,
-} from "../presets/preset-policy";
-import { normalizePresetLoadConfig } from "../presets/preset-load-config";
-import {
-  CHAT_PROJECT_ATTACHMENT_TARGET_KEY,
-  DEFAULT_PROJECT_ATTACHMENT_TARGET,
-  normalizeProjectAttachmentTarget,
-  type ProjectAttachmentTarget,
-} from "../utils/project-attachment-target";
-import { getExternalMaxOutputTokens } from "../provider-capabilities";
+  GPU_LAYERS_AUTO,
+  recoverDroppedDiffusionSplit,
+  shouldHydrateGpuPlacementControls,
+} from "../lib/gpu-placement";
 import {
   PERSISTED_INFERENCE_PARAM_KEYS,
-  REMEMBERED_INFERENCE_PARAM_KEYS,
   type PersistedInferenceParamKey,
+  REMEMBERED_INFERENCE_PARAM_KEYS,
   getRememberedParamsPatch,
   getReplayedParams,
   pickRememberedChanges,
   pickRememberedParams,
   setInferenceParam,
 } from "../lib/per-model-params";
+import { preserveThinkingDefaultFromLoad } from "../lib/resolve-preserve-thinking-default";
+import { normalizePresetLoadConfig } from "../presets/preset-load-config";
+import {
+  type ChatPresetSource,
+  type Preset,
+  getPresetSource,
+} from "../presets/preset-policy";
+import { getExternalMaxOutputTokens } from "../provider-capabilities";
+import type { MmprojFallbackReason } from "../types/api";
+import type { ResearchWebsitePolicy } from "../types/research";
 import {
   type ChatLoraSummary,
   type ChatModelSummary,
   DEFAULT_INFERENCE_PARAMS,
   type InferenceParams,
 } from "../types/runtime";
+import { loadChatSettingsWithLegacyImport } from "../utils/chat-settings-storage";
 import {
-  loadChatSettingsWithLegacyImport,
-  savePersistedChatSettingsPatch,
-} from "../utils/chat-settings-storage";
-import {
-  loadShadowOwnsMirroredSetting,
   MAX_RESEARCH_MODEL_TIMEOUT_SECONDS,
   MIN_FINITE_RESEARCH_MODEL_TIMEOUT_SECONDS,
+  loadShadowOwnsMirroredSetting,
   normalizeStoredPermissionMode,
   normalizeStoredRagAutoInject,
 } from "../utils/mirrored-chat-settings";
-import { retryablePatchAfterFailure } from "../utils/settings-retry";
-import { preserveThinkingDefaultFromLoad } from "../lib/resolve-preserve-thinking-default";
+import {
+  type ModelLifecycleLease,
+  chatModelLifecycleGate,
+} from "../utils/model-lifecycle-gate";
+import {
+  CHAT_PROJECT_ATTACHMENT_TARGET_KEY,
+  DEFAULT_PROJECT_ATTACHMENT_TARGET,
+  type ProjectAttachmentTarget,
+  normalizeProjectAttachmentTarget,
+} from "../utils/project-attachment-target";
+import { shouldAdvanceQueuedSettingsEpoch } from "../utils/queued-settings-epoch";
+import { isAssistantLocalThreadId } from "../utils/thread-ids";
 import {
   THREAD_SCOPED_PARAM_KEYS,
   THREAD_SCOPED_SETTING_KEYS,
@@ -73,91 +72,74 @@ import {
   isThreadScopedParamKey,
   sanitizeThreadScopedSettings,
 } from "../utils/thread-scoped-settings";
-import {
-  chatModelLifecycleGate,
-  type ModelLifecycleLease,
-} from "../utils/model-lifecycle-gate";
-import { shouldAdvanceQueuedSettingsEpoch } from "../utils/queued-settings-epoch";
-import type { MmprojFallbackReason } from "../types/api";
-import type { ResearchWebsitePolicy } from "../types/research";
 import { useExternalProvidersStore } from "./external-providers-store";
 import { PLUS_MENU_PINS_STORAGE_KEY } from "./plus-menu-prefs-store";
 
 export * from "./chat-runtime-store/index";
 import {
-  CHAT_REASONING_ENABLED_KEY,
-  CHAT_TOOLS_ENABLED_KEY,
-  CHAT_CODE_TOOLS_ENABLED_KEY,
-  CHAT_IMAGE_TOOLS_ENABLED_KEY,
-  CHAT_DEEP_RESEARCH_ENABLED_KEY,
-  CHAT_DEEP_RESEARCH_WEBSITE_POLICY_KEY,
-  CHAT_DEEP_RESEARCH_MODEL_TIMEOUT_KEY,
-  CHAT_ARTIFACTS_ENABLED_KEY,
-  CHAT_SHOW_CANVAS_MENU_ITEM_KEY,
-  CHAT_COLLAPSE_HTML_ARTIFACTS_KEY,
   CHAT_ALLOW_ARTIFACT_NETWORK_ACCESS_KEY,
-  CHAT_MCP_ENABLED_KEY,
+  CHAT_ARTIFACTS_ENABLED_KEY,
+  CHAT_CODE_TOOLS_ENABLED_KEY,
+  CHAT_COLLAPSE_HTML_ARTIFACTS_KEY,
   CHAT_CONFIRM_TOOL_CALLS_KEY,
+  CHAT_DEEP_RESEARCH_ENABLED_KEY,
+  CHAT_DEEP_RESEARCH_MODEL_TIMEOUT_KEY,
+  CHAT_DEEP_RESEARCH_WEBSITE_POLICY_KEY,
   CHAT_EXPAND_QUANTIZATIONS_KEY,
-  CHAT_SHOW_ALL_QUANTIZATIONS_KEY,
-  MODELS_FIT_ON_DEVICE_ONLY_KEY,
-  CHAT_BYPASS_PERMISSIONS_KEY,
+  CHAT_GPU_MEMORY_MODE_KEY,
+  CHAT_IMAGE_TOOLS_ENABLED_KEY,
+  CHAT_MCP_ENABLED_KEY,
   CHAT_PERMISSION_MODE_KEY,
-  CHAT_WEB_FETCH_TOOLS_ENABLED_KEY,
-  CHAT_RAG_SOURCE_KEY,
-  CHAT_RAG_MODE_KEY,
-  CHAT_RAG_TOP_K_KEY,
   CHAT_RAG_AUTOINJECT_KEY,
   CHAT_RAG_AUTOINJECT_MIN_SCORE_KEY,
-  CHAT_RAG_OCR_KEY,
   CHAT_RAG_CAPTION_KEY,
+  CHAT_RAG_MODE_KEY,
+  CHAT_RAG_OCR_KEY,
+  CHAT_RAG_SOURCE_KEY,
+  CHAT_RAG_TOP_K_KEY,
+  CHAT_REASONING_ENABLED_KEY,
+  CHAT_SHOW_ALL_QUANTIZATIONS_KEY,
+  CHAT_SHOW_CANVAS_MENU_ITEM_KEY,
   CHAT_SPECULATIVE_TYPE_KEY,
-  CHAT_GPU_MEMORY_MODE_KEY,
-  LAST_EXTERNAL_CHECKPOINT_KEY,
-  PENDING_CHAT_ATTACHMENT_KEY,
-  PERSISTED_SPEC_MODES,
-  ATOMIC_SETTING_KEYS,
-  DEFAULT_RAG_SOURCE,
-  DEFAULT_RAG_MODE,
-  DEFAULT_RAG_TOP_K,
+  CHAT_TOOLS_ENABLED_KEY,
+  CHAT_WEB_FETCH_TOOLS_ENABLED_KEY,
+  type ContextUsageSnapshot,
   DEFAULT_RAG_AUTOINJECT,
   DEFAULT_RAG_AUTOINJECT_MIN_SCORE,
-  DEFAULT_RAG_OCR,
   DEFAULT_RAG_CAPTION,
-  DEFAULT_RESEARCH_WEBSITE_POLICY,
+  DEFAULT_RAG_MODE,
+  DEFAULT_RAG_OCR,
+  DEFAULT_RAG_SOURCE,
+  DEFAULT_RAG_TOP_K,
   DEFAULT_RESEARCH_MODEL_TIMEOUT_SECONDS,
-  SETTINGS_DEBOUNCE_MS,
-  type PermissionMode,
-  type RagSource,
-  type RagMode,
-  type RagAutoInject,
-  type ReasoningStyle,
-  type ReasoningEffort,
+  DEFAULT_RESEARCH_WEBSITE_POLICY,
   type DiffusionCanvasFrame,
-  type PendingImageEditReference,
+  LAST_EXTERNAL_CHECKPOINT_KEY,
   type LoadingModelPick,
+  MODELS_FIT_ON_DEVICE_ONLY_KEY,
+  PENDING_CHAT_ATTACHMENT_KEY,
+  PERSISTED_SPEC_MODES,
+  type PendingImageEditReference,
+  type PermissionMode,
+  type RagAutoInject,
+  type RagMode,
+  type RagSource,
+  type ReasoningEffort,
+  type ReasoningStyle,
+  type SettingsPatch,
   type ThreadRunOwner,
   type ToolStatusEntry,
-  type ContextUsageSnapshot,
-  type SettingsPatch,
-  saveSettingsPatch,
-  flushSettingsPatch,
   cancelPendingFlushTimer,
-  warnSettingsPersistenceFailure,
+  createModelCatalogSlice,
+  createThreadLifecycleSlice,
+  createToolsStatusSlice,
+  flushPendingSettingsNow,
   isPlainObject,
   mergePatch,
   mergePreHydrationPatch,
-  flushPendingSettingsNow,
-  rebalanceSplit,
-  reconcilePersistedGpuIds,
-  reconcilePersistedGpuSelection,
   requestedGpuIdsFromResponse,
-  hasGgufSource,
-  isLocalModelPath,
-  isDownloadableHubRepo,
-  createThreadLifecycleSlice,
-  createToolsStatusSlice,
-  createModelCatalogSlice,
+  saveSettingsPatch,
+  warnSettingsPersistenceFailure,
 } from "./chat-runtime-store/index";
 
 /** Where the composer files an attachment in a project chat. `project` indexes
@@ -170,20 +152,29 @@ export function readPendingAttachmentTargetClaim(): number {
   return pendingAttachmentTargetClaim;
 }
 
-
 /** 0 (unlimited) or a finite budget the settings patch and the run route both accept.
  * Anything else would be dropped from the patch and 400 the run, so the default stands in. */
 function isSupportedResearchModelTimeout(value: number): boolean {
-  if (!Number.isSafeInteger(value) || value < 0) return false;
-  if (value > MAX_RESEARCH_MODEL_TIMEOUT_SECONDS) return false;
+  if (!Number.isSafeInteger(value) || value < 0) {
+    return false;
+  }
+  if (value > MAX_RESEARCH_MODEL_TIMEOUT_SECONDS) {
+    return false;
+  }
   return value === 0 || value >= MIN_FINITE_RESEARCH_MODEL_TIMEOUT_SECONDS;
 }
 
 function loadResearchModelTimeoutSeconds(): number {
-  if (typeof window === "undefined") return DEFAULT_RESEARCH_MODEL_TIMEOUT_SECONDS;
+  if (typeof window === "undefined") {
+    return DEFAULT_RESEARCH_MODEL_TIMEOUT_SECONDS;
+  }
   try {
-    const raw = window.localStorage.getItem(CHAT_DEEP_RESEARCH_MODEL_TIMEOUT_KEY);
-    if (raw === null) return DEFAULT_RESEARCH_MODEL_TIMEOUT_SECONDS;
+    const raw = window.localStorage.getItem(
+      CHAT_DEEP_RESEARCH_MODEL_TIMEOUT_KEY,
+    );
+    if (raw === null) {
+      return DEFAULT_RESEARCH_MODEL_TIMEOUT_SECONDS;
+    }
     const value = Number(raw);
     return isSupportedResearchModelTimeout(value)
       ? value
@@ -194,10 +185,13 @@ function loadResearchModelTimeoutSeconds(): number {
 }
 
 function loadResearchWebsitePolicy(): ResearchWebsitePolicy {
-  if (typeof window === "undefined") return DEFAULT_RESEARCH_WEBSITE_POLICY;
+  if (typeof window === "undefined") {
+    return DEFAULT_RESEARCH_WEBSITE_POLICY;
+  }
   try {
     const parsed = JSON.parse(
-      window.localStorage.getItem(CHAT_DEEP_RESEARCH_WEBSITE_POLICY_KEY) || "{}",
+      window.localStorage.getItem(CHAT_DEEP_RESEARCH_WEBSITE_POLICY_KEY) ||
+        "{}",
     ) as Partial<ResearchWebsitePolicy>;
     return {
       allowedDomains: Array.isArray(parsed.allowedDomains)
@@ -221,15 +215,21 @@ function saveResearchWebsitePolicy(policy: ResearchWebsitePolicy): void {
 }
 
 function loadRagSource(): RagSource {
-  if (typeof window === "undefined") return DEFAULT_RAG_SOURCE;
+  if (typeof window === "undefined") {
+    return DEFAULT_RAG_SOURCE;
+  }
   try {
     const raw = window.localStorage.getItem(CHAT_RAG_SOURCE_KEY);
-    if (!raw) return DEFAULT_RAG_SOURCE;
+    if (!raw) {
+      return DEFAULT_RAG_SOURCE;
+    }
     const parsed = JSON.parse(raw) as RagSource;
     if (parsed?.type === "kb" && typeof parsed.kbId === "string") {
       return { type: "kb", kbId: parsed.kbId };
     }
-    if (parsed?.type === "thread") return { type: "thread" };
+    if (parsed?.type === "thread") {
+      return { type: "thread" };
+    }
     return DEFAULT_RAG_SOURCE;
   } catch {
     return DEFAULT_RAG_SOURCE;
@@ -242,7 +242,10 @@ function saveRagSource(value: RagSource): void {
 
 function loadProjectAttachmentTarget(): ProjectAttachmentTarget {
   return normalizeProjectAttachmentTarget(
-    loadString(CHAT_PROJECT_ATTACHMENT_TARGET_KEY, DEFAULT_PROJECT_ATTACHMENT_TARGET),
+    loadString(
+      CHAT_PROJECT_ATTACHMENT_TARGET_KEY,
+      DEFAULT_PROJECT_ATTACHMENT_TARGET,
+    ),
   );
 }
 
@@ -258,10 +261,14 @@ function loadRagAutoInject(): RagAutoInject {
 }
 
 function loadRagTopK(): number {
-  if (typeof window === "undefined") return DEFAULT_RAG_TOP_K;
+  if (typeof window === "undefined") {
+    return DEFAULT_RAG_TOP_K;
+  }
   try {
     const raw = window.localStorage.getItem(CHAT_RAG_TOP_K_KEY);
-    if (raw === null) return DEFAULT_RAG_TOP_K;
+    if (raw === null) {
+      return DEFAULT_RAG_TOP_K;
+    }
     const parsed = Number.parseInt(raw, 10);
     return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_RAG_TOP_K;
   } catch {
@@ -279,12 +286,18 @@ function loadRagNumber(
     integer = false,
   }: { min: number; max: number; integer?: boolean },
 ): number {
-  if (typeof window === "undefined") return fallback;
+  if (typeof window === "undefined") {
+    return fallback;
+  }
   try {
     const raw = window.localStorage.getItem(key);
-    if (raw === null) return fallback;
+    if (raw === null) {
+      return fallback;
+    }
     const parsed = integer ? Number.parseInt(raw, 10) : Number.parseFloat(raw);
-    if (!Number.isFinite(parsed)) return fallback;
+    if (!Number.isFinite(parsed)) {
+      return fallback;
+    }
     return Math.min(max, Math.max(min, parsed));
   } catch {
     return fallback;
@@ -299,7 +312,9 @@ function loadRagNumber(
 // is reset to the default on every refresh.
 
 function loadLastExternalCheckpoint(): string | null {
-  if (typeof window === "undefined") return null;
+  if (typeof window === "undefined") {
+    return null;
+  }
   try {
     const value = window.localStorage.getItem(LAST_EXTERNAL_CHECKPOINT_KEY);
     return isExternalModelId(value) ? value : null;
@@ -309,7 +324,9 @@ function loadLastExternalCheckpoint(): string | null {
 }
 
 function saveLastExternalCheckpoint(value: string | null): void {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined") {
+    return;
+  }
   try {
     if (value && isExternalModelId(value)) {
       window.localStorage.setItem(LAST_EXTERNAL_CHECKPOINT_KEY, value);
@@ -324,7 +341,7 @@ function saveLastExternalCheckpoint(value: string | null): void {
   }
 }
 
-let hasShownSettingsPersistenceWarning = false;
+const _hasShownSettingsPersistenceWarning = false;
 let customPresetsMutationVersion = 0;
 let activePresetMutationVersion = 0;
 let activePresetSourceMutationVersion = 0;
@@ -346,14 +363,18 @@ function flushSettingsOnPageHidden(terminal: boolean): void {
   const sentNewest = new Set<string>();
   const flushedThreadId = threadSettingsWriteThreadId;
   flushThreadScopedSettingsWrite(terminal);
-  if (terminal && flushedThreadId !== null) sentNewest.add(flushedThreadId);
+  if (terminal && flushedThreadId !== null) {
+    sentNewest.add(flushedThreadId);
+  }
   // An edit made while its chat's read was still out lives only in heldThreadScopedEdits,
   // so the flush above does not see it. Effect cleanup is not guaranteed during unload and
   // its ordinary fetch would not outlive the page anyway, so send it from here, keepalive.
   if (terminal) {
     const heldThreadId = pendingPairingThreadId;
     void commitHeldThreadScopedEditsToTheirThread(true);
-    if (heldThreadId !== null) sentNewest.add(heldThreadId);
+    if (heldThreadId !== null) {
+      sentNewest.add(heldThreadId);
+    }
     // And anything an earlier visibilitychange already flushed the normal way, which
     // this event would otherwise leave to a fetch the page is about to cancel.
     beaconUnsettledThreadSettingsWrites(sentNewest);
@@ -365,7 +386,9 @@ function flushSettingsOnPageHidden(terminal: boolean): void {
 }
 
 if (typeof window !== "undefined") {
-  window.addEventListener("beforeunload", () => flushSettingsOnPageHidden(true));
+  window.addEventListener("beforeunload", () =>
+    flushSettingsOnPageHidden(true),
+  );
   // beforeunload is not the end of a page's life on every platform: mobile
   // Safari and backgrounded Android tabs are routinely discarded without it, and
   // a page restored from the back/forward cache never unloaded at all. pagehide
@@ -376,7 +399,9 @@ if (typeof window !== "undefined") {
   // immediately and the two never send the same edit twice.
   window.addEventListener("pagehide", () => flushSettingsOnPageHidden(true));
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "hidden") flushSettingsOnPageHidden(false);
+    if (document.visibilityState === "hidden") {
+      flushSettingsOnPageHidden(false);
+    }
   });
 }
 
@@ -385,7 +410,9 @@ function canUseStorage(): boolean {
 }
 
 function readStorageValue(key: string): string | null {
-  if (!canUseStorage()) return null;
+  if (!canUseStorage()) {
+    return null;
+  }
   try {
     return localStorage.getItem(key);
   } catch {
@@ -394,7 +421,9 @@ function readStorageValue(key: string): string | null {
 }
 
 function writeStorageValue(key: string, raw: string): void {
-  if (!canUseStorage()) return;
+  if (!canUseStorage()) {
+    return;
+  }
   try {
     localStorage.setItem(key, raw);
   } catch {
@@ -411,7 +440,8 @@ type MirroredSettingCodec = {
 
 const BOOLEAN_SETTING: MirroredSettingCodec = {
   encode: (value) => (value ? "true" : "false"),
-  decode: (raw) => (raw === "true" ? true : raw === "false" ? false : undefined),
+  decode: (raw) =>
+    raw === "true" ? true : raw === "false" ? false : undefined,
 };
 
 const STRING_SETTING: MirroredSettingCodec = {
@@ -572,9 +602,13 @@ let preHydrationPatch: SettingsPatch | null = null;
  */
 function mirrorSettingToBackend(key: string, raw: string): void {
   const setting = MIRRORED_SETTING_BY_STORAGE_KEY.get(key);
-  if (!setting) return;
+  if (!setting) {
+    return;
+  }
   const value = setting.decode(raw);
-  if (value === undefined) return;
+  if (value === undefined) {
+    return;
+  }
   scalarSettingMutationVersions[setting.field] += 1;
   const patch = { [setting.field]: value } as SettingsPatch;
   if (!mirroredSettingsHydrated) {
@@ -587,14 +621,18 @@ function mirrorSettingToBackend(key: string, raw: string): void {
 
 /** Move any held startup edits onto the outgoing patch. */
 function drainPreHydrationPatch(): void {
-  if (!preHydrationPatch) return;
+  if (!preHydrationPatch) {
+    return;
+  }
   mergePreHydrationPatch(preHydrationPatch);
   preHydrationPatch = null;
 }
 
 /** Replay the edits made while the initial GET was still in flight. */
 function flushPreHydrationSettings(): void {
-  if (!preHydrationPatch) return;
+  if (!preHydrationPatch) {
+    return;
+  }
   const patch = preHydrationPatch;
   preHydrationPatch = null;
   saveSettingsPatch(patch);
@@ -617,7 +655,9 @@ function persistSetting(key: string, raw: string): void {
     }
     writeStorageValue(key, raw);
   };
-  if (mirrored && captureThreadScopedEdit(mirrored.field, writeGlobal)) return;
+  if (mirrored && captureThreadScopedEdit(mirrored.field, writeGlobal)) {
+    return;
+  }
   writeGlobal();
 }
 
@@ -680,7 +720,9 @@ export function threadScopedOverride<K extends ThreadScopedSettingKey>(
       }
     } else {
       const live = readThreadScopedSettings(useChatRuntimeStore.getState());
-      if (live[key] !== undefined) return live[key];
+      if (live[key] !== undefined) {
+        return live[key];
+      }
     }
   }
   return activeThreadScopedSettings?.[key];
@@ -704,12 +746,17 @@ const explicitlyEditedThreadFields = new Set<string>();
 const constraintSuppressedThreadFields = new Set<string>();
 
 /** Both pills of Kimi's search/thinking exclusion; the only non-persisting setters. */
-const CONSTRAINT_SUPPRESSIBLE_KEYS = ["reasoningEnabled", "toolsEnabled"] as const;
+const CONSTRAINT_SUPPRESSIBLE_KEYS = [
+  "reasoningEnabled",
+  "toolsEnabled",
+] as const;
 
 function noteConstraintSuppressedThreadField(
   field: (typeof CONSTRAINT_SUPPRESSIBLE_KEYS)[number],
 ): void {
-  if (useChatRuntimeStore.getState().activeThreadId === null) return;
+  if (useChatRuntimeStore.getState().activeThreadId === null) {
+    return;
+  }
   constraintSuppressedThreadFields.add(field);
 }
 
@@ -789,7 +836,10 @@ function withoutActiveThreadParams(
   state: ChatRuntimeStore,
   params: InferenceParams,
 ): InferenceParams {
-  if (threadScopedSettingsThreadId === null && pendingPairingThreadId === null) {
+  if (
+    threadScopedSettingsThreadId === null &&
+    pendingPairingThreadId === null
+  ) {
     return params;
   }
   const remembered = params.checkpoint
@@ -799,7 +849,9 @@ function withoutActiveThreadParams(
   for (const key of THREAD_SCOPED_PARAM_KEYS) {
     // Only a key this chat actually owns; the rest are already the model's.
     const held = heldThreadScopedParamValue(key);
-    if (held === undefined && threadScopedOverride(key) === undefined) continue;
+    if (held === undefined && threadScopedOverride(key) === undefined) {
+      continue;
+    }
     // For a held key the installation copy can still be null and the store no longer
     // holds the pre-edit value; the sample taken when the window opened is that value.
     const own =
@@ -847,22 +899,30 @@ function withoutCapturedThreadEdits(
 function noteThreadScopedDefaults(shared: PersistedInferenceParams): void {
   let next: Record<string, unknown> | null = null;
   for (const [key, value] of Object.entries(shared)) {
-    if (!isThreadScopedParamKey(key)) continue;
+    if (!isThreadScopedParamKey(key)) {
+      continue;
+    }
     // Held field: the pairing capture restores it from the sample taken when the window
     // opened, so without this the pre-window value goes back and the in-memory defaults
     // stay behind the server's for the session, pinning onto the next snapshot-less chat.
     if (isHeldThreadScopedField(key)) {
       hydratedDefaultsByHeldField.set(key, value);
     }
-    if (globalThreadScopedDefaults === null) continue;
+    if (globalThreadScopedDefaults === null) {
+      continue;
+    }
     next ??= { ...globalThreadScopedDefaults };
     next[key] = value;
   }
-  if (next !== null) globalThreadScopedDefaults = next as ThreadScopedSettings;
+  if (next !== null) {
+    globalThreadScopedDefaults = next as ThreadScopedSettings;
+  }
 }
 
 function isSameThreadScopedValue(next: unknown, current: unknown): boolean {
-  if (Object.is(next, current)) return true;
+  if (Object.is(next, current)) {
+    return true;
+  }
   // ragSource is the only object among these, and its variants carry at most a kb id.
   if (isPlainObject(next) && isPlainObject(current)) {
     return next.type === current.type && next.kbId === current.kbId;
@@ -971,7 +1031,9 @@ function rememberThreadSettingsForReplay(
   threadId: string,
   body: Record<string, unknown>,
 ): void {
-  if (!canUseStorage()) return;
+  if (!canUseStorage()) {
+    return;
+  }
   try {
     const raw = localStorage.getItem(THREAD_SETTINGS_REPLAY_KEY);
     const pending = raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
@@ -990,13 +1052,19 @@ function rememberThreadSettingsForReplay(
 export function replayUnconfirmedThreadSettings(): void {
   // Once per session: it is called from both hydration outcomes, and sending each body
   // twice would race two writes carrying the same seq for the same row.
-  if (threadSettingsReplayStarted) return;
+  if (threadSettingsReplayStarted) {
+    return;
+  }
   threadSettingsReplayStarted = true;
-  if (!canUseStorage()) return;
+  if (!canUseStorage()) {
+    return;
+  }
   let pending: Record<string, unknown> = {};
   try {
     const raw = localStorage.getItem(THREAD_SETTINGS_REPLAY_KEY);
-    if (!raw) return;
+    if (!raw) {
+      return;
+    }
     pending = JSON.parse(raw) as Record<string, unknown>;
   } catch {
     localStorage.removeItem(THREAD_SETTINGS_REPLAY_KEY);
@@ -1005,17 +1073,25 @@ export function replayUnconfirmedThreadSettings(): void {
   const sent: Promise<unknown>[] = [];
   for (const [threadId, body] of Object.entries(pending)) {
     // Skip local-only thread IDs that have never been persisted to the backend.
-    if (isAssistantLocalThreadId(threadId)) continue;
+    if (isAssistantLocalThreadId(threadId)) {
+      continue;
+    }
     // Bounded: every settings write in the session waits for these, so a socket that
     // never settles would leave the whole session unable to persist anything.
     const timeout = new AbortController();
-    const timer = setTimeout(() => timeout.abort(), THREAD_SETTINGS_REPLAY_TIMEOUT_MS);
-    const request = authFetch(`/api/chat/threads/${encodeURIComponent(threadId)}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-      signal: timeout.signal,
-    })
+    const timer = setTimeout(
+      () => timeout.abort(),
+      THREAD_SETTINGS_REPLAY_TIMEOUT_MS,
+    );
+    const request = authFetch(
+      `/api/chat/threads/${encodeURIComponent(threadId)}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        signal: timeout.signal,
+      },
+    )
       .finally(() => clearTimeout(timer))
       // Only an ok response means it landed. authFetch resolves for 404 and 5xx too,
       // and the missing-row case this exists for is exactly the one that 404s, so
@@ -1025,7 +1101,9 @@ export function replayUnconfirmedThreadSettings(): void {
         // store a newer body for the same thread while the replay is still out, and
         // that one is unconfirmed by definition: dropping it because an older replay
         // succeeded would leave the newest edit with nothing to recover it from.
-        if (res.ok) forgetReplayedThreadSettings(threadId, body);
+        if (res.ok) {
+          forgetReplayedThreadSettings(threadId, body);
+        }
       })
       .catch(() => undefined);
     sent.push(request);
@@ -1051,10 +1129,14 @@ function forgetReplayedThreadSettings(
   threadId: string,
   expected?: unknown,
 ): void {
-  if (!canUseStorage()) return;
+  if (!canUseStorage()) {
+    return;
+  }
   try {
     const raw = localStorage.getItem(THREAD_SETTINGS_REPLAY_KEY);
-    if (!raw) return;
+    if (!raw) {
+      return;
+    }
     const pending = JSON.parse(raw) as Record<string, unknown>;
     if (
       expected !== undefined &&
@@ -1085,7 +1167,9 @@ function sendThreadScopedSettingsBeacon(
   merge = false,
 ): void {
   // Never beacon to the backend for local-only threads that haven't been persisted.
-  if (isAssistantLocalThreadId(threadId)) return;
+  if (isAssistantLocalThreadId(threadId)) {
+    return;
+  }
   // A merge carries only what the user touched, for the chat whose own snapshot was
   // never read; sending a replacement built from the defaults on screen would erase
   // the rest of its row. Everything else replaces, as the debounced write does.
@@ -1193,7 +1277,9 @@ function writeThreadScopedSettings(
       } catch {
         // the chat still behaves as edited; only the snapshot for the next visit is lost.
         // An abort lands here too, and that one is deliberate: a newer snapshot won.
-        if (!controller.signal.aborted) warnSettingsPersistenceFailure();
+        if (!controller.signal.aborted) {
+          warnSettingsPersistenceFailure();
+        }
         // An abort means a newer write won and is tracked in its place; a real failure
         // means nothing reached the row, and the caller needs to know.
         return controller.signal.aborted;
@@ -1234,7 +1320,9 @@ export async function settleThreadScopedSettingsForCopy(
   // server side from the row: going ahead on a failed write hands the new chat the
   // pre-edit snapshot and tells the user nothing.
   if (!(await awaitThreadScopedSettingsWrite(threadId))) {
-    throw new Error("This chat's settings could not be saved before copying it");
+    throw new Error(
+      "This chat's settings could not be saved before copying it",
+    );
   }
 }
 
@@ -1246,7 +1334,9 @@ export async function awaitThreadScopedSettingsWrite(
     flushThreadScopedSettingsWrite();
   }
   const chain = threadSettingsWriteChains.get(threadId);
-  if (chain === undefined) return true;
+  if (chain === undefined) {
+    return true;
+  }
   // A rejection is the held-edit merge path, which throws on failure.
   const landed = await chain.catch(() => false);
   return landed !== false;
@@ -1261,7 +1351,9 @@ function flushThreadScopedSettingsWrite(keepalive = false): void {
   const snapshot = threadSettingsWriteSnapshot;
   threadSettingsWriteThreadId = null;
   threadSettingsWriteSnapshot = null;
-  if (threadId === null) return;
+  if (threadId === null) {
+    return;
+  }
   if (keepalive) {
     sendThreadScopedSettingsBeacon(threadId, snapshot);
     return;
@@ -1317,7 +1409,9 @@ function beaconUnsettledThreadSettingsWrites(
   const unsettled = [...unsettledThreadSettingsWrites];
   unsettledThreadSettingsWrites.clear();
   for (const [threadId, entry] of unsettled) {
-    if (alreadySent.has(threadId)) continue;
+    if (alreadySent.has(threadId)) {
+      continue;
+    }
     sendThreadScopedSettingsBeacon(threadId, entry.snapshot);
   }
 }
@@ -1334,7 +1428,9 @@ function scheduleThreadScopedSettingsWrite(
   }
   threadSettingsWriteThreadId = threadId;
   threadSettingsWriteSnapshot = snapshot;
-  if (threadSettingsWriteTimer !== null) clearTimeout(threadSettingsWriteTimer);
+  if (threadSettingsWriteTimer !== null) {
+    clearTimeout(threadSettingsWriteTimer);
+  }
   threadSettingsWriteTimer = setTimeout(() => {
     threadSettingsWriteTimer = null;
     const pendingThreadId = threadSettingsWriteThreadId;
@@ -1368,7 +1464,9 @@ let heldThreadScopedEdits: {
 
 /** Start of the window: the read for `threadId` is out but its snapshot has not landed. */
 export function beginThreadScopedPairing(threadId: string): void {
-  if (pendingPairingThreadId === threadId) return;
+  if (pendingPairingThreadId === threadId) {
+    return;
+  }
   releaseHeldThreadScopedEdits();
   pendingPairingThreadId = threadId;
   // What the installation defaults were before this chat could edit anything. Recorded
@@ -1419,7 +1517,9 @@ function closeThreadScopedPairingGate(threadId: string | null): void {
   const stillWaiting =
     pendingPairingThreadId !== null &&
     pairingSettledByThreadId.has(pendingPairingThreadId);
-  if (useChatRuntimeStore.getState().threadScopedSettingsPending !== stillWaiting) {
+  if (
+    useChatRuntimeStore.getState().threadScopedSettingsPending !== stillWaiting
+  ) {
     useChatRuntimeStore.setState({ threadScopedSettingsPending: stillWaiting });
   }
 }
@@ -1446,9 +1546,13 @@ const pairingSettledByThreadId = new Map<
 export function awaitThreadScopedPairing(
   threadId: string | null | undefined,
 ): Promise<boolean> {
-  if (!threadId) return Promise.resolve(true);
+  if (!threadId) {
+    return Promise.resolve(true);
+  }
   const gate = pairingSettledByThreadId.get(threadId);
-  if (!gate) return Promise.resolve(true);
+  if (!gate) {
+    return Promise.resolve(true);
+  }
   return Promise.race([
     gate.promise.then(() => true),
     new Promise<boolean>((resolve) =>
@@ -1506,7 +1610,9 @@ export function commitHeldThreadScopedEditsToTheirThread(
   // chat's snapshot was never loaded, so a run still waiting on it must not be told the
   // settings are known: the store now shows the chat the user moved to.
   closeThreadScopedPairingGate(null);
-  if (threadId === null || held.length === 0) return Promise.resolve();
+  if (threadId === null || held.length === 0) {
+    return Promise.resolve();
+  }
   const changes = heldThreadScopedChanges(held);
   // Read off the store above, so only now that the values are safely captured.
   restoreDefaultsOverCommittedEdits(threadId, held);
@@ -1533,11 +1639,11 @@ function restoreDefaultsOverCommittedEdits(
   threadId: string,
   held: { field: string }[],
 ): void {
-  if (useChatRuntimeStore.getState().activeThreadId === threadId) return;
-  const before = (pairingWindowDefaults ?? globalThreadScopedDefaults) as Record<
-    string,
-    unknown
-  > | null;
+  if (useChatRuntimeStore.getState().activeThreadId === threadId) {
+    return;
+  }
+  const before = (pairingWindowDefaults ??
+    globalThreadScopedDefaults) as Record<string, unknown> | null;
   const fields: Record<string, unknown> = {};
   const params: Record<string, unknown> = {};
   for (const edit of held) {
@@ -1548,19 +1654,26 @@ function restoreDefaultsOverCommittedEdits(
       : before?.[edit.field];
     hydratedDefaultsByHeldField.delete(edit.field);
     // Nothing known to go back to: leaving the edit up is no worse than blanking it.
-    if (value === undefined) continue;
+    if (value === undefined) {
+      continue;
+    }
     if (isThreadScopedParamKey(edit.field)) {
       params[edit.field] = value;
     } else {
       fields[edit.field] = value;
     }
   }
-  if (!hasKeys(fields) && !hasKeys(params)) return;
+  if (!(hasKeys(fields) || hasKeys(params))) {
+    return;
+  }
   // setState and not setParams: these values are already the installation's, and going
   // through the setter would persist them back to it and to the loaded model's memory.
   useChatRuntimeStore.setState((state) =>
     hasKeys(params)
-      ? ({ ...fields, params: { ...state.params, ...params } } as Partial<ChatRuntimeStore>)
+      ? ({
+          ...fields,
+          params: { ...state.params, ...params },
+        } as Partial<ChatRuntimeStore>)
       : (fields as Partial<ChatRuntimeStore>),
   );
 }
@@ -1657,9 +1770,13 @@ function captureThreadScopedEdit(
   writeGlobal: (() => void) | null = null,
   value?: unknown,
 ): boolean {
-  if (!isThreadOwnedSettingKey(field)) return false;
+  if (!isThreadOwnedSettingKey(field)) {
+    return false;
+  }
   const threadId = useChatRuntimeStore.getState().activeThreadId;
-  if (threadId === null) return false;
+  if (threadId === null) {
+    return false;
+  }
   // both ids: between a switch and its snapshot arriving the store still holds the old values.
   if (threadId === threadScopedSettingsThreadId) {
     explicitlyEditedThreadFields.add(field);
@@ -1697,7 +1814,9 @@ function persistLoadDerivedSetting(
     return;
   }
   // Dropped outright: the cache now holds the hydrated preference too.
-  if (!stillCurrent) return;
+  if (!stillCurrent) {
+    return;
+  }
   persistSetting(key, raw);
 }
 
@@ -1708,7 +1827,9 @@ function loadBool(key: string, fallback: boolean): boolean {
 
 export function loadOptionalBool(key: string): boolean | null {
   const raw = readStorageValue(key);
-  if (raw === null) return null;
+  if (raw === null) {
+    return null;
+  }
   return raw === "true";
 }
 
@@ -1724,7 +1845,9 @@ export function resolveToolsEnabledOnLoad(supportsTools: boolean): {
   toolsEnabled: boolean;
   codeToolsEnabled: boolean;
 } {
-  if (!supportsTools) return { toolsEnabled: false, codeToolsEnabled: false };
+  if (!supportsTools) {
+    return { toolsEnabled: false, codeToolsEnabled: false };
+  }
   return {
     toolsEnabled:
       threadScopedOverride("toolsEnabled") ??
@@ -1771,11 +1894,17 @@ export function resolvePreserveThinkingOnLoad(resp: {
 // profiles that had explicitly pinned Canvas keep it visible.
 function loadShowCanvasMenuItem(): boolean {
   const stored = loadOptionalBool(CHAT_SHOW_CANVAS_MENU_ITEM_KEY);
-  if (stored !== null) return stored;
-  if (!canUseStorage()) return false;
+  if (stored !== null) {
+    return stored;
+  }
+  if (!canUseStorage()) {
+    return false;
+  }
   try {
     const raw = localStorage.getItem(PLUS_MENU_PINS_STORAGE_KEY);
-    if (raw === null) return false;
+    if (raw === null) {
+      return false;
+    }
     const parsed = JSON.parse(raw) as {
       state?: { pins?: { canvas?: boolean } };
     };
@@ -1800,7 +1929,9 @@ function loadPermissionMode(): PermissionMode {
 }
 
 function savePermissionMode(mode: PermissionMode): void {
-  if (mode === "full") return;
+  if (mode === "full") {
+    return;
+  }
   persistSetting(CHAT_PERMISSION_MODE_KEY, mode);
 }
 
@@ -1820,18 +1951,34 @@ function saveString(key: string, value: string): void {
 export function normalizeSpeculativeType(
   v: string | null | undefined,
 ): string | null {
-  if (v == null) return null;
+  if (v == null) {
+    return null;
+  }
   const s = String(v).trim().toLowerCase();
-  if (!s) return null;
-  if (s === "auto" || s === "default") return "auto";
-  if (s === "off") return "off";
-  if (s === "mtp" || s === "draft-mtp") return "mtp";
-  if (s === "dspark" || s === "draft-dspark") return "dspark";
-  if (s === "dflash" || s === "draft-dflash") return "dflash";
+  if (!s) {
+    return null;
+  }
+  if (s === "auto" || s === "default") {
+    return "auto";
+  }
+  if (s === "off") {
+    return "off";
+  }
+  if (s === "mtp" || s === "draft-mtp") {
+    return "mtp";
+  }
+  if (s === "dspark" || s === "draft-dspark") {
+    return "dspark";
+  }
+  if (s === "dflash" || s === "draft-dflash") {
+    return "dflash";
+  }
   if (s === "ngram" || s === "ngram-mod" || s === "ngram-simple") {
     return "ngram";
   }
-  if (s === "mtp+ngram") return "mtp+ngram";
+  if (s === "mtp+ngram") {
+    return "mtp+ngram";
+  }
   // Comma-chained legacy values (e.g. from older backend echoes).
   const parts = s
     .split(",")
@@ -1841,9 +1988,15 @@ export function normalizeSpeculativeType(
   const hasNgram = parts.some(
     (p) => p === "ngram" || p === "ngram-mod" || p === "ngram-simple",
   );
-  if (hasMtp && hasNgram) return "mtp+ngram";
-  if (hasMtp) return "mtp";
-  if (hasNgram) return "ngram";
+  if (hasMtp && hasNgram) {
+    return "mtp+ngram";
+  }
+  if (hasMtp) {
+    return "mtp";
+  }
+  if (hasNgram) {
+    return "ngram";
+  }
   // Unknown -> safe fallback to Auto so the dropdown stays controlled.
   return "auto";
 }
@@ -1891,7 +2044,9 @@ export function saveSpeculativeType(value: string | null): void {
 // GPU Memory strategy is a standing preference (like speculative type), not a
 // per-model setting: a "manual" choice persists across model switches and reloads.
 export function readPersistedGpuMemoryMode(): "auto" | "manual" {
-  return loadString(CHAT_GPU_MEMORY_MODE_KEY, "auto") === "manual" ? "manual" : "auto";
+  return loadString(CHAT_GPU_MEMORY_MODE_KEY, "auto") === "manual"
+    ? "manual"
+    : "auto";
 }
 
 export function saveGpuMemoryMode(value: "auto" | "manual"): void {
@@ -1909,7 +2064,9 @@ export function persistGpuMemoryModeOnLoad(
   resp: { is_gguf?: boolean; is_diffusion?: boolean },
   mode: "auto" | "manual",
 ): void {
-  if (resp.is_gguf && !resp.is_diffusion) saveGpuMemoryMode(mode);
+  if (resp.is_gguf && !resp.is_diffusion) {
+    saveGpuMemoryMode(mode);
+  }
 }
 
 // Re-exported from its dependency-free home so existing imports keep working.
@@ -1923,7 +2080,9 @@ function largestRemainder(shares: number[], total: number): number[] {
   const byFrac = shares
     .map((x, i) => ({ i, frac: x - Math.floor(x) }))
     .sort((a, b) => b.frac - a.frac);
-  for (let k = 0; rem > 0 && k < byFrac.length; k++, rem--) out[byFrac[k].i] += 1;
+  for (let k = 0; rem > 0 && k < byFrac.length; k++, rem--) {
+    out[byFrac[k].i] += 1;
+  }
   return out;
 }
 
@@ -1932,7 +2091,9 @@ function largestRemainder(shares: number[], total: number): number[] {
 // weights. Default per-GPU layer split before the user edits it (mirrors
 // llama.cpp's free-VRAM default).
 export function distributeByWeight(total: number, weights: number[]): number[] {
-  if (weights.length === 0) return [];
+  if (weights.length === 0) {
+    return [];
+  }
   const t = Math.max(0, Math.floor(total));
   const sum = weights.reduce((a, b) => a + b, 0);
   const w = sum > 0 ? weights : weights.map(() => 1);
@@ -1942,8 +2103,6 @@ export function distributeByWeight(total: number, weights: number[]): number[] {
     t,
   );
 }
-
-
 
 // Store fields derived from a load/status response's GPU-memory settings.
 // Shared by every load path so the manual-knob round-trip can't drift.
@@ -2082,11 +2241,6 @@ export function loadedGpuMemoryFields(resp: {
   };
 }
 
-
-
-
-
-
 type ChatRuntimeStore = {
   settingsHydrated: boolean;
   /**
@@ -2106,23 +2260,23 @@ type ChatRuntimeStore = {
   loras: ChatLoraSummary[];
   runningByThreadId: Record<string, boolean>;
   /**
-     * The subset of `runningByThreadId` decoding on the local llama-server. Swapping the local
-     * model neither interrupts an external-provider chat nor needs its consent, which is why
-     * the backend keeps those out of `active_generations` too.
-     */
+   * The subset of `runningByThreadId` decoding on the local llama-server. Swapping the local
+   * model neither interrupts an external-provider chat nor needs its consent, which is why
+   * the backend keeps those out of `active_generations` too.
+   */
   localRunByThreadId: Record<string, boolean>;
   /**
-     * Which runs set `runningByThreadId[id]`; see `setThreadRunning`'s `owner`. A list, not one
-     * entry: runs without a resolved thread id share the "__default" key, so one entry would let
-     * a newer run's clear delete an older run's flag while it still generates.
-     */
+   * Which runs set `runningByThreadId[id]`; see `setThreadRunning`'s `owner`. A list, not one
+   * entry: runs without a resolved thread id share the "__default" key, so one entry would let
+   * a newer run's clear delete an older run's flag while it still generates.
+   */
   runOwnerByThreadId: Record<string, ThreadRunOwner[]>;
   cancelByThreadId: Record<string, () => void>;
   /**
-     * Backend cancels for the threads generating in the background. `cancelByThreadId` only holds
-     * the visible thread's `cancelRun()`, so the adapter parks a closure here that POSTs that
-     * run's own cancel_id. A list for the same reason as `runOwnerByThreadId`: "__default" is shared.
-     */
+   * Backend cancels for the threads generating in the background. `cancelByThreadId` only holds
+   * the visible thread's `cancelRun()`, so the adapter parks a closure here that POSTs that
+   * run's own cancel_id. A list for the same reason as `runOwnerByThreadId`: "__default" is shared.
+   */
   serverCancelByThreadId: Record<string, (() => void)[]>;
   autoTitle: boolean;
   hfToken: string;
@@ -2261,14 +2415,14 @@ type ChatRuntimeStore = {
    */
   webFetchToolsEnabled: boolean;
   /**
-     * Live tool status per conversation ("Running Python: ...") with its start time. Keyed by
-     * thread, or one chat's tool call shows above every other composer; the timestamp keeps the
-     * counter running across a thread switch.
-     */
+   * Live tool status per conversation ("Running Python: ...") with its start time. Keyed by
+   * thread, or one chat's tool call shows above every other composer; the timestamp keeps the
+   * counter running across a thread switch.
+   */
   /**
-     * Per-run entries, newest last. Unresolved threads share "__default", so one scalar per key
-     * meant a finishing run's clear removed a sibling's status while its tool was still running.
-     */
+   * Per-run entries, newest last. Unresolved threads share "__default", so one scalar per key
+   * meant a finishing run's clear removed a sibling's status while its tool was still running.
+   */
   toolStatusByThreadId: Record<string, ToolStatusEntry[]>;
   /** Live stdout/stderr from running tools, keyed by toolCallId. Transient:
    *  appended by tool_output, cleared on tool_end or run end. */
@@ -2381,10 +2535,10 @@ type ChatRuntimeStore = {
    *  denoising-canvas artifact auto-render. */
   loadedIsDiffusion: boolean;
   /**
-     * Live denoising frame per conversation ("__default" until the id exists). Transient: set per
-     * step, cleared when the run ends, never persisted. Keyed, not global: two denoising chats
-     * overwrote each other's frame, so the visible preview flickered or vanished.
-     */
+   * Live denoising frame per conversation ("__default" until the id exists). Transient: set per
+   * step, cleared when the run ends, never persisted. Keyed, not global: two denoising chats
+   * overwrote each other's frame, so the visible preview flickered or vanished.
+   */
   activeDiffusionCanvasByThreadId: Record<string, DiffusionCanvasFrame>;
   customContextLength: number | null;
   /** The pinned context the loaded model used (null = Auto), so dirty-tracking
@@ -2412,10 +2566,10 @@ type ChatRuntimeStore = {
   pendingImageEditReference: PendingImageEditReference | null;
   contextUsage: ContextUsageSnapshot | null;
   /**
-     * Per-thread copy of the above, so the bar survives a switch away and back. `contextUsage` is
-     * the VISIBLE conversation's usage and a background run may not write it, so without this a
-     * run finishing off-screen leaves nothing to restore.
-     */
+   * Per-thread copy of the above, so the bar survives a switch away and back. `contextUsage` is
+   * the VISIBLE conversation's usage and a background run may not write it, so without this a
+   * run finishing off-screen leaves nothing to restore.
+   */
   contextUsageByThreadId: Record<string, ContextUsageSnapshot>;
   modelLoading: boolean;
   loadingModelPick: LoadingModelPick | null;
@@ -2452,29 +2606,29 @@ type ChatRuntimeStore = {
   setModels: (models: ChatModelSummary[]) => void;
   setLoras: (loras: ChatLoraSummary[]) => void;
   /**
-     * `local` defaults to true, so an unqualified caller still counts for the model-swap gate.
-     * `owner` narrows the clear to the run that set the flag: unresolved thread ids share the
-     * "__default" key, so a blind delete would drop a sibling's live entry. Owners accumulate,
-     * so the flag survives until the last one clears.
-     */
+   * `local` defaults to true, so an unqualified caller still counts for the model-swap gate.
+   * `owner` narrows the clear to the run that set the flag: unresolved thread ids share the
+   * "__default" key, so a blind delete would drop a sibling's live entry. Owners accumulate,
+   * so the flag survives until the last one clears.
+   */
   setThreadRunning: (
     threadId: string,
     running: boolean,
     options?: { local?: boolean; owner?: () => void },
   ) => void;
   /**
-     * Re-key a first turn's run handles once its thread is persisted.
-     *
-     * A run that starts before its id exists files everything under "__default". Nothing moved it
-     * afterwards, so once the user navigated away the sidebar found no run and showed no spinner;
-     * stopChatThread had no handle either and the generation carried on holding a slot.
-     */
+   * Re-key a first turn's run handles once its thread is persisted.
+   *
+   * A run that starts before its id exists files everything under "__default". Nothing moved it
+   * afterwards, so once the user navigated away the sidebar found no run and showed no spinner;
+   * stopChatThread had no handle either and the generation carried on holding a slot.
+   */
   adoptDefaultThreadRun: (threadId: string) => void;
   /**
-     * Which key this run's handles live under now. `adoptDefaultThreadRun` re-keys them mid-run,
-     * so a run that started under "__default" must look its owner up instead of reusing the key
-     * it captured, or its writes and its final clear miss the entries.
-     */
+   * Which key this run's handles live under now. `adoptDefaultThreadRun` re-keys them mid-run,
+   * so a run that started under "__default" must look its owner up instead of reusing the key
+   * it captured, or its writes and its final clear miss the entries.
+   */
   runKeyForOwner: (fallbackKey: string, owner: () => void) => string;
   registerThreadCancel: (threadId: string, cancel: () => void) => void;
   clearThreadCancel: (threadId: string, cancel?: () => void) => void;
@@ -2553,8 +2707,10 @@ type ChatRuntimeStore = {
   /** Carry a choice made before the chat existed onto its new id. `claim` is
    * the value readPendingAttachmentTargetClaim gave when the choice was made;
    * a newer one means the entry now belongs to a different composer. */
-  adoptPendingProjectAttachmentTarget: (threadId: string, claim?: number) =>
-    void;
+  adoptPendingProjectAttachmentTarget: (
+    threadId: string,
+    claim?: number,
+  ) => void;
   /** Drop a choice made in a composer that never became a chat. */
   clearPendingProjectAttachmentTarget: () => void;
   setRagMode: (mode: RagMode) => void;
@@ -2564,9 +2720,9 @@ type ChatRuntimeStore = {
   setRagOcrScanned: (enabled: boolean) => void;
   setRagCaptionFigures: (enabled: boolean) => void;
   /**
-     * `owner` is the run's identity token, as for `setThreadRunning`: unresolved threads share
-     * "__default", so without it one run's cleanup clears a concurrent run's status.
-     */
+   * `owner` is the run's identity token, as for `setThreadRunning`: unresolved threads share
+   * "__default", so without it one run's cleanup clears a concurrent run's status.
+   */
   setToolStatus: (
     threadId: string,
     status: string | null,
@@ -2585,7 +2741,7 @@ type ChatRuntimeStore = {
     canvas: DiffusionCanvasFrame,
   ) => void;
   /** Drop only `threadId`'s canvas: a run ending in a background chat must not wipe the
-     * frame another chat is still painting. */
+   * frame another chat is still painting. */
   clearActiveDiffusionCanvasForThread: (threadId: string | null) => void;
   setAutoHealToolCalls: (enabled: boolean) => void;
   setNudgeToolCalls: (enabled: boolean) => void;
@@ -2743,7 +2899,9 @@ function cacheHydratedSettings(
   for (const [name, setting] of Object.entries(MIRRORED_SETTINGS)) {
     const field = name as MirroredSettingKey;
     const value = settings[field];
-    if (value === undefined) continue;
+    if (value === undefined) {
+      continue;
+    }
     if (
       scalarSettingMutationVersions[field] !== versions.scalarSettings[field]
     ) {
@@ -2769,14 +2927,20 @@ function backfillMirroredSettings(settings: PersistedChatSettings): void {
   const patch: SettingsPatch = {};
   for (const [name, setting] of Object.entries(MIRRORED_SETTINGS)) {
     const field = name as MirroredSettingKey;
-    if (settings[field] !== undefined) continue;
+    if (settings[field] !== undefined) {
+      continue;
+    }
     const value = setting.readForBackfill
       ? setting.readForBackfill()
       : readStoredSettingValue(setting);
-    if (value === undefined) continue;
+    if (value === undefined) {
+      continue;
+    }
     (patch as Record<string, unknown>)[field] = value;
   }
-  if (hasKeys(patch)) saveSettingsPatch(patch);
+  if (hasKeys(patch)) {
+    saveSettingsPatch(patch);
+  }
 }
 
 /** `bumpVersions` fences the moved keys against a hydration response in flight.
@@ -3054,7 +3218,9 @@ function externalCheckpointRefusesDeepResearch(
   checkpoint: string | null | undefined,
 ): boolean {
   const parsed = parseExternalModelId(checkpoint);
-  if (!parsed) return false;
+  if (!parsed) {
+    return false;
+  }
   const provider = useExternalProvidersStore
     .getState()
     .providers.find((candidate) => candidate.id === parsed.providerId);
@@ -3068,7 +3234,9 @@ function externalCheckpointRefusesDeepResearch(
  */
 function isKimiCheckpoint(checkpoint: string | null | undefined): boolean {
   const parsed = parseExternalModelId(checkpoint);
-  if (!parsed) return false;
+  if (!parsed) {
+    return false;
+  }
   return (
     useExternalProvidersStore
       .getState()
@@ -3304,7 +3472,9 @@ function setScalarSettingVersion<K extends ScalarSettingKey>(
     scalarSettingMutationVersions[key] += 1;
     saveSettingsPatch({ [key]: value });
   };
-  if (captureThreadScopedEdit(key, writeGlobal)) return;
+  if (captureThreadScopedEdit(key, writeGlobal)) {
+    return;
+  }
   writeGlobal();
 }
 
@@ -3472,7 +3642,8 @@ export const useChatRuntimeStore = create<ChatRuntimeStore>((set, get) => ({
     settingsHydrationPromise = (async () => {
       const hydrationVersions = getSettingsHydrationVersions();
       try {
-        const { settings, fromServer } = await loadChatSettingsWithLegacyImport();
+        const { settings, fromServer } =
+          await loadChatSettingsWithLegacyImport();
         let applied = false;
         set((state) => {
           if (state.settingsHydrated) {
@@ -3497,7 +3668,9 @@ export const useChatRuntimeStore = create<ChatRuntimeStore>((set, get) => ({
           // server. A GET that fell back to legacy storage knows nothing about
           // it, and backfilling then pushes this browser's stale values over
           // whatever another browser wrote.
-          if (fromServer) backfillMirroredSettings(settings);
+          if (fromServer) {
+            backfillMirroredSettings(settings);
+          }
           // After the backfill, so a startup edit wins over the stored value.
           flushPreHydrationSettings();
           // The previous session's tab-close writes, for the rows that did not exist
@@ -3684,7 +3857,8 @@ export const useChatRuntimeStore = create<ChatRuntimeStore>((set, get) => ({
       // now reaches the backend, so that would write the preference off for every
       // browser on the install. Hoisted because all three writes below share it.
       const clampsDeepResearch =
-        isExternalModelId(modelId) && !externalModelSupportsStudioTools(modelId);
+        isExternalModelId(modelId) &&
+        !externalModelSupportsStudioTools(modelId);
       if (clampsDeepResearch) {
         saveBool(CHAT_DEEP_RESEARCH_ENABLED_KEY, false);
       }
@@ -3807,7 +3981,9 @@ export const useChatRuntimeStore = create<ChatRuntimeStore>((set, get) => ({
       // chat. Anything else and the read would silently undo a click the user already saw.
       const heldFields = new Set<string>();
       if (threadId !== null && threadId === pendingPairingThreadId) {
-        for (const edit of heldThreadScopedEdits) heldFields.add(edit.field);
+        for (const edit of heldThreadScopedEdits) {
+          heldFields.add(edit.field);
+        }
         heldThreadScopedEdits = [];
         pendingPairingThreadId = null;
         // The window is over, so the next visit to this chat samples afresh rather than
@@ -3889,7 +4065,9 @@ export const useChatRuntimeStore = create<ChatRuntimeStore>((set, get) => ({
             stored?.permissionMode ??
             globalThreadScopedDefaults?.permissionMode ??
             loadPermissionMode();
-          if (underneath !== "full") applied[key] = underneath;
+          if (underneath !== "full") {
+            applied[key] = underneath;
+          }
           continue;
         }
         // setCheckpoint clears deep research for external models in the store only, so a
@@ -3905,7 +4083,9 @@ export const useChatRuntimeStore = create<ChatRuntimeStore>((set, get) => ({
         }
         // a key the snapshot omits falls back to the defaults, not to the outgoing chat's value.
         const value = stored?.[key] ?? globalThreadScopedDefaults?.[key];
-        if (value === undefined) continue;
+        if (value === undefined) {
+          continue;
+        }
         applied[key] = value;
         if (isSameThreadScopedValue(value, readThreadScopedValue(state, key))) {
           continue;
@@ -3930,7 +4110,9 @@ export const useChatRuntimeStore = create<ChatRuntimeStore>((set, get) => ({
         (applied.reasoningEnabled ?? state.reasoningEnabled) === true
       ) {
         applied.reasoningEnabled = false;
-        if (state.reasoningEnabled !== false) target.reasoningEnabled = false;
+        if (state.reasoningEnabled !== false) {
+          target.reasoningEnabled = false;
+        }
       }
       // pin what the chat shows now, or changing the defaults later would rewrite its modes.
       // A chat that already had a snapshot only needs a write if it is carrying a held edit.
@@ -3958,12 +4140,10 @@ export const useChatRuntimeStore = create<ChatRuntimeStore>((set, get) => ({
     }),
   setActiveProjectId: (activeProjectId) => set({ activeProjectId }),
   setIncognito: (incognito) => {
-    if (incognito) saveBool(CHAT_DEEP_RESEARCH_ENABLED_KEY, false);
-    set(
-      incognito
-        ? { incognito, deepResearchEnabled: false }
-        : { incognito },
-    );
+    if (incognito) {
+      saveBool(CHAT_DEEP_RESEARCH_ENABLED_KEY, false);
+    }
+    set(incognito ? { incognito, deepResearchEnabled: false } : { incognito });
   },
   setSettingsPanelOpen: (settingsPanelOpen) => set({ settingsPanelOpen }),
   setEditingMessageId: (id) => set({ editingMessageId: id }),
@@ -4124,7 +4304,9 @@ export const useChatRuntimeStore = create<ChatRuntimeStore>((set, get) => ({
       } else {
         noteConstraintSuppressedThreadField("toolsEnabled");
       }
-      if (toolsEnabled) saveBool(CHAT_DEEP_RESEARCH_ENABLED_KEY, false);
+      if (toolsEnabled) {
+        saveBool(CHAT_DEEP_RESEARCH_ENABLED_KEY, false);
+      }
       return {
         ...(toolsEnabled
           ? { toolsEnabled, deepResearchEnabled: false }
@@ -4135,7 +4317,9 @@ export const useChatRuntimeStore = create<ChatRuntimeStore>((set, get) => ({
   setCodeToolsEnabled: (codeToolsEnabled) =>
     set((state) => {
       saveBool(CHAT_CODE_TOOLS_ENABLED_KEY, codeToolsEnabled);
-      if (codeToolsEnabled) saveBool(CHAT_DEEP_RESEARCH_ENABLED_KEY, false);
+      if (codeToolsEnabled) {
+        saveBool(CHAT_DEEP_RESEARCH_ENABLED_KEY, false);
+      }
       return {
         ...(codeToolsEnabled
           ? { codeToolsEnabled, deepResearchEnabled: false }
@@ -4146,7 +4330,9 @@ export const useChatRuntimeStore = create<ChatRuntimeStore>((set, get) => ({
   setImageToolsEnabled: (imageToolsEnabled) =>
     set((state) => {
       saveBool(CHAT_IMAGE_TOOLS_ENABLED_KEY, imageToolsEnabled);
-      if (imageToolsEnabled) saveBool(CHAT_DEEP_RESEARCH_ENABLED_KEY, false);
+      if (imageToolsEnabled) {
+        saveBool(CHAT_DEEP_RESEARCH_ENABLED_KEY, false);
+      }
       return {
         ...(imageToolsEnabled
           ? { imageToolsEnabled, deepResearchEnabled: false }
@@ -4214,7 +4400,9 @@ export const useChatRuntimeStore = create<ChatRuntimeStore>((set, get) => ({
       if (options?.persist !== false) {
         saveBool(CHAT_ARTIFACTS_ENABLED_KEY, artifactsEnabled);
       }
-      if (artifactsEnabled) saveBool(CHAT_DEEP_RESEARCH_ENABLED_KEY, false);
+      if (artifactsEnabled) {
+        saveBool(CHAT_DEEP_RESEARCH_ENABLED_KEY, false);
+      }
       return {
         ...(artifactsEnabled
           ? { artifactsEnabled, deepResearchEnabled: false }
@@ -4243,7 +4431,9 @@ export const useChatRuntimeStore = create<ChatRuntimeStore>((set, get) => ({
   setMcpEnabledForChat: (mcpEnabledForChat) =>
     set((state) => {
       saveBool(CHAT_MCP_ENABLED_KEY, mcpEnabledForChat);
-      if (mcpEnabledForChat) saveBool(CHAT_DEEP_RESEARCH_ENABLED_KEY, false);
+      if (mcpEnabledForChat) {
+        saveBool(CHAT_DEEP_RESEARCH_ENABLED_KEY, false);
+      }
       return {
         ...(mcpEnabledForChat
           ? { mcpEnabledForChat, deepResearchEnabled: false }
@@ -4331,7 +4521,9 @@ export const useChatRuntimeStore = create<ChatRuntimeStore>((set, get) => ({
   allowToolAlways: (sessionId, toolName) =>
     set((state) => {
       const current = state.alwaysAllowToolsBySession.get(sessionId);
-      if (current?.has(toolName)) return state;
+      if (current?.has(toolName)) {
+        return state;
+      }
       const next = new Map(state.alwaysAllowToolsBySession);
       next.set(sessionId, new Set(current ?? []).add(toolName));
       return { alwaysAllowToolsBySession: next };
@@ -4367,7 +4559,9 @@ export const useChatRuntimeStore = create<ChatRuntimeStore>((set, get) => ({
     }),
   setRagEnabled: () =>
     set((state) => {
-      if (!state.ragEnabled) return state;
+      if (!state.ragEnabled) {
+        return state;
+      }
       captureThreadScopedEdit("ragEnabled");
       return {
         ragEnabled: false,
@@ -4610,7 +4804,9 @@ export const useChatRuntimeStore = create<ChatRuntimeStore>((set, get) => ({
   // reads the map, so without this the bar goes blank on return.
   setContextUsage: (contextUsage) =>
     set((state) => {
-      if (!state.activeThreadId) return { contextUsage };
+      if (!state.activeThreadId) {
+        return { contextUsage };
+      }
       const next = { ...state.contextUsageByThreadId };
       if (contextUsage) {
         next[state.activeThreadId] = contextUsage;

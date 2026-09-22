@@ -1,4 +1,3 @@
-
 // The preference module comes FIRST, and the order is load-bearing. The
 // indicator imports the settings barrel, which eagerly evaluates SettingsDialog
 // and so general-tab, whose top-level reset list dereferences

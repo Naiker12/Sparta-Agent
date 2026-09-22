@@ -1,4 +1,3 @@
-
 import type { MessageRecord } from "../types";
 
 /** Mirrors studio_db._RESEARCH_LINK_KEYS: what marks a message as owned by a research run. */
@@ -11,7 +10,9 @@ const RESEARCH_METADATA_KEYS = [
 ] as const;
 
 export function hasResearchMetadata(metadata: unknown): boolean {
-  if (!metadata || typeof metadata !== "object") return false;
+  if (!metadata || typeof metadata !== "object") {
+    return false;
+  }
   const keys = metadata as Record<string, unknown>;
   return RESEARCH_METADATA_KEYS.some((key) => key in keys);
 }
@@ -35,13 +36,21 @@ export function reconcileServerManagedMessages(
   const storedById = new Map(stored.map((message) => [message.id, message]));
   const serverManaged = new Set<string>();
   for (const message of stored) {
-    if (!hasResearchMetadata(message.metadata)) continue;
+    if (!hasResearchMetadata(message.metadata)) {
+      continue;
+    }
     serverManaged.add(message.id);
-    if (message.parentId) serverManaged.add(message.parentId);
+    if (message.parentId) {
+      serverManaged.add(message.parentId);
+    }
   }
-  if (serverManaged.size === 0) return records;
+  if (serverManaged.size === 0) {
+    return records;
+  }
   return records.map((record) => {
-    if (!serverManaged.has(record.id)) return record;
+    if (!serverManaged.has(record.id)) {
+      return record;
+    }
     const stored = storedById.get(record.id);
     // parentId stays the client's: deleting the message a research prompt hung off relinks it,
     // and echoing the stored parent would persist a link to a row the same sync then prunes.

@@ -1,4 +1,3 @@
-
 import { isTauri } from "@/lib/api-base";
 
 import {
@@ -6,12 +5,15 @@ import {
   AUTH_SESSION_STORED_EVENT,
 } from "./session-events";
 
-export { AUTH_SESSION_CLEARED_EVENT, AUTH_SESSION_STORED_EVENT } from "./session-events";
+export {
+  AUTH_SESSION_CLEARED_EVENT,
+  AUTH_SESSION_STORED_EVENT,
+} from "./session-events";
 
 export const AUTH_TOKEN_KEY = "unsloth_auth_token";
 export const AUTH_REFRESH_TOKEN_KEY = "unsloth_auth_refresh_token";
-export const AUTH_MUST_CHANGE_PASSWORD_KEY = "unsloth_auth_must_change_password";
-
+export const AUTH_MUST_CHANGE_PASSWORD_KEY =
+  "unsloth_auth_must_change_password";
 
 let authSessionEpoch = 0;
 
@@ -27,22 +29,30 @@ function canUseStorage(): boolean {
 }
 
 export function hasAuthToken(): boolean {
-  if (!canUseStorage()) return false;
+  if (!canUseStorage()) {
+    return false;
+  }
   return Boolean(localStorage.getItem(AUTH_TOKEN_KEY));
 }
 
 export function hasRefreshToken(): boolean {
-  if (!canUseStorage()) return false;
+  if (!canUseStorage()) {
+    return false;
+  }
   return Boolean(localStorage.getItem(AUTH_REFRESH_TOKEN_KEY));
 }
 
 export function getAuthToken(): string | null {
-  if (!canUseStorage()) return null;
+  if (!canUseStorage()) {
+    return null;
+  }
   return localStorage.getItem(AUTH_TOKEN_KEY);
 }
 
 export function getRefreshToken(): string | null {
-  if (!canUseStorage()) return null;
+  if (!canUseStorage()) {
+    return null;
+  }
   return localStorage.getItem(AUTH_REFRESH_TOKEN_KEY);
 }
 
@@ -53,7 +63,9 @@ export function storeAuthTokens(
   // must_change_password is set via setMustChangePassword(), not here: routing
   // it through would let CodeQL trace the boolean into localStorage and flag the
   // deliberate JWT writes as sensitive-info storage.
-  if (!canUseStorage()) return;
+  if (!canUseStorage()) {
+    return;
+  }
   const sessionStarted = !localStorage.getItem(AUTH_TOKEN_KEY);
   localStorage.setItem(AUTH_TOKEN_KEY, accessToken);
   localStorage.setItem(AUTH_REFRESH_TOKEN_KEY, refreshToken);
@@ -64,7 +76,9 @@ export function storeAuthTokens(
 }
 
 export function clearAuthTokens(): void {
-  if (!canUseStorage()) return;
+  if (!canUseStorage()) {
+    return;
+  }
   authSessionEpoch += 1;
   localStorage.removeItem(AUTH_TOKEN_KEY);
   localStorage.removeItem(AUTH_REFRESH_TOKEN_KEY);
@@ -76,12 +90,16 @@ export function clearAuthTokens(): void {
 // so CodeQL doesn't flow must_change_password into localStorage.setItem. The
 // value is a route hint (/change-password vs /chat), not a secret.
 export function mustChangePassword(): boolean {
-  if (!canUseStorage()) return false;
+  if (!canUseStorage()) {
+    return false;
+  }
   return localStorage.getItem(AUTH_MUST_CHANGE_PASSWORD_KEY) !== null;
 }
 
 export function setMustChangePassword(required: boolean): void {
-  if (!canUseStorage()) return;
+  if (!canUseStorage()) {
+    return;
+  }
   if (required) {
     localStorage.setItem(AUTH_MUST_CHANGE_PASSWORD_KEY, "1");
   } else {
@@ -89,10 +107,12 @@ export function setMustChangePassword(required: boolean): void {
   }
 }
 
-
-
 export function getPostAuthRoute(): PostAuthRoute {
-  if (isTauri) return "/chat";
-  if (mustChangePassword()) return "/change-password";
+  if (isTauri) {
+    return "/chat";
+  }
+  if (mustChangePassword()) {
+    return "/change-password";
+  }
   return "/chat";
 }

@@ -1,4 +1,3 @@
-
 // eslint-disable-next-line no-restricted-imports -- Avoid the chat barrel's React exports.
 import {
   allowsManualModelIdsWithCatalog,

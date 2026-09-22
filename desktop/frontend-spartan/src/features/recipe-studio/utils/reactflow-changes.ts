@@ -1,4 +1,3 @@
-
 import type {
   Edge,
   EdgeChange,
@@ -14,7 +13,7 @@ export function applyAuxNodeChanges<T extends Node>(
   },
 ): void {
   for (const change of changes) {
-    if (!("id" in change) || !change.id.startsWith("aux-")) {
+    if (!("id" in change && change.id.startsWith("aux-"))) {
       continue;
     }
     if (change.type !== "position") {
@@ -42,6 +41,7 @@ export function filterEdgeChangesByIds(
   ids: Set<string>,
 ): EdgeChange<Edge>[] {
   return changes.filter(
-    (change): change is EdgeChange<Edge> => "id" in change && ids.has(change.id),
+    (change): change is EdgeChange<Edge> =>
+      "id" in change && ids.has(change.id),
   );
 }

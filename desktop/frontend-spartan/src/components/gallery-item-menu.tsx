@@ -1,4 +1,3 @@
-
 import {
   Archive02Icon,
   ArchiveRestoreIcon,
@@ -56,12 +55,17 @@ export function GalleryItemMenu({
   // cannot contain it when the tab goes away.
   const [open, setOpen] = useState(false);
   useEffect(() => {
-    if (!active) setOpen(false);
+    if (!active) {
+      setOpen(false);
+    }
   }, [active]);
 
   const overlay = variant === "overlay";
   const menu = (
-    <DropdownMenu open={active && open} onOpenChange={(o) => setOpen(active && o)}>
+    <DropdownMenu
+      open={active && open}
+      onOpenChange={(o) => setOpen(active && o)}
+    >
       <DropdownMenuTrigger asChild={true}>
         <Button
           size={overlay ? "icon-xs" : "sm"}
@@ -74,7 +78,10 @@ export function GalleryItemMenu({
             className,
           )}
         >
-          <HugeiconsIcon icon={MoreHorizontalIcon} className={overlay ? "size-3.5" : "size-4"} />
+          <HugeiconsIcon
+            icon={MoreHorizontalIcon}
+            className={overlay ? "size-3.5" : "size-4"}
+          />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -95,7 +102,9 @@ export function GalleryItemMenu({
     </DropdownMenu>
   );
 
-  if (!overlay) return menu;
+  if (!overlay) {
+    return menu;
+  }
   return (
     <span
       className={cn(

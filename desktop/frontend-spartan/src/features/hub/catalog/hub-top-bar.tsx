@@ -1,4 +1,3 @@
-
 import type { ReactNode } from "react";
 
 export function HubTopBar({ children }: { children: ReactNode }) {

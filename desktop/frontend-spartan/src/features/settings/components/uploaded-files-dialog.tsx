@@ -1,4 +1,3 @@
-
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,11 +37,15 @@ import { type ReactNode, useEffect, useRef, useState } from "react";
 import { useSettingsDialogStore } from "../stores/settings-dialog-store";
 
 function formatUploadedAt(value: string | number | null | undefined): string {
-  if (value === null || value === undefined || value === "") return "-";
+  if (value === null || value === undefined || value === "") {
+    return "-";
+  }
   // Chat attachments carry ms epoch numbers; RAG documents carry SQLite
   // ISO-ish strings (no timezone). Unparseable strings fall through raw.
   const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return String(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return String(value);
+  }
   return parsed.toLocaleDateString(undefined, {
     year: "numeric",
     month: "long",
@@ -51,13 +54,19 @@ function formatUploadedAt(value: string | number | null | undefined): string {
 }
 
 function formatSize(bytes: number | null | undefined): string {
-  if (bytes === null || bytes === undefined) return "-";
-  if (bytes < 1024) return `${bytes} B`;
+  if (bytes === null || bytes === undefined) {
+    return "-";
+  }
+  if (bytes < 1024) {
+    return `${bytes} B`;
+  }
   const units = ["KB", "MB", "GB"];
   let value = bytes;
   let unit = "B";
   for (const next of units) {
-    if (value < 1024) break;
+    if (value < 1024) {
+      break;
+    }
     value /= 1024;
     unit = next;
   }
@@ -65,11 +74,15 @@ function formatSize(bytes: number | null | undefined): string {
 }
 
 function ragLocationLabel(doc: UploadedDocument): string {
-  if (doc.kbId) return doc.kbName ? `KB · ${doc.kbName}` : "Knowledge base";
+  if (doc.kbId) {
+    return doc.kbName ? `KB · ${doc.kbName}` : "Knowledge base";
+  }
   if (doc.projectId) {
     return doc.projectName ? `Project · ${doc.projectName}` : "Project";
   }
-  if (doc.threadId) return "Chat files (RAG)";
+  if (doc.threadId) {
+    return "Chat files (RAG)";
+  }
   return "-";
 }
 
@@ -81,7 +94,9 @@ function fileTypeLabel(
 ): string | null {
   const dot = name.lastIndexOf(".");
   const ext = dot > 0 ? name.slice(dot + 1).trim() : "";
-  if (ext && ext.length <= 5) return ext.toUpperCase();
+  if (ext && ext.length <= 5) {
+    return ext.toUpperCase();
+  }
   const subtype = contentType?.split("/")[1]?.split("+")[0]?.trim();
   return subtype && subtype.length <= 10 ? subtype.toUpperCase() : null;
 }
@@ -102,7 +117,9 @@ function ChatImageThumb({
 
   useEffect(() => {
     const el = holderRef.current;
-    if (!el) return;
+    if (!el) {
+      return;
+    }
     if (typeof IntersectionObserver === "undefined") {
       return;
     }
@@ -117,12 +134,16 @@ function ChatImageThumb({
   }, []);
 
   useEffect(() => {
-    if (!visible) return;
+    if (!visible) {
+      return;
+    }
     let cancelled = false;
     let url: string | null = null;
     fetchChatAttachmentBlob(messageId, attachmentId)
       .then((blob) => {
-        if (cancelled) return;
+        if (cancelled) {
+          return;
+        }
         url = URL.createObjectURL(blob);
         setSrc(url);
       })
@@ -131,7 +152,9 @@ function ChatImageThumb({
       });
     return () => {
       cancelled = true;
-      if (url) URL.revokeObjectURL(url);
+      if (url) {
+        URL.revokeObjectURL(url);
+      }
     };
   }, [visible, messageId, attachmentId]);
 
@@ -182,7 +205,9 @@ interface UploadedFileRow {
 }
 
 function toSortTime(value: string | number | null | undefined): number {
-  if (value === null || value === undefined || value === "") return 0;
+  if (value === null || value === undefined || value === "") {
+    return 0;
+  }
   const parsed = new Date(value).getTime();
   return Number.isNaN(parsed) ? 0 : parsed;
 }
@@ -272,10 +297,14 @@ function savedAttachmentName(name: string, blobType: string): string {
   const mime = blobType.split(";")[0].trim().toLowerCase();
   const dot = extensionStart(name);
   if (mime === "text/plain") {
-    if (name.toLowerCase().endsWith(".txt")) return name;
+    if (name.toLowerCase().endsWith(".txt")) {
+      return name;
+    }
     return `${dot === -1 ? name : name.slice(0, dot)}.txt`;
   }
-  if (dot !== -1) return name;
+  if (dot !== -1) {
+    return name;
+  }
   const ext = EXT_BY_MIME[mime];
   return ext ? `${name}.${ext}` : name;
 }
@@ -368,7 +397,9 @@ export function UploadedFilesView() {
   // Jump to the chat thread the attachment lives in, closing the settings
   // dialog so the thread is actually visible.
   function goToChat(row: UploadedFileRow) {
-    if (!row.threadId) return;
+    if (!row.threadId) {
+      return;
+    }
     useSettingsDialogStore.getState().closeDialog();
     if (row.pairId) {
       void navigate({ to: "/chat", search: { compare: row.pairId } });
@@ -381,7 +412,9 @@ export function UploadedFilesView() {
     let cancelled = false;
     void listAllDocuments().then(
       (data) => {
-        if (!cancelled) setRagFiles({ status: "ready", data, error: null });
+        if (!cancelled) {
+          setRagFiles({ status: "ready", data, error: null });
+        }
       },
       (error: unknown) => {
         if (!cancelled) {
@@ -475,7 +508,9 @@ export function UploadedFilesView() {
     try {
       await row.open();
     } catch (err) {
-      if (isDownloadCancelled(err)) return;
+      if (isDownloadCancelled(err)) {
+        return;
+      }
       toast.error("Failed to open file", {
         description: err instanceof Error ? err.message : undefined,
       });
@@ -485,7 +520,9 @@ export function UploadedFilesView() {
   async function handleDelete(row: UploadedFileRow) {
     // Offset pages and destructive mutations must not race: a deletion shifts
     // the boundary used by an in-flight page request.
-    if (loadingMore || !row.remove) return;
+    if (loadingMore || !row.remove) {
+      return;
+    }
     try {
       await row.remove();
       if (row.source === "rag") {
@@ -676,7 +713,9 @@ export function UploadedFilesView() {
       <AlertDialog
         open={confirmingDelete !== null}
         onOpenChange={(o) => {
-          if (!o) setConfirmingDelete(null);
+          if (!o) {
+            setConfirmingDelete(null);
+          }
         }}
       >
         <AlertDialogContent>
@@ -697,7 +736,9 @@ export function UploadedFilesView() {
               onClick={() => {
                 const row = confirmingDelete;
                 setConfirmingDelete(null);
-                if (row) void handleDelete(row);
+                if (row) {
+                  void handleDelete(row);
+                }
               }}
             >
               Delete

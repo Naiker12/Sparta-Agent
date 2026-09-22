@@ -1,4 +1,3 @@
-
 import type { Node } from "@xyflow/react";
 
 function parseDim(value: unknown): number | null {
@@ -29,4 +28,3 @@ export function readNodeHeight(node: Node): number | null {
     null
   );
 }
-

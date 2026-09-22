@@ -1,4 +1,3 @@
-
 import type { NodeConfig, SeedConfig } from "../../types";
 
 const DEFAULT_CHUNK_SIZE = 1200;
@@ -8,16 +7,26 @@ const GITHUB_ITEM_TYPES = new Set(["issues", "pulls", "commits"]);
 
 function parseIntStrict(value: string | undefined): number | null {
   const trimmed = value?.trim();
-  if (!trimmed) return null;
+  if (!trimmed) {
+    return null;
+  }
   const num = Number(value);
-  if (!Number.isFinite(num) || !Number.isInteger(num)) return null;
+  if (!(Number.isFinite(num) && Number.isInteger(num))) {
+    return null;
+  }
   return num;
 }
 
-function resolveChunking(config: SeedConfig): { chunkSize: number; chunkOverlap: number } {
+function resolveChunking(config: SeedConfig): {
+  chunkSize: number;
+  chunkOverlap: number;
+} {
   const rawSize = parseIntStrict(config.unstructured_chunk_size);
   const rawOverlap = parseIntStrict(config.unstructured_chunk_overlap);
-  const chunkSize = Math.min(MAX_CHUNK_SIZE, Math.max(1, rawSize ?? DEFAULT_CHUNK_SIZE));
+  const chunkSize = Math.min(
+    MAX_CHUNK_SIZE,
+    Math.max(1, rawSize ?? DEFAULT_CHUNK_SIZE),
+  );
   const chunkOverlap = Math.min(
     Math.max(0, chunkSize - 1),
     Math.max(0, rawOverlap ?? DEFAULT_CHUNK_OVERLAP),
@@ -69,7 +78,10 @@ export function buildSeedConfig(
     source = {
       // biome-ignore lint/style/useNamingConvention: api schema
       seed_type: "unstructured",
-      paths: config.resolved_paths?.length ? config.resolved_paths : [config.hf_path],
+      paths:
+        config.resolved_paths && config.resolved_paths.length > 0
+          ? config.resolved_paths
+          : [config.hf_path],
       // biome-ignore lint/style/useNamingConvention: api schema
       chunk_size: chunkSize,
       // biome-ignore lint/style/useNamingConvention: api schema
@@ -94,9 +106,10 @@ export function buildSeedConfig(
       );
       return undefined;
     }
-    const itemTypes = config.github_item_types?.length
-      ? config.github_item_types
-      : ["issues", "pulls"];
+    const itemTypes =
+      config.github_item_types && config.github_item_types.length > 0
+        ? config.github_item_types
+        : ["issues", "pulls"];
     if (itemTypes.some((itemType) => !GITHUB_ITEM_TYPES.has(itemType))) {
       errors.push(`Seed ${config.name}: GitHub item types invalid.`);
       return undefined;
@@ -108,7 +121,9 @@ export function buildSeedConfig(
       );
       return undefined;
     }
-    const maxCommentsNum = parseIntStrict(config.github_max_comments_per_item ?? "30");
+    const maxCommentsNum = parseIntStrict(
+      config.github_max_comments_per_item ?? "30",
+    );
     if (maxCommentsNum === null || maxCommentsNum < 0 || maxCommentsNum > 200) {
       errors.push(
         `Seed ${config.name}: GitHub max comments per item must be an integer from 0 to 200.`,
@@ -161,7 +176,9 @@ export function buildSeedDropProcessor(
   errors: string[],
 ): Record<string, unknown> | null {
   const seedSourceType = config.seed_source_type ?? "hf";
-  const loadedCols = (config.seed_columns ?? []).map((c) => c.trim()).filter(Boolean);
+  const loadedCols = (config.seed_columns ?? [])
+    .map((c) => c.trim())
+    .filter(Boolean);
   const selectedDropColumns = (config.seed_drop_columns ?? [])
     .map((c) => c.trim())
     .filter(Boolean);
@@ -191,9 +208,7 @@ export function buildSeedDropProcessor(
   }
 
   if (cols.length === 0) {
-    errors.push(
-      `Seed ${config.name}: selected drop columns are unavailable.`,
-    );
+    errors.push(`Seed ${config.name}: selected drop columns are unavailable.`);
     return null;
   }
   return {

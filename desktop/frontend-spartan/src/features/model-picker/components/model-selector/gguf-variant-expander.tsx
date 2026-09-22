@@ -8,27 +8,16 @@
  * - Acciones de actualización y eliminación de variantes individuales con confirmación.
  */
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ReactNode,
-} from "react";
-import { cn } from "@/lib/utils";
+import { Spinner } from "@/components/ui/spinner";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Spinner } from "@/components/ui/spinner";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { ViewIcon } from "@hugeicons/core-free-icons";
 import {
-  listGgufVariants,
   type CachedGgufRepo,
   type GgufVariantDetail,
+  listGgufVariants,
 } from "@/features/chat";
 import { useChatRuntimeStore } from "@/features/chat";
 import {
@@ -36,18 +25,25 @@ import {
   listGgufVariants as listGgufVariantsCached,
   useGgufVariantsCacheVersions,
 } from "@/features/hub";
+import { cn } from "@/lib/utils";
+import { ViewIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { SizeText, formatBytes } from "./model-badges-and-chips";
 import { ModelLoadSettingsAction } from "./model-load-settings-action";
 import { ModelRowMenu } from "./model-row-menu";
-import { formatBytes, SizeText } from "./model-badges-and-chips";
 import {
   GgufDownloadFootprint,
   GgufDownloadFootprintExplanation,
 } from "./pickers";
-import {
-  makeModelOptionKey,
-  makeModelOptionChildrenId,
-  useRovingModelList,
-} from "./use-roving-model-list";
+import { pinKey, usePinnedModelsStore } from "./pinned-models";
 import {
   type SoleQuantEntry,
   type SoleQuantTarget,
@@ -61,6 +57,11 @@ import type {
   ModelDownloadFootprintResolver,
   ModelSelectorChangeMeta,
 } from "./types";
+import {
+  makeModelOptionChildrenId,
+  makeModelOptionKey,
+  useRovingModelList,
+} from "./use-roving-model-list";
 import { describeVariantListingError } from "./variant-listing-error";
 import {
   ggufVariantPickerLabel,
@@ -68,17 +69,15 @@ import {
   h3PickerHasOnlyPrunedBuilds,
   preferredGgufVariantByGroup,
 } from "./variant-presentation";
-import {
-  visibleGgufVariants,
-} from "./variant-visibility";
-import {
-  pinKey,
-  usePinnedModelsStore,
-} from "./pinned-models";
+import { visibleGgufVariants } from "./variant-visibility";
 // ── GGUF Variant Expander ────────────────────────────────────
 
-export function isValidGgufVariant(variant: unknown): variant is GgufVariantDetail {
-  if (!variant || typeof variant !== "object") return false;
+export function isValidGgufVariant(
+  variant: unknown,
+): variant is GgufVariantDetail {
+  if (!variant || typeof variant !== "object") {
+    return false;
+  }
   const candidate = variant as Partial<GgufVariantDetail>;
   return (
     typeof candidate.filename === "string" &&
@@ -171,7 +170,9 @@ export async function readSoleQuant(
     const local = normalized.variants;
     // One file on disk and nothing torn beside it. A partial quant keeps the
     // expander, where it can be resumed.
-    if (local.length !== 1 || local[0].downloaded !== true) return null;
+    if (local.length !== 1 || local[0].downloaded !== true) {
+      return null;
+    }
     return { variant: local[0], hasVision: normalized.hasVision };
   } catch {
     return null;
@@ -254,7 +255,9 @@ export function useSoleDownloadedQuants(
       workers: SOLE_QUANT_WORKERS,
       read: (target) => readSoleQuant(target, hfTokenRef.current),
       commit: (target, quant) => {
-        if (!mountedRef.current) return;
+        if (!mountedRef.current) {
+          return;
+        }
         setEntries((prev) => {
           const next = new Map(prev);
           next.set(target.repoId, { key: target.key, quant });
@@ -265,7 +268,9 @@ export function useSoleDownloadedQuants(
   }
 
   useEffect(() => {
-    if (stale.length > 0) readerRef.current?.start(stale);
+    if (stale.length > 0) {
+      readerRef.current?.start(stale);
+    }
   }, [stale]);
 
   return { quants, pending };
@@ -369,7 +374,9 @@ export function GgufVariantExpander({
     // per-host connection, and enough of them stall download and load too.
     const controller = new AbortController();
     queueMicrotask(() => {
-      if (canceled) return;
+      if (canceled) {
+        return;
+      }
       setLoading(true);
       setError(null);
       // Belongs to the identifier being listed: carrying it over would apply the previous
@@ -384,7 +391,9 @@ export function GgufVariantExpander({
       signal: controller.signal,
     })
       .then((res) => {
-        if (canceled) return;
+        if (canceled) {
+          return;
+        }
         const normalized = normalizeGgufVariantsResponse(res);
         setVariants(normalized.variants);
         setDefaultVariant(normalized.defaultVariant);
@@ -394,11 +403,15 @@ export function GgufVariantExpander({
         setResolvedLocally(normalized.resolvedLocally);
       })
       .catch((err) => {
-        if (canceled) return;
+        if (canceled) {
+          return;
+        }
         setError(describeVariantListingError(err));
       })
       .finally(() => {
-        if (!canceled) setLoading(false);
+        if (!canceled) {
+          setLoading(false);
+        }
       });
 
     return () => {
@@ -461,13 +474,21 @@ export function GgufVariantExpander({
     (sizeBytes: number): "fits" | "tight" | "oom" => {
       // Preserve permissive behavior only when no budget was measured. A known
       // zero Vulkan budget means every non-empty variant is OOM.
-      if (totalBudgetGb <= 0) return budgetKnown ? "oom" : "fits";
+      if (totalBudgetGb <= 0) {
+        return budgetKnown ? "oom" : "fits";
+      }
       const gb = sizeBytes / 1024 ** 3;
-      if (gb <= 0 || gb <= gpuBudgetGb) return "fits";
+      if (gb <= 0 || gb <= gpuBudgetGb) {
+        return "fits";
+      }
       // No-GPU / unified-memory hosts (Mac) have only the RAM budget, so the tier
       // collapses to fit-or-oom against system RAM.
-      if (gpuBudgetGb <= 0) return gb <= totalBudgetGb ? "fits" : "oom";
-      if (gb <= totalBudgetGb) return "tight";
+      if (gpuBudgetGb <= 0) {
+        return gb <= totalBudgetGb ? "fits" : "oom";
+      }
+      if (gb <= totalBudgetGb) {
+        return "tight";
+      }
       return "oom";
     },
     [budgetKnown, gpuBudgetGb, totalBudgetGb],
@@ -489,7 +510,9 @@ export function GgufVariantExpander({
     for (const group of variantGroups) {
       const preferred = preferredByGroup.get(group.key) ?? null;
       if (totalBudgetGb <= 0 && !budgetKnown) {
-        if (preferred) recommended.set(group.key, preferred.quant);
+        if (preferred) {
+          recommended.set(group.key, preferred.quant);
+        }
         continue;
       }
       if (preferred && getGgufFit(preferred.size_bytes) !== "oom") {
@@ -506,7 +529,9 @@ export function GgufVariantExpander({
       const smallest = [...group.variants].sort(
         (left, right) => left.size_bytes - right.size_bytes,
       )[0];
-      if (smallest) recommended.set(group.key, smallest.quant);
+      if (smallest) {
+        recommended.set(group.key, smallest.quant);
+      }
     }
     return recommended;
   }, [variantGroups, preferredByGroup, totalBudgetGb, budgetKnown, getGgufFit]);
@@ -520,18 +545,26 @@ export function GgufVariantExpander({
     const byVariant = new Map<GgufVariantDetail, string>();
     for (const group of variantGroups) {
       const recommended = effectiveRecommendedByGroup.get(group.key);
-      if (recommended === undefined) continue;
-      for (const variant of group.variants) byVariant.set(variant, recommended);
+      if (recommended === undefined) {
+        continue;
+      }
+      for (const variant of group.variants) {
+        byVariant.set(variant, recommended);
+      }
     }
     return byVariant;
   }, [variantGroups, effectiveRecommendedByGroup]);
 
   const sortedVariants = useMemo(() => {
-    if (!variants) return variants;
+    if (!variants) {
+      return variants;
+    }
     // Tier: 0 = downloaded+fits, 1 = downloaded+tight, 2 = fits, 3 = tight, 4 = OOM
     const tierOf = (v: GgufVariantDetail) => {
       const f = getGgufFit(v.size_bytes);
-      if (f === "oom") return 4;
+      if (f === "oom") {
+        return 4;
+      }
       const base = f === "fits" ? 0 : 1;
       return v.downloaded ? base : base + 2;
     };
@@ -540,12 +573,16 @@ export function GgufVariantExpander({
       return [...group.variants].sort((a, b) => {
         const aTier = tierOf(a);
         const bTier = tierOf(b);
-        if (aTier !== bTier) return aTier - bTier;
+        if (aTier !== bTier) {
+          return aTier - bTier;
+        }
 
         // Within the same tier, the workflow's recommendation goes first.
         const aIsRec = a.quant === recommended;
         const bIsRec = b.quant === recommended;
-        if (aIsRec !== bIsRec) return aIsRec ? -1 : 1;
+        if (aIsRec !== bIsRec) {
+          return aIsRec ? -1 : 1;
+        }
 
         // fits: largest first (best quality that fits in GPU)
         // tight/OOM: smallest first (closest to fitting, fastest to run)
@@ -563,7 +600,9 @@ export function GgufVariantExpander({
     (s) => s.showAllQuantizations,
   );
   const displayVariants = useMemo(() => {
-    if (!sortedVariants) return sortedVariants;
+    if (!sortedVariants) {
+      return sortedVariants;
+    }
     return visibleGgufVariants(sortedVariants, {
       onDevice,
       showAll: showAllQuantizations,
@@ -643,7 +682,9 @@ export function GgufVariantExpander({
         isGguf: true,
       })
         .then((footprint) => {
-          if (cancelled || !footprint) return;
+          if (cancelled || !footprint) {
+            return;
+          }
           // A checkpoint already on disk is not part of required_bytes at all, so nothing may
           // be subtracted for it: the whole figure IS the remote companion set. Subtracting
           // anyway drove the total to zero and hid a multi-GB companion set behind the
@@ -741,7 +782,7 @@ export function GgufVariantExpander({
     >
       {/* On Device shows the model name above, so the Quantizations heading is
           redundant; its Vision badge is relayed to the name instead. */}
-      {!onDevice && !displayVariantGroups.some((group) => group.title) && (
+      {!(onDevice || displayVariantGroups.some((group) => group.title)) && (
         <div className="px-2 py-1 flex items-center gap-1.5">
           <span className="text-ui-10 font-semibold uppercase tracking-wider text-muted-foreground">
             Quantizations

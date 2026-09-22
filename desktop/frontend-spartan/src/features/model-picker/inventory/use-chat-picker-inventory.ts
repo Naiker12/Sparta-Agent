@@ -1,4 +1,3 @@
-
 import type {
   CachedGgufRepo,
   CachedModelRepo,
@@ -22,7 +21,7 @@ const PICKER_LOCAL_SOURCES: ReadonlySet<LocalSource> = new Set([
 ]);
 
 function isCompleteCachedRow(row: CachedInventoryRow): boolean {
-  return !row.partial && !row.liveDownload;
+  return !(row.partial || row.liveDownload);
 }
 
 function toCachedGgufRepo(row: CachedInventoryRow): CachedGgufRepo {

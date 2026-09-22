@@ -1,9 +1,8 @@
-import { FolderAddIcon, Folder01Icon } from "@hugeicons/core-free-icons";
+import { useT } from "@/i18n";
+import { Folder01Icon, FolderAddIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useState } from "react";
-import { useT } from "@/i18n";
 
-import { toast } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,7 +12,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,18 +19,23 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { toast } from "@/lib/toast";
 import {
-  bindThreadWorkspace,
-  unbindThreadWorkspace,
   type ThreadWorkspaceBinding,
   type WorkspaceAccess,
+  bindThreadWorkspace,
+  unbindThreadWorkspace,
 } from "../api/chat-api";
-import {
-  chooseProjectWorkspaceFolder,
-} from "../hooks/use-chat-projects";
+import { chooseProjectWorkspaceFolder } from "../hooks/use-chat-projects";
 import { useChatRuntimeStore } from "../stores/chat-runtime-store";
+import {
+  type PendingWorkspace,
+  ensureThreadWorkspace,
+  getPendingWorkspace,
+  setPendingWorkspace,
+} from "../utils/pending-workspace";
 import { isAssistantLocalThreadId } from "../utils/thread-ids";
-import { ensureThreadWorkspace, getPendingWorkspace, setPendingWorkspace, type PendingWorkspace } from "../utils/pending-workspace";
 
 type NativeWorkspaceBridge = {
   setWorkspaceBinding?: (
@@ -45,9 +48,13 @@ type NativeWorkspaceBridge = {
   ) => Promise<{ success: boolean; error?: string }>;
 };
 
-
 function label(path: string): string {
-  return path.replace(/[\\/]+$/, "").split(/[\\/]/).pop() || path;
+  return (
+    path
+      .replace(/[\\/]+$/, "")
+      .split(/[\\/]/)
+      .pop() || path
+  );
 }
 
 /** The visible workspace capability for the currently open chat. */
@@ -55,7 +62,9 @@ export function ThreadWorkspaceChip() {
   const t = useT();
   const threadId = useChatRuntimeStore((state) => state.activeThreadId);
   const [binding, setBinding] = useState<ThreadWorkspaceBinding | null>(null);
-  const [pending, setPending] = useState<PendingWorkspace | null>(getPendingWorkspace);
+  const [pending, setPending] = useState<PendingWorkspace | null>(
+    getPendingWorkspace,
+  );
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
   const [selectedAccess, setSelectedAccess] = useState<WorkspaceAccess>("read");
 
@@ -67,7 +76,9 @@ export function ThreadWorkspaceChip() {
     let cancelled = false;
     void ensureThreadWorkspace(threadId)
       .then(async (next) => {
-        if (cancelled) return;
+        if (cancelled) {
+          return;
+        }
         if (!next) {
           setBinding(null);
           return;
@@ -80,22 +91,32 @@ export function ThreadWorkspaceChip() {
           next.canonicalPath,
           next.access,
         );
-        if (configured && !configured.success) throw new Error(configured.error);
-        if (cancelled) return;
+        if (configured && !configured.success) {
+          throw new Error(configured.error);
+        }
+        if (cancelled) {
+          return;
+        }
       })
       .catch((error) => {
-        if (cancelled) return;
+        if (cancelled) {
+          return;
+        }
         toast.error(t("chat.workspace.errorPrepare"), {
           description: error instanceof Error ? error.message : undefined,
         });
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [threadId, t]);
 
   async function selectFolder() {
     try {
       const folder = await chooseProjectWorkspaceFolder();
-      if (!folder) return;
+      if (!folder) {
+        return;
+      }
       setSelectedAccess("read");
       setSelectedFolder(folder);
     } catch (error) {
@@ -106,7 +127,9 @@ export function ThreadWorkspaceChip() {
   }
 
   async function confirmFolderAccess() {
-    if (!selectedFolder) return;
+    if (!selectedFolder) {
+      return;
+    }
     const folder = selectedFolder;
     const access = selectedAccess;
     try {
@@ -124,7 +147,9 @@ export function ThreadWorkspaceChip() {
         next.canonicalPath,
         next.access,
       );
-      if (configured && !configured.success) throw new Error(configured.error);
+      if (configured && !configured.success) {
+        throw new Error(configured.error);
+      }
       setBinding(next);
       setSelectedFolder(null);
     } catch (error) {
@@ -161,7 +186,9 @@ export function ThreadWorkspaceChip() {
     <button
       type="button"
       onClick={() => {
-        if (!binding && !pending) void selectFolder();
+        if (!(binding || pending)) {
+          void selectFolder();
+        }
       }}
       className="composer-pill-btn"
       data-keep-label="true"
@@ -194,7 +221,7 @@ export function ThreadWorkspaceChip() {
       open={selectedFolder !== null}
       onOpenChange={(open) => !open && setSelectedFolder(null)}
     >
-      <DialogContent className="max-w-lg" showCloseButton>
+      <DialogContent className="max-w-lg" showCloseButton={true}>
         <DialogHeader>
           <DialogTitle>{t("chat.workspace.connectTitle")}</DialogTitle>
           <DialogDescription>
@@ -210,42 +237,74 @@ export function ThreadWorkspaceChip() {
           aria-label={t("chat.workspace.permissionAria")}
         >
           <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-border px-4 py-3 has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-primary/5">
-            <RadioGroupItem value="read" aria-label={t("chat.workspace.readOnly")} />
+            <RadioGroupItem
+              value="read"
+              aria-label={t("chat.workspace.readOnly")}
+            />
             <span className="flex flex-col gap-1">
-              <span className="font-medium">{t("chat.workspace.readOnly")}</span>
-              <span className="text-sm text-muted-foreground">{t("chat.workspace.readOnlyDesc")}</span>
+              <span className="font-medium">
+                {t("chat.workspace.readOnly")}
+              </span>
+              <span className="text-sm text-muted-foreground">
+                {t("chat.workspace.readOnlyDesc")}
+              </span>
             </span>
           </label>
           <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-border px-4 py-3 has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-primary/5">
-            <RadioGroupItem value="write_no_delete" aria-label={t("chat.workspace.editNoDelete")} />
+            <RadioGroupItem
+              value="write_no_delete"
+              aria-label={t("chat.workspace.editNoDelete")}
+            />
             <span className="flex flex-col gap-1">
-              <span className="font-medium">{t("chat.workspace.editNoDelete")}</span>
-              <span className="text-sm text-muted-foreground">{t("chat.workspace.editNoDeleteDesc")}</span>
+              <span className="font-medium">
+                {t("chat.workspace.editNoDelete")}
+              </span>
+              <span className="text-sm text-muted-foreground">
+                {t("chat.workspace.editNoDeleteDesc")}
+              </span>
             </span>
           </label>
           <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-border px-4 py-3 has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-primary/5">
-            <RadioGroupItem value="write" aria-label={t("chat.workspace.allowEdits")} />
+            <RadioGroupItem
+              value="write"
+              aria-label={t("chat.workspace.allowEdits")}
+            />
             <span className="flex flex-col gap-1">
-              <span className="font-medium">{t("chat.workspace.allowEdits")}</span>
-              <span className="text-sm text-muted-foreground">{t("chat.workspace.allowEditsDesc")}</span>
+              <span className="font-medium">
+                {t("chat.workspace.allowEdits")}
+              </span>
+              <span className="text-sm text-muted-foreground">
+                {t("chat.workspace.allowEditsDesc")}
+              </span>
             </span>
           </label>
         </RadioGroup>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setSelectedFolder(null)}>{t("chat.workspace.cancel")}</Button>
-          <Button onClick={() => void confirmFolderAccess()}>{t("chat.workspace.connect")}</Button>
+          <Button variant="outline" onClick={() => setSelectedFolder(null)}>
+            {t("chat.workspace.cancel")}
+          </Button>
+          <Button onClick={() => void confirmFolderAccess()}>
+            {t("chat.workspace.connect")}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 
-  if (!binding && !pending) return <>{chip}{accessDialog}</>;
+  if (!(binding || pending)) {
+    return (
+      <>
+        {chip}
+        {accessDialog}
+      </>
+    );
+  }
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>{chip}</DropdownMenuTrigger>
+        <DropdownMenuTrigger asChild={true}>{chip}</DropdownMenuTrigger>
         <DropdownMenuContent side="top" align="start" className="w-64">
-          <DropdownMenuItem disabled className="truncate">
+          <DropdownMenuItem disabled={true} className="truncate">
             {currentPath}
           </DropdownMenuItem>
           <DropdownMenuSeparator />

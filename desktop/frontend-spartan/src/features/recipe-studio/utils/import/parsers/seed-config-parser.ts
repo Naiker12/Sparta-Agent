@@ -1,4 +1,3 @@
-
 import type {
   SeedConfig,
   SeedSamplingStrategy,
@@ -9,7 +8,9 @@ import { isRecord, readNumberString, readString } from "../helpers";
 
 function normalizeSampling(value: unknown): SeedSamplingStrategy {
   const raw = readString(value);
-  if (raw === "shuffle") return "shuffle";
+  if (raw === "shuffle") {
+    return "shuffle";
+  }
   return "ordered";
 }
 
@@ -48,7 +49,9 @@ function makeDefaultSeedConfig(id: string): SeedConfig {
 
 function inferRepoIdFromSeedPath(path: string): string {
   const trimmed = path.trim();
-  if (!trimmed) return "";
+  if (!trimmed) {
+    return "";
+  }
   const parts = trimmed.split("/").filter(Boolean);
   if (parts.length >= 3 && parts[0] === "datasets") {
     return `${parts[1]}/${parts[2]}`;
@@ -64,125 +67,130 @@ function parseSeedSettings(seedConfigRaw: unknown): Partial<SeedConfig> {
     return {};
   }
 
-  const sampling_strategy = normalizeSampling(seedConfigRaw.sampling_strategy);
+  const samplingStrategy = normalizeSampling(seedConfigRaw.sampling_strategy);
 
-  let seed_source_type: SeedSourceType = "hf";
-  let hf_path = "";
-  let hf_token = "";
-  let hf_endpoint = "https://huggingface.co";
-  let hf_repo_id = "";
-  let local_file_name = "";
+  let seedSourceType: SeedSourceType = "hf";
+  let hfPath = "";
+  let hfToken = "";
+  let hfEndpoint = "https://huggingface.co";
+  let hfRepoId = "";
+  let localFileName = "";
   let unstructuredFileIds: string[] = [];
   let unstructuredFileNames: string[] = [];
-  let unstructuredFileSizes: number[] = [];
-  let resolved_paths: string[] = [];
-  let unstructured_chunk_size = "1200";
-  let unstructured_chunk_overlap = "200";
-  let github_repo_slug = "";
-  let github_token = "";
-  let github_limit = "100";
-  let github_item_types: ("issues" | "pulls" | "commits")[] = ["issues", "pulls"];
-  let github_include_comments = true;
-  let github_max_comments_per_item = "30";
+  const unstructuredFileSizes: number[] = [];
+  let resolvedPaths: string[] = [];
+  let unstructuredChunkSize = "1200";
+  let unstructuredChunkOverlap = "200";
+  let githubRepoSlug = "";
+  let githubToken = "";
+  let githubLimit = "100";
+  let githubItemTypes: ("issues" | "pulls" | "commits")[] = ["issues", "pulls"];
+  let githubIncludeComments = true;
+  let githubMaxCommentsPerItem = "30";
   const sourceRaw = seedConfigRaw.source;
   if (isRecord(sourceRaw)) {
     const seedType = readString(sourceRaw.seed_type);
     const sourcePath = readString(sourceRaw.path) ?? "";
     if (seedType === "hf") {
-      seed_source_type = "hf";
-      hf_path = sourcePath;
-      hf_token = readString(sourceRaw.token) ?? "";
-      hf_endpoint = readString(sourceRaw.endpoint) ?? hf_endpoint;
-      hf_repo_id = inferRepoIdFromSeedPath(hf_path);
+      seedSourceType = "hf";
+      hfPath = sourcePath;
+      hfToken = readString(sourceRaw.token) ?? "";
+      hfEndpoint = readString(sourceRaw.endpoint) ?? hfEndpoint;
+      hfRepoId = inferRepoIdFromSeedPath(hfPath);
     } else if (seedType === "local") {
-      seed_source_type = "local";
-      hf_path = sourcePath;
-      local_file_name = sourcePath.split("/").pop() ?? sourcePath;
+      seedSourceType = "local";
+      hfPath = sourcePath;
+      localFileName = sourcePath.split("/").pop() ?? sourcePath;
     } else if (seedType === "unstructured") {
-      seed_source_type = "unstructured";
+      seedSourceType = "unstructured";
       const paths = Array.isArray(sourceRaw.paths) ? sourceRaw.paths : [];
-      const stringPaths = paths.filter((p): p is string => typeof p === "string");
+      const stringPaths = paths.filter(
+        (p): p is string => typeof p === "string",
+      );
       if (stringPaths.length === 0 && sourcePath) {
         stringPaths.push(sourcePath);
       }
-      hf_path = stringPaths[0] ?? sourcePath;
-      resolved_paths = stringPaths;
+      hfPath = stringPaths[0] ?? sourcePath;
+      resolvedPaths = stringPaths;
       unstructuredFileIds = [];
       unstructuredFileNames = [];
-      unstructured_chunk_size = readNumberString(sourceRaw.chunk_size) || "1200";
-      unstructured_chunk_overlap = readNumberString(sourceRaw.chunk_overlap) || "200";
+      unstructuredChunkSize = readNumberString(sourceRaw.chunk_size) || "1200";
+      unstructuredChunkOverlap =
+        readNumberString(sourceRaw.chunk_overlap) || "200";
     } else if (seedType === "github_repo") {
-      seed_source_type = "github_repo";
+      seedSourceType = "github_repo";
       const rawRepos = Array.isArray(sourceRaw.repos) ? sourceRaw.repos : [];
       const repos = rawRepos.filter((r): r is string => typeof r === "string");
-      github_repo_slug = repos.join("\n");
-      github_token = readString(sourceRaw.token) ?? "";
-      github_limit = readNumberString(sourceRaw.limit) || "100";
-      const rawItems = Array.isArray(sourceRaw.item_types) ? sourceRaw.item_types : [];
+      githubRepoSlug = repos.join("\n");
+      githubToken = readString(sourceRaw.token) ?? "";
+      githubLimit = readNumberString(sourceRaw.limit) || "100";
+      const rawItems = Array.isArray(sourceRaw.item_types)
+        ? sourceRaw.item_types
+        : [];
       const validItems = rawItems.filter(
         (t): t is "issues" | "pulls" | "commits" =>
           t === "issues" || t === "pulls" || t === "commits",
       );
       if (validItems.length > 0) {
-        github_item_types = validItems;
+        githubItemTypes = validItems;
       }
       if (typeof sourceRaw.include_comments === "boolean") {
-        github_include_comments = sourceRaw.include_comments;
+        githubIncludeComments = sourceRaw.include_comments;
       }
-      github_max_comments_per_item =
+      githubMaxCommentsPerItem =
         readNumberString(sourceRaw.max_comments_per_item) || "30";
     }
   }
 
-  let selection_type: SeedSelectionType = "none";
-  let selection_start = "0";
-  let selection_end = "10";
-  let selection_index = "0";
-  let selection_num_partitions = "1";
+  let selectionType: SeedSelectionType = "none";
+  let selectionStart = "0";
+  let selectionEnd = "10";
+  let selectionIndex = "0";
+  let selectionNumPartitions = "1";
   const selectionRaw = seedConfigRaw.selection_strategy;
   if (isRecord(selectionRaw)) {
     if (
       typeof selectionRaw.start === "number" &&
       typeof selectionRaw.end === "number"
     ) {
-      selection_type = "index_range";
-      selection_start = String(selectionRaw.start);
-      selection_end = String(selectionRaw.end);
+      selectionType = "index_range";
+      selectionStart = String(selectionRaw.start);
+      selectionEnd = String(selectionRaw.end);
     } else if (
       typeof selectionRaw.index === "number" &&
       typeof selectionRaw.num_partitions === "number"
     ) {
-      selection_type = "partition_block";
-      selection_index = String(selectionRaw.index);
-      selection_num_partitions = String(selectionRaw.num_partitions);
+      selectionType = "partition_block";
+      selectionIndex = String(selectionRaw.index);
+      selectionNumPartitions = String(selectionRaw.num_partitions);
     }
   }
 
   return {
-    seed_source_type,
-    hf_repo_id,
-    hf_path,
-    hf_token,
-    hf_endpoint,
-    local_file_name,
+    seed_source_type: seedSourceType,
+    hf_repo_id: hfRepoId,
+    hf_path: hfPath,
+    hf_token: hfToken,
+    hf_endpoint: hfEndpoint,
+    local_file_name: localFileName,
     unstructured_file_ids: unstructuredFileIds,
     unstructured_file_names: unstructuredFileNames,
     unstructured_file_sizes: unstructuredFileSizes,
-    resolved_paths,
-    unstructured_chunk_size,
-    unstructured_chunk_overlap,
-    github_repo_slug,
-    github_token,
-    github_limit,
-    github_item_types,
-    github_include_comments,
-    github_max_comments_per_item,
-    sampling_strategy,
-    selection_type,
-    selection_start,
-    selection_end,
-    selection_index,
-    selection_num_partitions,
+    resolved_paths: resolvedPaths,
+    unstructured_chunk_size: unstructuredChunkSize,
+    unstructured_chunk_overlap: unstructuredChunkOverlap,
+    github_repo_slug: githubRepoSlug,
+    github_token: githubToken,
+    github_limit: githubLimit,
+    github_item_types: githubItemTypes,
+    github_include_comments: githubIncludeComments,
+    github_max_comments_per_item: githubMaxCommentsPerItem,
+    sampling_strategy: samplingStrategy,
+    selection_type: selectionType,
+    selection_start: selectionStart,
+    selection_end: selectionEnd,
+    selection_index: selectionIndex,
+    selection_num_partitions: selectionNumPartitions,
   };
 }
 

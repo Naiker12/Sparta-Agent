@@ -1,24 +1,23 @@
-
 import type { ReactElement } from "react";
-import type { NodeConfig, SamplerConfig } from "../types";
-import { getBlockDefinitionForConfig } from "./definitions";
 import { ExpressionDialog } from "../dialogs/expression/expression-dialog";
 import { LlmDialog } from "../dialogs/llm/llm-dialog";
+import { MarkdownNoteDialog } from "../dialogs/markdown-note/markdown-note-dialog";
 import { ModelConfigDialog } from "../dialogs/models/model-config-dialog";
 import { ModelProviderDialog } from "../dialogs/models/model-provider-dialog";
-import { SeedDialog } from "../dialogs/seed/seed-dialog";
+import { BernoulliDialog } from "../dialogs/samplers/bernoulli-dialog";
 import { CategoryDialog } from "../dialogs/samplers/category-dialog";
 import { DatetimeDialog } from "../dialogs/samplers/datetime-dialog";
-import { BernoulliDialog } from "../dialogs/samplers/bernoulli-dialog";
 import { GaussianDialog } from "../dialogs/samplers/gaussian-dialog";
 import { PersonDialog } from "../dialogs/samplers/person-dialog";
 import { SubcategoryDialog } from "../dialogs/samplers/subcategory-dialog";
 import { TimedeltaDialog } from "../dialogs/samplers/timedelta-dialog";
 import { UniformDialog } from "../dialogs/samplers/uniform-dialog";
 import { UuidDialog } from "../dialogs/samplers/uuid-dialog";
-import { MarkdownNoteDialog } from "../dialogs/markdown-note/markdown-note-dialog";
+import { SeedDialog } from "../dialogs/seed/seed-dialog";
 import { ToolProfileDialog } from "../dialogs/tool-profile/tool-profile-dialog";
 import { ValidatorDialog } from "../dialogs/validators/validator-dialog";
+import type { NodeConfig, SamplerConfig } from "../types";
+import { getBlockDefinitionForConfig } from "./definitions";
 
 export function renderBlockDialog(
   config: NodeConfig | null,
@@ -32,7 +31,7 @@ export function renderBlockDialog(
   onUpdate: (id: string, patch: Partial<NodeConfig>) => void,
 ): ReactElement | null {
   const definition = getBlockDefinitionForConfig(config);
-  if (!definition || !config) {
+  if (!(definition && config)) {
     return null;
   }
 
@@ -48,7 +47,8 @@ export function renderBlockDialog(
         <CategoryDialog key={config.id} config={config} onUpdate={update} />
       ) : null;
     case "subcategory":
-      return config.kind === "sampler" && config.sampler_type === "subcategory" ? (
+      return config.kind === "sampler" &&
+        config.sampler_type === "subcategory" ? (
         <SubcategoryDialog
           config={config}
           categoryOptions={categoryOptions}
@@ -64,7 +64,8 @@ export function renderBlockDialog(
         <GaussianDialog config={config} onUpdate={update} />
       ) : null;
     case "bernoulli":
-      return config.kind === "sampler" && config.sampler_type === "bernoulli" ? (
+      return config.kind === "sampler" &&
+        config.sampler_type === "bernoulli" ? (
         <BernoulliDialog config={config} onUpdate={update} />
       ) : null;
     case "datetime":
@@ -72,7 +73,8 @@ export function renderBlockDialog(
         <DatetimeDialog config={config} onUpdate={update} />
       ) : null;
     case "timedelta":
-      return config.kind === "sampler" && config.sampler_type === "timedelta" ? (
+      return config.kind === "sampler" &&
+        config.sampler_type === "timedelta" ? (
         <TimedeltaDialog
           config={config}
           datetimeOptions={datetimeOptions}

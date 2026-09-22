@@ -1,4 +1,3 @@
-
 export interface HfCredentialStatus {
   has_token: boolean;
   token: string | null;
@@ -17,14 +16,15 @@ export interface LegacyHfTokenReconciliationDependencies<
 export async function reconcileLegacyHfToken<T extends HfCredentialStatus>(
   dependencies: LegacyHfTokenReconciliationDependencies<T>,
 ): Promise<T> {
-
   const legacyTokenBeforeLoad = dependencies.getLegacyToken().trim();
   let saved: T;
   try {
     saved = await dependencies.loadSavedToken();
   } catch (error) {
     const retainedToken = dependencies.getLegacyToken().trim();
-    if (retainedToken) dependencies.applyToken(retainedToken);
+    if (retainedToken) {
+      dependencies.applyToken(retainedToken);
+    }
     throw error;
   }
   if (saved.has_token && saved.token) {
@@ -57,7 +57,6 @@ export async function reconcileLegacyHfToken<T extends HfCredentialStatus>(
   return migrated;
 }
 
-
 export interface ProviderCredentialStatus {
   id: string;
   has_api_key: boolean;
@@ -81,20 +80,30 @@ export async function reconcileLegacyProviderKeys<
 ): Promise<T[]> {
   const reconciled = [...configs];
   for (let index = 0; index < reconciled.length; index += 1) {
-
-    if (dependencies.isCurrent && !dependencies.isCurrent()) return reconciled;
+    if (dependencies.isCurrent && !dependencies.isCurrent()) {
+      return reconciled;
+    }
     const config = reconciled[index];
     if (config.has_api_key) {
       const legacyKey = dependencies.getLegacyKey(config.id);
-      if (legacyKey) dependencies.removeLegacyKey(config.id, legacyKey);
+      if (legacyKey) {
+        dependencies.removeLegacyKey(config.id, legacyKey);
+      }
       continue;
     }
     const legacyKey = dependencies.getLegacyKey(config.id);
     const normalizedLegacyKey = legacyKey.trim();
-    if (!normalizedLegacyKey) continue;
+    if (!normalizedLegacyKey) {
+      continue;
+    }
     try {
-      const saved = await dependencies.saveLegacyKey(config.id, normalizedLegacyKey);
-      if (dependencies.isCurrent && !dependencies.isCurrent()) return reconciled;
+      const saved = await dependencies.saveLegacyKey(
+        config.id,
+        normalizedLegacyKey,
+      );
+      if (dependencies.isCurrent && !dependencies.isCurrent()) {
+        return reconciled;
+      }
       reconciled[index] = saved;
       if (saved.has_api_key) {
         dependencies.removeLegacyKey(config.id, legacyKey);
@@ -106,12 +115,13 @@ export async function reconcileLegacyProviderKeys<
   return reconciled;
 }
 
-
 export async function settleTasksIfCurrent(
   tasks: Array<() => Promise<unknown>>,
   isCurrent?: () => boolean,
 ): Promise<void> {
-  if (isCurrent && !isCurrent()) return;
+  if (isCurrent && !isCurrent()) {
+    return;
+  }
   await Promise.allSettled(tasks.map((task) => task()));
 }
 
@@ -128,8 +138,9 @@ export interface CredentialBootstrapDependencies<T> {
 export async function runCredentialBootstrap<T>(
   dependencies: CredentialBootstrapDependencies<T>,
 ): Promise<void> {
-
-  if (dependencies.isCurrent && !dependencies.isCurrent()) return;
+  if (dependencies.isCurrent && !dependencies.isCurrent()) {
+    return;
+  }
   const providerSync = dependencies.syncProviders(dependencies.getProviders());
   const [, providerResult] = await Promise.allSettled([
     dependencies.hydrateHfToken(),

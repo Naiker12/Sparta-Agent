@@ -1,4 +1,3 @@
-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,10 +13,10 @@ import {
   listGgufVariants,
   listLocalModels,
 } from "@/features/chat";
+import { ggufVariantDisplayLabel } from "@/features/hub";
 import { cn } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
 import { ChevronDownIcon, ChevronRightIcon, RefreshCwIcon } from "lucide-react";
-import { ggufVariantDisplayLabel } from "@/features/hub";
 import {
   type ComponentPropsWithoutRef,
   type ReactElement,

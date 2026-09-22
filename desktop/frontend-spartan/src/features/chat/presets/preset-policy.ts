@@ -1,4 +1,3 @@
-
 import {
   DEFAULT_INFERENCE_PARAMS,
   type InferenceParams,
@@ -355,8 +354,12 @@ export function resolveFitMaxSeqLength(
   customContextLength: number | null,
   fallback: number,
 ): number {
-  if (!isGguf || gpuMemoryMode !== "manual" || gpuLayers >= 0) return fallback;
-  return customContextLength && customContextLength > 0 ? customContextLength : 0;
+  if (!isGguf || gpuMemoryMode !== "manual" || gpuLayers >= 0) {
+    return fallback;
+  }
+  return customContextLength && customContextLength > 0
+    ? customContextLength
+    : 0;
 }
 
 // A Manual + Auto-layers load sends its positive context pin as max_seq_length;
@@ -368,7 +371,9 @@ export function resolveManualAutoCtxPin(
   gpuLayers: number,
   customContextLength: number | null,
 ): number | null {
-  return gpuMemoryMode === "manual" && gpuLayers < 0 && (customContextLength ?? 0) > 0
+  return gpuMemoryMode === "manual" &&
+    gpuLayers < 0 &&
+    (customContextLength ?? 0) > 0
     ? customContextLength
     : null;
 }

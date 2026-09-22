@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -19,8 +18,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { Spinner } from "@/components/ui/spinner";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import {
   ArrowLeft02Icon,
@@ -32,17 +31,10 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Eye, EyeOff } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import {
-  type WheelEvent,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { type WheelEvent, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ApiProviderLogo } from "./api-provider-logo";
 
-import { OpenAICodexConnect } from "./openai-codex-connect";
 import {
   type ProviderRegistryEntry,
   createProviderConfig,
@@ -52,22 +44,22 @@ import {
   testProviderConnection,
   updateProviderConfig,
 } from "./api/providers-api";
+import { OpenAICodexConnect } from "./openai-codex-connect";
 
-import { resolveProviderCredentialEdit } from "./provider-credential-edit";
-import { getExternalMinOutputTokens } from "./provider-capabilities";
+import { useT } from "@/i18n";
 import type { ExternalProviderConfig } from "./external-providers";
 import {
+  CUSTOM_PROVIDER_DISPLAY_NAME,
   CUSTOM_PROVIDER_PRESETS,
+  LEGACY_CUSTOM_PROVIDER_TYPE,
+  PROVIDER_MAX_OUTPUT_TOKENS_MIN,
   allowsManualModelIdsWithCatalog,
+  customPresetSkipsApiKeyField,
   customProviderBaseUrlPlaceholder,
   customProviderDisplayName,
   customProviderModelIdsPlaceholder,
-  customPresetSkipsApiKeyField,
-  PROVIDER_MAX_OUTPUT_TOKENS_MIN,
   getExternalProviderApiKey,
   isCustomProviderType,
-  LEGACY_CUSTOM_PROVIDER_TYPE,
-  CUSTOM_PROVIDER_DISPLAY_NAME,
   providerModelSupportsStudioTools,
   removeExternalProviderApiKey,
   supportsProviderMaxOutputTokens,
@@ -75,8 +67,9 @@ import {
   supportsRemoteModelCatalog,
   toExternalBackendProviderType,
 } from "./external-providers";
+import { getExternalMinOutputTokens } from "./provider-capabilities";
+import { resolveProviderCredentialEdit } from "./provider-credential-edit";
 import { useExternalProvidersStore } from "./stores/external-providers-store";
-import { useT } from "@/i18n";
 import {
   pruneProviderModelIds,
   syncExternalProvidersFromBackend,
@@ -96,7 +89,9 @@ function parseManualModelIds(text: string): string[] {
   const out: string[] = [];
   for (const raw of text.split(/[\n,]+/)) {
     const id = raw.trim();
-    if (!id || seen.has(id)) continue;
+    if (!id || seen.has(id)) {
+      continue;
+    }
     seen.add(id);
     out.push(id);
   }
@@ -104,24 +99,31 @@ function parseManualModelIds(text: string): string[] {
 }
 
 // Remote providers that support both catalog load and manual model IDs.
-const EMPTY_CATALOG_HINTS: Record<string, { title: string; description: string }> =
-  {
-    ollama: {
-      title: "No local Ollama models found.",
-      description:
-        "Run `ollama pull <model>` in a terminal, then reload — or enter a model ID manually below.",
-    },
-    llama_cpp: {
-      title: "No llama.cpp models found.",
-      description:
-        "Ensure llama-server is running with models loaded, then reload — or enter model IDs manually below.",
-    },
-    vllm: {
-      title: "No vLLM models found.",
-      description:
-        "Ensure the vLLM server is running and models are loaded, then reload — or enter model IDs manually below.",
-    },
-  };
+const EMPTY_CATALOG_HINTS: Record<
+  string,
+  { title: string; description: string }
+> = {
+  ollama: {
+    title: "No local Ollama models found.",
+    description:
+      "Run `ollama pull <model>` in a terminal, then reload — or enter a model ID manually below.",
+  },
+  lmstudio: {
+    title: "No LM Studio models found.",
+    description:
+      "Ensure LM Studio local server is running on port 1234, then reload — or enter model IDs manually below.",
+  },
+  llama_cpp: {
+    title: "No llama.cpp models found.",
+    description:
+      "Ensure llama-server is running with models loaded, then reload — or enter model IDs manually below.",
+  },
+  vllm: {
+    title: "No vLLM models found.",
+    description:
+      "Ensure the vLLM server is running and models are loaded, then reload — or enter model IDs manually below.",
+  },
+};
 
 function emptyCatalogHint(providerType: string): {
   title: string;
@@ -138,6 +140,7 @@ function emptyCatalogHint(providerType: string): {
 function shouldAppendOpenAiVersionPath(providerType: string): boolean {
   return (
     providerType === "ollama" ||
+    providerType === "lmstudio" ||
     providerType === "llama_cpp" ||
     providerType === "vllm" ||
     providerType === LEGACY_CUSTOM_PROVIDER_TYPE
@@ -199,19 +202,25 @@ export function ChatProvidersSettings({
     const modelList = (event.target as HTMLElement).closest<HTMLElement>(
       "[data-provider-model-list]",
     );
-    if (!modelList) return;
+    if (!modelList) {
+      return;
+    }
 
     const movingDown = event.deltaY > 0;
     const atTop = modelList.scrollTop <= 0;
     const atBottom =
       modelList.scrollTop + modelList.clientHeight >=
       modelList.scrollHeight - 1;
-    if ((!movingDown || !atBottom) && (movingDown || !atTop)) return;
+    if (!(movingDown && atBottom) && (movingDown || !atTop)) {
+      return;
+    }
 
     const scrollRoot = event.currentTarget.closest<HTMLElement>(
       "[data-provider-scroll-root]",
     );
-    if (!scrollRoot) return;
+    if (!scrollRoot) {
+      return;
+    }
 
     // A modal scroll lock prevents native wheel chaining out of a nested list.
     // Once the list reaches an edge, explicitly continue in the page scroller.
@@ -263,8 +272,9 @@ export function ChatProvidersSettings({
   const isCodexSubscription = usesOAuth;
   const modelIdsEditable =
     selectedProviderContract?.model_ids_editable !== false;
-  const showApiKeyField =
-    !usesOAuth && !customPresetSkipsApiKeyField(providerType);
+  const showApiKeyField = !(
+    usesOAuth || customPresetSkipsApiKeyField(providerType)
+  );
   const isCuratedModelList = useMemo(() => {
     return registryByType.get(providerType)?.model_list_mode === "curated";
   }, [registryByType, providerType]);
@@ -284,9 +294,7 @@ export function ChatProvidersSettings({
           .size
       : selectedModelIds.length;
   const modelStatusLabel =
-    !isManualModelList &&
-    !remoteAllowsManual &&
-    availableModels.length === 0
+    !(isManualModelList || remoteAllowsManual) && availableModels.length === 0
       ? t("chat.providersDialog.noModelsLoaded")
       : t(
           formModelCount === 1
@@ -295,18 +303,17 @@ export function ChatProvidersSettings({
           { count: formModelCount },
         );
   const showModelsBody =
-    isManualModelList ||
-    remoteAllowsManual ||
-    availableModels.length > 0;
+    isManualModelList || remoteAllowsManual || availableModels.length > 0;
   const missingModelCatalogBaseUrl =
-    supportsRemoteModelCatalog(providerType) && baseUrlDraft.trim().length === 0;
+    supportsRemoteModelCatalog(providerType) &&
+    baseUrlDraft.trim().length === 0;
   const editingProviderHasSavedKey = Boolean(
     editingProviderId &&
-      providers.find((provider) => provider.id === editingProviderId)?.hasApiKey,
+      providers.find((provider) => provider.id === editingProviderId)
+        ?.hasApiKey,
   );
   const missingModelCatalogApiKey =
-    !isCustomProvider &&
-    !isCuratedModelList &&
+    !(isCustomProvider || isCuratedModelList) &&
     apiKey.trim().length === 0 &&
     !(editingProviderHasSavedKey && !clearApiKeyRequested);
   const loadModelsDisabled =
@@ -322,9 +329,9 @@ export function ChatProvidersSettings({
         ? "Full catalog is not fetched for this connection"
         : missingModelCatalogBaseUrl
           ? "Enter a Base URL before loading models"
-            : missingModelCatalogApiKey
-              ? "Enter an API key before loading models"
-              : undefined;
+          : missingModelCatalogApiKey
+            ? "Enter an API key before loading models"
+            : undefined;
   const manualTestModelId =
     parseManualModelIds(manualModelIds)[0] ?? selectedModelIds[0] ?? null;
   const requiresConnectionTestAction =
@@ -336,28 +343,29 @@ export function ChatProvidersSettings({
     mutatingProvider ||
     !providerType ||
     usesOAuth ||
-    (!isCustomProvider &&
-      !apiKey.trim() &&
-      !(editingProviderHasSavedKey && !clearApiKeyRequested)) ||
+    !(
+      isCustomProvider ||
+      apiKey.trim() ||
+      (editingProviderHasSavedKey && !clearApiKeyRequested)
+    ) ||
     (isCustomProvider &&
       (missingModelCatalogBaseUrl ||
-        (!supportsRemoteModelCatalog(providerType) && !manualTestModelId)));
-  const testAndPrepareModelsTitle =
-    !providerType
-      ? "Choose a connection first"
-      : usesOAuth
-        ? "Connect your ChatGPT subscription first"
-        : !isCustomProvider &&
-            !apiKey.trim() &&
-            !(editingProviderHasSavedKey && !clearApiKeyRequested)
-          ? "Enter an API key before testing"
-          : missingModelCatalogBaseUrl
-            ? "Enter a Base URL before testing"
-            : isCustomProvider &&
-                !supportsRemoteModelCatalog(providerType) &&
-                !manualTestModelId
-              ? "Enter a model ID before testing this connection"
-              : undefined;
+        !(supportsRemoteModelCatalog(providerType) || manualTestModelId)));
+  const testAndPrepareModelsTitle = providerType
+    ? usesOAuth
+      ? "Connect your ChatGPT subscription first"
+      : isCustomProvider ||
+          apiKey.trim() ||
+          (editingProviderHasSavedKey && !clearApiKeyRequested)
+        ? missingModelCatalogBaseUrl
+          ? "Enter a Base URL before testing"
+          : isCustomProvider &&
+              !supportsRemoteModelCatalog(providerType) &&
+              !manualTestModelId
+            ? "Enter a model ID before testing this connection"
+            : undefined
+        : "Enter an API key before testing"
+    : "Choose a connection first";
   const filteredAvailableModels = useMemo(() => {
     const query = modelSearchQuery.trim().toLowerCase();
     if (!query) {
@@ -368,7 +376,10 @@ export function ChatProvidersSettings({
     );
   }, [availableModels, modelSearchQuery]);
   const availableModelsLabel = modelSearchQuery.trim()
-    ? t("chat.providersDialog.modelsFiltered", { shown: filteredAvailableModels.length, total: availableModels.length })
+    ? t("chat.providersDialog.modelsFiltered", {
+        shown: filteredAvailableModels.length,
+        total: availableModels.length,
+      })
     : t("chat.providersDialog.modelsTotal", { count: availableModels.length });
   const modelSearchInputClassName =
     "h-8 w-full bg-background/55 text-xs placeholder:text-muted-foreground/65 focus-visible:border-border focus-visible:ring-0";
@@ -378,8 +389,12 @@ export function ChatProvidersSettings({
   }, [providers]);
 
   useEffect(() => {
-    if (!providerType || editingProviderId) return;
-    if (seededProviderTypeRef.current === providerType) return;
+    if (!providerType || editingProviderId) {
+      return;
+    }
+    if (seededProviderTypeRef.current === providerType) {
+      return;
+    }
     seededProviderTypeRef.current = providerType;
     setMaxOutputTokensDraft("");
     setEditingBackendProviderType(null);
@@ -423,11 +438,15 @@ export function ChatProvidersSettings({
           listProviderRegistry(),
           syncExternalProvidersFromBackend(providersRef.current),
         ]);
-        if (!isMounted) return;
+        if (!isMounted) {
+          return;
+        }
         syncSucceeded = true;
         // Hidden entries are fetched for their capabilities only; the dropdown
         // surfaces them through CUSTOM_PROVIDER_PRESETS instead.
-        const selectableRegistry = registryRows.filter((entry) => !entry.hidden);
+        const selectableRegistry = registryRows.filter(
+          (entry) => !entry.hidden,
+        );
         setRegistry(selectableRegistry);
         setProviderType((current) => {
           if (
@@ -474,7 +493,9 @@ export function ChatProvidersSettings({
     // another browser propagate without forcing the user to reopen the
     // dialog. Skip when the document is hidden to avoid background work.
     const handleVisibilityChange = () => {
-      if (typeof document === "undefined" || document.hidden) return;
+      if (typeof document === "undefined" || document.hidden) {
+        return;
+      }
       void syncFromBackend({ showSpinner: false });
     };
     if (typeof window !== "undefined") {
@@ -485,7 +506,10 @@ export function ChatProvidersSettings({
       isMounted = false;
       if (typeof window !== "undefined") {
         window.removeEventListener("focus", handleVisibilityChange);
-        document.removeEventListener("visibilitychange", handleVisibilityChange);
+        document.removeEventListener(
+          "visibilitychange",
+          handleVisibilityChange,
+        );
       }
     };
   }, [onProvidersChange]);
@@ -544,15 +568,21 @@ export function ChatProvidersSettings({
     options: { appendOpenAiVersionPath?: boolean } = {},
   ): string | null {
     const trimmed = input.trim();
-    if (!trimmed) return null;
+    if (!trimmed) {
+      return null;
+    }
     let parsed: URL;
     try {
       parsed = new URL(trimmed);
     } catch {
-      throw new Error(t("chat.providersDialog.baseUrl") + " must be a valid URL.");
+      throw new Error(
+        `${t("chat.providersDialog.baseUrl")} must be a valid URL.`,
+      );
     }
     if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-      throw new Error(t("chat.providersDialog.baseUrl") + " must use http or https.");
+      throw new Error(
+        `${t("chat.providersDialog.baseUrl")} must use http or https.`,
+      );
     }
     if (options.appendOpenAiVersionPath) {
       const pathname = parsed.pathname.replace(/\/+$/, "");
@@ -571,18 +601,23 @@ export function ChatProvidersSettings({
     const trimmed = input.trim();
     if (!trimmed) {
       if (required) {
-        throw new Error(t("chat.providersDialog.baseUrl") + " is required for this connection.");
+        throw new Error(
+          `${t("chat.providersDialog.baseUrl")} is required for this connection.`,
+        );
       }
       return null;
     }
     return parseOptionalBaseUrl(trimmed, {
-      appendOpenAiVersionPath: shouldAppendOpenAiVersionPath(providerTypeForUrl),
+      appendOpenAiVersionPath:
+        shouldAppendOpenAiVersionPath(providerTypeForUrl),
     });
   }
 
   function parseMaxOutputTokens(input: string): number | null {
     const trimmed = input.trim();
-    if (!trimmed) return null;
+    if (!trimmed) {
+      return null;
+    }
     if (!/^\d+$/.test(trimmed)) {
       throw new Error("Max Tokens limit must be an integer.");
     }
@@ -618,7 +653,7 @@ export function ChatProvidersSettings({
       );
       return;
     }
-    if (!isCustomProvider && !apiKey.trim() && !editingProviderHasSavedKey) {
+    if (!(isCustomProvider || apiKey.trim() || editingProviderHasSavedKey)) {
       toast.error(t("chat.providersDialog.addApiKeyFirst"));
       return;
     }
@@ -653,9 +688,7 @@ export function ChatProvidersSettings({
         ),
       ]);
       setAvailableModels(modelIds);
-      setSelectedModelIds((prev) =>
-        prev.filter((id) => modelIds.includes(id)),
-      );
+      setSelectedModelIds((prev) => prev.filter((id) => modelIds.includes(id)));
       if (modelIds.length === 0) {
         const hint = emptyCatalogHint(providerType);
         toast.info(hint.title, { description: hint.description });
@@ -675,7 +708,10 @@ export function ChatProvidersSettings({
       }
       setModelSearchQuery("");
     } catch (error) {
-      const message = error instanceof Error ? error.message : t("chat.providersDialog.unknownError");
+      const message =
+        error instanceof Error
+          ? error.message
+          : t("chat.providersDialog.unknownError");
       toast.error(`Could not load models: ${message}`);
     } finally {
       setModelsLoading(false);
@@ -692,14 +728,16 @@ export function ChatProvidersSettings({
     // so it is the single request for ordinary providers. Calling /test first
     // would repeat the same catalog request and consume quota unnecessarily.
     if (
-      !isCuratedModelList &&
-      !(isCustomProvider && !supportsRemoteModelCatalog(providerType))
+      !(
+        isCuratedModelList ||
+        (isCustomProvider && !supportsRemoteModelCatalog(providerType))
+      )
     ) {
       await loadModels();
       return;
     }
 
-    if (!isCustomProvider && !apiKey.trim() && !editingProviderHasSavedKey) {
+    if (!(isCustomProvider || apiKey.trim() || editingProviderHasSavedKey)) {
       toast.error(t("chat.providersDialog.addApiKeyFirst"));
       return;
     }
@@ -742,7 +780,10 @@ export function ChatProvidersSettings({
       }
       toast.success(result.message);
     } catch (error) {
-      const message = error instanceof Error ? error.message : t("chat.providersDialog.unknownError");
+      const message =
+        error instanceof Error
+          ? error.message
+          : t("chat.providersDialog.unknownError");
       toast.error(`Test failed: ${message}`);
     } finally {
       setModelsLoading(false);
@@ -750,11 +791,15 @@ export function ChatProvidersSettings({
   }
 
   async function ensureCodexProvider(): Promise<string> {
-    if (editingProviderId) return editingProviderId;
+    if (editingProviderId) {
+      return editingProviderId;
+    }
     const backendProviderType = toExternalBackendProviderType(providerType);
     const entry = registryByType.get(backendProviderType);
     if (entry?.auth_kind !== "chatgpt_oauth") {
-      throw new Error("This connection does not support ChatGPT authorization.");
+      throw new Error(
+        "This connection does not support ChatGPT authorization.",
+      );
     }
 
     setMutatingProvider(true);
@@ -805,7 +850,6 @@ export function ChatProvidersSettings({
     }
   }
 
-
   async function addProvider() {
     if (!providerType) {
       toast.error(t("chat.providersDialog.chooseConnectionFirst"));
@@ -834,13 +878,8 @@ export function ChatProvidersSettings({
     const modelsToSave = pruneProviderModelIds(
       providerType,
       allowManual
-      ? [
-          ...new Set([
-            ...selectedModelIds,
-            ...manualIds,
-          ]),
-        ]
-      : [...selectedModelIds],
+        ? [...new Set([...selectedModelIds, ...manualIds])]
+        : [...selectedModelIds],
     );
     if (manualOnly) {
       if (modelsToSave.length === 0) {
@@ -884,7 +923,6 @@ export function ChatProvidersSettings({
           : pruneProviderModelIds(providerType, availableModels),
         maxOutputTokens,
         apiKey: apiKey.trim(),
-
       });
       const createdAt = Number.isFinite(Date.parse(created.created_at))
         ? Date.parse(created.created_at)
@@ -927,7 +965,10 @@ export function ChatProvidersSettings({
       setPage("list");
       toast.success(t("chat.providersDialog.connectionAdded"));
     } catch (error) {
-      const message = error instanceof Error ? error.message : t("chat.providersDialog.unknownError");
+      const message =
+        error instanceof Error
+          ? error.message
+          : t("chat.providersDialog.unknownError");
       toast.error(`Failed to add connection: ${message}`);
     } finally {
       setMutatingProvider(false);
@@ -935,7 +976,9 @@ export function ChatProvidersSettings({
   }
 
   async function saveProviderEdits() {
-    if (!editingProviderId) return;
+    if (!editingProviderId) {
+      return;
+    }
     const existing = providers.find(
       (provider) => provider.id === editingProviderId,
     );
@@ -943,12 +986,12 @@ export function ChatProvidersSettings({
       toast.error(t("chat.providersDialog.connectionNotFound"));
       return;
     }
-    const isEditingCustomProvider =
-      isCustomProviderType(existing.providerType);
+    const isEditingCustomProvider = isCustomProviderType(existing.providerType);
     const credentialEdit = resolveProviderCredentialEdit(
       Boolean(
         existing.hasApiKey ||
-          (!existing.hasApiKey && getExternalProviderApiKey(existing.id).trim()),
+          (!existing.hasApiKey &&
+            getExternalProviderApiKey(existing.id).trim()),
       ),
       apiKey,
       clearApiKeyRequested,
@@ -958,8 +1001,7 @@ export function ChatProvidersSettings({
     );
     const isEditingOAuthProvider = existing.authKind === "chatgpt_oauth";
     if (
-      !isEditingCustomProvider &&
-      !isEditingOAuthProvider &&
+      !(isEditingCustomProvider || isEditingOAuthProvider) &&
       credentialEdit.action === "missing"
     ) {
       toast.error(t("chat.providersDialog.apiKeyRequired"));
@@ -979,13 +1021,8 @@ export function ChatProvidersSettings({
     const modelsToSave = pruneProviderModelIds(
       existing.providerType,
       allowManual
-      ? [
-          ...new Set([
-            ...selectedModelIds,
-            ...manualIds,
-          ]),
-        ]
-      : [...selectedModelIds],
+        ? [...new Set([...selectedModelIds, ...manualIds])]
+        : [...selectedModelIds],
     );
     if (manualOnly) {
       if (modelsToSave.length === 0) {
@@ -1057,7 +1094,10 @@ export function ChatProvidersSettings({
                 models: modelsToSave,
                 availableModels: manualOnly
                   ? []
-                  : pruneProviderModelIds(existing.providerType, availableModels),
+                  : pruneProviderModelIds(
+                      existing.providerType,
+                      availableModels,
+                    ),
                 maxOutputTokens: updated.max_output_tokens ?? undefined,
 
                 hasApiKey: updated.has_api_key,
@@ -1076,7 +1116,10 @@ export function ChatProvidersSettings({
       autoOpenedAddFormRef.current = true;
       setPage("list");
     } catch (error) {
-      const message = error instanceof Error ? error.message : t("chat.providersDialog.unknownError");
+      const message =
+        error instanceof Error
+          ? error.message
+          : t("chat.providersDialog.unknownError");
       toast.error(`Failed to update connection: ${message}`);
     } finally {
       setMutatingProvider(false);
@@ -1091,9 +1134,7 @@ export function ChatProvidersSettings({
     setCustomProviderName(
       provider.name || customProviderDisplayName(provider.providerType),
     );
-    setApiKey(
-      provider.hasApiKey ? "" : getExternalProviderApiKey(provider.id),
-    );
+    setApiKey(provider.hasApiKey ? "" : getExternalProviderApiKey(provider.id));
 
     setClearApiKeyRequested(false);
     setShowApiKey(false);
@@ -1178,7 +1219,10 @@ export function ChatProvidersSettings({
         providers.filter((provider) => provider.id !== providerId),
       );
     } catch (error) {
-      const message = error instanceof Error ? error.message : t("chat.providersDialog.unknownError");
+      const message =
+        error instanceof Error
+          ? error.message
+          : t("chat.providersDialog.unknownError");
       toast.error(`Failed to delete connection: ${message}`);
     } finally {
       setMutatingProvider(false);
@@ -1186,7 +1230,6 @@ export function ChatProvidersSettings({
   }
 
   async function testProvider(provider: ExternalProviderConfig) {
-
     if (provider.authKind === "chatgpt_oauth") {
       if (provider.authStatus === "connected") {
         toast.success(t("chat.providersDialog.chatgptSubscriptionConnected"));
@@ -1202,9 +1245,11 @@ export function ChatProvidersSettings({
     // Hosted registry providers require keys. Local OpenAI-compatible presets
     // may be keyless.
     if (
-      !savedKey &&
-      !provider.hasApiKey &&
-      !supportsRemoteModelCatalog(provider.providerType)
+      !(
+        savedKey ||
+        provider.hasApiKey ||
+        supportsRemoteModelCatalog(provider.providerType)
+      )
     ) {
       if (isCustomProviderType(provider.providerType)) {
         await editProvider(provider);
@@ -1212,7 +1257,9 @@ export function ChatProvidersSettings({
         return;
       }
       await editProvider(provider);
-      toast.info(`No API key for ${provider.name}. Add one in Connections and save.`);
+      toast.info(
+        `No API key for ${provider.name}. Add one in Connections and save.`,
+      );
       return;
     }
     try {
@@ -1278,7 +1325,9 @@ export function ChatProvidersSettings({
             </span>
             <span className="size-1 rounded-full bg-muted-foreground/35" />
             <span className="truncate text-xs font-medium text-muted-foreground">
-              {editingProviderId ? t("chat.providersDialog.edit") : t("common.new")}
+              {editingProviderId
+                ? t("chat.providersDialog.edit")
+                : t("common.new")}
             </span>
           </div>
         </header>
@@ -1301,7 +1350,9 @@ export function ChatProvidersSettings({
                 <Select
                   value={providerType}
                   onValueChange={(value) => {
-                    if (editingProviderId) return;
+                    if (editingProviderId) {
+                      return;
+                    }
                     setProviderType(value);
                     setAvailableModels([]);
                     setSelectedModelIds([]);
@@ -1317,7 +1368,9 @@ export function ChatProvidersSettings({
                     className="h-9 w-full text-sm"
                     disabled={editingProviderId != null}
                   >
-                    <SelectValue placeholder={t("chat.providersDialog.chooseConnection")} />
+                    <SelectValue
+                      placeholder={t("chat.providersDialog.chooseConnection")}
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
@@ -1398,7 +1451,9 @@ export function ChatProvidersSettings({
                       value={apiKey}
                       onChange={(event) => {
                         setApiKey(event.target.value);
-                        if (event.target.value.trim()) setClearApiKeyRequested(false);
+                        if (event.target.value.trim()) {
+                          setClearApiKeyRequested(false);
+                        }
                       }}
                       placeholder={
                         editingProviderHasSavedKey
@@ -1411,7 +1466,11 @@ export function ChatProvidersSettings({
                       type="button"
                       onClick={() => setShowApiKey((visible) => !visible)}
                       className="absolute top-1/2 right-1.5 flex size-5 -translate-y-1/2 items-center justify-center rounded text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                      aria-label={showApiKey ? t("chat.providersDialog.hideApiKey") : t("chat.providersDialog.showApiKey")}
+                      aria-label={
+                        showApiKey
+                          ? t("chat.providersDialog.hideApiKey")
+                          : t("chat.providersDialog.showApiKey")
+                      }
                       aria-pressed={showApiKey}
                     >
                       {showApiKey ? (
@@ -1431,15 +1490,17 @@ export function ChatProvidersSettings({
                           setClearApiKeyRequested((requested) => !requested);
                         }}
                       >
-                        {clearApiKeyRequested ? "Keep saved key" : "Remove saved key"}
+                        {clearApiKeyRequested
+                          ? "Keep saved key"
+                          : "Remove saved key"}
                       </Button>
                     ) : null}
                     {clearApiKeyRequested ? (
                       <p className="mt-1 text-xs text-destructive">
-                        The saved key will be removed when you save this connection.
+                        The saved key will be removed when you save this
+                        connection.
                       </p>
                     ) : null}
-
                   </div>
                 </div>
               ) : null}
@@ -1503,9 +1564,9 @@ export function ChatProvidersSettings({
                       id="provider-max-output-tokens-help"
                       className="text-xs leading-snug text-muted-foreground"
                     >
-                      Caps Max Tokens for this connection. Never raises it past a
-                      model's documented limit. Leave blank to use that limit, or
-                      32,768 for a model without one.
+                      Caps Max Tokens for this connection. Never raises it past
+                      a model's documented limit. Leave blank to use that limit,
+                      or 32,768 for a model without one.
                     </p>
                   </div>
                   <div className="flex min-w-0 flex-col gap-1.5">
@@ -1578,14 +1639,18 @@ export function ChatProvidersSettings({
             </div>
           </section>
 
-
           {isCodexSubscription ? (
             <OpenAICodexConnect
               providerId={editingProviderId}
-              authStatus={providers.find((provider) => provider.id === editingProviderId)?.authStatus}
+              authStatus={
+                providers.find((provider) => provider.id === editingProviderId)
+                  ?.authStatus
+              }
               ensureProvider={ensureCodexProvider}
               onChanged={async () => {
-                const synced = await syncExternalProvidersFromBackend(providersRef.current);
+                const synced = await syncExternalProvidersFromBackend(
+                  providersRef.current,
+                );
                 providersRef.current = synced;
                 onProvidersChange(synced);
               }}
@@ -1615,7 +1680,9 @@ export function ChatProvidersSettings({
                   className={`flex flex-wrap items-center justify-between gap-3 px-4 py-3 ${showModelsBody ? "border-border/60 border-b" : ""}`}
                 >
                   <div className="flex min-w-0 flex-col gap-0.5">
-                    <Label className="text-sm font-medium">{t("chat.providersDialog.models")}</Label>
+                    <Label className="text-sm font-medium">
+                      {t("chat.providersDialog.models")}
+                    </Label>
                     <p className="text-xs leading-snug text-muted-foreground">
                       {modelStatusLabel}
                     </p>
@@ -1640,11 +1707,9 @@ export function ChatProvidersSettings({
                         : loadModelsTitle
                     }
                     onClick={() =>
-                      void (
-                        requiresConnectionTestAction
-                          ? testAndPrepareModels()
-                          : loadModels()
-                      )
+                      void (requiresConnectionTestAction
+                        ? testAndPrepareModels()
+                        : loadModels())
                     }
                   >
                     {modelsLoading ? (
@@ -1652,17 +1717,20 @@ export function ChatProvidersSettings({
                         <Spinner className="mr-2 size-3.5" />
                         {t("chat.providersDialog.loadingModels")}
                       </>
-                    ) : !requiresConnectionTestAction ? (
-                      t("chat.providersDialog.reloadModels")
-                    ) : isCustomProvider &&
+                    ) : requiresConnectionTestAction ? (
+                      isCustomProvider &&
                       !supportsRemoteModelCatalog(providerType) ? (
-                      t("chat.providersDialog.testConnection")
+                        t("chat.providersDialog.testConnection")
+                      ) : (
+                        t("chat.providersDialog.testAndLoadModels")
+                      )
                     ) : (
-                      t("chat.providersDialog.testAndLoadModels")
+                      t("chat.providersDialog.reloadModels")
                     )}
                   </Button>
                 </div>
-                {isCustomProvider && !supportsRemoteModelCatalog(providerType) ? (
+                {isCustomProvider &&
+                !supportsRemoteModelCatalog(providerType) ? (
                   <div className="space-y-3 px-4 py-4">
                     <div className="space-y-2">
                       <Label
@@ -1677,7 +1745,9 @@ export function ChatProvidersSettings({
                         onChange={(event) =>
                           setManualModelIds(event.target.value)
                         }
-                        placeholder={customProviderModelIdsPlaceholder(providerType)}
+                        placeholder={customProviderModelIdsPlaceholder(
+                          providerType,
+                        )}
                         rows={5}
                         className="min-h-[100px] resize-y font-mono text-sm"
                       />
@@ -1730,7 +1800,7 @@ export function ChatProvidersSettings({
                           </div>
                         </div>
                         <ul
-                          data-provider-model-list
+                          data-provider-model-list={true}
                           className="max-h-56 overflow-y-auto rounded-[8px] border border-border/70 bg-background/50"
                         >
                           {filteredAvailableModels.length === 0 ? (
@@ -1750,9 +1820,7 @@ export function ChatProvidersSettings({
                                   onCheckedChange={() => toggleModel(model)}
                                   onClick={(event) => event.stopPropagation()}
                                 />
-                                <span
-                                  className="min-w-0 break-all text-sm leading-tight"
-                                >
+                                <span className="min-w-0 break-all text-sm leading-tight">
                                   {model}
                                 </span>
                               </li>
@@ -1772,7 +1840,9 @@ export function ChatProvidersSettings({
                         <Textarea
                           id="provider-manual-models"
                           value={manualModelIds}
-                          onChange={(event) => setManualModelIds(event.target.value)}
+                          onChange={(event) =>
+                            setManualModelIds(event.target.value)
+                          }
                           placeholder={"model-id-1\nmodel-id-2"}
                           rows={5}
                           className="min-h-[100px] resize-y font-mono text-sm"
@@ -1822,7 +1892,7 @@ export function ChatProvidersSettings({
                           </div>
                         </div>
                         <ul
-                          data-provider-model-list
+                          data-provider-model-list={true}
                           className="max-h-56 overflow-y-auto rounded-[8px] border border-border/70 bg-background/50"
                         >
                           {filteredAvailableModels.length === 0 ? (
@@ -1842,9 +1912,7 @@ export function ChatProvidersSettings({
                                   onCheckedChange={() => toggleModel(model)}
                                   onClick={(event) => event.stopPropagation()}
                                 />
-                                <span
-                                  className="min-w-0 break-all text-sm leading-tight"
-                                >
+                                <span className="min-w-0 break-all text-sm leading-tight">
                                   {model}
                                 </span>
                               </li>
@@ -1902,7 +1970,9 @@ export function ChatProvidersSettings({
                     : void addProvider()
                 }
               >
-                {editingProviderId ? t("chat.providersDialog.saveConnection") : t("chat.providersDialog.addConnection")}
+                {editingProviderId
+                  ? t("chat.providersDialog.saveConnection")
+                  : t("chat.providersDialog.addConnection")}
               </Button>
               <Button
                 type="button"
@@ -1911,7 +1981,9 @@ export function ChatProvidersSettings({
                 className="h-8"
                 onClick={editingProviderId ? closeForm : resetForm}
               >
-                {editingProviderId ? t("chat.providersDialog.cancel") : t("chat.providersDialog.clear")}
+                {editingProviderId
+                  ? t("chat.providersDialog.cancel")
+                  : t("chat.providersDialog.clear")}
               </Button>
             </div>
           </div>
@@ -1927,7 +1999,9 @@ export function ChatProvidersSettings({
     >
       <header className="flex flex-col gap-1 pr-8">
         <div className="flex min-w-0 flex-col gap-1">
-          <h1 className="font-heading text-lg font-semibold">{t("chat.providersDialog.title")}</h1>
+          <h1 className="font-heading text-lg font-semibold">
+            {t("chat.providersDialog.title")}
+          </h1>
           <p className="text-xs leading-relaxed text-muted-foreground">
             {t("chat.providersDialog.description")}
           </p>
@@ -2104,7 +2178,7 @@ export function ChatProvidersDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        data-provider-scroll-root
+        data-provider-scroll-root={true}
         overlayClassName="bg-black/50 backdrop-blur-sm"
         className="flex max-h-[90dvh] w-[96vw] flex-col gap-0 overflow-y-scroll p-8 [scrollbar-gutter:stable] sm:max-w-none md:max-w-[44rem]"
       >

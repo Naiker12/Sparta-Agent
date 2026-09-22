@@ -1,4 +1,3 @@
-
 /**
  * The Advanced panel's resolved-control decisions, as pure functions the pages render.
  *
@@ -40,27 +39,46 @@ export interface ResolvedBadgeInfo {
 // toast DESCRIPTION under this title instead of as an unreadable single line.
 export const PRECISION_REFUSAL_TITLE = "Requested precision is not available";
 
+const PRECISION_REFUSAL_RE = /_quant='[^']*' could not be used/;
+
 /** Whether a load failure is that refusal, so it can be presented as an actionable choice. */
 export function isPrecisionRefusal(message: string): boolean {
-  return /_quant='[^']*' could not be used/.test(message);
+  return PRECISION_REFUSAL_RE.test(message);
 }
 
 /** Whether an engaged/requested value means "this control is off". */
 function isOff(value: string | boolean | null | undefined): boolean {
-  if (value === null || value === undefined || value === false) return true;
-  if (value === true) return false;
+  if (value === null || value === undefined || value === false) {
+    return true;
+  }
+  if (value === true) {
+    return false;
+  }
   const text = String(value).trim().toLowerCase().replace(/-/g, "_");
   return text === "" || text === "none" || text === "off" || text === "0";
 }
 
 /** The engaged value of a resolved Advanced control, formatted for its badge. */
-export function formatResolvedValue(key: string, value: string | boolean | null | undefined): string {
-  if (key === "cpu_offload") return value ? "On" : "Off";
-  if (value === null || value === undefined || value === "") return "Off";
-  if (typeof value === "boolean") return value ? "On" : "Off";
-  if (value === "_native_cudnn" || value.toLowerCase() === "cudnn") return "cuDNN";
+export function formatResolvedValue(
+  key: string,
+  value: string | boolean | null | undefined,
+): string {
+  if (key === "cpu_offload") {
+    return value ? "On" : "Off";
+  }
+  if (value === null || value === undefined || value === "") {
+    return "Off";
+  }
+  if (typeof value === "boolean") {
+    return value ? "On" : "Off";
+  }
+  if (value === "_native_cudnn" || value.toLowerCase() === "cudnn") {
+    return "cuDNN";
+  }
   // Deferred speed auto: the dense pipe stays exact/eager and compiles on the 3rd image (the tooltip carries the full reason).
-  if (value === "deferred") return "On from 3rd image";
+  if (value === "deferred") {
+    return "On from 3rd image";
+  }
   return value.toUpperCase();
 }
 
@@ -84,17 +102,32 @@ export function formatResolvedValue(key: string, value: string | boolean | null 
  * decline -- staying quiet is the safe direction, since the build that adds a status ships the
  * frontend that understands it.
  */
-export function isResolvedHonored(resolved: ResolvedControl | undefined | null): boolean {
-  if (!resolved) return true;
-  if (resolved.source === "auto") return true;
-  if (resolved.status) return resolved.status !== "fell_back" && resolved.status !== "unsupported";
+export function isResolvedHonored(
+  resolved: ResolvedControl | undefined | null,
+): boolean {
+  if (!resolved) {
+    return true;
+  }
+  if (resolved.source === "auto") {
+    return true;
+  }
+  if (resolved.status) {
+    return resolved.status !== "fell_back" && resolved.status !== "unsupported";
+  }
   // Older backend: no status field. Compare directly, treating every "off" spelling as equal.
   const requested = resolved.requested;
-  if (requested === undefined || requested === null) return true;
-  if (isOff(requested) && isOff(resolved.value)) return true;
+  if (requested === undefined || requested === null) {
+    return true;
+  }
+  if (isOff(requested) && isOff(resolved.value)) {
+    return true;
+  }
   return (
     String(requested).trim().toLowerCase().replace(/-/g, "_") ===
-    String(resolved.value ?? "").trim().toLowerCase().replace(/-/g, "_")
+    String(resolved.value ?? "")
+      .trim()
+      .toLowerCase()
+      .replace(/-/g, "_")
   );
 }
 
@@ -107,11 +140,14 @@ export function resolvedBadge(
   key: string,
   resolved: ResolvedControl | undefined | null,
 ): ResolvedBadgeInfo | null {
-  if (!resolved) return null;
+  if (!resolved) {
+    return null;
+  }
   const engaged = formatResolvedValue(key, resolved.value);
   if (!isResolvedHonored(resolved)) {
     const asked = formatResolvedValue(key, resolved.requested ?? null);
-    const verb = resolved.status === "unsupported" ? "not supported" : "not applied";
+    const verb =
+      resolved.status === "unsupported" ? "not supported" : "not applied";
     return {
       label: `${asked} → ${engaged}`,
       tone: "warn",
@@ -120,7 +156,9 @@ export function resolvedBadge(
         : `You requested ${asked}, but it was ${verb} here; ${engaged} was used instead.`,
     };
   }
-  if (resolved.source !== "auto") return null;
+  if (resolved.source !== "auto") {
+    return null;
+  }
   return { label: `Auto: ${engaged}`, tone: "auto", tooltip: resolved.reason };
 }
 
@@ -141,12 +179,24 @@ export function resolvedSelectValue<T extends string>(
   resolved: ResolvedControl | undefined | null,
   toOption: (value: string) => T | null,
 ): T | null {
-  if (!resolved) return null;
-  if (resolved.source === "auto") return toOption("auto");
-  const source = isResolvedHonored(resolved) ? resolved.requested : resolved.value;
-  if (source === undefined) return null;
-  if (source === null) return toOption("none");
-  if (typeof source === "boolean") return toOption(source ? "on" : "none");
+  if (!resolved) {
+    return null;
+  }
+  if (resolved.source === "auto") {
+    return toOption("auto");
+  }
+  const source = isResolvedHonored(resolved)
+    ? resolved.requested
+    : resolved.value;
+  if (source === undefined) {
+    return null;
+  }
+  if (source === null) {
+    return toOption("none");
+  }
+  if (typeof source === "boolean") {
+    return toOption(source ? "on" : "none");
+  }
   return toOption(String(source));
 }
 
@@ -168,9 +218,16 @@ export function resolvedSelectValue<T extends string>(
 export function resolvedSeedKey(
   resolved: Record<string, ResolvedControl> | null | undefined,
 ): string | null {
-  if (!resolved) return null;
-  const part = (control: ResolvedControl | undefined, withValue: boolean): string => {
-    if (!control) return "";
+  if (!resolved) {
+    return null;
+  }
+  const part = (
+    control: ResolvedControl | undefined,
+    withValue: boolean,
+  ): string => {
+    if (!control) {
+      return "";
+    }
     const engaged = withValue ? String(control.value ?? "") : "";
     return `${control.source}:${String(control.requested ?? "")}:${engaged}`;
   };
@@ -193,8 +250,16 @@ export function isNativeEngineStatus(status: {
   engine?: string | null;
   dtype?: string | null;
 }): boolean {
-  const engine = String(status.engine ?? "").trim().toLowerCase();
-  if (engine) return engine.includes("sd_cpp") || engine.includes("sd.cpp") || engine === "native";
+  const engine = String(status.engine ?? "")
+    .trim()
+    .toLowerCase();
+  if (engine) {
+    return (
+      engine.includes("sd_cpp") ||
+      engine.includes("sd.cpp") ||
+      engine === "native"
+    );
+  }
   return status.dtype === "gguf";
 }
 
@@ -215,10 +280,13 @@ export function isNativeEngineStatus(status: {
  * thing this row exists to state, so it reads the dtype like any other dense load.
  */
 export function denseTransformerBuildLabel(status: {
+  // biome-ignore lint/style/useNamingConvention: api schema
   model_kind?: string | null;
   dtype?: string | null;
 }): string {
-  if (status.model_kind === "gguf" || status.dtype === "gguf") return "GGUF (as-is)";
+  if (status.model_kind === "gguf" || status.dtype === "gguf") {
+    return "GGUF (as-is)";
+  }
   return denseDtypeLabel(status.dtype);
 }
 
@@ -231,11 +299,21 @@ export function denseTransformerBuildLabel(status: {
  * which is what a diffusers load that reports nothing is.
  */
 function denseDtypeLabel(dtype: string | null | undefined): string {
-  const text = String(dtype ?? "").trim().toLowerCase();
-  if (text.includes("bfloat16") || text === "bf16") return "BF16";
-  if (text.includes("float16") || text === "fp16") return "FP16";
-  if (text.includes("float32") || text === "fp32") return "FP32";
-  if (text.includes("float64")) return "FP64";
+  const text = String(dtype ?? "")
+    .trim()
+    .toLowerCase();
+  if (text.includes("bfloat16") || text === "bf16") {
+    return "BF16";
+  }
+  if (text.includes("float16") || text === "fp16") {
+    return "FP16";
+  }
+  if (text.includes("float32") || text === "fp32") {
+    return "FP32";
+  }
+  if (text.includes("float64")) {
+    return "FP64";
+  }
   return "BF16";
 }
 
@@ -247,8 +325,12 @@ function denseDtypeLabel(dtype: string | null | undefined): string {
  * whatever the family's asset mapping names, and several are not bf16 (FLUX.1 loads
  * `t5xxl_fp16.safetensors`). A null on that engine means "as stored", not BF16.
  */
-export function denseTextEncoderBuildLabel(status: { dtype?: string | null }): string {
-  return status.dtype === "gguf" ? "As in checkpoint" : denseDtypeLabel(status.dtype);
+export function denseTextEncoderBuildLabel(status: {
+  dtype?: string | null;
+}): string {
+  return status.dtype === "gguf"
+    ? "As in checkpoint"
+    : denseDtypeLabel(status.dtype);
 }
 
 /**
@@ -264,8 +346,13 @@ export function memoryRecipeValue(
   memoryMode: string | null | undefined,
   offloadPolicy: string | null | undefined,
 ): string {
-  const offloading = offloadPolicy != null && offloadPolicy !== "" && offloadPolicy !== "none";
-  if (!offloading) return memoryMode ?? "";
-  if (!memoryMode) return `${offloadPolicy} offload`;
+  const offloading =
+    offloadPolicy != null && offloadPolicy !== "" && offloadPolicy !== "none";
+  if (!offloading) {
+    return memoryMode ?? "";
+  }
+  if (!memoryMode) {
+    return `${offloadPolicy} offload`;
+  }
   return `${memoryMode} (${offloadPolicy} offload)`;
 }

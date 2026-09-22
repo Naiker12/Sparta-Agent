@@ -29,11 +29,7 @@
         "drop": true,
         "sampler_type": "category",
         "params": {
-          "values": [
-            "Tech Support",
-            "Personal Finance",
-            "Learning"
-          ]
+          "values": ["Tech Support", "Personal Finance", "Learning"]
         }
       },
       {
@@ -68,10 +64,7 @@
         "drop": true,
         "sampler_type": "category",
         "params": {
-          "values": [
-            "4",
-            "6"
-          ]
+          "values": ["4", "6"]
         }
       },
       {
@@ -101,27 +94,19 @@
                 "properties": {
                   "role": {
                     "type": "string",
-                    "enum": [
-                      "user",
-                      "assistant"
-                    ]
+                    "enum": ["user", "assistant"]
                   },
                   "content": {
                     "type": "string",
                     "minLength": 1
                   }
                 },
-                "required": [
-                  "role",
-                  "content"
-                ],
+                "required": ["role", "content"],
                 "additionalProperties": false
               }
             }
           },
-          "required": [
-            "conversation"
-          ],
+          "required": ["conversation"],
           "additionalProperties": false
         }
       }
@@ -131,9 +116,7 @@
   "run": {
     "rows": 5,
     "preview": true,
-    "output_formats": [
-      "jsonl"
-    ]
+    "output_formats": ["jsonl"]
   },
   "ui": {
     "nodes": [

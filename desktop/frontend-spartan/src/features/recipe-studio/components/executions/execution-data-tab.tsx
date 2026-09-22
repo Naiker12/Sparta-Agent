@@ -1,8 +1,3 @@
-
-import type { ReactElement } from "react";
-import { GithubIcon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
-import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import {
@@ -14,8 +9,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
 import { Spinner } from "@/components/ui/spinner";
-import { isExecutionInProgress } from "../../executions/execution-helpers";
+import { GithubIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import type { ColumnDef } from "@tanstack/react-table";
+import type { ReactElement } from "react";
 import type { RecipeExecutionRecord } from "../../execution-types";
+import { isExecutionInProgress } from "../../executions/execution-helpers";
 import { formatMetricValue } from "./executions-view-helpers";
 
 function formatSourceResource(value: string | null | undefined): string {
@@ -31,7 +30,10 @@ function formatFetchedValue(execution: RecipeExecutionRecord): string {
     return "--";
   }
   const fetched = formatMetricValue(source.fetched_items);
-  if (typeof source.estimated_total !== "number" || source.estimated_total <= 0) {
+  if (
+    typeof source.estimated_total !== "number" ||
+    source.estimated_total <= 0
+  ) {
     return fetched;
   }
   return `${fetched} / ${formatMetricValue(source.estimated_total)}`;
@@ -43,9 +45,14 @@ function formatGitHubSourceMessage(execution: RecipeExecutionRecord): string {
     return "Collecting repository threads before rows are available.";
   }
   if (source.status === "rate_limited") {
-    return source.message ?? "Waiting for GitHub rate limit. Unsloth will resume automatically.";
+    return (
+      source.message ??
+      "Waiting for GitHub rate limit. Unsloth will resume automatically."
+    );
   }
-  return source.message ?? "Collecting repository threads before rows are available.";
+  return (
+    source.message ?? "Collecting repository threads before rows are available."
+  );
 }
 
 function RunningDatasetEmptyState({
@@ -67,11 +74,12 @@ function RunningDatasetEmptyState({
       <div className="rounded-xl border border-border/60 bg-card/55 p-4 shadow-border">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex min-w-0 gap-3">
-            <div
-              className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-muted/20"
-            >
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-muted/20">
               {showProgress ? (
-                <HugeiconsIcon icon={GithubIcon} className="size-4 text-muted-foreground" />
+                <HugeiconsIcon
+                  icon={GithubIcon}
+                  className="size-4 text-muted-foreground"
+                />
               ) : (
                 <Spinner className="size-4 text-muted-foreground" />
               )}
@@ -83,15 +91,24 @@ function RunningDatasetEmptyState({
               </p>
             </div>
           </div>
-          <Button type="button" size="sm" variant="outline" onClick={onOpenOverview}>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={onOpenOverview}
+          >
             Open Overview
           </Button>
         </div>
-        {showProgress && <Progress value={source.percent ?? 0} className="mt-3 h-1" />}
+        {showProgress && (
+          <Progress value={source.percent ?? 0} className="mt-3 h-1" />
+        )}
         <div className="mt-3 grid gap-2 text-xs sm:grid-cols-2 lg:grid-cols-5">
           <p className="flex items-center justify-between gap-3">
             <span className="text-muted-foreground">Repo</span>
-            <span className="truncate font-semibold">{source.repo ?? "--"}</span>
+            <span className="truncate font-semibold">
+              {source.repo ?? "--"}
+            </span>
           </p>
           <p className="flex items-center justify-between gap-3">
             <span className="text-muted-foreground">Resource</span>
@@ -102,11 +119,15 @@ function RunningDatasetEmptyState({
           </p>
           <p className="flex items-center justify-between gap-3">
             <span className="text-muted-foreground">Fetched</span>
-            <span className="font-semibold">{formatFetchedValue(execution)}</span>
+            <span className="font-semibold">
+              {formatFetchedValue(execution)}
+            </span>
           </p>
           <p className="flex items-center justify-between gap-3">
             <span className="text-muted-foreground">Rate remaining</span>
-            <span className="font-semibold">{formatMetricValue(source.rate_remaining)}</span>
+            <span className="font-semibold">
+              {formatMetricValue(source.rate_remaining)}
+            </span>
           </p>
           <p className="flex items-center justify-between gap-3">
             <span className="text-muted-foreground">Retry wait</span>
@@ -135,7 +156,12 @@ function RunningDatasetEmptyState({
               : "Rows will appear here once the run produces a dataset sample."}
           </p>
         </div>
-        <Button type="button" size="sm" variant="outline" onClick={onOpenOverview}>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={onOpenOverview}
+        >
           Open Overview
         </Button>
       </div>
@@ -179,7 +205,7 @@ export function ExecutionDataTab({
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           {datasetColumnNames.length > 0 && (
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+              <DropdownMenuTrigger asChild={true}>
                 <Button type="button" size="sm" variant="outline">
                   Columns
                 </Button>
@@ -196,7 +222,9 @@ export function ExecutionDataTab({
                     onCheckedChange={(checked) => {
                       onSetHiddenColumns((currentColumns) => {
                         if (checked) {
-                          return currentColumns.filter((name) => name !== columnName);
+                          return currentColumns.filter(
+                            (name) => name !== columnName,
+                          );
                         }
                         return [...currentColumns, columnName];
                       });
@@ -218,7 +246,8 @@ export function ExecutionDataTab({
                 size="sm"
                 variant="outline"
                 disabled={
-                  isExecutionInProgress(execution.status) || currentDatasetPage <= 1
+                  isExecutionInProgress(execution.status) ||
+                  currentDatasetPage <= 1
                 }
                 onClick={onPrevPage}
               >

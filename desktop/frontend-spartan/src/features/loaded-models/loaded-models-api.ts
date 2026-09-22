@@ -1,4 +1,3 @@
-
 // Reads and ejects for the indicator. Reads are best-effort and independent: a
 // chat-only host has no video runtime, and that must not blank the other rows.
 // images/video/api-monitor are reached directly, as api-monitor-page.tsx does:
@@ -14,17 +13,11 @@ import {
 } from "@/features/chat";
 import { disposableTimeoutSignal } from "@/features/hub/lib/abort-signals";
 import { modelIdsMatch } from "@/features/hub/lib/model-identity";
-import {
-  getDiffusionStatus,
-  unloadDiffusionModel,
-} from "@/features/images/api";
-import { notifyModelEjected } from "@/lib/model-lifecycle-events";
 import { ejectChatModel } from "./eject-chat-model";
 import {
   type LoadedModelEntry,
   type LoadedModelSource,
   type SttStatusResponse,
-  describeDiffusionStatus,
   describeInferenceStatus,
   describeSttStatus,
   mergeLoadedModels,
@@ -43,7 +36,9 @@ async function readInferenceStatus(
   signal?: AbortSignal,
 ): Promise<InferenceStatus | null> {
   const response = await authFetch("/api/inference/status", { signal });
-  if (!response.ok) return null;
+  if (!response.ok) {
+    return null;
+  }
   return (await response.json()) as InferenceStatus;
 }
 
@@ -53,7 +48,9 @@ async function readSttStatus(
   const response = await authFetch("/api/inference/audio/stt/status", {
     signal,
   });
-  if (!response.ok) return null;
+  if (!response.ok) {
+    return null;
+  }
   return (await response.json()) as SttStatusResponse;
 }
 
@@ -120,9 +117,8 @@ export type LoadedModelsRead = {
 export async function readLoadedModels(
   previous: readonly LoadedModelEntry[] = [],
 ): Promise<LoadedModelsRead> {
-  const [inference, diffusion, stt] = await Promise.all([
+  const [inference, stt] = await Promise.all([
     settled(readInferenceStatus),
-    settled(getDiffusionStatus),
     settled(readSttStatus),
   ]);
   const kept = (source: LoadedModelSource) =>
@@ -133,13 +129,14 @@ export async function readLoadedModels(
     status: T | null,
     describe: (value: T) => LoadedModelEntry[],
   ) => {
-    if (status !== null) return describe(status);
+    if (status !== null) {
+      return describe(status);
+    }
     unreadable.push(source);
     return kept(source);
   };
   const entries = mergeLoadedModels([
     group("chat", inference, describeInferenceStatus),
-    group("image", diffusion, describeDiffusionStatus),
     group("stt", stt, describeSttStatus),
   ]);
   return { entries, unreadable };
@@ -153,7 +150,9 @@ async function ejectChatRow(entry: LoadedModelEntry): Promise<EjectOutcome> {
       readResident: async () => {
         const status = await bounded(getInferenceStatus);
         const checkpoint = resolveInferenceCheckpointId(status);
-        if (!checkpoint) return null;
+        if (!checkpoint) {
+          return null;
+        }
         // Both spellings: status reports the load path, the store the repo id.
         return {
           checkpoint,
@@ -168,10 +167,16 @@ async function ejectChatRow(entry: LoadedModelEntry): Promise<EjectOutcome> {
       readCached: async () => (await bounded(getInferenceStatus)).loaded ?? [],
     },
   );
-  if (stillResident) return { status: "stillResident", model: stillResident };
-  if (replacedBy) return { status: "replaced", resident: replacedBy };
+  if (stillResident) {
+    return { status: "stillResident", model: stillResident };
+  }
+  if (replacedBy) {
+    return { status: "replaced", resident: replacedBy };
+  }
   // Nothing released and nothing in its place: the runtime was already idle.
-  if (unloadedAliases.length === 0) return { status: "alreadyFree" };
+  if (unloadedAliases.length === 0) {
+    return { status: "alreadyFree" };
+  }
   // Only when the row's model is really gone. A reload during the run leaves it
   // resident and still usable, so emptying the picker would be wrong.
   clearChatSelectionFor(unloadedAliases);
@@ -183,7 +188,9 @@ async function ejectChatRow(entry: LoadedModelEntry): Promise<EjectOutcome> {
 function clearChatSelectionFor(aliases: string[]): void {
   const store = useChatRuntimeStore.getState();
   const selected = store.params.checkpoint;
-  if (!selected || isExternalModelId(selected)) return;
+  if (!selected || isExternalModelId(selected)) {
+    return;
+  }
   if (aliases.some((alias) => modelIdsMatch(selected, alias))) {
     store.clearCheckpoint();
   }
@@ -228,42 +235,32 @@ async function ejectRuntimeRow(
   const verdict = verifyResident(entry.name, resident, modelIdsMatch);
   // Nothing resident: the row is stale and its memory is already free. Said
   // plainly rather than as an eject, which would claim an unload never issued.
-  if (!resident) return { status: "alreadyFree" };
-  if (verdict !== "match") return { status: "replaced", resident };
+  if (!resident) {
+    return { status: "alreadyFree" };
+  }
+  if (verdict !== "match") {
+    return { status: "replaced", resident };
+  }
   const stillResident = await unload();
-  if (stillResident === UNVERIFIED) return { status: "unverified" };
+  if (stillResident === UNVERIFIED) {
+    return { status: "unverified" };
+  }
   return stillResident
     ? { status: "stillResident", model: stillResident }
     : { status: "ejected" };
 }
 
-/** Release one row, after checking the runtime still holds what the row names. */
 export async function ejectLoadedModel(
   entry: LoadedModelEntry,
 ): Promise<EjectOutcome> {
   switch (entry.source) {
     case "chat":
       return ejectChatRow(entry);
-    case "image": {
-      const before = await bounded(getDiffusionStatus);
-      return ejectRuntimeRow(
-        entry,
-        before.loaded ? before.repo_id : null,
-        async () => {
-          const after = await unloadDiffusionModel();
-          // The page owning this runtime keeps its own copy of the status.
-          notifyModelEjected("image");
-          return after.loaded ? (after.repo_id ?? entry.name) : null;
-        },
-      );
-    }
-    case "video":
-      // Video runtime support was removed. A stale lifecycle event from an
-      // earlier session therefore has nothing left to eject.
-      return { status: "alreadyFree" };
     case "stt": {
       const engine = entry.sttEngine;
-      if (!engine) throw new Error("This row names no dictation engine.");
+      if (!engine) {
+        throw new Error("This row names no dictation engine.");
+      }
       // Dictation loads on demand and releases when idle, so the engine's
       // resident model can change with no user action at all.
       const before = await bounded(readSttStatus);
@@ -283,7 +280,9 @@ export async function ejectLoadedModel(
             `/api/inference/audio/stt/unload?${query}`,
             { method: "POST" },
           );
-          if (!response.ok) throw new Error(await readErrorDetail(response));
+          if (!response.ok) {
+            throw new Error(await readErrorDetail(response));
+          }
           // The unload response body is a fixed {loaded_model: null}, and the
           // backend silently serves `gguf` from the transformers engine when
           // whisper-server is absent, so a 200 is not evidence this engine let
@@ -292,7 +291,9 @@ export async function ejectLoadedModel(
           // A non-2xx read is null too, and reading that as "nothing left"
           // would toast success and drop the row for a model still holding
           // memory, which is the exact case this re-read exists to catch.
-          if (!after) return UNVERIFIED;
+          if (!after) {
+            return UNVERIFIED;
+          }
           return sttEngineStatus(after, engine)?.loaded_model ?? null;
         },
       );
@@ -303,7 +304,9 @@ export async function ejectLoadedModel(
 async function readErrorDetail(response: Response): Promise<string> {
   try {
     const body = (await response.json()) as { detail?: unknown };
-    if (typeof body.detail === "string") return body.detail;
+    if (typeof body.detail === "string") {
+      return body.detail;
+    }
   } catch {
     // non-JSON error body
   }

@@ -1,4 +1,3 @@
-
 import type { Edge } from "@xyflow/react";
 import { INFRA_NODE_KINDS, type NodeConfig } from "../types";
 
@@ -182,7 +181,8 @@ function checkLlmMissingDataInput(
     warnings.push({
       nodeId: config.id,
       nodeName: config.name,
-      message: "No data-pipeline connection — connect it to a source or downstream step.",
+      message:
+        "No data-pipeline connection — connect it to a source or downstream step.",
       severity: "warning",
     });
   }

@@ -1,8 +1,9 @@
-
 import type { MermaidErrorComponentProps } from "streamdown";
 
+const SLASH_COMMENT_RE = /(^|[^:])\/\/.*/m;
+
 function hasSlashComment(chart: string): boolean {
-  return /(^|[^:])\/\/.*/m.test(chart);
+  return SLASH_COMMENT_RE.test(chart);
 }
 
 export function MermaidError({
@@ -15,7 +16,9 @@ export function MermaidError({
       <p className="text-sm font-semibold">Mermaid render failed</p>
       <p className="mt-1 break-words font-mono text-xs">{error}</p>
       {hasSlashComment(chart) ? (
-        <p className="mt-1 text-xs">Hint: Mermaid comments use `%%`, not `//`.</p>
+        <p className="mt-1 text-xs">
+          Hint: Mermaid comments use {"%%"}, not {"//"}.
+        </p>
       ) : null}
       <button
         type="button"

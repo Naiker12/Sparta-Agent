@@ -1,4 +1,3 @@
-
 /**
  * Pure, framework-free math behind {@link useTransferStats}.
  *

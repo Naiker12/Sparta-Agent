@@ -1,4 +1,3 @@
-
 import { toast } from "@/lib/toast";
 import { type IndexJob, terminalJobStatus } from "../types/rag";
 import {
@@ -11,8 +10,7 @@ import {
 // Windows keeps these device names reserved in every directory, with or without
 // an extension: "NUL.txt and NUL.tar.gz are both equivalent to NUL". The
 // ISO-8859-1 superscripts count as digits in COM#/LPT#.
-const RESERVED_DEVICE_NAME =
-  /^(?:con|prn|aux|nul|com[1-9¹²³]|lpt[1-9¹²³])$/i;
+const RESERVED_DEVICE_NAME = /^(?:con|prn|aux|nul|com[1-9¹²³]|lpt[1-9¹²³])$/i;
 // Filesystems cap a path component in bytes, not characters, so 80 CJK or emoji
 // code points would overrun the usual 255. Leave room for ".md" too.
 const MAX_STEM_BYTES = 180;
@@ -21,12 +19,16 @@ const MAX_STEM_BYTES = 180;
  * lone half of a surrogate pair behind. */
 function clampToBytes(text: string, maxBytes: number): string {
   const encoder = new TextEncoder();
-  if (encoder.encode(text).length <= maxBytes) return text;
+  if (encoder.encode(text).length <= maxBytes) {
+    return text;
+  }
   let used = 0;
   let out = "";
   for (const char of text) {
     const size = encoder.encode(char).length;
-    if (used + size > maxBytes) break;
+    if (used + size > maxBytes) {
+      break;
+    }
     used += size;
     out += char;
   }
@@ -41,11 +43,15 @@ export function projectSourceFileName(title: string): string {
     Array.from(title, (char) => {
       const code = char.codePointAt(0) ?? 0;
       // Control characters are not filename characters on any host.
-      if (code < 0x20 || code === 0x7f) return " ";
+      if (code < 0x20 || code === 0x7f) {
+        return " ";
+      }
       // Array.from yields whole code points, so a surrogate here is an unpaired
       // one the title arrived with; it has no encoding to send.
-      if (code >= 0xd800 && code <= 0xdfff) return "";
-      return "\\/:*?\"<>|".includes(char) ? "_" : char;
+      if (code >= 0xd800 && code <= 0xdfff) {
+        return "";
+      }
+      return '\\/:*?"<>|'.includes(char) ? "_" : char;
     })
       .join("")
       .replace(/\s+/g, " ")
@@ -57,7 +63,9 @@ export function projectSourceFileName(title: string): string {
   // The backend collapses everything outside [A-Za-z0-9._-] to "_", so a title
   // with no ASCII word character at all would be listed as "_.md". A generic
   // name at least reads as one.
-  if (!/[A-Za-z0-9]/.test(stem)) return "chat.md";
+  if (!/[A-Za-z0-9]/.test(stem)) {
+    return "chat.md";
+  }
   // A device name stays reserved through any extension, and Windows reads it as
   // the part before the *first* dot, so break the name there.
   const dot = stem.indexOf(".");
@@ -88,7 +96,9 @@ async function watchIngestion(
       return;
     }
     const terminal = terminalJobStatus(job.status);
-    if (!terminal) continue;
+    if (!terminal) {
+      continue;
+    }
     if (terminal === "failed") {
       // The panel hides failed documents, so without this the source just never
       // appears after a success toast.
@@ -118,7 +128,9 @@ export async function saveMarkdownAsProjectSource(
   invalidateProjectSources(projectId);
   try {
     const result = await uploadProjectDocument(projectId, file);
-    if (!options.quiet) toast.success("Saved to project sources.");
+    if (!options.quiet) {
+      toast.success("Saved to project sources.");
+    }
     void watchIngestion(projectId, result.jobId, result.filename || filename);
     return true;
   } catch (error) {

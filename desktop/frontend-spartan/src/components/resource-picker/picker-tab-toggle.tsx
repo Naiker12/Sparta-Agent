@@ -1,4 +1,3 @@
-
 import { SegmentedControlIndicator } from "@/components/segmented-control";
 import { cn } from "@/lib/utils";
 import { PICKER_OPTION_FOCUS_VISIBLE_CLASS } from "./picker-focus";

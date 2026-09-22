@@ -1,6 +1,7 @@
-
 export function fingerprintToken(token?: string | null): string {
-  if (!token) return "anon";
+  if (!token) {
+    return "anon";
+  }
   let h1 = 0x811c9dc5;
   let h2 = 0;
   for (let i = 0; i < token.length; i++) {

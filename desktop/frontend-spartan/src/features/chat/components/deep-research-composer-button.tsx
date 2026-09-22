@@ -1,7 +1,4 @@
-
 import { Button } from "@/components/ui/button";
-import { Telescope02Icon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Dialog,
   DialogContent,
@@ -11,16 +8,18 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
 import { ChevronDownStandardIcon } from "@/lib/chevron-icons";
+import { cn } from "@/lib/utils";
+import { Telescope02Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { XIcon } from "lucide-react";
 import { type KeyboardEvent, useState } from "react";
 import {
   DEFAULT_RESEARCH_MODEL_TIMEOUT_SECONDS,
   useChatRuntimeStore,
 } from "../stores/chat-runtime-store";
-import { MAX_RESEARCH_MODEL_TIMEOUT_SECONDS } from "../utils/mirrored-chat-settings";
 import type { ResearchWebsitePolicy } from "../types/research";
+import { MAX_RESEARCH_MODEL_TIMEOUT_SECONDS } from "../utils/mirrored-chat-settings";
 
 // The field is in minutes; its ceiling is the seconds cap the backend enforces.
 const MAX_RESEARCH_MODEL_TIMEOUT_MINUTES = Math.floor(
@@ -29,7 +28,9 @@ const MAX_RESEARCH_MODEL_TIMEOUT_MINUTES = Math.floor(
 
 function normalizeDomain(raw: string): string | null {
   const value = raw.trim();
-  if (!value || /[\\\s]/.test(value)) return null;
+  if (!value || /[\\\s]/.test(value)) {
+    return null;
+  }
   try {
     const url = new URL(value.includes("://") ? value : `https://${value}`);
     if (
@@ -64,7 +65,9 @@ function DomainList({
   const [error, setError] = useState("");
 
   const addDraft = () => {
-    if (!draft.trim()) return;
+    if (!draft.trim()) {
+      return;
+    }
     const domain = normalizeDomain(draft);
     if (!domain) {
       setError("Enter a domain without a port, such as arxiv.org.");
@@ -74,7 +77,9 @@ function DomainList({
       setError("You can add up to 100 domains to each list.");
       return;
     }
-    if (!values.includes(domain)) onChange([...values, domain]);
+    if (!values.includes(domain)) {
+      onChange([...values, domain]);
+    }
     setDraft("");
     setError("");
   };
@@ -83,7 +88,7 @@ function DomainList({
     if (event.key === "Enter" || event.key === ",") {
       event.preventDefault();
       addDraft();
-    } else if (event.key === "Backspace" && !draft && values.length) {
+    } else if (event.key === "Backspace" && !draft && values.length > 0) {
       onChange(values.slice(0, -1));
     }
   };
@@ -128,7 +133,7 @@ function DomainList({
           }}
           onBlur={addDraft}
           onKeyDown={handleKeyDown}
-          placeholder={values.length ? "Add another domain" : "example.com"}
+          placeholder={values.length > 0 ? "Add another domain" : "example.com"}
           aria-invalid={Boolean(error)}
           className="h-7 min-w-36 flex-1 border-0 bg-transparent px-1 shadow-none focus-visible:ring-0"
         />
@@ -148,7 +153,9 @@ export function DeepResearchComposerButton({
     (state) => state.setDeepResearchEnabled,
   );
 
-  if (!enabled) return null;
+  if (!enabled) {
+    return null;
+  }
 
   return (
     <button
@@ -321,11 +328,11 @@ function DeepResearchWebsiteAccessContent({
             setModelTimeoutSeconds(
               unlimited
                 ? 0
-                : !timeoutEdited
-                  ? modelTimeoutSeconds
-                  : Number.isSafeInteger(minutes) && minutes >= 1
+                : timeoutEdited
+                  ? Number.isSafeInteger(minutes) && minutes >= 1
                     ? Math.min(minutes, MAX_RESEARCH_MODEL_TIMEOUT_MINUTES) * 60
-                    : DEFAULT_RESEARCH_MODEL_TIMEOUT_SECONDS,
+                    : DEFAULT_RESEARCH_MODEL_TIMEOUT_SECONDS
+                  : modelTimeoutSeconds,
             );
             onClose();
           }}

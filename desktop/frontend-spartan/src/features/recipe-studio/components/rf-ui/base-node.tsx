@@ -1,4 +1,3 @@
-
 import type { ComponentProps, ReactElement } from "react";
 
 import { cn } from "@/lib/utils";
@@ -16,7 +15,6 @@ export function BaseNode({
         "[.react-flow\\_\\_node.selected_&]:shadow-md",
         className,
       )}
-      tabIndex={0}
       {...props}
     />
   );

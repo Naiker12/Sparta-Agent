@@ -1,4 +1,3 @@
-
 // A loaded model only shows on the page that loaded it, so memory stays held with
 // nothing on screen saying so. This card lists what is resident from anywhere and
 // ejects it in place. It joins the shared bottom-right stack instead of pinning
@@ -21,11 +20,9 @@ import { cn } from "@/lib/utils";
 import {
   Cancel01Icon,
   DragDropVerticalIcon,
-  Image01Icon,
   Message01Icon,
   Mic01Icon,
   RemoveCircleIcon,
-  Video01Icon,
   VolumeHighIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -54,8 +51,6 @@ const COLLAPSED_KEY = LOADED_MODELS_PREFERENCE_KEYS.collapsed;
 const KIND_ICONS: Record<LoadedModelKind, typeof SparkleIcon> = {
   text: Message01Icon,
   tts: VolumeHighIcon,
-  image: Image01Icon,
-  video: Video01Icon,
   stt: Mic01Icon,
 };
 
@@ -64,8 +59,12 @@ const KIND_ICONS: Record<LoadedModelKind, typeof SparkleIcon> = {
 const HIDDEN_ROUTES = new Set(["/login", "/signup", "/change-password"]);
 
 function canShowIndicator(pathname: string): boolean {
-  if (HIDDEN_ROUTES.has(pathname)) return false;
-  if (isTauri) return true;
+  if (HIDDEN_ROUTES.has(pathname)) {
+    return false;
+  }
+  if (isTauri) {
+    return true;
+  }
   return hasAuthToken() && !mustChangePassword();
 }
 
@@ -232,7 +231,9 @@ export function LoadedModelsIndicator({
     const ids = new Set(polledEntries.map((entry) => entry.id));
     const before = idsWhileClosedRef.current;
     idsWhileClosedRef.current = ids;
-    if (!before) return;
+    if (!before) {
+      return;
+    }
     for (const id of ids) {
       if (!before.has(id)) {
         setLoadedModelsDismissed(false);
@@ -241,7 +242,9 @@ export function LoadedModelsIndicator({
     }
   }, [dismissed, polledEntries]);
 
-  if (!enabled || entries.length === 0) return null;
+  if (!enabled || entries.length === 0) {
+    return null;
+  }
 
   const countLabel = `${entries.length} ${entries.length === 1 ? "model" : "models"} loaded`;
 
@@ -272,7 +275,9 @@ export function LoadedModelsIndicator({
               // The pill is its own drag handle, so a press that moved is a
               // drag and must not also expand the card.
               onClick={() => {
-                if (!justDragged()) setCollapsed(false);
+                if (!justDragged()) {
+                  setCollapsed(false);
+                }
               }}
               className="menu-soft-surface menu-soft-edgeless pointer-events-auto flex h-9 cursor-grab touch-none items-center gap-1.5 rounded-full pl-2.5 pr-3 font-heading text-muted-foreground transition-colors hover:text-foreground active:cursor-grabbing"
             >

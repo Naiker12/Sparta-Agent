@@ -1,36 +1,31 @@
-
-import { Link, createRouter, useRouterState } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { useT } from "@/i18n";
+import { Link, createRouter, useRouterState } from "@tanstack/react-router";
 import { Route as rootRoute } from "./routes/__root";
 import { Route as apiMonitorRoute } from "./routes/api";
-import { Route as chatRoute } from "./routes/chat";
-import { Route as exportRoute } from "./routes/export";
-import { Route as imagesRoute } from "./routes/images";
 import { Route as audioRoute } from "./routes/audio";
-import { Route as indexRoute } from "./routes/index";
-import { Route as loginRoute } from "./routes/login";
-import { Route as hubRoute } from "./routes/hub";
-import { Route as projectsRoute } from "./routes/projects";
 import { Route as changePasswordRoute } from "./routes/change-password";
-import { Route as settingsRoute } from "./routes/settings";
+import { Route as chatRoute } from "./routes/chat";
 import { Route as dataRecipesRoute } from "./routes/data-recipes";
 import { Route as editRecipeRoute } from "./routes/data-recipes.$recipeId";
+import { Route as exportRoute } from "./routes/export";
+import { Route as indexRoute } from "./routes/index";
+import { Route as loginRoute } from "./routes/login";
 import { Route as memoryRoute } from "./routes/memory";
+import { Route as projectsRoute } from "./routes/projects";
+import { Route as settingsRoute } from "./routes/settings";
 import { Route as tasksRoute } from "./routes/tasks";
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
   loginRoute,
   changePasswordRoute,
-  hubRoute,
   settingsRoute,
   chatRoute,
   projectsRoute,
   dataRecipesRoute,
   editRecipeRoute,
   exportRoute,
-  imagesRoute,
   audioRoute,
   apiMonitorRoute,
   memoryRoute,
@@ -56,7 +51,7 @@ function DefaultNotFound() {
           {t("shell.notFound.description", { path: pathname })}
         </p>
       </div>
-      <Button asChild>
+      <Button asChild={true}>
         <Link to="/chat">{t("shell.notFound.backToChat")}</Link>
       </Button>
     </div>

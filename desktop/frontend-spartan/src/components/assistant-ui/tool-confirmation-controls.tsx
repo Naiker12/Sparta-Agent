@@ -1,15 +1,14 @@
-
 "use client";
 
 import { Button } from "@/components/ui/button";
 import { resolveToolConfirmation } from "@/features/chat/api/chat-api";
 import { useChatRuntimeStore } from "@/features/chat/stores/chat-runtime-store";
+import { useT } from "@/i18n";
 import type {
   ToolCallMessagePartComponent,
   ToolCallMessagePartStatus,
 } from "@assistant-ui/react";
 import { useCallback, useEffect, useState } from "react";
-import { useT } from "@/i18n";
 
 /**
  * Allow / Always allow / Deny controls for a tool call paused awaiting the
@@ -64,7 +63,9 @@ export function ToolConfirmationControls({
 
   const resolve = useCallback(
     async (decision: "allow" | "deny") => {
-      if (!toolCallId || !confirmation) return;
+      if (!(toolCallId && confirmation)) {
+        return;
+      }
       setPending(decision);
       setFailed(false);
       try {
@@ -98,9 +99,13 @@ export function ToolConfirmationControls({
     }
   }, [showControls, autoAllowed, pending, failed, resolve]);
 
-  if (!showControls) return null;
+  if (!showControls) {
+    return null;
+  }
   // Auto-approved tools resolve silently unless the post fails.
-  if (autoAllowed && !failed) return null;
+  if (autoAllowed && !failed) {
+    return null;
+  }
 
   return (
     <div className="flex flex-wrap items-center gap-2 pt-1">
@@ -116,7 +121,9 @@ export function ToolConfirmationControls({
         variant="outline"
         disabled={pending !== null}
         onClick={() => {
-          if (autoAllowKey) allowToolAlways(autoAllowKey, toolName);
+          if (autoAllowKey) {
+            allowToolAlways(autoAllowKey, toolName);
+          }
           void resolve("allow");
         }}
       >

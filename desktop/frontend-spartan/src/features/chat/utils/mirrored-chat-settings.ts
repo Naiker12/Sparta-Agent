@@ -1,4 +1,3 @@
-
 // Composer, RAG and model-load toggles the chat runtime store mirrors to
 // /api/chat/settings so they follow the installation rather than one browser's
 // localStorage. Every value has to survive a round trip through a browser's
@@ -82,7 +81,9 @@ export function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function sanitizeDomainList(value: unknown): string[] {
-  if (!Array.isArray(value)) return [];
+  if (!Array.isArray(value)) {
+    return [];
+  }
   return value
     .filter(
       (entry): entry is string =>
@@ -94,7 +95,9 @@ function sanitizeDomainList(value: unknown): string[] {
 function sanitizeResearchWebsitePolicy(
   value: unknown,
 ): PersistedChatSettings["researchWebsitePolicy"] | undefined {
-  if (!isRecord(value)) return undefined;
+  if (!isRecord(value)) {
+    return undefined;
+  }
   return {
     allowedDomains: sanitizeDomainList(value.allowedDomains),
     blockedDomains: sanitizeDomainList(value.blockedDomains),
@@ -104,8 +107,12 @@ function sanitizeResearchWebsitePolicy(
 export function sanitizeRagSource(
   value: unknown,
 ): PersistedChatSettings["ragSource"] | undefined {
-  if (!isRecord(value)) return undefined;
-  if (value.type === "thread") return { type: "thread" };
+  if (!isRecord(value)) {
+    return undefined;
+  }
+  if (value.type === "thread") {
+    return { type: "thread" };
+  }
   if (
     value.type === "kb" &&
     typeof value.kbId === "string" &&
@@ -126,8 +133,12 @@ export function sanitizeBoundedNumber(
     integer,
   }: { min: number; minPositive?: number; max: number; integer: boolean },
 ): number | undefined {
-  if (typeof value !== "number" || !Number.isFinite(value)) return undefined;
-  if (integer && !Number.isInteger(value)) return undefined;
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return undefined;
+  }
+  if (integer && !Number.isInteger(value)) {
+    return undefined;
+  }
   // A sentinel below the floor stays legal; anything between the two is not.
   if (minPositive !== undefined && value > min && value < minPositive) {
     return undefined;
@@ -142,7 +153,9 @@ export function assignSanitizedMirroredSettings(
 ): void {
   const target = settings as Record<string, unknown>;
   for (const key of MIRRORED_BOOLEAN_KEYS) {
-    if (typeof value[key] === "boolean") target[key] = value[key];
+    if (typeof value[key] === "boolean") {
+      target[key] = value[key];
+    }
   }
   for (const [key, allowed] of Object.entries(MIRRORED_ENUM_VALUES)) {
     const candidate = value[key];
@@ -155,7 +168,9 @@ export function assignSanitizedMirroredSettings(
   }
   for (const [key, bounds] of Object.entries(MIRRORED_NUMBER_BOUNDS)) {
     const sanitized = sanitizeBoundedNumber(value[key], bounds);
-    if (sanitized !== undefined) target[key] = sanitized;
+    if (sanitized !== undefined) {
+      target[key] = sanitized;
+    }
   }
   const researchWebsitePolicy = sanitizeResearchWebsitePolicy(
     value.researchWebsitePolicy,
@@ -164,7 +179,9 @@ export function assignSanitizedMirroredSettings(
     settings.researchWebsitePolicy = researchWebsitePolicy;
   }
   const ragSource = sanitizeRagSource(value.ragSource);
-  if (ragSource) settings.ragSource = ragSource;
+  if (ragSource) {
+    settings.ragSource = ragSource;
+  }
 }
 
 /**
@@ -175,7 +192,9 @@ export function assignSanitizedMirroredSettings(
 export function normalizeStoredRagAutoInject(
   raw: string,
 ): "auto" | "on" | "off" {
-  if (raw === "auto" || raw === "on" || raw === "off") return raw;
+  if (raw === "auto" || raw === "on" || raw === "off") {
+    return raw;
+  }
   return raw === "false" ? "off" : "auto";
 }
 
@@ -194,8 +213,12 @@ export function loadShadowOwnsMirroredSetting(
     loadedGpuMemoryMode: "auto" | "manual" | null;
   },
 ): boolean {
-  if (key === "speculativeType") return shadows.loadedSpeculativeType !== null;
-  if (key === "gpuMemoryMode") return shadows.loadedGpuMemoryMode !== null;
+  if (key === "speculativeType") {
+    return shadows.loadedSpeculativeType !== null;
+  }
+  if (key === "gpuMemoryMode") {
+    return shadows.loadedGpuMemoryMode !== null;
+  }
   return false;
 }
 
@@ -207,7 +230,9 @@ export function normalizeStoredPermissionMode(
   if (rawMode === "ask" || rawMode === "auto" || rawMode === "off") {
     return rawMode;
   }
-  if (legacyConfirm === null) return "auto";
+  if (legacyConfirm === null) {
+    return "auto";
+  }
   return legacyConfirm ? "ask" : "off";
 }
 

@@ -1,4 +1,3 @@
-
 import {
   Popover,
   PopoverContent,
@@ -53,6 +52,7 @@ import {
 import { ggufVariantsMatch } from "../lib/model-identity";
 import { confirmExternalLink } from "../stores/external-link-confirm";
 import { useHfTokenStore } from "../stores/hf-token-store";
+import { DeleteImpactSummary, useDeleteImpact } from "./delete-impact";
 import { DotTag } from "./dot-tag";
 import {
   CardDeleteButton,
@@ -63,7 +63,6 @@ import {
 } from "./download-card";
 import { PathInfoButton } from "./path-info-button";
 import { TransportConflictDialog } from "./transport-conflict-dialog";
-import { DeleteImpactSummary, useDeleteImpact } from "./delete-impact";
 import { useCardDelete } from "./use-card-delete";
 import { useGgufVariantFetchState } from "./use-gguf-variant-fetch-state";
 
@@ -109,7 +108,10 @@ interface LocalOnDeviceCardProps {
    * it came from this card's selector or was derived from the resident model, which
    * decides whether a fresher status read may override it.
    */
-  onOpenSettings?: (ggufVariant: string | null, quantIsUserPicked: boolean) => void;
+  onOpenSettings?: (
+    ggufVariant: string | null,
+    quantIsUserPicked: boolean,
+  ) => void;
 }
 
 function formatAdapterLabel(
@@ -117,15 +119,23 @@ function formatAdapterLabel(
   trainingMethod?: string | null,
 ): string {
   const method = trainingMethod?.trim().toLowerCase();
-  if (method === "qlora") return "QLoRA adapter";
-  if (method === "lora") return "LoRA adapter";
+  if (method === "qlora") {
+    return "QLoRA adapter";
+  }
+  if (method === "lora") {
+    return "LoRA adapter";
+  }
   const type = adapterType?.trim();
   return type ? `${type.toUpperCase()} adapter` : "Adapter";
 }
 
 function baseModelSourceLabel(source?: BaseModelSource | null): string {
-  if (source === "huggingface") return "Hugging Face base model";
-  if (source === "local") return "Local base model";
+  if (source === "huggingface") {
+    return "Hugging Face base model";
+  }
+  if (source === "local") {
+    return "Local base model";
+  }
   return "Base model";
 }
 
@@ -245,16 +255,22 @@ export function LocalOnDeviceCard({
       : null,
   );
   const cancelUpdateConflict = useCallback(() => {
-    if (updateConflictKey) downloadManager.cancelConflict(updateConflictKey);
+    if (updateConflictKey) {
+      downloadManager.cancelConflict(updateConflictKey);
+    }
     setUpdateConflictKey(null);
   }, [updateConflictKey]);
   const resumeUpdateConflict = useCallback(() => {
-    if (!updateConflictKey) return;
+    if (!updateConflictKey) {
+      return;
+    }
     downloadManager.resumeConflict(updateConflictKey);
     setUpdateConflictKey(null);
   }, [updateConflictKey]);
   const restartUpdateConflict = useCallback(() => {
-    if (!updateConflictKey) return;
+    if (!updateConflictKey) {
+      return;
+    }
     downloadManager.restartConflict(updateConflictKey);
     setUpdateConflictKey(null);
   }, [updateConflictKey]);
@@ -262,10 +278,15 @@ export function LocalOnDeviceCard({
   // Update availability is derived from the GGUF variant metadata; offline rows
   // keep the button hidden because there is no remote revision to fetch.
   const online = useOnlineStatus();
-  const deleteImpact = useDeleteImpact(deleteOpen && Boolean(repoId), repoId ?? "");
+  const deleteImpact = useDeleteImpact(
+    deleteOpen && Boolean(repoId),
+    repoId ?? "",
+  );
   const { deleting, runDelete } = useCardDelete({
     action: async () => {
-      if (!repoId) return;
+      if (!repoId) {
+        return;
+      }
       // Delete is only offered for hf_cache rows (see canDelete), so `path` is
       // the cache snapshot path: pass it so the delete targets the cache this
       // card shows instead of falling back to the active cache.
@@ -312,12 +333,16 @@ export function LocalOnDeviceCard({
   const variants = useMemo(() => {
     const localVariants = currentVariantState.variants;
     const remoteVariants = remoteVariantState.variants;
-    if (!localVariants || !remoteVariants) return localVariants;
+    if (!(localVariants && remoteVariants)) {
+      return localVariants;
+    }
     return localVariants.map((variant) => {
       const remoteVariant = remoteVariants.find((remote) =>
         ggufVariantsMatch(remote.quant, variant.quant),
       );
-      if (!remoteVariant) return variant;
+      if (!remoteVariant) {
+        return variant;
+      }
       return {
         ...variant,
         download_size_bytes:
@@ -424,7 +449,9 @@ export function LocalOnDeviceCard({
   // Cancel. The worker re-resolves `main` and pulls changed blobs while the old
   // cached copy stays runnable until the new revision verifies.
   const handleConfirmUpdate = () => {
-    if (!repoId || !updateTargetVariant) return;
+    if (!(repoId && updateTargetVariant)) {
+      return;
+    }
     setUpdateOpen(false);
     void downloadManager
       .requestStart({
@@ -575,8 +602,9 @@ export function LocalOnDeviceCard({
                           </button>
                         );
                       })}
-                      {!currentVariantState.loading &&
-                        !currentVariantState.error &&
+                      {!(
+                        currentVariantState.loading || currentVariantState.error
+                      ) &&
                         sortedVariants?.length === 0 && (
                           <div className="px-4 py-2 text-xs text-muted-foreground">
                             No quantizations found.
@@ -649,13 +677,17 @@ export function LocalOnDeviceCard({
               type="button"
               disabled={isLoading || variantUnavailable || !canRun}
               onClick={() => {
-                if (!canRun) return;
+                if (!canRun) {
+                  return;
+                }
                 if (selectedVariantIsActive) {
                   onEject?.();
                   return;
                 }
                 if (needsVariantSelection) {
-                  if (!selectedVariant) return;
+                  if (!selectedVariant) {
+                    return;
+                  }
                   onLoad({
                     ggufVariant: selectedVariant.quant,
                     expectedBytes: selectedVariant.size_bytes,
@@ -715,7 +747,9 @@ export function LocalOnDeviceCard({
       <DeleteConfirmDialog
         open={deleteOpen}
         onOpenChange={(o) => {
-          if (!o && !deleting) setDeleteOpen(false);
+          if (!(o || deleting)) {
+            setDeleteOpen(false);
+          }
         }}
         title="Delete cached model?"
         deleting={deleting}
@@ -735,7 +769,9 @@ export function LocalOnDeviceCard({
       <UpdateConfirmDialog
         open={updateOpen}
         onOpenChange={(o) => {
-          if (!o) setUpdateOpen(false);
+          if (!o) {
+            setUpdateOpen(false);
+          }
         }}
         title={`Update ${repoId}?`}
         updating={false}

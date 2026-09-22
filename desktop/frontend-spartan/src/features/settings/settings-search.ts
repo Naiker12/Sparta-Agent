@@ -1,4 +1,3 @@
-
 import type { TranslationKey } from "@/i18n";
 import type { SettingsTab } from "./stores/settings-dialog-store";
 
@@ -198,7 +197,9 @@ export function createSettingsSearchIndex({
       "settings.about.updates",
       "settings.general.startup.sectionTitle",
       "settings.general.startup.launchAtLogin",
-      ...(closeToTray ? (["settings.general.startup.closeToTray"] as const) : []),
+      ...(closeToTray
+        ? (["settings.general.startup.closeToTray"] as const)
+        : []),
     ],
     about: SETTINGS_SEARCH_INDEX.about.filter(
       (key) => key !== "settings.about.updates",

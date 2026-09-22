@@ -1,14 +1,13 @@
-
 import type { Edge, Node, XYPosition } from "@xyflow/react";
 import type { RecipeGraphAuxNodeData } from "../../components/recipe-graph-aux-node";
 import { DEFAULT_NODE_HEIGHT, DEFAULT_NODE_WIDTH } from "../../constants";
-import type { RecipeNode, LayoutDirection, NodeConfig } from "../../types";
+import type { LayoutDirection, NodeConfig, RecipeNode } from "../../types";
 import {
+  HANDLE_IDS,
   getDefaultDataSourceHandle,
   getDefaultDataTargetHandle,
   getDefaultSemanticSourceHandle,
   getDefaultSemanticTargetHandle,
-  HANDLE_IDS,
   isDataSourceHandle,
   isDataTargetHandle,
   isSemanticSourceHandle,
@@ -34,7 +33,7 @@ type DisplayGraphInput = {
 };
 
 export type DisplayGraph = {
-  nodes: Array<Node<RecipeNode["data"] | RecipeGraphAuxNodeData>>;
+  nodes: Node<RecipeNode["data"] | RecipeGraphAuxNodeData>[];
   edges: Edge[];
 };
 
@@ -51,9 +50,7 @@ function normalizeEdge(
   doneNodeIds: Set<string>,
 ): Edge {
   const isActiveByRuntimeTarget =
-    Boolean(runningNodeId) &&
-    edge.target === runningNodeId &&
-    !isAuxEdge(edge);
+    Boolean(runningNodeId) && edge.target === runningNodeId && !isAuxEdge(edge);
   const isActiveEdge = activeEdgeIds.has(edge.id) || isActiveByRuntimeTarget;
   const isAux = isAuxEdge(edge);
   if (isAux) {
@@ -85,8 +82,12 @@ function normalizeEdge(
   const semantic =
     displayEdge.type === "semantic" ||
     (Boolean(source && target) && isSemanticRelation(source, target));
-  const sourceHandleNormalized = normalizeRecipeHandleId(displayEdge.sourceHandle);
-  const targetHandleNormalized = normalizeRecipeHandleId(displayEdge.targetHandle);
+  const sourceHandleNormalized = normalizeRecipeHandleId(
+    displayEdge.sourceHandle,
+  );
+  const targetHandleNormalized = normalizeRecipeHandleId(
+    displayEdge.targetHandle,
+  );
   const semanticSourceDefault =
     source?.kind === "llm"
       ? getDefaultDataSourceHandle(layoutDirection)
@@ -102,12 +103,12 @@ function normalizeEdge(
     sourceHandle =
       isSemanticSourceHandle(sourceHandleNormalized) ||
       isDataSourceHandle(sourceHandleNormalized)
-        ? sourceHandleNormalized ?? semanticSourceDefault
+        ? (sourceHandleNormalized ?? semanticSourceDefault)
         : semanticSourceDefault;
     targetHandle =
       isSemanticTargetHandle(targetHandleNormalized) ||
       isDataTargetHandle(targetHandleNormalized)
-        ? targetHandleNormalized ?? semanticTargetDefault
+        ? (targetHandleNormalized ?? semanticTargetDefault)
         : semanticTargetDefault;
     // LLM nodes only expose data lane handles; coerce legacy semantic handles.
     if (source?.kind === "llm" && isSemanticSourceHandle(sourceHandle)) {
@@ -118,10 +119,10 @@ function normalizeEdge(
     }
   } else {
     sourceHandle = isDataSourceHandle(sourceHandleNormalized)
-      ? sourceHandleNormalized ?? getDefaultDataSourceHandle(layoutDirection)
+      ? (sourceHandleNormalized ?? getDefaultDataSourceHandle(layoutDirection))
       : getDefaultDataSourceHandle(layoutDirection);
     targetHandle = isDataTargetHandle(targetHandleNormalized)
-      ? targetHandleNormalized ?? getDefaultDataTargetHandle(layoutDirection)
+      ? (targetHandleNormalized ?? getDefaultDataTargetHandle(layoutDirection))
       : getDefaultDataTargetHandle(layoutDirection);
   }
 
@@ -130,7 +131,11 @@ function normalizeEdge(
     type: semantic ? "semantic" : "canvas",
     data: semantic
       ? { ...(displayEdge.data ?? {}), active: isActiveEdge }
-      : { ...(displayEdge.data ?? {}), path: "smoothstep", active: isActiveEdge },
+      : {
+          ...(displayEdge.data ?? {}),
+          path: "smoothstep",
+          active: isActiveEdge,
+        },
     sourceHandle,
     targetHandle,
     animated: isActiveEdge,
@@ -149,11 +154,7 @@ type Rect = {
   height: number;
 };
 
-function toRect(
-  position: XYPosition,
-  width: number,
-  height: number,
-): Rect {
+function toRect(position: XYPosition, width: number, height: number): Rect {
   return {
     x: position.x,
     y: position.y,

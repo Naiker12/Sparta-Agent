@@ -1,4 +1,3 @@
-
 const PATH_SEPARATOR_RE = /[\\/]/;
 const TRAILING_PATH_SEPARATOR_RE = /[\\/]+$/;
 

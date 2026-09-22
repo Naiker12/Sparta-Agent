@@ -1,4 +1,3 @@
-
 import { toast } from "@/lib/toast";
 import { disposableTimeoutSignal } from "../lib/abort-signals";
 import { getActiveModelDownloads } from "./api";
@@ -7,10 +6,10 @@ import {
   apiTransportStatusWithRetry,
   effectiveTransportMode,
 } from "./download-api-adapter";
-import type {
-  DownloadRequest,
-  ManagedDownload,
-} from "./download-manager-types";
+import {
+  ACTIVE_STATES,
+  TRANSPORT_STATUS_TIMEOUT_MS,
+} from "./download-manager-config";
 import {
   findActiveJobForRepo,
   getState,
@@ -19,10 +18,13 @@ import {
   repoKeyOf,
   setConflict,
 } from "./download-manager-state";
+import type {
+  DownloadRequest,
+  ManagedDownload,
+} from "./download-manager-types";
 import { startJob } from "./poll-loop";
 import { runtimeRegistry } from "./runtime-registry";
 import { getTransportMode } from "./transport-preference";
-import { ACTIVE_STATES, TRANSPORT_STATUS_TIMEOUT_MS } from "./download-manager-config";
 
 function reportConflictStartError(error: unknown): void {
   const description =
@@ -36,7 +38,9 @@ function pendingStartKey(req: DownloadRequest): string {
 
 function hasPendingStartForRepo(repoKey: string): boolean {
   for (const key of runtimeRegistry.pendingStartRepoKeys) {
-    if (key === repoKey || key.startsWith(`${repoKey}#`)) return true;
+    if (key === repoKey || key.startsWith(`${repoKey}#`)) {
+      return true;
+    }
   }
   return false;
 }
@@ -49,9 +53,13 @@ function hasActiveOrPendingStart(req: DownloadRequest): boolean {
       includePending: true,
     });
   }
-  if (runtimeRegistry.pendingStartRepoKeys.has(key)) return true;
+  if (runtimeRegistry.pendingStartRepoKeys.has(key)) {
+    return true;
+  }
   const repoKey = repoKeyOf(req.kind, req.repoId);
-  if (hasPendingStartForRepo(repoKey)) return true;
+  if (hasPendingStartForRepo(repoKey)) {
+    return true;
+  }
   return (
     Boolean(findActiveJobForRepo(getState().jobs, req.kind, req.repoId)) ||
     Boolean(runtimeRegistry.runtimes.get(repoKey))
@@ -65,7 +73,9 @@ function asTransportMode(value: unknown): TransportMode | null {
 async function activeSiblingTransport(
   req: DownloadRequest,
 ): Promise<TransportMode | null> {
-  if (req.kind !== "model" || !req.variant) return null;
+  if (req.kind !== "model" || !req.variant) {
+    return null;
+  }
   const timeout = disposableTimeoutSignal(TRANSPORT_STATUS_TIMEOUT_MS);
   const downloads = await getActiveModelDownloads(req.repoId, timeout.signal, {
     fresh: true,
@@ -73,10 +83,16 @@ async function activeSiblingTransport(
   const variant = req.variant.trim().toLowerCase();
   for (const download of downloads) {
     const siblingVariant = download.variant?.trim().toLowerCase();
-    if (!siblingVariant || siblingVariant === variant) continue;
-    if (!ACTIVE_STATES.has(download.state)) continue;
+    if (!siblingVariant || siblingVariant === variant) {
+      continue;
+    }
+    if (!ACTIVE_STATES.has(download.state)) {
+      continue;
+    }
     const transport = asTransportMode(download.transport);
-    if (transport) return transport;
+    if (transport) {
+      return transport;
+    }
   }
   return null;
 }
@@ -97,7 +113,9 @@ export type DownloadStartOutcome = "started" | "conflict" | "busy" | "error";
 // callers never claim a download began when it did not.
 function isJobActiveFor(req: DownloadRequest): boolean {
   const job = getState().jobs[jobKeyOf(req.kind, req.repoId, req.variant)];
-  if (!job || !ACTIVE_STATES.has(job.state)) return false;
+  if (!(job && ACTIVE_STATES.has(job.state))) {
+    return false;
+  }
   return !scopedFileSetDiffers(job, req);
 }
 
@@ -108,13 +126,15 @@ function scopedFileSetDiffers(
   job: ManagedDownload,
   req: DownloadRequest,
 ): boolean {
-  if (!req.files || req.files.length === 0) return false;
-  if (!job.scopedFiles) return true;
+  if (!req.files || req.files.length === 0) {
+    return false;
+  }
+  if (!job.scopedFiles) {
+    return true;
+  }
   const live = [...new Set(job.scopedFiles)].sort();
   const wanted = [...new Set(req.files)].sort();
-  return (
-    live.length !== wanted.length || live.some((f, i) => f !== wanted[i])
-  );
+  return live.length !== wanted.length || live.some((f, i) => f !== wanted[i]);
 }
 
 async function runWithPendingStartGuard(
@@ -145,12 +165,7 @@ export async function requestStart(
     let mode: TransportMode = getTransportMode();
     try {
       mode = await effectiveTransportMode(mode);
-    } catch (err) {
-      console.warn(
-        "Transport capability check failed; using the selected transport.",
-        err,
-      );
-    }
+    } catch (_err) {}
     let siblingTransport: TransportMode | null = null;
     let siblingProbed = false;
     try {
@@ -165,9 +180,7 @@ export async function requestStart(
         });
         return "busy";
       }
-    } catch (err) {
-      console.warn("Active download transport check failed.", err);
-    }
+    } catch (_err) {}
     try {
       const status = await apiTransportStatusWithRetry(req);
       if (
@@ -191,11 +204,7 @@ export async function requestStart(
             "An earlier partial download can't be resumed, so it will start again from the beginning.",
         });
       }
-    } catch (err) {
-      console.warn(
-        "Transport status check failed; starting without partial-conflict preflight.",
-        err,
-      );
+    } catch (_err) {
       // Fail safe: Xet purges any partial unconditionally, so when the partial
       // can't be verified we downgrade this one start to HTTP (resumes an HTTP
       // partial, harmless for a fresh download); the Xet preference is kept for
@@ -221,7 +230,9 @@ export async function requestStart(
 
 export function resumeConflict(conflictKey: string): void {
   const entry = getState().conflicts[conflictKey];
-  if (!entry) return;
+  if (!entry) {
+    return;
+  }
   setConflict(conflictKey, null);
   void runWithPendingStartGuard(entry.pending, async () => {
     await startJob(entry.pending, {
@@ -233,7 +244,9 @@ export function resumeConflict(conflictKey: string): void {
 
 export function restartConflict(conflictKey: string): void {
   const entry = getState().conflicts[conflictKey];
-  if (!entry) return;
+  if (!entry) {
+    return;
+  }
   setConflict(conflictKey, null);
   void runWithPendingStartGuard(entry.pending, async () => {
     await startJob(entry.pending, {

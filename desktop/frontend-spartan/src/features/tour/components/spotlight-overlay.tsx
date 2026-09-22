@@ -1,4 +1,3 @@
-
 import { motion } from "motion/react";
 import type { Rect } from "../types";
 
@@ -9,7 +8,12 @@ type SpotlightOverlayProps = {
   maskId: string;
 };
 
-export function SpotlightOverlay({ rect, vw, vh, maskId }: SpotlightOverlayProps) {
+export function SpotlightOverlay({
+  rect,
+  vw,
+  vh,
+  maskId,
+}: SpotlightOverlayProps) {
   const hole = rect ?? { x: vw / 2 - 140, y: vh / 2 - 90, w: 280, h: 180 };
   const r = 22;
 
@@ -50,4 +54,3 @@ export function SpotlightOverlay({ rect, vw, vh, maskId }: SpotlightOverlayProps
     </svg>
   );
 }
-

@@ -1,5 +1,4 @@
-
-import { useChatRuntimeStore } from "../stores/chat-runtime-store";
+import type { useChatRuntimeStore } from "../stores/chat-runtime-store";
 
 const QUEUED_SETTING_KEYS = [
   "supportsTools",

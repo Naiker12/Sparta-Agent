@@ -1,4 +1,3 @@
-
 /** One settings read, in the three states the shortcut has to tell apart. */
 export type ReloadHint =
   | { reloadRequired: boolean }

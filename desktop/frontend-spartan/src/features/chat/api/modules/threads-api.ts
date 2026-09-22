@@ -1,10 +1,15 @@
 import { authFetch } from "@/features/auth";
-import { isAssistantLocalThreadId } from "../../utils/thread-ids";
 import {
   combineAbortSignals,
   disposableTimeoutSignal,
 } from "@/features/hub/lib/abort-signals";
-import type { MessageRecord, ModelType, ProjectRecord, ThreadRecord } from "../../types";
+import type {
+  MessageRecord,
+  ModelType,
+  ProjectRecord,
+  ThreadRecord,
+} from "../../types";
+import { isAssistantLocalThreadId } from "../../utils/thread-ids";
 import {
   notifyChatHistoryUpdated,
   parseErrorText,
@@ -31,9 +36,15 @@ export async function listChatThreads(
   } = {},
 ): Promise<ThreadRecord[]> {
   const params = new URLSearchParams();
-  if (args.modelType) params.set("model_type", args.modelType);
-  if (args.pairId) params.set("pair_id", args.pairId);
-  if (args.projectId) params.set("project_id", args.projectId);
+  if (args.modelType) {
+    params.set("model_type", args.modelType);
+  }
+  if (args.pairId) {
+    params.set("pair_id", args.pairId);
+  }
+  if (args.projectId) {
+    params.set("project_id", args.projectId);
+  }
   if (args.includeArchived !== undefined) {
     params.set("include_archived", String(args.includeArchived));
   }
@@ -67,7 +78,9 @@ export async function getChatThread(
       `/api/chat/threads/${encodeURIComponent(threadId)}`,
       signal ? { signal } : undefined,
     );
-    if (response.status === 404) return null;
+    if (response.status === 404) {
+      return null;
+    }
     return parseJsonOrThrow<ThreadRecord>(response);
   } finally {
     combined?.dispose();
@@ -163,7 +176,9 @@ export async function getThreadForkCounts(
   const response = await authFetch(
     `/api/chat/threads/${encodeURIComponent(threadId)}/forks`,
   );
-  if (response.status === 404) return new Map();
+  if (response.status === 404) {
+    return new Map();
+  }
   const data = await parseJsonOrThrow<{ counts?: Record<string, number> }>(
     response,
   );
@@ -174,7 +189,9 @@ export async function deleteChatThreads(
   threadIds: string[],
   args: { deleteFiles?: boolean } = {},
 ): Promise<string[]> {
-  if (threadIds.length === 0) return [];
+  if (threadIds.length === 0) {
+    return [];
+  }
   const response = await threadWriteFetch("/api/chat/threads", {
     method: "DELETE",
     headers: { "Content-Type": "application/json" },
@@ -241,7 +258,9 @@ export async function buildBackendChatExport(): Promise<{
 
 export async function listChatImportLedger(): Promise<Set<string>> {
   const response = await authFetch("/api/chat/import-ledger");
-  if (response.status === 404 || response.status === 405) return new Set();
+  if (response.status === 404 || response.status === 405) {
+    return new Set();
+  }
   const data = await parseJsonOrThrow<{ threadIds: string[] }>(response);
   return new Set(data.threadIds);
 }

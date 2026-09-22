@@ -462,7 +462,8 @@ export const chat = {
     editNoDelete: "Editar sin eliminar",
     editNoDeleteDesc: "Puede crear y editar; no puede borrar archivos.",
     allowEdits: "Permitir ediciones",
-    allowEditsDesc: "Puede crear, editar y eliminar archivos cuando se lo pidas.",
+    allowEditsDesc:
+      "Puede crear, editar y eliminar archivos cuando se lo pidas.",
     cancel: "Cancelar",
     connect: "Conectar carpeta",
     changeFolder: "Cambiar carpeta",

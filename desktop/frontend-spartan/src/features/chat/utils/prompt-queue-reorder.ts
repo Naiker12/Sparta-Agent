@@ -1,4 +1,3 @@
-
 /**
  * Index math for dragging a queued prompt into another's slot, kept apart from
  * the queue engine so the ordering rules are testable on plain arrays.
@@ -14,10 +13,18 @@ export function canReorderPromptQueueRange(
   activeIndex: number,
   itemCount: number,
 ): boolean {
-  if (fromIndex === toIndex) return false;
-  if (!Number.isInteger(fromIndex) || !Number.isInteger(toIndex)) return false;
-  if (fromIndex < 0 || toIndex < 0) return false;
-  if (fromIndex >= itemCount || toIndex >= itemCount) return false;
+  if (fromIndex === toIndex) {
+    return false;
+  }
+  if (!(Number.isInteger(fromIndex) && Number.isInteger(toIndex))) {
+    return false;
+  }
+  if (fromIndex < 0 || toIndex < 0) {
+    return false;
+  }
+  if (fromIndex >= itemCount || toIndex >= itemCount) {
+    return false;
+  }
   return fromIndex >= activeIndex && toIndex >= activeIndex;
 }
 
@@ -52,6 +59,8 @@ export function promptQueueActiveItemChanged<T>(
   after: readonly T[],
   activeIndex: number,
 ): boolean {
-  if (activeIndex < 0) return false;
+  if (activeIndex < 0) {
+    return false;
+  }
   return before[activeIndex] !== after[activeIndex];
 }

@@ -1,4 +1,3 @@
-
 // The eject sequence for one chat row. Its own plain module, taking its I/O as
 // deps, because loaded-models-api.ts reaches the chat store and cannot be
 // imported by the node --test suite. Mirrors api-monitor/unload-resident.ts.
@@ -59,7 +58,9 @@ export async function ejectChatModel(
     readResident: async () => {
       const resident = await deps.readResident();
       seen.resident = resident;
-      if (!resident) return null;
+      if (!resident) {
+        return null;
+      }
       const namesTarget = resident.aliases.some((alias) =>
         deps.matches(target, alias),
       );

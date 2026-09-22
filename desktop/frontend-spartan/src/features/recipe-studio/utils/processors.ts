@@ -1,4 +1,3 @@
-
 import type { RecipeProcessorConfig } from "../types";
 
 export function buildDefaultSchemaTransform(): RecipeProcessorConfig {

@@ -1,4 +1,3 @@
-
 import { useCallback, useState } from "react";
 
 /** A boolean that survives reloads, off by default. Only "true" is stored, so the

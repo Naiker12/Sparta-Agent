@@ -1,10 +1,9 @@
-
 import {
+  type HubFailure,
+  type HubPhase,
   getBrowserOfflineRetryDelayMs,
   getHubPhase,
   getLastHubFailure,
-  type HubFailure,
-  type HubPhase,
   isHuggingFaceOffline,
   subscribeNetworkStatus,
 } from "@/features/hub/lib/network";

@@ -1,8 +1,7 @@
-
-import { useEffect, useRef } from "react";
 import { Switch } from "@/components/ui/switch";
 import { useSidebarPin } from "@/hooks/use-sidebar-pin";
 import { useT } from "@/i18n";
+import { useEffect, useRef } from "react";
 import {
   ActiveColorControl,
   ChatFontRow,
@@ -17,15 +16,15 @@ import {
   UiFontRow,
   UiFontSizeRow,
 } from "../components/appearance-custom-controls";
+import { LanguageControls } from "../components/language-segmented";
 import { PaletteCards } from "../components/palette-cards";
 import { SettingsRow } from "../components/settings-row";
-import { SidebarMenuCustomizer } from "../components/sidebar-menu-customizer";
-import { SidebarNavCustomizer } from "../components/sidebar-nav-customizer";
 import {
   SettingsGroupDivider,
   SettingsSection,
 } from "../components/settings-section";
-import { LanguageControls } from "../components/language-segmented";
+import { SidebarMenuCustomizer } from "../components/sidebar-menu-customizer";
+import { SidebarNavCustomizer } from "../components/sidebar-nav-customizer";
 import { ThemeSegmented } from "../components/theme-segmented";
 import { useSettingsDialogStore } from "../stores/settings-dialog-store";
 import { useTheme } from "../stores/theme-store";
@@ -41,7 +40,9 @@ export function AppearanceTab() {
     (s) => s.consumeScrollTarget,
   );
   useEffect(() => {
-    if (scrollTarget !== "appearance-sidebar-nav") return;
+    if (scrollTarget !== "appearance-sidebar-nav") {
+      return;
+    }
     const frame = window.requestAnimationFrame(() => {
       sidebarNavSectionRef.current?.scrollIntoView({
         block: "start",

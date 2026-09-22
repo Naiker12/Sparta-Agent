@@ -1,4 +1,3 @@
-
 export type LanAccessState = "off" | "online" | "error";
 export type LanAccessOwner = "launch" | "settings" | null;
 

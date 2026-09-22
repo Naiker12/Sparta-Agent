@@ -1,6 +1,5 @@
-
-import { cn } from "@/lib/utils";
 import { GeneratedAvatar } from "@/components/ui/blobatar-avatar";
+import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { useHfOwnerAvatar } from "../lib/hf-owner-avatar";
 import {
@@ -271,7 +270,15 @@ function DefaultAvatar({
             SIZES[size],
             className,
           )}
-          fallback={<span className={cn("hub-avatar-tile inline-block shrink-0 bg-muted", SIZES[size], className)} />}
+          fallback={
+            <span
+              className={cn(
+                "hub-avatar-tile inline-block shrink-0 bg-muted",
+                SIZES[size],
+                className,
+              )}
+            />
+          }
         />
       )}
     </>

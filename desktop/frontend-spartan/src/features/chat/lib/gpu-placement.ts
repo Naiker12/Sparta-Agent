@@ -1,4 +1,3 @@
-
 // Placement sentinels and resolution rules shared by the load paths. Kept free
 // of store / React imports so the contract is unit-testable.
 
@@ -47,7 +46,9 @@ export function shouldPinDiffusionPlacement(
   isDiffusion: boolean | undefined,
   diffusionUnknown: boolean,
 ): boolean {
-  if (!targetIsGguf) return false;
+  if (!targetIsGguf) {
+    return false;
+  }
   return isDiffusion === true || diffusionUnknown;
 }
 
@@ -68,7 +69,9 @@ export function recoverDroppedDiffusionSplit(
   mode: "auto" | "manual",
   requestedNgl: number | null | undefined,
 ): number | null {
-  if (isDiffusion !== true || mode === "manual") return null;
+  if (isDiffusion !== true || mode === "manual") {
+    return null;
+  }
   return requestedNgl ?? null;
 }
 
@@ -86,7 +89,11 @@ export function resolveStagedDiffusionClassification(
     | null
     | undefined,
 ): boolean | undefined {
-  if (knownDiffusion) return true;
-  if (staged == null || staged.diffusionUnknown) return undefined;
+  if (knownDiffusion) {
+    return true;
+  }
+  if (staged == null || staged.diffusionUnknown) {
+    return undefined;
+  }
   return staged.isDiffusion;
 }

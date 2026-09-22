@@ -1,4 +1,3 @@
-
 import type { IconSvgElement } from "@hugeicons/react";
 
 // Standard chevrons: straight-line shapes shared across dropdown triggers and

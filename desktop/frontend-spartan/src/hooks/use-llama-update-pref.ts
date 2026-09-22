@@ -1,4 +1,3 @@
-
 import { useSyncExternalStore } from "react";
 
 // Whether the llama.cpp update banner may appear. On by default; only an
@@ -26,14 +25,18 @@ export function setShowLlamaUpdateBanner(show: boolean): void {
   } catch {
     // storage unavailable
   }
-  for (const listener of listeners) listener();
+  for (const listener of listeners) {
+    listener();
+  }
 }
 
 function subscribe(listener: () => void): () => void {
   listeners.add(listener);
   // Sync toggles made in another tab.
   const onStorage = (event: StorageEvent) => {
-    if (event.key === STORAGE_KEY) listener();
+    if (event.key === STORAGE_KEY) {
+      listener();
+    }
   };
   window.addEventListener("storage", onStorage);
   return () => {

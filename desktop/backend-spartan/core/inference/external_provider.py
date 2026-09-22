@@ -32,7 +32,7 @@ from core.inference.sse_control_frames import sanitize_provider_sse_line
 # self-hosted vLLM or llama.cpp registers without its preset. Unknown endpoint means assume
 # a template applies: sweeping a hosted API costs a space in delimiter-like text, not
 # sweeping a local one costs a forged turn.
-_TEMPLATE_APPLYING_PROVIDERS = frozenset({"vllm", "llama_cpp", "ollama", "custom"})
+_TEMPLATE_APPLYING_PROVIDERS = frozenset({"vllm", "llama_cpp", "ollama", "lmstudio", "custom"})
 
 # The subset documenting "continue_final_message" + "add_generation_prompt" on
 # /v1/chat/completions.

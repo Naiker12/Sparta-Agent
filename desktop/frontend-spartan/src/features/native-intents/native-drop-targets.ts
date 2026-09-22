@@ -1,4 +1,3 @@
-
 import { isTauri } from "@/lib/api-base";
 import { nativeDropPointToCss } from "./native-drop-position.ts";
 
@@ -24,26 +23,37 @@ export function nativeDropTargetAt(position: {
   x: number;
   y: number;
 }): HTMLElement | null {
-  if (!ready || targets.size === 0 || typeof document === "undefined")
+  if (!ready || targets.size === 0 || typeof document === "undefined") {
     return null;
+  }
   const { x, y } = nativeDropPointToCss(position, scaleFactor);
   let node: Element | null = document.elementFromPoint(x, y);
   while (node !== null) {
-    if (node instanceof HTMLElement && targets.has(node)) return node;
+    if (node instanceof HTMLElement && targets.has(node)) {
+      return node;
+    }
     node = node.parentElement;
   }
   return null;
 }
 
 function setHovered(next: HTMLElement | null): void {
-  if (hovered === next) return;
-  if (hovered) targets.get(hovered)?.onDragOver?.(false);
+  if (hovered === next) {
+    return;
+  }
+  if (hovered) {
+    targets.get(hovered)?.onDragOver?.(false);
+  }
   hovered = next;
-  if (next) targets.get(next)?.onDragOver?.(true);
+  if (next) {
+    targets.get(next)?.onDragOver?.(true);
+  }
 }
 
 function listen(): void {
-  if (listening || !isTauri) return;
+  if (listening || !isTauri) {
+    return;
+  }
   listening = true;
   void import("@tauri-apps/api/window")
     .then(async ({ getCurrentWindow }) => {
@@ -59,7 +69,9 @@ function listen(): void {
           return;
         }
         setHovered(null);
-        if (target) targets.get(target)?.onDrop(payload.paths);
+        if (target) {
+          targets.get(target)?.onDrop(payload.paths);
+        }
       });
       // Only now can a target be claimed: before this the window-wide handlers
       // would step aside for a listener that cannot deliver, losing the drop.
@@ -76,7 +88,9 @@ function listen(): void {
         })
         .catch(() => undefined);
       const initialScale = await currentWindow.scaleFactor().catch(() => null);
-      if (!scaleReported && initialScale !== null) scaleFactor = initialScale;
+      if (!scaleReported && initialScale !== null) {
+        scaleFactor = initialScale;
+      }
     })
     .catch(() => {
       listening = false;
@@ -94,7 +108,9 @@ export function registerNativeDropTarget(
   targets.set(element, handlers);
   listen();
   return () => {
-    if (hovered === element) hovered = null;
+    if (hovered === element) {
+      hovered = null;
+    }
     targets.delete(element);
   };
 }

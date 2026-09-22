@@ -1,4 +1,3 @@
-
 /**
  * Run `callback` once the main thread is idle, or after `timeout` at the latest; returns a
  * canceller. Falls back to setTimeout without requestIdleCallback (Safari, the WebKitGTK webview
@@ -10,7 +9,9 @@ export function scheduleIdleTask(
 ): () => void {
   let canceled = false;
   const run = () => {
-    if (!canceled) callback();
+    if (!canceled) {
+      callback();
+    }
   };
 
   if (typeof window === "undefined") {

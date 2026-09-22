@@ -1,10 +1,9 @@
-
 import {
   parseExternalModelId,
   providerModelSupportsStudioTools,
 } from "../external-providers";
-import { useExternalProvidersStore } from "../stores/external-providers-store";
 import { useChatRuntimeStore } from "../stores/chat-runtime-store";
+import { useExternalProvidersStore } from "../stores/external-providers-store";
 
 // Pre-select gate for the RAG toggle, mirroring Web search/Code/MCP: armable
 // with no model; disabled only when a loaded model can't run

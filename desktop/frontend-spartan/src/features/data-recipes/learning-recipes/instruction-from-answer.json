@@ -49,19 +49,14 @@
       {
         "processor_type": "drop_columns",
         "name": "drop_seed_columns",
-        "column_names": [
-          "input",
-          "instruction"
-        ]
+        "column_names": ["input", "instruction"]
       }
     ]
   },
   "run": {
     "rows": 5,
     "preview": true,
-    "output_formats": [
-      "jsonl"
-    ]
+    "output_formats": ["jsonl"]
   },
   "ui": {
     "nodes": [

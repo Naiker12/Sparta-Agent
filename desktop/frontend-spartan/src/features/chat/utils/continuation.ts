@@ -1,4 +1,3 @@
-
 /**
  * Resuming a response that stopped early: Max Tokens ran out (`length`), Stop was
  * pressed (`cancelled`), or the stream was cut (`interrupted`).

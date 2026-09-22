@@ -1,4 +1,3 @@
-
 // The monitor's Unload button releases whatever the backend has resident. /unload matches
 // on the internal id, which the monitor rows do not carry, so the id has to be read from
 // the status first. Its own plain module because the page is .tsx (router, motion, icons)

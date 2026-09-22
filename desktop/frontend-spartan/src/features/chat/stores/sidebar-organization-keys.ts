@@ -1,4 +1,3 @@
-
 /**
  * Storage keys for the sidebar organization store, in a module that imports
  * nothing. The store sits in an import cycle through the chat barrel, so the key

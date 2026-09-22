@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 
 const colorCache = new Map<string, string | null>();
@@ -10,7 +9,9 @@ function computeDominant(data: Uint8ClampedArray): string | null {
     { r: number; g: number; b: number; w: number }
   >();
   for (let i = 0; i < data.length; i += 4) {
-    if (data[i + 3] < 128) continue;
+    if (data[i + 3] < 128) {
+      continue;
+    }
     const r = data[i];
     const g = data[i + 1];
     const b = data[i + 2];
@@ -18,8 +19,12 @@ function computeDominant(data: Uint8ClampedArray): string | null {
     const min = Math.min(r, g, b);
     const light = (max + min) / 510;
     const sat = max === 0 ? 0 : (max - min) / max;
-    if (light > 0.93 || light < 0.07) continue;
-    if (sat < 0.18) continue;
+    if (light > 0.93 || light < 0.07) {
+      continue;
+    }
+    if (sat < 0.18) {
+      continue;
+    }
     const key = ((r >> 5) << 6) | ((g >> 5) << 3) | (b >> 5);
     const w = sat * (1 - Math.abs(light - 0.5));
     const bucket = buckets.get(key);
@@ -34,9 +39,13 @@ function computeDominant(data: Uint8ClampedArray): string | null {
   }
   let best: { r: number; g: number; b: number; w: number } | null = null;
   for (const bucket of buckets.values()) {
-    if (!best || bucket.w > best.w) best = bucket;
+    if (!best || bucket.w > best.w) {
+      best = bucket;
+    }
   }
-  if (!best || best.w < 2) return null;
+  if (!best || best.w < 2) {
+    return null;
+  }
   return `rgb(${Math.round(best.r / best.w)}, ${Math.round(best.g / best.w)}, ${Math.round(best.b / best.w)})`;
 }
 
@@ -89,7 +98,9 @@ export function useDominantColor(url: string | null): string | null {
     void promise.then((next) => {
       colorCache.set(url, next);
       inflight.delete(url);
-      if (alive) setColor(next);
+      if (alive) {
+        setColor(next);
+      }
     });
     return () => {
       alive = false;

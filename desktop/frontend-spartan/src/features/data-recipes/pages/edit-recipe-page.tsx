@@ -1,10 +1,14 @@
-
 import { Button } from "@/components/ui/button";
-import { RecipeStudioPage, type RecipePayload } from "@/features/recipe-studio";
+import { type RecipePayload, RecipeStudioPage } from "@/features/recipe-studio";
 import { useNavigate } from "@tanstack/react-router";
 import type { ReactElement } from "react";
 import { useCallback, useEffect, useState } from "react";
-import { getCachedRecipe, getRecipe, primeRecipeCache, saveRecipe } from "../data/recipes-db";
+import {
+  getCachedRecipe,
+  getRecipe,
+  primeRecipeCache,
+  saveRecipe,
+} from "../data/recipes-db";
 import type { RecipeRecord } from "../types";
 
 type EditRecipePageProps = {
@@ -31,7 +35,12 @@ function RecipeLoadState({
         <div className="w-full rounded-2xl border bg-card p-8 text-center">
           <h1 className="text-lg font-semibold">{title}</h1>
           <p className="mt-2 text-sm text-muted-foreground">{description}</p>
-          <Button type="button" variant="outline" className="mt-5" onClick={onBack}>
+          <Button
+            type="button"
+            variant="outline"
+            className="mt-5"
+            onClick={onBack}
+          >
             Back to Recipes
           </Button>
         </div>
@@ -40,7 +49,9 @@ function RecipeLoadState({
   );
 }
 
-export function EditRecipePage({ recipeId }: EditRecipePageProps): ReactElement {
+export function EditRecipePage({
+  recipeId,
+}: EditRecipePageProps): ReactElement {
   const navigate = useNavigate();
   const [loadState, setLoadState] = useState<LoadState>(() => {
     const cachedRecipe = getCachedRecipe(recipeId);
@@ -76,7 +87,11 @@ export function EditRecipePage({ recipeId }: EditRecipePageProps): ReactElement 
   }, [recipeId]);
 
   const handlePersist = useCallback(
-    async (input: { id: string | null; name: string; payload: RecipePayload }) => {
+    async (input: {
+      id: string | null;
+      name: string;
+      payload: RecipePayload;
+    }) => {
       const record = await saveRecipe({
         id: input.id ?? recipeId,
         name: input.name,

@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo, useRef } from "react";
 import type { ChannelId } from "../lib/channels";
 import { fingerprintToken } from "../lib/token-fingerprint";
@@ -20,9 +19,13 @@ export function useFeedWriteBack(opts: {
   const writtenKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!channelId || isLoading || results.length === 0) return;
+    if (!channelId || isLoading || results.length === 0) {
+      return;
+    }
     const key = `${channelId}:${tokenFingerprint}`;
-    if (writtenKeyRef.current === key) return;
+    if (writtenKeyRef.current === key) {
+      return;
+    }
     writtenKeyRef.current = key;
     setChannelEntry(channelId, results, tokenFingerprint);
   }, [channelId, isLoading, results, tokenFingerprint, setChannelEntry]);

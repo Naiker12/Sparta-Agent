@@ -1,5 +1,5 @@
-
 import { create } from "zustand";
+import { evictOldestUnprotected } from "../lib/lru-map.ts";
 import { INVENTORY_HINT_KINDS } from "./constants.ts";
 import {
   type InventoryHintReconciliation,
@@ -13,7 +13,6 @@ import {
   repoKey,
 } from "./inventory-hints.ts";
 import type { InventoryHint } from "./types.ts";
-import { evictOldestUnprotected } from "../lib/lru-map.ts";
 
 export const MAX_OBSERVED_INVENTORY_KEYS_PER_KIND = 1024;
 

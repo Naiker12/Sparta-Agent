@@ -1,4 +1,3 @@
-
 import { createEmptyRecipePayload } from "@/features/recipe-studio";
 import { normalizeNonEmptyName } from "@/utils";
 import Dexie, { type EntityTable, liveQuery } from "dexie";
@@ -133,8 +132,7 @@ export function useRecipes(): {
         setRecipes(value);
         setReady(true);
       },
-      error: (error) => {
-        console.error("data-recipes liveQuery:", error);
+      error: (_error) => {
         setReady(true);
       },
     });

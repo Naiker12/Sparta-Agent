@@ -1,4 +1,3 @@
-
 import { authFetch } from "@/features/auth";
 import type { ChatPresetSource } from "../presets/preset-policy";
 import type {
@@ -9,10 +8,7 @@ import type {
   ReasoningEffort,
 } from "../stores/chat-runtime-store";
 import type { ResearchWebsitePolicy } from "../types/research";
-import type {
-  InferenceParams,
-  PersistedInferenceParams,
-} from "../types/runtime";
+import type { PersistedInferenceParams } from "../types/runtime";
 import {
   ChatSettingsRequestError,
   isUnderKeepaliveBudget,

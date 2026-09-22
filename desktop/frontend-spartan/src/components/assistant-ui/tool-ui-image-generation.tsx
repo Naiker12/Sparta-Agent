@@ -1,12 +1,11 @@
-
 "use client";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { ToolCallMessagePartComponent } from "@assistant-ui/react";
-import { ImageIcon, PencilIcon } from "lucide-react";
 import { Download01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { ImageIcon, PencilIcon } from "lucide-react";
 import type { CSSProperties, MouseEvent } from "react";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { useGeneratedImageOverlay } from "./generated-image-overlay-context";
@@ -94,7 +93,9 @@ const parseImageSize = (
   size?: string,
 ): { width: number; height: number } | null => {
   const match = size?.match(/^(\d+)x(\d+)$/i);
-  if (!match) return null;
+  if (!match) {
+    return null;
+  }
   const width = Number(match[1]);
   const height = Number(match[2]);
   return width > 0 && height > 0 ? { width, height } : null;
@@ -221,7 +222,7 @@ const ImageGenerationToolUIImpl: ToolCallMessagePartComponent = ({
 
   const updatePromptOverflow = useCallback(() => {
     const captionElement = captionRef.current;
-    if (!captionElement || !captionPrompt) {
+    if (!(captionElement && captionPrompt)) {
       return;
     }
     const computedStyle = window.getComputedStyle(captionElement);
@@ -238,7 +239,7 @@ const ImageGenerationToolUIImpl: ToolCallMessagePartComponent = ({
 
   useEffect(() => {
     const captionElement = captionRef.current;
-    if (!captionElement || !captionPrompt) {
+    if (!(captionElement && captionPrompt)) {
       return;
     }
     const frame = window.requestAnimationFrame(updatePromptOverflow);

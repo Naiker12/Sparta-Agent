@@ -16,7 +16,9 @@ export type ChatSearch = {
   review?: string;
 };
 
-export function validateChatSearch(search: Record<string, unknown>): ChatSearch {
+export function validateChatSearch(
+  search: Record<string, unknown>,
+): ChatSearch {
   return {
     thread: typeof search.thread === "string" ? search.thread : undefined,
     compare: typeof search.compare === "string" ? search.compare : undefined,
@@ -58,21 +60,29 @@ export function pickBestLoraForBase(
   baseModel: string | null,
 ): LoraCandidate | null {
   const adapterOnly = loras.filter((lora) => lora.exportType === "lora");
-  if (adapterOnly.length === 0) return null;
+  if (adapterOnly.length === 0) {
+    return null;
+  }
   const sorted = [...adapterOnly].sort(
     (a, b) => (b.updatedAt ?? -1) - (a.updatedAt ?? -1),
   );
   const normalizedBase = normalizeModelRef(baseModel);
-  if (!normalizedBase) return sorted[0] ?? null;
+  if (!normalizedBase) {
+    return sorted[0] ?? null;
+  }
 
   const exact = sorted.find(
     (lora) => normalizeModelRef(lora.baseModel) === normalizedBase,
   );
-  if (exact) return exact;
+  if (exact) {
+    return exact;
+  }
 
   const partial = sorted.find((lora) => {
     const normalizedLoraBase = normalizeModelRef(lora.baseModel);
-    if (!normalizedLoraBase) return false;
+    if (!normalizedLoraBase) {
+      return false;
+    }
     return (
       normalizedLoraBase.includes(normalizedBase) ||
       normalizedBase.includes(normalizedLoraBase)

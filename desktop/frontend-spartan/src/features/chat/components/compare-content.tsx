@@ -13,28 +13,8 @@
  * - GeneralCompareContent (comparación general entre dos modelos arbitrarios)
  */
 
-import {
-  memo,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type ReactElement,
-} from "react";
-import { useSidebar } from "@/components/ui/sidebar";
-import { cn } from "@/lib/utils";
-import { useT } from "@/i18n";
-import {
-  ModelSelector,
-  type DeletedModelRef,
-  type ExternalConnectionRef,
-  type ExternalModelOption,
-  type LoraModelOption,
-  type ModelOption,
-  type ModelSelectorChangeMeta,
-  type PerModelConfig,
-} from "@/features/model-picker";
 import { Thread } from "@/components/assistant-ui/thread";
+import { useSidebar } from "@/components/ui/sidebar";
 import {
   ChatRuntimeProvider,
   useChatActive,
@@ -46,12 +26,32 @@ import {
   RegisterCompareHandle,
   SharedComposer,
 } from "@/features/chat/shared-composer";
-import { useChatRuntimeStore } from "@/features/chat/stores/chat-runtime-store";
 import { useChatPreferencesStore } from "@/features/chat/stores/chat-preferences-store";
+import { useChatRuntimeStore } from "@/features/chat/stores/chat-runtime-store";
 import {
   isExpectedBackgroundChatStorageError,
   listStoredChatThreads,
 } from "@/features/chat/utils/chat-history-storage";
+import {
+  type DeletedModelRef,
+  type ExternalConnectionRef,
+  type ExternalModelOption,
+  type LoraModelOption,
+  type ModelOption,
+  ModelSelector,
+  type ModelSelectorChangeMeta,
+  type PerModelConfig,
+} from "@/features/model-picker";
+import { useT } from "@/i18n";
+import { cn } from "@/lib/utils";
+import {
+  type ReactElement,
+  memo,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 export type CompareModelSelection = {
   id: string;
@@ -65,7 +65,9 @@ export function modelMatchesDeleted(
   model: { id: string; ggufVariant?: string | null },
   deletedModel?: DeletedModelRef,
 ): boolean {
-  if (!deletedModel || model.id !== deletedModel.id) return false;
+  if (!deletedModel || model.id !== deletedModel.id) {
+    return false;
+  }
   return (
     deletedModel.ggufVariant == null ||
     (model.ggufVariant ?? null) === deletedModel.ggufVariant
@@ -141,7 +143,7 @@ export function CompareShell({
   handlesRef: CompareHandles;
   children: ReactElement;
   composer: ReactElement;
-  }): ReactElement {
+}): ReactElement {
   const t = useT();
   const showModelDisclaimer = useChatPreferencesStore(
     (s) => s.showModelDisclaimer,
@@ -188,11 +190,15 @@ export const LoraCompareContent = memo(function LoraCompareContent({
   );
 
   useEffect(() => {
-    if (compareRunning) return;
+    if (compareRunning) {
+      return;
+    }
     let isActive = true;
     listStoredChatThreads({ pairId })
       .then((threads) => {
-        if (!isActive) return;
+        if (!isActive) {
+          return;
+        }
         setBaseThreadId(threads.find((t) => t.modelType === "base")?.id);
         setLoraThreadId(threads.find((t) => t.modelType === "lora")?.id);
       })
@@ -282,10 +288,7 @@ export function GeneralCompareHeader({
   value: string;
   selectedConfig?: PerModelConfig | null;
   selectedGgufVariant?: string | null;
-  onValueChange: (
-    id: string,
-    meta: ModelSelectorChangeMeta,
-  ) => void;
+  onValueChange: (id: string, meta: ModelSelectorChangeMeta) => void;
   onFoldersChange?: () => void;
   onModelsChange?: (deletedModel?: DeletedModelRef) => void;
   deleteDisabled?: boolean;
@@ -387,11 +390,15 @@ export const GeneralCompareContent = memo(function GeneralCompareContent({
   );
 
   useEffect(() => {
-    if (compareRunning) return;
+    if (compareRunning) {
+      return;
+    }
     let isActive = true;
     listStoredChatThreads({ pairId })
       .then((threads) => {
-        if (!isActive) return;
+        if (!isActive) {
+          return;
+        }
         setModel1ThreadId(
           threads.find(
             (t) => t.modelType === "model1" || t.modelType === "base",

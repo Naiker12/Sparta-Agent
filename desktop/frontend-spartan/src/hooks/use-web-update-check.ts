@@ -17,34 +17,51 @@ export type WebUpdateStatus = SpartaUpdateStatus;
 
 function parseSemver(v: string): [number, number, number] {
   const clean = v.replace(/^v/, "").trim();
-  const parts = clean.split(".").map((p) => parseInt(p, 10) || 0);
+  const parts = clean.split(".").map((p) => Number.parseInt(p, 10) || 0);
   return [parts[0] || 0, parts[1] || 0, parts[2] || 0];
 }
 
 function isNewerVersion(latest: string, current: string): boolean {
   const [lMajor, lMinor, lPatch] = parseSemver(latest);
   const [cMajor, cMinor, cPatch] = parseSemver(current);
-  if (lMajor > cMajor) return true;
-  if (lMajor < cMajor) return false;
-  if (lMinor > cMinor) return true;
-  if (lMinor < cMinor) return false;
+  if (lMajor > cMajor) {
+    return true;
+  }
+  if (lMajor < cMajor) {
+    return false;
+  }
+  if (lMinor > cMinor) {
+    return true;
+  }
+  if (lMinor < cMinor) {
+    return false;
+  }
   return lPatch > cPatch;
 }
 
-function getPlatformAsset(assets: Array<{ name: string; browser_download_url: string }>): string | null {
-  const userAgent = typeof navigator !== "undefined" ? navigator.userAgent.toLowerCase() : "";
+function getPlatformAsset(
+  assets: Array<{ name: string; browser_download_url: string }>,
+): string | null {
+  const userAgent =
+    typeof navigator !== "undefined" ? navigator.userAgent.toLowerCase() : "";
   const isWin = userAgent.includes("win");
   const isMac = userAgent.includes("mac");
 
   if (isWin) {
     const winAsset = assets.find((a) => a.name.endsWith(".exe"));
-    if (winAsset) return winAsset.browser_download_url;
+    if (winAsset) {
+      return winAsset.browser_download_url;
+    }
   } else if (isMac) {
     const macAsset = assets.find((a) => a.name.endsWith(".dmg"));
-    if (macAsset) return macAsset.browser_download_url;
+    if (macAsset) {
+      return macAsset.browser_download_url;
+    }
   } else {
     const linuxAsset = assets.find((a) => a.name.endsWith(".AppImage"));
-    if (linuxAsset) return linuxAsset.browser_download_url;
+    if (linuxAsset) {
+      return linuxAsset.browser_download_url;
+    }
   }
 
   return assets[0]?.browser_download_url || null;
@@ -55,7 +72,9 @@ function dismissalKey(version: string): string {
 }
 
 function isDismissed(version: string): boolean {
-  if (typeof window === "undefined") return true;
+  if (typeof window === "undefined") {
+    return true;
+  }
   try {
     return window.localStorage.getItem(dismissalKey(version)) !== null;
   } catch {
@@ -64,7 +83,9 @@ function isDismissed(version: string): boolean {
 }
 
 function markDismissed(version: string): void {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined") {
+    return;
+  }
   try {
     window.localStorage.setItem(dismissalKey(version), String(Date.now()));
   } catch {}
@@ -75,26 +96,38 @@ async function fetchLatestGitHubRelease(): Promise<SpartaUpdateStatus | null> {
     // The packaged app version is Electron's source of truth. The fallback keeps
     // the web/dev build working without exposing Node to the renderer.
     let currentVersion = SPARTA_VERSION;
-    const desktopApi = typeof window === "undefined" ? undefined : (window as Window & {
-      electronAPI?: { getVersion?: () => Promise<unknown> };
-    }).electronAPI;
+    const desktopApi =
+      typeof window === "undefined"
+        ? undefined
+        : (
+            window as Window & {
+              electronAPI?: { getVersion?: () => Promise<unknown> };
+            }
+          ).electronAPI;
     if (desktopApi?.getVersion) {
       try {
         const version = await desktopApi.getVersion();
-        if (typeof version === "string" && version.trim()) currentVersion = version.trim();
+        if (typeof version === "string" && version.trim()) {
+          currentVersion = version.trim();
+        }
       } catch {
         // Use the build-time fallback when Electron IPC is not ready yet.
       }
     }
-    const res = await fetch("https://api.github.com/repos/Naiker12/Sparta-Agent/releases/latest", {
-      headers: { Accept: "application/vnd.github.v3+json" },
-    });
-    if (!res.ok) return null;
+    const res = await fetch(
+      "https://api.github.com/repos/Naiker12/Sparta-Agent/releases/latest",
+      {
+        headers: { Accept: "application/vnd.github.v3+json" },
+      },
+    );
+    if (!res.ok) {
+      return null;
+    }
     const data = await res.json();
     const tagName = data.tag_name || "";
     const cleanTag = tagName.replace(/^v/, "");
 
-    if (!cleanTag || !isNewerVersion(cleanTag, currentVersion)) {
+    if (!(cleanTag && isNewerVersion(cleanTag, currentVersion))) {
       return null;
     }
 
@@ -107,7 +140,9 @@ async function fetchLatestGitHubRelease(): Promise<SpartaUpdateStatus | null> {
       currentVersion,
       latestVersion: cleanTag,
       downloadUrl,
-      releaseUrl: data.html_url || `https://github.com/Naiker12/Sparta-Agent/releases/tag/${tagName}`,
+      releaseUrl:
+        data.html_url ||
+        `https://github.com/Naiker12/Sparta-Agent/releases/tag/${tagName}`,
       releaseNotes: data.body || "",
       publishedAt: data.published_at,
     };
@@ -116,7 +151,9 @@ async function fetchLatestGitHubRelease(): Promise<SpartaUpdateStatus | null> {
   }
 }
 
-export function useWebUpdateCheck({ enabled = true }: { enabled?: boolean } = {}) {
+export function useWebUpdateCheck({
+  enabled = true,
+}: { enabled?: boolean } = {}) {
   const [status, setStatus] = useState<SpartaUpdateStatus | null>(null);
 
   useEffect(() => {

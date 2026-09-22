@@ -1,8 +1,11 @@
-
 import dagre from "@dagrejs/dagre";
 import type { Edge, Node } from "@xyflow/react";
 import { DEFAULT_NODE_HEIGHT, DEFAULT_NODE_WIDTH } from "../constants";
-import { INFRA_NODE_KINDS, type LayoutDirection, type NodeConfig } from "../types";
+import {
+  INFRA_NODE_KINDS,
+  type LayoutDirection,
+  type NodeConfig,
+} from "../types";
 import { readNodeHeight, readNodeWidth } from "./rf-node-dimensions";
 
 type LayoutOptions = {

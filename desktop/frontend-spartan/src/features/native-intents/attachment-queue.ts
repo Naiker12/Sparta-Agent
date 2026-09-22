@@ -1,4 +1,3 @@
-
 import type { NativeIntent } from "./types";
 
 export type PendingNativeAttachments = Record<string, NativeIntent[]>;

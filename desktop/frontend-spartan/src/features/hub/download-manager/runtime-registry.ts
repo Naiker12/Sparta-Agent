@@ -1,6 +1,5 @@
-
-import type { JobListeners, JobRuntime } from "./download-manager-types";
 import { evictOldestUnprotected } from "../lib/lru-map";
+import type { JobListeners, JobRuntime } from "./download-manager-types";
 
 const MAX_SUPPRESSED_COMPLETED_INVENTORY_HINTS = 64;
 
@@ -15,7 +14,9 @@ class DownloadManagerRuntimeRegistry {
 
   clearRemovalTimer(key: string): void {
     const timer = this.removalTimers.get(key);
-    if (timer === undefined) return;
+    if (timer === undefined) {
+      return;
+    }
     clearRuntimeTimer(timer);
     this.removalTimers.delete(key);
   }
@@ -44,7 +45,9 @@ class DownloadManagerRuntimeRegistry {
 export const runtimeRegistry = new DownloadManagerRuntimeRegistry();
 
 export function clearRuntimeTimer(timer: number | null): void {
-  if (timer === null) return;
+  if (timer === null) {
+    return;
+  }
   if (typeof window !== "undefined") {
     window.clearTimeout(timer);
   } else {
@@ -53,14 +56,18 @@ export function clearRuntimeTimer(timer: number | null): void {
 }
 
 export function clearWatchdog(rt: JobRuntime | undefined): void {
-  if (rt?.watchdog == null) return;
+  if (rt?.watchdog == null) {
+    return;
+  }
   clearRuntimeTimer(rt.watchdog);
   rt.watchdog = null;
 }
 
 export function teardownRuntime(key: string): void {
   const rt = runtimeRegistry.runtimes.get(key);
-  if (!rt) return;
+  if (!rt) {
+    return;
+  }
   clearRuntimeTimer(rt.pollTimer);
   if (rt.visibilityListener != null && typeof document !== "undefined") {
     document.removeEventListener("visibilitychange", rt.visibilityListener);

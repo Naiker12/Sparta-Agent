@@ -10,9 +10,9 @@
  */
 
 import {
+  StudioDictationAdapter,
   isStudioDictationAvailable,
   notifyStudioDictationUnavailable,
-  StudioDictationAdapter,
 } from "@/features/chat/adapters/studio-dictation-adapter";
 import type { StudioDictationSession } from "@/features/chat/adapters/studio-web-speech-dictation-adapter";
 import { useVoiceSettingsStore } from "@/features/settings/stores/voice-settings-store";
@@ -39,7 +39,9 @@ export function useDictation(
   const finalizingRef = useRef(false);
 
   const start = useCallback(async () => {
-    if (startingRef.current || sessionRef.current) return;
+    if (startingRef.current || sessionRef.current) {
+      return;
+    }
     // Motor no disponible (ej. Firefox): explicar y dirigir al modelo local.
     if (!isStudioDictationAvailable()) {
       notifyStudioDictationUnavailable();
@@ -65,14 +67,18 @@ export function useDictation(
     // Apenda transcripciones finales; el adaptador ya aplicó el diccionario
     // y registra la sesión en Dictados recientes.
     session.onSpeech((result) => {
-      if (!result.isFinal) return;
+      if (!result.isFinal) {
+        return;
+      }
       const transcript = result.transcript?.trim() ?? "";
       if (transcript) {
         setText((prev) => (prev ? `${prev} ${transcript}` : transcript));
       }
     });
     session.onEnd?.(() => {
-      if (sessionRef.current === session) sessionRef.current = null;
+      if (sessionRef.current === session) {
+        sessionRef.current = null;
+      }
       finalizingRef.current = false;
       setIsFinalizing(false);
       setIsDictating(false);
@@ -82,12 +88,16 @@ export function useDictation(
 
   const stop = useCallback(() => {
     const session = sessionRef.current;
-    if (!session) return;
+    if (!session) {
+      return;
+    }
     // Un segundo clic mientras el segmento final se transcribe descarta la
     // transcripción pendiente en lugar de dejar el pane bloqueado hasta timeout.
     if (finalizingRef.current) {
       session.cancel();
-      if (sessionRef.current === session) sessionRef.current = null;
+      if (sessionRef.current === session) {
+        sessionRef.current = null;
+      }
       finalizingRef.current = false;
       setIsFinalizing(false);
       setIsDictating(false);
@@ -97,10 +107,11 @@ export function useDictation(
     setIsFinalizing(true);
     // Mantiene la sesión viva mientras el audio final se transcribe.
     // onEnd limpia ambas banderas una vez que los callbacks de transcripción corren.
-    void session.stop().catch((error) => {
-      console.error("Could not stop dictation:", error);
+    void session.stop().catch((_error) => {
       session.cancel();
-      if (sessionRef.current === session) sessionRef.current = null;
+      if (sessionRef.current === session) {
+        sessionRef.current = null;
+      }
       finalizingRef.current = false;
       setIsFinalizing(false);
       setIsDictating(false);

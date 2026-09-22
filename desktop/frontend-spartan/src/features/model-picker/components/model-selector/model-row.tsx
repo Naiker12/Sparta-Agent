@@ -8,25 +8,16 @@
  * - Tooltip dinámico con detalles de memoria, dirección Hugging Face y formato.
  */
 
-import { useContext, type ReactNode } from "react";
-import { cn } from "@/lib/utils";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type { VramFitStatus } from "@/lib/vram";
 import { DotTag } from "@/features/hub";
-import {
-  detectCapabilities,
-  type ModelCapabilities,
-} from "./model-capabilities";
 import { extractParamLabel } from "@/lib/model-size";
-import {
-  isUnslothOwner,
-  parseMetaTokens,
-  splitRepoLabel,
-} from "./row-meta";
+import { cn } from "@/lib/utils";
+import type { VramFitStatus } from "@/lib/vram";
+import { type ReactNode, useContext } from "react";
 import {
   CapabilityIcons,
   CapabilityScope,
@@ -39,6 +30,11 @@ import {
   VramBadge,
   visibleCapabilityBadges,
 } from "./model-badges-and-chips";
+import {
+  type ModelCapabilities,
+  detectCapabilities,
+} from "./model-capabilities";
+import { isUnslothOwner, parseMetaTokens, splitRepoLabel } from "./row-meta";
 
 export type ModelRowOptionProps = {
   id: string;

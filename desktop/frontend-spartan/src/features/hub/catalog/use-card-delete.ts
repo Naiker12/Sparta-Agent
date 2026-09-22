@@ -1,4 +1,3 @@
-
 import { useDeleteConfirmAction } from "./use-delete-confirm-action";
 
 type DeleteSuccessMessage = string | (() => string);

@@ -27,7 +27,9 @@ export async function getThreadWorkspace(
   const response = await authFetch(
     `/api/chat/threads/${encodeURIComponent(threadId)}/workspace`,
   );
-  if (response.status === 404) return null;
+  if (response.status === 404) {
+    return null;
+  }
   return parseJsonOrThrow<ThreadWorkspaceBinding | null>(response);
 }
 

@@ -1,4 +1,3 @@
-
 import {
   SANDBOX_FILE_TOOLS,
   isSandboxToolResult,
@@ -21,14 +20,18 @@ export function recordedSandboxSessionId(
 ): string | undefined {
   for (let index = messages.length - 1; index >= 0; index -= 1) {
     const content = messages[index]?.content;
-    if (!Array.isArray(content)) continue;
+    if (!Array.isArray(content)) {
+      continue;
+    }
     for (let part = content.length - 1; part >= 0; part -= 1) {
       const entry = content[part] as {
         type?: unknown;
         toolName?: unknown;
         result?: unknown;
       } | null;
-      if (entry?.type !== "tool-call") continue;
+      if (entry?.type !== "tool-call") {
+        continue;
+      }
       if (
         typeof entry.toolName !== "string" ||
         !SANDBOX_FILE_TOOLS.has(entry.toolName)
@@ -36,8 +39,12 @@ export function recordedSandboxSessionId(
         continue;
       }
       const result: unknown = entry.result;
-      if (!isSandboxToolResult(result)) continue;
-      if (result.sessionId.length > 0) return result.sessionId;
+      if (!isSandboxToolResult(result)) {
+        continue;
+      }
+      if (result.sessionId.length > 0) {
+        return result.sessionId;
+      }
     }
   }
   return undefined;

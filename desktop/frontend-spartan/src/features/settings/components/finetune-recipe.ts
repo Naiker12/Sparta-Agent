@@ -1,4 +1,3 @@
-
 // Settings Data tab glue: turn chat history into a fine-tuning JSONL, stage
 // it as a Data Recipe seed upload, and open a new recipe on that file.
 
@@ -12,9 +11,9 @@ import { toast } from "@/lib/toast";
 function base64FromString(value: string): string {
   const bytes = new TextEncoder().encode(value);
   let binary = "";
-  const CHUNK = 0x8000;
-  for (let i = 0; i < bytes.length; i += CHUNK) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
   }
   return btoa(binary);
 }

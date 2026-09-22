@@ -1,5 +1,3 @@
-
-import { withModelLoadNotice } from "@/lib/model-lifecycle-events";
 import { authFetch } from "@/features/auth";
 import { hubTokenHeader } from "@/features/hub/lib/hub-token-header";
 import { useSettingsDialogStore } from "@/features/settings/stores/settings-dialog-store";
@@ -12,6 +10,7 @@ import {
   resolveModelDictationLanguage,
   useVoiceSettingsStore,
 } from "@/features/settings/stores/voice-settings-store";
+import { withModelLoadNotice } from "@/lib/model-lifecycle-events";
 import type { DictationAdapter } from "@assistant-ui/react";
 import { toast } from "sonner";
 import { startDictationLevelMeter } from "./dictation-level";
@@ -51,9 +50,13 @@ const PREFERRED_MIME_TYPES = [
 ];
 
 function pickMimeType(): string | undefined {
-  if (typeof MediaRecorder === "undefined") return undefined;
+  if (typeof MediaRecorder === "undefined") {
+    return undefined;
+  }
   for (const type of PREFERRED_MIME_TYPES) {
-    if (MediaRecorder.isTypeSupported(type)) return type;
+    if (MediaRecorder.isTypeSupported(type)) {
+      return type;
+    }
   }
   return undefined;
 }
@@ -71,7 +74,9 @@ export type SttEngine = "transformers" | "gguf" | "mtmd";
 
 export function sttEngineFor(model: string): SttEngine {
   // whisper.cpp is Whisper-only, so the newer ASR models go to llama.cpp.
-  if (MTMD_STT_MODELS.has(model.trim())) return "mtmd";
+  if (MTMD_STT_MODELS.has(model.trim())) {
+    return "mtmd";
+  }
   return isCuratedSttModel(model) ? "gguf" : "transformers";
 }
 
@@ -93,7 +98,9 @@ export async function transcribeAudioBlob(
   );
   const engine = options.engine ?? sttEngineFor(model);
   const params = new URLSearchParams({ model, fast: "true", engine });
-  if (language) params.set("language", language);
+  if (language) {
+    params.set("language", language);
+  }
   const response = await authFetch(
     `/api/inference/audio/transcribe/raw?${params.toString()}`,
     {
@@ -175,13 +182,19 @@ export async function fetchSttStatus(
   model?: string,
 ): Promise<SttStatus> {
   const params = new URLSearchParams();
-  if (refreshKey !== undefined) params.set("refresh", String(refreshKey));
-  if (model) params.set("model", model);
+  if (refreshKey !== undefined) {
+    params.set("refresh", String(refreshKey));
+  }
+  if (model) {
+    params.set("model", model);
+  }
   const query = params.toString();
   const response = await authFetch(
     `/api/inference/audio/stt/status${query ? `?${query}` : ""}`,
   );
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
   return (await response.json()) as SttStatus;
 }
 
@@ -194,8 +207,12 @@ export function sttEngineStatusFor(
   engineOverride?: SttEngine,
 ): SttEngineStatus | undefined {
   const engine = engineOverride ?? sttEngineFor(model);
-  if (engine === "mtmd") return status.mtmd;
-  if (engine === "gguf" && status.gguf?.available) return status.gguf;
+  if (engine === "mtmd") {
+    return status.mtmd;
+  }
+  if (engine === "gguf" && status.gguf?.available) {
+    return status.gguf;
+  }
   return status.transformers;
 }
 
@@ -230,19 +247,19 @@ export function loadSttModel(
   // Announced so the indicator shows the load immediately, as the toast does.
   return queueSttLifecycle(() =>
     withModelLoadNotice("stt", model, async () => {
-    const response = await authFetch("/api/inference/audio/stt/load", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ model, engine: resolvedEngine }),
-      signal,
-    });
-    if (!response.ok) {
-      const body = (await response.json().catch(() => null)) as {
-        detail?: string;
-      } | null;
-      const detail = body?.detail ?? `HTTP ${response.status}`;
-      throw sttRequestError(response.status, detail);
-    }
+      const response = await authFetch("/api/inference/audio/stt/load", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model, engine: resolvedEngine }),
+        signal,
+      });
+      if (!response.ok) {
+        const body = (await response.json().catch(() => null)) as {
+          detail?: string;
+        } | null;
+        const detail = body?.detail ?? `HTTP ${response.status}`;
+        throw sttRequestError(response.status, detail);
+      }
     }),
   );
 }
@@ -299,9 +316,13 @@ export function unloadSttModel(
 ): Promise<void> {
   return queueSttLifecycle(async () => {
     const params = new URLSearchParams();
-    if (engine) params.set("engine", engine);
-    if (model) params.set("model", model);
-    const query = params.size ? `?${params}` : "";
+    if (engine) {
+      params.set("engine", engine);
+    }
+    if (model) {
+      params.set("model", model);
+    }
+    const query = params.size > 0 ? `?${params}` : "";
     const response = await authFetch(
       `/api/inference/audio/stt/unload${query}`,
       { method: "POST" },
@@ -406,9 +427,10 @@ export class StudioModelDictationAdapter implements DictationAdapter {
       error: unknown,
       stage: "preload" | "segment" = "segment",
     ) => {
-      if (reportedTranscriptionError || cancelled || ended) return;
+      if (reportedTranscriptionError || cancelled || ended) {
+        return;
+      }
       reportedTranscriptionError = true;
-      console.error("STT transcription error:", error);
       // An undownloaded model is the ordinary first-run state, not a failure.
       // Point at the download; never start it here.
       if (error instanceof SttModelNotDownloadedError) {
@@ -430,7 +452,9 @@ export class StudioModelDictationAdapter implements DictationAdapter {
       // missing runtime or a load refused for training means no segment of
       // this session can be transcribed. End it rather than let the user keep
       // speaking into a recorder whose audio is already lost.
-      if (stage === "preload") finishSession("cancelled");
+      if (stage === "preload") {
+        finishSession("cancelled");
+      }
     };
 
     const buildTranscript = () =>
@@ -443,7 +467,9 @@ export class StudioModelDictationAdapter implements DictationAdapter {
       reason: "stopped" | "cancelled" | "error",
       transcript?: string,
     ) => {
-      if (ended) return;
+      if (ended) {
+        return;
+      }
       ended = true;
       stopLevelMeter();
       if (currentSeg && currentSeg.recorder.state !== "inactive") {
@@ -467,13 +493,17 @@ export class StudioModelDictationAdapter implements DictationAdapter {
       for (const callback of speechEndCallbacks) {
         callback({ transcript: corrected });
       }
-      for (const callback of endCallbacks) callback();
+      for (const callback of endCallbacks) {
+        callback();
+      }
       resolveEnded?.();
     };
 
     // Finish once the final segment has been cut and the queue has drained.
     const maybeComplete = () => {
-      if (ended || cancelled || !finalizing || !finalCutDone) return;
+      if (ended || cancelled || !finalizing || !finalCutDone) {
+        return;
+      }
       if (pendingRecorders === 0 && queue.length === 0 && !worker) {
         finishSession("stopped", buildTranscript());
       }
@@ -481,7 +511,9 @@ export class StudioModelDictationAdapter implements DictationAdapter {
 
     // Transcribe queued segments one at a time so the backend is never flooded.
     const processQueue = () => {
-      if (worker || cancelled || ended) return;
+      if (worker || cancelled || ended) {
+        return;
+      }
       const item = queue.shift();
       if (!item) {
         maybeComplete();
@@ -496,9 +528,11 @@ export class StudioModelDictationAdapter implements DictationAdapter {
             engine: sessionEngine,
             signal: abortController.signal,
           });
-          if (!cancelled) results[item.index] = text;
+          if (!cancelled) {
+            results[item.index] = text;
+          }
         } catch (error) {
-          if (!cancelled && !abortController.signal.aborted) {
+          if (!(cancelled || abortController.signal.aborted)) {
             // Keep transcribed segments, but never hide that part was lost.
             // Only a lost segment is partial: the model preload shares this
             // reporter and can fail without costing any audio.
@@ -528,7 +562,9 @@ export class StudioModelDictationAdapter implements DictationAdapter {
 
     // Start recording a fresh segment on the shared mic stream.
     const startSegment = () => {
-      if (ended || cancelled || !stream) return;
+      if (ended || cancelled || !stream) {
+        return;
+      }
       const seg: Segment = {
         index: segCounter++,
         chunks: [],
@@ -542,7 +578,9 @@ export class StudioModelDictationAdapter implements DictationAdapter {
       currentSeg = seg;
       silenceMs = 0;
       seg.recorder.addEventListener("dataavailable", (event) => {
-        if (event.data.size > 0) seg.chunks.push(event.data);
+        if (event.data.size > 0) {
+          seg.chunks.push(event.data);
+        }
       });
       seg.recorder.addEventListener("stop", () => {
         pendingRecorders = Math.max(0, pendingRecorders - 1);
@@ -560,7 +598,9 @@ export class StudioModelDictationAdapter implements DictationAdapter {
         seg.recorder.start(SEGMENT_TIMESLICE_MS);
       } catch (error) {
         pendingRecorders = Math.max(0, pendingRecorders - 1);
-        if (currentSeg === seg) currentSeg = null;
+        if (currentSeg === seg) {
+          currentSeg = null;
+        }
         throw error;
       }
     };
@@ -569,7 +609,9 @@ export class StudioModelDictationAdapter implements DictationAdapter {
     // continuous while each clip is independently decodable.
     const cutSegment = () => {
       const seg = currentSeg;
-      if (cutting || !seg || finalizing) return;
+      if (cutting || !seg || finalizing) {
+        return;
+      }
       cutting = true;
       const rec = seg.recorder;
       if (rec.state !== "inactive") {
@@ -617,7 +659,7 @@ export class StudioModelDictationAdapter implements DictationAdapter {
     const session: StudioDictationSession = {
       status: { type: "starting" },
       stop: async () => {
-        if (!ended && !finalizing) {
+        if (!(ended || finalizing)) {
           finalizing = true;
           // Stop publishing zero-valued frames at once so the UI can switch to
           // its transcription shimmer.
@@ -650,7 +692,9 @@ export class StudioModelDictationAdapter implements DictationAdapter {
         await endedPromise;
       },
       cancel: () => {
-        if (ended) return;
+        if (ended) {
+          return;
+        }
         cancelled = true;
         finalizing = true;
         abortController.abort();
@@ -721,10 +765,11 @@ export class StudioModelDictationAdapter implements DictationAdapter {
         });
         startSegment();
         session.status = { type: "running" };
-        for (const callback of speechStartCallbacks) callback();
+        for (const callback of speechStartCallbacks) {
+          callback();
+        }
       } catch (error) {
         const message = describeMediaError(error);
-        console.error("STT microphone error:", error);
         toast.error(message);
         finishSession("error");
       }

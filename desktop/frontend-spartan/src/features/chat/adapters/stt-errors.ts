@@ -1,4 +1,3 @@
-
 /** The selected local model has not been downloaded yet. */
 export class SttModelNotDownloadedError extends Error {
   constructor(message: string) {
@@ -15,8 +14,10 @@ export class SttModelNotDownloadedError extends Error {
  * as the preload would. 409 also covers a load cancelled for training and a
  * model switch mid-request, so the detail is what separates them.
  */
+const NOT_DOWNLOADED_RE = /not downloaded/i;
+
 export function sttRequestError(status: number, detail: string): Error {
-  return status === 409 && /not downloaded/i.test(detail)
+  return status === 409 && NOT_DOWNLOADED_RE.test(detail)
     ? new SttModelNotDownloadedError(detail)
     : new Error(detail);
 }

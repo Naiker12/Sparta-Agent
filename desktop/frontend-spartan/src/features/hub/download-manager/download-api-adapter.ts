@@ -1,6 +1,10 @@
-
-import { getHfToken } from "../stores/hf-token-store";
 import { toast } from "@/lib/toast";
+import {
+  type PollSignal,
+  disposableTimeoutSignal,
+  pollSignal,
+} from "../lib/abort-signals";
+import { getHfToken } from "../stores/hf-token-store";
 import {
   type DownloadStartResult,
   type DownloadStartState,
@@ -18,26 +22,21 @@ import {
   startModelDownload,
 } from "./api";
 import {
+  DOWNLOAD_KIND,
+  type ResolvedTransport,
+  TRANSPORT,
+  type TransportMode,
+} from "./constants";
+import {
   POLL_REQUEST_TIMEOUT_MS,
   TRANSPORT_STATUS_RETRY_DELAY_MS,
   TRANSPORT_STATUS_TIMEOUT_MS,
 } from "./download-manager-config";
-import {
-  DOWNLOAD_KIND,
-  TRANSPORT,
-  type ResolvedTransport,
-  type TransportMode,
-} from "./constants";
 import type {
   DownloadRequest,
   ManagedDownload,
   ProgressLike,
 } from "./download-manager-types";
-import {
-  type PollSignal,
-  disposableTimeoutSignal,
-  pollSignal,
-} from "../lib/abort-signals";
 
 let lastXetUnavailableWarningReason: string | null = null;
 
@@ -95,13 +94,13 @@ export function apiStart(
 ): Promise<DownloadStartResult> {
   // Already RESOLVED ("xet"/"http"), never "auto": effectiveTransportMode() asked the backend what
   // auto means here, and that answer must reach both the worker and the on-disk transport marker.
-  const transport_mode = useXet ? TRANSPORT.XET : TRANSPORT.HTTP;
+  const transportMode = useXet ? TRANSPORT.XET : TRANSPORT.HTTP;
   return req.kind === DOWNLOAD_KIND.DATASET
     ? startDatasetDownload({
         repo_id: req.repoId,
         hf_token: hfToken,
         use_xet: useXet,
-        transport_mode,
+        transport_mode: transportMode,
       })
     : startModelDownload({
         repo_id: req.repoId,
@@ -111,7 +110,7 @@ export function apiStart(
         files: req.files,
         hf_token: hfToken,
         use_xet: useXet,
-        transport_mode,
+        transport_mode: transportMode,
       });
 }
 
@@ -134,7 +133,9 @@ export function apiCancelRequest(
   generation: number | undefined,
   signal?: AbortSignal,
 ) {
-  if (!Number.isSafeInteger(generation)) return Promise.resolve();
+  if (!Number.isSafeInteger(generation)) {
+    return Promise.resolve();
+  }
   return req.kind === DOWNLOAD_KIND.DATASET
     ? cancelDatasetDownload({ repo_id: req.repoId, generation, signal })
     : cancelModelDownload({
@@ -145,10 +146,7 @@ export function apiCancelRequest(
       });
 }
 
-function apiTransportStatus(
-  req: DownloadRequest,
-  signal?: AbortSignal,
-) {
+function apiTransportStatus(req: DownloadRequest, signal?: AbortSignal) {
   const token = getHfToken() || null;
   return req.kind === DOWNLOAD_KIND.DATASET
     ? getDatasetTransportStatus(req.repoId, signal)
@@ -237,7 +235,9 @@ export function accessErrorMessage(raw: string): string | null {
     lower.includes("forbidden") ||
     lower.includes("gated") ||
     lower.includes("repository not found");
-  if (!hasAccessSignal) return null;
+  if (!hasAccessSignal) {
+    return null;
+  }
   return "Couldn't access this Hugging Face repo with the token used for this download. Update the HF token and restart the download, or delete the partial download if you no longer need it.";
 }
 

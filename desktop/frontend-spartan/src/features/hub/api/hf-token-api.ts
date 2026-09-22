@@ -1,4 +1,3 @@
-
 import { authFetch } from "@/features/auth/api";
 import { formatFastApiDetail } from "@/lib/format-fastapi-error";
 
@@ -8,14 +7,15 @@ export interface SavedHfTokenResponse {
 }
 
 function isSavedHfTokenResponse(value: unknown): value is SavedHfTokenResponse {
-  if (!value || typeof value !== "object") return false;
+  if (!value || typeof value !== "object") {
+    return false;
+  }
   const candidate = value as Partial<SavedHfTokenResponse>;
   return (
     typeof candidate.has_token === "boolean" &&
     (typeof candidate.token === "string" || candidate.token === null)
   );
 }
-
 
 async function parse(response: Response): Promise<SavedHfTokenResponse> {
   const body = (await response.json().catch(() => null)) as
@@ -30,7 +30,9 @@ async function parse(response: Response): Promise<SavedHfTokenResponse> {
     );
   }
   if (!isSavedHfTokenResponse(body)) {
-    throw new Error("Hugging Face credential request returned an invalid response");
+    throw new Error(
+      "Hugging Face credential request returned an invalid response",
+    );
   }
   return body;
 }
@@ -62,7 +64,6 @@ export async function migrateHfToken(
     }),
   );
 }
-
 
 export async function clearSavedHfToken(): Promise<SavedHfTokenResponse> {
   return parse(

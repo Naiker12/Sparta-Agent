@@ -4,31 +4,28 @@
  * eliminación, drag-and-drop y atajos de teclado.
  */
 
-import {
-  useRef,
-  useState,
-  useEffect,
-  type FC,
-  type DragEvent as ReactDragEvent,
-} from "react";
-import { CornerDownRightIcon } from "lucide-react";
-import {
-  Delete02Icon,
-  Edit03Icon,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { Button } from "@/components/ui/button";
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button";
+import { Button } from "@/components/ui/button";
 import {
   PROMPT_QUEUE_DRAG_TYPE,
   isPromptQueueDragTypes,
 } from "@/features/chat";
 import {
-  usePromptQueueUI,
   type PromptQueueUIItem,
   type PromptQueueUIItemStatus,
+  usePromptQueueUI,
 } from "@/features/chat/stores/prompt-queue-ui-store";
 import { cn } from "@/lib/utils";
+import { Delete02Icon, Edit03Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { CornerDownRightIcon } from "lucide-react";
+import {
+  type FC,
+  type DragEvent as ReactDragEvent,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import {
   editPromptQueueItem,
   findPromptQueueEntry,
@@ -82,7 +79,9 @@ export const PromptQueueStack: FC<PromptQueueStackProps> = ({
   const activeEditingItemId = editingItem ? editingItemId : null;
 
   useEffect(() => {
-    if (!activeEditingItemId) return;
+    if (!activeEditingItemId) {
+      return;
+    }
     editInputRef.current?.focus();
     editInputRef.current?.select();
   }, [activeEditingItemId]);
@@ -94,13 +93,17 @@ export const PromptQueueStack: FC<PromptQueueStackProps> = ({
   const { current, total } = queueEntry;
 
   const startEditing = (item: PromptQueueUIItem) => {
-    if (!item.canEdit) return;
+    if (!item.canEdit) {
+      return;
+    }
     setEditingItemId(item.id);
     setDraftPrompt(item.prompt);
   };
 
   const saveEditing = () => {
-    if (!activeEditingItemId) return;
+    if (!activeEditingItemId) {
+      return;
+    }
     if (editPromptQueueItem(activeEditingItemId, draftPrompt)) {
       setEditingItemId(null);
       setDraftPrompt("");
@@ -119,7 +122,9 @@ export const PromptQueueStack: FC<PromptQueueStackProps> = ({
 
   const moveByOffset = (index: number, offset: number) => {
     const target = visibleItems[index + offset];
-    if (!target) return;
+    if (!target) {
+      return;
+    }
     movePromptQueueItem(visibleItems[index].id, target.id);
   };
 
@@ -164,7 +169,9 @@ export const PromptQueueStack: FC<PromptQueueStackProps> = ({
                 setDragOverItemId((id) => (id === item.id ? null : id));
               }}
               onDrop={(event) => {
-                if (!isPromptQueueDrag(event)) return;
+                if (!isPromptQueueDrag(event)) {
+                  return;
+                }
                 event.preventDefault();
                 const sourceId =
                   event.dataTransfer.getData(PROMPT_QUEUE_DRAG_TYPE) ||

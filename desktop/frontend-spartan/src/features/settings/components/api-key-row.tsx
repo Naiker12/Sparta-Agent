@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -19,15 +18,21 @@ import type { ApiKey } from "../api/api-keys";
 type SettingsT = ReturnType<typeof useT>;
 
 function relative(iso: string | null, t: SettingsT, locale: Locale): string {
-  if (!iso) return t("settings.apiKeys.relativeNever");
+  if (!iso) {
+    return t("settings.apiKeys.relativeNever");
+  }
   const diff = Date.now() - new Date(iso).getTime();
   const days = Math.floor(diff / 86400000);
   if (days < 1) {
     const hours = Math.floor(diff / 3600000);
-    if (hours < 1) return t("settings.apiKeys.relativeJustNow");
+    if (hours < 1) {
+      return t("settings.apiKeys.relativeJustNow");
+    }
     return formatRelativeTime(locale, -hours, "hour");
   }
-  if (days < 30) return formatRelativeTime(locale, -days, "day");
+  if (days < 30) {
+    return formatRelativeTime(locale, -days, "day");
+  }
   if (days < 365) {
     const months = Math.floor(days / 30);
     return formatRelativeTime(locale, -months, "month");
@@ -37,11 +42,17 @@ function relative(iso: string | null, t: SettingsT, locale: Locale): string {
 }
 
 function expiresText(iso: string | null, t: SettingsT, locale: Locale): string {
-  if (!iso) return t("settings.apiKeys.relativeNever");
+  if (!iso) {
+    return t("settings.apiKeys.relativeNever");
+  }
   const diff = new Date(iso).getTime() - Date.now();
-  if (diff < 0) return t("settings.apiKeys.expired");
+  if (diff < 0) {
+    return t("settings.apiKeys.expired");
+  }
   const days = Math.floor(diff / 86400000);
-  if (days < 1) return t("settings.apiKeys.today");
+  if (days < 1) {
+    return t("settings.apiKeys.today");
+  }
   return formatRelativeTime(locale, days, "day");
 }
 
@@ -63,7 +74,10 @@ export function ApiKeyRow({
       />
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <div className="flex min-w-0 items-center justify-between gap-3">
-          <span className="truncate text-sm font-medium text-foreground" title={apiKey.name}>
+          <span
+            className="truncate text-sm font-medium text-foreground"
+            title={apiKey.name}
+          >
             {apiKey.name}
           </span>
           <code className="shrink-0 font-mono text-ui-11 text-muted-foreground">
@@ -91,7 +105,7 @@ export function ApiKeyRow({
         </div>
       </div>
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
+        <DropdownMenuTrigger asChild={true}>
           <Button
             variant="ghost"
             size="sm"
@@ -102,7 +116,11 @@ export function ApiKeyRow({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={async () => { await copyToClipboard(prefix); }}>
+          <DropdownMenuItem
+            onClick={async () => {
+              await copyToClipboard(prefix);
+            }}
+          >
             <HugeiconsIcon icon={Copy01Icon} className="size-3.5 mr-2" />
             {t("settings.apiKeys.copyPrefix")}
           </DropdownMenuItem>

@@ -1,4 +1,3 @@
-
 // Tauri types every drop position as physical, but wry only produces one on
 // WebView2 (ScreenToClient device pixels). macOS reports NSView points and GTK
 // reports widget coordinates, both of which are already CSS pixels.
@@ -12,8 +11,11 @@ function isPhysicalDropPosition(): boolean {
 // scale gives, and webview zoom moves the two apart either way. Take
 // devicePixelRatio, which is physical per CSS by definition.
 function physicalPerCssPx(windowScaleFactor: number): number {
-  const ratio = typeof window === "undefined" ? NaN : window.devicePixelRatio;
-  if (Number.isFinite(ratio) && ratio > 0) return ratio;
+  const ratio =
+    typeof window === "undefined" ? Number.NaN : window.devicePixelRatio;
+  if (Number.isFinite(ratio) && ratio > 0) {
+    return ratio;
+  }
   return Number.isFinite(windowScaleFactor) && windowScaleFactor > 0
     ? windowScaleFactor
     : 1;
@@ -24,7 +26,9 @@ export function nativeDropPointToCss(
   position: { x: number; y: number },
   windowScaleFactor: number,
 ): { x: number; y: number } {
-  if (!isPhysicalDropPosition()) return position;
+  if (!isPhysicalDropPosition()) {
+    return position;
+  }
   const scale = physicalPerCssPx(windowScaleFactor);
   return { x: position.x / scale, y: position.y / scale };
 }

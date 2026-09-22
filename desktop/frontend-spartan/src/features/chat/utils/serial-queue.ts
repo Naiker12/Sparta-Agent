@@ -1,4 +1,3 @@
-
 /** One task at a time, in call order. A rejected task does not block the next. */
 export function createSerialQueue() {
   let tail: Promise<unknown> = Promise.resolve();

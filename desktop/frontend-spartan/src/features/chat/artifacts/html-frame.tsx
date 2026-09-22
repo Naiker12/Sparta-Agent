@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -28,7 +27,9 @@ const GRANT_CANNOT_FIX = new Set(["object-src", "base-uri", "form-action"]);
 // one of them but this: its worker-src is `http: https: blob:`, with no data:,
 // so a data: Worker stays blocked after the grant. Kept in step by
 // test_the_permissive_policy_widens_every_hostless_scheme_but_one.
-const GRANT_CANNOT_FIX_SCHEME: Record<string, string> = { "worker-src": "data" };
+const GRANT_CANNOT_FIX_SCHEME: Record<string, string> = {
+  "worker-src": "data",
+};
 
 type BlockedState = { code: string; uris: string[]; hosts: string[] };
 
@@ -61,7 +62,9 @@ function appendBlocked(
 const BLOCKED_KEYWORD = /^[a-z-]+$/;
 
 function blockedHost(uri: string): string | null {
-  if (BLOCKED_KEYWORD.test(uri)) return uri;
+  if (BLOCKED_KEYWORD.test(uri)) {
+    return uri;
+  }
   try {
     return new URL(uri).host || null;
   } catch {
@@ -140,7 +143,9 @@ export function ArtifactHtmlFrame({
     pendingPostRef.current = true;
   }, [src]);
   const postArtifactHtml = useCallback(() => {
-    if (!pendingPostRef.current) return;
+    if (!pendingPostRef.current) {
+      return;
+    }
     pendingPostRef.current = false;
     // Sandboxed frame has an opaque origin ("null"), so a wildcard target is
     // required; the payload only reaches this iframe's contentWindow.
@@ -152,13 +157,19 @@ export function ArtifactHtmlFrame({
 
   useEffect(() => {
     const handler = (event: MessageEvent) => {
-      if (event.source !== iframeRef.current?.contentWindow) return;
-      if (event.origin !== "null") return;
+      if (event.source !== iframeRef.current?.contentWindow) {
+        return;
+      }
+      if (event.origin !== "null") {
+        return;
+      }
       if (event.data?.type === "unsloth:artifact-blocked") {
         // event.source survives the swap navigation, so without the frame's
         // stamp a report from the outgoing canvas would be tagged with the
         // incoming code and prompt a grant for a canvas that never hit the CSP.
-        if (event.data.v !== codeVersion) return;
+        if (event.data.v !== codeVersion) {
+          return;
+        }
         const uri = event.data.blockedURI;
         // A report carries the full URL, and the canvas can post these directly
         // rather than going through the CSP. The entry cap bounds how many are
@@ -169,18 +180,24 @@ export function ArtifactHtmlFrame({
         // The grant cannot fix these three, and prompting anyway widens the
         // policy for nothing, then hides the banner because the grant is on,
         // leaving a broken canvas and no way back to the prompt.
-        if (GRANT_CANNOT_FIX.has(event.data.effectiveDirective)) return;
+        if (GRANT_CANNOT_FIX.has(event.data.effectiveDirective)) {
+          return;
+        }
         // Same dead end one scheme down: the grant widens worker-src to blob:
         // but not data:, so a data: Worker reports under both policies.
         if (GRANT_CANNOT_FIX_SCHEME[event.data.effectiveDirective] === uri) {
           return;
         }
         const host = blockedHost(uri);
-        if (!host) return;
+        if (!host) {
+          return;
+        }
         setBlocked((current) => appendBlocked(current, code, uri, host));
         return;
       }
-      if (typeof event.data?.chatArtifactHeight !== "number") return;
+      if (typeof event.data?.chatArtifactHeight !== "number") {
+        return;
+      }
       setHeight(
         Math.min(
           Math.max(event.data.chatArtifactHeight, 160),

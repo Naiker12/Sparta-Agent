@@ -1,4 +1,3 @@
-
 /**
  * Tombstones mask deleted threads in the Dexie read fallback. Each carries a
  * `deletedAt` so old entries can be GC'd, keeping localStorage bounded. Reads
@@ -34,10 +33,14 @@ function isTombstone(value: unknown): value is Tombstone {
 }
 
 function loadTombstones(): Tombstone[] {
-  if (!canUseStorage()) return [];
+  if (!canUseStorage()) {
+    return [];
+  }
   try {
     const raw = JSON.parse(localStorage.getItem(TOMBSTONES_KEY) ?? "[]");
-    if (!Array.isArray(raw)) return [];
+    if (!Array.isArray(raw)) {
+      return [];
+    }
     const now = nowMs();
     const out: Tombstone[] = [];
     for (const item of raw) {
@@ -57,7 +60,9 @@ function loadTombstones(): Tombstone[] {
 function gc(): void {
   const cutoff = nowMs() - TOMBSTONE_MAX_AGE_MS;
   for (const [id, t] of deletedThreads) {
-    if (t.deletedAt < cutoff) deletedThreads.delete(id);
+    if (t.deletedAt < cutoff) {
+      deletedThreads.delete(id);
+    }
   }
   // Cap size: drop oldest if we exceed the limit (e.g. a bulk thread clear).
   if (deletedThreads.size > TOMBSTONE_MAX_COUNT) {
@@ -65,12 +70,16 @@ function gc(): void {
       (a, b) => a[1].deletedAt - b[1].deletedAt,
     );
     const drop = sorted.slice(0, deletedThreads.size - TOMBSTONE_MAX_COUNT);
-    for (const [id] of drop) deletedThreads.delete(id);
+    for (const [id] of drop) {
+      deletedThreads.delete(id);
+    }
   }
 }
 
 function persist(): void {
-  if (!canUseStorage()) return;
+  if (!canUseStorage()) {
+    return;
+  }
   try {
     const arr = Array.from(deletedThreads.values());
     localStorage.setItem(TOMBSTONES_KEY, JSON.stringify(arr));
@@ -107,9 +116,13 @@ export function isChatThreadDeleted(threadId: string): boolean {
 export function removeChatThreadTombstones(threadIds: Iterable<string>): void {
   let changed = false;
   for (const id of threadIds) {
-    if (deletedThreads.delete(id)) changed = true;
+    if (deletedThreads.delete(id)) {
+      changed = true;
+    }
   }
-  if (changed) persist();
+  if (changed) {
+    persist();
+  }
 }
 
 export function __resetChatThreadTombstonesForTests(): void {

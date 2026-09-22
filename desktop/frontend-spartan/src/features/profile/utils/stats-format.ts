@@ -1,4 +1,3 @@
-
 /**
  * Formatting helpers for the profile stats panel.
  *
@@ -64,13 +63,17 @@ function hasCompactUnit(locale: Locale, value: number): boolean {
  * not compact.
  */
 export function formatCompactNumber(value: number, locale: Locale): string {
-  if (!Number.isFinite(value)) return "0";
+  if (!Number.isFinite(value)) {
+    return "0";
+  }
   // Below the locale's first compact unit there is no unit to be a fraction OF, and these
   // are whole things: averageTokensPerChat is the one fractional caller, and "12.5 tokens"
   // reads as false precision where the pre-localization code said 13. Asked of Intl (is there
   // a `compact` part?) rather than a hardcoded 1000, because the first unit is per-locale:
   // en and hi compact at 1K, ja and de not until 万 and Mio.
-  if (!hasCompactUnit(locale, value)) return compactFormatter(locale, 0).format(value);
+  if (!hasCompactUnit(locale, value)) {
+    return compactFormatter(locale, 0).format(value);
+  }
   return compactInteger(locale, value) < 100
     ? compactFormatter(locale, 1).format(value)
     : compactFormatter(locale, 0).format(value);
@@ -78,10 +81,14 @@ export function formatCompactNumber(value: number, locale: Locale): string {
 
 /** The exact count behind a tile, grouped the way the chosen locale groups. */
 export function formatFullNumber(value: number, locale: Locale): string {
-  if (!Number.isFinite(value)) return "0";
+  if (!Number.isFinite(value)) {
+    return "0";
+  }
   const cached = FULL_FORMATTERS.get(locale);
   const formatter = cached ?? new Intl.NumberFormat(locale);
-  if (!cached) FULL_FORMATTERS.set(locale, formatter);
+  if (!cached) {
+    FULL_FORMATTERS.set(locale, formatter);
+  }
   return formatter.format(Math.round(value));
 }
 
@@ -267,22 +274,34 @@ export function formatProfileCount(
 
 /** Compact duration for chat and training time: 4h 8m, 12m 30s, 45s. */
 export function formatDuration(seconds: number): string {
-  if (!Number.isFinite(seconds) || seconds <= 0) return "0m";
+  if (!Number.isFinite(seconds) || seconds <= 0) {
+    return "0m";
+  }
   const total = Math.round(seconds);
   const days = Math.floor(total / 86400);
   const hours = Math.floor((total % 86400) / 3600);
   const minutes = Math.floor((total % 3600) / 60);
   const secs = total % 60;
 
-  if (days > 0) return `${days}d ${hours}h`;
-  if (hours > 0) return `${hours}h ${minutes}m`;
-  if (minutes > 0) return secs > 0 ? `${minutes}m ${secs}s` : `${minutes}m`;
+  if (days > 0) {
+    return `${days}d ${hours}h`;
+  }
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+  if (minutes > 0) {
+    return secs > 0 ? `${minutes}m ${secs}s` : `${minutes}m`;
+  }
   return `${secs}s`;
 }
 
 export function formatMilliseconds(ms: number): string {
-  if (!Number.isFinite(ms) || ms <= 0) return "—";
-  if (ms < 1000) return `${Math.round(ms)}ms`;
+  if (!Number.isFinite(ms) || ms <= 0) {
+    return "—";
+  }
+  if (ms < 1000) {
+    return `${Math.round(ms)}ms`;
+  }
   return `${(ms / 1000).toFixed(1)}s`;
 }
 
@@ -291,12 +310,22 @@ export function formatMilliseconds(ms: number): string {
  * Thresholds are relative to the busiest day so any usage scale looks alive.
  */
 export function heatLevel(tokens: number, peak: number): 0 | 1 | 2 | 3 | 4 {
-  if (tokens <= 0) return 0;
-  if (peak <= 0) return 1;
+  if (tokens <= 0) {
+    return 0;
+  }
+  if (peak <= 0) {
+    return 1;
+  }
   const ratio = tokens / peak;
-  if (ratio > 0.6) return 4;
-  if (ratio > 0.3) return 3;
-  if (ratio > 0.1) return 2;
+  if (ratio > 0.6) {
+    return 4;
+  }
+  if (ratio > 0.3) {
+    return 3;
+  }
+  if (ratio > 0.1) {
+    return 2;
+  }
   return 1;
 }
 
@@ -333,7 +362,9 @@ export function windowBaseline(
   start: number,
   mode: ActivityMode,
 ): number {
-  if (mode !== "cumulative" || start <= 0) return 0;
+  if (mode !== "cumulative" || start <= 0) {
+    return 0;
+  }
   return values[start - 1] ?? 0;
 }
 
@@ -341,7 +372,9 @@ export function seriesForMode(
   daily: Array<{ date: string; tokens: number }>,
   mode: ActivityMode,
 ): number[] {
-  if (mode === "daily") return daily.map((day) => day.tokens);
+  if (mode === "daily") {
+    return daily.map((day) => day.tokens);
+  }
 
   if (mode === "cumulative") {
     let running = 0;

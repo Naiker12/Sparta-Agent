@@ -1,4 +1,3 @@
-
 const JINJA_REF_RE = /{{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*}}/g;
 const JINJA_EXPR_RE = /{{\s*([^{}]+?)\s*}}/g;
 const SIMPLE_JINJA_EXPR_RE = /^[a-zA-Z_][a-zA-Z0-9_.]*$/;
@@ -9,7 +8,10 @@ function isValidNestedReference(expr: string, validSet: Set<string>): boolean {
   if (!expr.includes(".")) {
     return false;
   }
-  const parts = expr.split(".").map((part) => part.trim()).filter(Boolean);
+  const parts = expr
+    .split(".")
+    .map((part) => part.trim())
+    .filter(Boolean);
   if (parts.length < 2) {
     return false;
   }
@@ -52,7 +54,7 @@ export function findInvalidJinjaReferences(
       continue;
     }
     if (SIMPLE_JINJA_EXPR_RE.test(expr)) {
-      if (!validSet.has(expr) && !isValidNestedReference(expr, validSet)) {
+      if (!(validSet.has(expr) || isValidNestedReference(expr, validSet))) {
         invalid.add(expr);
       }
       continue;
@@ -65,11 +67,7 @@ export function findInvalidJinjaReferences(
   return Array.from(invalid);
 }
 
-export function replaceRef(
-  template: string,
-  from: string,
-  to: string,
-): string {
+export function replaceRef(template: string, from: string, to: string): string {
   if (!template || from === to) {
     return template;
   }

@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -10,6 +9,8 @@ import {
 } from "@/components/ui/dialog";
 import { downloadFile, isDownloadCancelled } from "@/lib/native-files";
 
+import { saveMarkdownAsProjectSource } from "@/features/rag";
+import { Tick02Icon } from "@/lib/tick-icon";
 import { cn } from "@/lib/utils";
 import { Search01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -25,7 +26,6 @@ import {
   UploadIcon,
   XIcon,
 } from "lucide-react";
-import { Tick02Icon } from "@/lib/tick-icon";
 import {
   type ReactElement,
   useCallback,
@@ -35,6 +35,7 @@ import {
   useState,
 } from "react";
 import { toast } from "sonner";
+import { toolResultModelText } from "../api/chat-adapter";
 import {
   type PromptEntry,
   type PromptListEntry,
@@ -47,26 +48,20 @@ import {
   savePromptEntry,
   savePromptList,
 } from "../api/prompts-api";
+import { usePlusMenuPrefsStore } from "../stores/plus-menu-prefs-store";
 import {
   listStoredChatMessages,
   listStoredChatThreads,
-  saveStoredChatThread,
-  syncStoredChatMessages,
 } from "../utils/chat-history-storage";
-import { notifyChatHistoryUpdated } from "../api/chat-api";
-import { toolResultModelText } from "../api/chat-adapter";
-import { usePlusMenuPrefsStore } from "../stores/plus-menu-prefs-store";
-import type { ThreadRecord, MessageRecord } from "../types";
-import { createConversationMarkdownExporter } from "../utils/conversation-markdown-export";
-import { parseCsv } from "../utils/csv-parse";
-import { unwrapPastedTextContent } from "../utils/pasted-text.ts";
 import {
   buildConversationMarkdown,
   contentBlocksToMarkdownBlocks,
   renderConversationBlocks,
 } from "../utils/conversation-markdown";
+import { createConversationMarkdownExporter } from "../utils/conversation-markdown-export";
+import { parseCsv } from "../utils/csv-parse";
+import { unwrapPastedTextContent } from "../utils/pasted-text.ts";
 import { planChatItemSources } from "../utils/project-source-plan";
-import { saveMarkdownAsProjectSource } from "@/features/rag";
 
 function newId(): string {
   return crypto.randomUUID().replace(/-/g, "").slice(0, 12);
@@ -109,12 +104,16 @@ function exportPromptCsv(entry: PromptEntry): Promise<void> {
 }
 
 function exportAllPromptsJsonl(entries: PromptEntry[]): Promise<void> {
-  const lines = entries.map((e) => JSON.stringify({ name: e.name, text: e.text })).join("\n");
+  const lines = entries
+    .map((e) => JSON.stringify({ name: e.name, text: e.text }))
+    .join("\n");
   return downloadBlob(lines, "prompts.jsonl", "application/x-ndjson");
 }
 
 function exportAllPromptsCsv(entries: PromptEntry[]): Promise<void> {
-  const rows = entries.map((e) => `${csvEscape(e.name)},${csvEscape(e.text)}`).join("\n");
+  const rows = entries
+    .map((e) => `${csvEscape(e.name)},${csvEscape(e.text)}`)
+    .join("\n");
   return downloadBlob(`name,text\n${rows}`, "prompts.csv", "text/csv");
 }
 
@@ -127,7 +126,9 @@ function exportListJsonl(entry: PromptListEntry): Promise<void> {
 }
 
 function exportAllListsJsonl(entries: PromptListEntry[]): Promise<void> {
-  const lines = entries.map((e) => JSON.stringify({ name: e.name, items: e.items })).join("\n");
+  const lines = entries
+    .map((e) => JSON.stringify({ name: e.name, items: e.items }))
+    .join("\n");
   return downloadBlob(lines, "prompt-lists.jsonl", "application/x-ndjson");
 }
 
@@ -144,52 +145,66 @@ function exportListCsv(entry: PromptListEntry): Promise<void> {
 
 function exportAllListsCsv(entries: PromptListEntry[]): Promise<void> {
   const rows = entries
-    .flatMap((e) => e.items.map((text, i) => `${csvEscape(e.name)},${i + 1},${csvEscape(text)}`))
+    .flatMap((e) =>
+      e.items.map(
+        (text, i) => `${csvEscape(e.name)},${i + 1},${csvEscape(text)}`,
+      ),
+    )
     .join("\n");
-  return downloadBlob(`list_name,order,prompt_text\n${rows}`, "prompt-lists.csv", "text/csv");
+  return downloadBlob(
+    `list_name,order,prompt_text\n${rows}`,
+    "prompt-lists.csv",
+    "text/csv",
+  );
 }
 
 function contentBlocksToText(content: unknown): string {
-  if (typeof content === "string") return content;
-  if (!Array.isArray(content)) return JSON.stringify(content);
+  if (typeof content === "string") {
+    return content;
+  }
+  if (!Array.isArray(content)) {
+    return JSON.stringify(content);
+  }
   const parts: string[] = [];
   for (const part of content) {
-    if (!part || typeof part !== "object") continue;
-      const p = part as Record<string, unknown>;
-      if (p.type === "text" && typeof p.text === "string") {
-        parts.push(p.text);
-      } else if (p.type === "reasoning" || p.type === "thinking") {
-        const thinkText =
-          typeof p.thinking === "string"
-            ? p.thinking
-            : typeof p.text === "string"
-              ? p.text
-              : "";
-        if (thinkText) {
-          parts.push("[thinking]\n" + thinkText + "\n[/thinking]");
-        }
-      } else if (p.type === "tool-call") {
-        // Keep base64 image payloads and sandbox card metadata out of every
-        // export format: use the model-visible text (matches chat replay).
-        const result = toolResultModelText(
-          p.result,
-          typeof p.toolName === "string" ? p.toolName : undefined,
-        );
-        parts.push(
-          JSON.stringify({
-            tool_call: p.toolName,
-            args: p.args,
-            result,
-          }),
-        );
-      } else if (p.type === "image") {
-        parts.push("[image attachment]");
-      } else if (p.type === "audio") {
-        parts.push("[audio attachment]");
-      }
+    if (!part || typeof part !== "object") {
+      continue;
     }
-    return parts.join("\n\n");
+    const p = part as Record<string, unknown>;
+    if (p.type === "text" && typeof p.text === "string") {
+      parts.push(p.text);
+    } else if (p.type === "reasoning" || p.type === "thinking") {
+      const thinkText =
+        typeof p.thinking === "string"
+          ? p.thinking
+          : typeof p.text === "string"
+            ? p.text
+            : "";
+      if (thinkText) {
+        parts.push(`[thinking]\n${thinkText}\n[/thinking]`);
+      }
+    } else if (p.type === "tool-call") {
+      // Keep base64 image payloads and sandbox card metadata out of every
+      // export format: use the model-visible text (matches chat replay).
+      const result = toolResultModelText(
+        p.result,
+        typeof p.toolName === "string" ? p.toolName : undefined,
+      );
+      parts.push(
+        JSON.stringify({
+          tool_call: p.toolName,
+          args: p.args,
+          result,
+        }),
+      );
+    } else if (p.type === "image") {
+      parts.push("[image attachment]");
+    } else if (p.type === "audio") {
+      parts.push("[audio attachment]");
+    }
   }
+  return parts.join("\n\n");
+}
 
 // Order via parentId chain: createdAt misorders turns (GPT response slots
 // predate the user's next message); the parent chain is timestamp-independent.
@@ -209,8 +224,10 @@ function orderByParentChain<T extends _Msg>(
   const childrenOf = new Map<string | null, T[]>();
   for (const m of messages) {
     const pid = m.parentId ?? null;
-    if (!childrenOf.has(pid)) childrenOf.set(pid, []);
-    childrenOf.get(pid)!.push(m);
+    if (!childrenOf.has(pid)) {
+      childrenOf.set(pid, []);
+    }
+    childrenOf.get(pid)?.push(m);
   }
 
   const result: T[] = [];
@@ -226,7 +243,9 @@ function orderByParentChain<T extends _Msg>(
   }
 
   if (includeSiblings) {
-    for (const [, m] of byId) result.push(m);
+    for (const [, m] of byId) {
+      result.push(m);
+    }
   }
   return result;
 }
@@ -244,8 +263,12 @@ async function loadConversationMessages(
   }
   // No parentId = legacy flat thread (already DB createdAt-sorted); walking the
   // chain would invert order, so keep raw order.
-  const hasParentIds = raw.some((m) => (m as { parentId?: unknown }).parentId != null);
-  if (!hasParentIds) return raw;
+  const hasParentIds = raw.some(
+    (m) => (m as { parentId?: unknown }).parentId != null,
+  );
+  if (!hasParentIds) {
+    return raw;
+  }
   return orderByParentChain(raw) as typeof raw;
 }
 
@@ -255,19 +278,28 @@ function exportTs(): string {
 
 // Attachments live in msg.attachments[].content, not msg.content, so flatten
 // both here or they'd be dropped on export.
-function messageToText(msg: { content: unknown; attachments?: unknown }): string {
+function messageToText(msg: {
+  content: unknown;
+  attachments?: unknown;
+}): string {
   const parts: string[] = [];
   const main = contentBlocksToText(msg.content);
-  if (main) parts.push(main);
+  if (main) {
+    parts.push(main);
+  }
   if (Array.isArray(msg.attachments)) {
     for (const attachment of msg.attachments as Array<{ content?: unknown }>) {
-      if (!attachment?.content) continue;
+      if (!attachment?.content) {
+        continue;
+      }
       // A paste carries a wrapper the same text never had when it fitted
       // inline, so strip it rather than exporting the marker.
       const attText = unwrapPastedTextContent(
         contentBlocksToText(attachment.content),
       );
-      if (attText) parts.push(attText);
+      if (attText) {
+        parts.push(attText);
+      }
     }
   }
   return parts.join("\n\n");
@@ -275,12 +307,20 @@ function messageToText(msg: { content: unknown; attachments?: unknown }): string
 
 // Markdown counterpart to messageToText: same content and attachments, but each
 // part keeps its shape so the renderer can fence tool calls and collapse thinking.
-function messageToMarkdown(msg: { content: unknown; attachments?: unknown }): string {
+function messageToMarkdown(msg: {
+  content: unknown;
+  attachments?: unknown;
+}): string {
   const normalizeToolResult = toolResultModelText;
-  const blocks = contentBlocksToMarkdownBlocks(msg.content, normalizeToolResult);
+  const blocks = contentBlocksToMarkdownBlocks(
+    msg.content,
+    normalizeToolResult,
+  );
   if (Array.isArray(msg.attachments)) {
     for (const attachment of msg.attachments as Array<{ content?: unknown }>) {
-      if (!attachment?.content) continue;
+      if (!attachment?.content) {
+        continue;
+      }
       blocks.push(
         ...contentBlocksToMarkdownBlocks(
           attachment.content,
@@ -315,7 +355,11 @@ type OAIMessage =
   | { role: "assistant"; content: string | null; tool_calls?: OAIToolCall[] }
   | { role: "tool"; tool_call_id: string; name: string; content: string };
 
-function messageToOpenAI(msg: { role: unknown; content: unknown; attachments?: unknown }): OAIMessage[] {
+function messageToOpenAI(msg: {
+  role: unknown;
+  content: unknown;
+  attachments?: unknown;
+}): OAIMessage[] {
   const role = (msg.role as string) ?? "user";
   const blocks = Array.isArray(msg.content) ? msg.content : [];
   const attachments = Array.isArray(msg.attachments) ? msg.attachments : [];
@@ -324,7 +368,9 @@ function messageToOpenAI(msg: { role: unknown; content: unknown; attachments?: u
     ...blocks.map((b) => b as Record<string, unknown>),
     ...attachments.flatMap((a) => {
       const att = a as { content?: unknown };
-      if (!Array.isArray(att.content)) return [];
+      if (!Array.isArray(att.content)) {
+        return [];
+      }
       // Attachment text only: a message body is verbatim, and the paste
       // wrapper is not something the user wrote.
       return (att.content as Record<string, unknown>[]).map((part) =>
@@ -344,29 +390,56 @@ function messageToOpenAI(msg: { role: unknown; content: unknown; attachments?: u
       if (p.type === "text" && typeof p.text === "string") {
         textParts.push(p.text);
       } else if (p.type === "reasoning" || p.type === "thinking") {
-        const t = typeof p.thinking === "string" ? p.thinking : typeof p.text === "string" ? p.text : "";
-        if (t) textParts.push(`<thinking>\n${t}\n</thinking>`);
+        const t =
+          typeof p.thinking === "string"
+            ? p.thinking
+            : typeof p.text === "string"
+              ? p.text
+              : "";
+        if (t) {
+          textParts.push(`<thinking>\n${t}\n</thinking>`);
+        }
       } else if (p.type === "tool-call") {
-        const id = typeof p.toolCallId === "string" ? p.toolCallId : `call_${toolCalls.length}`;
+        const id =
+          typeof p.toolCallId === "string"
+            ? p.toolCallId
+            : `call_${toolCalls.length}`;
         const name = typeof p.toolName === "string" ? p.toolName : "unknown";
-        const argsStr = p.args != null ? JSON.stringify(p.args) : (typeof p.argsText === "string" ? p.argsText : "{}");
-        toolCalls.push({ id, type: "function", function: { name, arguments: argsStr } });
+        const argsStr =
+          p.args != null
+            ? JSON.stringify(p.args)
+            : typeof p.argsText === "string"
+              ? p.argsText
+              : "{}";
+        toolCalls.push({
+          id,
+          type: "function",
+          function: { name, arguments: argsStr },
+        });
         if (p.result !== undefined && p.result !== null) {
           // Keep base64 image payloads out of exports: MCP image results carry
           // their model-visible text alongside the data, so serialize the text
           // (matching chat replay) instead of the full object.
           const modelText = toolResultModelText(p.result, name);
           const resultStr =
-            typeof modelText === "string" ? modelText : JSON.stringify(modelText);
-          toolResults.push({ role: "tool", tool_call_id: id, name, content: resultStr });
+            typeof modelText === "string"
+              ? modelText
+              : JSON.stringify(modelText);
+          toolResults.push({
+            role: "tool",
+            tool_call_id: id,
+            name,
+            content: resultStr,
+          });
         }
       }
     }
 
     const content = textParts.join("\n\n") || null;
-    const assistantMsg: OAIMessage = toolCalls.length > 0
-      ? { role: "assistant", content, tool_calls: toolCalls }
-      : { role: "assistant", content: content ?? "" };
+    const assistantMsg: OAIMessage =
+      toolCalls.length > 0
+        ? { role: "assistant", content, tool_calls: toolCalls }
+        : { role: "assistant", content: content ?? "" };
 
     return toolResults.length > 0
       ? [assistantMsg, ...toolResults]
@@ -386,63 +459,91 @@ function messageToOpenAI(msg: { role: unknown; content: unknown; attachments?: u
   }
 
   if (!hasNonText) {
-    const text = contentParts.map((p) => (p.type === "text" ? p.text : "")).join("\n\n");
+    const text = contentParts
+      .map((p) => (p.type === "text" ? p.text : ""))
+      .join("\n\n");
     return text ? [{ role: role as "user" | "system", content: text }] : [];
   }
-  return contentParts.length > 0 ? [{ role: role as "user" | "system", content: contentParts }] : [];
+  return contentParts.length > 0
+    ? [{ role: role as "user" | "system", content: contentParts }]
+    : [];
 }
 
 // ShareGPT training JSONL (human/system/gpt turns).
-export async function exportConversationShareGPT(threadId: string): Promise<void> {
+export async function exportConversationShareGPT(
+  threadId: string,
+): Promise<void> {
   const messages = await loadConversationMessages(threadId);
-  if (!messages) return;
+  if (!messages) {
+    return;
+  }
 
   const conversations: Array<{ from: string; value: string }> = [];
   for (const msg of messages) {
     const role = msg.role as string;
-    const from = role === "user" ? "human" : role === "system" ? "system" : "gpt";
+    const from =
+      role === "user" ? "human" : role === "system" ? "system" : "gpt";
     const value = messageToText(msg);
-    if (value.trim()) conversations.push({ from, value });
+    if (value.trim()) {
+      conversations.push({ from, value });
+    }
   }
 
-  if (conversations.length === 0) { toast.info("No exportable content."); return; }
+  if (conversations.length === 0) {
+    toast.info("No exportable content.");
+    return;
+  }
   await downloadBlob(
     JSON.stringify({ conversations }),
-    "conversation-" + exportTs() + ".jsonl",
+    `conversation-${exportTs()}.jsonl`,
     "application/x-ndjson",
   );
 }
 
 // OpenAI/ChatML JSONL: {"messages": [{"role","content"}, ...]} per conversation;
 // Unsloth reads this as a ChatML dataset.
-export async function exportConversationRawJsonl(threadId: string): Promise<void> {
+export async function exportConversationRawJsonl(
+  threadId: string,
+): Promise<void> {
   const messages = await loadConversationMessages(threadId);
-  if (!messages) return;
+  if (!messages) {
+    return;
+  }
 
   const oaiMsgs: OAIMessage[] = messages.flatMap((msg) => messageToOpenAI(msg));
-  if (oaiMsgs.length === 0) { toast.info("No exportable content."); return; }
+  if (oaiMsgs.length === 0) {
+    toast.info("No exportable content.");
+    return;
+  }
   await downloadBlob(
     JSON.stringify({ messages: oaiMsgs }),
-    "conversation-" + exportTs() + ".jsonl",
+    `conversation-${exportTs()}.jsonl`,
     "application/x-ndjson",
   );
 }
 
 export async function exportConversationCsv(threadId: string): Promise<void> {
   const messages = await loadConversationMessages(threadId);
-  if (!messages) return;
+  if (!messages) {
+    return;
+  }
 
   const rows = ["role,content"];
   for (const msg of messages) {
     const content = messageToText(msg);
-    if (!content.trim()) continue;
+    if (!content.trim()) {
+      continue;
+    }
     rows.push(`${csvEscape(msg.role as string)},${csvEscape(content)}`);
   }
 
-  if (rows.length <= 1) { toast.info("No exportable content."); return; }
+  if (rows.length <= 1) {
+    toast.info("No exportable content.");
+    return;
+  }
   await downloadBlob(
     rows.join("\n"),
-    "conversation-" + exportTs() + ".csv",
+    `conversation-${exportTs()}.csv`,
     "text/csv",
   );
 }
@@ -469,7 +570,9 @@ async function saveConversationAsProjectSource(
     threadId,
     "No messages in this conversation to save.",
   );
-  if (!messages) return "skipped";
+  if (!messages) {
+    return "skipped";
+  }
   const markdown = buildConversationMarkdown(
     messages.map((msg) => ({
       role: String(msg.role ?? ""),
@@ -492,7 +595,9 @@ export async function saveChatItemAsProjectSource(
 ): Promise<void> {
   const plans = planChatItemSources(
     item,
-    item.type === "single" ? [] : await listStoredChatThreads({ pairId: item.id }),
+    item.type === "single"
+      ? []
+      : await listStoredChatThreads({ pairId: item.id }),
   );
   let saved = 0;
   for (const plan of plans) {
@@ -501,12 +606,17 @@ export async function saveChatItemAsProjectSource(
       projectId,
       plan.title,
     );
-    if (outcome === "failed") break;
-    if (outcome === "saved") saved += 1;
+    if (outcome === "failed") {
+      break;
+    }
+    if (outcome === "saved") {
+      saved += 1;
+    }
   }
   // One toast per click, not one per thread in the pair.
-  if (saved === 1) toast.success("Saved to project sources.");
-  else if (saved > 1) {
+  if (saved === 1) {
+    toast.success("Saved to project sources.");
+  } else if (saved > 1) {
     toast.success(`Saved ${saved} chats to project sources.`);
   }
 }
@@ -528,12 +638,18 @@ async function buildThreadContent(
   format: ConvExportFormat,
 ): Promise<string | null> {
   const messages = await loadConversationMessages(threadId);
-  if (!messages) return null;
+  if (!messages) {
+    return null;
+  }
 
   if (format === "jsonl-raw") {
     // OpenAI/ChatML: Unsloth reads the "messages" key as ChatML.
-    const oaiMsgs: OAIMessage[] = messages.flatMap((msg) => messageToOpenAI(msg));
-    if (oaiMsgs.length === 0) return null;
+    const oaiMsgs: OAIMessage[] = messages.flatMap((msg) =>
+      messageToOpenAI(msg),
+    );
+    if (oaiMsgs.length === 0) {
+      return null;
+    }
     return JSON.stringify({ messages: oaiMsgs });
   }
 
@@ -542,16 +658,26 @@ async function buildThreadContent(
     for (const msg of messages) {
       const role = msg.role as string;
       const value = messageToText(msg);
-      if (value.trim()) conversations.push({ from: role === "user" ? "human" : role === "system" ? "system" : "gpt", value });
+      if (value.trim()) {
+        conversations.push({
+          from:
+            role === "user" ? "human" : role === "system" ? "system" : "gpt",
+          value,
+        });
+      }
     }
-    if (conversations.length === 0) return null;
+    if (conversations.length === 0) {
+      return null;
+    }
     return JSON.stringify({ conversations });
   }
 
   const rows: string[] = [];
   for (const msg of messages) {
     const content = messageToText(msg);
-    if (!content.trim()) continue;
+    if (!content.trim()) {
+      continue;
+    }
     rows.push(`${csvEscape(msg.role as string)},${csvEscape(content)}`);
   }
   return rows.length > 0 ? rows.join("\n") : null;
@@ -574,21 +700,27 @@ export async function exportBulkConversationsMerged(
   format: ConvExportFormat,
   basename: string,
 ): Promise<void> {
-  if (threadIds.length === 0) { toast.info("No conversations to export."); return; }
+  if (threadIds.length === 0) {
+    toast.info("No conversations to export.");
+    return;
+  }
 
   const parts: string[] = [];
   const header = csvHeader(format);
 
   for (const id of threadIds) {
     const content = await buildThreadContent(id, format);
-    if (content) parts.push(content);
+    if (content) {
+      parts.push(content);
+    }
   }
 
-  if (parts.length === 0) { toast.info("No exportable content."); return; }
+  if (parts.length === 0) {
+    toast.info("No exportable content.");
+    return;
+  }
 
-  const body = header
-    ? header + "\n" + parts.join("\n")
-    : parts.join("\n");
+  const body = header ? `${header}\n${parts.join("\n")}` : parts.join("\n");
 
   await downloadBlob(
     body,
@@ -602,7 +734,10 @@ export async function exportBulkConversationsSeparate(
   format: ConvExportFormat,
   basename: string,
 ): Promise<void> {
-  if (threadIds.length === 0) { toast.info("No conversations to export."); return; }
+  if (threadIds.length === 0) {
+    toast.info("No conversations to export.");
+    return;
+  }
 
   const { zipSync, strToU8 } = await import("fflate");
   const ext = exportExt(format);
@@ -611,12 +746,17 @@ export async function exportBulkConversationsSeparate(
 
   for (const id of threadIds) {
     const content = await buildThreadContent(id, format);
-    if (!content) continue;
-    const body = header ? header + "\n" + content : content;
+    if (!content) {
+      continue;
+    }
+    const body = header ? `${header}\n${content}` : content;
     files[`${id}.${ext}`] = strToU8(body);
   }
 
-  if (Object.keys(files).length === 0) { toast.info("No exportable content."); return; }
+  if (Object.keys(files).length === 0) {
+    toast.info("No exportable content.");
+    return;
+  }
 
   const zipped = zipSync(files);
   await downloadBlob(zipped, `${basename}.zip`, "application/zip");
@@ -695,16 +835,24 @@ function messageToPlainText(msg: {
       : (text: string) => text;
     // Legacy and imported histories can store content as a plain string.
     if (typeof blocks === "string") {
-      if (blocks.trim()) parts.push(normalize(blocks));
+      if (blocks.trim()) {
+        parts.push(normalize(blocks));
+      }
       return;
     }
-    if (!Array.isArray(blocks)) return;
+    if (!Array.isArray(blocks)) {
+      return;
+    }
     for (const b of blocks) {
       if (!b || typeof b !== "object") {
         continue;
       }
       const block = b as Record<string, unknown>;
-      if (block.type === "text" && typeof block.text === "string" && block.text) {
+      if (
+        block.type === "text" &&
+        typeof block.text === "string" &&
+        block.text
+      ) {
         parts.push(normalize(block.text));
       }
     }
@@ -743,13 +891,19 @@ function messagesToFineTuneTurns(
   const raw: FineTuneMessage[] = [];
   for (const msg of messages) {
     const role = msg.role as FineTuneMessage["role"];
-    if (!FINE_TUNE_ROLES.has(role)) continue;
+    if (!FINE_TUNE_ROLES.has(role)) {
+      continue;
+    }
     const content = messageToPlainText(msg);
-    if (!content) continue;
+    if (!content) {
+      continue;
+    }
     raw.push({ role, content });
   }
   const firstUser = raw.findIndex((t) => t.role === "user");
-  if (firstUser === -1) return null;
+  if (firstUser === -1) {
+    return null;
+  }
   const turns = mergeSameRoleTurns(
     raw.filter((t, i) => i >= firstUser || t.role === "system"),
   );
@@ -807,10 +961,16 @@ function turnsToFineTuneLines(
         pendingUser = t.content;
         continue;
       }
-      if (pendingUser === null) continue;
+      if (pendingUser === null) {
+        continue;
+      }
       const inputParts = [];
-      if (system) inputParts.push(system);
-      if (context.length > 0) inputParts.push(context.join("\n"));
+      if (system) {
+        inputParts.push(system);
+      }
+      if (context.length > 0) {
+        inputParts.push(context.join("\n"));
+      }
       lines.push(
         JSON.stringify({
           instruction: pendingUser,
@@ -932,10 +1092,17 @@ function exportListsTrainingJsonl(entries: PromptListEntry[]): Promise<void> {
       return JSON.stringify({ conversations });
     })
     .join("\n");
-  return downloadBlob(lines, "prompt-lists-training.jsonl", "application/x-ndjson");
+  return downloadBlob(
+    lines,
+    "prompt-lists-training.jsonl",
+    "application/x-ndjson",
+  );
 }
 
-async function importPromptsFromText(text: string, isCsv: boolean): Promise<{ count: number; skipped: number }> {
+async function importPromptsFromText(
+  text: string,
+  isCsv: boolean,
+): Promise<{ count: number; skipped: number }> {
   const entries: PromptEntry[] = [];
   let skipped = 0;
   if (isCsv) {
@@ -956,13 +1123,18 @@ async function importPromptsFromText(text: string, isCsv: boolean): Promise<{ co
   } else {
     for (const raw of text.split("\n")) {
       const line = raw.trim();
-      if (!line) continue;
+      if (!line) {
+        continue;
+      }
       try {
         const obj = JSON.parse(line) as Record<string, unknown>;
         if (typeof obj.text === "string" && obj.text.trim()) {
           entries.push({
             id: newId(),
-            name: typeof obj.name === "string" ? obj.name || "Imported" : "Imported",
+            name:
+              typeof obj.name === "string"
+                ? obj.name || "Imported"
+                : "Imported",
             text: obj.text.trim(),
             createdAt: now(),
             updatedAt: now(),
@@ -975,11 +1147,16 @@ async function importPromptsFromText(text: string, isCsv: boolean): Promise<{ co
       }
     }
   }
-  if (entries.length > 0) await bulkSavePromptEntries(entries);
+  if (entries.length > 0) {
+    await bulkSavePromptEntries(entries);
+  }
   return { count: entries.length, skipped };
 }
 
-async function importListsFromText(text: string, isCsv: boolean): Promise<{ count: number; skipped: number }> {
+async function importListsFromText(
+  text: string,
+  isCsv: boolean,
+): Promise<{ count: number; skipped: number }> {
   const lists: PromptListEntry[] = [];
   let skipped = 0;
   if (isCsv) {
@@ -989,9 +1166,11 @@ async function importListsFromText(text: string, isCsv: boolean): Promise<{ coun
       const listName = cells[0]?.trim();
       const promptText = cells[2]?.trim();
       if (listName && promptText) {
-        const order = parseInt(cells[1] ?? "0", 10) || 0;
-        if (!listMap.has(listName)) listMap.set(listName, []);
-        listMap.get(listName)!.push({ order, text: promptText });
+        const order = Number.parseInt(cells[1] ?? "0", 10) || 0;
+        if (!listMap.has(listName)) {
+          listMap.set(listName, []);
+        }
+        listMap.get(listName)?.push({ order, text: promptText });
       }
     }
     for (const [listName, items] of listMap.entries()) {
@@ -1009,7 +1188,9 @@ async function importListsFromText(text: string, isCsv: boolean): Promise<{ coun
   } else {
     for (const raw of text.split("\n")) {
       const line = raw.trim();
-      if (!line) continue;
+      if (!line) {
+        continue;
+      }
       try {
         const obj = JSON.parse(line) as Record<string, unknown>;
         if (Array.isArray(obj.items) && obj.items.length > 0) {
@@ -1019,7 +1200,10 @@ async function importListsFromText(text: string, isCsv: boolean): Promise<{ coun
           if (items.length > 0) {
             lists.push({
               id: newId(),
-              name: typeof obj.name === "string" ? obj.name || "Imported" : "Imported",
+              name:
+                typeof obj.name === "string"
+                  ? obj.name || "Imported"
+                  : "Imported",
               items,
               createdAt: now(),
               updatedAt: now(),
@@ -1035,34 +1219,52 @@ async function importListsFromText(text: string, isCsv: boolean): Promise<{ coun
       }
     }
   }
-  if (lists.length > 0) await bulkSavePromptLists(lists);
+  if (lists.length > 0) {
+    await bulkSavePromptLists(lists);
+  }
   return { count: lists.length, skipped };
 }
 
-async function importCollectionFromText(text: string): Promise<{ prompts: number; lists: number }> {
+async function importCollectionFromText(
+  text: string,
+): Promise<{ prompts: number; lists: number }> {
   const entries: PromptEntry[] = [];
   const listEntries: PromptListEntry[] = [];
   for (const raw of text.split("\n")) {
     const line = raw.trim();
-    if (!line) continue;
+    if (!line) {
+      continue;
+    }
     try {
       const obj = JSON.parse(line) as Record<string, unknown>;
-      if (obj.type === "prompt" && typeof obj.text === "string" && obj.text.trim()) {
+      if (
+        obj.type === "prompt" &&
+        typeof obj.text === "string" &&
+        obj.text.trim()
+      ) {
         entries.push({
           id: newId(),
-          name: typeof obj.name === "string" ? obj.name || "Imported" : "Imported",
+          name:
+            typeof obj.name === "string" ? obj.name || "Imported" : "Imported",
           text: obj.text.trim(),
           createdAt: now(),
           updatedAt: now(),
         });
-      } else if (obj.type === "prompt_list" && Array.isArray(obj.items) && obj.items.length > 0) {
+      } else if (
+        obj.type === "prompt_list" &&
+        Array.isArray(obj.items) &&
+        obj.items.length > 0
+      ) {
         const items = (obj.items as unknown[]).filter(
           (x): x is string => typeof x === "string" && x.trim().length > 0,
         );
         if (items.length > 0) {
           listEntries.push({
             id: newId(),
-            name: typeof obj.name === "string" ? obj.name || "Imported" : "Imported",
+            name:
+              typeof obj.name === "string"
+                ? obj.name || "Imported"
+                : "Imported",
             items,
             createdAt: now(),
             updatedAt: now(),
@@ -1073,8 +1275,12 @@ async function importCollectionFromText(text: string): Promise<{ prompts: number
       /* */
     }
   }
-  if (entries.length > 0) await bulkSavePromptEntries(entries);
-  if (listEntries.length > 0) await bulkSavePromptLists(listEntries);
+  if (entries.length > 0) {
+    await bulkSavePromptEntries(entries);
+  }
+  if (listEntries.length > 0) {
+    await bulkSavePromptLists(listEntries);
+  }
   return { prompts: entries.length, lists: listEntries.length };
 }
 
@@ -1084,7 +1290,12 @@ type ExportFormat = "jsonl" | "csv";
 type ExportModalCtx =
   | { kind: "prompt"; entry: PromptEntry }
   | { kind: "list"; entry: PromptListEntry }
-  | { kind: "bulk"; tab: Tab; prompts: PromptEntry[]; lists: PromptListEntry[] };
+  | {
+      kind: "bulk";
+      tab: Tab;
+      prompts: PromptEntry[];
+      lists: PromptListEntry[];
+    };
 
 function ExportModal({
   ctx,
@@ -1099,37 +1310,65 @@ function ExportModal({
   const csvAvailable = scope === "single";
 
   useEffect(() => {
-    if (!csvAvailable) setFormat("jsonl");
+    if (!csvAvailable) {
+      setFormat("jsonl");
+    }
   }, [csvAvailable]);
 
   const handleExport = useCallback(async () => {
     try {
       if (ctx.kind === "prompt") {
-        if (scope === "training") await exportPromptTrainingJsonl(ctx.entry);
-        else if (format === "csv") await exportPromptCsv(ctx.entry);
-        else await exportPromptJsonl(ctx.entry);
+        if (scope === "training") {
+          await exportPromptTrainingJsonl(ctx.entry);
+        } else if (format === "csv") {
+          await exportPromptCsv(ctx.entry);
+        } else {
+          await exportPromptJsonl(ctx.entry);
+        }
       } else if (ctx.kind === "list") {
-        if (scope === "training") await exportListTrainingJsonl(ctx.entry);
-        else if (format === "csv") await exportListCsv(ctx.entry);
-        else await exportListJsonl(ctx.entry);
+        if (scope === "training") {
+          await exportListTrainingJsonl(ctx.entry);
+        } else if (format === "csv") {
+          await exportListCsv(ctx.entry);
+        } else {
+          await exportListJsonl(ctx.entry);
+        }
       } else {
         const { tab, prompts, lists } = ctx;
         if (scope === "training") {
           if (tab === "prompts") {
-            if (prompts.length === 0) { toast.info("No prompts to export"); return; }
+            if (prompts.length === 0) {
+              toast.info("No prompts to export");
+              return;
+            }
             await exportPromptsTrainingJsonl(prompts);
           } else {
-            if (lists.length === 0) { toast.info("No prompt lists to export"); return; }
+            if (lists.length === 0) {
+              toast.info("No prompt lists to export");
+              return;
+            }
             await exportListsTrainingJsonl(lists);
           }
         } else if (tab === "prompts") {
-          if (prompts.length === 0) { toast.info("No prompts to export"); return; }
-          if (format === "csv") await exportAllPromptsCsv(prompts);
-          else await exportAllPromptsJsonl(prompts);
+          if (prompts.length === 0) {
+            toast.info("No prompts to export");
+            return;
+          }
+          if (format === "csv") {
+            await exportAllPromptsCsv(prompts);
+          } else {
+            await exportAllPromptsJsonl(prompts);
+          }
         } else {
-          if (lists.length === 0) { toast.info("No prompt lists to export"); return; }
-          if (format === "csv") await exportAllListsCsv(lists);
-          else await exportAllListsJsonl(lists);
+          if (lists.length === 0) {
+            toast.info("No prompt lists to export");
+            return;
+          }
+          if (format === "csv") {
+            await exportAllListsCsv(lists);
+          } else {
+            await exportAllListsJsonl(lists);
+          }
         }
       }
       onClose();
@@ -1161,13 +1400,17 @@ function ExportModal({
           : "One JSONL or CSV record per saved list";
 
   return (
-    <Dialog open onOpenChange={onClose}>
+    <Dialog open={true} onOpenChange={onClose}>
       {/* */}
       <DialogContent className="sm:max-w-[520px] gap-0 p-0 overflow-hidden">
         <div className="flex flex-col gap-5 p-6">
           {/* */}
-          <DialogTitle className="text-base font-semibold tracking-tight">Export</DialogTitle>
-          <DialogDescription className="sr-only">Choose export type and format.</DialogDescription>
+          <DialogTitle className="text-base font-semibold tracking-tight">
+            Export
+          </DialogTitle>
+          <DialogDescription className="sr-only">
+            Choose export type and format.
+          </DialogDescription>
 
           {/* */}
           <div className="flex flex-col gap-2">
@@ -1193,8 +1436,12 @@ function ExportModal({
                   className="accent-primary shrink-0"
                 />
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold leading-none">{singleLabel}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">{singleDesc}</p>
+                  <p className="text-sm font-semibold leading-none">
+                    {singleLabel}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {singleDesc}
+                  </p>
                 </div>
               </label>
 
@@ -1216,7 +1463,9 @@ function ExportModal({
                   className="mt-0.5 accent-primary shrink-0"
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold leading-none">Training Style</p>
+                  <p className="text-sm font-semibold leading-none">
+                    Training Style
+                  </p>
                   <p className="mt-1 text-xs text-muted-foreground">
                     ShareGPT format for Unsloth fine-tuning
                   </p>
@@ -1246,7 +1495,8 @@ function ExportModal({
                         : "cursor-pointer",
                       format === f && !disabled
                         ? "bg-background text-foreground shadow-sm ring-1 ring-border/40"
-                        : !disabled && "text-muted-foreground hover:text-foreground",
+                        : !disabled &&
+                            "text-muted-foreground hover:text-foreground",
                     )}
                   >
                     <input
@@ -1254,7 +1504,11 @@ function ExportModal({
                       name="export-format"
                       value={f}
                       checked={format === f}
-                      onChange={() => { if (!disabled) setFormat(f); }}
+                      onChange={() => {
+                        if (!disabled) {
+                          setFormat(f);
+                        }
+                      }}
                       disabled={disabled}
                       className="sr-only"
                     />
@@ -1307,8 +1561,15 @@ function PromptCard({
   const handleSave = useCallback(async () => {
     const trimName = name.trim();
     const trimText = text.trim();
-    if (!trimText) return;
-    await savePromptEntry({ ...entry, name: trimName || "Untitled Prompt", text: trimText, updatedAt: now() });
+    if (!trimText) {
+      return;
+    }
+    await savePromptEntry({
+      ...entry,
+      name: trimName || "Untitled Prompt",
+      text: trimText,
+      updatedAt: now(),
+    });
     setEditing(false);
     onRefresh();
   }, [entry, name, text, onRefresh]);
@@ -1335,11 +1596,25 @@ function PromptCard({
           className="w-full resize-y rounded-lg border-0 bg-background/80 px-3 py-2 text-sm ring-1 ring-border/60 outline-none focus:ring-ring transition-shadow leading-relaxed"
         />
         <div className="flex gap-2 justify-end">
-          <Button size="sm" variant="ghost" onClick={() => { setName(entry.name); setText(entry.text); setEditing(false); }}>
-            <XIcon className="size-3.5 mr-1" />Cancel
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              setName(entry.name);
+              setText(entry.text);
+              setEditing(false);
+            }}
+          >
+            <XIcon className="size-3.5 mr-1" />
+            Cancel
           </Button>
           <Button size="sm" onClick={handleSave}>
-            <HugeiconsIcon icon={Tick02Icon} strokeWidth={2} className="size-3.5 mr-1" />Save
+            <HugeiconsIcon
+              icon={Tick02Icon}
+              strokeWidth={2}
+              className="size-3.5 mr-1"
+            />
+            Save
           </Button>
         </div>
       </div>
@@ -1352,7 +1627,9 @@ function PromptCard({
         {isPinned ? (
           <BookmarkIcon className="size-3.5 shrink-0 fill-primary text-primary" />
         ) : null}
-        <span className="font-semibold text-sm flex-1 truncate tracking-tight">{entry.name}</span>
+        <span className="font-semibold text-sm flex-1 truncate tracking-tight">
+          {entry.name}
+        </span>
         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 pointer-coarse:opacity-100 transition-opacity">
           <button
             type="button"
@@ -1360,7 +1637,8 @@ function PromptCard({
             className="flex items-center gap-1.5 rounded-lg bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
             title="Load into composer"
           >
-            <PlayIcon className="size-3" />Use
+            <PlayIcon className="size-3" />
+            Use
           </button>
           <div className="mx-1 h-4 w-px bg-border/60" />
           <button
@@ -1404,18 +1682,25 @@ function PromptCard({
           </button>
         </div>
       </div>
-      <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">{entry.text}</p>
+      <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">
+        {entry.text}
+      </p>
     </div>
   );
 }
 
-function NewPromptForm({ onClose, onRefresh }: { onClose: () => void; onRefresh: () => void }): ReactElement {
+function NewPromptForm({
+  onClose,
+  onRefresh,
+}: { onClose: () => void; onRefresh: () => void }): ReactElement {
   const [name, setName] = useState("");
   const [text, setText] = useState("");
 
   const handleSave = useCallback(async () => {
     const trimText = text.trim();
-    if (!trimText) return;
+    if (!trimText) {
+      return;
+    }
     const ts = now();
     await savePromptEntry({
       id: newId(),
@@ -1435,7 +1720,6 @@ function NewPromptForm({ onClose, onRefresh }: { onClose: () => void; onRefresh:
         value={name}
         onChange={(e) => setName(e.target.value)}
         placeholder="Prompt name (optional)..."
-        autoFocus
         className="w-full rounded-lg border-0 bg-background/80 px-3 py-2 text-sm ring-1 ring-border/60 outline-none focus:ring-ring transition-shadow"
       />
       <textarea
@@ -1447,10 +1731,16 @@ function NewPromptForm({ onClose, onRefresh }: { onClose: () => void; onRefresh:
       />
       <div className="flex gap-2 justify-end">
         <Button size="sm" variant="ghost" onClick={onClose}>
-          <XIcon className="size-3.5 mr-1" />Cancel
+          <XIcon className="size-3.5 mr-1" />
+          Cancel
         </Button>
         <Button size="sm" onClick={handleSave} disabled={!text.trim()}>
-          <HugeiconsIcon icon={Tick02Icon} strokeWidth={2} className="size-3.5 mr-1" />Save Prompt
+          <HugeiconsIcon
+            icon={Tick02Icon}
+            strokeWidth={2}
+            className="size-3.5 mr-1"
+          />
+          Save Prompt
         </Button>
       </div>
     </div>
@@ -1474,8 +1764,15 @@ function PromptListCard({
 
   const handleSave = useCallback(async () => {
     const filtered = items.filter((t) => t.trim());
-    if (filtered.length === 0) return;
-    await savePromptList({ ...entry, name: name.trim() || "Untitled List", items: filtered, updatedAt: now() });
+    if (filtered.length === 0) {
+      return;
+    }
+    await savePromptList({
+      ...entry,
+      name: name.trim() || "Untitled List",
+      items: filtered,
+      updatedAt: now(),
+    });
     setEditing(false);
     onRefresh();
   }, [entry, name, items, onRefresh]);
@@ -1505,12 +1802,16 @@ function PromptListCard({
           placeholder="List name..."
           className="w-full rounded-lg border-0 bg-background/80 px-3 py-2 text-sm ring-1 ring-border/60 outline-none focus:ring-ring transition-shadow"
         />
-        <p className="text-xs font-semibold text-muted-foreground">Prompts (sent in order)</p>
+        <p className="text-xs font-semibold text-muted-foreground">
+          Prompts (sent in order)
+        </p>
         <div className="flex flex-col gap-2">
           {items.map((item, i) => (
             <div key={i} className="flex items-start gap-2">
               <GripVerticalIcon className="size-4 mt-2.5 shrink-0 text-muted-foreground/30 cursor-grab" />
-              <span className="text-xs font-medium text-muted-foreground/60 mt-2.5 w-5 shrink-0 text-right">{i + 1}.</span>
+              <span className="text-xs font-medium text-muted-foreground/60 mt-2.5 w-5 shrink-0 text-right">
+                {i + 1}.
+              </span>
               <textarea
                 value={item}
                 onChange={(e) => updateItem(i, e.target.value)}
@@ -1534,22 +1835,33 @@ function PromptListCard({
           onClick={addItem}
           className="flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
         >
-          <PlusIcon className="size-3.5" />Add prompt
+          <PlusIcon className="size-3.5" />
+          Add prompt
         </button>
         <div className="flex gap-2 justify-end">
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => { setName(entry.name); setItems(entry.items); setEditing(false); }}
+            onClick={() => {
+              setName(entry.name);
+              setItems(entry.items);
+              setEditing(false);
+            }}
           >
-            <XIcon className="size-3.5 mr-1" />Cancel
+            <XIcon className="size-3.5 mr-1" />
+            Cancel
           </Button>
           <Button
             size="sm"
             onClick={handleSave}
             disabled={items.filter((t) => t.trim()).length === 0}
           >
-            <HugeiconsIcon icon={Tick02Icon} strokeWidth={2} className="size-3.5 mr-1" />Save List
+            <HugeiconsIcon
+              icon={Tick02Icon}
+              strokeWidth={2}
+              className="size-3.5 mr-1"
+            />
+            Save List
           </Button>
         </div>
       </div>
@@ -1559,7 +1871,9 @@ function PromptListCard({
   return (
     <div className="group rounded-xl border border-border/60 bg-card p-4 flex flex-col gap-2.5 hover:border-border hover:shadow-sm transition-all">
       <div className="flex items-center gap-2">
-        <span className="font-semibold text-sm flex-1 truncate tracking-tight">{entry.name}</span>
+        <span className="font-semibold text-sm flex-1 truncate tracking-tight">
+          {entry.name}
+        </span>
         <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-ui-11 font-medium text-muted-foreground">
           {entry.items.length}
         </span>
@@ -1571,7 +1885,8 @@ function PromptListCard({
               className="flex h-7 items-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold text-primary hover:bg-primary/10 transition-colors"
               title="Run list"
             >
-              <PlayIcon className="size-3" />Run
+              <PlayIcon className="size-3" />
+              Run
             </button>
           )}
           <div className="mx-1 h-4 w-px bg-border/60" />
@@ -1603,8 +1918,13 @@ function PromptListCard({
       </div>
       <div className="flex flex-col gap-1">
         {entry.items.slice(0, 3).map((item, i) => (
-          <p key={i} className="text-xs text-muted-foreground flex gap-2 leading-relaxed">
-            <span className="text-muted-foreground/40 shrink-0 tabular-nums">{i + 1}.</span>
+          <p
+            key={i}
+            className="text-xs text-muted-foreground flex gap-2 leading-relaxed"
+          >
+            <span className="text-muted-foreground/40 shrink-0 tabular-nums">
+              {i + 1}.
+            </span>
             <span className="line-clamp-1">{item}</span>
           </p>
         ))}
@@ -1618,13 +1938,18 @@ function PromptListCard({
   );
 }
 
-function NewPromptListForm({ onClose, onRefresh }: { onClose: () => void; onRefresh: () => void }): ReactElement {
+function NewPromptListForm({
+  onClose,
+  onRefresh,
+}: { onClose: () => void; onRefresh: () => void }): ReactElement {
   const [name, setName] = useState("");
   const [items, setItems] = useState<string[]>(["", ""]);
 
   const handleSave = useCallback(async () => {
     const filtered = items.filter((t) => t.trim());
-    if (filtered.length === 0) return;
+    if (filtered.length === 0) {
+      return;
+    }
     const ts = now();
     await savePromptList({
       id: newId(),
@@ -1650,12 +1975,13 @@ function NewPromptListForm({ onClose, onRefresh }: { onClose: () => void; onRefr
 
   return (
     <div className="rounded-xl border border-border/50 bg-muted/30 p-4 flex flex-col gap-3">
-      <p className="text-xs font-semibold text-muted-foreground">New Prompt List</p>
+      <p className="text-xs font-semibold text-muted-foreground">
+        New Prompt List
+      </p>
       <input
         value={name}
         onChange={(e) => setName(e.target.value)}
         placeholder="List name..."
-        autoFocus
         className="w-full rounded-lg border-0 bg-background/80 px-3 py-2 text-sm ring-1 ring-border/60 outline-none focus:ring-ring transition-shadow"
       />
       <p className="text-xs font-semibold text-muted-foreground">
@@ -1664,7 +1990,9 @@ function NewPromptListForm({ onClose, onRefresh }: { onClose: () => void; onRefr
       <div className="flex flex-col gap-2">
         {items.map((item, i) => (
           <div key={i} className="flex items-start gap-2">
-            <span className="text-xs font-medium text-muted-foreground/60 mt-2.5 w-5 shrink-0 text-right">{i + 1}.</span>
+            <span className="text-xs font-medium text-muted-foreground/60 mt-2.5 w-5 shrink-0 text-right">
+              {i + 1}.
+            </span>
             <textarea
               value={item}
               onChange={(e) => updateItem(i, e.target.value)}
@@ -1689,18 +2017,25 @@ function NewPromptListForm({ onClose, onRefresh }: { onClose: () => void; onRefr
         onClick={addItem}
         className="flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
       >
-        <PlusIcon className="size-3.5" />Add another prompt
+        <PlusIcon className="size-3.5" />
+        Add another prompt
       </button>
       <div className="flex gap-2 justify-end">
         <Button size="sm" variant="ghost" onClick={onClose}>
-          <XIcon className="size-3.5 mr-1" />Cancel
+          <XIcon className="size-3.5 mr-1" />
+          Cancel
         </Button>
         <Button
           size="sm"
           onClick={handleSave}
           disabled={items.filter((t) => t.trim()).length === 0}
         >
-          <HugeiconsIcon icon={Tick02Icon} strokeWidth={2} className="size-3.5 mr-1" />Save Prompt List
+          <HugeiconsIcon
+            icon={Tick02Icon}
+            strokeWidth={2}
+            className="size-3.5 mr-1"
+          />
+          Save Prompt List
         </Button>
       </div>
     </div>
@@ -1732,10 +2067,14 @@ export function PromptStorageDialog({
   const [promptLists, setPromptLists] = useState<PromptListEntry[]>([]);
 
   const refreshEntries = useCallback(async () => {
-    try { setPromptEntries(await listPromptEntries()); } catch {}
+    try {
+      setPromptEntries(await listPromptEntries());
+    } catch {}
   }, []);
   const refreshLists = useCallback(async () => {
-    try { setPromptLists(await listPromptLists()); } catch {}
+    try {
+      setPromptLists(await listPromptLists());
+    } catch {}
   }, []);
 
   useEffect(() => {
@@ -1754,22 +2093,29 @@ export function PromptStorageDialog({
 
   const filteredPrompts = useMemo(() => {
     const all = promptEntries ?? [];
-    if (!searchQuery.trim()) return all;
+    if (!searchQuery.trim()) {
+      return all;
+    }
     const q = searchQuery.toLowerCase();
     return all.filter(
-      (e) => e.name.toLowerCase().includes(q) || e.text.toLowerCase().includes(q),
+      (e) =>
+        e.name.toLowerCase().includes(q) || e.text.toLowerCase().includes(q),
     );
   }, [promptEntries, searchQuery]);
 
   const filteredLists = useMemo(() => {
     const all = promptLists ?? [];
-    if (!searchQuery.trim()) return all;
+    if (!searchQuery.trim()) {
+      return all;
+    }
     const q = searchQuery.toLowerCase();
     return all.filter((e) => e.name.toLowerCase().includes(q));
   }, [promptLists, searchQuery]);
 
   const suggestions = useMemo(() => {
-    if (!searchQuery.trim()) return [];
+    if (!searchQuery.trim()) {
+      return [];
+    }
     const q = searchQuery.toLowerCase();
     const source: { name: string }[] =
       activeTab === "prompts" ? (promptEntries ?? []) : (promptLists ?? []);
@@ -1790,7 +2136,9 @@ export function PromptStorageDialog({
   const handleImportFile = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
-      if (!file) return;
+      if (!file) {
+        return;
+      }
       const text = await file.text();
       const isCsv = file.name.toLowerCase().endsWith(".csv");
       try {
@@ -1806,12 +2154,16 @@ export function PromptStorageDialog({
                 void refreshEntries();
                 void refreshLists();
                 if (total > 0) {
-                  toast.success(`Imported ${total} item${total !== 1 ? "s" : ""}`, {
-                    description: `${result.prompts} prompt${result.prompts !== 1 ? "s" : ""}, ${result.lists} list${result.lists !== 1 ? "s" : ""}`,
-                  });
+                  toast.success(
+                    `Imported ${total} item${total !== 1 ? "s" : ""}`,
+                    {
+                      description: `${result.prompts} prompt${result.prompts !== 1 ? "s" : ""}, ${result.lists} list${result.lists !== 1 ? "s" : ""}`,
+                    },
+                  );
                 } else {
                   toast.warning("No items imported", {
-                    description: "The file may be empty or in an unsupported format.",
+                    description:
+                      "The file may be empty or in an unsupported format.",
                   });
                 }
                 e.target.value = "";
@@ -1834,17 +2186,23 @@ export function PromptStorageDialog({
         }
         if (count > 0) {
           toast.success(`Imported ${count} item${count !== 1 ? "s" : ""}`, {
-            description: skipped > 0 ? `${skipped} line${skipped !== 1 ? "s" : ""} skipped (unrecognised format)` : undefined,
+            description:
+              skipped > 0
+                ? `${skipped} line${skipped !== 1 ? "s" : ""} skipped (unrecognised format)`
+                : undefined,
           });
         } else {
           toast.warning("No items imported", {
-            description: skipped > 0
-              ? `${skipped} line${skipped !== 1 ? "s" : ""} could not be parsed.`
-              : "The file may be empty or in an unsupported format.",
+            description:
+              skipped > 0
+                ? `${skipped} line${skipped !== 1 ? "s" : ""} could not be parsed.`
+                : "The file may be empty or in an unsupported format.",
           });
         }
       } catch {
-        toast.error("Import failed", { description: "Could not parse the file." });
+        toast.error("Import failed", {
+          description: "Could not parse the file.",
+        });
       }
       e.target.value = "";
     },
@@ -1852,7 +2210,9 @@ export function PromptStorageDialog({
   );
 
   const bulkExportDisabled =
-    (activeTab === "prompts" ? (promptEntries?.length ?? 0) : (promptLists?.length ?? 0)) === 0;
+    (activeTab === "prompts"
+      ? (promptEntries?.length ?? 0)
+      : (promptLists?.length ?? 0)) === 0;
 
   const openBulkExport = useCallback(() => {
     setExportCtx({
@@ -1866,7 +2226,10 @@ export function PromptStorageDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent showCloseButton={false} className="sm:max-w-[min(1100px,88vw)] max-h-[94dvh] flex flex-col gap-0 p-0 overflow-hidden">
+        <DialogContent
+          showCloseButton={false}
+          className="sm:max-w-[min(1100px,88vw)] max-h-[94dvh] flex flex-col gap-0 p-0 overflow-hidden"
+        >
           {/* */}
           <DialogHeader className="px-6 pt-5 pb-4 shrink-0 border-b border-border/50">
             <div className="flex items-center gap-3">
@@ -1907,7 +2270,7 @@ export function PromptStorageDialog({
                   Export
                 </Button>
                 <div className="ml-1 h-5 w-px bg-border/60 shrink-0" />
-                <DialogClose asChild>
+                <DialogClose asChild={true}>
                   <Button variant="ghost" size="icon-sm">
                     <XIcon className="size-4" />
                     <span className="sr-only">Close</span>
@@ -1943,7 +2306,11 @@ export function PromptStorageDialog({
 
             {/* */}
             <div className="relative">
-              <HugeiconsIcon icon={Search01Icon} strokeWidth={1.75} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground/60" />
+              <HugeiconsIcon
+                icon={Search01Icon}
+                strokeWidth={1.75}
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground/60"
+              />
               <input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -1952,22 +2319,31 @@ export function PromptStorageDialog({
                 placeholder={`Search ${activeTab === "prompts" ? "prompts by name or text" : "prompt lists by name"}…`}
                 className="w-full rounded-lg border-0 bg-muted/50 pl-9 pr-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground/60 transition-shadow"
               />
-              {showSuggestions && searchQuery.trim() !== "" && suggestions.length > 0 && (
-                <div className="absolute top-full left-0 right-0 z-50 mt-1 rounded-xl border border-border/60 bg-popover shadow-lg overflow-hidden">
-                  {suggestions.map((name) => (
-                    <button
-                      key={name}
-                      type="button"
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => { setSearchQuery(name); setShowSuggestions(false); }}
-                      className="flex w-full items-center gap-2.5 px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors text-left"
-                    >
-                      <HugeiconsIcon icon={Search01Icon} strokeWidth={1.75} className="size-3 shrink-0 text-muted-foreground/60" />
-                      <span className="truncate">{name}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
+              {showSuggestions &&
+                searchQuery.trim() !== "" &&
+                suggestions.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 z-50 mt-1 rounded-xl border border-border/60 bg-popover shadow-lg overflow-hidden">
+                    {suggestions.map((name) => (
+                      <button
+                        key={name}
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => {
+                          setSearchQuery(name);
+                          setShowSuggestions(false);
+                        }}
+                        className="flex w-full items-center gap-2.5 px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors text-left"
+                      >
+                        <HugeiconsIcon
+                          icon={Search01Icon}
+                          strokeWidth={1.75}
+                          className="size-3 shrink-0 text-muted-foreground/60"
+                        />
+                        <span className="truncate">{name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
             </div>
           </div>
 
@@ -1975,129 +2351,151 @@ export function PromptStorageDialog({
           <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-6 flex flex-col gap-2.5">
             {activeTab === "prompts" && (
               <>
-                {!showNewPrompt ? (
+                {showNewPrompt ? (
+                  <NewPromptForm
+                    onClose={() => setShowNewPrompt(false)}
+                    onRefresh={refreshEntries}
+                  />
+                ) : (
                   <button
                     type="button"
                     onClick={() => setShowNewPrompt(true)}
                     className="flex items-center gap-2.5 rounded-xl border-2 border-dashed border-border/40 px-4 py-3 text-sm font-medium text-muted-foreground hover:border-border hover:text-foreground hover:bg-muted/50 transition-all"
                   >
-                    <PlusIcon className="size-4" />New Prompt
+                    <PlusIcon className="size-4" />
+                    New Prompt
                   </button>
-                ) : (
-                  <NewPromptForm onClose={() => setShowNewPrompt(false)} onRefresh={refreshEntries} />
                 )}
 
-                {filteredPrompts.length > 0 ? (
-                  filteredPrompts.map((entry) => (
-                    <PromptCard
-                      key={entry.id}
-                      entry={entry}
-                      onUse={handleUsePrompt}
-                      onExport={(e) => setExportCtx({ kind: "prompt", entry: e })}
-                      onRefresh={refreshEntries}
-                    />
-                  ))
-                ) : (
-                  !showNewPrompt && (
-                    <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
-                      {searchQuery.trim() ? (
-                        <>
-                          <div className="flex size-12 items-center justify-center rounded-2xl bg-muted/60">
-                            <HugeiconsIcon icon={Search01Icon} strokeWidth={1.75} className="size-5 text-muted-foreground/40" />
-                          </div>
-                          <div className="flex flex-col gap-1">
-                            <p className="text-sm font-medium text-muted-foreground">
-                              No prompts match &ldquo;{searchQuery}&rdquo;
-                            </p>
-                            <button
-                              type="button"
-                              onClick={() => setSearchQuery("")}
-                              className="text-xs text-primary hover:underline"
-                            >
-                              Clear search
-                            </button>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div className="flex size-12 items-center justify-center rounded-2xl bg-muted/60">
-                            <BookmarkIcon className="size-5 text-muted-foreground/40" />
-                          </div>
-                          <div className="flex flex-col gap-1">
-                            <p className="text-sm font-medium text-muted-foreground">No saved prompts yet</p>
-                            <p className="text-xs text-muted-foreground/60">
-                              Save prompts you use often for quick reuse
-                            </p>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  )
-                )}
+                {filteredPrompts.length > 0
+                  ? filteredPrompts.map((entry) => (
+                      <PromptCard
+                        key={entry.id}
+                        entry={entry}
+                        onUse={handleUsePrompt}
+                        onExport={(e) =>
+                          setExportCtx({ kind: "prompt", entry: e })
+                        }
+                        onRefresh={refreshEntries}
+                      />
+                    ))
+                  : !showNewPrompt && (
+                      <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
+                        {searchQuery.trim() ? (
+                          <>
+                            <div className="flex size-12 items-center justify-center rounded-2xl bg-muted/60">
+                              <HugeiconsIcon
+                                icon={Search01Icon}
+                                strokeWidth={1.75}
+                                className="size-5 text-muted-foreground/40"
+                              />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <p className="text-sm font-medium text-muted-foreground">
+                                No prompts match &ldquo;{searchQuery}&rdquo;
+                              </p>
+                              <button
+                                type="button"
+                                onClick={() => setSearchQuery("")}
+                                className="text-xs text-primary hover:underline"
+                              >
+                                Clear search
+                              </button>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="flex size-12 items-center justify-center rounded-2xl bg-muted/60">
+                              <BookmarkIcon className="size-5 text-muted-foreground/40" />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <p className="text-sm font-medium text-muted-foreground">
+                                No saved prompts yet
+                              </p>
+                              <p className="text-xs text-muted-foreground/60">
+                                Save prompts you use often for quick reuse
+                              </p>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
               </>
             )}
 
             {activeTab === "lists" && (
               <>
-                {!showNewList ? (
+                {showNewList ? (
+                  <NewPromptListForm
+                    onClose={() => setShowNewList(false)}
+                    onRefresh={refreshLists}
+                  />
+                ) : (
                   <button
                     type="button"
                     onClick={() => setShowNewList(true)}
                     className="flex items-center gap-2.5 rounded-xl border-2 border-dashed border-border/40 px-4 py-3 text-sm font-medium text-muted-foreground hover:border-border hover:text-foreground hover:bg-muted/50 transition-all"
                   >
-                    <PlusIcon className="size-4" />New Prompt List
+                    <PlusIcon className="size-4" />
+                    New Prompt List
                   </button>
-                ) : (
-                  <NewPromptListForm onClose={() => setShowNewList(false)} onRefresh={refreshLists} />
                 )}
 
-                {filteredLists.length > 0 ? (
-                  filteredLists.map((entry) => (
-                    <PromptListCard
-                      key={entry.id}
-                      entry={entry}
-                      onRunList={onRunList}
-                      onExport={(e) => setExportCtx({ kind: "list", entry: e })}
-                      onRefresh={refreshLists}
-                    />
-                  ))
-                ) : (
-                  !showNewList && (
-                    <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
-                      {searchQuery.trim() ? (
-                        <>
-                          <div className="flex size-12 items-center justify-center rounded-2xl bg-muted/60">
-                            <HugeiconsIcon icon={Search01Icon} strokeWidth={1.75} className="size-5 text-muted-foreground/40" />
-                          </div>
-                          <div className="flex flex-col gap-1">
-                            <p className="text-sm font-medium text-muted-foreground">
-                              No prompt lists match &ldquo;{searchQuery}&rdquo;
-                            </p>
-                            <button
-                              type="button"
-                              onClick={() => setSearchQuery("")}
-                              className="text-xs text-primary hover:underline"
-                            >
-                              Clear search
-                            </button>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div className="flex size-12 items-center justify-center rounded-2xl bg-muted/60">
-                            <LayoutListIcon className="size-5 text-muted-foreground/40" />
-                          </div>
-                          <div className="flex flex-col gap-1">
-                            <p className="text-sm font-medium text-muted-foreground">No prompt lists yet</p>
-                            <p className="text-xs text-muted-foreground/60">
-                              A prompt list queues a sequence of prompts for quick reuse
-                            </p>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  )
-                )}
+                {filteredLists.length > 0
+                  ? filteredLists.map((entry) => (
+                      <PromptListCard
+                        key={entry.id}
+                        entry={entry}
+                        onRunList={onRunList}
+                        onExport={(e) =>
+                          setExportCtx({ kind: "list", entry: e })
+                        }
+                        onRefresh={refreshLists}
+                      />
+                    ))
+                  : !showNewList && (
+                      <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
+                        {searchQuery.trim() ? (
+                          <>
+                            <div className="flex size-12 items-center justify-center rounded-2xl bg-muted/60">
+                              <HugeiconsIcon
+                                icon={Search01Icon}
+                                strokeWidth={1.75}
+                                className="size-5 text-muted-foreground/40"
+                              />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <p className="text-sm font-medium text-muted-foreground">
+                                No prompt lists match &ldquo;{searchQuery}
+                                &rdquo;
+                              </p>
+                              <button
+                                type="button"
+                                onClick={() => setSearchQuery("")}
+                                className="text-xs text-primary hover:underline"
+                              >
+                                Clear search
+                              </button>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="flex size-12 items-center justify-center rounded-2xl bg-muted/60">
+                              <LayoutListIcon className="size-5 text-muted-foreground/40" />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <p className="text-sm font-medium text-muted-foreground">
+                                No prompt lists yet
+                              </p>
+                              <p className="text-xs text-muted-foreground/60">
+                                A prompt list queues a sequence of prompts for
+                                quick reuse
+                              </p>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
               </>
             )}
           </div>

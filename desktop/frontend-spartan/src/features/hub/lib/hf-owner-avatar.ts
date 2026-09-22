@@ -1,8 +1,7 @@
-
-import { useEffect, useState } from "react";
+import { useOnlineStatus } from "@/features/hub/hooks/use-online-status";
 import { LruMap } from "@/features/hub/lib/lru-map";
 import { fetchWithTimeout } from "@/features/hub/lib/network";
-import { useOnlineStatus } from "@/features/hub/hooks/use-online-status";
+import { useEffect, useState } from "react";
 
 type AvatarCacheEntry =
   | { kind: "url"; url: string; expiresAt: number }
@@ -60,7 +59,9 @@ function release(): void {
 // entry is kept so its failure count can escalate the next backoff.
 function readCache(name: string): AvatarCacheEntry | null {
   const entry = cache.get(name);
-  if (!entry) return null;
+  if (!entry) {
+    return null;
+  }
   if (entry.kind === "miss-transient" && Date.now() >= entry.until) {
     return null;
   }
@@ -68,7 +69,9 @@ function readCache(name: string): AvatarCacheEntry | null {
 }
 
 function readCachedUrl(name: string): string | null {
-  if (!name) return null;
+  if (!name) {
+    return null;
+  }
   const entry = readCache(name);
   return entry?.kind === "url" ? entry.url : null;
 }
@@ -124,14 +127,20 @@ async function fetchAvatarUrl(
 
 function loadAvatar(name: string): Promise<string | null> {
   const existing = inflight.get(name);
-  if (existing) return existing;
+  if (existing) {
+    return existing;
+  }
   const promise = acquire()
     .then(() => fetchAvatarUrl(name))
     .finally(release)
     .then(
       ({ url, transient }) => {
         if (url) {
-          cache.set(name, { kind: "url", url, expiresAt: Date.now() + URL_TTL_MS });
+          cache.set(name, {
+            kind: "url",
+            url,
+            expiresAt: Date.now() + URL_TTL_MS,
+          });
         } else if (transient) {
           cache.set(name, transientMiss(name));
         } else {
@@ -156,16 +165,20 @@ export function useHfOwnerAvatar(
 ): string | null {
   const key = owner?.trim() ?? "";
   const online = useOnlineStatus();
-  const [state, setState] = useState<{ key: string; url: string | null }>(() => {
-    return { key, url: readCachedUrl(key) };
-  });
+  const [state, setState] = useState<{ key: string; url: string | null }>(
+    () => {
+      return { key, url: readCachedUrl(key) };
+    },
+  );
   const url = state.key === key ? state.url : readCachedUrl(key);
 
   useEffect(() => {
     // When disabled (virtualized list rows), never hit the network: show a
     // cached avatar if one exists, else the colored-initial tile. Keeps the
     // "All publishers" feed from firing a per-row lookup storm.
-    if (!key || !online || !enabled) return;
+    if (!(key && online && enabled)) {
+      return;
+    }
     let cancelled = false;
     let retryTimer: ReturnType<typeof setTimeout> | null = null;
     let fetchTimer: ReturnType<typeof setTimeout> | null = null;
@@ -173,13 +186,17 @@ export function useHfOwnerAvatar(
     const scheduleRetry = (until: number) => {
       const wait = Math.max(until - Date.now(), 0) + 100;
       retryTimer = setTimeout(() => {
-        if (!cancelled) void attempt();
+        if (!cancelled) {
+          void attempt();
+        }
       }, wait);
     };
 
     const runFetch = () => {
       void loadAvatar(key).then((next) => {
-        if (cancelled) return;
+        if (cancelled) {
+          return;
+        }
         setState({ key, url: next });
         if (next == null) {
           const post = readCache(key);
@@ -193,20 +210,28 @@ export function useHfOwnerAvatar(
     const attempt = async () => {
       const cached = readCache(key);
       if (cached?.kind === "url") {
-        if (!cancelled) setState({ key, url: cached.url });
+        if (!cancelled) {
+          setState({ key, url: cached.url });
+        }
         if (cached.expiresAt <= Date.now()) {
           void loadAvatar(key).then((next) => {
-            if (!cancelled && next) setState({ key, url: next });
+            if (!cancelled && next) {
+              setState({ key, url: next });
+            }
           });
         }
         return;
       }
       if (cached?.kind === "miss-permanent") {
-        if (!cancelled) setState({ key, url: null });
+        if (!cancelled) {
+          setState({ key, url: null });
+        }
         return;
       }
       if (cached?.kind === "miss-transient") {
-        if (!cancelled) setState({ key, url: null });
+        if (!cancelled) {
+          setState({ key, url: null });
+        }
         scheduleRetry(cached.until);
         return;
       }
@@ -219,8 +244,12 @@ export function useHfOwnerAvatar(
 
     return () => {
       cancelled = true;
-      if (retryTimer != null) clearTimeout(retryTimer);
-      if (fetchTimer != null) clearTimeout(fetchTimer);
+      if (retryTimer != null) {
+        clearTimeout(retryTimer);
+      }
+      if (fetchTimer != null) {
+        clearTimeout(fetchTimer);
+      }
     };
   }, [key, online, enabled]);
 

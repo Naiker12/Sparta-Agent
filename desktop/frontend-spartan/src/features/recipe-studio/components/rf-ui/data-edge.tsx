@@ -1,14 +1,13 @@
-
-import type { ReactElement } from "react";
 import {
   BaseEdge,
+  type Edge,
+  type EdgeProps,
+  type Position,
   getBezierPath,
   getSmoothStepPath,
   getStraightPath,
-  Position,
-  type Edge,
-  type EdgeProps,
 } from "@xyflow/react";
+import type { ReactElement } from "react";
 
 export type DataEdge = Edge<{
   path?: "auto" | "bezier" | "smoothstep" | "step" | "straight";
@@ -51,12 +50,7 @@ export function DataEdge({
   };
 
   return (
-    <BaseEdge
-      id={id}
-      path={edgePath}
-      markerEnd={markerEnd}
-      style={edgeStyle}
-    />
+    <BaseEdge id={id} path={edgePath} markerEnd={markerEnd} style={edgeStyle} />
   );
 }
 

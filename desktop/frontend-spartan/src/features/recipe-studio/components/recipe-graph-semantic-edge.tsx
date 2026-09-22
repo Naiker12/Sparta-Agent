@@ -1,6 +1,5 @@
-
 import { BaseEdge, type EdgeProps, getSmoothStepPath } from "@xyflow/react";
-import { memo, type ReactElement } from "react";
+import { type ReactElement, memo } from "react";
 
 export const RecipeGraphSemanticEdge = memo(function RecipeGraphSemanticEdge({
   id,
@@ -35,7 +34,8 @@ export const RecipeGraphSemanticEdge = memo(function RecipeGraphSemanticEdge({
       style={{
         strokeDasharray: isActive ? "8 6" : selected ? "7 5" : "6 5",
         strokeWidth: isActive ? 2.4 : selected ? 2.3 : 1.8,
-        stroke: isActive || selected ? "var(--primary)" : "var(--muted-foreground)",
+        stroke:
+          isActive || selected ? "var(--primary)" : "var(--muted-foreground)",
         opacity: isActive ? 1 : selected ? 0.95 : 0.62,
         ...style,
       }}

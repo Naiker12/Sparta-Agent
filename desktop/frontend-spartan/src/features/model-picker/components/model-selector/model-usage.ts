@@ -1,4 +1,3 @@
-
 // Tracks when each model was last loaded so the "Recent" sort can order by usage
 // (distinct from "Downloaded", which orders by the file's download date). Kept in
 // localStorage; ids are lowercased to match how the picker compares them.
@@ -38,7 +37,9 @@ export function loadedAt(times: ModelLoadTimes, id: string): number {
 export function useModelLoadTimes(currentValue?: string): ModelLoadTimes {
   const [times, setTimes] = useState<ModelLoadTimes>(() => readLoadTimes());
   useEffect(() => {
-    if (!currentValue) return;
+    if (!currentValue) {
+      return;
+    }
     queueMicrotask(() => setTimes(recordModelLoaded(currentValue)));
   }, [currentValue]);
   return times;

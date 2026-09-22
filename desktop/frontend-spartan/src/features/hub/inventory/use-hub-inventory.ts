@@ -1,4 +1,3 @@
-
 import {
   type ManagedDownload,
   clearCompletedInventoryHint,
@@ -11,6 +10,10 @@ import {
   dedupeSameSourceHubCacheRows,
   partialSetFromRows,
 } from "./inventory-dedupe";
+import {
+  INVENTORY_FRESHNESS_WINDOW_MS,
+  isInventoryStampFresh,
+} from "./inventory-freshness";
 import {
   type PendingHintReconciliationCommit,
   pendingHintReconciliationNeedsCommit,
@@ -35,10 +38,6 @@ import {
   defaultCapabilities,
   normalizeTimestamp,
 } from "./view-models";
-import {
-  INVENTORY_FRESHNESS_WINDOW_MS,
-  isInventoryStampFresh,
-} from "./inventory-freshness";
 
 export interface HubInventory {
   cachedRows: CachedInventoryRow[];
@@ -89,7 +88,9 @@ function compareCachedRows(
   a: CachedInventoryRow,
   b: CachedInventoryRow,
 ): number {
-  if (Boolean(a.partial) !== Boolean(b.partial)) return a.partial ? 1 : -1;
+  if (Boolean(a.partial) !== Boolean(b.partial)) {
+    return a.partial ? 1 : -1;
+  }
   return a.repoId.localeCompare(b.repoId);
 }
 
@@ -110,8 +111,12 @@ function isReadyForDisplay(source: {
   ready: boolean;
   rows: readonly unknown[];
 }): boolean {
-  if (source.error !== null) return true;
-  if (!source.ready) return false;
+  if (source.error !== null) {
+    return true;
+  }
+  if (!source.ready) {
+    return false;
+  }
   return !(source.loading && source.rows.length === 0);
 }
 
@@ -123,8 +128,12 @@ function hasUnreadyFailure(source: {
 }
 
 function liveInventoryRank(job: ManagedDownload): number {
-  if (job.state === "running" || job.state === "cancelling") return 2;
-  if (job.state === "cancelled" || job.state === "error") return 1;
+  if (job.state === "running" || job.state === "cancelling") {
+    return 2;
+  }
+  if (job.state === "cancelled" || job.state === "error") {
+    return 1;
+  }
   return 0;
 }
 
@@ -132,15 +141,25 @@ function shouldSurfaceLiveJob(
   job: ManagedDownload,
   isDatasetMode: boolean,
 ): boolean {
-  if (isDatasetMode !== (job.kind === "dataset")) return false;
-  if (job.state === "running" || job.state === "cancelling") return true;
-  if (job.state !== "cancelled" && job.state !== "error") return false;
+  if (isDatasetMode !== (job.kind === "dataset")) {
+    return false;
+  }
+  if (job.state === "running" || job.state === "cancelling") {
+    return true;
+  }
+  if (job.state !== "cancelled" && job.state !== "error") {
+    return false;
+  }
   return Math.max(job.downloadedBytes, job.completedBytes) > 0;
 }
 
 function liveJobDisplayBytes(job: ManagedDownload): number {
-  if (job.expectedBytes > 0) return job.expectedBytes;
-  if (job.state === "running" || job.state === "cancelling") return 0;
+  if (job.expectedBytes > 0) {
+    return job.expectedBytes;
+  }
+  if (job.state === "running" || job.state === "cancelling") {
+    return 0;
+  }
   return Math.max(job.downloadedBytes, job.completedBytes, 0);
 }
 
@@ -154,9 +173,13 @@ function createLiveInventoryJobsSelector(isDatasetMode: boolean): (state: {
   return (state) => {
     const selectedByRepo = new Map<string, ManagedDownload>();
     for (const job of Object.values(state.jobs)) {
-      if (!shouldSurfaceLiveJob(job, isDatasetMode)) continue;
+      if (!shouldSurfaceLiveJob(job, isDatasetMode)) {
+        continue;
+      }
       const repoKey = job.repoId.trim().toLowerCase();
-      if (!repoKey) continue;
+      if (!repoKey) {
+        continue;
+      }
       const current = selectedByRepo.get(repoKey);
       if (
         !current ||
@@ -183,7 +206,9 @@ function createLiveInventoryJobsSelector(isDatasetMode: boolean): (state: {
           `${job.kind}\u0001${job.repoId.toLowerCase()}\u0001${job.variant ?? ""}\u0001${job.state}\u0001${job.startedAt}\u0001${job.displayBytes}`,
       )
       .join("\u0002");
-    if (signature === cache.signature) return cache.jobs;
+    if (signature === cache.signature) {
+      return cache.jobs;
+    }
     cache = { signature, jobs };
     return jobs;
   };
@@ -306,7 +331,7 @@ export function useHubInventory(
 
   useEffect(() => {
     const current = pendingForRenderRef.current;
-    if (!current || !pendingInventoryHintsEqual(current, pendingForRender)) {
+    if (!(current && pendingInventoryHintsEqual(current, pendingForRender))) {
       pendingForRenderRef.current = pendingForRender;
     }
   }, [pendingForRender]);
@@ -501,9 +526,13 @@ export function useHubInventory(
 
   const availableSet = useMemo(() => {
     const set = new Set<string>();
-    for (const row of cachedRows) set.add(row.repoId.toLowerCase());
+    for (const row of cachedRows) {
+      set.add(row.repoId.toLowerCase());
+    }
     for (const row of effectiveLocalRows) {
-      if (row.repoId) set.add(row.repoId.toLowerCase());
+      if (row.repoId) {
+        set.add(row.repoId.toLowerCase());
+      }
     }
     return set;
   }, [cachedRows, effectiveLocalRows]);
@@ -635,11 +664,7 @@ export function useHubInventory(
       void refreshDeviceInventory();
     }, 500);
     return () => window.clearTimeout(timer);
-  }, [
-    emptyRevalidationRequired,
-    enabled,
-    refreshDeviceInventory,
-  ]);
+  }, [emptyRevalidationRequired, enabled, refreshDeviceInventory]);
 
   return {
     cachedRows,

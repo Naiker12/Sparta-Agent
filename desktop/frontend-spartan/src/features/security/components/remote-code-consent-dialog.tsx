@@ -1,4 +1,3 @@
-
 import {
   AlertDialog,
   AlertDialogAction,
@@ -116,7 +115,10 @@ function UnsafeFileCard({ file }: { file: UnsafeFile }) {
         {file.level}
       </Badge>
       <span className="flex min-w-0 items-center gap-1 font-mono text-xs text-muted-foreground">
-        <HugeiconsIcon icon={SourceCodeSquareIcon} className="size-3.5 shrink-0" />
+        <HugeiconsIcon
+          icon={SourceCodeSquareIcon}
+          className="size-3.5 shrink-0"
+        />
         <span className="truncate">{file.path}</span>
       </span>
     </div>
@@ -124,7 +126,9 @@ function UnsafeFileCard({ file }: { file: UnsafeFile }) {
 }
 
 function FindingCard({ finding }: { finding: RemoteCodeFinding }) {
-  const fileLabel = finding.line ? `${finding.file}:${finding.line}` : finding.file;
+  const fileLabel = finding.line
+    ? `${finding.file}:${finding.line}`
+    : finding.file;
   const snippet = finding.snippet ?? [];
   return (
     <div className="min-w-0 overflow-hidden rounded-lg border">
@@ -147,7 +151,11 @@ function FindingCard({ finding }: { finding: RemoteCodeFinding }) {
       {snippet.length > 0 ? (
         <div className="min-w-0 overflow-x-auto bg-background py-2 font-mono text-xs leading-relaxed">
           {snippet.map((row) => (
-            <SnippetLine key={row.number} row={row} severity={finding.severity} />
+            <SnippetLine
+              key={row.number}
+              row={row}
+              severity={finding.severity}
+            />
           ))}
         </div>
       ) : finding.evidence ? (
@@ -161,18 +169,21 @@ function FindingCard({ finding }: { finding: RemoteCodeFinding }) {
 
 /** Last path segment of the model id, for display. */
 function modelDisplayName(modelName?: string): string {
-  if (!modelName) return "This model";
+  if (!modelName) {
+    return "This model";
+  }
   return modelName.split("/").pop() || modelName;
 }
 
 /** ` from "<provider>"` clause, rendered only when a provider was resolved. */
 function ProviderSuffix({ provider }: { provider: string | null }) {
-  if (!provider) return null;
+  if (!provider) {
+    return null;
+  }
   return (
     <>
       {" "}
-      from{" "}
-      <span className="font-medium text-foreground">"{provider}"</span>
+      from <span className="font-medium text-foreground">"{provider}"</span>
     </>
   );
 }
@@ -196,7 +207,9 @@ export function RemoteCodeConsentDialog() {
     <AlertDialog
       open={open}
       onOpenChange={(next) => {
-        if (!next) resolve(false);
+        if (!next) {
+          resolve(false);
+        }
       }}
     >
       <AlertDialogContent className="max-w-2xl">
@@ -236,19 +249,19 @@ export function RemoteCodeConsentDialog() {
                       <span className="font-medium text-foreground">
                         {displayName}
                       </span>
-                      <ProviderSuffix provider={provider} />{" "}
-                      contains files that Hugging Face's security scan flagged as
-                      unsafe (for example, a malicious pickle that would run code
-                      when the model loads). It cannot be loaded. The flagged
-                      files were never downloaded.
+                      <ProviderSuffix provider={provider} /> contains files that
+                      Hugging Face's security scan flagged as unsafe (for
+                      example, a malicious pickle that would run code when the
+                      model loads). It cannot be loaded. The flagged files were
+                      never downloaded.
                     </>
                   ) : (
                     <>
                       <span className="font-medium text-foreground">
                         {displayName}
                       </span>
-                      <ProviderSuffix provider={provider} />{" "}
-                      declares custom Python code in its repository.{" "}
+                      <ProviderSuffix provider={provider} /> declares custom
+                      Python code in its repository.{" "}
                       {blocked
                         ? "A security scan flagged CRITICAL issues, so it cannot be enabled."
                         : findings.length > 0
@@ -285,7 +298,7 @@ export function RemoteCodeConsentDialog() {
                 </div>
               ) : null}
 
-              {!malware && !blocked && findings.length === 0 ? (
+              {!(malware || blocked) && findings.length === 0 ? (
                 <p className="text-xs text-muted-foreground">
                   Our automatic scanner did not flag any worrying files, but
                   please double check.

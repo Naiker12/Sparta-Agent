@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -58,7 +57,9 @@ function formatError(error: unknown): string {
 }
 
 function formatFreeSpace(bytes: number | null): string | null {
-  if (bytes === null || !Number.isFinite(bytes)) return null;
+  if (bytes === null || !Number.isFinite(bytes)) {
+    return null;
+  }
   const gb = bytes / 1024 ** 3;
   return gb >= 10 ? `${Math.round(gb)} GB free` : `${gb.toFixed(1)} GB free`;
 }
@@ -122,13 +123,17 @@ export function OnDeviceFoldersDialog({
   }, []);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      return;
+    }
     const timer = window.setTimeout(refreshFolders, 0);
     return () => window.clearTimeout(timer);
   }, [open, refreshFolders]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      return;
+    }
     let cancelled = false;
     // The dialog stays mounted between opens, so re-arm the flag or a reopen
     // shows the previous answer as if it were fresh.
@@ -138,7 +143,9 @@ export function OnDeviceFoldersDialog({
       // rather than offer Change against a location we could not confirm.
       .catch(() => null)
       .then((settings) => {
-        if (cancelled) return;
+        if (cancelled) {
+          return;
+        }
         setDownloadCache(settings);
         setDownloadCacheLoaded(true);
       });
@@ -179,7 +186,9 @@ export function OnDeviceFoldersDialog({
     }
     try {
       const picked = await pickHuggingFaceCacheDir();
-      if (picked) await saveDownloadLocation(picked);
+      if (picked) {
+        await saveDownloadLocation(picked);
+      }
     } catch (err) {
       toast.error("Couldn't open the folder picker", {
         description: formatError(err),
@@ -190,7 +199,9 @@ export function OnDeviceFoldersDialog({
   const handleAdd = useCallback(
     async (rawPath: string) => {
       const nextPath = rawPath.trim();
-      if (!nextPath || pending) return;
+      if (!nextPath || pending) {
+        return;
+      }
       setPending("add");
       setError(null);
       try {
@@ -231,7 +242,9 @@ export function OnDeviceFoldersDialog({
   const handleRemove = useCallback(
     async (folder: ScanFolderInfo) => {
       const key = `remove:${folder.id}` as const;
-      if (pending) return;
+      if (pending) {
+        return;
+      }
       setPending(key);
       setError(null);
       try {
@@ -363,7 +376,9 @@ export function OnDeviceFoldersDialog({
                     value={path}
                     onChange={(event) => setPath(event.target.value)}
                     onKeyDown={(event) => {
-                      if (event.key !== "Enter") return;
+                      if (event.key !== "Enter") {
+                        return;
+                      }
                       event.preventDefault();
                       void handleAdd(path);
                     }}

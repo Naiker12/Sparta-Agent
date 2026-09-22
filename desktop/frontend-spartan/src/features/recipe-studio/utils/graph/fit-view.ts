@@ -1,4 +1,3 @@
-
 import type { FitViewOptions, Node } from "@xyflow/react";
 
 /** Cap auto-fit zoom so the view doesn't punch in too tight on small graphs. */

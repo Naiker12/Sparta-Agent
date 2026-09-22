@@ -1,4 +1,3 @@
-
 import { hasAuthToken } from "@/features/auth";
 import { useEffect } from "react";
 import {
@@ -64,10 +63,14 @@ export function useExportRuntimeLifecycle(): void {
     // what actually fill the log panel. A successful poll marks the stream
     // "connected" so the panel shows "streaming" rather than "connecting...".
     const pollLogsOnce = async () => {
-      if (disposed || !store.getState().isExporting) return;
+      if (disposed || !store.getState().isExporting) {
+        return;
+      }
       try {
         const res = await fetchExportLogs(store.getState().lastSeq);
-        if (disposed) return;
+        if (disposed) {
+          return;
+        }
         store.getState().setConnected(true);
         if (res.entries.length > 0) {
           store.getState().appendLogs(res.entries);
@@ -78,16 +81,22 @@ export function useExportRuntimeLifecycle(): void {
     };
 
     const logPollLoop = async () => {
-      if (disposed || !logPolling) return;
+      if (disposed || !logPolling) {
+        return;
+      }
       await pollLogsOnce();
-      if (disposed || !logPolling) return;
+      if (disposed || !logPolling) {
+        return;
+      }
       logPollTimer = setTimeout(() => {
         void logPollLoop();
       }, LOG_POLL_INTERVAL_MS);
     };
 
     const startLogPolling = () => {
-      if (logPolling || disposed) return;
+      if (logPolling || disposed) {
+        return;
+      }
       logPolling = true;
       void logPollLoop();
     };
@@ -142,8 +151,7 @@ export function useExportRuntimeLifecycle(): void {
         // the run actually ends.
 
         if (
-          !disposed &&
-          !controller.signal.aborted &&
+          !(disposed || controller.signal.aborted) &&
           store.getState().isExporting
         ) {
           reconnectTimer = setTimeout(() => {
@@ -154,10 +162,14 @@ export function useExportRuntimeLifecycle(): void {
     };
 
     const pollStatus = async () => {
-      if (!hasAuthToken()) return;
+      if (!hasAuthToken()) {
+        return;
+      }
       try {
         const status = await getExportStatus();
-        if (disposed) return;
+        if (disposed) {
+          return;
+        }
         store.getState().applyBackendStatus(status);
         if (store.getState().isExporting) {
           void ensureStream();
@@ -172,7 +184,9 @@ export function useExportRuntimeLifecycle(): void {
     // subscribeWithSelector middleware: the base subscribe fires on every change.
     let prevExporting = store.getState().isExporting;
     const unsubscribe = store.subscribe((state) => {
-      if (state.isExporting === prevExporting) return;
+      if (state.isExporting === prevExporting) {
+        return;
+      }
       prevExporting = state.isExporting;
       if (state.isExporting) {
         void ensureStream();

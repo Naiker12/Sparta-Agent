@@ -1,21 +1,3 @@
-
-import {
-  useEffect,
-  useState,
-  useCallback,
-  useRef,
-  useSyncExternalStore,
-} from "react";
-import { isTauri, setApiBase } from "@/lib/api-base";
-import { preflightStaleMessage } from "@/hooks/backend-preflight-message";
-import {
-  copySupportDiagnostics,
-  type CopySupportDiagnosticsResult,
-} from "@/lib/tauri-diagnostics";
-import {
-  clearTauriAuthFailure,
-  getTauriAuthFailure,
-} from "@/features/auth";
 import {
   APP_CLOSING_CANCELLED_EVENT,
   APP_CLOSING_EVENT,
@@ -27,9 +9,23 @@ import {
 import {
   INITIAL_STARTUP_MESSAGE,
   SERVER_STARTUP_MESSAGE,
-  startupMessageFromLog,
   type StartupMessage,
+  startupMessageFromLog,
 } from "@/components/tauri/startup-messages";
+import { clearTauriAuthFailure, getTauriAuthFailure } from "@/features/auth";
+import { preflightStaleMessage } from "@/hooks/backend-preflight-message";
+import { isTauri, setApiBase } from "@/lib/api-base";
+import {
+  type CopySupportDiagnosticsResult,
+  copySupportDiagnostics,
+} from "@/lib/tauri-diagnostics";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import {
   clearServerStopIntent,
   hasServerStopIntent,
@@ -161,7 +157,9 @@ export function useTauriBackend() {
   const closing = useSyncExternalStore(subscribeAppClosing, isAppClosing);
 
   function setBackendStatus(nextStatus: BackendStatus) {
-    if (authFailureRef.current) return;
+    if (authFailureRef.current) {
+      return;
+    }
     statusRef.current = nextStatus;
     setStatus(nextStatus);
   }
@@ -170,14 +168,18 @@ export function useTauriBackend() {
     nextError: string,
     nextStatus: BackendStatus = "error",
   ) {
-    if (authFailureRef.current) return;
+    if (authFailureRef.current) {
+      return;
+    }
     statusRef.current = nextStatus;
     setStatus(nextStatus);
     setError(nextError);
   }
 
   function clearBackendError() {
-    if (authFailureRef.current) return;
+    if (authFailureRef.current) {
+      return;
+    }
     setError(null);
   }
 
@@ -210,18 +212,24 @@ export function useTauriBackend() {
     externalPollAbortedRef.current = false;
     let failures = 0;
     externalPollRef.current = setInterval(async () => {
-      if (externalPollAbortedRef.current) return;
+      if (externalPollAbortedRef.current) {
+        return;
+      }
       try {
         const { invoke } = await import("@tauri-apps/api/core");
         const healthy = await invoke<boolean>("check_health", { port });
-        if (externalPollAbortedRef.current) return;
+        if (externalPollAbortedRef.current) {
+          return;
+        }
         if (healthy) {
           failures = 0;
         } else {
           failures++;
         }
       } catch {
-        if (externalPollAbortedRef.current) return;
+        if (externalPollAbortedRef.current) {
+          return;
+        }
         failures++;
       }
       if (failures >= 3) {
@@ -248,11 +256,14 @@ export function useTauriBackend() {
     try {
       const { invoke } = await import("@tauri-apps/api/core");
 
-      const preflight = await invoke<DesktopPreflightResult>("desktop_preflight");
+      const preflight =
+        await invoke<DesktopPreflightResult>("desktop_preflight");
       switch (preflight.disposition) {
         case "attached_ready": {
           if (!preflight.port) {
-            setBackendError("Desktop preflight found a backend without a port.");
+            setBackendError(
+              "Desktop preflight found a backend without a port.",
+            );
             return;
           }
           setApiBase(preflight.port);
@@ -263,9 +274,11 @@ export function useTauriBackend() {
           startExternalServerPoll(preflight.port);
           return;
         }
-        case "owned_ready":
+        case "owned_ready": {
           if (!preflight.port) {
-            setBackendError("Desktop preflight found an owned backend without a port.");
+            setBackendError(
+              "Desktop preflight found an owned backend without a port.",
+            );
             return;
           }
           setApiBase(preflight.port);
@@ -275,14 +288,16 @@ export function useTauriBackend() {
           setStartupMessage(SERVER_STARTUP_MESSAGE);
           setRunningStatus();
           return;
-        case "managed_ready":
+        }
+        case "managed_ready": {
           setIsExternalServer(false);
           stopExternalServerPoll();
           setBackendStatus("starting");
           await startManagedServer();
           return;
+        }
         case "owned_stale":
-        case "managed_stale":
+        case "managed_stale": {
           setIsExternalServer(false);
           stopExternalServerPoll();
           if (preflight.can_auto_repair) {
@@ -293,14 +308,17 @@ export function useTauriBackend() {
             );
           }
           return;
-        case "external_conflict":
+        }
+        case "external_conflict": {
           setIsExternalServer(false);
           stopExternalServerPoll();
           setBackendError(externalConflictMessage(preflight));
           return;
-        case "not_installed":
+        }
+        case "not_installed": {
           setBackendStatus("not-installed");
           return;
+        }
       }
     } catch (e) {
       setBackendError(String(e));
@@ -342,7 +360,6 @@ export function useTauriBackend() {
       if (startupResult.status === "aborted") {
         return;
       }
-
     } catch (e) {
       const msg = String(e);
       if (msg.includes("already running")) {
@@ -379,7 +396,9 @@ export function useTauriBackend() {
       await startManagedServer();
     } catch (e) {
       const msg = String(e);
-      if (msg.includes("NEEDS_ELEVATION")) return;
+      if (msg.includes("NEEDS_ELEVATION")) {
+        return;
+      }
       setBackendError(msg, "repair-error");
     }
   }
@@ -393,7 +412,9 @@ export function useTauriBackend() {
   // the invoke resolves, so a second tray Stop otherwise runs a second shutdown against the
   // backend the first is still taking down. Mirrors the startingRef guard on the start path.
   async function stopServer() {
-    if (stoppingRef.current) return;
+    if (stoppingRef.current) {
+      return;
+    }
     stoppingRef.current = true;
     try {
       await runStopServer();
@@ -449,7 +470,9 @@ export function useTauriBackend() {
       // NEEDS_ELEVATION is not a real error: the Rust side also emits
       // install-needs-elevation (sets needs-elevation status). Don't race with it
       // by setting install-error here.
-      if (msg.includes("NEEDS_ELEVATION")) return;
+      if (msg.includes("NEEDS_ELEVATION")) {
+        return;
+      }
       setBackendError(msg, "install-error");
     }
   }
@@ -478,16 +501,17 @@ export function useTauriBackend() {
       try {
         const { invoke } = await import("@tauri-apps/api/core");
         await invoke("cancel_pending_elevation");
-      } catch (error) {
-        console.warn("Failed to record elevation cancellation", error);
-      }
+      } catch (_error) {}
     }
     elevationResumeRef.current = null;
     clearBackendError();
     setLogs([]);
     setElevationPackages([]);
     if (resume === "repair") {
-      setBackendError("Repair canceled before system packages were installed.", "repair-error");
+      setBackendError(
+        "Repair canceled before system packages were installed.",
+        "repair-error",
+      );
       return;
     }
     setBackendStatus("not-installed");
@@ -508,38 +532,45 @@ export function useTauriBackend() {
         await startInstall();
       }
     } catch (e) {
-      setBackendError(String(e), resume === "repair" ? "repair-error" : "install-error");
+      setBackendError(
+        String(e),
+        resume === "repair" ? "repair-error" : "install-error",
+      );
     }
   }, [elevationPackages]);
 
-  const copyDiagnostics = useCallback((): Promise<CopySupportDiagnosticsResult> => {
-    const currentStatus = statusRef.current;
-    const flow =
-      currentStatus === "repairing" ||
-      currentStatus === "repair-error" ||
-      (currentStatus === "needs-elevation" && elevationResumeRef.current === "repair")
-        ? "repair"
-        : currentStatus === "installing" ||
-            currentStatus === "install-error" ||
-            currentStatus === "not-installed" ||
-            currentStatus === "needs-elevation"
-          ? "install"
-          : "backend";
+  const copyDiagnostics =
+    useCallback((): Promise<CopySupportDiagnosticsResult> => {
+      const currentStatus = statusRef.current;
+      const flow =
+        currentStatus === "repairing" ||
+        currentStatus === "repair-error" ||
+        (currentStatus === "needs-elevation" &&
+          elevationResumeRef.current === "repair")
+          ? "repair"
+          : currentStatus === "installing" ||
+              currentStatus === "install-error" ||
+              currentStatus === "not-installed" ||
+              currentStatus === "needs-elevation"
+            ? "install"
+            : "backend";
 
-    return copySupportDiagnostics({
-      status: currentStatus,
-      error,
-      currentStepIndex,
-      progressDetail,
-      elevationPackages,
-      lastUiLogLines: logs,
-      flow,
-    });
-  }, [currentStepIndex, elevationPackages, error, logs, progressDetail]);
+      return copySupportDiagnostics({
+        status: currentStatus,
+        error,
+        currentStepIndex,
+        progressDetail,
+        elevationPackages,
+        lastUiLogLines: logs,
+        flow,
+      });
+    }, [currentStepIndex, elevationPackages, error, logs, progressDetail]);
 
   // Initial check on mount after Tauri event listeners are registered.
   useEffect(() => {
-    if (!tauriEventsReady || mountedRef.current) return;
+    if (!tauriEventsReady || mountedRef.current) {
+      return;
+    }
     mountedRef.current = true;
 
     if (!isTauri) {
@@ -551,140 +582,162 @@ export function useTauriBackend() {
 
   // Listen for Tauri events
   useEffect(() => {
-    if (!isTauri) return;
+    if (!isTauri) {
+      return;
+    }
     const cleanup: (() => void)[] = [];
     let disposed = false;
 
-    import("@tauri-apps/api/event").then(({ listen }) => {
-      const registrations: Promise<void>[] = [];
-      function register<T>(
-        event: string,
-        handler: Parameters<typeof listen<T>>[1],
-      ) {
-        registrations.push(
-          listen<T>(event, handler).then((unlisten) => {
-            if (disposed) {
-              unlisten();
-            } else {
-              cleanup.push(unlisten);
-            }
-          }),
-        );
-      }
-
-      register<string>("install-progress", (e) => {
-        setLogs((prev) => [...prev.slice(-499), e.payload]);
-      });
-
-      // install-complete is informational only; does NOT trigger startServer. The
-      // invoke("start_install") success path handles that to avoid races.
-      register<void>("install-complete", () => {
-        setCurrentStepIndex(999); // all steps done
-      });
-
-      register<string>("install-step", (e) => {
-        const stepName = e.payload;
-        if (seenStepsRef.current.has(stepName)) return; // deduplicate
-        seenStepsRef.current.add(stepName);
-        setCurrentStepIndex((prev) => prev + 1);
-        setProgressDetail(null);
-      });
-
-      register<string[]>("install-needs-elevation", (e) => {
-        elevationResumeRef.current = "install";
-        setElevationPackages(e.payload);
-        setBackendStatus("needs-elevation");
-      });
-
-      register<string>("install-progress-detail", (e) => {
-        setProgressDetail(e.payload);
-      });
-
-      register<string>("install-failed", (e) => {
-        setBackendError(e.payload, "install-error");
-      });
-
-      register<string>("repair-progress", (e) => {
-        setLogs((prev) => [...prev.slice(-499), e.payload]);
-      });
-
-      register<string[]>("repair-needs-elevation", (e) => {
-        elevationResumeRef.current = "repair";
-        setElevationPackages(e.payload);
-        setBackendStatus("needs-elevation");
-      });
-
-      register<void>("repair-complete", () => {
-        if (statusRef.current !== "repairing") return;
-        setProgressDetail("Repair complete");
-      });
-
-      register<string>("repair-failed", (e) => {
-        if (statusRef.current !== "repairing") return;
-        setBackendError(e.payload, "repair-error");
-      });
-
-      register<number>("server-port", (e) => {
-        portRef.current = e.payload;
-        // A validated port means startup finished after all, so a later crash is
-        // a real crash and deserves the generic message.
-        startTimedOutRef.current = false;
-        setApiBase(e.payload);
-      });
-
-      register<void>("server-crashed", () => {
-        startingRef.current = false;
-        // Startup already timed out and left a message naming the backend's last
-        // output. That is strictly more actionable than this one, and the kill it
-        // reports is the timeout's own consequence, so keep the detail.
-        if (startTimedOutRef.current) return;
-        setBackendError("Server stopped unexpectedly");
-      });
-
-      // A backend that hangs never closes stdout, so server-crashed never fires and the
-      // startup screen would otherwise spin forever. Payload carries the backend's tail.
-      register<string>("server-start-timeout", (e) => {
-        startingRef.current = false;
-        startTimedOutRef.current = true;
-        setBackendError(e.payload || "The Spartan Agent backend did not start in time");
-      });
-
-      register<string>("server-log", (e) => {
-        setLogs((prev) => [...prev.slice(-499), e.payload]);
-        setStartupMessage((current) => startupMessageFromLog(current, e.payload));
-      });
-
-      // Reaping the backend blocks Rust's quit thread for up to ~15s. Cover the window
-      // for that, or it reads as a freeze.
-      register<void>(APP_CLOSING_EVENT, () => {
-        markAppClosing();
-      });
-
-      register<void>(APP_CLOSING_CANCELLED_EVENT, () => {
-        clearAppClosing();
-      });
-
-      register<void>("tray-toggle-server", () => {
-        if (statusRef.current === "running") {
-          stopServer();
-        } else if (
-          statusRef.current === "stopped" ||
-          statusRef.current === "error"
+    import("@tauri-apps/api/event")
+      .then(({ listen }) => {
+        const registrations: Promise<void>[] = [];
+        function register<T>(
+          event: string,
+          handler: Parameters<typeof listen<T>>[1],
         ) {
-          retry();
+          registrations.push(
+            listen<T>(event, handler).then((unlisten) => {
+              if (disposed) {
+                unlisten();
+              } else {
+                cleanup.push(unlisten);
+              }
+            }),
+          );
+        }
+
+        register<string>("install-progress", (e) => {
+          setLogs((prev) => [...prev.slice(-499), e.payload]);
+        });
+
+        // install-complete is informational only; does NOT trigger startServer. The
+        // invoke("start_install") success path handles that to avoid races.
+        register<void>("install-complete", () => {
+          setCurrentStepIndex(999); // all steps done
+        });
+
+        register<string>("install-step", (e) => {
+          const stepName = e.payload;
+          if (seenStepsRef.current.has(stepName)) {
+            return; // deduplicate
+          }
+          seenStepsRef.current.add(stepName);
+          setCurrentStepIndex((prev) => prev + 1);
+          setProgressDetail(null);
+        });
+
+        register<string[]>("install-needs-elevation", (e) => {
+          elevationResumeRef.current = "install";
+          setElevationPackages(e.payload);
+          setBackendStatus("needs-elevation");
+        });
+
+        register<string>("install-progress-detail", (e) => {
+          setProgressDetail(e.payload);
+        });
+
+        register<string>("install-failed", (e) => {
+          setBackendError(e.payload, "install-error");
+        });
+
+        register<string>("repair-progress", (e) => {
+          setLogs((prev) => [...prev.slice(-499), e.payload]);
+        });
+
+        register<string[]>("repair-needs-elevation", (e) => {
+          elevationResumeRef.current = "repair";
+          setElevationPackages(e.payload);
+          setBackendStatus("needs-elevation");
+        });
+
+        register<void>("repair-complete", () => {
+          if (statusRef.current !== "repairing") {
+            return;
+          }
+          setProgressDetail("Repair complete");
+        });
+
+        register<string>("repair-failed", (e) => {
+          if (statusRef.current !== "repairing") {
+            return;
+          }
+          setBackendError(e.payload, "repair-error");
+        });
+
+        register<number>("server-port", (e) => {
+          portRef.current = e.payload;
+          // A validated port means startup finished after all, so a later crash is
+          // a real crash and deserves the generic message.
+          startTimedOutRef.current = false;
+          setApiBase(e.payload);
+        });
+
+        register<void>("server-crashed", () => {
+          startingRef.current = false;
+          // Startup already timed out and left a message naming the backend's last
+          // output. That is strictly more actionable than this one, and the kill it
+          // reports is the timeout's own consequence, so keep the detail.
+          if (startTimedOutRef.current) {
+            return;
+          }
+          setBackendError("Server stopped unexpectedly");
+        });
+
+        // A backend that hangs never closes stdout, so server-crashed never fires and the
+        // startup screen would otherwise spin forever. Payload carries the backend's tail.
+        register<string>("server-start-timeout", (e) => {
+          startingRef.current = false;
+          startTimedOutRef.current = true;
+          setBackendError(
+            e.payload || "The Spartan Agent backend did not start in time",
+          );
+        });
+
+        register<string>("server-log", (e) => {
+          setLogs((prev) => [...prev.slice(-499), e.payload]);
+          setStartupMessage((current) =>
+            startupMessageFromLog(current, e.payload),
+          );
+        });
+
+        // Reaping the backend blocks Rust's quit thread for up to ~15s. Cover the window
+        // for that, or it reads as a freeze.
+        register<void>(APP_CLOSING_EVENT, () => {
+          markAppClosing();
+        });
+
+        register<void>(APP_CLOSING_CANCELLED_EVENT, () => {
+          clearAppClosing();
+        });
+
+        register<void>("tray-toggle-server", () => {
+          if (statusRef.current === "running") {
+            stopServer();
+          } else if (
+            statusRef.current === "stopped" ||
+            statusRef.current === "error"
+          ) {
+            retry();
+          }
+        });
+
+        Promise.all(registrations)
+          .then(() => {
+            if (!disposed) {
+              setTauriEventsReady(true);
+            }
+          })
+          .catch((error) => {
+            if (!disposed) {
+              setBackendError(String(error));
+            }
+          });
+      })
+      .catch((error) => {
+        if (!disposed) {
+          setBackendError(String(error));
         }
       });
-
-      Promise.all(registrations)
-        .then(() => {
-          if (!disposed) setTauriEventsReady(true);
-        })
-        .catch((error) => {
-          if (!disposed) setBackendError(String(error));
-        });
-    }).catch((error) => {
-      if (!disposed) setBackendError(String(error));
-    });
 
     const onAuthFailed = (event: Event) => {
       const detail =
@@ -695,7 +748,9 @@ export function useTauriBackend() {
     };
     window.addEventListener("tauri-auth-failed", onAuthFailed);
     const authFailure = getTauriAuthFailure();
-    if (authFailure) setAuthFailure(authFailure);
+    if (authFailure) {
+      setAuthFailure(authFailure);
+    }
     cleanup.push(() =>
       window.removeEventListener("tauri-auth-failed", onAuthFailed),
     );
@@ -708,9 +763,21 @@ export function useTauriBackend() {
   }, []);
 
   return {
-    status, logs, error, isExternalServer, closing,
-    currentStepIndex, progressDetail, startupMessage, elevationPackages,
-    startServer, stopServer, startInstall,
-    retry, retryInstall, approveElevation, copyDiagnostics,
+    status,
+    logs,
+    error,
+    isExternalServer,
+    closing,
+    currentStepIndex,
+    progressDetail,
+    startupMessage,
+    elevationPackages,
+    startServer,
+    stopServer,
+    startInstall,
+    retry,
+    retryInstall,
+    approveElevation,
+    copyDiagnostics,
   };
 }

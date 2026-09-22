@@ -1,4 +1,3 @@
-
 import type { CSSProperties } from "react";
 
 export type AdaptiveCardAccentStyle = CSSProperties & {

@@ -1,5 +1,18 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { HugeiconsIcon } from "@hugeicons/react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { authFetch } from "@/features/auth";
+import { useT } from "@/i18n";
+import { cn } from "@/lib/utils";
 import {
   Add01Icon,
   AiMagicIcon,
@@ -14,21 +27,8 @@ import {
   PencilEdit02Icon,
   ReloadIcon,
 } from "@hugeicons/core-free-icons";
-import { authFetch } from "@/features/auth";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { useT } from "@/i18n";
-import { cn } from "@/lib/utils";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 type Task = {
   id: string;
@@ -78,11 +78,17 @@ const TASK_TEMPLATES = [
 ];
 
 function formatInterval(seconds: number | null): string {
-  if (!seconds || seconds <= 0) return "Una vez";
+  if (!seconds || seconds <= 0) {
+    return "Una vez";
+  }
   const mins = Math.round(seconds / 60);
-  if (mins < 60) return `Cada ${mins} min`;
+  if (mins < 60) {
+    return `Cada ${mins} min`;
+  }
   const hours = Math.round(mins / 60);
-  if (hours < 24) return `Cada ${hours} ${hours === 1 ? "hora" : "horas"}`;
+  if (hours < 24) {
+    return `Cada ${hours} ${hours === 1 ? "hora" : "horas"}`;
+  }
   const days = Math.round(hours / 24);
   return `Cada ${days} ${days === 1 ? "día" : "días"}`;
 }
@@ -92,7 +98,9 @@ export function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [title, setTitle] = useState("");
   const [prompt, setPrompt] = useState("");
-  const [selectedPresetMinutes, setSelectedPresetMinutes] = useState<number | null>(60);
+  const [selectedPresetMinutes, setSelectedPresetMinutes] = useState<
+    number | null
+  >(60);
   const [customMinutes, setCustomMinutes] = useState("60");
   const [isCustomInterval, setIsCustomInterval] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -103,7 +111,7 @@ export function TasksPage() {
 
   const activeMinutes = isCustomInterval
     ? Math.max(1, Number(customMinutes) || 60)
-    : selectedPresetMinutes ?? 60;
+    : (selectedPresetMinutes ?? 60);
 
   const refresh = useCallback(async () => {
     setIsLoading(true);
@@ -114,13 +122,14 @@ export function TasksPage() {
         throw new Error(
           response.status === 404
             ? "El servicio de tareas aún no está activo en el backend. Reinicia la aplicación para conectarlo."
-            : `Error al cargar tareas (HTTP ${response.status})`
+            : `Error al cargar tareas (HTTP ${response.status})`,
         );
       }
       const data = await response.json();
       setTasks(data.tasks ?? []);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "No se pudieron cargar las tareas";
+      const msg =
+        e instanceof Error ? e.message : "No se pudieron cargar las tareas";
       setError(msg);
     } finally {
       setIsLoading(false);
@@ -132,7 +141,9 @@ export function TasksPage() {
   }, [refresh]);
 
   const handleCreate = async () => {
-    if (!title.trim() || !prompt.trim() || isCreating) return;
+    if (!(title.trim() && prompt.trim()) || isCreating) {
+      return;
+    }
     setIsCreating(true);
     setError(null);
     try {
@@ -175,12 +186,12 @@ export function TasksPage() {
       });
       if (response.ok) {
         setTasks((prev) =>
-          prev.map((t) => (t.id === task.id ? { ...t, enabled: !t.enabled } : t))
+          prev.map((t) =>
+            t.id === task.id ? { ...t, enabled: !t.enabled } : t,
+          ),
         );
       }
-    } catch (e) {
-      console.error("Error toggling task:", e);
-    }
+    } catch (_e) {}
   };
 
   const handleDelete = async (taskId: string) => {
@@ -194,8 +205,7 @@ export function TasksPage() {
       } else {
         await refresh();
       }
-    } catch (e) {
-      console.error("Error deleting task:", e);
+    } catch (_e) {
     } finally {
       setDeletingId(null);
     }
@@ -208,7 +218,10 @@ export function TasksPage() {
     setSelectedPresetMinutes(template.minutes);
   };
 
-  const activeCount = useMemo(() => tasks.filter((t) => t.enabled).length, [tasks]);
+  const activeCount = useMemo(
+    () => tasks.filter((t) => t.enabled).length,
+    [tasks],
+  );
 
   return (
     <main className="flex w-full flex-1 flex-col gap-6 p-4 sm:p-6 md:p-8 lg:p-10 transition-all">
@@ -217,14 +230,19 @@ export function TasksPage() {
         <div>
           <div className="flex items-center gap-2.5">
             <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <HugeiconsIcon icon={Clock01Icon} strokeWidth={1.75} className="size-5" />
+              <HugeiconsIcon
+                icon={Clock01Icon}
+                strokeWidth={1.75}
+                className="size-5"
+              />
             </div>
             <h1 className="text-3xl font-semibold tracking-tight">
               {t("shell.navigation.tasks") || "Tareas Programadas"}
             </h1>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
-            Guarda y organiza rutinas de análisis, recordatorios y reportes. La ejecución se habilita cuando el motor local esté disponible.
+            Guarda y organiza rutinas de análisis, recordatorios y reportes. La
+            ejecución se habilita cuando el motor local esté disponible.
           </p>
         </div>
 
@@ -239,7 +257,10 @@ export function TasksPage() {
             <HugeiconsIcon
               icon={ReloadIcon}
               strokeWidth={1.75}
-              className={cn("size-3.5", isLoading && "animate-spin text-primary")}
+              className={cn(
+                "size-3.5",
+                isLoading && "animate-spin text-primary",
+              )}
             />
             {isLoading ? "Cargando..." : "Actualizar"}
           </Button>
@@ -249,7 +270,11 @@ export function TasksPage() {
       {/* Error Alert Banner */}
       {error && (
         <div className="flex items-start gap-3 rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
-          <HugeiconsIcon icon={AlertCircleIcon} strokeWidth={1.75} className="mt-0.5 size-5 shrink-0" />
+          <HugeiconsIcon
+            icon={AlertCircleIcon}
+            strokeWidth={1.75}
+            className="mt-0.5 size-5 shrink-0"
+          />
           <div className="flex-1">
             <p className="font-medium">Atención con el servicio de tareas</p>
             <p className="mt-0.5 text-xs opacity-90">{error}</p>
@@ -269,13 +294,21 @@ export function TasksPage() {
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="flex items-center gap-4 rounded-3xl border border-foreground/10 bg-card p-4 ring-1 ring-foreground/5 shadow-xs">
           <div className="flex size-10 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-            <HugeiconsIcon icon={CheckmarkCircle02Icon} strokeWidth={1.75} className="size-5" />
+            <HugeiconsIcon
+              icon={CheckmarkCircle02Icon}
+              strokeWidth={1.75}
+              className="size-5"
+            />
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Tareas Activas</p>
             <div className="mt-0.5 flex items-center gap-2">
-              <span className="text-xl font-bold tracking-tight">{activeCount}</span>
-              <span className="text-xs text-muted-foreground">de {tasks.length} total</span>
+              <span className="text-xl font-bold tracking-tight">
+                {activeCount}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                de {tasks.length} total
+              </span>
               {activeCount > 0 && (
                 <span className="inline-block size-2 rounded-full bg-emerald-500 animate-pulse" />
               )}
@@ -285,23 +318,41 @@ export function TasksPage() {
 
         <div className="flex items-center gap-4 rounded-3xl border border-foreground/10 bg-card p-4 ring-1 ring-foreground/5 shadow-xs">
           <div className="flex size-10 items-center justify-center rounded-2xl bg-sky-500/10 text-sky-600 dark:text-sky-400">
-            <HugeiconsIcon icon={Message01Icon} strokeWidth={1.75} className="size-5" />
+            <HugeiconsIcon
+              icon={Message01Icon}
+              strokeWidth={1.75}
+              className="size-5"
+            />
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">Canal de Notificación</p>
-            <p className="mt-0.5 text-sm font-semibold">Preparado para Chat Spartan</p>
-            <p className="text-[11px] text-muted-foreground">Los resultados aparecerán aquí al activar el ejecutor</p>
+            <p className="text-xs text-muted-foreground">
+              Canal de Notificación
+            </p>
+            <p className="mt-0.5 text-sm font-semibold">
+              Preparado para Chat Spartan
+            </p>
+            <p className="text-[11px] text-muted-foreground">
+              Los resultados aparecerán aquí al activar el ejecutor
+            </p>
           </div>
         </div>
 
         <div className="flex items-center gap-4 rounded-3xl border border-foreground/10 bg-card p-4 ring-1 ring-foreground/5 shadow-xs">
           <div className="flex size-10 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
-            <HugeiconsIcon icon={PencilEdit02Icon} strokeWidth={1.75} className="size-5" />
+            <HugeiconsIcon
+              icon={PencilEdit02Icon}
+              strokeWidth={1.75}
+              className="size-5"
+            />
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Modo Agente</p>
-            <p className="mt-0.5 text-sm font-semibold">Programación guardada</p>
-            <p className="text-[11px] text-muted-foreground">No se ejecutan acciones sin un motor configurado</p>
+            <p className="mt-0.5 text-sm font-semibold">
+              Programación guardada
+            </p>
+            <p className="text-[11px] text-muted-foreground">
+              No se ejecutan acciones sin un motor configurado
+            </p>
           </div>
         </div>
       </section>
@@ -309,8 +360,14 @@ export function TasksPage() {
       {/* Quick Templates Bar */}
       <section className="flex flex-col gap-2.5">
         <div className="flex items-center gap-2">
-          <HugeiconsIcon icon={FlashIcon} strokeWidth={1.75} className="size-4 text-primary" />
-          <h2 className="text-sm font-medium">Plantillas de Automatización Rápida</h2>
+          <HugeiconsIcon
+            icon={FlashIcon}
+            strokeWidth={1.75}
+            className="size-4 text-primary"
+          />
+          <h2 className="text-sm font-medium">
+            Plantillas de Automatización Rápida
+          </h2>
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {TASK_TEMPLATES.map((tmpl, idx) => {
@@ -323,9 +380,16 @@ export function TasksPage() {
               >
                 <div className="flex w-full items-center justify-between">
                   <div className="flex size-7 items-center justify-center rounded-lg bg-primary/10 text-primary transition-transform group-hover:scale-105">
-                    <HugeiconsIcon icon={tmpl.icon} strokeWidth={1.75} className="size-3.5" />
+                    <HugeiconsIcon
+                      icon={tmpl.icon}
+                      strokeWidth={1.75}
+                      className="size-3.5"
+                    />
                   </div>
-                  <Badge variant="outline" className="text-[10px] uppercase tracking-wider">
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] uppercase tracking-wider"
+                  >
                     {tmpl.badge}
                   </Badge>
                 </div>
@@ -336,7 +400,11 @@ export function TasksPage() {
                   {tmpl.prompt}
                 </p>
                 <div className="mt-2.5 flex items-center gap-1 text-[10px] text-muted-foreground">
-                  <HugeiconsIcon icon={Clock01Icon} strokeWidth={1.75} className="size-3" />
+                  <HugeiconsIcon
+                    icon={Clock01Icon}
+                    strokeWidth={1.75}
+                    className="size-3"
+                  />
                   <span>{formatInterval(tmpl.minutes * 60)}</span>
                 </div>
               </button>
@@ -349,7 +417,11 @@ export function TasksPage() {
       <section className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <HugeiconsIcon icon={Clock01Icon} strokeWidth={1.75} className="size-4 text-muted-foreground" />
+            <HugeiconsIcon
+              icon={Clock01Icon}
+              strokeWidth={1.75}
+              className="size-4 text-muted-foreground"
+            />
             <h2 className="text-base font-semibold">Tareas Programadas</h2>
             <Badge variant="secondary" className="text-xs">
               {tasks.length}
@@ -360,11 +432,18 @@ export function TasksPage() {
         {tasks.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-foreground/15 bg-card/50 p-10 text-center">
             <div className="flex size-14 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
-              <HugeiconsIcon icon={Clock01Icon} strokeWidth={1.75} className="size-7 opacity-70" />
+              <HugeiconsIcon
+                icon={Clock01Icon}
+                strokeWidth={1.75}
+                className="size-7 opacity-70"
+              />
             </div>
-            <h3 className="mt-3.5 text-base font-medium">Aún no tienes tareas programadas</h3>
+            <h3 className="mt-3.5 text-base font-medium">
+              Aún no tienes tareas programadas
+            </h3>
             <p className="mt-1 max-w-md text-xs text-muted-foreground">
-              Programa tu primera tarea abajo o selecciona una de las plantillas rápidas para que el agente trabaje de forma autónoma.
+              Programa tu primera tarea abajo o selecciona una de las plantillas
+              rápidas para que el agente trabaje de forma autónoma.
             </p>
           </div>
         ) : (
@@ -378,7 +457,7 @@ export function TasksPage() {
                   key={task.id}
                   className={cn(
                     "flex flex-col rounded-3xl border border-foreground/10 bg-card p-5 ring-1 ring-foreground/5 transition-all shadow-xs",
-                    !task.enabled && "opacity-70 bg-card/60"
+                    !task.enabled && "opacity-70 bg-card/60",
                   )}
                 >
                   <div className="flex items-start justify-between gap-4">
@@ -388,32 +467,48 @@ export function TasksPage() {
                           "mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl",
                           task.enabled
                             ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                            : "bg-muted text-muted-foreground"
+                            : "bg-muted text-muted-foreground",
                         )}
                       >
-                        <HugeiconsIcon icon={PencilEdit02Icon} strokeWidth={1.75} className="size-4.5" />
+                        <HugeiconsIcon
+                          icon={PencilEdit02Icon}
+                          strokeWidth={1.75}
+                          className="size-4.5"
+                        />
                       </div>
 
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="text-base font-semibold tracking-tight">{task.title}</h3>
+                          <h3 className="text-base font-semibold tracking-tight">
+                            {task.title}
+                          </h3>
                           <Badge
                             variant={task.enabled ? "default" : "outline"}
                             className={cn(
                               "text-[10px] gap-1",
-                              task.enabled && "bg-emerald-600 hover:bg-emerald-600 text-white"
+                              task.enabled &&
+                                "bg-emerald-600 hover:bg-emerald-600 text-white",
                             )}
                           >
                             <span
                               className={cn(
                                 "size-1.5 rounded-full",
-                                task.enabled ? "bg-white animate-pulse" : "bg-muted-foreground"
+                                task.enabled
+                                  ? "bg-white animate-pulse"
+                                  : "bg-muted-foreground",
                               )}
                             />
                             {task.enabled ? "Activa" : "Pausada"}
                           </Badge>
-                          <Badge variant="secondary" className="text-[10px] gap-1">
-                            <HugeiconsIcon icon={Clock01Icon} strokeWidth={1.75} className="size-2.5" />
+                          <Badge
+                            variant="secondary"
+                            className="text-[10px] gap-1"
+                          >
+                            <HugeiconsIcon
+                              icon={Clock01Icon}
+                              strokeWidth={1.75}
+                              className="size-2.5"
+                            />
                             {formatInterval(task.intervalSeconds)}
                           </Badge>
                         </div>
@@ -443,7 +538,11 @@ export function TasksPage() {
                         title="Eliminar tarea"
                         className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                       >
-                        <HugeiconsIcon icon={Delete02Icon} strokeWidth={1.75} className="size-4" />
+                        <HugeiconsIcon
+                          icon={Delete02Icon}
+                          strokeWidth={1.75}
+                          className="size-4"
+                        />
                       </Button>
                     </div>
                   </div>
@@ -452,16 +551,28 @@ export function TasksPage() {
                   <div className="mt-3 flex items-center justify-between border-t border-border/50 pt-2.5 text-xs text-muted-foreground">
                     <button
                       type="button"
-                      onClick={() => setExpandedTaskId(isExpanded ? null : task.id)}
+                      onClick={() =>
+                        setExpandedTaskId(isExpanded ? null : task.id)
+                      }
                       className="flex items-center gap-1 font-medium hover:text-foreground transition-colors cursor-pointer"
                     >
                       {isExpanded ? (
                         <>
-                          <HugeiconsIcon icon={ArrowUp01Icon} strokeWidth={1.75} className="size-3.5" /> Ocultar instrucciones del agente
+                          <HugeiconsIcon
+                            icon={ArrowUp01Icon}
+                            strokeWidth={1.75}
+                            className="size-3.5"
+                          />{" "}
+                          Ocultar instrucciones del agente
                         </>
                       ) : (
                         <>
-                          <HugeiconsIcon icon={ArrowDown01Icon} strokeWidth={1.75} className="size-3.5" /> Ver instrucciones completas
+                          <HugeiconsIcon
+                            icon={ArrowDown01Icon}
+                            strokeWidth={1.75}
+                            className="size-3.5"
+                          />{" "}
+                          Ver instrucciones completas
                         </>
                       )}
                     </button>
@@ -486,12 +597,19 @@ export function TasksPage() {
         <CardHeader>
           <div className="flex items-center gap-2">
             <div className="flex size-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <HugeiconsIcon icon={Add01Icon} strokeWidth={1.75} className="size-4" />
+              <HugeiconsIcon
+                icon={Add01Icon}
+                strokeWidth={1.75}
+                className="size-4"
+              />
             </div>
-            <CardTitle className="text-lg">Programar Nueva Tarea Agéntica</CardTitle>
+            <CardTitle className="text-lg">
+              Programar Nueva Tarea Agéntica
+            </CardTitle>
           </div>
           <CardDescription>
-            Define qué acción deseas que el agente ejecute de forma autónoma y con qué frecuencia.
+            Define qué acción deseas que el agente ejecute de forma autónoma y
+            con qué frecuencia.
           </CardDescription>
         </CardHeader>
 
@@ -513,7 +631,8 @@ export function TasksPage() {
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <label className="text-xs font-medium text-foreground">
-                Instrucciones del Agente <span className="text-destructive">*</span>
+                Instrucciones del Agente{" "}
+                <span className="text-destructive">*</span>
               </label>
               <span className="text-[11px] text-muted-foreground">
                 Sé claro con el objetivo y el formato esperado
@@ -536,7 +655,8 @@ export function TasksPage() {
             {/* Quick Presets Pills */}
             <div className="flex flex-wrap items-center gap-2">
               {FREQUENCY_PRESETS.map((preset) => {
-                const isSelected = !isCustomInterval && selectedPresetMinutes === preset.minutes;
+                const isSelected =
+                  !isCustomInterval && selectedPresetMinutes === preset.minutes;
                 return (
                   <button
                     key={preset.minutes}
@@ -549,10 +669,14 @@ export function TasksPage() {
                       "flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-medium border transition-all cursor-pointer",
                       isSelected
                         ? "border-primary bg-primary text-primary-foreground shadow-xs"
-                        : "border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground"
+                        : "border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground",
                     )}
                   >
-                    <HugeiconsIcon icon={Clock01Icon} strokeWidth={1.75} className="size-3" />
+                    <HugeiconsIcon
+                      icon={Clock01Icon}
+                      strokeWidth={1.75}
+                      className="size-3"
+                    />
                     {preset.label}
                   </button>
                 );
@@ -565,7 +689,7 @@ export function TasksPage() {
                   "rounded-xl px-3 py-1.5 text-xs font-medium border transition-all cursor-pointer",
                   isCustomInterval
                     ? "border-primary bg-primary text-primary-foreground shadow-xs"
-                    : "border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground"
+                    : "border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground",
                 )}
               >
                 Personalizado
@@ -583,7 +707,9 @@ export function TasksPage() {
                   placeholder="Minutos"
                   className="rounded-xl h-9 text-sm"
                 />
-                <span className="text-xs text-muted-foreground shrink-0">minutos por ciclo</span>
+                <span className="text-xs text-muted-foreground shrink-0">
+                  minutos por ciclo
+                </span>
               </div>
             )}
           </div>
@@ -591,21 +717,34 @@ export function TasksPage() {
 
         <div className="flex items-center justify-between border-t border-border/60 px-6 py-4">
           <p className="text-xs text-muted-foreground">
-            Se ejecutará: <strong className="text-foreground">{formatInterval(activeMinutes * 60)}</strong>
+            Se ejecutará:{" "}
+            <strong className="text-foreground">
+              {formatInterval(activeMinutes * 60)}
+            </strong>
           </p>
 
           <Button
             onClick={() => void handleCreate()}
-            disabled={!title.trim() || !prompt.trim() || isCreating}
+            disabled={!(title.trim() && prompt.trim()) || isCreating}
             className="gap-2 rounded-full px-5"
           >
             {isCreating ? (
               <>
-                <HugeiconsIcon icon={ReloadIcon} strokeWidth={1.75} className="size-4 animate-spin" /> Guardando...
+                <HugeiconsIcon
+                  icon={ReloadIcon}
+                  strokeWidth={1.75}
+                  className="size-4 animate-spin"
+                />{" "}
+                Guardando...
               </>
             ) : (
               <>
-                <HugeiconsIcon icon={Add01Icon} strokeWidth={1.75} className="size-4" /> Crear Tarea Programada
+                <HugeiconsIcon
+                  icon={Add01Icon}
+                  strokeWidth={1.75}
+                  className="size-4"
+                />{" "}
+                Crear Tarea Programada
               </>
             )}
           </Button>

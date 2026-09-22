@@ -110,7 +110,8 @@ export const shell = {
     manageChats: "Gestionar chats...",
     clearAllChats: "Eliminar todos los chats...",
     clearAllChatsTitle: "Eliminar todos los chats",
-    clearAllChatsDescription: "¿Eliminar todos los chats? Esta acción no se puede deshacer.",
+    clearAllChatsDescription:
+      "¿Eliminar todos los chats? Esta acción no se puede deshacer.",
     clearAllChatsConfirm: "Eliminar todo",
     clearAllChatsSuccess: "Todos los chats eliminados",
     clearAllChatsFailed: "No se pudieron eliminar todos los chats",

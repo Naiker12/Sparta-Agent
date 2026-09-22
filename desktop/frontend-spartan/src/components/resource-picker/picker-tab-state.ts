@@ -1,4 +1,3 @@
-
 export const PICKER_TAB = {
   device: "device",
   hub: "hub",

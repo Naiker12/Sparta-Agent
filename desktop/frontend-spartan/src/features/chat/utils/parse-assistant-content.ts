@@ -1,4 +1,3 @@
-
 import type { ChatModelRunResult } from "@assistant-ui/react";
 
 type ContentPart = NonNullable<ChatModelRunResult["content"]>[number];
@@ -16,17 +15,23 @@ export function extractDeltaText(delta: unknown): {
   structuredReasoningContinues: boolean;
 } {
   const extractReasoningText = (payload: unknown): string => {
-    if (typeof payload === "string") return payload;
+    if (typeof payload === "string") {
+      return payload;
+    }
     if (Array.isArray(payload)) {
       return payload.map((item) => extractReasoningText(item)).join("");
     }
-    if (!payload || typeof payload !== "object") return "";
+    if (!payload || typeof payload !== "object") {
+      return "";
+    }
 
     const obj = payload as Record<string, unknown>;
     for (const key of ["thinking", "text", "content", "reasoning", "summary"]) {
       if (key in obj) {
         const text = extractReasoningText(obj[key]);
-        if (text) return text;
+        if (text) {
+          return text;
+        }
       }
     }
     return "";
@@ -49,7 +54,9 @@ export function extractDeltaText(delta: unknown): {
       }
       continue;
     }
-    if (!part || typeof part !== "object") continue;
+    if (!part || typeof part !== "object") {
+      continue;
+    }
     const obj = part as {
       type?: string;
       text?: string;
@@ -82,7 +89,9 @@ export function extractDeltaText(delta: unknown): {
 // text` fails (TS2540). Replace the last element with a merged object instead.
 
 export function appendTextPart(parts: ContentPart[], text: string): void {
-  if (!text) return;
+  if (!text) {
+    return;
+  }
   const last = parts.at(-1);
   if (last?.type === "text") {
     parts[parts.length - 1] = { type: "text", text: last.text + text };
@@ -92,7 +101,9 @@ export function appendTextPart(parts: ContentPart[], text: string): void {
 }
 
 export function appendReasoningPart(parts: ContentPart[], text: string): void {
-  if (!text) return;
+  if (!text) {
+    return;
+  }
   const last = parts.at(-1);
   if (last?.type === "reasoning") {
     parts[parts.length - 1] = { type: "reasoning", text: last.text + text };
@@ -101,9 +112,7 @@ export function appendReasoningPart(parts: ContentPart[], text: string): void {
   parts.push({ type: "reasoning", text });
 }
 
-export function parseAssistantContent(
-  raw: string,
-): ContentPart[] {
+export function parseAssistantContent(raw: string): ContentPart[] {
   const parts: ContentPart[] = [];
   if (!raw) {
     return parts;

@@ -1,4 +1,3 @@
-
 /**
  * The `function.arguments` string to replay for a stored tool call.
  *

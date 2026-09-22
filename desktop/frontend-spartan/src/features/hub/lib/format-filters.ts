@@ -1,4 +1,3 @@
-
 export type FormatFilterModelFormat =
   | "gguf"
   | "safetensors"
@@ -13,15 +12,21 @@ export function matchesFormat(
   modelFormat: boolean | FormatFilterModelFormat | null | undefined,
   formatFilter: FormatFilterValue,
 ): boolean {
-  if (formatFilter === "all") return true;
+  if (formatFilter === "all") {
+    return true;
+  }
   const normalized =
     typeof modelFormat === "boolean"
       ? modelFormat
         ? "gguf"
         : "safetensors"
       : modelFormat;
-  if (formatFilter === "gguf") return normalized === "gguf";
-  if (formatFilter === "mlx") return normalized === "mlx";
+  if (formatFilter === "gguf") {
+    return normalized === "gguf";
+  }
+  if (formatFilter === "mlx") {
+    return normalized === "mlx";
+  }
   return normalized === "safetensors" || normalized === "checkpoint";
 }
 
@@ -30,7 +35,9 @@ export function detectResultFormat(result: {
   tags?: string[];
   libraryName?: string;
 }): FormatFilterModelFormat {
-  if (result.isGguf) return "gguf";
+  if (result.isGguf) {
+    return "gguf";
+  }
   if (
     result.libraryName?.toLowerCase() === "mlx" ||
     result.tags?.some((tag) => tag.toLowerCase() === "mlx")
@@ -51,7 +58,9 @@ export function isUnslothFinetunable(result: {
   id: string;
   quantMethod?: string;
 }): boolean {
-  if (NON_FINETUNABLE_NAME.test(result.id)) return false;
+  if (NON_FINETUNABLE_NAME.test(result.id)) {
+    return false;
+  }
   const quant = result.quantMethod?.toLowerCase();
   return !quant || FINETUNABLE_QUANT.has(quant);
 }

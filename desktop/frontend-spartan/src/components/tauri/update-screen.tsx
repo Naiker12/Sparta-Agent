@@ -1,7 +1,6 @@
-
 import { Spinner } from "@/components/ui/spinner";
-import { useT } from "@/i18n";
 import type { UpdateStatus } from "@/hooks/use-tauri-update";
+import { useT } from "@/i18n";
 import type { CopySupportDiagnosticsResult } from "@/lib/tauri-diagnostics";
 
 import { ChevronDown as ChevronDownIcon } from "@hugeicons/core-free-icons";
@@ -55,7 +54,11 @@ function statusLabel(status: UpdateStatus, t: ReturnType<typeof useT>): string {
   }
 }
 
-function statusSubtext(status: UpdateStatus, progress: number, t: ReturnType<typeof useT>): string {
+function statusSubtext(
+  status: UpdateStatus,
+  progress: number,
+  t: ReturnType<typeof useT>,
+): string {
   switch (status) {
     case "updating-backend":
       return t("update.screen.backendHelp");
@@ -79,8 +82,12 @@ function UpdateDetails({ logs }: { logs: string[] }) {
   return (
     <details className="group mt-2 w-full max-w-sm text-left">
       <summary className="mx-auto flex w-fit cursor-pointer list-none items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
-        <span className="group-open:hidden">{t("update.screen.showDetails")}</span>
-        <span className="hidden group-open:inline">{t("update.screen.hideDetails")}</span>
+        <span className="group-open:hidden">
+          {t("update.screen.showDetails")}
+        </span>
+        <span className="hidden group-open:inline">
+          {t("update.screen.hideDetails")}
+        </span>
         <HugeiconsIcon
           icon={ChevronDownIcon}
           aria-hidden="true"
@@ -119,14 +126,13 @@ export function UpdateScreen({
         setManualMessage(null);
       } else {
         setManualReport(result.report);
-        setManualMessage(
-          result.error ??
-            t("update.screen.copyFailed"),
-        );
+        setManualMessage(result.error ?? t("update.screen.copyFailed"));
       }
     } catch (copyError) {
       setManualReport(null);
-      setManualMessage(t("update.screen.diagnosticsCopyFailed", { error: String(copyError) }));
+      setManualMessage(
+        t("update.screen.diagnosticsCopyFailed", { error: String(copyError) }),
+      );
     } finally {
       setCopying(false);
     }
@@ -191,7 +197,9 @@ export function UpdateScreen({
                   className="rounded-lg bg-muted px-5 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted/80"
                   onClick={() => void handleCopyDiagnostics()}
                 >
-                  {copying ? t("update.screen.copying") : t("update.screen.copyDiagnostics")}
+                  {copying
+                    ? t("update.screen.copying")
+                    : t("update.screen.copyDiagnostics")}
                 </button>
                 <button
                   type="button"
@@ -217,7 +225,7 @@ export function UpdateScreen({
             )}
             {manualReport && (
               <textarea
-                readOnly
+                readOnly={true}
                 value={manualReport}
                 onFocus={(event) => event.currentTarget.select()}
                 className="mt-1 h-32 w-full max-w-md resize-none rounded-lg border border-border/50 bg-muted/30 p-2 text-left font-mono text-ui-10 text-muted-foreground"

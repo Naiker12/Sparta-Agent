@@ -1,4 +1,3 @@
-
 import type {
   RecipeExecutionAnalysis,
   RecipeExecutionStatus,
@@ -142,7 +141,10 @@ export function formatPercent(value: number | null | undefined): string {
   return `${value.toFixed(1)}%`;
 }
 
-export function formatDuration(startedAt: number, finishedAt: number | null): string {
+export function formatDuration(
+  startedAt: number,
+  finishedAt: number | null,
+): string {
   if (!finishedAt || finishedAt <= startedAt) {
     return "--";
   }

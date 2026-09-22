@@ -101,14 +101,12 @@ export function RegisterCompareHandle({
           .thread()
           .append({ role: "user", content, createdAt: new Date() } as never),
       appendMessage: (content) =>
-        aui
-          .thread()
-          .append({
-            role: "user",
-            content,
-            createdAt: new Date(),
-            startRun: false,
-          } as never),
+        aui.thread().append({
+          role: "user",
+          content,
+          createdAt: new Date(),
+          startRun: false,
+        } as never),
       startRun: () => {
         const msgs = aui.thread().getState().messages;
         const lastId = msgs.length > 0 ? msgs[msgs.length - 1].id : null;
@@ -118,13 +116,12 @@ export function RegisterCompareHandle({
       isRunning: () => aui.thread().getState().isRunning,
       waitForRunEnd: () =>
         new Promise<void>((resolve, reject) => {
-          const runtime =
-            aui.threads().__internal_getAssistantRuntime?.();
+          const runtime = aui.threads().__internal_getAssistantRuntime?.();
           const itemState = aui.threadListItem().getState();
           const threadIds = Array.from(
             new Set(
-              [itemState.id, itemState.remoteId].filter(
-                (id): id is string => Boolean(id),
+              [itemState.id, itemState.remoteId].filter((id): id is string =>
+                Boolean(id),
               ),
             ),
           );
@@ -132,7 +129,9 @@ export function RegisterCompareHandle({
           for (const threadId of threadIds) {
             try {
               thread = runtime?.threads.getById(threadId) ?? null;
-              if (thread) break;
+              if (thread) {
+                break;
+              }
             } catch {
               // El alias puede estar retirado; intentar el siguiente.
             }
@@ -145,7 +144,9 @@ export function RegisterCompareHandle({
           let unsubscribe = () => {};
           unsubscribe = thread.subscribe(() => {
             const isRunning = thread.getState().isRunning;
-            if (isRunning) wasRunning = true;
+            if (isRunning) {
+              wasRunning = true;
+            }
             if (wasRunning && !isRunning) {
               unsubscribe();
               resolve();

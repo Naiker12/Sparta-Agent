@@ -1,4 +1,3 @@
-
 import { strFromU8, unzipSync } from "fflate";
 
 export const OPEN_DOCUMENT_SPREADSHEET_MIME =
@@ -197,8 +196,10 @@ function extractOpenDocumentSpreadsheetText(
     )
     .filter(
       (table) =>
-        !isHiddenOpenDocumentElement(table) &&
-        !hasHiddenOpenDocumentTableStyle(table, hiddenTableStyles),
+        !(
+          isHiddenOpenDocumentElement(table) ||
+          hasHiddenOpenDocumentTableStyle(table, hiddenTableStyles)
+        ),
     );
 
   return tables.map(extractOpenDocumentTableText).filter(Boolean).join("\n\n");

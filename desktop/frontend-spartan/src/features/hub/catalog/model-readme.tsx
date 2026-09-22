@@ -1,17 +1,15 @@
-
 import { Spinner } from "@/components/ui/spinner";
 import { useOnlineStatus } from "@/features/hub/hooks/use-online-status";
 import { LruMap } from "@/features/hub/lib/lru-map";
 import { isHuggingFaceOffline } from "@/features/hub/lib/network";
 import { fingerprintToken } from "@/features/hub/lib/token-fingerprint";
+import { useHfTokenStore } from "@/features/hub/stores/hf-token-store";
 import {
   type MarkdownPluginNeeds,
   markdownPluginNeeds,
 } from "@/lib/markdown-plugins";
 import { scheduleIdleTask } from "@/lib/schedule-idle-task";
 import { cn } from "@/lib/utils";
-import { confirmExternalLink } from "../stores/external-link-confirm";
-import { useHfTokenStore } from "@/features/hub/stores/hf-token-store";
 import { code as streamdownCode } from "@streamdown/code";
 import { math as streamdownMath } from "@streamdown/math";
 import { mermaid as streamdownMermaid } from "@streamdown/mermaid";
@@ -24,7 +22,7 @@ import {
   useState,
 } from "react";
 import type { ComponentProps } from "react";
-import { Streamdown, type Components } from "streamdown";
+import { type Components, Streamdown } from "streamdown";
 import {
   createReadmeUrlTransform,
   fetchReadme,
@@ -32,6 +30,7 @@ import {
   stripChromeHeadings,
   stripFrontmatter,
 } from "../lib/hf-readme";
+import { confirmExternalLink } from "../stores/external-link-confirm";
 
 type ReadmePlugins = NonNullable<ComponentProps<typeof Streamdown>["plugins"]>;
 
@@ -77,9 +76,7 @@ interface ResolvedReadmeCacheEntry {
   expiresAt: number;
 }
 
-type ReadmeCacheValue =
-  | ResolvedReadmeCacheEntry
-  | Promise<ReadmeCacheEntry>;
+type ReadmeCacheValue = ResolvedReadmeCacheEntry | Promise<ReadmeCacheEntry>;
 
 const readmeCache = new LruMap<string, ReadmeCacheValue>(64);
 
@@ -122,7 +119,9 @@ function hasReadmeContent(state: Pick<ReadmeState, "body" | "error">): boolean {
 function prepareReadmeBody(markdown: string): string {
   const { body } = stripFrontmatter(markdown);
   const cleaned = stripChromeHeadings(body).trim();
-  if (cleaned.length <= README_RENDER_CHAR_LIMIT) return cleaned;
+  if (cleaned.length <= README_RENDER_CHAR_LIMIT) {
+    return cleaned;
+  }
   return `${cleaned.slice(0, README_RENDER_CHAR_LIMIT).trimEnd()}${README_TRUNCATED_NOTICE}`;
 }
 
@@ -218,26 +217,42 @@ const README_COMPONENTS: Components = {
 };
 
 function readmeLoadingMessage(subject: ReadmeSubject): string {
-  if (subject === "dataset") return "Loading dataset card...";
-  if (subject === "baseModel") return "Loading base model card...";
+  if (subject === "dataset") {
+    return "Loading dataset card...";
+  }
+  if (subject === "baseModel") {
+    return "Loading base model card...";
+  }
   return "Loading model card...";
 }
 
 function readmePreparingMessage(subject: ReadmeSubject): string {
-  if (subject === "dataset") return "Preparing dataset card...";
-  if (subject === "baseModel") return "Preparing base model card...";
+  if (subject === "dataset") {
+    return "Preparing dataset card...";
+  }
+  if (subject === "baseModel") {
+    return "Preparing base model card...";
+  }
   return "Preparing model card...";
 }
 
 function readmeOfflineMessage(subject: ReadmeSubject): string {
-  if (subject === "dataset") return "Dataset card unavailable offline.";
-  if (subject === "baseModel") return "Base model card unavailable offline.";
+  if (subject === "dataset") {
+    return "Dataset card unavailable offline.";
+  }
+  if (subject === "baseModel") {
+    return "Base model card unavailable offline.";
+  }
   return "Model card unavailable offline.";
 }
 
 function readmeMissingMessage(subject: ReadmeSubject): string {
-  if (subject === "dataset") return "This dataset has no README.";
-  if (subject === "baseModel") return "This base model has no README.";
+  if (subject === "dataset") {
+    return "This dataset has no README.";
+  }
+  if (subject === "baseModel") {
+    return "This base model has no README.";
+  }
   return "This repository has no README.";
 }
 
@@ -294,8 +309,12 @@ async function loadReadmeFromCache({
 }): Promise<ReadmeCacheEntry> {
   const cached = readmeCache.get(cacheKey);
   if (cached) {
-    if (isReadmeCachePromise(cached)) return cached;
-    if (cached.expiresAt > Date.now()) return cached.entry;
+    if (isReadmeCachePromise(cached)) {
+      return cached;
+    }
+    if (cached.expiresAt > Date.now()) {
+      return cached.entry;
+    }
     readmeCache.delete(cacheKey);
   }
 
@@ -336,8 +355,12 @@ async function loadReadmeFromCache({
 
 function loadPlugins(needs: MarkdownPluginNeeds): ReadmePlugins {
   const plugins: ReadmePlugins = { code: streamdownCode };
-  if (needs.math) plugins.math = streamdownMath;
-  if (needs.mermaid) plugins.mermaid = streamdownMermaid;
+  if (needs.math) {
+    plugins.math = streamdownMath;
+  }
+  if (needs.mermaid) {
+    plugins.mermaid = streamdownMermaid;
+  }
   return plugins;
 }
 
@@ -359,7 +382,9 @@ export function ModelReadme({
   );
   const [state, setState] = useState<ReadmeState>(() => {
     const cached = readResolvedReadmeCache(stateKey);
-    if (cached) return readmeStateFromEntry(stateKey, cached);
+    if (cached) {
+      return readmeStateFromEntry(stateKey, cached);
+    }
     return {
       key: stateKey,
       body: null,
@@ -374,27 +399,28 @@ export function ModelReadme({
   const cachedState = cachedEntry
     ? readmeStateFromEntry(stateKey, cachedEntry)
     : null;
-  const current = matchingState && hasReadmeContent(matchingState)
-    ? matchingState
-    : cachedState && hasReadmeContent(cachedState)
-      ? cachedState
-      : !online
-        ? {
-            key: stateKey,
-            body: null,
-            baseUrl: null,
-            loading: false,
-            error: readmeOfflineMessage(subject),
-            plugins: null,
-          }
-        : matchingState ?? {
-            key: stateKey,
-            body: null,
-            baseUrl: null,
-            loading: true,
-            error: null,
-            plugins: null,
-          };
+  const current =
+    matchingState && hasReadmeContent(matchingState)
+      ? matchingState
+      : cachedState && hasReadmeContent(cachedState)
+        ? cachedState
+        : online
+          ? (matchingState ?? {
+              key: stateKey,
+              body: null,
+              baseUrl: null,
+              loading: true,
+              error: null,
+              plugins: null,
+            })
+          : {
+              key: stateKey,
+              body: null,
+              baseUrl: null,
+              loading: false,
+              error: readmeOfflineMessage(subject),
+              plugins: null,
+            };
 
   const urlTransform = useMemo(
     () =>
@@ -404,7 +430,9 @@ export function ModelReadme({
 
   useEffect(() => {
     let canceled = false;
-    if (!online) return;
+    if (!online) {
+      return;
+    }
     void loadReadmeFromCache({
       cacheKey: stateKey,
       repoId,
@@ -412,7 +440,9 @@ export function ModelReadme({
       hfToken,
     })
       .then((entry) => {
-        if (canceled) return;
+        if (canceled) {
+          return;
+        }
         startTransition(() => {
           setState({
             key: stateKey,
@@ -425,7 +455,9 @@ export function ModelReadme({
         });
       })
       .catch((err) => {
-        if (canceled) return;
+        if (canceled) {
+          return;
+        }
         startTransition(() => {
           setState({
             key: stateKey,
@@ -454,7 +486,9 @@ export function ModelReadme({
     const body = current.body;
     const baseUrl = current.baseUrl;
     const applyPlugins = (next: ReadmePlugins) => {
-      if (canceled) return;
+      if (canceled) {
+        return;
+      }
       startTransition(() => {
         setState((prev) => {
           if (prev.key === key) {

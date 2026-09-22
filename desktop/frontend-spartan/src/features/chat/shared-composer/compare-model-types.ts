@@ -8,8 +8,8 @@
  * sin dependencias de UI ni de estado React.
  */
 
-import { DRAFT_N_MAX_SPEC_TYPES } from "@/lib/speculative-modes";
 import type { PerModelConfig } from "@/features/model-picker";
+import { DRAFT_N_MAX_SPEC_TYPES } from "@/lib/speculative-modes";
 
 // ---------------------------------------------------------------------------
 // Tipos

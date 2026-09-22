@@ -1,4 +1,3 @@
-
 /**
  * Where the API monitor panel sits so that it does not land on top of another
  * floating panel.
@@ -147,8 +146,7 @@ function candidates(
       // the stack both live along the bottom edge, so a refuge up top is the
       // bigger surprise.
       refugeRank:
-        (anchor.rightSide ? 2 : 0) +
-        (placed.top > viewport.height / 2 ? 0 : 1),
+        (anchor.rightSide ? 2 : 0) + (placed.top > viewport.height / 2 ? 0 : 1),
     };
   });
 }

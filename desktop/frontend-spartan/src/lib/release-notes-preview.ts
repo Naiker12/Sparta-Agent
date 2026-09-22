@@ -1,4 +1,3 @@
-
 // Top release-note bullets, shown in the collapsed update popup.
 import { codeSpans, parkCodeSpans } from "@/lib/markdown-code-spans";
 import { commentClosesBelow } from "@/lib/markdown-inline-comments";
@@ -765,7 +764,7 @@ function contentLines(markdown: string): ContentLine[] {
     // (four columns past its container, outside a paragraph) ends one.
     const startsCode =
       !state.afterParagraph && indent - column >= INDENTED_CODE_INDENT;
-    state.afterParagraph = !HEADING_LINE.test(stripped) && !startsCode;
+    state.afterParagraph = !(HEADING_LINE.test(stripped) || startsCode);
     quote = quoteState(visible, above.inQuote);
     lines.push({ text: stripped.trim(), indent, quoted, column });
   }

@@ -1,4 +1,3 @@
-
 import {
   Popover,
   PopoverContent,
@@ -85,7 +84,9 @@ export function HubOptionMenu<T extends string>({
   const selectIndex = useCallback(
     (index: number) => {
       const option = options[index];
-      if (!option) return;
+      if (!option) {
+        return;
+      }
       onValueChange(option.value);
       closeAndRestoreFocus();
     },
@@ -107,7 +108,9 @@ export function HubOptionMenu<T extends string>({
 
   const handleContentKeyDown = useCallback(
     (event: KeyboardEvent<HTMLDivElement>) => {
-      if (options.length === 0) return;
+      if (options.length === 0) {
+        return;
+      }
       const currentIndex =
         resolvedActiveIndex >= 0 ? resolvedActiveIndex : selectedIndex;
 

@@ -1,4 +1,3 @@
-
 import type { Edge, XYPosition } from "@xyflow/react";
 import type {
   LayoutDirection,
@@ -9,7 +8,6 @@ import type {
   RecipeProcessorConfig,
 } from "../../types";
 import { isSemanticRelation } from "../graph/relations";
-import { getConfigErrors } from "../index";
 import {
   getDefaultDataSourceHandle,
   getDefaultDataTargetHandle,
@@ -21,6 +19,8 @@ import {
   isSemanticTargetHandle,
   normalizeRecipeHandleId,
 } from "../handles";
+import { isLikelyImageValue } from "../image-preview";
+import { getConfigErrors } from "../index";
 import { readNodeWidth } from "../rf-node-dimensions";
 import {
   buildExpressionColumn,
@@ -41,10 +41,9 @@ import {
   validateModelConfigProviders,
   validateSubcategoryConfigs,
   validateTimedeltaConfigs,
-  validateValidatorConfigs,
   validateUsedProviders,
+  validateValidatorConfigs,
 } from "./validate";
-import { isLikelyImageValue } from "../image-preview";
 
 function pushUniqueJson(
   label: string,
@@ -336,19 +335,21 @@ export function buildRecipePayload(
       sourceHandle =
         isSemanticSourceHandle(sourceHandleNormalized) ||
         isDataSourceHandle(sourceHandleNormalized)
-          ? sourceHandleNormalized ?? semanticSourceDefault
+          ? (sourceHandleNormalized ?? semanticSourceDefault)
           : semanticSourceDefault;
       targetHandle =
         isSemanticTargetHandle(targetHandleNormalized) ||
         isDataTargetHandle(targetHandleNormalized)
-          ? targetHandleNormalized ?? semanticTargetDefault
+          ? (targetHandleNormalized ?? semanticTargetDefault)
           : semanticTargetDefault;
     } else {
       sourceHandle = isDataSourceHandle(sourceHandleNormalized)
-        ? sourceHandleNormalized ?? getDefaultDataSourceHandle(layoutDirection)
+        ? (sourceHandleNormalized ??
+          getDefaultDataSourceHandle(layoutDirection))
         : getDefaultDataSourceHandle(layoutDirection);
       targetHandle = isDataTargetHandle(targetHandleNormalized)
-        ? targetHandleNormalized ?? getDefaultDataTargetHandle(layoutDirection)
+        ? (targetHandleNormalized ??
+          getDefaultDataTargetHandle(layoutDirection))
         : getDefaultDataTargetHandle(layoutDirection);
     }
     return [

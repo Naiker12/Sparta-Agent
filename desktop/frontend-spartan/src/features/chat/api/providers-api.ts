@@ -1,8 +1,6 @@
-
-import forge from "node-forge";
 import { authFetch } from "@/features/auth/api";
 import { formatFastApiDetail } from "@/lib/format-fastapi-error";
-
+import forge from "node-forge";
 
 export type ProviderAuthKind = "api_key" | "chatgpt_oauth";
 export type ProviderAuthStatus =
@@ -16,7 +14,10 @@ export interface ProviderRegistryEntry {
   base_url: string;
   default_models: string[];
 
-  model_capabilities?: Record<string, { vision?: boolean; studio_tools?: boolean }>;
+  model_capabilities?: Record<
+    string,
+    { vision?: boolean; studio_tools?: boolean }
+  >;
   supports_streaming: boolean;
   supports_vision: boolean;
   supports_tool_calling: boolean;
@@ -67,9 +68,13 @@ function parseErrorText(status: number, body: unknown): string {
   if (body && typeof body === "object") {
     const detail = (body as { detail?: unknown }).detail;
     const formatted = formatFastApiDetail(detail);
-    if (formatted) return formatted;
+    if (formatted) {
+      return formatted;
+    }
     const message = (body as { message?: unknown }).message;
-    if (typeof message === "string" && message) return message;
+    if (typeof message === "string" && message) {
+      return message;
+    }
   }
   return `Request failed (${status})`;
 }
@@ -83,7 +88,9 @@ async function parseJsonOrThrow<T>(response: Response): Promise<T> {
 }
 
 export function isProviderKeyRotationError(error: unknown): boolean {
-  if (!(error instanceof Error)) return false;
+  if (!(error instanceof Error)) {
+    return false;
+  }
   const normalized = error.message.toLowerCase();
   return (
     normalized.includes("public key may have changed") ||
@@ -137,7 +144,9 @@ export async function listProviderRegistry(): Promise<ProviderRegistryEntry[]> {
   // which carry the studio-tools capability the composer gates on. An older
   // backend ignores the parameter and returns the visible entries, so the
   // capability simply reads as unknown and the pills stay closed.
-  const response = await authFetch("/api/providers/registry?include_hidden=true");
+  const response = await authFetch(
+    "/api/providers/registry?include_hidden=true",
+  );
   return parseJsonOrThrow<ProviderRegistryEntry[]>(response);
 }
 
@@ -155,24 +164,27 @@ export async function createProviderConfig(payload: {
   maxOutputTokens?: number | null;
   apiKey?: string;
 }): Promise<ProviderConfig> {
-  return withApiKeyEncryptionRetry(payload.apiKey ?? "", async (encryptedApiKey) => {
-    const response = await authFetch("/api/providers/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        provider_type: payload.providerType,
-        display_name: payload.displayName,
-        base_url: payload.baseUrl ?? null,
-        models: payload.models ?? [],
-        available_models: payload.availableModels ?? [],
-        ...(payload.maxOutputTokens === undefined
-          ? {}
-          : { max_output_tokens: payload.maxOutputTokens }),
-        encrypted_api_key: encryptedApiKey,
-      }),
-    });
-    return parseJsonOrThrow<ProviderConfig>(response);
-  });
+  return withApiKeyEncryptionRetry(
+    payload.apiKey ?? "",
+    async (encryptedApiKey) => {
+      const response = await authFetch("/api/providers/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          provider_type: payload.providerType,
+          display_name: payload.displayName,
+          base_url: payload.baseUrl ?? null,
+          models: payload.models ?? [],
+          available_models: payload.availableModels ?? [],
+          ...(payload.maxOutputTokens === undefined
+            ? {}
+            : { max_output_tokens: payload.maxOutputTokens }),
+          encrypted_api_key: encryptedApiKey,
+        }),
+      });
+      return parseJsonOrThrow<ProviderConfig>(response);
+    },
+  );
 }
 
 export async function deleteProviderConfig(providerId: string): Promise<void> {
@@ -204,27 +216,40 @@ export async function updateProviderConfig(
     clearApiKey?: boolean;
   },
 ): Promise<ProviderConfig> {
-  return withApiKeyEncryptionRetry(payload.apiKey ?? "", async (encryptedApiKey) => {
-    const response = await authFetch(`/api/providers/${providerId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...(payload.displayName === undefined ? {} : { display_name: payload.displayName }),
-        ...(payload.baseUrl === undefined ? {} : { base_url: payload.baseUrl }),
-        ...(payload.isEnabled === undefined ? {} : { is_enabled: payload.isEnabled }),
-        ...(payload.models === undefined ? {} : { models: payload.models }),
-        ...(payload.availableModels === undefined
-          ? {}
-          : { available_models: payload.availableModels }),
-        ...(payload.maxOutputTokens === undefined
-          ? {}
-          : { max_output_tokens: payload.maxOutputTokens }),
-        ...(payload.apiKey === undefined ? {} : { encrypted_api_key: encryptedApiKey }),
-        ...(payload.clearApiKey === undefined ? {} : { clear_api_key: payload.clearApiKey }),
-      }),
-    });
-    return parseJsonOrThrow<ProviderConfig>(response);
-  });
+  return withApiKeyEncryptionRetry(
+    payload.apiKey ?? "",
+    async (encryptedApiKey) => {
+      const response = await authFetch(`/api/providers/${providerId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...(payload.displayName === undefined
+            ? {}
+            : { display_name: payload.displayName }),
+          ...(payload.baseUrl === undefined
+            ? {}
+            : { base_url: payload.baseUrl }),
+          ...(payload.isEnabled === undefined
+            ? {}
+            : { is_enabled: payload.isEnabled }),
+          ...(payload.models === undefined ? {} : { models: payload.models }),
+          ...(payload.availableModels === undefined
+            ? {}
+            : { available_models: payload.availableModels }),
+          ...(payload.maxOutputTokens === undefined
+            ? {}
+            : { max_output_tokens: payload.maxOutputTokens }),
+          ...(payload.apiKey === undefined
+            ? {}
+            : { encrypted_api_key: encryptedApiKey }),
+          ...(payload.clearApiKey === undefined
+            ? {}
+            : { clear_api_key: payload.clearApiKey }),
+        }),
+      });
+      return parseJsonOrThrow<ProviderConfig>(response);
+    },
+  );
 }
 
 export async function migrateProviderApiKey(
@@ -232,15 +257,17 @@ export async function migrateProviderApiKey(
   apiKey: string,
 ): Promise<ProviderConfig> {
   return withApiKeyEncryptionRetry(apiKey, async (encryptedApiKey) => {
-    const response = await authFetch(`/api/providers/${providerId}/api-key/migrate`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ encrypted_api_key: encryptedApiKey }),
-    });
+    const response = await authFetch(
+      `/api/providers/${providerId}/api-key/migrate`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ encrypted_api_key: encryptedApiKey }),
+      },
+    );
     return parseJsonOrThrow<ProviderConfig>(response);
   });
 }
-
 
 async function withApiKeyEncryptionRetry<T>(
   plaintextApiKey: string,
@@ -311,7 +338,6 @@ export async function listProviderModels(payload: {
   });
 }
 
-
 export interface CodexOAuthFlow {
   flow_id: string;
   method: "browser" | "device";
@@ -335,8 +361,13 @@ export async function startCodexOAuth(
   return parseJsonOrThrow<CodexOAuthFlow>(response);
 }
 
-export async function getCodexOAuthFlow(providerId: string, flowId: string): Promise<CodexOAuthFlow> {
-  const response = await authFetch(`/api/providers/${providerId}/oauth/flows/${flowId}`);
+export async function getCodexOAuthFlow(
+  providerId: string,
+  flowId: string,
+): Promise<CodexOAuthFlow> {
+  const response = await authFetch(
+    `/api/providers/${providerId}/oauth/flows/${flowId}`,
+  );
   return parseJsonOrThrow<CodexOAuthFlow>(response);
 }
 
@@ -345,11 +376,14 @@ export async function completeCodexOAuth(
   flowId: string,
   callbackUrl: string,
 ): Promise<CodexOAuthFlow> {
-  const response = await authFetch(`/api/providers/${providerId}/oauth/flows/${flowId}/complete`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ callback_url: callbackUrl }),
-  });
+  const response = await authFetch(
+    `/api/providers/${providerId}/oauth/flows/${flowId}/complete`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ callback_url: callbackUrl }),
+    },
+  );
   return parseJsonOrThrow<CodexOAuthFlow>(response);
 }
 
@@ -367,10 +401,10 @@ export async function cancelCodexOAuthFlow(
   }
 }
 
-
-
 export async function disconnectCodexOAuth(providerId: string): Promise<void> {
-  const response = await authFetch(`/api/providers/${providerId}/oauth`, { method: "DELETE" });
+  const response = await authFetch(`/api/providers/${providerId}/oauth`, {
+    method: "DELETE",
+  });
   if (!response.ok) {
     const body = await response.json().catch(() => null);
     throw new Error(parseErrorText(response.status, body));

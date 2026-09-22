@@ -2,7 +2,10 @@ import { cn } from "@/lib/utils";
 import { FileUpIcon } from "lucide-react";
 import type { NativeModelDropState } from "../use-native-drop";
 
-function overlayCopy(state: NativeModelDropState): { title: string; description: string } {
+function overlayCopy(state: NativeModelDropState): {
+  title: string;
+  description: string;
+} {
   if (state.status === "invalid") {
     return {
       title: "Can't use these files",
@@ -13,7 +16,9 @@ function overlayCopy(state: NativeModelDropState): { title: string; description:
   if (state.status === "attach") {
     // Only documents are indexed; images, audio and video ride the next message.
     const description =
-      state.kind === "images" || state.kind === "audio" || state.kind === "video"
+      state.kind === "images" ||
+      state.kind === "audio" ||
+      state.kind === "video"
         ? "Attached to your next message."
         : state.kind === "mixed"
           ? "Documents indexed, attachments sent with your next message."
@@ -52,10 +57,13 @@ function overlayCopy(state: NativeModelDropState): { title: string; description:
   };
 }
 
-export function NativeModelDropOverlay({ state }: { state: NativeModelDropState }) {
+export function NativeModelDropOverlay({
+  state,
+}: { state: NativeModelDropState }) {
   const isIdle = state.status === "idle";
   const isAutoLoad =
-    (state.status === "valid" && state.action !== "chip") || state.status === "attach";
+    (state.status === "valid" && state.action !== "chip") ||
+    state.status === "attach";
   const isInvalid = state.status === "invalid";
   const { title, description } = overlayCopy(state);
 

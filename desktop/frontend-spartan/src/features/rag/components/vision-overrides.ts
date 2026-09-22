@@ -1,4 +1,3 @@
-
 import {
   CHAT_RAG_CAPTION_KEY,
   CHAT_RAG_OCR_KEY,
@@ -18,7 +17,9 @@ function wait(ms: number): Promise<void> {
 }
 
 function hasLocal(key: string): boolean {
-  if (typeof window === "undefined") return false;
+  if (typeof window === "undefined") {
+    return false;
+  }
   try {
     return window.localStorage.getItem(key) !== null;
   } catch {

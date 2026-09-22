@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -11,14 +10,14 @@ import {
 } from "@/components/ui/dialog";
 import { Spinner } from "@/components/ui/spinner";
 import { formatBytes } from "@/features/hub/lib/format";
+import { useHfTokenStore } from "@/features/hub/stores/hf-token-store";
+import { toast } from "@/lib/toast";
+import { useCallback, useEffect, useState } from "react";
 import {
   type OrphanCompanion,
   deleteCachedModel,
   fetchOrphanCompanions,
 } from "../inventory";
-import { useHfTokenStore } from "@/features/hub/stores/hf-token-store";
-import { toast } from "@/lib/toast";
-import { useCallback, useEffect, useState } from "react";
 
 /**
  * Remove companion assets that no installed model needs any more.
@@ -76,10 +75,14 @@ export function FreeUpSpaceDialog({
   }, []);
 
   useEffect(() => {
-    if (open) void refresh();
+    if (open) {
+      void refresh();
+    }
   }, [open, refresh]);
 
-  const selectedCompanions = companions.filter((c) => selected.has(companionIdentity(c)));
+  const selectedCompanions = companions.filter((c) =>
+    selected.has(companionIdentity(c)),
+  );
   const selectedBytes = selectedCompanions.reduce(
     (sum, c) => sum + c.size_bytes,
     0,
@@ -125,9 +128,9 @@ export function FreeUpSpaceDialog({
         <DialogHeader>
           <DialogTitle>Free up space</DialogTitle>
           <DialogDescription>
-            Shared model assets, such as text encoders, VAE and tokenizers, that no installed
-            model needs any more. Anything still in use by a model on this device is not listed
-            and cannot be removed here.
+            Shared model assets, such as text encoders, VAE and tokenizers, that
+            no installed model needs any more. Anything still in use by a model
+            on this device is not listed and cannot be removed here.
           </DialogDescription>
         </DialogHeader>
         {loading ? (
@@ -137,9 +140,12 @@ export function FreeUpSpaceDialog({
         ) : error ? (
           <p className="py-6 text-ui-13 text-destructive">{error}</p>
         ) : companions.length === 0 ? (
-          <p className="py-6 text-ui-13 text-muted-foreground" data-testid="free-up-space-empty">
-            Nothing to clean up. Every cached asset is still needed by a model you have
-            installed.
+          <p
+            className="py-6 text-ui-13 text-muted-foreground"
+            data-testid="free-up-space-empty"
+          >
+            Nothing to clean up. Every cached asset is still needed by a model
+            you have installed.
           </p>
         ) : (
           <ul className="flex max-h-[260px] flex-col gap-1 overflow-y-auto py-1">
@@ -154,8 +160,11 @@ export function FreeUpSpaceDialog({
                   onCheckedChange={(checked) =>
                     setSelected((prev) => {
                       const next = new Set(prev);
-                      if (checked) next.add(companionIdentity(companion));
-                      else next.delete(companionIdentity(companion));
+                      if (checked) {
+                        next.add(companionIdentity(companion));
+                      } else {
+                        next.delete(companionIdentity(companion));
+                      }
                       return next;
                     })
                   }
@@ -187,9 +196,7 @@ export function FreeUpSpaceDialog({
             onClick={() => void runDelete()}
             data-testid="free-up-space-confirm"
           >
-            {deleting
-              ? "Removing…"
-              : `Remove ${formatBytes(selectedBytes)}`}
+            {deleting ? "Removing…" : `Remove ${formatBytes(selectedBytes)}`}
           </Button>
         </DialogFooter>
       </DialogContent>

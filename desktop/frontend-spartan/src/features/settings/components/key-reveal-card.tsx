@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { useT } from "@/i18n";
 import { copyToClipboard } from "@/lib/copy-to-clipboard";

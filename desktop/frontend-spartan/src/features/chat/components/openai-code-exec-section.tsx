@@ -1,4 +1,3 @@
-
 /**
  * Settings-sheet section for OpenAI shell-tool container management. Renders
  * only when the active provider is OpenAI cloud (api.openai.com) and the model
@@ -19,8 +18,6 @@
 
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,18 +29,20 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { InfoHint } from "@/components/ui/info-hint";
 import { Input } from "@/components/ui/input";
-import { TrashIcon, RefreshCwIcon, PlusIcon } from "lucide-react";
+import { PlusIcon, RefreshCwIcon, TrashIcon } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
+import { CHAT_HISTORY_UPDATED_EVENT } from "../api/chat-api";
 import {
+  type OpenAIContainerSummary,
   createOpenAIContainer,
   deleteOpenAIContainer,
   listOpenAIContainers,
-  type OpenAIContainerSummary,
 } from "../api/openai-containers";
-import { CHAT_HISTORY_UPDATED_EVENT } from "../api/chat-api";
 import type { ExternalProviderConfig } from "../external-providers";
 import { ensureThreadRecord } from "../runtime-provider";
-import { InfoHint } from "@/components/ui/info-hint";
 import {
   getStoredChatThread,
   listStoredChatThreads,
@@ -61,7 +60,9 @@ const REFRESH_POLL_MS = 30_000;
 function shortContainerId(id: string): string {
   // Mid-truncate keeps the "cntr_" prefix readable and still surfaces the
   // tail digits users sometimes copy off OpenAI's dashboard.
-  if (id.length <= 18) return id;
+  if (id.length <= 18) {
+    return id;
+  }
   return `${id.slice(0, 12)}…${id.slice(-4)}`;
 }
 
@@ -85,7 +86,6 @@ export function OpenAICodeExecSection({
   activeThreadId,
   onProviderChange,
 }: OpenAICodeExecSectionProps) {
-
   const hasCredential = Boolean(apiKey || provider.hasApiKey);
   const [containers, setContainers] = useState<OpenAIContainerSummary[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -150,7 +150,9 @@ export function OpenAICodeExecSection({
   // Single chokepoint: every downstream view (sorted picker, auto-bind
   // candidate, all-containers list) derives from visibleContainers.
   const visibleContainers = useMemo(() => {
-    if (tombstones.size === 0) return containers;
+    if (tombstones.size === 0) {
+      return containers;
+    }
     return containers.filter((c) => !tombstones.has(c.id));
   }, [containers, tombstones]);
 
@@ -186,7 +188,9 @@ export function OpenAICodeExecSection({
       : firstRunningContainer?.id) ?? null;
 
   const refresh = useCallback(async () => {
-    if (!hasCredential) return;
+    if (!hasCredential) {
+      return;
+    }
     setIsLoading(true);
     try {
       const list = await listOpenAIContainers({
@@ -205,11 +209,15 @@ export function OpenAICodeExecSection({
         return orphans.length > 0 ? [...orphans, ...list] : list;
       });
       setPendingIds((prev) => {
-        if (prev.size === 0) return prev;
+        if (prev.size === 0) {
+          return prev;
+        }
         const next = new Set(prev);
         let changed = false;
         for (const id of serverIds) {
-          if (next.delete(id)) changed = true;
+          if (next.delete(id)) {
+            changed = true;
+          }
         }
         return changed ? next : prev;
       });
@@ -271,7 +279,9 @@ export function OpenAICodeExecSection({
       (a, b) => (b.lastActiveAt ?? 0) - (a.lastActiveAt ?? 0),
     );
     const candidate = sorted[0];
-    if (!candidate) return;
+    if (!candidate) {
+      return;
+    }
     void (async () => {
       try {
         await ensureThreadRecord({
@@ -290,14 +300,18 @@ export function OpenAICodeExecSection({
   const ttlValue = provider.openaiContainerTtlMinutes ?? DEFAULT_TTL_MINUTES;
 
   const onTtlChange = (raw: string) => {
-    const n = parseInt(raw, 10);
-    if (Number.isNaN(n)) return;
+    const n = Number.parseInt(raw, 10);
+    if (Number.isNaN(n)) {
+      return;
+    }
     const clamped = Math.min(Math.max(n, TTL_MIN), TTL_MAX);
     onProviderChange({ ...provider, openaiContainerTtlMinutes: clamped });
   };
 
   const onPick = async (value: string) => {
-    if (!activeThreadId || !value) return;
+    if (!(activeThreadId && value)) {
+      return;
+    }
     // value is always a container id now; "Auto-create per thread" was removed
     // in favour of defaulting to the most-recently-active container. The
     // chat-adapter still handles the no-containers case (lazy-create on send).
@@ -320,7 +334,9 @@ export function OpenAICodeExecSection({
   };
 
   const onCreate = async () => {
-    if (!hasCredential) return;
+    if (!hasCredential) {
+      return;
+    }
     const name = createName.trim();
     if (!name) {
       toast.error("Container name is required");
@@ -347,7 +363,9 @@ export function OpenAICodeExecSection({
         prev.some((c) => c.id === created.id) ? prev : [created, ...prev],
       );
       setPendingIds((prev) => {
-        if (prev.has(created.id)) return prev;
+        if (prev.has(created.id)) {
+          return prev;
+        }
         const next = new Set(prev);
         next.add(created.id);
         return next;
@@ -389,7 +407,9 @@ export function OpenAICodeExecSection({
   };
 
   const confirmDelete = async () => {
-    if (!hasCredential || !pendingDelete) return;
+    if (!(hasCredential && pendingDelete)) {
+      return;
+    }
     const { id, name } = pendingDelete;
     setDeleting(true);
     try {
@@ -400,7 +420,9 @@ export function OpenAICodeExecSection({
       // Tombstone the id so the picker hides it at once even if OpenAI's list
       // keeps returning it for a while.
       setTombstones((prev) => {
-        if (prev.has(id)) return prev;
+        if (prev.has(id)) {
+          return prev;
+        }
         const next = new Set(prev);
         next.add(id);
         return next;
@@ -442,8 +464,8 @@ export function OpenAICodeExecSection({
             Idle timeout
           </label>
           <InfoHint>
-            Minutes a newly-created container stays alive between calls.
-            OpenAI caps this at 20.
+            Minutes a newly-created container stays alive between calls. OpenAI
+            caps this at 20.
           </InfoHint>
         </div>
         <Input
@@ -493,7 +515,7 @@ export function OpenAICodeExecSection({
               const ttlMinutes = c.expiresAfterMinutes ?? DEFAULT_TTL_MINUTES;
               const canActivate =
                 activeThreadId != null && !isActive && running;
-              const statusLabel = !running ? (c.status ?? "expired") : null;
+              const statusLabel = running ? null : (c.status ?? "expired");
               return (
                 <li
                   key={c.id}
@@ -505,10 +527,14 @@ export function OpenAICodeExecSection({
                     running ? "" : "opacity-60"
                   }`}
                   onClick={() => {
-                    if (canActivate) void onPick(c.id);
+                    if (canActivate) {
+                      void onPick(c.id);
+                    }
                   }}
                   onKeyDown={(e) => {
-                    if (!canActivate) return;
+                    if (!canActivate) {
+                      return;
+                    }
                     if (e.key === "Enter" || e.key === " ") {
                       e.preventDefault();
                       void onPick(c.id);
@@ -520,9 +546,9 @@ export function OpenAICodeExecSection({
                   title={
                     canActivate
                       ? "Use this container for the active thread"
-                      : !running
-                        ? `Container is ${statusLabel}`
-                        : undefined
+                      : running
+                        ? undefined
+                        : `Container is ${statusLabel}`
                   }
                 >
                   {/* min-w-0 + truncate keeps long container ids from
@@ -583,7 +609,7 @@ export function OpenAICodeExecSection({
       {createOpen ? (
         <div className="flex items-center gap-1 rounded-md border border-border/60 bg-muted/20 px-1.5 py-1">
           <Input
-            autoFocus
+            autoFocus={true}
             placeholder="Name"
             value={createName}
             onChange={(e) => setCreateName(e.target.value)}
@@ -638,8 +664,12 @@ export function OpenAICodeExecSection({
       <AlertDialog
         open={pendingDelete !== null}
         onOpenChange={(nextOpen) => {
-          if (!nextOpen && deleting) return;
-          if (!nextOpen) setPendingDelete(null);
+          if (!nextOpen && deleting) {
+            return;
+          }
+          if (!nextOpen) {
+            setPendingDelete(null);
+          }
         }}
       >
         <AlertDialogContent size="sm">

@@ -1,4 +1,3 @@
-
 /**
  * Single source of truth for "will this GGUF fit on the user's GPU?". Mirrors the
  * backend's GPU selection (llama_cpp.py `_select_gpus`): 90% of GPU memory for
@@ -40,9 +39,15 @@ export function classifyGgufFit(
     return required <= ramBudget ? "ram" : "oom";
   }
   const budget = gpuGb * VRAM_HEADROOM_RATIO;
-  if (required <= budget) return "fits";
-  if (required <= gpuGb) return "marginal";
+  if (required <= budget) {
+    return "fits";
+  }
+  if (required <= gpuGb) {
+    return "marginal";
+  }
   const combined = gpuGb + (systemRamGb ?? 0) * RAM_OFFLOAD_USABLE_RATIO;
-  if (required <= combined) return "partial";
+  if (required <= combined) {
+    return "partial";
+  }
   return "oom";
 }

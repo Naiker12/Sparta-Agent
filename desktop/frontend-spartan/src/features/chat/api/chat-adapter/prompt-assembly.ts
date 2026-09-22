@@ -1,19 +1,14 @@
-import { getLocale } from "@/i18n";
 import { sandboxSessionIdFor } from "@/components/assistant-ui/sandbox-files";
-import { useChatRuntimeStore } from "../../stores/chat-runtime-store";
+import { getLocale } from "@/i18n";
 import { getStoredChatProject } from "../../storage/project-storage";
 import { getStoredChatThread } from "../../storage/thread-storage";
-import { getThreadWorkspace } from "../chat-api";
+import { useChatRuntimeStore } from "../../stores/chat-runtime-store";
 import type { ModelType } from "../../types";
+import { getThreadWorkspace } from "../chat-api";
 import {
-  buildCurrentTemporalContext,
-  resolveSystemPromptVariables,
-} from "./system-prompt";
-import { resolveProjectId, type ThreadRecordReader } from "./token-counting";
-import {
+  type OpenAIChatMessage,
   isAnthropicRefusalMessage,
   toOpenAIMessages,
-  type OpenAIChatMessage,
 } from "./message-serialization";
 import {
   CANVAS_FALLBACK_INSTRUCTION,
@@ -21,6 +16,11 @@ import {
   type RunMessage,
   type RunMessages,
 } from "./multimodal-detection";
+import {
+  buildCurrentTemporalContext,
+  resolveSystemPromptVariables,
+} from "./system-prompt";
+import { type ThreadRecordReader, resolveProjectId } from "./token-counting";
 
 export type OpenAIStreamAdapterOptions = {
   modelType?: ModelType;
@@ -76,9 +76,13 @@ export async function resolveProjectWorkspaceContext(
   threadId: string | undefined,
   _readThreadRecord?: ThreadRecordReader,
 ): Promise<string> {
-  if (!threadId) return "";
+  if (!threadId) {
+    return "";
+  }
   const workspace = await getThreadWorkspace(threadId).catch(() => null);
-  if (!workspace) return "";
+  if (!workspace) {
+    return "";
+  }
   const canWrite = workspace.access !== "read";
   return [
     "<thread_workspace>",
@@ -178,7 +182,9 @@ export async function buildOutboundMessagesForTokenCount(
   for (const message of messages) {
     if (isAnthropicRefusalMessage(message)) {
       const last = survivingMessages.at(-1);
-      if (last && last.role === "user") survivingMessages.pop();
+      if (last && last.role === "user") {
+        survivingMessages.pop();
+      }
       continue;
     }
     survivingMessages.push(message);

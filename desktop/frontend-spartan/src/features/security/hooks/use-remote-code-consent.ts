@@ -1,4 +1,3 @@
-
 import {
   discardRemoteCodeDownload,
   getRemoteCodeScan,
@@ -21,7 +20,7 @@ interface ConfirmArgs {
 }
 
 /** Gate a load that may need trust_remote_code: scan, show the consent dialog, and on
-*  approval call onApprove with the pinning fingerprint. Returns false if declined. */
+ *  approval call onApprove with the pinning fingerprint. Returns false if declined. */
 export async function confirmRemoteCodeIfNeeded({
   modelName,
   hfToken,
@@ -89,7 +88,9 @@ export async function confirmRemoteCodeIfNeeded({
         : scan.createdByScan
           ? [scan.modelName]
           : [];
-    for (const repo of toPurge) void discardRemoteCodeDownload(repo);
+    for (const repo of toPurge) {
+      void discardRemoteCodeDownload(repo);
+    }
     return false;
   }
   onApprove(scan.fingerprint);

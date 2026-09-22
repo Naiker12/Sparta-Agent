@@ -1,4 +1,3 @@
-
 export type ChatArtifactSource = "tool" | "fence";
 export type ChatArtifactSurface = "panel" | "overlay";
 

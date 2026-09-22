@@ -6,7 +6,9 @@ import { isTauri } from "@/lib/api-base";
  * preventDefault; false to let native navigation proceed (relative, empty).
  */
 export function openLink(url: string): boolean {
-  if (!url) return false;
+  if (!url) {
+    return false;
+  }
 
   // Anchor links scroll within the page, don't open externally
   if (url.startsWith("#")) {
@@ -15,7 +17,7 @@ export function openLink(url: string): boolean {
   }
 
   // Relative URLs: let the browser / router handle them natively
-  if (!url.includes("://") && !url.startsWith("mailto:")) {
+  if (!(url.includes("://") || url.startsWith("mailto:"))) {
     return false;
   }
 

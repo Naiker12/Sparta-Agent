@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -20,7 +19,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -28,18 +26,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { isTauri } from "@/lib/api-base";
-import { isDownloadCancelled, pickNativeChatImport } from "@/lib/native-files";
-import { toast } from "@/lib/toast";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
+  type ProjectRecord,
   deleteChatProject,
   renameChatProject,
   useChatProjects,
   useChatRuntimeStore,
   usePinnedProjectsStore,
-  type ProjectRecord,
 } from "@/features/chat";
-import { NewProjectDialog } from "./components/new-project-dialog";
+import { useT } from "@/i18n";
+import { isTauri } from "@/lib/api-base";
+import { isDownloadCancelled, pickNativeChatImport } from "@/lib/native-files";
+import { toast } from "@/lib/toast";
 import {
   Delete02Icon,
   Download01Icon,
@@ -52,26 +51,24 @@ import {
   Upload01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { MoreHorizontalIcon } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
+import { MoreHorizontalIcon } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useT } from "@/i18n";
+import { NewProjectDialog } from "./components/new-project-dialog";
 import {
-  exportProjectConversations,
+  type ConvExportFormat,
+  EXPORT_FORMATS_LIST,
   exportBulkConversationsMerged,
   exportBulkConversationsSeparate,
-  EXPORT_FORMATS_LIST,
-  type ConvExportFormat,
+  exportProjectConversations,
 } from "./prompt-storage/prompt-storage-dialog";
+import { listStoredChatThreads } from "./utils/chat-history-storage";
 import {
+  type ImportSource,
   fileImportSource,
   importConversationsFromSource,
   nativeImportSource,
-  type ImportSource,
 } from "./utils/chat-import";
-import {
-  listStoredChatThreads,
-} from "./utils/chat-history-storage";
 
 type SortMode = "activity" | "name";
 
@@ -84,8 +81,13 @@ const PROJECTS_ROW_HEIGHT = 68;
 
 // Modified column, matching a file-list feel: Today / Yesterday / N days ago,
 // then a short date once it is over a week old.
-function formatModified(ts: number, t: (key: any, values?: any) => string): string {
-  if (!Number.isFinite(ts)) return "";
+function formatModified(
+  ts: number,
+  t: (key: any, values?: any) => string,
+): string {
+  if (!Number.isFinite(ts)) {
+    return "";
+  }
   const now = new Date();
   const then = new Date(ts);
   const startOfToday = new Date(
@@ -99,9 +101,15 @@ function formatModified(ts: number, t: (key: any, values?: any) => string): stri
     then.getDate(),
   ).getTime();
   const dayDiff = Math.round((startOfToday - startOfThen) / 86_400_000);
-  if (dayDiff <= 0) return t("projectsPage.today");
-  if (dayDiff === 1) return t("projectsPage.yesterday");
-  if (dayDiff < 7) return t("projectsPage.daysAgo", { count: dayDiff });
+  if (dayDiff <= 0) {
+    return t("projectsPage.today");
+  }
+  if (dayDiff === 1) {
+    return t("projectsPage.yesterday");
+  }
+  if (dayDiff < 7) {
+    return t("projectsPage.daysAgo", { count: dayDiff });
+  }
   return then.toLocaleDateString(undefined, {
     month: "short",
     day: "numeric",
@@ -192,14 +200,18 @@ export function ProjectsPage() {
   }
 
   async function selectGlobalImportFile() {
-    if (importing) return;
+    if (importing) {
+      return;
+    }
     if (!isTauri) {
       globalImportRef.current?.click();
       return;
     }
     try {
       const selected = await pickNativeChatImport();
-      if (!selected) return;
+      if (!selected) {
+        return;
+      }
       setImportTargetId(projects[0]?.id ?? null);
       setImportFile(nativeImportSource(selected));
     } catch (error) {
@@ -210,14 +222,18 @@ export function ProjectsPage() {
   }
 
   async function selectProjectImportFile(projectId: string) {
-    if (importing) return;
+    if (importing) {
+      return;
+    }
     if (!isTauri) {
       projectImportRefs.current.get(projectId)?.click();
       return;
     }
     try {
       const selected = await pickNativeChatImport();
-      if (!selected) return;
+      if (!selected) {
+        return;
+      }
       await handleImport(nativeImportSource(selected), projectId);
     } catch (error) {
       toast.error("Import failed.", {
@@ -230,13 +246,21 @@ export function ProjectsPage() {
     const target = importTargetId;
     const file = importFile;
     setImportFile(null);
-    if (!file) return;
+    if (!file) {
+      return;
+    }
     await handleImport(file, target);
   }
 
-  async function handleProjectExport(project: ProjectRecord, fmt: ConvExportFormat) {
+  async function handleProjectExport(
+    project: ProjectRecord,
+    fmt: ConvExportFormat,
+  ) {
     try {
-      const threads = await listStoredChatThreads({ projectId: project.id, includeArchived: false });
+      const threads = await listStoredChatThreads({
+        projectId: project.id,
+        includeArchived: false,
+      });
       const ids = [...new Set(threads.map((t) => t.id))];
       await exportProjectConversations(ids, fmt, project.name);
     } catch (error) {
@@ -257,7 +281,10 @@ export function ProjectsPage() {
         threads = (
           await Promise.all(
             projects.map((p) =>
-              listStoredChatThreads({ projectId: p.id, includeArchived: false }),
+              listStoredChatThreads({
+                projectId: p.id,
+                includeArchived: false,
+              }),
             ),
           )
         ).flat();
@@ -265,7 +292,10 @@ export function ProjectsPage() {
         threads = await listStoredChatThreads({ includeArchived: false });
       }
       const ids = [...new Set(threads.map((t) => t.id))];
-      if (ids.length === 0) { toast.info("No conversations to export."); return; }
+      if (ids.length === 0) {
+        toast.info("No conversations to export.");
+        return;
+      }
       const ts = new Date().toISOString().slice(0, 10);
       const basename = `${scope === "all" ? "all-chats" : "all-projects"}-${ts}`;
       if (merged) {
@@ -284,7 +314,9 @@ export function ProjectsPage() {
   useEffect(() => {
     function measure() {
       const el = listRef.current;
-      if (!el) return;
+      if (!el) {
+        return;
+      }
       const top = el.getBoundingClientRect().top;
       const available = window.innerHeight - top - 32;
       if (available > 0) {
@@ -311,7 +343,9 @@ export function ProjectsPage() {
       // within both the pinned and unpinned subsets.
       const aPinned = pinnedProjectIdSet.has(a.id);
       const bPinned = pinnedProjectIdSet.has(b.id);
-      if (aPinned !== bPinned) return aPinned ? -1 : 1;
+      if (aPinned !== bPinned) {
+        return aPinned ? -1 : 1;
+      }
       if (sortMode === "name") {
         return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
       }
@@ -326,7 +360,9 @@ export function ProjectsPage() {
   // Infinite scroll sentinel
   useEffect(() => {
     const el = sentinelRef.current;
-    if (!el || !hasMore) return;
+    if (!(el && hasMore)) {
+      return;
+    }
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries.some((e) => e.isIntersecting)) {
@@ -347,7 +383,9 @@ export function ProjectsPage() {
   }
 
   async function commitRename() {
-    if (!renaming) return;
+    if (!renaming) {
+      return;
+    }
     const trimmed = renameDraft.trim();
     if (!trimmed || trimmed === renaming.name) {
       setRenaming(null);
@@ -365,7 +403,9 @@ export function ProjectsPage() {
   }
 
   async function commitDelete() {
-    if (!deleting) return;
+    if (!deleting) {
+      return;
+    }
     const target = deleting;
     setDeleting(null);
     try {
@@ -401,7 +441,11 @@ export function ProjectsPage() {
         <div className="flex items-center gap-3">
           <div className="relative">
             <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground">
-              <HugeiconsIcon icon={Search01Icon} strokeWidth={1.75} className="size-4" />
+              <HugeiconsIcon
+                icon={Search01Icon}
+                strokeWidth={1.75}
+                className="size-4"
+              />
             </span>
             <Input
               value={query}
@@ -412,7 +456,9 @@ export function ProjectsPage() {
             />
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">{t("projectsPage.sortBy")}</span>
+            <span className="text-sm text-muted-foreground">
+              {t("projectsPage.sortBy")}
+            </span>
             <Select
               value={sortMode}
               onValueChange={(v) => setSortMode(v as SortMode)}
@@ -421,37 +467,56 @@ export function ProjectsPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="activity">{t("projectsPage.sortActivity")}</SelectItem>
-                <SelectItem value="name">{t("projectsPage.sortName")}</SelectItem>
+                <SelectItem value="activity">
+                  {t("projectsPage.sortActivity")}
+                </SelectItem>
+                <SelectItem value="name">
+                  {t("projectsPage.sortName")}
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+            <DropdownMenuTrigger asChild={true}>
               <Button
                 variant="outline"
                 size="icon"
                 title={t("projectsPage.importExport")}
                 className="rounded-full border-none bg-muted shadow-none dark:bg-card"
               >
-                <HugeiconsIcon icon={Download01Icon} strokeWidth={1.75} className="size-icon" />
+                <HugeiconsIcon
+                  icon={Download01Icon}
+                  strokeWidth={1.75}
+                  className="size-icon"
+                />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuItem onSelect={() => void selectGlobalImportFile()}>
-                <HugeiconsIcon icon={Upload01Icon} strokeWidth={1.75} className="size-icon" />
+                <HugeiconsIcon
+                  icon={Upload01Icon}
+                  strokeWidth={1.75}
+                  className="size-icon"
+                />
                 {t("projectsPage.importChats")}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuSub>
-                <DropdownMenuSubTrigger>{t("projectsPage.exportAllProjects")}</DropdownMenuSubTrigger>
+                <DropdownMenuSubTrigger>
+                  {t("projectsPage.exportAllProjects")}
+                </DropdownMenuSubTrigger>
                 <DropdownMenuSubContent className="w-52">
                   <DropdownMenuGroup>
                     <DropdownMenuLabel className="pb-1 pt-2 text-ui-11 font-medium">
                       {t("projectsPage.combined")}
                     </DropdownMenuLabel>
                     {EXPORT_FORMATS_LIST.map(({ fmt, label }) => (
-                      <DropdownMenuItem key={`ap-m-${fmt}`} onSelect={() => void handleBulkProjectExport("projects", fmt, true)}>
+                      <DropdownMenuItem
+                        key={`ap-m-${fmt}`}
+                        onSelect={() =>
+                          void handleBulkProjectExport("projects", fmt, true)
+                        }
+                      >
                         {label}
                       </DropdownMenuItem>
                     ))}
@@ -462,7 +527,12 @@ export function ProjectsPage() {
                       {t("projectsPage.perChat")}
                     </DropdownMenuLabel>
                     {EXPORT_FORMATS_LIST.map(({ fmt, label }) => (
-                      <DropdownMenuItem key={`ap-s-${fmt}`} onSelect={() => void handleBulkProjectExport("projects", fmt, false)}>
+                      <DropdownMenuItem
+                        key={`ap-s-${fmt}`}
+                        onSelect={() =>
+                          void handleBulkProjectExport("projects", fmt, false)
+                        }
+                      >
                         {label}
                       </DropdownMenuItem>
                     ))}
@@ -470,14 +540,21 @@ export function ProjectsPage() {
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
               <DropdownMenuSub>
-                <DropdownMenuSubTrigger>{t("projectsPage.exportProjectsAndRecents")}</DropdownMenuSubTrigger>
+                <DropdownMenuSubTrigger>
+                  {t("projectsPage.exportProjectsAndRecents")}
+                </DropdownMenuSubTrigger>
                 <DropdownMenuSubContent className="w-52">
                   <DropdownMenuGroup>
                     <DropdownMenuLabel className="pb-1 pt-2 text-ui-11 font-medium">
                       {t("projectsPage.combined")}
                     </DropdownMenuLabel>
                     {EXPORT_FORMATS_LIST.map(({ fmt, label }) => (
-                      <DropdownMenuItem key={`all-m-${fmt}`} onSelect={() => void handleBulkProjectExport("all", fmt, true)}>
+                      <DropdownMenuItem
+                        key={`all-m-${fmt}`}
+                        onSelect={() =>
+                          void handleBulkProjectExport("all", fmt, true)
+                        }
+                      >
                         {label}
                       </DropdownMenuItem>
                     ))}
@@ -488,7 +565,12 @@ export function ProjectsPage() {
                       {t("projectsPage.perChat")}
                     </DropdownMenuLabel>
                     {EXPORT_FORMATS_LIST.map(({ fmt, label }) => (
-                      <DropdownMenuItem key={`all-s-${fmt}`} onSelect={() => void handleBulkProjectExport("all", fmt, false)}>
+                      <DropdownMenuItem
+                        key={`all-s-${fmt}`}
+                        onSelect={() =>
+                          void handleBulkProjectExport("all", fmt, false)
+                        }
+                      >
                         {label}
                       </DropdownMenuItem>
                     ))}
@@ -497,15 +579,238 @@ export function ProjectsPage() {
               </DropdownMenuSub>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button onClick={() => setCreating(true)}>{t("projectsPage.newProject")}</Button>
+          <Button onClick={() => setCreating(true)}>
+            {t("projectsPage.newProject")}
+          </Button>
         </div>
       </div>
 
-      {!hasLoaded ? (
+      {hasLoaded ? (
+        visibleProjects.length === 0 ? (
+          <div className="mt-16 flex flex-col items-center justify-center gap-2 text-center text-muted-foreground">
+            <p className="text-sm">
+              {projects.length === 0
+                ? t("projectsPage.noProjectsYet")
+                : t("projectsPage.noMatchingProjects")}
+            </p>
+            {projects.length === 0 && (
+              <Button
+                variant="outline"
+                className="mt-2 border-none bg-background shadow-[0_2px_8px_-2px_rgba(0,0,0,0.16)] dark:bg-card dark:shadow-none"
+                onClick={() => setCreating(true)}
+              >
+                <HugeiconsIcon
+                  icon={FolderAddIcon}
+                  strokeWidth={1.75}
+                  className="size-icon"
+                />
+                {t("projectsPage.createFirstProject")}
+              </Button>
+            )}
+          </div>
+        ) : (
+          <>
+            <div className="mt-16">
+              {/* Column header. Name starts at the folder icon's left edge; the
+              right-anchored columns keep Modified over its values. */}
+              <div className="mb-1 flex items-center gap-3 px-5 pb-1 text-ui-13 font-medium text-muted-foreground">
+                <span className="flex-1">{t("projectsPage.colName")}</span>
+                <span className="w-52 shrink-0">
+                  {t("projectsPage.colFolder")}
+                </span>
+                <span className="w-32 shrink-0">
+                  {t("projectsPage.colModified")}
+                </span>
+                <span className="w-8 shrink-0" />
+              </div>
+              <div ref={listRef}>
+                {visibleProjects.map((project) => {
+                  const pinned = pinnedProjectIdSet.has(project.id);
+                  return (
+                    <div key={`wrap-${project.id}`}>
+                      <input
+                        key={`import-${project.id}`}
+                        type="file"
+                        accept=".json,.jsonl,.ndjson,.csv"
+                        className="hidden"
+                        ref={(el) => {
+                          if (el) {
+                            projectImportRefs.current.set(project.id, el);
+                          } else {
+                            projectImportRefs.current.delete(project.id);
+                          }
+                        }}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            void handleImport(
+                              fileImportSource(file),
+                              project.id,
+                            );
+                          }
+                          e.target.value = "";
+                        }}
+                      />
+                      <div
+                        key={project.id}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => openProject(project.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            openProject(project.id);
+                          }
+                        }}
+                        className="group/project-row relative flex cursor-pointer items-center gap-3 rounded-xl px-5 py-4 text-left transition-colors duration-150 hover:bg-muted/70 dark:hover:bg-white/[0.055] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      >
+                        <span className="mr-1 flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-muted text-foreground/70 transition-colors group-hover/project-row:bg-primary/10 group-hover/project-row:text-primary">
+                          <HugeiconsIcon
+                            icon={Folder02Icon}
+                            strokeWidth={1.75}
+                            className="size-5"
+                          />
+                        </span>
+                        <span className="min-w-0 flex-1 truncate text-ui-15 font-semibold text-foreground">
+                          {project.name}
+                        </span>
+                        <span className="w-32 shrink-0 text-sm text-muted-foreground">
+                          {formatModified(project.updatedAt, t)}
+                        </span>
+                        <div className="relative flex w-8 shrink-0 items-center justify-end">
+                          {/* Pin fades out and the kebab fades in on hover, focus, or
+                    menu open. Absolute + opacity gating keeps them from
+                    overlapping while leaving the button keyboard-focusable. */}
+                          {pinned && (
+                            <span className="text-muted-foreground transition-opacity group-hover/project-row:opacity-0 group-focus-within/project-row:opacity-0 group-has-[[data-state=open]]/project-row:opacity-0">
+                              <HugeiconsIcon
+                                icon={PinIcon}
+                                strokeWidth={1.75}
+                                className="size-4"
+                              />
+                            </span>
+                          )}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild={true}>
+                              <button
+                                type="button"
+                                onClick={(e) => e.stopPropagation()}
+                                aria-label={t(
+                                  "projectsPage.projectOptionsAria",
+                                )}
+                                className="absolute right-0 flex size-7 shrink-0 items-center justify-center rounded-full text-muted-foreground opacity-70 transition hover:bg-black/5 hover:text-foreground hover:opacity-100 focus-visible:opacity-100 data-[state=open]:bg-black/5 data-[state=open]:opacity-100 dark:hover:bg-white/10 dark:data-[state=open]:bg-white/10"
+                              >
+                                <MoreHorizontalIcon
+                                  strokeWidth={1.75}
+                                  className="size-icon"
+                                />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent
+                              side="bottom"
+                              align="end"
+                              sideOffset={0}
+                              onClick={(e) => e.stopPropagation()}
+                              onKeyDown={(e) => e.stopPropagation()}
+                              className="app-user-menu menu-soft-surface menu-flat-destructive ring-0 w-44 py-2 font-heading rounded-[14px] border-0"
+                            >
+                              <DropdownMenuItem
+                                onSelect={() => togglePinProject(project.id)}
+                              >
+                                <HugeiconsIcon
+                                  icon={pinned ? PinOffIcon : PinIcon}
+                                  strokeWidth={1.75}
+                                  className="size-icon"
+                                />
+                                <span>
+                                  {pinned
+                                    ? t("projectsPage.unpinProject")
+                                    : t("projectsPage.pinProject")}
+                                </span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onSelect={() => {
+                                  setRenameDraft(project.name);
+                                  setRenaming(project);
+                                }}
+                              >
+                                <HugeiconsIcon
+                                  icon={Edit03Icon}
+                                  strokeWidth={1.75}
+                                  className="size-icon"
+                                />
+                                <span>{t("projectsPage.rename")}</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onSelect={(e) => {
+                                  e.stopPropagation();
+                                  void selectProjectImportFile(project.id);
+                                }}
+                              >
+                                <HugeiconsIcon
+                                  icon={Upload01Icon}
+                                  strokeWidth={1.75}
+                                  className="size-icon"
+                                />
+                                <span>
+                                  {t("projectsPage.importIntoProject")}
+                                </span>
+                              </DropdownMenuItem>
+                              <DropdownMenuSub>
+                                <DropdownMenuSubTrigger>
+                                  <HugeiconsIcon
+                                    icon={Download01Icon}
+                                    strokeWidth={1.75}
+                                    className="size-icon mr-1"
+                                  />
+                                  <span>{t("projectsPage.export")}</span>
+                                </DropdownMenuSubTrigger>
+                                <DropdownMenuSubContent className="w-52">
+                                  {EXPORT_FORMATS_LIST.map(({ fmt, label }) => (
+                                    <DropdownMenuItem
+                                      key={fmt}
+                                      onSelect={(e) => {
+                                        e.stopPropagation();
+                                        void handleProjectExport(project, fmt);
+                                      }}
+                                    >
+                                      {label}
+                                    </DropdownMenuItem>
+                                  ))}
+                                </DropdownMenuSubContent>
+                              </DropdownMenuSub>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                variant="destructive"
+                                onSelect={() => setDeleting(project)}
+                              >
+                                <HugeiconsIcon
+                                  icon={Delete02Icon}
+                                  strokeWidth={1.75}
+                                  className="size-icon"
+                                />
+                                <span>{t("projectsPage.delete")}</span>
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+                {/* Loads the next page-step when scrolled into view. */}
+                {hasMore && <div ref={sentinelRef} className="h-px w-full" />}
+              </div>
+            </div>
+          </>
+        )
+      ) : (
         <div className="mt-16">
           <div className="mb-1 flex items-center gap-3 px-5 pb-1 text-ui-13 font-medium text-muted-foreground">
             <span className="flex-1">{t("projectsPage.colName")}</span>
-            <span className="w-32 shrink-0">{t("projectsPage.colModified")}</span>
+            <span className="w-32 shrink-0">
+              {t("projectsPage.colModified")}
+            </span>
             <span className="w-8 shrink-0" />
           </div>
           {Array.from({ length: 6 }).map((_, index) => (
@@ -522,176 +827,6 @@ export function ProjectsPage() {
             </div>
           ))}
         </div>
-      ) : visibleProjects.length === 0 ? (
-        <div className="mt-16 flex flex-col items-center justify-center gap-2 text-center text-muted-foreground">
-          <p className="text-sm">
-            {projects.length === 0
-              ? t("projectsPage.noProjectsYet")
-              : t("projectsPage.noMatchingProjects")}
-          </p>
-          {projects.length === 0 && (
-            <Button
-              variant="outline"
-              className="mt-2 border-none bg-background shadow-[0_2px_8px_-2px_rgba(0,0,0,0.16)] dark:bg-card dark:shadow-none"
-              onClick={() => setCreating(true)}
-            >
-              <HugeiconsIcon icon={FolderAddIcon} strokeWidth={1.75} className="size-icon" />
-              {t("projectsPage.createFirstProject")}
-            </Button>
-          )}
-        </div>
-      ) : (
-        <>
-        <div className="mt-16">
-          {/* Column header. Name starts at the folder icon's left edge; the
-              right-anchored columns keep Modified over its values. */}
-          <div className="mb-1 flex items-center gap-3 px-5 pb-1 text-ui-13 font-medium text-muted-foreground">
-            <span className="flex-1">{t("projectsPage.colName")}</span>
-            <span className="w-52 shrink-0">{t("projectsPage.colFolder")}</span>
-            <span className="w-32 shrink-0">{t("projectsPage.colModified")}</span>
-            <span className="w-8 shrink-0" />
-          </div>
-          <div ref={listRef}>
-          {visibleProjects.map((project) => {
-            const pinned = pinnedProjectIdSet.has(project.id);
-            return (
-            <div key={`wrap-${project.id}`}>
-            <input
-              key={`import-${project.id}`}
-              type="file"
-              accept=".json,.jsonl,.ndjson,.csv"
-              className="hidden"
-              ref={(el) => {
-                if (el) projectImportRefs.current.set(project.id, el);
-                else projectImportRefs.current.delete(project.id);
-              }}
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) void handleImport(fileImportSource(file), project.id);
-                e.target.value = "";
-              }}
-            />
-            <div
-              key={project.id}
-              role="button"
-              tabIndex={0}
-              onClick={() => openProject(project.id)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  openProject(project.id);
-                }
-              }}
-              className="group/project-row relative flex cursor-pointer items-center gap-3 rounded-xl px-5 py-4 text-left transition-colors duration-150 hover:bg-muted/70 dark:hover:bg-white/[0.055] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-            >
-              <span className="mr-1 flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-muted text-foreground/70 transition-colors group-hover/project-row:bg-primary/10 group-hover/project-row:text-primary">
-                <HugeiconsIcon
-                  icon={Folder02Icon}
-                  strokeWidth={1.75}
-                  className="size-5"
-                />
-              </span>
-              <span className="min-w-0 flex-1 truncate text-ui-15 font-semibold text-foreground">
-                {project.name}
-              </span>
-              <span className="w-32 shrink-0 text-sm text-muted-foreground">
-                {formatModified(project.updatedAt, t)}
-              </span>
-              <div className="relative flex w-8 shrink-0 items-center justify-end">
-                {/* Pin fades out and the kebab fades in on hover, focus, or
-                    menu open. Absolute + opacity gating keeps them from
-                    overlapping while leaving the button keyboard-focusable. */}
-                {pinned && (
-                  <span className="text-muted-foreground transition-opacity group-hover/project-row:opacity-0 group-focus-within/project-row:opacity-0 group-has-[[data-state=open]]/project-row:opacity-0">
-                    <HugeiconsIcon icon={PinIcon} strokeWidth={1.75} className="size-4" />
-                  </span>
-                )}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button
-                      type="button"
-                      onClick={(e) => e.stopPropagation()}
-                      aria-label={t("projectsPage.projectOptionsAria")}
-                      className="absolute right-0 flex size-7 shrink-0 items-center justify-center rounded-full text-muted-foreground opacity-70 transition hover:bg-black/5 hover:text-foreground hover:opacity-100 focus-visible:opacity-100 data-[state=open]:bg-black/5 data-[state=open]:opacity-100 dark:hover:bg-white/10 dark:data-[state=open]:bg-white/10"
-                    >
-                      <MoreHorizontalIcon strokeWidth={1.75} className="size-icon" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    side="bottom"
-                    align="end"
-                    sideOffset={0}
-                    onClick={(e) => e.stopPropagation()}
-                    onKeyDown={(e) => e.stopPropagation()}
-                    className="app-user-menu menu-soft-surface menu-flat-destructive ring-0 w-44 py-2 font-heading rounded-[14px] border-0"
-                  >
-                    <DropdownMenuItem
-                      onSelect={() => togglePinProject(project.id)}
-                    >
-                      <HugeiconsIcon
-                        icon={pinned ? PinOffIcon : PinIcon}
-                        strokeWidth={1.75}
-                        className="size-icon"
-                      />
-                      <span>{pinned ? t("projectsPage.unpinProject") : t("projectsPage.pinProject")}</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onSelect={() => {
-                        setRenameDraft(project.name);
-                        setRenaming(project);
-                      }}
-                    >
-                      <HugeiconsIcon icon={Edit03Icon} strokeWidth={1.75} className="size-icon" />
-                      <span>{t("projectsPage.rename")}</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onSelect={(e) => {
-                        e.stopPropagation();
-                        void selectProjectImportFile(project.id);
-                      }}
-                    >
-                      <HugeiconsIcon icon={Upload01Icon} strokeWidth={1.75} className="size-icon" />
-                      <span>{t("projectsPage.importIntoProject")}</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuSub>
-                      <DropdownMenuSubTrigger>
-                        <HugeiconsIcon icon={Download01Icon} strokeWidth={1.75} className="size-icon mr-1" />
-                        <span>{t("projectsPage.export")}</span>
-                      </DropdownMenuSubTrigger>
-                      <DropdownMenuSubContent className="w-52">
-                        {EXPORT_FORMATS_LIST.map(({ fmt, label }) => (
-                          <DropdownMenuItem
-                            key={fmt}
-                            onSelect={(e) => {
-                              e.stopPropagation();
-                              void handleProjectExport(project, fmt);
-                            }}
-                          >
-                            {label}
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuSubContent>
-                    </DropdownMenuSub>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      variant="destructive"
-                      onSelect={() => setDeleting(project)}
-                    >
-                      <HugeiconsIcon icon={Delete02Icon} strokeWidth={1.75} className="size-icon" />
-                      <span>{t("projectsPage.delete")}</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </div>
-            </div>
-            );
-          })}
-          {/* Loads the next page-step when scrolled into view. */}
-          {hasMore && <div ref={sentinelRef} className="h-px w-full" />}
-          </div>
-        </div>
-        </>
       )}
 
       {/* Create project (name + drag-and-drop sources) */}
@@ -701,7 +836,9 @@ export function ProjectsPage() {
       <Dialog
         open={renaming !== null}
         onOpenChange={(open) => {
-          if (!open) setRenaming(null);
+          if (!open) {
+            setRenaming(null);
+          }
         }}
       >
         <DialogContent className="corner-squircle dialog-soft-surface sm:max-w-md">
@@ -717,20 +854,26 @@ export function ProjectsPage() {
                 void commitRename();
               }
             }}
-            autoFocus
+            autoFocus={true}
             maxLength={120}
             placeholder={t("projectsPage.projectNamePlaceholder")}
             aria-label={t("projectsPage.projectNamePlaceholder")}
             className="focus-visible:border-input focus-visible:ring-0"
           />
           <DialogFooter className="flex-wrap gap-2 sm:justify-end">
-            <Button type="button" variant="ghost" onClick={() => setRenaming(null)}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setRenaming(null)}
+            >
               {t("common.cancel")}
             </Button>
             <Button
               type="button"
               onClick={() => void commitRename()}
-              disabled={!renameDraft.trim() || renameDraft.trim() === renaming?.name}
+              disabled={
+                !renameDraft.trim() || renameDraft.trim() === renaming?.name
+              }
             >
               {t("common.save")}
             </Button>
@@ -739,7 +882,14 @@ export function ProjectsPage() {
       </Dialog>
 
       {/* Import destination picker */}
-      <Dialog open={importFile !== null} onOpenChange={(open) => { if (!open) setImportFile(null); }}>
+      <Dialog
+        open={importFile !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setImportFile(null);
+          }
+        }}
+      >
         <DialogContent className="corner-squircle dialog-soft-surface sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{t("projectsPage.importTitle")}</DialogTitle>
@@ -749,21 +899,37 @@ export function ProjectsPage() {
           </p>
           <Select
             value={importTargetId ?? "__recents__"}
-            onValueChange={(v) => setImportTargetId(v === "__recents__" ? null : v)}
+            onValueChange={(v) =>
+              setImportTargetId(v === "__recents__" ? null : v)
+            }
           >
             <SelectTrigger>
-              <SelectValue placeholder={t("projectsPage.selectDestinationPlaceholder")} />
+              <SelectValue
+                placeholder={t("projectsPage.selectDestinationPlaceholder")}
+              />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="__recents__">{t("projectsPage.recents")}</SelectItem>
+              <SelectItem value="__recents__">
+                {t("projectsPage.recents")}
+              </SelectItem>
               {projects.map((p) => (
-                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                <SelectItem key={p.id} value={p.id}>
+                  {p.name}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
           <DialogFooter className="flex-wrap gap-2 sm:justify-end">
-            <Button type="button" variant="ghost" onClick={() => setImportFile(null)}>{t("common.cancel")}</Button>
-            <Button type="button" onClick={() => void commitImport()}>{t("projectsPage.importButton")}</Button>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setImportFile(null)}
+            >
+              {t("common.cancel")}
+            </Button>
+            <Button type="button" onClick={() => void commitImport()}>
+              {t("projectsPage.importButton")}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -772,7 +938,9 @@ export function ProjectsPage() {
       <Dialog
         open={deleting !== null}
         onOpenChange={(open) => {
-          if (!open) setDeleting(null);
+          if (!open) {
+            setDeleting(null);
+          }
         }}
       >
         <DialogContent className="menu-flat-destructive corner-squircle dialog-soft-surface sm:max-w-md">
@@ -783,10 +951,18 @@ export function ProjectsPage() {
             {t("projectsPage.deleteDescription", { name: deleting?.name })}
           </p>
           <DialogFooter className="flex-wrap gap-2 sm:justify-end">
-            <Button type="button" variant="ghost" onClick={() => setDeleting(null)}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setDeleting(null)}
+            >
               {t("common.cancel")}
             </Button>
-            <Button type="button" variant="destructive" onClick={() => void commitDelete()}>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => void commitDelete()}
+            >
               {t("common.delete")}
             </Button>
           </DialogFooter>

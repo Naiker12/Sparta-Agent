@@ -1,4 +1,3 @@
-
 /** Mirrors NUDGE_TOOL_CALLS_STATUS in backend core/inference/tool_call_parser.py; keep in sync. */
 export const NUDGE_TOOL_CALLS_STATUS = "Nudging tool calls";
 

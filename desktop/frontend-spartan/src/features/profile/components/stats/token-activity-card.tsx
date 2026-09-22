@@ -1,4 +1,3 @@
-
 import { useLocale, useT } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -40,10 +39,14 @@ function buildColumns(
   columns: number,
   mode: ActivityMode,
 ): Cell[][] {
-  if (daily.length === 0 || columns <= 0) return [];
+  if (daily.length === 0 || columns <= 0) {
+    return [];
+  }
 
   const lastDay = daily.at(-1);
-  if (!lastDay) return [];
+  if (!lastDay) {
+    return [];
+  }
   // Days after today in the final (partial) week.
   const trailing =
     DAYS_PER_WEEK -
@@ -59,7 +62,9 @@ function buildColumns(
   const cells: Cell[] = [];
   // Pad so every column is a Monday-started week.
   const firstVisible = visible[0];
-  if (!firstVisible) return [];
+  if (!firstVisible) {
+    return [];
+  }
   const leading = (parseDayKey(firstVisible.date).getDay() + 6) % DAYS_PER_WEEK;
   for (let index = 0; index < leading; index += 1) {
     cells.push({ key: `pad-${index}`, day: null, value: 0 });
@@ -86,14 +91,22 @@ function buildMonthLabels(grid: Cell[][], locale: string) {
   let lastMonth = -1;
   for (const [columnIndex, column] of grid.entries()) {
     const firstDay = column.find((cell) => cell.day !== null)?.day;
-    if (!firstDay) continue;
+    if (!firstDay) {
+      continue;
+    }
     const date = parseDayKey(firstDay.date);
-    if (date.getMonth() === lastMonth) continue;
+    if (date.getMonth() === lastMonth) {
+      continue;
+    }
     lastMonth = date.getMonth();
     // Skip a label that would collide with the previous one, or run off the end.
     const previous = labels.at(-1);
-    if (previous && columnIndex - previous.column < 3) continue;
-    if (columnIndex > grid.length - 3) continue;
+    if (previous && columnIndex - previous.column < 3) {
+      continue;
+    }
+    if (columnIndex > grid.length - 3) {
+      continue;
+    }
     labels.push({
       key: firstDay.date,
       column: columnIndex,
@@ -112,7 +125,9 @@ function columnSummary(column: Cell[]) {
   let tokens = 0;
   let firstDay: string | null = null;
   for (const cell of column) {
-    if (!cell.day) continue;
+    if (!cell.day) {
+      continue;
+    }
     value = Math.max(value, cell.value);
     tokens += cell.day.tokens;
     firstDay ??= cell.day.date;
@@ -122,7 +137,9 @@ function columnSummary(column: Cell[]) {
 
 /** Bar height in cells, at least one for any activity. */
 function barHeight(value: number, peakValue: number): number {
-  if (value <= 0 || peakValue <= 0) return 0;
+  if (value <= 0 || peakValue <= 0) {
+    return 0;
+  }
   return Math.max(1, Math.round((value / peakValue) * DAYS_PER_WEEK));
 }
 
@@ -133,10 +150,14 @@ function useVisibleColumns(maxColumns: number) {
 
   useEffect(() => {
     const element = ref.current;
-    if (!element) return;
+    if (!element) {
+      return;
+    }
     const measure = () => {
       const width = element.clientWidth;
-      if (width <= 0) return;
+      if (width <= 0) {
+        return;
+      }
       // The final column carries no trailing gap.
       const fits = Math.floor((width + CELL_GAP) / COLUMN_WIDTH);
       setColumns(Math.max(MIN_COLUMNS, Math.min(maxColumns, fits)));

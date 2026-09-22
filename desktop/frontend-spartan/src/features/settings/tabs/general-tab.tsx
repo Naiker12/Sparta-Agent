@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -22,10 +21,8 @@ import {
 } from "@/features/loaded-models";
 
 import { useHfTokenStore } from "@/features/hub";
-import {
-  setShowLlamaUpdateBanner,
-  useShowLlamaUpdateBanner,
-} from "@/hooks/use-llama-update-pref";
+
+import { CHAT_PROJECT_ATTACHMENT_TARGET_KEY } from "@/features/chat/utils/project-attachment-target";
 import { useHfTokenValidation } from "@/hooks";
 import { LOCALE_STORAGE_KEY, useT } from "@/i18n";
 import { isTauri } from "@/lib/api-base";
@@ -34,11 +31,6 @@ import { Check, Eye, EyeOff } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { loadCloseToTray, updateCloseToTray } from "../api/close-to-tray";
 import { loadLaunchAtLogin, updateLaunchAtLogin } from "../api/launch-at-login";
-import { ChangePasswordDialog } from "../components/change-password-dialog";
-import {
-  DesktopUpdateControl,
-  DesktopUpdateNote,
-} from "../components/desktop-update-control";
 import { LanguageControls } from "../components/language-segmented";
 import { SettingsRow } from "../components/settings-row";
 import { SettingsSection } from "../components/settings-section";
@@ -46,7 +38,6 @@ import { StudioVersionSection } from "../components/studio-version-section";
 import { useDesktopBooleanSetting } from "../hooks/use-desktop-boolean-setting";
 import { KEYBOARD_SHORTCUTS_STORAGE_KEY } from "../stores/keyboard-shortcuts-store";
 import { SETTINGS_PANEL_PREFS_STORAGE_KEY } from "../stores/settings-panel-prefs-store";
-import { CHAT_PROJECT_ATTACHMENT_TARGET_KEY } from "@/features/chat/utils/project-attachment-target";
 
 // Keys cleared by "Reset all local preferences". NEVER include auth/session keys here -- that
 // would log the user out (unsloth_auth_token, unsloth_auth_refresh_token, and
@@ -136,10 +127,8 @@ export function GeneralTab() {
   const hfToken = useChatRuntimeStore((s) => s.hfToken);
   const setHfToken = useChatRuntimeStore((s) => s.setHfToken);
 
-  const hfTokenPersistenceError = useHfTokenStore(
-    (s) => s.persistenceError,
-  );
-  const showLlamaUpdates = useShowLlamaUpdateBanner();
+  const hfTokenPersistenceError = useHfTokenStore((s) => s.persistenceError);
+
   const showLoadedModels = useShowLoadedModels();
 
   const [draftToken, setDraftToken] = useState(hfToken ?? "");
@@ -168,7 +157,9 @@ export function GeneralTab() {
   // Commit on unmount (dialog close / tab switch), skipped during the reset-prefs flow.
   useEffect(() => {
     return () => {
-      if (resetInProgress) return;
+      if (resetInProgress) {
+        return;
+      }
       const trimmed = draftRef.current.trim();
       const current = useChatRuntimeStore.getState().hfToken;
       if (trimmed !== current) {
@@ -179,8 +170,12 @@ export function GeneralTab() {
 
   const commitToken = () => {
     const trimmed = draftToken.trim();
-    if (trimmed !== draftToken) setDraftToken(trimmed);
-    if (trimmed !== hfToken) setHfToken(trimmed);
+    if (trimmed !== draftToken) {
+      setDraftToken(trimmed);
+    }
+    if (trimmed !== hfToken) {
+      setHfToken(trimmed);
+    }
   };
 
   const clearHfToken = () => {
@@ -266,7 +261,7 @@ export function GeneralTab() {
                 variant="outline"
                 size="sm"
                 className="h-8"
-                disabled={!draftToken && !hfToken}
+                disabled={!(draftToken || hfToken)}
                 onClick={clearHfToken}
               >
                 {t("settings.general.clearToken")}
@@ -317,9 +312,12 @@ export function GeneralTab() {
               <Switch
                 checked={launchAtLoginSetting.value ?? false}
                 disabled={
-                  launchAtLoginSetting.value === null || launchAtLoginSetting.saving
+                  launchAtLoginSetting.value === null ||
+                  launchAtLoginSetting.saving
                 }
-                onCheckedChange={(enabled) => void launchAtLoginSetting.update(enabled)}
+                onCheckedChange={(enabled) =>
+                  void launchAtLoginSetting.update(enabled)
+                }
               />
               {launchAtLoginSetting.error ? (
                 <span className="max-w-[260px] text-right text-xs text-destructive">
@@ -338,9 +336,12 @@ export function GeneralTab() {
                 <Switch
                   checked={closeToTraySetting.value ?? false}
                   disabled={
-                    closeToTraySetting.value === null || closeToTraySetting.saving
+                    closeToTraySetting.value === null ||
+                    closeToTraySetting.saving
                   }
-                  onCheckedChange={(enabled) => void closeToTraySetting.update(enabled)}
+                  onCheckedChange={(enabled) =>
+                    void closeToTraySetting.update(enabled)
+                  }
                 />
                 {closeToTraySetting.error ? (
                   <span className="max-w-[260px] text-right text-xs text-destructive">
@@ -363,17 +364,6 @@ export function GeneralTab() {
           <Switch
             checked={showLoadedModels}
             onCheckedChange={setShowLoadedModels}
-          />
-        </SettingsRow>
-        <SettingsRow
-          label={t("settings.general.notifications.showLlamaUpdates")}
-          description={t(
-            "settings.general.notifications.showLlamaUpdatesDescription",
-          )}
-        >
-          <Switch
-            checked={showLlamaUpdates}
-            onCheckedChange={setShowLlamaUpdateBanner}
           />
         </SettingsRow>
       </SettingsSection>
@@ -420,7 +410,6 @@ export function GeneralTab() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
     </div>
   );
 }

@@ -1,4 +1,3 @@
-
 // Pinned models for the model selector's On Device list, persisted in
 // localStorage so pins survive reloads. GGUF quants pin individually
 // (repoId + quant); non-GGUF repos pin as a whole. Pinned entries surface
@@ -31,10 +30,14 @@ export function pinnedQuantEntries(pinned: string[]): PinnedQuantEntry[] {
   const out: PinnedQuantEntry[] = [];
   for (const key of pinned) {
     const sep = key.indexOf("::");
-    if (sep <= 0) continue;
+    if (sep <= 0) {
+      continue;
+    }
     const repoId = key.slice(0, sep);
     const quant = key.slice(sep + 2);
-    if (repoId && quant) out.push({ repoId, quant });
+    if (repoId && quant) {
+      out.push({ repoId, quant });
+    }
   }
   return out;
 }
@@ -116,10 +119,14 @@ export const usePinnedModelsStore = create<PinnedModelsState>((set) => ({
     set((state) => {
       const from = state.pinned.indexOf(fromKey);
       const to = state.pinned.indexOf(toKey);
-      if (from < 0 || to < 0 || from === to) return state;
+      if (from < 0 || to < 0 || from === to) {
+        return state;
+      }
       const next = [...state.pinned];
       next.splice(to, 0, ...next.splice(from, 1));
-      if (dragSnapshot === null) writePinned(next);
+      if (dragSnapshot === null) {
+        writePinned(next);
+      }
       return { pinned: next };
     }),
   beginPinnedDrag: () =>
@@ -134,13 +141,17 @@ export const usePinnedModelsStore = create<PinnedModelsState>((set) => ({
       const external = dragExternalOrder;
       dragSnapshot = null;
       dragExternalOrder = null;
-      if (snapshot === null) return state;
+      if (snapshot === null) {
+        return state;
+      }
       // What this window and localStorage last agreed on: the order another
       // window installed mid-drag if there was one, else the pre-drag snapshot.
       const base = external ?? snapshot;
       if (commit) {
         // Nothing moved on top of that, so there is nothing to persist.
-        if (sameOrder(base, state.pinned)) return state;
+        if (sameOrder(base, state.pinned)) {
+          return state;
+        }
         writePinned(state.pinned);
         return state;
       }
@@ -148,7 +159,9 @@ export const usePinnedModelsStore = create<PinnedModelsState>((set) => ({
       // in localStorage. That is the snapshot for an ordinary drag and the
       // other window's list when one landed mid-drag, whatever it did to the
       // keys; the moves this drag previewed on top of it are dropped either way.
-      if (sameOrder(base, state.pinned)) return state;
+      if (sameOrder(base, state.pinned)) {
+        return state;
+      }
       return { pinned: base };
     }),
 }));
@@ -158,7 +171,9 @@ if (typeof window !== "undefined") {
     if (event.key === KEY || event.key === null) {
       const next = readPinned();
       // A drag in flight rolls back to this instead of its own snapshot.
-      if (dragSnapshot !== null) dragExternalOrder = next;
+      if (dragSnapshot !== null) {
+        dragExternalOrder = next;
+      }
       usePinnedModelsStore.setState({ pinned: next });
     }
   });

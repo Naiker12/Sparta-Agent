@@ -1,4 +1,3 @@
-
 import {
   Combobox,
   ComboboxContent,
@@ -8,9 +7,9 @@ import {
   ComboboxList,
 } from "@/components/ui/combobox";
 import { Spinner } from "@/components/ui/spinner";
-import type { PipelineType } from "@huggingface/hub";
 import { useHubModelSearch } from "@/features/hub/hooks/use-hub-model-search";
 import { useDebouncedValue } from "@/hooks";
+import type { PipelineType } from "@huggingface/hub";
 import { type ReactElement, useMemo, useRef } from "react";
 
 // HF pipeline filter for embedding models; matches the backend's
@@ -70,8 +69,12 @@ export function EmbeddingModelCombobox({
       ref={anchorRef}
       className={className}
       onKeyDown={(event) => {
-        if (event.key !== "Enter") return;
-        if (!(event.target instanceof HTMLInputElement)) return;
+        if (event.key !== "Enter") {
+          return;
+        }
+        if (!(event.target instanceof HTMLInputElement)) {
+          return;
+        }
         event.preventDefault();
         const typed = event.target.value.trim();
         if (typed) {

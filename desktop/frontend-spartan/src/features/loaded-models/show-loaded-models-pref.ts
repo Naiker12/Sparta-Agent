@@ -1,4 +1,3 @@
-
 // Whether the corner indicator may appear. Off by default; only an explicit
 // "true" (Settings -> General -> Notifications) enables it. An older explicit
 // "false" still reads as off, so anyone who already turned it down stays that
@@ -51,7 +50,9 @@ function subscribe(listener: () => void): () => void {
   listeners.add(listener);
   // Sync toggles made in another tab.
   const onStorage = (event: StorageEvent) => {
-    if (event.key === STORAGE_KEY || event.key === DISMISSED_KEY) listener();
+    if (event.key === STORAGE_KEY || event.key === DISMISSED_KEY) {
+      listener();
+    }
   };
   window.addEventListener("storage", onStorage);
   return () => {

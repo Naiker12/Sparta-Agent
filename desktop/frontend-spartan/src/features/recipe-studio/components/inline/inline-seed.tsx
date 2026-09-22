@@ -1,4 +1,3 @@
-
 import {
   DocumentAttachmentIcon,
   DocumentCodeIcon,
@@ -114,7 +113,8 @@ export function InlineSeed({
   const isLocal = mode === "local";
   const fileName = isLocal
     ? config.local_file_name?.trim()
-    : config.unstructured_file_names?.length
+    : config.unstructured_file_names &&
+        config.unstructured_file_names.length > 0
       ? `${config.unstructured_file_names.length} file${config.unstructured_file_names.length !== 1 ? "s" : ""}`
       : undefined;
 

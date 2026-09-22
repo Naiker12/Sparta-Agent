@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useT } from "@/i18n";
@@ -30,7 +29,9 @@ export function DictationDictionaryView({ onBack }: { onBack: () => void }) {
 
   const handleAddEntry = () => {
     const trimmed = newEntry.trim();
-    if (!trimmed) return;
+    if (!trimmed) {
+      return;
+    }
     addDictionaryEntry(trimmed);
     setNewEntry("");
   };

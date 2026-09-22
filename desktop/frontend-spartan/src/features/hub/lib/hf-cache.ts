@@ -1,4 +1,3 @@
-
 import { type ModelEntry, modelInfo } from "@huggingface/hub";
 
 import { LruMap } from "./lru-map";
@@ -59,7 +58,9 @@ function acquire(): Promise<void> {
 function release() {
   active--;
   const next = waiting.shift();
-  if (next) next();
+  if (next) {
+    next();
+  }
 }
 
 function isStale(key: string): boolean {
@@ -74,7 +75,9 @@ function cacheKey(name: string, token: string | undefined): string {
 function extractToken(
   params: Parameters<typeof modelInfo>[0],
 ): string | undefined {
-  if (params.accessToken) return params.accessToken;
+  if (params.accessToken) {
+    return params.accessToken;
+  }
   if (params.credentials && "accessToken" in params.credentials) {
     return params.credentials.accessToken;
   }
@@ -86,9 +89,13 @@ export function primeCacheFromListing(
   token: string | undefined,
   data: CachedResult,
 ): void {
-  if (!name) return;
+  if (!name) {
+    return;
+  }
   const key = cacheKey(name, token);
-  if (!isStale(key)) return;
+  if (!isStale(key)) {
+    return;
+  }
   cache.set(key, { data, ts: Date.now() });
 }
 
@@ -97,10 +104,15 @@ export async function cachedModelInfo(
 ): Promise<CachedResult> {
   const token = extractToken(params);
   const key = cacheKey(params.name, token);
-  if (!isStale(key)) return cache.get(key)!.data;
+  const cached = cache.get(key);
+  if (!isStale(key) && cached) {
+    return cached.data;
+  }
 
   const flying = inflight.get(key);
-  if (flying) return flying;
+  if (flying) {
+    return flying;
+  }
 
   const promise = (async () => {
     await acquire();
@@ -123,7 +135,9 @@ export async function cachedModelInfo(
       };
       if (token && !typed.private && !typed.gated) {
         const anonKey = cacheKey(params.name, undefined);
-        if (isStale(anonKey)) cache.set(anonKey, entry);
+        if (isStale(anonKey)) {
+          cache.set(anonKey, entry);
+        }
       }
       return result as CachedResult;
     } finally {

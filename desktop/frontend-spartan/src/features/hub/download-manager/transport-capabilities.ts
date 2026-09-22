@@ -1,4 +1,3 @@
-
 // Kept OUT of api.ts on purpose: api.ts imports the auth barrel, which the test runner cannot
 // load, so anything defined there is untestable. That is how a normalizer silently dropping the
 // backend's Auto verdict shipped green.
@@ -20,19 +19,20 @@ export interface DownloadTransportCapabilities {
   partials_resumable?: boolean;
 }
 
-export const DOWNLOAD_TRANSPORT_CAPABILITIES_FALLBACK: DownloadTransportCapabilities = {
-  http: { available: true, reason: null },
-  xet: {
-    available: null,
-    reason: "Couldn't verify Xet support with the Unsloth backend.",
-  },
-  // Unknown backend state: stay on Xet, the download-time ladder still falls back to HTTP.
-  auto_resolves_to: "xet",
-  auto_reason: null,
-  // Unverified means "do not promise a resume". Continuing a partial is honest either way; only
-  // the byte-resume wording would be a lie.
-  partials_resumable: false,
-};
+export const DOWNLOAD_TRANSPORT_CAPABILITIES_FALLBACK: DownloadTransportCapabilities =
+  {
+    http: { available: true, reason: null },
+    xet: {
+      available: null,
+      reason: "Couldn't verify Xet support with the Unsloth backend.",
+    },
+    // Unknown backend state: stay on Xet, the download-time ladder still falls back to HTTP.
+    auto_resolves_to: "xet",
+    auto_reason: null,
+    // Unverified means "do not promise a resume". Continuing a partial is honest either way; only
+    // the byte-resume wording would be a lie.
+    partials_resumable: false,
+  };
 export function normalizeDownloadTransportCapability(
   value: unknown,
   fallback: DownloadTransportCapability,
@@ -80,7 +80,8 @@ export function normalizeDownloadTransportCapabilities(
     // Carry the backend's verdict through. Dropping these left effectiveTransportMode("auto")
     // reading undefined, so Auto always resolved to Xet whatever the machine's health was.
     auto_resolves_to:
-      candidate.auto_resolves_to === "http" || candidate.auto_resolves_to === "xet"
+      candidate.auto_resolves_to === "http" ||
+      candidate.auto_resolves_to === "xet"
         ? candidate.auto_resolves_to
         : DOWNLOAD_TRANSPORT_CAPABILITIES_FALLBACK.auto_resolves_to,
     auto_reason:

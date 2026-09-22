@@ -1,4 +1,3 @@
-
 /**
  * What the dictation that just ended actually produced.
  *

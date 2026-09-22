@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { InfoHint } from "@/components/ui/info-hint";
@@ -12,7 +11,6 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { usePlatformStore } from "@/config/env";
-import { useT } from "@/i18n";
 import {
   GPU_LAYERS_AUTO,
   fetchGgufStagedMetadata,
@@ -21,6 +19,11 @@ import {
   useChatRuntimeStore,
 } from "@/features/chat";
 import { prepareHfTokenForUse } from "@/features/hf-auth";
+import {
+  type ModelMemorySettings,
+  loadModelMemorySettings,
+  subscribeModelMemorySettings,
+} from "@/features/settings/api/model-memory";
 import {
   type VramBudgetSettings,
   dropVramBudgetRetry,
@@ -42,6 +45,7 @@ import {
   reconcileGpuSelection,
   useGpuDevices,
 } from "@/hooks/use-gpu-info";
+import { useT } from "@/i18n";
 import { ChevronDownStandardIcon } from "@/lib/chevron-icons";
 import { toast } from "@/lib/toast";
 import { ArrowLeft01Icon } from "@hugeicons/core-free-icons";
@@ -56,11 +60,6 @@ import {
   useSyncExternalStore,
 } from "react";
 import {
-  type ModelMemorySettings,
-  loadModelMemorySettings,
-  subscribeModelMemorySettings,
-} from "@/features/settings/api/model-memory";
-import {
   type LlamaFlagCatalog,
   loadLlamaFlagCatalog,
   loadManagedLlamaFlags,
@@ -72,17 +71,17 @@ import {
   syncModelOverride,
 } from "../api/model-overrides";
 import {
+  useDefaultChatTemplate,
+  useModelMaxPositionEmbeddings,
+} from "../hooks/use-model-defaults";
+import { perModelConfigsEqual } from "../model-config/apply-per-model-config";
+import {
   diagnoseExtraArgs,
   extraArgsAreLoadable,
   formatExtraArgs,
   parseExtraArgs,
   sanitizeStoredExtraArgs,
 } from "../model-config/llama-extra-args";
-import {
-  useDefaultChatTemplate,
-  useModelMaxPositionEmbeddings,
-} from "../hooks/use-model-defaults";
-import { perModelConfigsEqual } from "../model-config/apply-per-model-config";
 import { ggufQuantLabel } from "../model-config/model-identity";
 import {
   CONTEXT_LENGTH_MIN,
@@ -101,6 +100,7 @@ import {
   N_PARALLEL_MIN,
   type PerModelConfig,
   SPECULATIVE_TYPES,
+  VRAM_BUDGET_PERCENT_STEP,
   deletePerModelConfig,
   floorMaxSeqLength,
   isDefaultConfig,
@@ -112,7 +112,6 @@ import {
   saveAdvancedSettingsOpen,
   savePerModelConfig,
   subscribeAdvancedSettingsOpen,
-  VRAM_BUDGET_PERCENT_STEP,
   vramFractionToPercent,
   vramPercentToFraction,
 } from "../model-config/per-model-config";
@@ -226,9 +225,9 @@ function withoutUnsupportedDiffusionSettings(
     llamaExtraArgs: null,
     ...(hasUnsupportedGpuPick
       ? {
-        selectedGpuIds: undefined,
-        selectedGpuIndexKind: undefined,
-      }
+          selectedGpuIds: undefined,
+          selectedGpuIndexKind: undefined,
+        }
       : {}),
   };
 }
@@ -295,7 +294,9 @@ function ChatTemplateSetting({
           className={`h-8 px-3 text-ui-13 ${CONTROL_SURFACE}`}
           onClick={onEditTemplate}
         >
-          {readOnly ? t("runSettings.chatTemplateView") : t("runSettings.chatTemplateEdit")}
+          {readOnly
+            ? t("runSettings.chatTemplateView")
+            : t("runSettings.chatTemplateEdit")}
         </Button>
       </div>
     </div>
@@ -320,10 +321,10 @@ function MaxSeqLengthSetting({
     <div className="space-y-3">
       <div className={ROW_CLASS}>
         <div className="flex min-w-0 items-center gap-1.5">
-          <span className={LABEL_CLASS}>{t("runSettings.maxSeqLengthLabel")}</span>
-          <InfoHint>
-            {t("runSettings.maxSeqLengthHint")}
-          </InfoHint>
+          <span className={LABEL_CLASS}>
+            {t("runSettings.maxSeqLengthLabel")}
+          </span>
+          <InfoHint>{t("runSettings.maxSeqLengthHint")}</InfoHint>
         </div>
         <NumericValueInput
           ref={inputRef}
@@ -539,7 +540,9 @@ function VramBudgetRow() {
       })
       .catch((error: unknown) => {
         toast.error(
-          error instanceof Error ? error.message : "Failed to reset VRAM budget",
+          error instanceof Error
+            ? error.message
+            : "Failed to reset VRAM budget",
         );
       });
   };
@@ -559,7 +562,9 @@ function VramBudgetRow() {
           // The client re-stages it, where the write generation can say whether
           // it is still the newest intent.
           toast.error(
-            error instanceof Error ? error.message : "Failed to save VRAM budget",
+            error instanceof Error
+              ? error.message
+              : "Failed to save VRAM budget",
           );
         });
     }, 400);
@@ -670,7 +675,9 @@ function GpuMemorySettings({
     const next = current.includes(index)
       ? current.filter((i) => i !== index)
       : [...current, index].sort((a, b) => a - b);
-    if (next.length === 0) return; // keep at least one GPU selected
+    if (next.length === 0) {
+      return; // keep at least one GPU selected
+    }
     update({
       selectedGpuIds: next,
       selectedGpuIndexKind: gpuIndexKind,
@@ -684,13 +691,17 @@ function GpuMemorySettings({
           <InfoHint>
             <div className="flex flex-col gap-1.5">
               <div>
-                <span className="font-medium">{t("runSettings.gpuMemoryDefault")}:</span> Unsloth fits the
-                model and context to your GPUs.
+                <span className="font-medium">
+                  {t("runSettings.gpuMemoryDefault")}:
+                </span>{" "}
+                Unsloth fits the model and context to your GPUs.
               </div>
               <div>
-                <span className="font-medium">{t("runSettings.gpuMemoryManual")}:</span> set GPU Layers
-                yourself. Leave it on Auto to let llama.cpp size the context and
-                offload overflow (including MoE experts) to RAM.
+                <span className="font-medium">
+                  {t("runSettings.gpuMemoryManual")}:
+                </span>{" "}
+                set GPU Layers yourself. Leave it on Auto to let llama.cpp size
+                the context and offload overflow (including MoE experts) to RAM.
               </div>
             </div>
           </InfoHint>
@@ -703,12 +714,12 @@ function GpuMemorySettings({
               v === "manual"
                 ? { gpuMemoryMode: "manual" }
                 : {
-                  gpuMemoryMode: "auto",
-                  gpuLayers: undefined,
-                  nCpuMoe: undefined,
-                  selectedGpuIds: undefined,
-                  selectedGpuIndexKind: undefined,
-                },
+                    gpuMemoryMode: "auto",
+                    gpuLayers: undefined,
+                    nCpuMoe: undefined,
+                    selectedGpuIds: undefined,
+                    selectedGpuIndexKind: undefined,
+                  },
             )
           }
         >
@@ -721,8 +732,12 @@ function GpuMemorySettings({
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="menu-soft-surface ring-0 border-0 rounded-lg">
-            <SelectItem value="auto">{t("runSettings.gpuMemoryDefault")}</SelectItem>
-            <SelectItem value="manual">{t("runSettings.gpuMemoryManual")}</SelectItem>
+            <SelectItem value="auto">
+              {t("runSettings.gpuMemoryDefault")}
+            </SelectItem>
+            <SelectItem value="manual">
+              {t("runSettings.gpuMemoryManual")}
+            </SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -862,15 +877,19 @@ function MlxAdvancedSettings({
         <>
           <div className={ROW_CLASS}>
             <div className="flex min-w-0 items-center gap-1.5">
-              <span className={LABEL_CLASS}>{t("runSettings.kvCacheDtype")}</span>
+              <span className={LABEL_CLASS}>
+                {t("runSettings.kvCacheDtype")}
+              </span>
               <InfoHint>
                 Lower KV cache precision to save memory at the cost of some
-                quality. Auto keeps full precision; 8-bit is the safest reduction,
-                and lower widths save more memory.
+                quality. Auto keeps full precision; 8-bit is the safest
+                reduction, and lower widths save more memory.
               </InfoHint>
             </div>
             <Select
-              value={config.mlxKvBits ? String(config.mlxKvBits) : MLX_KV_BITS_AUTO}
+              value={
+                config.mlxKvBits ? String(config.mlxKvBits) : MLX_KV_BITS_AUTO
+              }
               onValueChange={(v) =>
                 update({ mlxKvBits: v === MLX_KV_BITS_AUTO ? null : Number(v) })
               }
@@ -1005,7 +1024,9 @@ function GgufAdvancedSettings({
 
       <div className={ROW_CLASS}>
         <div className="flex min-w-0 items-center gap-1.5">
-          <span className={LABEL_CLASS_WRAP}>{t("runSettings.speculativeDecoding")}</span>
+          <span className={LABEL_CLASS_WRAP}>
+            {t("runSettings.speculativeDecoding")}
+          </span>
           <InfoHint>
             Faster generation. Auto picks the best strategy for the model and
             platform: DSpark or DFlash when the model ships a drafter sidecar,
@@ -1143,7 +1164,10 @@ function GgufAdvancedSettings({
                 const parsed = Number.parseInt(raw, 10);
                 if (Number.isFinite(parsed)) {
                   update({
-                    nBatch: Math.max(N_BATCH_MIN, Math.min(N_BATCH_MAX, parsed)),
+                    nBatch: Math.max(
+                      N_BATCH_MIN,
+                      Math.min(N_BATCH_MAX, parsed),
+                    ),
                   });
                 }
               }}
@@ -1154,7 +1178,8 @@ function GgufAdvancedSettings({
           </div>
           {batchBelowFloor && (
             <p id={batchAdviceId} className="text-ui-12 text-muted-foreground">
-              Too small for llama-server, so the load will raise it to {batchFloor}.
+              Too small for llama-server, so the load will raise it to{" "}
+              {batchFloor}.
               {config.nParallel != null && config.nParallel > 2
                 ? " It needs one output slot per parallel slot."
                 : " It cannot run a batch below 2."}
@@ -1169,10 +1194,10 @@ function GgufAdvancedSettings({
             <div className="flex min-w-0 items-center gap-1.5">
               <span className={LABEL_CLASS}>{t("runSettings.uBatchSize")}</span>
               <InfoHint>
-                Physical prompt micro-batch size (--ubatch-size). Leave blank for
-                the llama.cpp default (512). Larger values speed up prompt
-                processing but use more VRAM for the compute buffer; capped at the
-                batch size.
+                Physical prompt micro-batch size (--ubatch-size). Leave blank
+                for the llama.cpp default (512). Larger values speed up prompt
+                processing but use more VRAM for the compute buffer; capped at
+                the batch size.
               </InfoHint>
             </div>
             <input
@@ -1191,7 +1216,10 @@ function GgufAdvancedSettings({
                 const parsed = Number.parseInt(raw, 10);
                 if (Number.isFinite(parsed)) {
                   update({
-                    nUbatch: Math.max(N_BATCH_MIN, Math.min(N_BATCH_MAX, parsed)),
+                    nUbatch: Math.max(
+                      N_BATCH_MIN,
+                      Math.min(N_BATCH_MAX, parsed),
+                    ),
                   });
                 }
               }}
@@ -1202,8 +1230,8 @@ function GgufAdvancedSettings({
           </div>
           {ubatchExceedsBatch && (
             <p id={ubatchAdviceId} className="text-ui-12 text-muted-foreground">
-              Micro-batch is larger than the batch size, so llama.cpp will run at{" "}
-              {effectiveBatch}. Raise the batch size to use {config.nUbatch}.
+              Micro-batch is larger than the batch size, so llama.cpp will run
+              at {effectiveBatch}. Raise the batch size to use {config.nUbatch}.
             </p>
           )}
         </div>
@@ -1211,7 +1239,9 @@ function GgufAdvancedSettings({
 
       <div className={ROW_CLASS}>
         <div className="flex min-w-0 items-center gap-1.5">
-          <span className={LABEL_CLASS}>{t("runSettings.tensorParallelism")}</span>
+          <span className={LABEL_CLASS}>
+            {t("runSettings.tensorParallelism")}
+          </span>
           <InfoHint>
             No effect on a single GPU. On multi-GPU setups, improves tokens/sec
             for dense models. MoE models don't benefit.
@@ -1299,7 +1329,8 @@ function ExtraArgsRow({
   // help text that no longer describes the server it is about to launch.
   const [catalogEpoch, setCatalogEpoch] = useState(0);
   useEffect(
-    () => subscribeLlamaFlagCatalog(() => setCatalogEpoch((epoch) => epoch + 1)),
+    () =>
+      subscribeLlamaFlagCatalog(() => setCatalogEpoch((epoch) => epoch + 1)),
     [],
   );
   useEffect(() => {
@@ -1332,7 +1363,7 @@ function ExtraArgsRow({
           setModelMemory(loaded);
         }
       })
-      .catch(() => { });
+      .catch(() => {});
     const unsubscribe = subscribeModelMemorySettings(setModelMemory);
     return () => {
       cancelled = true;
@@ -1443,8 +1474,8 @@ interface ModelConfigPageProps {
   isDiffusion?: boolean;
   variant?: "page" | "sidebar";
   /**
-  * Page variant only: render the built-in "Run settings" title block. A host that already
-  * shows the model name as its page heading turns this off. */
+   * Page variant only: render the built-in "Run settings" title block. A host that already
+   * shows the model name as its page heading turns this off. */
   showHeader?: boolean;
 }
 
@@ -1542,16 +1573,16 @@ export function ModelConfigPage({
   // new value must retire a verdict that answered a different request.
   const chatTemplateOutcome =
     isActiveModel &&
-      (configState.chatTemplateOverride ?? null) ===
+    (configState.chatTemplateOverride ?? null) ===
       (loadedChatTemplateOverride ?? null)
       ? chatTemplateOverrideReason
       : null;
   const mlxKvQuantOutcome =
     isActiveModel &&
-      (configState.mlxKvBits ?? null) === (loadedMlxKvBitsRequested ?? null)
+    (configState.mlxKvBits ?? null) === (loadedMlxKvBitsRequested ?? null)
       ? // Both, not either: dropping the note promises savings before the offset
-      // where quantization actually starts.
-      [mlxKvQuantReason, mlxKvQuantNote].filter(Boolean).join(". ") || null
+        // where quantization actually starts.
+        [mlxKvQuantReason, mlxKvQuantNote].filter(Boolean).join(". ") || null
       : null;
   const servedByMlx = isServedByMlx(
     target.isGguf,
@@ -1857,7 +1888,10 @@ export function ModelConfigPage({
           if (cleaned.length !== local.length) {
             setConfig((current) =>
               current.llamaExtraArgs === local
-                ? { ...current, llamaExtraArgs: cleaned.length > 0 ? cleaned : null }
+                ? {
+                    ...current,
+                    llamaExtraArgs: cleaned.length > 0 ? cleaned : null,
+                  }
                 : current,
             );
           }
@@ -1886,28 +1920,34 @@ export function ModelConfigPage({
         // Load would be live for a request that comes back 400. The managed set is
         // enough for that: the value checks do not need the binary's catalogue.
         const hydratedIsLoadable = extraArgsAreLoadable(
-          diagnoseExtraArgs(formatExtraArgs(stored), {
-            flags: {},
-            managed: managed?.managed ?? new Set<string>(),
-            // Read without the probe, so nothing here knows which flags are
-            // switches, and nothing may be called a typo either.
-            switches: new Set<string>(),
-            maxBytes: managed?.maxBytes ?? 0,
-            windowsCommandBudget: managed?.windowsCommandBudget ?? 0,
-            defaultParallelSlots: managed?.defaultParallelSlots ?? 0,
-            // Carried from the managed-only read, which knows it: a build that
-            // serves one slot however many are asked for floors the batch at 2,
-            // and hydration must judge a stored list the same way the row does.
-            parallelSlotsClamped: managed?.parallelSlotsClamped ?? false,
-            probeOk: false,
-          },
+          diagnoseExtraArgs(
+            formatExtraArgs(stored),
+            {
+              flags: {},
+              managed: managed?.managed ?? new Set<string>(),
+              // Read without the probe, so nothing here knows which flags are
+              // switches, and nothing may be called a typo either.
+              switches: new Set<string>(),
+              maxBytes: managed?.maxBytes ?? 0,
+              windowsCommandBudget: managed?.windowsCommandBudget ?? 0,
+              defaultParallelSlots: managed?.defaultParallelSlots ?? 0,
+              // Carried from the managed-only read, which knows it: a build that
+              // serves one slot however many are asked for floors the batch at 2,
+              // and hydration must judge a stored list the same way the row does.
+              parallelSlotsClamped: managed?.parallelSlotsClamped ?? false,
+              probeOk: false,
+            },
             {
               // The slot floor is already known here, and the backend refuses a batch
               // below it deterministically. Left out, this released Load on a stored
               // "--batch-size 2" against a four-slot server, and a click in the window
               // before the full catalogue check lands reaches that 400.
-              batchFloor: effectiveBatchFloor(configRef.current.nParallel, managed),
-            }),
+              batchFloor: effectiveBatchFloor(
+                configRef.current.nParallel,
+                managed,
+              ),
+            },
+          ),
         );
         // Read from a ref rather than inside the updater below: an updater must stay
         // free of side effects (StrictMode calls it twice), and this decides one.
@@ -1945,7 +1985,13 @@ export function ModelConfigPage({
       cancelled = true;
       clearTimeout(release);
     };
-  }, [configId, target.id, target.ggufVariant, target.isGguf, resolvedIsDiffusion]);
+  }, [
+    configId,
+    target.id,
+    target.ggufVariant,
+    target.isGguf,
+    resolvedIsDiffusion,
+  ]);
   const config = reconcileConfigGpuSelection(
     configState,
     resolvedIsDiffusion,
@@ -2002,9 +2048,9 @@ export function ModelConfigPage({
   const contextValue = Math.min(
     Math.max(
       config.customContextLength ??
-      activeLoadedContext ??
-      nativeContextLength ??
-      maxContext,
+        activeLoadedContext ??
+        nativeContextLength ??
+        maxContext,
       minContext,
     ),
     maxContext,
@@ -2236,7 +2282,9 @@ export function ModelConfigPage({
           // did not change, and the slider is still there to retry.
           dropVramBudgetRetry();
           toast.error(
-            error instanceof Error ? error.message : "Failed to save VRAM budget",
+            error instanceof Error
+              ? error.message
+              : "Failed to save VRAM budget",
           );
         })
         .finally(() => {
@@ -2286,7 +2334,9 @@ export function ModelConfigPage({
             <div className="space-y-3">
               <div className={ROW_CLASS}>
                 <div className="flex min-w-0 items-center gap-1.5">
-                  <span className={LABEL_CLASS}>{t("runSettings.contextLength")}</span>
+                  <span className={LABEL_CLASS}>
+                    {t("runSettings.contextLength")}
+                  </span>
                   <InfoHint>
                     Tokens of context to allocate. Higher uses more VRAM.
                     {nativeContextLength != null
@@ -2303,8 +2353,8 @@ export function ModelConfigPage({
                   onChange={setContextLength}
                   displayValue={
                     config.customContextLength == null &&
-                      nativeContextLength == null &&
-                      activeLoadedContext == null
+                    nativeContextLength == null &&
+                    activeLoadedContext == null
                       ? "Auto"
                       : undefined
                   }
@@ -2476,7 +2526,7 @@ export function ModelConfigPage({
         value={config.chatTemplateOverride}
         defaultTemplate={resolvedDefaultTemplate}
         defaultLoading={resolvedDefaultLoading}
-        readOnly={!target.isGguf && !servedByMlx}
+        readOnly={!(target.isGguf || servedByMlx)}
         onSave={(override) => update({ chatTemplateOverride: override })}
       />
     </div>

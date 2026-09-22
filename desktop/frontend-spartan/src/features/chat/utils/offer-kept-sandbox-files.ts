@@ -1,6 +1,5 @@
-
-import { toast } from "sonner";
 import { translate } from "@/i18n";
+import { toast } from "sonner";
 import { deleteStoredChatThreads } from "./chat-history-storage";
 
 /**
@@ -10,11 +9,15 @@ import { deleteStoredChatThreads } from "./chat-history-storage";
  * so every delete surface that cannot ask up front makes the offer here.
  */
 export function offerToDeleteKeptSandboxes(keptThreadIds: string[]): void {
-  if (keptThreadIds.length === 0) return;
+  if (keptThreadIds.length === 0) {
+    return;
+  }
   toast(
     keptThreadIds.length === 1
       ? translate("chat.keptSandboxFiles.one")
-      : translate("chat.keptSandboxFiles.many", { count: keptThreadIds.length }),
+      : translate("chat.keptSandboxFiles.many", {
+          count: keptThreadIds.length,
+        }),
     {
       description:
         keptThreadIds.length === 1
@@ -28,7 +31,9 @@ export function offerToDeleteKeptSandboxes(keptThreadIds: string[]): void {
               // A tool still running in there, a surviving fork, or a folder
               // that would not go: the request succeeded and the files did not,
               // so this offer is the only way back to them.
-              if (stillKept.length > 0) offerToDeleteKeptSandboxes(stillKept);
+              if (stillKept.length > 0) {
+                offerToDeleteKeptSandboxes(stillKept);
+              }
             })
             .catch(() => {
               toast.error(translate("chat.keptSandboxFiles.deleteFailed"));

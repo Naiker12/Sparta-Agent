@@ -1,4 +1,3 @@
-
 import { isTauri } from "@/lib/api-base";
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
 import { stripAnsi } from "@/lib/strip-ansi";
@@ -41,7 +40,10 @@ export function redactDiagnosticsText(text: string): string {
   );
   redacted = redacted.replace(/\bhf_[A-Za-z0-9]{20,}\b/g, "hf_<redacted>");
   redacted = redacted.replace(/\bghp_[A-Za-z0-9_]{20,}\b/g, "ghp_<redacted>");
-  redacted = redacted.replace(/\bgithub_pat_[A-Za-z0-9_]{20,}\b/g, "github_pat_<redacted>");
+  redacted = redacted.replace(
+    /\bgithub_pat_[A-Za-z0-9_]{20,}\b/g,
+    "github_pat_<redacted>",
+  );
   redacted = redacted.replace(/\bsk-[A-Za-z0-9_-]{20,}\b/g, "sk-<redacted>");
   redacted = redacted.replace(
     /\b(cookie|set-cookie)\s*[:=]\s*[^\n\r]+/gi,
@@ -124,7 +126,6 @@ async function collectDiagnosticsReport(
     });
     return { report, source: "tauri" };
   } catch (error) {
-    console.warn("collect_support_diagnostics failed; using frontend-only diagnostics", error);
     return {
       report: buildFrontendFallbackReport(snapshot, error),
       source: "frontend-fallback",
@@ -145,6 +146,7 @@ export async function copySupportDiagnostics(
     ok: false,
     report,
     source,
-    error: "Unable to write diagnostics to the clipboard. Select and copy the text manually.",
+    error:
+      "Unable to write diagnostics to the clipboard. Select and copy the text manually.",
   };
 }

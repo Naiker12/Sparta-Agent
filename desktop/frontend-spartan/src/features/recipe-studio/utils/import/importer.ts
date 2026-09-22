@@ -1,4 +1,3 @@
-
 import type {
   LlmConfig,
   LlmMcpProviderConfig,
@@ -6,8 +5,8 @@ import type {
   MarkdownNoteConfig,
   NodeConfig,
   RecipeProcessorConfig,
-  SeedConfig,
   SamplerConfig,
+  SeedConfig,
   SeedSourceType,
   ToolProfileConfig,
   ValidatorConfig,
@@ -16,8 +15,8 @@ import { buildEdges } from "./edges";
 import { isRecord, parseJson, readString } from "./helpers";
 import { parseColumn, parseModelConfig, parseModelProvider } from "./parsers";
 import { parseSeedConfig } from "./parsers/seed-config-parser";
-import { buildNodes, parseUi } from "./ui";
 import type { ImportResult } from "./types";
+import { buildNodes, parseUi } from "./ui";
 
 type RecipeInput = {
   columns?: unknown;
@@ -282,7 +281,7 @@ function parseUiToolProfileNodes(
     const toolsByProvider = Object.fromEntries(
       Object.entries(rawToolsByProvider).flatMap(([providerName, tools]) => {
         const trimmedName = providerName.trim();
-        if (!trimmedName || !Array.isArray(tools)) {
+        if (!(trimmedName && Array.isArray(tools))) {
           return [];
         }
         const values = Array.from(
@@ -371,7 +370,7 @@ export function importRecipePayload(
   options: ImportRecipePayloadOptions = {},
 ): ImportResult {
   const parsed = parseJson(input);
-  if (!parsed.data || !isRecord(parsed.data)) {
+  if (!(parsed.data && isRecord(parsed.data))) {
     return {
       errors: [parsed.error ?? "Invalid JSON payload."],
       snapshot: null,
@@ -488,7 +487,8 @@ export function importRecipePayload(
       seed_columns:
         (uiSeedColumns?.length ?? 0) > 0
           ? uiSeedColumns
-          : uiSeedSourceType === "unstructured" || payloadSeedSourceIsUnstructured
+          : uiSeedSourceType === "unstructured" ||
+              payloadSeedSourceIsUnstructured
             ? ["chunk_text", "source_file"]
             : uiSeedColumns,
       seed_drop_columns:

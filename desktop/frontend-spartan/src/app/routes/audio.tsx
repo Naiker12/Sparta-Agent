@@ -1,4 +1,3 @@
-
 import { createRoute } from "@tanstack/react-router";
 import { requireAuth } from "../auth-guards";
 import { Route as rootRoute } from "./__root";

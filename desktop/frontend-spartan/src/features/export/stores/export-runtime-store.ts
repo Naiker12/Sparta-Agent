@@ -1,6 +1,9 @@
-
 import { create } from "zustand";
 import {
+  type ExportLogEntry,
+  type ExportLogPollEntry,
+  type ExportOperationResponse,
+  type ExportStatus,
   cancelExport,
   cleanupExport,
   exportGGUF,
@@ -9,10 +12,6 @@ import {
   getExportStatus,
   isRecoverableTransportError,
   loadCheckpoint,
-  type ExportLogEntry,
-  type ExportLogPollEntry,
-  type ExportOperationResponse,
-  type ExportStatus,
 } from "../api/export-api";
 import type { ExportMethod } from "../constants";
 
@@ -49,7 +48,9 @@ async function recoverViaStatus(
   let sawActive = false;
 
   while (Date.now() - start < RECOVERY_MAX_MS) {
-    if (!isCurrent()) throw new Error("Export run superseded");
+    if (!isCurrent()) {
+      throw new Error("Export run superseded");
+    }
     await sleep(RECOVERY_POLL_INTERVAL_MS);
 
     let st: ExportStatus;
@@ -80,7 +81,9 @@ async function recoverViaStatus(
       if (st.last_op_status === "success") {
         return { outputPath: st.last_op_output_path ?? null };
       }
-      if (st.last_op_status === "cancelled") throw new ExportCanceledError();
+      if (st.last_op_status === "cancelled") {
+        throw new ExportCanceledError();
+      }
       throw new Error(st.last_op_error || "Export failed");
     }
 
@@ -230,341 +233,378 @@ const initialState: ExportRuntimeState = {
   runId: 0,
 };
 
-export const useExportRuntimeStore = create<ExportRuntimeStore>()((set, get) => ({
-  ...initialState,
+export const useExportRuntimeStore = create<ExportRuntimeStore>()(
+  (set, get) => ({
+    ...initialState,
 
-  setConnected: (value) => set({ connected: value }),
+    setConnected: (value) => set({ connected: value }),
 
-  appendLog: (entry, seq) =>
-    set((state) => {
-      // De-dupe by seq: the SSE stream and the JSON poll fallback both feed
-      // logs, so ignore anything at or below the highest seq already seen.
-      if (
-        typeof seq === "number" &&
-        state.lastSeq !== null &&
-        seq <= state.lastSeq
-      ) {
-        return state;
-      }
-      const next =
-        state.logLines.length >= MAX_LOG_LINES
-          ? state.logLines.slice(state.logLines.length - MAX_LOG_LINES + 1)
-          : state.logLines.slice();
-      next.push(entry);
-      return {
-        logLines: next,
-        lastSeq: typeof seq === "number" ? seq : state.lastSeq,
-        // `status` lines are the worker's high-level progress markers; surface
-        // the most recent one as the stage label.
-        stage: entry.stream === "status" ? entry.line : state.stage,
-      };
-    }),
-
-  appendLogs: (entries) =>
-    set((state) => {
-      // Keep only lines newer than the highest seq we've shown (covers overlap
-      // with the SSE stream and with the previous poll batch).
-      const fresh =
-        state.lastSeq === null
-          ? entries
-          : entries.filter((e) => e.seq > (state.lastSeq as number));
-      if (fresh.length === 0) return state;
-
-      const merged = state.logLines.concat(
-        fresh.map((e) => ({ stream: e.stream, line: e.line, ts: e.ts })),
-      );
-      const next =
-        merged.length > MAX_LOG_LINES
-          ? merged.slice(merged.length - MAX_LOG_LINES)
-          : merged;
-
-      // Latest `status` line in the batch becomes the stage label.
-      let stage = state.stage;
-      for (const e of fresh) {
-        if (e.stream === "status") stage = e.line;
-      }
-      return {
-        logLines: next,
-        lastSeq: fresh[fresh.length - 1].seq,
-        stage,
-      };
-    }),
-
-  applyBackendStatus: (status) =>
-    set((state) => {
-      const base = { hasHydrated: true, backendActive: status.is_export_active };
-      // Recover a run started before this store existed (full page reload, or
-      // an export kicked off in another browser tab): show it live.
-      if (status.is_export_active && !state.isExporting && !state.ownsRun) {
+    appendLog: (entry, seq) =>
+      set((state) => {
+        // De-dupe by seq: the SSE stream and the JSON poll fallback both feed
+        // logs, so ignore anything at or below the highest seq already seen.
+        if (
+          typeof seq === "number" &&
+          state.lastSeq !== null &&
+          seq <= state.lastSeq
+        ) {
+          return state;
+        }
+        const next =
+          state.logLines.length >= MAX_LOG_LINES
+            ? state.logLines.slice(state.logLines.length - MAX_LOG_LINES + 1)
+            : state.logLines.slice();
+        next.push(entry);
         return {
-          ...base,
-          isExporting: true,
-          phase: "exporting" as const,
-          startedAt: state.startedAt ?? Date.now(),
+          logLines: next,
+          lastSeq: typeof seq === "number" ? seq : state.lastSeq,
+          // `status` lines are the worker's high-level progress markers; surface
+          // the most recent one as the stage label.
+          stage: entry.stream === "status" ? entry.line : state.stage,
         };
-      }
-      // A recovered (not store-owned) run finished on the backend. Settle from
-      // the last-op record when present (accurate success/error/output path),
-      // else fall back to the optimistic guess.
-      if (!status.is_export_active && state.isExporting && !state.ownsRun) {
-        // A standalone load_checkpoint (or no recorded op) is not an export and
-        // must never settle as a finished export. A completed export ends on its
-        // export_* op or the trailing cleanup, both of which count.
-        const wasExport =
-          !!status.last_op_kind && status.last_op_kind !== "load_checkpoint";
-        if (status.last_op_status === "error") {
+      }),
+
+    appendLogs: (entries) =>
+      set((state) => {
+        // Keep only lines newer than the highest seq we've shown (covers overlap
+        // with the SSE stream and with the previous poll batch).
+        const fresh =
+          state.lastSeq === null
+            ? entries
+            : entries.filter((e) => e.seq > (state.lastSeq as number));
+        if (fresh.length === 0) {
+          return state;
+        }
+
+        const merged = state.logLines.concat(
+          fresh.map((e) => ({ stream: e.stream, line: e.line, ts: e.ts })),
+        );
+        const next =
+          merged.length > MAX_LOG_LINES
+            ? merged.slice(merged.length - MAX_LOG_LINES)
+            : merged;
+
+        // Latest `status` line in the batch becomes the stage label.
+        let stage = state.stage;
+        for (const e of fresh) {
+          if (e.stream === "status") {
+            stage = e.line;
+          }
+        }
+        return {
+          logLines: next,
+          lastSeq: fresh[fresh.length - 1].seq,
+          stage,
+        };
+      }),
+
+    applyBackendStatus: (status) =>
+      set((state) => {
+        const base = {
+          hasHydrated: true,
+          backendActive: status.is_export_active,
+        };
+        // Recover a run started before this store existed (full page reload, or
+        // an export kicked off in another browser tab): show it live.
+        if (status.is_export_active && !state.isExporting && !state.ownsRun) {
           return {
             ...base,
-            isExporting: false,
-            phase: "error" as const,
-            error: status.last_op_error ?? "Export failed",
+            isExporting: true,
+            phase: "exporting" as const,
+            startedAt: state.startedAt ?? Date.now(),
           };
         }
-        if (status.last_op_status === "cancelled") {
-          return { ...base, isExporting: false, phase: "canceled" as const };
+        // A recovered (not store-owned) run finished on the backend. Settle from
+        // the last-op record when present (accurate success/error/output path),
+        // else fall back to the optimistic guess.
+        if (!status.is_export_active && state.isExporting && !state.ownsRun) {
+          // A standalone load_checkpoint (or no recorded op) is not an export and
+          // must never settle as a finished export. A completed export ends on its
+          // export_* op or the trailing cleanup, both of which count.
+          const wasExport =
+            !!status.last_op_kind && status.last_op_kind !== "load_checkpoint";
+          if (status.last_op_status === "error") {
+            return {
+              ...base,
+              isExporting: false,
+              phase: "error" as const,
+              error: status.last_op_error ?? "Export failed",
+            };
+          }
+          if (status.last_op_status === "cancelled") {
+            return { ...base, isExporting: false, phase: "canceled" as const };
+          }
+          if (status.last_op_status === "success" && wasExport) {
+            return {
+              ...base,
+              isExporting: false,
+              phase: "success" as const,
+              result: {
+                outputPath: status.last_op_output_path ?? null,
+                // A run recovered from the backend only knows the last output path.
+                outputPaths: status.last_op_output_path
+                  ? [{ label: "", path: status.last_op_output_path }]
+                  : [],
+                destination: state.result?.destination ?? "local",
+              },
+            };
+          }
+          // Load-only op, or no clear success record: nothing was exported.
+          return { ...base, isExporting: false, phase: "idle" as const };
         }
-        if (status.last_op_status === "success" && wasExport) {
-          return {
-            ...base,
-            isExporting: false,
-            phase: "success" as const,
-            result: {
-              outputPath: status.last_op_output_path ?? null,
-              // A run recovered from the backend only knows the last output path.
-              outputPaths: status.last_op_output_path
-                ? [{ label: "", path: status.last_op_output_path }]
-                : [],
-              destination: state.result?.destination ?? "local",
-            },
-          };
-        }
-        // Load-only op, or no clear success record: nothing was exported.
-        return { ...base, isExporting: false, phase: "idle" as const };
+        return base;
+      }),
+
+    reset: () =>
+      set((state) => ({
+        ...initialState,
+        hasHydrated: state.hasHydrated,
+        backendActive: state.backendActive,
+        runId: state.runId,
+      })),
+
+    requestCancel: async () => {
+      if (!get().isExporting) {
+        return;
       }
-      return base;
-    }),
-
-  reset: () =>
-    set((state) => ({
-      ...initialState,
-      hasHydrated: state.hasHydrated,
-      backendActive: state.backendActive,
-      runId: state.runId,
-    })),
-
-  requestCancel: async () => {
-    if (!get().isExporting) return;
-    set({ cancelRequested: true });
-    try {
-      await cancelExport();
-    } catch {
-      // Best-effort: the in-flight export POST will still reject when the
-      // worker dies, which runExport turns into the canceled phase.
-    }
-  },
-
-  runExport: async (params) => {
-    const runId = get().runId + 1;
-    const quantTotal =
-      params.exportMethod === "gguf"
-        ? Math.max(1, params.quantLevels.length)
-        : params.exportMethod === "merged"
-          ? Math.max(1, params.mergedSelections?.length ?? 1)
-          : 1;
-
-    set({
-      runId,
-      isExporting: true,
-      ownsRun: true,
-      phase: "loading",
-      method: params.exportMethod,
-      summary: params.summary,
-      quantTotal,
-      quantIndex: 0,
-      stage: null,
-      logLines: [],
-      lastSeq: null,
-      connected: false,
-      reconnecting: false,
-      startedAt: Date.now(),
-      result: null,
-      error: null,
-      cancelRequested: false,
-    });
-
-    const isCurrent = () => get().runId === runId;
-    const pushToHub = params.destination === "hub";
-
-    // Run a phase POST so it survives a Cloudflare tunnel 524: capture the
-    // last-op baseline, fire the POST, and on a recoverable transport failure
-    // settle the still-running backend op via short status polls instead of
-    // failing. Returns the resolved output path (null for load/hub-only).
-    const runRecoverableOp = async (
-      post: () => Promise<ExportOperationResponse>,
-    ): Promise<{ outputPath: string | null }> => {
-      let baseline: number | null = null;
+      set({ cancelRequested: true });
       try {
-        baseline = (await getExportStatus()).last_op_seq ?? 0;
+        await cancelExport();
       } catch {
-        baseline = null; // pre-read failed; recovery falls back to "saw active"
+        // Best-effort: the in-flight export POST will still reject when the
+        // worker dies, which runExport turns into the canceled phase.
       }
-      try {
-        const resp = await post();
-        return { outputPath: resp.details?.output_path ?? null };
-      } catch (err) {
-        if (!isRecoverableTransportError(err)) throw err;
-        set({ reconnecting: true });
-        try {
-          return await recoverViaStatus(baseline, isCurrent);
-        } finally {
-          if (isCurrent()) set({ reconnecting: false });
-        }
-      }
-    };
+    },
 
-    try {
-      // 1. Load the model source into a fresh export subprocess.
-      if (params.sourceMode === "checkpoint") {
-        if (!params.checkpointPath) {
-          throw new Error("No checkpoint selected");
-        }
-        const checkpointPath = params.checkpointPath;
-        await runRecoverableOp(() =>
-          loadCheckpoint({
-            checkpoint_path: checkpointPath,
-            hf_token: params.loadToken ?? null,
-          }),
-        );
-      } else {
-        await runRecoverableOp(() =>
-          loadCheckpoint({
-            checkpoint_path: params.source,
-            load_in_4bit: false,
-            trust_remote_code:
-              params.modelSource === "hf" ? params.trustRemoteCode : true,
-            approved_remote_code_fingerprint:
-              params.approvedRemoteCodeFingerprint ?? null,
-            hf_token: params.loadToken ?? null,
-          }),
-        );
-      }
-      if (!isCurrent()) return;
-
-      // 2. Run the export. Collect every resolved output_path so the success
-      // banner can list each sibling directory a multi-format run created.
-      set({ phase: "exporting" });
-      const outputs: { label: string; path: string }[] = [];
-
-      if (params.exportMethod === "merged") {
-        // Each selected format writes its own sibling directory (PEFT or non-PEFT base alike).
-        const selections =
-          params.mergedSelections && params.mergedSelections.length > 0
-            ? params.mergedSelections
-            : [{ formatType: "16-bit (FP16)", compressedMethod: null, label: "16-bit" }];
-        for (let i = 0; i < selections.length; i += 1) {
-          if (!isCurrent()) return;
-          set({ quantIndex: i });
-          const sel = selections[i];
-          const { outputPath } = await runRecoverableOp(() =>
-            exportMerged({
-              save_directory: params.saveDirectory,
-              format_type: sel.formatType,
-              compressed_method: sel.compressedMethod,
-              push_to_hub: pushToHub,
-              repo_id: params.repoId,
-              hf_token: params.token,
-              private: params.privateRepo,
-            }),
-          );
-          if (outputPath) outputs.push({ label: sel.label, path: outputPath });
-          if (!isCurrent()) return;
-          set({ quantIndex: i + 1 });
-        }
-      } else if (params.exportMethod === "gguf") {
-        // Send the whole quant list in ONE call: the model is merged once and every GGUF comes
-        // from that single merge (unsloth save_to_gguf loops internally).
-        const { outputPath } = await runRecoverableOp(() =>
-          exportGGUF({
-            save_directory: params.saveDirectory,
-            quantization_method: params.quantLevels,
-            push_to_hub: pushToHub,
-            repo_id: params.repoId,
-            // A local imatrix export resolves the matrix from a Hub repo, so fall back to the load
-            // token when there is no hub-upload token (both are the same HF token).
-            hf_token: params.token ?? params.loadToken ?? null,
-            imatrix: params.useImatrix,
-          }),
-        );
-        if (outputPath) outputs.push({ label: "GGUF", path: outputPath });
-        if (!isCurrent()) return;
-        set({ quantIndex: get().quantTotal });
-      } else if (params.exportMethod === "lora") {
-        const { outputPath } = await runRecoverableOp(() =>
-          exportLoRA({
-            save_directory: params.saveDirectory,
-            push_to_hub: pushToHub,
-            repo_id: params.repoId,
-            // A local GGUF LoRA export still reloads a possibly-gated base config, so fall back to
-            // the load token when there is no hub-upload token (both are the same HF token).
-            hf_token: params.token ?? params.loadToken ?? null,
-            private: params.privateRepo,
-            gguf: params.loraGguf ?? false,
-            gguf_outtype: params.loraGgufOuttype ?? "q8_0",
-          }),
-        );
-        if (outputPath) {
-          outputs.push({
-            label: params.loraGguf ? "GGUF LoRA adapter" : "LoRA adapter",
-            path: outputPath,
-          });
-        }
-      }
-      if (!isCurrent()) return;
+    runExport: async (params) => {
+      const runId = get().runId + 1;
+      const quantTotal =
+        params.exportMethod === "gguf"
+          ? Math.max(1, params.quantLevels.length)
+          : params.exportMethod === "merged"
+            ? Math.max(1, params.mergedSelections?.length ?? 1)
+            : 1;
 
       set({
-        phase: "success",
-        isExporting: false,
+        runId,
+        isExporting: true,
+        ownsRun: true,
+        phase: "loading",
+        method: params.exportMethod,
+        summary: params.summary,
+        quantTotal,
+        quantIndex: 0,
+        stage: null,
+        logLines: [],
+        lastSeq: null,
+        connected: false,
         reconnecting: false,
-        result: {
-          outputPath: outputs[0]?.path ?? null,
-          outputPaths: outputs,
-          destination: params.destination,
-        },
+        startedAt: Date.now(),
+        result: null,
+        error: null,
+        cancelRequested: false,
       });
-    } catch (err) {
-      if (!isCurrent()) return;
-      if (get().cancelRequested || err instanceof ExportCanceledError) {
-        set({
-          phase: "canceled",
-          isExporting: false,
-          reconnecting: false,
-          error: null,
-        });
-      } else {
-        set({
-          phase: "error",
-          isExporting: false,
-          reconnecting: false,
-          error: err instanceof Error ? err.message : "Export failed",
-        });
-      }
-    } finally {
-      // Cleanup is best-effort and runs after the terminal phase is set, so it
-      // does not gate the success banner. Only the run that still owns the
-      // store releases ownership and frees the worker.
-      if (isCurrent()) {
+
+      const isCurrent = () => get().runId === runId;
+      const pushToHub = params.destination === "hub";
+
+      // Run a phase POST so it survives a Cloudflare tunnel 524: capture the
+      // last-op baseline, fire the POST, and on a recoverable transport failure
+      // settle the still-running backend op via short status polls instead of
+      // failing. Returns the resolved output path (null for load/hub-only).
+      const runRecoverableOp = async (
+        post: () => Promise<ExportOperationResponse>,
+      ): Promise<{ outputPath: string | null }> => {
+        let baseline: number | null = null;
         try {
-          await cleanupExport();
+          baseline = (await getExportStatus()).last_op_seq ?? 0;
         } catch {
-          // ignore
+          baseline = null; // pre-read failed; recovery falls back to "saw active"
         }
+        try {
+          const resp = await post();
+          return { outputPath: resp.details?.output_path ?? null };
+        } catch (err) {
+          if (!isRecoverableTransportError(err)) {
+            throw err;
+          }
+          set({ reconnecting: true });
+          try {
+            return await recoverViaStatus(baseline, isCurrent);
+          } finally {
+            if (isCurrent()) {
+              set({ reconnecting: false });
+            }
+          }
+        }
+      };
+
+      try {
+        // 1. Load the model source into a fresh export subprocess.
+        if (params.sourceMode === "checkpoint") {
+          if (!params.checkpointPath) {
+            throw new Error("No checkpoint selected");
+          }
+          const checkpointPath = params.checkpointPath;
+          await runRecoverableOp(() =>
+            loadCheckpoint({
+              checkpoint_path: checkpointPath,
+              hf_token: params.loadToken ?? null,
+            }),
+          );
+        } else {
+          await runRecoverableOp(() =>
+            loadCheckpoint({
+              checkpoint_path: params.source,
+              load_in_4bit: false,
+              trust_remote_code:
+                params.modelSource === "hf" ? params.trustRemoteCode : true,
+              approved_remote_code_fingerprint:
+                params.approvedRemoteCodeFingerprint ?? null,
+              hf_token: params.loadToken ?? null,
+            }),
+          );
+        }
+        if (!isCurrent()) {
+          return;
+        }
+
+        // 2. Run the export. Collect every resolved output_path so the success
+        // banner can list each sibling directory a multi-format run created.
+        set({ phase: "exporting" });
+        const outputs: { label: string; path: string }[] = [];
+
+        if (params.exportMethod === "merged") {
+          // Each selected format writes its own sibling directory (PEFT or non-PEFT base alike).
+          const selections =
+            params.mergedSelections && params.mergedSelections.length > 0
+              ? params.mergedSelections
+              : [
+                  {
+                    formatType: "16-bit (FP16)",
+                    compressedMethod: null,
+                    label: "16-bit",
+                  },
+                ];
+          for (let i = 0; i < selections.length; i += 1) {
+            if (!isCurrent()) {
+              return;
+            }
+            set({ quantIndex: i });
+            const sel = selections[i];
+            const { outputPath } = await runRecoverableOp(() =>
+              exportMerged({
+                save_directory: params.saveDirectory,
+                format_type: sel.formatType,
+                compressed_method: sel.compressedMethod,
+                push_to_hub: pushToHub,
+                repo_id: params.repoId,
+                hf_token: params.token,
+                private: params.privateRepo,
+              }),
+            );
+            if (outputPath) {
+              outputs.push({ label: sel.label, path: outputPath });
+            }
+            if (!isCurrent()) {
+              return;
+            }
+            set({ quantIndex: i + 1 });
+          }
+        } else if (params.exportMethod === "gguf") {
+          // Send the whole quant list in ONE call: the model is merged once and every GGUF comes
+          // from that single merge (unsloth save_to_gguf loops internally).
+          const { outputPath } = await runRecoverableOp(() =>
+            exportGGUF({
+              save_directory: params.saveDirectory,
+              quantization_method: params.quantLevels,
+              push_to_hub: pushToHub,
+              repo_id: params.repoId,
+              // A local imatrix export resolves the matrix from a Hub repo, so fall back to the load
+              // token when there is no hub-upload token (both are the same HF token).
+              hf_token: params.token ?? params.loadToken ?? null,
+              imatrix: params.useImatrix,
+            }),
+          );
+          if (outputPath) {
+            outputs.push({ label: "GGUF", path: outputPath });
+          }
+          if (!isCurrent()) {
+            return;
+          }
+          set({ quantIndex: get().quantTotal });
+        } else if (params.exportMethod === "lora") {
+          const { outputPath } = await runRecoverableOp(() =>
+            exportLoRA({
+              save_directory: params.saveDirectory,
+              push_to_hub: pushToHub,
+              repo_id: params.repoId,
+              // A local GGUF LoRA export still reloads a possibly-gated base config, so fall back to
+              // the load token when there is no hub-upload token (both are the same HF token).
+              hf_token: params.token ?? params.loadToken ?? null,
+              private: params.privateRepo,
+              gguf: params.loraGguf ?? false,
+              gguf_outtype: params.loraGgufOuttype ?? "q8_0",
+            }),
+          );
+          if (outputPath) {
+            outputs.push({
+              label: params.loraGguf ? "GGUF LoRA adapter" : "LoRA adapter",
+              path: outputPath,
+            });
+          }
+        }
+        if (!isCurrent()) {
+          return;
+        }
+
+        set({
+          phase: "success",
+          isExporting: false,
+          reconnecting: false,
+          result: {
+            outputPath: outputs[0]?.path ?? null,
+            outputPaths: outputs,
+            destination: params.destination,
+          },
+        });
+      } catch (err) {
+        if (!isCurrent()) {
+          return;
+        }
+        if (get().cancelRequested || err instanceof ExportCanceledError) {
+          set({
+            phase: "canceled",
+            isExporting: false,
+            reconnecting: false,
+            error: null,
+          });
+        } else {
+          set({
+            phase: "error",
+            isExporting: false,
+            reconnecting: false,
+            error: err instanceof Error ? err.message : "Export failed",
+          });
+        }
+      } finally {
+        // Cleanup is best-effort and runs after the terminal phase is set, so it
+        // does not gate the success banner. Only the run that still owns the
+        // store releases ownership and frees the worker.
         if (isCurrent()) {
-          set({ ownsRun: false });
+          try {
+            await cleanupExport();
+          } catch {
+            // ignore
+          }
+          if (isCurrent()) {
+            set({ ownsRun: false });
+          }
         }
       }
-    }
-  },
-}));
+    },
+  }),
+);
 
 /**
  * Map the run phase to a 0-100 progress value. There is no byte-level signal

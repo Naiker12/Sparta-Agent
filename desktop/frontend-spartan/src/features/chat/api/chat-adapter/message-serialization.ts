@@ -1,5 +1,4 @@
 import type { ToolCallMessagePart } from "@assistant-ui/core";
-import { toolCallReplayArguments } from "../../tool-call-arguments";
 import {
   codexLocalToolRoundId,
   codexReasoningForToolCalls,
@@ -7,19 +6,20 @@ import {
   shouldReplayAssistantReasoning,
   startsNewCodexToolRound,
 } from "../../codex-reasoning";
+import type { PendingImageEditReference } from "../../stores/chat-runtime-store";
+import { toolCallReplayArguments } from "../../tool-call-arguments";
+import type {
+  OpenAIChatMessage,
+  OpenAIMessageContent,
+  OpenAIReasoningContentPart,
+} from "../../types/api";
+import type { RunMessage, RunMessages } from "./multimodal-detection";
 import {
   attachAssistantThoughtSignature,
   buildReplayContent,
   setAssistantCodexReasoning,
 } from "./replay-content";
 import { isWrappedWithText } from "./tool-results";
-import type { RunMessage, RunMessages } from "./multimodal-detection";
-import type { PendingImageEditReference } from "../../stores/chat-runtime-store";
-import type {
-  OpenAIChatMessage,
-  OpenAIMessageContent,
-  OpenAIReasoningContentPart,
-} from "../../types/api";
 
 export type {
   OpenAIChatMessage,
@@ -87,7 +87,6 @@ export function toOpenAIImageEditReferenceMessage(
   return { role: "assistant", content };
 }
 
-
 export type SerializedMessage = OpenAIChatMessage & {
   reasoning_content?: string;
   tool_calls?: Array<{
@@ -99,7 +98,9 @@ export type SerializedMessage = OpenAIChatMessage & {
   extra_content?: unknown;
 };
 
-export type SerializedToolCall = NonNullable<SerializedMessage["tool_calls"]>[number];
+export type SerializedToolCall = NonNullable<
+  SerializedMessage["tool_calls"]
+>[number];
 export type SerializedToolResult = {
   role: "tool";
   content: string;
@@ -120,8 +121,12 @@ export function isServerSideBuiltinToolPart(
   hasServerToolMarker: boolean,
   hasNativePart: boolean,
 ): boolean {
-  if (!SERVER_SIDE_BUILTIN_TOOL_NAMES.has(toolNameLower)) return false;
-  if (hasServerToolMarker) return true;
+  if (!SERVER_SIDE_BUILTIN_TOOL_NAMES.has(toolNameLower)) {
+    return false;
+  }
+  if (hasServerToolMarker) {
+    return true;
+  }
   return hasNativePart;
 }
 
@@ -132,7 +137,10 @@ export function collectTextParts(message: RunMessage): string[] {
 
   if ("attachments" in message && (message.attachments?.length ?? 0) > 0) {
     for (const attachment of message.attachments ?? []) {
-      for (const part of (attachment.content ?? []) as Array<{ type?: string; text?: string }>) {
+      for (const part of (attachment.content ?? []) as Array<{
+        type?: string;
+        text?: string;
+      }>) {
         if (part.type === "text" && typeof part.text === "string") {
           textParts.push(part.text);
         }
@@ -148,9 +156,13 @@ export function collectImageParts(
 ): Array<{ type: "image_url"; image_url: { url: string } }> {
   const parts: Array<{ type: "image_url"; image_url: { url: string } }> = [];
   const pushImagePart = (part: { type: string }) => {
-    if (part.type !== "image" || !("image" in part)) return;
+    if (part.type !== "image" || !("image" in part)) {
+      return;
+    }
     const src = (part as { image: string }).image;
-    if (!src) return;
+    if (!src) {
+      return;
+    }
     parts.push({
       type: "image_url",
       image_url: {
@@ -165,7 +177,10 @@ export function collectImageParts(
 
   if ("attachments" in message && (message.attachments?.length ?? 0) > 0) {
     for (const attachment of message.attachments ?? []) {
-      for (const part of (attachment.content ?? []) as Array<{ type?: string; image?: string }>) {
+      for (const part of (attachment.content ?? []) as Array<{
+        type?: string;
+        image?: string;
+      }>) {
         pushImagePart(part as { type: string });
       }
     }
@@ -182,7 +197,9 @@ export function sanitizeAssistantReplayText(text: string): string {
 }
 
 export function isAnthropicRefusalMessage(message: RunMessage): boolean {
-  if (message.role !== "assistant") return false;
+  if (message.role !== "assistant") {
+    return false;
+  }
   const metadata = (message as { metadata?: unknown }).metadata as
     | { custom?: Record<string, unknown> }
     | undefined;
@@ -206,8 +223,8 @@ export function getToolPartReplayMetadata(tc: ToolCallMessagePart): {
       : null;
   const hasNativePart = Boolean(
     argsGoogle &&
-    typeof argsGoogle.native_part === "object" &&
-    argsGoogle.native_part !== null,
+      typeof argsGoogle.native_part === "object" &&
+      argsGoogle.native_part !== null,
   );
   const hasServerToolMarker = Boolean(
     argsObj && (argsObj as Record<string, unknown>)._server_tool === true,
@@ -235,7 +252,9 @@ export function serializeToolResultPart(
   if (isServerSideBuiltin) {
     return null;
   }
-  if (result === undefined || result === null) return null;
+  if (result === undefined || result === null) {
+    return null;
+  }
 
   let content: string;
   if (typeof result === "string") {
@@ -259,7 +278,9 @@ export function serializeToolResultPart(
   };
 }
 
-export function canReplayToolCallWithoutRoleTool(part: ToolCallMessagePart): boolean {
+export function canReplayToolCallWithoutRoleTool(
+  part: ToolCallMessagePart,
+): boolean {
   return getToolPartReplayMetadata(part).isServerSideBuiltin;
 }
 
@@ -295,7 +316,9 @@ export function serializeAssistantToolCallPart(
 }
 
 export function extractImageBase64(input: string): string | undefined {
-  if (!input) return undefined;
+  if (!input) {
+    return undefined;
+  }
   if (input.startsWith("data:")) {
     const commaIndex = input.indexOf(",");
     return commaIndex >= 0 ? input.slice(commaIndex + 1) : undefined;
@@ -303,15 +326,21 @@ export function extractImageBase64(input: string): string | undefined {
   return input;
 }
 
-export function findLatestUserImageBase64(messages: RunMessages): string | undefined {
+export function findLatestUserImageBase64(
+  messages: RunMessages,
+): string | undefined {
   for (let i = messages.length - 1; i >= 0; i -= 1) {
     const message = messages[i];
-    if (!message || message.role !== "user") continue;
+    if (!message || message.role !== "user") {
+      continue;
+    }
 
     for (const part of message.content ?? []) {
       if (part.type === "image" && "image" in part) {
         const encoded = extractImageBase64(part.image);
-        if (encoded) return encoded;
+        if (encoded) {
+          return encoded;
+        }
       }
     }
 
@@ -320,7 +349,9 @@ export function findLatestUserImageBase64(messages: RunMessages): string | undef
         for (const part of attachment.content ?? []) {
           if (part.type === "image") {
             const encoded = extractImageBase64(part.image);
-            if (encoded) return encoded;
+            if (encoded) {
+              return encoded;
+            }
           }
         }
       }
@@ -332,15 +363,21 @@ export function findLatestUserImageBase64(messages: RunMessages): string | undef
 export function collectAssistantTextThoughtSignature(
   message: RunMessage,
 ): string | undefined {
-  if (!Array.isArray(message.content)) return undefined;
+  if (!Array.isArray(message.content)) {
+    return undefined;
+  }
   for (let i = message.content.length - 1; i >= 0; i -= 1) {
     const part = message.content[i] as { type?: string } & Record<
       string,
       unknown
     >;
-    if (part?.type !== "text") continue;
+    if (part?.type !== "text") {
+      continue;
+    }
     const sig = part._google_thought_signature;
-    if (typeof sig === "string" && sig) return sig;
+    if (typeof sig === "string" && sig) {
+      return sig;
+    }
   }
   return undefined;
 }
@@ -381,7 +418,7 @@ export function serializeAssistantReplayMessages(
       incomplete: false,
     });
 
-    if (!force && !hasContent && !hasToolCalls && !hasReasoningContent) {
+    if (!(force || hasContent || hasToolCalls || hasReasoningContent)) {
       return;
     }
 
@@ -428,13 +465,17 @@ export function serializeAssistantReplayMessages(
 
   for (const part of message.content ?? []) {
     if (part.type === "reasoning") {
-      if (pendingToolCalls.length > 0) flushAssistantAndToolResults();
+      if (pendingToolCalls.length > 0) {
+        flushAssistantAndToolResults();
+      }
       pendingReasoningParts.push(part.text);
       continue;
     }
 
     if (part.type === "text") {
-      if (pendingToolCalls.length > 0) flushAssistantAndToolResults();
+      if (pendingToolCalls.length > 0) {
+        flushAssistantAndToolResults();
+      }
       pendingTextParts.push(part.text);
       continue;
     }
@@ -442,14 +483,18 @@ export function serializeAssistantReplayMessages(
     if (part.type === "tool-call") {
       const toolPart = part as ToolCallMessagePart;
       const toolCall = serializeAssistantToolCallPart(toolPart);
-      if (!toolCall) continue;
-
-      const toolResult = serializeToolResultPart(toolPart);
-      if (!toolResult && !canReplayToolCallWithoutRoleTool(toolPart)) {
+      if (!toolCall) {
         continue;
       }
 
-      const provenance = (toolPart as { provenance?: unknown }).provenance as { source?: string } | undefined;
+      const toolResult = serializeToolResultPart(toolPart);
+      if (!(toolResult || canReplayToolCallWithoutRoleTool(toolPart))) {
+        continue;
+      }
+
+      const provenance = (toolPart as { provenance?: unknown }).provenance as
+        | { source?: string }
+        | undefined;
       const localRoundId = codexLocalToolRoundId(provenance);
       if (
         pendingToolCalls.length > 0 &&
@@ -457,7 +502,9 @@ export function serializeAssistantReplayMessages(
       ) {
         flushAssistantAndToolResults();
       }
-      if (localRoundId !== null) pendingLocalToolRoundId = localRoundId;
+      if (localRoundId !== null) {
+        pendingLocalToolRoundId = localRoundId;
+      }
 
       pendingToolCalls.push(toolCall);
       if (toolResult) {

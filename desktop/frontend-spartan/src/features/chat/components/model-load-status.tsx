@@ -1,7 +1,6 @@
-
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Spinner } from "@/components/ui/spinner";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 type ModelLoadDescriptionProps = {
@@ -23,12 +22,17 @@ function clampProgress(value: number): number {
  * own row), so neither line wraps raggedly once rate/ETA appears mid-download.
  * Labels without " • " return primary-only, so the secondary row doesn't render.
  */
-function splitProgressLabel(
-  label: string | null | undefined,
-): { primary: string; secondary: string } {
-  if (!label) return { primary: "", secondary: "" };
+function splitProgressLabel(label: string | null | undefined): {
+  primary: string;
+  secondary: string;
+} {
+  if (!label) {
+    return { primary: "", secondary: "" };
+  }
   const idx = label.indexOf(" \u2022 ");
-  if (idx < 0) return { primary: label, secondary: "" };
+  if (idx < 0) {
+    return { primary: label, secondary: "" };
+  }
   return {
     primary: label.slice(0, idx),
     secondary: label.slice(idx + 3),
@@ -48,12 +52,19 @@ export function ModelLoadDescription({
     splitProgressLabel(progressLabel);
 
   return (
-    <div className={cn("relative flex min-h-12 w-full items-stretch gap-2", className)}>
+    <div
+      className={cn(
+        "relative flex min-h-12 w-full items-stretch gap-2",
+        className,
+      )}
+    >
       <div className="flex h-full shrink-0 items-center self-center">
         <Spinner className="size-3.5 text-muted-foreground" />
       </div>
       <div className="flex min-w-0 flex-1 flex-col justify-center">
-        {title ? <p className="text-foreground leading-tight font-semibold">{title}</p> : null}
+        {title ? (
+          <p className="text-foreground leading-tight font-semibold">{title}</p>
+        ) : null}
         {hasProgress ? (
           <div className="w-full pt-1">
             <div className="flex items-center justify-between gap-2 text-ui-10 font-medium tracking-[0.08em] text-muted-foreground/80">
@@ -73,7 +84,9 @@ export function ModelLoadDescription({
             />
           </div>
         ) : message ? (
-          <p className="pt-1 text-xs leading-relaxed text-muted-foreground">{message}</p>
+          <p className="pt-1 text-xs leading-relaxed text-muted-foreground">
+            {message}
+          </p>
         ) : null}
       </div>
     </div>
@@ -100,7 +113,10 @@ export function ModelLoadInlineStatus({
   const hasProgress = typeof progressPercent === "number";
 
   return (
-    <div className="flex min-w-[20rem] items-center gap-2.5 text-muted-foreground" title={title}>
+    <div
+      className="flex min-w-[20rem] items-center gap-2.5 text-muted-foreground"
+      title={title}
+    >
       <div className="flex items-center gap-1.5 shrink-0">
         <Spinner className="size-3.5 shrink-0" />
         <span className="text-xs">{label}</span>
@@ -108,7 +124,10 @@ export function ModelLoadInlineStatus({
       {hasProgress ? (
         <div className="flex min-w-0 flex-[1.35] items-center gap-2.5">
           <div className="min-w-[7rem] flex-1">
-            <Progress value={clampProgress(progressPercent)} className="h-1 bg-foreground/[0.08]" />
+            <Progress
+              value={clampProgress(progressPercent)}
+              className="h-1 bg-foreground/[0.08]"
+            />
           </div>
           <div
             className="flex shrink-0 items-center gap-1 text-ui-10 font-medium tracking-[0.08em] text-muted-foreground/80"

@@ -1,4 +1,3 @@
-
 import type { NodeConfig } from "../../types";
 import { readString } from "./helpers";
 import { parseExpression } from "./parsers/expression-parser";
@@ -15,8 +14,7 @@ type ColumnParser = (
 ) => NodeConfig | null;
 
 const COLUMN_PARSERS: Record<string, ColumnParser> = {
-  sampler: (column, name, id, errors) =>
-    parseSampler(column, name, id, errors),
+  sampler: (column, name, id, errors) => parseSampler(column, name, id, errors),
   expression: (column, name, id) => parseExpression(column, name, id),
   "llm-text": (column, name, id) => parseLlm(column, name, id),
   "llm-structured": (column, name, id) => parseLlm(column, name, id),

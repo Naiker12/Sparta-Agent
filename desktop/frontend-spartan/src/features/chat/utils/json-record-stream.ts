@@ -1,4 +1,3 @@
-
 /** Text arriving from a file, with the byte count that produced it. */
 export interface TextChunk {
   text: string;
@@ -23,12 +22,15 @@ export async function* decodeTextChunks(
 ): AsyncGenerator<TextChunk> {
   const decoder = new TextDecoder("utf-8", { fatal });
   for await (const bytes of byteChunks) {
-    if (!bytes.byteLength) continue;
+    if (bytes.byteLength === 0) { continue; }
     // Preserve UTF-8 characters split across chunks.
-    yield { text: decoder.decode(bytes, { stream: true }), bytes: bytes.byteLength };
+    yield {
+      text: decoder.decode(bytes, { stream: true }),
+      bytes: bytes.byteLength,
+    };
   }
   const tail = decoder.decode();
-  if (tail) yield { text: tail, bytes: 0 };
+  if (tail) { yield { text: tail, bytes: 0 }; }
 }
 
 async function* fileBytes(file: File): AsyncGenerator<Uint8Array> {
@@ -36,8 +38,8 @@ async function* fileBytes(file: File): AsyncGenerator<Uint8Array> {
   try {
     while (true) {
       const { done, value } = await reader.read();
-      if (done) break;
-      if (value) yield value;
+      if (done) { break; }
+      if (value) { yield value; }
     }
   } finally {
     reader.releaseLock();
@@ -103,7 +105,7 @@ function salvageLines(region: string, proven: boolean): Salvage {
   const damaged: string[] = [];
   for (const line of region.split("\n")) {
     const text = line.trim();
-    if (!text) continue;
+    if (!text) { continue; }
     if (!proven && (/^\s/.test(line) || !/^[[{]/.test(text))) {
       damaged.push(text);
       continue;
@@ -121,16 +123,16 @@ export async function* streamJsonRecords(
   chunks: AsyncIterable<TextChunk>,
   options: StreamJsonOptions = {},
 ): AsyncGenerator<unknown> {
-  const QUOTE = 34; // "
-  const BACKSLASH = 92; // \
-  const OPEN_BRACE = 123; // {
-  const CLOSE_BRACE = 125; // }
-  const OPEN_BRACKET = 91; // [
-  const CLOSE_BRACKET = 93; // ]
-  const SPACE = 32;
-  const TAB = 9;
-  const NEWLINE = 10;
-  const RETURN = 13;
+  const quote = 34; // "
+  const backslash = 92; // \
+  const openBrace = 123; // {
+  const closeBrace = 125; // }
+  const openBracket = 91; // [
+  const closeBracket = 93; // ]
+  const space = 32;
+  const tab = 9;
+  const newline = 10;
+  const carriageReturn = 13;
 
   let buffer = "";
   let scan = 0;
@@ -149,7 +151,10 @@ export async function* streamJsonRecords(
     // Retain only the record still being read.
     const consumed = start >= 0 ? start : scan;
     try {
-      buffer = consumed > 0 ? buffer.slice(consumed) + chunk.text : buffer + chunk.text;
+      buffer =
+        consumed > 0
+          ? buffer.slice(consumed) + chunk.text
+          : buffer + chunk.text;
     } catch (error) {
       // Records are dropped from the buffer as they are emitted, so the only way
       // to reach the engine's maximum string length is ONE record that long.
@@ -163,7 +168,7 @@ export async function* streamJsonRecords(
       throw error;
     }
     scan -= consumed;
-    if (start >= 0) start = 0;
+    if (start >= 0) { start = 0; }
 
     // Recovery can replace the buffer and request another scan.
     let rescan = true;
@@ -174,9 +179,9 @@ export async function* streamJsonRecords(
         const code = buffer.charCodeAt(scan);
 
         if (inString) {
-          if (escaped) escaped = false;
-          else if (code === BACKSLASH) escaped = true;
-          else if (code === QUOTE) inString = false;
+          if (escaped) { escaped = false; }
+          else if (code === backslash) { escaped = true; }
+          else if (code === quote) { inString = false; }
           scan++;
           continue;
         }
@@ -186,7 +191,12 @@ export async function* streamJsonRecords(
           // record after it means this is not the single export it claims to
           // be, and importing it would take in data from who knows where.
           if (sawArrayEnd) {
-            if (code !== SPACE && code !== TAB && code !== NEWLINE && code !== RETURN) {
+            if (
+              code !== space &&
+              code !== tab &&
+              code !== newline &&
+              code !== carriageReturn
+            ) {
               throw new SyntaxError(
                 "The export continues after its closing bracket, so it is not one JSON array.",
               );
@@ -195,14 +205,14 @@ export async function* streamJsonRecords(
             continue;
           }
           // Between records: the array's own brackets, separators and whitespace.
-          if (code === OPEN_BRACKET && !sawArrayStart) {
+          if (code === openBracket && !sawArrayStart) {
             sawArrayStart = true;
             scan++;
             continue;
           }
-          if (code !== OPEN_BRACE && code !== OPEN_BRACKET) {
+          if (code !== openBrace && code !== openBracket) {
             // The array's own closing bracket: the file is complete from here on.
-            if (code === CLOSE_BRACKET && sawArrayStart) sawArrayEnd = true;
+            if (code === closeBracket && sawArrayStart) { sawArrayEnd = true; }
             // Commas, newlines, and any stray scalar between records: nothing to import.
             scan++;
             continue;
@@ -211,9 +221,9 @@ export async function* streamJsonRecords(
           depth = 0;
         }
 
-        if (code === QUOTE) inString = true;
-        else if (code === OPEN_BRACE || code === OPEN_BRACKET) depth++;
-        else if (code === CLOSE_BRACE || code === CLOSE_BRACKET) depth--;
+        if (code === quote) { inString = true; }
+        else if (code === openBrace || code === openBracket) { depth++; }
+        else if (code === closeBrace || code === closeBracket) { depth--; }
         scan++;
 
         if (depth === 0) {
@@ -245,14 +255,16 @@ export async function* streamJsonRecords(
       if (!sawArrayStart && start >= 0) {
         const lastNewline = buffer.lastIndexOf("\n");
         const boundary =
-          lastNewline > start ? NEW_RECORD_LINE.exec(buffer.slice(start, lastNewline)) : null;
+          lastNewline > start
+            ? NEW_RECORD_LINE.exec(buffer.slice(start, lastNewline))
+            : null;
         if (boundary) {
           // Only the text before the boundary is damaged. The scanner resumes
           // from the boundary itself, so a pretty-printed record after a broken
           // row is framed by its nesting rather than shredded into lines.
           const at = start + boundary.index + boundary[0].length - 1;
           const damaged = buffer.slice(start, at).trim();
-          if (damaged) options.onMalformed?.(damaged);
+          if (damaged) { options.onMalformed?.(damaged); }
           buffer = buffer.slice(at);
           scan = 0;
           start = -1;
@@ -288,7 +300,7 @@ export async function* streamJsonRecords(
         // Report one truncated record instead of each of its lines.
         options.onMalformed?.(tail);
       } else {
-        for (const text of salvaged.damaged) options.onMalformed?.(text);
+        for (const text of salvaged.damaged) { options.onMalformed?.(text); }
         yield* salvaged.records;
       }
     }

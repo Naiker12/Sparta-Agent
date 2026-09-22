@@ -1,4 +1,5 @@
-
+import type { GpuIndexKind } from "@/hooks/use-gpu-info";
+import { DRAFT_N_MAX_SPEC_TYPES } from "@/lib/speculative-modes";
 import {
   ggufVariantFromStorageKey,
   modelIdFromStorageKey,
@@ -7,8 +8,6 @@ import {
   normalizeModelIdentity,
   publicModelId,
 } from "./model-identity";
-import type { GpuIndexKind } from "@/hooks/use-gpu-info";
-import { DRAFT_N_MAX_SPEC_TYPES } from "@/lib/speculative-modes";
 
 export interface PerModelConfig {
   customContextLength: number | null;
@@ -116,9 +115,7 @@ export function isServedByMlx(
   chatOnlyReason?: string | null,
 ): boolean {
   return (
-    !isGguf &&
-    deviceType === "mac" &&
-    !NO_MLX_REASONS.has(chatOnlyReason ?? "")
+    !isGguf && deviceType === "mac" && !NO_MLX_REASONS.has(chatOnlyReason ?? "")
   );
 }
 
@@ -210,7 +207,9 @@ function normalizeLlamaExtraArgs(value: unknown): string[] | null | undefined {
   if (!Array.isArray(value)) {
     return undefined;
   }
-  const tokens = value.filter((entry): entry is string => typeof entry === "string");
+  const tokens = value.filter(
+    (entry): entry is string => typeof entry === "string",
+  );
   return tokens.length > 0 ? tokens : null;
 }
 
@@ -338,9 +337,9 @@ let unpersisted: { open: boolean; stored: boolean | null } | null = null;
 const advancedOpenListeners = new Set<() => void>();
 
 /** null until the switch is used, so an untouched panel is free to open the
-*  section for a model that carries non-default advanced values.
-*  Read straight from storage rather than cached: a write from another tab while every panel
-*  was unmounted has no listener to catch it, and its storage event is not replayed on mount. */
+ *  section for a model that carries non-default advanced values.
+ *  Read straight from storage rather than cached: a write from another tab while every panel
+ *  was unmounted has no listener to catch it, and its storage event is not replayed on mount. */
 export function readAdvancedSettingsOpen(): boolean | null {
   const stored = loadAdvancedSettingsOpen();
   if (!unpersisted) {
@@ -595,9 +594,7 @@ function migrateLegacyLoadSettingsOnce(): void {
     if (writeMap(map)) {
       localStorage.setItem(LEGACY_MIGRATION_FLAG, "1");
     }
-  } catch (err) {
-    console.warn("Failed to migrate legacy load settings:", err);
-  }
+  } catch (_err) {}
 }
 
 function readMapRaw(): StoredMap {
@@ -631,8 +628,7 @@ function writeMap(map: StoredMap): boolean {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
     return true;
-  } catch (err) {
-    console.warn("Failed to persist per-model config:", err);
+  } catch (_err) {
     return false;
   }
 }
@@ -648,10 +644,8 @@ function warnDroppedFields(
     (key) => !STORED_CONFIG_FIELDS.has(key),
   );
   if (dropped.length > 0) {
-    console.warn("Dropped unknown per-model config fields:", dropped);
   }
   if (version > STORAGE_SCHEMA_VERSION) {
-    console.warn("Per-model config schema is newer than this app:", version);
   }
 }
 
@@ -699,11 +693,17 @@ function normalizeV1(partial: RawConfig): PerModelConfig {
         : null,
     nBatch:
       typeof partial.nBatch === "number" && Number.isFinite(partial.nBatch)
-        ? Math.max(N_BATCH_MIN, Math.min(N_BATCH_MAX, Math.round(partial.nBatch)))
+        ? Math.max(
+            N_BATCH_MIN,
+            Math.min(N_BATCH_MAX, Math.round(partial.nBatch)),
+          )
         : null,
     nUbatch:
       typeof partial.nUbatch === "number" && Number.isFinite(partial.nUbatch)
-        ? Math.max(N_BATCH_MIN, Math.min(N_BATCH_MAX, Math.round(partial.nUbatch)))
+        ? Math.max(
+            N_BATCH_MIN,
+            Math.min(N_BATCH_MAX, Math.round(partial.nUbatch)),
+          )
         : null,
     tensorParallel:
       typeof partial.tensorParallel === "boolean"
@@ -720,8 +720,8 @@ function normalizeV1(partial: RawConfig): PerModelConfig {
 }
 
 /**
-* A config in the exact shape storage keeps it in: the UI carries sentinels storage does not
-* (Speculative Decoding "auto" canonicalizes to null), which would read as non-default. */
+ * A config in the exact shape storage keeps it in: the UI carries sentinels storage does not
+ * (Speculative Decoding "auto" canonicalizes to null), which would read as non-default. */
 export function normalizePerModelConfig(raw: unknown): PerModelConfig {
   return normalize(raw);
 }
@@ -890,9 +890,9 @@ export function savePerModelConfig(
   ggufVariant: string | null | undefined,
   config: PerModelConfig,
   /**
-  * Receives models dropped to stay inside the storage budget. Eviction is silent and still
-  * reports success, so without this their server overrides would keep applying with nothing
-  * in the UI able to forget them. */
+   * Receives models dropped to stay inside the storage budget. Eviction is silent and still
+   * reports success, so without this their server overrides would keep applying with nothing
+   * in the UI able to forget them. */
   evicted?: { modelId: string; ggufVariant: string | null }[],
 ): boolean {
   if (
@@ -981,16 +981,16 @@ export function deletePerModelConfig(
 }
 
 /**
-* Move a saved config from an id an older release keyed it by onto the current one.
-*
-* A repo cached outside the active HF cache is now keyed by its repo id (what the picker and
-* auto-switch index use); it used to be keyed by the snapshot path it loads from. Nothing else
-* migrates that, so without this the model reads as never remembered after an upgrade.
-*
-* The key is renamed in one write rather than saved then deleted: holding both copies puts an
-* already-full map over budget, and the save then silently evicts an unrelated model whose
-* server override outlives anything the UI could forget. A rename cannot grow the entry count.
-*/
+ * Move a saved config from an id an older release keyed it by onto the current one.
+ *
+ * A repo cached outside the active HF cache is now keyed by its repo id (what the picker and
+ * auto-switch index use); it used to be keyed by the snapshot path it loads from. Nothing else
+ * migrates that, so without this the model reads as never remembered after an upgrade.
+ *
+ * The key is renamed in one write rather than saved then deleted: holding both copies puts an
+ * already-full map over budget, and the save then silently evicts an unrelated model whose
+ * server override outlives anything the UI could forget. A rename cannot grow the entry count.
+ */
 export function adoptLegacyConfigKey(
   modelId: string,
   legacyModelId: string,
@@ -1051,14 +1051,14 @@ export function resolveInitialConfig(
 }
 
 /**
-* Remembered settings for the identifier ``/api/inference/status`` reports as loaded.
-*
-* An API auto-switch hands the loader the concrete snapshot path (the resolver index only holds
-* paths), so ``model_identifier`` names that path while this model's settings are keyed by its
-* repo id. Reading the raw identifier alone reports the resident model as unremembered, blanking
-* a control it is running with, which the next save writes back over the saved record. Only a
-* namespaced collapse is adopted, per ``residentModelIdMatches``: an HF snapshot collapses onto
-* a repo id naming exactly one model, while other paths collapse onto a shareable stem. */
+ * Remembered settings for the identifier ``/api/inference/status`` reports as loaded.
+ *
+ * An API auto-switch hands the loader the concrete snapshot path (the resolver index only holds
+ * paths), so ``model_identifier`` names that path while this model's settings are keyed by its
+ * repo id. Reading the raw identifier alone reports the resident model as unremembered, blanking
+ * a control it is running with, which the next save writes back over the saved record. Only a
+ * namespaced collapse is adopted, per ``residentModelIdMatches``: an HF snapshot collapses onto
+ * a repo id naming exactly one model, while other paths collapse onto a shareable stem. */
 export function resolveResidentInitialConfig(
   modelId: string,
   ggufVariant?: string | null,

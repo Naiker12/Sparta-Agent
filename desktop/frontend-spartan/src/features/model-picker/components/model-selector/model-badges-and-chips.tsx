@@ -14,27 +14,26 @@
  * - formatBytes: Función pura de conversión de bytes a unidades decimales.
  */
 
-import { useContext, type ReactNode } from "react";
-import { cn } from "@/lib/utils";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { HugeiconsIcon } from "@hugeicons/react";
+import { cn } from "@/lib/utils";
+import type { VramFitStatus } from "@/lib/vram";
 import {
   AudioWave01Icon,
   Download01Icon,
   FlimSlateIcon,
-  HelpCircleIcon,
   Image03Icon,
   ViewIcon,
 } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
-import type { FormatTone } from "./row-meta";
-import type { VramFitStatus } from "@/lib/vram";
-import type { ModelCapabilities } from "./model-capabilities";
+import { type ReactNode, useContext } from "react";
 import { createContext } from "react";
+import type { ModelCapabilities } from "./model-capabilities";
+import type { FormatTone } from "./row-meta";
 
 export function ListLabel({
   children,
@@ -86,7 +85,9 @@ export function ListLabel({
 }
 
 export function formatBytes(bytes: number): string {
-  if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
+  if (!Number.isFinite(bytes) || bytes <= 0) {
+    return "0 B";
+  }
   const units = ["B", "KB", "MB", "GB", "TB"];
   let i = 0;
   let value = bytes;
@@ -191,7 +192,10 @@ export const FORMAT_TONE_DOT: Record<FormatTone, string> = {
   adapter: "bg-format-adapter",
 };
 
-export function FormatTag({ tone, label }: { tone: FormatTone; label: string }) {
+export function FormatTag({
+  tone,
+  label,
+}: { tone: FormatTone; label: string }) {
   return (
     <Tooltip delayDuration={0}>
       <TooltipTrigger asChild={true}>

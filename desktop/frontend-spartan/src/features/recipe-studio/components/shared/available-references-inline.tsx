@@ -1,4 +1,3 @@
-
 import { Badge } from "@/components/ui/badge";
 import { type ReactElement, useLayoutEffect, useRef, useState } from "react";
 import type { AvailableVariableEntry } from "../../utils/variables";
@@ -22,8 +21,8 @@ export function AvailableReferencesInline({
       return;
     }
     const wrapper = wrapperRef.current;
-    const items = measureRefs.current.filter(
-      (node): node is HTMLSpanElement => Boolean(node),
+    const items = measureRefs.current.filter((node): node is HTMLSpanElement =>
+      Boolean(node),
     );
     if (!(wrapper && items.length > 0)) {
       setCollapsedCount(entries.length);

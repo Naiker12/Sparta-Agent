@@ -1,4 +1,3 @@
-
 // What a quantization expander shows, and when it opens. No React/DOM deps
 // so it stays easy to test.
 
@@ -12,7 +11,9 @@ export function visibleGgufVariants<
   variants: readonly T[],
   { onDevice, showAll }: { onDevice: boolean; showAll: boolean },
 ): readonly T[] {
-  if (showAll || !onDevice) return variants;
+  if (showAll || !onDevice) {
+    return variants;
+  }
   return variants.filter((v) => v.downloaded === true || v.partial === true);
 }
 

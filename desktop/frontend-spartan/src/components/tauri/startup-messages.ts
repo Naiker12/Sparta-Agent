@@ -43,15 +43,26 @@ export function installProgressMessage(
   rotationIndex = 0,
 ): InstallProgressMessage {
   const phaseIndex =
-    currentStepIndex < 2 ? 0 : currentStepIndex < 4 ? 1 : currentStepIndex < 6 ? 2 : 3;
+    currentStepIndex < 2
+      ? 0
+      : currentStepIndex < 4
+        ? 1
+        : currentStepIndex < 6
+          ? 2
+          : 3;
   const phaseMessage = INSTALL_PHASE_MESSAGES[phaseIndex];
-  if (rotationIndex === 0) return phaseMessage;
+  if (rotationIndex === 0) {
+    return phaseMessage;
+  }
 
   return {
     title: phaseMessage.title,
     subtitle:
       INSTALL_WAITING_SUBTITLES[
-        normalizedRotationIndex(rotationIndex - 1, INSTALL_WAITING_SUBTITLES.length)
+        normalizedRotationIndex(
+          rotationIndex - 1,
+          INSTALL_WAITING_SUBTITLES.length,
+        )
       ],
   };
 }
@@ -70,7 +81,9 @@ export function startupWaitingMessage(
   phaseMessage: StartupMessage,
   rotationIndex: number,
 ): string {
-  if (phaseMessage !== INITIAL_STARTUP_MESSAGE) return phaseMessage;
+  if (phaseMessage !== INITIAL_STARTUP_MESSAGE) {
+    return phaseMessage;
+  }
   return STARTUP_WAITING_MESSAGES[
     normalizedRotationIndex(rotationIndex, STARTUP_WAITING_MESSAGES.length)
   ];

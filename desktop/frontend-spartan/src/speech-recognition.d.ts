@@ -1,4 +1,3 @@
-
 /**
  * Minimal Web Speech API (Speech Recognition) types for browsers that support it.
  * Full types: @types/dom-speech-recognition

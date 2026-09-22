@@ -1,17 +1,8 @@
-
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  type GgufVariantDetail,
-  deleteCachedDataset,
-  deleteCachedModel,
-  formatLocalUpdated,
-  listGgufVariants,
-  useGgufVariantsCacheVersion,
-} from "../inventory";
 import {
   classifyUnslothSupport,
   formatBytes,
@@ -19,7 +10,6 @@ import {
   ggufVariantDisplayLabel,
   useHfTokenStore,
 } from "@/features/hub";
-import { modelIdsMatch } from "../lib/model-identity";
 import {
   ModelRowMenu,
   pinKey,
@@ -44,6 +34,15 @@ import {
   useRef,
   useState,
 } from "react";
+import {
+  type GgufVariantDetail,
+  deleteCachedDataset,
+  deleteCachedModel,
+  formatLocalUpdated,
+  listGgufVariants,
+  useGgufVariantsCacheVersion,
+} from "../inventory";
+import { modelIdsMatch } from "../lib/model-identity";
 import { paramLabelFromId } from "../lib/view-models";
 import type {
   CachedInventoryRow,
@@ -114,8 +113,12 @@ function CachedSizeChipLive({
       : { key: fetchKey, status: "idle" as const, variants: [] };
 
   const ensureVariantsLoaded = useCallback(() => {
-    if (!needsVariantFetch) return;
-    if (fetchedForRef.current === fetchKey) return;
+    if (!needsVariantFetch) {
+      return;
+    }
+    if (fetchedForRef.current === fetchKey) {
+      return;
+    }
     fetchedForRef.current = fetchKey;
     setVariantState({ key: fetchKey, status: "loading", variants: [] });
     listGgufVariants(repoId, hfToken, {
@@ -123,7 +126,9 @@ function CachedSizeChipLive({
       localPath: cachePath ?? null,
     })
       .then((res) => {
-        if (fetchedForRef.current !== fetchKey) return;
+        if (fetchedForRef.current !== fetchKey) {
+          return;
+        }
         setVariantState({
           key: fetchKey,
           status: "loaded",
@@ -131,7 +136,9 @@ function CachedSizeChipLive({
         });
       })
       .catch(() => {
-        if (fetchedForRef.current !== fetchKey) return;
+        if (fetchedForRef.current !== fetchKey) {
+          return;
+        }
         fetchedForRef.current = null;
         setVariantState({ key: fetchKey, status: "error", variants: [] });
       });
@@ -168,7 +175,9 @@ function CachedSizeChipLive({
   return (
     <Tooltip
       onOpenChange={(open) => {
-        if (open) ensureVariantsLoaded();
+        if (open) {
+          ensureVariantsLoaded();
+        }
       }}
     >
       <TooltipTrigger asChild={true}>{trigger}</TooltipTrigger>
@@ -288,7 +297,9 @@ function CatalogRow({
       </CatalogRowInteractiveContext.Provider>
     </div>
   );
-  if (!tooltip || !interactive) return button;
+  if (!(tooltip && interactive)) {
+    return button;
+  }
   return (
     <Tooltip>
       <TooltipTrigger asChild={true}>{button}</TooltipTrigger>
@@ -414,7 +425,9 @@ export function buildRowStatusTooltip({
     );
   }
 
-  if (lines.length === 0) return null;
+  if (lines.length === 0) {
+    return null;
+  }
   return <div className="space-y-1.5">{lines}</div>;
 }
 
@@ -447,7 +460,8 @@ export const DiscoverModelRow = memo(function DiscoverModelRow({
           }),
     [isDataset, row.id, row.result, deviceType],
   );
-  const unsupported = support?.status === "unsupported" && !support?.supportedIn;
+  const unsupported =
+    support?.status === "unsupported" && !support?.supportedIn;
   const handleClick = useCallback(() => onSelect(row.id), [onSelect, row.id]);
   const partialRepoId =
     row.isAvailableOnDevice && row.isPartialOnDevice
@@ -541,7 +555,9 @@ function cachedRowActive(
   activeCheckpoint: string | null,
   activeGgufVariant: string | null,
 ): boolean {
-  if (!modelIdsMatch(activeCheckpoint, row.loadId)) return false;
+  if (!modelIdsMatch(activeCheckpoint, row.loadId)) {
+    return false;
+  }
   if (row.modelFormat === "gguf") {
     return row.capabilities.requiresVariant ? activeGgufVariant !== null : true;
   }
@@ -553,7 +569,9 @@ function localRowActive(
   activeCheckpoint: string | null,
   activeGgufVariant: string | null,
 ): boolean {
-  if (!modelIdsMatch(activeCheckpoint, row.loadId)) return false;
+  if (!modelIdsMatch(activeCheckpoint, row.loadId)) {
+    return false;
+  }
   if (row.modelFormat === "gguf") {
     return row.capabilities.requiresVariant ? activeGgufVariant !== null : true;
   }
@@ -593,7 +611,9 @@ export const InventoryRow = memo(function InventoryRow({
       : (row.repoId ?? row.baseModelHubId ?? row.baseModel ?? row.loadId);
   const rowTagsSignature = row.tags?.join("\u0001") ?? "";
   const unsupported = useMemo(() => {
-    if (isDataset) return false;
+    if (isDataset) {
+      return false;
+    }
     const classified = classifyUnslothSupport({
       modelId: rowModelId,
       pipelineTag: row.pipelineTag,
@@ -736,7 +756,9 @@ export const InventoryRow = memo(function InventoryRow({
   // Settings applies to any downloaded model, not just deletable ones, so the menu renders
   // when either action applies. `deletableRepoId` keeps the delete closures' narrowing.
   const settingsAction =
-    !isDataset && onOpenSettings ? { onOpen: () => onOpenSettings(row) } : undefined;
+    !isDataset && onOpenSettings
+      ? { onOpen: () => onOpenSettings(row) }
+      : undefined;
   const deletableRepoId = canDelete ? cacheDeletableRepoId : null;
   const deleteAction =
     deletableRepoId || settingsAction ? (
@@ -756,63 +778,73 @@ export const InventoryRow = memo(function InventoryRow({
               }
         }
         cachePath={
-          isDataset || !deletableRepoId ? undefined : { repoId: deletableRepoId }
+          isDataset || !deletableRepoId
+            ? undefined
+            : { repoId: deletableRepoId }
         }
-        del={deletableRepoId ? {
-          title: isDataset ? "Delete cached dataset?" : "Delete cached model?",
-          // Datasets have no companion base repo, so only models get a preview.
-          impact: isDataset ? undefined : { repoId: deletableRepoId },
-          description: (
-            <>
-              This will remove{" "}
-              <span className="font-medium text-foreground">
-                {deletableRepoId}
-              </span>{" "}
-              {isDataset
-                ? "and its downloaded files"
-                : row.isGguf
-                  ? "and all of its downloaded quantizations"
-                  : "and all of its downloaded files"}
-              {row.kind === "cache" ? ` (${formatBytes(row.bytes)})` : ""} from
-              disk. You can re-download it later.
-            </>
-          ),
-          successMessage: `Deleted ${deletableRepoId}`,
-          onConfirm: async () => {
-            // Delete only the copy this row shows: cache rows carry the owning
-            // cache path, so pass it through and leave other caches untouched.
-            const rowCachePath =
-              row.kind === "cache" ? (row.cachePath ?? undefined) : undefined;
-            if (isDataset) {
-              await deleteCachedDataset(deletableRepoId, rowCachePath);
-            } else {
-              await deleteCachedModel(
-                deletableRepoId,
-                undefined,
-                undefined,
-                rowCachePath,
-              );
-              // Deleted repos can't stay pinned: drop the repo pin and any of
-              // its per-quant pins so stale rows don't linger up top.
-              const { pinned, togglePinned: toggle } =
-                usePinnedModelsStore.getState();
-              for (const key of pinned) {
-                if (
-                  key === pinKey(deletableRepoId) ||
-                  key.startsWith(`${deletableRepoId}::`)
-                ) {
-                  toggle(
-                    deletableRepoId,
-                    key.includes("::")
-                      ? key.slice(key.indexOf("::") + 2)
-                      : undefined,
-                  );
-                }
+        del={
+          deletableRepoId
+            ? {
+                title: isDataset
+                  ? "Delete cached dataset?"
+                  : "Delete cached model?",
+                // Datasets have no companion base repo, so only models get a preview.
+                impact: isDataset ? undefined : { repoId: deletableRepoId },
+                description: (
+                  <>
+                    This will remove{" "}
+                    <span className="font-medium text-foreground">
+                      {deletableRepoId}
+                    </span>{" "}
+                    {isDataset
+                      ? "and its downloaded files"
+                      : row.isGguf
+                        ? "and all of its downloaded quantizations"
+                        : "and all of its downloaded files"}
+                    {row.kind === "cache" ? ` (${formatBytes(row.bytes)})` : ""}{" "}
+                    from disk. You can re-download it later.
+                  </>
+                ),
+                successMessage: `Deleted ${deletableRepoId}`,
+                onConfirm: async () => {
+                  // Delete only the copy this row shows: cache rows carry the owning
+                  // cache path, so pass it through and leave other caches untouched.
+                  const rowCachePath =
+                    row.kind === "cache"
+                      ? (row.cachePath ?? undefined)
+                      : undefined;
+                  if (isDataset) {
+                    await deleteCachedDataset(deletableRepoId, rowCachePath);
+                  } else {
+                    await deleteCachedModel(
+                      deletableRepoId,
+                      undefined,
+                      undefined,
+                      rowCachePath,
+                    );
+                    // Deleted repos can't stay pinned: drop the repo pin and any of
+                    // its per-quant pins so stale rows don't linger up top.
+                    const { pinned, togglePinned: toggle } =
+                      usePinnedModelsStore.getState();
+                    for (const key of pinned) {
+                      if (
+                        key === pinKey(deletableRepoId) ||
+                        key.startsWith(`${deletableRepoId}::`)
+                      ) {
+                        toggle(
+                          deletableRepoId,
+                          key.includes("::")
+                            ? key.slice(key.indexOf("::") + 2)
+                            : undefined,
+                        );
+                      }
+                    }
+                  }
+                },
+                onDeleted: onChange,
               }
-            }
-          },
-          onDeleted: onChange,
-        } : undefined}
+            : undefined
+        }
       />
     ) : null;
 

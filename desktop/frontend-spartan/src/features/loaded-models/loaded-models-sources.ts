@@ -1,17 +1,15 @@
-
 // Chat, images, video and dictation each own a runtime and their own /status, and
 // nothing publishes "everything resident" in one call. These map each payload to a
 // common row shape. Pure and React-free so node --test can import them; the types
 // come from each feature's own module because the indexes re-export their pages.
 
 import type { InferenceStatusResponse } from "@/features/chat/types/api";
-import type { DiffusionStatus } from "@/features/images/api";
 
 /** What the row is, for the icon and label. */
-export type LoadedModelKind = "text" | "tts" | "image" | "video" | "stt";
+export type LoadedModelKind = "text" | "tts" | "stt";
 
 /** Which runtime holds the weights, so which endpoint releases them. */
-export type LoadedModelSource = "chat" | "image" | "video" | "stt";
+export type LoadedModelSource = "chat" | "stt";
 
 /** The dictation sidecars, as /audio/stt/status names them. */
 export type SttEngine = "transformers" | "mtmd" | "gguf";
@@ -63,13 +61,13 @@ const STT_ENGINE_LABELS: Record<SttEngine, string> = {
  * drives it. Point it at the Audio page once that lands.
  */
 export type LoadedModelTarget =
-  | { open: "route"; to: "/chat" | "/images"; label: string }
+  | { open: "route"; to: "/chat"; label: string }
   | { open: "settings"; tab: "voice"; label: string };
 
-export function loadedModelTarget(source: LoadedModelSource): LoadedModelTarget {
+export function loadedModelTarget(
+  source: LoadedModelSource,
+): LoadedModelTarget {
   switch (source) {
-    case "image":
-      return { open: "route", to: "/images", label: "Images" };
     case "stt":
       return { open: "settings", tab: "voice", label: "Voice settings" };
     default:
@@ -80,8 +78,6 @@ export function loadedModelTarget(source: LoadedModelSource): LoadedModelTarget 
 export const LOADED_MODEL_KIND_LABELS: Record<LoadedModelKind, string> = {
   text: "Chat",
   tts: "Speech",
-  image: "Image",
-  video: "Video",
   stt: "Dictation",
 };
 
@@ -94,9 +90,13 @@ function joinDetail(...parts: (string | null | undefined)[]): string {
   const seen = new Set<string>();
   const kept: string[] = [];
   for (const part of parts) {
-    if (!part) continue;
+    if (!part) {
+      continue;
+    }
     const key = part.toLowerCase();
-    if (seen.has(key)) continue;
+    if (seen.has(key)) {
+      continue;
+    }
     seen.add(key);
     kept.push(part);
   }
@@ -107,7 +107,9 @@ function joinDetail(...parts: (string | null | undefined)[]): string {
 export function shortModelLabel(name: string): string {
   const normalized = name.replace(/[\\/]+$/, "");
   const segments = normalized.split(/[\\/]+/).filter(Boolean);
-  if (segments.length <= 2) return normalized;
+  if (segments.length <= 2) {
+    return normalized;
+  }
   return segments.slice(-2).join("/");
 }
 
@@ -116,7 +118,9 @@ export function shortModelLabel(name: string): string {
 export function describeInferenceStatus(
   status: InferenceStatusResponse | null,
 ): LoadedModelEntry[] {
-  if (!status) return [];
+  if (!status) {
+    return [];
+  }
   const entries: LoadedModelEntry[] = [];
   const active = status.active_model;
   if (active) {
@@ -151,7 +155,9 @@ export function describeInferenceStatus(
   // Reported by /status for the whole load, so a load started in another tab or
   // before this page opened still shows, not only one driven from here.
   for (const name of status.loading ?? []) {
-    if (entries.some((entry) => entry.name === name)) continue;
+    if (entries.some((entry) => entry.name === name)) {
+      continue;
+    }
     entries.push({
       id: `chat:${name}`,
       kind: "text",
@@ -164,8 +170,12 @@ export function describeInferenceStatus(
   // Only the Transformers backend caches past the active model, but it is memory
   // nothing else surfaces or releases.
   for (const name of status.loaded ?? []) {
-    if (name === active) continue;
-    if (entries.some((entry) => entry.name === name)) continue;
+    if (name === active) {
+      continue;
+    }
+    if (entries.some((entry) => entry.name === name)) {
+      continue;
+    }
     entries.push({
       id: `chat:${name}`,
       kind: "text",
@@ -184,47 +194,18 @@ export function describeInferenceStatus(
  * token. Anything unrecognised is shown as the backend spelled it, upper-cased,
  * which is what keeps "Q8_0" and "IQ4_XS" readable without a table per quant.
  */
-export function precisionLabel(value: string | null | undefined): string | null {
-  if (!value || value === "none") return null;
+export function precisionLabel(
+  value: string | null | undefined,
+): string | null {
+  if (!value || value === "none") {
+    return null;
+  }
   const known: Record<string, string> = {
     bfloat16: "BF16",
     float16: "FP16",
     float32: "FP32",
   };
   return known[value] ?? value.toUpperCase();
-}
-
-export function describeDiffusionStatus(
-  status: DiffusionStatus | null,
-): LoadedModelEntry[] {
-  if (!status?.loaded || !status.repo_id) return [];
-  const isGguf =
-    status.model_kind === "gguf" ||
-    status.dtype?.toLowerCase() === "gguf" ||
-    Boolean(status.gguf_variant);
-  return [
-    {
-      id: `image:${status.repo_id}`,
-      kind: "image",
-      source: "image",
-      name: status.repo_id,
-      detail: joinDetail(
-        status.family,
-        // Only while the GGUF is what ran. A GGUF pick the dense fast path replaced is a
-        // torchao build of the base transformer, and calling that row "GGUF" names a file
-        // the pipeline never opened.
-        isGguf && !status.transformer_quant ? "GGUF" : null,
-        // What the transformer IS, in the order the build decides it: the dense scheme when
-        // one engaged, else the quant of the GGUF that ran, else the pipeline dtype. `dtype`
-        // is a COMPUTE dtype and reads bf16 for every CUDA load, so on its own it reported
-        // "BF16" for a Q8_0 pick. Via precisionLabel so a lowercase q8_0 still reads Q8_0.
-        precisionLabel(status.transformer_quant) ??
-          precisionLabel(status.gguf_variant) ??
-          precisionLabel(status.dtype),
-        status.device,
-      ),
-    },
-  ];
 }
 
 /** A server predating the engine split reports the resident Transformers model
@@ -234,7 +215,9 @@ export function sttEngineStatus(
   engine: SttEngine,
 ): SttEngineStatus | null {
   const block = status[engine];
-  if (block) return block;
+  if (block) {
+    return block;
+  }
   return engine === "transformers"
     ? { loaded_model: status.loaded_model, device: status.device }
     : null;
@@ -243,7 +226,9 @@ export function sttEngineStatus(
 export function describeSttStatus(
   status: SttStatusResponse | null,
 ): LoadedModelEntry[] {
-  if (!status) return [];
+  if (!status) {
+    return [];
+  }
   const engines: SttEngine[] = ["transformers", "mtmd", "gguf"];
   const entries: LoadedModelEntry[] = [];
   for (const engine of engines) {
@@ -260,7 +245,9 @@ export function describeSttStatus(
       });
       continue;
     }
-    if (!block?.loaded_model) continue;
+    if (!block?.loaded_model) {
+      continue;
+    }
     entries.push({
       id: `stt:${engine}`,
       kind: "stt",
@@ -286,7 +273,9 @@ export function verifyResident(
   resident: string | null | undefined,
   matches: (left: string, right: string) => boolean,
 ): ResidentVerdict {
-  if (!resident) return "gone";
+  if (!resident) {
+    return "gone";
+  }
   return matches(entryName, resident) ? "match" : "replaced";
 }
 
@@ -299,7 +288,9 @@ export function mergeLoadedModels(
   const merged: LoadedModelEntry[] = [];
   for (const group of groups) {
     for (const entry of group) {
-      if (seen.has(entry.id)) continue;
+      if (seen.has(entry.id)) {
+        continue;
+      }
       seen.add(entry.id);
       merged.push(entry);
     }
@@ -319,7 +310,9 @@ export function withPendingLoads(
   rows: LoadedModelEntry[],
   pending: Map<LoadedModelSource, string | null>,
 ): LoadedModelEntry[] {
-  if (pending.size === 0) return rows;
+  if (pending.size === 0) {
+    return rows;
+  }
   const extra: LoadedModelEntry[] = [];
   for (const [source, model] of pending) {
     // A status row wins only when it describes the same load. Images and video
@@ -352,7 +345,5 @@ export function withPendingLoads(
 
 const PENDING_KINDS: Record<LoadedModelSource, LoadedModelKind> = {
   chat: "text",
-  image: "image",
-  video: "video",
   stt: "stt",
 };

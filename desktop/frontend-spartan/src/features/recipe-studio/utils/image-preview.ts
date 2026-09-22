@@ -1,4 +1,3 @@
-
 export const MAX_IMAGE_PREVIEW_BYTES = 200 * 1024;
 
 type PreviewImagePayload = {
@@ -68,7 +67,11 @@ function isByteArray(value: unknown): value is number[] {
     return false;
   }
   return value.every(
-    (item) => typeof item === "number" && Number.isInteger(item) && item >= 0 && item <= 255,
+    (item) =>
+      typeof item === "number" &&
+      Number.isInteger(item) &&
+      item >= 0 &&
+      item <= 255,
   );
 }
 
@@ -127,7 +130,10 @@ function resolveImagePreviewFromString(
   return null;
 }
 
-function resolveImagePayloadObject(value: unknown, maxBytes: number): ImagePreviewResult | null {
+function resolveImagePayloadObject(
+  value: unknown,
+  maxBytes: number,
+): ImagePreviewResult | null {
   if (!isRecord(value)) {
     return null;
   }
@@ -173,7 +179,10 @@ function resolveImagePayloadObject(value: unknown, maxBytes: number): ImagePrevi
   }
 
   if (isByteArray(value.bytes)) {
-    const resolved = resolveStringCandidate(byteArrayToBase64(value.bytes), maxBytes);
+    const resolved = resolveStringCandidate(
+      byteArrayToBase64(value.bytes),
+      maxBytes,
+    );
     if (resolved !== null) {
       return resolved;
     }

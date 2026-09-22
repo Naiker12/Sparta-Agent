@@ -1,4 +1,3 @@
-
 import type {
   CodeHighlighterPlugin,
   CodePluginOptions,
@@ -8,11 +7,11 @@ import type {
 } from "@streamdown/code";
 import {
   type BundledLanguage,
+  type GrammarState,
+  type ThemedToken,
   bundledLanguages,
   bundledLanguagesInfo,
   createHighlighter,
-  type GrammarState,
-  type ThemedToken,
 } from "shiki";
 import { createJavaScriptRegexEngine } from "shiki/engine/javascript";
 
@@ -120,9 +119,13 @@ const themeIds = new Map<string, string>();
 const themeIdByInput = new WeakMap<object, string>();
 
 const themeKey = (theme: ThemeInput): string => {
-  if (typeof theme === "string") return theme;
+  if (typeof theme === "string") {
+    return theme;
+  }
   const known = themeIdByInput.get(theme);
-  if (known !== undefined) return known;
+  if (known !== undefined) {
+    return known;
+  }
   const definition = JSON.stringify(theme);
   let id = themeIds.get(definition);
   if (id === undefined) {
@@ -181,11 +184,15 @@ export function createCodePlugin(
   // Identical fences can share an index key.
   const dropCodeIndex = (fence: Fence): void => {
     const indexKey = codeKey(fence.key, fence.code);
-    if (fencesByCode.get(indexKey) === fence) fencesByCode.delete(indexKey);
+    if (fencesByCode.get(indexKey) === fence) {
+      fencesByCode.delete(indexKey);
+    }
   };
 
   const clearTrailing = (fence: Fence): void => {
-    if (fence.trailing !== null) clearTimeout(fence.trailing);
+    if (fence.trailing !== null) {
+      clearTimeout(fence.trailing);
+    }
     fence.trailing = null;
     fence.pending = null;
   };
@@ -198,19 +205,22 @@ export function createCodePlugin(
     if (!fence.pending || fence.pending.code !== code) {
       fence.pending = { code, callbacks: new Set() };
     }
-    if (callback) fence.pending.callbacks.add(callback);
+    if (callback) {
+      fence.pending.callbacks.add(callback);
+    }
   };
 
-  const notifyPending = (
-    pending: Pending,
-    result: HighlightResult,
-  ): void => {
-    for (const callback of pending.callbacks) callback(result);
+  const notifyPending = (pending: Pending, result: HighlightResult): void => {
+    for (const callback of pending.callbacks) {
+      callback(result);
+    }
   };
 
   const dropFence = (fence: Fence): void => {
     const index = fences.indexOf(fence);
-    if (index < 0) return;
+    if (index < 0) {
+      return;
+    }
     fences.splice(index, 1);
     cachedCharacters -= fence.code.length;
     dropCodeIndex(fence);
@@ -227,7 +237,9 @@ export function createCodePlugin(
       while (dropIndex >= 0 && fences[dropIndex].pending !== null) {
         dropIndex -= 1;
       }
-      if (dropIndex < 0) return;
+      if (dropIndex < 0) {
+        return;
+      }
       dropFence(fences[dropIndex]);
     }
   };
@@ -244,14 +256,20 @@ export function createCodePlugin(
   /** The fence whose cached code reaches furthest into `code`. */
   const findFence = (key: string, code: string): Fence => {
     const exact = fencesByCode.get(codeKey(key, code));
-    if (exact && exact.code === code) return promote(exact);
+    if (exact && exact.code === code) {
+      return promote(exact);
+    }
     let match: Fence | null = null;
     let matchLength = -1;
     for (const fence of fences) {
-      if (fence.key !== key) continue;
+      if (fence.key !== key) {
+        continue;
+      }
       // Prefix-related pending calls may belong to different blocks.
       if (fence.result === null) {
-        if (fence.pending?.code === code) return promote(fence);
+        if (fence.pending?.code === code) {
+          return promote(fence);
+        }
         continue;
       }
       const anchor = fence.code;
@@ -261,11 +279,15 @@ export function createCodePlugin(
         code.startsWith(anchor) ||
         (code.length >= fence.committedLength && shedsClosingRun(code, anchor));
       const reach = Math.min(anchor.length, code.length);
-      if (!anchor || reach <= matchLength || !reaches) continue;
+      if (!anchor || reach <= matchLength || !reaches) {
+        continue;
+      }
       match = fence;
       matchLength = reach;
     }
-    if (match) return promote(match);
+    if (match) {
+      return promote(match);
+    }
     const fence: Fence = {
       key,
       code: "",
@@ -359,12 +381,13 @@ export function createCodePlugin(
     let result: HighlightResult;
     try {
       result = tokenize(fence, highlighter, code, language, themes);
-    } catch (error) {
-      console.error("[Studio Code] Failed to highlight code:", error);
+    } catch (_error) {
       resetFence(fence);
       // A fence that never produced tokens has no anchor to match on, so a
       // block that keeps failing would strand a new one on every render.
-      if (fence.result === null) dropFence(fence);
+      if (fence.result === null) {
+        dropFence(fence);
+      }
       return null;
     }
     cachedCharacters += code.length - fence.code.length;
@@ -384,7 +407,9 @@ export function createCodePlugin(
   ): void => {
     const pending = fence.pending;
     clearTrailing(fence);
-    if (!pending) return;
+    if (!pending) {
+      return;
+    }
     const refreshed = update(
       fence,
       highlighter,
@@ -392,7 +417,9 @@ export function createCodePlugin(
       language,
       themes,
     );
-    if (refreshed) notifyPending(pending, refreshed);
+    if (refreshed) {
+      notifyPending(pending, refreshed);
+    }
   };
 
   const loadHighlighter = (
@@ -402,7 +429,9 @@ export function createCodePlugin(
     resume: (highlighter: Highlighter) => void,
   ): Highlighter | null => {
     const loading = highlighters.get(key);
-    if (loading) return loading.highlighter;
+    if (loading) {
+      return loading.highlighter;
+    }
     const entry: { highlighter: Highlighter | null } = { highlighter: null };
     highlighters.set(key, entry);
     createHighlighter({
@@ -414,12 +443,13 @@ export function createCodePlugin(
         entry.highlighter = highlighter;
         resume(highlighter);
       })
-      .catch((error) => {
-        console.error("[Studio Code] Failed to highlight code:", error);
+      .catch((_error) => {
         highlighters.delete(key);
         // Failed callbacks must not pin fences or fire after a later retry.
         for (const waiting of fences) {
-          if (waiting.key === key) clearTrailing(waiting);
+          if (waiting.key === key) {
+            clearTrailing(waiting);
+          }
         }
         evict();
       });
@@ -447,10 +477,7 @@ export function createCodePlugin(
 
       if (fence.result && fence.code === opts.code) {
         const pending = fence.pending;
-        if (
-          pending !== null &&
-          shedsClosingRun(opts.code, pending.code)
-        ) {
+        if (pending !== null && shedsClosingRun(opts.code, pending.code)) {
           // This may be one fence shedding its closing run or a shorter sibling
           // reusing the same entry. Settle the queued body before serving the
           // shorter exact hit so neither caller loses its final highlighted state.
@@ -464,16 +491,31 @@ export function createCodePlugin(
         return fence.result;
       }
 
-      const highlighter = loadHighlighter(key, language, opts.themes, (ready) => {
-        // Use a stable, oldest-first snapshot because updates can evict fences.
-        for (const waiting of [...fences].reverse()) {
-          const pending = waiting.pending;
-          if (waiting.key !== key || !pending) continue;
-          clearTrailing(waiting);
-          const resumed = update(waiting, ready, pending.code, language, themes);
-          if (resumed) notifyPending(pending, resumed);
-        }
-      });
+      const highlighter = loadHighlighter(
+        key,
+        language,
+        opts.themes,
+        (ready) => {
+          // Use a stable, oldest-first snapshot because updates can evict fences.
+          for (const waiting of [...fences].reverse()) {
+            const pending = waiting.pending;
+            if (waiting.key !== key || !pending) {
+              continue;
+            }
+            clearTrailing(waiting);
+            const resumed = update(
+              waiting,
+              ready,
+              pending.code,
+              language,
+              themes,
+            );
+            if (resumed) {
+              notifyPending(pending, resumed);
+            }
+          }
+        },
+      );
       if (!highlighter) {
         queuePending(fence, opts.code, callback);
         evict();
@@ -499,7 +541,9 @@ export function createCodePlugin(
             const pending = fence.pending;
             fence.trailing = null;
             fence.pending = null;
-            if (!pending) return;
+            if (!pending) {
+              return;
+            }
             const refreshed = update(
               fence,
               highlighter,
@@ -507,7 +551,9 @@ export function createCodePlugin(
               language,
               themes,
             );
-            if (refreshed) notifyPending(pending, refreshed);
+            if (refreshed) {
+              notifyPending(pending, refreshed);
+            }
           },
           Math.max(0, REFRESH_MS - elapsed),
         );

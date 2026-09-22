@@ -1,5 +1,4 @@
-
-import type { RecipeNodeData, LayoutDirection, NodeConfig } from "../types";
+import type { LayoutDirection, NodeConfig, RecipeNodeData } from "../types";
 import {
   labelForExpression,
   labelForLlm,

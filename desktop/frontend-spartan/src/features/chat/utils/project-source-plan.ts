@@ -1,4 +1,3 @@
-
 /** One conversation to save, and the title its source is listed under. */
 export interface ProjectSourcePlan {
   readonly id: string;
@@ -26,10 +25,18 @@ function modelLabel(thread: ProjectSourceThread): string | undefined {
  * words the compare header uses, since "base" beats "1" in a filename.
  */
 function paneLabel(thread: ProjectSourceThread, index: number): string {
-  if (thread.modelType === "base") return "base";
-  if (thread.modelType === "lora") return "fine-tuned";
-  if (thread.modelType === "model1") return "1";
-  if (thread.modelType === "model2") return "2";
+  if (thread.modelType === "base") {
+    return "base";
+  }
+  if (thread.modelType === "lora") {
+    return "fine-tuned";
+  }
+  if (thread.modelType === "model1") {
+    return "1";
+  }
+  if (thread.modelType === "model2") {
+    return "2";
+  }
   return String(index + 1);
 }
 
@@ -43,7 +50,9 @@ export function planChatItemSources(
   item: { id: string; title: string; type: string },
   threads: readonly ProjectSourceThread[],
 ): ProjectSourcePlan[] {
-  if (item.type === "single") return [{ id: item.id, title: item.title }];
+  if (item.type === "single") {
+    return [{ id: item.id, title: item.title }];
+  }
   if (threads.length <= 1) {
     return threads.map((thread) => ({ id: thread.id, title: item.title }));
   }
@@ -53,7 +62,9 @@ export function planChatItemSources(
     side: paneLabel(thread, index),
   }));
   const uses = new Map<string, number>();
-  for (const { label } of named) uses.set(label, (uses.get(label) ?? 0) + 1);
+  for (const { label } of named) {
+    uses.set(label, (uses.get(label) ?? 0) + 1);
+  }
   return named.map(({ thread, label, side }) => {
     // Only a colliding half carries a side, so two different models keep the
     // plain "<title> - <model>" name.

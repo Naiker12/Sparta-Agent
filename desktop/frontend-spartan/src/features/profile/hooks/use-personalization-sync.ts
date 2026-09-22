@@ -1,4 +1,3 @@
-
 import {
   type AppearanceCustomization,
   type Palette,
@@ -85,9 +84,13 @@ function drainQueuedSave(
   authGenerationRef: RefValue<number>,
   lastSavedRef: RefValue<string>,
 ): void {
-  if (saveInFlightRef.current) return;
+  if (saveInFlightRef.current) {
+    return;
+  }
   const next = queuedSaveRef.current;
-  if (!next) return;
+  if (!next) {
+    return;
+  }
   queuedSaveRef.current = null;
   saveInFlightRef.current = true;
   void savePersonalization(next.data)
@@ -153,7 +156,9 @@ export function remoteLanguagePreference(
   language: unknown,
 ): unknown {
   const isLegacy = typeof version !== "number" || version < 2;
-  if (isLegacy && language === "en") return DEFAULT_LOCALE_PREFERENCE;
+  if (isLegacy && language === "en") {
+    return DEFAULT_LOCALE_PREFERENCE;
+  }
   return language;
 }
 
@@ -235,7 +240,9 @@ export function usePersonalizationSync(enabled: boolean): void {
     void (async () => {
       try {
         const remote = await loadPersonalization();
-        if (cancelled) return;
+        if (cancelled) {
+          return;
+        }
         if (remote.saved) {
           // Legacy records predating a field come back server-defaulted. Keep
           // the local value and re-push it (lastSaved below records the remote
@@ -288,8 +295,12 @@ export function usePersonalizationSync(enabled: boolean): void {
             ? remoteLanguage
             : latestLanguageRef.current;
           useUserProfileStore.setState(nextProfile);
-          if (nextTheme !== latestThemeRef.current) setTheme(nextTheme);
-          if (nextPalette !== latestPaletteRef.current) setPalette(nextPalette);
+          if (nextTheme !== latestThemeRef.current) {
+            setTheme(nextTheme);
+          }
+          if (nextPalette !== latestPaletteRef.current) {
+            setPalette(nextPalette);
+          }
           if (
             !keepLocalCustomization &&
             JSON.stringify(nextCustomization) !==
@@ -311,14 +322,18 @@ export function usePersonalizationSync(enabled: boolean): void {
               // of the session, open forever. Same bound as startup.
               timeoutMs: LOCALE_INITIALIZATION_TIMEOUT_MS,
             });
-            if (cancelled) return;
+            if (cancelled) {
+              return;
+            }
             // "superseded" means a newer request took over, so this language is
             // no longer the one in effect and must not be recorded as the
             // synchronized baseline: the newer request may itself have failed,
             // leaving the local preference on neither value. Hydration still has
             // to finish, or every later save stays paused for the session; an
             // empty baseline makes the next push send whatever is in effect.
-            if (localeResult === "cancelled") return;
+            if (localeResult === "cancelled") {
+              return;
+            }
             if (localeResult === "superseded") {
               if (authGenerationRef.current === generation) {
                 lastSavedRef.current = "";
@@ -395,7 +410,9 @@ export function usePersonalizationSync(enabled: boolean): void {
   }, [enabled]);
 
   useEffect(() => {
-    if (!enabled || hydratedGeneration !== authGenerationRef.current) return;
+    if (!enabled || hydratedGeneration !== authGenerationRef.current) {
+      return;
+    }
     const current = payload(
       { displayName, nickname, avatarDataUrl, avatarShape, showGreetingSloth },
       theme,
@@ -404,7 +421,9 @@ export function usePersonalizationSync(enabled: boolean): void {
       language,
     );
     const currentSerialized = serialized(current);
-    if (currentSerialized === lastSavedRef.current) return;
+    if (currentSerialized === lastSavedRef.current) {
+      return;
+    }
     const id = window.setTimeout(() => {
       queuedSaveRef.current = {
         data: current,

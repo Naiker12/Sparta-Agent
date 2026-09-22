@@ -1,11 +1,10 @@
-
+import type { HfModelResult } from "@/features/hub/hooks/use-hub-model-search";
 import type {
   BaseModelSource,
   LocalSource,
   ModelInventoryCapabilities,
   ModelInventoryFormat,
 } from "@/features/hub/inventory";
-import type { HfModelResult } from "@/features/hub/hooks/use-hub-model-search";
 import type { Capability, CapabilityKey } from "./lib/model-capabilities";
 
 export type {

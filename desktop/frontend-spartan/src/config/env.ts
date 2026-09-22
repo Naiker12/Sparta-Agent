@@ -1,10 +1,9 @@
-
-import { apiUrl } from "@/lib/api-base";
 import {
   isDetectionDeferred,
   isProvisionalVerdict,
   resolveVerdict,
 } from "@/config/hardware-verdict";
+import { apiUrl } from "@/lib/api-base";
 import { create } from "zustand";
 
 export const env = {
@@ -53,11 +52,17 @@ interface PlatformState {
 
 // Client-side fallback when backend isn't ready yet.
 function detectLocalPlatform(): DeviceType {
-  if (typeof navigator === "undefined") return "linux";
+  if (typeof navigator === "undefined") {
+    return "linux";
+  }
   const platform = navigator.platform.toLowerCase();
   const ua = navigator.userAgent.toLowerCase();
-  if (platform.includes("mac") || ua.includes("mac")) return "mac";
-  if (platform.includes("win") || ua.includes("win")) return "windows";
+  if (platform.includes("mac") || ua.includes("mac")) {
+    return "mac";
+  }
+  if (platform.includes("win") || ua.includes("win")) {
+    return "windows";
+  }
   return "linux";
 }
 
@@ -84,7 +89,7 @@ export const usePlatformStore = create<PlatformState>()((_, get) => ({
   // else is coming this session, so treating it as unknown would spin the tabs forever.
   capabilitiesUnknown: () => {
     const state = get();
-    return !state.fetched && !state.detectionDeferred;
+    return !(state.fetched || state.detectionDeferred);
   },
 }));
 
@@ -111,7 +116,9 @@ export async function fetchDeviceType(options?: {
   force?: boolean;
 }): Promise<DeviceType> {
   const { fetched } = usePlatformStore.getState();
-  if (fetched && !options?.force) return usePlatformStore.getState().deviceType;
+  if (fetched && !options?.force) {
+    return usePlatformStore.getState().deviceType;
+  }
 
   try {
     // /api/health only reports the server's device_type to authed callers.
@@ -140,7 +147,9 @@ export async function fetchDeviceType(options?: {
         version?: string;
       };
       // Deferred is not "in progress": nothing will settle, so do not wait.
-      if (!isProvisionalVerdict(peek) || isDetectionDeferred(peek)) break;
+      if (!isProvisionalVerdict(peek) || isDetectionDeferred(peek)) {
+        break;
+      }
       // A rejected token gets the unauthenticated body, which never carries device_type.
       // `version` is authed-only, so its absence means this wait can only time out,
       // holding /login for the full window on a cold boot.
@@ -148,12 +157,16 @@ export async function fetchDeviceType(options?: {
         tokenRejected = true;
         break;
       }
-      await new Promise((resolve) => setTimeout(resolve, HARDWARE_DETECT_POLL_MS));
+      await new Promise((resolve) =>
+        setTimeout(resolve, HARDWARE_DETECT_POLL_MS),
+      );
       res = await fetch(apiUrl("/api/health"), { headers });
     }
     // Not spent when the backend rejected the token: no window was actually waited
     // out, and signing in later in this same page load must still get one.
-    if (spendWait && !tokenRejected) hardwareWaitSpent = true;
+    if (spendWait && !tokenRejected) {
+      hardwareWaitSpent = true;
+    }
     if (res.ok) {
       const data = (await res.json()) as {
         device_type?: string;
@@ -180,7 +193,8 @@ export async function fetchDeviceType(options?: {
       // changing model filtering, paths and install commands. Keep the server's answer.
       const keepPlatform = data.device_type === undefined && previous.fetched;
       const deviceType =
-        data.device_type ?? (keepPlatform ? previous.deviceType : detectLocalPlatform());
+        data.device_type ??
+        (keepPlatform ? previous.deviceType : detectLocalPlatform());
       // Rides with device_type and is kept on the same terms: a provisional or
       // unauthenticated reply carries neither, and a browser guess cannot tell Apple
       // Silicon from Intel. Absent means false, the pre-Apple-Silicon wording -- correct

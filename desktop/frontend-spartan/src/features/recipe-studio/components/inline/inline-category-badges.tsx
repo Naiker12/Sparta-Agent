@@ -1,4 +1,3 @@
-
 import { Badge } from "@/components/ui/badge";
 import { type ReactElement, useLayoutEffect, useRef, useState } from "react";
 
@@ -14,7 +13,9 @@ export function InlineCategoryBadges({
 
   useLayoutEffect(() => {
     const container = containerRef.current;
-    if (!container) return;
+    if (!container) {
+      return;
+    }
 
     const badges = Array.from(container.children) as HTMLElement[];
     if (badges.length === 0) {
@@ -30,7 +31,10 @@ export function InlineCategoryBadges({
 
     for (const badge of badges) {
       const badgeWidth = badge.scrollWidth + 4; // 4px for gap
-      if (usedWidth + badgeWidth > containerWidth - overflowBadgeWidth && count < badges.length - 1) {
+      if (
+        usedWidth + badgeWidth > containerWidth - overflowBadgeWidth &&
+        count < badges.length - 1
+      ) {
         break;
       }
       if (usedWidth + badgeWidth > containerWidth) {
@@ -56,7 +60,7 @@ export function InlineCategoryBadges({
       <div
         ref={containerRef}
         className="pointer-events-none invisible absolute inset-x-0 top-0 flex flex-nowrap gap-1"
-        aria-hidden
+        aria-hidden={true}
       >
         {values.map((v, i) => (
           <Badge
@@ -80,7 +84,10 @@ export function InlineCategoryBadges({
           </Badge>
         ))}
         {overflow > 0 && (
-          <Badge variant="outline" className="corner-squircle h-4 px-1.5 text-ui-10">
+          <Badge
+            variant="outline"
+            className="corner-squircle h-4 px-1.5 text-ui-10"
+          >
             +{overflow}
           </Badge>
         )}

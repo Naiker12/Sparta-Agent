@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Cancel01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -55,7 +54,7 @@ export function ChipInput({
     if (!trimmed) {
       return;
     }
-    if (!allowAny && !suggestionSet.has(trimmed)) {
+    if (!(allowAny || suggestionSet.has(trimmed))) {
       return;
     }
     onAdd(trimmed);

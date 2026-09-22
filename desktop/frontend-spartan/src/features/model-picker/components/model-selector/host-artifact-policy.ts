@@ -1,4 +1,3 @@
-
 /**
  * What the host can actually run, as opposed to what fits on it.
  *
@@ -29,11 +28,19 @@ export function classifyHost({
   // Mac outranks the backend string. Apple GPUs report as available and Studio may name the
   // backend mlx or cpu depending on what torch found, but no Mac can place a Modular Diffusers
   // workflow: it needs mem_get_info, which torch.mps does not expose. video.py refuses the load.
-  if (deviceType === "mac") return "gguf-only";
+  if (deviceType === "mac") {
+    return "gguf-only";
+  }
   const backend = (deviceBackend ?? "").trim().toLowerCase();
-  if (!(backend && budgetKnown)) return "unknown";
-  if (GGUF_ONLY_BACKENDS.has(backend)) return "gguf-only";
-  if (ACCELERATED_BACKENDS.has(backend)) return "accelerated";
+  if (!(backend && budgetKnown)) {
+    return "unknown";
+  }
+  if (GGUF_ONLY_BACKENDS.has(backend)) {
+    return "gguf-only";
+  }
+  if (ACCELERATED_BACKENDS.has(backend)) {
+    return "accelerated";
+  }
   // An unrecognised backend is a new accelerator, not a CPU. Show what we show today.
   return "unknown";
 }
@@ -60,7 +67,9 @@ export function curatedArtifactIsOfferable(
   repoId: string,
   host: HostClass,
 ): boolean {
-  if (host !== "gguf-only") return true;
+  if (host !== "gguf-only") {
+    return true;
+  }
   return !UNPLACEABLE_WITHOUT_ACCELERATOR.has(repoId.trim().toLowerCase());
 }
 
@@ -74,9 +83,15 @@ const H3_GGUF_ID = "unsloth/minimax-h3-gguf";
  * H3 has the measured gap this wording claims.
  */
 export function h3PerfSuffix(repoId: string, host: HostClass): string | null {
-  if (host !== "accelerated") return null;
+  if (host !== "accelerated") {
+    return null;
+  }
   const id = repoId.trim().toLowerCase();
-  if (id === H3_PIPELINE_ID) return "Fast FP8";
-  if (id === H3_GGUF_ID) return "Slow";
+  if (id === H3_PIPELINE_ID) {
+    return "Fast FP8";
+  }
+  if (id === H3_GGUF_ID) {
+    return "Slow";
+  }
   return null;
 }

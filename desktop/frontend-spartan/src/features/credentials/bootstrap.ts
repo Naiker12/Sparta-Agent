@@ -1,4 +1,3 @@
-
 import { getAuthSessionEpoch, hasAuthToken } from "@/features/auth";
 import { useExternalProvidersStore } from "@/features/chat/stores/external-providers-store";
 import { syncExternalProvidersFromBackend } from "@/features/chat/sync-external-providers";

@@ -9,41 +9,24 @@
  * - WorkflowChoice, ImagesNavDisclosure, ImagesWorkflowList (submenú desplegable de flujos de imágenes)
  */
 
-import {
-  useState,
-  type ReactNode,
-} from "react";
-import { useT } from "@/i18n";
-import { cn } from "@/lib/utils";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { Spinner } from "@/components/ui/spinner";
-import {
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar";
-import {
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useT } from "@/i18n";
+import { cn } from "@/lib/utils";
+import { FolderOpenIcon, type ZapIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { ChevronDown } from "lucide-react";
-import {
-  FolderOpenIcon,
-  type ZapIcon,
-} from "@hugeicons/core-free-icons";
+import { type ReactNode, useState } from "react";
 
-/* eslint-disable no-restricted-imports */
-import {
-  isWorkflowEnabled,
-  useImageWorkflowStore,
-} from "@/features/images/stores/image-workflow-store";
-import { WORKFLOW_TABS, type WorkflowId } from "@/features/images/workflows";
-/* eslint-enable no-restricted-imports */
-
-export function NavBadge({ label, className }: { label: string; className?: string }) {
+export function NavBadge({
+  label,
+  className,
+}: { label: string; className?: string }) {
   return (
     <span
       className={cn(
@@ -209,101 +192,5 @@ export function OpenChatFolderUnavailableItem() {
         </TooltipContent>
       </Tooltip>
     </DropdownMenuItem>
-  );
-}
-
-export function WorkflowChoice({
-  tab,
-  active,
-  enabled,
-  onSelect,
-}: {
-  tab: (typeof WORKFLOW_TABS)[number];
-  active: boolean;
-  enabled: boolean;
-  onSelect: () => void;
-}) {
-  const t = useT();
-  return (
-    <button
-      type="button"
-      disabled={!enabled}
-      title={enabled ? undefined : t("images.workflowUnavailable")}
-      onClick={onSelect}
-      className={cn(
-        "flex h-[29px] w-full items-center gap-2 rounded-full pl-3 pr-2.5 text-left font-medium text-nav-fg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        active ? "bg-sidebar-accent" : "hover:bg-sidebar-accent/60",
-        !enabled && "opacity-40 hover:bg-transparent",
-      )}
-    >
-      <HugeiconsIcon
-        icon={tab.icon}
-        strokeWidth={1.75}
-        className="size-4 shrink-0"
-      />
-      <span className="min-w-0 flex-1 truncate text-ui-13 tracking-nav">
-        {t(tab.labelKey)}
-      </span>
-    </button>
-  );
-}
-
-export function ImagesNavDisclosure() {
-  const t = useT();
-  const expanded = useImageWorkflowStore((s) => s.navExpanded);
-  const setExpanded = useImageWorkflowStore((s) => s.setNavExpanded);
-  return (
-    <button
-      type="button"
-      aria-label={t(expanded ? "images.hideWorkflows" : "images.showWorkflows")}
-      aria-expanded={expanded}
-      onClick={(e) => {
-        e.stopPropagation();
-        setExpanded(!expanded);
-      }}
-      className={cn(
-        "sidebar-row-action group-hover/images-item:opacity-100 group-hover/images-item:pointer-events-auto focus-visible:opacity-100 focus-visible:pointer-events-auto",
-        expanded && "is-disclosure-open",
-      )}
-    >
-      <span className="sidebar-row-action-glyph">
-        <ChevronDown
-          className={cn(
-            "size-3.5 transition-transform duration-200",
-            !expanded && "-rotate-90",
-          )}
-        />
-      </span>
-    </button>
-  );
-}
-
-export function ImagesWorkflowList({
-  active,
-  collapsed,
-  onPick,
-}: {
-  active: boolean;
-  collapsed: boolean;
-  onPick: (id: WorkflowId) => void;
-}) {
-  const workflow = useImageWorkflowStore((s) => s.workflow);
-  const supported = useImageWorkflowStore((s) => s.supported);
-  const expanded = useImageWorkflowStore((s) => s.navExpanded);
-  if (collapsed) return null;
-  if (!active && !expanded) return null;
-  const current = active ? workflow : null;
-  return (
-    <div className="mt-0.5 flex flex-col gap-px pl-5">
-      {WORKFLOW_TABS.map((tab) => (
-        <WorkflowChoice
-          key={tab.id}
-          tab={tab}
-          active={current === tab.id}
-          enabled={isWorkflowEnabled(tab.id, supported)}
-          onSelect={() => onPick(tab.id)}
-        />
-      ))}
-    </div>
   );
 }

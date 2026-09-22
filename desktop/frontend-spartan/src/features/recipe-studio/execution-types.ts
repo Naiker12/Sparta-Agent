@@ -1,4 +1,3 @@
-
 export type RecipeStudioView = "easy" | "editor" | "executions";
 
 export type RecipeExecutionKind = "preview" | "full";

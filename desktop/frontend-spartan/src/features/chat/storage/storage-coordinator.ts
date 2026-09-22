@@ -1,9 +1,5 @@
-import {
-  ChatThreadDeletedError,
-} from "../api/chat-api";
-import {
-  isChatThreadDeleted,
-} from "../utils/chat-thread-tombstones";
+import { ChatThreadDeletedError } from "../api/chat-api";
+import { isChatThreadDeleted } from "../utils/chat-thread-tombstones";
 import { ThreadRecordWriteCoordinator } from "../utils/thread-record-write-coordinator";
 
 /** IDs de hilos que pertenecen a sesiones incógnito/temporales no persistidas. */
@@ -30,7 +26,10 @@ export const threadRecordWrites = new ThreadRecordWriteCoordinator(
 );
 
 const initializingThreadRecords = new Map<string, Promise<void>>();
-export const failedThreadRecordByThreadId = new Map<string, () => Promise<void>>();
+export const failedThreadRecordByThreadId = new Map<
+  string,
+  () => Promise<void>
+>();
 export let threadRecordClearEpoch = 0;
 
 export function bumpThreadRecordClearEpoch(): void {

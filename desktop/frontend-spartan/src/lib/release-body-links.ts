@@ -1,4 +1,3 @@
-
 /**
  * A relative link in a release body means "somewhere in the Unsloth
  * repository", but inside Studio it would resolve against Studio's own origin.
@@ -583,7 +582,7 @@ function classify(lines: string[]): Classified {
     if (inCode) {
       inCode = blank || indented;
     } else {
-      inCode = !afterParagraph && !blank && indented;
+      inCode = !(afterParagraph || blank) && indented;
     }
     if (inCode) {
       masked.push(" ".repeat(line.length));
@@ -597,8 +596,7 @@ function classify(lines: string[]): Classified {
     text.push(index);
     masked.push(line);
     afterParagraph =
-      !blank &&
-      !BLOCK_LINE.test(structure) &&
+      !(blank || BLOCK_LINE.test(structure)) &&
       (afterParagraph || !LINK_DEFINITION.test(structure));
     quote = quoteState(structure, above.inQuote);
   });

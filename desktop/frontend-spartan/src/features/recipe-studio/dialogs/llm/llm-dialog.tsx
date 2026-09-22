@@ -1,14 +1,8 @@
-
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { type ReactElement, useRef } from "react";
 import type { LlmConfig } from "../../types";
 import { LlmGeneralTab } from "./general-tab";
 import { LlmScoresTab } from "./scores-tab";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
 
 type LlmDialogProps = {
   config: LlmConfig;
@@ -44,7 +38,9 @@ export function LlmDialog({
     <Tabs defaultValue="general" className="w-full">
       <TabsList className="w-full">
         <TabsTrigger value="general">General</TabsTrigger>
-        {config.llm_type === "judge" && <TabsTrigger value="scores">Scores</TabsTrigger>}
+        {config.llm_type === "judge" && (
+          <TabsTrigger value="scores">Scores</TabsTrigger>
+        )}
       </TabsList>
       <TabsContent value="general" className="pt-3">
         <LlmGeneralTab

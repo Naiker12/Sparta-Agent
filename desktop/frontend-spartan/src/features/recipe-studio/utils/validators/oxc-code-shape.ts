@@ -1,11 +1,6 @@
-
 import type { OxcCodeShape } from "../../types";
 
-export const OXC_CODE_SHAPES: OxcCodeShape[] = [
-  "auto",
-  "module",
-  "snippet",
-];
+export const OXC_CODE_SHAPES: OxcCodeShape[] = ["auto", "module", "snippet"];
 
 export function isOxcCodeShape(value: string): value is OxcCodeShape {
   return OXC_CODE_SHAPES.includes(value as OxcCodeShape);
@@ -21,4 +16,3 @@ export function normalizeOxcCodeShape(value: unknown): OxcCodeShape {
   }
   return "auto";
 }
-

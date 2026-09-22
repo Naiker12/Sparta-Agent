@@ -1,4 +1,3 @@
-
 import type { NativeIntent } from "@/features/native-intents";
 
 /** A source picked before the project exists, held until create commits. A

@@ -1,4 +1,3 @@
-
 // Long pastes become a .txt attachment instead of flooding the composer.
 // TextAttachmentAdapter still sends the full text to the model.
 
@@ -50,8 +49,12 @@ export function shouldAttachPastedText(
   text: string,
   minChars: number = PASTED_TEXT_DEFAULT_MIN_CHARS,
 ): boolean {
-  if (text.length === 0) return false;
-  if (minChars <= PASTED_TEXT_THRESHOLD_OFF) return false;
+  if (text.length === 0) {
+    return false;
+  }
+  if (minChars <= PASTED_TEXT_THRESHOLD_OFF) {
+    return false;
+  }
   return text.length >= minChars;
 }
 
@@ -71,8 +74,12 @@ function firstTextLine(text: string): string {
       start + PASTED_TEXT_NAME_SCAN_CHARS,
     );
     const line = text.slice(start, stop);
-    if (line.trim().length > 0) return line;
-    if (end === -1) return "";
+    if (line.trim().length > 0) {
+      return line;
+    }
+    if (end === -1) {
+      return "";
+    }
     start = end + 1;
   }
   return "";
@@ -127,7 +134,9 @@ export function attachmentContentText(
   pasted: boolean,
   bytes?: number,
 ): string {
-  if (!pasted) return `<attachment name=${name}>\n${text}\n</attachment>`;
+  if (!pasted) {
+    return `<attachment name=${name}>\n${text}\n</attachment>`;
+  }
   const size = bytes === undefined ? "" : ` bytes=${bytes}`;
   return `<${PASTED_TEXT_TAG} name=${name}${size}>\n${text}\n</${PASTED_TEXT_TAG}>`;
 }
@@ -144,7 +153,9 @@ const PASTED_TEXT_HEADER_SCAN_CHARS = 1024;
 export function pastedTextContentBytes(
   content: string | undefined,
 ): number | undefined {
-  if (content === undefined) return undefined;
+  if (content === undefined) {
+    return undefined;
+  }
   const bytes = PASTED_TEXT_BYTES_RE.exec(
     content.slice(0, PASTED_TEXT_HEADER_SCAN_CHARS),
   )?.[1];
@@ -160,7 +171,9 @@ function attachmentBodyRange(content: string): { start: number; end: number } {
       ? PASTED_TEXT_TAG
       : undefined;
   const headerEnd = tag === undefined ? -1 : content.indexOf("\n");
-  if (headerEnd === -1) return { start: 0, end: content.length };
+  if (headerEnd === -1) {
+    return { start: 0, end: content.length };
+  }
 
   const closing = `\n</${tag}>`;
   return {
@@ -213,9 +226,13 @@ export function attachmentsSample(
 ): string {
   for (const attachment of attachments ?? []) {
     for (const part of attachment.content ?? []) {
-      if (part.type !== "text" || part.text === undefined) continue;
+      if (part.type !== "text" || part.text === undefined) {
+        continue;
+      }
       const sample = attachmentContentSample(part.text);
-      if (sample.length > 0) return sample;
+      if (sample.length > 0) {
+        return sample;
+      }
     }
   }
   return "";
@@ -226,7 +243,9 @@ export function attachmentsSample(
  * user pasted it: copy, exports, fine-tuning rows. Other content is untouched.
  */
 export function unwrapPastedTextContent(content: string): string {
-  if (!isPastedTextContent(content)) return content;
+  if (!isPastedTextContent(content)) {
+    return content;
+  }
   const { start, end } = attachmentBodyRange(content);
   return content.slice(start, end);
 }
@@ -247,9 +266,13 @@ export function attachmentsPastedText(
   const bodies: string[] = [];
   for (const attachment of attachments ?? []) {
     for (const part of attachment.content ?? []) {
-      if (part.type !== "text" || part.text === undefined) continue;
+      if (part.type !== "text" || part.text === undefined) {
+        continue;
+      }
       const body = pastedTextContentBody(part.text);
-      if (body.length > 0) bodies.push(body);
+      if (body.length > 0) {
+        bodies.push(body);
+      }
     }
   }
   return bodies.join("\n\n");
@@ -270,15 +293,25 @@ export function pasteLongTextAsFile(
   onError?: () => void,
   minChars?: number,
 ): boolean {
-  if (event.defaultPrevented) return false;
+  if (event.defaultPrevented) {
+    return false;
+  }
   const { clipboardData } = event;
-  if (!clipboardData) return false;
+  if (!clipboardData) {
+    return false;
+  }
   // Images and files keep the existing paste path.
-  if (clipboardHasFileEntries(clipboardData)) return false;
-  if (clipboardAdvertisesFiles(clipboardData)) return false;
+  if (clipboardHasFileEntries(clipboardData)) {
+    return false;
+  }
+  if (clipboardAdvertisesFiles(clipboardData)) {
+    return false;
+  }
 
   const text = clipboardText(clipboardData);
-  if (!shouldAttachPastedText(text, minChars)) return false;
+  if (!shouldAttachPastedText(text, minChars)) {
+    return false;
+  }
 
   // Build the file first: if that throws, the browser can still paste.
   let file: File;

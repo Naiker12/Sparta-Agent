@@ -1,4 +1,3 @@
-
 /**
  * Which side of the connection the Code pill runs code on.
  *
@@ -39,10 +38,18 @@ export interface CodeToolNames {
   hosted: string[];
 }
 
-export function selectCodeToolNames(input: CodeToolPlacementInput): CodeToolNames {
-  if (!input.codeToolsEnabled) return { local: [], hosted: [] };
-  if (input.hostedCodeExecutionForThisTurn) return { local: [], hosted: ["code_execution"] };
-  if (input.providerHostsCodeExecution) return { local: [], hosted: [] };
+export function selectCodeToolNames(
+  input: CodeToolPlacementInput,
+): CodeToolNames {
+  if (!input.codeToolsEnabled) {
+    return { local: [], hosted: [] };
+  }
+  if (input.hostedCodeExecutionForThisTurn) {
+    return { local: [], hosted: ["code_execution"] };
+  }
+  if (input.providerHostsCodeExecution) {
+    return { local: [], hosted: [] };
+  }
   // edit_file is local-only: when the provider hosts execution the files live
   // in its sandbox, so a local editor would patch a copy nothing else sees.
   return { local: ["python", "terminal", "edit_file"], hosted: [] };
@@ -69,6 +76,8 @@ export function codeToolCanRun(input: {
     hostedCodeExecutionForThisTurn: input.hostedCodeExecutionForThisTurn,
     providerHostsCodeExecution: input.providerHostsCodeExecution,
   });
-  if (names.hosted.length > 0) return true;
+  if (names.hosted.length > 0) {
+    return true;
+  }
   return names.local.length > 0 && input.supportsStudioTools;
 }

@@ -1,4 +1,3 @@
-
 import {
   reconcileLegacyProviderKeys,
   settleTasksIfCurrent,
@@ -15,18 +14,17 @@ import {
   CUSTOM_BACKEND_PROVIDER_TYPE,
   CUSTOM_PROVIDER_PRESETS,
   type ExternalProviderConfig,
+  LEGACY_CUSTOM_PROVIDER_TYPE,
+  PROVIDER_CAPABILITY_WILDCARD,
   getExternalProviderApiKey,
   isCustomProviderType,
   isPromptCacheTtl,
-  LEGACY_CUSTOM_PROVIDER_TYPE,
   pruneExternalProviderApiKeys,
-  removeExternalProviderApiKey,
-
-  PROVIDER_CAPABILITY_WILDCARD,
   pruneProviderModelCapabilities,
+  removeExternalProviderApiKey,
   setProviderModelCapabilities,
-  supportsProviderPromptCaching,
   supportsProviderPromptCacheTtl,
+  supportsProviderPromptCaching,
   supportsProviderReasoningToggle,
 } from "./external-providers";
 
@@ -129,8 +127,6 @@ export function mergeLocalProviderOptions(
   };
 }
 
-
-
 /** Merge enabled backend provider configs with local store state. */
 export async function syncExternalProvidersFromBackend(
   existingProviders: ExternalProviderConfig[],
@@ -158,7 +154,9 @@ export async function syncExternalProvidersFromBackend(
   // persisted in localStorage and outlive the backend that wrote them, so a
   // provider the registry has stopped listing (hidden, or unknown to a rolled
   // back backend) would otherwise keep its last `studio_tools: true` forever.
-  pruneProviderModelCapabilities(registryRows.map((entry) => entry.provider_type));
+  pruneProviderModelCapabilities(
+    registryRows.map((entry) => entry.provider_type),
+  );
   const configRows = await reconcileLegacyProviderKeys(loadedConfigRows, {
     getLegacyKey: getExternalProviderApiKey,
     saveLegacyKey: migrateProviderApiKey,
@@ -167,7 +165,9 @@ export async function syncExternalProvidersFromBackend(
     isCurrent,
   });
 
-  if (isCurrent && !isCurrent()) return existingProviders;
+  if (isCurrent && !isCurrent()) {
+    return existingProviders;
+  }
   pruneExternalProviderApiKeys(loadedConfigRows.map((config) => config.id));
 
   const existingById = new Map<string, ExternalProviderConfig>();
@@ -195,7 +195,9 @@ export async function syncExternalProvidersFromBackend(
         : Date.now();
       const registryEntry =
         registryRows.find((entry) => entry.provider_type === uiProviderType) ??
-        registryRows.find((entry) => entry.provider_type === config.provider_type);
+        registryRows.find(
+          (entry) => entry.provider_type === config.provider_type,
+        );
       const defaultModels = pruneProviderModelIds(
         uiProviderType,
         registryEntry?.default_models ?? [],
@@ -266,7 +268,9 @@ export async function syncExternalProvidersFromBackend(
       return mergeLocalProviderOptions(existing, synced);
     });
 
-  if (isCurrent && !isCurrent()) return existingProviders;
+  if (isCurrent && !isCurrent()) {
+    return existingProviders;
+  }
 
   await settleTasksIfCurrent(backfillTasks, isCurrent);
   return syncedProviders;

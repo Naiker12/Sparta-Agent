@@ -1,4 +1,3 @@
-
 import { useTransformersUpgradeDialogStore } from "../stores/transformers-upgrade-dialog-store";
 import type { TransformersUpgradeInfo } from "../types";
 
@@ -21,7 +20,9 @@ export async function confirmTransformersUpgradeIfNeeded({
   trustRemoteCodeFallback,
   forceCancelActive,
 }: ConfirmArgs): Promise<boolean> {
-  if (!upgrade) return true;
+  if (!upgrade) {
+    return true;
+  }
   return useTransformersUpgradeDialogStore
     .getState()
     .requestConsent(modelName, upgrade, {

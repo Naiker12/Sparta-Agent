@@ -1,8 +1,8 @@
 import { FolderAddIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
-import { toast } from "@/lib/toast";
 import { useT } from "@/i18n";
+import { toast } from "@/lib/toast";
 
 import {
   connectChatProjectWorkspace,
@@ -21,7 +21,9 @@ export function ConnectWorkspaceFolderChip() {
   const { projects } = useChatProjects();
   const project = projects.find((item) => item.id === projectId) ?? null;
 
-  if (!project || project.connectedFolderPath) return null;
+  if (!project || project.connectedFolderPath) {
+    return null;
+  }
   const activeProjectId = project.id;
 
   async function connectFolder() {
@@ -48,7 +50,11 @@ export function ConnectWorkspaceFolderChip() {
       aria-label={t("projectsPage.connectFolder")}
     >
       <span className="composer-pill-glyph">
-        <HugeiconsIcon icon={FolderAddIcon} className="size-[15px]" strokeWidth={1.8} />
+        <HugeiconsIcon
+          icon={FolderAddIcon}
+          className="size-[15px]"
+          strokeWidth={1.8}
+        />
       </span>
       <span>{t("projectsPage.connectFolder")}</span>
     </button>

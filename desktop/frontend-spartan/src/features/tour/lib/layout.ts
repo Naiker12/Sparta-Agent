@@ -1,4 +1,3 @@
-
 import type { Placement, Rect } from "../types";
 
 export function clamp(n: number, min: number, max: number): number {
@@ -25,10 +24,18 @@ export function pickPlacement(
   const canBottom = target.y + target.h + gap + card.h <= vh - 12;
   const canTop = target.y - gap - card.h >= 12;
 
-  if (canRight) return "right";
-  if (canLeft) return "left";
-  if (canBottom) return "bottom";
-  if (canTop) return "top";
+  if (canRight) {
+    return "right";
+  }
+  if (canLeft) {
+    return "left";
+  }
+  if (canBottom) {
+    return "bottom";
+  }
+  if (canTop) {
+    return "top";
+  }
   return "bottom";
 }
 
@@ -64,4 +71,3 @@ export function computeCardPos(
   top = clamp(top, 12, vh - card.h - 12);
   return { left, top };
 }
-

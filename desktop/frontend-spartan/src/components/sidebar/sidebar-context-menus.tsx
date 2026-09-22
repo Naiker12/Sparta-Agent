@@ -7,8 +7,12 @@
  * - ChatContextMenu: Menú contextual para acciones en lote sobre chats seleccionados (fijar, archivar, marcar no leído, borrar).
  */
 
-import type { ReactElement } from "react";
-import { useT } from "@/i18n";
+import {
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuLabel,
+  ContextMenuSeparator,
+} from "@/components/ui/context-menu";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,13 +23,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuLabel,
-  ContextMenuSeparator,
-} from "@/components/ui/context-menu";
-import { HugeiconsIcon } from "@hugeicons/react";
+import type { SidebarChatSort, SidebarOrganizeBy } from "@/features/chat";
+import { useT } from "@/i18n";
 import {
   Archive03Icon,
   BubbleChatIcon,
@@ -34,10 +33,8 @@ import {
   PinIcon,
   PinOffIcon,
 } from "@hugeicons/core-free-icons";
-import type {
-  SidebarChatSort,
-  SidebarOrganizeBy,
-} from "@/features/chat";
+import { HugeiconsIcon } from "@hugeicons/react";
+import type { ReactElement } from "react";
 import {
   CHAT_SORT_OPTIONS,
   ORGANIZE_OPTIONS,
@@ -69,7 +66,7 @@ export function SidebarHeaderMenu({
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
+      <DropdownMenuTrigger asChild={true}>
         <button
           type="button"
           aria-label={ariaLabel}
@@ -114,9 +111,7 @@ export function SidebarHeaderMenu({
         <DropdownMenuLabel>{sortLabel}</DropdownMenuLabel>
         <DropdownMenuRadioGroup
           value={sortValue}
-          onValueChange={(value) =>
-            onSortChange(value as SidebarChatSort)
-          }
+          onValueChange={(value) => onSortChange(value as SidebarChatSort)}
         >
           {CHAT_SORT_OPTIONS.map((option) => (
             <DropdownMenuRadioItem
@@ -163,7 +158,9 @@ export function ProjectContextMenu({
   onDeleteSelectedProjects: () => void;
 }): ReactElement | null {
   const t = useT();
-  if (projectSelectionCount === 0) return null;
+  if (projectSelectionCount === 0) {
+    return null;
+  }
 
   return (
     <ContextMenuContent className="unsloth-plus-menu menu-flat-destructive w-52">
@@ -220,7 +217,9 @@ export function ChatContextMenu({
   onDeleteSelected: () => void;
 }): ReactElement | null {
   const t = useT();
-  if (selectionCount === 0) return null;
+  if (selectionCount === 0) {
+    return null;
+  }
 
   return (
     <ContextMenuContent className="unsloth-plus-menu menu-flat-destructive w-52">
@@ -258,10 +257,7 @@ export function ChatContextMenu({
         <span>{t("shell.selection.markUnread")}</span>
       </ContextMenuItem>
       <ContextMenuSeparator />
-      <ContextMenuItem
-        variant="destructive"
-        onSelect={onDeleteSelected}
-      >
+      <ContextMenuItem variant="destructive" onSelect={onDeleteSelected}>
         <HugeiconsIcon
           icon={Delete02Icon}
           strokeWidth={1.75}

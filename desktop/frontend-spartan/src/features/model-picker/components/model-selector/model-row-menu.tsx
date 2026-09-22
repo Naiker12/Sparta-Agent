@@ -1,4 +1,3 @@
-
 // Condensed row actions for model rows: everything except the run-settings
 // gear collapses into one dots menu (pin, update, delete) so rows don't grow
 // an icon strip. Mirrors the sidebar chat rows' MoreVertical menu pattern.
@@ -122,13 +121,17 @@ export function ModelRowMenu({
   const updateRepoId = update?.repoId;
   const updateVariant = update?.variant ?? null;
   useEffect(() => {
-    if (!updateRepoId) return;
+    if (!updateRepoId) {
+      return;
+    }
     return subscribeJobListeners("model", updateRepoId, {
       onComplete: (completedVariant) => {
         const matches = updateVariant
           ? ggufVariantsMatch(completedVariant, updateVariant)
           : !completedVariant;
-        if (matches) onUpdatedRef.current?.();
+        if (matches) {
+          onUpdatedRef.current?.();
+        }
       },
     });
   }, [updateRepoId, updateVariant]);
@@ -137,11 +140,15 @@ export function ModelRowMenu({
   const onDeleted = del?.onDeleted;
   const deleteSuccessMessage = del?.successMessage;
   const handleDeleteConfirm = useCallback(async () => {
-    if (!onDeleteConfirm) return;
+    if (!onDeleteConfirm) {
+      return;
+    }
     setDeleting(true);
     try {
       await onDeleteConfirm();
-      if (deleteSuccessMessage) toast.success(deleteSuccessMessage);
+      if (deleteSuccessMessage) {
+        toast.success(deleteSuccessMessage);
+      }
       onDeleted?.();
       setDeleteOpen(false);
     } catch (err) {
@@ -170,7 +177,9 @@ export function ModelRowMenu({
   const cachePathRepoId = cachePath?.repoId;
   const cachePathVariant = cachePath?.variant;
   const handleReveal = useCallback(() => {
-    if (!cachePathRepoId) return;
+    if (!cachePathRepoId) {
+      return;
+    }
     revealCachedModel(cachePathRepoId, cachePathVariant).catch((err) => {
       toast.error(
         err instanceof Error ? err.message : "Failed to open file manager",
@@ -178,7 +187,9 @@ export function ModelRowMenu({
     });
   }, [cachePathRepoId, cachePathVariant]);
 
-  if (!pin && !update && !del && !cachePath && !settings) return null;
+  if (!(pin || update || del || cachePath || settings)) {
+    return null;
+  }
 
   return (
     <>
@@ -291,7 +302,9 @@ export function ModelRowMenu({
         <DeleteConfirmDialog
           open={deleteOpen}
           onOpenChange={(nextOpen) => {
-            if (!nextOpen && deleting) return;
+            if (!nextOpen && deleting) {
+              return;
+            }
             setDeleteOpen(nextOpen);
           }}
           title={del.title}

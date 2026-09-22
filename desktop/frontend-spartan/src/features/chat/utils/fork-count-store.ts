@@ -1,4 +1,3 @@
-
 /**
  * One fork-count subscription per rendered thread, shared by every message badge.
  *
@@ -49,7 +48,9 @@ let listening = false;
 
 async function refresh(threadId: string): Promise<void> {
   const entry = entries.get(threadId);
-  if (!entry) return;
+  if (!entry) {
+    return;
+  }
   // A thread the server has never seen cannot have forks, so this request can only
   // ever 404 -- and getThreadForkCounts already maps that to an empty map, which is
   // what the entry starts as. It is a round trip whose answer is known.
@@ -59,7 +60,9 @@ async function refresh(threadId: string): Promise<void> {
   // So the first reply in a new chat pays one guaranteed-useless request per debounce
   // window for as long as it streams. The heavy-thread smoke is what noticed --
   // it counts requests issued inside a measured interaction, and these landed there.
-  if (isAssistantLocalThreadId(threadId)) return;
+  if (isAssistantLocalThreadId(threadId)) {
+    return;
+  }
   const seq = ++entry.seq;
   let counts: Counts;
   try {
@@ -67,9 +70,13 @@ async function refresh(threadId: string): Promise<void> {
   } catch {
     return; // the badge is non-critical
   }
-  if (entries.get(threadId) !== entry || entry.seq !== seq) return;
+  if (entries.get(threadId) !== entry || entry.seq !== seq) {
+    return;
+  }
   entry.counts = counts;
-  for (const notify of [...entry.subscribers]) notify();
+  for (const notify of [...entry.subscribers]) {
+    notify();
+  }
 }
 
 function cancelTimers(): void {
@@ -86,7 +93,9 @@ function cancelTimers(): void {
 function runRefresh(): void {
   // Both timers race for this; whichever loses must not fire afterwards.
   cancelTimers();
-  for (const threadId of entries.keys()) void refresh(threadId);
+  for (const threadId of entries.keys()) {
+    void refresh(threadId);
+  }
 }
 
 function onHistoryUpdated(): void {
@@ -95,7 +104,9 @@ function onHistoryUpdated(): void {
   // would expire mid-stream and the next chunk would start another window, costing one
   // whole-thread fetch every FORK_COUNT_REFRESH_DEBOUNCE_MS for as long as the reply runs.
   // Fork counts cannot change during generation, so every one of those is wasted.
-  if (pendingRefresh) clearTimeout(pendingRefresh);
+  if (pendingRefresh) {
+    clearTimeout(pendingRefresh);
+  }
   pendingRefresh = setTimeout(runRefresh, FORK_COUNT_REFRESH_DEBOUNCE_MS);
   // The bound. Deliberately not restarted while it is already running, or a per-chunk event
   // stream would push it out exactly the way it pushes out the trailing edge, and the ceiling
@@ -125,7 +136,9 @@ export function subscribeForkCounts(
   }
   return () => {
     owner.subscribers.delete(onChange);
-    if (owner.subscribers.size > 0 || entries.get(threadId) !== owner) return;
+    if (owner.subscribers.size > 0 || entries.get(threadId) !== owner) {
+      return;
+    }
     entries.delete(threadId);
     if (entries.size === 0 && listening) {
       window.removeEventListener(CHAT_HISTORY_UPDATED_EVENT, onHistoryUpdated);

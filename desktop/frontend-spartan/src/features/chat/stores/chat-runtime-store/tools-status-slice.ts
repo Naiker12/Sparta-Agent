@@ -67,20 +67,24 @@ export const createToolsStatusSlice = (
       const next = { ...state.toolStatusByThreadId };
       const entries = state.toolStatusByThreadId[threadId] ?? [];
       const mine = entries.find((e: ToolStatusEntry) => e.owner === owner);
-      if (!status) {
-        if (mine === undefined) return state;
+      if (status) {
+        if (mine?.status === status) {
+          return state;
+        }
+        const entry = { status, startedAt: Date.now(), owner };
+        next[threadId] = mine
+          ? entries.map((e: ToolStatusEntry) => (e === mine ? entry : e))
+          : [...entries, entry];
+      } else {
+        if (mine === undefined) {
+          return state;
+        }
         const rest = entries.filter((e: ToolStatusEntry) => e !== mine);
         if (rest.length > 0) {
           next[threadId] = rest;
         } else {
           delete next[threadId];
         }
-      } else {
-        if (mine?.status === status) return state;
-        const entry = { status, startedAt: Date.now(), owner };
-        next[threadId] = mine
-          ? entries.map((e: ToolStatusEntry) => (e === mine ? entry : e))
-          : [...entries, entry];
       }
       return { toolStatusByThreadId: next };
     }),
@@ -114,7 +118,7 @@ export const createToolsStatusSlice = (
   clearToolLiveOutput: (toolCallId) =>
     set((state: ToolsStatusStateParam) => {
       if (toolCallId === undefined) {
-        return Object.keys(state.toolLiveOutput).length
+        return Object.keys(state.toolLiveOutput).length > 0
           ? { toolLiveOutput: {} }
           : {};
       }
@@ -152,7 +156,9 @@ export const createToolsStatusSlice = (
   addAlwaysAllowTool: (sessionId, toolName) =>
     set((state: ToolsStatusStateParam) => {
       const current = state.alwaysAllowToolsBySession.get(sessionId);
-      if (current?.has(toolName)) return state;
+      if (current?.has(toolName)) {
+        return state;
+      }
       const next = new Map(state.alwaysAllowToolsBySession);
       next.set(sessionId, new Set(current ?? []).add(toolName));
       return { alwaysAllowToolsBySession: next };

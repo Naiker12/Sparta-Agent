@@ -1,4 +1,3 @@
-
 export const LOCAL_MODEL_SOURCE = {
   MODELS_DIR: "models_dir",
   HF_CACHE: "hf_cache",

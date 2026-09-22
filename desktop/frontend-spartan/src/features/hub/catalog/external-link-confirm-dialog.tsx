@@ -1,4 +1,3 @@
-
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,7 +31,9 @@ export function ExternalLinkConfirmDialog() {
     <AlertDialog
       open={open}
       onOpenChange={(next) => {
-        if (!next) dismiss();
+        if (!next) {
+          dismiss();
+        }
       }}
     >
       <AlertDialogContent>
@@ -64,7 +65,9 @@ export function ExternalLinkConfirmDialog() {
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction
             onClick={() => {
-              if (pendingUrl) openLink(pendingUrl);
+              if (pendingUrl) {
+                openLink(pendingUrl);
+              }
               dismiss();
             }}
           >

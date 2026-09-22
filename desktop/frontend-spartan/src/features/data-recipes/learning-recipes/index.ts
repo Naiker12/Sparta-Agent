@@ -1,4 +1,3 @@
-
 import type { RecipePayload } from "@/features/recipe-studio";
 
 const structuredOutputsJinjaUrl = new URL(

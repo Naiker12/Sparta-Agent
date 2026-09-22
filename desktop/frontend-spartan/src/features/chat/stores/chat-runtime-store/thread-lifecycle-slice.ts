@@ -84,8 +84,12 @@ export const createThreadLifecycleSlice = (
         const remaining = options?.owner
           ? owners.filter((o: ThreadRunOwner) => o.owner !== options.owner)
           : [];
-        if (options?.owner && remaining.length === owners.length) return state;
-        if (!options?.owner && owners.length > 0) return state;
+        if (options?.owner && remaining.length === owners.length) {
+          return state;
+        }
+        if (!options?.owner && owners.length > 0) {
+          return state;
+        }
         if (remaining.length > 0) {
           nextOwner[threadId] = remaining;
           if (remaining.some((o: ThreadRunOwner) => o.local)) {
@@ -109,12 +113,18 @@ export const createThreadLifecycleSlice = (
   adoptDefaultThreadRun: (threadId) =>
     set((state: ThreadLifecycleStateParam) => {
       const key = "__default";
-      if (!threadId || threadId === key) return state;
-      if ((state.runOwnerByThreadId[key]?.length ?? 0) > 1) return state;
+      if (!threadId || threadId === key) {
+        return state;
+      }
+      if ((state.runOwnerByThreadId[key]?.length ?? 0) > 1) {
+        return state;
+      }
       const moved: Record<string, any> = {};
       const move = (map: Record<string, any>, name: string) => {
         const entry = map[key];
-        if (entry === undefined || map[threadId] !== undefined) return;
+        if (entry === undefined || map[threadId] !== undefined) {
+          return;
+        }
         const next = { ...map };
         delete next[key];
         next[threadId] = entry;
@@ -139,7 +149,9 @@ export const createThreadLifecycleSlice = (
     for (const [key, entries] of Object.entries(
       get().runOwnerByThreadId as Record<string, ThreadRunOwner[]>,
     )) {
-      if (entries.some((e) => e.owner === owner)) return key;
+      if (entries.some((e) => e.owner === owner)) {
+        return key;
+      }
     }
     return fallbackKey;
   },
@@ -153,8 +165,12 @@ export const createThreadLifecycleSlice = (
 
   clearThreadCancel: (threadId, cancel) =>
     set((state: ThreadLifecycleStateParam) => {
-      if (!(threadId in state.cancelByThreadId)) return state;
-      if (cancel && state.cancelByThreadId[threadId] !== cancel) return state;
+      if (!(threadId in state.cancelByThreadId)) {
+        return state;
+      }
+      if (cancel && state.cancelByThreadId[threadId] !== cancel) {
+        return state;
+      }
       const next = { ...state.cancelByThreadId };
       delete next[threadId];
       return { cancelByThreadId: next };
@@ -173,10 +189,16 @@ export const createThreadLifecycleSlice = (
   clearThreadServerCancel: (threadId, cancel) =>
     set((state: ThreadLifecycleStateParam) => {
       const current = state.serverCancelByThreadId[threadId];
-      if (current === undefined) return state;
+      if (current === undefined) {
+        return state;
+      }
       const remaining =
-        cancel === undefined ? [] : current.filter((c: () => void) => c !== cancel);
-      if (remaining.length === current.length) return state;
+        cancel === undefined
+          ? []
+          : current.filter((c: () => void) => c !== cancel);
+      if (remaining.length === current.length) {
+        return state;
+      }
       const next = { ...state.serverCancelByThreadId };
       if (remaining.length > 0) {
         next[threadId] = remaining;
@@ -197,7 +219,9 @@ export const createThreadLifecycleSlice = (
   clearActiveDiffusionCanvasForThread: (threadId) =>
     set((state: ThreadLifecycleStateParam) => {
       const key = threadId || "__default";
-      if (state.activeDiffusionCanvasByThreadId[key] === undefined) return state;
+      if (state.activeDiffusionCanvasByThreadId[key] === undefined) {
+        return state;
+      }
       const next = { ...state.activeDiffusionCanvasByThreadId };
       delete next[key];
       return { activeDiffusionCanvasByThreadId: next };

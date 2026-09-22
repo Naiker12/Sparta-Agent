@@ -1,4 +1,3 @@
-
 import {
   normalizeProviderMaxOutputTokens,
   providerModelSupportsStudioTools,
@@ -36,7 +35,10 @@ export type ExternalReasoningCapabilities = {
   // Mirrors the store's ReasoningStyle. External providers only ever use the
   // first two; "enable_thinking_effort" exists so a local model's caps can be
   // assigned here without narrowing.
-  reasoningStyle: "enable_thinking" | "reasoning_effort" | "enable_thinking_effort";
+  reasoningStyle:
+    | "enable_thinking"
+    | "reasoning_effort"
+    | "enable_thinking_effort";
   reasoningAlwaysOn: boolean;
   supportsReasoningOff: boolean;
   reasoningEffortLevels: readonly (
@@ -162,23 +164,31 @@ function _documentedMaxOutputTokens(
   providerType: string | null | undefined,
   modelId: string | null | undefined,
 ): number | null {
-  if (!providerType || !modelId) return null;
+  if (!(providerType && modelId)) {
+    return null;
+  }
   const normalized = modelId.trim().toLowerCase();
-  if (!normalized) return null;
+  if (!normalized) {
+    return null;
+  }
   const stripped =
     providerType === "openrouter" && normalized.includes("/")
       ? normalized.split("/").slice(-1)[0]
       : normalized;
   const effectiveProvider =
     providerType === "openrouter"
-      ? _inferProviderFromOpenrouterId(normalized) ?? providerType
+      ? (_inferProviderFromOpenrouterId(normalized) ?? providerType)
       : providerType === "openai_codex"
         ? "openai_codex"
         : providerType;
-  if (effectiveProvider === "openai_codex") return 128000;
+  if (effectiveProvider === "openai_codex") {
+    return 128000;
+  }
 
   for (const entry of EXTERNAL_MAX_OUTPUT_TOKENS_BY_MODEL) {
-    if (entry.providerType !== effectiveProvider) continue;
+    if (entry.providerType !== effectiveProvider) {
+      continue;
+    }
     if (entry.prefixes.some((prefix) => stripped.startsWith(prefix))) {
       return entry.cap;
     }
@@ -202,20 +212,28 @@ export function resolveExternalMaxTokensClamp(input: {
   maxTokens: number;
   maxTokensMax: number;
 }): number | null {
-  if (!input.settingsHydrated || !input.hasActiveExternalProvider) return null;
+  if (!(input.settingsHydrated && input.hasActiveExternalProvider)) {
+    return null;
+  }
   if (!input.isExternalModel || input.maxTokens <= input.maxTokensMax) {
     return null;
   }
   return input.maxTokensMax;
 }
 
-function _inferProviderFromOpenrouterId(
-  normalizedId: string,
-): string | null {
-  if (normalizedId.startsWith("openai/")) return "openai";
-  if (normalizedId.startsWith("anthropic/")) return "anthropic";
-  if (normalizedId.startsWith("google/")) return "gemini";
-  if (normalizedId.startsWith("deepseek/")) return "deepseek";
+function _inferProviderFromOpenrouterId(normalizedId: string): string | null {
+  if (normalizedId.startsWith("openai/")) {
+    return "openai";
+  }
+  if (normalizedId.startsWith("anthropic/")) {
+    return "anthropic";
+  }
+  if (normalizedId.startsWith("google/")) {
+    return "gemini";
+  }
+  if (normalizedId.startsWith("deepseek/")) {
+    return "deepseek";
+  }
   return null;
 }
 
@@ -260,7 +278,9 @@ export function providerSupportsBuiltinWebSearch(
   // image ids. Custom Gemini OpenAI-compat proxies skip the backend's native
   // translator, so native tool envelopes never reach them -- hide the pill.
   if (providerType === "gemini") {
-    if (isGeminiCustomOpenAICompatBase(baseUrl)) return false;
+    if (isGeminiCustomOpenAICompatBase(baseUrl)) {
+      return false;
+    }
     const normalized = modelId?.trim().toLowerCase() ?? "";
     if (normalized && isGeminiImageModel(normalized)) {
       return geminiImageModelAllowsGoogleSearch(normalized);
@@ -308,8 +328,12 @@ export function providerSupportsFastMode(
   providerType: string | null | undefined,
   modelId: string | null | undefined,
 ): boolean {
-  if (providerType !== "anthropic") return false;
-  if (!modelId) return false;
+  if (providerType !== "anthropic") {
+    return false;
+  }
+  if (!modelId) {
+    return false;
+  }
   // Family boundary ("" or "-") required so IDs like "claude-opus-4-70" or
   // "claude-opus-4-7b" do not match.
   return ANTHROPIC_FAST_MODE_MODEL_PREFIXES.some(
@@ -377,7 +401,9 @@ const OPENAI_CODE_EXECUTION_MODEL_PREFIXES = [
  * `_is_openai_family_cloud` host check.
  */
 function isOpenAICloudBaseUrl(baseUrl: string | null | undefined): boolean {
-  if (!baseUrl) return true; // No override → uses the default openai.com base.
+  if (!baseUrl) {
+    return true; // No override → uses the default openai.com base.
+  }
   try {
     const host = new URL(baseUrl).hostname.toLowerCase();
     return host === "api.openai.com" || host.endsWith(".openai.azure.com");
@@ -392,7 +418,9 @@ export function providerSupportsBuiltinCodeExecution(
   baseUrl?: string | null,
 ): boolean {
   const normalized = modelId?.trim().toLowerCase() ?? "";
-  if (!normalized) return false;
+  if (!normalized) {
+    return false;
+  }
   if (providerType === "anthropic") {
     return ANTHROPIC_CODE_EXECUTION_MODEL_PREFIXES.some((prefix) =>
       normalized.startsWith(prefix),
@@ -403,7 +431,9 @@ export function providerSupportsBuiltinCodeExecution(
   }
 
   if (providerType === "openai") {
-    if (!isOpenAICloudBaseUrl(baseUrl)) return false;
+    if (!isOpenAICloudBaseUrl(baseUrl)) {
+      return false;
+    }
     return OPENAI_CODE_EXECUTION_MODEL_PREFIXES.some((prefix) =>
       normalized.startsWith(prefix),
     );
@@ -418,8 +448,12 @@ export function providerSupportsBuiltinCodeExecution(
     // Wire-up lives in `_stream_gemini` on the backend; output comes
     // back inline as executableCode/codeExecutionResult parts. See
     // https://ai.google.dev/gemini-api/docs/code-execution.
-    if (isGeminiCustomOpenAICompatBase(baseUrl)) return false;
-    if (isGeminiImageModel(normalized)) return false;
+    if (isGeminiCustomOpenAICompatBase(baseUrl)) {
+      return false;
+    }
+    if (isGeminiImageModel(normalized)) {
+      return false;
+    }
     return normalized.startsWith("gemini-");
   }
   return false;
@@ -436,7 +470,11 @@ export function providerSupportsBuiltinCodeExecution(
  * the same reason the backend registry leaves it out -- its code tools are
  * Studio's own, run by the Codex loop, and always have been.
  */
-const PROVIDER_TYPES_WITH_CODE_SANDBOX = new Set(["openai", "anthropic", "gemini"]);
+const PROVIDER_TYPES_WITH_CODE_SANDBOX = new Set([
+  "openai",
+  "anthropic",
+  "gemini",
+]);
 
 export function providerHostsCodeExecution(
   providerType: string | null | undefined,
@@ -471,9 +509,13 @@ export function providerSupportsBuiltinImageGeneration(
   baseUrl?: string | null,
 ): boolean {
   const normalized = modelId?.trim().toLowerCase() ?? "";
-  if (!normalized) return false;
+  if (!normalized) {
+    return false;
+  }
   if (providerType === "openai") {
-    if (!isOpenAICloudBaseUrl(baseUrl)) return false;
+    if (!isOpenAICloudBaseUrl(baseUrl)) {
+      return false;
+    }
     return OPENAI_IMAGE_GENERATION_MODEL_PREFIXES.some((prefix) =>
       normalized.startsWith(prefix),
     );
@@ -485,7 +527,9 @@ export function providerSupportsBuiltinImageGeneration(
     // path so the UI renders inline. Custom Gemini OpenAI-compat proxies skip
     // the native translator, so hide the image pill there.
     // See https://ai.google.dev/gemini-api/docs/image-generation.
-    if (isGeminiCustomOpenAICompatBase(baseUrl)) return false;
+    if (isGeminiCustomOpenAICompatBase(baseUrl)) {
+      return false;
+    }
     return normalized.includes("-image") || normalized.includes("nano-banana");
   }
   return false;
@@ -511,7 +555,9 @@ function isGeminiImageModel(modelId: string): boolean {
 export function isGeminiCustomOpenAICompatBase(
   baseUrl: string | null | undefined,
 ): boolean {
-  if (!baseUrl) return false;
+  if (!baseUrl) {
+    return false;
+  }
   try {
     const host = new URL(baseUrl).hostname.toLowerCase();
     return host.length > 0 && host !== "generativelanguage.googleapis.com";
@@ -553,7 +599,9 @@ const EXTERNAL_MIN_OUTPUT_TOKENS_BY_PROVIDER: Record<string, number> = {
 export function getExternalMinOutputTokens(
   providerType: string | null | undefined,
 ): number {
-  if (!providerType) return 64;
+  if (!providerType) {
+    return 64;
+  }
   return EXTERNAL_MIN_OUTPUT_TOKENS_BY_PROVIDER[providerType] ?? 64;
 }
 
@@ -672,7 +720,9 @@ const DEFAULT_EXTERNAL_CAPABILITIES = OPENAI_COMPAT_BASE;
 export function getProviderCapabilities(
   providerType: string | null | undefined,
 ): ProviderCapabilities | null {
-  if (!providerType) return null;
+  if (!providerType) {
+    return null;
+  }
   return PROVIDER_CAPABILITIES[providerType] ?? DEFAULT_EXTERNAL_CAPABILITIES;
 }
 
@@ -686,7 +736,9 @@ const OPENROUTER_MANDATORY_REASONING_MODELS = new Set([
 
 function isOpenRouterMandatoryReasoningModel(modelId: string): boolean {
   const normalized = modelId.trim().toLowerCase();
-  const canonical = normalized.startsWith("~") ? normalized.slice(1) : normalized;
+  const canonical = normalized.startsWith("~")
+    ? normalized.slice(1)
+    : normalized;
   return OPENROUTER_MANDATORY_REASONING_MODELS.has(canonical);
 }
 type ReasoningCaps = {
@@ -747,7 +799,9 @@ function matchesModelPrefix(
   return prefixes.some((prefix) => modelId.startsWith(prefix));
 }
 
-function resolveAnthropicReasoningEffortCapabilities(modelId: string): ReasoningCaps {
+function resolveAnthropicReasoningEffortCapabilities(
+  modelId: string,
+): ReasoningCaps {
   const normalized = modelId.trim().toLowerCase();
   const matched = ANTHROPIC_REASONING_MODELS.find((entry) =>
     matchesModelPrefix(normalized, entry.prefixes),
@@ -797,7 +851,9 @@ const OPENAI_REASONING_MODELS = [
   },
 ] as const;
 
-function resolveOpenAIReasoningEffortCapabilities(modelId: string): ReasoningCaps {
+function resolveOpenAIReasoningEffortCapabilities(
+  modelId: string,
+): ReasoningCaps {
   const normalized = modelId.trim().toLowerCase();
   const matched = OPENAI_REASONING_MODELS.find((entry) =>
     matchesModelPrefix(normalized, entry.prefixes),
@@ -822,7 +878,9 @@ function withEnableThinkingStyle(
   };
 }
 
-function withReasoningEffortStyle(caps: ReasoningCaps): ExternalReasoningCapabilities {
+function withReasoningEffortStyle(
+  caps: ReasoningCaps,
+): ExternalReasoningCapabilities {
   return {
     ...DEFAULT_EXTERNAL_REASONING_CAPABILITIES,
     supportsReasoning: true,
@@ -832,7 +890,9 @@ function withReasoningEffortStyle(caps: ReasoningCaps): ExternalReasoningCapabil
   };
 }
 
-function resolveKimiReasoningCapabilities(modelId: string): ExternalReasoningCapabilities {
+function resolveKimiReasoningCapabilities(
+  modelId: string,
+): ExternalReasoningCapabilities {
   // Kimi exposes a boolean thinking toggle, not an effort scale.
   //   - kimi-k2.6:        on by default, toggleable via
   //                       extra_body: {thinking: {type: enabled|disabled}}
@@ -872,16 +932,9 @@ const GEMINI3_FLASH_PREFIXES = [
   "gemini-flash-latest",
   "gemini-flash-lite-latest",
 ];
-const GEMINI25_PRO_PREFIXES = [
-  "gemini-2.5-pro",
-];
-const GEMINI25_FLASH_PREFIXES = [
-  "gemini-2.5-flash",
-];
-const GEMINI_IMAGE_HINTS = [
-  "-image",
-  "nano-banana",
-];
+const GEMINI25_PRO_PREFIXES = ["gemini-2.5-pro"];
+const GEMINI25_FLASH_PREFIXES = ["gemini-2.5-flash"];
+const GEMINI_IMAGE_HINTS = ["-image", "nano-banana"];
 function resolveGeminiReasoningCapabilities(
   modelId: string,
 ): ExternalReasoningCapabilities {
@@ -908,7 +961,10 @@ function resolveGeminiReasoningCapabilities(
       ] as const,
     });
   }
-  if (GEMINI3_PRO_PATTERN.test(m) || GEMINI3_PRO_PREFIXES.some((p) => m.startsWith(p))) {
+  if (
+    GEMINI3_PRO_PATTERN.test(m) ||
+    GEMINI3_PRO_PREFIXES.some((p) => m.startsWith(p))
+  ) {
     // Gemini 3.x Pro: thinkingLevel low/medium/high; cannot fully disable, and
     // "minimal" is rejected on Pro. Refs:
     // https://ai.google.dev/gemini-api/docs/thinking and
@@ -919,18 +975,16 @@ function resolveGeminiReasoningCapabilities(
       reasoningEffortLevels: ["low", "medium", "high"] as const,
     });
   }
-  if (GEMINI3_FLASH_PATTERN.test(m) || GEMINI3_FLASH_PREFIXES.some((p) => m.startsWith(p))) {
+  if (
+    GEMINI3_FLASH_PATTERN.test(m) ||
+    GEMINI3_FLASH_PREFIXES.some((p) => m.startsWith(p))
+  ) {
     // Gemini 3 Flash: thinkingLevel minimal/low/medium/high. Minimal is the
     // closest to "off" Google offers on Gemini 3.
     return withReasoningEffortStyle({
       supportsReasoning: true,
       supportsReasoningOff: false,
-      reasoningEffortLevels: [
-        "minimal",
-        "low",
-        "medium",
-        "high",
-      ] as const,
+      reasoningEffortLevels: ["minimal", "low", "medium", "high"] as const,
     });
   }
   if (GEMINI25_PRO_PREFIXES.some((p) => m.startsWith(p))) {
@@ -948,19 +1002,15 @@ function resolveGeminiReasoningCapabilities(
     return withReasoningEffortStyle({
       supportsReasoning: true,
       supportsReasoningOff: true,
-      reasoningEffortLevels: [
-        "none",
-        "low",
-        "medium",
-        "high",
-        "max",
-      ] as const,
+      reasoningEffortLevels: ["none", "low", "medium", "high", "max"] as const,
     });
   }
   return withEnableThinkingStyle();
 }
 
-function resolveMistralReasoningCapabilities(modelId: string): ExternalReasoningCapabilities {
+function resolveMistralReasoningCapabilities(
+  modelId: string,
+): ExternalReasoningCapabilities {
   if (modelId === "magistral-medium-latest") {
     return withReasoningEffortStyle({
       supportsReasoning: true,
@@ -969,7 +1019,10 @@ function resolveMistralReasoningCapabilities(modelId: string): ExternalReasoning
       reasoningEffortLevels: ["medium", "high"] as const,
     });
   }
-  if (modelId === "mistral-small-latest" || modelId === "mistral-vibe-cli-latest") {
+  if (
+    modelId === "mistral-small-latest" ||
+    modelId === "mistral-vibe-cli-latest"
+  ) {
     return withReasoningEffortStyle({
       supportsReasoning: true,
       supportsReasoningOff: true,
@@ -1035,7 +1088,7 @@ export function getExternalReasoningCapabilities(
   // OpenRouter ids are namespaced (e.g. "openai/gpt-5.5").
   const modelForMatching =
     normalizedProvider === "openrouter" && normalizedModel.includes("/")
-      ? normalizedModel.split("/").at(-1) ?? normalizedModel
+      ? (normalizedModel.split("/").at(-1) ?? normalizedModel)
       : normalizedModel;
 
   const isOpenAIProvider =
@@ -1056,8 +1109,12 @@ export function getExternalReasoningCapabilities(
       reasoningEffortLevels: DEFAULT_EFFORT_LEVELS,
     };
   }
-  if (isKimiProvider) return resolveKimiReasoningCapabilities(modelForMatching);
-  if (isMistralProvider) return resolveMistralReasoningCapabilities(modelForMatching);
+  if (isKimiProvider) {
+    return resolveKimiReasoningCapabilities(modelForMatching);
+  }
+  if (isMistralProvider) {
+    return resolveMistralReasoningCapabilities(modelForMatching);
+  }
   if (normalizedProvider === "gemini") {
     // Custom Gemini OAI-compat gateways route through /chat/completions, which
     // drops the native thinkingConfig payload. Hide the native thinking ladder
@@ -1067,7 +1124,7 @@ export function getExternalReasoningCapabilities(
     }
     return resolveGeminiReasoningCapabilities(modelForMatching);
   }
-  if (!isOpenAIProvider && !isAnthropicProvider) {
+  if (!(isOpenAIProvider || isAnthropicProvider)) {
     return withEnableThinkingStyle();
   }
 

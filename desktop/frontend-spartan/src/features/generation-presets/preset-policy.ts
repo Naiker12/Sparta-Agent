@@ -1,4 +1,3 @@
-
 export const DEFAULT_PRESET_NAME = "Default";
 
 export function configKey(value: unknown): string {

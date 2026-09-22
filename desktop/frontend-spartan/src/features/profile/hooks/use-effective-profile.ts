@@ -1,7 +1,6 @@
-
 import { getAuthToken } from "@/features/auth";
-import { decodeJwtSubject } from "../utils/jwt-subject";
 import { useUserProfileStore } from "../stores/user-profile-store";
+import { decodeJwtSubject } from "../utils/jwt-subject";
 
 export function useEffectiveProfile() {
   const displayName = useUserProfileStore((s) => s.displayName);

@@ -1,4 +1,3 @@
-
 import { SectionCard } from "@/components/section-card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -40,14 +39,14 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { usePlatformStore } from "@/config/env";
-import { useT } from "@/i18n";
 import { prepareHfTokenForUse } from "@/features/hf-auth";
 import { hfApiToken, useHfTokenStore, useHubModelSearch } from "@/features/hub";
+import type { LocalModelInfo } from "@/features/model-picker";
 import { confirmRemoteCodeIfNeeded } from "@/features/security";
 import { GuidedTour, useGuidedTourController } from "@/features/tour";
-import type { LocalModelInfo } from "@/features/model-picker";
 import { useDebouncedValue, useHfTokenValidation } from "@/hooks";
 import { useHardwareInfo } from "@/hooks/use-hardware-info";
+import { useT } from "@/i18n";
 import { ChevronDownStandardIcon } from "@/lib/chevron-icons";
 import {
   AlertCircleIcon,
@@ -142,16 +141,22 @@ function buildRelativeSaveDirectory(
 
 function siblingGgufDirectory(sourcePath: string): string | null {
   const trimmed = sourcePath.trim().replace(/[\\/]+$/, "");
-  if (!trimmed) return null;
+  if (!trimmed) {
+    return null;
+  }
   const slash = Math.max(trimmed.lastIndexOf("/"), trimmed.lastIndexOf("\\"));
   // Lowercase `_gguf` matches the backend's intermediate dir; `_GGUF` would relocate+delete it.
-  if (slash < 0) return `${trimmed}_gguf`;
+  if (slash < 0) {
+    return `${trimmed}_gguf`;
+  }
   const parent =
     slash === 0 || (slash === 2 && /^[A-Za-z]:/.test(trimmed))
       ? trimmed.slice(0, slash + 1)
       : trimmed.slice(0, slash);
   const name = trimmed.slice(slash + 1);
-  if (!name) return null;
+  if (!name) {
+    return null;
+  }
   const sep =
     parent.endsWith("/") || parent.endsWith("\\")
       ? ""
@@ -242,10 +247,14 @@ export function ExportPage() {
     () =>
       MERGED_FORMATS.filter((f) => {
         // compressed-tensors (llm-compressor) is the NVIDIA path; shown only on an NVIDIA GPU.
-        if (f.backend === "compressed") return hasNvidia;
+        if (f.backend === "compressed") {
+          return hasNvidia;
+        }
         // Portable torchao is the fallback for hosts without the NVIDIA compressed path. Hidden on
         // NVIDIA (use compressed-tensors) and on macOS/MLX (the backend rejects quantized export).
-        if (f.backend === "torchao") return !hasNvidia && !isMacHost;
+        if (f.backend === "torchao") {
+          return !(hasNvidia || isMacHost);
+        }
         // Plain 16-bit is available everywhere.
         return true;
       }),
@@ -305,14 +314,16 @@ export function ExportPage() {
         }
       })
       .catch((err) => {
-        if (!cancelled && !hadCache) {
+        if (!(cancelled || hadCache)) {
           setCheckpointError(
             err instanceof Error ? err.message : "Failed to load checkpoints",
           );
         }
       })
       .finally(() => {
-        if (!cancelled) setLoadingCheckpoints(false);
+        if (!cancelled) {
+          setLoadingCheckpoints(false);
+        }
       });
     return () => {
       cancelled = true;
@@ -329,10 +340,16 @@ export function ExportPage() {
       appliedRunRef.current = null;
       return;
     }
-    if (models.length === 0) return;
-    if (appliedRunRef.current === preselectRun) return;
+    if (models.length === 0) {
+      return;
+    }
+    if (appliedRunRef.current === preselectRun) {
+      return;
+    }
     const match = models.find((m) => m.name === preselectRun);
-    if (!match) return;
+    if (!match) {
+      return;
+    }
     appliedRunRef.current = preselectRun;
     setSourceMode("checkpoint");
     setSelectedModelIdx(match.name);
@@ -345,11 +362,15 @@ export function ExportPage() {
     const hadCache = getCachedLocalModels() !== null;
     void refreshLocalModels()
       .then((models) => {
-        if (cancelled) return;
+        if (cancelled) {
+          return;
+        }
         setLocalModels(models);
       })
       .catch((error) => {
-        if (cancelled || hadCache) return;
+        if (cancelled || hadCache) {
+          return;
+        }
         setLocalModelsError(
           error instanceof Error
             ? error.message
@@ -357,7 +378,9 @@ export function ExportPage() {
         );
       })
       .finally(() => {
-        if (cancelled) return;
+        if (cancelled) {
+          return;
+        }
         setIsLoadingLocalModels(false);
       });
     return () => {
@@ -449,8 +472,12 @@ export function ExportPage() {
   const exportableLocalModels = useMemo(
     () =>
       localModels.filter((m) => {
-        if (m.path.endsWith(".gguf")) return false;
-        if (m.id.toLowerCase().includes("-gguf")) return false;
+        if (m.path.endsWith(".gguf")) {
+          return false;
+        }
+        if (m.id.toLowerCase().includes("-gguf")) {
+          return false;
+        }
         return true;
       }),
     [localModels],
@@ -458,7 +485,9 @@ export function ExportPage() {
 
   const localMetaById = useMemo(() => {
     const map = new Map<string, LocalModelInfo>();
-    for (const model of exportableLocalModels) map.set(model.id, model);
+    for (const model of exportableLocalModels) {
+      map.set(model.id, model);
+    }
     return map;
   }, [exportableLocalModels]);
 
@@ -473,12 +502,20 @@ export function ExportPage() {
 
   const localFilteredIds = useMemo(() => {
     const q = localModelInput.trim().toLowerCase();
-    if (!q) return localResultIds;
+    if (!q) {
+      return localResultIds;
+    }
     return localResultIds.filter((id) => {
       const meta = localMetaById.get(id);
-      if (id.toLowerCase().includes(q)) return true;
-      if (meta?.display_name.toLowerCase().includes(q)) return true;
-      if (meta?.path.toLowerCase().includes(q)) return true;
+      if (id.toLowerCase().includes(q)) {
+        return true;
+      }
+      if (meta?.display_name.toLowerCase().includes(q)) {
+        return true;
+      }
+      if (meta?.path.toLowerCase().includes(q)) {
+        return true;
+      }
       return false;
     });
   }, [localMetaById, localModelInput, localResultIds]);
@@ -506,8 +543,12 @@ export function ExportPage() {
   // Default to the newest checkpoint when none is chosen. Declared after the reset effect above
   // so it runs last; covers both a ?run= deep link and a plain finetune.
   useEffect(() => {
-    if (sourceMode !== "checkpoint") return;
-    if (checkpoint != null || checkpointsForModel.length === 0) return;
+    if (sourceMode !== "checkpoint") {
+      return;
+    }
+    if (checkpoint != null || checkpointsForModel.length === 0) {
+      return;
+    }
     setCheckpoint(checkpointsForModel[0].display_name);
   }, [sourceMode, selectedModelIdx, checkpoint, checkpointsForModel]);
 
@@ -699,28 +740,41 @@ export function ExportPage() {
   const handleStart = useCallback(async () => {
     const source =
       sourceMode === "checkpoint" ? checkpoint : selectedSourceModel;
-    if (!source || !exportMethod) return;
-    // No supported accelerator (or PyTorch/MLX missing): the backend would reject anyway; don't submit.
-    if (exportUnsupported) return;
-    // GGUF with no quant, or merged with no format, would run an empty export; require at least one.
-    if (exportMethod === "gguf" && !ggufAsLora && quantLevels.length === 0)
+    if (!(source && exportMethod)) {
       return;
-    if (exportMethod === "merged" && selectedFormats.length === 0) return;
+    }
+    // No supported accelerator (or PyTorch/MLX missing): the backend would reject anyway; don't submit.
+    if (exportUnsupported) {
+      return;
+    }
+    // GGUF with no quant, or merged with no format, would run an empty export; require at least one.
+    if (exportMethod === "gguf" && !ggufAsLora && quantLevels.length === 0) {
+      return;
+    }
+    if (exportMethod === "merged" && selectedFormats.length === 0) {
+      return;
+    }
     // A Hub merged push writes each format to the repo root; several would collide (mirrors canExport).
-    if (hubMultiFormat) return;
+    if (hubMultiFormat) {
+      return;
+    }
 
     const selectedCp =
       sourceMode === "checkpoint"
         ? checkpointsForModel.find((cp) => cp.display_name === checkpoint)
         : null;
-    if (sourceMode === "checkpoint" && !selectedCp) return;
+    if (sourceMode === "checkpoint" && !selectedCp) {
+      return;
+    }
     const checkpointPath = selectedCp?.path ?? null;
 
     const pushToHub = destination === "hub";
     const preparedToken = await prepareHfTokenForUse(hfToken, {
       allowAnonymous: !pushToHub,
     });
-    if (!preparedToken.proceed) return;
+    if (!preparedToken.proceed) {
+      return;
+    }
     const actionHfToken = preparedToken.token ?? "";
 
     const repoId =
@@ -754,7 +808,9 @@ export function ExportPage() {
           approvedRemoteCodeFingerprint = fingerprint;
         },
       });
-      if (!remoteCodeOk) return;
+      if (!remoteCodeOk) {
+        return;
+      }
     }
 
     void runExport({
@@ -841,7 +897,9 @@ export function ExportPage() {
   const [panelEndVisible, setPanelEndVisible] = useState(true);
 
   useEffect(() => {
-    if (!showPanel) return;
+    if (!showPanel) {
+      return;
+    }
     const id = window.setTimeout(() => {
       panelEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
     }, 60);
@@ -850,7 +908,9 @@ export function ExportPage() {
 
   useEffect(() => {
     const el = panelEndRef.current;
-    if (!showPanel || !el) return;
+    if (!(showPanel && el)) {
+      return;
+    }
     // The scroll-down button is also gated on showPanel, so the observer self-corrects on open.
     const obs = new IntersectionObserver(
       ([entry]) => setPanelEndVisible(entry.isIntersecting),
@@ -898,7 +958,7 @@ export function ExportPage() {
             </div>
           )}
 
-          {!loadingCheckpoints && !checkpointError && (
+          {!(loadingCheckpoints || checkpointError) && (
             <>
               {/* Top row: Dropdowns + metadata | Guide */}
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
@@ -1108,7 +1168,9 @@ export function ExportPage() {
                                     applyHfSourceModel(hfModelInputRef.current)
                                   }
                                   onKeyDown={(event) => {
-                                    if (event.key !== "Enter") return;
+                                    if (event.key !== "Enter") {
+                                      return;
+                                    }
                                     event.preventDefault();
                                     applyHfSourceModel(hfModelInputRef.current);
                                   }}
@@ -1215,7 +1277,9 @@ export function ExportPage() {
                                   )
                                 }
                                 onKeyDown={(event) => {
-                                  if (event.key !== "Enter") return;
+                                  if (event.key !== "Enter") {
+                                    return;
+                                  }
                                   event.preventDefault();
                                   applyLocalSourceModel(
                                     localModelInputRef.current,

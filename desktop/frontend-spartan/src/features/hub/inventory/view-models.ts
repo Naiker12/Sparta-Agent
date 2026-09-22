@@ -1,4 +1,3 @@
-
 import { ownerOf, repoOf } from "../lib/format";
 import { looksLikeLocalPath } from "../lib/local-path";
 import { isGgufLike } from "../lib/model-identifiers";
@@ -9,9 +8,9 @@ import type {
   ModelInventoryRuntime,
 } from "./api";
 import type {
-  ModelInventoryCapabilities,
   CachedInventoryRow,
   LocalInventoryRow,
+  ModelInventoryCapabilities,
 } from "./types";
 
 export function localSourceLabel(source: LocalModelInfo["source"]): string {
@@ -40,7 +39,9 @@ export function normalizeTimestamp(value?: number | null): number | null {
 
 export function formatLocalUpdated(value?: number | null): string {
   const normalized = normalizeTimestamp(value);
-  if (!normalized) return "Unknown update";
+  if (!normalized) {
+    return "Unknown update";
+  }
   const formatter = new Intl.DateTimeFormat("en", {
     month: "short",
     day: "numeric",
@@ -50,12 +51,14 @@ export function formatLocalUpdated(value?: number | null): string {
 }
 
 function getLocalHubId(model: LocalModelInfo): string | null {
-  if (model.source !== "hf_cache") return null;
+  if (model.source !== "hf_cache") {
+    return null;
+  }
   const candidate = model.model_id?.trim();
   if (candidate?.toLowerCase().startsWith("ollama/")) {
     return null;
   }
-  if (candidate && candidate.includes("/") && !looksLikeLocalPath(candidate)) {
+  if (candidate?.includes("/") && !looksLikeLocalPath(candidate)) {
     return candidate;
   }
   return null;
@@ -104,8 +107,12 @@ export function normalizeRuntime(
   ) {
     return value;
   }
-  if (modelFormat === "gguf") return "llama_cpp";
-  if (modelFormat === "adapter") return "adapter";
+  if (modelFormat === "gguf") {
+    return "llama_cpp";
+  }
+  if (modelFormat === "adapter") {
+    return "adapter";
+  }
   if (modelFormat === "safetensors" || modelFormat === "checkpoint") {
     return "transformers";
   }
@@ -321,9 +328,14 @@ export function buildLocalInventoryRows(
       };
     })
     .sort((a, b) => {
-      if (Boolean(a.partial) !== Boolean(b.partial)) return a.partial ? 1 : -1;
-      const sourceWeight = sourceSortWeight(a.source) - sourceSortWeight(b.source);
-      if (sourceWeight !== 0) return sourceWeight;
+      if (Boolean(a.partial) !== Boolean(b.partial)) {
+        return a.partial ? 1 : -1;
+      }
+      const sourceWeight =
+        sourceSortWeight(a.source) - sourceSortWeight(b.source);
+      if (sourceWeight !== 0) {
+        return sourceWeight;
+      }
       if (a.updatedAt && b.updatedAt && a.updatedAt !== b.updatedAt) {
         return b.updatedAt - a.updatedAt;
       }

@@ -1,4 +1,3 @@
-
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,12 +26,16 @@ import type { FolderSyncJob, LinkedFolderScope } from "../types/rag";
 import { useLinkedFolders } from "./use-linked-folders";
 
 function percent(progress?: number | null): number | null {
-  if (progress == null || !Number.isFinite(progress)) return null;
+  if (progress == null || !Number.isFinite(progress)) {
+    return null;
+  }
   return Math.max(0, Math.min(100, progress <= 1 ? progress * 100 : progress));
 }
 
 function jobSummary(job: FolderSyncJob, t: ReturnType<typeof useT>): string {
-  if (job.status === "failed") return job.error ?? t("projectsPage.syncFailed");
+  if (job.status === "failed") {
+    return job.error ?? t("projectsPage.syncFailed");
+  }
   if (job.status === "completed") {
     const indexed = job.indexedFiles ?? job.processedFiles;
     return indexed == null
@@ -152,13 +155,21 @@ export function LinkedFoldersManager({
                       ? jobSummary(job, t)
                       : folder.error ||
                         (folder.lastSyncedAt
-                          ? t("projectsPage.lastSynced", { date: new Date(folder.lastSyncedAt).toLocaleString() })
-                          : t("projectsPage.indexedDocuments", { count: folder.documentCount ?? 0 }))}
+                          ? t("projectsPage.lastSynced", {
+                              date: new Date(
+                                folder.lastSyncedAt,
+                              ).toLocaleString(),
+                            })
+                          : t("projectsPage.indexedDocuments", {
+                              count: folder.documentCount ?? 0,
+                            }))}
                   </p>
                   {running ? (
                     <Progress
                       value={progress ?? 0}
-                      aria-label={t("projectsPage.syncProgress", { name: folder.displayName })}
+                      aria-label={t("projectsPage.syncProgress", {
+                        name: folder.displayName,
+                      })}
                       className="mt-2 h-1.5"
                     />
                   ) : null}
@@ -170,7 +181,9 @@ export function LinkedFoldersManager({
                       size="icon-sm"
                       variant="ghost"
                       className="shrink-0 rounded-full"
-                      aria-label={t("projectsPage.folderActions", { name: folder.displayName })}
+                      aria-label={t("projectsPage.folderActions", {
+                        name: folder.displayName,
+                      })}
                     >
                       {running ? (
                         <Spinner className="size-3.5" />
@@ -184,13 +197,15 @@ export function LinkedFoldersManager({
                       disabled={running}
                       onSelect={() => void manager.sync(folder.id)}
                     >
-                      <FolderSyncIcon className="size-3.5" /> {t("projectsPage.syncChanges")}
+                      <FolderSyncIcon className="size-3.5" />{" "}
+                      {t("projectsPage.syncChanges")}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       disabled={running}
                       onSelect={() => void manager.rebuild(folder.id)}
                     >
-                      <RotateCwIcon className="size-3.5" /> {t("projectsPage.rebuildIndex")}
+                      <RotateCwIcon className="size-3.5" />{" "}
+                      {t("projectsPage.rebuildIndex")}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
@@ -219,14 +234,20 @@ export function LinkedFoldersManager({
       <AlertDialog
         open={removeIndexFolder !== null}
         onOpenChange={(open) => {
-          if (!open) setRemoveIndexFolder(null);
+          if (!open) {
+            setRemoveIndexFolder(null);
+          }
         }}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("projectsPage.unlinkRemoveTitle")}</AlertDialogTitle>
+            <AlertDialogTitle>
+              {t("projectsPage.unlinkRemoveTitle")}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              {t("projectsPage.unlinkRemoveDescription", { name: removeIndexFolder?.name ?? "" })}
+              {t("projectsPage.unlinkRemoveDescription", {
+                name: removeIndexFolder?.name ?? "",
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -236,7 +257,9 @@ export function LinkedFoldersManager({
               onClick={() => {
                 const folder = removeIndexFolder;
                 setRemoveIndexFolder(null);
-                if (folder) void manager.remove(folder.id, true);
+                if (folder) {
+                  void manager.remove(folder.id, true);
+                }
               }}
             >
               {t("projectsPage.unlinkRemoveAction")}

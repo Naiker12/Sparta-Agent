@@ -1,4 +1,3 @@
-
 import type { ManagedDownload } from "../download-manager";
 import type { GgufVariantDetail } from "../inventory";
 import { normalizeGgufVariantIdentity } from "../lib/model-identity";
@@ -12,11 +11,15 @@ export type LiveGgufVariantState = {
   startedAt: number;
 };
 
-export function activeDownloadState(state: ManagedDownload["state"] | undefined): boolean {
+export function activeDownloadState(
+  state: ManagedDownload["state"] | undefined,
+): boolean {
   return state === "running" || state === "cancelling";
 }
 
-function terminalPartialState(state: ManagedDownload["state"] | undefined): boolean {
+function terminalPartialState(
+  state: ManagedDownload["state"] | undefined,
+): boolean {
   return state === "cancelled" || state === "error";
 }
 
@@ -30,21 +33,28 @@ export function createLiveGgufVariantStatesSelector(repoId: string): (state: {
   jobs: Record<string, ManagedDownload>;
 }) => Map<string, LiveGgufVariantState> {
   const repoKey = repoId.trim().toLowerCase();
-  let cache: { signature: string; states: Map<string, LiveGgufVariantState> } = {
-    signature: "",
-    states: new Map(),
-  };
+  let cache: { signature: string; states: Map<string, LiveGgufVariantState> } =
+    {
+      signature: "",
+      states: new Map(),
+    };
   return (state) => {
-    const entries: Array<[string, LiveGgufVariantState]> = [];
+    const entries: [string, LiveGgufVariantState][] = [];
     for (const job of Object.values(state.jobs)) {
-      if (job.kind !== "model" || !job.variant) continue;
-      if (job.repoId.trim().toLowerCase() !== repoKey) continue;
+      if (job.kind !== "model" || !job.variant) {
+        continue;
+      }
+      if (job.repoId.trim().toLowerCase() !== repoKey) {
+        continue;
+      }
       const live =
         activeDownloadState(job.state) ||
         completedDownloadState(job.state) ||
         (terminalPartialState(job.state) &&
           Math.max(job.downloadedBytes, job.completedBytes) > 0);
-      if (!live) continue;
+      if (!live) {
+        continue;
+      }
       entries.push([
         normalizeGgufVariantIdentity(job.variant),
         {
@@ -64,7 +74,9 @@ export function createLiveGgufVariantStatesSelector(repoId: string): (state: {
     }
     entries.sort(([left], [right]) => left.localeCompare(right));
     const signature = JSON.stringify(entries);
-    if (signature === cache.signature) return cache.states;
+    if (signature === cache.signature) {
+      return cache.states;
+    }
     cache = { signature, states: new Map(entries) };
     return cache.states;
   };
@@ -76,7 +88,9 @@ export function applyLiveGgufVariantStates(
 ): GgufVariantDetail[] {
   return variants.map((variant) => {
     const live = liveStates.get(normalizeGgufVariantIdentity(variant.quant));
-    if (!live) return variant;
+    if (!live) {
+      return variant;
+    }
     const liveComplete = completedDownloadState(live.state);
     const livePartial =
       activeDownloadState(live.state) || terminalPartialState(live.state);
@@ -113,14 +127,17 @@ export function applyLiveGgufVariantStates(
         : null;
     return {
       ...variant,
-      downloaded: liveComplete ? true : livePartial ? false : variant.downloaded,
+      downloaded: liveComplete
+        ? true
+        : livePartial
+          ? false
+          : variant.downloaded,
       partial: liveComplete ? false : livePartial || variant.partial,
       download_size_bytes:
         expectedBytes > 0 ? expectedBytes : variant.download_size_bytes,
-      download_remaining_bytes:
-        liveComplete
-          ? variant.download_remaining_bytes
-          : liveRemaining ?? variant.download_remaining_bytes,
+      download_remaining_bytes: liveComplete
+        ? variant.download_remaining_bytes
+        : (liveRemaining ?? variant.download_remaining_bytes),
     };
   });
 }

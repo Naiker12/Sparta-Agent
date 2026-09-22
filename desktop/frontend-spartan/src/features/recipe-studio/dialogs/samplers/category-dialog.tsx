@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
@@ -7,8 +6,8 @@ import {
 } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { type ReactElement, useState } from "react";
-import type { SamplerConfig } from "../../types";
 import { ChipInput } from "../../components/chip-input";
+import type { SamplerConfig } from "../../types";
 import { CollapsibleSectionTriggerButton } from "../shared/collapsible-section-trigger";
 import { FieldLabel } from "../shared/field-label";
 import { NameField } from "../shared/name-field";
@@ -125,19 +124,130 @@ export function CategoryDialog({
           />
         </CollapsibleTrigger>
         <CollapsibleContent className="mt-2 space-y-3">
-            <div className="grid gap-1.5">
-              <FieldLabel
-                label="Weights (optional)"
-                hint="Set selection probability per value."
-              />
-              {(config.values ?? []).length === 0 ? (
-                <p className="text-xs text-muted-foreground">
-                  Add values first, then set optional weights.
+          <div className="grid gap-1.5">
+            <FieldLabel
+              label="Weights (optional)"
+              hint="Set selection probability per value."
+            />
+            {(config.values ?? []).length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                Add values first, then set optional weights.
+              </p>
+            ) : (
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {(config.values ?? []).map((value, index) => (
+                  <div key={`${value}-weight`} className="space-y-1">
+                    <p
+                      className="truncate text-xs text-muted-foreground"
+                      title={value}
+                    >
+                      {value}
+                    </p>
+                    <Input
+                      type="number"
+                      className="nodrag w-full"
+                      placeholder="Weight"
+                      value={config.weights?.[index] ?? ""}
+                      onChange={(event) => {
+                        const weights = [...(config.weights ?? [])];
+                        weights[index] = event.target.value
+                          ? Number(event.target.value)
+                          : null;
+                        onUpdate({ weights });
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="flex items-center justify-between gap-2">
+            <FieldLabel
+              label="Conditional params (category)"
+              hint="Override category values/weights when condition matches."
+            />
+            <span className="text-xs text-muted-foreground">
+              {conditionalCount} rules
+            </span>
+          </div>
+          <div className="flex gap-2">
+            <Input
+              id={conditionInputId}
+              className="nodrag"
+              placeholder="Condition (e.g., {{ region }} == 'US')"
+              value={conditionDraft}
+              onChange={(event) => setConditionDraft(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  handleAddCondition();
+                }
+              }}
+            />
+            <Button type="button" size="sm" onClick={handleAddCondition}>
+              Add rule
+            </Button>
+          </div>
+          {Object.entries(conditional).map(([condition, params]) => (
+            <div
+              key={condition}
+              className="space-y-3 rounded-2xl border border-border/60 p-3"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs font-semibold text-foreground">
+                  {condition}
                 </p>
-              ) : (
+                <Button
+                  type="button"
+                  size="xs"
+                  variant="ghost"
+                  onClick={() => removeCondition(condition)}
+                >
+                  Remove
+                </Button>
+              </div>
+              <ChipInput
+                values={params.values ?? []}
+                onAdd={(value) => {
+                  const { values, weights } = addChipWithWeight(
+                    params.values,
+                    params.weights,
+                    value,
+                  );
+                  onUpdate({
+                    // biome-ignore lint/style/useNamingConvention: api schema
+                    conditional_params: {
+                      ...conditional,
+                      [condition]: { ...params, values, weights },
+                    },
+                  });
+                }}
+                onRemove={(index) => {
+                  const { values, weights } = removeChipWithWeight(
+                    params.values,
+                    params.weights,
+                    index,
+                  );
+                  onUpdate({
+                    // biome-ignore lint/style/useNamingConvention: api schema
+                    conditional_params: {
+                      ...conditional,
+                      [condition]: { ...params, values, weights },
+                    },
+                  });
+                }}
+                placeholder="Type a conditional value and press Enter"
+              />
+              <div className="grid gap-1.5">
+                <p className="text-xs font-semibold uppercase text-muted-foreground">
+                  Rule weights (optional)
+                </p>
                 <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                  {(config.values ?? []).map((value, index) => (
-                    <div key={`${value}-weight`} className="space-y-1">
+                  {(params.values ?? []).map((value, index) => (
+                    <div
+                      key={`${condition}-${value}-${index}-weight`}
+                      className="space-y-1"
+                    >
                       <p
                         className="truncate text-xs text-muted-foreground"
                         title={value}
@@ -146,144 +256,35 @@ export function CategoryDialog({
                       </p>
                       <Input
                         type="number"
-                        className="nodrag w-full"
+                        className="nodrag"
                         placeholder="Weight"
-                        value={config.weights?.[index] ?? ""}
+                        value={params.weights?.[index] ?? ""}
                         onChange={(event) => {
-                          const weights = [...(config.weights ?? [])];
+                          const weights = [
+                            ...(params.weights ??
+                              Array.from(
+                                { length: (params.values ?? []).length },
+                                () => null,
+                              )),
+                          ];
                           weights[index] = event.target.value
                             ? Number(event.target.value)
                             : null;
-                          onUpdate({ weights });
+                          onUpdate({
+                            // biome-ignore lint/style/useNamingConvention: api schema
+                            conditional_params: {
+                              ...conditional,
+                              [condition]: { ...params, weights },
+                            },
+                          });
                         }}
                       />
                     </div>
                   ))}
                 </div>
-              )}
-            </div>
-            <div className="flex items-center justify-between gap-2">
-              <FieldLabel
-                label="Conditional params (category)"
-                hint="Override category values/weights when condition matches."
-              />
-              <span className="text-xs text-muted-foreground">
-                {conditionalCount} rules
-              </span>
-            </div>
-            <div className="flex gap-2">
-              <Input
-                id={conditionInputId}
-                className="nodrag"
-                placeholder="Condition (e.g., {{ region }} == 'US')"
-                value={conditionDraft}
-                onChange={(event) => setConditionDraft(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    event.preventDefault();
-                    handleAddCondition();
-                  }
-                }}
-              />
-              <Button type="button" size="sm" onClick={handleAddCondition}>
-                Add rule
-              </Button>
-            </div>
-            {Object.entries(conditional).map(([condition, params]) => (
-              <div
-                key={condition}
-                className="space-y-3 rounded-2xl border border-border/60 p-3"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-xs font-semibold text-foreground">{condition}</p>
-                  <Button
-                    type="button"
-                    size="xs"
-                    variant="ghost"
-                    onClick={() => removeCondition(condition)}
-                  >
-                    Remove
-                  </Button>
-                </div>
-                <ChipInput
-                  values={params.values ?? []}
-                  onAdd={(value) => {
-                    const { values, weights } = addChipWithWeight(
-                      params.values,
-                      params.weights,
-                      value,
-                    );
-                    onUpdate({
-                      // biome-ignore lint/style/useNamingConvention: api schema
-                      conditional_params: {
-                        ...conditional,
-                        [condition]: { ...params, values, weights },
-                      },
-                    });
-                  }}
-                  onRemove={(index) => {
-                    const { values, weights } = removeChipWithWeight(
-                      params.values,
-                      params.weights,
-                      index,
-                    );
-                    onUpdate({
-                      // biome-ignore lint/style/useNamingConvention: api schema
-                      conditional_params: {
-                        ...conditional,
-                        [condition]: { ...params, values, weights },
-                      },
-                    });
-                  }}
-                  placeholder="Type a conditional value and press Enter"
-                />
-                <div className="grid gap-1.5">
-                  <p className="text-xs font-semibold uppercase text-muted-foreground">
-                    Rule weights (optional)
-                  </p>
-                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                    {(params.values ?? []).map((value, index) => (
-                      <div
-                        key={`${condition}-${value}-${index}-weight`}
-                        className="space-y-1"
-                      >
-                        <p
-                          className="truncate text-xs text-muted-foreground"
-                          title={value}
-                        >
-                          {value}
-                        </p>
-                        <Input
-                          type="number"
-                          className="nodrag"
-                          placeholder="Weight"
-                          value={params.weights?.[index] ?? ""}
-                          onChange={(event) => {
-                            const weights = [
-                              ...(params.weights ??
-                                Array.from(
-                                  { length: (params.values ?? []).length },
-                                  () => null,
-                                )),
-                            ];
-                            weights[index] = event.target.value
-                              ? Number(event.target.value)
-                              : null;
-                            onUpdate({
-                              // biome-ignore lint/style/useNamingConvention: api schema
-                              conditional_params: {
-                                ...conditional,
-                                [condition]: { ...params, weights },
-                              },
-                            });
-                          }}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
               </div>
-            ))}
+            </div>
+          ))}
         </CollapsibleContent>
       </Collapsible>
     </div>

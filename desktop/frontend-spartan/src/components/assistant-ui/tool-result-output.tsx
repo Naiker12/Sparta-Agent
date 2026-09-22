@@ -1,9 +1,7 @@
-
 "use client";
 
 import { stripAnsi, tailToolOutput } from "@/lib/strip-ansi";
 import { useMemo, useState } from "react";
-
 
 /**
  * Finished-tool output pane: renders the tail (~2000 lines) with a "Show all"

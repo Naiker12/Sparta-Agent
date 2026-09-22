@@ -1,4 +1,3 @@
-
 import { Spinner } from "@/components/ui/spinner";
 import {
   Tooltip,
@@ -26,6 +25,7 @@ import {
 } from "../lib/hub-feature-flags";
 import { fingerprintToken } from "../lib/token-fingerprint";
 import { useHfTokenStore } from "../stores/hf-token-store";
+import { DeleteImpactSummary, useDeleteImpact } from "./delete-impact";
 import { DotTag } from "./dot-tag";
 import {
   CardDivider,
@@ -35,13 +35,18 @@ import {
 } from "./download-card";
 import { QuantOptionsMenu } from "./gguf-download-card";
 import { useCardDelete } from "./use-card-delete";
-import { DeleteImpactSummary, useDeleteImpact } from "./delete-impact";
 import { useDownloadCardState } from "./use-download-card-state";
 
 function formatModelLabel(modelFormat?: ModelInventoryFormat | null): string {
-  if (modelFormat === "adapter") return "Adapter";
-  if (modelFormat === "checkpoint") return "Checkpoint";
-  if (!modelFormat || modelFormat === "safetensors") return "Safetensors";
+  if (modelFormat === "adapter") {
+    return "Adapter";
+  }
+  if (modelFormat === "checkpoint") {
+    return "Checkpoint";
+  }
+  if (!modelFormat || modelFormat === "safetensors") {
+    return "Safetensors";
+  }
   return "Model";
 }
 
@@ -103,7 +108,12 @@ export function SafetensorsDownloadCard({
   const [deleteRepoOpen, setDeleteRepoOpen] = useState(false);
   const { deleting, runDelete } = useCardDelete({
     action: () =>
-      deleteCachedModel(repoId, undefined, hfToken || undefined, cachePath ?? undefined),
+      deleteCachedModel(
+        repoId,
+        undefined,
+        hfToken || undefined,
+        cachePath ?? undefined,
+      ),
     resourceName: "model",
     successMessage: () => `Deleted ${repoId}`,
     onSuccess: () => {
@@ -129,22 +139,27 @@ export function SafetensorsDownloadCard({
       setJobExpectedBytes(knownBytes);
       return;
     }
-    if (!online) return;
-    if (!repoId) return;
+    if (!online) {
+      return;
+    }
+    if (!repoId) {
+      return;
+    }
     const controller = new AbortController();
     const { signal } = controller;
     void fetchModelSize(repoId, hfToken || undefined, signal)
       .then((info) => {
-        if (signal.aborted || !info) return;
+        if (signal.aborted || !info) {
+          return;
+        }
         const upstream = info.weightsBytes ?? info.totalBytes;
         if (upstream && upstream > 0) {
           setModelSize({ key: sizeKey, bytes: upstream });
           setJobExpectedBytes(upstream);
         }
       })
-      .catch((err) => {
+      .catch((_err) => {
         if (!signal.aborted && import.meta.env.DEV) {
-          console.debug("Model size lookup failed", err);
         }
       });
     return () => {
@@ -193,7 +208,9 @@ export function SafetensorsDownloadCard({
           <DeleteConfirmDialog
             open={deleteRepoOpen}
             onOpenChange={(o) => {
-              if (!o && !deleting) setDeleteRepoOpen(false);
+              if (!(o || deleting)) {
+                setDeleteRepoOpen(false);
+              }
             }}
             title="Delete cached model?"
             deleting={deleting}
@@ -222,7 +239,7 @@ export function SafetensorsDownloadCard({
                 label={isActive ? "Loaded" : "On device"}
               />
             )}
-            {!isDownloaded && !isActive && isPartial && !downloading && (
+            {!(isDownloaded || isActive) && isPartial && !downloading && (
               <Tooltip>
                 <TooltipTrigger asChild={true}>
                   <span className="inline-flex">
@@ -251,17 +268,17 @@ export function SafetensorsDownloadCard({
                 omitted in the run bar. Managed HF-cache repos only. */}
             {(isDownloaded || (isPartial && !downloading)) &&
               !/^([/\\~.]|[A-Za-z]:)/.test(repoId) && (
-              <QuantOptionsMenu
-                repoId={repoId}
-                label={repoId}
-                downloaded={isDownloaded}
-                canDelete={canDelete}
-                onDelete={() => setDeleteRepoOpen(true)}
-                showPin={false}
-                buttonClassName="ml-0.5 size-7"
-                iconClassName="size-4"
-              />
-            )}
+                <QuantOptionsMenu
+                  repoId={repoId}
+                  label={repoId}
+                  downloaded={isDownloaded}
+                  canDelete={canDelete}
+                  onDelete={() => setDeleteRepoOpen(true)}
+                  showPin={false}
+                  buttonClassName="ml-0.5 size-7"
+                  iconClassName="size-4"
+                />
+              )}
           </div>
         </div>
         {/* Info/actions hairline; dropped for the run action row (no divider before
@@ -288,7 +305,9 @@ export function SafetensorsDownloadCard({
               type="button"
               disabled={isLoadingThisModel || !canRun}
               onClick={() => {
-                if (!canRun) return;
+                if (!canRun) {
+                  return;
+                }
                 if (isActive) {
                   onEject?.();
                   return;

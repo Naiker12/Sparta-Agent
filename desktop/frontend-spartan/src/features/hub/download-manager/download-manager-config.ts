@@ -1,4 +1,3 @@
-
 import type { DownloadJobState } from "./api";
 
 export const POLL_INTERVAL_MS = 500;

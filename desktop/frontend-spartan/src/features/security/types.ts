@@ -1,4 +1,3 @@
-
 export type RemoteCodeSeverity = "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
 
 /** One line of the code window shown for a finding. */

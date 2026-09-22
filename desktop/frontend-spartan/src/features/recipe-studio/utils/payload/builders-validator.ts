@@ -1,4 +1,3 @@
-
 import type { NodeConfig, ValidatorConfig } from "../../types";
 import { isValidatorCodeLang } from "../validators/code-lang";
 

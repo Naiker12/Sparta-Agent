@@ -1,7 +1,6 @@
-
+import { subscribeModelLifecycle } from "@/lib/model-lifecycle-events";
 import { toast } from "@/lib/toast";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { subscribeModelLifecycle } from "@/lib/model-lifecycle-events";
 import { ejectLoadedModel, readLoadedModels } from "./loaded-models-api";
 import {
   type LoadedModelEntry,
@@ -15,7 +14,7 @@ const POLL_INTERVAL_MS = 5000;
 
 const NO_ENTRIES: LoadedModelEntry[] = [];
 
-const ALL_SOURCES: LoadedModelSource[] = ["chat", "image", "video", "stt"];
+const ALL_SOURCES: LoadedModelSource[] = ["chat", "stt"];
 
 export type UseLoadedModels = {
   entries: LoadedModelEntry[];
@@ -86,17 +85,23 @@ export function useLoadedModels(
    * settled, so the next readable poll retires them instead.
    */
   const retireSettled = useCallback((unreadable: LoadedModelSource[] = []) => {
-    if (settledRef.current.size === 0) return;
+    if (settledRef.current.size === 0) {
+      return;
+    }
     const done = [...settledRef.current].filter(
       (source) => !unreadable.includes(source),
     );
-    if (done.length === 0) return;
+    if (done.length === 0) {
+      return;
+    }
     settledRef.current = new Set(
       [...settledRef.current].filter((source) => !done.includes(source)),
     );
     setPending((prev) => {
       const next = new Map(prev);
-      for (const source of done) next.delete(source);
+      for (const source of done) {
+        next.delete(source);
+      }
       return next.size === prev.size ? prev : next;
     });
   }, []);
@@ -106,7 +111,9 @@ export function useLoadedModels(
     // Keyed on recording, not showing: a closed card keeps polling so a load
     // started outside this tab, which raises no lifecycle event at all, still
     // brings it back.
-    if (!track) return;
+    if (!track) {
+      return;
+    }
     if (inFlightRef.current) {
       // Remember the ask instead of dropping it: the refresh an eject queues
       // collides with the poll it has to correct more often than not.
@@ -139,7 +146,9 @@ export function useLoadedModels(
         // This read is the one that supersedes them, so retire only once no
         // further read is already queued, and only for the sources it could
         // actually see.
-        if (mountedRef.current) retireSettled(unreadable);
+        if (mountedRef.current) {
+          retireSettled(unreadable);
+        }
       });
   }, [track, retireSettled]);
   useEffect(() => {
@@ -163,13 +172,17 @@ export function useLoadedModels(
   const [wasTracking, setWasTracking] = useState(track);
   if (wasTracking !== track) {
     setWasTracking(track);
-    if (!track && pending.size > 0) setPending(new Map());
+    if (!track && pending.size > 0) {
+      setPending(new Map());
+    }
   }
 
   // The load call announces itself, so the row and the toast appear together
   // and a finished load is re-read at once instead of on the next tick.
   useEffect(() => {
-    if (!track) return;
+    if (!track) {
+      return;
+    }
     return subscribeModelLifecycle(({ runtime, loading, model }) => {
       if (loading) {
         settledRef.current.delete(runtime);
@@ -185,15 +198,21 @@ export function useLoadedModels(
   }, [track, refresh]);
 
   useEffect(() => {
-    if (!track) return;
+    if (!track) {
+      return;
+    }
     refresh();
     const timer = window.setInterval(() => {
-      if (document.hidden) return;
+      if (document.hidden) {
+        return;
+      }
       refresh();
     }, POLL_INTERVAL_MS);
     // Pick up a load or unload done in another tab.
     const onWake = () => {
-      if (!document.hidden) refresh();
+      if (!document.hidden) {
+        refresh();
+      }
     };
     window.addEventListener("focus", onWake);
     document.addEventListener("visibilitychange", onWake);

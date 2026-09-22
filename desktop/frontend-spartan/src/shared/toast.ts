@@ -1,4 +1,3 @@
-
 import { toast } from "@/lib/toast";
 
 export function toastSuccess(message: string): void {

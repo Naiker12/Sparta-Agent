@@ -1,4 +1,3 @@
-
 /** How keyboard and drag input map to prompt-queue actions. */
 
 /**
@@ -15,7 +14,9 @@ export const PROMPT_QUEUE_DRAG_TYPE = "application/x-unsloth-prompt-queue-item";
 export function isPromptQueueDragTypes(
   types: ArrayLike<string> | undefined | null,
 ): boolean {
-  if (!types) return false;
+  if (!types) {
+    return false;
+  }
   return Array.from(types).includes(PROMPT_QUEUE_DRAG_TYPE);
 }
 
@@ -33,7 +34,9 @@ export function isPromptQueueChord(event: {
   ctrlKey: boolean;
   altKey?: boolean;
 }): boolean {
-  if (event.key !== "Enter" || event.shiftKey || event.altKey) return false;
+  if (event.key !== "Enter" || event.shiftKey || event.altKey) {
+    return false;
+  }
   return event.metaKey || event.ctrlKey;
 }
 
@@ -48,8 +51,12 @@ export function hasPendingPromptQueueStart(
   threadId: string | null,
 ): boolean {
   for (const reservation of reservations) {
-    if (reservation.cancelled) continue;
-    if (reservation.threadId === threadId) return true;
+    if (reservation.cancelled) {
+      continue;
+    }
+    if (reservation.threadId === threadId) {
+      return true;
+    }
   }
   return false;
 }

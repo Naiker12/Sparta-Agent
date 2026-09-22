@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useT } from "@/i18n";
@@ -27,7 +26,9 @@ export function CreateKeyForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || loading) return;
+    if (!name.trim() || loading) {
+      return;
+    }
     setLoading(true);
     try {
       const result = await createApiKey(name.trim(), expiry);

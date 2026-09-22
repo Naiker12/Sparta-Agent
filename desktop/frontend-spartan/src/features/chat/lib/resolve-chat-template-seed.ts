@@ -1,4 +1,3 @@
-
 // What a fresh /api/inference/status does to the chat-template override pair. Its own
 // module, importing neither the store nor a barrel, so the rules are testable off a browser.
 

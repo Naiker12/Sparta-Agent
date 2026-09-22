@@ -1,6 +1,5 @@
-
-import type { ComponentProps, ReactElement } from "react";
 import { Handle, type HandleProps } from "@xyflow/react";
+import type { ComponentProps, ReactElement } from "react";
 
 import { cn } from "@/lib/utils";
 

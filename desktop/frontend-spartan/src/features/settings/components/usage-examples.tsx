@@ -1,4 +1,3 @@
-
 import { createCodePlugin } from "@/components/assistant-ui/code-plugin";
 import {
   unslothDarkTheme,
@@ -30,7 +29,11 @@ import { loadCodingAgents } from "../api/coding-agents";
 import { loadOpenAIAutoSwitchSettings } from "../api/openai-auto-switch";
 import { type OpenAIModel, listOpenAIModels } from "../api/openai-models";
 import { useSettingsPanelPrefsStore } from "../stores/settings-panel-prefs-store";
-import { buildAgentCommand, isLoopbackHost, normalizeHost } from "./agent-command";
+import {
+  buildAgentCommand,
+  isLoopbackHost,
+  normalizeHost,
+} from "./agent-command";
 
 type ExampleType =
   | "curl"
@@ -108,10 +111,7 @@ const DOC_LINKS = [
 // Fallback until the backend's installed-CLI check resolves. Mirrors
 // CODING_AGENTS in studio/spartan_backend/utils/coding_agents.py, minus HIDDEN_AGENTS
 // (see ../api/coding-agents.ts).
-const DEFAULT_AGENTS = [
-  "claude",
-  "codex",
-];
+const DEFAULT_AGENTS = ["claude", "codex"];
 // The agent selection resets to this whenever an auto-pick is no longer
 // trustworthy (leaving loopback, or the only compatible detected agent
 // stops being compatible) rather than lingering on a stale choice.
@@ -230,12 +230,13 @@ function pythonSnippet(
     extra.push(`        "enable_tools": True,`);
     extra.push(`        "enabled_tools": [${toolsJson}],`);
   }
-  const extraBody = extra.length
-    ? `
+  const extraBody =
+    extra.length > 0
+      ? `
     extra_body={
 ${extra.join("\n")}
     },`
-    : "";
+      : "";
   const loop =
     variant !== "plain"
       ? `for chunk in response:
@@ -277,14 +278,14 @@ function javascriptSnippet(
     options.push(`  top_k: ${ADV.top_k},`);
     options.push(`  min_p: ${ADV.min_p},`);
     options.push(`  repetition_penalty: ${ADV.repetition_penalty},`);
-    options.push(`  enable_thinking: true,`);
+    options.push("  enable_thinking: true,");
   }
   if (variant !== "plain") {
-    options.push(`  enable_tools: true,`);
+    options.push("  enable_tools: true,");
     options.push(`  enabled_tools: [${toolsJson}],`);
   }
 
-  const trailingOptions = options.length ? `\n${options.join("\n")}` : "";
+  const trailingOptions = options.length > 0 ? `\n${options.join("\n")}` : "";
 
   return `import OpenAI from "openai";
 
@@ -333,7 +334,9 @@ const CATALOG_RETRY_MS = 15000;
 const CATALOG_IDLE_MS = 60000;
 
 function readUseTunnelPref(): boolean {
-  if (typeof window === "undefined") return true;
+  if (typeof window === "undefined") {
+    return true;
+  }
   try {
     return window.localStorage.getItem(USE_TUNNEL_KEY) !== "false";
   } catch {
@@ -342,7 +345,9 @@ function readUseTunnelPref(): boolean {
 }
 
 function writeUseTunnelPref(value: boolean): void {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined") {
+    return;
+  }
   try {
     window.localStorage.setItem(USE_TUNNEL_KEY, value ? "true" : "false");
   } catch {
@@ -365,7 +370,9 @@ function looksLikePath(id: string): boolean {
 // Same model, ignoring any ":quant" a caller pinned.
 function sameBaseModelId(a: string, b: string): boolean {
   const base = (id: string) => id.trim().toLowerCase().split(":")[0];
-  return a.trim().toLowerCase() === b.trim().toLowerCase() || base(a) === base(b);
+  return (
+    a.trim().toLowerCase() === b.trim().toLowerCase() || base(a) === base(b)
+  );
 }
 
 // The model the examples name: always an id /v1 resolves against, null when there is none.
@@ -380,7 +387,9 @@ function useExampleModelName(): string | null {
   // what it freed: the stored checkpoint only, never an arbitrary catalog entry.
   const [idleReload, setIdleReload] = useState(false);
   const usableCheckpoint =
-    !!checkpoint && !checkpoint.startsWith("external::") && !looksLikePath(checkpoint);
+    !!checkpoint &&
+    !checkpoint.startsWith("external::") &&
+    !looksLikePath(checkpoint);
 
   // Always: a stored checkpoint can stop being servable without the store changing.
   // biome-ignore lint/correctness/useExhaustiveDependencies: a load or unload must refetch the servable ids
@@ -399,17 +408,23 @@ function useExampleModelName(): string | null {
           .catch(() => null),
       ])
         .then(([models, settings]) => {
-          if (cancelled) return true;
-          if (models !== null) setCatalog(models);
+          if (cancelled) {
+            return true;
+          }
+          if (models !== null) {
+            setCatalog(models);
+          }
           if (settings !== null) {
             setAutoSwitch(settings[0]);
             setIdleReload(settings[1]);
           }
           // Resident only slows the polling; it never stops it.
-          return models !== null && models.some((m) => m.loaded);
+          return models?.some((m) => m.loaded);
         })
         .then((resolved) => {
-          if (cancelled) return;
+          if (cancelled) {
+            return;
+          }
           timeoutId = window.setTimeout(
             update,
             resolved ? CATALOG_IDLE_MS : CATALOG_RETRY_MS,
@@ -420,7 +435,9 @@ function useExampleModelName(): string | null {
     update();
     return () => {
       cancelled = true;
-      if (timeoutId !== null) window.clearTimeout(timeoutId);
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+      }
     };
   }, [checkpoint, ggufVariant]);
 
@@ -428,7 +445,8 @@ function useExampleModelName(): string | null {
     // Name something held here, with its quant to pin the file on disk.
     const fromCatalog = (): string | null => {
       const pick =
-        catalog?.find((m) => m.loaded) ?? (autoSwitch ? catalog?.[0] : undefined);
+        catalog?.find((m) => m.loaded) ??
+        (autoSwitch ? catalog?.[0] : undefined);
       if (!pick) {
         return null;
       }
@@ -442,7 +460,8 @@ function useExampleModelName(): string | null {
     // /v1/models has not answered, which is not evidence against it.
     const entry = catalog?.find((m) => sameBaseModelId(m.id, checkpoint ?? ""));
     const backed =
-      catalog === null || (!!entry && (entry.loaded || autoSwitch || idleReload));
+      catalog === null ||
+      (!!entry && (entry.loaded || autoSwitch || idleReload));
     if (usableCheckpoint && checkpoint && backed) {
       if (checkpoint.includes(":")) {
         return checkpoint;
@@ -454,13 +473,22 @@ function useExampleModelName(): string | null {
       return quant ? `${checkpoint}:${quant}` : checkpoint;
     }
     return fromCatalog();
-  }, [autoSwitch, catalog, checkpoint, ggufVariant, idleReload, usableCheckpoint]);
+  }, [
+    autoSwitch,
+    catalog,
+    checkpoint,
+    ggufVariant,
+    idleReload,
+    usableCheckpoint,
+  ]);
 }
 
 // Backend PATH detection is only safe in the desktop app, where the UI owns
 // the local backend. A browser loopback URL may be an SSH/local port forward.
 function canUseLocalAgentDetection(base: string): boolean {
-  if (!isTauri) return false;
+  if (!isTauri) {
+    return false;
+  }
   try {
     return isLoopbackHost(normalizeHost(new URL(base).hostname));
   } catch {
@@ -513,7 +541,8 @@ export function UsageExamples({ apiKey }: { apiKey?: string | null }) {
   // read once: these seed the controls, which write back through the handlers.
   const [storedPrefs] = useState(() => useSettingsPanelPrefsStore.getState());
   const [lang, setLang] = useState<ExampleType>(
-    storedPrefs.apiExampleLang && EXAMPLE_TYPE_IDS.has(storedPrefs.apiExampleLang)
+    storedPrefs.apiExampleLang &&
+      EXAMPLE_TYPE_IDS.has(storedPrefs.apiExampleLang)
       ? (storedPrefs.apiExampleLang as ExampleType)
       : "curl",
   );
@@ -572,7 +601,9 @@ export function UsageExamples({ apiKey }: { apiKey?: string | null }) {
     let cancelled = false;
     void loadCodingAgents()
       .then((info) => {
-        if (cancelled) return;
+        if (cancelled) {
+          return;
+        }
         setAvailableAgents(info.agents);
         setDetectedAgents(info.detected);
       })
@@ -580,7 +611,9 @@ export function UsageExamples({ apiKey }: { apiKey?: string | null }) {
         // Best-effort: keep the default agent list and let the user pick manually.
       })
       .finally(() => {
-        if (!cancelled) setAgentsLoaded(true);
+        if (!cancelled) {
+          setAgentsLoaded(true);
+        }
       });
     return () => {
       cancelled = true;
@@ -589,13 +622,25 @@ export function UsageExamples({ apiKey }: { apiKey?: string | null }) {
 
   // a restored agent this build no longer offers cannot build a command.
   useEffect(() => {
-    if (!agentPickedByUserRef.current) return;
-    if (localAgentDetection && !agentsLoaded) return;
-    if (availableAgents.includes(agent)) return;
+    if (!agentPickedByUserRef.current) {
+      return;
+    }
+    if (localAgentDetection && !agentsLoaded) {
+      return;
+    }
+    if (availableAgents.includes(agent)) {
+      return;
+    }
     agentPickedByUserRef.current = false;
     setStoredAgent(null);
     setAgent(DEFAULT_AGENT);
-  }, [agent, agentsLoaded, availableAgents, localAgentDetection, setStoredAgent]);
+  }, [
+    agent,
+    agentsLoaded,
+    availableAgents,
+    localAgentDetection,
+    setStoredAgent,
+  ]);
 
   // Single source of truth for the auto-picked agent, re-derived whenever
   // the detected list or the loaded model's GGUF-ness changes -- in either
@@ -616,13 +661,21 @@ export function UsageExamples({ apiKey }: { apiKey?: string | null }) {
   // path a model can be GGUF through, matching the same is_gguf-or-equivalent
   // check hasGgufSource applies to a staged pick.
   const activeGgufVariant = useChatRuntimeStore((s) => s.activeGgufVariant);
-  const activeNativePathToken = useChatRuntimeStore((s) => s.activeNativePathToken);
+  const activeNativePathToken = useChatRuntimeStore(
+    (s) => s.activeNativePathToken,
+  );
   const ggufContextLength = useChatRuntimeStore((s) => s.ggufContextLength);
   useEffect(() => {
-    if (agentPickedByUserRef.current) return;
-    if (detectedAgents.length === 0) return;
+    if (agentPickedByUserRef.current) {
+      return;
+    }
+    if (detectedAgents.length === 0) {
+      return;
+    }
     const isGguf =
-      activeGgufVariant != null || activeNativePathToken != null || ggufContextLength != null;
+      activeGgufVariant != null ||
+      activeNativePathToken != null ||
+      ggufContextLength != null;
     const preferred = detectedAgents.find((a) => a !== "codex" || isGguf);
     if (preferred) {
       setAgent(preferred);
@@ -633,7 +686,13 @@ export function UsageExamples({ apiKey }: { apiKey?: string | null }) {
       // of leaving a codex command spartan_agent_cli will reject.
       setAgent(DEFAULT_AGENT);
     }
-  }, [agent, detectedAgents, activeGgufVariant, activeNativePathToken, ggufContextLength]);
+  }, [
+    agent,
+    detectedAgents,
+    activeGgufVariant,
+    activeNativePathToken,
+    ggufContextLength,
+  ]);
 
   const model = useExampleModelName();
   const key = apiKey || KEY_PLACEHOLDER;
@@ -659,7 +718,9 @@ export function UsageExamples({ apiKey }: { apiKey?: string | null }) {
       : "python";
 
   const handleCopy = async () => {
-    if (!snippets) return;
+    if (!snippets) {
+      return;
+    }
     if (await copyToClipboard(snippets[lang])) {
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);

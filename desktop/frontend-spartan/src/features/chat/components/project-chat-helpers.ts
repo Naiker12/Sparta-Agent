@@ -5,8 +5,8 @@
  * guardado de hilos como fuentes RAG y extracción de fragmentos de texto.
  */
 
-import type { MessageRecord } from "../types";
 import type { SidebarItem } from "../hooks/use-chat-sidebar-items";
+import type { MessageRecord } from "../types";
 import { listStoredChatThreads } from "../utils/chat-history-storage";
 import {
   CONVERSATION_MARKDOWN_FORMAT,
@@ -56,11 +56,18 @@ export async function exportProjectConversation(
   format: ProjectChatExportFormat,
 ): Promise<void> {
   const exports = await import("../prompt-storage/prompt-storage-dialog");
-  if (format === "raw-jsonl") return exports.exportConversationRawJsonl(threadId);
-  if (format === "csv") return exports.exportConversationCsv(threadId);
-  if (format === CONVERSATION_MARKDOWN_FORMAT)
+  if (format === "raw-jsonl") {
+    return exports.exportConversationRawJsonl(threadId);
+  }
+  if (format === "csv") {
+    return exports.exportConversationCsv(threadId);
+  }
+  if (format === CONVERSATION_MARKDOWN_FORMAT) {
     return exports.exportConversationMarkdown(threadId);
-  if (format === "sharegpt-jsonl") return exports.exportConversationShareGPT(threadId);
+  }
+  if (format === "sharegpt-jsonl") {
+    return exports.exportConversationShareGPT(threadId);
+  }
   const unhandled: never = format;
   throw new Error(`Unhandled export format: ${String(unhandled)}`);
 }
@@ -73,7 +80,9 @@ export async function exportProjectChatItem(
     item.type === "single"
       ? [item.id]
       : (await listStoredChatThreads({ pairId: item.id })).map((t) => t.id);
-  for (const id of ids) await exportProjectConversation(id, format);
+  for (const id of ids) {
+    await exportProjectConversation(id, format);
+  }
 }
 
 export async function saveProjectChatItemAsSource(

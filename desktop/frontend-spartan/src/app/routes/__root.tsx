@@ -1,4 +1,3 @@
-
 import { AppSidebar } from "@/components/app-sidebar";
 import { Navbar } from "@/components/navbar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
@@ -12,13 +11,13 @@ import {
 import {
   ChatPage,
   type ChatSearch,
-  clearNewChatDraft,
   StopRunningChatsDialog,
+  clearNewChatDraft,
   useChatRuntimeStore,
 } from "@/features/chat";
+import { bootstrapPersistedCredentials } from "@/features/credentials/bootstrap";
 import { useExportRuntimeLifecycle } from "@/features/export";
 import { HfTokenWarningDialog } from "@/features/hf-auth";
-import { bootstrapPersistedCredentials } from "@/features/credentials/bootstrap";
 import { backfillModelOverrides } from "@/features/model-picker/api/migrate-model-overrides";
 import { usePersonalizationSync } from "@/features/profile";
 import { RemoteCodeConsentDialog } from "@/features/security";
@@ -41,15 +40,13 @@ import {
 } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "motion/react";
 import {
-  lazy,
-
   type ReactNode,
   Suspense,
+  lazy,
   useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
-
   useState,
 } from "react";
 import { AppProvider } from "../provider";
@@ -82,23 +79,26 @@ const CREDENTIAL_BOOTSTRAP_TIMEOUT_MS = 12_000;
 function waitForCredentialBootstrap(): Promise<void> {
   return new Promise((resolve) => {
     let settled = false;
+    // biome-ignore lint/style/useConst: reassigned on line 93
     let timeout: number | undefined;
     const finish = () => {
-      if (settled) return;
+      if (settled) {
+        return;
+      }
       settled = true;
-      if (timeout !== undefined) window.clearTimeout(timeout);
+      if (timeout !== undefined) {
+        window.clearTimeout(timeout);
+      }
       resolve();
     };
     timeout = window.setTimeout(finish, CREDENTIAL_BOOTSTRAP_TIMEOUT_MS);
-    void bootstrapPersistedCredentials().finally(finish);
+    bootstrapPersistedCredentials()
+      .finally(finish)
+      .catch(() => {
+        // Non-critical: bootstrap failure is handled by the timeout.
+      });
   });
 }
-
-// ImagesPage is mounted persistently below (not via the /images route) so an in-flight batch survives leaving the tab,
-// mirroring ChatPage. Kept lazy so its bundle still loads only on the first /images visit.
-const ImagesPage = lazy(() =>
-  import("@/features/images").then((m) => ({ default: m.ImagesPage })),
-);
 
 // AudioPage gets the same persistent mount so an in-flight generation keeps its UI state; still lazy on first /audio visit.
 const AudioPage = lazy(() =>
@@ -117,11 +117,12 @@ function ChatSettingsHydrationMount() {
     (state) => state.hydratePersistedSettings,
   );
   useEffect(() => {
-    void hydratePersistedSettings();
+    hydratePersistedSettings().catch(() => {
+      // Non-critical: settings hydration failures are recoverable via defaults.
+    });
   }, [hydratePersistedSettings]);
   return null;
 }
-
 
 function CredentialBootstrapGate({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
@@ -138,12 +139,8 @@ function CredentialBootstrapGate({ children }: { children: ReactNode }) {
         return;
       }
       setReady(false);
-      void waitForCredentialBootstrap().finally(() => {
-        if (
-          active &&
-          revision === runRevision.current &&
-          hasAuthToken()
-        ) {
+      waitForCredentialBootstrap().finally(() => {
+        if (active && revision === runRevision.current && hasAuthToken()) {
           setReady(true);
         }
       });
@@ -194,13 +191,20 @@ function waitsOutUnknownVerdict(pathname: string): boolean {
 }
 
 function isChatOnlyAllowed(pathname: string): boolean {
-  if (CHAT_ONLY_ALLOWED.has(pathname)) return true;
-  if (pathname === "/data-recipes" || pathname.startsWith("/data-recipes/"))
+  if (CHAT_ONLY_ALLOWED.has(pathname)) {
     return true;
+  }
+  if (pathname === "/data-recipes" || pathname.startsWith("/data-recipes/")) {
+    return true;
+  }
   // Images runs on CPU/MPS via the native sd.cpp engine, the very no-GPU setup it was added for. The chat-only flag is about training/export, so it must not redirect /images.
-  if (pathname === "/images" || pathname.startsWith("/images/")) return true;
+  if (pathname === "/images" || pathname.startsWith("/images/")) {
+    return true;
+  }
   // Audio inference is CPU-capable too: GGUF TTS through llama.cpp and STT through the whisper.cpp / mtmd sidecars.
-  if (pathname === "/audio" || pathname.startsWith("/audio/")) return true;
+  if (pathname === "/audio" || pathname.startsWith("/audio/")) {
+    return true;
+  }
   return false;
 }
 
@@ -210,7 +214,9 @@ export const Route = createRootRoute({
     // TauriWrapper fetches the same verdict once the backend reports a validated
     // port; querying earlier would route through Vite's not-yet-live dev proxy.
     // Browser sessions still need the verdict before applying this guard.
-    if (!isTauri) await fetchDeviceType();
+    if (!isTauri) {
+      await fetchDeviceType();
+    }
     const { isChatOnly, capabilitiesUnknown } = usePlatformStore.getState();
     const unmeasured = capabilitiesUnknown();
     if (
@@ -277,16 +283,6 @@ function RootLayout() {
   const chatSearch = isChatRoute ? liveChatSearch : frozenChatSearch;
   const shouldMountChat = isChatRoute || chatMounted;
 
-  // Same persistent mount for /images so a long batch keeps generating off-tab. Mounts lazily on first visit, then stays
-  // mounted, hidden+inert while off-route. `active` is a visibility flag only: it lags the matches by a render, so ImagesPage
-  // reads ?model= from its own match instead of trusting it.
-  const isImagesRoute = pathname === "/images";
-  const [imagesMounted, setImagesMounted] = useState(isImagesRoute);
-  if (isImagesRoute && !imagesMounted) {
-    setImagesMounted(true);
-  }
-  const shouldMountImages = isImagesRoute || imagesMounted;
-
   // Same persistent mount for /audio so generation UI state survives leaving the tab.
   const isAudioRoute = pathname === "/audio";
   const [audioMounted, setAudioMounted] = useState(isAudioRoute);
@@ -294,9 +290,7 @@ function RootLayout() {
     setAudioMounted(true);
   }
   const shouldMountAudio = isAudioRoute || audioMounted;
-  // Chat, Images and Audio each render their own full-height shell, so all want the chat-style layout: no outer pt-14 inset, no outer
-  // scroll. Keying off isChatRoute alone pushed the picker down and clipped the gallery. Container padding/overflow only; keep-alive stays per route.
-  const isChatLike = isChatRoute || isImagesRoute || isAudioRoute;
+  const isChatLike = isChatRoute || isAudioRoute;
 
   // Global export driver: streams worker logs and tracks status from any route
   // so an export keeps running and stays visible while chatting.
@@ -306,8 +300,12 @@ function RootLayout() {
     select: (matches) => {
       for (let i = matches.length - 1; i >= 0; i--) {
         const { title, titleKey } = matches[i].staticData;
-        if (titleKey) return t(titleKey);
-        if (title) return title;
+        if (titleKey) {
+          return t(titleKey);
+        }
+        if (title) {
+          return title;
+        }
       }
       return null;
     },
@@ -329,7 +327,9 @@ function RootLayout() {
     if (isAuthFlowRoute) {
       return;
     }
-    void backfillModelOverrides();
+    backfillModelOverrides().catch(() => {
+      // Non-critical: model override backfill retried on next mount.
+    });
   }, [isAuthFlowRoute]);
 
   useEffect(() => {
@@ -347,8 +347,7 @@ function RootLayout() {
   );
   useShortcut(
     "openKeyboardShortcuts",
-    () =>
-      useSettingsDialogStore.getState().openDialog("keyboard-shortcuts"),
+    () => useSettingsDialogStore.getState().openDialog("keyboard-shortcuts"),
     { enabled: !isAuthFlowRoute },
   );
   useShortcut("newChat", () => {
@@ -357,21 +356,27 @@ function RootLayout() {
     chatRuntime.setActiveThreadId(null);
     chatRuntime.setActiveProjectId(null);
     chatRuntime.setIncognito(false);
-    void navigate({
+    navigate({
       to: "/chat",
       search: { new: crypto.randomUUID() },
+    }).catch(() => {
+      // Navigation errors are non-critical.
     });
   });
 
   useEffect(() => {
-    if (isChatRoute) return;
+    if (isChatRoute) {
+      return;
+    }
     const chatRuntime = useChatRuntimeStore.getState();
     // A URL-less chat's provider is keyed off the active thread id; clearing it
     // mid-generation would remount and cancel the stream. Only reset when idle.
     const anyRunning = Object.values(chatRuntime.runningByThreadId).some(
       Boolean,
     );
-    if (anyRunning) return;
+    if (anyRunning) {
+      return;
+    }
     chatRuntime.setActiveProjectId(null);
     chatRuntime.setActiveThreadId(null);
     chatRuntime.setIncognito(false);
@@ -437,21 +442,6 @@ function RootLayout() {
                   <ChatPage search={chatSearch} active={isChatRoute} />
                 </div>
               )}
-              {/* Same keep-alive treatment for Images so a long batch keeps generating off-tab; `active` force-closes its body-portaled overlays (model selector, recipe popover, aspect dropdown) so none bleed over another tab while hidden. */}
-              {shouldMountImages && (
-                <div
-                  className={
-                    isImagesRoute
-                      ? "flex min-h-0 min-w-0 flex-1 basis-0 flex-col overflow-hidden"
-                      : "hidden"
-                  }
-                  inert={!isImagesRoute || undefined}
-                >
-                  <Suspense fallback={<RouteFallback />}>
-                    <ImagesPage active={isImagesRoute} />
-                  </Suspense>
-                </div>
-              )}
               {/* Same keep-alive treatment for Audio so generation and training UI state survive off-tab; `active` force-closes its body-portaled overlays so none bleed over another tab while hidden. */}
               {shouldMountAudio && (
                 <div
@@ -472,7 +462,7 @@ function RootLayout() {
                   "popLayout" allows the new route to mount immediately while the
                   old one animates out, avoiding blocking on expensive exit renders.
                   See issue #5850. */}
-              {!isChatRoute && !isImagesRoute && !isAudioRoute && (
+              {!(isChatRoute || isAudioRoute) && (
                 <AnimatePresence initial={false} mode="popLayout">
                   <motion.div
                     key={pathname}
@@ -497,10 +487,10 @@ function RootLayout() {
 
   return (
     <AppProvider>
-      {!isAuthFlowRoute ? (
-        <CredentialBootstrapGate>{content}</CredentialBootstrapGate>
-      ) : (
+      {isAuthFlowRoute ? (
         content
+      ) : (
+        <CredentialBootstrapGate>{content}</CredentialBootstrapGate>
       )}
     </AppProvider>
   );

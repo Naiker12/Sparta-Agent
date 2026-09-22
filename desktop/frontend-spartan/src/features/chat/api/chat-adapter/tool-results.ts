@@ -32,7 +32,9 @@ export function isSandboxWrapper(
   result: unknown,
   toolName?: string,
 ): result is { text: string; sessionId: string } {
-  if (toolName !== undefined && !SANDBOX_FILE_TOOLS.has(toolName)) return false;
+  if (toolName !== undefined && !SANDBOX_FILE_TOOLS.has(toolName)) {
+    return false;
+  }
   return isSandboxToolResult(result);
 }
 
@@ -52,4 +54,3 @@ export function toolResultModelText(
   }
   return result;
 }
-

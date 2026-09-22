@@ -1,14 +1,14 @@
 "use client";
 
+import { useT } from "@/i18n";
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
 import { MAX_HIGHLIGHT_CHARS } from "@/lib/markdown-plugins";
 import { downloadFile, isDownloadCancelled } from "@/lib/native-files";
+import { Tick02Icon } from "@/lib/tick-icon";
 import { toast } from "@/lib/toast";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { code as codePlugin } from "@streamdown/code";
 import { CopyIcon, DownloadIcon, Maximize2Icon } from "lucide-react";
-import { useT } from "@/i18n";
-import { Tick02Icon } from "@/lib/tick-icon";
-import { HugeiconsIcon } from "@hugeicons/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Streamdown } from "streamdown";
 
@@ -141,9 +141,13 @@ export function HighlightedCode({
   // Pinned to the bottom until the reader scrolls up, so a streaming payload visibly grows.
   const pinnedToBottom = useRef(true);
   useEffect(() => {
-    if (nearViewport) return;
+    if (nearViewport) {
+      return;
+    }
     const el = containerRef.current;
-    if (!el) return;
+    if (!el) {
+      return;
+    }
     const io = new IntersectionObserver(
       (entries) => {
         if (entries.some((entry) => entry.isIntersecting)) {
@@ -285,7 +289,12 @@ export function ToolCodeCell({
           </>
         }
       >
-        <HighlightedCode code={code} language={language} expanded lineNumbers />
+        <HighlightedCode
+          code={code}
+          language={language}
+          expanded={true}
+          lineNumbers={true}
+        />
       </CodeViewerModal>
     </div>
   );

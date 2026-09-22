@@ -1,4 +1,3 @@
-
 import { getAuthToken, refreshSession } from "@/features/auth";
 import { useT } from "@/i18n";
 import { apiUrl, isElectron } from "@/lib/api-base";
@@ -19,11 +18,10 @@ const EMPTY_VERSIONS: StudioVersions = {
 };
 
 function parseStudioVersions(data: ApiObject): StudioVersions {
-  const packageVersion = data["version"];
-  const studioVersion = data["studio_version"];
+  const packageVersion = data.version;
+  const studioVersion = data.studio_version;
   return {
-    packageVersion:
-      typeof packageVersion === "string" ? packageVersion : null,
+    packageVersion: typeof packageVersion === "string" ? packageVersion : null,
     studioVersion: typeof studioVersion === "string" ? studioVersion : null,
   };
 }
@@ -36,7 +34,9 @@ async function requestStudioVersions(
   token: string | null,
 ): Promise<StudioVersions> {
   const headers = new Headers();
-  if (token) headers.set("Authorization", `Bearer ${token}`);
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
   const res = await fetch(apiUrl("/api/health"), { headers });
   if (!res.ok) {
     return EMPTY_VERSIONS;
@@ -69,11 +69,9 @@ async function fetchStudioVersions(): Promise<StudioVersions> {
 import { SPARTA_VERSION } from "@/config/version";
 
 export function StudioVersionSection({
-  llamaCppVersion,
   desktopAppVersion,
   children,
 }: {
-  llamaCppVersion?: string | null;
   desktopAppVersion?: string | null;
   children?: ReactNode;
 } = {}) {
@@ -92,7 +90,9 @@ export function StudioVersionSection({
     }
     let canceled = false;
     fetchStudioVersions().then((next) => {
-      if (canceled) return;
+      if (canceled) {
+        return;
+      }
       if (next.packageVersion && !next.packageVersion.includes("2026.8")) {
         setPackageVersion(next.packageVersion);
       } else {
@@ -125,13 +125,6 @@ export function StudioVersionSection({
         <SettingsRow label={t("settings.about.desktopAppVersion")}>
           <code className="font-mono text-xs text-muted-foreground">
             {desktopAppVersion ?? SPARTA_VERSION}
-          </code>
-        </SettingsRow>
-      ) : null}
-      {llamaCppVersion ? (
-        <SettingsRow label={t("settings.about.llamaCppVersion")}>
-          <code className="font-mono text-xs text-muted-foreground">
-            {llamaCppVersion}
           </code>
         </SettingsRow>
       ) : null}

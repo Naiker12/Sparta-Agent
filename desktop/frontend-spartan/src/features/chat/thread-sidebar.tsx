@@ -1,5 +1,22 @@
-import { useState } from "react";
-import { useT } from "@/i18n";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import {
   SidebarContent,
   SidebarFooter,
@@ -11,25 +28,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useT } from "@/i18n";
+import { isDownloadCancelled } from "@/lib/native-files";
 import {
   BookOpen02Icon,
   ColumnInsertIcon,
@@ -40,11 +40,8 @@ import {
   PencilEdit02Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { isDownloadCancelled } from "@/lib/native-files";
+import { useState } from "react";
 import { toast } from "sonner";
-import { useChatRuntimeStore } from "./stores/chat-runtime-store";
-import type { ChatView } from "./types";
-import { CONVERSATION_MARKDOWN_LABEL } from "./utils/conversation-markdown";
 import {
   deleteChatItem,
   renameChatItem,
@@ -52,16 +49,19 @@ import {
 } from "./hooks/use-chat-sidebar-items";
 import type { SidebarItem } from "./hooks/use-chat-sidebar-items";
 import {
-  exportConversationRawJsonl,
-  exportConversationCsv,
-  exportConversationShareGPT,
-  exportConversationMarkdown,
+  type ConvExportFormat,
+  EXPORT_FORMATS_LIST,
   exportBulkConversationsMerged,
   exportBulkConversationsSeparate,
-  EXPORT_FORMATS_LIST,
-  type ConvExportFormat,
+  exportConversationCsv,
+  exportConversationMarkdown,
+  exportConversationRawJsonl,
+  exportConversationShareGPT,
 } from "./prompt-storage/prompt-storage-dialog";
+import { useChatRuntimeStore } from "./stores/chat-runtime-store";
+import type { ChatView } from "./types";
 import { listStoredChatThreads } from "./utils/chat-history-storage";
+import { CONVERSATION_MARKDOWN_LABEL } from "./utils/conversation-markdown";
 
 const EXPORT_FORMATS = [
   { label: "Raw JSONL", fn: exportConversationRawJsonl },
@@ -71,7 +71,9 @@ const EXPORT_FORMATS = [
 ] as const;
 
 async function getThreadIdsForItem(item: SidebarItem): Promise<string[]> {
-  if (item.type === "single") return [item.id];
+  if (item.type === "single") {
+    return [item.id];
+  }
   const threads = await listStoredChatThreads({ pairId: item.id });
   return threads.map((t) => t.id);
 }
@@ -118,7 +120,9 @@ export function ThreadSidebar({
   }
 
   async function commitRename() {
-    if (!renamingItem) return;
+    if (!renamingItem) {
+      return;
+    }
     try {
       await renameChatItem(renamingItem, renameDraft);
     } catch {
@@ -215,7 +219,7 @@ export function ThreadSidebar({
               {t("shell.navigation.recents")}
             </span>
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+              <DropdownMenuTrigger asChild={true}>
                 <button
                   type="button"
                   className="flex items-center justify-center rounded-sm p-0.5 text-muted-foreground hover:bg-accent focus:outline-none focus-visible:ring-0"
@@ -318,9 +322,9 @@ export function ThreadSidebar({
                     <span>{item.title}</span>
                   </SidebarMenuButton>
                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
+                    <DropdownMenuTrigger asChild={true}>
                       <SidebarMenuAction
-                        showOnHover
+                        showOnHover={true}
                         className="focus:outline-none focus-visible:ring-0"
                         onClick={(e) => e.stopPropagation()}
                       >
@@ -422,7 +426,9 @@ export function ThreadSidebar({
       <Dialog
         open={renamingItem !== null}
         onOpenChange={(open) => {
-          if (!open) setRenamingItem(null);
+          if (!open) {
+            setRenamingItem(null);
+          }
         }}
       >
         <DialogContent className="corner-squircle dialog-soft-surface sm:max-w-sm">
@@ -433,9 +439,11 @@ export function ThreadSidebar({
             value={renameDraft}
             onChange={(e) => setRenameDraft(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter") void commitRename();
+              if (e.key === "Enter") {
+                void commitRename();
+              }
             }}
-            autoFocus
+            autoFocus={true}
           />
           <DialogFooter>
             <Button variant="outline" onClick={() => setRenamingItem(null)}>

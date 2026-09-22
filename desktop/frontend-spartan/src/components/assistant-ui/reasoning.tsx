@@ -1,4 +1,3 @@
-
 "use client";
 
 /* eslint-disable react-refresh/only-export-components */
@@ -18,18 +17,18 @@ import {
 } from "@/features/chat";
 import { useCollapseScrollLock } from "@/hooks/use-collapse-scroll-lock";
 import { useT } from "@/i18n";
+import { BulbIcon } from "@/lib/bulb-icon";
+import { copyToClipboard } from "@/lib/copy-to-clipboard";
+import { Tick02Icon } from "@/lib/tick-icon";
 import { cn } from "@/lib/utils";
 import {
   type ReasoningGroupComponent,
   type ReasoningMessagePartComponent,
   useAuiState,
 } from "@assistant-ui/react";
-import { copyToClipboard } from "@/lib/copy-to-clipboard";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { type VariantProps, cva } from "class-variance-authority";
 import { ChevronDownIcon, CopyIcon } from "lucide-react";
-import { BulbIcon } from "@/lib/bulb-icon";
-import { Tick02Icon } from "@/lib/tick-icon";
-import { HugeiconsIcon } from "@hugeicons/react";
 import {
   type CSSProperties,
   type ComponentProps,
@@ -226,7 +225,8 @@ function ReasoningText({
       if (currentScrollTop < lastScrollTopRef.current) {
         detachedFromBottomRef.current = true;
       }
-      const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+      const distanceFromBottom =
+        el.scrollHeight - el.scrollTop - el.clientHeight;
       if (
         detachedFromBottomRef.current &&
         distanceFromBottom <= AUTO_SCROLL_THRESHOLD_PX
@@ -293,7 +293,10 @@ const ReasoningImpl: ReasoningMessagePartComponent = () => <MarkdownText />;
 
 const COPY_RESET_MS = 2000;
 
-function ReasoningCopyButton({ startIndex, endIndex }: { startIndex: number; endIndex: number }) {
+function ReasoningCopyButton({
+  startIndex,
+  endIndex,
+}: { startIndex: number; endIndex: number }) {
   const t = useT();
   const [copied, setCopied] = useState(false);
   const resetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -309,7 +312,9 @@ function ReasoningCopyButton({ startIndex, endIndex }: { startIndex: number; end
   const handleCopy = useCallback(async () => {
     if (await copyToClipboard(reasoningText)) {
       setCopied(true);
-      if (resetRef.current) clearTimeout(resetRef.current);
+      if (resetRef.current) {
+        clearTimeout(resetRef.current);
+      }
       resetRef.current = setTimeout(() => setCopied(false), COPY_RESET_MS);
     }
   }, [reasoningText]);

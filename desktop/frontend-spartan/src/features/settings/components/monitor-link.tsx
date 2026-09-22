@@ -1,4 +1,3 @@
-
 // The monitor has its own page, normally reached from the floating panel; this card is
 // the way in from Settings.
 
@@ -27,7 +26,9 @@ export function MonitorLink(): ReactElement {
     let cancelled = false;
     void getApiMonitor()
       .then((next) => {
-        if (!cancelled) setData(next);
+        if (!cancelled) {
+          setData(next);
+        }
       })
       .catch(() => undefined);
     return () => {

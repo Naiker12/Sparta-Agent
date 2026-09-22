@@ -1,4 +1,3 @@
-
 // Split out of use-system.ts so the VRAM rules can be unit tested without pulling
 // the auth and React graph in behind them. Typed structurally, so SystemGpuInfo and
 // GpuDevice satisfy these without importing them.

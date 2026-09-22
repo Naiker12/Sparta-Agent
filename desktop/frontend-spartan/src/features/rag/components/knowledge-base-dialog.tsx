@@ -1,4 +1,3 @@
-
 import {
   Delete02Icon,
   Edit03Icon,
@@ -70,9 +69,8 @@ export function KnowledgeBaseDialog({
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
-  const [confirmingDelete, setConfirmingDelete] = useState<KnowledgeBase | null>(
-    null,
-  );
+  const [confirmingDelete, setConfirmingDelete] =
+    useState<KnowledgeBase | null>(null);
   // Measured only: while the answer is unknown this stays false and the dialog renders
   // exactly as it always has. See api/rag-availability.
   const ragUnavailable = useRagAvailabilityStore((s) => s.isUnavailable());
@@ -97,7 +95,9 @@ export function KnowledgeBaseDialog({
   }, []);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      return;
+    }
     setView({ kind: "list" });
     void refresh();
   }, [open, refresh]);
@@ -293,7 +293,9 @@ export function KnowledgeBaseDialog({
       <AlertDialog
         open={confirmingDelete !== null}
         onOpenChange={(next) => {
-          if (!next) setConfirmingDelete(null);
+          if (!next) {
+            setConfirmingDelete(null);
+          }
         }}
       >
         <AlertDialogContent>
@@ -314,7 +316,9 @@ export function KnowledgeBaseDialog({
               onClick={() => {
                 const kb = confirmingDelete;
                 setConfirmingDelete(null);
-                if (kb) void removeKb(kb);
+                if (kb) {
+                  void removeKb(kb);
+                }
               }}
             >
               Delete
@@ -363,7 +367,9 @@ function KnowledgeBaseDocuments({
           accept={RAG_UPLOAD_ACCEPT}
           className="hidden"
           onChange={(e) => {
-            if (e.target.files?.length) void upload(e.target.files);
+            if (e.target.files && e.target.files.length > 0) {
+              void upload(e.target.files);
+            }
             e.target.value = "";
           }}
         />

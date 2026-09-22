@@ -177,11 +177,6 @@ from routes.models_pkg import (
     scan_diffusion_controlnets,
     delete_finetuned_model,
     get_lora_base_model,
-    # GGUF Router Endpoints
-    get_kv_cache_estimate,
-    get_gguf_variants,
-    get_gguf_download_progress,
-    get_download_progress,
     # Cached Router Endpoints
     list_cached_gguf,
     list_cached_models,

@@ -1,4 +1,3 @@
-
 // what a fresh /api/inference/status does to one batch control/baseline pair
 
 export interface BatchSizeSeedState {

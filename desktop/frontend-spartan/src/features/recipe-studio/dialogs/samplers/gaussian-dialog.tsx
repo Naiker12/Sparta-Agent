@@ -1,4 +1,3 @@
-
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -9,8 +8,8 @@ import {
 } from "@/components/ui/select";
 import type { ReactElement } from "react";
 import type { SamplerConfig } from "../../types";
-import { NameField } from "../shared/name-field";
 import { FieldLabel } from "../shared/field-label";
+import { NameField } from "../shared/name-field";
 
 type GaussianDialogProps = {
   config: SamplerConfig;
@@ -71,7 +70,10 @@ export function GaussianDialog({
           onValueChange={(value) =>
             onUpdate({
               // biome-ignore lint/style/useNamingConvention: api schema
-              convert_to: value === "none" ? undefined : (value as "int" | "float" | "str"),
+              convert_to:
+                value === "none"
+                  ? undefined
+                  : (value as "int" | "float" | "str"),
             })
           }
         >

@@ -4,8 +4,6 @@
  * se desplaza hacia arriba en el historial.
  */
 
-import { type FC } from "react";
-import { ArrowDownIcon } from "lucide-react";
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button";
 import {
   useIsThreadAtBottom,
@@ -13,6 +11,8 @@ import {
 } from "@/components/assistant-ui/use-intent-aware-autoscroll";
 import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
+import { ArrowDownIcon } from "lucide-react";
+import type { FC } from "react";
 
 export const ThreadScrollToBottom: FC = () => {
   const t = useT();

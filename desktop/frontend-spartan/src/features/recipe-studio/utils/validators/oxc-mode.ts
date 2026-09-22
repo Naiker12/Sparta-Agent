@@ -1,4 +1,3 @@
-
 import type { OxcValidationMode } from "../../types";
 
 export const OXC_VALIDATION_MODES: OxcValidationMode[] = [

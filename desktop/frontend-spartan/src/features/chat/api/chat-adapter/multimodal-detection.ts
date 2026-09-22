@@ -17,12 +17,16 @@ export function messagesContainImage(messages: RunMessages): boolean {
     Boolean((part as { image: string }).image);
   for (const message of messages) {
     for (const part of message.content ?? []) {
-      if (isImage(part)) return true;
+      if (isImage(part)) {
+        return true;
+      }
     }
     if ("attachments" in message) {
       for (const attachment of message.attachments ?? []) {
         for (const part of attachment.content ?? []) {
-          if (isImage(part)) return true;
+          if (isImage(part)) {
+            return true;
+          }
         }
       }
     }
@@ -33,7 +37,9 @@ export function messagesContainImage(messages: RunMessages): boolean {
 export function extractAudioPartBase64(
   part: { type: string } | null | undefined,
 ): string | undefined {
-  if (!part || part.type !== "audio" || !("audio" in part)) return undefined;
+  if (!part || part.type !== "audio" || !("audio" in part)) {
+    return undefined;
+  }
   const audioPart = (
     part as unknown as {
       type: "audio";
@@ -41,7 +47,9 @@ export function extractAudioPartBase64(
     }
   ).audio;
   const raw = typeof audioPart === "string" ? audioPart : audioPart?.data;
-  if (!raw) return undefined;
+  if (!raw) {
+    return undefined;
+  }
   return raw.startsWith("data:") ? raw.split(",")[1] : raw;
 }
 
@@ -51,18 +59,24 @@ export function findLatestUserAudioBase64(
 ): string | undefined {
   for (let i = messages.length - 1; i >= 0; i -= 1) {
     const message = messages[i];
-    if (!message || message.role !== "user") continue;
+    if (!message || message.role !== "user") {
+      continue;
+    }
 
     for (const part of message.content ?? []) {
       const base64 = extractAudioPartBase64(part);
-      if (base64) return base64;
+      if (base64) {
+        return base64;
+      }
     }
 
     if ("attachments" in message) {
       for (const attachment of message.attachments ?? []) {
         for (const part of attachment.content ?? []) {
           const base64 = extractAudioPartBase64(part);
-          if (base64) return base64;
+          if (base64) {
+            return base64;
+          }
         }
       }
     }
@@ -78,10 +92,13 @@ export function findLatestUserAudioBase64(
 export function extractVideoPartBase64(
   part: { type: string } | null | undefined,
 ): string | undefined {
-  if (!part || part.type !== "file") return undefined;
-  const filePart = part as unknown as { data?: string; mimeType?: string };
-  if (!filePart.data || !/^video\//i.test(filePart.mimeType ?? ""))
+  if (!part || part.type !== "file") {
     return undefined;
+  }
+  const filePart = part as unknown as { data?: string; mimeType?: string };
+  if (!(filePart.data && /^video\//i.test(filePart.mimeType ?? ""))) {
+    return undefined;
+  }
   return filePart.data.startsWith("data:")
     ? filePart.data.split(",")[1]
     : filePart.data;
@@ -92,16 +109,22 @@ export function findLatestUserVideoBase64(
 ): string | undefined {
   for (let i = messages.length - 1; i >= 0; i -= 1) {
     const message = messages[i];
-    if (!message || message.role !== "user") continue;
+    if (!message || message.role !== "user") {
+      continue;
+    }
     for (const part of message.content ?? []) {
       const base64 = extractVideoPartBase64(part);
-      if (base64) return base64;
+      if (base64) {
+        return base64;
+      }
     }
     if ("attachments" in message) {
       for (const attachment of message.attachments ?? []) {
         for (const part of attachment.content ?? []) {
           const base64 = extractVideoPartBase64(part);
-          if (base64) return base64;
+          if (base64) {
+            return base64;
+          }
         }
       }
     }

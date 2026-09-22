@@ -1,11 +1,10 @@
-
 import { cn } from "@/lib/utils";
 import { ArrowLeft01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   type MouseEvent as ReactMouseEvent,
-  type PointerEvent as ReactPointerEvent,
   type ReactNode,
+  type PointerEvent as ReactPointerEvent,
   useCallback,
   useEffect,
   useRef,
@@ -74,14 +73,18 @@ export function CardCarousel<T>({
 
   const updateArrows = useCallback(() => {
     const el = scrollerRef.current;
-    if (!el) return;
+    if (!el) {
+      return;
+    }
     setCanLeft(el.scrollLeft > 1);
     setCanRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
   }, []);
 
   useEffect(() => {
     const el = scrollerRef.current;
-    if (!el) return;
+    if (!el) {
+      return;
+    }
     updateArrows();
     const observer = new ResizeObserver(updateArrows);
     observer.observe(el);
@@ -103,32 +106,48 @@ export function CardCarousel<T>({
   );
 
   // Click-and-drag panning (mouse only; touch/pen keep native scrolling).
-  const drag = useRef<{ id: number; x: number; left: number; moved: boolean } | null>(
-    null,
-  );
+  const drag = useRef<{
+    id: number;
+    x: number;
+    left: number;
+    moved: boolean;
+  } | null>(null);
   const suppressClick = useRef(false);
 
   const onPointerDown = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
     suppressClick.current = false;
     const el = scrollerRef.current;
-    if (!el || e.pointerType !== "mouse" || e.button !== 0) return;
-    drag.current = { id: e.pointerId, x: e.clientX, left: el.scrollLeft, moved: false };
+    if (!el || e.pointerType !== "mouse" || e.button !== 0) {
+      return;
+    }
+    drag.current = {
+      id: e.pointerId,
+      x: e.clientX,
+      left: el.scrollLeft,
+      moved: false,
+    };
   }, []);
 
   const onPointerMove = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
     const d = drag.current;
     const el = scrollerRef.current;
-    if (!d || !el || e.pointerId !== d.id) return;
+    if (!(d && el) || e.pointerId !== d.id) {
+      return;
+    }
     // Primary button no longer held: the press ended off the scroller, so no
     // pointerup reached us. Drop the stale drag instead of scrolling on hover.
     if ((e.buttons & 1) === 0) {
-      if (d.moved) el.style.scrollSnapType = "";
+      if (d.moved) {
+        el.style.scrollSnapType = "";
+      }
       drag.current = null;
       return;
     }
     const dx = e.clientX - d.x;
     // Ignore tiny moves so plain clicks still register.
-    if (!d.moved && Math.abs(dx) < 5) return;
+    if (!d.moved && Math.abs(dx) < 5) {
+      return;
+    }
     if (!d.moved) {
       d.moved = true;
       // Snap fights the per-frame scrollLeft writes; disable it while dragging.
@@ -140,20 +159,26 @@ export function CardCarousel<T>({
 
   const endDrag = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
     const d = drag.current;
-    if (!d || e.pointerId !== d.id) return;
+    if (!d || e.pointerId !== d.id) {
+      return;
+    }
     if (d.moved) {
       // A drag just happened: swallow the click it would fire on a card.
       suppressClick.current = true;
       const el = scrollerRef.current;
       // Restore snap so the row settles on a card after the drag.
-      if (el) el.style.scrollSnapType = "";
+      if (el) {
+        el.style.scrollSnapType = "";
+      }
       el?.releasePointerCapture?.(d.id);
     }
     drag.current = null;
   }, []);
 
   const onClickCapture = useCallback((e: ReactMouseEvent<HTMLDivElement>) => {
-    if (!suppressClick.current) return;
+    if (!suppressClick.current) {
+      return;
+    }
     suppressClick.current = false;
     e.preventDefault();
     e.stopPropagation();

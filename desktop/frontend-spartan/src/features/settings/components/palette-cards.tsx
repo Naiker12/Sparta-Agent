@@ -1,4 +1,3 @@
-
 import { type TranslationKey, useT } from "@/i18n";
 import {
   type Palette,

@@ -1,4 +1,3 @@
-
 import type { IconSvgElement } from "@hugeicons/react";
 
 // Hugeicons "Sparkle" (stroke-rounded): one four-point star, not the two-star

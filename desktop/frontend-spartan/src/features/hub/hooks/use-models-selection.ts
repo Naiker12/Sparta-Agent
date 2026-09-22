@@ -1,21 +1,15 @@
-
+import type { HfModelResult } from "@/features/hub/hooks/use-hub-model-search";
 import {
   type InventoryResourceFormatHint,
   findCompleteHfCacheLocalRow,
   resolveInventoryResource,
 } from "@/features/hub/inventory";
-import type { HfModelResult } from "@/features/hub/hooks/use-hub-model-search";
-import {
-  useCallback,
-  useDeferredValue,
-  useMemo,
-  useState,
-} from "react";
+import { ownerOf, repoOf } from "@/features/hub/lib/format";
+import { useCallback, useDeferredValue, useMemo, useState } from "react";
 import {
   resolveDiscoverSelection,
   resolveDownloadedSelection,
 } from "../lib/selection-resolution";
-import { ownerOf, repoOf } from "@/features/hub/lib/format";
 import { buildDiscoverRows, isGgufLike } from "../lib/view-models";
 import type {
   CachedInventoryRow,
@@ -203,7 +197,9 @@ export function useModelsSelection({
   );
 
   const selectedDiscoverResource = useMemo(() => {
-    if (!selectedDiscoverRow) return null;
+    if (!selectedDiscoverRow) {
+      return null;
+    }
     const formatHint: InventoryResourceFormatHint = isDatasetMode
       ? null
       : selectedDiscoverRow.result.isGguf
@@ -218,19 +214,31 @@ export function useModelsSelection({
   }, [cachedRows, isDatasetMode, localRows, selectedDiscoverRow]);
 
   const selectedCachedRow = useMemo(() => {
-    if (selectedDiscoverResource) return selectedDiscoverResource.cachedRow;
-    if (!detailSelectedId) return null;
+    if (selectedDiscoverResource) {
+      return selectedDiscoverResource.cachedRow;
+    }
+    if (!detailSelectedId) {
+      return null;
+    }
     const cached = cachedRowById.get(detailSelectedId) ?? null;
-    if (!cached?.partial) return cached;
+    if (!cached?.partial) {
+      return cached;
+    }
     const completeLocal = findCompleteHfCacheLocalRow(cached, localRows);
     return completeLocal ? null : cached;
   }, [cachedRowById, detailSelectedId, localRows, selectedDiscoverResource]);
 
   const selectedLocalRow = useMemo(() => {
-    if (selectedDiscoverResource) return selectedDiscoverResource.localRow;
-    if (!detailSelectedId) return null;
+    if (selectedDiscoverResource) {
+      return selectedDiscoverResource.localRow;
+    }
+    if (!detailSelectedId) {
+      return null;
+    }
     const direct = localRowById.get(detailSelectedId);
-    if (direct) return direct;
+    if (direct) {
+      return direct;
+    }
     const cached = cachedRowById.get(detailSelectedId);
     if (cached?.partial) {
       return findCompleteHfCacheLocalRow(cached, localRows);
@@ -238,7 +246,9 @@ export function useModelsSelection({
     const repoKey = isDiscoverTab
       ? selectedDiscoverRow?.result.id.toLowerCase()
       : detailSelectedId.toLowerCase();
-    return repoKey ? preferredLocalRow(localRowsByRepo.get(repoKey) ?? []) : null;
+    return repoKey
+      ? preferredLocalRow(localRowsByRepo.get(repoKey) ?? [])
+      : null;
   }, [
     detailSelectedId,
     cachedRowById,
@@ -268,21 +278,28 @@ export function useModelsSelection({
     [resultByRepo, selectedMetadataRepoId],
   );
 
-  const selectedRepoMetadata = useSelectedModelMetadata(selectedMetadataRepoId, {
-    accessToken,
-    enabled: !isDatasetMode && !selectedResultFromFeed,
-    online,
-  });
-  const selectedHfResult = selectedResultFromFeed ?? selectedRepoMetadata.result;
+  const selectedRepoMetadata = useSelectedModelMetadata(
+    selectedMetadataRepoId,
+    {
+      accessToken,
+      enabled: !(isDatasetMode || selectedResultFromFeed),
+      online,
+    },
+  );
+  const selectedHfResult =
+    selectedResultFromFeed ?? selectedRepoMetadata.result;
   const metadataUnavailable =
-    !isDatasetMode &&
-    !selectedResultFromFeed &&
+    !(isDatasetMode || selectedResultFromFeed) &&
     !!selectedHubRepoId &&
     selectedRepoMetadata.error;
 
   const selectedDiscoverRowForView = useMemo(() => {
-    if (!selectedDiscoverRow) return null;
-    if (discoverRowById.has(selectedDiscoverRow.id)) return selectedDiscoverRow;
+    if (!selectedDiscoverRow) {
+      return null;
+    }
+    if (discoverRowById.has(selectedDiscoverRow.id)) {
+      return selectedDiscoverRow;
+    }
     if (
       !isDatasetMode &&
       selectedHfResult &&

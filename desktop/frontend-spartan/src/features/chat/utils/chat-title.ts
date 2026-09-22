@@ -1,4 +1,3 @@
-
 import type { MessageRecord, ThreadRecord } from "../types";
 
 /** Store the whole first line and let the sidebar clip it with CSS, so a wider
@@ -23,9 +22,13 @@ export const KNOWN_DEFAULT_CHAT_TITLES = new Set<string>([
 ]);
 
 export function isDefaultChatTitle(title: string | null | undefined): boolean {
-  if (typeof title !== "string") return true;
+  if (typeof title !== "string") {
+    return true;
+  }
   const trimmed = title.trim();
-  if (!trimmed) return true;
+  if (!trimmed) {
+    return true;
+  }
   return (
     KNOWN_DEFAULT_CHAT_TITLES.has(title) ||
     KNOWN_DEFAULT_CHAT_TITLES.has(trimmed) ||
@@ -46,7 +49,9 @@ function dropLoneSurrogates(text: string): string {
   let out = "";
   for (const character of text) {
     const code = character.codePointAt(0) ?? 0;
-    if (character.length === 1 && code >= 0xd800 && code <= 0xdfff) continue;
+    if (character.length === 1 && code >= 0xd800 && code <= 0xdfff) {
+      continue;
+    }
     out += character;
   }
   return out;
@@ -63,7 +68,9 @@ function firstLineOf(text: string): string {
 function cutToUnits(text: string, maxUnits: number): string {
   let out = "";
   for (const character of text) {
-    if (out.length + character.length > maxUnits) break;
+    if (out.length + character.length > maxUnits) {
+      break;
+    }
     out += character;
   }
   return out;
@@ -71,10 +78,14 @@ function cutToUnits(text: string, maxUnits: number): string {
 
 export function fallbackTitleFromUserText(userText: string): string {
   const cleaned = firstLineOf(userText);
-  if (!cleaned) return DEFAULT_CHAT_TITLE;
-  if (cleaned.length <= FALLBACK_TITLE_MAX) return cleaned;
+  if (!cleaned) {
+    return DEFAULT_CHAT_TITLE;
+  }
+  if (cleaned.length <= FALLBACK_TITLE_MAX) {
+    return cleaned;
+  }
   // The ellipsis takes one of the budget, so the title still fits the input.
-  return cutToUnits(cleaned, FALLBACK_TITLE_MAX - 1).trimEnd() + "…";
+  return `${cutToUnits(cleaned, FALLBACK_TITLE_MAX - 1).trimEnd()}…`;
 }
 
 /** Pre-filter on the title alone: only these are worth fetching messages for. */
@@ -91,7 +102,9 @@ export function isLegacyClippedTitle(
   title: string | undefined,
   userText: string,
 ): boolean {
-  if (!couldBeLegacyClippedTitle(title)) return false;
+  if (!couldBeLegacyClippedTitle(title)) {
+    return false;
+  }
   const kept = (title as string).slice(0, LEGACY_FALLBACK_TITLE_MAX);
   const cleaned = firstLineOf(userText);
   return (
@@ -101,10 +114,16 @@ export function isLegacyClippedTitle(
 }
 
 function textOf(message: MessageRecord | undefined): string {
-  if (!message) return "";
+  if (!message) {
+    return "";
+  }
   const content = message.content;
-  if (typeof content === "string") return content;
-  if (!Array.isArray(content)) return "";
+  if (typeof content === "string") {
+    return content;
+  }
+  if (!Array.isArray(content)) {
+    return "";
+  }
   return content
     .filter(
       (part): part is Extract<typeof part, { type: "text" }> =>
@@ -187,17 +206,25 @@ export function planLegacyTitleRepairs(
     const opening = messages
       .filter((m) => m.role === "user")
       .reduce<MessageRecord | undefined>((earliest, m) => {
-        if (earliest === undefined) return m;
+        if (earliest === undefined) {
+          return m;
+        }
         if (m.createdAt !== earliest.createdAt) {
           return m.createdAt < earliest.createdAt ? m : earliest;
         }
         return m.id < earliest.id ? m : earliest;
       }, undefined);
     const userText = textOf(opening);
-    if (opening === undefined) continue;
-    if (!isLegacyClippedTitle(thread.title, userText)) continue;
+    if (opening === undefined) {
+      continue;
+    }
+    if (!isLegacyClippedTitle(thread.title, userText)) {
+      continue;
+    }
     const title = fallbackTitleFromUserText(userText);
-    if (title === thread.title) continue;
+    if (title === thread.title) {
+      continue;
+    }
     repairs.push({
       threadId: thread.id,
       previousTitle: thread.title,

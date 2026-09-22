@@ -1,4 +1,3 @@
-
 // Type filter for the On Device list. Mirrors the hub Discover capability
 // options and shares its detection, so both dropdowns behave the same.
 
@@ -38,9 +37,13 @@ export function matchesModelType(
   row: CachedInventoryRow | LocalInventoryRow,
   filter: ModelTypeFilter,
 ): boolean {
-  if (filter === "all") return true;
+  if (filter === "all") {
+    return true;
+  }
   // Honor the row's own vision flag before falling back to tag detection.
-  if (filter === "vision" && row.capabilities.supportsVision) return true;
+  if (filter === "vision" && row.capabilities.supportsVision) {
+    return true;
+  }
   const caps = detectCapabilities(
     row.tags ?? undefined,
     row.pipelineTag ?? undefined,

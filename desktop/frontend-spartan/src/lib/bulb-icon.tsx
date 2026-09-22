@@ -1,4 +1,3 @@
-
 import type { ComponentPropsWithoutRef } from "react";
 
 // Shared lightbulb glyph used by the composer thinking toggle and the

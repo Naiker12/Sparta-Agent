@@ -1,14 +1,14 @@
-
 "use client";
 
+import { Spinner } from "@/components/ui/spinner";
+import { useT } from "@/i18n";
 import {
   type ToolCallMessagePartComponent,
   useAuiState,
 } from "@assistant-ui/react";
 import { FileTextIcon, LibraryBigIcon } from "lucide-react";
-import { Spinner } from "@/components/ui/spinner";
-import { useT } from "@/i18n";
 
+import { useDocumentPreviewStore } from "@/features/rag/components/preview-store";
 import { stringifyToolResult } from "@/lib/strip-ansi";
 import { memo, useEffect, useMemo, useState } from "react";
 import { Badge } from "./badge";
@@ -17,7 +17,6 @@ import {
   ToolFallbackRoot,
   ToolFallbackTrigger,
 } from "./tool-fallback";
-import { useDocumentPreviewStore } from "@/features/rag/components/preview-store";
 
 import { type Citation, parseCitations } from "./citation-utils";
 
@@ -36,7 +35,9 @@ export function CitationBadge({
       : citation.filename;
 
   const open = () => {
-    if (!citation.documentId) return;
+    if (!citation.documentId) {
+      return;
+    }
     openPreview({
       documentId: citation.documentId,
       chunkId: citation.chunkId,
@@ -97,14 +98,21 @@ const KnowledgeBaseToolUIImpl: ToolCallMessagePartComponent = ({
   );
   const [open, setOpen] = useState(isRunning);
   useEffect(() => {
-    if (isRunning) setOpen(true);
-    else if (hasText) setOpen(false);
+    if (isRunning) {
+      setOpen(true);
+    } else if (hasText) {
+      setOpen(false);
+    }
   }, [isRunning, hasText]);
 
   return (
     <ToolFallbackRoot open={open} onOpenChange={setOpen}>
       <ToolFallbackTrigger
-        toolName={query ? t("chat.tools.knowledge.searched", { query }) : t("chat.tools.knowledge.search")}
+        toolName={
+          query
+            ? t("chat.tools.knowledge.searched", { query })
+            : t("chat.tools.knowledge.search")
+        }
         status={status}
         icon={LibraryBigIcon}
       />
@@ -134,7 +142,9 @@ const KnowledgeBaseToolUIImpl: ToolCallMessagePartComponent = ({
             {resultText}
           </pre>
         ) : (
-          <div className="text-sm text-muted-foreground">{t("chat.tools.knowledge.noMatches")}</div>
+          <div className="text-sm text-muted-foreground">
+            {t("chat.tools.knowledge.noMatches")}
+          </div>
         )}
       </ToolFallbackContent>
     </ToolFallbackRoot>

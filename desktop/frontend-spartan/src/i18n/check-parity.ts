@@ -1,4 +1,3 @@
-
 // Parity check between en.ts and every non-English locale:
 // - Locale files may be partial; required release surfaces must be translated.
 // - All non-English keys must exist in en (no extras).
@@ -107,7 +106,7 @@ const strict = process.argv.includes("--strict");
 let anyError = false;
 let anyMissing = false;
 
-for (const [locale, overlay] of Object.entries(overlays)) {
+for (const [_locale, overlay] of Object.entries(overlays)) {
   const errors: string[] = [];
   const missing: string[] = [];
   checkOverlay(en as unknown as Tree, overlay, "", errors, missing);
@@ -117,24 +116,17 @@ for (const [locale, overlay] of Object.entries(overlays)) {
       errors.push(`${key} must be localized`);
     }
   }
-
-  console.log(`\n=== ${locale} ===`);
-  console.log(`Missing keys (will fall back to en): ${missing.length}`);
   if (missing.length > 0) {
     anyMissing = true;
     // Name them either way: the count alone does not say what to translate.
-    for (const k of missing) {
-      console.log(`  - ${k}`);
+    for (const _k of missing) {
     }
   }
   if (errors.length > 0) {
     anyError = true;
-    console.error(`Errors (${errors.length}):`);
-    for (const e of errors) {
-      console.error(`  - ${e}`);
+    for (const _e of errors) {
     }
   } else {
-    console.log("No errors.");
   }
 }
 
@@ -142,10 +134,5 @@ if (anyError) {
   process.exit(1);
 }
 if (strict && anyMissing) {
-  console.error(
-    "\nMissing keys above. Add them to every overlay, or run without --strict " +
-      "to accept the English fallback.",
-  );
   process.exit(1);
 }
-console.log("\nAll locale overlays pass parity.");

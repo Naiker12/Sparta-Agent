@@ -1,4 +1,3 @@
-
 import type { TransformersUpgradeInfo } from "@/features/transformers-upgrade";
 
 export type CpuFallbackReason = "vulkan_startup_crash";
@@ -49,9 +48,9 @@ export interface LoadModelRequest {
   /** Start a fresh runtime even when the active settings already match. */
   force_reload?: boolean;
   /**
-     * Stop any chats still generating instead of getting a 409: a load replaces the single
-     * llama-server they all decode on. Set only after the user confirms.
-     */
+   * Stop any chats still generating instead of getting a 409: a load replaces the single
+   * llama-server they all decode on. Set only after the user confirms.
+   */
   force_cancel_active?: boolean;
   nativePathLease?: string | null;
   hf_token: string | null;

@@ -1,4 +1,3 @@
-
 import type { ModelInventoryFormat } from "../inventory";
 import { GgufDownloadCard } from "./gguf-download-card";
 import { SafetensorsDownloadCard } from "./safetensors-download-card";
@@ -59,7 +58,6 @@ export function DownloadSection({
         isActive={isActive}
         activeQuant={activeQuant}
         preferredFile={preferredGgufFile}
-
         preferredFileIntent={preferredGgufFileIntent}
         isLoadingThisModel={isLoadingThisModel}
         gpuGb={gpuGb}

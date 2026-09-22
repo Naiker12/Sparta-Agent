@@ -1,13 +1,12 @@
-
 import {
-  installProgressMessage,
-  startupWaitingMessage,
   STATUS_MESSAGE_ROTATION_MS,
   type StartupMessage,
+  installProgressMessage,
+  startupWaitingMessage,
 } from "@/components/tauri/startup-messages";
 import { Spinner } from "@/components/ui/spinner";
-import { translate } from "@/i18n";
 import type { BackendStatus } from "@/hooks/use-tauri-backend";
+import { translate } from "@/i18n";
 import type { CopySupportDiagnosticsResult } from "@/lib/tauri-diagnostics";
 
 import { LanguageSelect } from "@/features/settings/components/language-select";
@@ -37,7 +36,7 @@ function DiagnosticsCopyActions({
   children,
 }: {
   onCopyDiagnostics: () => Promise<CopySupportDiagnosticsResult>;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   const [copying, setCopying] = useState(false);
   const [manualReport, setManualReport] = useState<string | null>(null);
@@ -56,7 +55,11 @@ function DiagnosticsCopyActions({
       }
     } catch (error) {
       setManualReport(null);
-      setManualMessage(translate("shell.startup.diagnosticsCopyFailed", { error: String(error) }));
+      setManualMessage(
+        translate("shell.startup.diagnosticsCopyFailed", {
+          error: String(error),
+        }),
+      );
     } finally {
       setCopying(false);
     }
@@ -69,16 +72,20 @@ function DiagnosticsCopyActions({
           variant="secondary"
           onClick={() => void handleCopyDiagnostics()}
         >
-          {copying ? translate("shell.startup.copying") : translate("shell.startup.copyDiagnostics")}
+          {copying
+            ? translate("shell.startup.copying")
+            : translate("shell.startup.copyDiagnostics")}
         </ActionButton>
         {children}
       </div>
       {manualMessage && (
-        <p className="max-w-md text-center text-xs text-destructive">{manualMessage}</p>
+        <p className="max-w-md text-center text-xs text-destructive">
+          {manualMessage}
+        </p>
       )}
       {manualReport && (
         <textarea
-          readOnly
+          readOnly={true}
           value={manualReport}
           onFocus={(event) => event.currentTarget.select()}
           className="h-32 w-full max-w-md resize-none rounded-lg border border-border/50 bg-muted/30 p-2 font-mono text-ui-10 text-muted-foreground"
@@ -91,7 +98,6 @@ function DiagnosticsCopyActions({
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
-
 
 const EASE_OUT_QUART: [number, number, number, number] = [0.165, 0.84, 0.44, 1];
 
@@ -130,9 +136,10 @@ function ActionButton({
 }: {
   onClick: () => void;
   variant?: "primary" | "secondary";
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
-  const base = "rounded-lg px-5 py-2.5 text-sm font-medium cursor-pointer transition-colors";
+  const base =
+    "rounded-lg px-5 py-2.5 text-sm font-medium cursor-pointer transition-colors";
   const styles =
     variant === "primary"
       ? `${base} bg-primary text-primary-foreground hover:bg-primary/80`
@@ -156,7 +163,9 @@ function CheckingContent() {
       </div>
       <div className="mb-10 flex flex-col items-center gap-2">
         <Spinner className="size-6 text-primary" />
-        <p className="text-sm text-muted-foreground">{translate("shell.startup.checking")}</p>
+        <p className="text-sm text-muted-foreground">
+          {translate("shell.startup.checking")}
+        </p>
       </div>
     </div>
   );
@@ -208,9 +217,7 @@ function InstallingContent({
 }) {
   const messageIndex = useRotatingMessageIndex();
   const message = installProgressMessage(currentStepIndex, messageIndex);
-  const detailLines = progressDetail
-    ? [...logs, progressDetail]
-    : logs;
+  const detailLines = progressDetail ? [...logs, progressDetail] : logs;
 
   return (
     <div className="flex h-full w-full flex-col items-center">
@@ -226,8 +233,12 @@ function InstallingContent({
         {detailLines.length > 0 && (
           <details className="group mt-2 w-full max-w-sm text-left">
             <summary className="mx-auto flex w-fit cursor-pointer list-none items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
-              <span className="group-open:hidden">{translate("shell.startup.showInstallDetails")}</span>
-              <span className="hidden group-open:inline">{translate("shell.startup.hideInstallDetails")}</span>
+              <span className="group-open:hidden">
+                {translate("shell.startup.showInstallDetails")}
+              </span>
+              <span className="hidden group-open:inline">
+                {translate("shell.startup.hideInstallDetails")}
+              </span>
               <HugeiconsIcon
                 icon={ChevronDownIcon}
                 aria-hidden="true"
@@ -252,9 +263,7 @@ function RepairingContent({
   logs: string[];
   progressDetail: string | null;
 }) {
-  const detailLines = progressDetail
-    ? [...logs, progressDetail]
-    : logs;
+  const detailLines = progressDetail ? [...logs, progressDetail] : logs;
 
   return (
     <div className="flex h-full w-full flex-col items-center">
@@ -263,13 +272,21 @@ function RepairingContent({
       </div>
       <div className="mb-10 flex w-full flex-col items-center gap-2">
         <Spinner className="size-6 text-primary" />
-        <p className="text-sm font-bold text-foreground">{translate("shell.startup.gettingReady")}</p>
-        <p className="text-sm text-muted-foreground">{translate("shell.startup.gettingReadyHelp")}</p>
+        <p className="text-sm font-bold text-foreground">
+          {translate("shell.startup.gettingReady")}
+        </p>
+        <p className="text-sm text-muted-foreground">
+          {translate("shell.startup.gettingReadyHelp")}
+        </p>
         {detailLines.length > 0 && (
           <details className="group mt-2 w-full max-w-sm text-left">
             <summary className="mx-auto flex w-fit cursor-pointer list-none items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
-              <span className="group-open:hidden">{translate("shell.startup.showSetupDetails")}</span>
-              <span className="hidden group-open:inline">{translate("shell.startup.hideSetupDetails")}</span>
+              <span className="group-open:hidden">
+                {translate("shell.startup.showSetupDetails")}
+              </span>
+              <span className="hidden group-open:inline">
+                {translate("shell.startup.hideSetupDetails")}
+              </span>
               <HugeiconsIcon
                 icon={ChevronDownIcon}
                 aria-hidden="true"
@@ -298,7 +315,9 @@ function ClosingContent() {
         <p className="text-sm font-bold text-foreground" aria-live="polite">
           {translate("shell.startup.closing")}
         </p>
-        <p className="text-sm text-muted-foreground">{translate("shell.startup.shuttingDown")}</p>
+        <p className="text-sm text-muted-foreground">
+          {translate("shell.startup.shuttingDown")}
+        </p>
       </div>
     </div>
   );
@@ -317,12 +336,18 @@ function InstallErrorContent({
     <>
       <Logo />
       <div className="mt-8 flex flex-col items-center gap-2">
-        <p className="text-sm font-medium text-destructive">{translate("shell.startup.setupProblem")}</p>
+        <p className="text-sm font-medium text-destructive">
+          {translate("shell.startup.setupProblem")}
+        </p>
         {error && (
-          <p className="max-w-xs text-center text-xs text-muted-foreground">{error}</p>
+          <p className="max-w-xs text-center text-xs text-muted-foreground">
+            {error}
+          </p>
         )}
         <DiagnosticsCopyActions onCopyDiagnostics={onCopyDiagnostics}>
-          <ActionButton onClick={onRetryInstall}>{translate("shell.startup.tryAgain")}</ActionButton>
+          <ActionButton onClick={onRetryInstall}>
+            {translate("shell.startup.tryAgain")}
+          </ActionButton>
         </DiagnosticsCopyActions>
       </div>
     </>
@@ -342,12 +367,18 @@ function RepairErrorContent({
     <>
       <Logo />
       <div className="mt-8 flex flex-col items-center gap-2">
-        <p className="text-sm font-medium text-destructive">{translate("shell.startup.updateFailed")}</p>
+        <p className="text-sm font-medium text-destructive">
+          {translate("shell.startup.updateFailed")}
+        </p>
         {error && (
-          <p className="max-w-md text-center text-xs text-muted-foreground">{error}</p>
+          <p className="max-w-md text-center text-xs text-muted-foreground">
+            {error}
+          </p>
         )}
         <DiagnosticsCopyActions onCopyDiagnostics={onCopyDiagnostics}>
-          <ActionButton onClick={onRetry}>{translate("shell.startup.tryAgain")}</ActionButton>
+          <ActionButton onClick={onRetry}>
+            {translate("shell.startup.tryAgain")}
+          </ActionButton>
         </DiagnosticsCopyActions>
       </div>
     </>
@@ -367,7 +398,9 @@ function NeedsElevationContent({
     <>
       <Logo />
       <div className="mt-8 flex flex-col items-center gap-2">
-        <p className="text-sm font-medium text-foreground">{translate("shell.startup.permissionNeeded")}</p>
+        <p className="text-sm font-medium text-foreground">
+          {translate("shell.startup.permissionNeeded")}
+        </p>
         <p className="text-xs text-muted-foreground">
           {translate("shell.startup.packagesNeeded")}
         </p>
@@ -377,8 +410,12 @@ function NeedsElevationContent({
           ))}
         </div>
         <div className="mt-4 flex gap-3">
-          <ActionButton variant="secondary" onClick={onRetryInstall}>Cancel</ActionButton>
-          <ActionButton onClick={onApproveElevation}>{translate("shell.startup.allow")}</ActionButton>
+          <ActionButton variant="secondary" onClick={onRetryInstall}>
+            Cancel
+          </ActionButton>
+          <ActionButton onClick={onApproveElevation}>
+            {translate("shell.startup.allow")}
+          </ActionButton>
         </div>
       </div>
     </>
@@ -407,9 +444,13 @@ function StoppedContent({ onStartServer }: { onStartServer: () => void }) {
     <>
       <Logo />
       <div className="mt-8 flex flex-col items-center gap-2">
-        <p className="text-sm font-medium text-foreground">{translate("shell.startup.serverStopped")}</p>
+        <p className="text-sm font-medium text-foreground">
+          {translate("shell.startup.serverStopped")}
+        </p>
         <div className="mt-4">
-          <ActionButton onClick={onStartServer}>{translate("shell.startup.startServer")}</ActionButton>
+          <ActionButton onClick={onStartServer}>
+            {translate("shell.startup.startServer")}
+          </ActionButton>
         </div>
       </div>
     </>
@@ -429,12 +470,18 @@ function ErrorContent({
     <>
       <Logo />
       <div className="mt-8 flex flex-col items-center gap-2">
-        <p className="text-sm font-medium text-destructive">{translate("shell.startup.somethingWrong")}</p>
+        <p className="text-sm font-medium text-destructive">
+          {translate("shell.startup.somethingWrong")}
+        </p>
         {error && (
-          <p className="max-w-md text-center text-xs text-muted-foreground">{error}</p>
+          <p className="max-w-md text-center text-xs text-muted-foreground">
+            {error}
+          </p>
         )}
         <DiagnosticsCopyActions onCopyDiagnostics={onCopyDiagnostics}>
-          <ActionButton onClick={onRetry}>{translate("shell.startup.tryAgain")}</ActionButton>
+          <ActionButton onClick={onRetry}>
+            {translate("shell.startup.tryAgain")}
+          </ActionButton>
         </DiagnosticsCopyActions>
       </div>
     </>
@@ -501,7 +548,9 @@ export function StartupScreen({
           />
         );
       case "starting":
-        return <StartingContent key={startupMessage} message={startupMessage} />;
+        return (
+          <StartingContent key={startupMessage} message={startupMessage} />
+        );
       case "running":
         return null;
       case "stopped":

@@ -1,4 +1,3 @@
-
 export type AudioSttEngine = "transformers" | "gguf" | "mtmd";
 
 const TRANSFORMERS_REPO_BY_KEY: Record<string, string> = {
@@ -55,8 +54,12 @@ export function sttRepoIdForSidecarKey(
   engine: AudioSttEngine = "transformers",
 ): string {
   const normalized = sidecarKey.trim().toLowerCase();
-  if (engine === "gguf") return GGUF_REPO_BY_KEY[normalized] ?? sidecarKey;
-  if (engine === "mtmd") return MTMD_REPO_BY_KEY[normalized] ?? sidecarKey;
+  if (engine === "gguf") {
+    return GGUF_REPO_BY_KEY[normalized] ?? sidecarKey;
+  }
+  if (engine === "mtmd") {
+    return MTMD_REPO_BY_KEY[normalized] ?? sidecarKey;
+  }
   return TRANSFORMERS_REPO_BY_KEY[normalized] ?? sidecarKey;
 }
 

@@ -1,4 +1,3 @@
-
 export type SegmentedSize = "compact" | "default";
 
 export const segmentedTrackHeight: Record<SegmentedSize, string> = {

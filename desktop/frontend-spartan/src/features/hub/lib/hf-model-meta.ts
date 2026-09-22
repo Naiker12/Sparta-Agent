@@ -1,4 +1,3 @@
-
 export const EMBEDDING_TAGS: ReadonlySet<string> = new Set([
   "feature-extraction",
   "sentence-transformers",
@@ -32,7 +31,9 @@ export const DTYPE_BYTES: Readonly<Record<string, number>> = {
 export function estimateSizeFromDtypes(
   params: Record<string, number> | undefined,
 ): number | undefined {
-  if (!params) return undefined;
+  if (!params) {
+    return undefined;
+  }
   let total = 0;
   for (const [dtype, count] of Object.entries(params)) {
     const bytesPerParam = DTYPE_BYTES[dtype.toUpperCase()] ?? 2;

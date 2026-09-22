@@ -1,4 +1,3 @@
-
 import { memo } from "react";
 import { HUB_SECTION_TITLE, type HubSection } from "../lib/channels";
 import type { DiscoverRow } from "../types";

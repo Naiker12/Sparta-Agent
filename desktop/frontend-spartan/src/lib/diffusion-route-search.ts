@@ -1,4 +1,3 @@
-
 import { isGgufName } from "./gguf-filename-pick.ts";
 
 /** What the chat picker puts in the URL when a diffusion pick routes to /images or /video. */
@@ -20,7 +19,9 @@ export function diffusionRouteSearch(
   meta: { ggufFilename?: string | null; ggufVariant?: string | null },
 ): DiffusionRouteSearch {
   const filename = trimmed(meta.ggufFilename);
-  if (filename) return { model, quant: filename };
+  if (filename) {
+    return { model, quant: filename };
+  }
   const label = trimmed(meta.ggufVariant);
   return label ? { model, ggufQuant: label } : { model };
 }
@@ -39,6 +40,8 @@ export function routedGgufLabel(
   search: Pick<DiffusionRouteSearch, "quant" | "ggufQuant">,
 ): string | null {
   const quant = trimmed(search.quant);
-  if (quant && isGgufName(quant)) return null;
+  if (quant && isGgufName(quant)) {
+    return null;
+  }
   return trimmed(search.ggufQuant) ?? quant;
 }

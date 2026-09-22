@@ -1,4 +1,3 @@
-
 import type { Edge, XYPosition } from "@xyflow/react";
 import { DEFAULT_NODE_HEIGHT, DEFAULT_NODE_WIDTH } from "../../constants";
 import type { LayoutDirection, NodeConfig, RecipeNode } from "../../types";
@@ -392,7 +391,9 @@ export function centerModelInfraNodes(
     )
     .map((config) => config.id);
   const toolConfigIds = Object.values(configs)
-    .filter((config) => config.kind === "tool_config" && nodesById.has(config.id))
+    .filter(
+      (config) => config.kind === "tool_config" && nodesById.has(config.id),
+    )
     .map((config) => config.id);
 
   const occupiedById = new Map(

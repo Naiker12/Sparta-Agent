@@ -4,14 +4,6 @@
  * y la persistencia de trazas de pensamiento para modelos compatibles.
  */
 
-import { type FC, type ReactNode } from "react";
-import {
-  ArrowDownIcon as ArrowDownStandardIcon,
-  LightbulbIcon as BulbIcon,
-  XIcon,
-} from "lucide-react";
-import { Tick02Icon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,11 +15,19 @@ import { getExternalReasoningCapabilities } from "@/features/chat/provider-capab
 import { useChatRuntimeStore } from "@/features/chat/stores/chat-runtime-store";
 import { useExternalProvidersStore } from "@/features/chat/stores/external-providers-store";
 import { applyQwenThinkingParams } from "@/features/chat/utils/qwen-params";
+import { cn } from "@/lib/utils";
+import { Tick02Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  ArrowDownIcon as ArrowDownStandardIcon,
+  LightbulbIcon as BulbIcon,
+  XIcon,
+} from "lucide-react";
+import type { FC, ReactNode } from "react";
 import {
   thinkEffortAriaLabel,
   thinkToggleAriaLabel,
 } from "../think-aria-label";
-import { cn } from "@/lib/utils";
 
 export const ThinkIcon: FC = () => <BulbIcon className="size-3.5" />;
 
@@ -42,7 +42,9 @@ export interface ReasoningToggleProps {
   side?: "top" | "bottom";
 }
 
-export const ReasoningToggle: FC<ReasoningToggleProps> = ({ side = "bottom" }) => {
+export const ReasoningToggle: FC<ReasoningToggleProps> = ({
+  side = "bottom",
+}) => {
   const modelLoaded = useChatRuntimeStore(
     (s) => !!s.params.checkpoint && !s.modelLoading,
   );
@@ -117,8 +119,9 @@ export const ReasoningToggle: FC<ReasoningToggleProps> = ({ side = "bottom" }) =
     effectiveReasoningEnabled && reasoningEffort !== "none";
   const disabled = !(modelLoaded && effectiveSupportsReasoning);
   const formatEffortLabel = (level: typeof reasoningEffort): string => {
-    if (level !== "xhigh")
+    if (level !== "xhigh") {
       return level.charAt(0).toUpperCase() + level.slice(1);
+    }
     const normalized = externalSelection?.modelId?.trim().toLowerCase() ?? "";
     if (
       normalized.startsWith("claude-opus-4-6") ||
@@ -233,7 +236,9 @@ export const ReasoningToggle: FC<ReasoningToggleProps> = ({ side = "bottom" }) =
                   const next = !reasoningEnabled;
                   setReasoningEnabled(next);
                   applyQwenThinkingParams(next);
-                  if (!next) setPreserveThinking(false);
+                  if (!next) {
+                    setPreserveThinking(false);
+                  }
                   if (isKimiExternal && next && toolsEnabled) {
                     setToolsEnabled(false, { persist: false });
                   }
@@ -291,7 +296,9 @@ export const ReasoningToggle: FC<ReasoningToggleProps> = ({ side = "bottom" }) =
           : undefined
       }
       onClick={() => {
-        if (reasoningLockedOn) return;
+        if (reasoningLockedOn) {
+          return;
+        }
         const next = !reasoningEnabled;
         setReasoningEnabled(next);
         applyQwenThinkingParams(next);

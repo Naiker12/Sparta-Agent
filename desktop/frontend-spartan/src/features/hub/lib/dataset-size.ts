@@ -1,4 +1,3 @@
-
 import { LruMap } from "./lru-map";
 import { fetchWithTimeout } from "./network";
 import { fingerprintToken } from "./token-fingerprint";
@@ -51,7 +50,9 @@ function readSizeCache<T>(
   key: string,
 ): SizeCacheEntry<T> | null {
   const entry = cache.get(key);
-  if (!entry) return null;
+  if (!entry) {
+    return null;
+  }
   if (entry.kind === "miss-transient" && Date.now() >= entry.until) {
     cache.delete(key);
     return null;
@@ -64,7 +65,7 @@ function fetchCachedSize<T>(
   cache: LruMap<string, SizeCacheEntry<T>>,
   inflight: Map<string, InflightSizeEntry<T>>,
   load: (signal: AbortSignal) => Promise<LoadResult<T>>,
-  debugContext: { label: string; id: string },
+  _debugContext: { label: string; id: string },
   signal?: AbortSignal,
 ): Promise<T | null> {
   if (signal?.aborted) {
@@ -75,7 +76,9 @@ function fetchCachedSize<T>(
     return Promise.resolve(entry.kind === "value" ? entry.value : null);
   }
   const existing = inflight.get(cacheKey);
-  if (existing) return attachInflight(existing, signal);
+  if (existing) {
+    return attachInflight(existing, signal);
+  }
 
   let timedOut = false;
   const controller = new AbortController();
@@ -111,15 +114,11 @@ function fetchCachedSize<T>(
         });
       }
       return null;
-    } catch (err) {
+    } catch (_err) {
       if (
         import.meta.env.DEV &&
         (!inflightEntry.cancelledByConsumers || timedOut)
       ) {
-        console.debug(`${debugContext.label} size lookup failed`, {
-          id: debugContext.id,
-          error: err,
-        });
       }
       if (!inflightEntry.cancelledByConsumers || timedOut) {
         cache.set(cacheKey, {
@@ -146,7 +145,9 @@ function attachInflight<T>(
   entry.consumers += 1;
   let released = false;
   const release = () => {
-    if (released) return;
+    if (released) {
+      return;
+    }
     released = true;
     entry.consumers = Math.max(0, entry.consumers - 1);
     if (entry.consumers === 0 && !entry.settled) {
@@ -233,7 +234,9 @@ export function fetchDatasetSize(
       }
       const data = (await res.json()) as DatasetSizeApiResponse;
       const ds = data.size?.dataset;
-      if (!ds) return { miss: "longlived" };
+      if (!ds) {
+        return { miss: "longlived" };
+      }
       return {
         value: {
           numBytesOriginal: ds.num_bytes_original_files ?? null,
@@ -268,7 +271,8 @@ const SNAPSHOT_WEIGHT_FILE_RE =
   /\.(safetensors|bin|pt|pth|ckpt|h5|msgpack|npz)$/i;
 const SNAPSHOT_NON_BIN_WEIGHT_FILE_RE =
   /\.(safetensors|pt|pth|ckpt|h5|msgpack|npz)$/i;
-const SNAPSHOT_BIN_WEIGHT_PREFIX_RE = /^(model|pytorch_model|adapter_model).*\.bin$/i;
+const SNAPSHOT_BIN_WEIGHT_PREFIX_RE =
+  /^(model|pytorch_model|adapter_model).*\.bin$/i;
 
 function basename(path: string): string {
   return path.split("/").pop() ?? path;
@@ -277,7 +281,9 @@ function basename(path: string): string {
 function shipsTransformersWeights(siblings: ModelSibling[]): boolean {
   return siblings.some((s) => {
     const base = basename(s.rfilename ?? "").toLowerCase();
-    if (base.startsWith("consolidated")) return false;
+    if (base.startsWith("consolidated")) {
+      return false;
+    }
     return (
       SNAPSHOT_NON_BIN_WEIGHT_FILE_RE.test(base) ||
       SNAPSHOT_BIN_WEIGHT_PREFIX_RE.test(base)
@@ -333,9 +339,13 @@ export function fetchModelSize(
       let total = 0;
       let weights = 0;
       for (const s of siblings) {
-        if (typeof s.size !== "number") continue;
+        if (typeof s.size !== "number") {
+          continue;
+        }
         const filename = s.rfilename ?? "";
-        if (filename && isSnapshotIgnored(filename, skipConsolidated)) continue;
+        if (filename && isSnapshotIgnored(filename, skipConsolidated)) {
+          continue;
+        }
         total += s.size;
         if (filename && SNAPSHOT_WEIGHT_FILE_RE.test(filename)) {
           weights += s.size;

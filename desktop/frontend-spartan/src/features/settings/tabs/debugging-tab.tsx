@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { useCopyFeedback } from "@/features/hub/hooks/use-copy-feedback";
 import { useT } from "@/i18n";
@@ -22,9 +21,9 @@ import {
   type RefreshMode,
   applyLogChunk,
   isPageStale,
+  isRequestTimeout,
   nextDroppedState,
   parseRefreshMode,
-  isRequestTimeout,
   pollDelayMs,
   withRequestTimeout,
 } from "../lib/debug-log-buffer";
@@ -37,7 +36,9 @@ const MODES: RefreshMode[] = ["live", "3s", "manual"];
 const SOURCE_RESCAN_MS = 10_000;
 
 function readStoredMode(): RefreshMode {
-  if (typeof window === "undefined") return DEFAULT_REFRESH_MODE;
+  if (typeof window === "undefined") {
+    return DEFAULT_REFRESH_MODE;
+  }
   try {
     return parseRefreshMode(
       window.localStorage.getItem(REFRESH_MODE_STORAGE_KEY),
@@ -116,7 +117,9 @@ export function DebuggingTab() {
 
   const onPollFailed = useCallback(
     async (error: unknown, signal?: AbortSignal) => {
-      if (isAbort(error)) return;
+      if (isAbort(error)) {
+        return;
+      }
       if (isRequestTimeout(error)) {
         // Not the raw message: the backstop duration is an internal number, and
         // the user needs the consequence.
@@ -143,7 +146,9 @@ export function DebuggingTab() {
   // that failure's log is not offered.
   const rescanSourcesIfStale = useCallback(
     async (signal?: AbortSignal) => {
-      if (Date.now() - lastSourceScanRef.current < SOURCE_RESCAN_MS) return;
+      if (Date.now() - lastSourceScanRef.current < SOURCE_RESCAN_MS) {
+        return;
+      }
       lastSourceScanRef.current = Date.now();
       await refreshSources({ signal });
     },
@@ -153,7 +158,9 @@ export function DebuggingTab() {
   const poll = useCallback(
     async (signal?: AbortSignal) => {
       const selection = selectionRef.current;
-      if (inFlightRef.current === selection) return;
+      if (inFlightRef.current === selection) {
+        return;
+      }
       inFlightRef.current = selection;
       // Without the timeout a request that never settles pins inFlightRef
       // forever: every poll returns at the guard above and the pane freezes with
@@ -178,10 +185,13 @@ export function DebuggingTab() {
             requestSourceId: sourceId,
             pageSourceId: page.sourceId,
           })
-        )
+        ) {
           return;
+        }
         cursorRef.current = page.cursor;
-        if (page.realpath) setRealpath(page.realpath);
+        if (page.realpath) {
+          setRealpath(page.realpath);
+        }
         setDropped((previous) => nextDroppedState(previous, page));
         setMorePending(page.morePending);
         setStaleSession(page.fileLoggingDisabled);
@@ -198,11 +208,14 @@ export function DebuggingTab() {
           }),
         );
       } catch (error) {
-        if (selection === selectionRef.current)
+        if (selection === selectionRef.current) {
           await onPollFailed(error, signal);
+        }
       } finally {
         // Only if a poll for a newer selection has not taken the slot.
-        if (inFlightRef.current === selection) inFlightRef.current = null;
+        if (inFlightRef.current === selection) {
+          inFlightRef.current = null;
+        }
       }
     },
     [onPollFailed, sourceId, t],
@@ -232,7 +245,9 @@ export function DebuggingTab() {
     // A self-scheduling timeout, not setInterval: the next poll is queued only
     // once the previous settled, so a slow link builds no backlog.
     const tick = async () => {
-      if (stopped) return;
+      if (stopped) {
+        return;
+      }
       if (
         typeof document === "undefined" ||
         document.visibilityState !== "hidden"
@@ -240,16 +255,22 @@ export function DebuggingTab() {
         await rescanSourcesIfStale(controller.signal);
         await poll(controller.signal);
       }
-      if (stopped) return;
+      if (stopped) {
+        return;
+      }
       const delay = pollDelayMs(mode);
-      if (delay !== null) timer = window.setTimeout(tick, delay);
+      if (delay !== null) {
+        timer = window.setTimeout(tick, delay);
+      }
     };
 
     void tick();
     return () => {
       stopped = true;
       controller.abort();
-      if (timer !== undefined) window.clearTimeout(timer);
+      if (timer !== undefined) {
+        window.clearTimeout(timer);
+      }
     };
   }, [mode, poll, rescanSourcesIfStale]);
 
@@ -260,12 +281,16 @@ export function DebuggingTab() {
 
   useEffect(() => {
     const pane = paneRef.current;
-    if (pane && pinnedRef.current) pane.scrollTop = pane.scrollHeight;
+    if (pane && pinnedRef.current) {
+      pane.scrollTop = pane.scrollHeight;
+    }
   }, [text]);
 
   const onScroll = useCallback(() => {
     const pane = paneRef.current;
-    if (!pane) return;
+    if (!pane) {
+      return;
+    }
     // Stop chasing the bottom once the user scrolls up, so a traceback stays
     // readable while the app keeps logging.
     pinnedRef.current =

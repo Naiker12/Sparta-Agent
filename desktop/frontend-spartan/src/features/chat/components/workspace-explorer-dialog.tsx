@@ -1,6 +1,3 @@
-import { useCallback, useEffect, useState } from "react";
-import { File02Icon, Folder01Icon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -8,10 +5,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { getAttachmentFileKind } from "@/lib/attachment-file-kind";
-import { useDocumentPreviewStore } from "@/features/rag/components/preview-store";
 import { Textarea } from "@/components/ui/textarea";
+import { useDocumentPreviewStore } from "@/features/rag/components/preview-store";
 import { useT } from "@/i18n";
+import { getAttachmentFileKind } from "@/lib/attachment-file-kind";
+import { File02Icon, Folder01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { useCallback, useEffect, useState } from "react";
 
 import { getProjectNativeFilesystem } from "../hooks/use-chat-projects";
 import type { ProjectRecord } from "../types";
@@ -39,8 +39,9 @@ export function WorkspaceExplorerDialog({
   const loadDirectory = useCallback(
     async (path: string) => {
       const filesystem = getProjectNativeFilesystem();
-      if (!filesystem?.readDirLevel || !project)
+      if (!(filesystem?.readDirLevel && project)) {
         throw new Error(t("projectsPage.folderBrowserDesktopOnly"));
+      }
       const result = await filesystem.readDirLevel(project.id, path);
       setError(result.error ?? null);
       setNodes(result.nodes ?? []);
@@ -49,25 +50,33 @@ export function WorkspaceExplorerDialog({
   );
 
   useEffect(() => {
-    if (!open || !currentPath || !root) return;
+    if (!(open && currentPath && root)) {
+      return;
+    }
     let cancelled = false;
     void (async () => {
       const filesystem = getProjectNativeFilesystem();
-      if (!filesystem?.readDirLevel || !project)
+      if (!(filesystem?.readDirLevel && project)) {
         throw new Error(t("projectsPage.folderBrowserDesktopOnly"));
+      }
       const configured = await filesystem.setWorkspaceRoot?.(
         project.id,
         root,
         project.workspaceAccess ?? "read",
       );
-      if (configured && !configured.success) throw new Error(configured.error);
+      if (configured && !configured.success) {
+        throw new Error(configured.error);
+      }
       const result = await filesystem.readDirLevel(project.id, currentPath);
-      if (cancelled) return;
+      if (cancelled) {
+        return;
+      }
       setError(result.error ?? null);
       setNodes(result.nodes ?? []);
     })().catch((reason) => {
-      if (!cancelled)
+      if (!cancelled) {
         setError(reason instanceof Error ? reason.message : String(reason));
+      }
     });
     return () => {
       cancelled = true;
@@ -77,16 +86,28 @@ export function WorkspaceExplorerDialog({
   const openFile = useCallback(
     async (path: string) => {
       const filesystem = getProjectNativeFilesystem();
-      if (filesystem?.readPreview && project && !["text", "code"].includes(getAttachmentFileKind(path))) {
+      if (
+        filesystem?.readPreview &&
+        project &&
+        !["text", "code"].includes(getAttachmentFileKind(path))
+      ) {
         const result = await filesystem.readPreview(project.id, path);
-        if (!result.success || !result.bytes) { setError(result.error ?? "Could not preview file"); return; }
+        if (!(result.success && result.bytes)) {
+          setError(result.error ?? "Could not preview file");
+          return;
+        }
         const filename = path.split(/[\\/]/).pop() ?? path;
         const bytes = new Uint8Array(result.bytes);
-        useDocumentPreviewStore.getState().openLocalPreview({ blob: new Blob([bytes]), filename, kind: getAttachmentFileKind(filename), workspaceSource: { projectId: project.id, path } });
+        useDocumentPreviewStore.getState().openLocalPreview({
+          blob: new Blob([bytes]),
+          filename,
+          kind: getAttachmentFileKind(filename),
+          workspaceSource: { projectId: project.id, path },
+        });
         onOpenChange(false);
         return;
       }
-      if (!filesystem?.readFile || !project) {
+      if (!(filesystem?.readFile && project)) {
         setError(t("projectsPage.folderBrowserDesktopOnly"));
         return;
       }
@@ -103,9 +124,11 @@ export function WorkspaceExplorerDialog({
   );
 
   const saveFile = useCallback(async () => {
-    if (!selectedFile) return;
+    if (!selectedFile) {
+      return;
+    }
     const filesystem = getProjectNativeFilesystem();
-    if (!filesystem?.writeFile || !project) {
+    if (!(filesystem?.writeFile && project)) {
       setError(t("projectsPage.folderBrowserDesktopOnly"));
       return;
     }
@@ -116,10 +139,13 @@ export function WorkspaceExplorerDialog({
         selectedFile,
         content,
       );
-      if (!result.success)
+      if (!result.success) {
         throw new Error(result.error ?? "Could not save file");
+      }
       setError(null);
-      if (currentPath) await loadDirectory(currentPath);
+      if (currentPath) {
+        await loadDirectory(currentPath);
+      }
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : String(reason));
     } finally {
@@ -128,10 +154,15 @@ export function WorkspaceExplorerDialog({
   }, [content, currentPath, loadDirectory, project, selectedFile, t]);
 
   return (
-    <Dialog open={open} onOpenChange={(next) => {
-      if (next) setCurrentPath(root);
-      onOpenChange(next);
-    }}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (next) {
+          setCurrentPath(root);
+        }
+        onOpenChange(next);
+      }}
+    >
       <DialogContent className="corner-squircle dialog-soft-surface flex h-[min(80vh,48rem)] flex-col sm:max-w-5xl">
         <DialogHeader>
           <DialogTitle>{t("projectsPage.folderBrowser")}</DialogTitle>

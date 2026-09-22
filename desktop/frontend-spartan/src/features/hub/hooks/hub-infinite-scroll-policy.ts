@@ -1,4 +1,3 @@
-
 export type InfiniteScrollResetKey = string | number | boolean | null;
 
 export interface InfiniteScrollProgressInput {

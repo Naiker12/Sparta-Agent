@@ -1,4 +1,3 @@
-
 import {
   type TransferSample,
   appendSample,
@@ -28,14 +27,18 @@ export function isExternalJob(key: string): boolean {
 
 export async function cancelExternalJob(key: string): Promise<void> {
   const job = externalJobs.get(key);
-  if (!job) return;
+  if (!job) {
+    return;
+  }
   patchJob(key, { state: "cancelling" });
   try {
     await job.cancel();
   } catch {
     // The transfer is still running and progress updates do not reset state,
     // so put the row back rather than leaving it stuck on "cancelling".
-    if (externalJobs.has(key)) patchJob(key, { state: "running" });
+    if (externalJobs.has(key)) {
+      patchJob(key, { state: "running" });
+    }
   }
 }
 
@@ -71,7 +74,9 @@ export function updateExternalJob(
   progress: { downloadedBytes: number; expectedBytes: number },
 ): void {
   const job = externalJobs.get(key);
-  if (!job) return;
+  if (!job) {
+    return;
+  }
   const downloadedBytes = Math.max(0, progress.downloadedBytes);
   const expectedBytes = Math.max(0, progress.expectedBytes);
   appendSample(job.samples, Date.now() / 1000, downloadedBytes);
@@ -92,7 +97,9 @@ export function finishExternalJob(
   outcome: "complete" | "cancelled" | "error",
   error?: string | null,
 ): void {
-  if (!externalJobs.delete(key)) return;
+  if (!externalJobs.delete(key)) {
+    return;
+  }
   patchJob(key, {
     state: outcome,
     bytesPerSec: 0,

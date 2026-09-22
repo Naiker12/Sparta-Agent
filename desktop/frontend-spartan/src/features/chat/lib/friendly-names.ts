@@ -1,4 +1,3 @@
-
 /**
  * Friendly default names for auto-created OpenAI shell containers, used by the
  * chat-adapter's lazy-create path (Code pill on, no thread container, non-default

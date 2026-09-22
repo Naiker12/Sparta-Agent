@@ -1,7 +1,6 @@
-
 import type { HfModelResult } from "@/features/hub/hooks/use-hub-model-search";
-import { cachedModelInfo } from "../lib/hf-cache";
 import { useEffect, useState } from "react";
+import { cachedModelInfo } from "../lib/hf-cache";
 import { toHfModelResult } from "../lib/view-models";
 
 type SelectedModelMetadataResult = ReturnType<typeof toHfModelResult>;

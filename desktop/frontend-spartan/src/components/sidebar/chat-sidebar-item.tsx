@@ -9,17 +9,12 @@
  * - Menú contextual individual y menú kebab (renombrar, fijar/desfijar, abrir carpeta de sandbox, mover a proyecto, exportar, archivar, borrar).
  */
 
-import type { ReactElement } from "react";
-import { useT } from "@/i18n";
-import { cn } from "@/lib/utils";
+import { sandboxSessionIdFor } from "@/components/assistant-ui/sandbox-files";
 import {
-  SidebarMenuItem,
-  SidebarMenuButton,
-} from "@/components/ui/sidebar";
-import {
-  ContextMenu,
-  ContextMenuTrigger,
-} from "@/components/ui/context-menu";
+  revealSandbox,
+  sandboxHasFiles,
+} from "@/components/assistant-ui/sandbox-reveal";
+import { ContextMenu, ContextMenuTrigger } from "@/components/ui/context-menu";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,8 +25,22 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { Spinner } from "@/components/ui/spinner";
-import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  type ProjectRecord,
+  type SidebarItem,
+  compareModelDisplayName,
+  isDefaultChatTitle,
+  listStoredChatMessages,
+  listStoredChatThreads,
+  recordedSandboxSessionId,
+} from "@/features/chat";
+import { useSettingsDialogStore } from "@/features/settings";
+import { useT } from "@/i18n";
+import { isDownloadCancelled } from "@/lib/native-files";
+import { toast } from "@/lib/toast";
+import { cn } from "@/lib/utils";
 import {
   Archive03Icon,
   BookOpen01Icon,
@@ -47,34 +56,17 @@ import {
   PinIcon,
   PinOffIcon,
 } from "@hugeicons/core-free-icons";
-import { toast } from "@/lib/toast";
-import { isDownloadCancelled } from "@/lib/native-files";
-import { sandboxSessionIdFor } from "@/components/assistant-ui/sandbox-files";
-import {
-  revealSandbox,
-  sandboxHasFiles,
-} from "@/components/assistant-ui/sandbox-reveal";
-import { useSettingsDialogStore } from "@/features/settings";
-import {
-  compareModelDisplayName,
-  isDefaultChatTitle,
-  listStoredChatMessages,
-  listStoredChatThreads,
-  recordedSandboxSessionId,
-  type ProjectRecord,
-  type SidebarItem,
-} from "@/features/chat";
-import {
-  CHAT_EXPORT_OPTIONS,
-} from "./sidebar-types-and-constants";
+import { HugeiconsIcon } from "@hugeicons/react";
+import type { KeyboardEvent, MouseEvent, ReactElement } from "react";
 import {
   exportConversationByFormat,
   getSidebarItemThreadIds,
   saveChatToProjectSources,
 } from "./sidebar-chat-helpers";
-import { OpenChatFolderUnavailableItem } from "./sidebar-nav-items";
 import { ChatContextMenu } from "./sidebar-context-menus";
 import type { DeleteTarget, RenameTarget } from "./sidebar-dialogs";
+import { OpenChatFolderUnavailableItem } from "./sidebar-nav-items";
+import { CHAT_EXPORT_OPTIONS } from "./sidebar-types-and-constants";
 
 export interface ChatSidebarItemProps {
   item: SidebarItem;
@@ -100,10 +92,21 @@ export interface ChatSidebarItemProps {
   selectionCount: number;
   allSelectedPinned: boolean;
   // Event handlers
-  dropCueClass: (scope: string | undefined, orderedIds: string[] | undefined, rowId: string) => string | undefined;
+  dropCueClass: (
+    scope: string | undefined,
+    orderedIds: string[] | undefined,
+    rowId: string,
+  ) => string | undefined;
   rowDragProps: (scope: string, orderedIds: string[], rowId: string) => any;
-  handleSelectionClick: (event: React.MouseEvent, item: SidebarItem, list: { scope: string; ids: string[] }) => boolean;
-  selectForContextMenu: (item: SidebarItem, list: { scope: string; ids: string[] }) => void;
+  handleSelectionClick: (
+    event: MouseEvent,
+    item: SidebarItem,
+    list: { scope: string; ids: string[] },
+  ) => boolean;
+  selectForContextMenu: (
+    item: SidebarItem,
+    list: { scope: string; ids: string[] },
+  ) => void;
   clearSelection: () => void;
   clearChatNotifications: (item: SidebarItem) => void;
   navigate: (target: { to: string; search?: Record<string, any> }) => void;
@@ -111,15 +114,28 @@ export interface ChatSidebarItemProps {
   togglePinnedChat: (id: string) => void;
   openRenameChat: (item: SidebarItem) => void;
   setRenameDraft: (val: string) => void;
-  handleInlineRenameKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => void;
+  handleInlineRenameKeyDown: (
+    event: KeyboardEvent<HTMLInputElement>,
+  ) => void;
   handleInlineRenameBlur: () => void;
-  renderMoveRowItems: (scope: string, orderedIds: string[], rowId: string, index: number) => ReactElement;
+  renderMoveRowItems: (
+    scope: string,
+    orderedIds: string[],
+    rowId: string,
+    index: number,
+  ) => ReactElement;
   setProjectCreateMoveTarget: (item: SidebarItem | null) => void;
   setCreatingProject: (val: boolean) => void;
-  moveChatToProject: (item: SidebarItem, projectId: string | null) => Promise<void>;
+  moveChatToProject: (
+    item: SidebarItem,
+    projectId: string | null,
+  ) => Promise<void>;
   handleArchiveThread: (item: SidebarItem) => Promise<void>;
   openDeleteDialog: (target: DeleteTarget) => void;
-  deleteChatWithCleanup: (item: SidebarItem, options: { deleteFiles: boolean }) => Promise<void>;
+  deleteChatWithCleanup: (
+    item: SidebarItem,
+    options: { deleteFiles: boolean },
+  ) => Promise<void>;
   pinSelected: (pinned: boolean) => void;
   archiveSelected: () => Promise<void>;
   markSelectedUnread: () => void;
@@ -191,8 +207,7 @@ export function ChatSidebarItem({
   const showQueuedActivity = hasQueuedActivity && !isGenerating;
   const showWorkSpinner = isGenerating || showQueuedActivity;
   const hasUnreadActivity =
-    !isGenerating &&
-    !hasQueuedActivity &&
+    !(isGenerating || hasQueuedActivity) &&
     threadIds.some((threadId) => unreadThreadIds.has(threadId));
   const hasSecondaryRowAction =
     variant === "project" || (variant === "recent" && isPinned);
@@ -242,7 +257,6 @@ export function ChatSidebarItem({
     return (
       <SidebarMenuItem key={item.id} className={itemClass}>
         <input
-          autoFocus
           value={renameDraft}
           onChange={(event) => setRenameDraft(event.target.value)}
           onKeyDown={handleInlineRenameKeyDown}
@@ -261,7 +275,7 @@ export function ChatSidebarItem({
 
   return (
     <ContextMenu key={item.id}>
-      <ContextMenuTrigger asChild>
+      <ContextMenuTrigger asChild={true}>
         <SidebarMenuItem
           className={cn(
             itemClass,
@@ -283,7 +297,9 @@ export function ChatSidebarItem({
             data-selected={selectedChatIds.has(item.id) ? "true" : undefined}
             className={buttonClass}
             onClick={(event) => {
-              if (list && handleSelectionClick(event, item, list)) return;
+              if (list && handleSelectionClick(event, item, list)) {
+                return;
+              }
               clearSelection();
               clearChatNotifications(item);
               navigate({
@@ -292,15 +308,11 @@ export function ChatSidebarItem({
                   item.type === "single"
                     ? {
                         thread: item.id,
-                        ...(item.projectId
-                          ? { project: item.projectId }
-                          : {}),
+                        ...(item.projectId ? { project: item.projectId } : {}),
                       }
                     : {
                         compare: item.id,
-                        ...(item.projectId
-                          ? { project: item.projectId }
-                          : {}),
+                        ...(item.projectId ? { project: item.projectId } : {}),
                       },
               });
               closeMobileIfOpen();
@@ -334,9 +346,7 @@ export function ChatSidebarItem({
               <Spinner
                 data-testid="chat-row-spinner"
                 label={
-                  isGenerating
-                    ? t("shell.navigation.chatGenerating")
-                    : "Queued"
+                  isGenerating ? t("shell.navigation.chatGenerating") : "Queued"
                 }
                 className="ml-auto size-3.5 shrink-0 text-muted-foreground"
               />
@@ -350,7 +360,7 @@ export function ChatSidebarItem({
                   ? "group-hover/project-chat-item:opacity-0 group-has-[.sidebar-row-action[data-state=open]]/project-chat-item:opacity-0"
                   : "group-hover/recent-item:opacity-0 group-has-[.sidebar-row-action[data-state=open]]/recent-item:opacity-0",
               )}
-              aria-hidden
+              aria-hidden={true}
             >
               <span className="size-2 rounded-full bg-muted-foreground/60" />
             </span>
@@ -394,7 +404,7 @@ export function ChatSidebarItem({
             </button>
           )}
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+            <DropdownMenuTrigger asChild={true}>
               <button
                 type="button"
                 onClick={(e) => e.stopPropagation()}
@@ -430,9 +440,7 @@ export function ChatSidebarItem({
                   strokeWidth={1.75}
                   className="size-icon"
                 />
-                <span>
-                  {t(isPinned ? "chat.menu.unpin" : "chat.menu.pin")}
-                </span>
+                <span>{t(isPinned ? "chat.menu.unpin" : "chat.menu.pin")}</span>
               </DropdownMenuItem>
               {drag &&
                 renderMoveRowItems(
@@ -458,9 +466,7 @@ export function ChatSidebarItem({
                               ),
                             );
                           }
-                          let distinct = [
-                            ...new Set(recorded.filter(Boolean)),
-                          ];
+                          let distinct = [...new Set(recorded.filter(Boolean))];
                           if (distinct.length === 0 && item.projectId) {
                             const held: string[] = [];
                             for (const threadId of ids) {
@@ -478,9 +484,7 @@ export function ChatSidebarItem({
                             });
                             return;
                           }
-                          await revealSandbox(
-                            distinct[0] ?? sandboxSessionId,
-                          );
+                          await revealSandbox(distinct[0] ?? sandboxSessionId);
                         } catch (error) {
                           toast.error(t("chat.menu.openFolderFailed"), {
                             description:
@@ -540,9 +544,7 @@ export function ChatSidebarItem({
                     <DropdownMenuItem
                       key={project.id}
                       disabled={item.projectId === project.id}
-                      onSelect={() =>
-                        void moveChatToProject(item, project.id)
-                      }
+                      onSelect={() => void moveChatToProject(item, project.id)}
                     >
                       <HugeiconsIcon
                         icon={Folder01Icon}
@@ -619,7 +621,7 @@ export function ChatSidebarItem({
                   className="unsloth-plus-menu w-52"
                 >
                   {projects.length === 0 && (
-                    <DropdownMenuItem disabled>
+                    <DropdownMenuItem disabled={true}>
                       {t("chat.menu.noProjectsYet")}
                     </DropdownMenuItem>
                   )}
@@ -647,9 +649,7 @@ export function ChatSidebarItem({
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onSelect={() => void handleArchiveThread(item)}
-              >
+              <DropdownMenuItem onSelect={() => void handleArchiveThread(item)}>
                 <HugeiconsIcon
                   icon={Archive03Icon}
                   strokeWidth={1.75}

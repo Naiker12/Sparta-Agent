@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
@@ -45,17 +44,17 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+import { motion, useReducedMotion } from "motion/react";
 import {
-  useCallback,
   type ReactElement,
   memo,
+  useCallback,
   useEffect,
   useId,
   useLayoutEffect,
   useRef,
   useState,
 } from "react";
-import { motion, useReducedMotion } from "motion/react";
 import {
   approveResearchRun,
   retryResearchRun,
@@ -89,7 +88,9 @@ function useResearchActivityScroll(runId: string) {
 
   useLayoutEffect(() => {
     const element = viewportRef.current;
-    if (!element) return;
+    if (!element) {
+      return;
+    }
 
     let detached = false;
     let pointerActive = false;
@@ -110,14 +111,20 @@ function useResearchActivityScroll(runId: string) {
     const updateAtBottom = (value: boolean) =>
       setIsAtBottom((current) => (current === value ? current : value));
     const requestTick = () => {
-      if (animationFrame === null) animationFrame = requestAnimationFrame(tick);
+      if (animationFrame === null) {
+        animationFrame = requestAnimationFrame(tick);
+      }
     };
     // A reflow with no DOM mutation (a `font-display: swap` webfont landing, say) reaches neither
     // observer, so the rest of the window is covered by one deferred check rather than every frame.
     const scheduleSettleCheck = () => {
-      if (settleTimer !== null) return;
+      if (settleTimer !== null) {
+        return;
+      }
       const remaining = followUntil - performance.now();
-      if (remaining <= 0) return;
+      if (remaining <= 0) {
+        return;
+      }
       settleTimer = window.setTimeout(() => {
         settleTimer = null;
         // The timer lands on the deadline and its tick a frame later, so the window has closed by
@@ -132,7 +139,9 @@ function useResearchActivityScroll(runId: string) {
       settleCheckDue = false;
       if (!detached && (settling || performance.now() < followUntil)) {
         const pinned = distanceFromBottom() <= ACTIVITY_PINNED_THRESHOLD_PX;
-        if (!pinned) element.scrollTop = element.scrollHeight;
+        if (!pinned) {
+          element.scrollTop = element.scrollHeight;
+        }
         updateAtBottom(true);
         // Chaining on the window alone forced a layout every frame for the whole run; growth that
         // leaves the view unpinned is the signal, and a quiet frame defers to the settle check.
@@ -147,7 +156,9 @@ function useResearchActivityScroll(runId: string) {
       updateAtBottom(distanceFromBottom() <= ACTIVITY_BOTTOM_THRESHOLD_PX);
     };
     const followLayout = () => {
-      if (detached) return;
+      if (detached) {
+        return;
+      }
       layoutChanged = true;
       followUntil = performance.now() + ACTIVITY_FOLLOW_SETTLE_MS;
       requestTick();
@@ -175,7 +186,9 @@ function useResearchActivityScroll(runId: string) {
       while (node && node !== element) {
         if (node.scrollTop > 0) {
           const overflowY = window.getComputedStyle(node).overflowY;
-          if (overflowY === "auto" || overflowY === "scroll") return true;
+          if (overflowY === "auto" || overflowY === "scroll") {
+            return true;
+          }
         }
         node = node.parentElement;
       }
@@ -194,7 +207,9 @@ function useResearchActivityScroll(runId: string) {
     const onScroll = () => {
       const scrollTop = element.scrollTop;
       const movingUp = scrollTop < lastScrollTop;
-      if (!detached && pointerActive && movingUp) detach();
+      if (!detached && pointerActive && movingUp) {
+        detach();
+      }
       if (
         detached &&
         scrollTop > lastScrollTop &&
@@ -204,7 +219,9 @@ function useResearchActivityScroll(runId: string) {
         followLayout();
       }
       lastScrollTop = scrollTop;
-      if (detached) updateAtBottom(false);
+      if (detached) {
+        updateAtBottom(false);
+      }
     };
     const onWheel = (event: WheelEvent) => {
       if (
@@ -229,7 +246,9 @@ function useResearchActivityScroll(runId: string) {
       }
     };
     const onKeyDown = (event: KeyboardEvent) => {
-      if (["ArrowUp", "PageUp", "Home"].includes(event.key)) detach();
+      if (["ArrowUp", "PageUp", "Home"].includes(event.key)) {
+        detach();
+      }
     };
     const onPointerDown = () => {
       pointerActive = true;
@@ -259,8 +278,12 @@ function useResearchActivityScroll(runId: string) {
     scrollToLatest();
 
     return () => {
-      if (animationFrame !== null) cancelAnimationFrame(animationFrame);
-      if (settleTimer !== null) window.clearTimeout(settleTimer);
+      if (animationFrame !== null) {
+        cancelAnimationFrame(animationFrame);
+      }
+      if (settleTimer !== null) {
+        window.clearTimeout(settleTimer);
+      }
       resizeObserver.disconnect();
       mutationObserver.disconnect();
       element.removeEventListener("scroll", onScroll);
@@ -303,7 +326,9 @@ export function researchStatusLabel(status: ResearchRunStatus): string {
 
 function formatElapsed(start: number, end = Date.now()): string {
   const seconds = Math.max(0, Math.round((end - start) / 1000));
-  if (seconds < 60) return `${seconds}s`;
+  if (seconds < 60) {
+    return `${seconds}s`;
+  }
   const minutes = Math.floor(seconds / 60);
   const remainder = seconds % 60;
   return remainder ? `${minutes}m ${remainder}s` : `${minutes}m`;
@@ -313,11 +338,15 @@ function ActivityIcon({
   activity,
 }: { activity: ResearchActivity }): ReactElement {
   const className = "size-3.5";
-  if (activity.state === "running") return <Spinner className={cn(className, "text-sky-500")} />;
-  if (activity.state === "failed")
+  if (activity.state === "running") {
+    return <Spinner className={cn(className, "text-sky-500")} />;
+  }
+  if (activity.state === "failed") {
     return <X className={cn(className, "text-destructive")} />;
-  if (activity.state === "cancelled")
+  }
+  if (activity.state === "cancelled") {
     return <Square className={cn(className, "text-muted-foreground")} />;
+  }
   const titleLower = (activity.title || "").toLowerCase();
   if (
     activity.kind === "reasoning" ||
@@ -327,11 +356,19 @@ function ActivityIcon({
   ) {
     return <Brain className={cn(className, "text-muted-foreground")} />;
   }
-  if (activity.kind === "plan" || activity.kind === "report" || titleLower.includes("plan ready")) {
+  if (
+    activity.kind === "plan" ||
+    activity.kind === "report" ||
+    titleLower.includes("plan ready")
+  ) {
     return <FileText className={cn(className, "text-muted-foreground")} />;
   }
-  if (activity.action === "fetch") return <BookOpen className={cn(className, "text-muted-foreground")} />;
-  if (activity.action === "search") return <Search className={cn(className, "text-muted-foreground")} />;
+  if (activity.action === "fetch") {
+    return <BookOpen className={cn(className, "text-muted-foreground")} />;
+  }
+  if (activity.action === "search") {
+    return <Search className={cn(className, "text-muted-foreground")} />;
+  }
   return <Check className={cn(className, "text-muted-foreground")} />;
 }
 
@@ -345,19 +382,16 @@ const ActivityRow = memo(function ActivityRow({
   const storedOpen = useResearchRunStore(
     (state) => state.activityOpenByRunId[runId]?.[activity.id],
   );
-  const setActivityOpen = useResearchRunStore(
-    (state) => state.setActivityOpen,
-  );
+  const setActivityOpen = useResearchRunStore((state) => state.setActivityOpen);
   const open =
-    storedOpen ??
-    (activity.state === "running" || activity.state === "action");
+    storedOpen ?? (activity.state === "running" || activity.state === "action");
   const hasDetails = Boolean(
     activity.reasoning ||
       activity.plan ||
       activity.input ||
-      activity.previewLabels?.length ||
-      activity.sources?.length ||
-      activity.evidenceSources?.length ||
+      (activity.previewLabels && activity.previewLabels.length > 0) ||
+      (activity.sources && activity.sources.length > 0) ||
+      (activity.evidenceSources && activity.evidenceSources.length > 0) ||
       activity.excerpt ||
       activity.detail,
   );
@@ -368,25 +402,26 @@ const ActivityRow = memo(function ActivityRow({
           <p
             className={cn(
               "line-clamp-3 break-words rounded-2xl bg-muted/40 p-3.5 text-xs leading-relaxed text-foreground/90 font-sans border border-border/40",
-              activity.kind === "step" &&
-                "bg-muted/50 border-border/50",
+              activity.kind === "step" && "bg-muted/50 border-border/50",
             )}
           >
             {activity.input}
           </p>
           <span className="inline-block text-xs font-medium text-sky-500 dark:text-sky-400 pl-0.5">
-            {activity.action === "search" || activity.kind === "step" ? "Web search" : "Tool query"}
+            {activity.action === "search" || activity.kind === "step"
+              ? "Web search"
+              : "Tool query"}
           </span>
         </div>
       ) : null}
-      {activity.previewLabels?.length ? (
+      {activity.previewLabels && activity.previewLabels.length > 0 ? (
         <ul className="space-y-1 rounded-xl bg-muted/35 px-3 py-2">
           {activity.previewLabels.map((label, index) => (
             <li
               key={`${activity.id}-preview-${index}`}
               className="flex gap-2 leading-relaxed"
             >
-              <span aria-hidden className="text-primary/70">
+              <span aria-hidden={true} className="text-primary/70">
                 ·
               </span>
               <span className="min-w-0 break-words text-foreground/80">
@@ -488,9 +523,7 @@ const ActivityRow = memo(function ActivityRow({
   return (
     <Collapsible
       open={open}
-      onOpenChange={(nextOpen) =>
-        setActivityOpen(runId, activity.id, nextOpen)
-      }
+      onOpenChange={(nextOpen) => setActivityOpen(runId, activity.id, nextOpen)}
     >
       <div
         className={cn(
@@ -534,13 +567,9 @@ const ActivityRow = memo(function ActivityRow({
 
 function PlanReview({ runId }: { runId: string }): ReactElement | null {
   const run = useResearchRunStore((state) => state.sessions[runId]?.run);
-  const review = useResearchRunStore(
-    (state) => state.planReviewByRunId[runId],
-  );
+  const review = useResearchRunStore((state) => state.planReviewByRunId[runId]);
   const setOpen = useResearchRunStore((state) => state.setPlanReviewOpen);
-  const setEditing = useResearchRunStore(
-    (state) => state.setPlanReviewEditing,
-  );
+  const setEditing = useResearchRunStore((state) => state.setPlanReviewEditing);
   const setDraft = useResearchRunStore((state) => state.setPlanReviewDraft);
   const [pending, setPending] = useState(false);
   const stepKeyPrefix = useId();
@@ -549,7 +578,9 @@ function PlanReview({ runId }: { runId: string }): ReactElement | null {
   );
   const reduceMotion = useReducedMotion();
 
-  if (!run?.plan || run.status !== "awaiting_approval" || !review) return null;
+  if (!run?.plan || run.status !== "awaiting_approval" || !review) {
+    return null;
+  }
   const { draft, editing, open } = review;
 
   const start = async () => {
@@ -560,8 +591,9 @@ function PlanReview({ runId }: { runId: string }): ReactElement | null {
         latest = await updateResearchPlan(run.id, draft, run.planRevision);
         ingestResearchUpdate(latest);
       }
-      if (!latest.planHash)
+      if (!latest.planHash) {
         throw new Error("The research plan is missing its approval hash.");
+      }
       const approved = await approveResearchRun(
         latest.id,
         latest.planRevision,
@@ -579,7 +611,9 @@ function PlanReview({ runId }: { runId: string }): ReactElement | null {
 
   const move = (index: number, direction: -1 | 1) => {
     const target = index + direction;
-    if (target < 0 || target >= draft.steps.length) return;
+    if (target < 0 || target >= draft.steps.length) {
+      return;
+    }
     const steps = [...draft.steps];
     [steps[index], steps[target]] = [steps[target], steps[index]];
     const keys = [...stepKeys];
@@ -603,10 +637,7 @@ function PlanReview({ runId }: { runId: string }): ReactElement | null {
           Review plan
         </Button>
       </section>
-      <Dialog
-        open={open}
-        onOpenChange={(nextOpen) => setOpen(runId, nextOpen)}
-      >
+      <Dialog open={open} onOpenChange={(nextOpen) => setOpen(runId, nextOpen)}>
         <DialogContent className="max-h-[min(680px,calc(100dvh-6rem))] grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden p-0 sm:max-w-3xl [&>[data-slot=dialog-close]]:right-6 [&>[data-slot=dialog-close]]:top-6">
           <DialogHeader className="border-b border-border/70 px-7 pb-4 pt-6 pr-16">
             <DialogTitle>Review the research plan</DialogTitle>
@@ -670,9 +701,9 @@ function PlanReview({ runId }: { runId: string }): ReactElement | null {
                         size="icon-xs"
                         disabled={draft.steps.length === 1}
                         onClick={() => {
-                          setStepKeys((keys) => keys.filter(
-                            (_, stepIndex) => stepIndex !== index,
-                          ));
+                          setStepKeys((keys) =>
+                            keys.filter((_, stepIndex) => stepIndex !== index),
+                          );
                           setDraft(runId, {
                             ...draft,
                             steps: draft.steps.filter(
@@ -712,7 +743,9 @@ function PlanReview({ runId }: { runId: string }): ReactElement | null {
                 <Button
                   variant="ghost"
                   size="sm"
-                  disabled={draft.steps.length >= (run?.config?.budgets?.maxSteps ?? 30)}
+                  disabled={
+                    draft.steps.length >= (run?.config?.budgets?.maxSteps ?? 30)
+                  }
                   onClick={() => {
                     setStepKeys((keys) => [
                       ...keys,
@@ -777,7 +810,7 @@ function PlanReview({ runId }: { runId: string }): ReactElement | null {
                   pending ||
                   !draft.title.trim() ||
                   draft.steps.some(
-                    (step) => !step.title.trim() || !step.query.trim(),
+                    (step) => !(step.title.trim() && step.query.trim()),
                   )
                 }
                 onClick={() => void start()}
@@ -800,9 +833,13 @@ function PlanReview({ runId }: { runId: string }): ReactElement | null {
 function ResearchActions({ runId }: { runId: string }): ReactElement | null {
   const run = useResearchRunStore((state) => state.sessions[runId]?.run);
   const [pending, setPending] = useState(false);
-  if (!run) return null;
+  if (!run) {
+    return null;
+  }
   const canRetry = run.status === "failed" || run.status === "cancelled";
-  if (!canRetry) return null;
+  if (!canRetry) {
+    return null;
+  }
   const retry = async () => {
     setPending(true);
     try {
@@ -856,7 +893,9 @@ export function ResearchActivityPanel({
   }, [runId, session?.following]);
 
   useEffect(() => {
-    if (!session || terminalStatuses.has(session.run.status)) return;
+    if (!session || terminalStatuses.has(session.run.status)) {
+      return;
+    }
     const timer = window.setInterval(() => setElapsedNow(Date.now()), 1000);
     return () => window.clearInterval(timer);
   }, [session?.run.status]);
@@ -872,16 +911,17 @@ export function ResearchActivityPanel({
   const elapsedEnd = run.completedAt ?? elapsedNow ?? run.updatedAt;
   const allowedDomains = run.config?.websitePolicy?.allowedDomains ?? [];
   const blockedDomains = run.config?.websitePolicy?.blockedDomains ?? [];
-  const websiteLimitLabel = allowedDomains.length
-    ? allowedDomains.length === 1
-      ? `Only ${allowedDomains[0]}`
-      : `${allowedDomains.length} allowed domains`
-    : blockedDomains.length
-      ? `${blockedDomains.length} blocked ${blockedDomains.length === 1 ? "domain" : "domains"}`
-      : null;
+  const websiteLimitLabel =
+    allowedDomains.length > 0
+      ? allowedDomains.length === 1
+        ? `Only ${allowedDomains[0]}`
+        : `${allowedDomains.length} allowed domains`
+      : blockedDomains.length > 0
+        ? `${blockedDomains.length} blocked ${blockedDomains.length === 1 ? "domain" : "domains"}`
+        : null;
   const websiteLimitTitle = [
-    allowedDomains.length ? `Allowed: ${allowedDomains.join(", ")}` : "",
-    blockedDomains.length ? `Blocked: ${blockedDomains.join(", ")}` : "",
+    allowedDomains.length > 0 ? `Allowed: ${allowedDomains.join(", ")}` : "",
+    blockedDomains.length > 0 ? `Blocked: ${blockedDomains.join(", ")}` : "",
   ]
     .filter(Boolean)
     .join("\n");
@@ -980,9 +1020,7 @@ export function ResearchActivityPanel({
               variant="ghost"
               className="h-7 px-2 text-ui-11"
               onClick={() => {
-                useResearchRunStore
-                  .getState()
-                  .setConnectionError(runId, null);
+                useResearchRunStore.getState().setConnectionError(runId, null);
                 ensureResearchRunFollowed(runId, run);
               }}
             >
@@ -1000,14 +1038,13 @@ export function ResearchActivityPanel({
         role="log"
         aria-live="off"
         aria-label="Research activity timeline"
-        tabIndex={0}
         className="min-h-0 flex-1 overflow-y-auto px-4 py-3 [overflow-anchor:none] focus-visible:outline-none"
       >
         {hydrating ? (
           <div className="flex items-center gap-2 py-3 text-sm text-muted-foreground">
             <Spinner /> Restoring research activity…
           </div>
-        ) : activities.length ? (
+        ) : activities.length > 0 ? (
           activities.map((activity) => (
             <ActivityRow key={activity.id} runId={runId} activity={activity} />
           ))

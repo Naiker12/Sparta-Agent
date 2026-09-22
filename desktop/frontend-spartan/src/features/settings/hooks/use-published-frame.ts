@@ -1,4 +1,3 @@
-
 // Publish an element's box to the overlay-frame store, so the bottom-right
 // stack keeps clear of it. The Live monitor does this by hand inside its own
 // layout effect; anything else that must not be covered uses this.
@@ -56,7 +55,9 @@ export function usePublishedFrame(
     measure();
     window.addEventListener("resize", measure);
     const observer =
-      typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(measure);
     observer?.observe(element);
     return () => {
       window.removeEventListener("resize", measure);

@@ -1,6 +1,4 @@
-﻿
 import { authFetch } from "@/features/auth";
-import { chatModelLoaded } from "./lib/chat-model-loaded";
 import {
   AssistantRuntimeProvider,
   type Attachment,
@@ -39,24 +37,16 @@ import {
   ThreadAutosaveHandle,
   createOpenAIStreamAdapter,
 } from "./api/chat-adapter";
-import {
-  cloneAttachments,
-  cloneContent,
-  toThreadMessage,
-} from "./runtime/message-converters";
 import { CHAT_HISTORY_UPDATED_EVENT } from "./api/chat-api";
 import { getResearchThreadState } from "./api/research-api";
-import { sanitizeThreadScopedSettings } from "./utils/thread-scoped-settings";
-import {
-  ingestResearchUpdate,
-  useResearchRunStore,
-} from "./stores/research-run-store";
+import { AudioAttachmentAdapter } from "./audio-attachment-adapter";
 import {
   loadConnectionsEnabled,
   loadExternalProviders,
   parseExternalModelId,
   providerModelSupportsVision,
 } from "./external-providers";
+import { chatModelLoaded } from "./lib/chat-model-loaded";
 import {
   OPEN_DOCUMENT_SPREADSHEET_MIME,
   OPEN_DOCUMENT_TEXT_MIME,
@@ -64,8 +54,11 @@ import {
   readActiveOpenDocumentAttachmentContent,
   readOpenDocumentAttachmentContent,
 } from "./open-document";
-import { AudioAttachmentAdapter } from "./audio-attachment-adapter";
-import { VideoAttachmentAdapter } from "./video-attachment-adapter";
+import {
+  cloneAttachments,
+  cloneContent,
+  toThreadMessage,
+} from "./runtime/message-converters";
 import {
   awaitThreadScopedSettingsWrite,
   beginThreadScopedPairing,
@@ -73,35 +66,18 @@ import {
   releaseHeldThreadScopedEdits,
   useChatRuntimeStore,
 } from "./stores/chat-runtime-store";
+import {
+  ingestResearchUpdate,
+  useResearchRunStore,
+} from "./stores/research-run-store";
 import { ToolPaneScopeContext, toolPaneScope } from "./tool-output-scope";
-import {
-  notifyPromptQueueRunFailed,
-  requestPromptQueueStop,
-  requestTemporaryPromptQueueStop,
-} from "./utils/prompt-queue-boundary";
-import {
-  adoptPreStreamRunReservation,
-  claimPreStreamRunReservation,
-  findPreStreamRunReservation,
-  isPreStreamRunReservationCancelled,
-  preStreamRunThreadIdsForRuntime,
-  releasePreStreamRunReservation,
-} from "./utils/pre-stream-run-reservation";
 import type { MessageRecord, ModelType, ThreadRecord } from "./types";
 import {
   chatContentPartAttachmentIdFromSignature,
   chatContentPartAttachmentSignature,
   onChatAttachmentDeleted,
 } from "./utils/chat-attachment-events";
-import {
-  attachmentContentText,
-  attachmentsSample,
-  isPastedTextFile,
-} from "./utils/pasted-text";
-import {
-  refreshContextUsage,
-  setActiveBranchReader,
-} from "./utils/refresh-context-usage";
+import { chatHistoryClearBoundary } from "./utils/chat-history-clear-boundary";
 import {
   awaitStoredChatThreadWrites,
   deleteStoredChatThreads,
@@ -122,7 +98,6 @@ import {
   isChatThreadDeleted,
   markChatThreadDeleted,
 } from "./utils/chat-thread-tombstones";
-import { chatHistoryClearBoundary } from "./utils/chat-history-clear-boundary";
 import {
   DEFAULT_CHAT_TITLE,
   fallbackTitleFromUserText,
@@ -130,7 +105,31 @@ import {
 } from "./utils/chat-title";
 import { syncExportedRepositoryToBackend } from "./utils/delete-thread-message";
 import { getImageInputUnavailableReason } from "./utils/image-input-support";
+import {
+  attachmentContentText,
+  attachmentsSample,
+  isPastedTextFile,
+} from "./utils/pasted-text";
+import {
+  adoptPreStreamRunReservation,
+  claimPreStreamRunReservation,
+  findPreStreamRunReservation,
+  isPreStreamRunReservationCancelled,
+  preStreamRunThreadIdsForRuntime,
+  releasePreStreamRunReservation,
+} from "./utils/pre-stream-run-reservation";
+import {
+  notifyPromptQueueRunFailed,
+  requestPromptQueueStop,
+  requestTemporaryPromptQueueStop,
+} from "./utils/prompt-queue-boundary";
+import {
+  refreshContextUsage,
+  setActiveBranchReader,
+} from "./utils/refresh-context-usage";
 import { isAssistantLocalThreadId } from "./utils/thread-ids";
+import { sanitizeThreadScopedSettings } from "./utils/thread-scoped-settings";
+import { VideoAttachmentAdapter } from "./video-attachment-adapter";
 
 const pendingHistoryAppendByMessageId = new Map<string, Promise<void>>();
 // Resolves to the thread id assigned when this message's chat was first persisted.
@@ -404,7 +403,9 @@ class HtmlAttachmentAdapter implements AttachmentAdapter {
   async send(attachment: PendingAttachment): Promise<CompleteAttachment> {
     const html = await attachment.file.text();
     const doc = new DOMParser().parseFromString(html, "text/html");
-    for (const el of doc.querySelectorAll("script, style")) el.remove();
+    for (const el of doc.querySelectorAll("script, style")) {
+      el.remove();
+    }
     const text = (doc.body.textContent ?? "").replace(/\s+/g, " ").trim();
     return {
       id: attachment.id,
@@ -553,17 +554,23 @@ class OpenDocumentAttachmentAdapter implements AttachmentAdapter {
 
 function clip(input: string, maxLen: number): string {
   const text = input.replace(/\s+/g, " ").trim();
-  if (text.length <= maxLen) return text;
+  if (text.length <= maxLen) {
+    return text;
+  }
   return text.slice(0, maxLen).trimEnd();
 }
 
 function extractTextParts(m: ThreadMessage | undefined): string {
-  if (!m) return "";
+  if (!m) {
+    return "";
+  }
   // assistant-ui normally supplies content parts, but restored and locally
   // created user messages can still arrive as a plain string. Treating that
   // valid form as an empty array made the opening title stay "New Chat".
   const rawContent: unknown = m.content;
-  if (typeof rawContent === "string") return rawContent.trim();
+  if (typeof rawContent === "string") {
+    return rawContent.trim();
+  }
   const content = Array.isArray(m.content) ? m.content : [];
   return content
     .filter((p): p is Extract<typeof p, { type: "text" }> => p.type === "text")
@@ -577,9 +584,13 @@ function extractTextParts(m: ThreadMessage | undefined): string {
 // instruction for "summarise this" plus a paste. The sample is bounded.
 function titleTextOf(m: ThreadMessage | undefined): string {
   const text = extractTextParts(m);
-  if (m?.role !== "user") return text;
+  if (m?.role !== "user") {
+    return text;
+  }
   const sample = attachmentsSample(m.attachments);
-  if (sample.length === 0) return text;
+  if (sample.length === 0) {
+    return text;
+  }
   return text.length > 0 ? `${text}\n\n${sample}` : sample;
 }
 
@@ -588,7 +599,9 @@ async function generateTitleWithModel(payload: {
   assistantText?: string;
 }): Promise<string | null> {
   const params = useChatRuntimeStore.getState().params;
-  if (!params.checkpoint) return null;
+  if (!params.checkpoint) {
+    return null;
+  }
 
   const user = clip(payload.userText, 256);
   const assistant = clip(payload.assistantText ?? "", 384);
@@ -613,7 +626,9 @@ async function generateTitleWithModel(payload: {
 
     const words = title.split(" ").filter(Boolean).slice(0, 6);
     const joined = words.join(" ").trim();
-    if (!joined) return null;
+    if (!joined) {
+      return null;
+    }
     return joined.length > 60 ? joined.slice(0, 60).trimEnd() : joined;
   }
 
@@ -648,11 +663,17 @@ async function generateTitleWithModel(payload: {
   const body = (await response
     .json()
     .catch(() => null)) as TitleResponse | null;
-  if (!response.ok) return null;
+  if (!response.ok) {
+    return null;
+  }
   const choice = body?.choices?.[0];
-  if (choice?.finish_reason === "length") return null;
+  if (choice?.finish_reason === "length") {
+    return null;
+  }
   const raw: string | undefined = choice?.message?.content;
-  if (!raw || /<\/?think>/i.test(raw)) return null;
+  if (!raw || /<\/?think>/i.test(raw)) {
+    return null;
+  }
   return normalizeTitle(raw);
 }
 
@@ -667,8 +688,6 @@ function clonePersistedValue<T>(value: T, fallback: T): T {
     return fallback;
   }
 }
-
-
 
 export async function ensureThreadRecord({
   threadId,
@@ -859,7 +878,9 @@ function createStudioDbAdapter(
       // while the creator is still queued. Use the same retry choke point as other mutations so a
       // temporarily missing row does not permanently skip first-turn title generation. A title is
       // cosmetic, so a row that never landed falls back to the default rather than rejecting here.
-      const thread = await ensureStoredChatThread(remoteId).catch(() => undefined);
+      const thread = await ensureStoredChatThread(remoteId).catch(
+        () => undefined,
+      );
       const defaultTitle = DEFAULT_CHAT_TITLE;
 
       function streamTitle(title: string) {
@@ -872,7 +893,9 @@ function createStudioDbAdapter(
       async function persistTitle(title: string): Promise<void> {
         await ensureStoredChatThread(remoteId, thread);
         await updateStoredChatThread(remoteId, { title });
-        if (!pairId) return;
+        if (!pairId) {
+          return;
+        }
         const paired = (await listStoredChatThreads({ pairId })).find(
           (t) => t.id !== remoteId,
         );
@@ -897,7 +920,9 @@ function createStudioDbAdapter(
       const firstAssistant =
         firstUserIndex === -1
           ? undefined
-          : messages.find((m, i) => m.role === "assistant" && i > firstUserIndex);
+          : messages.find(
+              (m, i) => m.role === "assistant" && i > firstUserIndex,
+            );
       const userText = titleTextOf(firstUser) || defaultTitle;
       const assistantText = extractTextParts(firstAssistant);
 
@@ -922,10 +947,11 @@ function createStudioDbAdapter(
           const running = useChatRuntimeStore.getState().runningByThreadId;
           if (running[paired.id]) {
             setTimeout(() => {
-              void createStudioDbAdapter(modelType, pairId, projectId).generateTitle(
-                remoteId,
-                messages,
-              );
+              void createStudioDbAdapter(
+                modelType,
+                pairId,
+                projectId,
+              ).generateTitle(remoteId, messages);
             }, 600);
             return streamTitle(thread.title || defaultTitle);
           }
@@ -1022,7 +1048,9 @@ async function waitForRunStartHistoryAppend(
     return;
   }
   const runStartReady = pendingRunStartReadyByMessageId.get(userMessage.id);
-  const historyAppendReady = pendingHistoryAppendByMessageId.get(userMessage.id);
+  const historyAppendReady = pendingHistoryAppendByMessageId.get(
+    userMessage.id,
+  );
   if (runStartReady === undefined && historyAppendReady === undefined) {
     return undefined;
   }
@@ -1047,7 +1075,9 @@ async function waitForRunStartHistoryAppend(
   return adoptedThreadId;
 }
 
-function createPersistedRunAdapter(adapter: ChatModelAdapter): ChatModelAdapter {
+function createPersistedRunAdapter(
+  adapter: ChatModelAdapter,
+): ChatModelAdapter {
   return {
     ...adapter,
     async *run(options) {
@@ -1074,10 +1104,7 @@ function createPersistedRunAdapter(adapter: ChatModelAdapter): ChatModelAdapter 
       };
       throwIfReservationCancelled();
       const persistedRunThreadIds = preStreamRunThreadIdsForRuntime(
-        [
-          ...reservationThreadIds,
-          ...trackedRunStartThreadIds,
-        ],
+        [...reservationThreadIds, ...trackedRunStartThreadIds],
         undefined,
       );
       let adoptedThreadId: string | undefined;
@@ -1138,7 +1165,9 @@ function useStudioRuntimeAdapters(
     let pendingDeletion = Promise.resolve();
     const unsubscribe = onChatAttachmentDeleted((event) => {
       pendingDeletion = pendingDeletion.then(async () => {
-        if (!active) return;
+        if (!active) {
+          return;
+        }
         const { messageId, attachmentId } = event;
         try {
           const thread = aui.thread();
@@ -1148,7 +1177,9 @@ function useStudioRuntimeAdapters(
               const target = exported.messages.find(
                 (item) => item.message.id === messageId,
               );
-              if (!target || !Array.isArray(target.message.content)) return;
+              if (!(target && Array.isArray(target.message.content))) {
+                return;
+              }
               const content = target.message.content;
 
               const signatures = content.map((part) =>
@@ -1172,7 +1203,7 @@ function useStudioRuntimeAdapters(
                   (attachment) => attachment.id === attachmentId,
                 );
               if (
-                (!ids.includes(attachmentId) && !hasTargetAttachment) ||
+                !(ids.includes(attachmentId) || hasTargetAttachment) ||
                 !active
               ) {
                 return;
@@ -1185,7 +1216,9 @@ function useStudioRuntimeAdapters(
                 (item) => item.message.id === messageId,
               );
               const latestContent = latestTarget?.message.content;
-              if (!Array.isArray(latestContent)) return;
+              if (!Array.isArray(latestContent)) {
+                return;
+              }
               const latestSignatures = latestContent.map((part) =>
                 chatContentPartAttachmentSignature(part),
               );
@@ -1199,7 +1232,9 @@ function useStudioRuntimeAdapters(
               }
 
               const messages = latest.messages.map((item) => {
-                if (item.message.id !== messageId) return item;
+                if (item.message.id !== messageId) {
+                  return item;
+                }
                 const attachments = (
                   item.message as {
                     attachments?: readonly { id: string }[];
@@ -1214,16 +1249,17 @@ function useStudioRuntimeAdapters(
                     ),
                     ...(Array.isArray(attachments)
                       ? {
-                        attachments: attachments.filter(
-                          (attachment) =>
-                            attachment.id !== attachmentId,
-                        ),
-                      }
+                          attachments: attachments.filter(
+                            (attachment) => attachment.id !== attachmentId,
+                          ),
+                        }
                       : {}),
                   } as typeof item.message,
                 };
               });
-              if (active) thread.import({ ...latest, messages });
+              if (active) {
+                thread.import({ ...latest, messages });
+              }
               return;
             }
             return;
@@ -1232,16 +1268,16 @@ function useStudioRuntimeAdapters(
           const exported = thread.export();
           let changed = false;
           const messages = exported.messages.map((item) => {
-            if (item.message.id !== messageId) return item;
+            if (item.message.id !== messageId) {
+              return item;
+            }
             const message = item.message;
             const attachments = (
               message as { attachments?: readonly { id: string }[] }
             ).attachments;
             if (
               Array.isArray(attachments) &&
-              attachments.some(
-                (attachment) => attachment.id === attachmentId,
-              )
+              attachments.some((attachment) => attachment.id === attachmentId)
             ) {
               changed = true;
               return {
@@ -1259,15 +1295,16 @@ function useStudioRuntimeAdapters(
               const idx = Number(attachmentId.slice("content-part-".length));
               const content = message.content;
               if (
-                !Array.isArray(content) ||
-                !Number.isInteger(idx) ||
+                !(Array.isArray(content) && Number.isInteger(idx)) ||
                 idx < 0 ||
                 idx >= content.length
               ) {
                 return item;
               }
               const part = content[idx] as { type?: string };
-              if (part?.type !== "image" && part?.type !== "audio") return item;
+              if (part?.type !== "image" && part?.type !== "audio") {
+                return item;
+              }
               changed = true;
               return {
                 ...item,
@@ -1279,7 +1316,9 @@ function useStudioRuntimeAdapters(
             }
             return item;
           });
-          if (changed && active) thread.import({ ...exported, messages });
+          if (changed && active) {
+            thread.import({ ...exported, messages });
+          }
         } catch {
           // No active thread mounted: storage already holds the truth.
         }
@@ -1302,7 +1341,9 @@ function useStudioRuntimeAdapters(
             : null;
         const remoteId =
           itemState.remoteId ||
-          (itemState.id && !isAssistantLocalThreadId(itemState.id) ? itemState.id : undefined) ||
+          (itemState.id && !isAssistantLocalThreadId(itemState.id)
+            ? itemState.id
+            : undefined) ||
           useChatRuntimeStore.getState().activeThreadId ||
           searchThreadId ||
           undefined;
@@ -1326,16 +1367,18 @@ function useStudioRuntimeAdapters(
         }
         // Durable research can outlive this runtime. Reattach its server-owned
         // assistant message to the inline card after navigation or refresh.
-        const researchThreadState = await getResearchThreadState(remoteId).catch(
-          () => null,
-        );
+        const researchThreadState = await getResearchThreadState(
+          remoteId,
+        ).catch(() => null);
         if (researchThreadState) {
           useResearchRunStore
             .getState()
             .setThreadClaimed(remoteId, researchThreadState.hasRun);
         }
         const activeResearchRun = researchThreadState?.activeRun ?? null;
-        if (activeResearchRun) ingestResearchUpdate(activeResearchRun);
+        if (activeResearchRun) {
+          ingestResearchUpdate(activeResearchRun);
+        }
         if (activeResearchRun?.assistantMessageId) {
           const assistant = msgs.find(
             (message) => message.id === activeResearchRun.assistantMessageId,
@@ -1351,10 +1394,14 @@ function useStudioRuntimeAdapters(
           }
         }
         msgs.sort((a, b) => {
-          if (a.createdAt !== b.createdAt) return a.createdAt - b.createdAt;
+          if (a.createdAt !== b.createdAt) {
+            return a.createdAt - b.createdAt;
+          }
           const aOrder = roleOrder[a.role] ?? 99;
           const bOrder = roleOrder[b.role] ?? 99;
-          if (aOrder !== bOrder) return aOrder - bOrder;
+          if (aOrder !== bOrder) {
+            return aOrder - bOrder;
+          }
           return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
         });
 
@@ -1383,13 +1430,13 @@ function useStudioRuntimeAdapters(
         const savedUsage = (lastAssistant?.metadata as Record<string, unknown>)
           ?.contextUsage as
           | {
-            promptTokens: number;
-            completionTokens: number;
-            totalTokens: number;
-            cachedTokens: number;
-            cacheWriteTokens?: number;
-            modelId?: string;
-          }
+              promptTokens: number;
+              completionTokens: number;
+              totalTokens: number;
+              cachedTokens: number;
+              cacheWriteTokens?: number;
+              modelId?: string;
+            }
           | undefined;
         const store = useChatRuntimeStore.getState();
         // Window check applies only when a local GGUF window is known; external
@@ -1403,7 +1450,7 @@ function useStudioRuntimeAdapters(
         const modelMatches = savedUsage?.modelId
           ? savedUsage.modelId === store.params.checkpoint
           : typeof store.ggufContextLength === "number" &&
-          store.ggufContextLength > 0;
+            store.ggufContextLength > 0;
         // The value, not a boolean: the writes below need the narrowing.
         const restoredUsage =
           savedUsage && withinLocalLimit && modelMatches ? savedUsage : null;
@@ -1451,9 +1498,7 @@ function useStudioRuntimeAdapters(
         const localThreadId = aui.threadListItem().getState().id;
         const historyClearGeneration = chatHistoryClearBoundary.capture();
         const throwIfHistoryWasCleared = async (remoteId: string) => {
-          if (
-            chatHistoryClearBoundary.capture() === historyClearGeneration
-          ) {
+          if (chatHistoryClearBoundary.capture() === historyClearGeneration) {
             return;
           }
           markChatThreadDeleted(remoteId);
@@ -1502,7 +1547,9 @@ function useStudioRuntimeAdapters(
           await throwIfHistoryWasCleared(remoteId);
           const content = cloneContent(message.content);
           const attachments =
-            message.role === "user" ? cloneAttachments(message.attachments) : [];
+            message.role === "user"
+              ? cloneAttachments(message.attachments)
+              : [];
           const custom = message.metadata?.custom;
           const createdAt =
             existingMessage?.createdAt ??
@@ -1510,9 +1557,12 @@ function useStudioRuntimeAdapters(
             Date.now();
           const existingMetadata = existingMessage?.metadata;
           const incomingRevision = Number(
-            (custom as Record<string, unknown> | undefined)?.serverRevision ?? -1,
+            (custom as Record<string, unknown> | undefined)?.serverRevision ??
+              -1,
           );
-          const existingRevision = Number(existingMetadata?.serverRevision ?? -1);
+          const existingRevision = Number(
+            existingMetadata?.serverRevision ?? -1,
+          );
           const incomingMetadata = custom as
             | Record<string, unknown>
             | undefined;
@@ -1536,7 +1586,10 @@ function useStudioRuntimeAdapters(
             threadId: remoteId,
             parentId: parentId ?? null,
             role: message.role,
-            content: preserveServerManaged ? existingMessage!.content : content,
+            content:
+              preserveServerManaged && existingMessage?.content
+                ? existingMessage.content
+                : content,
             ...(attachments.length > 0 && { attachments }),
             ...(metadata && { metadata }),
             createdAt,
@@ -1626,7 +1679,9 @@ function useRuntimeHook(
 }
 
 function createRuntimeHook(modelType: ModelType, pairId?: string) {
-  return function useConfiguredRuntimeHook(): ReturnType<typeof useLocalRuntime> {
+  return function useConfiguredRuntimeHook(): ReturnType<
+    typeof useLocalRuntime
+  > {
     return useRuntimeHook(modelType, pairId);
   };
 }
@@ -1712,13 +1767,22 @@ function ThreadNewChatSwitch({
       return;
     }
     const store = useChatRuntimeStore.getState();
-    if (store.activeThreadId != null || store.contextUsage != null) return;
+    if (store.activeThreadId != null || store.contextUsage != null) {
+      return;
+    }
     void refreshContextUsage();
     // nonce: a fresh New Chat click re-runs the effect above, which blanks the bar again.
     // runActive is a DEPENDENCY, not just a guard: refreshContextUsage declines while anything
     // generates, and nothing else re-fires this when the run ends. ThreadContextUsageRecount
     // cannot cover for it -- an unpersisted New Chat has no activeThreadId.
-  }, [checkpoint, ggufContextLength, isLoading, modelLoading, nonce, runActive]);
+  }, [
+    checkpoint,
+    ggufContextLength,
+    isLoading,
+    modelLoading,
+    nonce,
+    runActive,
+  ]);
 
   return null;
 }
@@ -1776,7 +1840,9 @@ function ThreadScopedSettingsSync({
       return;
     }
     if (activeThreadId === null) {
-      if (settingsHydrated) applyThreadScopedSettings(null, null);
+      if (settingsHydrated) {
+        applyThreadScopedSettings(null, null);
+      }
       return;
     }
     // The composer is interactive while /api/chat/settings is still out, so start holding
@@ -1805,12 +1871,16 @@ function ThreadScopedSettingsSync({
     // the full write timeout while the next try opened another.
     const reads = new Set<AbortController>();
     const abortReads = () => {
-      for (const read of reads) read.abort();
+      for (const read of reads) {
+        read.abort();
+      }
       reads.clear();
     };
 
     const sync = () => {
-      if (cancelled || paired) return;
+      if (cancelled || paired) {
+        return;
+      }
       // the composer is live while this read is out, so hold any edit made in the meantime
       // rather than writing it to the installation defaults and then discarding it.
       // Drop to the installation defaults for the duration of the read. Until it lands the
@@ -1858,7 +1928,9 @@ function ThreadScopedSettingsSync({
           reads.delete(read);
         })
         .then(({ thread, cacheable }) => {
-          if (cancelled || paired) return;
+          if (cancelled || paired) {
+            return;
+          }
           // A legacy fallback row means the backend GET FAILED and Dexie answered instead.
           // That is the failure case, not a confirmed missing row: the thread may well
           // have a snapshot on the server, so keep holding and retry rather than
@@ -1875,7 +1947,9 @@ function ThreadScopedSettingsSync({
             // second missing read meant an unsaved chat's click was written to a row that
             // does not exist, or attached to the chat once it was saved.
             releaseHeldThreadScopedEdits();
-            if (unpaired) return;
+            if (unpaired) {
+              return;
+            }
             unpaired = true;
             applyThreadScopedSettings(null, null);
             return;
@@ -1884,7 +1958,9 @@ function ThreadScopedSettingsSync({
           // the response spells every omitted field as null, which is not a value to apply.
           applyThreadScopedSettings(
             activeThreadId,
-            thread.settings ? sanitizeThreadScopedSettings(thread.settings) : null,
+            thread.settings
+              ? sanitizeThreadScopedSettings(thread.settings)
+              : null,
           );
         })
         // A failed read leaves the installation defaults up (dropped to above), not the
@@ -1898,9 +1974,13 @@ function ThreadScopedSettingsSync({
     // installation defaults for as long as it stays open. A fresh browser with no legacy
     // cache has nothing else to fall back on, so retry a bounded few times.
     const retryThreadRead = () => {
-      if (cancelled) return;
+      if (cancelled) {
+        return;
+      }
       commitHeldThreadScopedEditsToTheirThread();
-      if (retryTimer !== null) return;
+      if (retryTimer !== null) {
+        return;
+      }
       if (retriesLeft <= 0) {
         // Out of tries. Staying paired would hold every send behind "Loading this
         // chat's settings" with nothing left to resolve it, so give up openly: the
@@ -1929,7 +2009,9 @@ function ThreadScopedSettingsSync({
     window.addEventListener(CHAT_HISTORY_UPDATED_EVENT, sync);
     return () => {
       cancelled = true;
-      if (retryTimer !== null) clearTimeout(retryTimer);
+      if (retryTimer !== null) {
+        clearTimeout(retryTimer);
+      }
       // Nothing is waiting on these once the chat is gone, and leaving them running is
       // how an outage turned every chat opened during it into three open requests.
       abortReads();
@@ -1988,8 +2070,7 @@ function ThreadContextUsageRecount({
 
   useEffect(() => {
     if (
-      !enabled ||
-      !activeThreadId ||
+      !(enabled && activeThreadId) ||
       modelLoading ||
       runActive ||
       !checkpoint ||
@@ -1998,7 +2079,9 @@ function ThreadContextUsageRecount({
       return;
     }
     // Only into a blank bar: restored or completion-written usage is exact, this is an estimate.
-    if (useChatRuntimeStore.getState().contextUsage != null) return;
+    if (useChatRuntimeStore.getState().contextUsage != null) {
+      return;
+    }
     void refreshContextUsage({ threadId: activeThreadId });
   }, [
     activeThreadId,
@@ -2022,10 +2105,16 @@ function CancelRegistrar(): ReactElement | null {
   );
 
   useEffect(() => {
-    if (!mainThreadId) return;
+    if (!mainThreadId) {
+      return;
+    }
     const runtime = aui.threads().__internal_getAssistantRuntime?.();
     const threadIds = Array.from(
-      new Set([mainThreadId, remoteThreadId].filter((id): id is string => Boolean(id))),
+      new Set(
+        [mainThreadId, remoteThreadId].filter((id): id is string =>
+          Boolean(id),
+        ),
+      ),
     );
     const cancel = () => {
       for (const threadId of threadIds) {
@@ -2046,7 +2135,9 @@ function CancelRegistrar(): ReactElement | null {
       for (const threadId of threadIds) {
         try {
           thread = runtime?.threads.getById(threadId) ?? null;
-          if (thread) break;
+          if (thread) {
+            break;
+          }
         } catch {
           // Try the other alias.
         }
@@ -2060,15 +2151,13 @@ function CancelRegistrar(): ReactElement | null {
       // assistant-ui enters its running state before adapter preflight turns
       // on runningByThreadId. Keep the only cancel handle after navigation,
       // then release it when assistant-ui reports that the run actually ended.
-      let unsubscribe = () => { };
+      let unsubscribe = () => {};
       unsubscribe = thread.subscribe(() => {
         if (thread.getState().isRunning) {
           return;
         }
         for (const threadId of threadIds) {
-          useChatRuntimeStore
-            .getState()
-            .clearThreadCancel(threadId, cancel);
+          useChatRuntimeStore.getState().clearThreadCancel(threadId, cancel);
         }
         unsubscribe();
       });
@@ -2091,7 +2180,6 @@ function ThreadBackendAutosave({
 
   const reportAutosaveError = useCallback((error: unknown): void => {
     if (!isExpectedBackgroundChatStorageError(error)) {
-      console.error("Failed to autosave chat thread", error);
     }
   }, []);
 
@@ -2134,7 +2222,7 @@ function ThreadBackendAutosave({
   const queueSave = useCallback(
     (threadId: string): void => {
       saveChainRef.current = saveChainRef.current
-        .catch(() => { })
+        .catch(() => {})
         .then(async () => {
           await pendingFirstSavesRef.current.get(threadId);
           await saveThread(threadId);
@@ -2216,11 +2304,7 @@ export function ChatRuntimeProvider({
   // TriggerPopover via useResource) throw "Version is less than committed version".
   // Giving the inner tree a new key forces React to fully unmount before mounting
   // the new runtime so no component ever sees a downward version jump.
-  const runtimeKey = [
-    modelType,
-    pairId ?? "",
-    initialThreadId ?? "",
-  ].join(":");
+  const runtimeKey = [modelType, pairId ?? "", initialThreadId ?? ""].join(":");
   return (
     <ChatRuntimeProviderImpl
       key={runtimeKey}

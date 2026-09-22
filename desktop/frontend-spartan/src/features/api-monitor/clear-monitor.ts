@@ -1,4 +1,3 @@
-
 // What the monitor's "Clear log" button runs. Its own plain module because the hook it
 // belongs to imports React and cannot be loaded by the node --test suite.
 

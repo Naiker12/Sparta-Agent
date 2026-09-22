@@ -1,4 +1,3 @@
-
 import { authFetch } from "@/features/auth";
 import { useEffect, useState } from "react";
 import { shouldRetrySystemDiscovery } from "./system-discovery";
@@ -78,11 +77,16 @@ const DEFAULT_SYSTEM: SystemInfoResponse = {
   python_version: "Unknown",
   device_backend: "cpu",
   uptime_seconds: 0,
-  cpu: { logical_count: 0, physical_count: 0, usage_percent: 0, frequency_mhz: null },
+  cpu: {
+    logical_count: 0,
+    physical_count: 0,
+    usage_percent: 0,
+    frequency_mhz: null,
+  },
   memory: { total_gb: 0, available_gb: 0, percent_used: 0, process_used_mb: 0 },
   disk: { total_gb: 0, free_gb: 0, percent_used: 0 },
   gpu: { available: false, devices: [] },
-  ml_packages: {}
+  ml_packages: {},
 };
 
 export function getCachedSystemInfo(): SystemInfoResponse | null {
@@ -139,13 +143,19 @@ function scheduleVulkanRetry(): void {
 export async function fetchSystemInfo({
   force = false,
 }: { force?: boolean } = {}): Promise<SystemInfoResponse | null> {
-  if (systemFetchPromise) return systemFetchPromise;
-  if (!force && cachedSystem) return cachedSystem;
+  if (systemFetchPromise) {
+    return systemFetchPromise;
+  }
+  if (!force && cachedSystem) {
+    return cachedSystem;
+  }
 
   systemFetchPromise = (async () => {
     try {
       const res = await authFetch("/api/system");
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
       const data = await res.json();
 
       cachedSystem = data as SystemInfoResponse;
@@ -169,12 +179,14 @@ export async function fetchSystemInfo({
 
       if (electron?.invoke) {
         try {
-          const nativeInfo = (await electron.invoke(
-            "system:get-info",
-          )) as SystemInfoResponse | undefined;
-          if (nativeInfo && nativeInfo.cpu) {
+          const nativeInfo = (await electron.invoke("system:get-info")) as
+            | SystemInfoResponse
+            | undefined;
+          if (nativeInfo?.cpu) {
             cachedSystem = nativeInfo;
-            systemSubscribers.forEach((subscriber) => subscriber(cachedSystem!));
+            systemSubscribers.forEach((subscriber) =>
+              subscriber(cachedSystem!),
+            );
             return cachedSystem;
           }
         } catch {
@@ -200,10 +212,14 @@ export function useSystemInfo({
   pollMs,
   enabled = true,
 }: UseSystemInfoOptions = {}): SystemInfoResponse {
-  const [systemInfo, setSystemInfo] = useState<SystemInfoResponse>(cachedSystem ?? DEFAULT_SYSTEM);
+  const [systemInfo, setSystemInfo] = useState<SystemInfoResponse>(
+    cachedSystem ?? DEFAULT_SYSTEM,
+  );
 
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled) {
+      return;
+    }
 
     let cancelled = false;
     let timeoutId: number | null = null;
@@ -211,10 +227,14 @@ export function useSystemInfo({
     const update = (force: boolean) => {
       void fetchSystemInfo({ force })
         .then((info) => {
-          if (!cancelled && info) setSystemInfo(info);
+          if (!cancelled && info) {
+            setSystemInfo(info);
+          }
         })
         .finally(() => {
-          if (cancelled || !pollMs) return;
+          if (cancelled || !pollMs) {
+            return;
+          }
           timeoutId = window.setTimeout(() => update(true), pollMs);
         });
     };
@@ -222,7 +242,9 @@ export function useSystemInfo({
     update(Boolean(pollMs));
     return () => {
       cancelled = true;
-      if (timeoutId !== null) window.clearTimeout(timeoutId);
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+      }
     };
   }, [enabled, pollMs]);
 

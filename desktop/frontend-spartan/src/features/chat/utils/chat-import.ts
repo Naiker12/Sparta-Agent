@@ -1,4 +1,3 @@
-
 /**
  * Imports Open WebUI JSON arrays, OpenAI/ShareGPT JSONL, and role/content CSV.
  * JSON records stream individually so large exports never become one JS string.
@@ -13,11 +12,11 @@ import {
 } from "./chat-history-storage";
 import { parseCsv } from "./csv-parse";
 import {
+  type ImportSource,
   decodeTextChunks,
   fileImportSource,
   readAllText,
   streamJsonRecords,
-  type ImportSource,
 } from "./json-record-stream";
 import {
   isOpenWebUIRecord,
@@ -116,7 +115,12 @@ function oaiMessagesToRecords(
   for (const m of oaiMsgs) {
     const msg = m as Record<string, unknown>;
     if (msg.role === "tool" && typeof msg.tool_call_id === "string") {
-      toolResults.set(msg.tool_call_id, typeof msg.content === "string" ? msg.content : JSON.stringify(msg.content ?? ""));
+      toolResults.set(
+        msg.tool_call_id,
+        typeof msg.content === "string"
+          ? msg.content
+          : JSON.stringify(msg.content ?? ""),
+      );
     }
   }
 
@@ -127,7 +131,9 @@ function oaiMessagesToRecords(
   for (const m of oaiMsgs) {
     const msg = m as Record<string, unknown>;
     const role = msg.role as string;
-    if (role === "tool") continue;
+    if (role === "tool") {
+      continue;
+    }
 
     const id = crypto.randomUUID();
 
@@ -142,13 +148,19 @@ function oaiMessagesToRecords(
         for (const tc of msg.tool_calls) {
           const tcObj = tc as Record<string, unknown>;
           const fn = (tcObj.function as Record<string, unknown>) ?? {};
-          const tcId = typeof tcObj.id === "string" ? tcObj.id : crypto.randomUUID();
+          const tcId =
+            typeof tcObj.id === "string" ? tcObj.id : crypto.randomUUID();
           const name = typeof fn.name === "string" ? fn.name : "unknown";
-          const argsStr = typeof fn.arguments === "string" ? fn.arguments : "{}";
+          const argsStr =
+            typeof fn.arguments === "string" ? fn.arguments : "{}";
           let args: unknown = {};
           // _raw matches what the stream adapter and the backend keep for
           // arguments the model did not emit as valid JSON.
-          try { args = JSON.parse(argsStr); } catch { args = { _raw: argsStr }; }
+          try {
+            args = JSON.parse(argsStr);
+          } catch {
+            args = { _raw: argsStr };
+          }
           const result = toolResults.get(tcId);
           parts.push({
             type: "tool-call",
@@ -171,16 +183,26 @@ function oaiMessagesToRecords(
           }
           if (part.type === "image_url") {
             const iu = (part.image_url as Record<string, unknown>) ?? {};
-            return [{ type: "image", image: typeof iu.url === "string" ? iu.url : "" }];
+            return [
+              {
+                type: "image",
+                image: typeof iu.url === "string" ? iu.url : "",
+              },
+            ];
           }
           return [];
         });
       } else {
-        content = typeof raw === "string" && raw.trim() ? [{ type: "text", text: raw }] : [];
+        content =
+          typeof raw === "string" && raw.trim()
+            ? [{ type: "text", text: raw }]
+            : [];
       }
     }
 
-    if (content.length === 0) continue;
+    if (content.length === 0) {
+      continue;
+    }
 
     records.push({
       id,
@@ -209,8 +231,11 @@ function sharegptToRecords(
     const conv = c as Record<string, unknown>;
     const from = typeof conv.from === "string" ? conv.from : "";
     const value = typeof conv.value === "string" ? conv.value : "";
-    if (!value.trim()) continue;
-    const role: MessageRecord["role"] = from === "human" ? "user" : from === "system" ? "system" : "assistant";
+    if (!value.trim()) {
+      continue;
+    }
+    const role: MessageRecord["role"] =
+      from === "human" ? "user" : from === "system" ? "system" : "assistant";
     const id = crypto.randomUUID();
     records.push({
       id,
@@ -226,7 +251,11 @@ function sharegptToRecords(
   return records;
 }
 
-function csvToRecords(csvText: string, threadId: string, baseTs: number): MessageRecord[] {
+function csvToRecords(
+  csvText: string,
+  threadId: string,
+  baseTs: number,
+): MessageRecord[] {
   // parseCsv handles quoted newlines, so multi-line message content
   // round-trips from the exporter.
   const rows = parseCsv(csvText).slice(1);
@@ -234,11 +263,18 @@ function csvToRecords(csvText: string, threadId: string, baseTs: number): Messag
   let prevId: string | null = null;
   let idx = 0;
   for (const row of rows) {
-    if (row.length < 2) continue;
+    if (row.length < 2) {
+      continue;
+    }
     const role = row[0]?.trim().toLowerCase();
     const content = row.slice(1).join(",");
-    if (!content.trim()) continue;
-    const validRole = role === "user" || role === "assistant" || role === "system" ? role : "user";
+    if (!content.trim()) {
+      continue;
+    }
+    const validRole =
+      role === "user" || role === "assistant" || role === "system"
+        ? role
+        : "user";
     const id = crypto.randomUUID();
     records.push({
       id,
@@ -263,14 +299,17 @@ export function recordToConversation(
     return openWebUIRecordToConversation(record, fallbackTitle);
   }
 
-  if (typeof record !== "object" || record === null) return null;
+  if (typeof record !== "object" || record === null) {
+    return null;
+  }
   const obj = record as Record<string, unknown>;
 
   // Fresh ID: reusing the exported thread_id would clobber an existing
   // thread on import.
   const threadId = crypto.randomUUID();
   const title = typeof obj.title === "string" ? obj.title : fallbackTitle;
-  const baseTs = typeof obj.created_at === "number" ? obj.created_at : Date.now();
+  const baseTs =
+    typeof obj.created_at === "number" ? obj.created_at : Date.now();
 
   let messages: MessageRecord[] = [];
   if (Array.isArray(obj.messages)) {
@@ -279,7 +318,9 @@ export function recordToConversation(
     messages = sharegptToRecords(obj.conversations, threadId, baseTs);
   }
 
-  if (messages.length === 0) return null;
+  if (messages.length === 0) {
+    return null;
+  }
   return { title, threadId, messages };
 }
 
@@ -298,7 +339,9 @@ export function parseImportText(
   const results: ParsedConversation[] = [];
   let index = 0;
   for (const line of text.split(/\r?\n/)) {
-    if (!line.trim()) continue;
+    if (!line.trim()) {
+      continue;
+    }
     let record: unknown;
     try {
       record = JSON.parse(line);
@@ -307,7 +350,9 @@ export function parseImportText(
     }
     const parsed = recordToConversation(record, `${basename} ${index + 1}`);
     index++;
-    if (parsed) results.push(parsed);
+    if (parsed) {
+      results.push(parsed);
+    }
   }
   return results;
 }
@@ -358,7 +403,9 @@ export async function importConversationsFromSource(
       await writeConversation(conversation, projectId);
       progress.imported++;
     }
-    if (progress.imported > 0) notifyChatHistoryUpdated();
+    if (progress.imported > 0) {
+      notifyChatHistoryUpdated();
+    }
     report();
     return { imported: progress.imported, failed: progress.failed };
   }
@@ -382,9 +429,14 @@ export async function importConversationsFromSource(
         progress.failed++;
       },
     })) {
-      const conversation = recordToConversation(record, `${basename} ${index + 1}`);
+      const conversation = recordToConversation(
+        record,
+        `${basename} ${index + 1}`,
+      );
       index++;
-      if (!conversation) continue;
+      if (!conversation) {
+        continue;
+      }
 
       const task = writeConversation(conversation, projectId)
         .then(() => {
@@ -396,10 +448,14 @@ export async function importConversationsFromSource(
         })
         .finally(() => {
           inFlight.delete(task);
-          if ((progress.imported + progress.failed) % 25 === 0) report();
+          if ((progress.imported + progress.failed) % 25 === 0) {
+            report();
+          }
         });
       inFlight.add(task);
-      if (inFlight.size >= WRITE_CONCURRENCY) await Promise.race(inFlight);
+      if (inFlight.size >= WRITE_CONCURRENCY) {
+        await Promise.race(inFlight);
+      }
     }
   } catch (error) {
     // A read that dies partway still leaves earlier chats saved.
@@ -409,7 +465,9 @@ export async function importConversationsFromSource(
   await Promise.allSettled(inFlight);
   // Those chats have to reach the sidebar even when the read failed, or the UI
   // stays empty until a reload and a retry duplicates every one of them.
-  if (progress.imported > 0) notifyChatHistoryUpdated();
+  if (progress.imported > 0) {
+    notifyChatHistoryUpdated();
+  }
   report();
 
   if (failure !== undefined) {

@@ -17,17 +17,25 @@ export type FastApiValidationError = {
 };
 
 export function formatFastApiDetail(detail: unknown): string | null {
-  if (typeof detail === "string" && detail) return detail;
-  if (!Array.isArray(detail)) return null;
+  if (typeof detail === "string" && detail) {
+    return detail;
+  }
+  if (!Array.isArray(detail)) {
+    return null;
+  }
   const parts = detail
     .map((entry) => {
-      if (!entry || typeof entry !== "object") return "";
+      if (!entry || typeof entry !== "object") {
+        return "";
+      }
       const { loc, msg } = entry as FastApiValidationError;
       const path = Array.isArray(loc)
         ? loc.filter((segment) => segment !== "body").join(".")
         : "";
       const message = typeof msg === "string" ? msg : "";
-      if (path && message) return `${path}: ${message}`;
+      if (path && message) {
+        return `${path}: ${message}`;
+      }
       return path || message;
     })
     .filter(Boolean);
@@ -38,7 +46,9 @@ export function formatFastApiDetail(detail: unknown): string | null {
 const MAX_ERROR_BODY_DEPTH = 4;
 
 function formatErrorBody(body: unknown, depth: number): string | null {
-  if (!body || typeof body !== "object") return null;
+  if (!body || typeof body !== "object") {
+    return null;
+  }
 
   const payload = body as {
     detail?: unknown;
@@ -46,7 +56,9 @@ function formatErrorBody(body: unknown, depth: number): string | null {
     error?: unknown;
   };
   const formatted = formatFastApiDetail(payload.detail);
-  if (formatted) return formatted;
+  if (formatted) {
+    return formatted;
+  }
   // The same route may return a flat envelope or nest it inside `detail`.
   if (
     depth < MAX_ERROR_BODY_DEPTH &&
@@ -55,7 +67,9 @@ function formatErrorBody(body: unknown, depth: number): string | null {
     !Array.isArray(payload.detail)
   ) {
     const nested = formatErrorBody(payload.detail, depth + 1);
-    if (nested) return nested;
+    if (nested) {
+      return nested;
+    }
   }
   if (typeof payload.message === "string" && payload.message) {
     return payload.message;
@@ -81,11 +95,13 @@ export function formatApiErrorBody(body: unknown): string | null {
  */
 export async function readFastApiError(
   response: Response,
-  fallbackPrefix: string = "Request failed",
+  fallbackPrefix = "Request failed",
 ): Promise<string> {
   try {
     const formatted = formatApiErrorBody(await response.json());
-    if (formatted) return formatted;
+    if (formatted) {
+      return formatted;
+    }
   } catch {
     // fall through
   }

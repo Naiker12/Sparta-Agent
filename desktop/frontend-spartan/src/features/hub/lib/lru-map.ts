@@ -1,4 +1,3 @@
-
 /**
  * Insertion-ordered map with a maximum size. Reads and writes move a key to
  * the most-recent position; once over capacity the least-recently-used key is
@@ -18,7 +17,9 @@ export class LruMap<K, V> {
   }
 
   get(key: K): V | undefined {
-    if (!this.map.has(key)) return undefined;
+    if (!this.map.has(key)) {
+      return undefined;
+    }
     const value = this.map.get(key) as V;
     this.map.delete(key);
     this.map.set(key, value);
@@ -30,7 +31,9 @@ export class LruMap<K, V> {
     this.map.set(key, value);
     if (this.map.size > this.max) {
       const oldest = this.map.keys().next().value;
-      if (oldest !== undefined) this.map.delete(oldest);
+      if (oldest !== undefined) {
+        this.map.delete(oldest);
+      }
     }
   }
 
@@ -57,7 +60,9 @@ export function evictOldestUnprotected(
   let protectedScans = 0;
   while (set.size > max && protectedScans < set.size) {
     const oldest = set.values().next().value;
-    if (oldest === undefined) break;
+    if (oldest === undefined) {
+      break;
+    }
     if (isProtected(oldest)) {
       set.delete(oldest);
       set.add(oldest);

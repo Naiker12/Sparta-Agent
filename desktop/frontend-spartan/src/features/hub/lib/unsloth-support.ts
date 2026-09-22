@@ -1,4 +1,3 @@
-
 const EXCLUDED_TAGS_GPU = new Set([
   "gptq",
   "awq",
@@ -151,9 +150,15 @@ export function studioPageForTask(
   pipelineTag?: string | null,
 ): "images" | "video" | undefined {
   const tag = pipelineTag?.toLowerCase().trim();
-  if (!tag) return undefined;
-  if (IMAGE_PAGE_TASKS.has(tag)) return "images";
-  if (VIDEO_PAGE_TASKS.has(tag)) return "video";
+  if (!tag) {
+    return undefined;
+  }
+  if (IMAGE_PAGE_TASKS.has(tag)) {
+    return "images";
+  }
+  if (VIDEO_PAGE_TASKS.has(tag)) {
+    return "video";
+  }
   return undefined;
 }
 
@@ -166,7 +171,9 @@ export function excludedFormatTagsForDevice(
 }
 
 function normalizeQuantMethod(value: string | null | undefined): string | null {
-  if (typeof value !== "string") return null;
+  if (typeof value !== "string") {
+    return null;
+  }
   const trimmed = value.toLowerCase().trim();
   return trimmed.length > 0 ? trimmed : null;
 }
@@ -181,17 +188,25 @@ function detectFormatKey(
   lowerTags: ReadonlySet<string>,
 ): string | null {
   for (const tag of lowerTags) {
-    if (FORMAT_TAG_LABEL[tag]) return tag;
+    if (FORMAT_TAG_LABEL[tag]) {
+      return tag;
+    }
     const alias = FORMAT_ALIAS_TAGS[tag];
-    if (alias) return alias;
+    if (alias) {
+      return alias;
+    }
   }
   if (modelId) {
     // Owner implies format even when local metadata lacks tags; mirrors the
     // backend's _looks_like_mlx_repo heuristic.
-    if (modelId.trim().toLowerCase().startsWith("mlx-community/")) return "mlx";
+    if (modelId.trim().toLowerCase().startsWith("mlx-community/")) {
+      return "mlx";
+    }
     const name = repoLeaf(modelId);
     for (const { key, pattern } of FORMAT_NAME_PATTERNS) {
-      if (pattern.test(name)) return key;
+      if (pattern.test(name)) {
+        return key;
+      }
     }
   }
   return null;
@@ -263,7 +278,8 @@ export function classifyUnslothSupport({
   }
   const formatKey = detectFormatKey(modelId, lowerTags);
   if (formatKey && formatTags.has(formatKey)) {
-    const label = FORMAT_TAG_LABEL[formatKey] ?? `${formatKey.toUpperCase()} weights`;
+    const label =
+      FORMAT_TAG_LABEL[formatKey] ?? `${formatKey.toUpperCase()} weights`;
     return {
       status: "unsupported",
       reason: `Detected ${label}.`,

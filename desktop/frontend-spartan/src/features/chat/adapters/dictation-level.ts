@@ -1,4 +1,3 @@
-
 type LevelListener = (level: number) => void;
 type FrameListener = (rawRms: number, now: number) => void;
 

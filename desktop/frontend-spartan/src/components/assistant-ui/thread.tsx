@@ -1,179 +1,99 @@
-import {
-  ComposerAttachments,
-  UserMessageAttachments,
-} from "@/components/assistant-ui/attachment";
+import { ComposerAttachments } from "@/components/assistant-ui/attachment";
+import { ChatDictationBar } from "@/components/assistant-ui/chat-dictation-bar";
 import {
   GeneratedImageOverlayProvider,
   useGeneratedImageOverlay,
 } from "@/components/assistant-ui/generated-image-overlay-context";
 import { downloadImagePart } from "@/components/assistant-ui/image";
 import { threadHasResearchMessage } from "@/components/assistant-ui/thread-research-presence";
-import { ChatDictationBar } from "@/components/assistant-ui/chat-dictation-bar";
-import {
-  PROMPT_QUEUE_DRAG_TYPE,
-  hasPendingPromptQueueStart,
-  isPastedTextFile,
-  isPromptQueueChord,
-  isPromptQueueDragTypes,
-  pastedTextQueueKey,
-  promptQueueActiveItemChanged,
-  reorderPromptQueueItems,
-  pasteClipboardFiles,
-  extractYoutubeVideoId,
-  pasteLongTextAsFile,
-  isStudioDictationAvailable,
-  notifyStudioDictationUnavailable,
-  YoutubeTranscriptPrompt,
-} from "@/features/chat";
-import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button";
 import {
   IntentAwareScrollProvider,
   useIntentAwareAutoScroll,
-  useIsThreadAtBottom,
-  useScrollThreadToBottom,
 } from "@/components/assistant-ui/use-intent-aware-autoscroll";
 import { Button } from "@/components/ui/button";
 import {
-  GeneratedAvatar,
-  ThinkingAvatar,
-} from "@/components/ui/blobatar-avatar";
-import { publicAssetUrl } from "@/lib/public-asset-url";
-import { Spinner } from "@/components/ui/spinner";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { resolveProjectId } from "@/features/chat/api/chat-adapter";
-import {
-  PromptStorageDialog,
-  exportConversationShareGPT,
-  exportConversationRawJsonl,
-  exportConversationCsv,
-  exportConversationMarkdown,
-} from "@/features/chat/prompt-storage/prompt-storage-dialog";
-import {
-  listPromptEntries,
-  type PromptEntry,
-} from "@/features/chat/api/prompts-api";
-import { useChatPreferencesStore } from "@/features/chat/stores/chat-preferences-store";
+  YoutubeTranscriptPrompt,
+  extractYoutubeVideoId,
+  hasPendingPromptQueueStart,
+  isPastedTextFile,
+  pasteClipboardFiles,
+  pasteLongTextAsFile,
+  pastedTextQueueKey,
+} from "@/features/chat";
 import {
   createChatProject,
   getDroppedNativePath,
   setChatProjectWorkspace,
-  useChatProjects,
 } from "@/features/chat/hooks/use-chat-projects";
-import { NewProjectDialog } from "@/features/chat/components/new-project-dialog";
+import { useChatPreferencesStore } from "@/features/chat/stores/chat-preferences-store";
 
 import {
   DeepResearchComposerButton,
   DeepResearchWebsiteAccessDialog,
 } from "@/features/chat/components/deep-research-composer-button";
+import { parseExternalModelId } from "@/features/chat/external-providers";
+import { useResearchRunStore } from "@/features/chat/stores/research-run-store";
 import {
   type NativeIntent,
   useNativeAttachmentTargetKey,
   useNativeIntentStore,
 } from "@/features/native-intents";
 import { nativeAttachmentIntentToFile } from "@/features/native-intents/native-attachment-file";
-import { cancelResearchRun } from "@/features/chat/api/research-api";
-import {
-  ingestResearchUpdate,
-  useResearchRunStore,
-} from "@/features/chat/stores/research-run-store";
-import {
-  parseExternalModelId,
-  providerModelSupportsStudioTools,
-} from "@/features/chat/external-providers";
-import { toolStatusKind } from "@/features/chat/utils/tool-status";
 
-import { McpComposerButton } from "@/features/chat/mcp-composer-button";
-import { ComposerMentions } from "@/features/chat/composer-mentions";
-import { getExternalReasoningCapabilities } from "@/features/chat/provider-capabilities";
-import { useRagToolDisabled } from "@/features/chat/hooks/use-rag-tool-disabled";
-import { BypassPermissionsMenuItem } from "@/features/chat/bypass-permissions-menu-item";
-import { PermissionModeComposerPill } from "@/features/chat/permission-mode-select";
-import { ThreadWorkspaceChip } from "@/features/chat/components/thread-workspace-chip";
-import { useChatRuntimeStore } from "@/features/chat/stores/chat-runtime-store";
-import { useT, type TranslationKey } from "@/i18n";
-import { useExternalProvidersStore } from "@/features/chat/stores/external-providers-store";
 import {
-  PLUS_MENU_ORDER,
-  CONVERSATION_MARKDOWN_LABEL,
-  PROMPT_QUEUE_RUN_FAILED_EVENT,
   PROMPT_QUEUE_STOP_EVENT,
+  type PromptQueueStopEventDetail,
   addQueuedChatRunSettingsThreadIds,
   adoptPreStreamRunReservation,
   chatHistoryClearBoundary,
+  composerDraftKey,
+  composerPasteDraftKey,
+  createPastedTextFile,
   deleteStoredChatThreads,
+  dictationFailed,
+  dictationProducedTranscript,
   discardQueuedChatRunSettings,
-  discardQueuedChatRunSettingsForThread,
   hasPreStreamRunReservation,
   localPromptQueueModelBoundary,
+  markChatThreadDeleted,
+  markThreadIncognito,
   notifyPromptQueueRunFailed,
-  planLocalPromptQueueStop,
+  pastedTextOf,
+  readComposerDraft,
+  readPasteDraft,
   registerQueuedChatRunSettings,
   releasePreStreamRunReservation,
   reservePreStreamRun,
   shouldAbortPendingQueueForModelBoundary,
   shouldAbortPendingQueueForSettingsChange,
   snapshotQueuedChatRunSettings,
-  composerDraftKey,
-  composerPasteDraftKey,
-  createPastedTextFile,
-  pastedTextOf,
-  readPasteDraft,
-  writePasteDraft,
-  markThreadIncognito,
-  markChatThreadDeleted,
-  type PromptQueueRunFailedEventDetail,
-  type PromptQueueStopEventDetail,
-  dictationFailed,
-  dictationProducedTranscript,
-  readComposerDraft,
-  type PromptQueueUIEntry,
-  type PromptQueueUIItem,
-  type PromptQueueUIItemStatus,
-  type PromptQueueUIState,
   usePromptQueueUI,
-  type PlusMenuItemId,
-  usePlusMenuPrefsStore,
   writeComposerDraft,
+  writePasteDraft,
 } from "@/features/chat";
-import {
-  applySentTextGuard,
-  armSentTextGuard,
-  isGuardRetiringKey,
-  markSentTextGuardUserInput,
-  sentTextGuardBlocksDraft,
-  type SentTextGuard,
-} from "@/features/chat/utils/composer-send-guard";
+import { ThreadWorkspaceChip } from "@/features/chat/components/thread-workspace-chip";
+import { ComposerMentions } from "@/features/chat/composer-mentions";
+import { McpComposerButton } from "@/features/chat/mcp-composer-button";
+import { PermissionModeComposerPill } from "@/features/chat/permission-mode-select";
+import { useChatRuntimeStore } from "@/features/chat/stores/chat-runtime-store";
 import { updateStoredChatThread } from "@/features/chat/utils/chat-history-storage";
+import {
+  type SentTextGuard,
+  armSentTextGuard,
+  sentTextGuardBlocksDraft,
+} from "@/features/chat/utils/composer-send-guard";
 import {
   dictationSendBlocked,
   shouldSubmitDictation,
 } from "@/features/chat/utils/dictation-send";
-import {
-  isRagClientError,
-  listProjectDocuments,
-  listThreadDocuments,
-  projectWorkCount,
-} from "@/features/rag/api/rag-api";
-import { useRagAvailabilityStore } from "@/features/rag/api/rag-availability";
-import { ThreadDocumentsBar } from "@/features/rag/components/thread-documents-bar";
-import { KnowledgeBaseComposerButton } from "@/features/rag/components/knowledge-base-composer-button";
 import { DocumentPreviewMount } from "@/features/rag/components/document-preview-mount";
-import { useUserProfileStore } from "@/features/profile/stores/user-profile-store";
+import { KnowledgeBaseComposerButton } from "@/features/rag/components/knowledge-base-composer-button";
+import { ThreadDocumentsBar } from "@/features/rag/components/thread-documents-bar";
 import { usePublishedFrame } from "@/features/settings/hooks/use-published-frame";
-import { useVoiceSettingsStore } from "@/features/settings/stores/voice-settings-store";
-import { applyQwenThinkingParams } from "@/features/chat/utils/qwen-params";
+import { useComposerPillFit } from "@/hooks/use-composer-pill-fit";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useT } from "@/i18n";
 import { isTauri } from "@/lib/api-base";
-import { MicIcon } from "@/lib/mic-icon";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import {
@@ -189,32 +109,16 @@ import {
   AttachmentIcon,
   BubbleChatTemporaryIcon,
   Download01Icon,
-  FileDatabaseIcon,
   Folder01Icon,
-  FolderAddIcon,
-  Image03Icon,
-  McpServerIcon,
-  PencilRulerIcon,
-  Telescope02Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { XIcon } from "lucide-react";
 import {
-  Columns2Icon,
-  GlobeIcon,
-  PlusIcon,
-  SquareIcon,
-  TerminalIcon,
-  XIcon,
-} from "lucide-react";
-import {
-  type ChangeEvent,
-  type CompositionEvent,
   type ClipboardEvent,
   type FC,
   type KeyboardEvent,
   type DragEvent as ReactDragEvent,
   type ReactNode,
-  Fragment,
   createContext,
   memo,
   useCallback,
@@ -224,9 +128,6 @@ import {
   useRef,
   useState,
 } from "react";
-import { updateStoredChatThread as _updateStoredChatThread } from "@/features/chat/utils/chat-history-storage";
-import { useComposerPillFit } from "@/hooks/use-composer-pill-fit";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 // True while a file is dragged anywhere over the chat page, so the composer
 // can show its "Drop files here" affordance.
@@ -242,7 +143,9 @@ function extractAbsoluteFolderPath(value: string): string | null {
   const match = value.match(
     /(?:^|[\s"'])([A-Za-z]:[\\/][^\r\n"']+|\/(?:Users|home|mnt|var|opt|tmp)\/[^\r\n\s"']+)/,
   );
-  if (!match?.[1]) return null;
+  if (!match?.[1]) {
+    return null;
+  }
   // A common chat phrasing is "D:\\project what is this?". Keep the folder
   // portion instead of making the question part of the local path.
   const withoutQuestion = match[1].replace(
@@ -259,9 +162,13 @@ function droppedFolderPath(dataTransfer: DataTransfer): string | null {
         webkitGetAsEntry?: () => { isDirectory: boolean } | null;
       }
     ).webkitGetAsEntry?.();
-    if (!entry?.isDirectory) continue;
+    if (!entry?.isDirectory) {
+      continue;
+    }
     const file = item.getAsFile();
-    if (file) return getDroppedNativePath(file);
+    if (file) {
+      return getDroppedNativePath(file);
+    }
   }
   return null;
 }
@@ -276,39 +183,35 @@ export const ChatComposerModelSelectorProvider: FC<{
 );
 
 import {
-  type PromptQueueTarget,
-  type PromptQueueItem,
-  type PromptQueueRun,
+  ArtifactsToggle,
+  COMPOSER_SCROLL_GAP_PX,
+  CodeToolsToggle,
+  ComposerRightControls,
+  ComposerToolsMenu,
+  FOOTER_GAP_BELOW_SPACER_PX,
+  ImagesToggle,
+  PendingAudioChip,
   type PromptQueueCallbacks,
   PromptQueueContext,
-  startPromptQueue,
-  stopPromptQueueRunForThreadIds,
-  findPromptQueueEntry,
-  cancelPendingPromptQueueFactoriesForStop,
-  compactIds,
-  syncPromptQueueUI,
-  appendTextToThread,
   PromptQueueStack,
-  ReasoningToggle,
-  WebSearchToggle,
-  CodeToolsToggle,
-  ImagesToggle,
-  ArtifactsToggle,
-  ToolStatusDisplay,
-  ComposerToolsMenu,
-  ComposerRightControls,
-  COMPOSER_SCROLL_GAP_PX,
-  FOOTER_GAP_BELOW_SPACER_PX,
+  type PromptQueueTarget,
   RUN_SHRINK_WINDOW_MS,
   ThreadComposerDock,
   ThreadScrollToBottom,
   ThreadWelcome,
-  PendingAudioChip,
-  useImeComposerInputHandlers,
+  ToolStatusDisplay,
+  WebSearchToggle,
+  appendTextToThread,
+  cancelPendingPromptQueueFactoriesForStop,
+  compactIds,
+  findPromptQueueEntry,
   renderThreadMessage,
+  startPromptQueue,
+  stopPromptQueueRunForThreadIds,
+  syncPromptQueueUI,
+  useImeComposerInputHandlers,
   useThreadForkCounts,
 } from "./thread/index";
-
 
 // Memoized: chat-page renders this inline in a store-subscribing component, so a parent render
 // would otherwise reconcile the whole message list.
@@ -497,21 +400,31 @@ export const Thread: FC<{
   const hasFiles = (e: ReactDragEvent) =>
     Array.from(e.dataTransfer?.types ?? []).includes("Files");
   const onDragEnter = (e: ReactDragEvent) => {
-    if (isTauri || !hasFiles(e)) return;
+    if (isTauri || !hasFiles(e)) {
+      return;
+    }
     dragDepth.current += 1;
     setPageDragging(true);
   };
   const onDragOver = (e: ReactDragEvent) => {
-    if (isTauri || !hasFiles(e)) return;
+    if (isTauri || !hasFiles(e)) {
+      return;
+    }
     e.preventDefault();
   };
   const onDragLeave = (e: ReactDragEvent) => {
-    if (isTauri || !hasFiles(e)) return;
+    if (isTauri || !hasFiles(e)) {
+      return;
+    }
     dragDepth.current = Math.max(0, dragDepth.current - 1);
-    if (dragDepth.current === 0) setPageDragging(false);
+    if (dragDepth.current === 0) {
+      setPageDragging(false);
+    }
   };
   const onDrop = (e: ReactDragEvent) => {
-    if (isTauri) return;
+    if (isTauri) {
+      return;
+    }
     dragDepth.current = 0;
     setPageDragging(false);
     const folderPath = droppedFolderPath(e.dataTransfer);
@@ -526,12 +439,18 @@ export const Thread: FC<{
     }
     // Compare panes hide this composer and use the shared composer's own
     // dropzone, so don't capture drops into a hidden composer here.
-    if (hideComposer) return;
+    if (hideComposer) {
+      return;
+    }
     // Drops on the composer box are handled by its dropzone (preventDefault);
     // skip those here so the file isn't added twice.
-    if (e.defaultPrevented) return;
+    if (e.defaultPrevented) {
+      return;
+    }
     const files = Array.from(e.dataTransfer.files);
-    if (files.length === 0) return;
+    if (files.length === 0) {
+      return;
+    }
     e.preventDefault();
     for (const file of files) {
       aui
@@ -550,9 +469,8 @@ export const Thread: FC<{
           className="aui-root aui-thread-root @container relative flex min-h-0 min-w-0 flex-1 basis-0 flex-col overflow-hidden"
           style={{
             marginRight: "var(--document-preview-width, 0px)",
-            ["--thread-max-width" as string]: "48rem",
-            ["--thread-content-max-width" as string]:
-              "calc(var(--thread-max-width) - 1.5rem)",
+            ["--thread-max-width" as string]: "42rem",
+            ["--thread-content-max-width" as string]: "42rem",
           }}
           onDragEnter={onDragEnter}
           onDragOver={onDragOver}
@@ -591,10 +509,14 @@ export const Thread: FC<{
               )}
 
               {hideWelcome && (
-                <AuiIf condition={({ thread }) => thread.isEmpty && thread.isLoading}>
+                <AuiIf
+                  condition={({ thread }) => thread.isEmpty && thread.isLoading}
+                >
                   <div className="flex flex-1 flex-col items-center justify-center py-24 text-muted-foreground animate-in fade-in duration-300">
                     <div className="size-6 animate-spin rounded-full border-2 border-primary border-t-transparent mb-3" />
-                    <p className="text-sm font-medium">Cargando conversación...</p>
+                    <p className="text-sm font-medium">
+                      Cargando conversación...
+                    </p>
                   </div>
                 </AuiIf>
               )}
@@ -807,7 +729,7 @@ export const ProjectComposer: FC<{
       <ComposerAnimated
         disabled={disabled}
         placeholder={placeholder}
-        disableQueue
+        disableQueue={true}
       />
     </GeneratedImageOverlayProvider>
   );
@@ -821,7 +743,7 @@ const ComposerAnimated: FC<{
   disableQueue?: boolean;
 }> = ({ disabled, threadId, menuSide, disableQueue }) => {
   return (
-    <div className="relative mx-auto min-w-0 w-full max-w-[46rem]">
+    <div className="relative mx-auto min-w-0 w-full max-w-[42rem]">
       <div className="relative z-10 w-full">
         <Composer
           disabled={disabled}
@@ -833,7 +755,6 @@ const ComposerAnimated: FC<{
     </div>
   );
 };
-
 
 const Composer: FC<{
   disabled?: boolean;
@@ -851,9 +772,9 @@ const Composer: FC<{
   const setImageToolsEnabled = useChatRuntimeStore(
     (s) => s.setImageToolsEnabled,
   );
-  const toolsEnabled = useChatRuntimeStore((s) => s.toolsEnabled);
-  const codeToolsEnabled = useChatRuntimeStore((s) => s.codeToolsEnabled);
-  const imageToolsEnabled = useChatRuntimeStore((s) => s.imageToolsEnabled);
+  const _toolsEnabled = useChatRuntimeStore((s) => s.toolsEnabled);
+  const _codeToolsEnabled = useChatRuntimeStore((s) => s.codeToolsEnabled);
+  const _imageToolsEnabled = useChatRuntimeStore((s) => s.imageToolsEnabled);
   const supportsBuiltinImageGeneration = useChatRuntimeStore(
     (s) => s.supportsBuiltinImageGeneration,
   );
@@ -888,7 +809,9 @@ const Composer: FC<{
   const [researchWebsiteAccessOpen, setResearchWebsiteAccessOpen] =
     useState(false);
   useEffect(() => {
-    if (!researchUsed) return;
+    if (!researchUsed) {
+      return;
+    }
     if (hasResearchMessage && researchThreadId) {
       useResearchRunStore.getState().setThreadClaimed(researchThreadId, true);
     }
@@ -960,7 +883,9 @@ const Composer: FC<{
   useEffect(() => {
     const onFolderDrop = (event: Event) => {
       const path = (event as CustomEvent<string>).detail;
-      if (path && activeProjectId) setWorkspacePathOffer(path);
+      if (path && activeProjectId) {
+        setWorkspacePathOffer(path);
+      }
     };
     window.addEventListener("sparta:workspace-folder-drop", onFolderDrop);
     return () =>
@@ -988,9 +913,13 @@ const Composer: FC<{
       // have made. Only once the attachment is in, and only if the composer is
       // still the one that was pasted into, or a failed paste eats the text.
       const dropReplacedSelection = () => {
-        if (selectionStart === selectionEnd) return;
+        if (selectionStart === selectionEnd) {
+          return;
+        }
         const composer = aui.composer();
-        if (composer.getState().text !== value) return;
+        if (composer.getState().text !== value) {
+          return;
+        }
         composer.setText(
           value.slice(0, selectionStart) + value.slice(selectionEnd),
         );
@@ -1010,7 +939,9 @@ const Composer: FC<{
             }),
           pastedTextMinChars,
         );
-      if (attachedPastedText) return;
+      if (attachedPastedText) {
+        return;
+      }
       pasteClipboardFiles(
         event,
         async (files) => {
@@ -1041,7 +972,9 @@ const Composer: FC<{
 
   const connectOfferedWorkspace = useCallback(
     async (workspaceAccess: "read" | "write") => {
-      if (!workspacePathOffer) return;
+      if (!workspacePathOffer) {
+        return;
+      }
       try {
         let projectId = activeProjectId;
         if (!projectId) {
@@ -1105,7 +1038,9 @@ const Composer: FC<{
       return;
     }
     // Latched on: stays until the text clears, so skip re-measuring.
-    if (isMultiline) return;
+    if (isMultiline) {
+      return;
+    }
     const el = inputRef.current;
     if (!el) {
       return;
@@ -1119,7 +1054,9 @@ const Composer: FC<{
     }
     const { lineHeight, padding } = lineMetricsRef.current;
     const contentHeight = el.scrollHeight - padding;
-    if (contentHeight > lineHeight * 1.5) setIsMultiline(true);
+    if (contentHeight > lineHeight * 1.5) {
+      setIsMultiline(true);
+    }
   }, [composerText, isMultiline]);
   const hasAttachments = useAuiState(
     ({ composer }) => composer.attachments.length > 0,
@@ -1151,7 +1088,7 @@ const Composer: FC<{
   const hasPendingImageAttachments = useNativeIntentStore((s) =>
     Boolean(
       nativeAttachmentTargetKey &&
-      (s.pendingImageAttachments[nativeAttachmentTargetKey]?.length ?? 0) > 0,
+        (s.pendingImageAttachments[nativeAttachmentTargetKey]?.length ?? 0) > 0,
     ),
   );
   const registeringImageDrops = useNativeIntentStore(
@@ -1162,7 +1099,7 @@ const Composer: FC<{
   const hasPendingAudioAttachments = useNativeIntentStore((s) =>
     Boolean(
       nativeAttachmentTargetKey &&
-      (s.pendingAudioAttachments[nativeAttachmentTargetKey]?.length ?? 0) > 0,
+        (s.pendingAudioAttachments[nativeAttachmentTargetKey]?.length ?? 0) > 0,
     ),
   );
   const registeringAudioDrops = useNativeIntentStore(
@@ -1173,7 +1110,7 @@ const Composer: FC<{
   const hasPendingVideoAttachments = useNativeIntentStore((s) =>
     Boolean(
       nativeAttachmentTargetKey &&
-      (s.pendingVideoAttachments[nativeAttachmentTargetKey]?.length ?? 0) > 0,
+        (s.pendingVideoAttachments[nativeAttachmentTargetKey]?.length ?? 0) > 0,
     ),
   );
   const registeringVideoDrops = useNativeIntentStore(
@@ -1196,7 +1133,9 @@ const Composer: FC<{
   // Registration fails before an intent exists, so the drain never sees it.
   // Cancel here or the parked send goes out with the text alone.
   useEffect(() => {
-    if (seenImageDropFailuresRef.current === imageDropFailures) return;
+    if (seenImageDropFailuresRef.current === imageDropFailures) {
+      return;
+    }
     seenImageDropFailuresRef.current = imageDropFailures;
     cancelQueuedSendRef.current?.();
   }, [imageDropFailures]);
@@ -1209,7 +1148,9 @@ const Composer: FC<{
   const seenAudioDropFailuresRef = useRef(audioDropFailures);
   // Cancel the parked send before `endAudioDropRegistration` reopens the gate.
   useEffect(() => {
-    if (seenAudioDropFailuresRef.current === audioDropFailures) return;
+    if (seenAudioDropFailuresRef.current === audioDropFailures) {
+      return;
+    }
     seenAudioDropFailuresRef.current = audioDropFailures;
     cancelQueuedSendRef.current?.();
   }, [audioDropFailures]);
@@ -1222,7 +1163,9 @@ const Composer: FC<{
   const seenVideoDropFailuresRef = useRef(videoDropFailures);
   // Cancel the parked send before `endVideoDropRegistration` reopens the gate.
   useEffect(() => {
-    if (seenVideoDropFailuresRef.current === videoDropFailures) return;
+    if (seenVideoDropFailuresRef.current === videoDropFailures) {
+      return;
+    }
     seenVideoDropFailuresRef.current = videoDropFailures;
     cancelQueuedSendRef.current?.();
   }, [videoDropFailures]);
@@ -1254,7 +1197,9 @@ const Composer: FC<{
     };
 
     const drainPendingAudio = async () => {
-      if (disposed || draining) return;
+      if (disposed || draining) {
+        return;
+      }
       draining = true;
       setMaterializingDroppedAudio(true);
       try {
@@ -1262,7 +1207,9 @@ const Composer: FC<{
           const intents = useNativeIntentStore
             .getState()
             .takeAudioAttachments(targetKey);
-          if (intents.length === 0) break;
+          if (intents.length === 0) {
+            break;
+          }
           for (const [index, intent] of intents.entries()) {
             if (disposed) {
               requeue(intents.slice(index));
@@ -1277,7 +1224,9 @@ const Composer: FC<{
                   error instanceof Error ? error.message : String(error),
               });
               // Do not let a send parked on this clip go out as bare text.
-              if (stillThisComposer()) cancelQueuedSendRef.current?.();
+              if (stillThisComposer()) {
+                cancelQueuedSendRef.current?.();
+              }
               continue;
             }
             // The read is async; a chat switch in that window must not steal the clip.
@@ -1293,7 +1242,9 @@ const Composer: FC<{
             } catch {
               // Chat-wide, not per file (no audio model, too large, already
               // attached), and every adapter path toasted: stop quietly.
-              if (stillThisComposer()) cancelQueuedSendRef.current?.();
+              if (stillThisComposer()) {
+                cancelQueuedSendRef.current?.();
+              }
               return;
             }
           }
@@ -1371,7 +1322,9 @@ const Composer: FC<{
     };
 
     const drainPendingVideo = async () => {
-      if (disposed || draining) return;
+      if (disposed || draining) {
+        return;
+      }
       draining = true;
       setMaterializingDroppedVideo(true);
       try {
@@ -1379,7 +1332,9 @@ const Composer: FC<{
           const intents = useNativeIntentStore
             .getState()
             .takeVideoAttachments(targetKey);
-          if (intents.length === 0) break;
+          if (intents.length === 0) {
+            break;
+          }
           for (const [index, intent] of intents.entries()) {
             if (disposed) {
               requeue(intents.slice(index));
@@ -1394,7 +1349,9 @@ const Composer: FC<{
                   error instanceof Error ? error.message : String(error),
               });
               // Do not let a send parked on this clip go out as bare text.
-              if (stillThisComposer()) cancelQueuedSendRef.current?.();
+              if (stillThisComposer()) {
+                cancelQueuedSendRef.current?.();
+              }
               continue;
             }
             // The read is async; a chat switch in that window must not steal the clip.
@@ -1410,7 +1367,9 @@ const Composer: FC<{
             } catch {
               // Chat-wide, not per file (no video mmproj, no ffmpeg, too large,
               // already attached), and every adapter path toasted: stop quietly.
-              if (stillThisComposer()) cancelQueuedSendRef.current?.();
+              if (stillThisComposer()) {
+                cancelQueuedSendRef.current?.();
+              }
               return;
             }
           }
@@ -1533,7 +1492,9 @@ const Composer: FC<{
             } catch {
               // Chat-wide, not per file (no vision model, or none loaded). The
               // adapter toasted, and the rest would fail alike: stop quietly.
-              if (stillThisComposer()) cancelQueuedSendRef.current?.();
+              if (stillThisComposer()) {
+                cancelQueuedSendRef.current?.();
+              }
               return;
             }
           }
@@ -1548,20 +1509,21 @@ const Composer: FC<{
                 : String(lastReadError),
           });
           // A re-key still owns the parked send; a real thread switch does not.
-          if (stillThisComposer()) cancelQueuedSendRef.current?.();
+          if (stillThisComposer()) {
+            cancelQueuedSendRef.current?.();
+          }
         }
         // A drain for a target the composer has already left must not touch the
         // flag: cleanup cleared it, and the live target may have set it again.
-        if (disposed) {
-          return;
-        }
-        const pending =
-          useNativeIntentStore.getState().pendingImageAttachments[targetKey]
-            ?.length ?? 0;
-        if (pending > 0) {
-          void drainPendingImages();
-        } else {
-          setMaterializingDroppedImages(false);
+        if (!disposed) {
+          const pending =
+            useNativeIntentStore.getState().pendingImageAttachments[targetKey]
+              ?.length ?? 0;
+          if (pending > 0) {
+            void drainPendingImages();
+          } else {
+            setMaterializingDroppedImages(false);
+          }
         }
       }
     };
@@ -1637,15 +1599,16 @@ const Composer: FC<{
   );
   const hasSendableContent =
     composerText.trim().length > 0 || hasAttachments || hasPendingAudio;
-  const composerAcceptsQueueing =
-    !hasPendingAudio &&
-    !isComposing &&
-    !hasPendingAttachments &&
-    !hasMaterializingImageAttachments &&
-    !hasMaterializingAudioAttachments &&
-    !hasMaterializingVideoAttachments &&
-    !disabled &&
-    !overlay;
+  const composerAcceptsQueueing = !(
+    hasPendingAudio ||
+    isComposing ||
+    hasPendingAttachments ||
+    hasMaterializingImageAttachments ||
+    hasMaterializingAudioAttachments ||
+    hasMaterializingVideoAttachments ||
+    disabled ||
+    overlay
+  );
   const canQueueCurrentPrompt =
     composerText.trim().length > 0 &&
     !hasAttachments &&
@@ -1675,7 +1638,9 @@ const Composer: FC<{
   useEffect(() => {
     const draft = draftKey ? (readComposerDraft(draftKey) ?? "") : "";
     const composer = aui.composer();
-    if (!composer.getState().isEditing) return;
+    if (!composer.getState().isEditing) {
+      return;
+    }
     // A save that raced the send still holds the sent text, so restoring it
     // would undo the clear. Keyed on the sending thread, so another thread's
     // identical draft still restores. Clear rather than return early, which
@@ -1687,7 +1652,9 @@ const Composer: FC<{
         clearTimeout(draftSaveTimerRef.current);
         draftSaveTimerRef.current = null;
       }
-      if (draftKey) writeComposerDraft(draftKey, "");
+      if (draftKey) {
+        writeComposerDraft(draftKey, "");
+      }
       composer.setText("");
       return;
     }
@@ -1701,8 +1668,12 @@ const Composer: FC<{
   // above, which clears the raced draft this would otherwise retire on.
   useEffect(() => {
     const guard = justSentRef.current;
-    if (guard === null || guard.draftKey !== draftKey) return;
-    if (aui.composer().getState().text.length === 0) return;
+    if (guard === null || guard.draftKey !== draftKey) {
+      return;
+    }
+    if (aui.composer().getState().text.length === 0) {
+      return;
+    }
     justSentRef.current = null;
   }, [composerText, draftKey, aui]);
   // Separate from the text restore above, which must stay keyed on the draft
@@ -1710,12 +1681,18 @@ const Composer: FC<{
   // text on those would drop whatever had been typed since the last autosave.
   useEffect(() => {
     const composer = aui.composer();
-    if (!composer.getState().isEditing) return;
-    if (restoredPasteKeyRef.current === pasteDraftKey) return;
+    if (!composer.getState().isEditing) {
+      return;
+    }
+    if (restoredPasteKeyRef.current === pasteDraftKey) {
+      return;
+    }
     // The composer outlives a thread switch, so restore only into an empty one
     // rather than mixing this thread's draft with whatever the last one left.
     // Changing attachments re-runs this effect, which is how the retry happens.
-    if (composer.getState().attachments.length > 0) return;
+    if (composer.getState().attachments.length > 0) {
+      return;
+    }
     const stored = pasteDraftKey ? readPasteDraft(pasteDraftKey) : [];
     if (stored.length === 0) {
       restoredPasteKeyRef.current = pasteDraftKey;
@@ -1732,7 +1709,9 @@ const Composer: FC<{
   // Keyed on the paste identities, never their bodies, so typing beside a
   // megabyte paste does not rewrite it to localStorage every 300ms.
   useEffect(() => {
-    if (!pasteDraftKey || restoredPasteKeyRef.current !== pasteDraftKey) return;
+    if (!pasteDraftKey || restoredPasteKeyRef.current !== pasteDraftKey) {
+      return;
+    }
     const pastes = aui
       .composer()
       .getState()
@@ -1788,7 +1767,7 @@ const Composer: FC<{
       return;
     }
     let lastWidth = -1;
-    const pending: Array<ReturnType<typeof setTimeout>> = [];
+    const pending: ReturnType<typeof setTimeout>[] = [];
     const observer = new ResizeObserver((entries) => {
       const width = Math.round(entries[0]?.contentRect.width ?? 0);
       // Width changes only; reacting to autosize's height change would loop.
@@ -1798,7 +1777,7 @@ const Composer: FC<{
       lastWidth = width;
       // Re-measure after layout settles. An immediate dispatch races
       // autosize's own measurement (stale pre-expand width); 0ms + 64ms wins.
-      while (pending.length) {
+      while (pending.length > 0) {
         clearTimeout(pending.pop());
       }
       for (const delay of [0, 64]) {
@@ -1811,7 +1790,7 @@ const Composer: FC<{
     });
     observer.observe(el);
     return () => {
-      while (pending.length) {
+      while (pending.length > 0) {
         clearTimeout(pending.pop());
       }
       observer.disconnect();
@@ -1909,7 +1888,9 @@ const Composer: FC<{
     // materializes its thread. Do not turn a repeated notification into another
     // composer render: that feedback loop can otherwise exceed React's update
     // depth before the document row settles.
-    if (indexingActiveRef.current === active) return;
+    if (indexingActiveRef.current === active) {
+      return;
+    }
     indexingActiveRef.current = active;
     setIndexingActive(active);
   }, []);
@@ -2014,7 +1995,7 @@ const Composer: FC<{
         if (
           !initializedFreshThreadId ||
           freshThreadAppendAccepted ||
-          (!cancelled && !historyWasCleared)
+          !(cancelled || historyWasCleared)
         ) {
           return false;
         }
@@ -2077,7 +2058,7 @@ const Composer: FC<{
               assistantRuntime ??
               aui.threads().__internal_getAssistantRuntime?.();
             const state = getThreadListItemState();
-            if (!runtime || !state) {
+            if (!(runtime && state)) {
               throw new Error("Prompt queue thread item is unavailable");
             }
             if (chatHistoryClearBoundary.capture() !== historyClearGeneration) {
@@ -2188,7 +2169,9 @@ const Composer: FC<{
       queuedSettingsEpoch: number;
       historyClearGeneration?: number;
     }): boolean => {
-      if (pending.cancelled) return true;
+      if (pending.cancelled) {
+        return true;
+      }
       if (
         pending.historyClearGeneration !== undefined &&
         chatHistoryClearBoundary.capture() !== pending.historyClearGeneration
@@ -2308,10 +2291,14 @@ const Composer: FC<{
       const files: File[] = [];
       for (const attachment of attachments) {
         const file = (attachment as { file?: File }).file;
-        if (file === undefined || !isPastedTextFile(file)) return false;
+        if (file === undefined || !isPastedTextFile(file)) {
+          return false;
+        }
         files.push(file);
       }
-      if (files.length === 0) return false;
+      if (files.length === 0) {
+        return false;
+      }
 
       const attachmentIds = attachments.map((attachment) => attachment.id);
       const textAtQueue = composer.getState().text.trim();
@@ -2327,7 +2314,9 @@ const Composer: FC<{
         const queuedPrompt = [textAtQueue, ...texts]
           .filter((part) => part.trim().length > 0)
           .join("\n\n");
-        if (queuedPrompt.length === 0) return;
+        if (queuedPrompt.length === 0) {
+          return;
+        }
         startHydratedPromptQueue(
           [queuedPrompt],
           waitForCurrentRun,
@@ -2365,7 +2354,9 @@ const Composer: FC<{
       const cachedTexts: string[] = [];
       for (const file of files) {
         const text = pastedTextOf(file);
-        if (text === undefined) break;
+        if (text === undefined) {
+          break;
+        }
         cachedTexts.push(text);
       }
       if (cachedTexts.length === files.length) {
@@ -2384,7 +2375,9 @@ const Composer: FC<{
       // than queue a duplicate. A read whose baselines have gone stale will
       // abort, so it must not absorb the retry either.
       const inFlight = pastedTextQueuePendingRef.current.get(pendingKey);
-      if (inFlight && !pendingQueueStartIsStale(inFlight)) return true;
+      if (inFlight && !pendingQueueStartIsStale(inFlight)) {
+        return true;
+      }
       // Every baseline the reservation would otherwise take after the read, so
       // a setting or boundary changed during it still aborts the queue.
       const chatState = useChatRuntimeStore.getState();
@@ -2492,9 +2485,15 @@ const Composer: FC<{
   const enqueueSend = useCallback(
     (
       waitingOn:
-        "indexing" | "images" | "audio" | "video" | "settings" = "indexing",
+        | "indexing"
+        | "images"
+        | "audio"
+        | "video"
+        | "settings" = "indexing",
     ) => {
-      if (pendingSendRef.current) return;
+      if (pendingSendRef.current) {
+        return;
+      }
       pendingSendRef.current = true;
       setPendingSend(true);
       const title =
@@ -2510,7 +2509,7 @@ const Composer: FC<{
       waitToastRef.current = toast(title, {
         description:
           "Your message will send automatically once they are ready.",
-        duration: Infinity,
+        duration: Number.POSITIVE_INFINITY,
         cancel: { label: "Cancel", onClick: cancelQueuedSend },
       });
     },
@@ -2523,9 +2522,11 @@ const Composer: FC<{
     if (
       disabled ||
       overlay ||
-      (!hasMaterializingImageAttachments &&
-        !hasMaterializingAudioAttachments &&
-        !hasMaterializingVideoAttachments) ||
+      !(
+        hasMaterializingImageAttachments ||
+        hasMaterializingAudioAttachments ||
+        hasMaterializingVideoAttachments
+      ) ||
       !hasSendableContent ||
       isComposingRef.current ||
       hasPendingAttachments
@@ -2664,8 +2665,7 @@ const Composer: FC<{
     // pendingSendRef too: a cancel earlier in this same commit has already
     // dropped the send, while `pendingSend` still reads true from this render.
     if (
-      !pendingSend ||
-      !pendingSendRef.current ||
+      !(pendingSend && pendingSendRef.current) ||
       indexingActive ||
       threadScopedSettingsPending ||
       hasMaterializingImageAttachments ||
@@ -2726,7 +2726,9 @@ const Composer: FC<{
     () => () => {
       pendingSendRef.current = false;
       pendingSendForceQueueRef.current = false;
-      if (waitToastRef.current !== null) toast.dismiss(waitToastRef.current);
+      if (waitToastRef.current !== null) {
+        toast.dismiss(waitToastRef.current);
+      }
     },
     [],
   );
@@ -2784,7 +2786,9 @@ const Composer: FC<{
   const wasDictatingRef = useRef(false);
   useEffect(() => {
     if (isDictating) {
-      if (wasDictatingRef.current) return;
+      if (wasDictatingRef.current) {
+        return;
+      }
       wasDictatingRef.current = true;
       // A new recording supersedes a send still held for an upload.
       sendAfterDictationRef.current = false;
@@ -2796,7 +2800,9 @@ const Composer: FC<{
       return;
     }
     wasDictatingRef.current = false;
-    if (!sendAfterDictationRef.current) return;
+    if (!sendAfterDictationRef.current) {
+      return;
+    }
     // A partial transcript (a failed chunk, or an engine error after one
     // landed) belongs in the composer, but must not send half a message.
     // Silence, a thread switch mid-transcription, or a plus-menu insertion
@@ -2951,7 +2957,9 @@ const Composer: FC<{
         }
       }
 
-      if (interceptSend(event)) return;
+      if (interceptSend(event)) {
+        return;
+      }
 
       if (overlay) {
         const trimmed = composerText.trim();
@@ -3056,7 +3064,9 @@ const Composer: FC<{
     ) => {
       // Saved-prompt Run-list calls this directly, so honour disableQueue here
       // too: queuing from the project new-chat composer misbinds the thread.
-      if (disableQueue) return false;
+      if (disableQueue) {
+        return false;
+      }
       return startHydratedPromptQueue(
         items,
         waitForCurrentRun,
@@ -3071,12 +3081,12 @@ const Composer: FC<{
 
   const composerContent = (
     <>
-      {!isDictating ? (
+      {isDictating ? null : (
         <>
           <ComposerAttachments />
           <PendingAudioChip />
         </>
-      ) : null}
+      )}
       {/* Keep indexing state subscribed while dictating, but hide its chips so
           the waveform stays the composer's only status indicator. */}
       <div className={isDictating ? "hidden" : "contents"}>
@@ -3085,12 +3095,12 @@ const Composer: FC<{
           onIndexingChange={handleIndexingChange}
         />
       </div>
-      {!isDictating ? <ToolStatusDisplay /> : null}
+      {isDictating ? null : <ToolStatusDisplay />}
       <div
         className="unsloth-composer-line"
         // The permission pill is always visible, so keep the two-row layout
         // expanded whenever not dictating; dictation collapses to the bar.
-        data-expanded={!isDictating ? "true" : "false"}
+        data-expanded={isDictating ? "false" : "true"}
         data-dictating={isDictating ? "true" : undefined}
       >
         <div
@@ -3104,10 +3114,12 @@ const Composer: FC<{
           />
           {/* While dictating, show only the "+"; hide the pill and tool toggles
               so the waveform is the sole status indicator. */}
-          {!isDictating ? (
+          {isDictating ? null : (
             <>
-              {/* Permission-level pill: always visible, opens the level dropdown. */}
-              <PermissionModeComposerPill side={effectiveMenuSide} />
+              {/* Model selector pill: placed next to "+" in the composer toolbar */}
+              {modelSelector ? (
+                <div className="flex min-w-0 items-center">{modelSelector}</div>
+              ) : null}
               {effectiveDeepResearchEnabled ? (
                 <DeepResearchComposerButton
                   onConfigure={() => setResearchWebsiteAccessOpen(true)}
@@ -3122,7 +3134,7 @@ const Composer: FC<{
                 <McpComposerButton side={effectiveMenuSide} />
               ) : null}
             </>
-          ) : null}
+          )}
         </div>
         {isDictating ? (
           // The recording UI replaces the input and send controls; only the
@@ -3171,7 +3183,9 @@ const Composer: FC<{
                 !(canQueueCurrentPrompt || canQueuePastedTextPrompt)
               }
               onQueueClick={() => {
-                if (disableQueue) return;
+                if (disableQueue) {
+                  return;
+                }
                 // Same pasted-text path the Enter key takes, or the button
                 // would refuse what submitting the form accepts.
                 if (canQueuePastedTextPrompt && queuePastedTextPrompt(true)) {
@@ -3204,11 +3218,14 @@ const Composer: FC<{
           </>
         )}
       </div>
-      {!isDictating ? (
+      {isDictating ? null : (
         <div className="thread-workspace-strip">
-          <ThreadWorkspaceChip />
+          <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+            <ThreadWorkspaceChip />
+            <PermissionModeComposerPill side="top" />
+          </div>
         </div>
-      ) : null}
+      )}
       <DeepResearchWebsiteAccessDialog
         open={researchWebsiteAccessOpen && effectiveDeepResearchEnabled}
         onOpenChange={setResearchWebsiteAccessOpen}
@@ -3281,20 +3298,10 @@ const Composer: FC<{
             // Phase 1 native model owns Tauri local-path drops. Restore browser
             // attachment drops in Tauri once Phase 1d adds token bridging.
             <div className="aui-composer-attachment-dropzone unsloth-composer-surface relative z-10">
-              {modelSelector ? (
-                <div className="flex min-w-0 items-center px-0.5 pb-1">
-                  {modelSelector}
-                </div>
-              ) : null}
               {composerContent}
             </div>
           ) : (
             <ComposerPrimitive.AttachmentDropzone className="group/dropzone aui-composer-attachment-dropzone unsloth-composer-surface relative z-10">
-              {modelSelector ? (
-                <div className="flex min-w-0 items-center px-0.5 pb-1">
-                  {modelSelector}
-                </div>
-              ) : null}
               {composerContent}
               {/* Gemini-style drop affordance, shown while a file is dragged over
               the composer. Absolute + pointer-events-none so the outline adds

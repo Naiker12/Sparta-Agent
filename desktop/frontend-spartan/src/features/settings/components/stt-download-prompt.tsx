@@ -1,4 +1,3 @@
-
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,7 +29,9 @@ import {
 /** Emphasise the model name in translated copy; plain text if absent. */
 function highlightModel(text: string, model: string): ReactNode {
   const at = model ? text.indexOf(model) : -1;
-  if (at === -1) return text;
+  if (at === -1) {
+    return text;
+  }
   return (
     <>
       {text.slice(0, at)}
@@ -73,7 +74,9 @@ export function SttDownloadPrompt() {
     <AlertDialog
       open={pending !== null}
       onOpenChange={(open) => {
-        if (!open) dismiss();
+        if (!open) {
+          dismiss();
+        }
       }}
     >
       <AlertDialogContent>
@@ -109,7 +112,9 @@ export function SttDownloadPrompt() {
               event.preventDefault();
               const request = pending;
               dismiss();
-              if (request) void confirm(request);
+              if (request) {
+                void confirm(request);
+              }
             }}
           >
             {t("settings.voice.dictation.sttDownload")}

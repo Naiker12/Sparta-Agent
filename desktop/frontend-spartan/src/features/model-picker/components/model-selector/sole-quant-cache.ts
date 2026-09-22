@@ -1,4 +1,3 @@
-
 // Bookkeeping for the On Device sole-quant probe: what is known, what is
 // still being read, and what needs reading. Per repo, so one repo's
 // invalidation leaves the rest of the list alone. No React/DOM deps so it
@@ -61,7 +60,9 @@ export function partitionSoleQuants<T>(
   const quants = new Map<string, T>();
   const pending = new Set<string>();
   const stale: SoleQuantTarget[] = [];
-  if (!enabled) return { quants, pending, stale };
+  if (!enabled) {
+    return { quants, pending, stale };
+  }
   for (const target of targets) {
     const entry = entries.get(target.repoId);
     if (!entry || entry.key !== target.key) {
@@ -69,7 +70,9 @@ export function partitionSoleQuants<T>(
       stale.push(target);
       continue;
     }
-    if (entry.quant) quants.set(target.repoId, entry.quant);
+    if (entry.quant) {
+      quants.set(target.repoId, entry.quant);
+    }
   }
   return { quants, pending, stale };
 }
@@ -97,10 +100,14 @@ export function createSoleQuantReader<T>({
     while (queue.length > 0) {
       const target = queue.shift();
       // Superseded before it started, so there is nothing to read.
-      if (!(target && owns(target))) continue;
+      if (!(target && owns(target))) {
+        continue;
+      }
       const quant = await read(target).catch(() => null);
       // Superseded while reading: the newer read owns this repo now.
-      if (!owns(target)) continue;
+      if (!owns(target)) {
+        continue;
+      }
       inFlight.delete(target.repoId);
       commit(target, quant);
     }
@@ -110,7 +117,9 @@ export function createSoleQuantReader<T>({
   return {
     start(targets) {
       for (const target of targets) {
-        if (owns(target)) continue;
+        if (owns(target)) {
+          continue;
+        }
         inFlight.set(target.repoId, target.key);
         queue.push(target);
       }

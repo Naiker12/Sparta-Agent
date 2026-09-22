@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useAuiState } from "@assistant-ui/react";
@@ -70,8 +69,12 @@ export function useToolOutputFor(
   // older conversation whose own entry had been cleared.
   const isRunning = useAuiState(({ thread }) => thread.isRunning);
   const own = map[toolOutputKey(paneScope, toolCallId)];
-  if (own !== undefined) return own;
-  if (!isRunning) return "";
+  if (own !== undefined) {
+    return own;
+  }
+  if (!isRunning) {
+    return "";
+  }
   return map[toolOutputKey(unresolvedScope, toolCallId)] ?? "";
 }
 
@@ -98,7 +101,10 @@ const TRUNCATION_FOOTER_MARKER = "\n\n... (truncated";
  * timed-out/cancelled tool returns only a status line, so length alone would
  * drop the partial stdout the stream captured.
  */
-export function shouldPreserveFullOutput(full: string, result: string): boolean {
+export function shouldPreserveFullOutput(
+  full: string,
+  result: string,
+): boolean {
   if (!full) {
     return false;
   }
@@ -142,7 +148,6 @@ export function preferFullToolOutput(full: string, result: string): string {
   }
   return `${full.replace(/\s+$/, "")}\n\n${result}`;
 }
-
 
 /** Normalize both sources before deciding whether the live stream is fuller. */
 export function preferSanitizedFullToolOutput(

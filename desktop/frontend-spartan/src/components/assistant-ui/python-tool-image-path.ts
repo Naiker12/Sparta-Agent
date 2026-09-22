@@ -1,4 +1,3 @@
-
 import { sandboxFilePath } from "./sandbox-files.ts";
 
 export function pythonToolImagePath(

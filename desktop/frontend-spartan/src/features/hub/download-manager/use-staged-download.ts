@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { toast } from "@/lib/toast";
@@ -47,7 +46,9 @@ export function useStagedDownload({
   const advance = useCallback(() => {
     setQueue((rest) => {
       const remaining = (rest ?? []).slice(1);
-      if (remaining.length > 0) return remaining;
+      if (remaining.length > 0) {
+        return remaining;
+      }
       return null;
     });
   }, []);
@@ -70,21 +71,29 @@ export function useStagedDownload({
     // The listener subscription is per REPO, not per job, and one repo can have several jobs in flight. Each callback carries the variant it fired
     // for, so drop the ones that are not this staged entry: a sibling's completion would advance the queue and its failure would wipe a live job.
     onComplete: (variant) => {
-      if (!isOurs(variant)) return;
+      if (!isOurs(variant)) {
+        return;
+      }
       inFlight.current = null;
       const remaining = (queue ?? []).slice(1);
       advance();
       // Every entry is on disk, so the load will find its cache warm.
-      if (remaining.length === 0) onReady();
+      if (remaining.length === 0) {
+        onReady();
+      }
     },
     onError: (variant) => {
-      if (!isOurs(variant)) return;
+      if (!isOurs(variant)) {
+        return;
+      }
       inFlight.current = null;
       setQueue(null);
       onCancelled?.();
     },
     onCancelled: (variant) => {
-      if (!isOurs(variant)) return;
+      if (!isOurs(variant)) {
+        return;
+      }
       inFlight.current = null;
       setQueue(null);
       onCancelled?.();
@@ -96,7 +105,9 @@ export function useStagedDownload({
   const onCancelledRef = useRef(onCancelled);
   onCancelledRef.current = onCancelled;
   useEffect(() => {
-    if (!current) return;
+    if (!current) {
+      return;
+    }
     let active = true;
     const started = { key: entryKey(current), generation: generation.current };
     // Register ownership before the start request. The global panel can expose the job as soon as
@@ -113,9 +124,15 @@ export function useStagedDownload({
         files: current.files,
         checkpoint: current.checkpoint,
       });
-      if (!active) return;
-      if (outcome === "started") return;
-      if (inFlight.current === started) inFlight.current = null;
+      if (!active) {
+        return;
+      }
+      if (outcome === "started") {
+        return;
+      }
+      if (inFlight.current === started) {
+        inFlight.current = null;
+      }
       // A start that never got off the ground (network failure, rejected scoped request, worker refused) will never complete, so
       // clear the queue instead of leaving the head in place, where the effect never re-runs and onReady never fires.
       // The pick dies with it, so the consumer's pending auto-load has to go too.

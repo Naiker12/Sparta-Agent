@@ -1,4 +1,3 @@
-
 /**
  * CommonMark code spans: a backtick run closes only on an equal-length run.
  * That needs lookbehind, which older Safari rejects, so runs are scanned by hand.

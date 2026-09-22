@@ -1,12 +1,17 @@
-
 import { useEffect, useRef, useState } from "react";
-import { batchListChatMessages, CHAT_HISTORY_UPDATED_EVENT } from "../api/chat-api";
+import {
+  CHAT_HISTORY_UPDATED_EVENT,
+  batchListChatMessages,
+} from "../api/chat-api";
 import type { MessageRecord } from "../types";
 import {
   listStoredChatMessages,
   listStoredChatThreads,
 } from "../utils/chat-history-storage";
-import { formatMcpToolName, mcpServerFromProvenance } from "../utils/mcp-tool-name";
+import {
+  formatMcpToolName,
+  mcpServerFromProvenance,
+} from "../utils/mcp-tool-name";
 import { attachmentsPastedText } from "../utils/pasted-text.ts";
 
 export interface ChatSearchItem {
@@ -34,7 +39,9 @@ const BINARY_KEY = /b64|base64|^(images?|audio|video)$/i;
 function stripMcpImageSuffix(value: string): string {
   const marker = "\n__MCP_IMAGES__:";
   const idx = value.lastIndexOf(marker);
-  if (idx === -1) return value;
+  if (idx === -1) {
+    return value;
+  }
   try {
     const images: unknown = JSON.parse(value.slice(idx + marker.length));
     if (
@@ -63,19 +70,25 @@ function searchableText(value: unknown, depth = 0): string {
   if (typeof value === "string") {
     let text = stripMcpImageSuffix(value);
     const cut = text.indexOf("\n__IMAGES__:");
-    if (cut !== -1) text = text.slice(0, cut);
+    if (cut !== -1) {
+      text = text.slice(0, cut);
+    }
     return text
       .replace(/data:[^;,\s]+;base64,[A-Za-z0-9+/=]+/g, " ")
       .replace(/[A-Za-z0-9+/]{120,}={0,2}/g, " ");
   }
-  if (value == null || depth > 4) return "";
+  if (value == null || depth > 4) {
+    return "";
+  }
   if (Array.isArray(value)) {
     return value.map((v) => searchableText(v, depth + 1)).join(" ");
   }
   if (typeof value === "object") {
     const out: string[] = [];
     for (const [k, v] of Object.entries(value)) {
-      if (!BINARY_KEY.test(k)) out.push(searchableText(v, depth + 1));
+      if (!BINARY_KEY.test(k)) {
+        out.push(searchableText(v, depth + 1));
+      }
     }
     return out.join(" ");
   }
@@ -87,33 +100,60 @@ function searchableText(value: unknown, depth = 0): string {
 function extractText(message: MessageRecord): string {
   const content = message.content;
   const pasted = attachmentsPastedText(message.attachments);
-  if (!Array.isArray(content)) return pasted;
+  if (!Array.isArray(content)) {
+    return pasted;
+  }
   const parts: string[] = [];
-  if (pasted) parts.push(pasted);
+  if (pasted) {
+    parts.push(pasted);
+  }
   for (const part of content) {
-    if (!part || typeof part !== "object") continue;
+    if (!part || typeof part !== "object") {
+      continue;
+    }
     const p = part as Record<string, unknown>;
-    if ((p.type === "text" || p.type === "reasoning") && typeof p.text === "string") {
+    if (
+      (p.type === "text" || p.type === "reasoning") &&
+      typeof p.text === "string"
+    ) {
       parts.push(p.text);
     } else if (p.type === "thinking") {
       const t = typeof p.thinking === "string" ? p.thinking : p.text;
-      if (typeof t === "string") parts.push(t);
+      if (typeof t === "string") {
+        parts.push(t);
+      }
     } else if (p.type === "tool-call") {
-      if (typeof p.toolName === "string") parts.push(p.toolName);
+      if (typeof p.toolName === "string") {
+        parts.push(p.toolName);
+      }
       const mcpServer = mcpServerFromProvenance(p.provenance);
       if (mcpServer) {
         parts.push(mcpServer);
         // Index the rendered "Server · tool" label too, so pasting it matches.
         const label =
-          typeof p.toolName === "string" ? formatMcpToolName(p.toolName, mcpServer) : null;
-        if (label) parts.push(label);
+          typeof p.toolName === "string"
+            ? formatMcpToolName(p.toolName, mcpServer)
+            : null;
+        if (label) {
+          parts.push(label);
+        }
       }
-      const args = searchableText(typeof p.argsText === "string" ? p.argsText : p.args);
-      if (args) parts.push(args);
+      const args = searchableText(
+        typeof p.argsText === "string" ? p.argsText : p.args,
+      );
+      if (args) {
+        parts.push(args);
+      }
       const result = searchableText(p.result);
-      if (result) parts.push(result);
+      if (result) {
+        parts.push(result);
+      }
     } else if (p.type === "source") {
-      for (const v of [p.title, p.url]) if (typeof v === "string") parts.push(v);
+      for (const v of [p.title, p.url]) {
+        if (typeof v === "string") {
+          parts.push(v);
+        }
+      }
     }
   }
   return parts.join(" ").replace(/\s+/g, " ").trim();
@@ -137,7 +177,9 @@ async function buildIndex(): Promise<ChatSearchItem[]> {
     if (t.pairId) {
       if (seenPairs.has(t.pairId)) {
         const existing = itemThreadIds.get(t.pairId);
-        if (existing) existing.threadIds.push(t.id);
+        if (existing) {
+          existing.threadIds.push(t.id);
+        }
         continue;
       }
       seenPairs.add(t.pairId);
@@ -180,10 +222,13 @@ async function buildIndex(): Promise<ChatSearchItem[]> {
   );
   if (missingThreadIds.length > 0) {
     const legacyEntries = await Promise.all(
-      missingThreadIds.map(async (threadId) => [
-        threadId,
-        await listStoredChatMessages(threadId).catch(() => []),
-      ] as const),
+      missingThreadIds.map(
+        async (threadId) =>
+          [
+            threadId,
+            await listStoredChatMessages(threadId).catch(() => []),
+          ] as const,
+      ),
     );
     messagesByThread = new Map(messagesByThread);
     for (const [threadId, messages] of legacyEntries) {
@@ -196,7 +241,9 @@ async function buildIndex(): Promise<ChatSearchItem[]> {
     const merged: MessageRecord[] = [];
     for (const tid of threadIds) {
       const arr = messagesByThread.get(tid);
-      if (arr) merged.push(...arr);
+      if (arr) {
+        merged.push(...arr);
+      }
     }
     if (merged.length === 0) {
       continue;
@@ -209,9 +256,13 @@ async function buildIndex(): Promise<ChatSearchItem[]> {
     const allParts: string[] = [item.title];
     for (const m of merged) {
       const text = extractText(m);
-      if (!text) continue;
+      if (!text) {
+        continue;
+      }
       allParts.push(text);
-      if (m.role === "user") userParts.push(text);
+      if (m.role === "user") {
+        userParts.push(text);
+      }
     }
     const userSearchText = userParts.join(" ").toLowerCase();
     const searchText = allParts.join(" ").toLowerCase();
@@ -246,24 +297,34 @@ export function useChatSearchIndex(enabled: boolean): {
       buildIndex()
         .then((result) => {
           // Drop out-of-order responses so a slower rebuild can't clobber a fresher one.
-          if (cancelled || seq !== requestSeqRef.current) return;
+          if (cancelled || seq !== requestSeqRef.current) {
+            return;
+          }
           setItems(result);
         })
         .catch(() => {
-          if (cancelled || seq !== requestSeqRef.current) return;
+          if (cancelled || seq !== requestSeqRef.current) {
+            return;
+          }
           setItems([]);
         })
         .finally(() => {
-          if (cancelled || seq !== requestSeqRef.current) return;
+          if (cancelled || seq !== requestSeqRef.current) {
+            return;
+          }
           setLoading(false);
         });
     };
 
     const scheduleRebuild = () => {
-      if (debounceTimer !== null) clearTimeout(debounceTimer);
+      if (debounceTimer !== null) {
+        clearTimeout(debounceTimer);
+      }
       debounceTimer = setTimeout(() => {
         debounceTimer = null;
-        if (!cancelled) run();
+        if (!cancelled) {
+          run();
+        }
       }, SEARCH_REBUILD_DEBOUNCE_MS);
     };
 
@@ -271,7 +332,9 @@ export function useChatSearchIndex(enabled: boolean): {
     window.addEventListener(CHAT_HISTORY_UPDATED_EVENT, scheduleRebuild);
     return () => {
       cancelled = true;
-      if (debounceTimer !== null) clearTimeout(debounceTimer);
+      if (debounceTimer !== null) {
+        clearTimeout(debounceTimer);
+      }
       window.removeEventListener(CHAT_HISTORY_UPDATED_EVENT, scheduleRebuild);
     };
   }, [enabled]);

@@ -1,4 +1,3 @@
-
 import type {
   CachedInventoryRow,
   LocalInventoryRow,
@@ -24,8 +23,12 @@ function cachedRowMatchesFormat(
   row: CachedInventoryRow,
   formatHint: InventoryResourceFormatHint,
 ): boolean {
-  if (!formatHint || formatHint === "unknown") return true;
-  if (formatHint === "non-gguf") return row.modelFormat !== "gguf";
+  if (!formatHint || formatHint === "unknown") {
+    return true;
+  }
+  if (formatHint === "non-gguf") {
+    return row.modelFormat !== "gguf";
+  }
   return row.modelFormat === formatHint;
 }
 
@@ -33,8 +36,12 @@ function localRowMatchesFormat(
   row: LocalInventoryRow,
   formatHint: InventoryResourceFormatHint,
 ): boolean {
-  if (!formatHint || formatHint === "unknown") return true;
-  if (formatHint === "non-gguf") return row.modelFormat !== "gguf";
+  if (!formatHint || formatHint === "unknown") {
+    return true;
+  }
+  if (formatHint === "non-gguf") {
+    return row.modelFormat !== "gguf";
+  }
   return row.modelFormat === formatHint;
 }
 
@@ -57,7 +64,9 @@ function bestCompleteCached(
   );
 }
 
-function bestCompleteLocal(rows: LocalInventoryRow[]): LocalInventoryRow | null {
+function bestCompleteLocal(
+  rows: LocalInventoryRow[],
+): LocalInventoryRow | null {
   return (
     rows.find((row) => !row.partial && row.source !== "hf_cache") ??
     rows.find((row) => !row.partial) ??
@@ -77,9 +86,13 @@ export function resolveInventoryResource({
   formatHint?: InventoryResourceFormatHint;
 }): ResolvedInventoryResource {
   const key = repoKey(repoId);
-  if (!key) return { cachedRow: null, localRow: null };
+  if (!key) {
+    return { cachedRow: null, localRow: null };
+  }
 
-  const repoCachedRows = cachedRows.filter((row) => repoKey(row.repoId) === key);
+  const repoCachedRows = cachedRows.filter(
+    (row) => repoKey(row.repoId) === key,
+  );
   const repoLocalRows = localRows.filter((row) => repoKey(row.repoId) === key);
   const compatibleCachedRows = repoCachedRows.filter((row) =>
     cachedRowMatchesFormat(row, formatHint),
@@ -89,29 +102,41 @@ export function resolveInventoryResource({
   );
 
   const completeCached = bestCompleteCached(compatibleCachedRows);
-  if (completeCached) return { cachedRow: completeCached, localRow: null };
+  if (completeCached) {
+    return { cachedRow: completeCached, localRow: null };
+  }
 
   const completeLocal = bestCompleteLocal(compatibleLocalRows);
-  if (completeLocal) return { cachedRow: null, localRow: completeLocal };
+  if (completeLocal) {
+    return { cachedRow: null, localRow: completeLocal };
+  }
 
-  const partialCached =
-    compatibleCachedRows.find((row) => row.partial) ?? null;
-  if (partialCached) return { cachedRow: partialCached, localRow: null };
+  const partialCached = compatibleCachedRows.find((row) => row.partial) ?? null;
+  if (partialCached) {
+    return { cachedRow: partialCached, localRow: null };
+  }
 
   const compatibleLocal = compatibleLocalRows[0] ?? null;
-  if (compatibleLocal) return { cachedRow: null, localRow: compatibleLocal };
+  if (compatibleLocal) {
+    return { cachedRow: null, localRow: compatibleLocal };
+  }
 
   if (hasExplicitFormatHint(formatHint)) {
     return { cachedRow: null, localRow: null };
   }
 
   const fallbackCached = bestCompleteCached(repoCachedRows);
-  if (fallbackCached) return { cachedRow: fallbackCached, localRow: null };
+  if (fallbackCached) {
+    return { cachedRow: fallbackCached, localRow: null };
+  }
 
   const fallbackLocal = bestCompleteLocal(repoLocalRows);
-  if (fallbackLocal) return { cachedRow: null, localRow: fallbackLocal };
+  if (fallbackLocal) {
+    return { cachedRow: null, localRow: fallbackLocal };
+  }
 
-  const fallbackPartialCached = repoCachedRows.find((row) => row.partial) ?? null;
+  const fallbackPartialCached =
+    repoCachedRows.find((row) => row.partial) ?? null;
   if (fallbackPartialCached) {
     return { cachedRow: fallbackPartialCached, localRow: null };
   }

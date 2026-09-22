@@ -1,9 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { ReleaseNotesPanel } from "@/components/update/release-notes-panel";
 import { useWebUpdateCheck } from "@/hooks/use-web-update-check";
 import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
-import { Download, ExternalLink, Sparkles, X } from "lucide-react";
+import { Download, Sparkles, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { type ReactElement, useState } from "react";
 
@@ -93,7 +92,9 @@ export function WebUpdateBanner({
                 className="h-8 rounded-lg px-2.5 text-xs text-muted-foreground hover:text-foreground"
                 onClick={() => setShowNotes(!showNotes)}
               >
-                {showNotes ? t("update.hideReleaseNotes") : t("update.showReleaseNotes")}
+                {showNotes
+                  ? t("update.hideReleaseNotes")
+                  : t("update.showReleaseNotes")}
               </Button>
 
               <div className="flex items-center gap-1.5">

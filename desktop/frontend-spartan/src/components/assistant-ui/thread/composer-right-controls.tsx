@@ -4,19 +4,6 @@
  * control de cola de mensajes y selección de esfuerzo de pensamiento.
  */
 
-import {
-  useEffect,
-  useRef,
-  useState,
-  type FC,
-} from "react";
-import { ArrowUpIcon, MicIcon, SquareIcon } from "lucide-react";
-import {
-  AuiIf,
-  ComposerPrimitive,
-  useAui,
-} from "@assistant-ui/react";
-import { toast } from "sonner";
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
@@ -32,6 +19,10 @@ import {
   useResearchRunStore,
 } from "@/features/chat/stores/research-run-store";
 import { useT } from "@/i18n";
+import { AuiIf, ComposerPrimitive, useAui } from "@assistant-ui/react";
+import { ArrowUpIcon, MicIcon, SquareIcon } from "lucide-react";
+import { type FC, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { findPromptQueueEntry } from "./prompt-queue-manager";
 import { ReasoningToggle } from "./reasoning-toggle";
 
@@ -104,7 +95,9 @@ export const ComposerRightControls: FC<ComposerRightControlsProps> = ({
       ) {
         return;
       }
-      if (isQueueRunning) onStopClick?.();
+      if (isQueueRunning) {
+        onStopClick?.();
+      }
       stoppingResearchRunIdRef.current = activeResearchRunId;
       setStoppingResearchRunId(activeResearchRunId);
       void cancelResearchRun(activeResearchRunId)
@@ -118,7 +111,9 @@ export const ComposerRightControls: FC<ComposerRightControlsProps> = ({
         });
       return;
     }
-    if (isQueueRunning) onStopClick?.();
+    if (isQueueRunning) {
+      onStopClick?.();
+    }
   };
 
   const aui = useAui();
@@ -153,12 +148,16 @@ export const ComposerRightControls: FC<ComposerRightControlsProps> = ({
       </ComposerPrimitive.If>
       <AuiIf
         condition={({ thread }) =>
-          !thread.isRunning && !isQueueRunning && !isResearchActive
+          !(thread.isRunning || isQueueRunning || isResearchActive)
         }
       >
         <ComposerPrimitive.Send asChild={true}>
           <TooltipIconButton
-            tooltip={pendingSend ? t("chat.composer.waitingDocs") : t("chat.composer.sendMessage")}
+            tooltip={
+              pendingSend
+                ? t("chat.composer.waitingDocs")
+                : t("chat.composer.sendMessage")
+            }
             side="bottom"
             type="submit"
             variant="default"
@@ -212,7 +211,11 @@ export const ComposerRightControls: FC<ComposerRightControlsProps> = ({
           variant="default"
           size="icon"
           className="aui-composer-cancel ml-1 size-7.5 rounded-full"
-          aria-label={researchStopping ? t("chat.composer.stoppingResearch") : t("chat.composer.stopResearch")}
+          aria-label={
+            researchStopping
+              ? t("chat.composer.stoppingResearch")
+              : t("chat.composer.stopResearch")
+          }
           disabled={researchStopping}
           onClick={stop}
         >

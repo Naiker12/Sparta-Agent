@@ -1,4 +1,3 @@
-
 import { ShieldBanIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
@@ -19,10 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useChatRuntimeStore } from "@/features/chat/stores/chat-runtime-store";
 import { useT } from "@/i18n";
-import {
-  FULL_ACCESS_WARNING,
-  PermissionModeMenuItems,
-} from "./permission-mode-select";
+import { PermissionModeMenuItems } from "./permission-mode-select";
 
 // Tool permissions entry for the composer "+" menu.
 export function BypassPermissionsMenuItem() {

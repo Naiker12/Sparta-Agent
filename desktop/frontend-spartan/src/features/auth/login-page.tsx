@@ -1,6 +1,5 @@
-
-import { LightRays } from "@/components/ui/light-rays";
 import { Card } from "@/components/ui/card";
+import { LightRays } from "@/components/ui/light-rays";
 import { AuthForm } from "./components/auth-form";
 
 export function LoginPage() {

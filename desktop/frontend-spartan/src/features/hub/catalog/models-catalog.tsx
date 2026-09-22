@@ -1,4 +1,3 @@
-
 import { usePlatformStore } from "@/config/env";
 import type { HubFailure } from "@/features/hub/lib/network";
 import { cn } from "@/lib/utils";
@@ -353,11 +352,11 @@ export const ModelsCatalog = memo(function ModelsCatalog({
   // scrollTop to 0 and corrupts the mirror, so visibility + pointer-events-none hides it instead.
   // Non-split reserves an equal `both-edges` gutter so the centered --hub-measure column stays
   // symmetric; split mode pins a narrow master left, so it reserves only the right gutter.
-  const scrollPaneClassName =
-    "absolute inset-0 min-h-0 overflow-x-hidden overflow-y-auto pb-6 pt-0 [overflow-anchor:none] [scrollbar-width:thin] " +
-    (discoverView === "split"
+  const scrollPaneClassName = `absolute inset-0 min-h-0 overflow-x-hidden overflow-y-auto pb-6 pt-0 [overflow-anchor:none] [scrollbar-width:thin] ${
+    discoverView === "split"
       ? "[scrollbar-gutter:stable]"
-      : "[scrollbar-gutter:stable_both-edges]");
+      : "[scrollbar-gutter:stable_both-edges]"
+  }`;
   // Split mode keeps the top bar's left padding to align the list header but tightens the right.
   const splitView = discoverView === "split";
   const discoverColumnClassName = splitView

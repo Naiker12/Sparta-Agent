@@ -1,4 +1,3 @@
-
 import { authFetch } from "@/features/auth";
 
 import { sandboxRoutePrefix } from "./sandbox-files";
@@ -42,7 +41,9 @@ export async function revealSandbox(sessionId: string): Promise<void> {
       const body: unknown = await response.json();
       if (body && typeof body === "object" && "detail" in body) {
         const value = (body as { detail?: unknown }).detail;
-        if (typeof value === "string") detail = value;
+        if (typeof value === "string") {
+          detail = value;
+        }
       }
     } catch {
       // A non-JSON error body leaves the status as the only thing to report.

@@ -4,28 +4,25 @@
  * detección de deep research activo, accesibilidad de foco y exportación a markdown.
  */
 
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type FocusEvent as ReactFocusEvent,
-} from "react";
-import { useNavigate } from "@tanstack/react-router";
-import { useAui, useAuiState } from "@assistant-ui/react";
-import { toast } from "sonner";
 import { researchReplyOwners } from "@/components/assistant-ui/research-reply-owners";
+import { forkChatThread } from "@/features/chat/api/chat-api";
 import {
   settleThreadScopedSettingsForCopy,
   useChatRuntimeStore,
 } from "@/features/chat/stores/chat-runtime-store";
-import { forkChatThread } from "@/features/chat/api/chat-api";
-import {
-  forkCountFor,
-  subscribeForkCounts,
-} from "@/features/chat/utils/fork-count-store";
 import { useResearchRunStore } from "@/features/chat/stores/research-run-store";
+import { subscribeForkCounts } from "@/features/chat/utils/fork-count-store";
 import { downloadFile, isDownloadCancelled } from "@/lib/native-files";
+import { useAui, useAuiState } from "@assistant-ui/react";
+import { useNavigate } from "@tanstack/react-router";
+import {
+  type FocusEvent as ReactFocusEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import { toast } from "sonner";
 
 export const getResearchRunId = (metadata: unknown): string | null => {
   const custom = (
@@ -81,7 +78,9 @@ export const useThreadForkCounts = (): void => {
   const remoteId =
     useAuiState(({ threadListItem }) => threadListItem.remoteId) ?? null;
   useEffect(() => {
-    if (!remoteId) return;
+    if (!remoteId) {
+      return;
+    }
     return subscribeForkCounts(remoteId, () => {});
   }, [remoteId]);
 };
@@ -129,7 +128,6 @@ export const useForkMessageAction = () => {
         toast.success("Fork created");
       }
     } catch (error) {
-      console.error("Failed to fork", error);
       toast.error("Failed to fork", {
         description: error instanceof Error ? error.message : undefined,
       });
@@ -172,9 +170,13 @@ export function useActionBarFocusReveal() {
 
   const isEngaged = useCallback(() => {
     const el = rootRef.current;
-    if (!el) return false;
+    if (!el) {
+      return false;
+    }
     const active = document.activeElement;
-    if (active && el.contains(active)) return true;
+    if (active && el.contains(active)) {
+      return true;
+    }
     return openPopupTrigger() !== null;
   }, [openPopupTrigger]);
 
@@ -188,15 +190,21 @@ export function useActionBarFocusReveal() {
   const scheduleClear = useCallback(
     (restart: boolean) => {
       if (clearFrameRef.current !== null) {
-        if (!restart) return;
+        if (!restart) {
+          return;
+        }
         cancelAnimationFrame(clearFrameRef.current);
       }
       const decide = () => {
         clearFrameRef.current = null;
         const el = rootRef.current;
-        if (!el || !focusWithinRef.current) return;
+        if (!(el && focusWithinRef.current)) {
+          return;
+        }
         const active = document.activeElement;
-        if (active && el.contains(active)) return;
+        if (active && el.contains(active)) {
+          return;
+        }
         if (openPopupTrigger()) {
           clearFrameRef.current = requestAnimationFrame(decide);
           return;
@@ -220,7 +228,9 @@ export function useActionBarFocusReveal() {
         return;
       }
       cancelPendingClear();
-      if (focusWithinRef.current) return;
+      if (focusWithinRef.current) {
+        return;
+      }
       focusWithinRef.current = true;
       aui.message().setIsHovering(true);
     },
@@ -228,13 +238,17 @@ export function useActionBarFocusReveal() {
   );
 
   const handleBlur = useCallback(() => {
-    if (!focusWithinRef.current) return;
+    if (!focusWithinRef.current) {
+      return;
+    }
     scheduleClear(true);
   }, [scheduleClear]);
 
   useEffect(() => {
     const el = rootRef.current;
-    if (!el) return;
+    if (!el) {
+      return;
+    }
     const reassert = () => {
       if (focusWithinRef.current && isEngaged()) {
         aui.message().setIsHovering(true);

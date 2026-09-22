@@ -1,4 +1,3 @@
-
 import type { NodeConfig } from "../types";
 
 export type AvailableVariableSource = "column" | "seed";
@@ -56,7 +55,9 @@ export function getAvailableVariableEntries(
     if (config.kind === "seed") {
       for (const col of config.seed_columns ?? []) {
         const name = col.trim();
-        if (!name) continue;
+        if (!name) {
+          continue;
+        }
         vars.push({ name, source: "seed" });
       }
       continue;
@@ -85,5 +86,7 @@ export function getAvailableVariables(
   configs: Record<string, NodeConfig>,
   currentId: string,
 ): string[] {
-  return getAvailableVariableEntries(configs, currentId).map((entry) => entry.name);
+  return getAvailableVariableEntries(configs, currentId).map(
+    (entry) => entry.name,
+  );
 }

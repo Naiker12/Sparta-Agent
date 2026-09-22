@@ -1,7 +1,6 @@
-
-import { createRoute, redirect } from "@tanstack/react-router";
 import { getPostAuthRoute } from "@/features/auth";
 import { useSettingsDialogStore } from "@/features/settings";
+import { createRoute, redirect } from "@tanstack/react-router";
 import { requireAuth } from "../auth-guards";
 import { Route as rootRoute } from "./__root";
 

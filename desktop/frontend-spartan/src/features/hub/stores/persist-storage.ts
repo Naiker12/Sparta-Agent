@@ -1,4 +1,3 @@
-
 import type { StateStorage } from "zustand/middleware";
 
 export const noopStorage: StateStorage = {
@@ -30,7 +29,9 @@ export function createThrottledStorage(
     getItem: (name) => base.getItem(name),
     setItem: (name, value) => {
       pending.set(name, value);
-      if (timer === null) timer = setTimeout(flush, delayMs);
+      if (timer === null) {
+        timer = setTimeout(flush, delayMs);
+      }
     },
     removeItem: (name) => {
       pending.delete(name);

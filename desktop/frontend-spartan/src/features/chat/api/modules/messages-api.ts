@@ -1,6 +1,6 @@
 import { authFetch } from "@/features/auth";
-import { isAssistantLocalThreadId } from "../../utils/thread-ids";
 import type { MessageRecord } from "../../types";
+import { isAssistantLocalThreadId } from "../../utils/thread-ids";
 import {
   notifyChatHistoryUpdated,
   parseJsonOrThrow,
@@ -10,11 +10,15 @@ import {
 export async function listChatMessages(
   threadId: string,
 ): Promise<MessageRecord[]> {
-  if (isAssistantLocalThreadId(threadId)) return [];
+  if (isAssistantLocalThreadId(threadId)) {
+    return [];
+  }
   const response = await authFetch(
     `/api/chat/threads/${encodeURIComponent(threadId)}/messages`,
   );
-  if (response.status === 404) return [];
+  if (response.status === 404) {
+    return [];
+  }
   const data = await parseJsonOrThrow<{ messages: MessageRecord[] }>(response);
   return Array.isArray(data.messages) ? data.messages : [];
 }
@@ -23,7 +27,9 @@ export async function batchListChatMessages(
   threadIds: string[],
 ): Promise<Map<string, MessageRecord[]>> {
   const out = new Map<string, MessageRecord[]>();
-  if (threadIds.length === 0) return out;
+  if (threadIds.length === 0) {
+    return out;
+  }
   const response = await authFetch("/api/chat/messages:batch", {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -33,7 +39,9 @@ export async function batchListChatMessages(
     const per = await Promise.all(
       threadIds.map(async (id) => [id, await listChatMessages(id)] as const),
     );
-    for (const [id, msgs] of per) out.set(id, msgs);
+    for (const [id, msgs] of per) {
+      out.set(id, msgs);
+    }
     return out;
   }
   const data = await parseJsonOrThrow<{
@@ -52,7 +60,9 @@ export async function getChatMessage(
   const response = await authFetch(
     `/api/chat/threads/${encodeURIComponent(threadId)}/messages/${encodeURIComponent(messageId)}`,
   );
-  if (response.status === 404) return null;
+  if (response.status === 404) {
+    return null;
+  }
   return parseJsonOrThrow<MessageRecord>(response);
 }
 

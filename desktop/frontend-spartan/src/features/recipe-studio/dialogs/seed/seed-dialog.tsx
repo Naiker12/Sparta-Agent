@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -30,6 +29,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 import {
   type KeyboardEvent,
   type ReactElement,
@@ -40,32 +40,31 @@ import {
   useRef,
   useState,
 } from "react";
-import { cn } from "@/lib/utils";
-import { UnstructuredDropZone, type FileEntry } from "./unstructured-drop-zone";
-import {
-  LOCAL_SEED_UPLOAD_MAX_BYTES,
-  LOCAL_SEED_UPLOAD_MAX_LABEL,
-} from "./upload-limits";
 import {
   getGithubEnvTokenStatus,
   inspectSeedDataset,
   inspectSeedUpload,
 } from "../../api";
+import { HfDatasetCombobox } from "../../components/shared/hf-dataset-combobox";
 import { useRecipeStudioStore } from "../../stores/recipe-studio";
-import {
-  makeUnstructuredUploadUid,
-  resolveUnstructuredUploadBlockId,
-} from "../../utils/config-factories";
-import { resolveImagePreview } from "../../utils/image-preview";
 import type {
   GithubItemType,
   SeedConfig,
   SeedSamplingStrategy,
   SeedSelectionType,
 } from "../../types";
+import {
+  makeUnstructuredUploadUid,
+  resolveUnstructuredUploadBlockId,
+} from "../../utils/config-factories";
+import { resolveImagePreview } from "../../utils/image-preview";
 import { CollapsibleSectionTriggerButton } from "../shared/collapsible-section-trigger";
-import { HfDatasetCombobox } from "../../components/shared/hf-dataset-combobox";
 import { FieldLabel } from "../shared/field-label";
+import { type FileEntry, UnstructuredDropZone } from "./unstructured-drop-zone";
+import {
+  LOCAL_SEED_UPLOAD_MAX_BYTES,
+  LOCAL_SEED_UPLOAD_MAX_LABEL,
+} from "./upload-limits";
 
 const SAMPLING_OPTIONS: Array<{ value: SeedSamplingStrategy; label: string }> =
   [
@@ -188,10 +187,14 @@ export function GithubRepoSeedForm({
     let cancelled = false;
     void getGithubEnvTokenStatus()
       .then((status) => {
-        if (!cancelled) setServerHasEnvToken(status.has_token);
+        if (!cancelled) {
+          setServerHasEnvToken(status.has_token);
+        }
       })
       .catch(() => {
-        if (!cancelled) setServerHasEnvToken(false);
+        if (!cancelled) {
+          setServerHasEnvToken(false);
+        }
       });
     return () => {
       cancelled = true;
@@ -468,10 +471,15 @@ function getErrorMessage(error: unknown, fallback: string): string {
 }
 
 function stringifyCell(value: unknown): string {
-  if (value === null || value === undefined) return "";
-  if (typeof value === "string") return value;
-  if (typeof value === "number" || typeof value === "boolean")
+  if (value === null || value === undefined) {
+    return "";
+  }
+  if (typeof value === "string") {
+    return value;
+  }
+  if (typeof value === "number" || typeof value === "boolean") {
     return String(value);
+  }
   try {
     return JSON.stringify(value);
   } catch {
@@ -529,12 +537,20 @@ function parseChunkNumber(
   max: number,
 ): number {
   const raw = value?.trim();
-  if (!raw) return fallback;
+  if (!raw) {
+    return fallback;
+  }
   const parsed = Number(raw);
-  if (!Number.isFinite(parsed)) return fallback;
+  if (!Number.isFinite(parsed)) {
+    return fallback;
+  }
   const int = Math.floor(parsed);
-  if (int < min) return min;
-  if (int > max) return max;
+  if (int < min) {
+    return min;
+  }
+  if (int > max) {
+    return max;
+  }
   return int;
 }
 
@@ -585,7 +601,10 @@ export function SeedDialog({
   const [localFile, setLocalFile] = useState<File | null>(null);
   const [unstructuredFiles, setUnstructuredFiles] = useState<FileEntry[]>(
     () => {
-      if (config.unstructured_file_ids?.length) {
+      if (
+        config.unstructured_file_ids &&
+        config.unstructured_file_ids.length > 0
+      ) {
         return config.unstructured_file_ids.map((id, i) => ({
           id,
           name: config.unstructured_file_names?.[i] ?? "Unknown",
@@ -626,9 +645,15 @@ export function SeedDialog({
   });
 
   useEffect(() => {
-    if (mode !== "unstructured") return;
-    if (uploadUid) return;
-    if (unstructuredFileCount > 0) return;
+    if (mode !== "unstructured") {
+      return;
+    }
+    if (uploadUid) {
+      return;
+    }
+    if (unstructuredFileCount > 0) {
+      return;
+    }
     const nextUid =
       generatedUploadUidRef.current ?? makeUnstructuredUploadUid();
     generatedUploadUidRef.current = nextUid;
@@ -645,7 +670,10 @@ export function SeedDialog({
       setUnstructuredFiles([]);
     }
     if (prevMode !== "unstructured" && mode === "unstructured") {
-      if (config.unstructured_file_ids?.length) {
+      if (
+        config.unstructured_file_ids &&
+        config.unstructured_file_ids.length > 0
+      ) {
         setUnstructuredFiles(
           config.unstructured_file_ids.map((id, i) => ({
             id,
@@ -666,10 +694,21 @@ export function SeedDialog({
       didSyncFilesRef.current = false;
       return;
     }
-    if (didSyncFilesRef.current) return;
-    if (mode !== "unstructured") return;
-    if (unstructuredFiles.length > 0) return;
-    if (!config.unstructured_file_ids?.length) return;
+    if (didSyncFilesRef.current) {
+      return;
+    }
+    if (mode !== "unstructured") {
+      return;
+    }
+    if (unstructuredFiles.length > 0) {
+      return;
+    }
+    if (
+      !config.unstructured_file_ids ||
+      config.unstructured_file_ids.length === 0
+    ) {
+      return;
+    }
     didSyncFilesRef.current = true;
     setUnstructuredFiles(
       config.unstructured_file_ids.map((id, i) => ({
@@ -723,16 +762,22 @@ export function SeedDialog({
   const getCurrentLoadKey = useCallback((): string | null => {
     if (mode === "hf") {
       const dataset = config.hf_repo_id.trim();
-      if (!dataset) return null;
+      if (!dataset) {
+        return null;
+      }
       const token = config.hf_token?.trim() ?? "";
       return `hf:${dataset}|${token}`;
     }
     if (mode === "local") {
-      if (!localFile) return null;
+      if (!localFile) {
+        return null;
+      }
       return `local:${localFile.name}|${localFile.size}|${localFile.lastModified}`;
     }
     const okFiles = unstructuredFiles.filter((f) => f.status === "ok");
-    if (okFiles.length === 0) return null;
+    if (okFiles.length === 0) {
+      return null;
+    }
     const { chunkSize, chunkOverlap } = resolveChunking(config);
     const fileKey = okFiles.map((f) => `${f.id}|${f.name}`).join(",");
     return `unstructured:${fileKey}|${chunkSize}|${chunkOverlap}`;
@@ -906,7 +951,9 @@ export function SeedDialog({
 
   const wasUploadingRef = useRef(false);
   useEffect(() => {
-    if (mode !== "unstructured") return;
+    if (mode !== "unstructured") {
+      return;
+    }
     const isUploading = unstructuredFiles.some((f) => f.status === "uploading");
     if (isUploading) {
       wasUploadingRef.current = true;
@@ -921,8 +968,12 @@ export function SeedDialog({
 
   const previewColumns = useMemo(() => {
     const loadedColumns = config.seed_columns ?? [];
-    if (loadedColumns.length > 0) return loadedColumns;
-    if (previewRows[0]) return Object.keys(previewRows[0]);
+    if (loadedColumns.length > 0) {
+      return loadedColumns;
+    }
+    if (previewRows[0]) {
+      return Object.keys(previewRows[0]);
+    }
     return [];
   }, [config.seed_columns, previewRows]);
   const selectedSeedDropColumns = useMemo(

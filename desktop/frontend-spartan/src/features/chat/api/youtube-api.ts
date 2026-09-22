@@ -1,4 +1,3 @@
-
 import { authFetch } from "@/features/auth";
 import { formatFastApiDetail } from "@/lib/format-fastapi-error";
 

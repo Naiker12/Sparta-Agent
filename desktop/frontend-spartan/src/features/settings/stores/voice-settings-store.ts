@@ -1,4 +1,3 @@
-
 import { isTauri } from "@/lib/api-base";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
@@ -163,7 +162,9 @@ const quotaSafeLocalStorage = {
     }
     const state = parsed.state;
     const recents = state?.recentDictations;
-    if (!state || !Array.isArray(recents)) return;
+    if (!(state && Array.isArray(recents))) {
+      return;
+    }
     // Halve the history until the save fits, down to an empty history, so even
     // a small history shrinks when another store already consumed the quota.
     let keep = Math.min(QUOTA_TRIM_KEEP, recents.length);
@@ -176,7 +177,9 @@ const quotaSafeLocalStorage = {
       } catch {
         // Still over quota: trim harder.
       }
-      if (keep === 0) return;
+      if (keep === 0) {
+        return;
+      }
       keep = Math.floor(keep / 2);
     }
   },
@@ -221,8 +224,12 @@ export const useVoiceSettingsStore = create<VoiceSettingsState>()(
       addDictionaryEntry: (value) =>
         set((state) => {
           const trimmed = value.trim().slice(0, MAX_DICTIONARY_ENTRY_LENGTH);
-          if (!trimmed) return state;
-          if (state.dictionary.length >= MAX_DICTIONARY_ENTRIES) return state;
+          if (!trimmed) {
+            return state;
+          }
+          if (state.dictionary.length >= MAX_DICTIONARY_ENTRIES) {
+            return state;
+          }
           if (
             state.dictionary.some(
               (entry) => entry.toLowerCase() === trimmed.toLowerCase(),
@@ -236,14 +243,18 @@ export const useVoiceSettingsStore = create<VoiceSettingsState>()(
       updateDictionaryEntry: (index, value) =>
         set((state) => {
           const dictionary = [...state.dictionary];
-          if (index < 0 || index >= dictionary.length) return state;
+          if (index < 0 || index >= dictionary.length) {
+            return state;
+          }
           dictionary[index] = value.slice(0, MAX_DICTIONARY_ENTRY_LENGTH);
           return { dictionary };
         }),
       commitDictionaryEntry: (index) =>
         set((state) => {
           const dictionary = [...state.dictionary];
-          if (index < 0 || index >= dictionary.length) return state;
+          if (index < 0 || index >= dictionary.length) {
+            return state;
+          }
           const trimmed = dictionary[index]?.trim() ?? "";
           if (trimmed) {
             dictionary[index] = trimmed;
@@ -394,14 +405,18 @@ function clampNumber(
   max: number,
   fallback: number,
 ): number {
-  if (typeof value !== "number" || Number.isNaN(value)) return fallback;
+  if (typeof value !== "number" || Number.isNaN(value)) {
+    return fallback;
+  }
   return Math.min(max, Math.max(min, value));
 }
 
 /** Resolve the "auto" language setting to a concrete BCP 47 tag. */
 export function resolveDictationLanguage(setting?: string): string {
   const value = setting ?? useVoiceSettingsStore.getState().dictationLanguage;
-  if (value && value !== "auto") return value;
+  if (value && value !== "auto") {
+    return value;
+  }
   return typeof navigator !== "undefined" && navigator.language
     ? navigator.language
     : "en-US";
@@ -412,15 +427,112 @@ export function resolveDictationLanguage(setting?: string): string {
 // `_known_whisper_languages()`; Auto only resolves to a code in this set, so a
 // UI locale Whisper cannot honor stays on auto-detect.
 const WHISPER_DICTATION_LANGUAGES = new Set([
-  "af", "am", "ar", "as", "az", "ba", "be", "bg", "bn", "bo", "br", "bs",
-  "ca", "cmn", "cs", "cy", "da", "de", "el", "en", "es", "et", "eu", "fa",
-  "fi", "fil", "fo", "fr", "gl", "gu", "ha", "haw", "he", "hi", "hr", "ht",
-  "hu", "hy", "id", "in", "is", "it", "iw", "ja", "ji", "jw", "ka", "kk",
-  "km", "kn", "ko", "la", "lb", "ln", "lo", "lt", "lv", "mg", "mi", "mk",
-  "ml", "mn", "mr", "ms", "mt", "my", "nb", "ne", "nl", "nn", "no", "oc",
-  "pa", "pl", "ps", "pt", "ro", "ru", "sa", "sd", "si", "sk", "sl", "sn",
-  "so", "sq", "sr", "su", "sv", "sw", "ta", "te", "tg", "th", "tk", "tl",
-  "tr", "tt", "uk", "ur", "uz", "vi", "yi", "yo", "yue", "zh",
+  "af",
+  "am",
+  "ar",
+  "as",
+  "az",
+  "ba",
+  "be",
+  "bg",
+  "bn",
+  "bo",
+  "br",
+  "bs",
+  "ca",
+  "cmn",
+  "cs",
+  "cy",
+  "da",
+  "de",
+  "el",
+  "en",
+  "es",
+  "et",
+  "eu",
+  "fa",
+  "fi",
+  "fil",
+  "fo",
+  "fr",
+  "gl",
+  "gu",
+  "ha",
+  "haw",
+  "he",
+  "hi",
+  "hr",
+  "ht",
+  "hu",
+  "hy",
+  "id",
+  "in",
+  "is",
+  "it",
+  "iw",
+  "ja",
+  "ji",
+  "jw",
+  "ka",
+  "kk",
+  "km",
+  "kn",
+  "ko",
+  "la",
+  "lb",
+  "ln",
+  "lo",
+  "lt",
+  "lv",
+  "mg",
+  "mi",
+  "mk",
+  "ml",
+  "mn",
+  "mr",
+  "ms",
+  "mt",
+  "my",
+  "nb",
+  "ne",
+  "nl",
+  "nn",
+  "no",
+  "oc",
+  "pa",
+  "pl",
+  "ps",
+  "pt",
+  "ro",
+  "ru",
+  "sa",
+  "sd",
+  "si",
+  "sk",
+  "sl",
+  "sn",
+  "so",
+  "sq",
+  "sr",
+  "su",
+  "sv",
+  "sw",
+  "ta",
+  "te",
+  "tg",
+  "th",
+  "tk",
+  "tl",
+  "tr",
+  "tt",
+  "uk",
+  "ur",
+  "uz",
+  "vi",
+  "yi",
+  "yo",
+  "yue",
+  "zh",
 ]);
 
 /**
@@ -435,7 +547,9 @@ export function resolveModelDictationLanguage(
   model: SttModel,
   requested: string,
 ): string {
-  if (requested !== "auto") return requested;
+  if (requested !== "auto") {
+    return requested;
+  }
   const resolved = resolveDictationLanguage(requested);
   const primary = resolved
     .trim()
@@ -461,11 +575,15 @@ export function applyDictationDictionary(
   dictionary?: string[],
 ): string {
   const entries = dictionary ?? useVoiceSettingsStore.getState().dictionary;
-  if (!transcript || entries.length === 0) return transcript;
+  if (!transcript || entries.length === 0) {
+    return transcript;
+  }
   let result = transcript;
   for (const entry of entries) {
     const trimmed = entry.trim();
-    if (!trimmed) continue;
+    if (!trimmed) {
+      continue;
+    }
     // Whitespace-tolerant pattern so "jane   doe" still matches.
     const pattern = trimmed.split(/\s+/).map(escapeRegExp).join("\\s+");
     try {

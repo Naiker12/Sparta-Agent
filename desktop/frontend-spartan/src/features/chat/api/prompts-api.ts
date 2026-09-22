@@ -1,4 +1,3 @@
-
 import { authFetch } from "@/features/auth";
 
 export interface PromptEntry {
@@ -32,7 +31,9 @@ export async function listPromptEntries(): Promise<PromptEntry[]> {
   return data.entries;
 }
 
-export async function savePromptEntry(entry: PromptEntry): Promise<PromptEntry> {
+export async function savePromptEntry(
+  entry: PromptEntry,
+): Promise<PromptEntry> {
   const res = await authFetch(`/api/prompts/entries/${entry.id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
@@ -42,12 +43,20 @@ export async function savePromptEntry(entry: PromptEntry): Promise<PromptEntry> 
 }
 
 export async function deletePromptEntry(id: string): Promise<void> {
-  const res = await authFetch(`/api/prompts/entries/${id}`, { method: "DELETE" });
-  if (!res.ok) throw new Error(`Delete failed (${res.status})`);
+  const res = await authFetch(`/api/prompts/entries/${id}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) {
+    throw new Error(`Delete failed (${res.status})`);
+  }
 }
 
-export async function bulkSavePromptEntries(entries: PromptEntry[]): Promise<number> {
-  if (!entries.length) return 0;
+export async function bulkSavePromptEntries(
+  entries: PromptEntry[],
+): Promise<number> {
+  if (entries.length === 0) {
+    return 0;
+  }
   const res = await authFetch("/api/prompts/entries/bulk", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -63,7 +72,9 @@ export async function listPromptLists(): Promise<PromptListEntry[]> {
   return data.lists;
 }
 
-export async function savePromptList(list: PromptListEntry): Promise<PromptListEntry> {
+export async function savePromptList(
+  list: PromptListEntry,
+): Promise<PromptListEntry> {
   const res = await authFetch(`/api/prompts/lists/${list.id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
@@ -74,11 +85,17 @@ export async function savePromptList(list: PromptListEntry): Promise<PromptListE
 
 export async function deletePromptList(id: string): Promise<void> {
   const res = await authFetch(`/api/prompts/lists/${id}`, { method: "DELETE" });
-  if (!res.ok) throw new Error(`Delete failed (${res.status})`);
+  if (!res.ok) {
+    throw new Error(`Delete failed (${res.status})`);
+  }
 }
 
-export async function bulkSavePromptLists(lists: PromptListEntry[]): Promise<number> {
-  if (!lists.length) return 0;
+export async function bulkSavePromptLists(
+  lists: PromptListEntry[],
+): Promise<number> {
+  if (lists.length === 0) {
+    return 0;
+  }
   const res = await authFetch("/api/prompts/lists/bulk", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

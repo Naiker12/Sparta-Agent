@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -25,11 +24,15 @@ export function useChatCreatedModel(
     modelId: string | null;
   } | null>(null);
   useEffect(() => {
-    if (!threadId) return;
+    if (!threadId) {
+      return;
+    }
     let cancelled = false;
     void getStoredChatThread(threadId)
       .then((thread) => {
-        if (!cancelled) setRead({ threadId, modelId: thread?.modelId || null });
+        if (!cancelled) {
+          setRead({ threadId, modelId: thread?.modelId || null });
+        }
       })
       .catch(() => {
         // A failed read is not worth a message: the notice is an offer, not a
@@ -66,10 +69,14 @@ export function ChatModelNotice({
   onSwitch,
 }: ChatModelNoticeProps) {
   const createdModelId = useChatCreatedModel(threadId);
-  if (!createdModelId || createdModelId === checkpoint) return null;
+  if (!createdModelId || createdModelId === checkpoint) {
+    return null;
+  }
   // A model that has since been deleted, or a connection that is gone: the
   // switch could not be honoured, and saying so on every open is just noise.
-  if (!selectableModelIds.has(createdModelId)) return null;
+  if (!selectableModelIds.has(createdModelId)) {
+    return null;
+  }
   const label = compareModelDisplayName(createdModelId);
   return (
     // Positioned, not in flow. The chat header is `absolute ... z-40` with an

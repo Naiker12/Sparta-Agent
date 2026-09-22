@@ -1,4 +1,3 @@
-
 import { authFetch } from "@/features/auth";
 import { useVoiceSettingsStore } from "@/features/settings/stores/voice-settings-store";
 import { toast } from "@/lib/toast";
@@ -13,9 +12,13 @@ export function findTtsVoice(
   if (typeof window === "undefined" || !window.speechSynthesis) {
     return undefined;
   }
-  if (!voiceURI) return undefined;
+  if (!voiceURI) {
+    return undefined;
+  }
   const voices = window.speechSynthesis.getVoices();
-  if (voiceURI === "default") return voices.find((voice) => voice.default);
+  if (voiceURI === "default") {
+    return voices.find((voice) => voice.default);
+  }
   return voices.find((voice) => voice.voiceURI === voiceURI);
 }
 
@@ -80,12 +83,24 @@ const PREFERRED_VOICE_NAMES = [
 function voiceQualityScore(voice: SpeechSynthesisVoice): number {
   const name = voice.name.toLowerCase();
   let score = 0;
-  if (name.includes("premium")) score += 100;
-  if (name.includes("siri")) score += 90;
-  if (name.includes("enhanced")) score += 80;
-  if (name.includes("natural") || name.includes("neural")) score += 70;
-  if (name.includes("google")) score += 40;
-  if (name.includes("microsoft")) score += 30;
+  if (name.includes("premium")) {
+    score += 100;
+  }
+  if (name.includes("siri")) {
+    score += 90;
+  }
+  if (name.includes("enhanced")) {
+    score += 80;
+  }
+  if (name.includes("natural") || name.includes("neural")) {
+    score += 70;
+  }
+  if (name.includes("google")) {
+    score += 40;
+  }
+  if (name.includes("microsoft")) {
+    score += 30;
+  }
   return score;
 }
 
@@ -96,8 +111,12 @@ function voiceLocaleScore(voice: SpeechSynthesisVoice): number {
       ? navigator.language.toLowerCase()
       : "en-us";
   const lang = voice.lang.toLowerCase().replace("_", "-");
-  if (lang === navLang) return 2;
-  if (langBase(lang) === langBase(navLang)) return 1;
+  if (lang === navLang) {
+    return 2;
+  }
+  if (langBase(lang) === langBase(navLang)) {
+    return 1;
+  }
   return 0;
 }
 
@@ -135,21 +154,33 @@ export function curateSystemVoices(
   // drop them so the Radix Select never gets an empty or colliding value.
   const seenVoiceURIs = new Set<string>();
   const kept = voices.filter((voice) => {
-    if (!voice.voiceURI || seenVoiceURIs.has(voice.voiceURI)) return false;
+    if (!voice.voiceURI || seenVoiceURIs.has(voice.voiceURI)) {
+      return false;
+    }
     seenVoiceURIs.add(voice.voiceURI);
-    if (LOW_QUALITY_VOICE_NAMES.has(voiceBaseName(voice))) return false;
+    if (LOW_QUALITY_VOICE_NAMES.has(voiceBaseName(voice))) {
+      return false;
+    }
     return wantedLangs.has(langBase(voice.lang));
   });
 
   kept.sort((a, b) => {
     const quality = voiceQualityScore(b) - voiceQualityScore(a);
-    if (quality !== 0) return quality;
+    if (quality !== 0) {
+      return quality;
+    }
     const locale = voiceLocaleScore(b) - voiceLocaleScore(a);
-    if (locale !== 0) return locale;
+    if (locale !== 0) {
+      return locale;
+    }
     const preferred = voicePreferredRank(b) - voicePreferredRank(a);
-    if (preferred !== 0) return preferred;
+    if (preferred !== 0) {
+      return preferred;
+    }
     const byDefault = Number(b.default) - Number(a.default);
-    if (byDefault !== 0) return byDefault;
+    if (byDefault !== 0) {
+      return byDefault;
+    }
     return a.name.localeCompare(b.name);
   });
 
@@ -161,8 +192,12 @@ export function curateSystemVoices(
   const winners = new Map<string, string>();
   for (const voice of kept) {
     const key = keyOf(voice);
-    if (!winners.has(key)) winners.set(key, voice.voiceURI);
-    if (voice.voiceURI === selectedVoiceURI) winners.set(key, voice.voiceURI);
+    if (!winners.has(key)) {
+      winners.set(key, voice.voiceURI);
+    }
+    if (voice.voiceURI === selectedVoiceURI) {
+      winners.set(key, voice.voiceURI);
+    }
   }
   const deduped = kept.filter(
     (voice) => winners.get(keyOf(voice)) === voice.voiceURI,
@@ -177,7 +212,9 @@ export function curateSystemVoices(
     const selected = voices.find(
       (voice) => voice.voiceURI === selectedVoiceURI,
     );
-    if (selected) curated.push(selected);
+    if (selected) {
+      curated.push(selected);
+    }
   }
   return curated;
 }
@@ -274,28 +311,36 @@ function speakWithStudioModel(
   void (async () => {
     try {
       const url = await generateStudioTtsAudio(text, controller.signal);
-      if (cancelled) return;
+      if (cancelled) {
+        return;
+      }
       audio = new Audio(url);
       audio.playbackRate = ttsRate;
       audio.volume = ttsVolume;
       // Some browsers reset playbackRate to 1 once the source loads; reapply
       // it on loadedmetadata so the speed setting reliably takes effect.
       audio.addEventListener("loadedmetadata", () => {
-        if (audio) audio.playbackRate = ttsRate;
+        if (audio) {
+          audio.playbackRate = ttsRate;
+        }
       });
       audio.addEventListener("ended", () => {
         cleanup();
         handleEnd("finished");
       });
       audio.addEventListener("error", () => {
-        if (cancelled) return;
+        if (cancelled) {
+          return;
+        }
         cleanup();
         handleEnd("error", new Error("Audio playback failed."));
       });
       markRunning();
       await audio.play();
     } catch (error) {
-      if (cancelled || controller.signal.aborted) return;
+      if (cancelled || controller.signal.aborted) {
+        return;
+      }
       cleanup();
       handleEnd("error", error);
     }
@@ -341,7 +386,9 @@ export class StudioSpeechSynthesisAdapter implements SpeechSynthesisAdapter {
       reason: "finished" | "error" | "cancelled",
       error?: unknown,
     ) => {
-      if (res.status.type === "ended") return;
+      if (res.status.type === "ended") {
+        return;
+      }
       // Surface genuine read-aloud failures; a cancelled/interrupted utterance
       // is a normal stop, not an error, and must not toast.
       if (
@@ -354,7 +401,9 @@ export class StudioSpeechSynthesisAdapter implements SpeechSynthesisAdapter {
         );
       }
       res.status = { type: "ended", reason, error };
-      for (const handler of subscribers) handler();
+      for (const handler of subscribers) {
+        handler();
+      }
     };
 
     let cancelImpl: () => void;
@@ -367,7 +416,9 @@ export class StudioSpeechSynthesisAdapter implements SpeechSynthesisAdapter {
         if (res.status.type === "ended") {
           let cancelled = false;
           queueMicrotask(() => {
-            if (!cancelled) callback();
+            if (!cancelled) {
+              callback();
+            }
           });
           return () => {
             cancelled = true;
@@ -387,11 +438,15 @@ export class StudioSpeechSynthesisAdapter implements SpeechSynthesisAdapter {
       !StudioSpeechSynthesisAdapter.systemVoicesSupported()
     ) {
       const session = speakWithStudioModel(text, handleEnd, () => {
-        if (res.status.type === "ended") return;
+        if (res.status.type === "ended") {
+          return;
+        }
         // Notify subscribers of the async starting -> running transition;
         // the adapter contract drives UI state off these subscribe callbacks.
         res.status = { type: "running" };
-        for (const handler of subscribers) handler();
+        for (const handler of subscribers) {
+          handler();
+        }
       });
       cancelImpl = session.cancel;
       return res;

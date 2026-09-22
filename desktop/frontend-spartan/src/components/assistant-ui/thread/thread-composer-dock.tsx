@@ -4,20 +4,15 @@
  * chip de audio pendiente, nota de descargo del modelo y reporte de altura al viewport.
  */
 
-import {
-  useEffect,
-  useRef,
-  type FC,
-  type ReactNode,
-} from "react";
-import { HeadphonesIcon, XIcon } from "lucide-react";
-import { useAuiState } from "@assistant-ui/react";
 import { useGeneratedImageOverlay } from "@/components/assistant-ui/generated-image-overlay-context";
 import { useChatPreferencesStore } from "@/features/chat/stores/chat-preferences-store";
 import { useChatRuntimeStore } from "@/features/chat/stores/chat-runtime-store";
 import { usePromptQueueUI } from "@/features/chat/stores/prompt-queue-ui-store";
 import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
+import { useAuiState } from "@assistant-ui/react";
+import { HeadphonesIcon, XIcon } from "lucide-react";
+import { type FC, type ReactNode, useEffect, useRef } from "react";
 import { compactIds, findPromptQueueEntry } from "./prompt-queue-manager";
 
 export const COMPOSER_SCROLL_GAP_PX = 24;
@@ -86,7 +81,9 @@ export const ThreadComposerDock: FC<ThreadComposerDockProps> = ({
   const dockRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     const el = dockRef.current;
-    if (!el || !onHeightChange) return;
+    if (!(el && onHeightChange)) {
+      return;
+    }
     const measure = () => onHeightChange(el.offsetHeight);
     measure();
     const resizeObserver = new ResizeObserver(measure);

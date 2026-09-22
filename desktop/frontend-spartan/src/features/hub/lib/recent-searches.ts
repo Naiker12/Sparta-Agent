@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 
 // Persisted recent Hub search terms, newest first. Uses the localStorage +

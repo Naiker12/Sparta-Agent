@@ -1,4 +1,3 @@
-
 type SessionRecoveryDependencies = {
   clearSession: () => void;
   authenticate: () => Promise<boolean>;
@@ -20,7 +19,9 @@ export function createTauriSessionRecovery({
   let inflight: Promise<boolean> | null = null;
 
   return function recoverTauriSession(): Promise<boolean> {
-    if (inflight) return inflight;
+    if (inflight) {
+      return inflight;
+    }
 
     const recovery = (async () => {
       clearSession();
@@ -29,7 +30,9 @@ export function createTauriSessionRecovery({
       // begins.  If joining it reports success without leaving a token, force
       // one fresh exchange after that shared promise has finished.
       for (let attempt = 0; attempt < 2; attempt += 1) {
-        if ((await authenticate()) && hasSession()) return true;
+        if ((await authenticate()) && hasSession()) {
+          return true;
+        }
       }
       return false;
     })();

@@ -1,4 +1,3 @@
-
 import { formatMcpToolName, mcpServerFromProvenance } from "./mcp-tool-name.ts";
 
 export type ConversationMarkdownMessage = {
@@ -25,7 +24,10 @@ function roleLabel(role: string): string {
   // Imported transcripts keep their own role strings verbatim, and this one is
   // interpolated into a ## heading closeOpenBlocks never sees: a line break would
   // end the heading, a tag would open an element nothing later closes.
-  const label = role.replace(/[\s]+/g, " ").replace(/[<>&\\[\]`*_#]/g, "").trim();
+  const label = role
+    .replace(/[\s]+/g, " ")
+    .replace(/[<>&\\[\]`*_#]/g, "")
+    .trim();
   return label.length > 0
     ? `${label[0]?.toUpperCase()}${label.slice(1)}`
     : "Message";
@@ -96,13 +98,23 @@ const HTML_BLOCK_START_PATTERN = /^ {0,3}<[A-Za-z!/?]/;
 
 // A run only opens a span if its match arrives: an unmatched run is live text.
 // The search stops where a span would, at a blank line or an html block.
-function runClosesLater(lines: readonly string[], from: number, run: string): boolean {
-  const closer = new RegExp("(^|[^`])(" + run + ")(?!`)");
+function runClosesLater(
+  lines: readonly string[],
+  from: number,
+  run: string,
+): boolean {
+  const closer = new RegExp(`(^|[^\`])(${run})(?!\`)`);
   for (let index = from; index < lines.length; index += 2) {
     const line = lines[index] as string;
-    const content = line.slice((BLOCKQUOTE_PATTERN.exec(line)?.[0] ?? "").length);
-    if (line.trim() === "" || HTML_BLOCK_START_PATTERN.test(content)) return false;
-    if (closer.test(line)) return true;
+    const content = line.slice(
+      (BLOCKQUOTE_PATTERN.exec(line)?.[0] ?? "").length,
+    );
+    if (line.trim() === "" || HTML_BLOCK_START_PATTERN.test(content)) {
+      return false;
+    }
+    if (closer.test(line)) {
+      return true;
+    }
   }
   return false;
 }
@@ -115,7 +127,8 @@ const LITERAL_BLOCKS = [
   { opener: "<![CDATA[", terminator: "]]>", ownLine: true },
 ] as const;
 // One that opens and closes on the same line is literal text, not an opener.
-const CLOSED_LITERAL_PATTERN = /<!--[\s\S]*?-->|<\?[\s\S]*?\?>|<!\[CDATA\[[\s\S]*?\]\]>/g;
+const CLOSED_LITERAL_PATTERN =
+  /<!--[\s\S]*?-->|<\?[\s\S]*?\?>|<!\[CDATA\[[\s\S]*?\]\]>/g;
 // Nothing at all closes plaintext: the browser reads every byte after it as
 // that element's text. The opener itself is the only thing that can be undone.
 const UNCLOSABLE_ELEMENTS: ReadonlySet<string> = new Set(["plaintext"]);
@@ -167,8 +180,11 @@ const PERSISTENT_ELEMENTS: ReadonlySet<string> = new Set([
 function closeOpenBlocks(text: string): string {
   // Split keeping the separators, so a repaired line can be put back verbatim.
   const parts = text.split(/(\r\n|[\r\n])/);
-  let fence: { readonly run: string; readonly indent: string; readonly quoted: boolean } | null =
-    null;
+  let fence: {
+    readonly run: string;
+    readonly indent: string;
+    readonly quoted: boolean;
+  } | null = null;
   let block: (typeof LITERAL_BLOCKS)[number] | null = null;
   let blankBefore = true;
   // An indented code block runs through blank lines, so its state outlives its opener.
@@ -190,7 +206,9 @@ function closeOpenBlocks(text: string): string {
     blankBefore = blankLine;
     if (block !== null) {
       const end = line.indexOf(block.terminator);
-      if (end === -1) continue;
+      if (end === -1) {
+        continue;
+      }
       // The rest of the line is live again, so blank what the block held and rescan.
       const consumed = end + block.terminator.length;
       line = " ".repeat(consumed) + line.slice(consumed);
@@ -201,13 +219,22 @@ function closeOpenBlocks(text: string): string {
     const marker = BLOCKQUOTE_PATTERN.exec(line)?.[0] ?? "";
     const content = line.slice(marker.length);
     // The quote ending ends the fence, so an unclosed one never reaches the next turn.
-    if (fence !== null && fence.quoted && marker === "") fence = null;
+    if (fence?.quoted && marker === "") {
+      fence = null;
+    }
     const literal = open.some((name) => CONDITION_1_ELEMENTS.has(name));
     const [, indent = "", run, info = ""] =
-      unfinished.length || literal ? [] : FENCE_LINE_PATTERN.exec(content) ?? [];
+      unfinished.length > 0 || literal
+        ? []
+        : (FENCE_LINE_PATTERN.exec(content) ?? []);
     if (fence !== null) {
       // A closer repeats the opener's character, is at least as long, and has no info.
-      if (run && run[0] === fence.run[0] && run.length >= fence.run.length && !info.trim()) {
+      if (
+        run &&
+        run[0] === fence.run[0] &&
+        run.length >= fence.run.length &&
+        !info.trim()
+      ) {
         fence = null;
       }
       continue;
@@ -220,18 +247,24 @@ function closeOpenBlocks(text: string): string {
     // is prose and falls through, since its tags are live. Indented code, code spans
     // and closed comments are literal, so a < in one opens nothing; but indented code
     // only starts after a blank line, else the line is a lazy continuation and live.
-    if (!unfinished.length && !literal) {
+    if (!(unfinished.length > 0 || literal)) {
       indented = indented
         ? blankLine || INDENTED_CODE_PATTERN.test(content)
         : afterBlank && INDENTED_CODE_PATTERN.test(content);
-      if (indented) continue;
+      if (indented) {
+        continue;
+      }
     }
     // A span in progress swallows this line up to its closing run. A blank line
     // ends it, and so does an html block, which the parser sees first.
-    if (span && (blankLine || HTML_BLOCK_START_PATTERN.test(content))) span = "";
+    if (span && (blankLine || HTML_BLOCK_START_PATTERN.test(content))) {
+      span = "";
+    }
     if (span) {
-      const closer = new RegExp("(^|[^`])(" + span + ")(?!`)").exec(line);
-      if (closer === null) continue;
+      const closer = new RegExp(`(^|[^\`])(${span})(?!\`)`).exec(line);
+      if (closer === null) {
+        continue;
+      }
       const consumed = (closer.index ?? 0) + closer[0].length;
       line = " ".repeat(consumed) + line.slice(consumed);
       span = "";
@@ -239,8 +272,10 @@ function closeOpenBlocks(text: string): string {
     // Every substitution below preserves length, so columns still map to the original.
     let prose = line
       .replace(BLOCKQUOTE_PATTERN, (marker) => " ".repeat(marker.length))
-      .replace(CODE_SPAN_PATTERN, (span: string, lead: string) =>
-        lead + " ".repeat(span.length - lead.length),
+      .replace(
+        CODE_SPAN_PATTERN,
+        (span: string, lead: string) =>
+          lead + " ".repeat(span.length - lead.length),
       )
       .replace(IMAGE_DESCRIPTION_PATTERN, (alt) => " ".repeat(alt.length))
       .replace(LINK_DESTINATION_PATTERN, (link) => " ".repeat(link.length))
@@ -248,19 +283,24 @@ function closeOpenBlocks(text: string): string {
     // The backslash is markdown's, so it holds only where that parser reads inlines.
     if (!literal) {
       prose = prose.replace(ESCAPED_LT_PATTERN, (backslashes) =>
-        backslashes.length % 2 === 0 ? `${backslashes.slice(0, -1)} ` : backslashes,
+        backslashes.length % 2 === 0
+          ? `${backslashes.slice(0, -1)} `
+          : backslashes,
       );
     }
     // A run left after masking closed spans runs on, so the rest of the line is code.
     const leftover = OPEN_RUN_PATTERN.exec(prose);
-    if (leftover !== null && runClosesLater(parts, part + 2, leftover[2] as string)) {
+    if (
+      leftover !== null &&
+      runClosesLater(parts, part + 2, leftover[2] as string)
+    ) {
       span = leftover[2] as string;
       const from = (leftover.index ?? 0) + (leftover[1] as string).length;
       prose = prose.slice(0, from) + " ".repeat(prose.length - from);
     }
     // These first: whichever opens last swallows every tag after it.
     let blockAt = -1;
-    if (!unfinished.length) {
+    if (unfinished.length === 0) {
       for (const candidate of LITERAL_BLOCKS) {
         const at = prose.lastIndexOf(candidate.opener);
         if (at > blockAt && at > prose.lastIndexOf(candidate.terminator)) {
@@ -273,9 +313,11 @@ function closeOpenBlocks(text: string): string {
 
     let at = 0;
     while (at <= tags.length) {
-      if (!unfinished.length) {
+      if (unfinished.length === 0) {
         const start = tags.indexOf("<", at);
-        if (start === -1) break;
+        if (start === -1) {
+          break;
+        }
         if (!TAG_OPEN_PATTERN.test(tags.slice(start))) {
           at = start + 1;
           continue;
@@ -291,27 +333,39 @@ function closeOpenBlocks(text: string): string {
         if (character === "<" && TAG_OPEN_PATTERN.test(tags.slice(end))) {
           unfinished.push({ part, column: end });
         } else if (quote) {
-          if (character === quote) quote = "";
+          if (character === quote) {
+            quote = "";
+          }
         } else if (character === '"' || character === "'") {
           quote = character;
         } else if (character === ">") {
           break;
         }
       }
-      if (end === tags.length) break;
+      if (end === tags.length) {
+        break;
+      }
       const start = unfinished[0] as { part: number; column: number };
       const [, slash, name = ""] =
-        TAG_OPEN_PATTERN.exec((parts[start.part] as string).slice(start.column)) ?? [];
+        TAG_OPEN_PATTERN.exec(
+          (parts[start.part] as string).slice(start.column),
+        ) ?? [];
       unfinished = [];
       at = end + 1;
       const tag = name.toLowerCase();
-      const rawText = [...open].reverse().find((name_) => RAW_TEXT_ELEMENTS.has(name_));
-      if (rawText !== undefined && !(slash && tag === rawText)) continue;
+      const rawText = [...open]
+        .reverse()
+        .find((name_) => RAW_TEXT_ELEMENTS.has(name_));
+      if (rawText !== undefined && !(slash && tag === rawText)) {
+        continue;
+      }
       if (!slash && UNCLOSABLE_ELEMENTS.has(tag)) {
         escapes.push(start);
         continue;
       }
-      if (!PERSISTENT_ELEMENTS.has(tag)) continue;
+      if (!PERSISTENT_ELEMENTS.has(tag)) {
+        continue;
+      }
       if (!slash) {
         open.push(tag);
         continue;
@@ -319,7 +373,9 @@ function closeOpenBlocks(text: string): string {
       // Innermost matching opener, so </div></details> still closes the details. A
       // closer with no opener is inert, so it must not license a later opener.
       const index = open.lastIndexOf(tag);
-      if (index !== -1) open.splice(index, 1);
+      if (index !== -1) {
+        open.splice(index, 1);
+      }
     }
   }
 
@@ -337,9 +393,13 @@ function closeOpenBlocks(text: string): string {
   // returns would read a \n-prefixed closer as a fresh fence instead.
   const eol = !text.includes("\n") && text.includes("\r") ? "\r" : "\n";
   let out = parts.join("");
-  if (block !== null) out += block.ownLine ? `${eol}${block.terminator}` : block.terminator;
+  if (block !== null) {
+    out += block.ownLine ? `${eol}${block.terminator}` : block.terminator;
+  }
   // Indented to the opener's column: at column zero the closer would end its list.
-  if (fence !== null && !fence.quoted) out += `${eol}${fence.indent}${fence.run}`;
+  if (fence !== null && !fence.quoted) {
+    out += `${eol}${fence.indent}${fence.run}`;
+  }
   // Innermost first, so closers nest as the openers did; each on its own line after
   // a blank one so it is a block, not a lazy continuation of the paragraph above.
   for (let index = open.length - 1; index >= 0; index -= 1) {
@@ -372,8 +432,12 @@ function inlineCode(raw: string): string {
   // Padding keeps an edge backtick from closing the span and an empty value from
   // collapsing into one delimiter run. CommonMark 6.1 also strips one space from each
   // end of a span padded at both, unless all spaces, so such a value needs a spare pair.
-  const stripped = value.startsWith(" ") && value.endsWith(" ") && value.trim() !== "";
-  const pad = !value || value.startsWith("`") || value.endsWith("`") || stripped ? " " : "";
+  const stripped =
+    value.startsWith(" ") && value.endsWith(" ") && value.trim() !== "";
+  const pad =
+    !value || value.startsWith("`") || value.endsWith("`") || stripped
+      ? " "
+      : "";
   return `${ticks}${pad}${value}${pad}${ticks}`;
 }
 
@@ -428,13 +492,16 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 // A multi-line string is almost always source, so fence it as-is rather than let it
 // read as a JSON string full of \n. No language tag: guessing wrong is worse than none.
 function renderValue(label: string, value: unknown): string[] {
-  if (value === undefined) return [];
+  if (value === undefined) {
+    return [];
+  }
   const escapedLabel = escapeMarkdownLabel(label);
   // Scalars as text too: a json fence spends three lines on `10`.
   if (value === null || typeof value !== "object") {
     const text = typeof value === "string" ? value : String(value);
-    if (LINE_BREAK_PATTERN.test(text))
+    if (LINE_BREAK_PATTERN.test(text)) {
       return [`**${escapedLabel}:**`, fence(text)];
+    }
     // A code span, not escaping: any list of metacharacters to escape misses one.
     return [`**${escapedLabel}:** ${inlineCode(text)}`];
   }
@@ -450,7 +517,9 @@ function renderBlock(block: ConversationMarkdownBlock): string {
     return block.text.trim() ? closeOpenBlocks(block.text) : "";
   }
   if (block.kind === "thinking") {
-    if (!block.text.trim()) return "";
+    if (!block.text.trim()) {
+      return "";
+    }
     // A quoted </details> would end the block early; the entity renders the same.
     const text = closeOpenBlocks(
       block.text.replace(DETAILS_TAG_PATTERN, "&lt;$1$2$3>"),
@@ -513,10 +582,14 @@ function withoutInlineDataBytes(
 // Gemini keeps a code-execution turn replayable by stashing the raw part in
 // args.google.native_part, base64 inlineData included. Keep metadata, drop bytes.
 function withoutNativePartBytes(args: unknown): unknown {
-  if (!isPlainObject(args) || !isPlainObject(args.google)) return args;
+  if (!(isPlainObject(args) && isPlainObject(args.google))) {
+    return args;
+  }
   const google = args.google;
   const native = google.native_part;
-  if (!isPlainObject(native)) return args;
+  if (!isPlainObject(native)) {
+    return args;
+  }
   const cleaned = Array.isArray(native.parts)
     ? {
         ...native,
@@ -551,7 +624,9 @@ export function contentBlocksToMarkdownBlocks(
 
   const blocks: ConversationMarkdownBlock[] = [];
   for (const part of content) {
-    if (!part || typeof part !== "object") continue;
+    if (!part || typeof part !== "object") {
+      continue;
+    }
     const p = part as Record<string, unknown>;
     if (p.type === "text" && typeof p.text === "string") {
       blocks.push({ kind: "text", text: withoutGeneratedAudioBytes(p.text) });
@@ -562,7 +637,9 @@ export function contentBlocksToMarkdownBlocks(
           : typeof p.text === "string"
             ? p.text
             : "";
-      if (thinkText) blocks.push({ kind: "thinking", text: thinkText });
+      if (thinkText) {
+        blocks.push({ kind: "thinking", text: thinkText });
+      }
     } else if (p.type === "tool-call") {
       const toolName = typeof p.toolName === "string" ? p.toolName : "unknown";
       blocks.push({

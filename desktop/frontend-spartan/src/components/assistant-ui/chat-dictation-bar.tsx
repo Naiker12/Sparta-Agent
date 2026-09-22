@@ -1,4 +1,3 @@
-
 import { Spinner } from "@/components/ui/spinner";
 import {
   cancelActiveStudioDictation,
@@ -206,7 +205,9 @@ export const ChatDictationBar: FC<{
 
   // Same transcription, then the message submits on its own.
   const send = () => {
-    if (sendDisabled) return;
+    if (sendDisabled) {
+      return;
+    }
     if (!onSend) {
       stop();
       return;

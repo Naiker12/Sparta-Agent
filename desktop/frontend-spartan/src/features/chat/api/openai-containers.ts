@@ -1,4 +1,3 @@
-
 /**
  * Wrappers for the backend's three OpenAI shell-tool container endpoints
  * (studio/spartan_backend/routes/inference.py). Each proxies to OpenAI's
@@ -70,7 +69,9 @@ export async function listOpenAIContainers(
       body: JSON.stringify(await buildAuthBody(auth)),
     },
   );
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok) {
+    throw new Error(await parseError(response));
+  }
   const body = (await response.json()) as { containers?: RawSummary[] };
   return (body.containers ?? []).map(fromRaw);
 }
@@ -91,7 +92,9 @@ export async function createOpenAIContainer(
       }),
     },
   );
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok) {
+    throw new Error(await parseError(response));
+  }
   const raw = (await response.json()) as RawSummary;
   return fromRaw(raw);
 }

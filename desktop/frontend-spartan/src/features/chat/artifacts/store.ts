@@ -1,4 +1,3 @@
-
 import { create } from "zustand";
 import type { ArtifactViewMode } from "./html-frame";
 import type { ChatArtifact, ChatArtifactSurface } from "./types";
@@ -64,7 +63,9 @@ export const useChatArtifactsStore = create<ChatArtifactsState>((set) => ({
     set({ selectedArtifactId: null, surface: "panel" }),
   clearArtifactsForThread: (threadId) =>
     set((state) => {
-      if (!threadId) return state;
+      if (!threadId) {
+        return state;
+      }
       const artifactsById = Object.fromEntries(
         Object.entries(state.artifactsById).filter(
           ([, artifact]) => artifact.threadId !== threadId,

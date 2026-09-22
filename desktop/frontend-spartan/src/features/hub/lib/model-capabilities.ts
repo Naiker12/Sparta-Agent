@@ -1,4 +1,3 @@
-
 import { EMBEDDING_TAGS } from "./hf-model-meta";
 
 export type CapabilityKey =
@@ -143,7 +142,9 @@ const COMMON_LANGUAGE_TAGS = new Set([
 ]);
 
 function lower(values: string[] | undefined): Set<string> {
-  if (!values) return new Set();
+  if (!values) {
+    return new Set();
+  }
   return new Set(values.map((v) => v.toLowerCase()));
 }
 
@@ -159,7 +160,9 @@ export function detectCapabilities(
 
   const hasAny = (set: ReadonlySet<string>) => {
     for (const t of set) {
-      if (tagSet.has(t)) return true;
+      if (tagSet.has(t)) {
+        return true;
+      }
     }
     return pipeline ? set.has(pipeline) : false;
   };
@@ -224,7 +227,9 @@ export function detectCapabilities(
     const code = lower.startsWith("language:")
       ? lower.slice("language:".length)
       : lower;
-    if (COMMON_LANGUAGE_TAGS.has(code)) languageCodes.add(code);
+    if (COMMON_LANGUAGE_TAGS.has(code)) {
+      languageCodes.add(code);
+    }
   }
   if (tagSet.has("multilingual") || languageCodes.size >= 3) {
     out.push({ key: "multilingual", label: "Multilingual" });
@@ -233,7 +238,9 @@ export function detectCapabilities(
 }
 
 export function detectLicense(tags: string[] | undefined): string | null {
-  if (!tags) return null;
+  if (!tags) {
+    return null;
+  }
   const license = tags.find((t) => t.startsWith("license:"));
   return license ? license.slice("license:".length) : null;
 }

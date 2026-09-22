@@ -1,8 +1,7 @@
-
-import type { RecipeNode, NodeConfig } from "../../types";
 import { DEFAULT_NODE_WIDTH } from "../../constants";
-import { nodeDataFromConfig } from "../index";
+import type { NodeConfig, RecipeNode } from "../../types";
 import { normalizeRecipeHandleId } from "../handles";
+import { nodeDataFromConfig } from "../index";
 import { isRecord, readString } from "./helpers";
 
 type UiInput = {
@@ -20,9 +19,7 @@ type ParsedAuxNode = {
   y: number;
 };
 
-export function parseUi(
-  ui: UiInput | null,
-): {
+export function parseUi(ui: UiInput | null): {
   layouts: Map<string, { x: number; y: number; width?: number }>;
   auxNodes: ParsedAuxNode[];
   edges: Array<{
@@ -124,8 +121,7 @@ export function buildNodes(
       x: 0,
       y: index * 140,
     };
-    const layout =
-      layouts.get(config.name) ?? fallbackLayout;
+    const layout = layouts.get(config.name) ?? fallbackLayout;
     return {
       id: config.id,
       type: "builder",

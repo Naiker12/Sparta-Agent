@@ -1,4 +1,3 @@
-
 import { useSyncExternalStore } from "react";
 
 const MOBILE_BREAKPOINT = 768;
@@ -10,12 +9,16 @@ const COMPACT_LAYOUT_BREAKPOINT = 1080;
 const COMPACT_LAYOUT_MEDIA_QUERY = `(max-width: ${COMPACT_LAYOUT_BREAKPOINT - 1}px)`;
 
 function getSnapshot(): boolean {
-  if (typeof window === "undefined") return false;
+  if (typeof window === "undefined") {
+    return false;
+  }
   return window.matchMedia(MEDIA_QUERY).matches;
 }
 
 function subscribe(callback: () => void): () => void {
-  if (typeof window === "undefined") return () => {};
+  if (typeof window === "undefined") {
+    return () => {};
+  }
   const mql = window.matchMedia(MEDIA_QUERY);
   mql.addEventListener("change", callback);
   return () => mql.removeEventListener("change", callback);
@@ -26,12 +29,16 @@ export function useIsMobile(): boolean {
 }
 
 function getCompactLayoutSnapshot(): boolean {
-  if (typeof window === "undefined") return false;
+  if (typeof window === "undefined") {
+    return false;
+  }
   return window.matchMedia(COMPACT_LAYOUT_MEDIA_QUERY).matches;
 }
 
 function subscribeCompactLayout(callback: () => void): () => void {
-  if (typeof window === "undefined") return () => {};
+  if (typeof window === "undefined") {
+    return () => {};
+  }
   const mql = window.matchMedia(COMPACT_LAYOUT_MEDIA_QUERY);
   mql.addEventListener("change", callback);
   return () => mql.removeEventListener("change", callback);

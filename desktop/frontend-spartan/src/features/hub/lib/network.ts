@@ -1,4 +1,3 @@
-
 const NETWORK_STATUS_EVENT = "unsloth-network-status";
 const REMOTE_OFFLINE_TTL_MS = 30_000;
 const HUGGING_FACE_ORIGIN = "https://huggingface.co";
@@ -65,10 +64,7 @@ export function getBrowserOfflineRetryDelayMs(): number {
   // recovery doesn't stall on platforms where navigator.onLine is stuck false.
   // The earliest live window, not the latest: the phase reads one feed's, so
   // waking on the longest would leave it reporting a state it had already left.
-  return Math.max(
-    0,
-    getEarliestRemoteOfflineUntil() - Date.now(),
-  );
+  return Math.max(0, getEarliestRemoteOfflineUntil() - Date.now());
 }
 
 function normalizeScope(scope: RemoteNetworkScope): readonly string[] {
@@ -157,7 +153,7 @@ export function markRemoteNetworkOnline(origin?: string): void {
   // The cause goes with the window: a success is what proves the block lifted.
   const hadWindow = remoteOfflineUntilByOrigin.delete(origin);
   const hadFailure = lastFailureByOrigin.delete(origin);
-  if (!hadWindow && !hadFailure) {
+  if (!(hadWindow || hadFailure)) {
     return;
   }
   emitNetworkStatusChange();
@@ -196,9 +192,7 @@ export function markRemoteNetworkOffline(
 }
 
 /** Let Retry re-probe now. The failure stays until a request succeeds. */
-export function clearRemoteBackoff(
-  origin: string = HUGGING_FACE_ORIGIN,
-): void {
+export function clearRemoteBackoff(origin: string = HUGGING_FACE_ORIGIN): void {
   if (!remoteOfflineUntilByOrigin.delete(origin)) {
     return;
   }
@@ -315,8 +309,13 @@ export function classifyFetchFailure(
  * search query, and on a private deployment the mirror's hostname.
  */
 export function sanitizeHubErrorMessage(message: string): string {
-  if (!message) return message;
-  const cleaned = message.replace(/\.?\s*URL:\s*\S+(\.\s*Request ID:\s*\S+)?\.?\s*$/, "");
+  if (!message) {
+    return message;
+  }
+  const cleaned = message.replace(
+    /\.?\s*URL:\s*\S+(\.\s*Request ID:\s*\S+)?\.?\s*$/,
+    "",
+  );
   return cleaned.trim() || message;
 }
 

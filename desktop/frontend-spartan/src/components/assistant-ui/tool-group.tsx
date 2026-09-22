@@ -1,32 +1,34 @@
 "use client";
 
 import {
-  memo,
-  useCallback,
-  useRef,
-  useState,
-  type FC,
-  type PropsWithChildren,
-} from "react";
-import { useAuiState } from "@assistant-ui/react";
-import { useChatRuntimeStore } from "@/features/chat/stores/chat-runtime-store";
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { Spinner } from "@/components/ui/spinner";
 import {
   toolOutputKey,
   useToolPaneScope,
   useUnresolvedToolPaneScope,
 } from "@/features/chat";
-import { ChevronDownIcon } from "lucide-react";
-import { Wrench01Icon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { cva, type VariantProps } from "class-variance-authority";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { useChatRuntimeStore } from "@/features/chat/stores/chat-runtime-store";
 import { useCollapseScrollLock } from "@/hooks/use-collapse-scroll-lock";
 import { cn } from "@/lib/utils";
-import { Spinner } from "@/components/ui/spinner";
+import { useAuiState } from "@assistant-ui/react";
+import { Wrench01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { type VariantProps, cva } from "class-variance-authority";
+import { ChevronDownIcon } from "lucide-react";
+import {
+  type CSSProperties,
+  type ComponentProps,
+  type FC,
+  type PropsWithChildren,
+  memo,
+  useCallback,
+  useRef,
+  useState,
+} from "react";
 
 const ANIMATION_DURATION = 200;
 
@@ -43,7 +45,7 @@ const toolGroupVariants = cva("aui-tool-group-root group/tool-group w-full", {
 });
 
 export type ToolGroupRootProps = Omit<
-  React.ComponentProps<typeof Collapsible>,
+  ComponentProps<typeof Collapsible>,
   "open" | "onOpenChange"
 > &
   VariantProps<typeof toolGroupVariants> & {
@@ -96,7 +98,7 @@ function ToolGroupRoot({
       style={
         {
           "--animation-duration": `${ANIMATION_DURATION}ms`,
-        } as React.CSSProperties
+        } as CSSProperties
       }
       {...props}
     >
@@ -110,7 +112,7 @@ function ToolGroupTrigger({
   active = false,
   className,
   ...props
-}: React.ComponentProps<typeof CollapsibleTrigger> & {
+}: ComponentProps<typeof CollapsibleTrigger> & {
   count: number;
   active?: boolean;
 }) {
@@ -147,7 +149,7 @@ function ToolGroupTrigger({
         <span>{label}</span>
         {active && (
           <span
-            aria-hidden
+            aria-hidden={true}
             data-slot="tool-group-trigger-shimmer"
             className="aui-tool-group-trigger-shimmer shimmer pointer-events-none absolute inset-0 motion-reduce:animate-none"
           >
@@ -172,7 +174,7 @@ function ToolGroupContent({
   className,
   children,
   ...props
-}: React.ComponentProps<typeof CollapsibleContent>) {
+}: ComponentProps<typeof CollapsibleContent>) {
   return (
     <CollapsibleContent
       data-slot="tool-group-content"
@@ -247,27 +249,27 @@ const ToolGroupImpl: FC<
   const paneScope = useToolPaneScope();
   const unresolvedScope = useUnresolvedToolPaneScope();
   const hasLiveOutput = useAuiState(({ message }) =>
-    message.parts
-      .slice(startIndex, endIndex + 1)
-      .some(
-        (part) =>
-          part.type === "tool-call" &&
-          // Either scope: a first turn writes under the unresolved one for its whole
-          // life, even after the autosave assigns the id (see useToolOutputFor).
-          (Object.prototype.hasOwnProperty.call(
+    message.parts.slice(startIndex, endIndex + 1).some(
+      (part) =>
+        part.type === "tool-call" &&
+        // Either scope: a first turn writes under the unresolved one for its whole
+        // life, even after the autosave assigns the id (see useToolOutputFor).
+        (Object.prototype.hasOwnProperty.call(
+          toolLiveOutput,
+          toolOutputKey(paneScope, part.toolCallId),
+        ) ||
+          Object.prototype.hasOwnProperty.call(
             toolLiveOutput,
-            toolOutputKey(paneScope, part.toolCallId),
-          ) ||
-            Object.prototype.hasOwnProperty.call(
-              toolLiveOutput,
-              toolOutputKey(unresolvedScope, part.toolCallId),
-            )),
-      ),
+            toolOutputKey(unresolvedScope, part.toolCallId),
+          )),
+    ),
   );
   // Keep the group open once a confirmation or live output forced it (so an
   // allow/deny doesn't snap it shut between calls); reverts once the turn ends.
   const forcedOpenRef = useRef(false);
-  if (hasPendingConfirmation || hasLiveOutput) forcedOpenRef.current = true;
+  if (hasPendingConfirmation || hasLiveOutput) {
+    forcedOpenRef.current = true;
+  }
   const forceOpen =
     hasPendingConfirmation ||
     (hasLiveOutput && messageRunning) ||

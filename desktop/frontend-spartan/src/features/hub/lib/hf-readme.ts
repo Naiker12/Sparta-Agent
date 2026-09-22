@@ -1,8 +1,7 @@
-
 import { LruMap } from "@/features/hub/lib/lru-map";
 import { fetchWithTimeout } from "@/features/hub/lib/network";
 import { fingerprintToken } from "@/features/hub/lib/token-fingerprint";
-import { defaultUrlTransform, type UrlTransform } from "streamdown";
+import { type UrlTransform, defaultUrlTransform } from "streamdown";
 
 export type ReadmeKind = "model" | "dataset";
 
@@ -46,7 +45,9 @@ async function fetchReadmeOnce(
 ): Promise<FetchedReadme | null> {
   const prefix = readmePrefix(kind);
   const headers: HeadersInit = {};
-  if (token) headers.Authorization = `Bearer ${token}`;
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
   let transient = false;
   for (const branch of ["main", "master"] as const) {
     try {
@@ -62,7 +63,9 @@ async function fetchReadmeOnce(
       if (res.ok) {
         return { markdown: await res.text(), branch };
       }
-      if (res.status !== 404) transient = true;
+      if (res.status !== 404) {
+        transient = true;
+      }
     } catch {
       transient = true;
     }
@@ -80,7 +83,9 @@ export function fetchReadme(
 ): Promise<FetchedReadme | null> {
   const key = `${kind}::${repoId}::${fingerprintToken(token)}`;
   const cached = cache.get(key);
-  if (cached && Date.now() < cached.staleAt) return cached.promise;
+  if (cached && Date.now() < cached.staleAt) {
+    return cached.promise;
+  }
 
   const entry: ReadmeCacheEntry = {
     promise: Promise.resolve(null),
@@ -88,7 +93,9 @@ export function fetchReadme(
   };
   entry.promise = fetchReadmeOnce(repoId, kind, token)
     .then((result) => {
-      if (result === null) entry.staleAt = Date.now() + README_NEGATIVE_TTL_MS;
+      if (result === null) {
+        entry.staleAt = Date.now() + README_NEGATIVE_TTL_MS;
+      }
       return result;
     })
     .catch((err) => {
@@ -103,8 +110,12 @@ const ABSOLUTE_URL_RE = /^(?:[a-z][a-z0-9+.-]*:|\/\/|#|data:|mailto:|tel:)/i;
 const BLOCKED_README_PROTOCOLS = new Set(["javascript:", "vbscript:"]);
 
 function resolveAgainstBase(src: string, baseUrl: string): string {
-  if (!src) return src;
-  if (ABSOLUTE_URL_RE.test(src)) return src;
+  if (!src) {
+    return src;
+  }
+  if (ABSOLUTE_URL_RE.test(src)) {
+    return src;
+  }
   try {
     return new URL(src, baseUrl).toString();
   } catch {
@@ -125,9 +136,15 @@ function isBlockedReadmeUrl(
   node: Readonly<{ tagName?: unknown }>,
 ): boolean {
   const protocol = readmeUrlProtocol(src.trim());
-  if (!protocol) return false;
-  if (BLOCKED_README_PROTOCOLS.has(protocol)) return true;
-  if (protocol !== "data:") return false;
+  if (!protocol) {
+    return false;
+  }
+  if (BLOCKED_README_PROTOCOLS.has(protocol)) {
+    return true;
+  }
+  if (protocol !== "data:") {
+    return false;
+  }
   return String(node.tagName ?? "").toLowerCase() !== "img";
 }
 
@@ -165,7 +182,7 @@ export function stripFrontmatter(markdown: string): {
  * header already shows the repo name and section context.
  */
 export function stripChromeHeadings(markdown: string): string {
-  const RE_HEADING = /^(#{1,6})\s+(.+?)\s*$/;
+  const reHeading = /^(#{1,6})\s+(.+?)\s*$/;
   const isChromeTitle = (text: string): boolean => {
     const t = text
       .toLowerCase()
@@ -185,8 +202,10 @@ export function stripChromeHeadings(markdown: string): string {
   const lines = markdown.split(/\r?\n/);
   const out: string[] = [];
   for (const line of lines) {
-    const m = RE_HEADING.exec(line);
-    if (m && isChromeTitle(m[2])) continue;
+    const m = reHeading.exec(line);
+    if (m && isChromeTitle(m[2])) {
+      continue;
+    }
     out.push(line);
   }
   return out.join("\n");

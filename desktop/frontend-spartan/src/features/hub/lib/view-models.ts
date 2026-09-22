@@ -1,4 +1,3 @@
-
 import type { HfModelResult } from "@/features/hub/hooks/use-hub-model-search";
 import { resolveInventoryResource } from "@/features/hub/inventory/resource-resolver";
 import type {
@@ -53,7 +52,9 @@ export const FORMAT_FILTER_OPTIONS: ReadonlyArray<{
 const BILLION = 1_000_000_000;
 
 export function formatParamCount(totalParams: number | undefined): string {
-  if (!totalParams || totalParams <= 0) return "N/A";
+  if (!totalParams || totalParams <= 0) {
+    return "N/A";
+  }
   const billions = totalParams / BILLION;
   if (billions >= 1) {
     return `${billions >= 100 ? Math.round(billions) : Number(billions.toFixed(billions >= 10 ? 0 : 1))}B`;
@@ -85,7 +86,9 @@ export function formatModelParamLabel(
 }
 
 export function formatPipelineTag(tag: string | undefined): string | null {
-  if (!tag) return null;
+  if (!tag) {
+    return null;
+  }
   return tag
     .split(/[-_]/)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
@@ -93,22 +96,31 @@ export function formatPipelineTag(tag: string | undefined): string | null {
 }
 
 export function formatLibrary(name: string | undefined): string | null {
-  if (!name) return null;
-  if (name === "transformers") return "Transformers";
+  if (!name) {
+    return null;
+  }
+  if (name === "transformers") {
+    return "Transformers";
+  }
   return name;
 }
 
 export function buildSummary(result: HfModelResult): string {
   const parts: string[] = [];
   const pipeline = formatPipelineTag(result.pipelineTag);
-  if (pipeline) parts.push(pipeline);
-  if (result.totalParams)
+  if (pipeline) {
+    parts.push(pipeline);
+  }
+  if (result.totalParams) {
     parts.push(`${compactNumber(result.totalParams)} params`);
+  }
   if (result.isGguf) {
     parts.push("GGUF");
   } else {
     const library = formatLibrary(result.libraryName);
-    if (library) parts.push(library);
+    if (library) {
+      parts.push(library);
+    }
   }
   return parts.join(" · ") || "Hugging Face model";
 }
@@ -149,7 +161,9 @@ export function toHfModelResult(raw: unknown): HfModelResult | null {
     config?: { quantization_config?: { quant_method?: string } };
   };
 
-  if (!model.name) return null;
+  if (!model.name) {
+    return null;
+  }
 
   const isGguf =
     Boolean(model.tags?.some((tag) => tag.toLowerCase() === "gguf")) ||
@@ -224,7 +238,9 @@ export function matchesCapability(
   capabilities: Array<{ key: CapabilityKey }>,
   capabilityFilter: CapabilityFilter,
 ): boolean {
-  if (capabilityFilter === "all") return true;
+  if (capabilityFilter === "all") {
+    return true;
+  }
   return capabilities.some((capability) => capability.key === capabilityFilter);
 }
 
@@ -235,9 +251,13 @@ export function parseLanguageTags(
 ): string[] {
   const langs: string[] = [];
   for (const tag of tags ?? []) {
-    if (!tag.startsWith(LANGUAGE_TAG_PREFIX)) continue;
+    if (!tag.startsWith(LANGUAGE_TAG_PREFIX)) {
+      continue;
+    }
     const code = tag.slice(LANGUAGE_TAG_PREFIX.length);
-    if (code && !langs.includes(code)) langs.push(code);
+    if (code && !langs.includes(code)) {
+      langs.push(code);
+    }
   }
   return langs;
 }

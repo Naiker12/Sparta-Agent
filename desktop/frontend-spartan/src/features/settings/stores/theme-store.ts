@@ -1,4 +1,3 @@
-
 import { useSyncExternalStore } from "react";
 
 export type Theme = "light" | "dark" | "system";
@@ -29,20 +28,25 @@ const STORED_PALETTE: Record<Palette, Palette> = {
 };
 
 function readStoredTheme(): Theme {
-  if (typeof window === "undefined") return "light";
+  if (typeof window === "undefined") {
+    return "light";
+  }
   let stored: string | null = null;
   try {
     stored = window.localStorage.getItem(STORAGE_KEY);
   } catch {
     return "light";
   }
-  if (stored === "light" || stored === "dark" || stored === "system")
+  if (stored === "light" || stored === "dark" || stored === "system") {
     return stored;
+  }
   return "light";
 }
 
 function readStoredPalette(): Palette {
-  if (typeof window === "undefined") return "standard";
+  if (typeof window === "undefined") {
+    return "standard";
+  }
   let stored: string | null = null;
   try {
     stored = window.localStorage.getItem(PALETTE_STORAGE_KEY);
@@ -60,17 +64,23 @@ let currentTheme: Theme = readStoredTheme();
 let currentPalette: Palette = readStoredPalette();
 
 function systemPrefersDark(): boolean {
-  if (typeof window === "undefined") return false;
+  if (typeof window === "undefined") {
+    return false;
+  }
   return window.matchMedia("(prefers-color-scheme: dark)").matches;
 }
 
 function resolveTheme(theme: Theme): ResolvedTheme {
-  if (theme === "system") return systemPrefersDark() ? "dark" : "light";
+  if (theme === "system") {
+    return systemPrefersDark() ? "dark" : "light";
+  }
   return theme;
 }
 
 function applyToDocument(resolved: ResolvedTheme) {
-  if (typeof document === "undefined") return;
+  if (typeof document === "undefined") {
+    return;
+  }
   const el = document.documentElement;
   el.classList.toggle("dark", resolved === "dark");
   el.classList.toggle("light", resolved === "light");
@@ -83,7 +93,10 @@ function applyToDocument(resolved: ResolvedTheme) {
       ? { color: "#1E1E22", symbolColor: "#FFFFFF" }
       : { color: "#F2EBE0", symbolColor: "#352D40" };
     try {
-      const electron = (window as unknown as { electron?: { send: (channel: string, data: unknown) => void }; electronAPI?: { setTitleBarOverlay?: (c: typeof colors) => void } });
+      const electron = window as unknown as {
+        electron?: { send: (channel: string, data: unknown) => void };
+        electronAPI?: { setTitleBarOverlay?: (c: typeof colors) => void };
+      };
       if (electron.electronAPI?.setTitleBarOverlay) {
         electron.electronAPI.setTitleBarOverlay(colors);
       } else if (electron.electron?.send) {
@@ -96,7 +109,9 @@ function applyToDocument(resolved: ResolvedTheme) {
 }
 
 function applyPaletteToDocument(palette: Palette) {
-  if (typeof document === "undefined") return;
+  if (typeof document === "undefined") {
+    return;
+  }
   const el = document.documentElement;
   // Standard is the base :root/.dark palette; no attribute keeps the DOM
   // (and CSS selectors) simple for the default look.
@@ -172,7 +187,9 @@ function getResolvedServerSnapshot(): ResolvedTheme {
  * localStorage, and React subscribers stay in sync.
  */
 export function setTheme(next: Theme): void {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined") {
+    return;
+  }
   currentTheme = next;
   // Persist "system" explicitly so a reload keeps following the OS.
   try {
@@ -212,7 +229,9 @@ function getPaletteServerSnapshot(): Palette {
  * sync.
  */
 export function setPalette(next: Palette): void {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined") {
+    return;
+  }
   currentPalette = next;
   try {
     window.localStorage.setItem(PALETTE_STORAGE_KEY, STORED_PALETTE[next]);

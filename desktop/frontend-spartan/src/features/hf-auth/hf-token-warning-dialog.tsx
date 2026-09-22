@@ -1,4 +1,3 @@
-
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,7 +23,9 @@ export function HfTokenWarningDialog() {
     <AlertDialog
       open={open}
       onOpenChange={(next) => {
-        if (!next) resolve("cancel");
+        if (!next) {
+          resolve("cancel");
+        }
       }}
     >
       <AlertDialogContent className="max-w-md">

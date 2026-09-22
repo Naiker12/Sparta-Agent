@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -45,16 +44,22 @@ function useElapsedSeconds(startedAt: number | null, running: boolean): number {
   // flips false the interval stops and `now` freezes, holding the final time.
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
-    if (!running || startedAt == null) return;
+    if (!running || startedAt == null) {
+      return;
+    }
     const id = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(id);
   }, [running, startedAt]);
-  if (startedAt == null) return 0;
+  if (startedAt == null) {
+    return 0;
+  }
   return Math.max(0, Math.floor((now - startedAt) / 1000));
 }
 
 function formatElapsed(seconds: number): string {
-  if (seconds < 60) return `${seconds}s`;
+  if (seconds < 60) {
+    return `${seconds}s`;
+  }
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
   return `${m}m ${s.toString().padStart(2, "0")}s`;
@@ -85,9 +90,15 @@ const PHASE_LABELS: Record<string, string> = {
 // seconds behind, especially over a tunnel). Reflects the phase so the panel
 // never looks stuck while the progress bar is already advancing.
 function waitingMessage(phase: string, stage: string | null): string {
-  if (stage) return stage;
-  if (phase === "loading") return "Loading model into the export worker...";
-  if (phase === "exporting") return "Preparing export...";
+  if (stage) {
+    return stage;
+  }
+  if (phase === "loading") {
+    return "Loading model into the export worker...";
+  }
+  if (phase === "exporting") {
+    return "Preparing export...";
+  }
   return "Starting...";
 }
 
@@ -185,14 +196,20 @@ export function ExportRunPanel(props: ExportRunPanelProps) {
   const [followTail, setFollowTail] = useState(true);
 
   useEffect(() => {
-    if (!followTail) return;
+    if (!followTail) {
+      return;
+    }
     const el = logScrollRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
+    if (el) {
+      el.scrollTop = el.scrollHeight;
+    }
   }, [run.logLines, followTail]);
 
   const handleLogScroll = () => {
     const el = logScrollRef.current;
-    if (!el) return;
+    if (!el) {
+      return;
+    }
     const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 24;
     setFollowTail(nearBottom);
   };
@@ -316,77 +333,77 @@ export function ExportRunPanel(props: ExportRunPanelProps) {
 
           {destination === "hub" && (
             <div className="flex flex-col gap-4 px-0.5">
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-medium text-muted-foreground">
-                        Username / Org
-                      </label>
-                      <Input
-                        placeholder="your-username"
-                        value={hfUsername}
-                        onChange={(e) => onHfUsernameChange(e.target.value)}
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-medium text-muted-foreground">
-                        Model Name
-                      </label>
-                      <Input
-                        placeholder="my-model-GGUF"
-                        value={modelName}
-                        onChange={(e) => onModelNameChange(e.target.value)}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-medium text-muted-foreground">
-                        HF Write Token
-                      </label>
-                      <a
-                        href="https://huggingface.co/settings/tokens"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1 text-ui-11 text-emerald-600 hover:text-emerald-700 transition-colors"
-                      >
-                        Get token
-                        <HugeiconsIcon icon={ArrowRight01Icon} className="size-3" />
-                      </a>
-                    </div>
-                    <InputGroup>
-                      <InputGroupAddon>
-                        <HugeiconsIcon icon={Key01Icon} className="size-4" />
-                      </InputGroupAddon>
-                      <InputGroupInput
-                        type="password"
-                        autoComplete="new-password"
-                        name="hf-token"
-                        placeholder="hf_..."
-                        value={hfToken}
-                        onChange={(e) => onHfTokenChange(e.target.value)}
-                      />
-                    </InputGroup>
-                    <p className="text-ui-11 text-muted-foreground/70">
-                      Leave empty if already logged in via CLI.
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <Switch
-                      id="export-private-repo"
-                      size="sm"
-                      checked={privateRepo}
-                      onCheckedChange={onPrivateRepoChange}
-                    />
-                    <label
-                      htmlFor="export-private-repo"
-                      className="text-xs font-medium cursor-pointer"
-                    >
-                      Private Repository
-                    </label>
-                  </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">
+                    Username / Org
+                  </label>
+                  <Input
+                    placeholder="your-username"
+                    value={hfUsername}
+                    onChange={(e) => onHfUsernameChange(e.target.value)}
+                  />
                 </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">
+                    Model Name
+                  </label>
+                  <Input
+                    placeholder="my-model-GGUF"
+                    value={modelName}
+                    onChange={(e) => onModelNameChange(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-medium text-muted-foreground">
+                    HF Write Token
+                  </label>
+                  <a
+                    href="https://huggingface.co/settings/tokens"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 text-ui-11 text-emerald-600 hover:text-emerald-700 transition-colors"
+                  >
+                    Get token
+                    <HugeiconsIcon icon={ArrowRight01Icon} className="size-3" />
+                  </a>
+                </div>
+                <InputGroup>
+                  <InputGroupAddon>
+                    <HugeiconsIcon icon={Key01Icon} className="size-4" />
+                  </InputGroupAddon>
+                  <InputGroupInput
+                    type="password"
+                    autoComplete="new-password"
+                    name="hf-token"
+                    placeholder="hf_..."
+                    value={hfToken}
+                    onChange={(e) => onHfTokenChange(e.target.value)}
+                  />
+                </InputGroup>
+                <p className="text-ui-11 text-muted-foreground/70">
+                  Leave empty if already logged in via CLI.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Switch
+                  id="export-private-repo"
+                  size="sm"
+                  checked={privateRepo}
+                  onCheckedChange={onPrivateRepoChange}
+                />
+                <label
+                  htmlFor="export-private-repo"
+                  className="text-xs font-medium cursor-pointer"
+                >
+                  Private Repository
+                </label>
+              </div>
+            </div>
           )}
         </>
       )}
@@ -546,55 +563,55 @@ export function ExportRunPanel(props: ExportRunPanelProps) {
       {/* Live export output */}
       {showLogPanel && (isExporting || run.logLines.length > 0) && (
         <div className="flex flex-col gap-1.5 pt-1">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-medium text-muted-foreground">
-                  Export output
-                </label>
-                <div className="flex items-center gap-2 text-ui-11 text-muted-foreground/80">
-                  <span
-                    className={
-                      run.reconnecting
-                        ? "inline-block size-1.5 rounded-full bg-amber-500"
-                        : run.connected
-                          ? "inline-block size-1.5 rounded-full bg-emerald-500"
-                          : "inline-block size-1.5 rounded-full bg-muted-foreground/40"
-                    }
-                  />
-                  <span>
-                    {run.reconnecting
-                      ? "reconnecting..."
-                      : run.connected
-                        ? "streaming"
-                        : isExporting
-                          ? "connecting..."
-                          : "idle"}
-                  </span>
-                </div>
-              </div>
-              <div
-                ref={logScrollRef}
-                onScroll={handleLogScroll}
-                className="h-56 w-full overflow-auto rounded-lg border border-border/40 bg-black/85 p-3 font-mono text-ui-11 leading-[1.45] text-emerald-200/90"
-              >
-                {run.logLines.length === 0 ? (
-                  <div className="flex h-full items-center justify-center text-muted-foreground/70">
-                    <span className="flex items-center gap-2">
-                      <Spinner className="size-3" />
-                      {waitingMessage(run.phase, run.stage)}
-                    </span>
-                  </div>
-                ) : (
-                  <div className="whitespace-pre-wrap break-words">
-                    {run.logLines.map((entry, idx) => (
-                  <div key={idx} className={getExportLogLineClass(entry)}>
-                        {formatLogLine(entry)}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-medium text-muted-foreground">
+              Export output
+            </label>
+            <div className="flex items-center gap-2 text-ui-11 text-muted-foreground/80">
+              <span
+                className={
+                  run.reconnecting
+                    ? "inline-block size-1.5 rounded-full bg-amber-500"
+                    : run.connected
+                      ? "inline-block size-1.5 rounded-full bg-emerald-500"
+                      : "inline-block size-1.5 rounded-full bg-muted-foreground/40"
+                }
+              />
+              <span>
+                {run.reconnecting
+                  ? "reconnecting..."
+                  : run.connected
+                    ? "streaming"
+                    : isExporting
+                      ? "connecting..."
+                      : "idle"}
+              </span>
             </div>
-        )}
+          </div>
+          <div
+            ref={logScrollRef}
+            onScroll={handleLogScroll}
+            className="h-56 w-full overflow-auto rounded-lg border border-border/40 bg-black/85 p-3 font-mono text-ui-11 leading-[1.45] text-emerald-200/90"
+          >
+            {run.logLines.length === 0 ? (
+              <div className="flex h-full items-center justify-center text-muted-foreground/70">
+                <span className="flex items-center gap-2">
+                  <Spinner className="size-3" />
+                  {waitingMessage(run.phase, run.stage)}
+                </span>
+              </div>
+            ) : (
+              <div className="whitespace-pre-wrap break-words">
+                {run.logLines.map((entry, idx) => (
+                  <div key={idx} className={getExportLogLineClass(entry)}>
+                    {formatLogLine(entry)}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Footer actions */}
       <div className="flex justify-end gap-2">

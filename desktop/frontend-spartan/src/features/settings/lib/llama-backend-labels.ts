@@ -1,4 +1,3 @@
-
 import type { TranslationKey } from "@/i18n";
 
 /** Backend labels shared by the picker and notifications. */

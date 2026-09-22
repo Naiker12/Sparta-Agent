@@ -1,4 +1,3 @@
-
 import type { ReactNode } from "react";
 
 import { Settings02Icon } from "@hugeicons/core-free-icons";

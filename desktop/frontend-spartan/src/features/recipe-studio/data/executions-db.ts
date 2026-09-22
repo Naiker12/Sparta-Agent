@@ -1,4 +1,3 @@
-
 import Dexie, { type EntityTable } from "dexie";
 import type { RecipeExecutionRecord } from "../execution-types";
 
@@ -17,7 +16,10 @@ db.version(2).stores({
 export async function listRecipeExecutions(
   recipeId: string,
 ): Promise<RecipeExecutionRecord[]> {
-  const executions = await db.executions.where("recipeId").equals(recipeId).toArray();
+  const executions = await db.executions
+    .where("recipeId")
+    .equals(recipeId)
+    .toArray();
   return executions.sort((a, b) => b.createdAt - a.createdAt);
 }
 

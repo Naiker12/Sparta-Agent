@@ -1,4 +1,3 @@
-
 // The curated dictation model list and its persisted-settings migration. Split
 // out of voice-settings-store so it stays free of app imports and can be tested
 // directly by the node runner.

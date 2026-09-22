@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo, useState } from "react";
 import {
   type GpuIndexKind,
@@ -76,7 +75,7 @@ function toGpuInfo(
   const gpuData =
     source === "inference_gpu" ? (data?.inference_gpu ?? data?.gpu) : data?.gpu;
   const devices = gpuData?.devices ?? [];
-  if (!gpuData?.available || !devices.length) {
+  if (!(gpuData?.available && devices.length > 0)) {
     return { ...DEFAULT_GPU, ...base, budgetKnown: data !== null };
   }
   return {
@@ -91,7 +90,10 @@ function toGpuInfo(
     name: devices[0]?.name ?? "Unknown",
     // Shared-memory (Vulkan iGPU) devices report the same system RAM pool, so they are counted once rather than summed.
     memoryTotalGb: aggregateGpuMemoryTotalGb(devices),
-    maxDeviceMemoryGb: devices.reduce((max, d) => Math.max(max, d.memory_total_gb ?? 0), 0),
+    maxDeviceMemoryGb: devices.reduce(
+      (max, d) => Math.max(max, d.memory_total_gb ?? 0),
+      0,
+    ),
     // Lowest visible ordinal = torch's current device = where the pipeline lands.
     loadDeviceMemoryGb: pickLoadDevice(devices)?.memory_total_gb ?? 0,
   };
@@ -117,7 +119,9 @@ function toGpuDevices(
     // meaningless to a Vulkan llama-server, and the backend rejects every
     // explicit diffusion pin outright while is_vulkan_build is true. Report no
     // pinnable/diffusionPinnable devices until the probe succeeds.
-    if (!(inference.devices ?? []).length) return [];
+    if ((inference.devices ?? []).length === 0) {
+      return [];
+    }
     const picksAccepted = inference.gguf_gpu_ids_supported !== false;
     return (inference.devices ?? [])
       .filter((d) => typeof d.index === "number")
@@ -174,7 +178,9 @@ function useGpuInfoSource(source: "gpu" | "inference_gpu"): GpuInfo {
     // (between render and effect) would otherwise stay stuck at the default.
     let cancelled = false;
     const sync = (data: SystemInfoResponse) => {
-      if (cancelled) return;
+      if (cancelled) {
+        return;
+      }
       const next = toGpuInfo(data, source);
       setGpu((current) =>
         JSON.stringify(current) === JSON.stringify(next) ? current : next,
@@ -182,8 +188,12 @@ function useGpuInfoSource(source: "gpu" | "inference_gpu"): GpuInfo {
     };
     const update = () => {
       fetchSystemInfo().then((d) => {
-        if (cancelled) return;
-        if (!d) return;
+        if (cancelled) {
+          return;
+        }
+        if (!d) {
+          return;
+        }
         // A cache hit does not publish a new snapshot. Sync it here so a
         // consumer mounting while the initial request finishes cannot miss it.
         sync(d);
@@ -223,12 +233,16 @@ export function useGpuDevices(forDiffusion = false): SystemGpuDevice[] {
     let cancelled = false;
     let lastSerialized: string | null = null;
     const sync = (data: SystemInfoResponse | null) => {
-      if (cancelled) return;
+      if (cancelled) {
+        return;
+      }
       const next = toGpuDevices(data, forDiffusion);
       // Every refresh builds a fresh array, so compare by value or a 3s Vulkan
       // retry loop would re-render this hook forever.
       const serialized = JSON.stringify(next);
-      if (serialized === lastSerialized) return;
+      if (serialized === lastSerialized) {
+        return;
+      }
       lastSerialized = serialized;
       setDevices(next);
     };

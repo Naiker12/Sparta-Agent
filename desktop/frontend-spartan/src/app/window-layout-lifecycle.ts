@@ -1,4 +1,3 @@
-
 import {
   DEFAULT_APP_WINDOW_SIZE_BOUNDS,
   type LogicalWindowSize,
@@ -44,7 +43,9 @@ export async function measureWindowLayout<Monitor extends WorkAreaMonitor>(
   // Some platforms cannot resolve the monitor for a hidden window.
   const monitor =
     (await reader.currentMonitor()) ?? (await reader.primaryMonitor());
-  if (!isCurrent()) return null;
+  if (!isCurrent()) {
+    return null;
+  }
 
   const frameSize = { width: 0, height: 0 };
   let availableInnerSize: LogicalWindowSize | undefined;
@@ -55,7 +56,9 @@ export async function measureWindowLayout<Monitor extends WorkAreaMonitor>(
         reader.innerSize(),
         reader.outerSize(),
       ]);
-      if (!isCurrent()) return null;
+      if (!isCurrent()) {
+        return null;
+      }
       frameSize.width = Math.max(0, outerSize.width - innerSize.width);
       frameSize.height = Math.max(0, outerSize.height - innerSize.height);
       // Tauri sizes the inner rectangle but positions the outer rectangle.
@@ -105,24 +108,36 @@ export async function finalizeAppWindowLayout<Monitor extends WorkAreaMonitor>({
   enforceBounds,
   isCurrent,
 }: FinalizeAppWindowLayoutOptions<Monitor>): Promise<void> {
-  if (!isCurrent()) return;
+  if (!isCurrent()) {
+    return;
+  }
   const shown = await show();
-  if (!isCurrent()) return;
+  if (!isCurrent()) {
+    return;
+  }
   // A restored hidden autostart cannot reliably resolve its saved monitor yet.
   // Keep the plugin-restored geometry untouched until native tray reveal.
-  if (restored && !shown) return;
+  if (restored && !shown) {
+    return;
+  }
 
   // Native restore calls complete before GTK/Cocoa move and resize events have
   // necessarily updated Tauri's cached geometry.
   if (restored) {
     await waitForSettled?.();
-    if (!isCurrent()) return;
+    if (!isCurrent()) {
+      return;
+    }
     measured = (await measure()) ?? measured;
-    if (!isCurrent()) return;
+    if (!isCurrent()) {
+      return;
+    }
   }
 
   await setMinimumConstraints(measured.bounds.minimum);
-  if (!isCurrent()) return;
+  if (!isCurrent()) {
+    return;
+  }
   // Do not cap restored sizes against a temporary monitor fallback.
   await enforceBounds(
     restored ? { minimum: measured.bounds.minimum } : measured.bounds,

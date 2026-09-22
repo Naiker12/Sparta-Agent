@@ -4,31 +4,12 @@
  * barra de continuación de streaming, indicadores de generación, denoising canvas y slot unificado.
  */
 
-import {
-  useEffect,
-  useRef,
-  type FC,
-} from "react";
-import { FastForwardIcon, HeadphonesIcon, RefreshCwIcon } from "lucide-react";
-import {
-  ActionBarPrimitive,
-  ComposerPrimitive,
-  ErrorPrimitive,
-  MessagePrimitive,
-  useAui,
-  useAuiEvent,
-  useAuiState,
-} from "@assistant-ui/react";
-import { toast } from "sonner";
 import { UserMessageAttachments } from "@/components/assistant-ui/attachment";
 import { MarkdownText } from "@/components/assistant-ui/markdown-text";
 import { MessageHtmlArtifacts } from "@/components/assistant-ui/message-html-artifacts";
 import { MessageResponseModelBadge } from "@/components/assistant-ui/message-response-details-sheet";
-import {
-  Reasoning,
-  ReasoningGroup,
-} from "@/components/assistant-ui/reasoning";
 import { RagSourcesGroup } from "@/components/assistant-ui/rag-sources";
+import { Reasoning, ReasoningGroup } from "@/components/assistant-ui/reasoning";
 import { Sources, SourcesGroup } from "@/components/assistant-ui/sources";
 import {
   proplessSlot,
@@ -45,16 +26,15 @@ import { PythonToolUI } from "@/components/assistant-ui/tool-ui-python";
 import { RenderHtmlToolUI } from "@/components/assistant-ui/tool-ui-render-html";
 import { TerminalToolUI } from "@/components/assistant-ui/tool-ui-terminal";
 import { WebSearchToolUI } from "@/components/assistant-ui/tool-ui-web-search";
+import { ThinkingAvatar } from "@/components/ui/blobatar-avatar";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { ThinkingAvatar } from "@/components/ui/blobatar-avatar";
 import {
   findLatestUserAudioBase64,
   sentAudioNames,
 } from "@/features/chat/api/chat-adapter";
 import { ResearchMessage } from "@/features/chat/components/research-message";
 import { useChatRuntimeStore } from "@/features/chat/stores/chat-runtime-store";
-import { useT } from "@/i18n";
 import {
   CONTINUATION_RUN_CONFIG_KEY,
   incompleteLabel,
@@ -65,6 +45,19 @@ import {
 } from "@/features/chat/utils/continuation";
 import { extractTaggedText } from "@/features/chat/utils/update-thread-message";
 import { updateThreadMessage } from "@/features/chat/utils/update-thread-message";
+import { useT } from "@/i18n";
+import {
+  ActionBarPrimitive,
+  ComposerPrimitive,
+  ErrorPrimitive,
+  MessagePrimitive,
+  useAui,
+  useAuiEvent,
+  useAuiState,
+} from "@assistant-ui/react";
+import { FastForwardIcon, HeadphonesIcon, RefreshCwIcon } from "lucide-react";
+import { type FC, useEffect, useRef } from "react";
+import { toast } from "sonner";
 import {
   AssistantActionBar,
   BranchPicker,
@@ -85,7 +78,7 @@ export const MessageError: FC = () => {
     <MessagePrimitive.Error>
       <ErrorPrimitive.Root className="aui-message-error-root mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md bg-destructive/10 p-3 text-destructive text-sm dark:bg-destructive/5 dark:text-red-200">
         <ErrorPrimitive.Message className="aui-message-error-message line-clamp-2 min-w-0 flex-1" />
-        {!researchRunId && !researchActive && (
+        {!(researchRunId || researchActive) && (
           <ActionBarPrimitive.Reload asChild={true}>
             <button
               type="button"
@@ -103,17 +96,17 @@ export const MessageError: FC = () => {
 
 export const GeneratingIndicator: FC = () => {
   const t = useT();
-  const show = useAuiState(
-    ({ message }) => {
-      if (message.status?.type !== "running") return false;
-      // A tool call makes `content` non-empty, which used to hide the only
-      // live indicator while the assistant was still generating a document.
-      // Keep it visible until either answer text or a reasoning stream exists.
-      return !message.parts.some(
-        (part) => part.type === "text" || part.type === "reasoning",
-      );
-    },
-  );
+  const show = useAuiState(({ message }) => {
+    if (message.status?.type !== "running") {
+      return false;
+    }
+    // A tool call makes `content` non-empty, which used to hide the only
+    // live indicator while the assistant was still generating a document.
+    // Keep it visible until either answer text or a reasoning stream exists.
+    return !message.parts.some(
+      (part) => part.type === "text" || part.type === "reasoning",
+    );
+  });
   if (!show) {
     return null;
   }
@@ -208,8 +201,7 @@ export const ContinueMessageBarForLastMessage: FC = () => {
   const reason = cancelled ? ("cancelled" as const) : stamped?.reason;
 
   if (
-    !reason ||
-    !isLast ||
+    !(reason && isLast) ||
     isRunning ||
     researchRunId ||
     researchActive ||
@@ -314,7 +306,7 @@ export const DiffusionCanvas: FC = () => {
   const canvas = useChatRuntimeStore(
     (s) => s.activeDiffusionCanvasByThreadId[threadKey],
   );
-  if (!isRunning || !canvas) {
+  if (!(isRunning && canvas)) {
     return null;
   }
   const stepLabel =
@@ -366,7 +358,9 @@ export const AssistantMessage: FC = () => {
   };
 
   useEffect(() => {
-    if (isEditing) setTimeout(adjustHeight, 0);
+    if (isEditing) {
+      setTimeout(adjustHeight, 0);
+    }
   }, [isEditing]);
 
   const handleSave = async () => {
@@ -392,8 +386,7 @@ export const AssistantMessage: FC = () => {
         newText: finalText,
         isIncognito: incognito,
       });
-    } catch (error) {
-      console.error("UI: Error during save:", error);
+    } catch (_error) {
       toast.error(t("chat.actions.saveFailed"));
     } finally {
       setEditingId(null);
@@ -416,7 +409,6 @@ export const AssistantMessage: FC = () => {
               ref={textareaRef}
               defaultValue={extractTaggedText(messageContent)}
               className="w-full p-3 rounded-xl bg-muted border border-border text-foreground focus:ring-1 focus:ring-ring outline-none overflow-y-auto resize-none font-mono text-sm max-h-[70dvh]"
-              autoFocus
               onInput={adjustHeight}
               onKeyDown={(e) => {
                 e.stopPropagation();
@@ -475,7 +467,6 @@ export const AssistantMessage: FC = () => {
 
       <span
         className="aui-assistant-reveal-sentinel"
-        tabIndex={0}
         aria-label="Message actions"
       />
     </MessagePrimitive.Root>

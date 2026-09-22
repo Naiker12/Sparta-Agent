@@ -1,4 +1,3 @@
-
 import { consumeNativePathToken } from "@/features/native-intents";
 import { toast } from "@/lib/toast";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -95,10 +94,18 @@ export function useRagDocuments(
   // model loaded); the backend re-ingests on the same hash, so let it through.
   const sigBlocksReupload = useCallback((sig: string) => {
     const ids = new Set<string>();
-    for (const [id, s] of sigByDocId.current) if (s === sig) ids.add(id);
-    if (ids.size === 0) return false;
+    for (const [id, s] of sigByDocId.current) {
+      if (s === sig) {
+        ids.add(id);
+      }
+    }
+    if (ids.size === 0) {
+      return false;
+    }
     const docs = documentsRef.current.filter((d) => ids.has(d.id));
-    if (docs.length === 0) return false; // sig tracked but doc gone -> allow re-upload
+    if (docs.length === 0) {
+      return false; // sig tracked but doc gone -> allow re-upload
+    }
     return docs.some((d) => d.status !== "completed" || (d.numChunks ?? 0) > 0);
   }, []);
   // True while upload() runs, so the scope-change effect can tell a real switch
@@ -136,7 +143,9 @@ export function useRagDocuments(
 
   const trackJob = useCallback(
     (jobId: string, documentId: string, filename: string) => {
-      if (trackedJobs.current.has(jobId)) return;
+      if (trackedJobs.current.has(jobId)) {
+        return;
+      }
       const controller = new AbortController();
       trackedJobs.current.set(jobId, controller);
 
@@ -199,7 +208,9 @@ export function useRagDocuments(
           // SSE unavailable: poll to a terminal state.
           try {
             for (let i = 0; i < 600; i++) {
-              if (controller.signal.aborted) break;
+              if (controller.signal.aborted) {
+                break;
+              }
               const job = await getJob(jobId);
               const terminal = terminalJobStatus(job.status);
               if (terminal) {
@@ -231,15 +242,21 @@ export function useRagDocuments(
    * only when the request still being awaited failed. */
   const refresh = useCallback(
     async (opts?: { quiet?: boolean; silentErrors?: boolean }) => {
-      if (!scopeKey) return true;
+      if (!scopeKey) {
+        return true;
+      }
       const requestId = ++refreshSeq.current;
       refreshInFlight.current = true;
-      if (!opts?.quiet) setLoading(true);
+      if (!opts?.quiet) {
+        setLoading(true);
+      }
       try {
         // Merge server truth with local progress so a refresh mid-index keeps a
         // live "running %" chip. Failed docs hidden (toast warned at upload).
         const rows = (await lister()).filter((row) => row.status !== "failed");
-        if (refreshSeq.current !== requestId) return true;
+        if (refreshSeq.current !== requestId) {
+          return true;
+        }
         setDocuments((prev) => {
           const merged = rows.map((row) => {
             const tracked = prev.find((p) => p.id === row.id);
@@ -261,10 +278,14 @@ export function useRagDocuments(
       } catch (err) {
         // A superseded failure describes a scope no longer shown, and a host
         // without RAG 503s every one of these: no toast per composer opened.
-        if (refreshSeq.current !== requestId) return true;
+        if (refreshSeq.current !== requestId) {
+          return true;
+        }
         if (
-          !opts?.silentErrors &&
-          !useRagAvailabilityStore.getState().isUnavailable()
+          !(
+            opts?.silentErrors ||
+            useRagAvailabilityStore.getState().isUnavailable()
+          )
         ) {
           toast.error("Failed to load documents", {
             description: err instanceof Error ? err.message : String(err),
@@ -295,15 +316,21 @@ export function useRagDocuments(
           const last = attempt === REFRESH_RETRIES - 1;
           // True for a request that published, and for one a newer request has
           // already outranked.
-          if (await refresh({ quiet: opts?.quiet, silentErrors: !last })) return;
-          if (last) break;
+          if (await refresh({ quiet: opts?.quiet, silentErrors: !last })) {
+            return;
+          }
+          if (last) {
+            break;
+          }
           await new Promise((resolve) =>
             setTimeout(resolve, 1000 * (attempt + 1)),
           );
           // This closure keeps the lister of the scope it started for, so a
           // retry after the user moves on would take a ticket behind the new
           // scope's request and publish into the composer showing it.
-          if (liveScopeKeyRef.current !== startedFor) return;
+          if (liveScopeKeyRef.current !== startedFor) {
+            return;
+          }
         }
       } finally {
         noteProjectWork(projectId, -1);
@@ -320,7 +347,9 @@ export function useRagDocuments(
     const prev = prevScopeKeyRef.current;
     prevScopeKeyRef.current = scopeKey;
     if (prev !== null && prev !== scopeKey) {
-      for (const controller of jobs.values()) controller.abort();
+      for (const controller of jobs.values()) {
+        controller.abort();
+      }
       jobs.clear();
       sigByDocId.current.clear();
       // Stand down any refresh still in flight for the old scope. Clearing to a
@@ -351,8 +380,12 @@ export function useRagDocuments(
     return () => {
       // Preserve in-flight tracking when cleanup is the materialization flip,
       // not a real switch/unmount.
-      if (uploadInFlightRef.current) return;
-      for (const controller of jobs.values()) controller.abort();
+      if (uploadInFlightRef.current) {
+        return;
+      }
+      for (const controller of jobs.values()) {
+        controller.abort();
+      }
       jobs.clear();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -398,7 +431,9 @@ export function useRagDocuments(
     workElsewhere > 0 ||
     documents.some((d) => d.status === "pending" || d.status === "running");
   useEffect(() => {
-    if (!scopeKey || !hasIndexing) return;
+    if (!(scopeKey && hasIndexing)) {
+      return;
+    }
     // Skip a tick while one is still out. Starting another would retire it
     // through the sequence gate, and a list slower than the interval would
     // then never publish: the row this is watching never reaches completed and
@@ -416,11 +451,15 @@ export function useRagDocuments(
   // bar and the Sources panel), so each has to pick up the other's mutations.
   const projectScopeId = scope?.type === "project" ? scope.projectId : null;
   useEffect(() => {
-    if (!projectScopeId) return;
+    if (!projectScopeId) {
+      return;
+    }
     const onChanged = (event: Event) => {
       const changed = (event as CustomEvent<{ projectId?: string }>).detail
         ?.projectId;
-      if (changed !== projectScopeId) return;
+      if (changed !== projectScopeId) {
+        return;
+      }
       // The refresh an invalidation triggers is quiet, so it takes no loading
       // gate, and the mutation that fired it has released its own. Counted as
       // work while it runs, or nothing gates the send between the two.
@@ -551,7 +590,9 @@ export function useRagDocuments(
             item,
           });
         }
-        if (fresh.length === 0) return;
+        if (fresh.length === 0) {
+          return;
+        }
         setDocuments((rows) => [
           ...rows,
           ...fresh.map(({ tempId, item }) => ({
@@ -619,7 +660,9 @@ export function useRagDocuments(
         );
       } catch (err) {
         setDocuments(prev);
-        if (prevSig !== undefined) sigByDocId.current.set(documentId, prevSig);
+        if (prevSig !== undefined) {
+          sigByDocId.current.set(documentId, prevSig);
+        }
         toast.error("Delete failed", {
           description: err instanceof Error ? err.message : String(err),
         });

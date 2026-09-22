@@ -148,13 +148,17 @@ export const useNativeIntentStore = create<NativeIntentState>((set, get) => ({
     set({ registeringImageDrops: get().registeringImageDrops + 1 });
   },
   endImageDropRegistration: () => {
-    set({ registeringImageDrops: Math.max(0, get().registeringImageDrops - 1) });
+    set({
+      registeringImageDrops: Math.max(0, get().registeringImageDrops - 1),
+    });
   },
   beginAudioDropRegistration: () => {
     set({ registeringAudioDrops: get().registeringAudioDrops + 1 });
   },
   endAudioDropRegistration: () => {
-    set({ registeringAudioDrops: Math.max(0, get().registeringAudioDrops - 1) });
+    set({
+      registeringAudioDrops: Math.max(0, get().registeringAudioDrops - 1),
+    });
   },
   failImageDropRegistration: (targetKey) => {
     const current = get().imageDropFailures;
@@ -175,16 +179,24 @@ export const useNativeIntentStore = create<NativeIntentState>((set, get) => ({
     });
   },
   noteImageDropOwner: (targetKey, identity) => {
-    if (!identity) return;
-    set({ imageDropOwners: { ...get().imageDropOwners, [targetKey]: identity } });
+    if (!identity) {
+      return;
+    }
+    set({
+      imageDropOwners: { ...get().imageDropOwners, [targetKey]: identity },
+    });
   },
   claimImageAttachments: (identity, targetKey) => {
-    if (!identity) return;
+    if (!identity) {
+      return;
+    }
     const owners = get().imageDropOwners;
     const stale = Object.keys(owners).filter(
       (key) => owners[key] === identity && key !== targetKey,
     );
-    if (stale.length === 0) return;
+    if (stale.length === 0) {
+      return;
+    }
     const queues = get().pendingImageAttachments;
     let pendingImageAttachments = queues;
     for (const key of stale) {
@@ -202,20 +214,30 @@ export const useNativeIntentStore = create<NativeIntentState>((set, get) => ({
       }
     }
     const nextOwners = { ...owners };
-    for (const key of stale) delete nextOwners[key];
+    for (const key of stale) {
+      delete nextOwners[key];
+    }
     set({ pendingImageAttachments, imageDropOwners: nextOwners });
   },
   noteAudioDropOwner: (targetKey, identity) => {
-    if (!identity) return;
-    set({ audioDropOwners: { ...get().audioDropOwners, [targetKey]: identity } });
+    if (!identity) {
+      return;
+    }
+    set({
+      audioDropOwners: { ...get().audioDropOwners, [targetKey]: identity },
+    });
   },
   claimAudioAttachments: (identity, targetKey) => {
-    if (!identity) return;
+    if (!identity) {
+      return;
+    }
     const owners = get().audioDropOwners;
     const stale = Object.keys(owners).filter(
       (key) => owners[key] === identity && key !== targetKey,
     );
-    if (stale.length === 0) return;
+    if (stale.length === 0) {
+      return;
+    }
     const queues = get().pendingAudioAttachments;
     let pendingAudioAttachments = queues;
     for (const key of stale) {
@@ -233,7 +255,9 @@ export const useNativeIntentStore = create<NativeIntentState>((set, get) => ({
       }
     }
     const nextOwners = { ...owners };
-    for (const key of stale) delete nextOwners[key];
+    for (const key of stale) {
+      delete nextOwners[key];
+    }
     set({ pendingAudioAttachments, audioDropOwners: nextOwners });
   },
   addVideoAttachments: (targetKey, intents) => {
@@ -262,7 +286,9 @@ export const useNativeIntentStore = create<NativeIntentState>((set, get) => ({
     set({ registeringVideoDrops: get().registeringVideoDrops + 1 });
   },
   endVideoDropRegistration: () => {
-    set({ registeringVideoDrops: Math.max(0, get().registeringVideoDrops - 1) });
+    set({
+      registeringVideoDrops: Math.max(0, get().registeringVideoDrops - 1),
+    });
   },
   failVideoDropRegistration: (targetKey) => {
     const current = get().videoDropFailures;
@@ -274,16 +300,24 @@ export const useNativeIntentStore = create<NativeIntentState>((set, get) => ({
     });
   },
   noteVideoDropOwner: (targetKey, identity) => {
-    if (!identity) return;
-    set({ videoDropOwners: { ...get().videoDropOwners, [targetKey]: identity } });
+    if (!identity) {
+      return;
+    }
+    set({
+      videoDropOwners: { ...get().videoDropOwners, [targetKey]: identity },
+    });
   },
   claimVideoAttachments: (identity, targetKey) => {
-    if (!identity) return;
+    if (!identity) {
+      return;
+    }
     const owners = get().videoDropOwners;
     const stale = Object.keys(owners).filter(
       (key) => owners[key] === identity && key !== targetKey,
     );
-    if (stale.length === 0) return;
+    if (stale.length === 0) {
+      return;
+    }
     const queues = get().pendingVideoAttachments;
     let pendingVideoAttachments = queues;
     for (const key of stale) {
@@ -301,7 +335,9 @@ export const useNativeIntentStore = create<NativeIntentState>((set, get) => ({
       }
     }
     const nextOwners = { ...owners };
-    for (const key of stale) delete nextOwners[key];
+    for (const key of stale) {
+      delete nextOwners[key];
+    }
     set({ pendingVideoAttachments, videoDropOwners: nextOwners });
   },
   addIntent: (intent) => {

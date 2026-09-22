@@ -1,4 +1,3 @@
-
 import type { BaseModelSource } from "./api";
 import type { InventoryHintKind, LocalSource } from "./constants";
 

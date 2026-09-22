@@ -1,4 +1,3 @@
-
 "use client";
 
 // Once an assistant message finishes, append one canvas card per fenced ```html

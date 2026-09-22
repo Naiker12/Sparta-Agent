@@ -1,4 +1,3 @@
-
 /**
  * Which floating panel is in front.
  *

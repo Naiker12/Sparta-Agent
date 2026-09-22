@@ -1,4 +1,3 @@
-
 import {
   applyPerModelConfigToRuntime,
   currentRuntimePerModelConfig,
@@ -6,16 +5,16 @@ import {
 } from "@/features/model-picker";
 import {
   CONTEXT_LENGTH_MIN,
-  DEFAULT_PER_MODEL_CONFIG,
   DEFAULT_MAX_SEQ_LENGTH,
+  DEFAULT_PER_MODEL_CONFIG,
   KV_CACHE_DTYPES,
   MLX_KV_BITS,
   N_BATCH_MAX,
   N_BATCH_MIN,
   N_PARALLEL_MAX,
   N_PARALLEL_MIN,
-  normalizeMaxSeqLength,
   type PerModelConfig,
+  normalizeMaxSeqLength,
 } from "@/features/model-picker/model-config/per-model-config";
 import {
   DRAFT_N_MAX_SPEC_TYPES,
@@ -23,8 +22,8 @@ import {
 } from "@/lib/speculative-modes";
 import {
   GPU_LAYERS_AUTO,
-  useChatRuntimeStore,
   normalizeSpeculativeType,
+  useChatRuntimeStore,
 } from "../stores/chat-runtime-store";
 
 /** Load/runtime knobs saved in a chat preset (excludes per-model-only blobs). */
@@ -61,9 +60,7 @@ export const EMPTY_PRESET_LOAD_CONFIG: PresetLoadConfig = {
   tensorParallel: false,
 };
 
-function toComparablePerModelConfig(
-  config: PresetLoadConfig,
-): PerModelConfig {
+function toComparablePerModelConfig(config: PresetLoadConfig): PerModelConfig {
   return {
     ...DEFAULT_PER_MODEL_CONFIG,
     ...config,
@@ -94,8 +91,12 @@ export function normalizePresetLoadConfig(
   const gpuMemoryMode =
     partial.gpuMemoryMode === "manual" ? ("manual" as const) : undefined;
   let gpuLayers: number | undefined;
-  if (typeof partial.gpuLayers === "number" && Number.isFinite(partial.gpuLayers)) {
-    gpuLayers = partial.gpuLayers < 0 ? GPU_LAYERS_AUTO : Math.floor(partial.gpuLayers);
+  if (
+    typeof partial.gpuLayers === "number" &&
+    Number.isFinite(partial.gpuLayers)
+  ) {
+    gpuLayers =
+      partial.gpuLayers < 0 ? GPU_LAYERS_AUTO : Math.floor(partial.gpuLayers);
   }
   let nCpuMoe: number | undefined;
   if (typeof partial.nCpuMoe === "number" && Number.isFinite(partial.nCpuMoe)) {
@@ -135,11 +136,17 @@ export function normalizePresetLoadConfig(
         : null,
     nBatch:
       typeof partial.nBatch === "number" && Number.isFinite(partial.nBatch)
-        ? Math.max(N_BATCH_MIN, Math.min(N_BATCH_MAX, Math.round(partial.nBatch)))
+        ? Math.max(
+            N_BATCH_MIN,
+            Math.min(N_BATCH_MAX, Math.round(partial.nBatch)),
+          )
         : null,
     nUbatch:
       typeof partial.nUbatch === "number" && Number.isFinite(partial.nUbatch)
-        ? Math.max(N_BATCH_MIN, Math.min(N_BATCH_MAX, Math.round(partial.nUbatch)))
+        ? Math.max(
+            N_BATCH_MIN,
+            Math.min(N_BATCH_MAX, Math.round(partial.nUbatch)),
+          )
         : null,
     tensorParallel:
       typeof partial.tensorParallel === "boolean"
@@ -154,9 +161,7 @@ export function normalizePresetLoadConfig(
   return hasPresetLoadConfig(coalesced) ? coalesced : undefined;
 }
 
-export function hasPresetLoadConfig(
-  config?: PresetLoadConfig | null,
-): boolean {
+export function hasPresetLoadConfig(config?: PresetLoadConfig | null): boolean {
   return !isSamePresetLoadConfig(config, EMPTY_PRESET_LOAD_CONFIG);
 }
 
@@ -178,8 +183,7 @@ export function capturePresetLoadConfig(): PresetLoadConfig | undefined {
     store.ggufContextLength != null ||
     (store.params.checkpoint?.toLowerCase().endsWith(".gguf") ?? false);
   const effectiveContextLength =
-    snapshot.customContextLength ??
-    (isGguf ? store.ggufContextLength : null);
+    snapshot.customContextLength ?? (isGguf ? store.ggufContextLength : null);
   const captured: PresetLoadConfig = {
     customContextLength: effectiveContextLength ?? null,
     maxSeqLength: normalizeMaxSeqLength(snapshot.maxSeqLength),
@@ -222,24 +226,23 @@ function coalesceDefaultLoadKnobs(
     (result.gpuLayers == null || result.gpuLayers < 0) &&
     result.gpuMemoryMode !== "manual"
   ) {
-    delete result.gpuLayers;
+    result.gpuLayers = undefined;
   }
   if ((result.nCpuMoe ?? 0) === 0) {
-    delete result.nCpuMoe;
+    result.nCpuMoe = undefined;
   }
   return result;
 }
 
-export function applyPresetLoadConfig(
-  config?: PresetLoadConfig | null,
-): void {
+export function applyPresetLoadConfig(config?: PresetLoadConfig | null): void {
   if (config == null) {
     return;
   }
   const store = useChatRuntimeStore.getState();
   applyPerModelConfigToRuntime({
     ...DEFAULT_PER_MODEL_CONFIG,
-    maxSeqLength: normalizeMaxSeqLength(config.maxSeqLength) ?? DEFAULT_MAX_SEQ_LENGTH,
+    maxSeqLength:
+      normalizeMaxSeqLength(config.maxSeqLength) ?? DEFAULT_MAX_SEQ_LENGTH,
     customContextLength: config.customContextLength ?? null,
     kvCacheDtype: config.kvCacheDtype ?? null,
     mlxKvBits: config.mlxKvBits ?? null,
@@ -261,7 +264,7 @@ export function applyPresetLoadConfig(
 export function formatPresetLoadConfigSummary(
   config?: PresetLoadConfig | null,
 ): string | null {
-  if (!config || !hasPresetLoadConfig(config)) {
+  if (!(config && hasPresetLoadConfig(config))) {
     return null;
   }
   const parts: string[] = [];

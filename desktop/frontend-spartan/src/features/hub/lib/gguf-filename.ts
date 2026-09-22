@@ -1,4 +1,3 @@
-
 const GGUF_SPLIT_SUFFIX = /-\d{3,}-of-\d{3,}(?=\.gguf$)/i;
 
 function normalizeGgufFilename(filename: string): string {
@@ -13,7 +12,9 @@ export function ggufFilenamesMatch(
   left: string | null | undefined,
   right: string | null | undefined,
 ): boolean {
-  if (!(left && right)) return false;
+  if (!(left && right)) {
+    return false;
+  }
   return normalizeGgufFilename(left) === normalizeGgufFilename(right);
 }
 

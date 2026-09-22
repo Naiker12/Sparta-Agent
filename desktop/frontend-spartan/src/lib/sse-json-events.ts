@@ -1,4 +1,3 @@
-
 import { takeSseFrame } from "./sse-framing.ts";
 
 const LINE_BREAK = /\r?\n/;
@@ -15,7 +14,9 @@ function drainFrames(buffer: string): { payloads: string[]; rest: string } {
       .filter((line) => line.startsWith("data:"))
       .map((line) => line.slice(5).trimStart())
       .join("\n");
-    if (data) payloads.push(data);
+    if (data) {
+      payloads.push(data);
+    }
     frame = takeSseFrame(rest);
   }
   return { payloads, rest };
@@ -26,7 +27,9 @@ function readWithStall(
   onStall: () => void,
   stallMs: number | undefined,
 ): Promise<ReadableStreamReadResult<Uint8Array>> {
-  if (stallMs === undefined) return reader.read();
+  if (stallMs === undefined) {
+    return reader.read();
+  }
   const stall = setTimeout(onStall, stallMs);
   return reader.read().finally(() => clearTimeout(stall));
 }
@@ -54,13 +57,17 @@ export async function* readSseJsonEvents<T>(
   try {
     while (true) {
       const chunk = await readWithStall(reader, cancel, stallMs);
-      if (chunk.done) break;
+      if (chunk.done) {
+        break;
+      }
       const { payloads, rest } = drainFrames(
         buffer + decoder.decode(chunk.value, { stream: true }),
       );
       buffer = rest;
       for (const data of payloads) {
-        if (data === "[DONE]") return;
+        if (data === "[DONE]") {
+          return;
+        }
         try {
           yield JSON.parse(data) as T;
         } catch {

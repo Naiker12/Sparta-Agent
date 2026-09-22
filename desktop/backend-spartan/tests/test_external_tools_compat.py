@@ -59,9 +59,9 @@ def _capturing_handler(captured: dict):
     return handler
 
 
-# The four self-hosted presets. They are ``hidden`` in the registry and are
+# The self-hosted presets. They are ``hidden`` in the registry and are
 # surfaced by the UI through CUSTOM_PROVIDER_PRESETS rather than the dropdown.
-SELF_HOSTED_PRESETS = ("custom", "vllm", "ollama", "llama_cpp")
+SELF_HOSTED_PRESETS = ("custom", "vllm", "ollama", "llama_cpp", "lmstudio")
 
 # Keys the pre-change bundle already read off every registry row. Dropping or
 # renaming any of them breaks a cached bundle even though the server is new.

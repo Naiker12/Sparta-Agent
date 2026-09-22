@@ -1,4 +1,3 @@
-
 export function parseNumber(value?: string): number | null {
   if (!value) {
     return null;
@@ -25,7 +24,7 @@ export function parseAgeRange(value?: string): [number, number] | null {
   }
   const min = Number(parts[0]);
   const max = Number(parts[1]);
-  if (!Number.isFinite(min) || !Number.isFinite(max)) {
+  if (!(Number.isFinite(min) && Number.isFinite(max))) {
     return null;
   }
   return [min, max];
@@ -36,7 +35,7 @@ export function parseJsonObject(
   label: string,
   errors: string[],
 ): Record<string, unknown> | undefined {
-  if (!value || !value.trim()) {
+  if (!value?.trim()) {
     return undefined;
   }
   try {
@@ -58,4 +57,3 @@ export function isValidSex(value?: string): value is "Male" | "Female" {
   }
   return value === "Male" || value === "Female";
 }
-

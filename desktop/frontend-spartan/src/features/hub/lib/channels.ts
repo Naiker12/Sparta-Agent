@@ -1,4 +1,3 @@
-
 import type { HfSortKey } from "@/features/hub/hooks/use-hub-model-search";
 import {
   NewReleasesIcon,
@@ -63,7 +62,9 @@ export const CHANNEL_PRESETS: readonly ChannelPreset[] = [
 ];
 
 export function findChannel(id: ChannelId | null): ChannelPreset | null {
-  if (!id) return null;
+  if (!id) {
+    return null;
+  }
   return CHANNEL_PRESETS.find((preset) => preset.id === id) ?? null;
 }
 

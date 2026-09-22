@@ -1,4 +1,3 @@
-
 type MessagePartLike = {
   type?: unknown;
   text?: unknown;
@@ -54,7 +53,9 @@ export function lastReasoningGroupTextLength(
   let inGroup = false;
   for (let index = parts.length - 1; index >= 0; index -= 1) {
     if (parts[index]?.type !== "reasoning") {
-      if (inGroup) break;
+      if (inGroup) {
+        break;
+      }
       continue;
     }
     inGroup = true;
@@ -84,9 +85,7 @@ export function resolveReasoningGroupDuration(
   return asDuration(custom?.reasoningDuration);
 }
 
-export function createReasoningDurationTracker(
-  now: () => number = Date.now,
-) {
+export function createReasoningDurationTracker(now: () => number = Date.now) {
   let durations: number[] = [];
   // First time each group index became visible. A group can be closed and
   // reopened -- a provider that emits several complete <think>...</think>

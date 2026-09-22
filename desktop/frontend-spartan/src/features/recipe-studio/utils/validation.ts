@@ -1,7 +1,14 @@
-
 import type { NodeConfig } from "../types";
-import { isValidSex, parseAgeRange, parseIntNumber, parseNumber } from "./parse";
-import { VALIDATOR_OXC_CODE_LANGS, VALIDATOR_SQL_CODE_LANGS } from "./validators/code-lang";
+import {
+  isValidSex,
+  parseAgeRange,
+  parseIntNumber,
+  parseNumber,
+} from "./parse";
+import {
+  VALIDATOR_OXC_CODE_LANGS,
+  VALIDATOR_SQL_CODE_LANGS,
+} from "./validators/code-lang";
 import { isOxcCodeShape } from "./validators/oxc-code-shape";
 import { isOxcValidationMode } from "./validators/oxc-mode";
 
@@ -144,14 +151,14 @@ export function getConfigErrors(config: NodeConfig | null): string[] {
       errors.push("Code language is required.");
     }
     if (config.llm_type === "structured") {
-      if (!config.output_format?.trim()) {
-        errors.push("Output format is required.");
-      } else {
+      if (config.output_format?.trim()) {
         try {
           JSON.parse(config.output_format);
         } catch {
           errors.push("Output format must be valid JSON.");
         }
+      } else {
+        errors.push("Output format is required.");
       }
     }
     if (config.llm_type === "judge") {
@@ -168,10 +175,12 @@ export function getConfigErrors(config: NodeConfig | null): string[] {
         }
         const options = score.options ?? [];
         if (options.length === 0) {
-          errors.push(`Scoring rule ${score.name || "Untitled"} needs options.`);
+          errors.push(
+            `Scoring rule ${score.name || "Untitled"} needs options.`,
+          );
         }
         for (const option of options) {
-          if (!option.value.trim() || !option.description.trim()) {
+          if (!(option.value.trim() && option.description.trim())) {
             errors.push(
               `Scoring rule ${score.name || "Untitled"} needs both a value and a description for each option.`,
             );
@@ -185,10 +194,7 @@ export function getConfigErrors(config: NodeConfig | null): string[] {
         errors.push("Image context column is required.");
       }
     }
-    if (
-      config.with_trace &&
-      !TRACE_MODES.has(config.with_trace)
-    ) {
+    if (config.with_trace && !TRACE_MODES.has(config.with_trace)) {
       errors.push("Trace mode must be none, last_message, or all_messages.");
     }
   }
@@ -283,19 +289,24 @@ export function getConfigErrors(config: NodeConfig | null): string[] {
       ) {
         errors.push("GitHub repositories must use owner/name format.");
       }
-      const itemTypes = config.github_item_types?.length
-        ? config.github_item_types
-        : ["issues", "pulls"];
+      const itemTypes =
+        config.github_item_types && config.github_item_types.length > 0
+          ? config.github_item_types
+          : ["issues", "pulls"];
       if (itemTypes.length === 0) {
         errors.push("Choose at least one GitHub item type.");
-      } else if (itemTypes.some((itemType) => !GITHUB_ITEM_TYPES.has(itemType))) {
+      } else if (
+        itemTypes.some((itemType) => !GITHUB_ITEM_TYPES.has(itemType))
+      ) {
         errors.push("GitHub item types must be issues, pulls, or commits.");
       }
       const limit = parseIntNumber(config.github_limit ?? "100");
       if (limit === null || limit < 1 || limit > 5000) {
         errors.push("Items per repo must be an integer from 1 to 5000.");
       }
-      const maxComments = parseIntNumber(config.github_max_comments_per_item ?? "30");
+      const maxComments = parseIntNumber(
+        config.github_max_comments_per_item ?? "30",
+      );
       if (maxComments === null || maxComments < 0 || maxComments > 200) {
         errors.push("Max comments per item must be an integer from 0 to 200.");
       }
@@ -320,14 +331,19 @@ export function getConfigErrors(config: NodeConfig | null): string[] {
     }
     if (seedSourceType === "unstructured") {
       if (config.drop && (config.seed_columns?.length ?? 0) === 0) {
-        errors.push("Load the available fields before hiding any from the final dataset.");
+        errors.push(
+          "Load the available fields before hiding any from the final dataset.",
+        );
       }
       const chunkSizeRaw = Number(config.unstructured_chunk_size);
       const chunkOverlapRaw = Number(config.unstructured_chunk_overlap);
       if (!Number.isFinite(chunkSizeRaw) || Math.floor(chunkSizeRaw) < 1) {
         errors.push("Chunk size must be an integer >= 1.");
       }
-      if (!Number.isFinite(chunkOverlapRaw) || Math.floor(chunkOverlapRaw) < 0) {
+      if (
+        !Number.isFinite(chunkOverlapRaw) ||
+        Math.floor(chunkOverlapRaw) < 0
+      ) {
         errors.push("Chunk overlap must be an integer >= 0.");
       }
       if (
@@ -341,8 +357,13 @@ export function getConfigErrors(config: NodeConfig | null): string[] {
       const selectedDropColumns = (config.seed_drop_columns ?? [])
         .map((value) => value.trim())
         .filter(Boolean);
-      if (selectedDropColumns.length > 0 && (config.seed_columns?.length ?? 0) === 0) {
-        errors.push("Load the available fields before hiding any from the final dataset.");
+      if (
+        selectedDropColumns.length > 0 &&
+        (config.seed_columns?.length ?? 0) === 0
+      ) {
+        errors.push(
+          "Load the available fields before hiding any from the final dataset.",
+        );
       }
     }
 
@@ -366,8 +387,12 @@ export function getConfigErrors(config: NodeConfig | null): string[] {
       if (index === null || parts === null) {
         errors.push("Partition index/num_partitions must be integers.");
       } else {
-        if (index < 0) errors.push("Partition index must be >= 0.");
-        if (parts < 1) errors.push("Partition num_partitions must be >= 1.");
+        if (index < 0) {
+          errors.push("Partition index must be >= 0.");
+        }
+        if (parts < 1) {
+          errors.push("Partition num_partitions must be >= 1.");
+        }
         if (parts >= 1 && index >= parts) {
           errors.push("Partition index must be < num_partitions.");
         }

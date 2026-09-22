@@ -1,4 +1,3 @@
-
 import { type Edge, addEdge } from "@xyflow/react";
 import type {
   LayoutDirection,
@@ -7,8 +6,8 @@ import type {
   SamplerConfig,
   ValidatorConfig,
 } from "../../types";
-import { applyRecipeConnection } from "../../utils/graph";
 import { isCategoryConfig, isSubcategoryConfig } from "../../utils";
+import { applyRecipeConnection } from "../../utils/graph";
 import { HANDLE_IDS } from "../../utils/handles";
 
 function findNodeIdByName(
@@ -83,7 +82,8 @@ export function syncEdgesForConfigPatch(
     "subcategory_parent",
   );
   if (isSubcategoryConfig(current) && hasParentPatch) {
-    const nextParent = (patch as Partial<SamplerConfig>).subcategory_parent ?? "";
+    const nextParent =
+      (patch as Partial<SamplerConfig>).subcategory_parent ?? "";
     const parentId = nextParent ? findNodeIdByName(configs, nextParent) : null;
     nextEdges = removeTargetEdges(nextEdges, current.id);
     if (parentId) {
@@ -167,7 +167,8 @@ export function syncEdgesForConfigPatch(
   );
   if (current.kind === "llm" && hasModelAliasPatch) {
     const nextAlias =
-      (patch as Partial<NodeConfig> & { model_alias?: string }).model_alias ?? "";
+      (patch as Partial<NodeConfig> & { model_alias?: string }).model_alias ??
+      "";
     if (nextAlias.trim() === current.model_alias.trim()) {
       return nextEdges;
     }
@@ -236,21 +237,18 @@ export function syncEdgesForConfigPatch(
     "target_columns",
   );
   if (current.kind === "validator" && hasValidatorTargetsPatch) {
-    const nextTargets =
-      ((patch as Partial<ValidatorConfig>).target_columns ?? [])
-        .map((value) => value.trim())
-        .filter(Boolean);
+    const nextTargets = (
+      (patch as Partial<ValidatorConfig>).target_columns ?? []
+    )
+      .map((value) => value.trim())
+      .filter(Boolean);
     nextEdges = nextEdges.filter((edge) => {
       if (edge.source !== current.id && edge.target !== current.id) {
         return true;
       }
       const otherId = edge.source === current.id ? edge.target : edge.source;
       const other = configs[otherId];
-      return !(
-        other &&
-        other.kind === "llm" &&
-        other.llm_type === "code"
-      );
+      return !(other && other.kind === "llm" && other.llm_type === "code");
     });
     const nextTargetName = nextTargets[0];
     if (nextTargetName) {

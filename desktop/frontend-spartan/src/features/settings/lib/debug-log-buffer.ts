@@ -1,4 +1,3 @@
-
 /** Buffer and polling maths for the Settings > Logs log viewer. Kept free
  * of React so it can be tested: the tab component pulls in the router, motion
  * and hugeicons and cannot be imported under node:test.
@@ -102,7 +101,9 @@ export async function withRequestTimeout<T>(
   signal?: AbortSignal,
 ): Promise<T> {
   const local = new AbortController();
-  if (signal?.aborted) local.abort();
+  if (signal?.aborted) {
+    local.abort();
+  }
   const relay = () => local.abort();
   signal?.addEventListener("abort", relay);
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -127,7 +128,9 @@ export async function withRequestTimeout<T>(
     // silent by design, and it can race the timer on a request that was
     // already doomed. Only a backstop with no caller abort behind it is a
     // fault the user needs told about.
-    if (signal?.aborted && isRequestTimeout(error)) throw abortError();
+    if (signal?.aborted && isRequestTimeout(error)) {
+      throw abortError();
+    }
     throw error;
   } finally {
     clearTimeout(timer);
@@ -149,7 +152,9 @@ export function isPageStale(page: {
   requestSourceId: string | null;
   pageSourceId: string | null;
 }): boolean {
-  if (page.requestSelection !== page.currentSelection) return true;
+  if (page.requestSelection !== page.currentSelection) {
+    return true;
+  }
   // The server answers an unset source with its default, so only disagree when
   // both ends named one.
   return Boolean(
@@ -170,7 +175,9 @@ export function nextDroppedState(
   previous: boolean,
   page: { droppedBytes: number; reset: boolean },
 ): boolean {
-  if (page.droppedBytes > 0) return true;
+  if (page.droppedBytes > 0) {
+    return true;
+  }
   return page.reset ? false : previous;
 }
 
@@ -179,8 +186,12 @@ export function trimBuffer(lines: string[]): string[] {
   let trimmed =
     lines.length > MAX_CLIENT_LINES ? lines.slice(-MAX_CLIENT_LINES) : lines;
   let chars = 0;
-  for (const line of trimmed) chars += line.length + 1;
-  if (chars <= MAX_CLIENT_CHARS) return trimmed;
+  for (const line of trimmed) {
+    chars += line.length + 1;
+  }
+  if (chars <= MAX_CLIENT_CHARS) {
+    return trimmed;
+  }
   let start = 0;
   while (start < trimmed.length && chars > MAX_CLIENT_CHARS) {
     chars -= trimmed[start].length + 1;
@@ -202,7 +213,9 @@ export function applyLogChunk(
     return { lines: trimBuffer(chunk.lines.slice()), cursor: chunk.cursor };
   }
   if (chunk.lines.length === 0) {
-    if (chunk.cursor === previous.cursor) return previous;
+    if (chunk.cursor === previous.cursor) {
+      return previous;
+    }
     return { lines: previous.lines, cursor: chunk.cursor };
   }
   return {

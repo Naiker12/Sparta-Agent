@@ -13,8 +13,9 @@ export async function exportConversationByFormat(
   threadId: string,
   format: ConversationExportFormat,
 ): Promise<void> {
-  const exports =
-    await import("@/features/chat/prompt-storage/prompt-storage-dialog");
+  const exports = await import(
+    "@/features/chat/prompt-storage/prompt-storage-dialog"
+  );
   switch (format) {
     case "raw-jsonl":
       return exports.exportConversationRawJsonl(threadId);
@@ -35,11 +36,12 @@ export async function saveChatToProjectSources(
   item: SidebarItem,
   projectId: string,
 ): Promise<void> {
-  const { saveChatItemAsProjectSource } =
-    await import("@/features/chat/prompt-storage/prompt-storage-dialog");
+  const { saveChatItemAsProjectSource } = await import(
+    "@/features/chat/prompt-storage/prompt-storage-dialog"
+  );
   await saveChatItemAsProjectSource(item, projectId);
 }
 
 export function getSidebarItemThreadIds(item: SidebarItem): string[] {
-  return item.threadIds?.length ? item.threadIds : [item.id];
+  return item.threadIds && item.threadIds.length > 0 ? item.threadIds : [item.id];
 }

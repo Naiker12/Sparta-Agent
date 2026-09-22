@@ -107,7 +107,7 @@ export function cancelPreStreamRunReservations(
   let cancelled = 0;
   for (const token of new Set(tokens)) {
     const reservation = reservations.get(token);
-    if (!reservation || !reservation.usesLocalModel || reservation.cancelled) {
+    if (!reservation?.usesLocalModel || reservation.cancelled) {
       continue;
     }
     reservation.cancelled = true;

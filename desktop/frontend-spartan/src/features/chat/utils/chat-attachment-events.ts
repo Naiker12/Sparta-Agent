@@ -1,4 +1,3 @@
-
 /**
  * Notifies loaded chat runtimes when the Data tab deletes a stored attachment.
  * Without this, the active thread's in-memory repository still holds the
@@ -18,8 +17,12 @@ const URI_SCHEME_RE = /^[A-Za-z][A-Za-z0-9+.-]*:/;
 
 function isLocallyStoredBlob(value: string): boolean {
   const candidate = value.trimStart();
-  if (!candidate) return false;
-  if (candidate.slice(0, 5).toLowerCase() === "data:") return true;
+  if (!candidate) {
+    return false;
+  }
+  if (candidate.slice(0, 5).toLowerCase() === "data:") {
+    return true;
+  }
   if (candidate.startsWith("//") || candidate.startsWith("\\\\")) {
     return false;
   }
@@ -48,7 +51,9 @@ function stableJson(value: unknown): string {
 export function chatContentPartAttachmentSignature(
   part: unknown,
 ): string | null {
-  if (!part || typeof part !== "object") return null;
+  if (!part || typeof part !== "object") {
+    return null;
+  }
   const record = part as Record<string, unknown>;
   let payload: ["image" | "audio", unknown] | null = null;
   if (
@@ -67,7 +72,9 @@ export function chatContentPartAttachmentSignature(
       payload = ["audio", record.audio];
     }
   }
-  if (!payload) return null;
+  if (!payload) {
+    return null;
+  }
 
   return stableJson(payload);
 }

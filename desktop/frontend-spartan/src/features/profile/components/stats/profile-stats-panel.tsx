@@ -1,4 +1,3 @@
-
 import { Suspense, lazy } from "react";
 import { StatsSkeleton } from "./stats-skeleton";
 

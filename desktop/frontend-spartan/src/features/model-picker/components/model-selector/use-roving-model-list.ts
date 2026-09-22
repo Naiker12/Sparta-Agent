@@ -7,7 +7,7 @@
  * - Helpers para asociación padre-hijo (makeModelOptionKey, makeModelOptionChildrenId, focusFirstChildOption).
  */
 
-import { useCallback, useId, useState, type KeyboardEvent } from "react";
+import { type KeyboardEvent, useCallback, useId, useState } from "react";
 import type { ModelRowOptionProps } from "./model-row";
 
 export function makeModelOptionKey(section: string, id: string): string {

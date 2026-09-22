@@ -1,28 +1,30 @@
-
-import { idleProbeVerdict } from "./adopt-rules";
 import { disposableTimeoutSignal } from "../lib/abort-signals";
+import { idleProbeVerdict } from "./adopt-rules";
 import {
+  type DownloadJobState,
   getActiveDatasetDownloads,
   getAllActiveModelDownloads,
-  type DownloadJobState,
 } from "./api";
 import { DOWNLOAD_KIND, isResolvedTransport } from "./constants";
-import { ACTIVE_STATES, POLL_REQUEST_TIMEOUT_MS } from "./download-manager-config";
 import {
   apiGetProgress,
   apiGetStatus,
   isRequestTimeout,
 } from "./download-api-adapter";
-import type {
-  DownloadRequest,
-  ManagedDownload,
-} from "./download-manager-types";
+import {
+  ACTIVE_STATES,
+  POLL_REQUEST_TIMEOUT_MS,
+} from "./download-manager-config";
 import {
   getState,
   jobKeyOf,
   removeJob,
   repoKeyOf,
 } from "./download-manager-state";
+import type {
+  DownloadRequest,
+  ManagedDownload,
+} from "./download-manager-types";
 import {
   adoptJob,
   applyProgressUpdate,
@@ -64,15 +66,27 @@ function removeLocalActivePeers(
   const activeJobKey = jobKeyOf(kind, repoId, variant);
   const snapshotJobKey = jobKeyOf(kind, repoId, null);
   for (const job of Object.values(getState().jobs)) {
-    if (job.external) continue;
-    if (!ACTIVE_STATES.has(job.state)) continue;
-    if (repoKeyOf(job.kind, job.repoId) !== activeRepoKey) continue;
-    if (variant !== null && kind === DOWNLOAD_KIND.MODEL) {
-      if (job.key === activeJobKey) continue;
-      if (job.key === snapshotJobKey) removeJob(job.key);
+    if (job.external) {
       continue;
     }
-    if (job.key !== activeJobKey) removeJob(job.key);
+    if (!ACTIVE_STATES.has(job.state)) {
+      continue;
+    }
+    if (repoKeyOf(job.kind, job.repoId) !== activeRepoKey) {
+      continue;
+    }
+    if (variant !== null && kind === DOWNLOAD_KIND.MODEL) {
+      if (job.key === activeJobKey) {
+        continue;
+      }
+      if (job.key === snapshotJobKey) {
+        removeJob(job.key);
+      }
+      continue;
+    }
+    if (job.key !== activeJobKey) {
+      removeJob(job.key);
+    }
   }
 }
 
@@ -82,7 +96,9 @@ async function adoptActiveModelDownloads(): Promise<void> {
   );
   for (const download of downloads) {
     const repoId = download.repo_id?.trim();
-    if (!repoId || !ACTIVE_STATES.has(download.state)) continue;
+    if (!(repoId && ACTIVE_STATES.has(download.state))) {
+      continue;
+    }
     removeLocalActivePeers(
       DOWNLOAD_KIND.MODEL,
       repoId,
@@ -113,7 +129,9 @@ async function adoptActiveDatasetDownloads(): Promise<void> {
   );
   for (const download of downloads) {
     const repoId = download.repo_id?.trim();
-    if (!repoId || !ACTIVE_STATES.has(download.state)) continue;
+    if (!(repoId && ACTIVE_STATES.has(download.state))) {
+      continue;
+    }
     removeLocalActivePeers(DOWNLOAD_KIND.DATASET, repoId, null);
     adoptJob(
       {
@@ -153,7 +171,9 @@ async function hydrateBackendActiveDownloads(
   const pending = sides.filter(
     (_, index) => results[index].status === "rejected",
   );
-  if (pending.length === 0 || attempt >= HYDRATE_ADOPTION_MAX_RETRIES) return;
+  if (pending.length === 0 || attempt >= HYDRATE_ADOPTION_MAX_RETRIES) {
+    return;
+  }
   scheduleBackendAdoptionRetry(attempt + 1, pending);
 }
 
@@ -177,10 +197,14 @@ async function probeHydratedIdleProgress(
       apiGetProgress(job, signal),
     );
     const current = getState().jobs[key];
-    if (!current || !ACTIVE_STATES.has(current.state)) return "settled";
+    if (!(current && ACTIVE_STATES.has(current.state))) {
+      return "settled";
+    }
     applyProgressUpdate(key, current, progressResp);
     const updated = getState().jobs[key];
-    if (!updated || !ACTIVE_STATES.has(updated.state)) return "settled";
+    if (!(updated && ACTIVE_STATES.has(updated.state))) {
+      return "settled";
+    }
     if (hasObservedExpectedBytes(updated)) {
       finalize(key, "complete", { bytes: updated.downloadedBytes });
       return "settled";
@@ -234,7 +258,9 @@ async function settleHydratedJob(
       finalize(key, "complete", { bytes: job.downloadedBytes });
     } else if (job?.state === "running" || job?.state === "cancelling") {
       const probeResult = await probeHydratedIdleProgress(key, job);
-      if (probeResult === "settled") return;
+      if (probeResult === "settled") {
+        return;
+      }
       if (probeResult === "active" && job.state === "running") {
         adoptJob(req);
         return;
@@ -259,7 +285,9 @@ function scheduleHydrationProbeRetry(
   const timer = window.setTimeout(() => {
     runtimeRegistry.hydrationRetryTimers.delete(timer);
     const job = getState().jobs[key];
-    if (!job || !ACTIVE_STATES.has(job.state)) return;
+    if (!(job && ACTIVE_STATES.has(job.state))) {
+      return;
+    }
     void probeHydratedJob(key, req, attempt);
   }, HYDRATE_STATUS_RETRY_MS);
   runtimeRegistry.hydrationRetryTimers.add(timer);
@@ -271,13 +299,17 @@ async function probeHydratedJob(
   attempt: number,
 ): Promise<void> {
   const job = getState().jobs[key];
-  if (!job || !ACTIVE_STATES.has(job.state)) return;
+  if (!(job && ACTIVE_STATES.has(job.state))) {
+    return;
+  }
   try {
     const status = await withHydrationTimeout((signal) =>
       apiGetStatus(job, signal),
     );
     const current = getState().jobs[key];
-    if (!current || !ACTIVE_STATES.has(current.state)) return;
+    if (!(current && ACTIVE_STATES.has(current.state))) {
+      return;
+    }
     await settleHydratedJob(key, req, status);
   } catch (error) {
     if (isRequestTimeout(error) && attempt < HYDRATE_STATUS_TIMEOUT_RETRIES) {
@@ -289,13 +321,17 @@ async function probeHydratedJob(
 }
 
 export function hydrateDownloadManager(): void {
-  if (hydrated) return;
+  if (hydrated) {
+    return;
+  }
   hydrated = true;
   void hydrateBackendActiveDownloads();
   const jobs = Object.values(getState().jobs);
   for (const job of jobs) {
     // External jobs are live in memory and have no hub job to probe.
-    if (job.external) continue;
+    if (job.external) {
+      continue;
+    }
     if (!ACTIVE_STATES.has(job.state)) {
       removeJob(job.key);
       continue;

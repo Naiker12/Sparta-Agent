@@ -1,4 +1,3 @@
-
 // The leading boundary skips family-version digits ("Qwen3-") and MoE active-param
 // notation ("A3B"), so "Qwen3-30B-A3B" reads as 30B total, not 3B active.
 const PARAM_COUNT_RE = /(?:^|[-_])(\d+(?:\.\d+)?)[Bb](?:[-_]|$)/;
@@ -15,7 +14,9 @@ export function extractParamLabel(id: string): string | null {
 
 export function parseParamCountB(id: string): number | null {
   const m = matchParamCount(id);
-  if (!m) return null;
+  if (!m) {
+    return null;
+  }
   const v = Number.parseFloat(m[1]);
   return Number.isFinite(v) ? v : null;
 }

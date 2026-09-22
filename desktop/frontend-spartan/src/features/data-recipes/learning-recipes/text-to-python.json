@@ -28,11 +28,7 @@
         "drop": false,
         "sampler_type": "category",
         "params": {
-          "values": [
-            "Data Processing",
-            "Web API",
-            "Automation"
-          ]
+          "values": ["Data Processing", "Web API", "Automation"]
         }
       },
       {
@@ -48,11 +44,7 @@
               "JSON transform",
               "deduplicate rows"
             ],
-            "Web API": [
-              "GET endpoint",
-              "POST validation",
-              "pagination helper"
-            ],
+            "Web API": ["GET endpoint", "POST validation", "pagination helper"],
             "Automation": [
               "file organizer",
               "log parser",
@@ -107,9 +99,7 @@
   "run": {
     "rows": 5,
     "preview": true,
-    "output_formats": [
-      "jsonl"
-    ]
+    "output_formats": ["jsonl"]
   },
   "ui": {
     "nodes": [

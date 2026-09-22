@@ -1,4 +1,3 @@
-
 import { getClientPlatform } from "@/components/tauri/window-titlebar";
 import {
   Command,
@@ -32,6 +31,7 @@ import {
   listModels,
 } from "@/features/chat";
 import { useHfTokenStore } from "@/features/hub";
+import { ggufVariantDisplayLabel } from "@/features/hub";
 import type { TranslationKey } from "@/i18n";
 import { useT } from "@/i18n";
 import { getApiBase, isTauri } from "@/lib/api-base";
@@ -52,7 +52,6 @@ import {
 import { SettingsSection } from "../components/settings-section";
 import { psSingle, shSingle } from "../components/usage-examples";
 import { useSettingsPanelPrefsStore } from "../stores/settings-panel-prefs-store";
-import { ggufVariantDisplayLabel } from "@/features/hub";
 
 const DOCS_URL = "https://unsloth.ai/docs/integrations/unsloth-start";
 const EXAMPLE_MODEL_REPO = "unsloth/gemma-4-E4B-it-GGUF";
@@ -84,15 +83,21 @@ function useCopyButton(text: string) {
 
   useEffect(
     () => () => {
-      if (timeoutRef.current !== null) window.clearTimeout(timeoutRef.current);
+      if (timeoutRef.current !== null) {
+        window.clearTimeout(timeoutRef.current);
+      }
     },
     [],
   );
 
   const copy = async () => {
-    if (!(await copyToClipboard(text))) return;
+    if (!(await copyToClipboard(text))) {
+      return;
+    }
     setCopied(true);
-    if (timeoutRef.current !== null) window.clearTimeout(timeoutRef.current);
+    if (timeoutRef.current !== null) {
+      window.clearTimeout(timeoutRef.current);
+    }
     timeoutRef.current = window.setTimeout(() => {
       setCopied(false);
       timeoutRef.current = null;
@@ -688,7 +693,7 @@ export function AgentsTab() {
   const [variants, setVariants] = useState<GgufVariantDetail[]>([]);
   const [selectedVariant, setSelectedVariant] = useState<string | null>(
     chosenVariant.current &&
-    modelKey(chosenVariant.current.model) === modelKey(initialModel)
+      modelKey(chosenVariant.current.model) === modelKey(initialModel)
       ? chosenVariant.current.variant
       : initialModel === EXAMPLE_MODEL_REPO
         ? EXAMPLE_MODEL_VARIANT
@@ -819,9 +824,15 @@ export function AgentsTab() {
 
   // a restored agent the backend no longer lists cannot build a command.
   useEffect(() => {
-    if (!agentSelectionChanged.current) return;
-    if (localDetection && !loaded) return;
-    if (agents.includes(selectedAgent)) return;
+    if (!agentSelectionChanged.current) {
+      return;
+    }
+    if (localDetection && !loaded) {
+      return;
+    }
+    if (agents.includes(selectedAgent)) {
+      return;
+    }
     agentSelectionChanged.current = false;
     setStoredAgent(null);
     setSelectedAgent(
@@ -843,10 +854,12 @@ export function AgentsTab() {
     // An endpoint that could not answer has not proved a model absent, and the
     // retire treats discoveredKeys as exactly that proof.
     let discoveryComplete = true;
-    const note = <T,>(fallback: T) => (): T => {
-      discoveryComplete = false;
-      return fallback;
-    };
+    const note =
+      <T,>(fallback: T) =>
+      (): T => {
+        discoveryComplete = false;
+        return fallback;
+      };
     Promise.all([
       listModels().catch(note(null)),
       listCachedGguf().catch(note([])),
@@ -1041,7 +1054,9 @@ export function AgentsTab() {
   // the other knows about, and a wrong retire drops the user's choice.
   useEffect(() => {
     const restored = restoredModel.current;
-    if (!(restored && discoveredKeys && statusSettled)) return;
+    if (!(restored && discoveredKeys && statusSettled)) {
+      return;
+    }
     const active = activeModelRef.current;
     restoredModel.current = null;
     // modelKey both sides: discovery folds repo-id case, so an exact match
@@ -1382,7 +1397,9 @@ export function AgentsTab() {
                             modelSelectionChanged.current = true;
                             restoredModel.current = null;
                             const variant =
-                              rememberedVariant(model) ?? knownVariants[model] ?? null;
+                              rememberedVariant(model) ??
+                              knownVariants[model] ??
+                              null;
                             setSelectedModel(model);
                             setSelectedVariant(variant);
                             // a native-grant label names no path to reuse.

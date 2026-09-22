@@ -1,4 +1,3 @@
-
 /**
  * Optimistic list maths for the Images and Video galleries, kept pure so both pages share one
  * implementation and it can be tested without rendering either.
@@ -18,16 +17,27 @@ export type GalleryKind = "images" | "videos";
  * stale until a full reload. In lib/ because emitter and listeners are both features.
  */
 export function notifyGalleryChanged(kind: GalleryKind): void {
-  if (typeof window === "undefined") return;
-  window.dispatchEvent(new CustomEvent(GALLERY_CHANGED_EVENT, { detail: { kind } }));
+  if (typeof window === "undefined") {
+    return;
+  }
+  window.dispatchEvent(
+    new CustomEvent(GALLERY_CHANGED_EVENT, { detail: { kind } }),
+  );
 }
 
 /** Calls back when `kind` changed elsewhere. Returns an unsubscriber. */
-export function subscribeGalleryChanged(kind: GalleryKind, onChanged: () => void): () => void {
-  if (typeof window === "undefined") return () => {};
+export function subscribeGalleryChanged(
+  kind: GalleryKind,
+  onChanged: () => void,
+): () => void {
+  if (typeof window === "undefined") {
+    return () => {};
+  }
   const handler = (event: Event) => {
     const detail = (event as CustomEvent<{ kind?: string }>).detail;
-    if (detail?.kind === kind) onChanged();
+    if (detail?.kind === kind) {
+      onChanged();
+    }
   };
   window.addEventListener(GALLERY_CHANGED_EVENT, handler);
   return () => window.removeEventListener(GALLERY_CHANGED_EVENT, handler);
@@ -43,8 +53,10 @@ export interface FlaggableItem {
 
 /** Newest first, matching the backend's mtime ordering closely enough for an optimistic reorder. */
 function newestFirst<T extends FlaggableItem>(a: T, b: T): number {
-  const at = typeof a.created_at === "number" ? a.created_at : Date.parse(a.created_at);
-  const bt = typeof b.created_at === "number" ? b.created_at : Date.parse(b.created_at);
+  const at =
+    typeof a.created_at === "number" ? a.created_at : Date.parse(a.created_at);
+  const bt =
+    typeof b.created_at === "number" ? b.created_at : Date.parse(b.created_at);
   return bt - at;
 }
 
@@ -55,13 +67,18 @@ function newestFirst<T extends FlaggableItem>(a: T, b: T): number {
  * client never learns, so re-sorting them by `created_at` would rearrange them on any unrelated
  * merge. `justPinnedId` is the exception: a fresh pin leads, matching the backend.
  */
-export function sortGalleryItems<T extends FlaggableItem>(items: T[], justPinnedId?: string): T[] {
+export function sortGalleryItems<T extends FlaggableItem>(
+  items: T[],
+  justPinnedId?: string,
+): T[] {
   const pinned = items.filter((i) => i.pinned);
   const rest = items.filter((i) => !i.pinned);
   rest.sort(newestFirst);
   if (justPinnedId) {
     const at = pinned.findIndex((i) => i.id === justPinnedId);
-    if (at > 0) pinned.unshift(...pinned.splice(at, 1));
+    if (at > 0) {
+      pinned.unshift(...pinned.splice(at, 1));
+    }
   }
   return [...pinned, ...rest];
 }
@@ -70,7 +87,11 @@ export function sortGalleryItems<T extends FlaggableItem>(items: T[], justPinned
  * Apply a pin toggle in place and re-sort. Archiving is NOT handled here: an archived item leaves
  * this shelf entirely, which is `removeGalleryItem`.
  */
-export function applyPin<T extends FlaggableItem>(items: T[], id: string, pinned: boolean): T[] {
+export function applyPin<T extends FlaggableItem>(
+  items: T[],
+  id: string,
+  pinned: boolean,
+): T[] {
   const next = items.map((i) => (i.id === id ? { ...i, pinned } : i));
   return sortGalleryItems(next, pinned ? id : undefined);
 }
@@ -101,7 +122,10 @@ export function restorePinOrder<T extends FlaggableItem>(
 }
 
 /** Prepend a finished run's records, dropping any a concurrent load already brought in. */
-export function mergeGenerated<T extends FlaggableItem>(items: T[], fresh: T[]): T[] {
+export function mergeGenerated<T extends FlaggableItem>(
+  items: T[],
+  fresh: T[],
+): T[] {
   const known = new Set(items.map((i) => i.id));
   return sortGalleryItems([...fresh.filter((i) => !known.has(i.id)), ...items]);
 }
@@ -133,7 +157,10 @@ export function newRecordProbeBaseline<T extends FlaggableItem>(
   hasMore: boolean,
   knownIds: ReadonlySet<string>,
 ): NewRecordProbeBaseline {
-  return { knownIds, canJudgeUnpinned: loaded.some((i) => !i.pinned) || !hasMore };
+  return {
+    knownIds,
+    canJudgeUnpinned: loaded.some((i) => !i.pinned) || !hasMore,
+  };
 }
 
 export async function hasUnknownRecord<T extends FlaggableItem>(
@@ -144,18 +171,24 @@ export async function hasUnknownRecord<T extends FlaggableItem>(
 ): Promise<boolean> {
   // Nothing the listing can show would be conclusive, so refuse to claim proof. The caller then
   // reports the submission error, which is the loud failure rather than a silent false success.
-  if (!baseline.canJudgeUnpinned) return false;
+  if (!baseline.canJudgeUnpinned) {
+    return false;
+  }
   for (let page = 0; page < maxPages; page += 1) {
     const { items, hasMore } = await fetchPage(page * pageSize);
     for (const record of items) {
       // A saved record is never pinned, so a pinned row is never the proof -- not even an unknown
       // one. With more pins than the client had loaded, treating an unfamiliar pin as evidence
       // would report a generation that never reached the server as finished.
-      if (record.pinned) continue;
+      if (record.pinned) {
+        continue;
+      }
       // The first unpinned row is where a new record would be, so it alone decides.
       return !baseline.knownIds.has(record.id);
     }
-    if (!hasMore || items.length === 0) return false;
+    if (!hasMore || items.length === 0) {
+      return false;
+    }
   }
   return false;
 }
@@ -168,7 +201,10 @@ const queues = new Map<string, Promise<unknown>>();
  * click order. Different keys stay parallel. A rejection does not break the chain, and is still
  * delivered to whoever awaited it.
  */
-export function serializeById<T>(key: string, task: () => Promise<T>): Promise<T> {
+export function serializeById<T>(
+  key: string,
+  task: () => Promise<T>,
+): Promise<T> {
   const previous = queues.get(key);
   const run = previous ? previous.then(task, task) : task();
   const settled = run.then(
@@ -178,13 +214,18 @@ export function serializeById<T>(key: string, task: () => Promise<T>): Promise<T
   queues.set(key, settled);
   void settled.then(() => {
     // Only the last link clears the key; an earlier one finishing must not drop a live chain.
-    if (queues.get(key) === settled) queues.delete(key);
+    if (queues.get(key) === settled) {
+      queues.delete(key);
+    }
   });
   return run;
 }
 
 /** Drop an item that was archived or deleted; order among the rest is untouched. */
-export function removeGalleryItem<T extends FlaggableItem>(items: T[], id: string): T[] {
+export function removeGalleryItem<T extends FlaggableItem>(
+  items: T[],
+  id: string,
+): T[] {
   return items.filter((i) => i.id !== id);
 }
 
@@ -208,7 +249,9 @@ export async function fetchWhileStable<T>(
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     const before = token();
     const result = await fetch();
-    if (token() === before) return result;
+    if (token() === before) {
+      return result;
+    }
   }
   return null;
 }
@@ -255,7 +298,12 @@ export function nextSelectedId<T extends FlaggableItem>(
   selectedId: string | null,
   removedIndex: number,
 ): string | null {
-  if (selectedId !== removedId) return selectedId;
-  if (remaining.length === 0) return null;
-  return remaining[Math.min(Math.max(removedIndex, 0), remaining.length - 1)].id;
+  if (selectedId !== removedId) {
+    return selectedId;
+  }
+  if (remaining.length === 0) {
+    return null;
+  }
+  return remaining[Math.min(Math.max(removedIndex, 0), remaining.length - 1)]
+    .id;
 }

@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { TourStep } from "../types";
 
@@ -27,19 +26,33 @@ export function useGuidedTourController({
   useEffect(() => setHasRuntime(true), []);
 
   useEffect(() => {
-    if (!hasRuntime || !enabled) return;
-    if (!autoKey || !autoWhen) return;
-    if (steps.length === 0) return;
-    if (localStorage.getItem(autoKey)) return;
+    if (!(hasRuntime && enabled)) {
+      return;
+    }
+    if (!(autoKey && autoWhen)) {
+      return;
+    }
+    if (steps.length === 0) {
+      return;
+    }
+    if (localStorage.getItem(autoKey)) {
+      return;
+    }
     setOpen(true);
   }, [autoKey, autoWhen, enabled, hasRuntime, steps.length]);
 
   useEffect(() => {
-    if (!hasRuntime || !enabled) return;
+    if (!(hasRuntime && enabled)) {
+      return;
+    }
     function onOpen(e: Event) {
       const ce = e as CustomEvent<TourOpenDetail>;
-      if (ce.detail?.id && ce.detail.id !== id) return;
-      if (steps.length === 0) return;
+      if (ce.detail?.id && ce.detail.id !== id) {
+        return;
+      }
+      if (steps.length === 0) {
+        return;
+      }
       setOpen(true);
     }
     window.addEventListener(TOUR_OPEN_EVENT, onOpen);
@@ -47,12 +60,16 @@ export function useGuidedTourController({
   }, [enabled, hasRuntime, id, steps.length]);
 
   const onSkip = useCallback(() => {
-    if (!autoKey) return;
+    if (!autoKey) {
+      return;
+    }
     localStorage.setItem(autoKey, "skipped");
   }, [autoKey]);
 
   const onComplete = useCallback(() => {
-    if (!autoKey) return;
+    if (!autoKey) {
+      return;
+    }
     localStorage.setItem(autoKey, "done");
   }, [autoKey]);
 
@@ -69,4 +86,3 @@ export function useGuidedTourController({
 
   return { open, setOpen, onSkip, onComplete, tourProps };
 }
-

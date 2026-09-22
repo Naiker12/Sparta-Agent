@@ -1,4 +1,3 @@
-
 // Whether the header may call the picked model loaded. Its own plain module so
 // the node suite can drive it: runtime-provider.tsx pulls in the whole chat
 // runtime.
@@ -32,7 +31,11 @@ export function chatModelLoaded({
   isExternalMissing = false,
   residentCheckpoint,
 }: ChatModelLoadedInput): boolean {
-  if (!checkpoint || modelLoading) return false;
-  if (isExternalModel) return !isExternalMissing;
+  if (!checkpoint || modelLoading) {
+    return false;
+  }
+  if (isExternalModel) {
+    return !isExternalMissing;
+  }
   return residentCheckpoint !== null;
 }

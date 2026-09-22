@@ -1,4 +1,3 @@
-
 import { authFetch } from "@/features/auth";
 import { apiUrl } from "@/lib/api-base";
 import { formatFastApiDetail } from "@/lib/format-fastapi-error";
@@ -24,22 +23,34 @@ function parseErrorText(status: number, body: unknown): string {
   if (body && typeof body === "object") {
     const { detail, message } = body as { detail?: unknown; message?: unknown };
     const formatted = formatFastApiDetail(detail);
-    if (formatted) return formatted;
-    if (typeof message === "string" && message) return message;
+    if (formatted) {
+      return formatted;
+    }
+    if (typeof message === "string" && message) {
+      return message;
+    }
   }
   return `Request failed (${status})`;
 }
 
 /** The message a caller shows, plus the status one has to branch on: a 404 is an
  * answer, a network failure is not. */
-export function ragError(status: number, body: unknown): Error & { status: number } {
+export function ragError(
+  status: number,
+  body: unknown,
+): Error & { status: number } {
   return Object.assign(new Error(parseErrorText(status, body)), { status });
 }
 
 /** True for a failure the server answered definitively, so retrying cannot help. */
 export function isRagClientError(error: unknown): boolean {
   const status = (error as { status?: unknown } | null)?.status;
-  return typeof status === "number" && status >= 400 && status < 500 && status !== 429;
+  return (
+    typeof status === "number" &&
+    status >= 400 &&
+    status < 500 &&
+    status !== 429
+  );
 }
 
 async function ragRequest<T>(
@@ -59,7 +70,9 @@ async function ragRequest<T>(
   // Every RAG endpoint but the list gates on the extension loading, so its status is
   // also an availability answer. See api/rag-availability.
   noteRagResponse(response.status, json);
-  if (!response.ok) throw ragError(response.status, json);
+  if (!response.ok) {
+    throw ragError(response.status, json);
+  }
   return json as T;
 }
 
@@ -77,11 +90,18 @@ async function ragUpload(
   caption?: boolean,
 ): Promise<DocumentUploadResult> {
   const form = new FormData();
-  if (source instanceof File) form.append("file", source);
-  else form.append("nativePathLease", source.nativePathLease);
+  if (source instanceof File) {
+    form.append("file", source);
+  } else {
+    form.append("nativePathLease", source.nativePathLease);
+  }
   // Per-upload overrides for the vision passes; omitted -> backend config default.
-  if (ocr !== undefined) form.append("ocr", String(ocr));
-  if (caption !== undefined) form.append("caption", String(caption));
+  if (ocr !== undefined) {
+    form.append("ocr", String(ocr));
+  }
+  if (caption !== undefined) {
+    form.append("caption", String(caption));
+  }
   // No Content-Type: let the browser set the multipart boundary.
   const response = await authFetch(`${RAG_BASE}${path}`, {
     method: "POST",
@@ -90,7 +110,9 @@ async function ragUpload(
   const json = await response.json().catch(() => null);
   // Uploads bypass ragRequest, so they have to report availability themselves.
   noteRagResponse(response.status, json);
-  if (!response.ok) throw ragError(response.status, json);
+  if (!response.ok) {
+    throw ragError(response.status, json);
+  }
   return json as DocumentUploadResult;
 }
 
@@ -124,8 +146,12 @@ export function updateKnowledgeBase(
   payload: { name?: string; description?: string },
 ): Promise<{ ok: boolean }> {
   const body: Record<string, unknown> = {};
-  if (payload.name !== undefined) body.name = payload.name;
-  if (payload.description !== undefined) body.description = payload.description;
+  if (payload.name !== undefined) {
+    body.name = payload.name;
+  }
+  if (payload.description !== undefined) {
+    body.description = payload.description;
+  }
   return ragRequest(`/knowledge-bases/${encodeURIComponent(kbId)}`, {
     method: "PATCH",
     body,
@@ -254,11 +280,15 @@ export function subscribeProjectSourcesUpdated(
   projectId: string,
   onUpdated: () => void,
 ): () => void {
-  if (typeof window === "undefined") return () => undefined;
+  if (typeof window === "undefined") {
+    return () => undefined;
+  }
   const listener = (event: Event) => {
     const detail = (event as CustomEvent<{ projectId?: string }>).detail;
     // Another project's save must not refetch this one's list.
-    if (detail?.projectId === projectId) onUpdated();
+    if (detail?.projectId === projectId) {
+      onUpdated();
+    }
   };
   window.addEventListener(PROJECT_SOURCES_CHANGED_EVENT, listener);
   subscribeProjectSourcesBroadcast();
@@ -269,7 +299,9 @@ export function subscribeProjectSourcesUpdated(
 
 function publishProjectSourcesChanged(projectId: string): void {
   projectSourcesCache.delete(projectId);
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined") {
+    return;
+  }
   window.dispatchEvent(
     new CustomEvent(PROJECT_SOURCES_CHANGED_EVENT, { detail: { projectId } }),
   );
@@ -347,7 +379,9 @@ function askForWorkInFlight(): void {
 
 function answerWorkQuery(): void {
   const channel = getProjectChannel();
-  if (!channel) return;
+  if (!channel) {
+    return;
+  }
   for (const [projectId, count] of projectWorkInFlight) {
     channel.postMessage({ kind: "work-state", projectId, count, from: TAB_ID });
   }
@@ -440,7 +474,9 @@ function armRemoteWorkExpiry(projectId: string): void {
   }
   remoteWorkTimers.delete(projectId);
   const bySender = remoteProjectWork.get(projectId);
-  if (!bySender || bySender.size === 0) return;
+  if (!bySender || bySender.size === 0) {
+    return;
+  }
   // The earliest deadline among the senders, not a fresh TTL: one timer covers
   // the project, so arming it for the tab that just reported would leave a tab
   // that has since closed counted until some later event happens to publish.
@@ -457,9 +493,13 @@ function armRemoteWorkExpiry(projectId: string): void {
       const live = remoteProjectWork.get(projectId);
       if (live) {
         for (const [sender, entry] of live) {
-          if (entry.until <= now) live.delete(sender);
+          if (entry.until <= now) {
+            live.delete(sender);
+          }
         }
-        if (live.size === 0) remoteProjectWork.delete(projectId);
+        if (live.size === 0) {
+          remoteProjectWork.delete(projectId);
+        }
       }
       publishProjectWorkChanged(projectId);
       armRemoteWorkExpiry(projectId);
@@ -509,7 +549,9 @@ function noteRemoteProjectWork(
   const current = remoteSenderCount(projectId, from);
   // A zero delta is the heartbeat: it renews this sender's deadline only, and
   // says nothing about a sender with nothing running.
-  if (delta === 0 && current === 0) return;
+  if (delta === 0 && current === 0) {
+    return;
+  }
   setRemoteProjectWork(projectId, from, Math.max(0, current + delta));
 }
 
@@ -522,15 +564,23 @@ function seedRemoteProjectWork(
   from: string,
   count: number,
 ): void {
-  if (count <= 0) return;
-  setRemoteProjectWork(projectId, from, Math.max(remoteSenderCount(projectId, from), count));
+  if (count <= 0) {
+    return;
+  }
+  setRemoteProjectWork(
+    projectId,
+    from,
+    Math.max(remoteSenderCount(projectId, from), count),
+  );
 }
 
 export function projectWorkCount(projectId: string): number {
   let remoteCount = 0;
   const now = Date.now();
   for (const entry of remoteProjectWork.get(projectId)?.values() ?? []) {
-    if (entry.until > now) remoteCount += entry.count;
+    if (entry.until > now) {
+      remoteCount += entry.count;
+    }
   }
   return (projectWorkInFlight.get(projectId) ?? 0) + remoteCount;
 }
@@ -565,7 +615,9 @@ export function watchProjectFolderJob(projectId: string, jobId: string): void {
         } catch (error) {
           // An answered 4xx is the job being gone, not a read that failed:
           // unlinking deletes its job rows, and so does the history prune.
-          if (isRagClientError(error)) break;
+          if (isRagClientError(error)) {
+            break;
+          }
           consecutiveFailures += 1;
           if (consecutiveFailures >= MAX_FOLDER_JOB_READ_FAILURES) {
             break;
@@ -605,7 +657,9 @@ export async function reconcileProjectFolderJobs(
   projectId: string,
 ): Promise<void> {
   const now = Date.now();
-  if ((folderReconcileNotBefore.get(projectId) ?? 0) > now) return;
+  if ((folderReconcileNotBefore.get(projectId) ?? 0) > now) {
+    return;
+  }
   folderReconcileNotBefore.set(projectId, now + FOLDER_RECONCILE_MIN_GAP_MS);
   // Every look, not just the first: a scan writes no row until it is underway,
   // so the list the composer already has proves nothing.
@@ -713,7 +767,9 @@ export async function deleteDocument(
       method: "DELETE",
     },
   );
-  if (projectId) announceProjectSourcesUpdated(projectId);
+  if (projectId) {
+    announceProjectSourcesUpdated(projectId);
+  }
   return result;
 }
 
@@ -735,7 +791,9 @@ async function openEventStream(
     noteRagResponse(response.status, body);
     throw ragError(response.status, body);
   }
-  if (!response.body) throw new Error("Stream response missing body");
+  if (!response.body) {
+    throw new Error("Stream response missing body");
+  }
   return response.body;
 }
 

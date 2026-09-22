@@ -1,4 +1,3 @@
-
 // Shared clipboard inspection. The file paste path and the long text paste path
 // must agree on what counts as a file, or a paste falls through both or neither.
 
@@ -27,7 +26,9 @@ function clipboardHasLocalFileUri(
 /** Files the browser decoded for us, ready to attach. */
 export function browserClipboardFiles(clipboardData: DataTransfer): File[] {
   const files = Array.from(clipboardData.files).filter((file) => file.size > 0);
-  if (files.length > 0) return files;
+  if (files.length > 0) {
+    return files;
+  }
 
   return Array.from(clipboardData.items)
     .filter((item) => item.kind === "file")
@@ -37,7 +38,9 @@ export function browserClipboardFiles(clipboardData: DataTransfer): File[] {
 
 /** A file entry the browser may still refuse to decode, so the text path defers. */
 export function clipboardHasFileEntries(clipboardData: DataTransfer): boolean {
-  if (Array.from(clipboardData.files).some((file) => file.size > 0)) return true;
+  if (Array.from(clipboardData.files).some((file) => file.size > 0)) {
+    return true;
+  }
   return Array.from(clipboardData.items).some((item) => item.kind === "file");
 }
 

@@ -1,4 +1,3 @@
-
 import { getActiveGenerations } from "../api/chat-api";
 import { useChatRuntimeStore } from "../stores/chat-runtime-store";
 import { usePromptQueueUI } from "../stores/prompt-queue-ui-store";
@@ -104,9 +103,10 @@ export async function confirmStopRunningChatsIfNeeded(
     // counts those separately. A first turn started before its id was persisted has no
     // id to merge, so add those back or the prompt names fewer chats than will stop.
     const unnamed = entries.filter((entry) => !entry.thread_id).length;
-    count = entries.length
-      ? running.length + unnamed + unnamedPreStreamRuns
-      : Math.max(active.count ?? 0, running.length) + unnamedPreStreamRuns;
+    count =
+      entries.length > 0
+        ? running.length + unnamed + unnamedPreStreamRuns
+        : Math.max(active.count ?? 0, running.length) + unnamedPreStreamRuns;
     // Embeddings / completions / audio share the model but are not conversations, so the
     // prompt must not offer to stop chats that do not exist.
     hasNonChat = entries.some((entry) => (entry.kind ?? "chat") !== "chat");
@@ -134,7 +134,9 @@ export async function confirmStopRunningChatsIfNeeded(
     for (const id of running) {
       const thread = byId.get(id);
       const key = thread?.pairId ?? id;
-      if (seen.has(key)) continue;
+      if (seen.has(key)) {
+        continue;
+      }
       seen.add(key);
       titles.push(thread?.title || "Untitled chat");
     }

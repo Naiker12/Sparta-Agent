@@ -5,9 +5,9 @@
  * rangos con Shift/Meta, deselección con Escape y clics contextuales.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ProjectRecord, SidebarItem } from "@/features/chat";
 import { rangeBetween, toggleSelected } from "@/features/chat";
+import { type MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SELECT_WITH_META } from "./sidebar-types-and-constants";
 
 export function useSidebarSelection({
@@ -55,30 +55,39 @@ export function useSidebarSelection({
   }, [dropChatSelection, dropProjectSelection]);
 
   useEffect(() => {
-    if (selectionCount === 0 && projectSelectionCount === 0) return;
+    if (selectionCount === 0 && projectSelectionCount === 0) {
+      return;
+    }
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") clearSelection();
+      if (event.key === "Escape") {
+        clearSelection();
+      }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [selectionCount, projectSelectionCount, clearSelection]);
 
   function handleSelectionClick(
-    event: React.MouseEvent,
+    event: MouseEvent,
     item: SidebarItem,
     list: { scope: string; ids: string[] },
   ): boolean {
     dropProjectSelection();
-    if (SELECT_WITH_META ? event.metaKey : event.ctrlKey) {
+    const additive = SELECT_WITH_META ? event.metaKey : event.ctrlKey;
+    const range = event.shiftKey;
+    if (!additive && !range) {
+      return false;
+    }
+    if (additive) {
       setSelectedChatIds((prev) => toggleSelected(prev, item.id));
       selectionAnchorRef.current = { scope: list.scope, id: item.id };
       return true;
     }
-    if (!event.shiftKey) return false;
     const anchor = selectionAnchorRef.current;
     const sameList = anchor?.scope === list.scope;
-    if (!sameList)
+    if (!sameList) {
       selectionAnchorRef.current = { scope: list.scope, id: item.id };
+    }
     setSelectedChatIds(
       new Set(
         sameList && anchor
@@ -94,17 +103,21 @@ export function useSidebarSelection({
     list: { scope: string; ids: string[] },
   ) {
     dropProjectSelection();
-    if (selectedChatIds.has(item.id)) return;
+    if (selectedChatIds.has(item.id)) {
+      return;
+    }
     selectionAnchorRef.current = { scope: list.scope, id: item.id };
     setSelectedChatIds(new Set([item.id]));
   }
 
   function handleProjectSelectionClick(
-    event: React.MouseEvent,
+    event: MouseEvent,
     projectId: string,
   ): boolean {
     const additive = SELECT_WITH_META ? event.metaKey : event.ctrlKey;
-    if (!additive && !event.shiftKey) return false;
+    if (!(additive || event.shiftKey)) {
+      return false;
+    }
     dropChatSelection();
     if (additive) {
       setSelectedProjectIds((prev) => toggleSelected(prev, projectId));
@@ -112,7 +125,9 @@ export function useSidebarSelection({
       return true;
     }
     const anchorId = projectAnchorRef.current;
-    if (!anchorId) projectAnchorRef.current = projectId;
+    if (!anchorId) {
+      projectAnchorRef.current = projectId;
+    }
     setSelectedProjectIds(
       new Set(
         anchorId
@@ -125,7 +140,9 @@ export function useSidebarSelection({
 
   function selectProjectForContextMenu(projectId: string) {
     dropChatSelection();
-    if (selectedProjectIds.has(projectId)) return;
+    if (selectedProjectIds.has(projectId)) {
+      return;
+    }
     projectAnchorRef.current = projectId;
     setSelectedProjectIds(new Set([projectId]));
   }

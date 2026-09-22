@@ -1,4 +1,3 @@
-
 import type { TauriUpdateController } from "@/hooks/use-tauri-update";
 import { createContext, useContext } from "react";
 

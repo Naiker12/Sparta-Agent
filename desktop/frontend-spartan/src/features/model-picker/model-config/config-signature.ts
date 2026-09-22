@@ -1,4 +1,3 @@
-
 // Identity of one ModelConfigPage editor instance. The page seeds its state from `loadedConfig`
 // in a useState initializer, so it reads that prop once per mount: a host that opens it before
 // status hydrates gets null first and the live config a moment later, and without the config in

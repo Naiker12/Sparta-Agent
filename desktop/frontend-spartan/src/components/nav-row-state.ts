@@ -1,4 +1,3 @@
-
 // How a sidebar nav row renders once its pending state is folded in. Its own import-free
 // module so it is testable: app-sidebar.tsx pulls in the whole shell.
 

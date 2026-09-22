@@ -1,4 +1,3 @@
-
 import {
   Collapsible,
   CollapsibleContent,
@@ -24,9 +23,9 @@ import { type ReactElement, useMemo, useRef } from "react";
 import { useRecipeStudioStore } from "../../stores/recipe-studio";
 import type { ValidatorConfig } from "../../types";
 import {
-  isValidatorCodeLang,
   VALIDATOR_OXC_CODE_LANGS,
   VALIDATOR_SQL_CODE_LANGS,
+  isValidatorCodeLang,
 } from "../../utils/validators/code-lang";
 import {
   OXC_CODE_SHAPES,
@@ -59,7 +58,9 @@ export function ValidatorDialog({
   const oxcModeAnchorRef = useRef<HTMLDivElement>(null);
   const oxcCodeShapeAnchorRef = useRef<HTMLDivElement>(null);
   const advancedOpen = config.advancedOpen === true;
-  const selectedOxcMode = normalizeOxcValidationMode(config.oxc_validation_mode);
+  const selectedOxcMode = normalizeOxcValidationMode(
+    config.oxc_validation_mode,
+  );
   const selectedOxcCodeShape = normalizeOxcCodeShape(config.oxc_code_shape);
   const codeOptions = useMemo(
     () =>
@@ -70,7 +71,11 @@ export function ValidatorDialog({
           }
           if (config.validator_type === "oxc") {
             const lang = item.code_lang?.trim() ?? "";
-            if (!VALIDATOR_OXC_CODE_LANGS.includes(lang as typeof config.code_lang)) {
+            if (
+              !VALIDATOR_OXC_CODE_LANGS.includes(
+                lang as typeof config.code_lang,
+              )
+            ) {
               return [];
             }
           } else {
@@ -78,7 +83,9 @@ export function ValidatorDialog({
             if (
               !(
                 lang === "python" ||
-                VALIDATOR_SQL_CODE_LANGS.includes(lang as typeof config.code_lang)
+                VALIDATOR_SQL_CODE_LANGS.includes(
+                  lang as typeof config.code_lang,
+                )
               )
             ) {
               return [];
@@ -121,7 +128,9 @@ export function ValidatorDialog({
               });
               return;
             }
-            const targetConfig = codeOptions.find((item) => item.name === value);
+            const targetConfig = codeOptions.find(
+              (item) => item.name === value,
+            );
             const nextCodeLang = targetConfig?.codeLang?.trim();
             onUpdate({
               // biome-ignore lint/style/useNamingConvention: api schema
@@ -147,11 +156,11 @@ export function ValidatorDialog({
           </SelectContent>
         </Select>
         {codeOptions.length === 0 && (
-              <p className="text-xs text-muted-foreground">
-                {config.validator_type === "oxc"
-                  ? "Add an AI code step that generates JavaScript or TypeScript first."
-                  : "Add an AI code step first."}
-              </p>
+          <p className="text-xs text-muted-foreground">
+            {config.validator_type === "oxc"
+              ? "Add an AI code step that generates JavaScript or TypeScript first."
+              : "Add an AI code step first."}
+          </p>
         )}
       </div>
       {config.validator_type === "oxc" && (

@@ -1,8 +1,7 @@
-
-import { apiUrl } from "@/lib/api-base";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { apiUrl } from "@/lib/api-base";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Eye, EyeOff } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -28,6 +27,8 @@ import {
   setMustChangePassword,
   storeAuthTokens,
 } from "../session";
+
+const WHITESPACE_RE = /\s/;
 
 type AuthMode = "login" | "change-password";
 
@@ -58,7 +59,9 @@ async function loginWithPassword(
   });
 
   if (!response.ok) {
-    const errorPayload = (await response.json().catch(() => null)) as { detail?: string } | null;
+    const errorPayload = (await response.json().catch(() => null)) as {
+      detail?: string;
+    } | null;
     throw new Error(errorPayload?.detail ?? "Login failed.");
   }
 
@@ -95,7 +98,9 @@ export function AuthForm({ mode }: AuthFormProps): ReactElement | null {
       // truth for requires_password_change.
       try {
         const response = await fetch(apiUrl("/api/auth/status"));
-        if (!response.ok) throw new Error("Failed to load auth status.");
+        if (!response.ok) {
+          throw new Error("Failed to load auth status.");
+        }
         const result = (await response.json()) as AuthStatusResponse;
         if (!canceled) {
           setInitialized(result.initialized);
@@ -122,13 +127,17 @@ export function AuthForm({ mode }: AuthFormProps): ReactElement | null {
             if (hasRefreshToken()) {
               const refreshed = await refreshSession();
               if (refreshed) {
-                if (!canceled) setStatusLoading(false);
+                if (!canceled) {
+                  setStatusLoading(false);
+                }
                 navigate({ to: getPostAuthRoute() });
                 return;
               }
             }
             if (hasAuthToken()) {
-              if (!canceled) setStatusLoading(false);
+              if (!canceled) {
+                setStatusLoading(false);
+              }
               navigate({ to: getPostAuthRoute() });
               return;
             }
@@ -139,7 +148,9 @@ export function AuthForm({ mode }: AuthFormProps): ReactElement | null {
           setError(err instanceof Error ? err.message : "Failed to load.");
         }
       } finally {
-        if (!canceled) setStatusLoading(false);
+        if (!canceled) {
+          setStatusLoading(false);
+        }
       }
     }
 
@@ -170,12 +181,13 @@ export function AuthForm({ mode }: AuthFormProps): ReactElement | null {
   if (initialized === false) {
     helperText = "Auth is still bootstrapping the default admin account.";
   } else if (isLoginMode && requiresPasswordChange) {
-    helperText = "Sign in once with the seeded credentials to change the password.";
-  } else if (!isLoginMode && !requiresPasswordChange) {
+    helperText =
+      "Sign in once with the seeded credentials to change the password.";
+  } else if (!(isLoginMode || requiresPasswordChange)) {
     helperText = "Password already updated. Use the login screen.";
   }
   const title = isLoginMode ? "Welcome back" : "Setup your account";
-  const subtitle = isLoginMode  
+  const subtitle = isLoginMode
     ? "Sign in with your password."
     : "Choose a new password";
   const submitLabel = isLoginMode ? "Login" : "Change password";
@@ -183,7 +195,8 @@ export function AuthForm({ mode }: AuthFormProps): ReactElement | null {
   const switchText = "Password already setup? ";
   const switchLinkTo = "/login";
   const switchLinkText = "Back to login";
-  const currentPassword = password || window.__UNSLOTH_BOOTSTRAP__?.password || "";
+  const currentPassword =
+    password || window.__UNSLOTH_BOOTSTRAP__?.password || "";
   // On first boot the backend injects __UNSLOTH_BOOTSTRAP__ and we silently
   // reuse that password; the Current password input is only rendered for the
   // admin-forced must_change_password path where no bootstrap is available.
@@ -192,10 +205,10 @@ export function AuthForm({ mode }: AuthFormProps): ReactElement | null {
     !isLoginMode &&
     (currentPassword.length < 8 ||
       newPassword.length < 8 ||
-      /\s/.test(newPassword) ||
+      WHITESPACE_RE.test(newPassword) ||
       newPassword !== confirmPassword ||
       currentPassword === newPassword);
-  const showWhitespaceWarning = !isLoginMode && /\s/.test(newPassword);
+  const showWhitespaceWarning = !isLoginMode && WHITESPACE_RE.test(newPassword);
   const showPasswordMismatchWarning =
     !isLoginMode &&
     newPassword.length > 0 &&
@@ -220,7 +233,7 @@ export function AuthForm({ mode }: AuthFormProps): ReactElement | null {
         setError("New password must be at least 8 characters.");
         return;
       }
-      if (/\s/.test(newPassword)) {
+      if (WHITESPACE_RE.test(newPassword)) {
         setError("New password cannot contain spaces.");
         return;
       }
@@ -253,7 +266,10 @@ export function AuthForm({ mode }: AuthFormProps): ReactElement | null {
         }
 
         if (!accessToken) {
-          const bootstrapToken = await loginWithPassword(username, currentPassword);
+          const bootstrapToken = await loginWithPassword(
+            username,
+            currentPassword,
+          );
           storeAuthTokens(
             bootstrapToken.access_token,
             bootstrapToken.refresh_token,
@@ -276,21 +292,23 @@ export function AuthForm({ mode }: AuthFormProps): ReactElement | null {
 
         if (!response.ok) {
           let message = "Password update failed.";
-          const errorPayload = (await response
-            .json()
-            .catch(() => null)) as { detail?: string } | null;
-          if (errorPayload?.detail) message = errorPayload.detail;
+          const errorPayload = (await response.json().catch(() => null)) as {
+            detail?: string;
+          } | null;
+          if (errorPayload?.detail) {
+            message = errorPayload.detail;
+          }
           throw new Error(message);
         }
 
         token = (await response.json()) as TokenResponse;
       }
 
-      if (!isLoginMode) {
+      if (isLoginMode) {
+        setMustChangePassword(token.must_change_password);
+      } else {
         setRequiresPasswordChange(false);
         setMustChangePassword(false);
-      } else {
-        setMustChangePassword(token.must_change_password);
       }
       storeAuthTokens(token.access_token, token.refresh_token);
       navigate({ to: getPostAuthRoute() });
@@ -308,7 +326,9 @@ export function AuthForm({ mode }: AuthFormProps): ReactElement | null {
     }
   }
 
-  if (statusLoading && initialized === null && error === null) return null;
+  if (statusLoading && initialized === null && error === null) {
+    return null;
+  }
 
   return (
     <div className="w-full max-w-sm space-y-6">
@@ -334,7 +354,7 @@ export function AuthForm({ mode }: AuthFormProps): ReactElement | null {
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 minLength={8}
-                required
+                required={true}
               />
               <Button
                 type="button"
@@ -367,7 +387,7 @@ export function AuthForm({ mode }: AuthFormProps): ReactElement | null {
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
                     minLength={8}
-                    required
+                    required={true}
                   />
                   <Button
                     type="button"
@@ -396,7 +416,7 @@ export function AuthForm({ mode }: AuthFormProps): ReactElement | null {
                   value={newPassword}
                   onChange={(event) => setNewPassword(event.target.value)}
                   minLength={8}
-                  required
+                  required={true}
                 />
                 <Button
                   type="button"
@@ -422,7 +442,7 @@ export function AuthForm({ mode }: AuthFormProps): ReactElement | null {
                 value={confirmPassword}
                 onChange={(event) => setConfirmPassword(event.target.value)}
                 minLength={8}
-                required
+                required={true}
               />
             </div>
             <p

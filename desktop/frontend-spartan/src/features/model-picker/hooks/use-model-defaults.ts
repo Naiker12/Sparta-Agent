@@ -1,4 +1,3 @@
-
 import { useHfTokenStore, useInventoryVersion } from "@/features/hub";
 import { useEffect, useState } from "react";
 import { fetchModelMaxPositionEmbeddings } from "../api/model-metadata";

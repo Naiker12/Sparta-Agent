@@ -1,4 +1,3 @@
-
 import type { Rect } from "../types";
 
 export function cssEscape(value: string): string {
@@ -16,4 +15,3 @@ export function toRect(domRect: DOMRect): Rect {
     h: domRect.height,
   };
 }
-

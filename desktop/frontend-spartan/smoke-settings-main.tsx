@@ -71,10 +71,8 @@ window.__settingsSmoke = {
   open: (tab?: string) => {
     store.getState().openDialog(tab as SettingsTab | undefined);
   },
-  // The archive toasts' deep-open: straight to Data, on the shelf they name.
   openArchived: (shelf: string) => {
     if (shelf === "chats") store.getState().openArchivedChats();
-    else store.getState().openArchivedMedia(shelf as "images");
   },
   close: () => {
     store.getState().closeDialog();

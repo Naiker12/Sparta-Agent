@@ -8,25 +8,17 @@
  * - Botón de colapso en riel de iconos.
  */
 
-import type { ReactElement } from "react";
-import { Link } from "@tanstack/react-router";
+import { DesktopTitlebarNavigation } from "@/components/tauri/window-titlebar";
+import { SidebarHeader } from "@/components/ui/sidebar";
+import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
+import { useChatSearchStore } from "@/features/chat";
 import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
-import {
-  SidebarHeader,
-} from "@/components/ui/sidebar";
-import {
-  Tooltip,
-  TooltipContent,
-} from "@/components/ui/tooltip";
-import { Tooltip as TooltipPrimitive } from "radix-ui";
+import { LayoutAlignLeftIcon, Search01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import {
-  LayoutAlignLeftIcon,
-  Search01Icon,
-} from "@hugeicons/core-free-icons";
-import { DesktopTitlebarNavigation } from "@/components/tauri/window-titlebar";
-import { useChatSearchStore } from "@/features/chat";
+import { Link } from "@tanstack/react-router";
+import { Tooltip as TooltipPrimitive } from "radix-ui";
+import type { ReactElement } from "react";
 
 export function SidebarBrandHeader({
   showSidebarBrand,
@@ -66,7 +58,7 @@ export function SidebarBrandHeader({
         <>
           {usesNativeMacTitlebar && !isMobile && (
             <div
-              data-tauri-drag-region
+              data-tauri-drag-region={true}
               className="absolute inset-x-0 top-0 z-10 flex h-[var(--studio-desktop-titlebar-height,34px)] items-start pt-px pl-[calc(var(--studio-mac-traffic-light-inset,78px)+6px)] select-none group-data-[collapsible=icon]:hidden"
             >
               <DesktopTitlebarNavigation
@@ -88,7 +80,9 @@ export function SidebarBrandHeader({
               to="/chat"
               onClick={(event) => {
                 event.preventDefault();
-                if (chatDisabled) return;
+                if (chatDisabled) {
+                  return;
+                }
                 openNewChat(null);
               }}
               className={cn(
@@ -109,7 +103,7 @@ export function SidebarBrandHeader({
             </Link>
             <div className="flex shrink-0 items-center gap-0.25">
               <Tooltip>
-                <TooltipPrimitive.Trigger asChild>
+                <TooltipPrimitive.Trigger asChild={true}>
                   <button
                     type="button"
                     onClick={() => {
@@ -140,9 +134,9 @@ export function SidebarBrandHeader({
                   )}
                 </TooltipContent>
               </Tooltip>
-              {!isMobile && !usesDesktopTitlebar && (
+              {!(isMobile || usesDesktopTitlebar) && (
                 <Tooltip>
-                  <TooltipPrimitive.Trigger asChild>
+                  <TooltipPrimitive.Trigger asChild={true}>
                     <button
                       type="button"
                       onClick={togglePinned}
@@ -170,7 +164,7 @@ export function SidebarBrandHeader({
           {!isMobile && (!usesDesktopTitlebar || usesNativeMacTitlebar) && (
             <div className="relative z-10 hidden group-data-[collapsible=icon]:flex h-[33px] items-center justify-center w-full">
               <Tooltip>
-                <TooltipPrimitive.Trigger asChild>
+                <TooltipPrimitive.Trigger asChild={true}>
                   <button
                     type="button"
                     onClick={togglePinned}

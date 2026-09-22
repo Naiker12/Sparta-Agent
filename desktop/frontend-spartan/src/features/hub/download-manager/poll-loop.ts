@@ -1,41 +1,20 @@
-
-import { carriesOverSeed, seededMeasuredTransfer } from "./adopt-rules";
+import { toast } from "@/lib/toast";
+import { appendSample, computeTransferStats } from "@/lib/transfer-stats";
 import { invalidateGgufVariantsCache } from "../inventory/api";
 import { getHfToken } from "../stores/hf-token-store";
 import { bumpInventoryVersion } from "../stores/inventory-events";
-import { toast } from "@/lib/toast";
-import { appendSample, computeTransferStats } from "@/lib/transfer-stats";
+import { carriesOverSeed, seededMeasuredTransfer } from "./adopt-rules";
 import {
-  getActiveDatasetDownloads,
-  getActiveModelDownloads,
   type ActiveModelDownload,
   type DownloadJobState,
+  getActiveDatasetDownloads,
+  getActiveModelDownloads,
 } from "./api";
-import { cancelExternalJob, isExternalJob } from "./external-jobs";
-import {
-  CANCELLED_LINGER_MS,
-  CANCEL_WATCHDOG_MS,
-  COMPLETE_LINGER_MS,
-  ERROR_LINGER_MS,
-  HIDDEN_POLL_INTERVAL_MS,
-  IDLE_EVICT_GRACE_MS,
-  INVENTORY_BUMP_DEBOUNCE_MS,
-  POLL_BACKOFF_AFTER_MS,
-  POLL_BACKOFF_INTERVAL_MS,
-  POLL_DEGRADED_AFTER_MS,
-  POLL_DEGRADED_MESSAGE,
-  POLL_INTERVAL_MS,
-  POLL_JITTER_MS,
-  PROGRESS_POLL_BACKOFF_INTERVAL_MS,
-  PROGRESS_POLL_INTERVAL_MS,
-  ACTIVE_STATES,
-  TERMINAL_DISPLAY_STATES,
-} from "./download-manager-config";
 import {
   DOWNLOAD_KIND,
-  TRANSPORT,
   type DownloadKind,
   type ResolvedTransport,
+  TRANSPORT,
   type TransportMode,
   adoptedTransports,
   isResolvedTransport,
@@ -54,14 +33,25 @@ import {
   pollAccessErrorMessage,
   withPollRequestTimeout,
 } from "./download-api-adapter";
-import type {
-  DownloadRequest,
-  JobListeners,
-  JobRuntime,
-  ManagedDownload,
-  ProgressLike,
-  Terminal,
-} from "./download-manager-types";
+import {
+  ACTIVE_STATES,
+  CANCELLED_LINGER_MS,
+  CANCEL_WATCHDOG_MS,
+  COMPLETE_LINGER_MS,
+  ERROR_LINGER_MS,
+  HIDDEN_POLL_INTERVAL_MS,
+  IDLE_EVICT_GRACE_MS,
+  INVENTORY_BUMP_DEBOUNCE_MS,
+  POLL_BACKOFF_AFTER_MS,
+  POLL_BACKOFF_INTERVAL_MS,
+  POLL_DEGRADED_AFTER_MS,
+  POLL_DEGRADED_MESSAGE,
+  POLL_INTERVAL_MS,
+  POLL_JITTER_MS,
+  PROGRESS_POLL_BACKOFF_INTERVAL_MS,
+  PROGRESS_POLL_INTERVAL_MS,
+  TERMINAL_DISPLAY_STATES,
+} from "./download-manager-config";
 import {
   getState,
   hasActiveRepoPeer,
@@ -74,6 +64,15 @@ import {
   scheduleRemoval,
   setExpectedBytesForJob,
 } from "./download-manager-state";
+import type {
+  DownloadRequest,
+  JobListeners,
+  JobRuntime,
+  ManagedDownload,
+  ProgressLike,
+  Terminal,
+} from "./download-manager-types";
+import { cancelExternalJob, isExternalJob } from "./external-jobs";
 import {
   hasObservedExpectedBytes,
   resolveProgressUpdate,
@@ -91,23 +90,19 @@ function notify(
   bytes: number,
 ): void {
   const set = runtimeRegistry.listeners.get(repoKeyOf(job.kind, job.repoId));
-  if (!set) return;
+  if (!set) {
+    return;
+  }
   for (const handlers of [...set]) {
     try {
-      if (event === "onComplete")
+      if (event === "onComplete") {
         void handlers.onComplete?.(job.variant, bytes);
-      else if (event === "onCancelled")
+      } else if (event === "onCancelled") {
         void handlers.onCancelled?.(job.variant);
-      else void handlers.onError?.(job.variant);
-    } catch (error) {
-      console.warn("Download job listener failed", {
-        kind: job.kind,
-        repoId: job.repoId,
-        variant: job.variant,
-        event,
-        error,
-      });
-    }
+      } else {
+        void handlers.onError?.(job.variant);
+      }
+    } catch (_error) {}
   }
 }
 
@@ -174,7 +169,9 @@ function markPollSuccess(key: string, rt: JobRuntime): void {
 function markPollFailure(key: string, rt: JobRuntime): void {
   const now = Date.now();
   rt.pollFailureStartedAt ??= now;
-  if (now - rt.pollFailureStartedAt < POLL_DEGRADED_AFTER_MS) return;
+  if (now - rt.pollFailureStartedAt < POLL_DEGRADED_AFTER_MS) {
+    return;
+  }
   rt.speedSamples.length = 0;
   patchJob(key, {
     error: POLL_DEGRADED_MESSAGE,
@@ -189,8 +186,12 @@ export function finalize(
 ): void {
   const job = getState().jobs[key];
   teardownRuntime(key);
-  if (!job) return;
-  if (TERMINAL_DISPLAY_STATES.has(job.state)) return;
+  if (!job) {
+    return;
+  }
+  if (TERMINAL_DISPLAY_STATES.has(job.state)) {
+    return;
+  }
   if (job.kind === DOWNLOAD_KIND.MODEL) {
     invalidateGgufVariantsCache(job.repoId);
   }
@@ -230,7 +231,9 @@ export function finalize(
     patchJob(key, {
       state: "error",
       error:
-        opts.error === null ? null : (pollAccessErrorMessage(rawError) ?? rawError),
+        opts.error === null
+          ? null
+          : (pollAccessErrorMessage(rawError) ?? rawError),
       bytesPerSec: 0,
     });
     notify(job, "onError", 0);
@@ -281,17 +284,25 @@ async function finalizeTerminalStatus(
   epoch: number,
 ): Promise<void> {
   const current = getState().jobs[key];
-  if (!current) return;
+  if (!current) {
+    return;
+  }
   if (terminalKind === "complete") {
     let finalBytes = current.downloadedBytes;
     try {
       const progressResp = await withPollRequestTimeout(abort, (signal) =>
         apiGetProgress(current, signal),
       );
-      if (!isCurrent(key, epoch)) return;
+      if (!isCurrent(key, epoch)) {
+        return;
+      }
       const latest = getState().jobs[key];
       if (latest) {
-        const { downloadedBytes } = applyProgressUpdate(key, latest, progressResp);
+        const { downloadedBytes } = applyProgressUpdate(
+          key,
+          latest,
+          progressResp,
+        );
         finalBytes = downloadedBytes;
       }
     } catch {
@@ -338,7 +349,12 @@ function reconcileProgressAndSpeed(
   } = resolveProgressUpdate(current, progressResp, {
     resetMonotonic: generationChanged,
   });
-  const bytesPerSec = applySpeedSample(rt, downloadedBytes, expected, Date.now());
+  const bytesPerSec = applySpeedSample(
+    rt,
+    downloadedBytes,
+    expected,
+    Date.now(),
+  );
   patchJob(key, {
     expectedBytes: expected,
     downloadedBytes,
@@ -378,7 +394,9 @@ function handleTickError(
   epoch: number,
   error: unknown,
 ): void {
-  if (!isCurrent(key, epoch)) return;
+  if (!isCurrent(key, epoch)) {
+    return;
+  }
   const accessMessage = pollAccessErrorMessage(
     error instanceof Error ? error.message : String(error ?? ""),
   );
@@ -391,7 +409,9 @@ function handleTickError(
 
 async function tick(key: string): Promise<void> {
   const rt = runtimeRegistry.runtimes.get(key);
-  if (!rt) return;
+  if (!rt) {
+    return;
+  }
   const job = getState().jobs[key];
   if (!job) {
     teardownRuntime(key);
@@ -401,7 +421,9 @@ async function tick(key: string): Promise<void> {
     rt.speedSamples.length = 0;
     return;
   }
-  if (rt.inFlight) return;
+  if (rt.inFlight) {
+    return;
+  }
   rt.inFlight = true;
   const epoch = rt.epoch;
   const abort = rt.abort;
@@ -409,7 +431,9 @@ async function tick(key: string): Promise<void> {
     const status = await withPollRequestTimeout(abort, (signal) =>
       apiGetStatus(job, signal),
     );
-    if (!isCurrent(key, epoch)) return;
+    if (!isCurrent(key, epoch)) {
+      return;
+    }
 
     const generationChanged = syncServerGeneration(key, job, status);
 
@@ -438,9 +462,13 @@ async function tick(key: string): Promise<void> {
     const progressResp = await withPollRequestTimeout(abort, (signal) =>
       apiGetProgress(jobForProgress, signal),
     );
-    if (!isCurrent(key, epoch)) return;
+    if (!isCurrent(key, epoch)) {
+      return;
+    }
     const current = getState().jobs[key];
-    if (!current) return;
+    if (!current) {
+      return;
+    }
 
     const { madeProgress } = reconcileProgressAndSpeed(
       rt,
@@ -501,10 +529,16 @@ function beginPolling(key: string, rt: JobRuntime): void {
   if (typeof document !== "undefined") {
     const epoch = rt.epoch;
     rt.visibilityListener = () => {
-      if (document.hidden || !isCurrent(key, epoch)) return;
+      if (document.hidden || !isCurrent(key, epoch)) {
+        return;
+      }
       const live = runtimeRegistry.runtimes.get(key);
-      if (live !== rt) return;
-      if (live.inFlight) return;
+      if (live !== rt) {
+        return;
+      }
+      if (live.inFlight) {
+        return;
+      }
       if (live.pollTimer != null) {
         window.clearTimeout(live.pollTimer);
         live.pollTimer = null;
@@ -544,7 +578,10 @@ export async function startJob(
   // downloading (or colliding with a no-variant snapshot). Skipped when ADOPTING:
   // the restored own entry would look like a peer and freeze the bar; adoptJob's
   // `pollingStarted` guard already prevents double-polling the same key.
-  if (!opts.adopt && hasActiveRepoPeer(req.kind, req.repoId, key, req.variant)) {
+  if (
+    !opts.adopt &&
+    hasActiveRepoPeer(req.kind, req.repoId, key, req.variant)
+  ) {
     return;
   }
   const nextEpoch = (runtimeRegistry.runtimes.get(key)?.epoch ?? 0) + 1;
@@ -625,7 +662,10 @@ export async function startJob(
       )
     : { transport: mode, cancelTransport: undefined };
   const activeTransport = adopted.transport;
-  if (!opts.adopt && hasActiveRepoPeer(req.kind, req.repoId, key, req.variant)) {
+  if (
+    !opts.adopt &&
+    hasActiveRepoPeer(req.kind, req.repoId, key, req.variant)
+  ) {
     teardownRuntime(key);
     return;
   }
@@ -676,7 +716,9 @@ export async function startJob(
     try {
       result = await apiStart(req, mode === TRANSPORT.XET, hfToken);
     } catch (err) {
-      if (!isCurrent(key, epoch)) return;
+      if (!isCurrent(key, epoch)) {
+        return;
+      }
       finalize(key, "error", {
         error: normalizeDownloadError(err),
       });
@@ -687,7 +729,9 @@ export async function startJob(
     if (rt.cancelRequested && result.accepted) {
       reissueDroppedStartCancel(req, result.generation);
     }
-    if (!isCurrent(key, epoch)) return;
+    if (!isCurrent(key, epoch)) {
+      return;
+    }
     if (!result.accepted) {
       finalize(key, "error", { error: describeUnacceptedStart(result.state) });
       return;
@@ -696,7 +740,9 @@ export async function startJob(
       patchJob(key, { serverGeneration: result.generation });
     }
     const started = transportAfterStart(mode, result.transport);
-    if (started !== activeTransport) patchJob(key, { transport: started });
+    if (started !== activeTransport) {
+      patchJob(key, { transport: started });
+    }
     // An adopted job can already have fallen back from Xet to HTTP, which
     // keeps its original cancel marker and so its stop control.
     if (isResolvedTransport(result.cancel_transport)) {
@@ -722,15 +768,25 @@ async function resolveCancelWatchdog(
   cancelEpoch: number,
 ): Promise<void> {
   const rt = runtimeRegistry.runtimes.get(key);
-  if (!rt || rt.epoch !== cancelEpoch || !rt.cancelRequested) return;
+  if (!rt || rt.epoch !== cancelEpoch || !rt.cancelRequested) {
+    return;
+  }
   const job = getState().jobs[key];
-  if (!job) return;
+  if (!job) {
+    return;
+  }
   const probe = await probeCancelOutcome(key, job, rt, cancelEpoch);
-  if (probe === "stale") return;
+  if (probe === "stale") {
+    return;
+  }
   const live = runtimeRegistry.runtimes.get(key);
-  if (!live || live.epoch !== cancelEpoch || !live.cancelRequested) return;
+  if (!live || live.epoch !== cancelEpoch || !live.cancelRequested) {
+    return;
+  }
   if (probe.terminal === "complete") {
-    finalize(key, "complete", { bytes: getState().jobs[key]?.downloadedBytes ?? 0 });
+    finalize(key, "complete", {
+      bytes: getState().jobs[key]?.downloadedBytes ?? 0,
+    });
   } else if (probe.terminal === "error") {
     finalize(key, "error", { error: probe.error });
   } else {
@@ -744,9 +800,13 @@ function applyCancelResult(
   result: { state: DownloadJobState },
 ): void {
   const live = runtimeRegistry.runtimes.get(key);
-  if (live && live.epoch !== cancelEpoch) return;
+  if (live && live.epoch !== cancelEpoch) {
+    return;
+  }
   if (result.state === "cancelling" || result.state === "cancelled") {
-    if (!live || !live.pollingStarted) finalize(key, "cancelled");
+    if (!live?.pollingStarted) {
+      finalize(key, "cancelled");
+    }
     return;
   }
   if (live) {
@@ -784,7 +844,9 @@ async function probeCancelOutcome(
   cancelEpoch: number,
 ): Promise<CancelProbeResult | "stale"> {
   try {
-    const probe = await withDownloadTimeout((signal) => apiGetStatus(job, signal));
+    const probe = await withDownloadTimeout((signal) =>
+      apiGetStatus(job, signal),
+    );
     if (probe.state === "complete") {
       return { terminal: "complete", error: null };
     }
@@ -805,7 +867,11 @@ async function probeCancelOutcome(
             apiGetProgress(current, signal),
           );
           const liveAfterProgress = runtimeRegistry.runtimes.get(key);
-          if (rt && liveAfterProgress && liveAfterProgress.epoch !== cancelEpoch) {
+          if (
+            rt &&
+            liveAfterProgress &&
+            liveAfterProgress.epoch !== cancelEpoch
+          ) {
             return "stale";
           }
           const latest = getState().jobs[key];
@@ -835,7 +901,9 @@ async function probeCancelOutcome(
 
 export async function cancelJob(key: string): Promise<void> {
   const job = getState().jobs[key];
-  if (!job) return;
+  if (!job) {
+    return;
+  }
   // Another subsystem owns this transfer; it does the cancelling.
   if (isExternalJob(key)) {
     await cancelExternalJob(key);
@@ -843,27 +911,37 @@ export async function cancelJob(key: string): Promise<void> {
   }
   const rt = runtimeRegistry.runtimes.get(key);
   const cancelEpoch = rt?.epoch ?? 0;
-  if (rt) rt.cancelRequested = true;
+  if (rt) {
+    rt.cancelRequested = true;
+  }
   patchJob(key, { state: "cancelling" });
   clearWatchdog(rt);
-  if (rt) armCancelWatchdog(key, rt, cancelEpoch);
+  if (rt) {
+    armCancelWatchdog(key, rt, cancelEpoch);
+  }
   try {
     const result = await withDownloadTimeout<{ state: DownloadJobState }>(
       (signal) => apiCancel(job, signal),
     );
     applyCancelResult(key, cancelEpoch, result);
-  } catch (err) {
+  } catch (_err) {
     const liveAtError = runtimeRegistry.runtimes.get(key);
-    if (rt && liveAtError && liveAtError.epoch !== cancelEpoch) return;
+    if (rt && liveAtError && liveAtError.epoch !== cancelEpoch) {
+      return;
+    }
     // apiCancel failed; the probe below is authoritative. Disarm the watchdog so
     // it can't finalize "cancelled" mid-probe and tear down a still-running worker.
     clearWatchdog(liveAtError);
 
     const probe = await probeCancelOutcome(key, job, rt, cancelEpoch);
-    if (probe === "stale") return;
+    if (probe === "stale") {
+      return;
+    }
 
     const live = runtimeRegistry.runtimes.get(key);
-    if (rt && (!live || live.epoch !== cancelEpoch)) return;
+    if (rt && (!live || live.epoch !== cancelEpoch)) {
+      return;
+    }
 
     if (probe.terminal !== null) {
       if (probe.terminal === "complete") {
@@ -882,7 +960,6 @@ export async function cancelJob(key: string): Promise<void> {
     }
     patchJob(key, { state: "running" });
     toast.error("Couldn't cancel the download. It's still running.");
-    console.warn("Failed to cancel download", err);
   }
 }
 
@@ -908,7 +985,9 @@ export function adoptJob(
         ...(cancelTransport === undefined
           ? {}
           : { cancelTransport: cancelTransport ?? undefined }),
-        ...(Number.isSafeInteger(known) ? {} : { serverGeneration: generation }),
+        ...(Number.isSafeInteger(known)
+          ? {}
+          : { serverGeneration: generation }),
       });
     }
     return;
@@ -939,7 +1018,9 @@ export async function probeAndAdopt(
       const downloads = await getActiveModelDownloads(repoId, signal, {
         fresh: options.fresh,
       });
-      if (signal.aborted) return;
+      if (signal.aborted) {
+        return;
+      }
       const activeDownloads = downloads.filter(
         (download) =>
           (options.includeVariants || download.variant === null) &&
@@ -955,7 +1036,9 @@ export async function probeAndAdopt(
             expectedBytes: 0,
             // Carry the live job's own file list so the adopted record can be matched against a later start for the same slot.
             // Without it the adopted job had an unknown set and any sibling checkpoint's request read as "already started".
-            ...(active.files && active.files.length > 0 ? { files: [...active.files] } : {}),
+            ...(active.files && active.files.length > 0
+              ? { files: [...active.files] }
+              : {}),
           },
           active.generation,
           active.state,
@@ -972,12 +1055,16 @@ export async function probeAndAdopt(
     // transport, without which an adopted HTTP dataset shows Cancel for a
     // transfer that would have resumed.
     const datasets = await getActiveDatasetDownloads(signal, repoId);
-    if (signal.aborted) return;
+    if (signal.aborted) {
+      return;
+    }
     // No repo compare here: the endpoint resolves the cached casing before it
     // filters, so an exact match against the card's spelling would drop the
     // very row it just asked for.
     for (const active of datasets) {
-      if (active.state !== "running" && active.state !== "cancelling") continue;
+      if (active.state !== "running" && active.state !== "cancelling") {
+        continue;
+      }
       adoptJob(
         { kind, repoId, variant: null, expectedBytes: 0 },
         active.generation,
@@ -988,12 +1075,11 @@ export async function probeAndAdopt(
           : null,
       );
     }
-  } catch (error) {
+  } catch (_error) {
     if (signal.aborted) {
       return;
     }
     if (import.meta.env.DEV) {
-      console.debug("Download adoption probe failed", { kind, repoId, error });
     }
   }
 }

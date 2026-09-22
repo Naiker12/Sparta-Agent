@@ -1,4 +1,3 @@
-
 export type ProviderCredentialEdit =
   | { action: "replace"; apiKey: string }
   | { action: "clear" }
@@ -11,7 +10,11 @@ export function resolveProviderCredentialEdit(
   clearRequested: boolean,
 ): ProviderCredentialEdit {
   const replacement = apiKey.trim();
-  if (replacement) return { action: "replace", apiKey: replacement };
-  if (clearRequested) return { action: "clear" };
+  if (replacement) {
+    return { action: "replace", apiKey: replacement };
+  }
+  if (clearRequested) {
+    return { action: "clear" };
+  }
   return hasExistingCredential ? { action: "keep" } : { action: "missing" };
 }

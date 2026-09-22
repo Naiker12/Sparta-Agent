@@ -1,4 +1,3 @@
-
 export async function checkDesktopUpdate() {
   const [{ invoke }, { Update }] = await Promise.all([
     import("@tauri-apps/api/core"),

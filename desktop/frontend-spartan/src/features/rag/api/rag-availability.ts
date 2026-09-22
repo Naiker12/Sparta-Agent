@@ -1,4 +1,3 @@
-
 import { create } from "zustand";
 
 import { formatFastApiDetail } from "@/lib/format-fastapi-error";
@@ -40,8 +39,12 @@ const DEFAULT_UNAVAILABLE_REASON =
 const RAG_UNAVAILABLE_MARKERS = ["sqlite-vec"];
 
 /** True only for a 503 body the RAG router itself produced. */
-function isRagUnavailableDetail(detail: string | null | undefined): detail is string {
-  if (!detail) return false;
+function isRagUnavailableDetail(
+  detail: string | null | undefined,
+): detail is string {
+  if (!detail) {
+    return false;
+  }
   const text = detail.toLowerCase();
   return RAG_UNAVAILABLE_MARKERS.some((marker) => text.includes(marker));
 }
@@ -85,7 +88,9 @@ export const useRagAvailabilityStore = create<RagAvailabilityState>()(
 
 /** True when a response body carries the backend's availability marker. */
 export function hasRagAvailabilityMarker(body: unknown): boolean {
-  if (!body || typeof body !== "object") return false;
+  if (!body || typeof body !== "object") {
+    return false;
+  }
   return typeof (body as RagAvailabilityMarker).ragAvailable === "boolean";
 }
 
@@ -96,7 +101,9 @@ export function hasRagAvailabilityMarker(body: unknown): boolean {
  * contract, and inventing an answer for it is what would gray the dialog out on a guess.
  */
 export function noteRagAvailability(body: unknown): void {
-  if (!hasRagAvailabilityMarker(body)) return;
+  if (!hasRagAvailabilityMarker(body)) {
+    return;
+  }
   const { ragAvailable, ragUnavailableReason } = body as RagAvailabilityMarker;
   if (ragAvailable === true) {
     useRagAvailabilityStore.setState({
@@ -137,7 +144,9 @@ export function noteRagResponse(status: number, body: unknown): void {
     // bodies say nothing about sqlite-vec. Recording one as unavailable would gate the
     // dialog for the session behind a transient outage, showing an extension
     // explanation for something that was never the extension.
-    if (!isRagUnavailableDetail(detail)) return;
+    if (!isRagUnavailableDetail(detail)) {
+      return;
+    }
     useRagAvailabilityStore.setState({
       available: false,
       reason: detail,
@@ -147,8 +156,12 @@ export function noteRagResponse(status: number, body: unknown): void {
   }
   // Any other failure is transient (auth, validation, a dead network) and says nothing
   // about whether the extension loads.
-  if (status < 200 || status >= 300) return;
-  if (hasRagAvailabilityMarker(body)) return;
+  if (status < 200 || status >= 300) {
+    return;
+  }
+  if (hasRagAvailabilityMarker(body)) {
+    return;
+  }
   useRagAvailabilityStore.setState({
     available: true,
     reason: null,

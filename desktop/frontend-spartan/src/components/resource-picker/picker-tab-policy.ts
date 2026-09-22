@@ -1,4 +1,3 @@
-
 import { PICKER_TAB, type PickerTab } from "./picker-tab-state.ts";
 
 export interface PickerDeviceInventoryState {

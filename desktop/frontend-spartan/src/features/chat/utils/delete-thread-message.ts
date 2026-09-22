@@ -1,4 +1,3 @@
-
 /**
  * assistant-ui exposes no public `deleteMessage` in our version, but
  * `MessageRepository` already does branch-safe deletion. We import it from

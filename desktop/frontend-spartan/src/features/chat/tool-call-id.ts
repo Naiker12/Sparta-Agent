@@ -1,4 +1,3 @@
-
 export function resolveToolCallPartId(
   ids: Map<string, string>,
   backendId: string,
@@ -6,10 +5,16 @@ export function resolveToolCallPartId(
   lastPartId: string,
   createId: () => string,
 ): string {
-  if (!backendId) return lastPartId;
-  if (confirmationId) return confirmationId;
+  if (!backendId) {
+    return lastPartId;
+  }
+  if (confirmationId) {
+    return confirmationId;
+  }
   const existing = ids.get(backendId);
-  if (existing) return existing;
+  if (existing) {
+    return existing;
+  }
   const partId = createId();
   ids.set(backendId, partId);
   return partId;

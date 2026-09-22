@@ -1,4 +1,3 @@
-
 import {
   Command,
   CommandDialog,
@@ -7,7 +6,11 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { useShortcut } from "@/features/settings/hooks/use-shortcut";
-import { Cancel01Icon, Message01Icon, Search01Icon } from "@hugeicons/core-free-icons";
+import {
+  Cancel01Icon,
+  Message01Icon,
+  Search01Icon,
+} from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useNavigate } from "@tanstack/react-router";
 import { Command as CommandPrimitive } from "cmdk";
@@ -33,18 +36,30 @@ export function selectVisibleChats<
   T extends { userSearchText: string; searchText: string },
 >(items: T[], search: string): T[] {
   const tokens = queryTokens(search);
-  if (tokens.length === 0) return items;
-  const userHits = items.filter((it) => haystackMatches(it.userSearchText, tokens));
-  if (userHits.length > 0) return userHits;
+  if (tokens.length === 0) {
+    return items;
+  }
+  const userHits = items.filter((it) =>
+    haystackMatches(it.userSearchText, tokens),
+  );
+  if (userHits.length > 0) {
+    return userHits;
+  }
   return items.filter((it) => haystackMatches(it.searchText, tokens));
 }
 
 function formatRelative(createdAt: number): string {
   const diff = Date.now() - createdAt;
   const day = 86_400_000;
-  if (diff < day) return "Today";
-  if (diff < 7 * day) return "Past week";
-  if (diff < 30 * day) return "Past month";
+  if (diff < day) {
+    return "Today";
+  }
+  if (diff < 7 * day) {
+    return "Past week";
+  }
+  if (diff < 30 * day) {
+    return "Past month";
+  }
   return "Older";
 }
 
@@ -62,7 +77,9 @@ export function ChatSearchDialog() {
   );
 
   useEffect(() => {
-    if (!isOpen) setQuery("");
+    if (!isOpen) {
+      setQuery("");
+    }
   }, [isOpen]);
 
   // skipInTextFields keeps the composer's own ⌘K (and any browser find) intact
@@ -96,7 +113,11 @@ export function ChatSearchDialog() {
             className="flex size-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             aria-label="Close"
           >
-            <HugeiconsIcon icon={Cancel01Icon} strokeWidth={2} className="size-4" />
+            <HugeiconsIcon
+              icon={Cancel01Icon}
+              strokeWidth={2}
+              className="size-4"
+            />
           </button>
         </div>
         <CommandList className="cmd-native-scrollbar hover-scrollbar max-h-[420px] p-1">
@@ -119,11 +140,15 @@ export function ChatSearchDialog() {
                       item.type === "single"
                         ? {
                             thread: item.id,
-                            ...(item.projectId ? { project: item.projectId } : {}),
+                            ...(item.projectId
+                              ? { project: item.projectId }
+                              : {}),
                           }
                         : {
                             compare: item.id,
-                            ...(item.projectId ? { project: item.projectId } : {}),
+                            ...(item.projectId
+                              ? { project: item.projectId }
+                              : {}),
                           },
                   });
                   close();

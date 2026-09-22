@@ -1,4 +1,3 @@
-
 import { MarkdownPreview } from "@/components/markdown/markdown-preview";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -255,7 +254,8 @@ function getConfigSummary(config: NodeConfig | undefined): string {
     }
     if (
       seedSourceType === "unstructured" &&
-      config.unstructured_file_names?.length
+      config.unstructured_file_names &&
+      config.unstructured_file_names.length > 0
     ) {
       const count = config.unstructured_file_names.length;
       return `${count} file${count !== 1 ? "s" : ""} uploaded`;
@@ -458,8 +458,7 @@ function RecipeGraphNodeBase({
         ? "border-emerald-500/60 ring-1 ring-emerald-500/20"
         : "";
   const hasConnectionIssue =
-    connectionStatus.isDisconnected ||
-    connectionStatus.missingDataInput;
+    connectionStatus.isDisconnected || connectionStatus.missingDataInput;
 
   return (
     <BaseNode

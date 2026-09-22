@@ -1,4 +1,3 @@
-
 interface InferenceGpuDiscovery {
   available: boolean;
   backend?: string;

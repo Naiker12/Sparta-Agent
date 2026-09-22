@@ -1,4 +1,3 @@
-
 // Build the `unsloth start <agent>` command for the API-keys panel.
 // `unsloth start` reads UNSLOTH_STUDIO_URL (default 127.0.0.1:8888) and only
 // auto-mints a key for a loopback server, so the bare command is correct only for
@@ -12,7 +11,9 @@ const DEFAULT_AGENT = "claude";
 // "[::1]"), so strip the brackets before matching the bare "::1" loopback rules below.
 export function normalizeHost(host: string): string {
   const lower = host.toLowerCase();
-  return lower.startsWith("[") && lower.endsWith("]") ? lower.slice(1, -1) : lower;
+  return lower.startsWith("[") && lower.endsWith("]")
+    ? lower.slice(1, -1)
+    : lower;
 }
 
 // The bare `unsloth start` probes exactly http://127.0.0.1:8888, so only that literal
@@ -25,7 +26,9 @@ function isDefaultLocalHost(host: string): boolean {
 
 // Match the CLI auto-mint rule (is_loopback_url): localhost, ::1, and all of 127.0.0.0/8.
 export function isLoopbackHost(host: string): boolean {
-  if (host === "localhost" || host === "::1") return true;
+  if (host === "localhost" || host === "::1") {
+    return true;
+  }
   const octets = host.split(".");
   return (
     octets.length === 4 &&
@@ -44,25 +47,35 @@ export function buildAgentCommand(
 
   let url: URL | null = null;
   try {
-    if (base) url = new URL(base);
+    if (base) {
+      url = new URL(base);
+    }
   } catch {
     url = null;
   }
   // Unknown base: fall back to the bare default-local command.
-  if (!url) return bare;
+  if (!url) {
+    return bare;
+  }
 
   const host = normalizeHost(url.hostname);
   const loopback = isLoopbackHost(host);
   // Default local server (http://127.0.0.1/localhost:8888): bare command
   // auto-discovers it. The CLI's bare default probes plain HTTP, so an HTTPS
   // loopback on the same port must keep its explicit SPARTAN_STUDIO_URL.
-  if (url.protocol === "http:" && isDefaultLocalHost(host) && url.port === DEFAULT_STUDIO_PORT) {
+  if (
+    url.protocol === "http:" &&
+    isDefaultLocalHost(host) &&
+    url.port === DEFAULT_STUDIO_PORT
+  ) {
     return bare;
   }
 
   // Non-default server: set the URL; non-loopback also needs an explicit key.
   let cmd = bare;
-  if (!loopback && key) cmd += ` --api-key ${key}`;
+  if (!loopback && key) {
+    cmd += ` --api-key ${key}`;
+  }
 
   const studioUrl = url.origin;
   return os === "windows"

@@ -1,12 +1,11 @@
-
-import { useState } from "react";
 import { GeneratedAvatar } from "@/components/ui/blobatar-avatar";
 import { cn } from "@/lib/utils";
-import {
-  useUserProfileStore,
-  type AvatarShape,
-} from "../stores/user-profile-store";
+import { useState } from "react";
 import { blobatarSeedFromValue } from "../blobatar-avatars";
+import {
+  type AvatarShape,
+  useUserProfileStore,
+} from "../stores/user-profile-store";
 
 type UserAvatarProps = {
   name: string;
@@ -70,7 +69,16 @@ export function UserAvatar({
     <GeneratedAvatar
       name={selectedSeed ?? (name.trim() || "sparta-user")}
       className={cn("inline-block shrink-0", shapeClass, SIZE[size], className)}
-      fallback={<span className={cn("inline-block shrink-0 bg-muted", shapeClass, SIZE[size], className)} />}
+      fallback={
+        <span
+          className={cn(
+            "inline-block shrink-0 bg-muted",
+            shapeClass,
+            SIZE[size],
+            className,
+          )}
+        />
+      }
     />
   );
 }

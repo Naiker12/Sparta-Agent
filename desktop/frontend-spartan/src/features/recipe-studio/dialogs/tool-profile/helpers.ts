@@ -1,4 +1,3 @@
-
 import type { LlmMcpProviderConfig } from "../../types";
 
 export function createMcpProviderId(prefix: string, index: number): string {

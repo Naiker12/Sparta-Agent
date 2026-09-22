@@ -1,4 +1,3 @@
-
 import { useSyncExternalStore } from "react";
 
 type Listener = () => void;
@@ -18,16 +17,22 @@ let outboundCloseTimer: ReturnType<typeof setTimeout> | null = null;
 let storageHandler: ((event: StorageEvent) => void) | null = null;
 
 function emitInventoryChange(): void {
-  for (const fn of [...listeners]) fn();
+  for (const fn of [...listeners]) {
+    fn();
+  }
 }
 
 function rememberBump(id: string): boolean {
-  if (seenBumps.has(id)) return false;
+  if (seenBumps.has(id)) {
+    return false;
+  }
   seenBumps.add(id);
   seenBumpOrder.push(id);
   while (seenBumpOrder.length > 32) {
     const oldest = seenBumpOrder.shift();
-    if (oldest) seenBumps.delete(oldest);
+    if (oldest) {
+      seenBumps.delete(oldest);
+    }
   }
   return true;
 }
@@ -38,32 +43,46 @@ function applyInventoryBump(): void {
 }
 
 function ensureCrossTabSync(): void {
-  if (crossTabReady || typeof window === "undefined") return;
+  if (crossTabReady || typeof window === "undefined") {
+    return;
+  }
   crossTabReady = true;
   if (typeof BroadcastChannel !== "undefined") {
     channel = new BroadcastChannel(CHANNEL_NAME);
     channel.onmessage = (event) => {
-      if (typeof event.data !== "string") return;
-      if (!rememberBump(event.data)) return;
+      if (typeof event.data !== "string") {
+        return;
+      }
+      if (!rememberBump(event.data)) {
+        return;
+      }
       applyInventoryBump();
     };
   }
   storageHandler = (event) => {
-    if (event.key !== STORAGE_KEY || typeof event.newValue !== "string") return;
-    if (!rememberBump(event.newValue)) return;
+    if (event.key !== STORAGE_KEY || typeof event.newValue !== "string") {
+      return;
+    }
+    if (!rememberBump(event.newValue)) {
+      return;
+    }
     applyInventoryBump();
   };
   window.addEventListener("storage", storageHandler);
   try {
     const current = window.localStorage.getItem(STORAGE_KEY);
-    if (typeof current === "string") rememberBump(current);
+    if (typeof current === "string") {
+      rememberBump(current);
+    }
   } catch {
     void 0;
   }
 }
 
 function stopCrossTabSync(): void {
-  if (!crossTabReady) return;
+  if (!crossTabReady) {
+    return;
+  }
   channel?.close();
   channel = null;
   if (storageHandler && typeof window !== "undefined") {
@@ -115,9 +134,13 @@ export function bumpInventoryVersion(): void {
     typeof window === "undefined"
       ? null
       : `${Date.now()}:${Math.random().toString(36).slice(2)}`;
-  if (id) rememberBump(id);
+  if (id) {
+    rememberBump(id);
+  }
   applyInventoryBump();
-  if (!id) return;
+  if (!id) {
+    return;
+  }
   postInventoryBump(id);
 }
 

@@ -1,4 +1,3 @@
-
 /**
  * The speculative-decoding vocabulary shared by the model picker and chat.
  *

@@ -1,12 +1,12 @@
 import { projectHasSources } from "@/features/rag/api/rag-api";
-import { getThreadWorkspace } from "../chat-api";
+import { clampReasoningEffortToLevels } from "../../provider-capabilities";
+import { useChatRuntimeStore } from "../../stores/chat-runtime-store";
+import type { ThreadRecord } from "../../types";
 import {
   getStoredChatThread,
   isThreadIncognito,
 } from "../../utils/chat-history-storage";
-import { useChatRuntimeStore } from "../../stores/chat-runtime-store";
-import { clampReasoningEffortToLevels } from "../../provider-capabilities";
-import type { ThreadRecord } from "../../types";
+import { getThreadWorkspace } from "../chat-api";
 
 export type ThreadRecordReader = () => Promise<ThreadRecord | undefined>;
 
@@ -16,7 +16,9 @@ export function rememberComposerProjectForRun(
   threadId: string,
   projectId: string | null,
 ): void {
-  if (isThreadIncognito(threadId)) return;
+  if (isThreadIncognito(threadId)) {
+    return;
+  }
   if (!composerProjectByPendingThread.has(threadId)) {
     composerProjectByPendingThread.set(threadId, projectId);
   }
@@ -36,7 +38,9 @@ export async function resolveProjectId(
     try {
       thread = await (readThreadRecord?.() ?? getStoredChatThread(threadId));
     } catch (error) {
-      if (opts?.rethrowReadFailure) throw error;
+      if (opts?.rethrowReadFailure) {
+        throw error;
+      }
       return null;
     }
     if (thread) {
@@ -103,7 +107,9 @@ export async function buildLocalTokenCountExtras(
     autoHealToolCalls,
     bypassPermissions,
   } = useChatRuntimeStore.getState();
-  if (!supportsTools) return {};
+  if (!supportsTools) {
+    return {};
+  }
 
   const ragProjectId = await resolveProjectId(threadId);
   const projectRagEnabled = ragProjectId
@@ -114,12 +120,14 @@ export async function buildLocalTokenCountExtras(
     : false;
   const ragOn = ragEnabled || projectRagEnabled;
   if (
-    !toolsEnabled &&
-    !codeToolsEnabled &&
-    !artifactsEnabled &&
-    !mcpEnabledForChat &&
-    !ragOn &&
-    !workspaceEnabled
+    !(
+      toolsEnabled ||
+      codeToolsEnabled ||
+      artifactsEnabled ||
+      mcpEnabledForChat ||
+      ragOn ||
+      workspaceEnabled
+    )
   ) {
     return { enable_tools: false, bypass_permissions: bypassPermissions };
   }

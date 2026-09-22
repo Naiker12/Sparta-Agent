@@ -1,4 +1,3 @@
-
 import { useCallback, useState } from "react";
 
 /** A string choice that survives reloads, falling back to `fallback`.

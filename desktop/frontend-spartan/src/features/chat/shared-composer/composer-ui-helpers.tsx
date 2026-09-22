@@ -118,8 +118,9 @@ export function PendingImageThumb({
     setSrc(url);
     return () => URL.revokeObjectURL(url);
   }, [file]);
-  if (!src)
+  if (!src) {
     return <div className="size-14 animate-pulse rounded-[14px] bg-muted" />;
+  }
   return (
     <div className="relative size-14 shrink-0 overflow-hidden rounded-[14px] border border-foreground/20 bg-muted">
       <img src={src} alt={file.name} className="h-full w-full object-cover" />

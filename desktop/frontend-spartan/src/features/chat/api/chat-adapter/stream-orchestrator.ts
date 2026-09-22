@@ -1,41 +1,18 @@
-import { getAuthToken } from "@/features/auth";
-import { projectHasSources } from "@/features/rag/api/rag-api";
 import {
   SANDBOX_FILE_TOOLS,
-  extractCreatedFiles,
-  isSandboxFileList,
-  isSandboxToolResult,
   type SandboxFile,
-  sandboxSessionIdFor,
+  extractCreatedFiles,
 } from "@/components/assistant-ui/sandbox-files";
+import { getAuthToken } from "@/features/auth";
+import { projectHasSources } from "@/features/rag/api/rag-api";
 import { apiUrl } from "@/lib/api-base";
-import { getLocale } from "@/i18n";
 import { parseParamCountB } from "@/lib/model-size";
-import { createLoadingToastIcon, toast } from "@/lib/toast";
-import { useSettingsDialogStore } from "@/features/settings/stores/settings-dialog-store";
-import { notifyPromptQueueRunFailed } from "../../utils/prompt-queue-boundary";
-import {
-  adoptPreStreamRunReservation,
-  findPreStreamRunReservation,
-  preStreamRunThreadIdsForAdapter,
-  releasePreStreamRunForThreadIds,
-  releasePreStreamRunReservation,
-} from "../../utils/pre-stream-run-reservation";
-import {
-  consumeQueuedChatRunSettings,
-  snapshotQueuedChatRunSettings,
-} from "../../utils/queued-chat-run-settings";
-import {
-  mergeQueuedModelCapabilities,
-  type QueuedModelCapabilities,
-} from "../../utils/queued-model-capabilities";
-import type { MessageTiming, ToolCallMessagePart } from "@assistant-ui/core";
+import { toast } from "@/lib/toast";
+import type { ToolCallMessagePart } from "@assistant-ui/core";
 import type { ChatModelAdapter } from "@assistant-ui/react";
-import { parsePartialJsonObject } from "assistant-stream/utils";
 import {
   getExternalProviderApiKey,
   isCustomProviderType,
-  isExternalModelId,
   isPromptCacheTtl,
   loadExternalProviders,
   parseExternalModelId,
@@ -45,25 +22,28 @@ import {
   supportsProviderPromptCaching,
   toExternalBackendProviderType,
 } from "../../external-providers";
+import {
+  adoptPreStreamRunReservation,
+  findPreStreamRunReservation,
+  preStreamRunThreadIdsForAdapter,
+  releasePreStreamRunForThreadIds,
+  releasePreStreamRunReservation,
+} from "../../utils/pre-stream-run-reservation";
+import { notifyPromptQueueRunFailed } from "../../utils/prompt-queue-boundary";
+import { consumeQueuedChatRunSettings } from "../../utils/queued-chat-run-settings";
+import { mergeQueuedModelCapabilities } from "../../utils/queued-model-capabilities";
 
 import {
-  addCodexReasoning,
-  codexLocalToolRoundId,
-  codexReasoningForToolCalls,
-  readCodexReasoning,
-  shouldReplayAssistantReasoning,
-  startsNewCodexToolRound,
   type CodexReasoningLedger,
+  addCodexReasoning,
 } from "../../codex-reasoning";
-
-import { toolCallReplayArguments } from "../../tool-call-arguments";
 import {
   findStreamedToolCallPartIndex,
   resolveToolCallPartId,
 } from "../../tool-call-id";
 
-import { buildResearchInferenceRequest } from "../../research-inference-request";
 import { pickFriendlyContainerName } from "../../lib/friendly-names";
+import { buildResearchInferenceRequest } from "../../research-inference-request";
 
 import {
   clampReasoningEffortToLevels,
@@ -81,81 +61,36 @@ import {
 } from "../../provider-capabilities";
 import { selectCodeToolNames } from "../code-tool-placement";
 import {
-  buildCurrentTemporalContext,
-  resolveSystemPromptVariables,
-  attachAssistantThoughtSignature,
-  buildReplayContent,
-  setAssistantCodexReasoning,
-  autoLoadSourceKey,
-  isRememberedAutoLoadSource,
-  normalizeAutoLoadTarget,
-  orderAutoLoadSources,
-  type AutoLoadSource,
-  ThreadAutosaveHandle,
-  useThreadAutosaveHandle,
-  isContextLimitError,
-  isSafeNavigableSourceUrl,
-  documentCitationToSource,
-  parseSourcesFromResult,
-  parseLiveToolArgs,
-  toolResultModelText,
-  isMcpImageToolResult,
-  isSandboxWrapper,
-  isWrappedWithText,
-  type McpImageToolResult,
-  messagesContainImage,
-  findLatestUserAudioBase64,
-  findLatestUserVideoBase64,
-  extractAudioPartBase64,
-  extractVideoPartBase64,
-  CANVAS_TOOL_INSTRUCTION,
   CANVAS_FALLBACK_INSTRUCTION,
-  type RunMessages,
-  type RunMessage,
-  resolveProjectId,
-  rememberComposerProjectForRun,
-  buildLocalTokenCountReasoning,
-  buildLocalTokenCountExtras,
-  type ThreadRecordReader,
-  wait,
-  collectTextParts,
-  collectImageParts,
-  isServerSideBuiltinToolPart,
-  SERVER_SIDE_BUILTIN_TOOL_NAMES,
-  sanitizeAssistantReplayText,
-  isAnthropicRefusalMessage,
-  getToolPartReplayMetadata,
-  serializeAssistantToolCallPart,
-  serializeToolResultPart,
-  canReplayToolCallWithoutRoleTool,
-  extractImageBase64,
-  findLatestUserImageBase64,
-  collectAssistantTextThoughtSignature,
-  serializeAssistantReplayMessages,
-  toOpenAIMessages,
-  toOpenAIImageEditReferenceMessage,
-  normalizeOpenAIReasoningItem,
-  estimateTokenCount,
-  buildTiming,
-  type SerializedMessage,
-  type SerializedToolCall,
-  type SerializedToolResult,
-  type OpenAIChatMessage,
-  type OpenAIMessageContent,
-  type OpenAIReasoningContentPart,
-  RESPONSE_LANGUAGE_BY_LOCALE,
-  defaultResponseLanguageInstruction,
-  resolveProjectInstructions,
-  resolveProjectWorkspaceContext,
-  resolveChatInstructions,
-  resolveUseAdapter,
-  resolveSandboxSessionId,
-  buildOutboundMessagesForTokenCount,
+  CANVAS_TOOL_INSTRUCTION,
+  type McpImageToolResult,
   type OpenAIStreamAdapterOptions,
-  waitForModelReady,
-  autoLoadSmallestModel,
-  resolveQueuedEmptyLocalModel,
   type QueuedResolvedModelRuntime,
+  type RunMessage,
+  type SerializedMessage,
+  ThreadAutosaveHandle,
+  attachAssistantThoughtSignature,
+  buildTiming,
+  documentCitationToSource,
+  estimateTokenCount,
+  findLatestUserAudioBase64,
+  findLatestUserImageBase64,
+  findLatestUserVideoBase64,
+  isAnthropicRefusalMessage,
+  isContextLimitError,
+  isMcpImageToolResult,
+  parseLiveToolArgs,
+  parseSourcesFromResult,
+  rememberComposerProjectForRun,
+  resolveChatInstructions,
+  resolveProjectId,
+  resolveQueuedEmptyLocalModel,
+  resolveSandboxSessionId,
+  resolveUseAdapter,
+  toOpenAIImageEditReferenceMessage,
+  toOpenAIMessages,
+  wait,
+  waitForModelReady,
 } from "./index";
 
 // A connected project is an explicit capability: these tools are available
@@ -171,86 +106,66 @@ const WORKSPACE_TOOL_NAMES = [
   "search_in_files",
 ] as const;
 import {
-  type PendingImageEditReference,
   type RagAutoInject,
   awaitThreadScopedPairing,
   useChatRuntimeStore,
 } from "../../stores/chat-runtime-store";
 import { useExternalProvidersStore } from "../../stores/external-providers-store";
 import {
+  beginExternalResearchFollow,
+  ingestResearchUpdate,
+  terminalResearchStatuses,
+  useResearchRunStore,
+  watchResearchRun,
+} from "../../stores/research-run-store";
+import {
   shouldPreserveFullOutput,
   toolOutputKey,
   toolPaneScope,
   toolThreadScope,
 } from "../../tool-output-scope";
-import type { ModelType, ThreadRecord } from "../../types";
-import { isMultimodalResponse } from "../../types/api";
-import type {
-  CpuFallbackReason,
-  MmprojFallbackReason,
-  GgufVariantDetail,
-  OpenAIChatCompletionsRequest,
-} from "../../types/api";
-import type { ChatModelSummary } from "../../types/runtime";
-import { loadFallbackNotice } from "../../utils/mmproj-fallback";
+import type { OpenAIChatCompletionsRequest } from "../../types/api";
 import {
   getStoredChatThread,
   getStoredChatThreadReadResult,
-  getStoredChatProject,
-  isThreadIncognito,
-  listStoredChatThreads,
   listStoredChatMessages,
+  listStoredChatThreads,
   saveStoredChatMessage,
   updateStoredChatThread,
 } from "../../utils/chat-history-storage";
 import {
-  readLastLocalModelLoad,
-  recordLastLocalModelLoad,
-  type LastLocalModelKind,
-} from "../../utils/last-local-model-load";
-import { createRetryableSharedRead } from "../../utils/retryable-shared-read";
-import { ensureThreadWorkspace } from "../../utils/pending-workspace";
+  CONTINUE_INSTRUCTION,
+  type IncompleteReason,
+  budgetImpliesTruncation,
+  joinContinuation,
+  readContinuationRequest,
+  rejectsAssistantPrefill,
+  resumesExactly,
+} from "../../utils/continuation";
 import { getImageInputUnavailableReason } from "../../utils/image-input-support";
+import { createSegmentedAssistantText } from "../../utils/incremental-assistant-content";
 import {
   createThinkTagTracker,
   extractDeltaText,
-  parseAssistantContent,
+  type parseAssistantContent,
 } from "../../utils/parse-assistant-content";
-import { createSegmentedAssistantText } from "../../utils/incremental-assistant-content";
-import {
-  createTrailingPlaceholderWatch,
-  stripTrailingTemplatePlaceholder,
-} from "../../utils/trailing-template-placeholder";
-import { createStreamPublishGate } from "../../utils/stream-pacing";
+import { ensureThreadWorkspace } from "../../utils/pending-workspace";
 import {
   countReasoningGroups,
   createReasoningDurationTracker,
   lastReasoningGroupTextLength,
 } from "../../utils/reasoning-duration";
-import { resolveLoadMaxSeqLength } from "../../presets/preset-policy";
-import type { CachedGgufRepo, CachedModelRepo } from "../chat-api";
+import { createRetryableSharedRead } from "../../utils/retryable-shared-read";
+import { createStreamPublishGate } from "../../utils/stream-pacing";
 import {
-  budgetImpliesTruncation,
-  CONTINUE_INSTRUCTION,
-  type IncompleteReason,
-  joinContinuation,
-  readIncompleteInfo,
-  readContinuationRequest,
-  rejectsAssistantPrefill,
-  resumesExactly,
-} from "../../utils/continuation";
+  createTrailingPlaceholderWatch,
+  stripTrailingTemplatePlaceholder,
+} from "../../utils/trailing-template-placeholder";
 import {
-  generateAudio,
   GenerationLengthError,
-  fetchGgufStagedMetadata,
-  getInferenceStatus,
-  listCachedGguf,
-  listCachedModels,
-  listGgufVariants,
-  loadModel,
-  streamChatCompletions,
   StreamInterruptedError,
-  validateModel,
+  generateAudio,
+  streamChatCompletions,
 } from "../chat-api";
 import {
   createOpenAIContainer,
@@ -260,13 +175,6 @@ import {
   encryptProviderApiKey,
   isProviderKeyRotationError,
 } from "../providers-api";
-import {
-  beginExternalResearchFollow,
-  ingestResearchUpdate,
-  terminalResearchStatuses,
-  useResearchRunStore,
-  watchResearchRun,
-} from "../../stores/research-run-store";
 import { cancelResearchRun, createResearchRun } from "../research-api";
 
 // Small models (<=9B) answer from memory instead of calling search, so "auto"
@@ -274,8 +182,12 @@ import { cancelResearchRun, createResearchRun } from "../research-api";
 const AUTOINJECT_AUTO_MAX_SIZE_B = 9;
 
 function resolveAutoInject(mode: RagAutoInject, checkpoint: string): boolean {
-  if (mode === "on") return true;
-  if (mode === "off") return false;
+  if (mode === "on") {
+    return true;
+  }
+  if (mode === "off") {
+    return false;
+  }
   const size = parseParamCountB(checkpoint);
   // Unknown size -> enable.
   return size === null || size <= AUTOINJECT_AUTO_MAX_SIZE_B;
@@ -350,14 +262,8 @@ interface ResponseDetailsMetadata {
   };
 }
 
-
 /** Tracks which user messages were sent with an audio file (messageId → filename). */
 export const sentAudioNames = new Map<string, string>();
-
-
-
-
-
 
 async function updateStoredChatThreadEventually(
   threadId: string,
@@ -367,21 +273,12 @@ async function updateStoredChatThreadEventually(
     const updated = await updateStoredChatThread(threadId, patch).catch(
       () => undefined,
     );
-    if (updated) return;
+    if (updated) {
+      return;
+    }
     await wait(50);
   }
 }
-
-
-
-
-
-
-
-
-
-
-
 
 export function createOpenAIStreamAdapter(
   options: OpenAIStreamAdapterOptions = {},
@@ -451,18 +348,14 @@ export function createOpenAIStreamAdapter(
         ) {
           return;
         }
-        try {
-          await updateStoredChatThread(resolvedThreadId, { modelId });
-        } catch (error) {
-          throw error;
-        }
+        await updateStoredChatThread(resolvedThreadId, { modelId });
       };
       if (queuedRunSettings) {
         runtime = { ...runtime, ...queuedRunSettings };
       }
       const threadAlreadyResearched = Boolean(
         resolvedThreadId &&
-        useResearchRunStore.getState().claimedThreadIds[resolvedThreadId],
+          useResearchRunStore.getState().claimedThreadIds[resolvedThreadId],
       );
       if (runtime.deepResearchEnabled && threadAlreadyResearched) {
         if (queuedRunSettings) {
@@ -479,21 +372,13 @@ export function createOpenAIStreamAdapter(
       ) {
         if (runtime.modelLoading) {
           toast.info("Waiting for model to finish loading…");
-          try {
-            await waitForModelReady(abortSignal);
-          } catch (error) {
-            throw error;
-          }
+          await waitForModelReady(abortSignal);
         }
         if (!runtime.params.checkpoint) {
           let resolution: Awaited<
             ReturnType<typeof resolveQueuedEmptyLocalModel>
           >;
-          try {
-            resolution = await resolveQueuedEmptyLocalModel(abortSignal);
-          } catch (error) {
-            throw error;
-          }
+          resolution = await resolveQueuedEmptyLocalModel(abortSignal);
           queuedEmptyModelRuntime = resolution.modelRuntime;
           if (!resolution.loaded) {
             // A reported failure already names the model; generic advice buries it.
@@ -560,8 +445,9 @@ export function createOpenAIStreamAdapter(
                 ),
               }
           : liveRuntime;
-        if (!resolvedThreadId)
+        if (!resolvedThreadId) {
           throw new Error("Research requires a saved chat.");
+        }
         if (!unstable_assistantMessageId) {
           throw new Error(
             "Deep research could not bind its assistant message. Please retry the send.",
@@ -570,10 +456,12 @@ export function createOpenAIStreamAdapter(
         const userMessage = [...messages]
           .reverse()
           .find((m) => m.role === "user");
-        if (!userMessage) throw new Error("Research requires a user message.");
+        if (!userMessage) {
+          throw new Error("Research requires a user message.");
+        }
         const userMessageIndex = messages.indexOf(userMessage);
         const userMessageParentId =
-          userMessageIndex > 0 ? messages[userMessageIndex - 1]!.id : null;
+          userMessageIndex > 0 ? messages[userMessageIndex - 1]?.id : null;
         const { params } = runtime;
         await persistResolvedQueuedModel(params.checkpoint);
         const selectedCheckpoint = params.checkpoint.trim();
@@ -698,7 +586,7 @@ export function createOpenAIStreamAdapter(
             parentId: storedUserMessage?.parentId ?? userMessageParentId,
             role: "user",
             content: userMessage.content,
-            ...(userMessage.attachments?.length
+            ...(userMessage.attachments && userMessage.attachments.length > 0
               ? { attachments: userMessage.attachments }
               : {}),
             createdAt: userMessage.createdAt?.getTime?.() ?? Date.now(),
@@ -778,8 +666,7 @@ export function createOpenAIStreamAdapter(
           }
         } catch (error) {
           if (
-            !abortSignal.aborted &&
-            !researchFollowController.signal.aborted
+            !(abortSignal.aborted || researchFollowController.signal.aborted)
           ) {
             throw error;
           }
@@ -930,10 +817,9 @@ export function createOpenAIStreamAdapter(
       const threadWorkspace = resolvedThreadId
         ? await ensureThreadWorkspace(resolvedThreadId)
         : null;
-      const sandboxSessionId = threadWorkspace ? resolvedThreadId : await resolveSandboxSessionId(
-        resolvedThreadId,
-        readThreadRecord,
-      );
+      const sandboxSessionId = threadWorkspace
+        ? resolvedThreadId
+        : await resolveSandboxSessionId(resolvedThreadId, readThreadRecord);
       const toolConfirmationScopeId = resolvedThreadId
         ? `${sandboxSessionId || "_default"}:${resolvedThreadId}`
         : sandboxSessionId || "_default";
@@ -1015,8 +901,8 @@ export function createOpenAIStreamAdapter(
         : false;
       const externalProviderIsGeminiCustomBase = Boolean(
         externalProvider &&
-        externalProvider.providerType === "gemini" &&
-        isGeminiCustomOpenAICompatBase(externalProvider.baseUrl),
+          externalProvider.providerType === "gemini" &&
+          isGeminiCustomOpenAICompatBase(externalProvider.baseUrl),
       );
       const externalProviderUsesOAuth =
         externalProvider?.authKind === "chatgpt_oauth";
@@ -1040,13 +926,13 @@ export function createOpenAIStreamAdapter(
       // computed first so Gemini image mode can suppress Search/Code.
       const imageGenerationEnabledForThisTurn = Boolean(
         externalProvider &&
-        externalSelection &&
-        imageToolsEnabled &&
-        providerSupportsBuiltinImageGeneration(
-          externalProvider.providerType,
-          externalSelection.modelId,
-          externalProvider.baseUrl,
-        ),
+          externalSelection &&
+          imageToolsEnabled &&
+          providerSupportsBuiltinImageGeneration(
+            externalProvider.providerType,
+            externalSelection.modelId,
+            externalProvider.baseUrl,
+          ),
       );
       // Per-model Search/Code allowances live in
       // providerSupportsBuiltin*; this flag just signals image-mode.
@@ -1055,36 +941,36 @@ export function createOpenAIStreamAdapter(
         imageGenerationEnabledForThisTurn;
       const webSearchEnabledForThisTurn = Boolean(
         externalProvider &&
-        externalSelection &&
-        toolsEnabled &&
-        providerSupportsBuiltinWebSearch(
-          externalProvider.providerType,
-          externalSelection.modelId,
-          externalProvider.baseUrl,
-        ),
+          externalSelection &&
+          toolsEnabled &&
+          providerSupportsBuiltinWebSearch(
+            externalProvider.providerType,
+            externalSelection.modelId,
+            externalProvider.baseUrl,
+          ),
       );
       const codeExecEnabledForThisTurn = Boolean(
         externalProvider &&
-        externalSelection &&
-        codeToolsEnabled &&
-        !geminiImageModeForThisTurn &&
-        providerSupportsBuiltinCodeExecution(
-          externalProvider.providerType,
-          externalSelection.modelId,
-          externalProvider.baseUrl,
-        ),
+          externalSelection &&
+          codeToolsEnabled &&
+          !geminiImageModeForThisTurn &&
+          providerSupportsBuiltinCodeExecution(
+            externalProvider.providerType,
+            externalSelection.modelId,
+            externalProvider.baseUrl,
+          ),
       );
       // Fetch pill is independent of Search (Anthropic bills web_fetch
       // separately). Sourced from `webFetchToolsEnabled`; on providers
       // without web_fetch the toggle is forced off in chat-page setState.
       const webFetchEnabledForThisTurn = Boolean(
         externalProvider &&
-        webFetchToolsEnabled &&
-        providerSupportsBuiltinWebFetch(externalProvider.providerType),
+          webFetchToolsEnabled &&
+          providerSupportsBuiltinWebFetch(externalProvider.providerType),
       );
       const providerShipsWebFetch = Boolean(
         externalProvider &&
-        providerSupportsBuiltinWebFetch(externalProvider.providerType),
+          providerSupportsBuiltinWebFetch(externalProvider.providerType),
       );
       // Which side of the connection the Code pill runs code on. Hosted
       // `code_execution` and local `python` / `terminal` are two trust
@@ -1213,47 +1099,31 @@ export function createOpenAIStreamAdapter(
         const anyWebEnabledForThisTurn =
           webSearchEnabledForThisTurn || webFetchEnabledForThisTurn;
         if (
-          !anyWebEnabledForThisTurn &&
-          !codeExecEnabledForThisTurn &&
-          !imageGenerationEnabledForThisTurn
+          !(
+            anyWebEnabledForThisTurn ||
+            codeExecEnabledForThisTurn ||
+            imageGenerationEnabledForThisTurn
+          )
         ) {
-          disabledToolGuard =
-            `You do not have ${webLabel}, code execution, or image generation tools in this conversation. ` +
-            "Answer from your own knowledge. " +
-            "If a request genuinely requires tool use, live data fetch, running code, or image generation, " +
-            "inform the user that you do not have access to these capabilities. " +
-            "Do not return tool-call syntax inside your response.";
-        } else if (!anyWebEnabledForThisTurn && !codeExecEnabledForThisTurn) {
-          disabledToolGuard =
-            `You do not have ${webLabel} or code execution tools in this conversation. ` +
-            "You may still use image generation tools when they are available and useful. " +
-            "If a request genuinely requires live data fetch or running code, " +
-            "inform the user that you do not have access to these capabilities. " +
-            "Do not return tool-call syntax inside your response.";
+          disabledToolGuard = `You do not have ${webLabel}, code execution, or image generation tools in this conversation. Answer from your own knowledge. If a request genuinely requires tool use, live data fetch, running code, or image generation, inform the user that you do not have access to these capabilities. Do not return tool-call syntax inside your response.`;
+        } else if (!(anyWebEnabledForThisTurn || codeExecEnabledForThisTurn)) {
+          disabledToolGuard = `You do not have ${webLabel} or code execution tools in this conversation. You may still use image generation tools when they are available and useful. If a request genuinely requires live data fetch or running code, inform the user that you do not have access to these capabilities. Do not return tool-call syntax inside your response.`;
         } else if (!anyWebEnabledForThisTurn) {
           const availableTools = [
             codeExecEnabledForThisTurn ? "code execution" : null,
             imageGenerationEnabledForThisTurn ? "image generation" : null,
           ].filter(Boolean);
-          disabledToolGuard =
-            `You do not have ${webLabel} tools in this conversation. ` +
-            (availableTools.length > 0
+          disabledToolGuard = `You do not have ${webLabel} tools in this conversation. ${
+            availableTools.length > 0
               ? `You may still use ${availableTools.join(" and ")} tools when they are available and useful. `
-              : "") +
-            "If a request genuinely requires live data fetch or web search tool use, " +
-            "inform the user that you do not have access to these capabilities. " +
-            "Do not return tool-call syntax inside your response.";
+              : ""
+          }If a request genuinely requires live data fetch or web search tool use, inform the user that you do not have access to these capabilities. Do not return tool-call syntax inside your response.`;
         } else if (!codeExecEnabledForThisTurn) {
           const availableTools = [
             webLabel,
             imageGenerationEnabledForThisTurn ? "image generation" : null,
           ].filter(Boolean);
-          disabledToolGuard =
-            "You do not have code execution tools in this conversation. " +
-            `You may still use ${availableTools.join(" and ")} tools when they are available and useful. ` +
-            "If a request genuinely requires running code or code execution tool use, " +
-            "inform the user that you do not have access to these capabilities. " +
-            "Do not return tool-call syntax inside your response.";
+          disabledToolGuard = `You do not have code execution tools in this conversation. You may still use ${availableTools.join(" and ")} tools when they are available and useful. If a request genuinely requires running code or code execution tool use, inform the user that you do not have access to these capabilities. Do not return tool-call syntax inside your response.`;
         }
       }
       type OutboundMessage = (typeof outboundMessages)[number];
@@ -1261,7 +1131,9 @@ export function createOpenAIStreamAdapter(
         targetMessages: OutboundMessage[],
         text: string | null,
       ): void {
-        if (!text) return;
+        if (!text) {
+          return;
+        }
         const firstMessage = targetMessages[0];
         if (firstMessage?.role === "system") {
           if (typeof firstMessage.content === "string") {
@@ -1292,7 +1164,7 @@ export function createOpenAIStreamAdapter(
       // composer since would switch it onto the audio path, which cannot be continued.
       const audioBase64 = findLatestUserAudioBase64(
         survivingMessages,
-        !queuedRunSettings && !continuation,
+        !(queuedRunSettings || continuation),
       );
       const videoBase64 = findLatestUserVideoBase64(survivingMessages);
       const hasOutboundImage = Boolean(imageBase64);
@@ -1302,9 +1174,9 @@ export function createOpenAIStreamAdapter(
       // with Canvas on exposes render_html even with no other pills active.
       const renderHtmlToolEnabledForThisTurn = Boolean(
         !isExternalRequest &&
-        supportsTools &&
-        artifactsEnabled &&
-        !hasOutboundImage,
+          supportsTools &&
+          artifactsEnabled &&
+          !hasOutboundImage,
       );
       const artifactInstruction = artifactsEnabled
         ? renderHtmlToolEnabledForThisTurn
@@ -1361,7 +1233,9 @@ export function createOpenAIStreamAdapter(
           const lastUserMsg = [...survivingMessages]
             .reverse()
             .find((m) => m.role === "user");
-          if (lastUserMsg) sentAudioNames.set(lastUserMsg.id, audioName);
+          if (lastUserMsg) {
+            sentAudioNames.set(lastUserMsg.id, audioName);
+          }
         }
         runtime.clearPendingAudio();
       }
@@ -1477,21 +1351,29 @@ export function createOpenAIStreamAdapter(
       void firstTokenPromise.catch(() => {});
 
       function settleFirstTokenOk(): void {
-        if (firstTokenSettled) return;
+        if (firstTokenSettled) {
+          return;
+        }
         firstTokenSettled = true;
         resolveFirstToken?.();
       }
 
       function settleFirstTokenErr(err: unknown): void {
-        if (firstTokenSettled) return;
+        if (firstTokenSettled) {
+          return;
+        }
         firstTokenSettled = true;
         rejectFirstToken?.(err);
       }
 
       const warmupDelayMs = 450;
       const warmupTimer = setTimeout(() => {
-        if (!waitingFirstChunk) return;
-        if (runSignal.aborted) return;
+        if (!waitingFirstChunk) {
+          return;
+        }
+        if (runSignal.aborted) {
+          return;
+        }
         runtime.setGeneratingStatus("waiting");
       }, warmupDelayMs);
       // Flagged local/external so the model-swap gate only counts the chats a reload ends; the
@@ -1636,7 +1518,9 @@ export function createOpenAIStreamAdapter(
       const pinTextThoughtSignature = <T extends { type: string }>(
         parts: T[],
       ): T[] => {
-        if (!latestTextThoughtSignature || parts.length === 0) return parts;
+        if (!latestTextThoughtSignature || parts.length === 0) {
+          return parts;
+        }
         for (let i = parts.length - 1; i >= 0; i -= 1) {
           if (parts[i].type === "text") {
             parts[i] = {
@@ -1716,8 +1600,12 @@ export function createOpenAIStreamAdapter(
         existing: ToolCallProvenance | undefined,
         incoming: ToolCallProvenance | undefined,
       ): ToolCallProvenance | undefined => {
-        if (!incoming) return existing;
-        if (!existing) return incoming;
+        if (!incoming) {
+          return existing;
+        }
+        if (!existing) {
+          return incoming;
+        }
         const merged: ToolCallProvenance = { ...existing, ...incoming };
         for (const key of [
           "healed",
@@ -1766,7 +1654,9 @@ export function createOpenAIStreamAdapter(
           return;
         }
         const body: Record<string, string> = { cancel_id: cancelId };
-        if (sandboxSessionId) body.session_id = sandboxSessionId;
+        if (sandboxSessionId) {
+          body.session_id = sandboxSessionId;
+        }
         // Plain fetch, not authFetch: authFetch redirects to login on
         // 401, which would kick the user out mid-stop.
         const token = getAuthToken();
@@ -1903,7 +1793,7 @@ export function createOpenAIStreamAdapter(
           reasoningEffortLevels,
         );
         const externalReasoningEnabled =
-          !externalReasoningCaps.supportsReasoningOff ? true : reasoningEnabled;
+          externalReasoningCaps.supportsReasoningOff ? reasoningEnabled : true;
         const buildRequestPayload = async (
           forceRefreshPublicKey = false,
         ): Promise<OpenAIChatCompletionsRequest> => {
@@ -1963,8 +1853,12 @@ export function createOpenAIStreamAdapter(
                     includeArchived: true,
                   });
                   for (const t of others) {
-                    if (t.id === resolvedThreadId) continue;
-                    if (!t.openaiCodeExecContainerId) continue;
+                    if (t.id === resolvedThreadId) {
+                      continue;
+                    }
+                    if (!t.openaiCodeExecContainerId) {
+                      continue;
+                    }
                     // Skip ids not in active set; null the source thread so
                     // the next pass doesn't re-pick a dead id.
                     if (
@@ -2467,7 +2361,8 @@ export function createOpenAIStreamAdapter(
                 // Persist container_id onto the thread (OpenAI / Anthropic).
                 if (toolEvent.type === "container_ready") {
                   const newContainerId = toolEvent.container_id as
-                    string | undefined;
+                    | string
+                    | undefined;
                   if (newContainerId && resolvedThreadId) {
                     const field =
                       externalProvider?.providerType === "anthropic"
@@ -2485,7 +2380,9 @@ export function createOpenAIStreamAdapter(
                   const cits = toolEvent.citations;
                   if (Array.isArray(cits)) {
                     cits.forEach((entry, idx) => {
-                      if (!entry || typeof entry !== "object") return;
+                      if (!entry || typeof entry !== "object") {
+                        return;
+                      }
                       const part = documentCitationToSource(
                         entry as Record<string, unknown>,
                         idx,
@@ -2735,8 +2632,9 @@ export function createOpenAIStreamAdapter(
                           text: rawResult.slice(0, mcpImgIdx),
                           images,
                         };
-                        if (isMcpImageToolResult(candidate))
+                        if (isMcpImageToolResult(candidate)) {
                           mcpImages = candidate;
+                        }
                       } catch {
                         // Not a valid envelope; fall through below.
                       }
@@ -2919,9 +2817,12 @@ export function createOpenAIStreamAdapter(
                 serverMetadata = {
                   usage: chunk.usage,
                   timings: (chunk as Record<string, unknown>).timings as
-                    ServerTimings | undefined,
+                    | ServerTimings
+                    | undefined,
                 };
-                if (chunk.choices?.length === 0) continue;
+                if (chunk.choices?.length === 0) {
+                  continue;
+                }
               }
 
               totalChunks += 1;
@@ -2958,7 +2859,8 @@ export function createOpenAIStreamAdapter(
               // Latest Gemini text-part thoughtSignature for next-turn replay.
               const deltaExtraContent = (
                 chunk.choices?.[0]?.delta as
-                  { extra_content?: unknown } | undefined
+                  | { extra_content?: unknown }
+                  | undefined
               )?.extra_content;
               // Replay state reaches the message only through a yield, so a
               // Stop while the gate holds one persists a turn that cannot
@@ -2999,18 +2901,22 @@ export function createOpenAIStreamAdapter(
               // wrap inline as <think>...</think> for parseAssistantContent.
               const rawReasoning = (
                 chunk.choices?.[0]?.delta as
-                  { reasoning_content?: unknown } | undefined
+                  | { reasoning_content?: unknown }
+                  | undefined
               )?.reasoning_content;
               // OpenRouter ships reasoning as delta.reasoning_details[]
               // regardless of provider; merge into the same wrap path.
               const rawReasoningDetails = (
                 chunk.choices?.[0]?.delta as
-                  { reasoning_details?: unknown } | undefined
+                  | { reasoning_details?: unknown }
+                  | undefined
               )?.reasoning_details;
               const reasoningFromDetails = Array.isArray(rawReasoningDetails)
                 ? rawReasoningDetails
                     .map((part) => {
-                      if (!part || typeof part !== "object") return "";
+                      if (!part || typeof part !== "object") {
+                        return "";
+                      }
                       const text = (part as { text?: unknown }).text;
                       return typeof text === "string" ? text : "";
                     })
@@ -3024,7 +2930,8 @@ export function createOpenAIStreamAdapter(
               // thoughtSignature for replay.
               const rawDeltaToolCalls = (
                 chunk.choices?.[0]?.delta as
-                  { tool_calls?: unknown } | undefined
+                  | { tool_calls?: unknown }
+                  | undefined
               )?.tool_calls;
               if (
                 Array.isArray(rawDeltaToolCalls) &&
@@ -3035,7 +2942,9 @@ export function createOpenAIStreamAdapter(
                 // is state, so it always publishes.
                 let addedToolCall = false;
                 for (const tc of rawDeltaToolCalls) {
-                  if (!tc || typeof tc !== "object") continue;
+                  if (!tc || typeof tc !== "object") {
+                    continue;
+                  }
                   const call = tc as {
                     id?: string;
                     index?: number;
@@ -3197,7 +3106,7 @@ export function createOpenAIStreamAdapter(
                 }
                 continue;
               }
-              if (!delta && !reasoning) {
+              if (!(delta || reasoning)) {
                 continue;
               }
               // So a chunk that added nothing can be told from one that did.
@@ -3210,12 +3119,12 @@ export function createOpenAIStreamAdapter(
               }
 
               if (reasoning) {
-                if (!reasoningContentOpen) {
+                if (reasoningContentOpen) {
+                  appendCumulative(reasoning);
+                } else {
                   reasoningDurationTracker.startGroup();
                   appendCumulative(`<think>${reasoning}`);
                   reasoningContentOpen = true;
-                } else {
-                  appendCumulative(reasoning);
                 }
               }
               if (delta) {
@@ -3277,7 +3186,7 @@ export function createOpenAIStreamAdapter(
               ) {
                 continue;
               }
-              if (!replayStateChanged && !canPublish(streamedChars)) {
+              if (!(replayStateChanged || canPublish(streamedChars))) {
                 continue;
               }
 

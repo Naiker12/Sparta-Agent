@@ -1,4 +1,3 @@
-
 import {
   Tooltip,
   TooltipContent,
@@ -131,7 +130,9 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
-function resolveTrendingGlow(row: DiscoverRow): Pick<
+function resolveTrendingGlow(
+  row: DiscoverRow,
+): Pick<
   TrendingCardStyle,
   "--hub-trending-glow" | "--hub-trending-secondary-glow"
 > {
@@ -202,11 +203,7 @@ export function buildTrendingAuraStyle(row: DiscoverRow): TrendingCardStyle {
     10,
     90,
   );
-  const secondaryY = clamp(
-    layout.secondaryY + ((hash >>> 16) % 9) - 4,
-    6,
-    58,
-  );
+  const secondaryY = clamp(layout.secondaryY + ((hash >>> 16) % 9) - 4, 6, 58);
   const sheenAngle = layout.sheenAngle + ((hash >>> 20) % 17) - 8;
   const scrimAngle = layout.scrimAngle + ((hash >>> 24) % 19) - 9;
   return {
@@ -247,7 +244,8 @@ export const ModelCard = memo(function ModelCard({
           }),
     [isDataset, row.id, row.result, deviceType],
   );
-  const unsupported = support?.status === "unsupported" && !support?.supportedIn;
+  const unsupported =
+    support?.status === "unsupported" && !support?.supportedIn;
   const partial = row.isAvailableOnDevice && row.isPartialOnDevice;
   const onDevice = row.isAvailableOnDevice && !row.isPartialOnDevice;
   const topCapability = row.capabilities[0] ?? null;

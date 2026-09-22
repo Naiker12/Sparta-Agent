@@ -46,8 +46,12 @@ function parseErrorText(status: number, body: unknown): string {
   if (body && typeof body === "object") {
     const { detail, message } = body as { detail?: unknown; message?: unknown };
     const formatted = formatFastApiDetail(detail);
-    if (formatted) return formatted;
-    if (typeof message === "string" && message) return message;
+    if (formatted) {
+      return formatted;
+    }
+    if (typeof message === "string" && message) {
+      return message;
+    }
   }
   return `Request failed (${status})`;
 }
@@ -62,9 +66,13 @@ async function mcpRequest<T>(
     body: init?.body ? JSON.stringify(init.body) : undefined,
   });
   // 204 No Content (DELETE) has no body — calling .json() would throw.
-  if (response.status === 204) return undefined as T;
+  if (response.status === 204) {
+    return undefined as T;
+  }
   const json = await response.json().catch(() => null);
-  if (!response.ok) throw new Error(parseErrorText(response.status, json));
+  if (!response.ok) {
+    throw new Error(parseErrorText(response.status, json));
+  }
   return json as T;
 }
 
@@ -107,12 +115,21 @@ export function updateMcpServer(
   },
 ): Promise<McpServerConfig> {
   const body: Record<string, unknown> = {};
-  if (payload.displayName !== undefined)
+  if (payload.displayName !== undefined) {
     body.display_name = payload.displayName;
-  if (payload.url !== undefined) body.url = payload.url;
-  if (payload.headers !== undefined) body.headers = payload.headers;
-  if (payload.isEnabled !== undefined) body.is_enabled = payload.isEnabled;
-  if (payload.useOauth !== undefined) body.use_oauth = payload.useOauth;
+  }
+  if (payload.url !== undefined) {
+    body.url = payload.url;
+  }
+  if (payload.headers !== undefined) {
+    body.headers = payload.headers;
+  }
+  if (payload.isEnabled !== undefined) {
+    body.is_enabled = payload.isEnabled;
+  }
+  if (payload.useOauth !== undefined) {
+    body.use_oauth = payload.useOauth;
+  }
   return mcpRequest(`/${serverId}`, { method: "PUT", body });
 }
 

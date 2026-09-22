@@ -1,4 +1,3 @@
-
 import {
   Tooltip,
   TooltipContent,
@@ -16,6 +15,7 @@ import {
   formatShortDate,
 } from "@/features/hub/lib/format";
 import { useHfTokenStore } from "@/features/hub/stores/hf-token-store";
+import { taskForMediaPick } from "@/features/model-picker/components/model-selector/audio-picker-policy";
 import { Tick02Icon } from "@/lib/tick-icon";
 import { cn, formatCompact } from "@/lib/utils";
 import {
@@ -41,6 +41,8 @@ import { memo, useDeferredValue, useMemo } from "react";
 import { selectActiveJob, useDownloadManagerStore } from "../download-manager";
 import { useCopyFeedback } from "../hooks/use-copy-feedback";
 import { useDatasetSize } from "../hooks/use-dataset-size";
+import { routableToMediaPage } from "../lib/local-path";
+import { studioPageForTask } from "../lib/unsloth-support";
 import {
   formatLibrary,
   formatLocalUpdated,
@@ -50,9 +52,6 @@ import {
 import { confirmExternalLink } from "../stores/external-link-confirm";
 import type { SelectedModelView } from "../types";
 import { DatasetDownloadSection } from "./dataset-download-section";
-import { taskForMediaPick } from "@/features/model-picker/components/model-selector/audio-picker-policy";
-import { routableToMediaPage } from "../lib/local-path";
-import { studioPageForTask } from "../lib/unsloth-support";
 import { DownloadSection } from "./download-section";
 import { LocalDatasetCard } from "./local-dataset-card";
 import { LocalOnDeviceCard } from "./local-on-device-card";
@@ -288,9 +287,11 @@ function ModelStatusChips({
     !unslothSupport.supportedIn;
   // The format-unsupported chip already explains itself; this one covers the
   // supported-format model a chat-only host still can't run.
-  const showChatOnly = !isDataset && !isGguf && chatOnly && !showUnsupported;
+  const showChatOnly = !(isDataset || isGguf) && chatOnly && !showUnsupported;
   const showVram = !isDataset && vramInfo && !isGguf;
-  if (!showUnsupported && !showChatOnly && !showVram) return null;
+  if (!(showUnsupported || showChatOnly || showVram)) {
+    return null;
+  }
 
   const vramTone = vramInfo
     ? vramInfo.status === "exceeds"
@@ -319,7 +320,7 @@ function ModelStatusChips({
       {showUnsupported && (
         <Tooltip>
           <TooltipTrigger asChild={true}>
-            <span tabIndex={0} className="inline-flex outline-none">
+            <span className="inline-flex outline-none">
               <StatusChip tone="danger" label="May not be supported" />
             </span>
           </TooltipTrigger>
@@ -343,7 +344,7 @@ function ModelStatusChips({
       {showChatOnly && (
         <Tooltip>
           <TooltipTrigger asChild={true}>
-            <span tabIndex={0} className="inline-flex outline-none">
+            <span className="inline-flex outline-none">
               <StatusChip tone="warning" label="GGUF-only device" />
             </span>
           </TooltipTrigger>
@@ -363,7 +364,7 @@ function ModelStatusChips({
       {showVram && vramInfo && (
         <Tooltip>
           <TooltipTrigger asChild={true}>
-            <span tabIndex={0} className="inline-flex outline-none">
+            <span className="inline-flex outline-none">
               <StatusChip tone={vramTone} label={vramLabel} />
             </span>
           </TooltipTrigger>
@@ -579,8 +580,7 @@ export const ModelInspector = memo(function ModelInspector({
   const runsOnMediaPage =
     studioPageForTask(
       taskForMediaPick(model.pipelineTag, model.task) ?? undefined,
-    ) !== undefined &&
-    routableToMediaPage(model.kind, model.localSource);
+    ) !== undefined && routableToMediaPage(model.kind, model.localSource);
   // Chat-only hosts (no supported GPU / usable MLX) run inference only through
   // llama.cpp, so only GGUF is loadable.
   const canRunModel =
@@ -719,11 +719,11 @@ export const ModelInspector = memo(function ModelInspector({
               loadingPhase={loadingPhase}
               gpuGb={gpuGb}
               systemRamGb={systemRamGb}
-
               preferredFile={preferredGgufFile}
               preferredFileIntent={preferredGgufFileIntent}
               unsupportedReason={
-                unslothSupport.status === "unsupported" && !unslothSupport.supportedIn
+                unslothSupport.status === "unsupported" &&
+                !unslothSupport.supportedIn
                   ? (unslothSupport.reason ?? "Unsupported format")
                   : null
               }
@@ -749,7 +749,6 @@ export const ModelInspector = memo(function ModelInspector({
               isActive={isActive}
               activeQuant={isActive ? (activeGgufVariant ?? null) : null}
               preferredGgufFile={preferredGgufFile}
-
               preferredGgufFileIntent={preferredGgufFileIntent}
               isLoadingThisModel={isLoadingThisModel}
               gpuGb={gpuGb}

@@ -4,24 +4,23 @@
  * y reordenamiento de turnos pendientes entre conversaciones.
  */
 
-import { createContext } from "react";
 import {
   PROMPT_QUEUE_RUN_FAILED_EVENT,
   PROMPT_QUEUE_STOP_EVENT,
+  type PromptQueueRunFailedEventDetail,
+  type PromptQueueStopEventDetail,
   planLocalPromptQueueStop,
   promptQueueActiveItemChanged,
   reorderPromptQueueItems,
-  type PromptQueueRunFailedEventDetail,
-  type PromptQueueStopEventDetail,
 } from "@/features/chat";
 import { resolveProjectId } from "@/features/chat/api/chat-adapter";
 import { useChatRuntimeStore } from "@/features/chat/stores/chat-runtime-store";
 import {
-  usePromptQueueUI,
   type PromptQueueUIEntry,
   type PromptQueueUIItem,
   type PromptQueueUIItemStatus,
   type PromptQueueUIState,
+  usePromptQueueUI,
 } from "@/features/chat/stores/prompt-queue-ui-store";
 import { discardQueuedChatRunSettingsForThread } from "@/features/chat/utils/queued-chat-run-settings";
 import {
@@ -31,6 +30,7 @@ import {
   projectWorkCount,
 } from "@/features/rag/api/rag-api";
 import { useRagAvailabilityStore } from "@/features/rag/api/rag-availability";
+import { createContext } from "react";
 import {
   PROMPT_QUEUE_DISPATCH_RETRY_MS,
   PROMPT_QUEUE_INDEXING_RETRY_MS,
@@ -70,13 +70,17 @@ function stopPromptQueueSubscription(): void {
 }
 
 function clearPromptQueuePumpTimer(): void {
-  if (!promptQueuePumpTimer) return;
+  if (!promptQueuePumpTimer) {
+    return;
+  }
   clearTimeout(promptQueuePumpTimer);
   promptQueuePumpTimer = null;
 }
 
 function clearPromptQueueRetryTimer(run: PromptQueueRun): void {
-  if (!run.retryTimer) return;
+  if (!run.retryTimer) {
+    return;
+  }
   clearTimeout(run.retryTimer);
   run.retryTimer = null;
 }
@@ -130,20 +134,19 @@ export function requestPromptQueuePumpIfReady(delay = 0): void {
 function handleQueuedPromptAppendFailure(
   run: PromptQueueRun,
   item: PromptQueueItem,
-  error: unknown,
+  _error: unknown,
 ): void {
-  if (!isActivePromptQueueItem(run, item, run.generation)) return;
+  if (!isActivePromptQueueItem(run, item, run.generation)) {
+    return;
+  }
   item.dispatched = false;
   promptQueueActiveRunIds.delete(run.id);
   syncPromptQueueUI();
   item.dispatchRetries += 1;
   if (item.dispatchRetries > PROMPT_QUEUE_MAX_DISPATCH_RETRIES) {
-    console.error("Prompt queue dispatch failed permanently:", error);
     try {
       item.target.cancel();
-    } catch (cleanupError) {
-      console.error("Prompt queue cleanup failed:", cleanupError);
-    }
+    } catch (_cleanupError) {}
     deletePromptQueueRun(run);
     requestPromptQueuePumpIfReady();
     return;
@@ -156,7 +159,9 @@ function consumePromptQueueDeepResearch(
   run: PromptQueueRun,
   item: PromptQueueItem,
 ): void {
-  if (run.deepResearchConsumed || !item.target.usesDeepResearch) return;
+  if (run.deepResearchConsumed || !item.target.usesDeepResearch) {
+    return;
+  }
   run.deepResearchConsumed = true;
   for (const queueItem of run.items) {
     queueItem.target.consumeDeepResearch();
@@ -190,14 +195,20 @@ const indexingDocument = (doc: { status: string }) =>
 async function targetHasIndexingDocuments(
   item: PromptQueueItem,
 ): Promise<boolean> {
-  if (item.target.isIndexing()) return true;
+  if (item.target.isIndexing()) {
+    return true;
+  }
   const threadId = item.target.getDocumentThreadId();
   try {
     if (threadId && item.target.usesThreadDocuments) {
       const documents = await listThreadDocuments(threadId);
-      if (documents.some(indexingDocument)) return true;
+      if (documents.some(indexingDocument)) {
+        return true;
+      }
     }
-    if (item.target.usesKnowledgeBase) return false;
+    if (item.target.usesKnowledgeBase) {
+      return false;
+    }
     const queueProjectId = item.target.getQueueProjectId();
     const projectId = threadId
       ? await resolveProjectId(threadId, undefined, {
@@ -205,13 +216,19 @@ async function targetHasIndexingDocuments(
           composerProjectId: queueProjectId,
         })
       : queueProjectId;
-    if (!projectId) return false;
-    if (projectWorkCount(projectId) > 0) return true;
+    if (!projectId) {
+      return false;
+    }
+    if (projectWorkCount(projectId) > 0) {
+      return true;
+    }
     try {
       const projectDocuments = await listProjectDocuments(projectId);
       return projectDocuments.some(indexingDocument);
     } catch (error) {
-      if (isRagClientError(error)) return false;
+      if (isRagClientError(error)) {
+        return false;
+      }
       throw error;
     }
   } catch {
@@ -265,13 +282,17 @@ export function isPromptQueueRunReadyToDispatch(run: PromptQueueRun): boolean {
 }
 
 function getNextReadyPromptQueueRun(): PromptQueueRun | null {
-  if (promptQueueRunOrder.length === 0) return null;
+  if (promptQueueRunOrder.length === 0) {
+    return null;
+  }
   const size = promptQueueRunOrder.length;
   for (let offset = 0; offset < size; offset += 1) {
     const orderIndex = (promptQueueRoundRobinCursor + offset) % size;
     const runId = promptQueueRunOrder[orderIndex];
     const run = promptQueueRuns.get(runId);
-    if (!run || !isPromptQueueRunReadyToDispatch(run)) continue;
+    if (!(run && isPromptQueueRunReadyToDispatch(run))) {
+      continue;
+    }
     promptQueueRoundRobinCursor = (orderIndex + 1) % size;
     return run;
   }
@@ -279,7 +300,9 @@ function getNextReadyPromptQueueRun(): PromptQueueRun | null {
 }
 
 export function requestPromptQueuePump(delay = 0): void {
-  if (promptQueuePumpTimer) return;
+  if (promptQueuePumpTimer) {
+    return;
+  }
   promptQueuePumpTimer = setTimeout(() => {
     promptQueuePumpTimer = null;
     pumpPromptQueues();
@@ -290,7 +313,9 @@ function pumpPromptQueues(): void {
   ensurePromptQueueSubscription();
   while (true) {
     const run = getNextReadyPromptQueueRun();
-    if (!run) return;
+    if (!run) {
+      return;
+    }
     const item = getActivePromptQueueItem(run);
     if (!item) {
       deletePromptQueueRun(run);
@@ -314,7 +339,9 @@ async function dispatchQueuedPrompt(
   item: PromptQueueItem,
   generation = run.generation,
 ): Promise<void> {
-  if (!isActivePromptQueueItem(run, item, generation)) return;
+  if (!isActivePromptQueueItem(run, item, generation)) {
+    return;
+  }
   if (
     isPromptQueueTargetRunning(
       item.target,
@@ -334,13 +361,17 @@ async function dispatchQueuedPrompt(
     return;
   }
   const hasIndexing = await targetHasIndexingDocuments(item);
-  if (!isActivePromptQueueItem(run, item, generation)) return;
+  if (!isActivePromptQueueItem(run, item, generation)) {
+    return;
+  }
   if (hasIndexing) {
     promptQueueActiveRunIds.delete(run.id);
     scheduleQueuedPromptDispatch(run, item, PROMPT_QUEUE_INDEXING_RETRY_MS);
     return;
   }
-  if (!isActivePromptQueueItem(run, item, generation)) return;
+  if (!isActivePromptQueueItem(run, item, generation)) {
+    return;
+  }
   appendQueuedPrompt(run, item);
 }
 
@@ -396,9 +427,13 @@ export function findPromptQueueRunByTarget(
   target: PromptQueueTarget,
 ): PromptQueueRun | null {
   const targetIds = getPromptQueueTargetIds(target);
-  if (targetIds.length === 0) return null;
+  if (targetIds.length === 0) {
+    return null;
+  }
   for (const run of promptQueueRuns.values()) {
-    if (promptQueueRunMatchesThreadIds(run, targetIds)) return run;
+    if (promptQueueRunMatchesThreadIds(run, targetIds)) {
+      return run;
+    }
   }
   return null;
 }
@@ -418,9 +453,13 @@ export function findPromptQueueRunByItemId(
 export function findPromptQueueRunByThreadIds(
   threadIds: string[],
 ): PromptQueueRun | null {
-  if (threadIds.length === 0) return null;
+  if (threadIds.length === 0) {
+    return null;
+  }
   for (const run of promptQueueRuns.values()) {
-    if (promptQueueRunMatchesThreadIds(run, threadIds)) return run;
+    if (promptQueueRunMatchesThreadIds(run, threadIds)) {
+      return run;
+    }
   }
   return null;
 }
@@ -431,7 +470,9 @@ export function findPromptQueueEntry(
 ): PromptQueueUIEntry | null {
   for (const threadId of threadIds) {
     const entry = state.byThreadId[threadId];
-    if (entry) return entry;
+    if (entry) {
+      return entry;
+    }
   }
   return null;
 }
@@ -472,7 +513,9 @@ export function getPromptQueueUIItemsForRun(
   const { activeItemIndex, total } = getPromptQueueRunProgress(run);
   const items: PromptQueueUIItem[] = [];
   for (const [index, item] of run.items.entries()) {
-    if (index < activeItemIndex || item.dispatched) continue;
+    if (index < activeItemIndex || item.dispatched) {
+      continue;
+    }
     items.push({
       id: item.id,
       runId: run.id,
@@ -513,7 +556,9 @@ export function syncPromptQueueUI(): void {
     items.push(...getPromptQueueUIItemsForRun(run));
 
     const ids = getPromptQueueRunTargetIds(run);
-    if (ids.length === 0) continue;
+    if (ids.length === 0) {
+      continue;
+    }
     const entry: PromptQueueUIEntry = {
       runId: run.id,
       current: runCurrent,
@@ -538,11 +583,17 @@ export function syncPromptQueueUI(): void {
 
 export function editPromptQueueItem(itemId: string, prompt: string): boolean {
   const nextPrompt = prompt.trim();
-  if (!nextPrompt) return false;
+  if (!nextPrompt) {
+    return false;
+  }
   const match = findPromptQueueRunByItemId(itemId);
-  if (!match) return false;
+  if (!match) {
+    return false;
+  }
   const { item } = match;
-  if (!canEditPromptQueueItem(item)) return false;
+  if (!canEditPromptQueueItem(item)) {
+    return false;
+  }
   item.prompt = nextPrompt;
   syncPromptQueueUI();
   return true;
@@ -550,9 +601,13 @@ export function editPromptQueueItem(itemId: string, prompt: string): boolean {
 
 export function removePromptQueueItem(itemId: string): boolean {
   const match = findPromptQueueRunByItemId(itemId);
-  if (!match) return false;
+  if (!match) {
+    return false;
+  }
   const { run, itemIndex, item } = match;
-  if (!canRemovePromptQueueItem(item)) return false;
+  if (!canRemovePromptQueueItem(item)) {
+    return false;
+  }
 
   const wasActive = itemIndex === Math.max(run.index, 0);
   run.items.splice(itemIndex, 1);
@@ -572,7 +627,9 @@ export function removePromptQueueItem(itemId: string): boolean {
   syncPromptQueueUI();
   if (wasActive) {
     clearPromptQueueRetryTimer(run);
-    if (run.index < 0 || run.waitingForTargetIdle) return true;
+    if (run.index < 0 || run.waitingForTargetIdle) {
+      return true;
+    }
     run.prevStoreRunning = false;
     const next = run.items[run.index];
     if (next) {
@@ -586,13 +643,21 @@ export function movePromptQueueItem(
   itemId: string,
   targetItemId: string,
 ): boolean {
-  if (itemId === targetItemId) return false;
+  if (itemId === targetItemId) {
+    return false;
+  }
   const match = findPromptQueueRunByItemId(itemId);
   const target = findPromptQueueRunByItemId(targetItemId);
-  if (!match || !target || match.run !== target.run) return false;
+  if (!(match && target) || match.run !== target.run) {
+    return false;
+  }
   const { run, itemIndex, item } = match;
-  if (item.dispatched || target.item.dispatched) return false;
-  if (promptQueueDispatchingRunIds.has(run.id)) return false;
+  if (item.dispatched || target.item.dispatched) {
+    return false;
+  }
+  if (promptQueueDispatchingRunIds.has(run.id)) {
+    return false;
+  }
 
   const activeIndex = Math.max(run.index, 0);
   const before = run.items;
@@ -602,7 +667,9 @@ export function movePromptQueueItem(
     target.itemIndex,
     activeIndex,
   );
-  if (!after) return false;
+  if (!after) {
+    return false;
+  }
   const activeChanged = promptQueueActiveItemChanged(before, after, run.index);
   run.items = after;
   syncPromptQueueUI();
@@ -626,14 +693,20 @@ export function isPromptQueueTargetRunning(
   runningByThreadId: Record<string, boolean>,
 ): boolean {
   try {
-    if (target.isRunning()) return true;
+    if (target.isRunning()) {
+      return true;
+    }
   } catch {
     // Silently continue
   }
   const runningIds = Object.keys(runningByThreadId);
-  if (runningIds.length === 0) return false;
+  if (runningIds.length === 0) {
+    return false;
+  }
   const targetIds = target.getRunningThreadIds();
-  if (targetIds.length === 0) return false;
+  if (targetIds.length === 0) {
+    return false;
+  }
   return runningIds.some((threadId) => targetIds.includes(threadId));
 }
 
@@ -642,7 +715,9 @@ export function isPromptQueueRunTargetRunning(
   runningByThreadId: Record<string, boolean>,
 ): boolean {
   const activeItem = getActivePromptQueueItem(run);
-  if (!activeItem) return false;
+  if (!activeItem) {
+    return false;
+  }
   return isPromptQueueTargetRunning(activeItem.target, runningByThreadId);
 }
 
@@ -662,9 +737,7 @@ export function advancePromptQueue(run: PromptQueueRun): void {
   requestPromptQueuePump(100);
 }
 
-export function shouldPollPromptQueueTargetState(
-  run: PromptQueueRun,
-): boolean {
+export function shouldPollPromptQueueTargetState(run: PromptQueueRun): boolean {
   return (
     run.waitingForTargetIdle ||
     run.index < 0 ||
@@ -674,7 +747,9 @@ export function shouldPollPromptQueueTargetState(
 
 export function schedulePromptQueueTargetStatePoll(run: PromptQueueRun): void {
   const isWaiting = shouldPollPromptQueueTargetState(run);
-  if (run.retryTimer || !isWaiting) return;
+  if (run.retryTimer || !isWaiting) {
+    return;
+  }
   const generation = run.generation;
   run.retryTimer = setTimeout(() => {
     run.retryTimer = null;
@@ -714,11 +789,15 @@ export function handlePromptQueueRunState(
   run: PromptQueueRun,
   runningByThreadId: Record<string, boolean>,
 ): void {
-  if (!promptQueueRuns.has(run.id)) return;
+  if (!promptQueueRuns.has(run.id)) {
+    return;
+  }
   const isRunning = isPromptQueueRunTargetRunning(run, runningByThreadId);
   const wasRunning = run.prevStoreRunning;
   run.prevStoreRunning = isRunning;
-  if (!wasRunning || isRunning) return;
+  if (!wasRunning || isRunning) {
+    return;
+  }
   if (run.waitingForTargetIdle) {
     clearPromptQueueRetryTimer(run);
     run.waitingForTargetIdle = false;
@@ -733,7 +812,9 @@ export function handlePromptQueueRunState(
 }
 
 export function ensurePromptQueueSubscription(): void {
-  if (promptQueueStoreUnsub) return;
+  if (promptQueueStoreUnsub) {
+    return;
+  }
   let previousRunningCount = getRunningThreadCount(
     useChatRuntimeStore.getState().runningByThreadId,
   );
@@ -761,7 +842,9 @@ export function startPromptQueue(
   waitForCurrentRun = false,
 ): void {
   const filtered = items.map((item) => item.trim()).filter(Boolean);
-  if (filtered.length === 0) return;
+  if (filtered.length === 0) {
+    return;
+  }
 
   const existingRun = findPromptQueueRunByTarget(target);
   if (existingRun) {
@@ -814,7 +897,9 @@ export function getPromptQueueRunsForThreadIds(
   const runs = new Set<PromptQueueRun>();
   for (const id of compactIds(threadIds)) {
     const run = findPromptQueueRunByThreadIds([id]);
-    if (run) runs.add(run);
+    if (run) {
+      runs.add(run);
+    }
   }
   return Array.from(runs);
 }
@@ -825,7 +910,9 @@ export function stopPromptQueueRun(threadIds?: string[]): void {
     const activeTarget = activeItem?.target;
     const shouldCancel = Boolean(activeItem?.dispatched);
     deletePromptQueueRun(run);
-    if (!shouldCancel) continue;
+    if (!shouldCancel) {
+      continue;
+    }
     try {
       activeTarget?.cancel();
     } catch {
@@ -865,12 +952,16 @@ export function stopLocalPromptQueueRun(run: PromptQueueRun): void {
     })),
     run.index,
   );
-  if (plan.retainedItemIndexes.length === run.items.length) return;
+  if (plan.retainedItemIndexes.length === run.items.length) {
+    return;
+  }
 
   run.items = plan.retainedItemIndexes.map((index) => run.items[index]);
   if (!getActivePromptQueueItem(run)) {
     deletePromptQueueRun(run);
-    if (!plan.cancelActiveItem) return;
+    if (!plan.cancelActiveItem) {
+      return;
+    }
     try {
       activeItem?.target.cancel();
     } catch {
@@ -904,7 +995,9 @@ export function stopLocalPromptQueueRun(run: PromptQueueRun): void {
 export function stopLocalPromptQueueRunsForThreadIds(
   threadIds: string[],
 ): void {
-  if (threadIds.length === 0) return;
+  if (threadIds.length === 0) {
+    return;
+  }
   for (const run of getPromptQueueRunsForThreadIds(threadIds)) {
     stopLocalPromptQueueRun(run);
   }
@@ -916,7 +1009,9 @@ export function retainPendingPromptQueueItemsAfterFailure(
 ): boolean {
   const activeIndex = Math.max(run.index, 0);
   const activeItem = run.items[activeIndex];
-  if (run.index < 0 || !activeItem?.dispatched) return false;
+  if (run.index < 0 || !activeItem?.dispatched) {
+    return false;
+  }
 
   activeItem.target.complete();
   run.items.splice(activeIndex, 1);
@@ -937,7 +1032,9 @@ export function cancelPendingPromptQueueFactoriesForStop<
   detail: PromptQueueStopEventDetail,
 ): void {
   const { threadIds, temporaryOnly, localOnly } = detail;
-  if (localOnly) return;
+  if (localOnly) {
+    return;
+  }
   if (
     threadIds &&
     threadIds.length > 0 &&
@@ -946,7 +1043,9 @@ export function cancelPendingPromptQueueFactoriesForStop<
     return;
   }
   for (const [key, reservation] of pendingFactories) {
-    if (temporaryOnly && !reservation.temporary) continue;
+    if (temporaryOnly && !reservation.temporary) {
+      continue;
+    }
     reservation.cancelled = true;
     pendingFactories.delete(key);
   }
@@ -960,7 +1059,9 @@ export function stopAllPromptQueueRuns(): void {
   for (const { activeItem } of activeRuns) {
     const activeTarget = activeItem?.target;
     const shouldCancel = Boolean(activeItem?.dispatched);
-    if (!shouldCancel) continue;
+    if (!shouldCancel) {
+      continue;
+    }
     try {
       activeTarget?.cancel();
     } catch {
@@ -996,7 +1097,9 @@ if (typeof window !== "undefined") {
       stopPromptQueueRunForThreadIds(threadIds);
       return;
     }
-    if (temporaryOnly) return;
+    if (temporaryOnly) {
+      return;
+    }
     stopAllPromptQueueRuns();
   });
 

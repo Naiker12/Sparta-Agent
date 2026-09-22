@@ -1,4 +1,3 @@
-
 // Pure helpers for model-row presentation: owner/name split, format pills,
 // param chip, tabular size. No React/DOM deps so they stay easy to test.
 
@@ -53,7 +52,9 @@ const META_WHITESPACE_RE = /\s+/;
  * "<n>B" like "4B"), format keyword, or plain text. */
 export function classifyMetaToken(raw: string): MetaToken | null {
   const t = raw.trim();
-  if (!t) return null;
+  if (!t) {
+    return null;
+  }
   if (META_SIZE_RE.test(t) || META_APPROX_RE.test(t)) {
     return { kind: "size", label: t };
   }
@@ -80,10 +81,14 @@ export function parseMetaTokens(meta?: string | null): {
   const texts: string[] = [];
   let param: string | undefined;
   let size: string | undefined;
-  if (!meta) return { formats, texts };
+  if (!meta) {
+    return { formats, texts };
+  }
   for (const part of meta.split("·")) {
     const token = classifyMetaToken(part);
-    if (!token) continue;
+    if (!token) {
+      continue;
+    }
     if (token.kind === "format") {
       formats.push({ label: token.label, tone: token.tone });
     } else if (token.kind === "size") {

@@ -1,9 +1,11 @@
-
 "use client";
 
-import { type ToolCallMessagePartComponent, useAuiState } from "@assistant-ui/react";
-import { GlobeIcon } from "lucide-react";
 import { useT } from "@/i18n";
+import {
+  type ToolCallMessagePartComponent,
+  useAuiState,
+} from "@assistant-ui/react";
+import { GlobeIcon } from "lucide-react";
 
 import { stringifyToolResult } from "@/lib/strip-ansi";
 import { memo, useEffect, useState } from "react";
@@ -27,13 +29,18 @@ const RE_SNIPPET = /Snippet:\s*(.+)/s;
 // Mirrors _normalize_url_scheme: a dotted host, optionally followed by a port
 // that may be empty ("example.com:" fetches on the default port) but otherwise
 // has to be in range, so the card names a host only when the backend fetches it.
-const RE_BARE_HOST = /^[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+(?::(\d{0,5}))?(?:[/?#]|$)/;
+const RE_BARE_HOST =
+  /^[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+(?::(\d{0,5}))?(?:[/?#]|$)/;
 
 function isBareHostFetchedAsHttps(value: string): boolean {
   const match = RE_BARE_HOST.exec(value);
-  if (!match) return false;
+  if (!match) {
+    return false;
+  }
   const port = match[1];
-  if (!port) return true;
+  if (!port) {
+    return true;
+  }
   return Number(port) >= 1 && Number(port) <= 65535;
 }
 
@@ -43,7 +50,9 @@ function isBareHostFetchedAsHttps(value: string): boolean {
  */
 function isSafeHttpUrl(raw: string): boolean {
   const value = raw.trim();
-  if (!value || /[\r\n]/.test(value)) return false;
+  if (!value || /[\r\n]/.test(value)) {
+    return false;
+  }
   try {
     const parsed = new URL(value);
     return parsed.protocol === "http:" || parsed.protocol === "https:";
@@ -63,9 +72,13 @@ function parseSearchResults(raw: string): ParsedSource[] {
     const titleMatch = block.match(RE_TITLE);
     const urlMatch = block.match(RE_URL);
     const snippetMatch = block.match(RE_SNIPPET);
-    if (!titleMatch || !urlMatch) continue;
+    if (!(titleMatch && urlMatch)) {
+      continue;
+    }
     const url = urlMatch[1].trim();
-    if (!isSafeHttpUrl(url)) continue;
+    if (!isSafeHttpUrl(url)) {
+      continue;
+    }
     sources.push({
       title: titleMatch[1].trim(),
       url,
@@ -85,14 +98,18 @@ const WebSearchToolUIImpl: ToolCallMessagePartComponent = ({
   const url = ((args as { url?: string })?.url ?? "").trim();
   const isUrlFetch = !!url;
   const displayDomain = (() => {
-    if (!url) return "";
+    if (!url) {
+      return "";
+    }
     // new URL() throws on the bare hosts the backend fetches, so mirror that
     // grammar or the card names no host for exactly the URLs it does fetch.
     const bare = url.startsWith("//") ? url.slice(2) : url;
     const candidate = isBareHostFetchedAsHttps(bare) ? `https://${bare}` : url;
     try {
       const parsed = new URL(candidate);
-      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return "";
+      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+        return "";
+      }
       return parsed.hostname.replace(/^www\./, "");
     } catch {
       return "";
@@ -104,7 +121,12 @@ const WebSearchToolUIImpl: ToolCallMessagePartComponent = ({
 
   // Collapse when LLM starts generating text after the tool call
   const hasText = useAuiState(({ message }) =>
-    message.content.some((p) => p.type === "text" && "text" in p && (p as { text: string }).text.length > 0),
+    message.content.some(
+      (p) =>
+        p.type === "text" &&
+        "text" in p &&
+        (p as { text: string }).text.length > 0,
+    ),
   );
   const [open, setOpen] = useState(isRunning);
   useEffect(() => {
@@ -120,7 +142,9 @@ const WebSearchToolUIImpl: ToolCallMessagePartComponent = ({
       <ToolFallbackTrigger
         toolName={
           isUrlFetch
-            ? displayDomain ? t("chat.tools.web.read", { domain: displayDomain }) : t("chat.tools.web.readPage")
+            ? displayDomain
+              ? t("chat.tools.web.read", { domain: displayDomain })
+              : t("chat.tools.web.readPage")
             : query
               ? t("chat.tools.web.searched", { query })
               : t("chat.tools.web.search")
@@ -132,10 +156,15 @@ const WebSearchToolUIImpl: ToolCallMessagePartComponent = ({
         {isRunning ? (
           <div className="flex items-center text-sm text-muted-foreground">
             <span>
-              {isUrlFetch
-                ? <>{t("chat.tools.web.reading", { domain: displayDomain || "page" })}</>
-                : <>{t("chat.tools.web.searching", { query })}</>
-              }
+              {isUrlFetch ? (
+                <>
+                  {t("chat.tools.web.reading", {
+                    domain: displayDomain || "page",
+                  })}
+                </>
+              ) : (
+                <>{t("chat.tools.web.searching", { query })}</>
+              )}
             </span>
           </div>
         ) : sources.length > 0 ? (

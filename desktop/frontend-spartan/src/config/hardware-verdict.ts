@@ -1,4 +1,3 @@
-
 // The /api/health hardware verdict: whether a reply carries a measured one or the backend's
 // pre-detection default, and what the shell derives from it. Its own import-free module so it is
 // testable: env.ts reaches import.meta.env through api-base.ts, which only vite can load, and a
@@ -32,7 +31,6 @@ export function isDetectionDeferred(data: HealthVerdict): boolean {
   return data.hardware_detection_deferred === true;
 }
 
-
 /** The Video row's tooltip, or undefined when the row stays navigable.
  *
  * Only the chat-only reasons that leave no video device at all. Apple Silicon runs video on Metal
@@ -43,12 +41,17 @@ export function videoNavHint(
   chatOnlyMeasured: boolean,
   chatOnlyReason: string | null,
 ): string | undefined {
-  if (!chatOnlyMeasured) return undefined;
+  if (!chatOnlyMeasured) {
+    return undefined;
+  }
   // Not "or a GPU": an Intel Mac's own dGPU is not one the video pipelines can use, so offering
   // that reads as a fix that would not work. Mirrors the backend's message for this host.
-  if (chatOnlyReason === "intel_mac")
+  if (chatOnlyReason === "intel_mac") {
     return "Video generation requires Apple Silicon. This Intel Mac has no Metal device to run it.";
-  if (chatOnlyReason === "no_gpu") return "Video generation needs an NVIDIA or AMD GPU.";
+  }
+  if (chatOnlyReason === "no_gpu") {
+    return "Video generation needs an NVIDIA or AMD GPU.";
+  }
   return undefined;
 }
 
@@ -73,7 +76,9 @@ export function resolveVerdict(
           : (data.chat_only_detail ?? null),
     };
   }
-  if (isProvisionalVerdict(data)) return previous;
+  if (isProvisionalVerdict(data)) {
+    return previous;
+  }
   return {
     chatOnly: data.chat_only ?? false,
     chatOnlyReason: data.chat_only_reason ?? null,

@@ -1,4 +1,3 @@
-
 // One announcement per model load or release, raised from the API call itself
 // so every caller is covered without each page remembering to.
 //
@@ -14,11 +13,11 @@
 export const MODEL_EJECTED_EVENT = "unsloth:model-ejected";
 export const MODEL_LIFECYCLE_EVENT = "unsloth:model-lifecycle";
 
-/** Which runtime was released. Only these two own a page holding its status. */
-export type EjectedModelRuntime = "image" | "video";
+/** Which runtime was released. */
+export type EjectedModelRuntime = "chat" | "stt";
 
 /** Every runtime the indicator lists. */
-export type ModelRuntime = "chat" | "image" | "video" | "stt";
+export type ModelRuntime = "chat" | "stt";
 
 export type ModelLifecycle = {
   runtime: ModelRuntime;
@@ -29,7 +28,9 @@ export type ModelLifecycle = {
 };
 
 export function notifyModelEjected(runtime: EjectedModelRuntime): void {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined") {
+    return;
+  }
   window.dispatchEvent(
     new CustomEvent(MODEL_EJECTED_EVENT, { detail: { runtime } }),
   );
@@ -40,17 +41,23 @@ export function subscribeModelEjected(
   runtime: EjectedModelRuntime,
   onEjected: () => void,
 ): () => void {
-  if (typeof window === "undefined") return () => {};
+  if (typeof window === "undefined") {
+    return () => {};
+  }
   const handler = (event: Event) => {
     const detail = (event as CustomEvent<{ runtime?: string }>).detail;
-    if (detail?.runtime === runtime) onEjected();
+    if (detail?.runtime === runtime) {
+      onEjected();
+    }
   };
   window.addEventListener(MODEL_EJECTED_EVENT, handler);
   return () => window.removeEventListener(MODEL_EJECTED_EVENT, handler);
 }
 
 export function notifyModelLifecycle(detail: ModelLifecycle): void {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined") {
+    return;
+  }
   window.dispatchEvent(new CustomEvent(MODEL_LIFECYCLE_EVENT, { detail }));
 }
 
@@ -58,10 +65,14 @@ export function notifyModelLifecycle(detail: ModelLifecycle): void {
 export function subscribeModelLifecycle(
   onChange: (detail: ModelLifecycle) => void,
 ): () => void {
-  if (typeof window === "undefined") return () => {};
+  if (typeof window === "undefined") {
+    return () => {};
+  }
   const handler = (event: Event) => {
     const detail = (event as CustomEvent<ModelLifecycle>).detail;
-    if (detail?.runtime) onChange(detail);
+    if (detail?.runtime) {
+      onChange(detail);
+    }
   };
   window.addEventListener(MODEL_LIFECYCLE_EVENT, handler);
   return () => window.removeEventListener(MODEL_LIFECYCLE_EVENT, handler);
@@ -149,7 +160,9 @@ export async function withBackgroundLoadNotice<T>(
   } finally {
     // A load that never started settles here; one that did settles from the
     // poll, so exactly one of the two paths ends the notice.
-    if (!started) notifyModelLifecycle({ runtime, loading: false, model });
+    if (!started) {
+      notifyModelLifecycle({ runtime, loading: false, model });
+    }
   }
 }
 
@@ -174,10 +187,14 @@ async function settleWhenLoadEnds(
       if (phase === undefined) {
         // Only a sustained run of unreadable polls gives up. A load that is
         // still reporting progress is never abandoned, however long it takes.
-        if (Date.now() - lastHealthy >= stallMs) return;
+        if (Date.now() - lastHealthy >= stallMs) {
+          return;
+        }
         continue;
       }
-      if (phase !== "downloading" && phase !== "finalizing") return;
+      if (phase !== "downloading" && phase !== "finalizing") {
+        return;
+      }
       lastHealthy = Date.now();
     }
   } finally {

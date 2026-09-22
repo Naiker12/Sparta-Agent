@@ -1,4 +1,3 @@
-
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -9,8 +8,8 @@ import {
 } from "@/components/ui/select";
 import { type ReactElement, useEffect } from "react";
 import type { SamplerConfig } from "../../types";
-import { NameField } from "../shared/name-field";
 import { FieldLabel } from "../shared/field-label";
+import { NameField } from "../shared/name-field";
 
 type PersonDialogProps = {
   config: SamplerConfig;

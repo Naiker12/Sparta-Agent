@@ -1,4 +1,3 @@
-
 /**
  * Which Streamdown plugins a document actually needs.
  *
@@ -29,6 +28,7 @@ export function markdownPluginNeeds(markdown: string): MarkdownPluginNeeds {
   return {
     math: NEEDS_MATH.test(markdown),
     mermaid: NEEDS_MERMAID.test(markdown),
-    code: markdown.length <= MAX_HIGHLIGHT_CHARS && NEEDS_CODE_BLOCK.test(markdown),
+    code:
+      markdown.length <= MAX_HIGHLIGHT_CHARS && NEEDS_CODE_BLOCK.test(markdown),
   };
 }

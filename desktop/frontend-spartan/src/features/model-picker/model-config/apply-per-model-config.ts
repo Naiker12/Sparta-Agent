@@ -1,4 +1,3 @@
-
 import {
   GPU_LAYERS_AUTO,
   defaultInferenceParams,
@@ -140,7 +139,8 @@ export function perModelConfigsEqual(
     Boolean(a.tensorParallel) === Boolean(b.tensorParallel) &&
     cleanTemplate(a.chatTemplateOverride) ===
       cleanTemplate(b.chatTemplateOverride) &&
-    extraArgsSignature(a.llamaExtraArgs) === extraArgsSignature(b.llamaExtraArgs) &&
+    extraArgsSignature(a.llamaExtraArgs) ===
+      extraArgsSignature(b.llamaExtraArgs) &&
     gpuFieldsEqual(a, b)
   );
 }

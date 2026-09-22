@@ -42,10 +42,19 @@ export function toThreadMessage(m: MessageRecord): ThreadMessage {
 
   // Asegurar que mensajes de asistente con reasoning tengan siempre representación válida
   if (m.role === "assistant" && Array.isArray(content)) {
-    const hasText = content.some((p) => p && typeof p === "object" && (p as { type?: string }).type === "text");
+    const hasText = content.some(
+      (p) =>
+        p && typeof p === "object" && (p as { type?: string }).type === "text",
+    );
     if (!hasText) {
       // Si solo tenía reasoning, mantenemos reasoning y agregamos un bloque de texto para compatibilidad con assistant-ui
-      const reasoningPart = content.find((p) => p && typeof p === "object" && ((p as { type?: string }).type === "reasoning" || (p as { type?: string }).type === "thinking"));
+      const reasoningPart = content.find(
+        (p) =>
+          p &&
+          typeof p === "object" &&
+          ((p as { type?: string }).type === "reasoning" ||
+            (p as { type?: string }).type === "thinking"),
+      );
       if (reasoningPart) {
         // Dejar el reasoning visible
       }
@@ -72,7 +81,10 @@ export function toThreadMessage(m: MessageRecord): ThreadMessage {
     id: m.id,
     createdAt: new Date(m.createdAt),
     role: "assistant" as const,
-    content: content as Extract<ThreadMessage, { role: "assistant" }>["content"],
+    content: content as Extract<
+      ThreadMessage,
+      { role: "assistant" }
+    >["content"],
     status: { type: "complete" as const, reason: "unknown" as const },
     metadata: {
       custom,
@@ -86,9 +98,16 @@ export function toThreadMessage(m: MessageRecord): ThreadMessage {
 }
 
 export function titleTextOf(message: ThreadMessage): string {
-  if (!Array.isArray(message.content)) return "";
+  if (!Array.isArray(message.content)) {
+    return "";
+  }
   for (const part of message.content) {
-    if (part && typeof part === "object" && "text" in part && typeof (part as { text?: unknown }).text === "string") {
+    if (
+      part &&
+      typeof part === "object" &&
+      "text" in part &&
+      typeof (part as { text?: unknown }).text === "string"
+    ) {
       return (part as { text: string }).text.trim();
     }
   }
@@ -96,8 +115,12 @@ export function titleTextOf(message: ThreadMessage): string {
 }
 
 export function fallbackTitleFromUserText(text: string): string {
-  if (!text) return "Nueva conversación";
+  if (!text) {
+    return "Nueva conversación";
+  }
   const cleaned = text.replace(/\s+/g, " ").trim();
-  if (cleaned.length <= 40) return cleaned;
+  if (cleaned.length <= 40) {
+    return cleaned;
+  }
   return `${cleaned.slice(0, 37)}...`;
 }

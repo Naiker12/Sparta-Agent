@@ -1,4 +1,3 @@
-
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -15,8 +14,9 @@ export const useMonitorOverlayStore = create<MonitorOverlayState>()(
       isOpen: false,
       isMinimized: false,
       setIsOpen: (isOpen) => set({ isOpen }),
-      toggleMinimized: () => set((state) => ({ isMinimized: !state.isMinimized })),
+      toggleMinimized: () =>
+        set((state) => ({ isMinimized: !state.isMinimized })),
     }),
-    { name: "unsloth_monitor_overlay" }
-  )
+    { name: "unsloth_monitor_overlay" },
+  ),
 );

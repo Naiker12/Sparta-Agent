@@ -25,14 +25,8 @@
     "seed_config": {
       "source": {
         "seed_type": "github_repo",
-        "repos": [
-          "unslothai/unsloth",
-          "unslothai/unsloth-zoo"
-        ],
-        "item_types": [
-          "issues",
-          "pulls"
-        ],
+        "repos": ["unslothai/unsloth", "unslothai/unsloth-zoo"],
+        "item_types": ["issues", "pulls"],
         "limit": 100,
         "include_comments": true,
         "max_comments_per_item": 20
@@ -93,20 +87,10 @@
             },
             "confidence": {
               "type": "string",
-              "enum": [
-                "high",
-                "medium",
-                "low"
-              ]
+              "enum": ["high", "medium", "low"]
             }
           },
-          "required": [
-            "response",
-            "followups",
-            "cites",
-            "task",
-            "confidence"
-          ],
+          "required": ["response", "followups", "cites", "task", "confidence"],
           "additionalProperties": false
         }
       }
@@ -116,9 +100,7 @@
   "run": {
     "rows": 5,
     "preview": true,
-    "output_formats": [
-      "jsonl"
-    ]
+    "output_formats": ["jsonl"]
   },
   "ui": {
     "nodes": [

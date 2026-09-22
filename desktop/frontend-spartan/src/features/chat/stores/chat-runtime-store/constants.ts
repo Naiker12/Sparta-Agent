@@ -45,7 +45,8 @@ export const CHAT_RAG_OCR_KEY = "unsloth_chat_rag_ocr_scanned";
 export const CHAT_RAG_CAPTION_KEY = "unsloth_chat_rag_caption_figures";
 export const CHAT_SPECULATIVE_TYPE_KEY = "unsloth_chat_speculative_type";
 export const CHAT_GPU_MEMORY_MODE_KEY = "unsloth_chat_gpu_memory_mode";
-export const LAST_EXTERNAL_CHECKPOINT_KEY = "unsloth_chat_last_external_checkpoint";
+export const LAST_EXTERNAL_CHECKPOINT_KEY =
+  "unsloth_chat_last_external_checkpoint";
 export const PENDING_CHAT_ATTACHMENT_KEY = "__pending__";
 
 export const PERSISTED_SPEC_MODES = new Set(["auto", "ngram", "off"]);

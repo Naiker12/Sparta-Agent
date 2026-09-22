@@ -1,4 +1,3 @@
-
 import { authFetch } from "@/features/auth";
 
 export type LastLocalModelKind = "gguf" | "model";
@@ -235,8 +234,7 @@ export function recordLastLocalModelLoad(input: {
       // match too.
       const legacy = readLegacyEntry();
       if (
-        !legacy?.pendingSync ||
-        !sameRecord(legacy.record, record) ||
+        !(legacy?.pendingSync && sameRecord(legacy.record, record)) ||
         legacy.loadedAt !== loadedAt
       ) {
         return;

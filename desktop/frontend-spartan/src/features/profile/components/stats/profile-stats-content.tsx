@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { useT } from "@/i18n";
 import { useProfileStats } from "../../hooks/use-profile-stats";
@@ -38,10 +37,12 @@ export function ProfileStatsContent() {
     );
   }
 
-  if (stats === null) return null;
+  if (stats === null) {
+    return null;
+  }
 
   const hasChats = stats.totals.messages > 0;
-  const hasTraining = stats.training.runs > 0;
+  const _hasTraining = stats.training.runs > 0;
 
   return (
     <div className="flex w-full flex-col gap-4">

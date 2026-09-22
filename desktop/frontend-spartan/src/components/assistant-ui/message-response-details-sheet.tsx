@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -11,12 +10,12 @@ import {
 } from "@/components/ui/sheet";
 import {
   customProviderDisplayName,
+  formatMcpToolName,
+  mcpServerFromProvenance,
   parseExternalModelId,
   useChatPreferencesStore,
   useChatRuntimeStore,
   useExternalProvidersStore,
-  formatMcpToolName,
-  mcpServerFromProvenance,
 } from "@/features/chat";
 import { cn } from "@/lib/utils";
 import { useMessage, useMessageTiming } from "@assistant-ui/react";
@@ -67,20 +66,30 @@ function formatNumber(value: number | undefined): string | null {
 }
 
 function formatMs(value: number | undefined): string | null {
-  if (value == null) return null;
-  if (value < 1000) return `${Math.round(value)}ms`;
+  if (value == null) {
+    return null;
+  }
+  if (value < 1000) {
+    return `${Math.round(value)}ms`;
+  }
   return `${(value / 1000).toFixed(2)}s`;
 }
 
 function formatRate(value: number | undefined): string | null {
-  if (value == null) return null;
+  if (value == null) {
+    return null;
+  }
   return `${value.toFixed(1)} tok/s`;
 }
 
 function formatDate(value: Date | number | string | undefined): string | null {
-  if (value == null) return null;
+  if (value == null) {
+    return null;
+  }
   const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
   return new Intl.DateTimeFormat(undefined, {
     dateStyle: "medium",
     timeStyle: "medium",
@@ -115,8 +124,12 @@ function uniqueValues(values: string[]): string[] {
 
 function toolCategoryFromCall(toolName: string): string | null {
   const normalized = toolName.toLowerCase();
-  if (normalized === "web_search") return "search";
-  if (normalized === "web_fetch") return "fetch";
+  if (normalized === "web_search") {
+    return "search";
+  }
+  if (normalized === "web_fetch") {
+    return "fetch";
+  }
   if (
     normalized === "code_execution" ||
     normalized === "python" ||
@@ -125,27 +138,43 @@ function toolCategoryFromCall(toolName: string): string | null {
   ) {
     return "code";
   }
-  if (normalized === "image_generation") return "images";
-  if (normalized === "search_knowledge_base") return "docs";
-  if (normalized === "render_html") return "artifacts";
-  if (normalized.startsWith("mcp__")) return "mcp";
+  if (normalized === "image_generation") {
+    return "images";
+  }
+  if (normalized === "search_knowledge_base") {
+    return "docs";
+  }
+  if (normalized === "render_html") {
+    return "artifacts";
+  }
+  if (normalized.startsWith("mcp__")) {
+    return "mcp";
+  }
   return null;
 }
 
 function formatToolCallName(toolName: string, mcpServer?: string): string {
   const normalized = toolName.toLowerCase();
-  if (TOOL_CALL_LABELS[normalized]) return TOOL_CALL_LABELS[normalized];
+  if (TOOL_CALL_LABELS[normalized]) {
+    return TOOL_CALL_LABELS[normalized];
+  }
   const mcpLabel = formatMcpToolName(toolName, mcpServer);
-  if (mcpLabel) return `MCP: ${mcpLabel}`;
+  if (mcpLabel) {
+    return `MCP: ${mcpLabel}`;
+  }
   // Malformed but still MCP: keep the prefix so the category check agrees.
-  if (normalized.startsWith("mcp__")) return `MCP: ${toolName.slice(5)}`;
+  if (normalized.startsWith("mcp__")) {
+    return `MCP: ${toolName.slice(5)}`;
+  }
   return toolName
     .replace(/[_-]+/g, " ")
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 function toolCallsFromContent(content: unknown): string[] {
-  if (!Array.isArray(content)) return [];
+  if (!Array.isArray(content)) {
+    return [];
+  }
   return uniqueValues(
     content
       .map((part) =>
@@ -165,13 +194,25 @@ function toolCallsFromContent(content: unknown): string[] {
 
 function mcpServersFromContent(content: unknown): Map<string, string> {
   const servers = new Map<string, string>();
-  if (!Array.isArray(content)) return servers;
+  if (!Array.isArray(content)) {
+    return servers;
+  }
   for (const part of content) {
-    if (!part || typeof part !== "object") continue;
-    const p = part as { type?: unknown; toolName?: unknown; provenance?: unknown };
-    if (p.type !== "tool-call" || typeof p.toolName !== "string") continue;
+    if (!part || typeof part !== "object") {
+      continue;
+    }
+    const p = part as {
+      type?: unknown;
+      toolName?: unknown;
+      provenance?: unknown;
+    };
+    if (p.type !== "tool-call" || typeof p.toolName !== "string") {
+      continue;
+    }
     const server = mcpServerFromProvenance(p.provenance);
-    if (server) servers.set(p.toolName, server);
+    if (server) {
+      servers.set(p.toolName, server);
+    }
   }
   return servers;
 }
@@ -180,14 +221,20 @@ function enabledTools(
   tools: Record<string, boolean | undefined> | undefined,
   toolCalls: string[],
 ): string | null {
-  if (!tools && toolCalls.length === 0) return null;
+  if (!tools && toolCalls.length === 0) {
+    return null;
+  }
   const activeKeys = new Set<string>();
   for (const key of Object.keys(TOOL_CATEGORY_LABELS)) {
-    if (tools?.[key] === true) activeKeys.add(key);
+    if (tools?.[key] === true) {
+      activeKeys.add(key);
+    }
   }
   for (const toolName of toolCalls) {
     const key = toolCategoryFromCall(toolName);
-    if (key) activeKeys.add(key);
+    if (key) {
+      activeKeys.add(key);
+    }
   }
   const active = Object.keys(TOOL_CATEGORY_LABELS)
     .filter((key) => activeKeys.has(key))
@@ -199,7 +246,9 @@ function calledTools(
   toolCalls: string[],
   mcpServers: Map<string, string>,
 ): string | null {
-  if (toolCalls.length === 0) return null;
+  if (toolCalls.length === 0) {
+    return null;
+  }
   return uniqueValues(
     toolCalls.map((name) => formatToolCallName(name, mcpServers.get(name))),
   ).join(", ");
@@ -229,7 +278,9 @@ function DetailRow({
   value: ReactNode | null | undefined;
   mono?: boolean;
 }) {
-  if (value == null || value === "") return null;
+  if (value == null || value === "") {
+    return null;
+  }
   return (
     <div className="grid grid-cols-[8.5rem_minmax(0,1fr)] items-start gap-3 text-ui-13">
       <span className="text-muted-foreground">{label}</span>
@@ -250,9 +301,8 @@ function useResponseModelDisplay() {
   const models = useChatRuntimeStore((s) => s.models);
   const providers = useExternalProvidersStore((s) => s.providers);
 
-  const custom = (
-    message.metadata as Record<string, unknown> | undefined
-  )?.custom as MessageCustomMetadata | undefined;
+  const custom = (message.metadata as Record<string, unknown> | undefined)
+    ?.custom as MessageCustomMetadata | undefined;
   const responseDetails = custom?.responseDetails;
   const usage = custom?.contextUsage;
   const serverTimings = custom?.serverTimings;
@@ -335,8 +385,7 @@ export const MessageResponseDetailsSheet: FC<{
     modelLabel,
     providerLabel,
   } = useResponseModelDisplay();
-  const promptTokens =
-    usage?.promptTokens ?? asNumber(serverTimings?.prompt_n);
+  const promptTokens = usage?.promptTokens ?? asNumber(serverTimings?.prompt_n);
   const completionTokens =
     usage?.completionTokens ??
     timing?.tokenCount ??
@@ -424,48 +473,56 @@ export const MessageResponseDetailsSheet: FC<{
           </DetailSection>
 
           <DetailSection title="Tokens">
-            <DetailRow label="Prompt" value={formatNumber(promptTokens)} mono />
+            <DetailRow
+              label="Prompt"
+              value={formatNumber(promptTokens)}
+              mono={true}
+            />
             <DetailRow
               label="Output"
               value={formatNumber(completionTokens)}
-              mono
+              mono={true}
             />
-            <DetailRow label="Total" value={formatNumber(totalTokens)} mono />
+            <DetailRow
+              label="Total"
+              value={formatNumber(totalTokens)}
+              mono={true}
+            />
             <DetailRow
               label="Cache hits"
               value={formatNumber(
                 usage?.cachedTokens ?? asNumber(serverTimings?.cache_n),
               )}
-              mono
+              mono={true}
             />
             <DetailRow
               label="Cache writes"
               value={formatNumber(usage?.cacheWriteTokens)}
-              mono
+              mono={true}
             />
           </DetailSection>
 
           <DetailSection title="Timing">
-            <DetailRow label="Total" value={formatMs(totalTime)} mono />
+            <DetailRow label="Total" value={formatMs(totalTime)} mono={true} />
             <DetailRow
               label="First token"
               value={formatMs(timing?.firstTokenTime)}
-              mono
+              mono={true}
             />
             <DetailRow
               label="Prompt eval"
               value={formatMs(asNumber(serverTimings?.prompt_ms))}
-              mono
+              mono={true}
             />
             <DetailRow
               label="Prompt speed"
               value={formatRate(promptSpeed)}
-              mono
+              mono={true}
             />
             <DetailRow
               label="Generation"
               value={formatMs(asNumber(serverTimings?.predicted_ms))}
-              mono
+              mono={true}
             />
             <DetailRow
               label="Speed"
@@ -473,17 +530,17 @@ export const MessageResponseDetailsSheet: FC<{
                 asNumber(serverTimings?.predicted_per_second) ??
                   timing?.tokensPerSecond,
               )}
-              mono
+              mono={true}
             />
             <DetailRow
               label="Chunks"
               value={formatNumber(timing?.totalChunks)}
-              mono
+              mono={true}
             />
             <DetailRow
               label="Tool calls"
               value={formatNumber(timing?.toolCallCount)}
-              mono
+              mono={true}
             />
           </DetailSection>
 
@@ -492,7 +549,10 @@ export const MessageResponseDetailsSheet: FC<{
               label="Enabled"
               value={enabledTools(responseDetails?.tools, toolCalls)}
             />
-            <DetailRow label="Called" value={calledTools(toolCalls, mcpServers)} />
+            <DetailRow
+              label="Called"
+              value={calledTools(toolCalls, mcpServers)}
+            />
             <DetailRow
               label="Confirmation"
               value={
@@ -513,8 +573,16 @@ export const MessageResponseDetailsSheet: FC<{
                     : null
               }
             />
-            <DetailRow label="Session" value={responseDetails?.sessionId} mono />
-            <DetailRow label="Run ID" value={responseDetails?.cancelId} mono />
+            <DetailRow
+              label="Session"
+              value={responseDetails?.sessionId}
+              mono={true}
+            />
+            <DetailRow
+              label="Run ID"
+              value={responseDetails?.cancelId}
+              mono={true}
+            />
           </DetailSection>
         </div>
       </SheetContent>

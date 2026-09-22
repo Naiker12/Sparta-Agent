@@ -1,4 +1,3 @@
-
 /**
  * The stacking order of Studio's full-viewport surfaces, in one place.
  *

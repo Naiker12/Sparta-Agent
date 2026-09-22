@@ -1,4 +1,3 @@
-
 import { listGgufVariants } from "@/features/hub";
 import { isGgufName, pickGgufFilename } from "./gguf-filename-pick";
 
@@ -14,7 +13,9 @@ export async function resolveDiffusionGgufFilename(
 ): Promise<string | null> {
   const quant = options?.quant?.trim() || null;
   // Already a filename: no listing needed.
-  if (quant && isGgufName(quant)) return quant;
+  if (quant && isGgufName(quant)) {
+    return quant;
+  }
   try {
     const res = await listGgufVariants(repoId, options?.hfToken, {
       preferLocalCache: true,

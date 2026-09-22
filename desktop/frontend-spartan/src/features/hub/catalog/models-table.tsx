@@ -1,4 +1,3 @@
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -574,7 +573,8 @@ function useResultRowModel(
   const taskLabel = isDataset
     ? null
     : formatPipelineTag(row.result.pipelineTag);
-  const unsupported = support?.status === "unsupported" && !support?.supportedIn;
+  const unsupported =
+    support?.status === "unsupported" && !support?.supportedIn;
   return {
     support,
     unsupported,

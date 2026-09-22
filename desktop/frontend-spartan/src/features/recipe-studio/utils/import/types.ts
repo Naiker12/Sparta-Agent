@@ -1,10 +1,9 @@
-
 import type { Edge, XYPosition } from "@xyflow/react";
 import type {
   LayoutDirection,
+  NodeConfig,
   RecipeNode,
   RecipeProcessorConfig,
-  NodeConfig,
 } from "../../types";
 
 export type RecipeSnapshot = {

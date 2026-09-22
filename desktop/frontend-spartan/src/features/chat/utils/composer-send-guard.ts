@@ -1,4 +1,3 @@
-
 /**
  * Refuses writes that put a just-sent message back into the composer: an event
  * the engine queued against the pre-send value (autocorrect commit, IME
@@ -48,7 +47,9 @@ export function isGuardRetiringKey(event: {
   const altGraph =
     event.getModifierState?.("AltGraph") === true ||
     (event.ctrlKey && event.altKey === true && event.key.length === 1);
-  if (!altGraph && (event.metaKey || event.ctrlKey)) return false;
+  if (!altGraph && (event.metaKey || event.ctrlKey)) {
+    return false;
+  }
   if (event.key === "Enter" || event.key === "Escape" || event.key === "Tab") {
     return false;
   }
@@ -65,7 +66,9 @@ export function isGuardRetiringKey(event: {
 export function markSentTextGuardUserInput(
   guard: SentTextGuard | null,
 ): SentTextGuard | null {
-  if (guard === null || guard.userInputSince) return guard;
+  if (guard === null || guard.userInputSince) {
+    return guard;
+  }
   return { ...guard, userInputSince: true };
 }
 
@@ -75,7 +78,9 @@ export function sentTextGuardBlocksDraft(
   draft: string,
   draftKey: string | null,
 ): boolean {
-  if (guard === null) return false;
+  if (guard === null) {
+    return false;
+  }
   return guard.draftKey === draftKey && guard.texts.includes(draft);
 }
 
@@ -102,12 +107,18 @@ export function applySentTextGuard(
     composerIsEmpty: boolean;
   },
 ): { accept: boolean; guard: SentTextGuard | null } {
-  if (guard === null) return { accept: true, guard: null };
-  if (write.isDeliberate) return { accept: true, guard: null };
+  if (guard === null) {
+    return { accept: true, guard: null };
+  }
+  if (write.isDeliberate) {
+    return { accept: true, guard: null };
+  }
   // Re-typing the whole prompt is only one write when it is one character, so
   // equality alone would swallow every retry of a "?" or a single emoji.
   if (guard.texts.includes(write.value)) {
-    if (guard.userInputSince) return { accept: true, guard: null };
+    if (guard.userInputSince) {
+      return { accept: true, guard: null };
+    }
     return { accept: false, guard };
   }
   if (write.replacesText && write.composerIsEmpty) {

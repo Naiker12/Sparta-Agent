@@ -1,23 +1,20 @@
-
+import { Switch } from "@/components/ui/switch";
+import { useT } from "@/i18n";
+import type { TranslationKey } from "@/i18n";
 import {
   AudioWave01Icon,
+  BookOpen01Icon,
   ChefHatIcon,
-  DashboardCircleIcon,
   DownloadSquare01Icon,
   DragDropVerticalIcon,
   Folder01Icon,
   Globe02Icon,
-  Image03Icon,
   MoreHorizontalIcon,
   PencilEdit02Icon,
-  BookOpen01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Reorder, useDragControls } from "motion/react";
-import { Switch } from "@/components/ui/switch";
-import { useT } from "@/i18n";
-import type { TranslationKey } from "@/i18n";
 import type { IconSvgElement } from "@hugeicons/react";
+import { Reorder, useDragControls } from "motion/react";
 import type { SidebarNavItemPref } from "../stores/appearance-custom-store";
 import { useAppearanceCustomStore } from "../stores/appearance-custom-store";
 
@@ -26,8 +23,6 @@ const ITEM_META: Record<
   { icon: IconSvgElement; labelKey: TranslationKey }
 > = {
   projects: { icon: Folder01Icon, labelKey: "shell.navigation.projects" },
-  hub: { icon: DashboardCircleIcon, labelKey: "shell.navigation.hub" },
-  images: { icon: Image03Icon, labelKey: "shell.navigation.images" },
   audio: { icon: AudioWave01Icon, labelKey: "shell.navigation.audio" },
   recipes: { icon: ChefHatIcon, labelKey: "shell.navigation.recipes" },
   export: { icon: DownloadSquare01Icon, labelKey: "shell.navigation.export" },
@@ -51,7 +46,9 @@ function MovableRow({ item }: { item: SidebarNavItemPref }) {
   const t = useT();
   const controls = useDragControls();
   const patch = useAppearanceCustomStore((s) => s.patch);
-  const sidebarNav = useAppearanceCustomStore((s) => s.customization.sidebarNav);
+  const sidebarNav = useAppearanceCustomStore(
+    (s) => s.customization.sidebarNav,
+  );
   const meta = ITEM_META[item.id];
   return (
     <Reorder.Item
@@ -109,7 +106,9 @@ function MovableRow({ item }: { item: SidebarNavItemPref }) {
 /** Pin and reorder the sidebar nav rows. Unpinned rows collect in the "More" flyout; a single unpinned row is hidden instead of getting a menu of one. New chat is static: an action, not a destination. */
 export function SidebarNavCustomizer() {
   const t = useT();
-  const sidebarNav = useAppearanceCustomStore((s) => s.customization.sidebarNav);
+  const sidebarNav = useAppearanceCustomStore(
+    (s) => s.customization.sidebarNav,
+  );
   const patch = useAppearanceCustomStore((s) => s.patch);
   const unpinnedCount = sidebarNav.filter((item) => !item.pinned).length;
   return (

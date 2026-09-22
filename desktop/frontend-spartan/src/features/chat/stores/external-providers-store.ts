@@ -1,11 +1,10 @@
-
 import { create } from "zustand";
 import {
+  type ExternalProviderConfig,
   loadConnectionsEnabled,
   loadExternalProviders,
   saveConnectionsEnabled,
   saveExternalProviders,
-  type ExternalProviderConfig,
 } from "../external-providers";
 
 interface ExternalProvidersState {

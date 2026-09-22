@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useAuiEvent } from "@assistant-ui/react";
@@ -461,10 +460,7 @@ export function useIntentAwareAutoScroll(): {
         const needed = Math.max(0, shrink);
         if (needed !== stabilizerPx) {
           stabilizerPx = needed;
-          el.style.setProperty(
-            "--aui-scroll-stabilizer",
-            `${stabilizerPx}px`,
-          );
+          el.style.setProperty("--aui-scroll-stabilizer", `${stabilizerPx}px`);
         }
         return currentContent + stabilizerPx;
       };

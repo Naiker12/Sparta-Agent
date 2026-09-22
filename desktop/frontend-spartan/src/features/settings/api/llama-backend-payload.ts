@@ -1,4 +1,3 @@
-
 /** Import-free payload types and parsers for the llama.cpp backend picker. */
 
 /** Backends a user can ask for. "auto" means hardware detection. */

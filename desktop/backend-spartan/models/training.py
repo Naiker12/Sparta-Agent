@@ -8,7 +8,8 @@ from pathlib import Path, PureWindowsPath
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from typing import Any, Optional, List, Dict, Literal, Union
 
-from hub.schemas.inventory import ModelFormat
+ModelFormat = Literal["transformers", "gguf", "lora", "mlx"]
+
 from utils.hf_dataset_options import (
     MAX_HF_DATASET_OPTION_LENGTH,
     valid_hf_dataset_config_name,

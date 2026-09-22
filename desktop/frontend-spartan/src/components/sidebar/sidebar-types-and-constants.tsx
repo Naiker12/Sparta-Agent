@@ -5,16 +5,12 @@
  * atajos de teclado y opciones de exportación para la barra lateral.
  */
 
-import type { ReactNode } from "react";
-import type { TranslationKey, useT } from "@/i18n";
-import type {
-  SidebarChatSort,
-  SidebarOrganizeBy,
-} from "@/features/chat";
+import type { SidebarChatSort, SidebarOrganizeBy } from "@/features/chat";
 import {
   CONVERSATION_MARKDOWN_FORMAT,
   CONVERSATION_MARKDOWN_LABEL,
 } from "@/features/chat";
+import type { TranslationKey, useT } from "@/i18n";
 import {
   CloudIcon,
   CpuIcon,
@@ -23,6 +19,7 @@ import {
   UserIcon,
   type ZapIcon,
 } from "@hugeicons/core-free-icons";
+import type { ReactNode } from "react";
 
 export const EMPHASIS_MARKER = "__UNSLOTH_I18N_EMPHASIS_MARKER__";
 
@@ -35,12 +32,17 @@ export function renderEmphasizedTranslation(
 ): ReactNode {
   const translated = t(key, { name: EMPHASIS_MARKER });
   const parts = translated.split(EMPHASIS_MARKER);
-  if (parts.length === 1) return translated;
+  if (parts.length === 1) {
+    return translated;
+  }
 
   const nodes: ReactNode[] = [];
   parts.forEach((part, index) => {
-    if (part.length > 0) nodes.push(part);
+    if (part.length > 0) {
+      nodes.push(part);
+    }
     if (index < parts.length - 1) {
+      // biome-ignore lint/suspicious/noArrayIndexKey: static string parts split has no unique ids
       nodes.push(<em key={`emphasis-${index}`}>{emphasizedValue}</em>);
     }
   });
@@ -48,9 +50,15 @@ export function renderEmphasizedTranslation(
 }
 
 export function getTourId(pathname: string): string | null {
-  if (pathname.startsWith("/studio")) return "studio";
-  if (pathname.startsWith("/export")) return "export";
-  if (pathname.startsWith("/chat")) return "chat";
+  if (pathname.startsWith("/studio")) {
+    return "studio";
+  }
+  if (pathname.startsWith("/export")) {
+    return "export";
+  }
+  if (pathname.startsWith("/chat")) {
+    return "chat";
+  }
   return null;
 }
 
@@ -138,14 +146,22 @@ export const CHAT_EXPORT_OPTIONS: Array<{
 
 export function formatRelativeShort(iso: string): string {
   const then = new Date(iso).getTime();
-  if (Number.isNaN(then)) return "";
+  if (Number.isNaN(then)) {
+    return "";
+  }
   const diffMs = Date.now() - then;
   const s = Math.max(0, Math.floor(diffMs / 1000));
-  if (s < 60) return `${s}s`;
+  if (s < 60) {
+    return `${s}s`;
+  }
   const m = Math.floor(s / 60);
-  if (m < 60) return `${m}m`;
+  if (m < 60) {
+    return `${m}m`;
+  }
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h`;
+  if (h < 24) {
+    return `${h}h`;
+  }
   const d = Math.floor(h / 24);
   return `${d}d`;
 }

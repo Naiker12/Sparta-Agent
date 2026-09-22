@@ -1,4 +1,3 @@
-
 import type { GgufVariantDetail } from "@/features/hub/inventory";
 import { formatBytes } from "@/features/hub/lib/format";
 import { classifyGgufFit } from "@/features/hub/lib/gguf-fit";
@@ -31,7 +30,9 @@ type GgufVariantTransfer = Pick<
  * unmeasured partial falls back to the total, the costlier of the two. */
 export function ggufVariantTransferBytes(variant: GgufVariantTransfer): number {
   const total = ggufVariantDownloadSizeBytes(variant);
-  if (!variant.partial) return total;
+  if (!variant.partial) {
+    return total;
+  }
   const remaining = variant.download_remaining_bytes;
   return typeof remaining === "number" && remaining >= 0 ? remaining : total;
 }
@@ -68,15 +69,21 @@ export function compareGgufVariantFitAndSize(
 ): number {
   const aFit = ggufVariantFitRank(a, resources);
   const bFit = ggufVariantFitRank(b, resources);
-  if (aFit !== bFit) return aFit - bFit;
+  if (aFit !== bFit) {
+    return aFit - bFit;
+  }
   return aFit === 3 ? a.size_bytes - b.size_bytes : b.size_bytes - a.size_bytes;
 }
 
 export function ggufVariantDownloadStatusRank(
   variant: GgufVariantDetail,
 ): number {
-  if (variant.downloaded) return 0;
-  if (variant.partial) return 1;
+  if (variant.downloaded) {
+    return 0;
+  }
+  if (variant.partial) {
+    return 1;
+  }
   return 2;
 }
 
@@ -87,7 +94,9 @@ export function sortDownloadableGgufVariants(
   return [...variants].sort((a, b) => {
     const statusDelta =
       ggufVariantDownloadStatusRank(a) - ggufVariantDownloadStatusRank(b);
-    if (statusDelta !== 0) return statusDelta;
+    if (statusDelta !== 0) {
+      return statusDelta;
+    }
     return compareGgufVariantFitAndSize(a, b, resources);
   });
 }
@@ -102,10 +111,14 @@ export function sortLocalGgufVariants(
   return [...variants].sort((a, b) => {
     const aActive = ggufVariantsMatch(a.quant, options.activeGgufVariant);
     const bActive = ggufVariantsMatch(b.quant, options.activeGgufVariant);
-    if (aActive !== bActive) return aActive ? -1 : 1;
+    if (aActive !== bActive) {
+      return aActive ? -1 : 1;
+    }
     const aDefault = ggufVariantsMatch(a.quant, options.defaultVariant);
     const bDefault = ggufVariantsMatch(b.quant, options.defaultVariant);
-    if (aDefault !== bDefault) return aDefault ? -1 : 1;
+    if (aDefault !== bDefault) {
+      return aDefault ? -1 : 1;
+    }
     return compareGgufVariantFitAndSize(a, b, options);
   });
 }

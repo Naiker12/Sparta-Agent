@@ -1,4 +1,3 @@
-
 // Save `data` as a pretty-printed JSON file via a temporary object URL. Uses
 // only the standard Blob/anchor download path so it works in every browser.
 export function triggerJsonDownload(data: unknown, filename: string): void {

@@ -1,4 +1,3 @@
-
 import type { Edge } from "@xyflow/react";
 import type {
   RecipeExecutionBatch,
@@ -157,7 +156,7 @@ export function deriveGraphRuntimeVisualState(input: {
   }
 
   const runningNodeId = activeExecution.current_column
-    ? nameToNodeId.get(activeExecution.current_column.trim()) ?? null
+    ? (nameToNodeId.get(activeExecution.current_column.trim()) ?? null)
     : null;
   if (runningNodeId) {
     doneNodeIds.delete(runningNodeId);

@@ -4,20 +4,6 @@
  * Canvas (Artifacts) y el indicador dinámico de estado de herramientas (ToolStatusDisplay).
  */
 
-import {
-  useEffect,
-  useRef,
-  useState,
-  type FC,
-} from "react";
-import { GlobeIcon, TerminalIcon } from "lucide-react";
-import {
-  CodeIcon,
-  Image03Icon,
-  PencilRulerIcon,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { useAuiState } from "@assistant-ui/react";
 import { Spinner } from "@/components/ui/spinner";
 import { parseExternalModelId } from "@/features/chat/external-providers";
 import { useChatRuntimeStore } from "@/features/chat/stores/chat-runtime-store";
@@ -26,6 +12,15 @@ import { applyQwenThinkingParams } from "@/features/chat/utils/qwen-params";
 import { toolStatusKind } from "@/features/chat/utils/tool-status";
 import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
+import { useAuiState } from "@assistant-ui/react";
+import {
+  CodeIcon,
+  Image03Icon,
+  PencilRulerIcon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { GlobeIcon, TerminalIcon } from "lucide-react";
+import { type FC, useEffect, useRef, useState } from "react";
 import { PillGlyph } from "./reasoning-toggle";
 
 export const WebSearchToggle: FC = () => {
@@ -114,11 +109,7 @@ export const CodeToolsToggle: FC = () => {
       }
     >
       <PillGlyph>
-        <HugeiconsIcon
-          icon={CodeIcon}
-          className="size-3.5"
-          strokeWidth={2}
-        />
+        <HugeiconsIcon icon={CodeIcon} className="size-3.5" strokeWidth={2} />
       </PillGlyph>
       <span>{t("chat.composer.codePill")}</span>
     </button>
@@ -137,7 +128,7 @@ export const ImagesToggle: FC = () => {
   const setImageToolsEnabled = useChatRuntimeStore(
     (s) => s.setImageToolsEnabled,
   );
-  if (!supportsBuiltinImageGeneration || !imageToolsEnabled) {
+  if (!(supportsBuiltinImageGeneration && imageToolsEnabled)) {
     return null;
   }
   const disabled = !modelLoaded;
@@ -170,7 +161,9 @@ export const ImagesToggle: FC = () => {
 export const ArtifactsToggle: FC = () => {
   const artifactsEnabled = useChatRuntimeStore((s) => s.artifactsEnabled);
   const setArtifactsEnabled = useChatRuntimeStore((s) => s.setArtifactsEnabled);
-  if (!artifactsEnabled) return null;
+  if (!artifactsEnabled) {
+    return null;
+  }
 
   return (
     <button

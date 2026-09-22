@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useState } from "react";
 
 interface DesktopBooleanSettingOptions {
@@ -22,17 +21,23 @@ export function useDesktopBooleanSetting({
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled) {
+      return;
+    }
     let cancelled = false;
     void load()
       .then((loaded) => {
-        if (cancelled) return;
+        if (cancelled) {
+          return;
+        }
         setValue(loaded);
         setSupported(loaded !== null);
         setError(null);
       })
       .catch((cause) => {
-        if (cancelled) return;
+        if (cancelled) {
+          return;
+        }
         setError(cause instanceof Error ? cause.message : loadError);
       });
     return () => {

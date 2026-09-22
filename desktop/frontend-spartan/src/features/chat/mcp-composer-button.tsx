@@ -1,4 +1,3 @@
-
 import { Tick02Icon } from "@/lib/tick-icon";
 import { McpServerIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -137,7 +136,7 @@ export function McpComposerButton({
     (preset) => !enabledUrls.has(normalizeMcpUrl(preset.url)),
   );
   const disabledCustomServers = servers.filter(
-    (s) => !s.is_enabled && !PRESET_URLS.has(normalizeMcpUrl(s.url)),
+    (s) => !(s.is_enabled || PRESET_URLS.has(normalizeMcpUrl(s.url))),
   );
   const enabledCount = connectedServers.length;
   const active = mcpEnabledForChat && enabledCount > 0;
@@ -150,7 +149,9 @@ export function McpComposerButton({
     disablesWebSearch?: boolean;
   }) {
     const norm = normalizeMcpUrl(args.url);
-    if (pendingUrl === norm) return; // guard rapid double-clicks
+    if (pendingUrl === norm) {
+      return; // guard rapid double-clicks
+    }
     setPendingUrl(norm);
     try {
       if (args.checked) {
@@ -168,7 +169,9 @@ export function McpComposerButton({
         }
         setMcpEnabledForChat(true);
         // Search servers turn off the built-in Web Search to avoid overlap.
-        if (args.disablesWebSearch) setToolsEnabled(false);
+        if (args.disablesWebSearch) {
+          setToolsEnabled(false);
+        }
       } else if (args.existing) {
         await updateMcpServer(args.existing.id, { isEnabled: false });
       }
@@ -243,7 +246,9 @@ export function McpComposerButton({
           open={menuOpen}
           onOpenChange={(open) => {
             setMenuOpen(open);
-            if (open) void refresh();
+            if (open) {
+              void refresh();
+            }
           }}
         >
           <DropdownMenuTrigger asChild={true}>
@@ -263,11 +268,15 @@ export function McpComposerButton({
                 aria-label="Turn off MCP"
                 tabIndex={-1}
                 onPointerDown={(e) => {
-                  if (e.currentTarget.closest('[data-pill-compact="true"]')) return;
+                  if (e.currentTarget.closest('[data-pill-compact="true"]')) {
+                    return;
+                  }
                   e.stopPropagation();
                 }}
                 onClick={(e) => {
-                  if (e.currentTarget.closest('[data-pill-compact="true"]')) return;
+                  if (e.currentTarget.closest('[data-pill-compact="true"]')) {
+                    return;
+                  }
                   e.stopPropagation();
                   setMcpEnabledForChat(false);
                 }}
@@ -316,21 +325,25 @@ export function McpComposerButton({
                   {t("chat.mcp.quickConnections")}
                 </DropdownMenuLabel>
                 {availablePresets.map((preset) => {
-              const norm = normalizeMcpUrl(preset.url);
-              return renderRow({
-                key: preset.id,
-                label: preset.label ?? preset.displayName,
-                url: preset.url,
-                displayName: preset.displayName,
-                enabled: enabledUrls.has(norm),
-                existing: servers.find((s) => normalizeMcpUrl(s.url) === norm),
-                hint: preset.hint,
-                disablesWebSearch: preset.disablesWebSearch,
-              });
+                  const norm = normalizeMcpUrl(preset.url);
+                  return renderRow({
+                    key: preset.id,
+                    label: preset.label ?? preset.displayName,
+                    url: preset.url,
+                    displayName: preset.displayName,
+                    enabled: enabledUrls.has(norm),
+                    existing: servers.find(
+                      (s) => normalizeMcpUrl(s.url) === norm,
+                    ),
+                    hint: preset.hint,
+                    disablesWebSearch: preset.disablesWebSearch,
+                  });
                 })}
               </DropdownMenuGroup>
             ) : null}
-            {disabledCustomServers.length > 0 ? <DropdownMenuSeparator /> : null}
+            {disabledCustomServers.length > 0 ? (
+              <DropdownMenuSeparator />
+            ) : null}
             {disabledCustomServers.length > 0 ? (
               <DropdownMenuGroup>
                 <DropdownMenuLabel>
@@ -378,9 +391,7 @@ export function McpComposerButton({
               <span>MCP</span>
             </button>
           </TooltipTrigger>
-          <TooltipContent>
-            {t("chat.mcp.tooltip")}
-          </TooltipContent>
+          <TooltipContent>{t("chat.mcp.tooltip")}</TooltipContent>
         </Tooltip>
       )}
       <ChatMcpServersDialog
@@ -388,7 +399,9 @@ export function McpComposerButton({
         onOpenChange={(next) => {
           setDialogOpen(next);
           // Resync after managing servers.
-          if (!next) void refresh();
+          if (!next) {
+            void refresh();
+          }
         }}
       />
     </>

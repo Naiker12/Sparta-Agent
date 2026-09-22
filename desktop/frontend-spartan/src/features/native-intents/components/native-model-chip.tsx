@@ -1,9 +1,9 @@
+import { toast } from "@/lib/toast";
+import { XIcon } from "lucide-react";
+import { useEffect, useState } from "react";
 import { revealPathToken } from "../api";
 import { useNativeIntentStore } from "../store";
 import type { NativeIntent } from "../types";
-import { XIcon } from "lucide-react";
-import { useEffect, useState } from "react";
-import { toast } from "@/lib/toast";
 
 interface NativeModelChipProps {
   intent: NativeIntent;
@@ -23,21 +23,28 @@ export function NativeModelChip({
   nativeReadsDisabled,
   onLoad,
 }: NativeModelChipProps) {
-  const clearModelIntent = useNativeIntentStore((state) => state.clearModelIntent);
+  const clearModelIntent = useNativeIntentStore(
+    (state) => state.clearModelIntent,
+  );
   const [loading, setLoading] = useState(false);
   const [now, setNow] = useState(() => Date.now());
-  const label = intent.path.displayLabel || intent.displayLabel || "Local GGUF model";
+  const label =
+    intent.path.displayLabel || intent.displayLabel || "Local GGUF model";
   const expired = intent.path.expiresAtMs <= now;
 
   useEffect(() => {
-    if (expired) return;
+    if (expired) {
+      return;
+    }
     const remaining = Math.max(0, intent.path.expiresAtMs - Date.now());
     const timer = window.setTimeout(() => setNow(Date.now()), remaining);
     return () => window.clearTimeout(timer);
   }, [expired, intent.path.expiresAtMs]);
 
   async function handleLoad() {
-    if (nativeReadsDisabled || expired) return;
+    if (nativeReadsDisabled || expired) {
+      return;
+    }
     setLoading(true);
     try {
       await onLoad({
@@ -68,13 +75,19 @@ export function NativeModelChip({
 
   return (
     <div className="flex min-w-0 max-w-[34rem] items-center gap-2 rounded-lg border border-border/70 bg-muted/70 px-2.5 py-1.5 text-xs">
-      <span className="shrink-0 font-medium text-muted-foreground">Local GGUF</span>
-      <span className="min-w-0 flex-1 truncate" title={label}>{label}</span>
+      <span className="shrink-0 font-medium text-muted-foreground">
+        Local GGUF
+      </span>
+      <span className="min-w-0 flex-1 truncate" title={label}>
+        {label}
+      </span>
       <button
         type="button"
         onClick={handleReveal}
         disabled={expired}
-        title={expired ? "Selection expired, pick or drop the file again" : undefined}
+        title={
+          expired ? "Selection expired, pick or drop the file again" : undefined
+        }
         className="rounded-md px-2 py-1 text-muted-foreground transition-colors hover:bg-background hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
       >
         Reveal

@@ -1,28 +1,36 @@
 "use client";
 
-import { useMessageTiming, useMessage } from "@assistant-ui/react";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
 import { useT } from "@/i18n";
+import { cn } from "@/lib/utils";
+import { useMessage, useMessageTiming } from "@assistant-ui/react";
 import type { FC } from "react";
 
 const formatTimingMs = (ms: number | undefined): string => {
-  if (ms === undefined) return "—";
-  if (ms < 1000) return `${Math.round(ms)}ms`;
+  if (ms === undefined) {
+    return "—";
+  }
+  if (ms < 1000) {
+    return `${Math.round(ms)}ms`;
+  }
   return `${(ms / 1000).toFixed(2)}s`;
 };
 
 const formatNumber = (n: number | undefined): string => {
-  if (n === undefined) return "—";
+  if (n === undefined) {
+    return "—";
+  }
   return n.toLocaleString();
 };
 
 const formatRate = (r: number | undefined): string => {
-  if (r === undefined || !Number.isFinite(r)) return "—";
+  if (r === undefined || !Number.isFinite(r)) {
+    return "—";
+  }
   return `${Math.round(r).toLocaleString()} tok/s`;
 };
 
@@ -40,11 +48,12 @@ export const MessageTiming: FC<{
   const message = useMessage();
   const t = useT();
 
-  if (timing?.totalStreamTime === undefined) return null;
+  if (timing?.totalStreamTime === undefined) {
+    return null;
+  }
 
-  const custom = (
-    message.metadata as Record<string, unknown> | undefined
-  )?.custom as
+  const custom = (message.metadata as Record<string, unknown> | undefined)
+    ?.custom as
     | {
         serverTimings?: {
           prompt_ms?: number;
@@ -89,7 +98,7 @@ export const MessageTiming: FC<{
 
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
+      <TooltipTrigger asChild={true}>
         <button
           type="button"
           tabIndex={0}
@@ -112,203 +121,252 @@ export const MessageTiming: FC<{
         <div className="grid min-w-40 gap-1.5 text-xs">
           {st ? (
             isDiffusion ? (
-            <>
-              {/* DiffusionGemma: honest throughput (no autoregressive prompt speed) */}
-              {timing.firstTokenTime !== undefined && (
+              <>
+                {/* DiffusionGemma: honest throughput (no autoregressive prompt speed) */}
+                {timing.firstTokenTime !== undefined && (
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-muted-foreground">
+                      {t("chat.timing.firstToken")}
+                    </span>
+                    <span className="font-mono tabular-nums">
+                      {formatTimingMs(timing.firstTokenTime)}
+                    </span>
+                  </div>
+                )}
+                {st?.diffusion_parallel_tok_s != null && (
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-muted-foreground">
+                      {t("chat.timing.speedInStep")}
+                    </span>
+                    <span className="font-mono tabular-nums">
+                      {formatRate(st.diffusion_parallel_tok_s)}
+                    </span>
+                  </div>
+                )}
+                {st?.diffusion_effective_tok_s != null && (
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-muted-foreground">
+                      {t("chat.timing.effective")}
+                    </span>
+                    <span className="font-mono tabular-nums">
+                      {formatRate(st.diffusion_effective_tok_s)}
+                    </span>
+                  </div>
+                )}
+                {st?.diffusion_output_tok_s != null && (
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-muted-foreground">
+                      {t("chat.timing.output")}
+                    </span>
+                    <span className="font-mono tabular-nums">
+                      {formatRate(st.diffusion_output_tok_s)}
+                    </span>
+                  </div>
+                )}
+                {st?.diffusion_steps != null && (
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-muted-foreground">
+                      {t("chat.timing.denoising")}
+                    </span>
+                    <span className="font-mono tabular-nums">
+                      {formatNumber(st.diffusion_steps)} steps
+                      {st?.diffusion_blocks != null
+                        ? `, ${formatNumber(st.diffusion_blocks)} blocks`
+                        : ""}
+                    </span>
+                  </div>
+                )}
+                {st?.diffusion_canvas != null && (
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-muted-foreground">
+                      {t("chat.timing.canvas")}
+                    </span>
+                    <span className="font-mono tabular-nums">
+                      {formatNumber(st.diffusion_canvas)} tokens
+                    </span>
+                  </div>
+                )}
+                {(st?.diffusion_wall_ms ?? st?.predicted_ms) != null && (
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-muted-foreground">
+                      {t("chat.timing.generation")}
+                    </span>
+                    <span className="font-mono tabular-nums">
+                      {formatTimingMs(st.diffusion_wall_ms ?? st.predicted_ms)}
+                    </span>
+                  </div>
+                )}
+                {timing.tokenCount !== undefined && (
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-muted-foreground">
+                      {t("chat.timing.answerTokens")}
+                    </span>
+                    <span className="font-mono tabular-nums">
+                      {formatNumber(timing.tokenCount)}
+                    </span>
+                  </div>
+                )}
+                {(st?.diffusion_prompt_n ?? st?.prompt_n) != null && (
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-muted-foreground">
+                      {t("chat.timing.prompt")}
+                    </span>
+                    <span className="font-mono tabular-nums">
+                      {formatNumber(st.diffusion_prompt_n ?? st.prompt_n)}{" "}
+                      tokens
+                    </span>
+                  </div>
+                )}
+                <div className="my-0.5 border-t border-border/40" />
                 <div className="flex items-center justify-between gap-4">
-                  <span className="text-muted-foreground">{t("chat.timing.firstToken")}</span>
+                  <span className="text-muted-foreground">
+                    {t("chat.timing.total")}
+                  </span>
                   <span className="font-mono tabular-nums">
-                    {formatTimingMs(timing.firstTokenTime)}
+                    {formatTimingMs(timing.totalStreamTime)}
                   </span>
                 </div>
-              )}
-              {st?.diffusion_parallel_tok_s != null && (
                 <div className="flex items-center justify-between gap-4">
-                  <span className="text-muted-foreground">{t("chat.timing.speedInStep")}</span>
+                  <span className="text-muted-foreground">
+                    {t("chat.timing.chunks")}
+                  </span>
                   <span className="font-mono tabular-nums">
-                    {formatRate(st.diffusion_parallel_tok_s)}
+                    {timing.totalChunks}
                   </span>
                 </div>
-              )}
-              {st?.diffusion_effective_tok_s != null && (
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-muted-foreground">{t("chat.timing.effective")}</span>
-                  <span className="font-mono tabular-nums">
-                    {formatRate(st.diffusion_effective_tok_s)}
-                  </span>
-                </div>
-              )}
-              {st?.diffusion_output_tok_s != null && (
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-muted-foreground">{t("chat.timing.output")}</span>
-                  <span className="font-mono tabular-nums">
-                    {formatRate(st.diffusion_output_tok_s)}
-                  </span>
-                </div>
-              )}
-              {st?.diffusion_steps != null && (
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-muted-foreground">{t("chat.timing.denoising")}</span>
-                  <span className="font-mono tabular-nums">
-                    {formatNumber(st.diffusion_steps)} steps
-                    {st?.diffusion_blocks != null
-                      ? `, ${formatNumber(st.diffusion_blocks)} blocks`
-                      : ""}
-                  </span>
-                </div>
-              )}
-              {st?.diffusion_canvas != null && (
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-muted-foreground">{t("chat.timing.canvas")}</span>
-                  <span className="font-mono tabular-nums">
-                    {formatNumber(st.diffusion_canvas)} tokens
-                  </span>
-                </div>
-              )}
-              {(st?.diffusion_wall_ms ?? st?.predicted_ms) != null && (
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-muted-foreground">{t("chat.timing.generation")}</span>
-                  <span className="font-mono tabular-nums">
-                    {formatTimingMs(st.diffusion_wall_ms ?? st.predicted_ms)}
-                  </span>
-                </div>
-              )}
-              {timing.tokenCount !== undefined && (
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-muted-foreground">{t("chat.timing.answerTokens")}</span>
-                  <span className="font-mono tabular-nums">
-                    {formatNumber(timing.tokenCount)}
-                  </span>
-                </div>
-              )}
-              {(st?.diffusion_prompt_n ?? st?.prompt_n) != null && (
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-muted-foreground">{t("chat.timing.prompt")}</span>
-                  <span className="font-mono tabular-nums">
-                    {formatNumber(st.diffusion_prompt_n ?? st.prompt_n)} tokens
-                  </span>
-                </div>
-              )}
-              <div className="my-0.5 border-t border-border/40" />
-              <div className="flex items-center justify-between gap-4">
-                <span className="text-muted-foreground">{t("chat.timing.total")}</span>
-                <span className="font-mono tabular-nums">
-                  {formatTimingMs(timing.totalStreamTime)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-4">
-                <span className="text-muted-foreground">{t("chat.timing.chunks")}</span>
-                <span className="font-mono tabular-nums">
-                  {timing.totalChunks}
-                </span>
-              </div>
-            </>
+              </>
             ) : (
-            <>
-              {/* Server-side metrics (GGUF, MLX, safetensors) */}
-              {st?.prompt_ms != null && (
+              <>
+                {/* Server-side metrics (GGUF, MLX, safetensors) */}
+                {st?.prompt_ms != null && (
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-muted-foreground">
+                      {t("chat.timing.promptEval")}
+                    </span>
+                    <span className="font-mono tabular-nums">
+                      {formatTimingMs(st.prompt_ms)}
+                    </span>
+                  </div>
+                )}
+                {(st?.prompt_n ?? 0) > 1 &&
+                  st?.prompt_per_second != null &&
+                  st.prompt_per_second > 0 && (
+                    <div className="flex items-center justify-between gap-4">
+                      <span className="text-muted-foreground">
+                        {t("chat.timing.promptSpeed")}
+                      </span>
+                      <span className="font-mono tabular-nums">
+                        {st.prompt_per_second.toFixed(1)} tok/s
+                      </span>
+                    </div>
+                  )}
+                {hasPredicted && st?.predicted_ms != null && (
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-muted-foreground">
+                      {t("chat.timing.generation")}
+                    </span>
+                    <span className="font-mono tabular-nums">
+                      {formatTimingMs(st.predicted_ms)}
+                    </span>
+                  </div>
+                )}
+                {predictedRate != null && (
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-muted-foreground">
+                      {t("chat.timing.speed")}
+                    </span>
+                    <span className="font-mono tabular-nums">
+                      {predictedRate.toFixed(1)} tok/s
+                    </span>
+                  </div>
+                )}
+                {timing.tokenCount !== undefined && (
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-muted-foreground">
+                      {t("chat.timing.tokens")}
+                    </span>
+                    <span className="font-mono tabular-nums">
+                      {formatNumber(timing.tokenCount)}
+                    </span>
+                  </div>
+                )}
+                {timing.firstTokenTime !== undefined && (
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-muted-foreground">
+                      {t("chat.timing.firstToken")}
+                    </span>
+                    <span className="font-mono tabular-nums">
+                      {formatTimingMs(timing.firstTokenTime)}
+                    </span>
+                  </div>
+                )}
+                {st?.diffusion_steps != null && (
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-muted-foreground">
+                      {t("chat.timing.denoisingSteps")}
+                    </span>
+                    <span className="font-mono tabular-nums">
+                      {formatNumber(st.diffusion_steps)}
+                    </span>
+                  </div>
+                )}
+                {st?.diffusion_blocks != null && (
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-muted-foreground">
+                      {t("chat.timing.blocks")}
+                    </span>
+                    <span className="font-mono tabular-nums">
+                      {formatNumber(st.diffusion_blocks)}
+                    </span>
+                  </div>
+                )}
+                {cacheHits > 0 && (
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-muted-foreground">
+                      {t("chat.timing.cacheHits")}
+                    </span>
+                    <span className="font-mono tabular-nums">
+                      {formatNumber(cacheHits)}
+                    </span>
+                  </div>
+                )}
+                {cacheWrites > 0 && (
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-muted-foreground">
+                      {t("chat.timing.cacheWrites")}
+                    </span>
+                    <span className="font-mono tabular-nums">
+                      {formatNumber(cacheWrites)}
+                    </span>
+                  </div>
+                )}
+                <div className="my-0.5 border-t border-border/40" />
                 <div className="flex items-center justify-between gap-4">
-                  <span className="text-muted-foreground">{t("chat.timing.promptEval")}</span>
+                  <span className="text-muted-foreground">
+                    {t("chat.timing.total")}
+                  </span>
                   <span className="font-mono tabular-nums">
-                    {formatTimingMs(st.prompt_ms)}
+                    {formatTimingMs(timing.totalStreamTime)}
                   </span>
                 </div>
-              )}
-              {(st?.prompt_n ?? 0) > 1 &&
-                st?.prompt_per_second != null &&
-                st.prompt_per_second > 0 && (
                 <div className="flex items-center justify-between gap-4">
-                  <span className="text-muted-foreground">{t("chat.timing.promptSpeed")}</span>
+                  <span className="text-muted-foreground">
+                    {t("chat.timing.chunks")}
+                  </span>
                   <span className="font-mono tabular-nums">
-                    {st.prompt_per_second.toFixed(1)} tok/s
+                    {timing.totalChunks}
                   </span>
                 </div>
-              )}
-              {hasPredicted && st?.predicted_ms != null && (
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-muted-foreground">{t("chat.timing.generation")}</span>
-                  <span className="font-mono tabular-nums">
-                    {formatTimingMs(st.predicted_ms)}
-                  </span>
-                </div>
-              )}
-              {predictedRate != null && (
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-muted-foreground">{t("chat.timing.speed")}</span>
-                  <span className="font-mono tabular-nums">
-                    {predictedRate.toFixed(1)} tok/s
-                  </span>
-                </div>
-              )}
-              {timing.tokenCount !== undefined && (
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-muted-foreground">{t("chat.timing.tokens")}</span>
-                  <span className="font-mono tabular-nums">
-                    {formatNumber(timing.tokenCount)}
-                  </span>
-                </div>
-              )}
-              {timing.firstTokenTime !== undefined && (
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-muted-foreground">{t("chat.timing.firstToken")}</span>
-                  <span className="font-mono tabular-nums">
-                    {formatTimingMs(timing.firstTokenTime)}
-                  </span>
-                </div>
-              )}
-              {st?.diffusion_steps != null && (
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-muted-foreground">{t("chat.timing.denoisingSteps")}</span>
-                  <span className="font-mono tabular-nums">
-                    {formatNumber(st.diffusion_steps)}
-                  </span>
-                </div>
-              )}
-              {st?.diffusion_blocks != null && (
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-muted-foreground">{t("chat.timing.blocks")}</span>
-                  <span className="font-mono tabular-nums">
-                    {formatNumber(st.diffusion_blocks)}
-                  </span>
-                </div>
-              )}
-              {cacheHits > 0 && (
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-muted-foreground">{t("chat.timing.cacheHits")}</span>
-                  <span className="font-mono tabular-nums">
-                    {formatNumber(cacheHits)}
-                  </span>
-                </div>
-              )}
-              {cacheWrites > 0 && (
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-muted-foreground">{t("chat.timing.cacheWrites")}</span>
-                  <span className="font-mono tabular-nums">
-                    {formatNumber(cacheWrites)}
-                  </span>
-                </div>
-              )}
-              <div className="my-0.5 border-t border-border/40" />
-              <div className="flex items-center justify-between gap-4">
-                <span className="text-muted-foreground">{t("chat.timing.total")}</span>
-                <span className="font-mono tabular-nums">
-                  {formatTimingMs(timing.totalStreamTime)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-4">
-                <span className="text-muted-foreground">{t("chat.timing.chunks")}</span>
-                <span className="font-mono tabular-nums">
-                  {timing.totalChunks}
-                </span>
-              </div>
-            </>
+              </>
             )
           ) : (
             <>
               {/* Client-side metrics (external provider fallback) */}
               {timing.firstTokenTime !== undefined && (
                 <div className="flex items-center justify-between gap-4">
-                  <span className="text-muted-foreground">{t("chat.timing.firstToken")}</span>
+                  <span className="text-muted-foreground">
+                    {t("chat.timing.firstToken")}
+                  </span>
                   <span className="font-mono tabular-nums">
                     {formatTimingMs(timing.firstTokenTime)}
                   </span>
@@ -316,7 +374,9 @@ export const MessageTiming: FC<{
               )}
               {cacheHits > 0 && (
                 <div className="flex items-center justify-between gap-4">
-                  <span className="text-muted-foreground">{t("chat.timing.cacheHits")}</span>
+                  <span className="text-muted-foreground">
+                    {t("chat.timing.cacheHits")}
+                  </span>
                   <span className="font-mono tabular-nums">
                     {formatNumber(cacheHits)}
                   </span>
@@ -324,20 +384,26 @@ export const MessageTiming: FC<{
               )}
               {cacheWrites > 0 && (
                 <div className="flex items-center justify-between gap-4">
-                  <span className="text-muted-foreground">{t("chat.timing.cacheWrites")}</span>
+                  <span className="text-muted-foreground">
+                    {t("chat.timing.cacheWrites")}
+                  </span>
                   <span className="font-mono tabular-nums">
                     {formatNumber(cacheWrites)}
                   </span>
                 </div>
               )}
               <div className="flex items-center justify-between gap-4">
-                <span className="text-muted-foreground">{t("chat.timing.total")}</span>
+                <span className="text-muted-foreground">
+                  {t("chat.timing.total")}
+                </span>
                 <span className="font-mono tabular-nums">
                   {formatTimingMs(timing.totalStreamTime)}
                 </span>
               </div>
               <div className="flex items-center justify-between gap-4">
-                <span className="text-muted-foreground">{t("chat.timing.chunks")}</span>
+                <span className="text-muted-foreground">
+                  {t("chat.timing.chunks")}
+                </span>
                 <span className="font-mono tabular-nums">
                   {timing.totalChunks}
                 </span>

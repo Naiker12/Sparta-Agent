@@ -1,4 +1,3 @@
-
 export async function loadLaunchAtLogin(): Promise<boolean> {
   const { invoke } = await import("@tauri-apps/api/core");
   return invoke<boolean>("get_launch_at_login");

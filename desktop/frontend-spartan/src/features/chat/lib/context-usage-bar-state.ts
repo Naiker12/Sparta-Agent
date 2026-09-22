@@ -1,8 +1,9 @@
-
 // its own plain module so the node suite can drive it: the component is JSX the runner cannot import
 
 export const formatTokenCount = (n: number): string => {
-  if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
+  if (n >= 1000) {
+    return `${(n / 1000).toFixed(1)}k`;
+  }
   return String(n);
 };
 
@@ -53,8 +54,12 @@ export function deriveContextUsageBar({
 
   if (limit === null) {
     // nothing to show: no window to name, and no counted usage to report against one
-    if (usedTokens === null) return null;
-    if (usedTokens <= 0 && !hasUsageDetails) return null;
+    if (usedTokens === null) {
+      return null;
+    }
+    if (usedTokens <= 0 && !hasUsageDetails) {
+      return null;
+    }
     return {
       face: `${formatTokenCount(usedTokens)} tokens`,
       label: `Token usage: ${formatTokenCount(usedTokens)} tokens`,

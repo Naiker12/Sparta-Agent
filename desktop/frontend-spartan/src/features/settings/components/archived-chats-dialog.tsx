@@ -1,4 +1,3 @@
-
 import {
   AlertDialog,
   AlertDialogAction,
@@ -9,9 +8,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import {
-  type SidebarItem,
   DeleteChatFilesSwitch,
+  type SidebarItem,
   deleteChatItem,
   unarchiveChatItem,
   useChatPreferencesStore,
@@ -21,7 +21,6 @@ import {
 import { toast } from "@/lib/toast";
 import { ArchiveRestoreIcon, Delete02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Button } from "@/components/ui/button";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { useState } from "react";
 import { useSettingsDialogStore } from "../stores/settings-dialog-store";
@@ -46,7 +45,9 @@ export function ArchivedChatsView() {
   // pair id only lives in the search params; mirror how the sidebar reads it.
   const openChatId = useRouterState({
     select: (s) => {
-      if (!s.location.pathname.startsWith("/chat")) return undefined;
+      if (!s.location.pathname.startsWith("/chat")) {
+        return undefined;
+      }
       const search = s.location.search as Record<string, string | undefined>;
       return search.thread ?? search.compare ?? storeThreadId ?? undefined;
     },
@@ -200,7 +201,9 @@ export function ArchivedChatsView() {
       <AlertDialog
         open={confirmingDelete !== null}
         onOpenChange={(o) => {
-          if (!o) setConfirmingDelete(null);
+          if (!o) {
+            setConfirmingDelete(null);
+          }
         }}
       >
         <AlertDialogContent>
@@ -227,7 +230,9 @@ export function ArchivedChatsView() {
                 const item = confirmingDelete;
                 const deleteFiles = deleteFilesOnDelete;
                 setConfirmingDelete(null);
-                if (item) void handleDelete(item, deleteFiles);
+                if (item) {
+                  void handleDelete(item, deleteFiles);
+                }
               }}
             >
               Delete

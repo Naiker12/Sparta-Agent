@@ -1,4 +1,3 @@
-
 /** One file a tool call created in the chat's sandbox. */
 export type SandboxFile = {
   name: string;
@@ -11,7 +10,9 @@ const FILES_MARKER = "\n__FILES__:";
 export const SANDBOX_FILE_TOOLS = new Set(["python", "terminal"]);
 
 function isSandboxFile(entry: unknown): entry is SandboxFile {
-  if (typeof entry !== "object" || entry === null) return false;
+  if (typeof entry !== "object" || entry === null) {
+    return false;
+  }
   const { name, size } = entry as { name?: unknown; size?: unknown };
   return (
     typeof name === "string" &&
@@ -31,7 +32,9 @@ export function extractCreatedFiles(raw: string): {
   files: SandboxFile[];
 } {
   const start = raw.lastIndexOf(FILES_MARKER);
-  if (start === -1) return { text: raw, files: [] };
+  if (start === -1) {
+    return { text: raw, files: [] };
+  }
 
   const payloadStart = start + FILES_MARKER.length;
   const nextMarker = raw.indexOf("\n__", payloadStart);
@@ -40,7 +43,7 @@ export function extractCreatedFiles(raw: string): {
     const parsed: unknown = JSON.parse(raw.slice(payloadStart, end));
     // Every entry, not just the array: a tool printing `__FILES__:[null]` would
     // otherwise have its output eaten and throw while rendering file.name.
-    if (!Array.isArray(parsed) || !parsed.every(isSandboxFile)) {
+    if (!(Array.isArray(parsed) && parsed.every(isSandboxFile))) {
       return { text: raw, files: [] };
     }
     return { text: raw.slice(0, start) + raw.slice(end), files: parsed };
@@ -51,8 +54,12 @@ export function extractCreatedFiles(raw: string): {
 
 /** ``files`` as the cards need it: absent, or entries with a usable name. */
 export function isSandboxFileList(val: unknown): boolean {
-  if (val === undefined || val === null) return true;
-  if (!Array.isArray(val)) return false;
+  if (val === undefined || val === null) {
+    return true;
+  }
+  if (!Array.isArray(val)) {
+    return false;
+  }
   return val.every(
     (entry) =>
       typeof entry === "object" &&
@@ -68,7 +75,9 @@ export function isSandboxFileList(val: unknown): boolean {
 export function isSandboxToolResult(
   val: unknown,
 ): val is { text: string; sessionId: string } {
-  if (typeof val !== "object" || val === null) return false;
+  if (typeof val !== "object" || val === null) {
+    return false;
+  }
   const v = val as {
     text?: unknown;
     sessionId?: unknown;

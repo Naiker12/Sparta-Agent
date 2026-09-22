@@ -1,4 +1,3 @@
-
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -47,10 +46,14 @@ export function reorderIds(
   draggedId: string,
   targetId: string,
 ): string[] {
-  if (draggedId === targetId) return ids;
+  if (draggedId === targetId) {
+    return ids;
+  }
   const from = ids.indexOf(draggedId);
   const to = ids.indexOf(targetId);
-  if (from === -1 || to === -1) return ids;
+  if (from === -1 || to === -1) {
+    return ids;
+  }
   const next = [...ids];
   next.splice(from, 1);
   next.splice(to, 0, draggedId);
@@ -88,15 +91,15 @@ export function dropEdgeFor(
  * Moves a row one slot up or down. The menu path to the same reorder that
  * dragging does, for touch and keyboard, which never see a `dragstart`.
  */
-export function moveIdBy(
-  ids: string[],
-  id: string,
-  delta: number,
-): string[] {
+export function moveIdBy(ids: string[], id: string, delta: number): string[] {
   const from = ids.indexOf(id);
-  if (from === -1) return ids;
+  if (from === -1) {
+    return ids;
+  }
   const to = from + delta;
-  if (to < 0 || to >= ids.length) return ids;
+  if (to < 0 || to >= ids.length) {
+    return ids;
+  }
   const next = [...ids];
   next.splice(from, 1);
   next.splice(to, 0, id);
@@ -113,7 +116,9 @@ export function applyManualOrder<T>(
   order: string[] | undefined,
   getId: (item: T) => string,
 ): T[] {
-  if (!order?.length) return items;
+  if (!order || order.length === 0) {
+    return items;
+  }
   const rank = new Map(order.map((id, index) => [id, index]));
   // Sort is stable, so two unranked rows keep their relative order.
   return [...items].sort(

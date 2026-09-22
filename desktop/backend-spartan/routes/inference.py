@@ -10152,16 +10152,24 @@ for _r in _lifecycle_router.routes:
 # =====================================================================
 from routes.inference_pkg.router_audio import (
     router as _audio_router,
+    studio_router as _audio_studio_router,
     generate_audio,
     openai_audio_speech,
     openai_audio_transcriptions,
     _generate_tts_wav,
     _persist_tts_clip,
     _wav_duration_seconds,
+    list_gallery_audio,
+    get_gallery_audio_file,
+    delete_gallery_audio,
+    clear_gallery_audio,
 )
 
 for _r in _audio_router.routes:
     router.routes.append(_r)
+
+for _r in _audio_studio_router.routes:
+    studio_router.routes.append(_r)
 
 # =====================================================================
 # Speech-To-Text (STT) Sidecar (Modularized in routes.inference_pkg)
@@ -15492,45 +15500,3 @@ async def _openai_passthrough_non_streaming_upstream(
 
 
 # =====================================================================
-# =====================================================================
-# Studio Diffusion & Gallery Routes (Modularized in routes.inference_pkg)
-# =====================================================================
-from routes.inference_pkg.router_images_studio import (
-    router as _images_compat_router,
-    studio_router as _images_studio_router,
-    _diffusion_training_active,
-    _diffusion_training_admission,
-    _guard_diffusion_load_against_training,
-    _training_is_active,
-    _selected_gpu_ordinal,
-    _parse_openai_image_size,
-    _sign_image_id,
-    _IMAGE_LINK_TTL,
-    diffusion_download_plan,
-    load_diffusion_model,
-    load_diffusion_model_gated,
-    generate_diffusion_image,
-    list_gallery_images,
-    get_gallery_image_file,
-    update_gallery_image_flags,
-    delete_gallery_image,
-    clear_gallery_images,
-    list_gallery_audio,
-    get_gallery_audio_file,
-    delete_gallery_audio,
-    clear_gallery_audio,
-    unload_diffusion_model,
-    diffusion_status,
-    diffusion_inference_info,
-    diffusion_load_progress,
-    diffusion_generate_progress,
-    cancel_diffusion_generation,
-    get_gallery_image_file_signed,
-    openai_image_generations,
-)
-
-for r in _images_studio_router.routes:
-    studio_router.routes.append(r)
-
-for r in _images_compat_router.routes:
-    router.routes.append(r)

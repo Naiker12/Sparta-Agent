@@ -1,4 +1,3 @@
-
 import { authFetch } from "@/features/auth";
 import {
   formatFastApiDetail,
@@ -212,11 +211,15 @@ async function parseErrorResponse(response: Response): Promise<string> {
     // Use ||, not ??: an array detail is truthy but not nullish, and
     // formatFastApiDetail returns null when it cannot flatten the value.
     const formatted = formatFastApiDetail(parsed.detail);
-    if (formatted) return formatted;
-    if (typeof parsed.message === "string" && parsed.message)
+    if (formatted) {
+      return formatted;
+    }
+    if (typeof parsed.message === "string" && parsed.message) {
       return parsed.message;
-    if (typeof parsed.raw_detail === "string" && parsed.raw_detail)
+    }
+    if (typeof parsed.raw_detail === "string" && parsed.raw_detail) {
       return parsed.raw_detail;
+    }
     return text;
   } catch {
     return text;
@@ -461,8 +464,11 @@ export async function uploadUnstructuredFile(
   signal?: AbortSignal,
 ): Promise<UnstructuredFileUploadResponse> {
   const formData = new FormData();
-  if (file instanceof File) formData.append("file", file);
-  else formData.append("nativePathLease", file.nativePathLease);
+  if (file instanceof File) {
+    formData.append("file", file);
+  } else {
+    formData.append("nativePathLease", file.nativePathLease);
+  }
   formData.append("block_id", blockId);
 
   const res = await authFetch(

@@ -1,4 +1,6 @@
-
+import { Switch } from "@/components/ui/switch";
+import { useT } from "@/i18n";
+import type { TranslationKey } from "@/i18n";
 import {
   CloudIcon,
   CpuIcon,
@@ -15,11 +17,8 @@ import {
   UserIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Reorder, useDragControls } from "motion/react";
-import { Switch } from "@/components/ui/switch";
-import { useT } from "@/i18n";
-import type { TranslationKey } from "@/i18n";
 import type { IconSvgElement } from "@hugeicons/react";
+import { Reorder, useDragControls } from "motion/react";
 import type { SidebarMenuItemPref } from "../stores/appearance-custom-store";
 import { useAppearanceCustomStore } from "../stores/appearance-custom-store";
 
@@ -28,8 +27,14 @@ const ITEM_META: Record<
   { icon: IconSvgElement; labelKey: TranslationKey }
 > = {
   api: { icon: Globe02Icon, labelKey: "shell.navigation.api" },
-  darkMode: { icon: Moon02Icon, labelKey: "settings.appearance.sidebarMenu.darkModeToggle" },
-  guidedTour: { icon: CursorInfo02Icon, labelKey: "shell.navigation.guidedTour" },
+  darkMode: {
+    icon: Moon02Icon,
+    labelKey: "settings.appearance.sidebarMenu.darkModeToggle",
+  },
+  guidedTour: {
+    icon: CursorInfo02Icon,
+    labelKey: "shell.navigation.guidedTour",
+  },
   profile: { icon: UserIcon, labelKey: "settings.tabs.profile" },
   appearance: { icon: PaintBrush02Icon, labelKey: "settings.tabs.appearance" },
   resources: { icon: CpuIcon, labelKey: "settings.tabs.resources" },

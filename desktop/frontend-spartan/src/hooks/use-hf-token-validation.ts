@@ -1,4 +1,3 @@
-
 import { validateHfToken } from "@/features/hf-auth";
 import { useEffect, useRef, useState } from "react";
 import { useDebouncedValue } from "./use-debounced-value";
@@ -29,7 +28,7 @@ const NO_COMPLETED_VALIDATION: CompletedValidation = {
 const COMPLETE_HF_TOKEN = /^hf_[A-Za-z0-9]{34}$/;
 
 /** Validates the HF token via the whoami-v2 API, debounced to avoid excessive requests
-* while typing. isValid is null until checked. */
+ * while typing. isValid is null until checked. */
 export function useHfTokenValidation(token: string): HfTokenValidationState {
   const normalizedToken = token.trim().replace(/^["']+|["']+$/g, "");
   const debouncedToken = useDebouncedValue(normalizedToken, 500);
@@ -47,7 +46,9 @@ export function useHfTokenValidation(token: string): HfTokenValidationState {
     const version = ++versionRef.current;
     void validateHfToken(debouncedToken).then(
       (result) => {
-        if (versionRef.current !== version) return;
+        if (versionRef.current !== version) {
+          return;
+        }
         if (result.status === "valid") {
           setCompleted({
             token: debouncedToken,
@@ -83,7 +84,9 @@ export function useHfTokenValidation(token: string): HfTokenValidationState {
         }
       },
       () => {
-        if (versionRef.current !== version) return;
+        if (versionRef.current !== version) {
+          return;
+        }
         setCompleted({
           token: debouncedToken,
           isValid: null,
@@ -102,7 +105,9 @@ export function useHfTokenValidation(token: string): HfTokenValidationState {
       isChecking: false,
     };
   }
-  if (!COMPLETE_HF_TOKEN.test(normalizedToken)) return INITIAL;
+  if (!COMPLETE_HF_TOKEN.test(normalizedToken)) {
+    return INITIAL;
+  }
   if (completed.token !== normalizedToken) {
     return { isValid: null, error: null, isChecking: true };
   }

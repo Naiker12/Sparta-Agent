@@ -1,9 +1,20 @@
-
 "use client";
 
-import { Component, lazy, Suspense, type ReactNode, useEffect, useState } from "react";
+import {
+  Component,
+  type ReactNode,
+  Suspense,
+  lazy,
+  useEffect,
+  useState,
+} from "react";
 
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Spinner } from "@/components/ui/spinner";
 import { useT } from "@/i18n";
 import { useDocumentPreviewStore } from "./preview-store";
@@ -83,13 +94,17 @@ export function DocumentPreviewMount() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (open) setMounted(true);
+    if (open) {
+      setMounted(true);
+    }
   }, [open]);
 
   // On the first click, render the lazy boundary immediately instead of
   // waiting for an effect tick. This makes the Sheet available as soon as the
   // local preview state opens.
-  if (!mounted && !open) return null;
+  if (!(mounted || open)) {
+    return null;
+  }
   return (
     <DocumentPreviewLoadBoundary
       resetKey={open ? 1 : 0}

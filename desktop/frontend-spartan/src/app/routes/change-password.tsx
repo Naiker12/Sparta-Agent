@@ -1,4 +1,3 @@
-
 import { createRoute } from "@tanstack/react-router";
 import { lazy } from "react";
 import { requirePasswordChangeFlow } from "../auth-guards";

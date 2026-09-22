@@ -1,4 +1,3 @@
-
 export type SseFrame = {
   event: string;
   remainder: string;

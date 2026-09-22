@@ -12,7 +12,9 @@ export type InstalledSkill = {
 
 export async function listInstalledSkills(): Promise<InstalledSkill[]> {
   const response = await authFetch("/api/skills/");
-  if (!response.ok) throw new Error(`Request failed (${response.status})`);
+  if (!response.ok) {
+    throw new Error(`Request failed (${response.status})`);
+  }
   const value = await response.json();
   return Array.isArray(value) ? (value as InstalledSkill[]) : [];
 }

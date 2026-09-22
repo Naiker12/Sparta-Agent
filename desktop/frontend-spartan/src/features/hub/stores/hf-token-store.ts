@@ -1,4 +1,3 @@
-
 import { AUTH_SESSION_CLEARED_EVENT } from "../../auth/session-events.ts";
 import { reconcileLegacyHfToken } from "../../credentials/reconciliation.ts";
 
@@ -28,15 +27,22 @@ export function normalizeHfToken(raw: string): string {
 }
 
 function loadLegacyToken(): string {
-
-  if (!canUseStorage()) return stagedLegacyToken;
+  if (!canUseStorage()) {
+    return stagedLegacyToken;
+  }
   try {
     const direct = window.localStorage.getItem(HF_TOKEN_KEY);
     const migrationCopy = window.localStorage.getItem(HF_TOKEN_MIGRATION_KEY);
-    if (migrationCopy !== null) return normalizeHfToken(migrationCopy);
-    if (direct !== null) return normalizeHfToken(direct);
+    if (migrationCopy !== null) {
+      return normalizeHfToken(migrationCopy);
+    }
+    if (direct !== null) {
+      return normalizeHfToken(direct);
+    }
     const legacy = window.localStorage.getItem(LEGACY_TRAINING_KEY);
-    if (!legacy) return stagedLegacyToken;
+    if (!legacy) {
+      return stagedLegacyToken;
+    }
     const parsed = JSON.parse(legacy) as { state?: Record<string, unknown> };
     const token = parsed?.state?.hfToken;
     return typeof token === "string"
@@ -49,20 +55,31 @@ function loadLegacyToken(): string {
 
 function removeLegacyToken(expectedToken: string): void {
   const expected = normalizeHfToken(expectedToken);
-  if (!expected) return;
-  if (normalizeHfToken(stagedLegacyToken) === expected) stagedLegacyToken = "";
-  if (!canUseStorage()) return;
+  if (!expected) {
+    return;
+  }
+  if (normalizeHfToken(stagedLegacyToken) === expected) {
+    stagedLegacyToken = "";
+  }
+  if (!canUseStorage()) {
+    return;
+  }
   try {
     const direct = window.localStorage.getItem(HF_TOKEN_KEY);
     if (direct !== null && normalizeHfToken(direct) === expected) {
       window.localStorage.removeItem(HF_TOKEN_KEY);
     }
     const migrationCopy = window.localStorage.getItem(HF_TOKEN_MIGRATION_KEY);
-    if (migrationCopy !== null && normalizeHfToken(migrationCopy) === expected) {
+    if (
+      migrationCopy !== null &&
+      normalizeHfToken(migrationCopy) === expected
+    ) {
       window.localStorage.removeItem(HF_TOKEN_MIGRATION_KEY);
     }
     const raw = window.localStorage.getItem(LEGACY_TRAINING_KEY);
-    if (!raw) return;
+    if (!raw) {
+      return;
+    }
     const parsed = JSON.parse(raw) as { state?: Record<string, unknown> };
     const trainingToken = parsed.state?.hfToken;
     if (
@@ -72,7 +89,7 @@ function removeLegacyToken(expectedToken: string): void {
     ) {
       return;
     }
-    delete parsed.state.hfToken;
+    parsed.state.hfToken = undefined;
     window.localStorage.setItem(LEGACY_TRAINING_KEY, JSON.stringify(parsed));
   } catch {
     // Keep legacy data untouched on malformed/unavailable storage.
@@ -84,7 +101,9 @@ let persistenceChain: Promise<void> = Promise.resolve();
 let lastPersistedToken = "";
 
 function announcePersistedTokenChange(): void {
-  if (!canUseStorage()) return;
+  if (!canUseStorage()) {
+    return;
+  }
   try {
     window.localStorage.setItem(
       HF_TOKEN_SYNC_KEY,
@@ -110,7 +129,9 @@ function persistTokenToBackend(token: string): void {
     .then(async () => {
       // Collapse rapid field edits before they reach the network. In-flight
       // writes remain ordered, so an older response can never win last.
-      if (revision !== persistenceRevision) return;
+      if (revision !== persistenceRevision) {
+        return;
+      }
 
       const legacyTokenBeforeSave = loadLegacyToken();
       try {
@@ -134,7 +155,9 @@ function persistTokenToBackend(token: string): void {
         const persistedToken = response.token
           ? normalizeHfToken(response.token)
           : "";
-        if (sessionRevision !== authSessionRevision) return;
+        if (sessionRevision !== authSessionRevision) {
+          return;
+        }
         lastPersistedToken = persistedToken;
         if (revision === persistenceRevision) {
           removeLegacyToken(legacyTokenBeforeSave);
@@ -157,20 +180,24 @@ function persistTokenToBackend(token: string): void {
     });
 }
 
-
 /** Wait until the latest queued token edit is durable, or surface its save error. */
 export async function waitForHfTokenPersistence(): Promise<void> {
   while (true) {
     const revision = persistenceRevision;
     await persistenceChain;
-    if (revision !== persistenceRevision) continue;
+    if (revision !== persistenceRevision) {
+      continue;
+    }
     const state = useHfTokenStore.getState();
-    if (state.isPersisting) continue;
-    if (state.persistenceError) throw new Error(state.persistenceError);
+    if (state.isPersisting) {
+      continue;
+    }
+    if (state.persistenceError) {
+      throw new Error(state.persistenceError);
+    }
     return;
   }
 }
-
 
 interface HfTokenStore {
   token: string;
@@ -208,9 +235,13 @@ let authSessionRevision = 0;
 
 /** Retain a pre-v12 training-store token as migration input until server save succeeds. */
 export function stageLegacyHfTokenForMigration(value: string): void {
-  if (serverCredentialHydrated) return;
+  if (serverCredentialHydrated) {
+    return;
+  }
   const token = normalizeHfToken(value);
-  if (!token) return;
+  if (!token) {
+    return;
+  }
   stagedLegacyToken ||= token;
   if (canUseStorage()) {
     try {
@@ -224,22 +255,25 @@ export function stageLegacyHfTokenForMigration(value: string): void {
   }
 }
 
-
-
 let hydrationPromise: Promise<void> | null = null;
 let hydrationReplayRequested = false;
 
 /** Server-first, retry-safe migration and hydration after authentication. */
 export function hydrateHfTokenFromBackend(): Promise<void> {
-  if (hydrationPromise) return hydrationPromise;
+  if (hydrationPromise) {
+    return hydrationPromise;
+  }
   const sessionRevision = authSessionRevision;
   const persistenceRevisionAtStart = persistenceRevision;
   const persistenceWasPending = useHfTokenStore.getState().isPersisting;
   const canApplyHydratedToken = () =>
-    !persistenceWasPending && persistenceRevisionAtStart === persistenceRevision;
+    !persistenceWasPending &&
+    persistenceRevisionAtStart === persistenceRevision;
   const assertCurrentSession = () => {
     if (sessionRevision !== authSessionRevision) {
-      throw new Error("Authentication session changed during credential hydration.");
+      throw new Error(
+        "Authentication session changed during credential hydration.",
+      );
     }
   };
 
@@ -263,7 +297,9 @@ export function hydrateHfTokenFromBackend(): Promise<void> {
       },
       applyToken: (token) => {
         assertCurrentSession();
-        if (!canApplyHydratedToken()) return;
+        if (!canApplyHydratedToken()) {
+          return;
+        }
         lastPersistedToken = normalizeHfToken(token);
         useHfTokenStore.setState({
           token: lastPersistedToken,
@@ -277,24 +313,28 @@ export function hydrateHfTokenFromBackend(): Promise<void> {
       },
     });
   })().finally(() => {
-    if (sessionRevision === authSessionRevision) hydrationPromise = null;
+    if (sessionRevision === authSessionRevision) {
+      hydrationPromise = null;
+    }
   });
   return hydrationPromise;
 }
 
-
 /** Re-read after an active hydration when another tab reports a newer backend value. */
 export async function refreshHfTokenFromBackend(): Promise<void> {
-
   backendNotificationRevision += 1;
-  if (!hydrationPromise) return hydrateHfTokenFromBackend();
+  if (!hydrationPromise) {
+    return hydrateHfTokenFromBackend();
+  }
   hydrationReplayRequested = true;
   try {
     await hydrationPromise;
   } catch {
     // The replay is the authoritative retry for the cross-tab notification.
   }
-  if (!hydrationReplayRequested) return;
+  if (!hydrationReplayRequested) {
+    return;
+  }
   hydrationReplayRequested = false;
   return hydrateHfTokenFromBackend();
 }
@@ -319,7 +359,9 @@ if (typeof window !== "undefined") {
   window.addEventListener(AUTH_SESSION_CLEARED_EVENT, resetHfCredentialSession);
 
   window.addEventListener("storage", (event) => {
-    if (event.key !== HF_TOKEN_SYNC_KEY || !event.newValue) return;
+    if (event.key !== HF_TOKEN_SYNC_KEY || !event.newValue) {
+      return;
+    }
     void refreshHfTokenFromBackend().catch(() => undefined);
   });
 }

@@ -1,15 +1,14 @@
-
 import { authFetch } from "@/features/auth";
 import {
   disposableTimeoutSignal,
   withAbort,
 } from "@/features/hub/lib/abort-signals";
 import { hubTokenHeader } from "@/features/hub/lib/hub-token-header";
-import { readFastApiError } from "@/lib/format-fastapi-error";
 import { localPathCacheKey } from "@/features/hub/lib/local-path";
 import { isHuggingFaceOffline } from "@/features/hub/lib/network";
 import { fingerprintToken } from "@/features/hub/lib/token-fingerprint";
 import { bumpInventoryVersion } from "@/features/hub/stores/inventory-events";
+import { readFastApiError } from "@/lib/format-fastapi-error";
 import type { ScanFolderStatus } from "../lib/scan-folder-status";
 import type { LocalSource } from "./constants";
 import { bumpGgufVariantsCacheVersion } from "./gguf-variants-cache-events";
@@ -260,7 +259,9 @@ export async function listCachedDatasets(): Promise<CachedDatasetRepo[]> {
   const response = await withHubTimeout(INVENTORY_TIMEOUT_MS, (signal) =>
     authFetch("/api/hub/datasets/cached", { signal }),
   );
-  const data = await parseJsonOrThrow<{ cached: CachedDatasetRepo[] }>(response);
+  const data = await parseJsonOrThrow<{ cached: CachedDatasetRepo[] }>(
+    response,
+  );
   return data.cached;
 }
 
@@ -310,7 +311,9 @@ export async function fetchDeleteImpact(
         variant ? { repo_id: repoId, variant } : { repo_id: repoId },
       ),
     });
-    if (!response.ok) return null;
+    if (!response.ok) {
+      return null;
+    }
     return (await response.json()) as DeleteImpact;
   } catch {
     return null;

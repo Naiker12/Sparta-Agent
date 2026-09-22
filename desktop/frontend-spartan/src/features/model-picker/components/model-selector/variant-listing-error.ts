@@ -1,8 +1,9 @@
-
 // Read by property, not instanceof: DOMException does not inherit from Error in older
 // WebKit, so `err instanceof Error` misses exactly the aborts this needs to classify.
 function propString(err: unknown, key: "name" | "message"): string {
-  if (typeof err !== "object" || err === null) return "";
+  if (typeof err !== "object" || err === null) {
+    return "";
+  }
   const value = (err as Record<string, unknown>)[key];
   return typeof value === "string" ? value : "";
 }

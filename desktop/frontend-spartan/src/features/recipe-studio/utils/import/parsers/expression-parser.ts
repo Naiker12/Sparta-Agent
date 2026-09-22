@@ -1,8 +1,4 @@
-
-import type {
-  ExpressionConfig,
-  ExpressionDtype,
-} from "../../../types";
+import type { ExpressionConfig, ExpressionDtype } from "../../../types";
 import { readString } from "../helpers";
 
 const EXPRESSION_DTYPES: ExpressionDtype[] = ["str", "int", "float", "bool"];

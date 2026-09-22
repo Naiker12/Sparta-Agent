@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { ReleaseNotesPanel } from "@/components/update/release-notes-panel";
 import type {
@@ -7,9 +6,9 @@ import type {
   UpdateInfo,
   UpdateStatus,
 } from "@/hooks/use-tauri-update";
+import { useT } from "@/i18n";
 import type { CopySupportDiagnosticsResult } from "@/lib/tauri-diagnostics";
 import { cn } from "@/lib/utils";
-import { useT } from "@/i18n";
 import { CircleAlert, Download } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
@@ -35,7 +34,9 @@ const EASE_OUT_QUART: [number, number, number, number] = [0.165, 0.84, 0.44, 1];
 const LEADING_V = /^v/;
 
 function formatVersion(version: string | null | undefined): string {
-  if (!version) return "";
+  if (!version) {
+    return "";
+  }
   return version.startsWith("v") ? version : `v${version}`;
 }
 

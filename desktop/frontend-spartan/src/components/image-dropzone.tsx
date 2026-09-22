@@ -1,7 +1,6 @@
-
-import { useCallback, useEffect, useRef, useState } from "react";
 import { Delete02Icon, ImageAdd02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -14,8 +13,8 @@ import {
   registerNativeAttachmentPath,
   useNativeDropTarget,
 } from "@/features/native-intents";
-import { cn } from "@/lib/utils";
 import { toast } from "@/lib/toast";
+import { cn } from "@/lib/utils";
 
 // All registerNativeAttachmentPath takes. The picker itself accepts image/*,
 // so name the droppable formats instead of surfacing the backend's refusal.
@@ -56,22 +55,28 @@ export function ImageDropzone({
   // means a read in flight is for the slot as it used to be.
   const seen = useRef(value);
   useEffect(() => {
-    if (seen.current === value) return;
+    if (seen.current === value) {
+      return;
+    }
     seen.current = value;
     selection.current += 1;
   }, [value]);
 
   const readFile = useCallback(
     (file: File | undefined | null) => {
-      if (!file || !file.type.startsWith("image/")) {
-        if (file) toast.error("Please choose an image file");
+      if (!file?.type.startsWith("image/")) {
+        if (file) {
+          toast.error("Please choose an image file");
+        }
         return;
       }
       selection.current += 1;
       const claimed = selection.current;
       const reader = new FileReader();
       reader.onload = () => {
-        if (claimed !== selection.current) return;
+        if (claimed !== selection.current) {
+          return;
+        }
         onChange(typeof reader.result === "string" ? reader.result : null);
       };
       reader.onerror = () => toast.error("Could not read the image");
@@ -84,10 +89,15 @@ export function ImageDropzone({
   // that the native side registers and reads for this picker.
   const readNativePath = useCallback(
     async (path: string | undefined) => {
-      if (!path) return;
-      if (!NATIVE_IMAGE_EXTS.includes(path.split(".").pop()?.toLowerCase() ?? "")) {
+      if (!path) {
+        return;
+      }
+      if (
+        !NATIVE_IMAGE_EXTS.includes(path.split(".").pop()?.toLowerCase() ?? "")
+      ) {
         toast.error("Drop a JPEG, PNG, WebP or GIF image", {
-          description: "Other image formats can still be chosen with the picker.",
+          description:
+            "Other image formats can still be chosen with the picker.",
         });
         return;
       }
@@ -96,7 +106,9 @@ export function ImageDropzone({
       try {
         const intent = await registerNativeAttachmentPath(path);
         const file = await readNativeAttachmentFile(intent.path.token);
-        if (!mounted.current || claimed !== selection.current) return;
+        if (!mounted.current || claimed !== selection.current) {
+          return;
+        }
         onChange(`data:${file.mimeType};base64,${file.base64}`);
       } catch (error) {
         toast.error("Could not read the image", {
@@ -114,8 +126,17 @@ export function ImageDropzone({
 
   if (value) {
     return (
-      <div className={cn("relative overflow-hidden rounded-[10px] border border-border", className)}>
-        <img src={value} alt="Source" className="max-h-44 w-full object-contain bg-muted/30" />
+      <div
+        className={cn(
+          "relative overflow-hidden rounded-[10px] border border-border",
+          className,
+        )}
+      >
+        <img
+          src={value}
+          alt="Source"
+          className="max-h-44 w-full object-contain bg-muted/30"
+        />
         <Tooltip>
           <TooltipTrigger asChild={true}>
             <Button
@@ -127,7 +148,9 @@ export function ImageDropzone({
               onClick={() => {
                 selection.current += 1;
                 onChange(null);
-                if (inputRef.current) inputRef.current.value = "";
+                if (inputRef.current) {
+                  inputRef.current.value = "";
+                }
               }}
             >
               <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />

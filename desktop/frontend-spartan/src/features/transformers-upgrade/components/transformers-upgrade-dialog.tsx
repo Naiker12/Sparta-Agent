@@ -1,4 +1,3 @@
-
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,7 +16,9 @@ import { upgradeDialogActions } from "../lib/upgrade-dialog-actions";
 import { useTransformersUpgradeDialogStore } from "../stores/transformers-upgrade-dialog-store";
 
 function modelDisplayName(modelName: string | null): string {
-  if (!modelName) return "This model";
+  if (!modelName) {
+    return "This model";
+  }
   return modelName.split("/").pop() || modelName;
 }
 
@@ -51,7 +52,9 @@ export function TransformersUpgradeDialog() {
       open={open}
       onOpenChange={(next) => {
         // Escape/overlay dismiss must not abandon an in-flight install.
-        if (!next && !installing) resolve(false);
+        if (!(next || installing)) {
+          resolve(false);
+        }
       }}
     >
       <AlertDialogContent className="max-w-lg">

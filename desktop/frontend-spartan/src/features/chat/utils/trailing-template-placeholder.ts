@@ -1,4 +1,3 @@
-
 /**
  * Some external providers (mistral magistral, occasionally) leak a trailing
  * template-literal fragment such as `${answer}` into the stream, so the adapter

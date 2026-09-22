@@ -1,4 +1,3 @@
-
 import { usePlatformStore } from "@/config/env";
 import type { PipelineType } from "@huggingface/hub";
 import { listModels } from "@huggingface/hub";
@@ -61,7 +60,9 @@ export type HfSortDirection = "desc" | "asc";
 export type HfTaskFilter = PipelineType | readonly PipelineType[] | undefined;
 
 function normalizeTaskFilter(task: HfTaskFilter): readonly PipelineType[] {
-  if (!task) return [];
+  if (!task) {
+    return [];
+  }
   return typeof task === "string" ? [task] : task;
 }
 
@@ -190,8 +191,7 @@ function makeMapModel(
     }
     const isEmbedding = m.tags?.some((t) => EMBEDDING_TAGS.has(t));
     if (
-      !keepUnsupportedTags &&
-      !isEmbedding &&
+      !(keepUnsupportedTags || isEmbedding) &&
       m.tags?.some((t) => excludedTags.has(t))
     ) {
       return null;
@@ -200,7 +200,9 @@ function makeMapModel(
     // expander would dead-end at "No GGUF variants found." Trust the bare tag only when the repo is not a pipeline; "-GGUF" and real metadata still win.
     const isDiffusersPipeline =
       m.library_name?.toLowerCase() === "diffusers" ||
-      Boolean(m.tags?.some((tag) => tag.toLowerCase().startsWith("diffusers:")));
+      Boolean(
+        m.tags?.some((tag) => tag.toLowerCase().startsWith("diffusers:")),
+      );
     const isGguf =
       isGgufLike(m.name) ||
       Boolean(m.gguf) ||
@@ -213,7 +215,7 @@ function makeMapModel(
     const quantMethod = m.config?.quantization_config?.quant_method;
     // Drop runtime-unloadable models before they reach the row list. Discover opts out via
     // keepUnsupportedTags. Embeddings skip the gate: unsupported for chat but trainable.
-    if (!keepUnsupportedTags && !isEmbedding) {
+    if (!(keepUnsupportedTags || isEmbedding)) {
       const support = classifyUnslothSupport({
         modelId: m.name,
         pipelineTag,
@@ -222,7 +224,9 @@ function makeMapModel(
         deviceType,
         quantMethod,
       });
-      if (support.status === "unsupported") return null;
+      if (support.status === "unsupported") {
+        return null;
+      }
     }
     const updatedAtIso =
       m.updatedAt instanceof Date
@@ -267,9 +271,9 @@ const UNSLOTH_PINNED_PREFETCH = 4;
 const PUBLISHER_RE = /^([^/\s]+)\/([^/\s]+)$/;
 
 /**
-* Prime the hf-cache from a listModels result. For public models also prime the anonymous slot
-* so the VRAM hook gets cache hits; gated/private models are cached only under the caller's token.
-*/
+ * Prime the hf-cache from a listModels result. For public models also prime the anonymous slot
+ * so the VRAM hook gets cache hits; gated/private models are cached only under the caller's token.
+ */
 function primeFromListing(
   name: string,
   accessToken: string | undefined,
@@ -346,7 +350,9 @@ async function* mergedModelIterator(
     }
     yield model;
     count++;
-    if (count >= limit) break;
+    if (count >= limit) {
+      break;
+    }
   }
 
   // Phase 1b: pinned publisher model before general results
@@ -366,7 +372,9 @@ async function* mergedModelIterator(
   // Phase 2: general results, skipping already-seen models
   for await (const model of generalIter) {
     const m = model as { name?: string };
-    if (m.name && seen.has(m.name)) continue;
+    if (m.name && seen.has(m.name)) {
+      continue;
+    }
     if (m.name) {
       primeFromListing(m.name, accessToken, model);
     }
@@ -404,8 +412,12 @@ async function* priorityThenListingIterator(
   for (const result of settled) {
     if (result.status === "fulfilled") {
       const m = result.value as { name?: string; pipeline_tag?: string };
-      if (!taskMatches(m.pipeline_tag, tasks)) continue;
-      if (m.name) seen.add(m.name);
+      if (!taskMatches(m.pipeline_tag, tasks)) {
+        continue;
+      }
+      if (m.name) {
+        seen.add(m.name);
+      }
       yield result.value;
     }
   }
@@ -422,7 +434,9 @@ async function* priorityThenListingIterator(
   );
   for await (const model of generalIter) {
     const m = model as { name?: string };
-    if (m.name && seen.has(m.name)) continue;
+    if (m.name && seen.has(m.name)) {
+      continue;
+    }
     if (m.name) {
       primeFromListing(m.name, accessToken, model);
     }
@@ -450,7 +464,7 @@ function createChannelIterator(
   },
 ): AsyncGenerator<unknown> {
   const channelTags =
-    channel.tags && channel.tags.length ? [...channel.tags] : undefined;
+    channel.tags && channel.tags.length > 0 ? [...channel.tags] : undefined;
   const queryString = opts.query || channel.query || undefined;
   return listModels({
     search: {
@@ -502,9 +516,13 @@ async function* channelUnslothFirstIterator(
   let count = 0;
   for await (const model of unslothIter) {
     const name = (model as { name?: string }).name;
-    if (name) seen.add(name);
+    if (name) {
+      seen.add(name);
+    }
     yield model;
-    if (++count >= UNSLOTH_CHANNEL_PREFETCH) break;
+    if (++count >= UNSLOTH_CHANNEL_PREFETCH) {
+      break;
+    }
   }
 
   const generalIter = listModels({
@@ -519,7 +537,9 @@ async function* channelUnslothFirstIterator(
   }) as AsyncGenerator<unknown>;
   for await (const model of generalIter) {
     const name = (model as { name?: string }).name;
-    if (name && seen.has(name)) continue;
+    if (name && seen.has(name)) {
+      continue;
+    }
     yield model;
   }
 }
@@ -572,7 +592,9 @@ export async function fetchChannelFirstPage(
     });
     for await (const model of iter) {
       const name = (model as { name?: string }).name;
-      if (name) primeFromListing(name, accessToken, model);
+      if (name) {
+        primeFromListing(name, accessToken, model);
+      }
       yield model;
     }
   }
@@ -595,8 +617,8 @@ export function useHubModelSearch(
     sortDirection?: HfSortDirection;
     pinUnslothFirst?: boolean;
     /**
-    * "unsloth" restricts listings to the unsloth org; "all" surfaces the whole Hub with unsloth
-    * floated to the top. Owner-fixed channel presets ignore this. */
+     * "unsloth" restricts listings to the unsloth org; "all" surfaces the whole Hub with unsloth
+     * floated to the top. Owner-fixed channel presets ignore this. */
     ownerScope?: "unsloth" | "all";
     enabled?: boolean;
     keepUnsupportedTags?: boolean;
@@ -635,7 +657,7 @@ export function useHubModelSearch(
     const is = !!m && m[1].toLowerCase() !== "unsloth";
     return {
       isPublisherQuery: is,
-      searchQuery: is ? m![2] : t,
+      searchQuery: is ? m?.[2] : t,
       pinnedId: is ? t : undefined,
       trimmed: t,
     };
@@ -818,7 +840,7 @@ export function useHubModelSearch(
     } else if (incoming.length === 0) {
       results = incoming;
       if (
-        stableCache.length !== 0 ||
+        stableCache.length > 0 ||
         stableCache.results !== incoming ||
         !stableCache.sorted
       ) {
@@ -867,7 +889,9 @@ export function useHubModelSearch(
 
   const cacheNeedsUpdate = nextCache !== stableCache;
   useEffect(() => {
-    if (!cacheNeedsUpdate) return;
+    if (!cacheNeedsUpdate) {
+      return;
+    }
     startTransition(() => {
       setStableCache((current) =>
         current === stableCache ? nextCache : current,

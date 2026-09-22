@@ -1,4 +1,3 @@
-
 import { extractRefs as extractJinjaRefs } from "../refs";
 
 export function isRecord(value: unknown): value is Record<string, unknown> {
@@ -19,9 +18,10 @@ export function readNumberString(value: unknown): string {
   return "";
 }
 
-export function parseJson(
-  input: string,
-): { data: unknown | null; error?: string } {
+export function parseJson(input: string): {
+  data: unknown | null;
+  error?: string;
+} {
   try {
     return { data: JSON.parse(input) };
   } catch (error) {

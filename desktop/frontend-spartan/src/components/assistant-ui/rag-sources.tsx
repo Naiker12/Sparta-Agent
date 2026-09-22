@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useMessage } from "@assistant-ui/react";

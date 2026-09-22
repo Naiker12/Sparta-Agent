@@ -1,7 +1,6 @@
-
-import { useCallback, useEffect, useMemo, useState } from "react";
 import { toastError, toastSuccess } from "@/shared/toast";
 import { normalizeNonEmptyName } from "@/utils";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { removeUnstructuredBlock } from "../api";
 import {
   buildSignature,
@@ -9,7 +8,7 @@ import {
   formatSavedLabel,
 } from "../executions/execution-helpers";
 import { useRecipeStudioStore } from "../stores/recipe-studio";
-import { importRecipePayload, type RecipeSnapshot } from "../utils/import";
+import { type RecipeSnapshot, importRecipePayload } from "../utils/import";
 import type { RecipePayloadResult } from "../utils/payload/types";
 
 type SaveTone = "success" | "error";
@@ -119,7 +118,7 @@ function sanitizeSeedForShare(payload: unknown): unknown {
       : null;
 
   if (source && "token" in source) {
-    delete source.token;
+    source.token = undefined;
   }
 
   const uiSourceType =
@@ -206,9 +205,7 @@ function drainQueuedUploadCleanups(
           ),
         }));
       })
-      .catch((error) => {
-        console.warn("Failed to clean up uploaded documents:", error);
-      });
+      .catch((_error) => {});
   }
 }
 
@@ -260,7 +257,6 @@ export function useRecipePersistence({
     if (parsed.snapshot) {
       loadRecipe(parsed.snapshot);
     } else {
-      console.error("Failed to load recipe payload.", parsed.errors);
     }
 
     const payload = getCurrentPayloadFromStore();
@@ -295,8 +291,7 @@ export function useRecipePersistence({
       setLastSavedAt(result.updatedAt);
       setSavedSignature(buildSignature(nextName, currentPayload));
       drainQueuedUploadCleanups(currentPayload);
-    } catch (error) {
-      console.error("Save recipe failed:", error);
+    } catch (_error) {
       toastError("Save failed", "Could not save recipe.");
     } finally {
       setSaveLoading(false);
@@ -341,8 +336,7 @@ export function useRecipePersistence({
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1500);
       toastSuccess("👨‍🍳 Recipe copied");
-    } catch (error) {
-      console.error("Copy failed:", error);
+    } catch (_error) {
       toastError("Copy failed", "Could not copy payload.");
     }
   }, [payloadResult.payload]);

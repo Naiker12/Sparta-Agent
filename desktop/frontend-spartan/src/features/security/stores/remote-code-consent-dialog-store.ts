@@ -1,4 +1,3 @@
-
 import { create } from "zustand";
 import type { RemoteCodeScan } from "../types";
 
@@ -15,8 +14,8 @@ interface RemoteCodeConsentDialogStore {
   resolve: (confirmed: boolean) => void;
 }
 
-export const useRemoteCodeConsentDialogStore = create<RemoteCodeConsentDialogStore>()(
-  (set) => ({
+export const useRemoteCodeConsentDialogStore =
+  create<RemoteCodeConsentDialogStore>()((set) => ({
     open: false,
     scan: null,
     requestConsent: (scan) =>
@@ -31,5 +30,4 @@ export const useRemoteCodeConsentDialogStore = create<RemoteCodeConsentDialogSto
       set({ open: false, scan: null });
       resolver?.(confirmed);
     },
-  }),
-);
+  }));

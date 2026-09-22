@@ -1,32 +1,24 @@
-
 import {
-  CheckmarkCircle01Icon,
   Download01Icon,
   File02Icon,
   FolderOpenIcon,
-  ViewIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
+import { Spinner } from "@/components/ui/spinner";
 import { authFetch, getAuthToken } from "@/features/auth";
+import { useWorkspaceStore } from "@/features/chat/stores/use-workspace-store";
 import { preloadDocumentPreview } from "@/features/rag/components/document-preview-mount";
 import { useDocumentPreviewStore } from "@/features/rag/components/preview-store";
 import { useT } from "@/i18n";
-import { getAttachmentFileKind } from "@/lib/attachment-file-kind";
 import { apiUrl, isTauri } from "@/lib/api-base";
+import { getAttachmentFileKind } from "@/lib/attachment-file-kind";
 import { downloadUrlStreaming, isDownloadCancelled } from "@/lib/native-files";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Spinner } from "@/components/ui/spinner";
+import { ChevronRightIcon, GlobeIcon } from "lucide-react";
 
-import { sandboxFilePath, type SandboxFile } from "./sandbox-files";
+import { type SandboxFile, sandboxFilePath } from "./sandbox-files";
 import { revealSandbox } from "./sandbox-reveal";
 
 // Browser previews buffer the full response and some parsers make another
@@ -35,16 +27,19 @@ import { revealSandbox } from "./sandbox-reveal";
 const MAX_LOCAL_PREVIEW_BYTES = 25 * 1024 * 1024;
 
 function formatSize(size: number | null): string {
-  if (size === null || size === undefined || Number.isNaN(size)) return "";
-  if (size < 1024) return `${size} B`;
-  if (size < 1024 * 1024) return `${Math.round(size / 1024)} KB`;
+  if (size === null || size === undefined || Number.isNaN(size)) {
+    return "";
+  }
+  if (size < 1024) {
+    return `${size} B`;
+  }
+  if (size < 1024 * 1024) {
+    return `${Math.round(size / 1024)} KB`;
+  }
   return `${(size / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function fileTypeLabel(
-  t: ReturnType<typeof useT>,
-  filename: string,
-): string {
+function fileTypeLabel(t: ReturnType<typeof useT>, filename: string): string {
   switch (getAttachmentFileKind(filename)) {
     case "excel":
       return t("chat.files.excelWorkbook");
@@ -68,7 +63,7 @@ function SandboxFileRow({
 }) {
   const t = useT();
   const [busy, setBusy] = useState(false);
-  const [previewing, setPreviewing] = useState(false);
+  const [_previewing, setPreviewing] = useState(false);
   const openLocalPreview = useDocumentPreviewStore(
     (state) => state.openLocalPreview,
   );
@@ -80,10 +75,15 @@ function SandboxFileRow({
       const path = sandboxFilePath(sessionId, file.name);
       const response = await authFetch(apiUrl(path));
       if (!response.ok) {
-        throw new Error(t("chat.files.previewRefused", { status: response.status }));
+        throw new Error(
+          t("chat.files.previewRefused", { status: response.status }),
+        );
       }
       const contentLength = Number(response.headers.get("content-length"));
-      if (Number.isFinite(contentLength) && contentLength > MAX_LOCAL_PREVIEW_BYTES) {
+      if (
+        Number.isFinite(contentLength) &&
+        contentLength > MAX_LOCAL_PREVIEW_BYTES
+      ) {
         throw new Error(t("chat.files.previewTooLarge"));
       }
       const blob = await response.blob();
@@ -121,7 +121,9 @@ function SandboxFileRow({
       // refreshes and retries, and the HEAD settles that the file is there.
       const probe = await authFetch(apiUrl(path), { method: "HEAD" });
       if (!probe.ok) {
-        throw new Error(t("chat.files.downloadRefused", { status: probe.status }));
+        throw new Error(
+          t("chat.files.downloadRefused", { status: probe.status }),
+        );
       }
       const token = getAuthToken();
       const separator = path.includes("?") ? "&" : "?";
@@ -140,68 +142,74 @@ function SandboxFileRow({
     }
   }, [file.name, sessionId, t]);
 
-  return (
-    <Card size="sm" className="w-full max-w-xl gap-0 rounded-2xl py-0!">
-      <CardHeader className="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-3">
-        <div className="flex min-w-0 flex-1 items-center gap-2.5">
-          <div
-            aria-hidden={true}
-            className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"
-          >
-            <HugeiconsIcon icon={File02Icon} className="size-4" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <CardTitle className="select-none truncate text-sm font-semibold">
-              {file.name}
-            </CardTitle>
-            <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
-              <span className="truncate">
-              {fileTypeLabel(t, file.name)}
-              {file.size !== null ? ` · ${formatSize(file.size)}` : ""}
-              </span>
-              <span aria-hidden="true">·</span>
-              <SandboxFolderLabel sessionId={sessionId} label={t("chat.files.showFolder")} />
-            </div>
-          </div>
-        </div>
+  const isHtmlFile = file.name.endsWith(".html") || file.name.endsWith(".htm");
 
-        <div className="ml-auto flex shrink-0 items-center gap-1.5">
-          <Badge variant="secondary" className="hidden shrink-0 sm:inline-flex">
-            <HugeiconsIcon icon={CheckmarkCircle01Icon} data-icon="inline-start" />
-            {t("chat.files.ready")}
-          </Badge>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={preview}
-            disabled={previewing}
-            aria-label={t("chat.files.previewFile", { filename: file.name })}
-          >
-            {previewing ? (
-              <Spinner data-icon="inline-start" />
-            ) : (
-              <HugeiconsIcon icon={ViewIcon} data-icon="inline-start" />
-            )}
-            {t("chat.files.preview")}
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            onClick={save}
-            disabled={busy}
-            aria-label={t("chat.files.downloadFile", { filename: file.name })}
-          >
-            {busy ? (
-              <Spinner data-icon="inline-start" />
-            ) : (
-              <HugeiconsIcon icon={Download01Icon} data-icon="inline-start" />
-            )}
-            {t("chat.files.download")}
-          </Button>
+  const handleOpen = useCallback(() => {
+    const path = sandboxFilePath(sessionId, file.name);
+    const targetUrl = apiUrl(path);
+    if (isHtmlFile) {
+      useWorkspaceStore.getState().navigateBrowser(targetUrl, file.name);
+    } else {
+      preview();
+    }
+  }, [file.name, isHtmlFile, preview, sessionId]);
+
+  return (
+    <div
+      onClick={handleOpen}
+      className="group flex w-full max-w-[42rem] items-center justify-between gap-3 p-3.5 rounded-2xl border border-border/60 bg-card hover:bg-muted/40 hover:border-border hover:shadow-xs transition-all cursor-pointer select-none"
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          handleOpen();
+        }
+      }}
+    >
+      <div className="flex min-w-0 items-center gap-3">
+        <div
+          aria-hidden={true}
+          className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400 group-hover:scale-105 transition-transform"
+        >
+          {isHtmlFile ? (
+            <GlobeIcon className="size-5" />
+          ) : (
+            <HugeiconsIcon icon={File02Icon} className="size-5" />
+          )}
         </div>
-      </CardHeader>
-    </Card>
+        <div className="min-w-0 flex-1">
+          <h4 className="truncate text-sm font-semibold text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+            {file.name}
+          </h4>
+          <p className="text-xs text-muted-foreground mt-0.5 truncate">
+            {isHtmlFile ? "Página web creada" : fileTypeLabel(t, file.name)}
+          </p>
+        </div>
+      </div>
+
+      <div className="flex shrink-0 items-center gap-2">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            void save();
+          }}
+          disabled={busy}
+          title={t("chat.files.download")}
+          className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+        >
+          {busy ? (
+            <Spinner className="size-4" />
+          ) : (
+            <HugeiconsIcon icon={Download01Icon} className="size-4" />
+          )}
+        </button>
+        <div className="text-muted-foreground/60 group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:translate-x-0.5 transition-all">
+          <ChevronRightIcon className="size-5" />
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -258,9 +266,11 @@ export function SandboxFiles({
   sessionId: string;
   files: SandboxFile[];
 }) {
-  if (!sessionId || files.length === 0) return null;
+  if (!sessionId || files.length === 0) {
+    return null;
+  }
   return (
-    <div className="mt-3 flex max-w-md flex-col gap-2">
+    <div className="mt-3 flex w-full max-w-[42rem] flex-col gap-2">
       {files.map((file) => (
         <SandboxFileRow key={file.name} sessionId={sessionId} file={file} />
       ))}

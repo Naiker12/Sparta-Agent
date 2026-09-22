@@ -14,18 +14,18 @@ import uuid
 from typing import Any, Dict, List, Optional, Tuple
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Response, UploadFile
-from fastapi.responses import JSONResponse, PlainTextResponse
+from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 
 from auth import get_current_subject
 from core.inference.api_monitor import api_monitor
-from core.inference.llama_cpp import LlamaCppBackend
-from models.inference import AudioSpeechRequest, ChatCompletionRequest
+from models.inference import AudioGalleryItem, AudioGalleryListResponse, AudioSpeechRequest, ChatCompletionRequest
 from core.inference.audio_errors import AudioBackendUnsupportedError, AudioGenerationCancelledError
 from utils.utils import safe_error_detail
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+studio_router = APIRouter()
 
 
 def _get_inference_module():
@@ -92,7 +92,7 @@ def get_llama_cpp_backend():
     fn = _get_inf_attr("get_llama_cpp_backend")
     if fn:
         return fn()
-    return LlamaCppBackend()
+    return None
 
 
 def _friendly_error(e):
@@ -433,4 +433,83 @@ async def openai_audio_transcriptions(
     if fmt == "text":
         return PlainTextResponse(content = str(result.get("text", "")))
     return JSONResponse(content = {"text": result.get("text", "")})
+
+
+@studio_router.get("/audio/gallery", response_model = AudioGalleryListResponse)
+async def list_gallery_audio(
+    limit: int = 50,
+    offset: int = 0,
+    before_mtime: Optional[float] = None,
+    before_id: Optional[str] = None,
+    current_subject: str = Depends(get_current_subject),
+):
+    from pydantic import ValidationError
+    from core.inference import audio_gallery
+
+    limit = max(1, min(limit, 200))
+    offset = max(0, offset)
+    if (before_mtime is None) != (before_id is None):
+        raise HTTPException(status_code = 400, detail = "Incomplete audio gallery cursor.")
+    before = (
+        (before_mtime, before_id) if before_mtime is not None and before_id is not None else None
+    )
+
+    def _valid_gallery_audio(record: dict) -> bool:
+        try:
+            AudioGalleryItem(**record)
+        except ValidationError:
+            return False
+        return True
+
+    entries = await asyncio.to_thread(
+        audio_gallery.list_audio_page,
+        limit + 1,
+        offset,
+        before = before,
+        valid = _valid_gallery_audio,
+    )
+    has_more = len(entries) > limit
+    visible = entries[:limit]
+    audio = [AudioGalleryItem(**record) for record, _ in visible]
+    next_cursor = visible[-1][1] if has_more and visible else None
+    return AudioGalleryListResponse(
+        audio = audio,
+        has_more = has_more,
+        next_before_mtime = next_cursor[0] if next_cursor else None,
+        next_before_id = next_cursor[1] if next_cursor else None,
+    )
+
+
+@studio_router.get("/audio/gallery/{audio_id}/file")
+async def get_gallery_audio_file(
+    audio_id: str, current_subject: str = Depends(get_current_subject)
+):
+    from core.inference import audio_gallery
+
+    path = await asyncio.to_thread(audio_gallery.owned_audio_path, audio_id)
+    if path is None:
+        raise HTTPException(status_code = 404, detail = "Audio not found.")
+
+    return FileResponse(
+        path,
+        media_type = "audio/wav",
+        headers = {"Cache-Control": "private, max-age=31536000, immutable"},
+    )
+
+
+@studio_router.delete("/audio/gallery/{audio_id}")
+async def delete_gallery_audio(audio_id: str, current_subject: str = Depends(get_current_subject)):
+    from core.inference import audio_gallery
+
+    deleted = await asyncio.to_thread(audio_gallery.delete, audio_id)
+    if not deleted:
+        raise HTTPException(status_code = 404, detail = "Audio not found.")
+    return {"deleted": True}
+
+
+@studio_router.delete("/audio/gallery")
+async def clear_gallery_audio(current_subject: str = Depends(get_current_subject)):
+    from core.inference import audio_gallery
+    removed = await asyncio.to_thread(audio_gallery.clear)
+    return {"removed": removed}
 

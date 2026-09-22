@@ -1,4 +1,3 @@
-
 import { listRecipeExecutions } from "../data/executions-db";
 import type { RecipeExecutionRecord } from "../execution-types";
 import {
@@ -18,6 +17,8 @@ export function findResumableExecution(
   records: RecipeExecutionRecord[],
 ): RecipeExecutionRecord | null {
   return (
-    records.find((record) => record.jobId && isExecutionInProgress(record.status)) ?? null
+    records.find(
+      (record) => record.jobId && isExecutionInProgress(record.status),
+    ) ?? null
   );
 }

@@ -1,9 +1,4 @@
-
-import type {
-  ExpressionDtype,
-  LlmType,
-  SamplerType,
-} from "../types";
+import type { ExpressionDtype, LlmType, SamplerType } from "../types";
 
 const SAMPLER_LABELS: Record<SamplerType, string> = {
   category: "Category",

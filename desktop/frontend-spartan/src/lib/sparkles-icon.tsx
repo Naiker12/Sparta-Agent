@@ -1,4 +1,3 @@
-
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 
 // Hugeicons "AI Security 03" (stroke-rounded). A four-point sparkle inside a

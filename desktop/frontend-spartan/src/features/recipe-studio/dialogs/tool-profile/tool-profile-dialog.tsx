@@ -1,4 +1,3 @@
-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,8 +17,12 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { type ReactElement, useEffect, useMemo, useRef, useState } from "react";
 import { listMcpTools } from "../../api";
 import { ChipInput } from "../../components/chip-input";
+import type {
+  LlmMcpProviderConfig,
+  McpEnvVar,
+  ToolProfileConfig,
+} from "../../types";
 import { CollapsibleSectionTriggerButton } from "../shared/collapsible-section-trigger";
-import type { LlmMcpProviderConfig, McpEnvVar, ToolProfileConfig } from "../../types";
 import { FieldLabel } from "../shared/field-label";
 import { NameField } from "../shared/name-field";
 import {
@@ -107,7 +110,8 @@ function McpServerCard({
   const summaryTitle = provider.name.trim() || `Tool server ${index + 1}`;
   const transportLabel =
     provider.provider_type === "stdio" ? "Local command" : "HTTP";
-  const toolsLabel = typeof toolsCount === "number" ? `${toolsCount} tools` : null;
+  const toolsLabel =
+    typeof toolsCount === "number" ? `${toolsCount} tools` : null;
   const description =
     provider.provider_type === "stdio"
       ? "Runs a local tool server."
@@ -133,16 +137,24 @@ function McpServerCard({
                   <p className="truncate text-sm font-semibold text-foreground">
                     {summaryTitle}
                   </p>
-                  <Badge variant="outline" className="rounded-full text-ui-10 uppercase">
+                  <Badge
+                    variant="outline"
+                    className="rounded-full text-ui-10 uppercase"
+                  >
                     {transportLabel}
                   </Badge>
                   {toolsLabel ? (
-                    <Badge variant="secondary" className="rounded-full text-ui-10">
+                    <Badge
+                      variant="secondary"
+                      className="rounded-full text-ui-10"
+                    >
                       {toolsLabel}
                     </Badge>
                   ) : null}
                 </div>
-                <p className="mt-1 text-xs text-muted-foreground">{description}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {description}
+                </p>
               </div>
             </button>
           </CollapsibleTrigger>
@@ -164,7 +176,10 @@ function McpServerCard({
           )}
 
           <div className="grid gap-1.5">
-            <FieldLabel label="Server name" hint="Name shown in this tool access setup." />
+            <FieldLabel
+              label="Server name"
+              hint="Name shown in this tool access setup."
+            />
             <Input
               className="nodrag"
               value={provider.name}
@@ -184,16 +199,19 @@ function McpServerCard({
               })
             }
           >
-              <TabsList className="w-full">
-                <TabsTrigger value="stdio">Local command</TabsTrigger>
-                <TabsTrigger value="streamable_http">HTTP endpoint</TabsTrigger>
-              </TabsList>
+            <TabsList className="w-full">
+              <TabsTrigger value="stdio">Local command</TabsTrigger>
+              <TabsTrigger value="streamable_http">HTTP endpoint</TabsTrigger>
+            </TabsList>
           </Tabs>
 
           {provider.provider_type === "stdio" ? (
             <div className="space-y-4">
               <div className="grid gap-1.5">
-                <FieldLabel label="Command" hint="Command used to start the tool server." />
+                <FieldLabel
+                  label="Command"
+                  hint="Command used to start the tool server."
+                />
                 <Input
                   className="nodrag"
                   value={provider.command ?? ""}
@@ -206,7 +224,10 @@ function McpServerCard({
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between gap-3">
-                  <FieldLabel label="Arguments" hint="Optional command arguments." />
+                  <FieldLabel
+                    label="Arguments"
+                    hint="Optional command arguments."
+                  />
                   <Button
                     type="button"
                     size="xs"
@@ -218,7 +239,10 @@ function McpServerCard({
                   </Button>
                 </div>
                 {args.map((arg, argIndex) => (
-                  <div key={`${provider.id}-arg-${argIndex}`} className="flex gap-2">
+                  <div
+                    key={`${provider.id}-arg-${argIndex}`}
+                    className="flex gap-2"
+                  >
                     <Input
                       className="nodrag"
                       value={arg}
@@ -241,7 +265,10 @@ function McpServerCard({
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between gap-3">
-                  <FieldLabel label="Environment variables" hint="Optional values passed to the tool server." />
+                  <FieldLabel
+                    label="Environment variables"
+                    hint="Optional values passed to the tool server."
+                  />
                   <Button
                     type="button"
                     size="xs"
@@ -321,10 +348,7 @@ function McpServerCard({
                   />
                 </div>
                 <div className="grid gap-1.5">
-                  <FieldLabel
-                    label="API key"
-                    hint="Optional API key."
-                  />
+                  <FieldLabel label="API key" hint="Optional API key." />
                   <Input
                     className="nodrag"
                     value={provider.api_key ?? ""}
@@ -356,12 +380,18 @@ export function ToolProfileDialog({
   );
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [loadingTools, setLoadingTools] = useState(false);
-  const [toolsByProvider, setToolsByProvider] = useState<Record<string, string[]>>(
-    config.fetched_tools_by_provider ?? {},
+  const [toolsByProvider, setToolsByProvider] = useState<
+    Record<string, string[]>
+  >(config.fetched_tools_by_provider ?? {});
+  const [providerErrors, setProviderErrors] = useState<Record<string, string>>(
+    {},
   );
-  const [providerErrors, setProviderErrors] = useState<Record<string, string>>({});
-  const [duplicateTools, setDuplicateTools] = useState<Record<string, string[]>>({});
-  const [openProviders, setOpenProviders] = useState<Record<string, boolean>>({});
+  const [duplicateTools, setDuplicateTools] = useState<
+    Record<string, string[]>
+  >({});
+  const [openProviders, setOpenProviders] = useState<Record<string, boolean>>(
+    {},
+  );
   const previousProviderSignatureRef = useRef<string | null>(null);
 
   const providerSignature = useMemo(
@@ -441,7 +471,9 @@ export function ToolProfileDialog({
 
   function mutateProviderAt(
     index: number,
-    mapProvider: (provider: LlmMcpProviderConfig) => Partial<LlmMcpProviderConfig>,
+    mapProvider: (
+      provider: LlmMcpProviderConfig,
+    ) => Partial<LlmMcpProviderConfig>,
   ): void {
     const provider = providers[index];
     if (!provider) {
@@ -451,7 +483,9 @@ export function ToolProfileDialog({
   }
 
   function removeProvider(index: number): void {
-    updateProviders(providers.filter((_, currentIndex) => currentIndex !== index));
+    updateProviders(
+      providers.filter((_, currentIndex) => currentIndex !== index),
+    );
   }
 
   function addProvider(): void {
@@ -495,7 +529,9 @@ export function ToolProfileDialog({
 
   function removeProviderArg(providerIndex: number, argIndex: number): void {
     mutateProviderAt(providerIndex, (provider) => ({
-      args: (provider.args ?? []).filter((_, currentIndex) => currentIndex !== argIndex),
+      args: (provider.args ?? []).filter(
+        (_, currentIndex) => currentIndex !== argIndex,
+      ),
     }));
   }
 
@@ -511,10 +547,9 @@ export function ToolProfileDialog({
     patch: Partial<McpEnvVar>,
   ): void {
     mutateProviderAt(providerIndex, (provider) => ({
-      env: (
-        provider.env && provider.env.length > 0
-          ? provider.env
-          : [{ key: "", value: "" }]
+      env: (provider.env && provider.env.length > 0
+        ? provider.env
+        : [{ key: "", value: "" }]
       ).map((item, currentIndex) =>
         currentIndex === envIndex ? { ...item, ...patch } : item,
       ),
@@ -523,7 +558,9 @@ export function ToolProfileDialog({
 
   function removeProviderEnv(providerIndex: number, envIndex: number): void {
     mutateProviderAt(providerIndex, (provider) => ({
-      env: (provider.env ?? []).filter((_, currentIndex) => currentIndex !== envIndex),
+      env: (provider.env ?? []).filter(
+        (_, currentIndex) => currentIndex !== envIndex,
+      ),
     }));
   }
 
@@ -564,14 +601,19 @@ export function ToolProfileDialog({
         Object.fromEntries(
           response.providers
             .filter((provider) => provider.name.trim() && provider.error)
-            .map((provider) => [provider.name.trim(), provider.error ?? "Failed to load tools."]),
+            .map((provider) => [
+              provider.name.trim(),
+              provider.error ?? "Failed to load tools.",
+            ]),
         ),
       );
       setDuplicateTools(response.duplicate_tools ?? {});
     } catch (error) {
       toastError(
         "Couldn't load tools",
-        error instanceof Error ? error.message : "We couldn't load the tools for these servers.",
+        error instanceof Error
+          ? error.message
+          : "We couldn't load the tools for these servers.",
       );
     } finally {
       setLoadingTools(false);
@@ -581,7 +623,9 @@ export function ToolProfileDialog({
   const providerNames = useMemo(
     () =>
       Array.from(
-        new Set(providers.map((provider) => provider.name.trim()).filter(Boolean)),
+        new Set(
+          providers.map((provider) => provider.name.trim()).filter(Boolean),
+        ),
       ),
     [providers],
   );
@@ -617,21 +661,7 @@ export function ToolProfileDialog({
           onChange={(value) => onUpdate({ name: value })}
         />
 
-        {!hasProviders ? (
-          <div className="space-y-3">
-            <EmptyState
-              title="Add a server to start choosing tools"
-              description="Set up a server first, then come back here to choose which tools this step can use."
-            />
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setActiveTab("servers")}
-            >
-              Add servers first
-            </Button>
-          </div>
-        ) : (
+        {hasProviders ? (
           <>
             <div className="rounded-2xl border border-border/60 bg-muted/10 px-4 py-3">
               <p className="text-sm font-semibold text-foreground">
@@ -649,7 +679,8 @@ export function ToolProfileDialog({
                     Available tools
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Load tool names so you can pick from a list instead of guessing.
+                    Load tool names so you can pick from a list instead of
+                    guessing.
                   </p>
                 </div>
                 <Button
@@ -672,32 +703,42 @@ export function ToolProfileDialog({
                   </p>
                 )}
 
-              {Object.entries(toolsByProvider).map(([providerName, toolNames]) => (
-                <div key={providerName} className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <p className="text-xs font-semibold uppercase text-muted-foreground">
-                      {providerName}
-                    </p>
-                    <Badge variant="outline" className="rounded-full text-ui-10">
-                      {toolNames.length}
-                    </Badge>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {toolNames.map((toolName) => (
-                      <Badge key={`${providerName}-${toolName}`} variant="secondary">
-                        {toolName}
+              {Object.entries(toolsByProvider).map(
+                ([providerName, toolNames]) => (
+                  <div key={providerName} className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs font-semibold uppercase text-muted-foreground">
+                        {providerName}
+                      </p>
+                      <Badge
+                        variant="outline"
+                        className="rounded-full text-ui-10"
+                      >
+                        {toolNames.length}
                       </Badge>
-                    ))}
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {toolNames.map((toolName) => (
+                        <Badge
+                          key={`${providerName}-${toolName}`}
+                          variant="secondary"
+                        >
+                          {toolName}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ),
+              )}
 
               {Object.entries(duplicateTools).length > 0 && (
                 <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
-                  Some tool names appear on more than one server:
-                  {" "}
+                  Some tool names appear on more than one server:{" "}
                   {Object.entries(duplicateTools)
-                    .map(([toolName, providerList]) => `${toolName} (${providerList.join(", ")})`)
+                    .map(
+                      ([toolName, providerList]) =>
+                        `${toolName} (${providerList.join(", ")})`,
+                    )
                     .join("; ")}
                 </div>
               )}
@@ -774,6 +815,20 @@ export function ToolProfileDialog({
               </CollapsibleContent>
             </Collapsible>
           </>
+        ) : (
+          <div className="space-y-3">
+            <EmptyState
+              title="Add a server to start choosing tools"
+              description="Set up a server first, then come back here to choose which tools this step can use."
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setActiveTab("servers")}
+            >
+              Add servers first
+            </Button>
+          </div>
         )}
       </TabsContent>
 
@@ -792,18 +847,18 @@ export function ToolProfileDialog({
             label="Tool servers"
             hint="These servers belong to this tool access setup and can be reused by linked AI steps."
           />
-          <Button type="button" size="xs" variant="outline" onClick={addProvider}>
+          <Button
+            type="button"
+            size="xs"
+            variant="outline"
+            onClick={addProvider}
+          >
             <HugeiconsIcon icon={PlusSignIcon} className="size-3.5" />
             Add server
           </Button>
         </div>
 
-        {!hasProviders ? (
-          <EmptyState
-            title="No tool servers yet"
-            description="Add one or more servers here, then go back to Access to load and choose tools."
-          />
-        ) : (
+        {hasProviders ? (
           <div className="space-y-3">
             {providers.map((provider, index) => (
               <McpServerCard
@@ -815,8 +870,14 @@ export function ToolProfileDialog({
                     ? (toolsByProvider[provider.name.trim()] ?? []).length
                     : undefined
                 }
-                error={provider.name.trim() ? providerErrors[provider.name.trim()] : undefined}
-                open={openProviders[provider.id] ?? !isProviderConfigured(provider)}
+                error={
+                  provider.name.trim()
+                    ? providerErrors[provider.name.trim()]
+                    : undefined
+                }
+                open={
+                  openProviders[provider.id] ?? !isProviderConfigured(provider)
+                }
                 onOpenChange={(open) =>
                   setOpenProviders((current) => ({
                     ...current,
@@ -834,6 +895,11 @@ export function ToolProfileDialog({
               />
             ))}
           </div>
+        ) : (
+          <EmptyState
+            title="No tool servers yet"
+            description="Add one or more servers here, then go back to Access to load and choose tools."
+          />
         )}
       </TabsContent>
     </Tabs>

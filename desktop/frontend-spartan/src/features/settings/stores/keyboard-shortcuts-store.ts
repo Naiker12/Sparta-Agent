@@ -1,4 +1,3 @@
-
 import { create } from "zustand";
 import {
   SHORTCUT_DEFS,
@@ -23,19 +22,29 @@ const STORAGE_KEY = KEYBOARD_SHORTCUTS_STORAGE_KEY;
 export type ShortcutOverrides = Partial<Record<ShortcutId, string | null>>;
 
 function loadOverrides(): ShortcutOverrides {
-  if (typeof window === "undefined") return {};
+  if (typeof window === "undefined") {
+    return {};
+  }
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return {};
+    if (!raw) {
+      return {};
+    }
     const parsed = JSON.parse(raw) as unknown;
-    if (!parsed || typeof parsed !== "object") return {};
+    if (!parsed || typeof parsed !== "object") {
+      return {};
+    }
     const out: ShortcutOverrides = {};
     for (const [id, value] of Object.entries(
       parsed as Record<string, unknown>,
     )) {
       // Drop ids from an older build so a removed action cannot resurrect.
-      if (!isShortcutId(id)) continue;
-      if (value === null || typeof value === "string") out[id] = value;
+      if (!isShortcutId(id)) {
+        continue;
+      }
+      if (value === null || typeof value === "string") {
+        out[id] = value;
+      }
     }
     return out;
   } catch {
@@ -44,7 +53,9 @@ function loadOverrides(): ShortcutOverrides {
 }
 
 function persist(overrides: ShortcutOverrides): void {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined") {
+    return;
+  }
   try {
     if (Object.keys(overrides).length === 0) {
       window.localStorage.removeItem(STORAGE_KEY);
@@ -83,9 +94,13 @@ export function shortcutOwningBinding(
   overrides: ShortcutOverrides,
   value: string | null,
 ): ShortcutId | null {
-  if (!value) return null;
+  if (!value) {
+    return null;
+  }
   for (const def of SHORTCUT_DEFS) {
-    if (resolveBinding(overrides, def.id) === value) return def.id;
+    if (resolveBinding(overrides, def.id) === value) {
+      return def.id;
+    }
   }
   return null;
 }
@@ -98,14 +113,23 @@ export function findConflicts(overrides: ShortcutOverrides): Set<ShortcutId> {
   const byValue = new Map<string, ShortcutId[]>();
   for (const def of SHORTCUT_DEFS) {
     const value = resolveBinding(overrides, def.id);
-    if (!value) continue;
+    if (!value) {
+      continue;
+    }
     const ids = byValue.get(value);
-    if (ids) ids.push(def.id);
-    else byValue.set(value, [def.id]);
+    if (ids) {
+      ids.push(def.id);
+    } else {
+      byValue.set(value, [def.id]);
+    }
   }
   const out = new Set<ShortcutId>();
   for (const ids of byValue.values()) {
-    if (ids.length > 1) for (const id of ids) out.add(id);
+    if (ids.length > 1) {
+      for (const id of ids) {
+        out.add(id);
+      }
+    }
   }
   return out;
 }
@@ -138,7 +162,9 @@ export const useKeyboardShortcutsStore = create<KeyboardShortcutsState>(
       }),
     resetBinding: (id) =>
       set((state) => {
-        if (!Object.hasOwn(state.overrides, id)) return state;
+        if (!Object.hasOwn(state.overrides, id)) {
+          return state;
+        }
         const overrides = { ...state.overrides };
         delete overrides[id];
         persist(overrides);

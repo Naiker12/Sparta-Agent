@@ -1,4 +1,3 @@
-
 // Minimal views over the `unknown[]` export fields we filter on.
 type ExportThreadView = {
   id?: string;

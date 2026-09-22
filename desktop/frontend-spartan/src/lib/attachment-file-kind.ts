@@ -159,14 +159,18 @@ export function getAttachmentFileKind(
     if (dotIndex !== -1 && dotIndex < name.length - 1) {
       const ext = name.slice(dotIndex + 1).toLowerCase();
       const kind = EXTENSION_MAP[ext];
-      if (kind) return kind;
+      if (kind) {
+        return kind;
+      }
     }
   }
 
   if (contentType) {
     const mime = contentType.toLowerCase().trim();
 
-    if (mime.includes("pdf")) return "pdf";
+    if (mime.includes("pdf")) {
+      return "pdf";
+    }
     if (
       mime.includes("word") ||
       mime.includes("officedocument.wordprocessingml") ||
@@ -191,9 +195,15 @@ export function getAttachmentFileKind(
     ) {
       return "powerpoint";
     }
-    if (mime.startsWith("image/")) return "image";
-    if (mime.startsWith("video/")) return "video";
-    if (mime.startsWith("audio/")) return "audio";
+    if (mime.startsWith("image/")) {
+      return "image";
+    }
+    if (mime.startsWith("video/")) {
+      return "video";
+    }
+    if (mime.startsWith("audio/")) {
+      return "audio";
+    }
     if (
       mime.includes("zip") ||
       mime.includes("compressed") ||
@@ -234,7 +244,9 @@ export function getAttachmentIcon(
   kindOrName?: AttachmentFileKind | string | null,
   contentType?: string | null,
 ) {
-  if (!kindOrName) return File02Icon;
+  if (!kindOrName) {
+    return File02Icon;
+  }
 
   // Si ya es uno de los AttachmentFileKind conocidos:
   if (kindOrName in KIND_ICON_MAP) {

@@ -1,55 +1,62 @@
-let apiBase = ''
-let backendError: string | null = null
+let apiBase = "";
+let backendError: string | null = null;
 
 function detectTauri(): boolean {
-  if (typeof window === 'undefined') {
-    return false
+  if (typeof window === "undefined") {
+    return false;
   }
   return (
-    '__TAURI__' in window ||
-    '__TAURI_INTERNALS__' in window ||
-    window.location.protocol === 'tauri:'
-  )
+    "__TAURI__" in window ||
+    "__TAURI_INTERNALS__" in window ||
+    window.location.protocol === "tauri:"
+  );
 }
 
 function detectElectron(): boolean {
-  if (typeof window === 'undefined') return false
+  if (typeof window === "undefined") {
+    return false;
+  }
   return (
-    'electronAPI' in window ||
-    (typeof navigator !== 'undefined' && navigator.userAgent?.includes('Electron') === true)
-  )
+    "electronAPI" in window ||
+    (typeof navigator !== "undefined" &&
+      navigator.userAgent?.includes("Electron") === true)
+  );
 }
 
-const isTauri = detectTauri()
-const isElectron = detectElectron()
+const isTauri = detectTauri();
+const isElectron = detectElectron();
 
-const initialApiBase = apiBase
+const initialApiBase = apiBase;
 
 export function resetApiBase() {
-  apiBase = initialApiBase
+  apiBase = initialApiBase;
 }
 
 export function setApiBase(port: number) {
-  if (!Number.isInteger(port) || port < 1 || port > 65_535) return
-  apiBase = `http://127.0.0.1:${port}`
-  backendError = null
+  if (!Number.isInteger(port) || port < 1 || port > 65_535) {
+    return;
+  }
+  apiBase = `http://127.0.0.1:${port}`;
+  backendError = null;
 }
 
 export function setBackendError(message: string | null): void {
-  backendError = message
+  backendError = message;
 }
 
 export function getBackendError(): string | null {
-  return backendError
+  return backendError;
 }
 
 export function getApiBase(): string {
-  return apiBase
+  return apiBase;
 }
 
 export function apiUrl(path: string): string {
-  if (path.startsWith('http')) return path
-  return `${apiBase}${path}`
+  if (path.startsWith("http")) {
+    return path;
+  }
+  return `${apiBase}${path}`;
 }
 
-export { isTauri, isElectron }
+export { isTauri, isElectron };

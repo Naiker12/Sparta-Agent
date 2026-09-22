@@ -1,4 +1,3 @@
-
 import type {
   LoraModelOption,
   ModelSelectorChangeMeta,
@@ -26,7 +25,9 @@ export function chatModelSwitchMeta(
   loraModels: readonly LoraModelOption[],
 ): ModelSelectorChangeMeta | undefined {
   const row = loraModels.find((model) => model.id === modelId);
-  if (!row) return undefined;
+  if (!row) {
+    return undefined;
+  }
   const isLocal = row.source === "local";
   return {
     source: isLocal ? "local" : row.source === "exported" ? "exported" : "lora",

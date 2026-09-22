@@ -1,4 +1,3 @@
-
 import {
   Select,
   SelectContent,
@@ -7,10 +6,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { type ReactElement, useCallback, useEffect, useMemo } from "react";
-import type { SamplerConfig } from "../../types";
 import { ChipInput } from "../../components/chip-input";
-import { NameField } from "../shared/name-field";
+import type { SamplerConfig } from "../../types";
 import { FieldLabel } from "../shared/field-label";
+import { NameField } from "../shared/name-field";
 
 type SubcategoryDialogProps = {
   config: SamplerConfig;

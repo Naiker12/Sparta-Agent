@@ -1,4 +1,3 @@
-
 import { readNativeAttachmentFile } from "./api";
 import type { NativeIntent } from "./types";
 

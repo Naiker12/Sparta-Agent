@@ -1,4 +1,3 @@
-
 /**
  * Two decisions the download manager makes from a single progress reading.
  *
@@ -20,10 +19,17 @@ export function carriesOverSeed(
   persistedGeneration: number | undefined,
   probedGeneration: number | undefined,
 ): boolean {
-  if (!adopt) return false;
+  if (!adopt) {
+    return false;
+  }
   // An unknown generation on either side is not evidence of a new run, so the seed is kept:
   // that is the adopt-after-reload path, where the counters are all we have.
-  if (!Number.isSafeInteger(probedGeneration) || persistedGeneration === undefined) return true;
+  if (
+    !Number.isSafeInteger(probedGeneration) ||
+    persistedGeneration === undefined
+  ) {
+    return true;
+  }
   return persistedGeneration === probedGeneration;
 }
 
@@ -69,19 +75,27 @@ export function idleProbeVerdict(
   cacheMeasured?: boolean,
 ): "active" | "gone" {
   // Unknown first: a scan that could not be completed says nothing either way.
-  if (cacheMeasured === false) return "active";
+  if (cacheMeasured === false) {
+    return "active";
+  }
   // Then the EXPLICIT verdict, ahead of the byte count. The two can disagree: on the
   // unknown-hash path the byte reading falls back to a retained manifest and counts a shared
   // mmproj or MTP companion that outlived the main shard, while the by-name scan correctly
   // reports the quant itself gone. Believing the bytes there re-adopts the phantom and blocks
   // a fresh download of the deleted variant.
-  if (targetPresent === false) return "gone";
-  if (downloadedBytes > 0) return "active";
+  if (targetPresent === false) {
+    return "gone";
+  }
+  if (downloadedBytes > 0) {
+    return "active";
+  }
   // A MEASURED scan with no cache path is an absence, however it was serialized. The GGUF
   // progress route sets response_model_exclude_none, so its measured-empty answer drops
   // cache_path entirely rather than sending null -- which read as "older backend, unknown"
   // and re-adopted a job whose cache was deleted, blocking a fresh download of it. An older
   // backend sends no cache_measured at all and keeps the null-only rule below.
-  if (cacheMeasured === true) return cachePath == null ? "gone" : "active";
+  if (cacheMeasured === true) {
+    return cachePath == null ? "gone" : "active";
+  }
   return cachePath === null ? "gone" : "active";
 }

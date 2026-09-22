@@ -1,4 +1,3 @@
-
 export { looksLikeLocalPath } from "../../../lib/local-path.ts";
 
 const WINDOWS_PATH_SEPARATOR_RE = /\\/g;

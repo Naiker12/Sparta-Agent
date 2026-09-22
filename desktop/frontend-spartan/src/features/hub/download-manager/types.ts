@@ -1,4 +1,3 @@
-
 import type { TransportMode } from "./constants";
 
 export interface TransportConflictInfo {

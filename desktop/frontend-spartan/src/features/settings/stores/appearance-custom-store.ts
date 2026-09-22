@@ -1,4 +1,3 @@
-
 import { create } from "zustand";
 import {
   type StateStorage,
@@ -86,10 +85,7 @@ export const SIDEBAR_MENU_DEFAULT_VISIBLE: Record<SidebarMenuItemId, boolean> =
 
 /** Sidebar NAVIGATION rows the user can pin and reorder, distinct from the profile-menu entries above. Array order is render order. Unpinned rows go to the "More" flyout, except a lone one, which is hidden. */
 export const SIDEBAR_NAV_ITEM_IDS = [
-  // Model hub leads: picking a model comes before the work that uses one.
-  "hub",
   "projects",
-  "images",
   "audio",
   "recipes",
   "export",
@@ -108,10 +104,7 @@ export type SidebarNavItemPref = {
 
 // Matches the shipped layout, so an untouched install looks unchanged.
 export const SIDEBAR_NAV_DEFAULT_PINNED: Record<SidebarNavItemId, boolean> = {
-  hub: true,
   projects: true,
-  images: true,
-  // Under "More" until a user pins it.
   audio: false,
   recipes: false,
   export: false,
@@ -124,7 +117,9 @@ export const SIDEBAR_NAV_DEFAULT_PINNED: Record<SidebarNavItemId, boolean> = {
  *  user arranged themselves. v3 pinned Video under Images; v4 moved Model hub above Projects;
  *  v5 put Video back under "More" and later added API before Audio shipped; v6 added Audio;
  *  v7 pins Video under Images again. */
-const SHIPPED_SIDEBAR_NAV_DEFAULTS: Array<Array<{ id: string; pinned: boolean }>> = [
+const SHIPPED_SIDEBAR_NAV_DEFAULTS: Array<
+  Array<{ id: string; pinned: boolean }>
+> = [
   [
     { id: "projects", pinned: true },
     { id: "hub", pinned: true },
@@ -249,7 +244,9 @@ function sanitizeColor(value: unknown): string | null {
 }
 
 function sanitizeFont(value: unknown): string | null {
-  if (typeof value !== "string") return null;
+  if (typeof value !== "string") {
+    return null;
+  }
   // Strip the same characters the backend rejects (_FONT_NAME_FORBIDDEN plus
   // control chars) so a locally chosen name never fails the personalization PUT
   // and stalls sync; also stops smuggling CSS through the inline setProperty.
@@ -265,7 +262,9 @@ function sanitizeSize(
   value: unknown,
   range: { min: number; max: number },
 ): number | null {
-  if (typeof value !== "number" || !Number.isFinite(value)) return null;
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return null;
+  }
   const rounded = Math.round(value);
   if (rounded < range.min || rounded > range.max) {
     return Math.min(range.max, Math.max(range.min, rounded));
@@ -286,19 +285,25 @@ const FONT_DATA_URL_PATTERN =
   /^data:(?:font\/(?:woff2?|ttf|otf|sfnt)|application\/(?:octet-stream|x-font-\w+|font-\w+));base64,[A-Za-z0-9+/=]+$/;
 
 function sanitizeImportedFonts(value: unknown): ImportedFont[] {
-  if (!Array.isArray(value)) return [];
+  if (!Array.isArray(value)) {
+    return [];
+  }
   const fonts: ImportedFont[] = [];
   const seen = new Set<string>();
   let total = 0;
   for (const entry of value) {
-    if (fonts.length >= MAX_IMPORTED_FONTS) break;
+    if (fonts.length >= MAX_IMPORTED_FONTS) {
+      break;
+    }
     const source = (entry ?? {}) as Partial<ImportedFont>;
     // Cap to the backend name length so an over-long name can't fail the PUT.
     const rawName = sanitizeFont(source.name);
     const name = rawName
       ? rawName.slice(0, MAX_IMPORTED_FONT_NAME_LENGTH)
       : null;
-    if (!name || seen.has(name)) continue;
+    if (!name || seen.has(name)) {
+      continue;
+    }
     const dataUrl = source.dataUrl;
     if (
       typeof dataUrl !== "string" ||
@@ -328,13 +333,17 @@ function sanitizeSidebarNav(value: unknown): SidebarNavItemPref[] {
   const seen = new Set<SidebarNavItemId>();
   for (const entry of Array.isArray(value) ? value : []) {
     const source = (entry ?? {}) as Partial<SidebarNavItemPref>;
-    if (!isSidebarNavItemId(source.id) || seen.has(source.id)) continue;
+    if (!isSidebarNavItemId(source.id) || seen.has(source.id)) {
+      continue;
+    }
     seen.add(source.id);
     items.push({ id: source.id, pinned: source.pinned !== false });
   }
   // Ids added after the payload was written land at the end with their default.
   for (const id of SIDEBAR_NAV_ITEM_IDS) {
-    if (!seen.has(id)) items.push({ id, pinned: SIDEBAR_NAV_DEFAULT_PINNED[id] });
+    if (!seen.has(id)) {
+      items.push({ id, pinned: SIDEBAR_NAV_DEFAULT_PINNED[id] });
+    }
   }
   return items;
 }
@@ -344,15 +353,18 @@ function sanitizeSidebarMenu(value: unknown): SidebarMenuItemPref[] {
   const seen = new Set<SidebarMenuItemId>();
   for (const entry of Array.isArray(value) ? value : []) {
     const source = (entry ?? {}) as Partial<SidebarMenuItemPref>;
-    if (!isSidebarMenuItemId(source.id) || seen.has(source.id)) continue;
+    if (!isSidebarMenuItemId(source.id) || seen.has(source.id)) {
+      continue;
+    }
     seen.add(source.id);
     items.push({ id: source.id, visible: source.visible !== false });
   }
   // Ids added after the payload was written land at the end with their
   // default visibility.
   for (const id of SIDEBAR_MENU_ITEM_IDS) {
-    if (!seen.has(id))
+    if (!seen.has(id)) {
       items.push({ id, visible: SIDEBAR_MENU_DEFAULT_VISIBLE[id] });
+    }
   }
   return items;
 }
@@ -402,7 +414,9 @@ export function migrateShippedSidebarNavDefault(
 ): AppearanceCustomization {
   // Once this migration version has been persisted, the same layout may be a
   // deliberate user choice and must never be adopted again.
-  if (storedVersion >= migrationVersion) return customization;
+  if (storedVersion >= migrationVersion) {
+    return customization;
+  }
   const stored = JSON.stringify(customization.sidebarNav);
   // Sanitize each layout too: the stored one has since gained any ids added
   // after it was written, so a raw compare would never match.
@@ -689,7 +703,9 @@ const registeredFontFaces = new Map<
 >();
 
 function syncImportedFonts(fonts: ImportedFont[]): void {
-  if (typeof document === "undefined" || !("fonts" in document)) return;
+  if (typeof document === "undefined" || !("fonts" in document)) {
+    return;
+  }
   // Never trust the shape at this boundary: a stale
   // persisted payload without importedFonts must not crash the applier.
   const wanted = new Map(
@@ -705,7 +721,9 @@ function syncImportedFonts(fonts: ImportedFont[]): void {
     }
   }
   for (const [name, dataUrl] of wanted) {
-    if (registeredFontFaces.has(name)) continue;
+    if (registeredFontFaces.has(name)) {
+      continue;
+    }
     try {
       const face = new FontFace(name, `url(${dataUrl})`);
       registeredFontFaces.set(name, { face, dataUrl });
@@ -750,13 +768,18 @@ export function applyCustomizationToDocument(
   c: AppearanceCustomization,
   resolved: ResolvedTheme,
 ): void {
-  if (typeof document === "undefined") return;
+  if (typeof document === "undefined") {
+    return;
+  }
   const el = document.documentElement;
   const style = el.style;
 
   const setVar = (name: string, value: string | null) => {
-    if (value === null) style.removeProperty(name);
-    else style.setProperty(name, value);
+    if (value === null) {
+      style.removeProperty(name);
+    } else {
+      style.setProperty(name, value);
+    }
   };
 
   const colors = c.colors[resolved];
@@ -768,7 +791,9 @@ export function applyCustomizationToDocument(
         paletteSurfaces.elevated,
       ])
     : null;
-  for (const name of ACCENT_VARS) setVar(name, accent);
+  for (const name of ACCENT_VARS) {
+    setVar(name, accent);
+  }
   for (const name of ACCENT_FG_VARS) {
     // Keyed off the corrected accent, since that is the color labels sit on.
     setVar(name, accent ? readableForeground(accent) : null);
@@ -793,9 +818,7 @@ export function applyCustomizationToDocument(
   );
   setVar(
     "--nav-surface-hover",
-    accent
-      ? `color-mix(in srgb, ${accent} 12%, ${navigationSurface})`
-      : null,
+    accent ? `color-mix(in srgb, ${accent} 12%, ${navigationSurface})` : null,
   );
 
   syncImportedFonts(c.importedFonts);
@@ -896,8 +919,12 @@ export function applyCustomizationToDocument(
 export function prefersReducedMotion(): boolean {
   const setting =
     useAppearanceCustomStore.getState().customization.reduceMotion;
-  if (setting === "on") return true;
-  if (setting === "off") return false;
+  if (setting === "on") {
+    return true;
+  }
+  if (setting === "off") {
+    return false;
+  }
   return (
     typeof window !== "undefined" &&
     window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true

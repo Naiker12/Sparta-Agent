@@ -1,4 +1,3 @@
-
 /**
  * Rust asks for the closing overlay with this, from the quit thread in main.rs, once the
  * quit confirmations have passed and only the backend reap is left. Windows is the only

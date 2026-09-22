@@ -1,4 +1,3 @@
-
 import type { FormatFilter } from "./recommended-fit";
 import type { ModelSelectorChangeMeta } from "./types";
 
@@ -36,16 +35,19 @@ export function communityAudioRowIsRunnable({
   tags?: readonly string[] | null;
   libraryName?: string | null;
 }): boolean {
-  if (!isStt && !isTts) {
+  if (!(isStt || isTts)) {
     return true;
   }
   const evidence = [id, baseModel ?? "", ...(tags ?? [])].map((value) =>
     value.toLowerCase(),
   );
   if (isStt) {
-    if (isGguf) return false;
-    if (libraryName && libraryName.toLowerCase() !== "transformers")
+    if (isGguf) {
       return false;
+    }
+    if (libraryName && libraryName.toLowerCase() !== "transformers") {
+      return false;
+    }
     return evidence.some((value) => value.includes("whisper"));
   }
 
@@ -56,9 +58,13 @@ export function communityAudioRowIsRunnable({
   // AudioCodecManager cannot decode, so admitting it produced a row that loaded and then
   // failed at generation. The list and the comment above must stay in step.
   const family = evidence.find((value) =>
-    /(?:^|[-_./])(orpheus|csm|spark-?tts|outetts|oute-?tts)(?:$|[-_./])/.test(value),
+    /(?:^|[-_./])(orpheus|csm|spark-?tts|outetts|oute-?tts)(?:$|[-_./])/.test(
+      value,
+    ),
   );
-  if (!family) return false;
+  if (!family) {
+    return false;
+  }
   // llama.cpp intentionally has no CSM decoder; CSM is Transformers-only.
   return !(isGguf && /(?:^|[-_./])csm(?:$|[-_./])/.test(family));
 }
@@ -89,15 +95,15 @@ export function audioPickIsRoutable({
   tags?: readonly string[] | null;
   libraryName?: string | null;
 }): boolean {
-  if (isCurated) return true;
+  if (isCurated) {
+    return true;
+  }
   // A checkpoint from outputs/ has no Hub identity for communityAudioRowIsRunnable to
   // judge, and the family-name heuristic it applies would reject it on its directory
   // name. Its task came from the backend reading the checkpoint, which is the stronger
   // signal, and the Audio page lists it off that same tag.
   if (isLocalCheckpoint) {
-    return (
-      task === "text-to-speech" || task === "automatic-speech-recognition"
-    );
+    return task === "text-to-speech" || task === "automatic-speech-recognition";
   }
   // The same Hub evidence the Audio page's own lists judge on. Passing the id alone
   // rejected a checkpoint whose family is in its tags or base model rather than its
@@ -127,7 +133,7 @@ export function macTtsHubRowIsRunnable({
   isGguf: boolean;
   hasRunnableGgufSibling: boolean;
 }): boolean {
-  return !isMac || !isTts || isGguf || hasRunnableGgufSibling;
+  return !(isMac && isTts) || isGguf || hasRunnableGgufSibling;
 }
 
 export function taskCatalogFormatMatches(
@@ -183,8 +189,9 @@ export function curatedAudioInventoryMatches({
     catalogScope !== "audio" ||
     !catalogTask ||
     !pickerTask
-  )
+  ) {
     return false;
+  }
   const expected =
     catalogTask === "tts" ? "text-to-speech" : "automatic-speech-recognition";
   return Array.isArray(pickerTask)
@@ -245,7 +252,9 @@ export function taskForMediaPick(
   // Such a GGUF still carries an ordinary text-to-image tag on the Hub. The on-device
   // verdict is the one the loader enforces, so it outranks the tag: trusting the tag routes
   // the pick at a page whose picker omits the row and whose load would be refused.
-  if (inventoryTask === UNSUPPORTED_DIFFUSION_TASK) return inventoryTask;
+  if (inventoryTask === UNSUPPORTED_DIFFUSION_TASK) {
+    return inventoryTask;
+  }
   // Cache inventory commonly reports Audio GGUFs as generic text-generation;
   // an exact catalog task is the stronger runtime contract in that case.
   return pipelineTag && pipelineTag !== "text-generation"

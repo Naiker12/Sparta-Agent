@@ -1,19 +1,14 @@
-
-import { copyToClipboard } from "@/lib/copy-to-clipboard";
 import { useT } from "@/i18n";
+import { copyToClipboard } from "@/lib/copy-to-clipboard";
 import { Tick02Icon } from "@/lib/tick-icon";
 import { cn } from "@/lib/utils";
-import {
-  ArrowUpRight01Icon,
-  Copy01Icon,
-} from "@hugeicons/core-free-icons";
+import { ArrowUpRight01Icon, Copy01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import type { ReactElement } from "react";
 import { useEffect, useRef, useState } from "react";
 
-const STUDIO_INSTALL_UNIX_CMD =
-  "curl -fsSL https://unsloth.ai/install.sh | sh";
+const STUDIO_INSTALL_UNIX_CMD = "curl -fsSL https://unsloth.ai/install.sh | sh";
 const STUDIO_INSTALL_WINDOWS_CMD = "irm https://unsloth.ai/install.ps1 | iex";
 const STUDIO_LOCAL_PULL_CMD = "git pull --ff-only";
 const STUDIO_LOCAL_INSTALL_UNIX_CMD = "./install.sh --local";

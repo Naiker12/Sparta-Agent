@@ -1,10 +1,21 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Document, Page, pdfjs } from "react-pdf";
-import { ChevronLeftIcon, ChevronRightIcon, ZoomInIcon, ZoomOutIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ZoomInIcon,
+  ZoomOutIcon,
+} from "lucide-react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
+import { Document, Page, pdfjs } from "react-pdf";
 import type { PdfRegion } from "../types/rag";
 // Serve the pdf.js worker from the app origin.
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -14,7 +25,9 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 
 // Highlight rects; coords are 0..1 of the page box.
 function RegionOverlay({ regions }: { regions: PdfRegion[] }) {
-  if (regions.length === 0) return null;
+  if (regions.length === 0) {
+    return null;
+  }
   return (
     <>
       {regions.map((r, i) => (
@@ -68,7 +81,9 @@ export function PdfPreview({
 
   useLayoutEffect(() => {
     const el = containerRef.current;
-    if (!el) return;
+    if (!el) {
+      return;
+    }
     const measure = () => setWidth(el.clientWidth);
     measure();
     const ro = new ResizeObserver(measure);
@@ -79,7 +94,9 @@ export function PdfPreview({
   // Non-passive wheel listener so preventDefault can stop the panel scrolling.
   useEffect(() => {
     const el = containerRef.current;
-    if (!el) return;
+    if (!el) {
+      return;
+    }
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
       setScale((s) => clampZoom(s - Math.sign(e.deltaY) * ZOOM_STEP));
@@ -101,7 +118,9 @@ export function PdfPreview({
   // Whether the page overflows the panel (so panning matters).
   const recheckScrollable = useCallback(() => {
     const el = containerRef.current;
-    if (!el) return;
+    if (!el) {
+      return;
+    }
     setScrollable(
       el.scrollWidth > el.clientWidth + 1 ||
         el.scrollHeight > el.clientHeight + 1,
@@ -114,11 +133,15 @@ export function PdfPreview({
 
   // Grab-to-pan; listen on window so the drag tracks past the panel edge.
   useEffect(() => {
-    if (!grabbing) return;
+    if (!grabbing) {
+      return;
+    }
     const onMove = (e: MouseEvent) => {
       const el = containerRef.current;
       const start = panRef.current;
-      if (!el || !start) return;
+      if (!(el && start)) {
+        return;
+      }
       el.scrollLeft = start.left - (e.clientX - start.x);
       el.scrollTop = start.top - (e.clientY - start.y);
     };
@@ -137,7 +160,9 @@ export function PdfPreview({
   const onPanStart = useCallback(
     (e: React.MouseEvent) => {
       const el = containerRef.current;
-      if (!el || e.button !== 0 || !scrollable) return;
+      if (!el || e.button !== 0 || !scrollable) {
+        return;
+      }
       panRef.current = {
         x: e.clientX,
         y: e.clientY,
@@ -266,9 +291,8 @@ export function PdfPreview({
         ) : (
           <span />
         )}
-        <span aria-hidden />
+        <span aria-hidden={true} />
       </div>
     </div>
   );
 }
-

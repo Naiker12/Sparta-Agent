@@ -220,14 +220,6 @@ except (OSError, ValueError):
 if _STUDIO_ROOT_RESOLVED != _LEGACY_STUDIO_ROOT:
     if not os.environ.get("UNSLOTH_STUDIO_HOME"):
         os.environ["UNSLOTH_STUDIO_HOME"] = str(_STUDIO_ROOT_RESOLVED)
-    _MANAGED_LLAMA_CPP_PATH = _STUDIO_ROOT_RESOLVED / "llama.cpp"
-    if not os.environ.get("UNSLOTH_LLAMA_CPP_PATH"):
-        os.environ["UNSLOTH_LLAMA_CPP_PATH"] = str(_MANAGED_LLAMA_CPP_PATH)
-    # A CLI/desktop launcher may already have exported Studio's own install path.
-    # Classify by the canonical value so that inherited default remains editable.
-    from utils.llama_cpp_path_settings import mark_managed_llama_cpp_path
-
-    mark_managed_llama_cpp_path(_MANAGED_LLAMA_CPP_PATH)
 
 # The studio bundles unsloth_zoo; declare unsloth present (as `import spartan_agent` does) so its
 # lazy submodule imports and the DiffusionGemma runner don't trip the install guard.
@@ -309,21 +301,9 @@ from routes import (
     youtube_router,
 )
 from routes.project_files import router as project_files_router
-from routes.llama import router as llama_router
 from routes.whisper import router as whisper_router
 from routes.preview import router as preview_router
-from hub.routes import (
-    datasets_router as hub_datasets_router,
-    inventory_router as hub_inventory_router,
-    token_router as hub_token_router,
-)
 from picker.routes import templates_router as picker_templates_router
-from hub.schemas.downloads import TransportCapabilities
-from hub.utils.download_registry import (
-    get_download_transport_capabilities,
-    reap_orphan_workers as reap_hub_orphan_workers,
-    terminate_active_downloads as terminate_hub_downloads,
-)
 from routes.settings import router as settings_router
 from routes.prompts import router as prompts_router
 from routes.profile_stats import router as profile_stats_router
@@ -431,69 +411,6 @@ def _start_helper_precache_if_enabled() -> None:
     threading.Thread(target = _precache, daemon = True, name = "helper-gguf-precache").start()
 
 
-def _run_llama_cpp_startup_probes(app: FastAPI) -> None:
-    """llama.cpp capability (MTP support) + freshness (release age) probes.
-
-    Runs OFF the startup critical path (see _start_llama_cpp_probes_if_enabled).
-    Both are cached and freshness has a 24h disk TTL, but on a cold/expired cache
-    the freshness check makes a blocking GitHub request, and on macOS the first
-    `llama-server --help` exec can stall on Gatekeeper verification -- neither must
-    ever gate `Application startup complete`. Writes app.state only; nothing reads
-    those values synchronously at startup (the status routes call
-    check_prebuilt_freshness directly at request time), so populating them late is
-    safe.
-    """
-    try:
-        from core.inference.llama_cpp import LlamaCppBackend
-        from utils.llama_cpp_freshness import (
-            check_prebuilt_freshness,
-            format_stale_warning,
-        )
-
-        _bin = LlamaCppBackend._find_llama_server_binary()
-        _caps = LlamaCppBackend.probe_server_capabilities(_bin)
-        app.state.llama_cpp_capabilities = _caps
-        _freshness = check_prebuilt_freshness(_bin)
-        app.state.llama_cpp_freshness = _freshness
-
-        import structlog as _structlog
-
-        _log = _structlog.get_logger(__name__)
-        if (
-            _caps.get("found")
-            and not _caps.get("supports_mtp")
-            and not _caps.get("mtp_probe_inconclusive")
-        ):
-            _msg = (
-                "llama.cpp prebuilt lacks MTP support "
-                "(--spec-type mtp/draft-mtp). Run `unsloth studio update`. "
-                "MTP GGUFs will load without speculative decoding."
-            )
-            _log.warning(_msg)
-            print(f"WARNING: {_msg}", flush = True)
-        if _freshness.get("stale"):
-            _msg = format_stale_warning(_freshness)
-            _log.warning(_msg)
-            print(f"WARNING: {_msg}", flush = True)
-    except Exception as _probe_exc:
-        import structlog as _structlog
-        _structlog.get_logger(__name__).debug("llama.cpp startup probes failed: %s", _probe_exc)
-
-
-def _start_llama_cpp_probes_if_enabled(app: FastAPI) -> None:
-    """Run the llama.cpp startup probes on a daemon thread, off the startup
-    critical path so they never delay `Application startup complete`. Skipped
-    entirely when update checks are disabled, so a fully offline boot makes no
-    background network calls."""
-    if os.environ.get("UNSLOTH_DISABLE_UPDATE_CHECK") == "1":
-        return
-
-    threading.Thread(
-        target = _run_llama_cpp_startup_probes,
-        args = (app,),
-        daemon = True,
-        name = "llama-cpp-startup-probe",
-    ).start()
 
 
 _post_warm_thread: Optional[threading.Thread] = None
@@ -662,25 +579,10 @@ async def lifespan(app: FastAPI):
     except Exception as exc:
         _lifespan_log.warning("cleanup_orphaned_runs failed at startup: %s", exc)
 
-    reap_hub_orphan_workers()
-    try:
-        from hub.utils.download_manifest import migrate_ordinary_v2_manifests_for_downgrade
-        migrated_manifests = migrate_ordinary_v2_manifests_for_downgrade()
-        if migrated_manifests:
-            _lifespan_log.info(
-                "Migrated %s Hub download manifest(s) for downgrade compatibility.",
-                migrated_manifests,
-            )
-    except Exception as exc:
-        _lifespan_log.warning("Hub manifest compatibility migration failed: %s", exc)
 
-    # llama.cpp probes: capability (MTP support) + freshness (release age). Inline they could
-    # block `Application startup complete` for tens of seconds on macOS (cold GitHub cache,
-    # Gatekeeper verifying the unsigned binary). Nothing reads them synchronously at startup,
-    # so run them on a daemon thread; app.state stays None until it populates them.
+
     app.state.llama_cpp_capabilities = None
     app.state.llama_cpp_freshness = None
-    _start_llama_cpp_probes_if_enabled(app)
 
     try:
         from storage.rag_db import reconcile_orphaned_ingestion_jobs
@@ -696,11 +598,6 @@ async def lifespan(app: FastAPI):
     app.state.research_supervisor = ResearchSupervisor(app)
     app.state.research_supervisor.start()
 
-    # Idle auto-unload loop (no-op unless the OpenAI auto-unload TTL is set).
-    from core.inference.llama_keepwarm import idle_unload_loop, sweep_slot_save_dir
-
-    sweep_slot_save_dir()
-    app.state.idle_unload_task = asyncio.create_task(idle_unload_loop())
 
     # Initialize RSA key pair for API key encryption (external providers).
     from core.inference.key_exchange import init_key_pair
@@ -772,12 +669,8 @@ async def lifespan(app: FastAPI):
     if _research_supervisor is not None:
         await _research_supervisor.stop()
 
-    from core.inference.llama_http import aclose as _close_llama_http
-
-    await _close_llama_http()
-
     await run_lifespan_shutdown(
-        terminate_hub_downloads,
+        lambda: None,
         lambda: clear_compiled_cache_unless_shared(app),
         _hw_module,
     )
@@ -1286,10 +1179,6 @@ app.add_middleware(
     upload_passthrough_exact_paths = _BODY_UPLOAD_PASSTHROUGH_EXACT_PATHS,
 )
 
-# Tracks in-flight inference requests for idle auto-unload; off -> passthrough.
-from core.inference.llama_keepwarm import LlamaKeepWarmMiddleware  # noqa: E402
-
-app.add_middleware(LlamaKeepWarmMiddleware)
 
 
 from starlette.responses import RedirectResponse as _RedirectResponse  # noqa: E402
@@ -1369,14 +1258,10 @@ app.include_router(prompts_router, prefix = "/api/prompts", tags = ["prompts"])
 app.include_router(memory_router, prefix = "/api/memory", tags = ["memory"])
 app.include_router(tasks_router, prefix = "/api/tasks", tags = ["tasks"])
 app.include_router(profile_stats_router, prefix = "/api/profile", tags = ["profile"])
-app.include_router(llama_router, prefix = "/api/llama", tags = ["llama"])
 app.include_router(whisper_router, prefix = "/api/whisper", tags = ["whisper"])
 app.include_router(export_router, prefix = "/api/export", tags = ["export"])
 app.include_router(rag_router, prefix = "/api/rag", tags = ["rag"])
-app.include_router(hub_inventory_router, prefix = "/api/hub", tags = ["hub"])
-app.include_router(hub_datasets_router, prefix = "/api/hub/datasets", tags = ["hub"])
 app.include_router(picker_templates_router, prefix = "/api/picker", tags = ["picker"])
-app.include_router(hub_token_router, prefix = "/api/hub", tags = ["hub"])
 app.include_router(youtube_router, prefix = "/api/youtube", tags = ["youtube"])
 
 # Re-wrap /v1/* client errors into OpenAI/Anthropic envelopes; non-/v1 keeps {"detail": ...}.
@@ -1781,15 +1666,11 @@ def studio_release_notes(
     return get_release_notes(version, refresh = refresh)
 
 
-@app.get(
-    "/api/studio/download-transport-capabilities",
-    response_model = TransportCapabilities,
-)
+@app.get("/api/studio/download-transport-capabilities")
 def studio_download_transport_capabilities(
     probe: bool = False, _current_subject: str = Depends(get_current_subject)
 ):
-    # Sync def, so FastAPI runs this in the threadpool and an opted-in probe cannot block the loop.
-    return asdict(get_download_transport_capabilities(probe = probe))
+    return {}
 
 
 @app.post("/api/shutdown")
@@ -1890,25 +1771,8 @@ def _get_cached_system_gpu_info(logger) -> tuple[dict[str, Any], dict[str, Any]]
             d.get("index") for d in utilization_info.get("devices", [])
         } == {d.get("index") for d in enriched_devices}
 
-        try:
-            from core.inference.llama_cpp import LlamaCppBackend
-            from utils.hardware import DeviceType, get_device
-
-            llama_uses_vulkan = LlamaCppBackend._is_vulkan_backend()
-            if llama_uses_vulkan:
-                # The separate inference inventory owns Vulkan ordinals. Keep this false so a failed
-                # Vulkan probe cannot expose torch indices that llama.cpp reads in another namespace.
-                gpu_ids_supported = False
-            else:
-                # XPU indices cannot yet be applied safely across Level Zero's FLAT and COMPOSITE modes.
-                # A proven CPU-only llama.cpp build cannot apply a CUDA pin either.
-                gpu_ids_supported = (
-                    get_device() != DeviceType.XPU and not LlamaCppBackend._backend_lacks_gpu_lib()
-                )
-        except Exception as e:
-            logger.debug(f"Could not resolve gpu_ids support: {e}")
-            llama_uses_vulkan = False
-            gpu_ids_supported = True
+        llama_uses_vulkan = False
+        gpu_ids_supported = True
         # Preserve backend/index metadata from the visibility probe: a CPU training host can expose
         # a Vulkan inference GPU, and the UI must label it Vulkan, not the top-level CPU backend.
         gpu_info = {
@@ -2077,17 +1941,7 @@ def get_hardware_info(
         **video_capability(),
     }
     if include_details:
-        from utils.llama_cpp_update import get_installed_llama_version
-
-        # All backend-visible GPUs (respects CUDA_VISIBLE_DEVICES); get_gpu_summary reports only
-        # the primary. Sort by visible_ordinal: the nvidia-smi path returns physical order, so a
-        # reordering CUDA_VISIBLE_DEVICES (e.g. "5,3") would mislabel by array index.
-        devices = get_backend_visible_gpu_info().get("devices", [])
-        body["gpus"] = [
-            {"name": d.get("name"), "vram_total_gb": d.get("memory_total_gb")}
-            for d in sorted(devices, key = lambda d: d.get("visible_ordinal", 0))
-        ]
-        body["llama_cpp"] = get_installed_llama_version()
+        body["llama_cpp"] = None
     return body
 
 

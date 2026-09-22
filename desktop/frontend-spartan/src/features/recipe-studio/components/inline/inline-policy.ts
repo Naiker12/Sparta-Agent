@@ -1,4 +1,3 @@
-
 import type { NodeConfig, SamplerType } from "../../types";
 
 export type ConfigUiMode = "inline" | "dialog";
@@ -40,8 +39,6 @@ export function getConfigUiMode(
   return "dialog";
 }
 
-export function isInlineConfig(
-  config: NodeConfig | null | undefined,
-): boolean {
+export function isInlineConfig(config: NodeConfig | null | undefined): boolean {
   return getConfigUiMode(config) === "inline";
 }

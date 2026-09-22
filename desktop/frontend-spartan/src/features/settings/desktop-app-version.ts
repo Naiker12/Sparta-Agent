@@ -11,18 +11,23 @@ async function readTauriAppVersion(): Promise<string> {
 export async function loadDesktopAppVersion(
   readVersion: VersionReader = readTauriAppVersion,
 ): Promise<string | null> {
-  if (typeof window !== "undefined" && window.electronAPI && typeof (window.electronAPI as any).getVersion === "function") {
+  if (
+    typeof window !== "undefined" &&
+    window.electronAPI &&
+    typeof (window.electronAPI as any).getVersion === "function"
+  ) {
     try {
       const v = await (window.electronAPI as any).getVersion();
-      if (v) return String(v).trim();
+      if (v) {
+        return String(v).trim();
+      }
     } catch {}
   }
   if (isTauri) {
     try {
       const version = await readVersion();
       return version.trim() || SPARTA_VERSION;
-    } catch (error) {
-      console.warn("Desktop app version read failed; using SPARTA_VERSION", error);
+    } catch (_error) {
       return SPARTA_VERSION;
     }
   }

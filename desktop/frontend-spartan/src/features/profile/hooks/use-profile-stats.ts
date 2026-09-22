@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useRef, useState } from "react";
 import { type ProfileStats, loadProfileStats } from "../api/profile-stats";
 
@@ -25,14 +24,20 @@ export function useProfileStats(): ProfileStatsState {
     setLoading(true);
     try {
       const next = await loadProfileStats(controller.signal);
-      if (controller.signal.aborted) return;
+      if (controller.signal.aborted) {
+        return;
+      }
       setStats(next);
       setError(null);
     } catch (cause: unknown) {
-      if (controller.signal.aborted) return;
+      if (controller.signal.aborted) {
+        return;
+      }
       setError(cause instanceof Error ? cause.message : String(cause));
     } finally {
-      if (!controller.signal.aborted) setLoading(false);
+      if (!controller.signal.aborted) {
+        setLoading(false);
+      }
     }
   }, []);
 

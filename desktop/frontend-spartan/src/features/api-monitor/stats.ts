@@ -1,4 +1,3 @@
-
 // Split out of use-api-monitor.ts so the arithmetic runs under `node --test`: the hook
 // imports through the "@/" alias, which node cannot resolve.
 
@@ -85,7 +84,12 @@ export function computeStats(entries: ApiMonitorEntry[]): MonitorStats {
       // Rate the decode window: duration_ms carries queue wait and prefill,
       // which read a 50 tok/s model as 5. Untimed requests are skipped.
       const decodeMs = entry.decode_ms;
-      if (decodeMs != null && decodeMs > 0 && generated != null && generated > 0) {
+      if (
+        decodeMs != null &&
+        decodeMs > 0 &&
+        generated != null &&
+        generated > 0
+      ) {
         generatedTokens += generated;
         generatedDurationMs += decodeMs;
       }

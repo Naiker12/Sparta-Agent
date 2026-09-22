@@ -1,28 +1,27 @@
-
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useHttpPartialsResumable, useRepoDownload } from "../download-manager";
-import { deleteCachedDataset } from "../inventory";
 import { cn } from "@/lib/utils";
-import { TrainIcon } from "../components/train-icon";
-import { HUB_POST_DOWNLOAD_ACTIONS_VISIBLE } from "../lib/hub-feature-flags";
-import { DotTag } from "./dot-tag";
-import { PathInfoButton } from "./path-info-button";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useState } from "react";
-import { useHfTokenStore } from "../stores/hf-token-store";
-import { formatBytes } from "../lib/format";
+import { TrainIcon } from "../components/train-icon";
+import { useHttpPartialsResumable, useRepoDownload } from "../download-manager";
 import { useDatasetSize } from "../hooks/use-dataset-size";
+import { deleteCachedDataset } from "../inventory";
+import { formatBytes } from "../lib/format";
+import { HUB_POST_DOWNLOAD_ACTIONS_VISIBLE } from "../lib/hub-feature-flags";
+import { useHfTokenStore } from "../stores/hf-token-store";
+import { DotTag } from "./dot-tag";
 import {
-  CardDivider,
   CardDeleteButton,
+  CardDivider,
   DeleteConfirmDialog,
   DownloadActionButton,
   DownloadCard,
 } from "./download-card";
+import { PathInfoButton } from "./path-info-button";
 import { useCardDelete } from "./use-card-delete";
 import { useDownloadCardState } from "./use-download-card-state";
 
@@ -109,7 +108,9 @@ export function DatasetDownloadSection({
         <DeleteConfirmDialog
           open={deleteOpen}
           onOpenChange={(o) => {
-            if (!o && !deleting) setDeleteOpen(false);
+            if (!(o || deleting)) {
+              setDeleteOpen(false);
+            }
           }}
           title="Delete cached dataset?"
           deleting={deleting}
@@ -133,7 +134,7 @@ export function DatasetDownloadSection({
           {isDownloaded && <DotTag tone="success" label="On device" />}
           {!isDownloaded && isPartial && !downloading && (
             <Tooltip>
-              <TooltipTrigger asChild>
+              <TooltipTrigger asChild={true}>
                 <span className="inline-flex">
                   <DotTag tone="warning" label="Partial" />
                 </span>
@@ -155,9 +156,7 @@ export function DatasetDownloadSection({
               onClick={() => setDeleteOpen(true)}
             />
           )}
-          {isDownloaded && cachePath && (
-            <PathInfoButton path={cachePath} />
-          )}
+          {isDownloaded && cachePath && <PathInfoButton path={cachePath} />}
         </div>
       </div>
       {/* Train CTA hidden until Hub→train picker ships; divider pairs with it. */}

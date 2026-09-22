@@ -1,4 +1,3 @@
-
 import {
   Tooltip,
   TooltipContent,
@@ -11,24 +10,27 @@ import {
 import { cn } from "@/lib/utils";
 import { useEffect } from "react";
 
-const OPTIONS: { value: "auto" | "http" | "xet"; label: string; hint: string }[] =
-  [
-    {
-      value: "auto",
-      label: "Auto",
-      hint: "Picks the transport for this machine and switches to HTTP if Xet stalls or fails.",
-    },
-    {
-      value: "http",
-      label: "HTTP",
-      hint: "Resumes from where it stopped if you cancel.",
-    },
-    {
-      value: "xet",
-      label: "Xet",
-      hint: "Usually faster on a fresh download, but starts over if you cancel.",
-    },
-  ];
+const OPTIONS: {
+  value: "auto" | "http" | "xet";
+  label: string;
+  hint: string;
+}[] = [
+  {
+    value: "auto",
+    label: "Auto",
+    hint: "Picks the transport for this machine and switches to HTTP if Xet stalls or fails.",
+  },
+  {
+    value: "http",
+    label: "HTTP",
+    hint: "Resumes from where it stopped if you cancel.",
+  },
+  {
+    value: "xet",
+    label: "Xet",
+    hint: "Usually faster on a fresh download, but starts over if you cancel.",
+  },
+];
 
 export function TransportToggle() {
   const [mode, setMode] = useTransportMode();
@@ -69,7 +71,9 @@ export function TransportToggle() {
                 aria-disabled={disabled || undefined}
                 aria-pressed={active}
                 onClick={() => {
-                  if (!disabled) setMode(opt.value);
+                  if (!disabled) {
+                    setMode(opt.value);
+                  }
                 }}
                 className={cn(
                   "inline-flex h-[22px] items-center justify-center rounded-full px-2 font-medium tracking-tight transition-colors",

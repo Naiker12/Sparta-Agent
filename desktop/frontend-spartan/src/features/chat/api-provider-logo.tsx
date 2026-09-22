@@ -1,4 +1,3 @@
-
 import { cn } from "@/lib/utils";
 import { DashboardSquare01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -22,15 +21,22 @@ const PROVIDER_LOGO_EXT: Record<string, "svg" | "png" | "jpg"> = {
   vllm: "svg",
   ollama: "svg",
   llama_cpp: "svg",
+  lmstudio: "svg",
+  groq: "svg",
 };
 
 export function apiProviderLogoSrc(
   providerType: string | undefined | null,
 ): string | undefined {
-  if (!providerType) return undefined;
-  const logoProviderType = providerType === "openai_codex" ? "openai" : providerType;
+  if (!providerType) {
+    return undefined;
+  }
+  const logoProviderType =
+    providerType === "openai_codex" ? "openai" : providerType;
   const ext = PROVIDER_LOGO_EXT[logoProviderType];
-  if (!ext) return undefined;
+  if (!ext) {
+    return undefined;
+  }
   return `${import.meta.env.BASE_URL}provider-logos/${logoProviderType}.${ext}`;
 }
 
@@ -40,17 +46,26 @@ interface ApiProviderLogoProps {
   title?: string;
 }
 
-const DARK_INVERT_LOGOS = new Set(["openai", "openai_codex", "ollama", "openrouter"]);
+const DARK_INVERT_LOGOS = new Set([
+  "openai",
+  "openai_codex",
+  "ollama",
+  "openrouter",
+]);
 
 /** Provider logo from `public/provider-logos/`; monochrome ones invert in dark mode. */
-export function ApiProviderLogo({ providerType, className, title }: ApiProviderLogoProps) {
+export function ApiProviderLogo({
+  providerType,
+  className,
+  title,
+}: ApiProviderLogoProps) {
   const src = apiProviderLogoSrc(providerType);
   const [failed, setFailed] = useState(false);
   if ((!src && isCustomProviderType(providerType)) || failed) {
     return (
       <span
         title={title}
-        aria-hidden
+        aria-hidden={true}
         className={cn(
           "inline-flex shrink-0 items-center justify-center rounded-sm bg-muted text-muted-foreground",
           className,
@@ -61,13 +76,15 @@ export function ApiProviderLogo({ providerType, className, title }: ApiProviderL
     );
   }
 
-  if (!src) return null;
+  if (!src) {
+    return null;
+  }
   return (
     <img
       src={src}
       alt=""
       title={title}
-      aria-hidden
+      aria-hidden={true}
       onError={() => setFailed(true)}
       className={cn(
         "shrink-0 object-contain",

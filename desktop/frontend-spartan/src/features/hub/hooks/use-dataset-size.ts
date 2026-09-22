@@ -1,11 +1,7 @@
-
 import { useOnlineStatus } from "@/features/hub/hooks/use-online-status";
 import { fingerprintToken } from "@/features/hub/lib/token-fingerprint";
 import { useEffect, useState } from "react";
-import {
-  type DatasetSizeInfo,
-  fetchDatasetSize,
-} from "../lib/dataset-size";
+import { type DatasetSizeInfo, fetchDatasetSize } from "../lib/dataset-size";
 
 export function useDatasetSize(
   repoId: string | null | undefined,
@@ -22,7 +18,9 @@ export function useDatasetSize(
   }>(() => ({ key, value: null }));
 
   useEffect(() => {
-    if (!repoKey || !enabled || !online) return;
+    if (!(repoKey && enabled && online)) {
+      return;
+    }
     const controller = new AbortController();
     void fetchDatasetSize(repoKey, token, controller.signal).then((value) => {
       if (!controller.signal.aborted) {

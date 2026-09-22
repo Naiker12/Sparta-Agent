@@ -1,4 +1,3 @@
-
 import { useSettingsDialogStore } from "@/features/settings/stores/settings-dialog-store";
 import {
   applyDictationDictionary,
@@ -29,7 +28,9 @@ export function activeDictationChatId(): string | undefined {
 export function resolveDictationChatId(
   chatId: string | null | undefined,
 ): string | undefined {
-  if (chatId === undefined) return activeDictationChatId();
+  if (chatId === undefined) {
+    return activeDictationChatId();
+  }
   return chatId ?? undefined;
 }
 
@@ -51,7 +52,9 @@ export type StudioDictationSession = DictationAdapter.Session & {
 const getSpeechRecognitionAPI = ():
   | SpeechRecognitionConstructor
   | undefined => {
-  if (typeof window === "undefined") return undefined;
+  if (typeof window === "undefined") {
+    return undefined;
+  }
   return window.SpeechRecognition ?? window.webkitSpeechRecognition;
 };
 
@@ -80,8 +83,16 @@ export const describeMediaError = (error: unknown): string => {
   if (name === "NotAllowedError" || name === "SecurityError") {
     // The desktop WebView has no site-permission UI, so Settings is the only way back.
     return isTauri
-      ? translate("settings.voice.dictation.micAccessBlockedDesktop", undefined, locale)
-      : translate("settings.voice.dictation.micAccessBlocked", undefined, locale);
+      ? translate(
+          "settings.voice.dictation.micAccessBlockedDesktop",
+          undefined,
+          locale,
+        )
+      : translate(
+          "settings.voice.dictation.micAccessBlocked",
+          undefined,
+          locale,
+        );
   }
   if (name === "NotFoundError" || name === "OverconstrainedError") {
     return translate("settings.voice.dictation.micNotFound", undefined, locale);
@@ -100,16 +111,32 @@ export const describeSpeechError = (
 ): string => {
   const locale = getLocale();
   if (error === "not-allowed") {
-    return translate("settings.voice.dictation.speechBlocked", undefined, locale);
+    return translate(
+      "settings.voice.dictation.speechBlocked",
+      undefined,
+      locale,
+    );
   }
   if (error === "service-not-allowed") {
-    return translate("settings.voice.dictation.speechServiceBlocked", undefined, locale);
+    return translate(
+      "settings.voice.dictation.speechServiceBlocked",
+      undefined,
+      locale,
+    );
   }
   if (error === "network") {
-    return translate("settings.voice.dictation.speechNetwork", undefined, locale);
+    return translate(
+      "settings.voice.dictation.speechNetwork",
+      undefined,
+      locale,
+    );
   }
   if (error === "language-not-supported") {
-    return translate("settings.voice.dictation.speechLangUnsupported", undefined, locale);
+    return translate(
+      "settings.voice.dictation.speechLangUnsupported",
+      undefined,
+      locale,
+    );
   }
   return message || `Speech recognition failed: ${error}`;
 };
@@ -149,7 +176,7 @@ export class StudioWebSpeechDictationAdapter implements DictationAdapter {
 
   listen(): DictationAdapter.Session {
     const SpeechRecognitionAPI = getSpeechRecognitionAPI();
-    if (!SpeechRecognitionAPI || !navigator.mediaDevices?.getUserMedia) {
+    if (!(SpeechRecognitionAPI && navigator.mediaDevices?.getUserMedia)) {
       throw new Error("Speech recognition is not supported in this browser.");
     }
 
@@ -208,8 +235,12 @@ export class StudioWebSpeechDictationAdapter implements DictationAdapter {
       },
 
       cancel: () => {
-        if (ended) return;
-        if (started) recognition.abort();
+        if (ended) {
+          return;
+        }
+        if (started) {
+          recognition.abort();
+        }
         finish("cancelled");
       },
 
@@ -254,9 +285,13 @@ export class StudioWebSpeechDictationAdapter implements DictationAdapter {
     const promoteInterim = () => {
       const interim = currentInterimTranscript();
       interimParts.clear();
-      if (!interim) return false;
+      if (!interim) {
+        return false;
+      }
       const corrected = applyDictationDictionary(interim).trim();
-      if (!corrected) return false;
+      if (!corrected) {
+        return false;
+      }
       finalTranscript = finalTranscript
         ? `${finalTranscript} ${corrected}`
         : corrected;
@@ -264,7 +299,9 @@ export class StudioWebSpeechDictationAdapter implements DictationAdapter {
     };
 
     function scheduleStopFallback(): void {
-      if (!stopping || ended || stopFallbackTimer) return;
+      if (!stopping || ended || stopFallbackTimer) {
+        return;
+      }
       const elapsed = performance.now() - stopRequestedAt;
       const delay = Math.max(0, STOP_FINALIZATION_GRACE_MS - elapsed);
       stopFallbackTimer = window.setTimeout(() => {
@@ -278,10 +315,14 @@ export class StudioWebSpeechDictationAdapter implements DictationAdapter {
     }
 
     const finish = (reason: "stopped" | "cancelled" | "error") => {
-      if (ended) return;
+      if (ended) {
+        return;
+      }
       ended = true;
       stopping = false;
-      if (stopFallbackTimer) window.clearTimeout(stopFallbackTimer);
+      if (stopFallbackTimer) {
+        window.clearTimeout(stopFallbackTimer);
+      }
       stopFallbackTimer = 0;
       session.status = { type: "ended", reason };
       stopLevelMeter();
@@ -302,7 +343,9 @@ export class StudioWebSpeechDictationAdapter implements DictationAdapter {
       }
       finalTranscript = "";
       interimParts.clear();
-      for (const callback of endCallbacks) callback();
+      for (const callback of endCallbacks) {
+        callback();
+      }
       resolveEnded?.();
     };
 
@@ -311,11 +354,15 @@ export class StudioWebSpeechDictationAdapter implements DictationAdapter {
     });
 
     recognition.addEventListener("speechstart", () => {
-      for (const callback of speechStartCallbacks) callback();
+      for (const callback of speechStartCallbacks) {
+        callback();
+      }
     });
 
     recognition.addEventListener("result", (event) => {
-      if (ended) return;
+      if (ended) {
+        return;
+      }
       const speechEvent = event as SpeechRecognitionEvent;
       for (
         let i = speechEvent.resultIndex;
@@ -323,7 +370,9 @@ export class StudioWebSpeechDictationAdapter implements DictationAdapter {
         i++
       ) {
         const result = speechEvent.results[i];
-        if (!result) continue;
+        if (!result) {
+          continue;
+        }
         const transcript = result[0]?.transcript ?? "";
         if (result.isFinal) {
           interimParts.delete(i);
@@ -355,7 +404,9 @@ export class StudioWebSpeechDictationAdapter implements DictationAdapter {
     });
 
     recognition.addEventListener("error", (event) => {
-      if (ended) return;
+      if (ended) {
+        return;
+      }
       const errorEvent = event as SpeechRecognitionErrorEvent;
       if (errorEvent.error === "aborted") {
         if (stopping) {
@@ -370,7 +421,6 @@ export class StudioWebSpeechDictationAdapter implements DictationAdapter {
         errorEvent.error,
         errorEvent.message,
       );
-      console.error("Dictation error:", errorEvent.error, errorEvent.message);
       if (errorEvent.error === "network") {
         // Online speech service unreachable; point the user to the offline
         // local engine (the toast opens Voice settings).
@@ -433,14 +483,7 @@ export class StudioWebSpeechDictationAdapter implements DictationAdapter {
         stopLevelMeter = startDictationLevelMeter(stream);
         try {
           recognition.start(audioTrack);
-        } catch (error) {
-          // Older engines expose only start(); retry without the experimental
-          // track overload. Recognition then captures from the default device,
-          // so release the selected-device stream instead of holding it open.
-          console.debug(
-            "Dictation start(audioTrack) failed; retrying start().",
-            error,
-          );
+        } catch (_error) {
           stopLevelMeter();
           stopStream(stream);
           stream = null;
@@ -449,7 +492,6 @@ export class StudioWebSpeechDictationAdapter implements DictationAdapter {
         started = true;
       } catch (error) {
         const description = describeMediaError(error);
-        console.error("Dictation microphone error:", error);
         toast.error(description);
         finish("error");
       }

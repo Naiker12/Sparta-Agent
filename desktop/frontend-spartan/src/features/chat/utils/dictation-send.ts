@@ -1,4 +1,3 @@
-
 /**
  * Whether the recording bar's send should submit once dictation ends.
  *
@@ -42,7 +41,9 @@ export function dictationSendBlocked(state: {
   if (state.composerDisabled || state.uploading || state.researchActive) {
     return true;
   }
-  if (!state.runActive) return false;
+  if (!state.runActive) {
+    return false;
+  }
   return (
     state.queueDisabled ||
     state.hasOverlay ||
@@ -72,7 +73,11 @@ export function shouldSubmitDictation(input: {
   /** Composer text now. */
   text: string;
 }): boolean {
-  if (input.originComposer !== input.currentComposer) return false;
-  if (!input.producedTranscript) return false;
+  if (input.originComposer !== input.currentComposer) {
+    return false;
+  }
+  if (!input.producedTranscript) {
+    return false;
+  }
   return dictationProducedText(input.baseText, input.text);
 }

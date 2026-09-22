@@ -28,11 +28,7 @@
         "drop": true,
         "sampler_type": "category",
         "params": {
-          "values": [
-            "Ecommerce",
-            "Customer Support",
-            "Finance"
-          ]
+          "values": ["Ecommerce", "Customer Support", "Finance"]
         }
       },
       {
@@ -113,9 +109,7 @@
         "column_type": "validation",
         "name": "sql-validator",
         "drop": false,
-        "target_columns": [
-          "sql"
-        ],
+        "target_columns": ["sql"],
         "validator_type": "code",
         "validator_params": {
           "code_lang": "sql:ansi"
@@ -128,9 +122,7 @@
   "run": {
     "rows": 5,
     "preview": true,
-    "output_formats": [
-      "jsonl"
-    ]
+    "output_formats": ["jsonl"]
   },
   "ui": {
     "nodes": [

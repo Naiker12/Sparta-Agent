@@ -1,4 +1,3 @@
-
 import type { ThreadMessage } from "@assistant-ui/react";
 import {
   buildLocalTokenCountExtras,
@@ -65,7 +64,10 @@ function storedMessageToRunMessage(record: MessageRecord): ThreadMessage {
     id: record.id,
     createdAt: new Date(record.createdAt),
     role: "assistant",
-    content: content as Extract<ThreadMessage, { role: "assistant" }>["content"],
+    content: content as Extract<
+      ThreadMessage,
+      { role: "assistant" }
+    >["content"],
     status: { type: "complete", reason: "unknown" },
     metadata: {
       custom,
@@ -88,10 +90,14 @@ const ROLE_ORDER: Record<string, number> = { system: 0, user: 1, assistant: 2 };
  */
 function orderBySelectedBranch<T extends MessageRecord>(messages: T[]): T[] {
   const sorted = messages.slice().sort((a, b) => {
-    if (a.createdAt !== b.createdAt) return a.createdAt - b.createdAt;
+    if (a.createdAt !== b.createdAt) {
+      return a.createdAt - b.createdAt;
+    }
     const aOrder = ROLE_ORDER[a.role] ?? 99;
     const bOrder = ROLE_ORDER[b.role] ?? 99;
-    if (aOrder !== bOrder) return aOrder - bOrder;
+    if (aOrder !== bOrder) {
+      return aOrder - bOrder;
+    }
     return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
   });
 
@@ -110,7 +116,9 @@ function orderBySelectedBranch<T extends MessageRecord>(messages: T[]): T[] {
   while (cur != null && !seen.has(cur)) {
     seen.add(cur);
     const record = byId.get(cur);
-    if (!record) break;
+    if (!record) {
+      break;
+    }
     chain.push(record);
     cur = parentOf.get(cur) ?? null;
   }
@@ -203,18 +211,24 @@ export async function refreshContextUsage(
   const activeModel = store.models?.find(
     (model: { id: string }) => model.id === checkpoint,
   );
-  if (activeModel?.isAudio && !activeModel?.hasAudioInput) return;
+  if (activeModel?.isAudio && !activeModel?.hasAudioInput) {
+    return;
+  }
 
   // Deep Research routes the turn to a server-side research run whose reply carries no usage, so
   // a total counted here would describe a request that is never made and nothing would correct it.
-  if (store.deepResearchEnabled) return;
+  if (store.deepResearchEnabled) {
+    return;
+  }
 
   // Never count while anything is generating: the endpoint refuses, and the recount effect depends
   // on this, so the last run finishing re-fires it. runningByThreadId, not the narrower
   // localRunByThreadId: the endpoint refuses during an external-provider run too, so gating on less
   // than the server refuses on would spend a request to be told 503 and lose the retry -- nothing
   // re-fires this effect when an external run ends unless it is in the dependency array.
-  if (Object.values(store.runningByThreadId ?? {}).some(Boolean)) return;
+  if (Object.values(store.runningByThreadId ?? {}).some(Boolean)) {
+    return;
+  }
 
   const capturedThreadId = threadId ?? null;
   const capturedCheckpoint = checkpoint;
@@ -259,7 +273,9 @@ export async function refreshContextUsage(
       runMessages = liveBranch as readonly ThreadMessage[];
     } else {
       const records = threadId ? await listStoredChatMessages(threadId) : [];
-      if (stale()) return;
+      if (stale()) {
+        return;
+      }
       runMessages = orderBySelectedBranch(records).map(
         storedMessageToRunMessage,
       );
@@ -268,11 +284,15 @@ export async function refreshContextUsage(
     // /chat/count_tokens always 503s on images: /apply-template swaps each for a marker. Declining
     // before the hash below keeps the base64 out of it and out of a request body that can reach
     // megabytes, both synchronous on the UI thread.
-    if (messagesContainImage(runMessages)) return;
+    if (messagesContainImage(runMessages)) {
+      return;
+    }
 
     // The real request replays the newest user audio as audio_base64 but toOpenAIMessages has
     // no audio branch, so counting would price a text-only prompt. Decline as images do.
-    if (findLatestUserAudioBase64(runMessages)) return;
+    if (findLatestUserAudioBase64(runMessages)) {
+      return;
+    }
 
     // Same for video, and more so: the real request replays the clip as
     // video_base64 and llama-server expands it into frames, while
@@ -281,7 +301,9 @@ export async function refreshContextUsage(
     // /chat/count_tokens 503s on video for the same reason. Declining here also
     // keeps up to 85 MB of base64 out of branchSignature's JSON.stringify,
     // which is the synchronous main-thread cost the image bail above exists for.
-    if (findLatestUserVideoBase64(runMessages)) return;
+    if (findLatestUserVideoBase64(runMessages)) {
+      return;
+    }
 
     if (fromLiveBranch) {
       countedBranch = branchSignature(runMessages);
@@ -299,9 +321,13 @@ export async function refreshContextUsage(
       runMessages,
       payloadThreadId,
     );
-    if (stale()) return;
+    if (stale()) {
+      return;
+    }
     const countExtras = await buildLocalTokenCountExtras(payloadThreadId);
-    if (stale()) return;
+    if (stale()) {
+      return;
+    }
 
     // Always ask the server: the template itself has tokens, and `unsloth run --enable-tools`
     // injects schemas the client cannot see.
@@ -313,10 +339,14 @@ export async function refreshContextUsage(
         ...countExtras,
       });
 
-    if (stale()) return;
+    if (stale()) {
+      return;
+    }
     // The response type is a compile-time assertion only: anything else answering 200 here would
     // put undefined on the bar and throw from toLocaleString.
-    if (typeof inputTokens !== "number" || !Number.isFinite(inputTokens)) return;
+    if (typeof inputTokens !== "number" || !Number.isFinite(inputTokens)) {
+      return;
+    }
     // The endpoint counts with whatever is resident, never the model asked for: a load from
     // another tab returns another tokenizer's total, which the checkpoint guards cannot see.
     if (countedModel != null && countedModel !== capturedCheckpoint) {
@@ -331,7 +361,11 @@ export async function refreshContextUsage(
     }
     // A run writes its own usage when it lands, so declining while one is live never loses a
     // number. A first turn has no thread id yet and files under "__default".
-    if (useChatRuntimeStore.getState().runningByThreadId[capturedThreadId ?? "__default"]) {
+    if (
+      useChatRuntimeStore.getState().runningByThreadId[
+        capturedThreadId ?? "__default"
+      ]
+    ) {
       return;
     }
     // The usage snapshot above only sees a completion that WROTE usage, so a run stopped before
@@ -370,6 +404,8 @@ export async function refreshContextUsage(
     countsInFlight.delete(capturedThreadId);
     const queued = retryAfterInFlight.get(capturedThreadId);
     const hadQueued = retryAfterInFlight.delete(capturedThreadId);
-    if (hadQueued && !published) void refreshContextUsage(queued);
+    if (hadQueued && !published) {
+      void refreshContextUsage(queued);
+    }
   }
 }

@@ -1,4 +1,3 @@
-
 import type {
   LlmConfig,
   LlmMcpProviderConfig,
@@ -9,7 +8,7 @@ import type {
 function buildImageContext(
   config: LlmConfig,
   errors: string[],
-): Array<Record<string, unknown>> | undefined {
+): Record<string, unknown>[] | undefined {
   const imageContext = config.image_context;
   if (!imageContext?.enabled) {
     return undefined;
@@ -84,7 +83,7 @@ export function buildLlmColumn(
         for (const option of score.options ?? []) {
           const key = option.value.trim();
           const value = option.description.trim();
-          if (!key || !value) {
+          if (!(key && value)) {
             continue;
           }
           options[key] = value;
@@ -97,7 +96,9 @@ export function buildLlmColumn(
       })
       .filter(
         (score) =>
-          score.name && score.description && Object.keys(score.options).length > 0,
+          score.name &&
+          score.description &&
+          Object.keys(score.options).length > 0,
       );
     if (scores.length === 0) {
       errors.push(`LLM ${config.name}: scores required for LLM Judge.`);

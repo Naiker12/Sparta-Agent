@@ -1,4 +1,3 @@
-
 // Pure helpers that infer what a model can do (vision / reasoning / audio / media
 // generation) from its HF tags + pipeline tag, falling back to repo-name keywords.
 // No React/DOM deps so they stay easy to test.
@@ -83,7 +82,11 @@ const VIDEO_GEN_NAME_RE = new RegExp(
 );
 
 function hasAny(tagSet: Set<string>, wanted: Set<string>): boolean {
-  for (const tag of wanted) if (tagSet.has(tag)) return true;
+  for (const tag of wanted) {
+    if (tagSet.has(tag)) {
+      return true;
+    }
+  }
   return false;
 }
 
@@ -95,12 +98,15 @@ export function detectCapabilities(opts: {
 }): ModelCapabilities {
   const { id, tags, pipelineTag } = opts;
   const tagSet = new Set((tags ?? []).map((t) => t.toLowerCase()));
-  if (pipelineTag) tagSet.add(pipelineTag.toLowerCase());
+  if (pipelineTag) {
+    tagSet.add(pipelineTag.toLowerCase());
+  }
   // Name part only. These two match model FAMILIES, and a family word turns up in owners too:
   // "hunyuanvideo-community/HunyuanImage-2.1" is an image model published by a video org, and
   // matching the whole id badges it as video.
   const name = id.split("/").pop() ?? id;
-  const videoGen = hasAny(tagSet, VIDEO_GEN_TAGS) || VIDEO_GEN_NAME_RE.test(name);
+  const videoGen =
+    hasAny(tagSet, VIDEO_GEN_TAGS) || VIDEO_GEN_NAME_RE.test(name);
   return {
     vision: hasAny(tagSet, VISION_TAGS) || VISION_NAME_RE.test(id),
     reasoning: hasAny(tagSet, REASONING_TAGS) || REASONING_NAME_RE.test(id),
@@ -108,7 +114,8 @@ export function detectCapabilities(opts: {
     // A video model is not also an image model. Several ship a text-to-image tag for their
     // first-frame path, and both badges on one row says less than the video one alone.
     imageGen:
-      !videoGen && (hasAny(tagSet, IMAGE_GEN_TAGS) || IMAGE_GEN_NAME_RE.test(name)),
+      !videoGen &&
+      (hasAny(tagSet, IMAGE_GEN_TAGS) || IMAGE_GEN_NAME_RE.test(name)),
     videoGen,
   };
 }

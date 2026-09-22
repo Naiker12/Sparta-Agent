@@ -1,4 +1,3 @@
-
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import type { ReactElement } from "react";
@@ -19,12 +18,18 @@ export function MarkdownNoteDialog({
   const colorId = `${config.id}-note-color`;
   const opacity =
     Number.parseInt(config.note_opacity ?? "35", 10) > 0
-      ? Math.max(0, Math.min(100, Number.parseInt(config.note_opacity ?? "35", 10)))
+      ? Math.max(
+          0,
+          Math.min(100, Number.parseInt(config.note_opacity ?? "35", 10)),
+        )
       : 35;
 
   return (
     <div className="space-y-4">
-      <NameField value={config.name} onChange={(value) => onUpdate({ name: value })} />
+      <NameField
+        value={config.name}
+        onChange={(value) => onUpdate({ name: value })}
+      />
       <div className="grid gap-3">
         <FieldLabel
           label="Note style"
@@ -42,7 +47,9 @@ export function MarkdownNoteDialog({
           <div className="flex-1 space-y-1">
             <div className="flex items-center justify-between">
               <span className="text-xs text-muted-foreground">Opacity</span>
-              <span className="text-xs tabular-nums text-muted-foreground">{opacity}%</span>
+              <span className="text-xs tabular-nums text-muted-foreground">
+                {opacity}%
+              </span>
             </div>
             <Slider
               min={5}

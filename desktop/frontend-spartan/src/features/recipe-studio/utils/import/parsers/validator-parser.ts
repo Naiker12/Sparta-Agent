@@ -1,15 +1,16 @@
-
 import type { ValidatorConfig } from "../../../types";
-import { readNumberString } from "../helpers";
 import { normalizeValidatorCodeLang } from "../../validators/code-lang";
 import { normalizeOxcCodeShape } from "../../validators/oxc-code-shape";
 import { normalizeOxcValidationMode } from "../../validators/oxc-mode";
+import { readNumberString } from "../helpers";
 
 const OXC_VALIDATION_FN_MARKER = "unsloth_oxc_validator";
 
-function parseOxcValidationMarker(
-  validationFunctionRaw: string,
-): { codeLang: string; mode: string; codeShape: string } {
+function parseOxcValidationMarker(validationFunctionRaw: string): {
+  codeLang: string;
+  mode: string;
+  codeShape: string;
+} {
   const marker = `${OXC_VALIDATION_FN_MARKER}:`;
   if (!validationFunctionRaw.startsWith(marker)) {
     return { codeLang: "", mode: "syntax", codeShape: "auto" };
@@ -69,9 +70,7 @@ export function parseValidator(
     oxc_validation_mode: isOxc
       ? normalizeOxcValidationMode(marker.mode)
       : "syntax",
-    oxc_code_shape: isOxc
-      ? normalizeOxcCodeShape(marker.codeShape)
-      : "auto",
+    oxc_code_shape: isOxc ? normalizeOxcCodeShape(marker.codeShape) : "auto",
     batch_size: readNumberString(column.batch_size) || "10",
   };
 }

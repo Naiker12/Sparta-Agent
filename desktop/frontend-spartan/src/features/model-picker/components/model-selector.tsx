@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -40,11 +39,11 @@ import {
   resolveInitialConfig,
 } from "../model-config/per-model-config";
 import { ModelConfigPage } from "./model-config-page";
+import type { CommunityModelPolicy } from "./model-selector/audio-picker-policy";
 import {
   type ExternalConnectionRef,
   missingExternalModel,
 } from "./model-selector/missing-external-model";
-import type { CommunityModelPolicy } from "./model-selector/audio-picker-policy";
 import type { CatalogGroup } from "./model-selector/model-catalog";
 import { HubModelPicker, hasDownloadedModels } from "./model-selector/pickers";
 import { PillTabs } from "./model-selector/pill-tabs";
@@ -75,9 +74,13 @@ const PROVIDER_LOGO_EXT: Record<string, "svg" | "png" | "jpg"> = {
 };
 
 function providerLogoSrc(providerType: string | undefined): string | undefined {
-  if (!providerType) return undefined;
+  if (!providerType) {
+    return undefined;
+  }
   const ext = PROVIDER_LOGO_EXT[providerType];
-  if (!ext) return undefined;
+  if (!ext) {
+    return undefined;
+  }
   return `${import.meta.env.BASE_URL}provider-logos/${providerType}.${ext}`;
 }
 
@@ -102,7 +105,9 @@ function ExternalProviderLogo({
     );
   }
 
-  if (!src) return null;
+  if (!src) {
+    return null;
+  }
   return (
     <img
       src={src}
@@ -182,6 +187,7 @@ interface ModelSelectorProps {
   communityModelPolicy?: CommunityModelPolicy;
   /** Trigger text when nothing is loaded. Defaults to "Select model"; task pages name what they pick so it reads as separate from the chat model. */
   placeholder?: string;
+  side?: "top" | "bottom";
 }
 
 function ModelSelectorTrigger({
@@ -321,7 +327,9 @@ function loadLastHubSection(): HubSection | null {
   }
 }
 function saveLastHubSection(section: HubSection): void {
-  if (section !== "downloaded" && section !== "recommended") return;
+  if (section !== "downloaded" && section !== "recommended") {
+    return;
+  }
   try {
     localStorage.setItem(HUB_SECTION_KEY, section);
   } catch {
@@ -338,18 +346,21 @@ function defaultHubSection(hasAdditionalOnDeviceModels = false): HubSection {
   );
 }
 
-const HUB_SECTION_TABS: { value: string; label: string; icon?: ReactNode }[] = [
-  {
-    value: "recommended",
-    label: "Recommended",
-    icon: <HugeiconsIcon icon={StarIcon} className="size-3.5 shrink-0" />,
-  },
-  {
-    value: "downloaded",
-    label: "On Device",
-    icon: <HugeiconsIcon icon={Download01Icon} className="size-3.5 shrink-0" />,
-  },
-];
+const _HUB_SECTION_TABS: { value: string; label: string; icon?: ReactNode }[] =
+  [
+    {
+      value: "recommended",
+      label: "Recommended",
+      icon: <HugeiconsIcon icon={StarIcon} className="size-3.5 shrink-0" />,
+    },
+    {
+      value: "downloaded",
+      label: "On Device",
+      icon: (
+        <HugeiconsIcon icon={Download01Icon} className="size-3.5 shrink-0" />
+      ),
+    },
+  ];
 
 function ModelSelectorContent({
   open,
@@ -376,6 +387,7 @@ function ModelSelectorContent({
   task,
   catalog,
   communityModelPolicy,
+  side,
 }: {
   open: boolean;
   models: ModelOption[];
@@ -401,6 +413,7 @@ function ModelSelectorContent({
   task?: HfTaskFilter;
   catalog?: CatalogGroup[];
   communityModelPolicy?: CommunityModelPolicy;
+  side?: "top" | "bottom";
 }) {
   const t = useT();
   const hasSelection = Boolean(value);
@@ -409,7 +422,6 @@ function ModelSelectorContent({
   const fineTunedModels = useMemo(
     () => loraModels.filter((model) => isFineTunedSource(model.source)),
     [loraModels],
-
   );
   // Connected sits in the section toggle, shown only with external providers.
   const hubSectionTabs = useMemo(() => {
@@ -422,7 +434,9 @@ function ModelSelectorContent({
       {
         value: "downloaded",
         label: t("picker.onDevice"),
-        icon: <HugeiconsIcon icon={Download01Icon} className="size-3.5 shrink-0" />,
+        icon: (
+          <HugeiconsIcon icon={Download01Icon} className="size-3.5 shrink-0" />
+        ),
       },
     ];
     return hasExternal
@@ -505,7 +519,7 @@ function ModelSelectorContent({
       "[data-model-picker-search-input]",
     );
     const isTabTrigger = Boolean(target.closest('[role="tab"]'));
-    if (!isPickerSearchInput && !isTabTrigger) {
+    if (!(isPickerSearchInput || isTabTrigger)) {
       return;
     }
 
@@ -542,6 +556,7 @@ function ModelSelectorContent({
 
   return (
     <PopoverContent
+      side={side}
       align="start"
       alignOffset={10}
       data-tour={dataTour}
@@ -682,11 +697,12 @@ export function ModelSelector({
   communityModelPolicy = "none",
   placeholder,
   loaded,
+  side = "top",
 }: ModelSelectorProps) {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const open = controlledOpen ?? uncontrolledOpen;
   const setOpen = onOpenChange ?? setUncontrolledOpen;
-  const navigate = useNavigate();
+  const _navigate = useNavigate();
   const t = useT();
   const [uncontrolled, setUncontrolled] = useState(defaultValue ?? "");
 
@@ -745,7 +761,9 @@ export function ModelSelector({
   }, [externalModels, loraModels, models]);
 
   const currentModel = useMemo(() => {
-    if (!selected) return undefined;
+    if (!selected) {
+      return undefined;
+    }
     const found = optionById.get(selected);
     // A pick whose connection no longer offers it takes its option away and leaves the
     // id in the checkpoint, and the generic fallback below cannot shorten an
@@ -759,7 +777,8 @@ export function ModelSelector({
     // No catalog entry (yet, or ever); a cached GGUF's checkpoint is a snapshot path.
     // The leaf, not the namespaced public id (#7966), matches the catalog row that
     // later replaces this one.
-    const fallbackName = missingExternal?.modelName ?? modelDisplayName(selected);
+    const fallbackName =
+      missingExternal?.modelName ?? modelDisplayName(selected);
     if (activeGgufVariant) {
       const desc = `GGUF · ${activeGgufVariant}`;
       return found
@@ -805,11 +824,6 @@ export function ModelSelector({
     setOpen(false);
   }
 
-  function handleBrowseHub() {
-    setOpen(false);
-    void navigate({ to: "/hub", search: { tab: "discover" } });
-  }
-
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <ModelSelectorTrigger
@@ -825,6 +839,7 @@ export function ModelSelector({
         placeholder={placeholder ?? t("picker.selectModel")}
       />
       <ModelSelectorContent
+        side={side}
         open={open}
         models={models}
         additionalOnDeviceModels={additionalOnDeviceModels}
@@ -841,11 +856,7 @@ export function ModelSelector({
         resolveDownloadFootprint={resolveDownloadFootprint}
         onEject={onEject ? handleEject : undefined}
         onFoldersChange={onFoldersChange}
-        // A curated task picker (Images / Video) is self-contained, so it omits this.
-        // A community-enabled one (Audio) already lists past unsloth, so it keeps it.
-        onBrowseHub={
-          task && communityModelPolicy === "none" ? undefined : handleBrowseHub
-        }
+        onBrowseHub={undefined}
         onModelsChange={onModelsChange}
         deleteDisabled={deleteDisabled}
         className={contentClassName}

@@ -1,23 +1,27 @@
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Handle,
-  Position,
   type Node,
   type NodeProps,
+  Position,
   useUpdateNodeInternals,
 } from "@xyflow/react";
-import { memo, type ReactElement, useEffect } from "react";
+import { type ReactElement, memo, useEffect } from "react";
 import { useRecipeStudioStore } from "../stores/recipe-studio";
 import type { LlmConfig, Score, ScoreOption } from "../types";
 import { AUX_HANDLE_CLASS } from "../utils/handle-layout";
 import { HANDLE_IDS } from "../utils/handles";
 import { findInvalidJinjaReferences } from "../utils/refs";
 import { getAvailableVariableEntries } from "../utils/variables";
+import {
+  BaseNode,
+  BaseNodeContent,
+  BaseNodeHeader,
+  BaseNodeHeaderTitle,
+} from "./rf-ui/base-node";
 import { AvailableReferencesInline } from "./shared/available-references-inline";
-import { BaseNode, BaseNodeContent, BaseNodeHeader, BaseNodeHeaderTitle } from "./rf-ui/base-node";
 
 type PromptField = "prompt" | "system_prompt";
 
@@ -124,7 +128,8 @@ function AuxNodeBase({
   );
 
   if (data.kind === "llm-prompt-input") {
-    const value = data.field === "prompt" ? config.prompt : config.system_prompt;
+    const value =
+      data.field === "prompt" ? config.prompt : config.system_prompt;
     const variableEntries = getAvailableVariableEntries(configs, data.llmId);
     const availableRefs = variableEntries.map((entry) => entry.name);
     const hasInvalidRefs =
@@ -132,7 +137,9 @@ function AuxNodeBase({
     return (
       <BaseNode className="corner-squircle w-full min-w-0 rounded-4xl border-border/60 bg-card shadow-sm">
         <BaseNodeHeader className="border-b border-border/50 px-3 py-2">
-          <BaseNodeHeaderTitle className="text-xs">{data.title}</BaseNodeHeaderTitle>
+          <BaseNodeHeaderTitle className="text-xs">
+            {data.title}
+          </BaseNodeHeaderTitle>
         </BaseNodeHeader>
         <BaseNodeContent className="gap-2 px-3 py-2">
           <Textarea
@@ -226,7 +233,10 @@ function AuxNodeBase({
         />
         <div className="space-y-1">
           {score.options.map((option, optionIndex) => (
-            <div key={`${data.llmId}-score-${data.scoreIndex}-opt-${optionIndex}`} className="grid grid-cols-[74px_1fr_auto] gap-1">
+            <div
+              key={`${data.llmId}-score-${data.scoreIndex}-opt-${optionIndex}`}
+              className="grid grid-cols-[74px_1fr_auto] gap-1"
+            >
               <Input
                 className="nodrag h-7 text-xs"
                 placeholder="Value"

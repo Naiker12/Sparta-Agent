@@ -1,4 +1,3 @@
-
 import { Input } from "@/components/ui/input";
 import { type ReactElement, useId } from "react";
 import { FieldLabel } from "./field-label";
@@ -25,10 +24,7 @@ export function NameField({
       <FieldLabel
         label={label ?? "Field name"}
         htmlFor={inputId}
-        hint={
-          hint ??
-          "This name is used in prompts and in the final dataset."
-        }
+        hint={hint ?? "This name is used in prompts and in the final dataset."}
       />
       <Input
         id={inputId}

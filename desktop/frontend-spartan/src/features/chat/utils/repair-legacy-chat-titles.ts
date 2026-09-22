@@ -1,4 +1,3 @@
-
 import { authFetch } from "@/features/auth";
 import {
   batchListChatMessages,
@@ -53,7 +52,9 @@ function backendEnforcesTitleGuard(): Promise<boolean> {
       probe = { supported: false, settled: false };
     }
     // Only a settled answer is worth remembering.
-    if (!probe.settled) guardSupport = null;
+    if (!probe.settled) {
+      guardSupport = null;
+    }
     return probe.supported;
   })();
   return guardSupport;
@@ -69,16 +70,22 @@ export function repairLegacyChatTitles(
 async function runRepairPass(threads: ThreadRecord[]): Promise<number> {
   // Claim nothing until the guard is known: a rewrite that can silently beat a
   // rename is not worth a tidier title.
-  if (!(await backendEnforcesTitleGuard())) return 0;
+  if (!(await backendEnforcesTitleGuard())) {
+    return 0;
+  }
 
   const { candidates, rest, hasMore } = selectLegacyRepairPage(
     threads,
     attempted,
     REPAIR_PER_PASS,
   );
-  if (candidates.length === 0) return 0;
+  if (candidates.length === 0) {
+    return 0;
+  }
   const ids = candidates.map((thread) => thread.id);
-  for (const id of ids) attempted.add(id);
+  for (const id of ids) {
+    attempted.add(id);
+  }
 
   let messages: Map<string, MessageRecord[]>;
   try {
@@ -87,7 +94,9 @@ async function runRepairPass(threads: ThreadRecord[]): Promise<number> {
     messages = await batchListChatMessages(ids);
   } catch {
     // Nothing was decided, so let a later refresh try these again.
-    for (const id of ids) attempted.delete(id);
+    for (const id of ids) {
+      attempted.delete(id);
+    }
     return 0;
   }
 

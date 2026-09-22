@@ -1,4 +1,3 @@
-
 import type { RecipeExecutionKind } from "../execution-types";
 import type { RecipeRunSettings } from "../stores/recipe-executions";
 import type { RecipePayload } from "../utils/payload/types";
@@ -60,7 +59,9 @@ export function sanitizeExecutionRows(
   return toPositiveInt(rows, kind === "preview" ? 5 : 1000);
 }
 
-export function normalizeRunSettings(settings: RecipeRunSettings): RecipeRunSettings {
+export function normalizeRunSettings(
+  settings: RecipeRunSettings,
+): RecipeRunSettings {
   return {
     batchSize: toPositiveInt(settings.batchSize, 1000, 1, 200_000),
     batchEnabled: Boolean(settings.batchEnabled),
@@ -87,7 +88,12 @@ export function normalizeRunSettings(settings: RecipeRunSettings): RecipeRunSett
     ),
     disableEarlyShutdown: Boolean(settings.disableEarlyShutdown),
     shutdownErrorRate: toRatio(settings.shutdownErrorRate, 0.5),
-    shutdownErrorWindow: toPositiveInt(settings.shutdownErrorWindow, 10, 1, 10_000),
+    shutdownErrorWindow: toPositiveInt(
+      settings.shutdownErrorWindow,
+      10,
+      1,
+      10_000,
+    ),
   };
 }
 
@@ -99,7 +105,9 @@ function buildRunConfigPayload(
   const useBatching = kind === "full" && settings.batchEnabled;
   return {
     // biome-ignore lint/style/useNamingConvention: backend schema
-    buffer_size: useBatching ? settings.batchSize : toPositiveInt(rows, 1000, 1, 200_000),
+    buffer_size: useBatching
+      ? settings.batchSize
+      : toPositiveInt(rows, 1000, 1, 200_000),
     // biome-ignore lint/style/useNamingConvention: backend schema
     non_inference_max_parallel_workers: settings.nonInferenceWorkers,
     // biome-ignore lint/style/useNamingConvention: backend schema
@@ -169,7 +177,11 @@ export function buildExecutionPayload(input: {
       // biome-ignore lint/style/useNamingConvention: backend schema
       execution_type: input.kind,
       // biome-ignore lint/style/useNamingConvention: backend schema
-      run_config: buildRunConfigPayload(normalizedSettings, input.rows, input.kind),
+      run_config: buildRunConfigPayload(
+        normalizedSettings,
+        input.rows,
+        input.kind,
+      ),
       // biome-ignore lint/style/useNamingConvention: backend schema
       merge_batches:
         input.kind === "full" &&

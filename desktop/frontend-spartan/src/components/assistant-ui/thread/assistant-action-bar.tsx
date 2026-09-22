@@ -4,22 +4,32 @@
  * copiar, editar, bifurcar (fork), reintentar, síntesis de voz (TTS) y selector de ramas.
  */
 
+import { MessageResponseDetailsSheet } from "@/components/assistant-ui/message-response-details-sheet";
+import { MessageTiming } from "@/components/assistant-ui/message-timing";
+import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button";
+import { toolResultModelText } from "@/features/chat/api/chat-adapter";
+import { useChatRuntimeStore } from "@/features/chat/stores/chat-runtime-store";
+import { getStoredChatThread } from "@/features/chat/utils/chat-history-storage";
+import { deleteThreadMessage } from "@/features/chat/utils/delete-thread-message";
 import {
-  useCallback,
-  useRef,
-  useState,
-  useSyncExternalStore,
-  type FC,
-} from "react";
+  forkCountFor,
+  subscribeForkCounts,
+} from "@/features/chat/utils/fork-count-store";
+import { attachmentsPastedText } from "@/features/chat/utils/pasted-text";
+import { replySourceMarkdown } from "@/features/chat/utils/reply-source-markdown";
+import { saveMarkdownAsProjectSource } from "@/features/rag";
+import { useVoiceSettingsStore } from "@/features/settings/stores/voice-settings-store";
+import { useT } from "@/i18n";
+import { copyToClipboard } from "@/lib/copy-to-clipboard";
+import { cn } from "@/lib/utils";
 import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  GitBranchIcon,
-  MoreHorizontalIcon,
-  RefreshCwIcon,
-  Volume2Icon,
-  VolumeXIcon,
-} from "lucide-react";
+  ActionBarMorePrimitive,
+  ActionBarPrimitive,
+  BranchPickerPrimitive,
+  MessagePrimitive,
+  useAui,
+  useAuiState,
+} from "@assistant-ui/react";
 import {
   BookOpen01Icon,
   Copy01Icon,
@@ -31,32 +41,22 @@ import {
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  ActionBarMorePrimitive,
-  ActionBarPrimitive,
-  BranchPickerPrimitive,
-  MessagePrimitive,
-  useAui,
-  useAuiState,
-} from "@assistant-ui/react";
-import { toast } from "sonner";
-import { attachmentsPastedText } from "@/features/chat/utils/pasted-text";
-import { MessageResponseDetailsSheet } from "@/components/assistant-ui/message-response-details-sheet";
-import { MessageTiming } from "@/components/assistant-ui/message-timing";
-import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button";
-import { replySourceMarkdown } from "@/features/chat/utils/reply-source-markdown";
-import { saveMarkdownAsProjectSource } from "@/features/rag";
-import { toolResultModelText } from "@/features/chat/api/chat-adapter";
-import { getStoredChatThread } from "@/features/chat/utils/chat-history-storage";
-import { useChatRuntimeStore } from "@/features/chat/stores/chat-runtime-store";
-import { deleteThreadMessage } from "@/features/chat/utils/delete-thread-message";
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  GitBranchIcon,
+  MoreHorizontalIcon,
+  RefreshCwIcon,
+  Volume2Icon,
+  VolumeXIcon,
+} from "lucide-react";
 import {
-  forkCountFor,
-  subscribeForkCounts,
-} from "@/features/chat/utils/fork-count-store";
-import { useVoiceSettingsStore } from "@/features/settings/stores/voice-settings-store";
-import { useT } from "@/i18n";
-import { copyToClipboard } from "@/lib/copy-to-clipboard";
-import { cn } from "@/lib/utils";
+  type FC,
+  useCallback,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
+import { toast } from "sonner";
 import {
   exportMessageMarkdown,
   useForkMessageAction,
@@ -83,7 +83,9 @@ export const ForkCountBadge: FC = () => {
   );
   const count = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
-  if (count <= 0) return null;
+  if (count <= 0) {
+    return null;
+  }
   return (
     <span
       className="mx-1 inline-flex items-center gap-1 rounded-sm bg-primary/10 px-1.5 py-0.5 text-ui-10 font-medium text-primary"
@@ -154,8 +156,7 @@ export const DeleteMessageButton: FC = () => {
         messageId,
         remoteId,
       });
-    } catch (error) {
-      console.error("Failed to delete message", error);
+    } catch (_error) {
       toast.error(t("chat.actions.deleteFailed"));
     }
   };
@@ -227,7 +228,9 @@ export const EditAssistantMessageButton: FC = () => {
   const researchActive = useThreadResearchActive();
   const setEditingId = useChatRuntimeStore((s) => s.setEditingMessageId);
 
-  if (researchRunId) return null;
+  if (researchRunId) {
+    return null;
+  }
 
   return (
     <TooltipIconButton
@@ -265,9 +268,12 @@ export const AssistantActionBar: FC = () => {
       >
         <CopyButton />
         <EditAssistantMessageButton />
-        {!researchRunId && !researchActive && (
+        {!(researchRunId || researchActive) && (
           <ActionBarPrimitive.Reload asChild={true}>
-            <TooltipIconButton tooltip={t("chat.actions.refresh")} aria-label={t("chat.actions.refresh")}>
+            <TooltipIconButton
+              tooltip={t("chat.actions.refresh")}
+              aria-label={t("chat.actions.refresh")}
+            >
               <RefreshCwIcon strokeWidth={1.75} className="size-icon" />
             </TooltipIconButton>
           </ActionBarPrimitive.Reload>
@@ -277,7 +283,10 @@ export const AssistantActionBar: FC = () => {
         {ttsEnabled && (
           <MessagePrimitive.If speaking={false}>
             <ActionBarPrimitive.Speak asChild={true}>
-              <TooltipIconButton tooltip={t("chat.actions.readAloud")} aria-label={t("chat.actions.readAloud")}>
+              <TooltipIconButton
+                tooltip={t("chat.actions.readAloud")}
+                aria-label={t("chat.actions.readAloud")}
+              >
                 <Volume2Icon strokeWidth={1.75} className="size-icon" />
               </TooltipIconButton>
             </ActionBarPrimitive.Speak>
@@ -407,7 +416,7 @@ export const UserActionBar: FC = () => {
       className="aui-user-action-bar-root flex gap-1 text-chat-icon-fg [&_button]:size-8 [&_button]:!rounded-full [&_button:hover]:bg-chat-icon-bg-hover [&_button:hover]:text-chat-icon-fg-hover"
     >
       <CopyButton />
-      {!ownsResearchMessage && !researchActive && (
+      {!(ownsResearchMessage || researchActive) && (
         <ActionBarPrimitive.Edit asChild={true}>
           <TooltipIconButton
             tooltip={t("chat.actions.edit")}

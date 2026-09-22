@@ -1,7 +1,6 @@
-
 import { Switch } from "@/components/ui/switch";
-import { formatBytes } from "@/features/hub/lib/format";
 import { useT } from "@/i18n";
+import { formatBytes } from "@/lib/format-utils";
 import { useEffect, useState } from "react";
 import {
   type ModelMemorySettings,
@@ -21,12 +20,16 @@ export function ModelMemorySection() {
     let cancelled = false;
     void loadModelMemorySettings()
       .then((loaded) => {
-        if (cancelled) return;
+        if (cancelled) {
+          return;
+        }
         setSettings(loaded);
         setError(null);
       })
       .catch((loadError) => {
-        if (cancelled) return;
+        if (cancelled) {
+          return;
+        }
         setError(
           loadError instanceof Error
             ? loadError.message

@@ -1,4 +1,3 @@
-
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -37,7 +36,9 @@ export const usePinnedChatsStore = create<PinnedChatsState>()(
           }
           // Already pinned chats keep their place; the rest lead, as one pin does.
           const additions = ids.filter((id) => !state.pinnedIds.includes(id));
-          if (additions.length === 0) return state;
+          if (additions.length === 0) {
+            return state;
+          }
           return { pinnedIds: [...additions, ...state.pinnedIds] };
         }),
     }),

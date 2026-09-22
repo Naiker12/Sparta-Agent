@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo, useRef } from "react";
 import {
   type ShortcutId,
@@ -13,7 +12,9 @@ import {
 } from "../stores/keyboard-shortcuts-store";
 
 function isTextEntryFocused(): boolean {
-  if (typeof document === "undefined") return false;
+  if (typeof document === "undefined") {
+    return false;
+  }
   const el = document.activeElement as HTMLElement | null;
   const tag = el?.tagName;
   return (
@@ -60,11 +61,19 @@ export function useShortcut(
   handlerRef.current = handler;
 
   useEffect(() => {
-    if (!binding || !enabled || !owned) return;
+    if (!(binding && enabled && owned)) {
+      return;
+    }
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.defaultPrevented) return;
-      if (!matchesBinding(binding, event)) return;
-      if (skipInTextFields && isTextEntryFocused()) return;
+      if (event.defaultPrevented) {
+        return;
+      }
+      if (!matchesBinding(binding, event)) {
+        return;
+      }
+      if (skipInTextFields && isTextEntryFocused()) {
+        return;
+      }
       event.preventDefault();
       handlerRef.current(event);
     };

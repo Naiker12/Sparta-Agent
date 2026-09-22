@@ -1,12 +1,11 @@
-
-import { useMemo } from "react";
+import { formatBytes } from "@/features/hub/lib/format";
 import type { GpuInfo } from "@/hooks/use-gpu-info";
 import {
   type VramFitStatus,
   checkVramFit,
   estimateLoadingVram,
 } from "@/lib/vram";
-import { formatBytes } from "@/features/hub/lib/format";
+import { useMemo } from "react";
 import type { SelectedModelView } from "../types";
 
 export interface ModelVramInfo {
@@ -28,19 +27,27 @@ export function useHubModelVram(
   }, [gpu, selectedModel]);
 
   const minMemory = useMemo(() => {
-    if (!selectedModel) return null;
-    if (selectedModel.isGguf) {
-      if (selectedModel.cachedBytes)
-        return formatBytes(selectedModel.cachedBytes);
-      if (selectedModel.estimatedSizeBytes)
-        return formatBytes(selectedModel.estimatedSizeBytes);
+    if (!selectedModel) {
       return null;
     }
-    if (selectedModel.estimatedSizeBytes)
+    if (selectedModel.isGguf) {
+      if (selectedModel.cachedBytes) {
+        return formatBytes(selectedModel.cachedBytes);
+      }
+      if (selectedModel.estimatedSizeBytes) {
+        return formatBytes(selectedModel.estimatedSizeBytes);
+      }
+      return null;
+    }
+    if (selectedModel.estimatedSizeBytes) {
       return formatBytes(selectedModel.estimatedSizeBytes);
-    if (vramInfo) return `~${vramInfo.est} GB`;
-    if (selectedModel.cachedBytes)
+    }
+    if (vramInfo) {
+      return `~${vramInfo.est} GB`;
+    }
+    if (selectedModel.cachedBytes) {
       return formatBytes(selectedModel.cachedBytes);
+    }
     return null;
   }, [selectedModel, vramInfo]);
 

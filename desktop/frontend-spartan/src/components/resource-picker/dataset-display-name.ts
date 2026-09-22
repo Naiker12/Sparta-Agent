@@ -1,4 +1,3 @@
-
 const UPLOADED_DATASET_HASH_PREFIX_RE = /^[0-9a-f]{32}_(.+)$/i;
 
 export function datasetDisplayName(value: string): string {

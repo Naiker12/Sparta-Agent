@@ -1,4 +1,3 @@
-
 /**
  * A settings route this build of the UI knows about and the running backend does not.
  *

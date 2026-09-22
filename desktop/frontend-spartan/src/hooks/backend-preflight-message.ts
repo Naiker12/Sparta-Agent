@@ -1,6 +1,3 @@
-
-
-
 /// The install is fine, the folder it must run from is not reachable.
 /// Mirrors WORKING_DIRECTORY_UNAVAILABLE in studio/src-tauri/src/preflight/managed.rs.
 export const WORKING_DIRECTORY_UNAVAILABLE = "working_directory_unavailable";
@@ -37,7 +34,9 @@ export function preflightStaleMessage(
   // Also not an install problem, and not the folder either: one of Spartan's own
   // path settings names somewhere unresolvable, so the value is the fix.
   if (kind === PATH_SETTING_UNRESOLVABLE) {
-    const which = setting ? `${setting} points` : "One of Spartan's folder settings points";
+    const which = setting
+      ? `${setting} points`
+      : "One of Spartan's folder settings points";
     if (spanish) {
       const spanishWhich = setting
         ? `${setting} apunta`

@@ -1,17 +1,16 @@
-
 import { useMemo } from "react";
 import { detectCapabilities, detectLicense } from "../lib/model-capabilities";
 import {
   buildSummary,
   localSourceLabel,
-  toHfModelResult,
+  type toHfModelResult,
 } from "../lib/view-models";
 import type {
   CachedInventoryRow,
   DiscoverRow,
   LocalInventoryRow,
-  SelectedResourceRef,
   SelectedModelView,
+  SelectedResourceRef,
 } from "../types";
 
 type HfResult = ReturnType<typeof toHfModelResult>;
@@ -74,10 +73,18 @@ function remoteResource(row: DiscoverRow): SelectedResourceRef {
 }
 
 function localFormatLabel(row: LocalInventoryRow): string {
-  if (row.modelFormat === "gguf") return "local GGUF";
-  if (row.modelFormat === "adapter") return "local adapter";
-  if (row.modelFormat === "safetensors") return "local safetensors model";
-  if (row.modelFormat === "checkpoint") return "local checkpoint";
+  if (row.modelFormat === "gguf") {
+    return "local GGUF";
+  }
+  if (row.modelFormat === "adapter") {
+    return "local adapter";
+  }
+  if (row.modelFormat === "safetensors") {
+    return "local safetensors model";
+  }
+  if (row.modelFormat === "checkpoint") {
+    return "local checkpoint";
+  }
   return "local model";
 }
 

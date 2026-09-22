@@ -1,4 +1,3 @@
-
 type Listener = () => void;
 
 const listeners = new Set<Listener>();
@@ -12,7 +11,9 @@ function repoKey(repoId: string): string {
 }
 
 function emit(): void {
-  for (const listener of [...listeners]) listener();
+  for (const listener of [...listeners]) {
+    listener();
+  }
 }
 
 function nextVersion(): number {
@@ -27,7 +28,9 @@ export function bumpGgufVariantsCacheVersion(repoId?: string): void {
     repoVersions.set(key, nextVersion());
     while (repoVersions.size > REPO_VERSION_LIMIT) {
       const oldest = repoVersions.keys().next().value;
-      if (!oldest) break;
+      if (!oldest) {
+        break;
+      }
       repoVersions.delete(oldest);
     }
   } else {
@@ -41,9 +44,7 @@ export function getGgufVariantsCacheVersion(repoId?: string | null): string {
   return `${globalVersion}:${key ? (repoVersions.get(key) ?? 0) : 0}`;
 }
 
-export function subscribeGgufVariantsCache(
-  listener: Listener,
-): () => void {
+export function subscribeGgufVariantsCache(listener: Listener): () => void {
   listeners.add(listener);
   return () => listeners.delete(listener);
 }

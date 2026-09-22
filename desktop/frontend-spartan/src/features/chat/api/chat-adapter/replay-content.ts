@@ -18,7 +18,9 @@ export function setAssistantCodexReasoning(
   message: ReplayMessageWithExtra,
   reasoning: unknown[] | undefined,
 ): void {
-  if (!reasoning) return;
+  if (!reasoning) {
+    return;
+  }
   const extra =
     message.extra_content &&
     typeof message.extra_content === "object" &&
@@ -32,10 +34,14 @@ export function attachAssistantThoughtSignature(
   messages: ReplayMessageWithExtra[],
   thoughtSignature: string | undefined,
 ): void {
-  if (!thoughtSignature) return;
+  if (!thoughtSignature) {
+    return;
+  }
   for (let index = messages.length - 1; index >= 0; index -= 1) {
     const message = messages[index];
-    if (message.role !== "assistant") continue;
+    if (message.role !== "assistant") {
+      continue;
+    }
     const extra =
       message.extra_content &&
       typeof message.extra_content === "object" &&
@@ -43,7 +49,9 @@ export function attachAssistantThoughtSignature(
         ? (message.extra_content as Record<string, unknown>)
         : {};
     const google =
-      extra.google && typeof extra.google === "object" && !Array.isArray(extra.google)
+      extra.google &&
+      typeof extra.google === "object" &&
+      !Array.isArray(extra.google)
         ? (extra.google as Record<string, unknown>)
         : {};
     message.extra_content = {

@@ -1,4 +1,3 @@
-
 import { useChatRuntimeStore } from "../stores/chat-runtime-store";
 
 /**
@@ -10,12 +9,14 @@ import { useChatRuntimeStore } from "../stores/chat-runtime-store";
  * thread id share the "__default" key, so stop every handle filed under it.
  */
 export function stopChatThread(threadId: string | null | undefined): boolean {
-  if (!threadId) return false;
+  if (!threadId) {
+    return false;
+  }
   const { runningByThreadId, cancelByThreadId, serverCancelByThreadId } =
     useChatRuntimeStore.getState();
   const cancel = cancelByThreadId[threadId];
   const serverCancels = serverCancelByThreadId[threadId] ?? [];
-  if (!runningByThreadId[threadId] && !cancel && serverCancels.length === 0) {
+  if (!(runningByThreadId[threadId] || cancel) && serverCancels.length === 0) {
     return false;
   }
   let stopped = false;

@@ -27,8 +27,8 @@ const CURRENCY_REGEX =
 function mergeRegions(
   left: ReadonlyArray<readonly [number, number]>,
   right: ReadonlyArray<readonly [number, number]>,
-): Array<[number, number]> {
-  const merged: Array<[number, number]> = [];
+): [number, number][] {
+  const merged: [number, number][] = [];
   let leftIndex = 0;
   let rightIndex = 0;
   while (leftIndex < left.length || rightIndex < right.length) {
@@ -52,9 +52,9 @@ function mergeRegions(
  * Find code-block regions (``` ... ```, ~~~ ... ~~~, and ` ... `) to skip.
  * Returns a sorted, non-overlapping array of [start, end] index pairs.
  */
-function findCodeBlockRegions(content: string): Array<[number, number]> {
+function findCodeBlockRegions(content: string): [number, number][] {
   // Fenced code blocks: ```...``` and ~~~...~~~ (both are code in GFM)
-  const fenced: Array<[number, number]> = [];
+  const fenced: [number, number][] = [];
   const fencedRe = /```[\s\S]*?```|~~~[\s\S]*?~~~/g;
   let match: RegExpExecArray | null;
   while ((match = fencedRe.exec(content)) !== null) {
@@ -64,7 +64,7 @@ function findCodeBlockRegions(content: string): Array<[number, number]> {
   // Inline code: `...`, skipped when inside a fenced block. Both loops yield
   // ascending matches, so walk the fenced list with a cursor rather than
   // rescanning it per match (was quadratic on code-heavy text).
-  const inline: Array<[number, number]> = [];
+  const inline: [number, number][] = [];
   const inlineRe = /`[^`\n]+`/g;
   let fencedIndex = 0;
   while ((match = inlineRe.exec(content)) !== null) {
@@ -92,7 +92,7 @@ function findCodeBlockRegions(content: string): Array<[number, number]> {
  * of balanced parens.
  */
 const LINK_DEST_RE =
-  /!?\[(?:\\.|[^\]\\])*?\]\(((?:\\.|[^()\\]|\([^()]*\))*)\)/gd;
+  /!?\[(?:\\.|[^\]\\])*?\]\(((?:\\.|[^()\\]|\([^()]*\))*)\)/dg;
 
 /**
  * Find the destination spans of inline links/images, so a `\(...\)` written with
@@ -100,14 +100,19 @@ const LINK_DEST_RE =
  * link). Only the destination is returned, not the link text, so math in the
  * visible text still converts. Sorted, non-overlapping (matches are disjoint).
  */
-function findLinkDestinationRegions(content: string): Array<[number, number]> {
-  if (!content.includes("](")) return [];
-  const regions: Array<[number, number]> = [];
+function findLinkDestinationRegions(content: string): [number, number][] {
+  if (!content.includes("](")) {
+    return [];
+  }
+  const regions: [number, number][] = [];
   let match: RegExpExecArray | null;
   LINK_DEST_RE.lastIndex = 0;
   while ((match = LINK_DEST_RE.exec(content)) !== null) {
     // `indices` is present (the `d` flag); group 1 spans the destination.
-    regions.push(match.indices![1]);
+    const dest = match.indices?.[1];
+    if (dest) {
+      regions.push(dest);
+    }
   }
   return regions;
 }
@@ -116,10 +121,7 @@ function findLinkDestinationRegions(content: string): Array<[number, number]> {
  * Binary search to check if a position falls inside any region. Regions must be
  * sorted by start and non-overlapping.
  */
-function isInRegion(
-  position: number,
-  regions: Array<[number, number]>,
-): boolean {
+function isInRegion(position: number, regions: [number, number][]): boolean {
   let lo = 0;
   let hi = regions.length - 1;
   while (lo <= hi) {
@@ -182,15 +184,27 @@ const SIMPLE_MATH_RE =
  *   - `$1,000$`     -> NOT math (single currency-like token)
  */
 function looksLikeMathBody(body: string): boolean {
-  if (LATEX_CHAR_RE.test(body)) return true;
+  if (LATEX_CHAR_RE.test(body)) {
+    return true;
+  }
   const trimmed = body.trim().replace(TRAIL_PUNCT_RE, "");
-  if (!trimmed) return false;
-  if (CURRENCY_BODY_RE.test(trimmed)) return false;
+  if (!trimmed) {
+    return false;
+  }
+  if (CURRENCY_BODY_RE.test(trimmed)) {
+    return false;
+  }
   // Numeric-only operator forms: `2 + 2`, `100 < 200`, `1,000 - 500`.
   // Recognised without requiring a lone-variable letter.
-  if (SIMPLE_MATH_RE.test(trimmed)) return true;
-  if (!/\s/.test(trimmed)) return true;
-  if (!MATH_OP_RE.test(trimmed)) return false;
+  if (SIMPLE_MATH_RE.test(trimmed)) {
+    return true;
+  }
+  if (!/\s/.test(trimmed)) {
+    return true;
+  }
+  if (!MATH_OP_RE.test(trimmed)) {
+    return false;
+  }
   return LONE_LETTER_RE.test(trimmed);
 }
 
@@ -205,18 +219,26 @@ function looksLikeMathBody(body: string): boolean {
 function hasInlineMathCloser(
   content: string,
   offset: number,
-  mathRegions: Array<[number, number]>,
+  mathRegions: [number, number][],
 ): boolean {
   const maxSpan = 200;
   const limit = Math.min(content.length, offset + 1 + maxSpan);
   for (let i = offset + 1; i < limit; i++) {
     const c = content[i];
-    if (c === "\n") return false;
-    if (c !== "$") continue;
-    if (content[i - 1] === "\\") continue;
+    if (c === "\n") {
+      return false;
+    }
+    if (c !== "$") {
+      continue;
+    }
+    if (content[i - 1] === "\\") {
+      continue;
+    }
     // A `$` opening a generated span (from `\(...\)`) is not a currency closer;
     // pairing with it would swallow the price into math (`$5 + x \(y\)`).
-    if (isInRegion(i, mathRegions)) return false;
+    if (isInRegion(i, mathRegions)) {
+      return false;
+    }
     if (content[i + 1] === "$") {
       i++;
       continue;
@@ -275,9 +297,9 @@ const LATEX_DELIM_RE =
  */
 function convertLatexDelimiters(content: string): {
   text: string;
-  mathRegions: Array<[number, number]>;
+  mathRegions: [number, number][];
 } {
-  if (!content.includes("\\[") && !content.includes("\\(")) {
+  if (!(content.includes("\\[") || content.includes("\\("))) {
     return { text: content, mathRegions: [] };
   }
 
@@ -287,7 +309,7 @@ function convertLatexDelimiters(content: string): {
     isInRegion(pos, codeRegions) || isInRegion(pos, linkRegions);
   // Pushed in ascending, non-overlapping order (offset only grows), so this
   // stays valid for isInRegion's binary search without a sort.
-  const mathRegions: Array<[number, number]> = [];
+  const mathRegions: [number, number][] = [];
   // Accumulate into an array, not a string: reading the last char off a growing
   // `+=` accumulator flattens its rope every append (O(n^2) over many spans, on
   // the per-frame streaming path), so track the tail char and length instead.
@@ -298,7 +320,9 @@ function convertLatexDelimiters(content: string): {
   // Append a chunk, separating a trailing `$` from a leading `$` so two spans
   // can't fuse. Returns where the chunk landed (after any inserted space).
   const append = (chunk: string): number => {
-    if (!chunk) return offset;
+    if (!chunk) {
+      return offset;
+    }
     if (lastChar === "$" && chunk.startsWith("$")) {
       parts.push(" ");
       offset += 1;
@@ -372,7 +396,9 @@ function convertLatexDelimiters(content: string): {
 export function preprocessLaTeX(content: string): string {
   const { text, mathRegions } = convertLatexDelimiters(content);
 
-  if (!text.includes("$")) return text;
+  if (!text.includes("$")) {
+    return text;
+  }
 
   const codeRegions = findCodeBlockRegions(text);
 
@@ -388,6 +414,6 @@ export function preprocessLaTeX(content: string): string {
     if (hasInlineMathCloser(text, offset, mathRegions)) {
       return match;
     }
-    return "\\" + match;
+    return `\\${match}`;
   });
 }

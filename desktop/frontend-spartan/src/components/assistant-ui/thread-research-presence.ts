@@ -1,4 +1,3 @@
-
 /**
  * Whether a thread already holds a research answer, asked once per message array rather than once
  * per keystroke.

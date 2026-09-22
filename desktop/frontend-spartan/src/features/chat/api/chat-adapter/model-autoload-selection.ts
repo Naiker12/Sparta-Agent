@@ -1,5 +1,5 @@
-import type { LastLocalModelKind } from "../../utils/last-local-model-load";
 import type { GgufVariantDetail } from "../../types/api";
+import type { LastLocalModelKind } from "../../utils/last-local-model-load";
 
 export type AutoLoadSource = {
   kind: LastLocalModelKind;
@@ -30,9 +30,14 @@ export function isRememberedAutoLoadSource(
   source: AutoLoadSource,
   remembered: { id: string; kind: LastLocalModelKind },
 ): boolean {
-  if (source.kind !== remembered.kind) return false;
+  if (source.kind !== remembered.kind) {
+    return false;
+  }
   const target = normalizeAutoLoadTarget(remembered.id);
-  return normalizeAutoLoadTarget(source.id) === target || normalizeAutoLoadTarget(source.loadId) === target;
+  return (
+    normalizeAutoLoadTarget(source.id) === target ||
+    normalizeAutoLoadTarget(source.loadId) === target
+  );
 }
 
 /** Last used first, then GGUF before safetensors, then smallest first. */
@@ -41,7 +46,9 @@ export function orderAutoLoadSources(
   remembered: { id: string; kind: LastLocalModelKind } | null,
 ): AutoLoadSource[] {
   const rank = (source: AutoLoadSource): number => {
-    if (remembered && isRememberedAutoLoadSource(source, remembered)) return 0;
+    if (remembered && isRememberedAutoLoadSource(source, remembered)) {
+      return 0;
+    }
     return source.kind === "gguf" ? 1 : 2;
   };
   const size = (source: AutoLoadSource): number =>

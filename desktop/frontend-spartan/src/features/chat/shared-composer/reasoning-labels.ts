@@ -18,7 +18,9 @@ export function formatReasoningEffortLabel(
   level: ReasoningEffort,
   modelId?: string,
 ): string {
-  if (level === "max") return "Max";
+  if (level === "max") {
+    return "Max";
+  }
   if (level === "xhigh") {
     const normalized = modelId?.trim().toLowerCase() ?? "";
     if (
@@ -43,6 +45,8 @@ export function formatReasoningDisabledLabel(
 ): string {
   const normalized = modelId?.trim().toLowerCase() ?? "";
   // Magistral mantiene el valor wire "none" pero el UX lo presenta como "Medium".
-  if (normalized.includes("magistral-medium-latest")) return "Medium";
+  if (normalized.includes("magistral-medium-latest")) {
+    return "Medium";
+  }
   return supportsReasoningOff && isExternalOpenAIReasoning ? "None" : "Off";
 }

@@ -1,4 +1,3 @@
-
 export type InventoryRefreshDecision = "reuse" | "join" | "refresh";
 export const INVENTORY_FRESHNESS_WINDOW_MS = 30_000;
 
@@ -60,7 +59,13 @@ export function nextRevalidationStamp({
     return null;
   }
   const sameKey = previous.key === requestKey;
-  if (force && sameKey && previous.ready && previous.error === null && previous.rowCount === 0) {
+  if (
+    force &&
+    sameKey &&
+    previous.ready &&
+    previous.error === null &&
+    previous.rowCount === 0
+  ) {
     return now;
   }
   return sameKey ? previous.revalidatedAt : null;

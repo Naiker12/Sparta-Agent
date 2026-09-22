@@ -1,4 +1,3 @@
-
 // RFC 4180 CSV parser: handles quoted fields with embedded newlines/commas.
 export function parseCsv(text: string): string[][] {
   const rows: string[][] = [];
@@ -28,12 +27,23 @@ export function parseCsv(text: string): string[][] {
         }
       }
       row.push(cell);
-      if (text[i] === ",") { i++; }
-      else if (text[i] === "\r") { i++; if (text[i] === "\n") i++; finishRow(); }
-      else if (text[i] === "\n") { i++; finishRow(); }
+      if (text[i] === ",") {
+        i++;
+      } else if (text[i] === "\r") {
+        i++;
+        if (text[i] === "\n") {
+          i++;
+        }
+        finishRow();
+      } else if (text[i] === "\n") {
+        i++;
+        finishRow();
+      }
     } else if (text[i] === "\r") {
       i++;
-      if (text[i] === "\n") i++;
+      if (text[i] === "\n") {
+        i++;
+      }
       row.push("");
       finishRow();
     } else if (text[i] === "\n") {
@@ -42,15 +52,31 @@ export function parseCsv(text: string): string[][] {
       finishRow();
     } else {
       let cell = "";
-      while (i < text.length && text[i] !== "," && text[i] !== "\r" && text[i] !== "\n") {
+      while (
+        i < text.length &&
+        text[i] !== "," &&
+        text[i] !== "\r" &&
+        text[i] !== "\n"
+      ) {
         cell += text[i++];
       }
       row.push(cell);
-      if (text[i] === ",") { i++; }
-      else if (text[i] === "\r") { i++; if (text[i] === "\n") i++; finishRow(); }
-      else if (text[i] === "\n") { i++; finishRow(); }
+      if (text[i] === ",") {
+        i++;
+      } else if (text[i] === "\r") {
+        i++;
+        if (text[i] === "\n") {
+          i++;
+        }
+        finishRow();
+      } else if (text[i] === "\n") {
+        i++;
+        finishRow();
+      }
     }
   }
-  if (row.length > 0) rows.push(row);
+  if (row.length > 0) {
+    rows.push(row);
+  }
   return rows;
 }

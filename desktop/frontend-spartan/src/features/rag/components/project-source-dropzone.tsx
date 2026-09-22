@@ -1,12 +1,11 @@
-
 import {
   consumeNativePathToken,
   registerNativeAttachmentPath,
   useNativeDropTarget,
 } from "@/features/native-intents";
+import { useT } from "@/i18n";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
-import { useT } from "@/i18n";
 import { File02Icon, FolderAddIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { XIcon } from "lucide-react";
@@ -19,11 +18,11 @@ import {
 } from "../api/rag-api";
 import { RAG_UPLOAD_ACCEPT } from "../types/rag";
 import {
-  addStagedSources,
   EXPIRY_GRACE_MS,
+  type StagedSource,
+  addStagedSources,
   isExpired,
   nativeExpiryMs,
-  type StagedSource,
   stagedFromFile,
   stagedFromIntent,
 } from "./staged-source";
@@ -37,7 +36,9 @@ function nativeFileName(path: string): string {
 }
 
 function formatSize(bytes: number): string {
-  if (!Number.isFinite(bytes) || bytes <= 0) return "";
+  if (!Number.isFinite(bytes) || bytes <= 0) {
+    return "";
+  }
   const units = ["B", "KB", "MB", "GB"];
   let value = bytes;
   let unit = 0;
@@ -61,7 +62,9 @@ const ACCEPTED_EXTS = new Set(
 // the backend would 400 on.
 function isSupported(name: string): boolean {
   const dot = name.lastIndexOf(".");
-  if (dot <= 0) return false;
+  if (dot <= 0) {
+    return false;
+  }
   return ACCEPTED_EXTS.has(name.slice(dot).toLowerCase());
 }
 
@@ -89,7 +92,9 @@ export async function uploadStagedSources(
   projectId: string,
   staged: StagedSource[],
 ): Promise<void> {
-  if (staged.length === 0) return;
+  if (staged.length === 0) {
+    return;
+  }
   invalidateProjectSources(projectId);
   markProjectSourcesPending(projectId);
   // Counted as project work for the whole batch: a tab opening the new project
@@ -125,11 +130,19 @@ async function uploadStaged(
                 await consumeNativePathToken(entry.upload.nativeToken, "attach")
               ).nativePathLease,
             };
-      const result = await uploadProjectDocument(projectId, source, ocr, caption);
+      const result = await uploadProjectDocument(
+        projectId,
+        source,
+        ocr,
+        caption,
+      );
       // Same bytes under another name: the backend hashes content, so this is
       // the document already uploaded. Say so rather than imply a new source.
-      if (documentIds.has(result.documentId)) merged.push(entry.name);
-      else documentIds.add(result.documentId);
+      if (documentIds.has(result.documentId)) {
+        merged.push(entry.name);
+      } else {
+        documentIds.add(result.documentId);
+      }
     } catch (error) {
       toast.error(`Couldn't upload ${entry.name}`, {
         description: error instanceof Error ? error.message : String(error),
@@ -188,7 +201,9 @@ export function ProjectSourceDropzone({
   const generation = useRef(0);
   const handedOff = useRef<StagedSource[] | null>(null);
   useEffect(() => {
-    if (staged === handedOff.current) return;
+    if (staged === handedOff.current) {
+      return;
+    }
     handedOff.current = staged;
     generation.current += 1;
   }, [staged]);
@@ -209,7 +224,9 @@ export function ProjectSourceDropzone({
     pending.current += delta;
     // A drop from a previous mount must not answer for the live dropzone: its
     // "done" would re-enable Create while the current drop is still pending.
-    if (!mounted.current) return;
+    if (!mounted.current) {
+      return;
+    }
     onPendingChangeRef.current?.(pending.current > 0);
   }, []);
 
@@ -219,12 +236,16 @@ export function ProjectSourceDropzone({
     const expiries = staged
       .map(nativeExpiryMs)
       .filter((value): value is number => value !== null);
-    if (expiries.length === 0) return;
+    if (expiries.length === 0) {
+      return;
+    }
     const timer = setTimeout(
       () => {
         const current = stagedRef.current;
         const kept = current.filter((entry) => !isExpired(entry, Date.now()));
-        if (kept.length === current.length) return;
+        if (kept.length === current.length) {
+          return;
+        }
         commit(kept);
         const dropped = current.length - kept.length;
         toast.info(
@@ -243,7 +264,9 @@ export function ProjectSourceDropzone({
     (incoming: StagedSource[], unsupported: string[]) => {
       const current = stagedRef.current;
       const { next, duplicates } = addStagedSources(current, incoming);
-      if (next.length !== current.length) commit(next);
+      if (next.length !== current.length) {
+        commit(next);
+      }
       if (unsupported.length > 0) {
         toast.info(
           unsupported.length === 1
@@ -270,7 +293,9 @@ export function ProjectSourceDropzone({
       const incoming = Array.from(files);
       addSources(
         incoming.filter((file) => isSupported(file.name)).map(stagedFromFile),
-        incoming.filter((file) => !isSupported(file.name)).map((file) => file.name),
+        incoming
+          .filter((file) => !isSupported(file.name))
+          .map((file) => file.name),
       );
     },
     [addSources],
@@ -279,7 +304,9 @@ export function ProjectSourceDropzone({
   const addNativePaths = useCallback(
     async (paths: string[]) => {
       const claimed = generation.current;
-      const supported = paths.filter((path) => isSupported(nativeFileName(path)));
+      const supported = paths.filter((path) =>
+        isSupported(nativeFileName(path)),
+      );
       const unsupported = paths
         .filter((path) => !isSupported(nativeFileName(path)))
         .map(nativeFileName);
@@ -290,7 +317,9 @@ export function ProjectSourceDropzone({
       ).finally(() => addPending(-1));
       // Cleared or closed while registering: let the tokens lapse rather than
       // refill a draft the next dialog would open on.
-      if (!mounted.current || claimed !== generation.current) return;
+      if (!mounted.current || claimed !== generation.current) {
+        return;
+      }
       const staged = settled.flatMap((result) =>
         result.status === "fulfilled" ? [stagedFromIntent(result.value)] : [],
       );
@@ -298,7 +327,9 @@ export function ProjectSourceDropzone({
       const failed = settled.length - staged.length;
       if (failed > 0) {
         toast.error(
-          failed === 1 ? "Couldn't add a dropped file" : `Couldn't add ${failed} dropped files`,
+          failed === 1
+            ? "Couldn't add a dropped file"
+            : `Couldn't add ${failed} dropped files`,
         );
       }
     },
@@ -329,7 +360,9 @@ export function ProjectSourceDropzone({
 
   return (
     <div className="flex min-w-0 flex-col gap-2.5">
-      <p className="text-ui-15 font-medium text-foreground">{t("projectsPage.sourcesTitle")}</p>
+      <p className="text-ui-15 font-medium text-foreground">
+        {t("projectsPage.sourcesTitle")}
+      </p>
       {/* Panel is the drop target; the inner button owns the click so staged
           rows can carry their own remove buttons. */}
       <div
@@ -339,22 +372,30 @@ export function ProjectSourceDropzone({
         // kill the uploads in flight.
         onDragEnter={(e) => {
           e.preventDefault();
-          if (disabled) return;
+          if (disabled) {
+            return;
+          }
           dragDepth.current += 1;
           setDragging(true);
         }}
         onDragOver={(e) => {
           e.preventDefault();
-          if (disabled) return;
+          if (disabled) {
+            return;
+          }
           e.dataTransfer.dropEffect = "copy";
         }}
         onDragLeave={() => {
           dragDepth.current = Math.max(0, dragDepth.current - 1);
-          if (dragDepth.current === 0) setDragging(false);
+          if (dragDepth.current === 0) {
+            setDragging(false);
+          }
         }}
         onDrop={(e) => {
           e.preventDefault();
-          if (disabled) return;
+          if (disabled) {
+            return;
+          }
           endDrag();
           addFiles(Array.from(e.dataTransfer.files ?? []));
         }}

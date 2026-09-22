@@ -1,9 +1,7 @@
-
 import { useCallback, useEffect, useMemo } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { useLatestRef } from "../hooks/use-latest-ref";
 import type { ResolvedTransport } from "./constants";
-import type { TransportConflictInfo } from "./types";
 import {
   type DownloadKind,
   type JobListeners,
@@ -13,6 +11,7 @@ import {
   subscribeJobListeners,
   useDownloadManagerStore,
 } from "./download-manager-controller";
+import type { TransportConflictInfo } from "./types";
 
 export interface DownloadJobProgress {
   variant: string | null;
@@ -85,7 +84,9 @@ export function useRepoDownload(config: RepoDownloadConfig): DownloadJob {
   }, [handlersRef, kind, repoId]);
 
   useEffect(() => {
-    if (!autoAdopt) return;
+    if (!autoAdopt) {
+      return;
+    }
     const controller = new AbortController();
     void downloadManager.probeAndAdopt(kind, repoId, controller.signal);
     return () => controller.abort();

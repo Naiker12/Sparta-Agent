@@ -1,4 +1,3 @@
-
 export { KnowledgeBaseComposerButton } from "./components/knowledge-base-composer-button";
 export { KnowledgeBaseDialog } from "./components/knowledge-base-dialog";
 export { LinkedFoldersManager } from "./components/linked-folders-manager";

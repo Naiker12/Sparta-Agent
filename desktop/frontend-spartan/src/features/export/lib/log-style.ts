@@ -1,4 +1,3 @@
-
 import type { ExportLogEntry } from "../api/export-api";
 
 type ExportLogTone = "stdout" | "stderr" | "status" | "warning";

@@ -1,4 +1,3 @@
-
 import { formatBytes, formatEta, formatRate } from "@/features/hub/lib/format";
 
 export interface DownloadProgress {

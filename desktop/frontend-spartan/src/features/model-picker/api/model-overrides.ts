@@ -1,4 +1,3 @@
-
 // Server-side mirror of the per-model config. ../model-config/per-model-config.ts lives in
 // browser localStorage, so an API auto-switch load (no browser in the loop) came up with none of
 // the user's settings. routes/inference.py reads this map and rebuilds the picker's LoadRequest.
@@ -434,11 +433,6 @@ export function syncModelOverride(
   options?: PutModelOverrideOptions,
 ): void {
   void putModelOverride(modelId, ggufVariant, config, options).catch(
-    (error: unknown) => {
-      console.warn(
-        "Failed to mirror model settings to the server; an API load of this model will use defaults.",
-        error,
-      );
-    },
+    (_error: unknown) => {},
   );
 }

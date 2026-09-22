@@ -1,4 +1,3 @@
-
 import { authFetch } from "@/features/auth";
 import { hubTokenHeader } from "@/features/hub";
 import { consumeNativePathToken } from "@/features/native-intents/api";

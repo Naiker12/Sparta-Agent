@@ -1,7 +1,5 @@
 import { authFetch } from "@/features/auth";
-import {
-  disposableTimeoutSignal,
-} from "@/features/hub/lib/abort-signals";
+import { disposableTimeoutSignal } from "@/features/hub/lib/abort-signals";
 import { formatApiErrorBody } from "@/lib/format-fastapi-error";
 import { assertCompletedPaddedBody } from "../padded-response";
 
@@ -26,7 +24,9 @@ export async function threadWriteFetch(
 
   const controller = new AbortController();
   const abort = () => controller.abort();
-  if (caller.aborted) abort();
+  if (caller.aborted) {
+    abort();
+  }
   caller.addEventListener("abort", abort);
   timeout.signal.addEventListener("abort", abort);
   try {
@@ -83,7 +83,9 @@ export function deferredError(
           }
         )._deferred_error
       : undefined;
-  if (!deferred || typeof deferred !== "object") return null;
+  if (!deferred || typeof deferred !== "object") {
+    return null;
+  }
   const status =
     typeof deferred.status_code === "number" ? deferred.status_code : 500;
   return {

@@ -1,4 +1,3 @@
-
 import {
   AUDIO_CATALOG,
   catalogToModelOptions,
@@ -23,20 +22,26 @@ export {
 export type AudioTask = "tts" | "stt";
 
 export function audioTaskFor(repoId: string): AudioTask | null {
-  if (isKnownSttArtifactRepoId(repoId)) return "stt";
+  if (isKnownSttArtifactRepoId(repoId)) {
+    return "stt";
+  }
   return groupForRepoId(repoId, AUDIO_CATALOG)?.task ?? null;
 }
 
 export function ggufSiblingFor(repoId: string): string | null {
   const group = groupForRepoId(repoId, AUDIO_CATALOG);
-  if (!group || group.task !== "tts") return null;
+  if (!group || group.task !== "tts") {
+    return null;
+  }
   const gguf = group.artifacts.find((a) => a.format === "gguf");
   return gguf && gguf.repoId !== repoId ? gguf.repoId : null;
 }
 
 export function macTtsCatalogChoiceIsRunnable(repoId: string): boolean {
   const group = groupForRepoId(repoId, AUDIO_CATALOG);
-  if (!group || group.task !== "tts") return false;
+  if (!group || group.task !== "tts") {
+    return false;
+  }
   return group.artifacts.some((artifact) => artifact.format === "gguf");
 }
 

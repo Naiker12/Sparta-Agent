@@ -1,9 +1,6 @@
 import { authFetch } from "@/features/auth";
 import type { ProjectRecord } from "../../types";
-import {
-  notifyChatProjectsUpdated,
-  parseJsonOrThrow,
-} from "./base";
+import { notifyChatProjectsUpdated, parseJsonOrThrow } from "./base";
 
 export async function listChatProjects(
   args: { includeArchived?: boolean } = {},
@@ -24,7 +21,9 @@ export async function getChatProject(
   const response = await authFetch(
     `/api/chat/projects/${encodeURIComponent(projectId)}`,
   );
-  if (response.status === 404) return null;
+  if (response.status === 404) {
+    return null;
+  }
   return parseJsonOrThrow<ProjectRecord>(response);
 }
 
@@ -81,7 +80,9 @@ export async function deleteChatProject(
   args: { deleteFiles?: boolean } = {},
 ): Promise<string[]> {
   const params = new URLSearchParams();
-  if (args.deleteFiles) params.set("delete_files", "true");
+  if (args.deleteFiles) {
+    params.set("delete_files", "true");
+  }
   const qs = params.toString();
   const response = await authFetch(
     `/api/chat/projects/${encodeURIComponent(projectId)}${qs ? `?${qs}` : ""}`,

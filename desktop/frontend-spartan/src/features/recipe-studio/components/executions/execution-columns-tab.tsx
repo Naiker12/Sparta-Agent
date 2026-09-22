@@ -1,5 +1,3 @@
-
-import type { ReactElement } from "react";
 import {
   Table,
   TableBody,
@@ -8,6 +6,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import type { ReactElement } from "react";
 import type { AnalysisColumnStat } from "./executions-view-helpers";
 
 type ExecutionColumnsTabProps = {
@@ -21,7 +20,9 @@ export function ExecutionColumnsTab({
     <div className="mt-3 rounded-xl border p-3">
       <p className="mb-2 text-sm font-semibold">Column statistics</p>
       {analysisColumns.length === 0 ? (
-        <p className="text-xs text-muted-foreground">No column statistics yet.</p>
+        <p className="text-xs text-muted-foreground">
+          No column statistics yet.
+        </p>
       ) : (
         <Table>
           <TableHeader>

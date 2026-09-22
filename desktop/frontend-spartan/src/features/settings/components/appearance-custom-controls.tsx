@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -27,12 +26,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { motion, useReducedMotionConfig } from "motion/react";
-import {
-  useEffect,
-  useRef,
-  useState,
-  useSyncExternalStore,
-} from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
   CODE_FONT_SIZE_RANGE,
   type CustomModeColors,
@@ -208,7 +202,9 @@ const CANDIDATE_DEVICE_FONTS = [
 function detectFontsByMeasurement(candidates: string[]): string[] {
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
-  if (!ctx) return [];
+  if (!ctx) {
+    return [];
+  }
   const sample = "mmmmmmmmmwwwwwwwlli";
   const baselines = ["monospace", "sans-serif", "serif"].map((base) => {
     ctx.font = `72px ${base}`;
@@ -225,7 +221,9 @@ function detectFontsByMeasurement(candidates: string[]): string[] {
 let deviceFontsCache: string[] | null = null;
 
 async function loadDeviceFonts(): Promise<string[]> {
-  if (deviceFontsCache) return deviceFontsCache;
+  if (deviceFontsCache) {
+    return deviceFontsCache;
+  }
   let families: string[] = [];
   const query = (
     globalThis as {
@@ -286,8 +284,12 @@ function FontSelect({
   };
 
   const folderFonts = useFolderFonts();
-  const { inputs: uploadInputs, requestUpload, requestFolder, importFile } =
-    useFontImport((name) => select(name));
+  const {
+    inputs: uploadInputs,
+    requestUpload,
+    requestFolder,
+    importFile,
+  } = useFontImport((name) => select(name));
 
   const knownNames = new Set<string>([
     ...BUNDLED_FONTS,
@@ -324,7 +326,9 @@ function FontSelect({
         >
           <span
             className="min-w-0 truncate"
-            style={{ fontFamily: `"${value ?? defaultFont}", var(--font-sans)` }}
+            style={{
+              fontFamily: `"${value ?? defaultFont}", var(--font-sans)`,
+            }}
           >
             {value ?? defaultLabel}
           </span>
@@ -353,7 +357,9 @@ function FontSelect({
               data-checked={value === null}
               className="cursor-pointer rounded-[11px]"
             >
-              <span style={{ fontFamily: `"${defaultFont}", var(--font-sans)` }}>
+              <span
+                style={{ fontFamily: `"${defaultFont}", var(--font-sans)` }}
+              >
                 {defaultLabel}
               </span>
             </CommandItem>
@@ -584,7 +590,9 @@ const folderFontsListeners = new Set<() => void>();
 
 function setFolderFonts(next: FolderFont[]) {
   folderFontsCache = next;
-  for (const listener of folderFontsListeners) listener();
+  for (const listener of folderFontsListeners) {
+    listener();
+  }
 }
 
 function useFolderFonts(): FolderFont[] {
@@ -628,11 +636,19 @@ function useFontImport(onImported: (name: string) => void) {
   const findExisting = (fileName: string): string | null => {
     for (const candidate of familyCandidates(fontBaseName(fileName))) {
       const lower = candidate.toLowerCase();
-      const imported = importedFonts.find((f) => f.name.toLowerCase() === lower);
-      if (imported) return imported.name;
+      const imported = importedFonts.find(
+        (f) => f.name.toLowerCase() === lower,
+      );
+      if (imported) {
+        return imported.name;
+      }
       const bundled = BUNDLED_FONTS.find((f) => f.toLowerCase() === lower);
-      if (bundled) return bundled;
-      if (detectFontsByMeasurement([candidate]).length > 0) return candidate;
+      if (bundled) {
+        return bundled;
+      }
+      if (detectFontsByMeasurement([candidate]).length > 0) {
+        return candidate;
+      }
     }
     return null;
   };
@@ -711,12 +727,18 @@ function useFontImport(onImported: (name: string) => void) {
     const seen = new Set<string>();
     for (const file of Array.from(files)) {
       const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
-      if (!FONT_MIME_BY_EXTENSION[extension]) continue;
+      if (!FONT_MIME_BY_EXTENSION[extension]) {
+        continue;
+      }
       const name = fontBaseName(file.name).slice(0, 60);
-      if (!name || seen.has(name.toLowerCase())) continue;
+      if (!name || seen.has(name.toLowerCase())) {
+        continue;
+      }
       seen.add(name.toLowerCase());
       found.push({ name, file });
-      if (found.length >= 200) break;
+      if (found.length >= 200) {
+        break;
+      }
     }
     if (found.length === 0) {
       toast.info(t("settings.appearance.custom.importFont.folderNoFonts"));
@@ -738,7 +760,9 @@ function useFontImport(onImported: (name: string) => void) {
         className="hidden"
         onChange={(e) => {
           const file = e.target.files?.[0];
-          if (file) importFile(file);
+          if (file) {
+            importFile(file);
+          }
           e.target.value = "";
         }}
       />
@@ -749,7 +773,9 @@ function useFontImport(onImported: (name: string) => void) {
         // Non-standard but universal directory picker attributes.
         {...({ webkitdirectory: "", directory: "" } as object)}
         onChange={(e) => {
-          if (e.target.files) scanFolder(e.target.files);
+          if (e.target.files) {
+            scanFolder(e.target.files);
+          }
           e.target.value = "";
         }}
       />

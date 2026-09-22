@@ -8,14 +8,6 @@
  * - Botón de acceso directo a Ajustes / Settings cog.
  */
 
-import type { ReactElement } from "react";
-import { useT } from "@/i18n";
-import { cn } from "@/lib/utils";
-import {
-  SidebarFooter,
-  SidebarMenu,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,7 +17,16 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  SidebarFooter,
+  SidebarMenu,
+  SidebarMenuItem,
+} from "@/components/ui/sidebar";
+import { UserAvatar } from "@/features/profile";
+import { useSettingsDialogStore } from "@/features/settings";
+import { TOUR_OPEN_EVENT } from "@/features/tour";
+import { useT } from "@/i18n";
+import { cn } from "@/lib/utils";
 import {
   ArrowRight02Icon,
   BadgeInfoIcon,
@@ -36,10 +37,9 @@ import {
   Settings02Icon,
   Sun03Icon,
 } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { Moon } from "lucide-react";
-import { UserAvatar } from "@/features/profile";
-import { useSettingsDialogStore } from "@/features/settings";
-import { TOUR_OPEN_EVENT } from "@/features/tour";
+import type { ReactElement, Ref } from "react";
 import { NavItem } from "./sidebar-nav-items";
 import {
   SETTINGS_TAB_MENU_ITEMS,
@@ -58,7 +58,7 @@ export interface SidebarUserFooterProps {
   pathname: string;
   isDark: boolean;
   toggleTheme: () => void;
-  anchorRef: React.Ref<any>;
+  anchorRef: Ref<unknown>;
   isTauri: boolean;
   closeMobileIfOpen: () => void;
   onOpenShutdown: () => void;
@@ -158,7 +158,7 @@ export function SidebarUserFooter({
         />
         <SidebarMenuItem className="relative">
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+            <DropdownMenuTrigger asChild={true}>
               <button
                 type="button"
                 aria-label={t("shell.accountMenu", { name: displayTitle })}
@@ -207,7 +207,9 @@ export function SidebarUserFooter({
                   )}
                 </DropdownMenuItem>
                 {sidebarMenu.map((item) => {
-                  if (!item.visible) return null;
+                  if (!item.visible) {
+                    return null;
+                  }
                   if (item.id === "api") {
                     return (
                       <DropdownMenuItem
@@ -231,7 +233,7 @@ export function SidebarUserFooter({
                     return (
                       <DropdownMenuItem
                         key={item.id}
-                        ref={anchorRef as React.Ref<HTMLDivElement>}
+                        ref={anchorRef as Ref<HTMLDivElement>}
                         onSelect={(e) => {
                           e.preventDefault();
                           toggleTheme();
@@ -255,13 +257,17 @@ export function SidebarUserFooter({
                     );
                   }
                   if (item.id === "guidedTour") {
-                    if (!getTourId(pathname)) return null;
+                    if (!getTourId(pathname)) {
+                      return null;
+                    }
                     return (
                       <DropdownMenuItem
                         key={item.id}
                         onSelect={() => {
                           const tourId = getTourId(pathname);
-                          if (!tourId) return;
+                          if (!tourId) {
+                            return;
+                          }
                           window.dispatchEvent(
                             new CustomEvent(TOUR_OPEN_EVENT, {
                               detail: { id: tourId },
@@ -278,9 +284,12 @@ export function SidebarUserFooter({
                       </DropdownMenuItem>
                     );
                   }
-                  const settingsTabId = item.id as keyof typeof SETTINGS_TAB_MENU_ITEMS;
+                  const settingsTabId =
+                    item.id as keyof typeof SETTINGS_TAB_MENU_ITEMS;
                   const tab = SETTINGS_TAB_MENU_ITEMS[settingsTabId];
-                  if (!tab) return null;
+                  if (!tab) {
+                    return null;
+                  }
                   return (
                     <DropdownMenuItem
                       key={item.id}

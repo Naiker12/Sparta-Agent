@@ -1,5 +1,5 @@
 export const tabs = {
-  "configure": "Configurar",
-  "currentRun": "Ejecución actual",
-  "history": "Historial"
+  configure: "Configurar",
+  currentRun: "Ejecución actual",
+  history: "Historial",
 } as const;

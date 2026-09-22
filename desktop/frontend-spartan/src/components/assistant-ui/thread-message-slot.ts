@@ -1,4 +1,3 @@
-
 /**
  * How the thread hands one message to a component, and which component that is.
  *

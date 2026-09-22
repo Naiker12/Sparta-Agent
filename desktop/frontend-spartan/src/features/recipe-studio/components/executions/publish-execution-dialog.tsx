@@ -1,7 +1,3 @@
-
-import { useEffect, useMemo, useState, type ReactElement } from "react";
-import { ArrowRight01Icon, CheckmarkCircle02Icon, Copy01Icon, Key01Icon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -15,6 +11,14 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { toastError, toastSuccess } from "@/shared/toast";
+import {
+  ArrowRight01Icon,
+  CheckmarkCircle02Icon,
+  Copy01Icon,
+  Key01Icon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { type ReactElement, useEffect, useMemo, useState } from "react";
 import type { RecipeExecutionRecord } from "../../execution-types";
 import { copyTextToClipboard } from "../../executions/execution-helpers";
 
@@ -31,7 +35,9 @@ type PublishExecutionDialogProps = {
   }) => Promise<{ url: string }>;
 };
 
-function getExecutionRecordCount(execution: RecipeExecutionRecord | null): number | null {
+function getExecutionRecordCount(
+  execution: RecipeExecutionRecord | null,
+): number | null {
   if (!execution) {
     return null;
   }
@@ -47,7 +53,9 @@ function getExecutionRecordCount(execution: RecipeExecutionRecord | null): numbe
   return null;
 }
 
-function buildDefaultDescription(execution: RecipeExecutionRecord | null): string {
+function buildDefaultDescription(
+  execution: RecipeExecutionRecord | null,
+): string {
   if (!execution) {
     return "";
   }
@@ -120,7 +128,9 @@ export function PublishExecutionDialog({
 
   const handlePublish = async (): Promise<void> => {
     if (!execution?.jobId) {
-      setPublishError("This run is missing a job id, so it cannot be published.");
+      setPublishError(
+        "This run is missing a job id, so it cannot be published.",
+      );
       return;
     }
     setPublishing(true);
@@ -137,7 +147,9 @@ export function PublishExecutionDialog({
       toastSuccess("Dataset published");
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Could not publish this dataset.";
+        error instanceof Error
+          ? error.message
+          : "Could not publish this dataset.";
       setPublishError(message);
       toastError("Publish failed", message);
     } finally {
@@ -182,7 +194,9 @@ export function PublishExecutionDialog({
             </div>
             <div className="rounded-2xl border border-border/60 bg-card/55 p-3 text-xs">
               <p className="mb-1 text-muted-foreground">Dataset URL</p>
-              <p className="break-all font-medium text-foreground">{publishedUrl}</p>
+              <p className="break-all font-medium text-foreground">
+                {publishedUrl}
+              </p>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={handleCopyUrl}>
@@ -192,7 +206,10 @@ export function PublishExecutionDialog({
               <Button asChild={true}>
                 <a href={publishedUrl} target="_blank" rel="noreferrer">
                   Open repo
-                  <HugeiconsIcon icon={ArrowRight01Icon} className="ml-2 size-4" />
+                  <HugeiconsIcon
+                    icon={ArrowRight01Icon}
+                    className="ml-2 size-4"
+                  />
                 </a>
               </Button>
               <Button variant="ghost" onClick={() => onOpenChange(false)}>
@@ -217,17 +234,21 @@ export function PublishExecutionDialog({
                     Run: <span className="text-foreground">{runLabel}</span>
                   </p>
                   <p>
-                    Records: <span className="text-foreground">{recordLabel}</span>
+                    Records:{" "}
+                    <span className="text-foreground">{recordLabel}</span>
                   </p>
                 </div>
                 <p className="mt-2 text-muted-foreground">
-                  We’ll upload the generated dataset, dataset card, images, and any processor
-                  outputs from this execution.
+                  We’ll upload the generated dataset, dataset card, images, and
+                  any processor outputs from this execution.
                 </p>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-foreground" htmlFor="publish-repo-id">
+                <label
+                  className="text-sm font-medium text-foreground"
+                  htmlFor="publish-repo-id"
+                >
                   Repository
                 </label>
                 <Input
@@ -238,12 +259,19 @@ export function PublishExecutionDialog({
                   disabled={publishing}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Use the format <span className="font-mono">username-or-org/dataset-name</span>.
+                  Use the format{" "}
+                  <span className="font-mono">
+                    username-or-org/dataset-name
+                  </span>
+                  .
                 </p>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-foreground" htmlFor="publish-description">
+                <label
+                  className="text-sm font-medium text-foreground"
+                  htmlFor="publish-description"
+                >
                   About this dataset
                 </label>
                 <Textarea
@@ -253,16 +281,22 @@ export function PublishExecutionDialog({
                   onChange={(event) => setDescription(event.target.value)}
                   disabled={publishing}
                   rows={4}
-                  placeholder={defaultDescription || "What is this dataset for?"}
+                  placeholder={
+                    defaultDescription || "What is this dataset for?"
+                  }
                 />
                 <p className="text-xs text-muted-foreground">
-                  This short summary is used in the dataset card on Hugging Face.
+                  This short summary is used in the dataset card on Hugging
+                  Face.
                 </p>
               </div>
 
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between gap-3">
-                  <label className="text-sm font-medium text-foreground" htmlFor="publish-hf-token">
+                  <label
+                    className="text-sm font-medium text-foreground"
+                    htmlFor="publish-hf-token"
+                  >
                     HF write token
                   </label>
                   <a
@@ -331,7 +365,10 @@ export function PublishExecutionDialog({
               >
                 Cancel
               </Button>
-              <Button onClick={() => void handlePublish()} disabled={!canSubmit}>
+              <Button
+                onClick={() => void handlePublish()}
+                disabled={!canSubmit}
+              >
                 {publishing ? "Publishing..." : "Publish to Hugging Face"}
               </Button>
             </DialogFooter>

@@ -1,4 +1,3 @@
-
 import { loadEmbeddingModelSettings } from "@/features/settings";
 import { useEffect, useState } from "react";
 import { useInventoryVersion } from "../stores/inventory-events";

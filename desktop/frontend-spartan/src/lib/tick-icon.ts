@@ -1,4 +1,3 @@
-
 import type { IconSvgElement } from "@hugeicons/react";
 
 // App-wide check mark. Plain tick geometry, sized a touch larger

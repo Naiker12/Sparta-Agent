@@ -1,4 +1,3 @@
-
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,10 +23,10 @@ import {
 } from "@/components/ui/select";
 import {
   DeleteChatFilesSwitch,
+  type SidebarItem,
   deleteChatItem,
   useChatPreferencesStore,
   useChatRuntimeStore,
-  type SidebarItem,
 } from "@/features/chat";
 import { useT } from "@/i18n";
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
@@ -43,11 +42,11 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { useSettingsDialogStore } from "../stores/settings-dialog-store";
 import {
   type RecentDictation,
   useVoiceSettingsStore,
 } from "../stores/voice-settings-store";
-import { useSettingsDialogStore } from "../stores/settings-dialog-store";
 
 /** Dictations shown per page; "Show more" reveals the next page. */
 const PAGE_SIZE = 20;
@@ -258,12 +257,10 @@ export function RecentDictationsView({
             <Button
               variant="outline"
               size="sm"
-              onClick={() =>
-                {
-                  setDeleteFilesOnDelete(alwaysDeleteChatFiles);
-                  setPendingDelete({ kind: "one", dictation: selected });
-                }
-              }
+              onClick={() => {
+                setDeleteFilesOnDelete(alwaysDeleteChatFiles);
+                setPendingDelete({ kind: "one", dictation: selected });
+              }}
               className="text-destructive hover:border-destructive/60 hover:text-destructive"
             >
               <HugeiconsIcon icon={Delete02Icon} className="mr-1.5 size-3.5" />
@@ -429,12 +426,10 @@ export function RecentDictationsView({
                     </button>
                     <button
                       type="button"
-                      onClick={() =>
-                        {
+                      onClick={() => {
                         setDeleteFilesOnDelete(alwaysDeleteChatFiles);
                         setPendingDelete({ kind: "one", dictation });
-                      }
-                      }
+                      }}
                       aria-label={t("settings.voice.recents.delete")}
                       title={t("settings.voice.recents.delete")}
                       className="inline-flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"

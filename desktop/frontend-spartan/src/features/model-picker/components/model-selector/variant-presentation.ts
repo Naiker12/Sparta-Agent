@@ -1,4 +1,3 @@
-
 type PresentableGgufVariant = {
   filename: string;
   quant: string;

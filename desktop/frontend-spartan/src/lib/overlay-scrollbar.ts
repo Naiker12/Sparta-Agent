@@ -1,4 +1,3 @@
-
 /**
  * Publishes the pointer-active strip of an overlay scrollbar for right-edge
  * controls. Classic scrollbars take layout space, so their gutter stays unset.

@@ -1,4 +1,3 @@
-
 import { looksLikeLocalPath } from "./local-path.ts";
 
 const WINDOWS_DRIVE_PATH_RE = /^[A-Za-z]:/;
@@ -106,9 +105,9 @@ function hfCacheRepoId(path: string): string | null {
 }
 
 /**
-* Whether *identifier* is an HF cache snapshot dir, so its public id names the repo rather
-* than the revision inside it. Mirrors ``hf_cache_repo_id`` in core/inference/model_ids.py.
-*/
+ * Whether *identifier* is an HF cache snapshot dir, so its public id names the repo rather
+ * than the revision inside it. Mirrors ``hf_cache_repo_id`` in core/inference/model_ids.py.
+ */
 export function isHfCacheSnapshotPath(
   identifier: string | null | undefined,
 ): boolean {
@@ -116,10 +115,10 @@ export function isHfCacheSnapshotPath(
 }
 
 /**
-* The clean id the backend reports for a model loaded by path. Mirrors ``public_model_id`` in
-* core/inference/model_ids.py, which is what ``/api/inference/status`` puts in ``active_model``:
-* an HF cache snapshot becomes its repo id, any other local GGUF its filename stem.
-*/
+ * The clean id the backend reports for a model loaded by path. Mirrors ``public_model_id`` in
+ * core/inference/model_ids.py, which is what ``/api/inference/status`` puts in ``active_model``:
+ * an HF cache snapshot becomes its repo id, any other local GGUF its filename stem.
+ */
 export function publicModelId(identifier: string): string {
   const trimmed = identifier.trim();
   if (!(trimmed && looksLikeModelPath(trimmed))) {
@@ -137,7 +136,7 @@ export function publicModelId(identifier: string): string {
 }
 
 /** `org/name`, including Hub repos named `org/name.gguf`. A file reference carries a
-* repo id plus a filename, so two or more slashes. */
+ * repo id plus a filename, so two or more slashes. */
 function isHubRepoId(identifier: string): boolean {
   if (identifier.split("/").length - 1 !== 1) {
     return false;
@@ -146,11 +145,11 @@ function isHubRepoId(identifier: string): boolean {
 }
 
 /**
-* The short label for a model id with no catalog entry to take a name from. Mirrors
-* ``display_model_name`` in core/inference/model_ids.py: the public id's trailing
-* segment, so a repo id and the HF cache snapshot it loads from read alike. Splitting
-* the raw id leaks the host layout on Windows, where ``C:\\Users\\...`` holds no ``/``.
-*/
+ * The short label for a model id with no catalog entry to take a name from. Mirrors
+ * ``display_model_name`` in core/inference/model_ids.py: the public id's trailing
+ * segment, so a repo id and the HF cache snapshot it loads from read alike. Splitting
+ * the raw id leaks the host layout on Windows, where ``C:\\Users\\...`` holds no ``/``.
+ */
 export function modelDisplayName(identifier: string): string {
   const trimmed = identifier.trim();
   if (isHubRepoId(trimmed)) {
@@ -161,13 +160,13 @@ export function modelDisplayName(identifier: string): string {
 }
 
 /**
-* Whether the model the backend reports as loaded is one of *candidates*.
-*
-* A GGUF from an inactive HF cache loads by path, so a caller holding only the public id would
-* read an exact comparison as "not loaded": candidates are compared literally first, then by
-* public id. That second pass only accepts an identity naming one model, since an HF snapshot
-* collapses onto its unique repo id while other paths collapse onto a shareable stem.
-*/
+ * Whether the model the backend reports as loaded is one of *candidates*.
+ *
+ * A GGUF from an inactive HF cache loads by path, so a caller holding only the public id would
+ * read an exact comparison as "not loaded": candidates are compared literally first, then by
+ * public id. That second pass only accepts an identity naming one model, since an HF snapshot
+ * collapses onto its unique repo id while other paths collapse onto a shareable stem.
+ */
 export function residentModelIdMatches(
   activeModelId: string | null | undefined,
   ...candidates: (string | null | undefined)[]

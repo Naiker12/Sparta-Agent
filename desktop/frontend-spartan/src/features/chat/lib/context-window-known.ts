@@ -1,4 +1,3 @@
-
 // its own plain module so the node suite can drive it: chat-page.tsx pulls in the whole chat runtime
 
 export type KnownContextWindowInput = {
@@ -18,8 +17,12 @@ export function hasKnownContextWindow({
   isExternalModel,
   residentCheckpoint,
 }: KnownContextWindowInput): boolean {
-  if (modelLoading || isExternalModel) return false;
-  if (ggufContextLength == null || ggufContextLength <= 0) return false;
+  if (modelLoading || isExternalModel) {
+    return false;
+  }
+  if (ggufContextLength == null || ggufContextLength <= 0) {
+    return false;
+  }
   // matches chatModelLoaded: undefined is "status not read yet", not "evicted"
   return residentCheckpoint !== null;
 }

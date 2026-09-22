@@ -1,4 +1,3 @@
-
 // Per-model parameter memory: a per-checkpoint record alongside the global set,
 // so a switch no longer hands the next model the previous one's settings. No
 // store or network imports, so the rules stay unit-testable.

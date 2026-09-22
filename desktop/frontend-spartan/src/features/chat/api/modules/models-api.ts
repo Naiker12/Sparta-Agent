@@ -146,12 +146,14 @@ export async function loadModel(
   },
 ): Promise<LoadModelResponse> {
   const preparedToken = await prepareHfTokenForUse(payload.hf_token);
-  if (!preparedToken.proceed)
+  if (!preparedToken.proceed) {
     throw Object.assign(new Error("Model load cancelled."), {
       unslothUserCancelled: true,
     });
-  if (options?.signal?.aborted)
+  }
+  if (options?.signal?.aborted) {
     throw options.signal.reason ?? new DOMException("Aborted", "AbortError");
+  }
   options?.onRequestStart?.();
   return withModelLoadNotice("chat", payload.model_path ?? null, async () => {
     const response = await authFetch("/api/inference/load", {
@@ -173,10 +175,11 @@ export async function validateModel(
   payload: LoadModelRequest,
 ): Promise<ValidateModelResponse> {
   const preparedToken = await prepareHfTokenForUse(payload.hf_token);
-  if (!preparedToken.proceed)
+  if (!preparedToken.proceed) {
     throw Object.assign(new Error("Model load cancelled."), {
       unslothUserCancelled: true,
     });
+  }
   const response = await authFetch("/api/inference/validate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -271,7 +274,7 @@ export async function getGgufDownloadProgress(
   downloaded_bytes: number;
   expected_bytes: number;
   progress: number;
-  }> {
+}> {
   const params = new URLSearchParams({
     repo_id: repoId,
     variant,
@@ -338,7 +341,9 @@ export async function getCachedModelPath(
   variant?: string,
 ): Promise<CachedModelPath> {
   const params = new URLSearchParams({ repo_id: repoId });
-  if (variant) params.set("variant", variant);
+  if (variant) {
+    params.set("variant", variant);
+  }
   const response = await authFetch(
     `/api/models/cached-model-path?${params.toString()}`,
   );
@@ -350,7 +355,9 @@ export async function revealCachedModel(
   variant?: string,
 ): Promise<void> {
   const payload: Record<string, string> = { repo_id: repoId };
-  if (variant) payload.variant = variant;
+  if (variant) {
+    payload.variant = variant;
+  }
   const response = await authFetch("/api/models/reveal-cached-model", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -412,8 +419,12 @@ export async function browseFolders(
   signal?: AbortSignal,
 ): Promise<BrowseFoldersResponse> {
   const params = new URLSearchParams();
-  if (path !== undefined && path !== null) params.set("path", path);
-  if (showHidden) params.set("show_hidden", "true");
+  if (path !== undefined && path !== null) {
+    params.set("path", path);
+  }
+  if (showHidden) {
+    params.set("show_hidden", "true");
+  }
   const qs = params.toString();
   const response = await authFetch(
     `/api/models/browse-folders${qs ? `?${qs}` : ""}`,
@@ -449,7 +460,9 @@ export async function estimateKvCache(
     quant,
     n_ctx: String(nCtx),
   });
-  if (cacheTypeKv) params.set("cache_type_kv", cacheTypeKv);
+  if (cacheTypeKv) {
+    params.set("cache_type_kv", cacheTypeKv);
+  }
   const response = await authFetch(
     `/api/models/kv-cache-estimate?${params}`,
     signal ? { signal } : undefined,

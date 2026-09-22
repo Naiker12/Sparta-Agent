@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   type GgufVariantDetail,
@@ -91,7 +90,9 @@ export function useGgufVariantFetchState({
         localPath: localVariantPath,
         signal: controller.signal,
       });
-      if (controller.signal.aborted) return;
+      if (controller.signal.aborted) {
+        return;
+      }
       setState({
         key: variantKey,
         scopeKey: variantScopeKey,
@@ -105,7 +106,9 @@ export function useGgufVariantFetchState({
       // A timeout in the API layer also rejects as AbortError. Only ignore an
       // abort issued by this hook (a newer request or an unmount), so a timed
       // out request can clear its loading state and expose a retry.
-      if (controller.signal.aborted) return;
+      if (controller.signal.aborted) {
+        return;
+      }
       setState((prev) => {
         const sameScope = prev.scopeKey === variantScopeKey;
         const variants = sameScope ? prev.variants : null;

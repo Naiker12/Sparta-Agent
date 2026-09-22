@@ -1,4 +1,3 @@
-
 import type { Connection } from "@xyflow/react";
 import type { LayoutDirection } from "../types";
 
@@ -202,7 +201,9 @@ export function getDefaultSemanticTargetHandle(
 export function getDefaultSemanticSourceHandle(
   direction: LayoutDirection,
 ): string {
-  return direction === "TB" ? HANDLE_IDS.semanticOutBottom : HANDLE_IDS.semanticOut;
+  return direction === "TB"
+    ? HANDLE_IDS.semanticOutBottom
+    : HANDLE_IDS.semanticOut;
 }
 
 type RecipeEdgeHandles = {

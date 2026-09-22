@@ -1,4 +1,3 @@
-
 // Shared fenced-code helpers for the HTML-artifact render paths, hoisted from
 // markdown-text.tsx so the in-place collapse and the post-message auto-render
 // agree on what counts as a renderable HTML fence.
@@ -54,12 +53,18 @@ export function getCodeFence(blockContent: string): CodeFence | null {
 
 export function isSvgFence(codeFence: CodeFence): boolean {
   const lang = codeFence.language?.toLowerCase() ?? "";
-  if (lang === "svg") return true;
+  if (lang === "svg") {
+    return true;
+  }
   if (lang === "xml" || lang === "html") {
     const trimmed = codeFence.source.trimStart();
     // <svg directly, or <?xml ...?> then <svg
-    if (trimmed.startsWith("<svg")) return true;
-    if (trimmed.startsWith("<?xml") && trimmed.includes("<svg")) return true;
+    if (trimmed.startsWith("<svg")) {
+      return true;
+    }
+    if (trimmed.startsWith("<?xml") && trimmed.includes("<svg")) {
+      return true;
+    }
   }
   return false;
 }

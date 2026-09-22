@@ -1,4 +1,3 @@
-
 // One backend progress reading reconciled against the job's current figures.
 // Split out of poll-loop so it can be exercised on its own: poll-loop reaches
 // the store, the toaster and the API client, and this is the part that decides
@@ -101,7 +100,8 @@ export function resolveProgressUpdate(
   // false "complete" retires the card and drops the download, and that is not an
   // outcome to leave resting on a cross-tier promise no code here checks. Both
   // halves of hasObservedExpectedBytes now provably come from the same reading.
-  const completeOnDisk = progressResp.complete_on_disk === true && measuredCompleted;
+  const completeOnDisk =
+    progressResp.complete_on_disk === true && measuredCompleted;
   const madeProgress =
     resetMonotonic ||
     // An UNMEASURED scan is not an idle one. The backend says cache_measured false when it

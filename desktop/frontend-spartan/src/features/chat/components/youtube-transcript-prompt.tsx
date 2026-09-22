@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { getLocale } from "@/i18n";
@@ -63,7 +62,9 @@ async function detachFile(composer: Composer, file: File): Promise<void> {
   const added = composer
     .getState()
     .attachments.find((attachment) => attachment.file === file);
-  if (added) await composer.attachment({ id: added.id }).remove();
+  if (added) {
+    await composer.attachment({ id: added.id }).remove();
+  }
 }
 
 /**
@@ -86,7 +87,9 @@ export function YoutubeTranscriptPrompt({
   useEffect(() => () => abortRef.current?.abort(), []);
 
   const attach = useCallback(async () => {
-    if (fetching) return;
+    if (fetching) {
+      return;
+    }
     const controller = new AbortController();
     abortRef.current = controller;
     setFetching(true);
@@ -102,7 +105,9 @@ export function YoutubeTranscriptPrompt({
         transcriptFileName(transcript),
         { type: "text/plain" },
       );
-      if (controller.signal.aborted) return;
+      if (controller.signal.aborted) {
+        return;
+      }
       await composer.addAttachment(file);
       // A send lands while addAttachment is still pending, and abort cannot recall it,
       // so drop the file rather than let it ride along on the next message.
@@ -112,7 +117,9 @@ export function YoutubeTranscriptPrompt({
       }
       onClose();
     } catch (error) {
-      if (controller.signal.aborted) return;
+      if (controller.signal.aborted) {
+        return;
+      }
       setFetching(false);
       toast.error("Could not attach the transcript", {
         description: error instanceof Error ? error.message : "Unknown error",

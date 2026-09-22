@@ -1,4 +1,3 @@
-
 import {
   AUDIO_ACCEPT,
   fileToBase64,
@@ -62,7 +61,8 @@ export class AudioAttachmentAdapter implements AttachmentAdapter {
       throw new Error(sizeReason);
     }
     if (this.attachmentIds.size > 0 || state.pendingAudioBase64) {
-      const duplicateReason = "Only one audio file can be attached per message.";
+      const duplicateReason =
+        "Only one audio file can be attached per message.";
       toast.error(duplicateReason);
       throw new Error(duplicateReason);
     }

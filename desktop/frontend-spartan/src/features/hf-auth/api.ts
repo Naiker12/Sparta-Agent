@@ -1,4 +1,3 @@
-
 import { authFetch } from "@/features/auth";
 // This header helper is API-layer-only and is not part of the feature's
 // React-facing public barrel.

@@ -1,4 +1,3 @@
-
 export function normalizeNonEmptyName(
   value: string,
   fallback = "Unnamed",
@@ -6,4 +5,3 @@ export function normalizeNonEmptyName(
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : fallback;
 }
-

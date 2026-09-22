@@ -1,4 +1,3 @@
-
 "use client";
 
 import { CodeToggleIcon } from "@/components/assistant-ui/code-toggle-icon";
@@ -158,7 +157,9 @@ export function ArtifactCard({
   };
 
   if (!showCodeButton) {
-    return <div className={cn("my-2", className)}>{renderButton("preview")}</div>;
+    return (
+      <div className={cn("my-2", className)}>{renderButton("preview")}</div>
+    );
   }
 
   return (

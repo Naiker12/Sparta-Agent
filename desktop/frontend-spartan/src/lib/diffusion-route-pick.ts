@@ -1,4 +1,3 @@
-
 /** Load kind + repo for a diffusion pick that arrived through the URL. */
 export interface DiffusionRoutePick {
   repoId: string;
@@ -9,11 +8,21 @@ export interface DiffusionRoutePick {
 export function diffusionRoutePick(
   model: string,
   quant?: string | null,
-  spec?: { kind: "gguf" | "single_file" | "pipeline"; filename?: string } | null,
+  spec?: {
+    kind: "gguf" | "single_file" | "pipeline";
+    filename?: string;
+  } | null,
 ): DiffusionRoutePick {
-  if (quant) return { repoId: model, opts: { kind: "gguf", filename: quant } };
+  if (quant) {
+    return { repoId: model, opts: { kind: "gguf", filename: quant } };
+  }
   // A spec exists only for a catalog repo id (loadSpecFor matches on that), never a local path, so it beats the extension sniffing below.
-  if (spec) return { repoId: model, opts: { kind: spec.kind, filename: spec.filename } };
+  if (spec) {
+    return {
+      repoId: model,
+      opts: { kind: spec.kind, filename: spec.filename },
+    };
+  }
   const norm = model.replace(/\\/g, "/");
   const slash = norm.lastIndexOf("/");
   const filename = slash >= 0 ? norm.slice(slash + 1) : norm;

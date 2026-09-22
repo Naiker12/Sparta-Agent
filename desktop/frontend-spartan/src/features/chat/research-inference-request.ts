@@ -1,4 +1,3 @@
-
 type ReasoningEffort =
   | "none"
   | "minimal"
@@ -7,7 +6,6 @@ type ReasoningEffort =
   | "high"
   | "xhigh"
   | "max";
-
 
 export interface ResearchInferenceRequest {
   model: string;
@@ -47,7 +45,11 @@ export function buildResearchInferenceRequest(input: {
         }
       : {}),
   };
-  if (Number.isFinite(input.temperature) && input.temperature >= 0 && input.temperature <= 2) {
+  if (
+    Number.isFinite(input.temperature) &&
+    input.temperature >= 0 &&
+    input.temperature <= 2
+  ) {
     request.temperature = input.temperature;
   }
   if (Number.isFinite(input.topP) && input.topP > 0 && input.topP <= 1) {

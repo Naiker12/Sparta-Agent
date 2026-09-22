@@ -1,4 +1,3 @@
-
 import { isTauri } from "@/lib/api-base";
 
 // Native IPC, so it works outside a user gesture (e.g. after an await).
@@ -7,8 +6,7 @@ async function copyWithTauriClipboard(text: string): Promise<boolean> {
     const { writeText } = await import("@tauri-apps/plugin-clipboard-manager");
     await writeText(text);
     return true;
-  } catch (error) {
-    console.warn("Tauri clipboard-manager writeText failed", error);
+  } catch (_error) {
     return false;
   }
 }
@@ -18,7 +16,9 @@ async function copyWithTauriClipboard(text: string): Promise<boolean> {
  * as the click (required by Safari's clipboard security).
  */
 function copyWithExecCommand(text: string): boolean {
-  if (typeof document === "undefined" || !document.body) return false;
+  if (typeof document === "undefined" || !document.body) {
+    return false;
+  }
 
   const textarea = document.createElement("textarea");
   textarea.value = text;
@@ -61,8 +61,7 @@ export async function copyToClipboard(text: string): Promise<boolean> {
     try {
       await navigator.clipboard.writeText(text);
       return true;
-    } catch (error) {
-      console.warn("Async clipboard API failed, falling back to execCommand", error);
+    } catch (_error) {
       // Rejected (NotAllowedError, insecure context, etc.); fall through.
     }
   }

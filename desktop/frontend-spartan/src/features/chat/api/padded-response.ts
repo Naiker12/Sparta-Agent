@@ -1,4 +1,3 @@
-
 /**
  * `/api/inference/load` and `/unload` pad their body so a proxy cannot time the request
  * out, committing the 200 before the work finishes (`_tunnel_safe_json` in

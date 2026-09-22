@@ -1,4 +1,3 @@
-
 import type { ValidatorCodeLang } from "../../types";
 
 export const VALIDATOR_OXC_CODE_LANGS: ValidatorCodeLang[] = [
@@ -27,9 +26,7 @@ export function isValidatorCodeLang(value: string): value is ValidatorCodeLang {
   return VALIDATOR_CODE_LANG_SET.has(value as ValidatorCodeLang);
 }
 
-export function normalizeValidatorCodeLang(
-  value: unknown,
-): ValidatorCodeLang {
+export function normalizeValidatorCodeLang(value: unknown): ValidatorCodeLang {
   const raw = typeof value === "string" ? value.trim() : "";
   if (!raw) {
     return "python";

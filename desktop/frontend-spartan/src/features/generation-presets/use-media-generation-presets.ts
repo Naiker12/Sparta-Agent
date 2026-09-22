@@ -1,4 +1,3 @@
-
 import { toast } from "@/lib/toast";
 import {
   useCallback,
@@ -364,7 +363,9 @@ export function useMediaGenerationPresets<Params extends object>({
       } catch (error) {
         // A refused write took nothing over, so it must not keep the claim it made: a pending
         // model pick would go on reading the form as claimed by something newer than itself.
-        if (formClaim.current === claim) formClaim.current = previousClaim;
+        if (formClaim.current === claim) {
+          formClaim.current = previousClaim;
+        }
         toast.error(refusalMessage(error, `Could not save ${kind} preset`));
         return null;
       }
@@ -414,7 +415,9 @@ export function useMediaGenerationPresets<Params extends object>({
       await deleteMediaGenerationPreset(kind, deletedName);
     } catch (error) {
       // Same as a refused save: a delete that did not happen has not taken the form.
-      if (formClaim.current === claim) formClaim.current = previousClaim;
+      if (formClaim.current === claim) {
+        formClaim.current = previousClaim;
+      }
       toast.error(refusalMessage(error, `Could not delete ${kind} preset`));
       return false;
     }

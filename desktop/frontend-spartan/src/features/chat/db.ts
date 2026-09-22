@@ -1,4 +1,3 @@
-
 import Dexie, { type EntityTable, liveQuery } from "dexie";
 import { useEffect, useRef, useState } from "react";
 import type { MessageRecord, ThreadRecord } from "./types";
@@ -34,7 +33,7 @@ db.version(3)
       .table("threads")
       .toCollection()
       .modify((thread) => {
-        if (!thread.modelId) thread.modelId = "";
+        if (!thread.modelId) { thread.modelId = ""; }
       }),
   );
 
@@ -57,7 +56,7 @@ export function useLiveQuery<T>(
   useEffect(() => {
     const sub = liveQuery(() => querierRef.current()).subscribe({
       next: setValue,
-      error: (err) => console.error("useLiveQuery:", err),
+      error: () => {},
     });
     return () => sub.unsubscribe();
     // Intentionally omit `querier` from deps: inline functions would re-subscribe every render.

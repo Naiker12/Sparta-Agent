@@ -1,8 +1,8 @@
 import { isTauri } from "@/lib/api-base";
-import { useEffect, useRef, useState } from "react";
 import { toast } from "@/lib/toast";
+import { useEffect, useRef, useState } from "react";
 import { registerNativeAttachmentPath, registerNativeModelPath } from "./api";
-import { classifyDropPaths, SUPPORTED_DROP_HINT } from "./drop-paths";
+import { SUPPORTED_DROP_HINT, classifyDropPaths } from "./drop-paths";
 import { nativeDropTargetAt } from "./native-drop-targets";
 import { useNativeIntentStore } from "./store";
 import type { NativeIntent } from "./types";
@@ -61,7 +61,9 @@ function canAutoLoadModel(options: NativeModelDropOptions): boolean {
   );
 }
 
-function attachmentCount(dropped: ReturnType<typeof classifyDropPaths>): number {
+function attachmentCount(
+  dropped: ReturnType<typeof classifyDropPaths>,
+): number {
   if (
     dropped.kind === "docs" ||
     dropped.kind === "images" ||
@@ -94,7 +96,9 @@ function dropStateForPaths(
   options: NativeModelDropOptions,
 ): NativeModelDropState {
   const dropped = classifyDropPaths(paths);
-  if (dropped.kind === "none") return { status: "idle" };
+  if (dropped.kind === "none") {
+    return { status: "idle" };
+  }
   if (options.dropsUnsupportedReason && isActionableKind(dropped)) {
     return { status: "invalid", reason: options.dropsUnsupportedReason };
   }
@@ -122,13 +126,17 @@ function dropStateForPaths(
     const docsSupported = dropped.docs.length === 0 || canAttachDocs(options);
     const imagesSupported =
       dropped.images.length === 0 || canAttachImages(options);
-    const audioSupported = dropped.audio.length === 0 || canAttachAudio(options);
-    const videoSupported = dropped.video.length === 0 || canAttachVideo(options);
+    const audioSupported =
+      dropped.audio.length === 0 || canAttachAudio(options);
+    const videoSupported =
+      dropped.video.length === 0 || canAttachVideo(options);
     return docsSupported && imagesSupported && audioSupported && videoSupported
       ? { status: "attach", count: attachmentCount(dropped), kind: "mixed" }
       : { status: "invalid" };
   }
-  if (dropped.kind === "unsupported") return { status: "invalid" };
+  if (dropped.kind === "unsupported") {
+    return { status: "invalid" };
+  }
   if (!canAutoLoadModel(options)) {
     return { status: "valid", action: "chip" };
   }
@@ -225,24 +233,34 @@ function sameDropState(
   a: NativeModelDropState,
   b: NativeModelDropState,
 ): boolean {
-  if (a.status !== b.status) return false;
-  if (a.status === "valid" && b.status === "valid") return a.action === b.action;
-  if (a.status === "attach" && b.status === "attach")
+  if (a.status !== b.status) {
+    return false;
+  }
+  if (a.status === "valid" && b.status === "valid") {
+    return a.action === b.action;
+  }
+  if (a.status === "attach" && b.status === "attach") {
     return a.count === b.count && a.kind === b.kind;
-  if (a.status === "invalid" && b.status === "invalid")
+  }
+  if (a.status === "invalid" && b.status === "invalid") {
     return a.reason === b.reason;
+  }
   return true;
 }
 
-export function useNativeModelDrop(options: NativeModelDropOptions): NativeModelDropState {
+export function useNativeModelDrop(
+  options: NativeModelDropOptions,
+): NativeModelDropState {
   const { enabled = true } = options;
   const addIntent = useNativeIntentStore((state) => state.addIntent);
-  const [dropState, setDropState] = useState<NativeModelDropState>({ status: "idle" });
+  const [dropState, setDropState] = useState<NativeModelDropState>({
+    status: "idle",
+  });
   const optionsRef = useRef(options);
   optionsRef.current = options;
 
   useEffect(() => {
-    if (!isTauri || !enabled) {
+    if (!(isTauri && enabled)) {
       setDropState({ status: "idle" });
       return;
     }
@@ -257,181 +275,212 @@ export function useNativeModelDrop(options: NativeModelDropOptions): NativeModel
       setDropState((prev) => (sameDropState(prev, next) ? prev : next));
 
     void import("@tauri-apps/api/window")
-      .then(({ getCurrentWindow }) => getCurrentWindow().onDragDropEvent(async (event) => {
-        const currentOptions = optionsRef.current;
-        if (event.payload.type === "leave") {
+      .then(({ getCurrentWindow }) =>
+        getCurrentWindow().onDragDropEvent(async (event) => {
+          const currentOptions = optionsRef.current;
+          if (event.payload.type === "leave") {
+            draggedPaths = [];
+            publish({ status: "idle" });
+            return;
+          }
+          if (event.payload.type === "enter") {
+            draggedPaths = event.payload.paths;
+          }
+          // A drop zone under the cursor owns this drop; leave it alone.
+          if (nativeDropTargetAt(event.payload.position)) {
+            publish({ status: "idle" });
+            return;
+          }
+          if (event.payload.type !== "drop") {
+            publish(dropStateForPaths(draggedPaths, currentOptions));
+            return;
+          }
           draggedPaths = [];
           publish({ status: "idle" });
-          return;
-        }
-        if (event.payload.type === "enter") {
-          draggedPaths = event.payload.paths;
-        }
-        // A drop zone under the cursor owns this drop; leave it alone.
-        if (nativeDropTargetAt(event.payload.position)) {
-          publish({ status: "idle" });
-          return;
-        }
-        if (event.payload.type !== "drop") {
-          publish(dropStateForPaths(draggedPaths, currentOptions));
-          return;
-        }
-        draggedPaths = [];
-        publish({ status: "idle" });
-        const dropped = classifyDropPaths(event.payload.paths);
-        if (dropped.kind === "none") return;
-        if (dropped.kind === "unsupported") {
-          toast.error(SUPPORTED_DROP_HINT);
-          return;
-        }
-        // Before the model branch too: this view loads nothing, so a dropped
-        // GGUF must not replace the active model behind it.
-        if (currentOptions.dropsUnsupportedReason && isActionableKind(dropped)) {
-          toast.error(currentOptions.dropsUnsupportedReason);
-          return;
-        }
-        if (
-          dropped.kind === "docs" ||
-          dropped.kind === "images" ||
-          dropped.kind === "audio" ||
-          dropped.kind === "video" ||
-          dropped.kind === "attach"
-        ) {
-          const needsDocs =
+          const dropped = classifyDropPaths(event.payload.paths);
+          if (dropped.kind === "none") {
+            return;
+          }
+          if (dropped.kind === "unsupported") {
+            toast.error(SUPPORTED_DROP_HINT);
+            return;
+          }
+          // Before the model branch too: this view loads nothing, so a dropped
+          // GGUF must not replace the active model behind it.
+          if (
+            currentOptions.dropsUnsupportedReason &&
+            isActionableKind(dropped)
+          ) {
+            toast.error(currentOptions.dropsUnsupportedReason);
+            return;
+          }
+          if (
             dropped.kind === "docs" ||
-            (dropped.kind === "attach" && dropped.docs.length > 0);
-          const needsImages =
             dropped.kind === "images" ||
-            (dropped.kind === "attach" && dropped.images.length > 0);
-          const needsAudio =
             dropped.kind === "audio" ||
-            (dropped.kind === "attach" && dropped.audio.length > 0);
-          const needsVideo =
             dropped.kind === "video" ||
-            (dropped.kind === "attach" && dropped.video.length > 0);
-          if (needsDocs && !canAttachDocs(currentOptions)) {
-            toast.error("Attaching files needs the desktop backend", {
-              description: "Retry once Studio has finished starting up.",
-            });
-            return;
-          }
-          if (needsImages && !canAttachImages(currentOptions)) {
-            toast.error("Attaching images is unavailable right now", {
-              description: "Retry once this chat is ready for attachments.",
-            });
-            return;
-          }
-          if (needsAudio && !canAttachAudio(currentOptions)) {
-            toast.error("Attaching audio is unavailable right now", {
-              description: "Retry once this chat is ready for attachments.",
-            });
-            return;
-          }
-          if (needsVideo && !canAttachVideo(currentOptions)) {
-            toast.error("Attaching video is unavailable right now", {
-              description: "Retry once this chat is ready for attachments.",
-            });
-            return;
-          }
-          // Hold the send gate across registration too. Between the drop and the
-          // intents reaching the queue there is nothing for the composer to see,
-          // so an Enter in that window would send the text without the image.
-          const store = useNativeIntentStore.getState();
-          if (needsImages) store.beginImageDropRegistration();
-          if (needsAudio) store.beginAudioDropRegistration();
-          if (needsVideo) store.beginVideoDropRegistration();
-          try {
-            const registered = await registerDroppedAttachments(dropped);
-            const latestOptions = optionsRef.current;
-            // Both callbacks only enqueue against a target key, so a drop that
-            // outlived this listener still reaches the chat it landed on.
-            const attachOptions =
-              !disposed &&
-              latestOptions.attachmentScope === currentOptions.attachmentScope
-                ? latestOptions
-                : currentOptions;
-            if (registered.docs.length > 0) {
-              await attachOptions.onAttach?.(registered.docs);
+            dropped.kind === "attach"
+          ) {
+            const needsDocs =
+              dropped.kind === "docs" ||
+              (dropped.kind === "attach" && dropped.docs.length > 0);
+            const needsImages =
+              dropped.kind === "images" ||
+              (dropped.kind === "attach" && dropped.images.length > 0);
+            const needsAudio =
+              dropped.kind === "audio" ||
+              (dropped.kind === "attach" && dropped.audio.length > 0);
+            const needsVideo =
+              dropped.kind === "video" ||
+              (dropped.kind === "attach" && dropped.video.length > 0);
+            if (needsDocs && !canAttachDocs(currentOptions)) {
+              toast.error("Attaching files needs the desktop backend", {
+                description: "Retry once Studio has finished starting up.",
+              });
+              return;
             }
-            if (registered.images.length > 0) {
-              await attachOptions.onAttachImages?.(registered.images);
+            if (needsImages && !canAttachImages(currentOptions)) {
+              toast.error("Attaching images is unavailable right now", {
+                description: "Retry once this chat is ready for attachments.",
+              });
+              return;
             }
-            const failureKey = attachOptions.attachmentTargetKey;
-            if (registered.imagesFailed > 0 && failureKey) {
-              store.failImageDropRegistration(failureKey);
+            if (needsAudio && !canAttachAudio(currentOptions)) {
+              toast.error("Attaching audio is unavailable right now", {
+                description: "Retry once this chat is ready for attachments.",
+              });
+              return;
             }
-            if (registered.audioFailed > 0 && failureKey) {
-              store.failAudioDropRegistration(failureKey);
+            if (needsVideo && !canAttachVideo(currentOptions)) {
+              toast.error("Attaching video is unavailable right now", {
+                description: "Retry once this chat is ready for attachments.",
+              });
+              return;
             }
-            if (registered.videoFailed > 0 && failureKey) {
-              store.failVideoDropRegistration(failureKey);
+            // Hold the send gate across registration too. Between the drop and the
+            // intents reaching the queue there is nothing for the composer to see,
+            // so an Enter in that window would send the text without the image.
+            const store = useNativeIntentStore.getState();
+            if (needsImages) {
+              store.beginImageDropRegistration();
             }
-            // A failed document cancels a send parked behind the image, audio or
-            // video gate too, or the draft goes out with only what survived.
-            if (registered.docsFailed > 0 && failureKey) {
-              if (needsImages) store.failImageDropRegistration(failureKey);
-              if (needsAudio) store.failAudioDropRegistration(failureKey);
-              if (needsVideo) store.failVideoDropRegistration(failureKey);
+            if (needsAudio) {
+              store.beginAudioDropRegistration();
             }
-            if (registered.audio.length > 0) {
-              await attachOptions.onAttachAudio?.(registered.audio);
+            if (needsVideo) {
+              store.beginVideoDropRegistration();
             }
-            if (registered.video.length > 0) {
-              await attachOptions.onAttachVideo?.(registered.video);
-            }
-            if (
-              registered.docsFailed +
-                registered.imagesFailed +
-                registered.audioFailed +
-                registered.videoFailed >
-              0
-            ) {
+            try {
+              const registered = await registerDroppedAttachments(dropped);
+              const latestOptions = optionsRef.current;
+              // Both callbacks only enqueue against a target key, so a drop that
+              // outlived this listener still reaches the chat it landed on.
+              const attachOptions =
+                !disposed &&
+                latestOptions.attachmentScope === currentOptions.attachmentScope
+                  ? latestOptions
+                  : currentOptions;
+              if (registered.docs.length > 0) {
+                await attachOptions.onAttach?.(registered.docs);
+              }
+              if (registered.images.length > 0) {
+                await attachOptions.onAttachImages?.(registered.images);
+              }
+              const failureKey = attachOptions.attachmentTargetKey;
+              if (registered.imagesFailed > 0 && failureKey) {
+                store.failImageDropRegistration(failureKey);
+              }
+              if (registered.audioFailed > 0 && failureKey) {
+                store.failAudioDropRegistration(failureKey);
+              }
+              if (registered.videoFailed > 0 && failureKey) {
+                store.failVideoDropRegistration(failureKey);
+              }
+              // A failed document cancels a send parked behind the image, audio or
+              // video gate too, or the draft goes out with only what survived.
+              if (registered.docsFailed > 0 && failureKey) {
+                if (needsImages) {
+                  store.failImageDropRegistration(failureKey);
+                }
+                if (needsAudio) {
+                  store.failAudioDropRegistration(failureKey);
+                }
+                if (needsVideo) {
+                  store.failVideoDropRegistration(failureKey);
+                }
+              }
+              if (registered.audio.length > 0) {
+                await attachOptions.onAttachAudio?.(registered.audio);
+              }
+              if (registered.video.length > 0) {
+                await attachOptions.onAttachVideo?.(registered.video);
+              }
+              if (
+                registered.docsFailed +
+                  registered.imagesFailed +
+                  registered.audioFailed +
+                  registered.videoFailed >
+                0
+              ) {
+                toast.error("Could not attach dropped files", {
+                  description:
+                    registered.error?.message ?? "Some files were skipped.",
+                });
+              }
+            } catch (error) {
+              const failureKey = currentOptions.attachmentTargetKey;
+              if (needsImages && failureKey) {
+                store.failImageDropRegistration(failureKey);
+              }
+              if (needsAudio && failureKey) {
+                store.failAudioDropRegistration(failureKey);
+              }
+              if (needsVideo && failureKey) {
+                store.failVideoDropRegistration(failureKey);
+              }
               toast.error("Could not attach dropped files", {
-                description: registered.error?.message ?? "Some files were skipped.",
+                description:
+                  error instanceof Error ? error.message : String(error),
+              });
+            } finally {
+              if (needsImages) {
+                store.endImageDropRegistration();
+              }
+              if (needsAudio) {
+                store.endAudioDropRegistration();
+              }
+              if (needsVideo) {
+                store.endVideoDropRegistration();
+              }
+            }
+            return;
+          }
+          try {
+            const intent = await registerNativeModelPath(dropped.path);
+            if (disposed) {
+              return;
+            }
+            if (!canAutoLoadModel(currentOptions)) {
+              addIntent(intent);
+              return;
+            }
+            try {
+              await currentOptions.onAutoLoad?.(intent);
+            } catch (error) {
+              addIntent(intent);
+              toast.error("Could not load dropped model", {
+                description:
+                  error instanceof Error ? error.message : String(error),
               });
             }
           } catch (error) {
-            const failureKey = currentOptions.attachmentTargetKey;
-            if (needsImages && failureKey) {
-              store.failImageDropRegistration(failureKey);
-            }
-            if (needsAudio && failureKey) {
-              store.failAudioDropRegistration(failureKey);
-            }
-            if (needsVideo && failureKey) {
-              store.failVideoDropRegistration(failureKey);
-            }
-            toast.error("Could not attach dropped files", {
-              description: error instanceof Error ? error.message : String(error),
-            });
-          } finally {
-            if (needsImages) store.endImageDropRegistration();
-            if (needsAudio) store.endAudioDropRegistration();
-            if (needsVideo) store.endVideoDropRegistration();
-          }
-          return;
-        }
-        try {
-          const intent = await registerNativeModelPath(dropped.path);
-          if (disposed) return;
-          if (!canAutoLoadModel(currentOptions)) {
-            addIntent(intent);
-            return;
-          }
-          try {
-            await currentOptions.onAutoLoad?.(intent);
-          } catch (error) {
-            addIntent(intent);
-            toast.error("Could not load dropped model", {
-              description: error instanceof Error ? error.message : String(error),
+            toast.error("Could not use dropped model", {
+              description:
+                error instanceof Error ? error.message : String(error),
             });
           }
-        } catch (error) {
-          toast.error("Could not use dropped model", {
-            description: error instanceof Error ? error.message : String(error),
-          });
-        }
-      }))
+        }),
+      )
       .then((cleanup) => {
         if (disposed) {
           cleanup();

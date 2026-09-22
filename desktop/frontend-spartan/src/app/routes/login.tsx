@@ -1,4 +1,3 @@
-
 import { createRoute } from "@tanstack/react-router";
 import { lazy } from "react";
 import { requireGuest } from "../auth-guards";

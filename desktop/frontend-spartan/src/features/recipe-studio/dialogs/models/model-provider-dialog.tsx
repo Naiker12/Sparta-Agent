@@ -1,4 +1,3 @@
-
 import {
   Collapsible,
   CollapsibleContent,
@@ -102,9 +101,9 @@ export function ModelProviderDialog({
           <button
             type="button"
             className={`rounded-xl border px-4 py-3 text-left transition-colors ${
-              !isLocal
-                ? "border-ring-strong bg-primary/5"
-                : "border-border/60 bg-muted/10 hover:border-border"
+              isLocal
+                ? "border-border/60 bg-muted/10 hover:border-border"
+                : "border-ring-strong bg-primary/5"
             }`}
             onClick={() => onUpdate({ is_local: false })}
           >

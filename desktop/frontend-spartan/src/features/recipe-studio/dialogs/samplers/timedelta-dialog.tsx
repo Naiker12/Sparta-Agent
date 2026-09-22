@@ -1,4 +1,3 @@
-
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -9,8 +8,8 @@ import {
 } from "@/components/ui/select";
 import type { ReactElement } from "react";
 import type { SamplerConfig } from "../../types";
-import { NameField } from "../shared/name-field";
 import { FieldLabel } from "../shared/field-label";
+import { NameField } from "../shared/name-field";
 
 const TIMEDELTA_UNITS: Array<"D" | "h" | "m" | "s"> = ["D", "h", "m", "s"];
 const NONE_VALUE = "__none";
@@ -105,7 +104,10 @@ export function TimedeltaDialog({
         <Select
           value={config.reference_column_name?.trim() || NONE_VALUE}
           onValueChange={(value) =>
-            updateField("reference_column_name", value === NONE_VALUE ? "" : value)
+            updateField(
+              "reference_column_name",
+              value === NONE_VALUE ? "" : value,
+            )
           }
         >
           <SelectTrigger className="nodrag w-full" id={referenceId}>

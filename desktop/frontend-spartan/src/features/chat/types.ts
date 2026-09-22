@@ -1,4 +1,3 @@
-
 export type ModelType = "base" | "lora" | "model1" | "model2";
 
 export type ChatView =

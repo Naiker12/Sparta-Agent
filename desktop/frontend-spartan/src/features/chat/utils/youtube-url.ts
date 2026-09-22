@@ -1,4 +1,3 @@
-
 // Mirrors extract_video_id in studio/spartan_backend/core/youtube_transcript.py. The
 // backend re-parses the URL, so this only decides whether to offer the prompt.
 
@@ -16,7 +15,9 @@ const ID_PATH_PREFIXES = ["/shorts/", "/embed/", "/live/", "/v/"];
 /** The 11-character video id in a YouTube URL, or null if it is not one. */
 export function extractYoutubeVideoId(value: string): string | null {
   const trimmed = value.trim();
-  if (trimmed.length === 0 || trimmed.length > 2048) return null;
+  if (trimmed.length === 0 || trimmed.length > 2048) {
+    return null;
+  }
 
   let parsed: URL;
   try {
@@ -24,7 +25,9 @@ export function extractYoutubeVideoId(value: string): string | null {
   } catch {
     return null;
   }
-  if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return null;
+  if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+    return null;
+  }
 
   const host = parsed.hostname.toLowerCase().replace(/^www\./, "");
   let candidate = "";

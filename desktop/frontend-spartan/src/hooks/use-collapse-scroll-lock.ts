@@ -1,4 +1,3 @@
-
 import { type RefObject, useCallback, useEffect, useRef } from "react";
 
 /**
@@ -25,7 +24,9 @@ export function useCollapseScrollLock(
     cleanupRef.current?.();
 
     const animatedElement = animatedElementRef.current;
-    if (!animatedElement) return;
+    if (!animatedElement) {
+      return;
+    }
 
     let scrollContainer: HTMLElement | null = animatedElement;
     while (scrollContainer) {
@@ -35,7 +36,9 @@ export function useCollapseScrollLock(
       }
       scrollContainer = scrollContainer.parentElement;
     }
-    if (!scrollContainer) return;
+    if (!scrollContainer) {
+      return;
+    }
 
     const container = scrollContainer;
     const scrollPosition = container.scrollTop;

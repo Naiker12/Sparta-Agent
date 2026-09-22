@@ -5,8 +5,14 @@
  * durante el modo de comparación entre modelos.
  */
 
-import { useCallback, useEffect, useRef, useState, type MutableRefObject } from "react";
 import { toast } from "@/lib/toast";
+import {
+  type MutableRefObject,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 export interface UseComparePromptQueueOptions {
   running: boolean;
@@ -50,10 +56,13 @@ export function useComparePromptQueue({
       return;
     }
     queueIndexRef.current = nextIndex;
-    setQueueProgress({ current: nextIndex + 1, total: queueRef.current.length });
+    setQueueProgress({
+      current: nextIndex + 1,
+      total: queueRef.current.length,
+    });
     const next = queueRef.current[nextIndex];
     toast(`Prompt ${nextIndex + 1} / ${queueRef.current.length}`, {
-      description: next.length > 80 ? next.slice(0, 80) + "…" : next,
+      description: next.length > 80 ? `${next.slice(0, 80)}…` : next,
     });
     setText(next);
     setTimeout(() => {
@@ -64,7 +73,9 @@ export function useComparePromptQueue({
   const startQueue = useCallback(
     (items: string[]) => {
       const filtered = items.filter((p) => p.trim());
-      if (!filtered.length) return false;
+      if (filtered.length === 0) {
+        return false;
+      }
       queueRef.current = filtered;
       queueIndexRef.current = 0;
       isQueueRunningRef.current = true;
@@ -72,7 +83,9 @@ export function useComparePromptQueue({
       setQueueProgress({ current: 1, total: filtered.length });
       toast(`Prompt 1 / ${filtered.length}`, {
         description:
-          filtered[0].length > 80 ? filtered[0].slice(0, 80) + "…" : filtered[0],
+          filtered[0].length > 80
+            ? `${filtered[0].slice(0, 80)}…`
+            : filtered[0],
       });
       setText(filtered[0]);
       setTimeout(() => {
@@ -87,7 +100,9 @@ export function useComparePromptQueue({
   useEffect(() => {
     const wasComparing = prevComparingRef.current;
     prevComparingRef.current = comparing;
-    if (!isQueueRunningRef.current || !wasComparing || comparing) return;
+    if (!(isQueueRunningRef.current && wasComparing) || comparing) {
+      return;
+    }
     if (!compareStepSucceededRef.current) {
       resetPromptQueue();
       toast.error("Prompt queue stopped", {
@@ -103,7 +118,9 @@ export function useComparePromptQueue({
   useEffect(() => {
     const wasRunning = prevRunningRef.current;
     prevRunningRef.current = running;
-    if (!isQueueRunningRef.current || !wasRunning || running || comparing) return;
+    if (!(isQueueRunningRef.current && wasRunning) || running || comparing) {
+      return;
+    }
     advanceQueue();
   }, [running, comparing, advanceQueue]);
 

@@ -1,4 +1,3 @@
-
 const EDGE_OFFSET = 12;
 const MOBILE_EDGE_OFFSET = 16;
 const HEADER_TOP_OFFSET = 52;

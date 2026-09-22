@@ -1,4 +1,3 @@
-
 import { getInferenceStatus, loadModel } from "@/features/chat";
 import { createLoadingToastIcon, toast } from "@/lib/toast";
 import { toastError } from "@/shared/toast";

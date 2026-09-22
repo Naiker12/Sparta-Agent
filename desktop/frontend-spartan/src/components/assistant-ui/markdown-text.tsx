@@ -1,4 +1,3 @@
-
 "use client";
 
 import { ArtifactCard, useChatRuntimeStore } from "@/features/chat";
@@ -11,10 +10,10 @@ import {
 } from "@/features/chat/artifacts/html-fences";
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
 import { preprocessLaTeX } from "@/lib/latex";
+import { markdownPluginNeeds } from "@/lib/markdown-plugins";
 import { downloadFile, isDownloadCancelled } from "@/lib/native-files";
 import { openLink } from "@/lib/open-link";
 import { safeMarkdownUrl } from "@/lib/safe-markdown-url";
-import { markdownPluginNeeds } from "@/lib/markdown-plugins";
 import { Tick02Icon } from "@/lib/tick-icon";
 import { toast } from "@/lib/toast";
 import { INTERNAL, useAuiState, useMessagePartText } from "@assistant-ui/react";
@@ -179,7 +178,9 @@ const UNSAFE_SVG_RE =
   /<script[\s>]|on\w+\s*=|javascript:|<foreignObject[\s>]|<iframe[\s>]|<embed[\s>]|<object[\s>]/i;
 
 function sanitizeSvg(source: string): string | null {
-  if (UNSAFE_SVG_RE.test(source)) return null;
+  if (UNSAFE_SVG_RE.test(source)) {
+    return null;
+  }
   // Strip XML declaration: unneeded for data URIs and breaks some renderers.
   return source.replace(/^\s*<\?xml[^?]*\?>\s*/i, "");
 }
@@ -537,29 +538,39 @@ function useOptionalMarkdownPlugins(markdown: string): {
     const loaders: Promise<void>[] = [];
 
     if (needs.code) {
-      loaders.push(loadCodePlugin().then((renderer) => {
-        plugins.code = renderer.plugin;
-        shikiTheme = renderer.shikiTheme;
-      }));
+      loaders.push(
+        loadCodePlugin().then((renderer) => {
+          plugins.code = renderer.plugin;
+          shikiTheme = renderer.shikiTheme;
+        }),
+      );
     }
     if (needs.math) {
-      loaders.push(loadMathPlugin().then((plugin) => {
-        plugins.math = plugin;
-      }));
+      loaders.push(
+        loadMathPlugin().then((plugin) => {
+          plugins.math = plugin;
+        }),
+      );
     }
     if (needs.mermaid) {
-      loaders.push(loadMermaidPlugin().then((plugin) => {
-        plugins.mermaid = plugin;
-      }));
+      loaders.push(
+        loadMermaidPlugin().then((plugin) => {
+          plugins.mermaid = plugin;
+        }),
+      );
     }
 
     void Promise.all(loaders)
       .then(() => {
-        if (!cancelled) setLoaded({ key, plugins, shikiTheme });
+        if (!cancelled) {
+          setLoaded({ key, plugins, shikiTheme });
+        }
       })
       .catch(() => {
         // A response remains readable when an optional renderer fails to load.
-        if (!cancelled) setLoaded({ key, plugins: {} });
+        if (!cancelled) {
+          setLoaded({ key, plugins: {} });
+        }
       });
 
     return () => {

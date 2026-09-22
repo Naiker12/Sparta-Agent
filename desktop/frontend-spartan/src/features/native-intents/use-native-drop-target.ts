@@ -1,4 +1,3 @@
-
 import { isTauri } from "@/lib/api-base";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -18,7 +17,9 @@ export function useNativeDropTarget(
   latest.current = options;
 
   useEffect(() => {
-    if (!isTauri || !enabled || !element) return;
+    if (!(isTauri && enabled && element)) {
+      return;
+    }
     return registerNativeDropTarget(element, {
       onDrop: (paths) => latest.current.onDrop(paths),
       onDragOver: (over) => latest.current.onDragOver?.(over),

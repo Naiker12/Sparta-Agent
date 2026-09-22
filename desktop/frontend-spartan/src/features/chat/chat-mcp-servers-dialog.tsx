@@ -1,4 +1,11 @@
 import {
+  Delete02Icon,
+  Edit03Icon,
+  PlusSignIcon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { RefreshCwIcon, UploadIcon } from "lucide-react";
+import {
   type ChangeEvent,
   useCallback,
   useEffect,
@@ -6,13 +13,6 @@ import {
   useState,
 } from "react";
 import { toast } from "sonner";
-import {
-  Delete02Icon,
-  Edit03Icon,
-  PlusSignIcon,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { RefreshCwIcon, UploadIcon } from "lucide-react";
 
 import {
   AlertDialog,
@@ -24,8 +24,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -38,8 +38,8 @@ import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
 import {
-  type McpServerConfig,
   type McpCatalogTemplate,
+  type McpServerConfig,
   createMcpServer,
   deleteMcpServer,
   importMcpServers,
@@ -83,7 +83,9 @@ function headersToObject(
   const out: Record<string, string> = {};
   for (const row of rows) {
     const key = row.key.trim();
-    if (!key) continue;
+    if (!key) {
+      continue;
+    }
     out[key] = row.value;
   }
   return Object.keys(out).length > 0 ? out : undefined;
@@ -98,7 +100,9 @@ function isHttpAddress(value: string): boolean {
 
 function isValidAddress(value: string): boolean {
   const trimmed = value.trim();
-  if (!trimmed) return false;
+  if (!trimmed) {
+    return false;
+  }
   if (isHttpAddress(trimmed)) {
     try {
       const parsed = new URL(trimmed);
@@ -239,7 +243,9 @@ export function ChatMcpServersDialog({
   }, []);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      return;
+    }
     refresh();
     // Reset to the list on each open, else a stale create/edit view persists.
     setView({ kind: "list" });
@@ -253,7 +259,9 @@ export function ChatMcpServersDialog({
 
   async function openCatalog() {
     setView({ kind: "catalog" });
-    if (catalog.length > 0) return;
+    if (catalog.length > 0) {
+      return;
+    }
     setCatalogLoading(true);
     try {
       setCatalog(await listMcpCatalog());
@@ -374,7 +382,9 @@ export function ChatMcpServersDialog({
   async function onImportFile(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = ""; // let the user re-pick the same file later
-    if (!file) return;
+    if (!file) {
+      return;
+    }
     let config: unknown;
     try {
       config = JSON.parse(await file.text());
@@ -386,14 +396,16 @@ export function ChatMcpServersDialog({
     try {
       const result = await importMcpServers(config);
       const parts = [`${result.created.length} added`];
-      if (result.skipped.length) parts.push(`${result.skipped.length} skipped`);
-      if (result.errors.length) {
+      if (result.skipped.length > 0) {
+        parts.push(`${result.skipped.length} skipped`);
+      }
+      if (result.errors.length > 0) {
         parts.push(
           `${result.errors.length} error${result.errors.length === 1 ? "" : "s"}`,
         );
       }
       const summary = parts.join(", ");
-      if (result.errors.length) {
+      if (result.errors.length > 0) {
         toast.warning(summary, {
           description: (
             <div className="whitespace-pre-line">
@@ -763,7 +775,9 @@ export function ChatMcpServersDialog({
       <AlertDialog
         open={confirmingDelete !== null}
         onOpenChange={(next) => {
-          if (!next) setConfirmingDelete(null);
+          if (!next) {
+            setConfirmingDelete(null);
+          }
         }}
       >
         <AlertDialogContent>
@@ -784,7 +798,9 @@ export function ChatMcpServersDialog({
               onClick={() => {
                 const server = confirmingDelete;
                 setConfirmingDelete(null);
-                if (server) void removeServer(server);
+                if (server) {
+                  void removeServer(server);
+                }
               }}
             >
               Delete
