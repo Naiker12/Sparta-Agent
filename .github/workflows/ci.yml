@@ -66,4 +66,4 @@ jobs:
         working-directory: desktop/backend-spartan
         env:
           PYTHONPATH: .
-        run: python -m pytest --noconftest tests/test_auth_access_boundary.py tests/test_credential_rotation_race.py -q
+        run: python -m pytest --noconftest tests/test_auth_access_boundary.py tests/test_credential_rotation_race.py tests/test_api_only_contract.py -q

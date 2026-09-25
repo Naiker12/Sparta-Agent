@@ -38,10 +38,10 @@ import {
   type ExternalModelOption,
   type LoraModelOption,
   type ModelOption,
-  ModelSelector,
   type ModelSelectorChangeMeta,
   type PerModelConfig,
 } from "@/features/model-picker";
+import { ApiProviderModelSelector } from "./api-provider-model-selector";
 import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
 import {
@@ -268,34 +268,16 @@ export const LoraCompareContent = memo(function LoraCompareContent({
  * aligned to the global topbar height.
  */
 export function GeneralCompareHeader({
-  models,
-  loraModels,
   externalModels,
-  externalConnections,
   value,
-  selectedConfig,
-  selectedGgufVariant,
   onValueChange,
-  onFoldersChange,
-  onModelsChange,
-  deleteDisabled,
   side,
 }: {
-  models: ModelOption[];
-  loraModels: LoraModelOption[];
   externalModels: ExternalModelOption[];
-  externalConnections: ExternalConnectionRef[];
   value: string;
-  selectedConfig?: PerModelConfig | null;
-  selectedGgufVariant?: string | null;
   onValueChange: (id: string, meta: ModelSelectorChangeMeta) => void;
-  onFoldersChange?: () => void;
-  onModelsChange?: (deletedModel?: DeletedModelRef) => void;
-  deleteDisabled?: boolean;
   side: "left" | "right";
 }): ReactElement {
-  const active = useChatActive();
-  const [selectorOpen, setSelectorOpen] = useState(false);
   const { pinned } = useSidebar();
 
   return (
@@ -309,22 +291,13 @@ export function GeneralCompareHeader({
           : "pl-3 pr-[calc(3rem+var(--studio-chat-header-right-inset,var(--studio-window-control-inset,0px)))]",
       )}
     >
-      <ModelSelector
-        models={models}
-        loraModels={loraModels}
-        externalModels={externalModels}
-        externalConnections={externalConnections}
+      <ApiProviderModelSelector
+        models={externalModels}
         value={value}
-        selectedConfig={selectedConfig}
-        selectedGgufVariant={selectedGgufVariant}
-        onValueChange={onValueChange}
-        onFoldersChange={onFoldersChange}
-        onModelsChange={onModelsChange}
-        deleteDisabled={deleteDisabled}
-        variant="ghost"
+        onValueChange={(id) =>
+          onValueChange(id, { source: "external", isLora: false })
+        }
         className="pointer-events-auto max-w-[80%] !h-[var(--studio-chat-control-height,34px)]"
-        open={active && selectorOpen}
-        onOpenChange={(open) => setSelectorOpen(active && open)}
       />
     </div>
   );
@@ -354,6 +327,13 @@ export const GeneralCompareContent = memo(function GeneralCompareContent({
   deleteDisabled?: boolean;
   onExitCompare?: () => void;
 }): ReactElement {
+  // These inputs remain part of the comparison contract while API-only builds
+  // migrate saved compare sessions. They intentionally have no picker UI.
+  void models;
+  void loraModels;
+  void externalConnections;
+  void onFoldersChange;
+  void deleteDisabled;
   const handlesRef = useRef<Record<string, CompareHandle>>({});
   const [model1ThreadId, setModel1ThreadId] = useState<string>();
   const [model2ThreadId, setModel2ThreadId] = useState<string>();
@@ -448,13 +428,8 @@ export const GeneralCompareContent = memo(function GeneralCompareContent({
           header={
             <GeneralCompareHeader
               side="left"
-              models={models}
-              loraModels={loraModels}
               externalModels={externalModels}
-              externalConnections={externalConnections}
               value={model1.id}
-              selectedConfig={model1.config}
-              selectedGgufVariant={model1.ggufVariant}
               onValueChange={(id, meta) =>
                 setModel1({
                   id,
@@ -464,9 +439,6 @@ export const GeneralCompareContent = memo(function GeneralCompareContent({
                   config: meta.config,
                 })
               }
-              onFoldersChange={onFoldersChange}
-              onModelsChange={handleModelsChange}
-              deleteDisabled={deleteDisabled}
             />
           }
         />
@@ -480,13 +452,8 @@ export const GeneralCompareContent = memo(function GeneralCompareContent({
           header={
             <GeneralCompareHeader
               side="right"
-              models={models}
-              loraModels={loraModels}
               externalModels={externalModels}
-              externalConnections={externalConnections}
               value={model2.id}
-              selectedConfig={model2.config}
-              selectedGgufVariant={model2.ggufVariant}
               onValueChange={(id, meta) =>
                 setModel2({
                   id,
@@ -496,9 +463,6 @@ export const GeneralCompareContent = memo(function GeneralCompareContent({
                   config: meta.config,
                 })
               }
-              onFoldersChange={onFoldersChange}
-              onModelsChange={handleModelsChange}
-              deleteDisabled={deleteDisabled}
             />
           }
         />

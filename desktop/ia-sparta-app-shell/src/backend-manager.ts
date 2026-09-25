@@ -1,5 +1,5 @@
 import { ChildProcess, spawn, execSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import path from "node:path";
 
@@ -313,7 +313,8 @@ export class BackendManager {
 
   private backendFingerprint(backendDir: string): string {
     const hash = createHash("sha256");
-    for (const filename of RUNTIME_FINGERPRINT_FILES) {
+    const requirementFiles = this.collectRequirementFiles(path.join(backendDir, "requirements"), backendDir);
+    for (const filename of [...RUNTIME_FINGERPRINT_FILES, ...requirementFiles]) {
       const file = path.join(backendDir, filename);
       if (!existsSync(file)) throw new Error(`No se pudo verificar el motor local: falta ${filename}.`);
       hash.update(filename);
@@ -322,5 +323,19 @@ export class BackendManager {
       hash.update("\0");
     }
     return hash.digest("hex");
+  }
+
+  private collectRequirementFiles(directory: string, backendDir: string): string[] {
+    if (!existsSync(directory)) return [];
+    const files: string[] = [];
+    const visit = (current: string) => {
+      for (const entry of readdirSync(current, { withFileTypes: true })) {
+        const target = path.join(current, entry.name);
+        if (entry.isDirectory()) visit(target);
+        else if (entry.isFile()) files.push(path.relative(backendDir, target));
+      }
+    };
+    visit(directory);
+    return files.sort();
   }
 }

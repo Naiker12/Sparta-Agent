@@ -289,9 +289,14 @@ export function externalModelSupportsStudioTools(
   );
 }
 
-export const CUSTOM_BACKEND_PROVIDER_TYPE = "openai";
 export const LEGACY_CUSTOM_PROVIDER_TYPE = "custom";
-export const CUSTOM_PROVIDER_DISPLAY_NAME = "Custom";
+// All custom and local-server presets are persisted through the generic
+// OpenAI-compatible backend path, never through a bundled local engine.
+export const CUSTOM_BACKEND_PROVIDER_TYPE = LEGACY_CUSTOM_PROVIDER_TYPE;
+// This is an external endpoint, not a bundled runtime. It can point to a
+// provider on the LAN/localhost or a hosted OpenAI-compatible API.
+export const CUSTOM_PROVIDER_DISPLAY_NAME =
+  "Servidor API compatible (local o remoto)";
 const OPENAI_CODEX_PROVIDER_TYPE = "openai_codex";
 export const PROVIDER_MAX_OUTPUT_TOKENS_MIN = 64;
 
@@ -329,32 +334,43 @@ export function supportsProviderMaxOutputTokens(
   );
 }
 
-export const CUSTOM_PROVIDER_PRESETS = [
+interface CustomProviderPreset {
+  providerType: string;
+  displayName: string;
+  baseUrlPlaceholder: string;
+  modelIdsPlaceholder: string;
+}
+
+/**
+ * External OpenAI-compatible servers. These entries only store an endpoint;
+ * they never download, install, start or manage a runtime on this computer.
+ */
+export const CUSTOM_PROVIDER_PRESETS: readonly CustomProviderPreset[] = [
   {
-    providerType: "ollama",
-    displayName: "Ollama",
+    providerType: "local_ollama",
+    displayName: "Ollama (servidor externo)",
     baseUrlPlaceholder: "http://localhost:11434/v1",
-    modelIdsPlaceholder: "llama3.2\nqwen2.5-coder:7b",
+    modelIdsPlaceholder: "llama3.2",
   },
   {
-    providerType: "lmstudio",
-    displayName: "LM Studio",
+    providerType: "local_lmstudio",
+    displayName: "LM Studio (servidor externo)",
     baseUrlPlaceholder: "http://localhost:1234/v1",
-    modelIdsPlaceholder: "local-model-id",
+    modelIdsPlaceholder: "modelo-cargado-en-lm-studio",
   },
   {
-    providerType: "llama_cpp",
-    displayName: "llama.cpp",
+    providerType: "local_llamacpp",
+    displayName: "llama.cpp server (externo)",
     baseUrlPlaceholder: "http://localhost:8080/v1",
-    modelIdsPlaceholder: "gpt-oss-20b\nqwen3-14b",
+    modelIdsPlaceholder: "modelo-cargado-en-llama-server",
   },
   {
-    providerType: "vllm",
-    displayName: "vLLM",
-    baseUrlPlaceholder: "https://my-vllm-server.com/v1",
-    modelIdsPlaceholder: "openai/gpt-oss-20b\nQwen/Qwen3-14B",
+    providerType: "local_vllm",
+    displayName: "vLLM server (externo)",
+    baseUrlPlaceholder: "http://localhost:8000/v1",
+    modelIdsPlaceholder: "modelo-servido-por-vllm",
   },
-] as const;
+];
 
 const CUSTOM_PROVIDER_LABELS: Record<string, string> = {
   [LEGACY_CUSTOM_PROVIDER_TYPE]: CUSTOM_PROVIDER_DISPLAY_NAME,
@@ -367,7 +383,7 @@ const CUSTOM_PROVIDER_LABELS: Record<string, string> = {
 };
 
 const CUSTOM_PROVIDER_BASE_URL_PLACEHOLDERS: Record<string, string> = {
-  [LEGACY_CUSTOM_PROVIDER_TYPE]: "https://my-vllm-server.com/v1",
+  [LEGACY_CUSTOM_PROVIDER_TYPE]: "http://localhost:1234/v1",
   ...Object.fromEntries(
     CUSTOM_PROVIDER_PRESETS.map((preset) => [
       preset.providerType,
@@ -398,10 +414,7 @@ export function isCustomProviderType(
 /** OpenAI-compat custom types that may expose GET /v1/models. */
 const REMOTE_MODEL_CATALOG_CUSTOM_PROVIDER_TYPES = new Set([
   LEGACY_CUSTOM_PROVIDER_TYPE,
-  "ollama",
-  "lmstudio",
-  "vllm",
-  "llama_cpp",
+  ...CUSTOM_PROVIDER_PRESETS.map((preset) => preset.providerType),
 ]);
 
 export function supportsRemoteModelCatalog(
@@ -413,12 +426,11 @@ export function supportsRemoteModelCatalog(
   );
 }
 
-/** Presets that hide the API-key field. Ollama is not skipped: Ollama cloud
- * requires a key; local servers leave the optional field empty. */
+/** API-only connections always use API-key authentication. */
 export function customPresetSkipsApiKeyField(
-  providerType: string | null | undefined,
+  _providerType: string | null | undefined,
 ): boolean {
-  return providerType === "llama_cpp" || providerType === "lmstudio";
+  return false;
 }
 
 /** Catalog load plus optional manual model IDs. */
@@ -480,26 +492,12 @@ export function toExternalBackendProviderType(
   if (!providerType) {
     return undefined;
   }
-  // vLLM's /v1/responses applies the loaded model's chat template, which 400s on
-  // strict-alternation templates (e.g. Gemma 3). Pass the type through so the
-  // backend routes vLLM to /v1/chat/completions instead of the Responses path.
-  if (providerType === "vllm") {
-    return "vllm";
-  }
-  if (providerType === "ollama") {
-    return "ollama";
-  }
-  if (providerType === "llama_cpp") {
-    return "llama_cpp";
-  }
   // Generic custom servers are OpenAI-compatible, but should still use the
   // chat-completions backend path instead of OpenAI's Responses API route.
-  if (providerType === LEGACY_CUSTOM_PROVIDER_TYPE) {
+  if (isCustomProviderType(providerType)) {
     return LEGACY_CUSTOM_PROVIDER_TYPE;
   }
-  return isCustomProviderType(providerType)
-    ? CUSTOM_BACKEND_PROVIDER_TYPE
-    : providerType;
+  return providerType;
 }
 
 const EXTERNAL_PROVIDERS_KEY = "unsloth_chat_external_providers";

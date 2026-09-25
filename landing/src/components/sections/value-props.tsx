@@ -6,7 +6,7 @@ import { ShieldCheck, DollarSign, Eye, Edit3 } from 'lucide-react';
 
 export function ValueProps() {
   const [policyMode, setPolicyMode] = useState<'PLAN' | 'BUILD'>('BUILD');
-  const [selectedModel, setSelectedModel] = useState<'Ollama' | 'Claude' | 'Gemini'>('Ollama');
+  const [selectedProvider, setSelectedProvider] = useState<'OpenAI' | 'Anthropic' | 'Gemini'>('OpenAI');
 
   return (
     <section id="pilares" className="py-20 relative bg-[#09090b] border-y border-white/10">
@@ -29,14 +29,14 @@ export function ValueProps() {
                 <div className="p-3 rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-sm">
                   <ShieldCheck className="w-6 h-6" />
                 </div>
-                <Badge variant="success">Local-First Sandbox</Badge>
+                <Badge variant="success">Control local</Badge>
               </div>
 
               <h3 className="text-2xl font-bold font-display text-white">
                 1. Privacidad y Compliance Total por Diseño
               </h3>
               <p className="text-sm text-gray-300 leading-relaxed">
-                El broker de seguridad intercepta todas las llamadas I/O del sistema operativo. Tu código jamás abandona la máquina ni el perímetro corporativo sin tu autorización explícita.
+                Las acciones con archivos y terminal requieren control explícito. El contenido que envías a un modelo se comparte únicamente con el proveedor de IA que configures.
               </p>
 
               {/* Interactive Permission Policy Switcher */}
@@ -94,30 +94,30 @@ export function ValueProps() {
               </div>
 
               <h3 className="text-2xl font-bold font-display text-white">
-                2. Modelo Híbrido: Cero Cuotas Innecesarias
+                2. Elige el proveedor que ya utilizas
               </h3>
               <p className="text-sm text-gray-300 leading-relaxed">
-                Utiliza Ollama o modelos locales para tareas pesadas de indexado y reserva APIs en la nube solo para razonamiento complejo.
+                Conecta proveedores por API y selecciona los modelos habilitados en tu cuenta. Sparta no descarga pesos, ni instala motores, ni exige GPU.
               </p>
 
               {/* Model Provider Simulator */}
               <div className="p-4 rounded-2xl bg-[#0a0a0a] border border-white/10 space-y-3 font-mono text-xs">
                 <div className="flex items-center justify-between text-gray-300 pb-2 border-b border-white/10">
                   <span>PROVEEDOR SELECCIONADO</span>
-                  <span className="text-amber-400 font-semibold">{selectedModel}</span>
+                  <span className="text-amber-400 font-semibold">{selectedProvider}</span>
                 </div>
                 <div className="flex gap-2">
-                  {(['Ollama', 'Claude', 'Gemini'] as const).map((m) => (
+                  {(['OpenAI', 'Anthropic', 'Gemini'] as const).map((provider) => (
                     <button
-                      key={m}
-                      onClick={() => setSelectedModel(m)}
+                      key={provider}
+                      onClick={() => setSelectedProvider(provider)}
                       className={`flex-1 py-1.5 rounded-xl border text-[11px] cursor-pointer transition-all ${
-                        selectedModel === m
+                        selectedProvider === provider
                           ? 'bg-[#52525b] border-[#52525b] text-white font-bold'
                           : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
                       }`}
                     >
-                      {m}
+                      {provider}
                     </button>
                   ))}
                 </div>

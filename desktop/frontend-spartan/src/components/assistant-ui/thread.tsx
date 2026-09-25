@@ -87,8 +87,6 @@ import {
   shouldSubmitDictation,
 } from "@/features/chat/utils/dictation-send";
 import { DocumentPreviewMount } from "@/features/rag/components/document-preview-mount";
-import { KnowledgeBaseComposerButton } from "@/features/rag/components/knowledge-base-composer-button";
-import { ThreadDocumentsBar } from "@/features/rag/components/thread-documents-bar";
 import { usePublishedFrame } from "@/features/settings/hooks/use-published-frame";
 import { useComposerPillFit } from "@/hooks/use-composer-pill-fit";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -3087,14 +3085,6 @@ const Composer: FC<{
           <PendingAudioChip />
         </>
       )}
-      {/* Keep indexing state subscribed while dictating, but hide its chips so
-          the waveform stays the composer's only status indicator. */}
-      <div className={isDictating ? "hidden" : "contents"}>
-        <ThreadDocumentsBar
-          threadId={referenceThreadId}
-          onIndexingChange={handleIndexingChange}
-        />
-      </div>
       {isDictating ? null : <ToolStatusDisplay />}
       <div
         className="unsloth-composer-line"
@@ -3128,7 +3118,6 @@ const Composer: FC<{
               <WebSearchToggle />
               <CodeToolsToggle />
               <ImagesToggle />
-              <KnowledgeBaseComposerButton side={effectiveMenuSide} />
               {artifactsEnabled ? <ArtifactsToggle /> : null}
               {mcpEnabledForChat ? (
                 <McpComposerButton side={effectiveMenuSide} />

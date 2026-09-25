@@ -3,22 +3,30 @@ title: "Modelos y proveedores"
 description: "Configura la conexión adecuada para tu tarea y comprueba sus capacidades."
 ---
 
-## Dos formas de conectar
+## Una forma de conectar: proveedores por API
 
-**Proveedor remoto:** añade una conexión y su credencial en los ajustes. Las peticiones se procesan en el servicio seleccionado.
+Sparta Agent usa las APIs oficiales o compatibles de los proveedores configurados. Añade una conexión, guarda su credencial en la aplicación y elige el modelo disponible para esa conexión. La petición se procesa en el servicio seleccionado; el escritorio no descarga, carga ni sirve pesos de modelos.
 
-**Modelo local:** utiliza el motor compatible de Sparta o un servidor con una API compatible. Indica su dirección y comprueba que está escuchando antes de probar la conexión.
+Sparta no instala, actualiza ni administra Ollama, LM Studio, llama.cpp, GGUF, vLLM, Torch ni Transformers. Si ya tienes un servidor compatible ejecutándose en tu PC o red, puedes usar **Servidor API compatible (local o remoto)** y su URL —por ejemplo `http://localhost:1234/v1`— sin incorporar ese motor al instalador.
+
+## Configuración segura
+
+1. Abre **Conexiones** y crea o selecciona el proveedor.
+2. Introduce una clave API con los permisos mínimos necesarios.
+3. Elige un modelo y realiza una consulta corta de prueba.
+4. Activa herramientas o MCP solo si el modelo y el proveedor lo soportan.
+5. Revisa las políticas de uso, retención y residencia de datos del proveedor antes de enviar código o documentos sensibles.
 
 ## Selecciona por capacidad
 
 No todos los modelos aceptan imágenes, herramientas o el mismo tamaño de contexto. Comprueba la capacidad indicada por el proveedor y realiza una petición pequeña antes de cargar archivos grandes.
 
-## Cuando un modelo no aparece
+## Cuando un modelo no aparece o falla
 
-Revisa la URL base, la credencial, el inventario del servidor y el estado del backend. Un endpoint accesible no implica que haya un modelo cargado.
+Comprueba que la credencial esté vigente, que tu cuenta tenga acceso al modelo y que el proveedor no tenga una incidencia o límite de cuota. Una conexión válida no garantiza acceso a todos los modelos ni a todas sus funciones. También verifica que el modelo seleccionado acepte las entradas que envías, por ejemplo imágenes, llamadas de herramientas o grandes ventanas de contexto.
 
-## Memoria y contexto
+## Contexto, coste y privacidad
 
-Los modelos locales compiten por RAM o VRAM. Un contexto mayor también consume memoria. Reduce el contexto o el tamaño del modelo si falla la carga, y comprueba si hubo fallback a CPU.
+El tamaño del contexto y la salida se consumen y facturan según las reglas del proveedor. Adjunta solo la información necesaria, divide tareas grandes y usa el monitor de API para identificar solicitudes extensas. Los archivos, el historial y las configuraciones permanecen en tu equipo, pero el contenido incorporado a una solicitud se comparte con el proveedor remoto elegido.
 
 Consulta [Rendimiento](/docs/guides/performance) para medir la carga, la primera respuesta y la velocidad de generación por separado.

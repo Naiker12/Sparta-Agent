@@ -5,24 +5,18 @@ import { CheckCircle2, Clock } from 'lucide-react';
 
 export function Roadmap() {
   const completed = [
-    'Runtime agéntico nativo en TypeScript (Plan → Act → Reflect)',
-    'Motor de Gráficas V2 (8 tipos, 5 temas visuales, exportación HD)',
-    'Subagentes delegados paralelos (delegate_research, delegate_code)',
-    'Trazado visual de búsqueda web estilo Claude Code con auto-colapso',
-    'Instalación local asInvoker (NSIS) sin elevación de UAC',
-    'Integración de Monaco Editor + Base UI + xterm.js en Electron 30',
-    'Broker de seguridad local (CommandSanitizer + PathGuard)',
-    'Soporte multi-modelo (Ollama, Llama 3, Anthropic Claude, Gemini, OpenAI)',
-    'Generación de planes de ejecución en tiempo real (create_plan)',
-    'Ecosistema de skills modular (.agents/skills/)',
-    'Soporte nativo para el protocolo MCP (Model Context Protocol)',
+    'Chat, proyectos, archivos y terminal en una aplicación de escritorio',
+    'Conexiones por API para proveedores de IA y servidores compatibles',
+    'Configuración de credenciales y modelos disponibles por proveedor',
+    'Controles de permisos para acciones sensibles',
+    'Compatibilidad con Model Context Protocol (MCP)',
   ];
 
   const inProgress = [
-    'Soporte parcial para extensiones de VS Code',
-    'Memoria a largo plazo persistente con ChromaDB vectorial',
-    'Sincronización P2P encriptada para equipos de ingeniería',
-    'Balanceo dinámico de cuotas multi-proveedor en tiempo real',
+    'Más proveedores y catálogos de modelos por API',
+    'Mejoras en diagnóstico de conexión y cuota',
+    'Más conectores MCP y controles de permisos',
+    'Experiencia colaborativa para equipos de ingeniería',
   ];
 
   return (
@@ -45,7 +39,7 @@ export function Roadmap() {
                   <CheckCircle2 className="w-5 h-5" />
                 </div>
                 <h3 className="text-xl font-bold font-display text-[#d8ecf8]">
-                  Logrado (v0.2.8)
+                  Disponible
                 </h3>
               </div>
               <Badge variant="success">Completado</Badge>

@@ -8,19 +8,17 @@ import { Callout } from 'fumadocs-ui/components/callout';
 
 ## Antes de empezar
 
-Necesitas una instalación compatible con tu sistema y conexión a internet para descargar el motor o utilizar proveedores remotos. El espacio en disco y la memoria necesarios dependen del modelo; no todos requieren GPU.
-
-<DocsVideo id="quickstart" />
+Necesitas una instalación compatible con tu sistema y acceso a un proveedor de IA por API. Sparta no descarga modelos ni requiere GPU para el chat.
 
 <Steps>
 ### Instala Sparta
 Descarga el archivo correspondiente a tu plataforma desde las [versiones del repositorio](https://github.com/Naiker12/Sparta-Agent/releases). Usa el nombre del archivo publicado en esa versión; no reutilices enlaces de una versión antigua.
 
-### Prepara el motor local
-Abre Sparta y sigue la preparación del motor. El escritorio crea un entorno Python en su directorio de datos. La primera preparación puede tardar mientras descarga dependencias. Abre los detalles si necesitas revisar un error.
+### Abre el chat
+Abre **Nuevo chat**. Si aún no tienes una conexión, selecciona **Configurar proveedor API**.
 
 ### Conecta un proveedor
-En la configuración de modelos y conexiones, añade tu proveedor y sus credenciales o la URL de un servidor local compatible. Comprueba que el modelo aparece y puede responder antes de habilitar herramientas.
+En la configuración de conexiones, añade tu proveedor y sus credenciales. Si ya ejecutas un servidor compatible en tu PC o red, usa **Servidor API compatible (local o remoto)** y su URL. Comprueba que el modelo aparece y puede responder antes de habilitar herramientas.
 
 ### Envía una conversación de prueba
 Escribe: «Responde con una frase y explica qué información necesitas para ayudarme con un proyecto». Una respuesta confirma el flujo básico del proveedor, pero no comprueba todavía la ejecución de herramientas.
@@ -42,4 +40,4 @@ npm --prefix desktop/frontend-spartan ci
 npm run dev
 ```
 
-El comando inicia Vite y Electron. La preparación del backend y sus modelos es un paso separado; instalar dependencias JavaScript no prepara el entorno Python.
+El comando inicia Vite y Electron. Sparta no prepara ni descarga modelos como parte del arranque.

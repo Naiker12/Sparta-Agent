@@ -4,6 +4,20 @@ export const chat = {
     "Group project chats under a Projects heading. Turn this off to list them in Recents instead.",
   title: "Chat",
   description: "Customize how chat behaves on this device.",
+  response: {
+    title: "Model response",
+    description:
+      "Settings sent to API providers when the selected model supports them. Sparta does not download or run models locally.",
+    systemPrompt: "System instruction",
+    systemPromptDescription: "Base guidance applied to new chats.",
+    systemPromptPlaceholder: "Example: respond clearly and in English.",
+    temperature: "Temperature",
+    temperatureDescription: "Lower for more consistent answers; raise for more variety.",
+    topP: "Top P",
+    maxTokens: "Maximum response tokens",
+    reset: "Reset response settings",
+    resetAction: "Use defaults",
+  },
   modelSelection: {
     title: "Select model settings",
     expandQuantizations: "Expand quantizations",

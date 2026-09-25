@@ -1,5 +1,4 @@
 import { ElectronUpdateBanner } from "@/components/electron/update-banner";
-import { LlamaUpdateBanner } from "@/components/llama-update-banner";
 import {
   ClosingScreen,
   StartupScreen,
@@ -19,8 +18,6 @@ import { fetchDeviceType } from "@/config/env";
 import { getTauriAuthFailure, tauriAutoAuth } from "@/features/auth";
 import { useWorkspaceRelay } from "@/features/chat/hooks/use-workspace-relay";
 import { DeepLinkHandler } from "@/features/deep-links";
-import { DownloadManagerPanel } from "@/features/hub/download-manager";
-import { LoadedModelsIndicator } from "@/features/loaded-models";
 import { NativeIntentDrain } from "@/features/native-intents/native-intent-drain";
 import {
   applyCustomizationToDocument,
@@ -28,7 +25,6 @@ import {
   useStackGeometry,
   useTheme,
 } from "@/features/settings";
-import { SttDownloadPrompt } from "@/features/settings/components/stt-download-prompt";
 import { TauriUpdateContext } from "@/hooks/tauri-update-context";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSidebarPin } from "@/hooks/use-sidebar-pin";
@@ -885,14 +881,6 @@ function TauriWrapper({ children }: { children: ReactNode }) {
               enabled={!WEB_UPDATE_HIDDEN_ROUTES.has(pathname)}
             />
           )}
-          <LlamaUpdateBanner
-            positioned={false}
-            enabled={!WEB_UPDATE_HIDDEN_ROUTES.has(pathname)}
-          />
-          <DownloadManagerPanel positioned={false} />
-          {/* Last in the stack, so the persistent card sits at the corner and the
-              transient banners above it never cover it. */}
-          <LoadedModelsIndicator positioned={false} />
         </div>
       </div>
     );
@@ -912,9 +900,6 @@ function TauriWrapper({ children }: { children: ReactNode }) {
         </>
       }
     >
-      <LlamaUpdateBanner positioned={false} enabled={!hidesTitlebarSidebar} />
-      <DownloadManagerPanel positioned={false} />
-      <LoadedModelsIndicator positioned={false} />
     </TauriUpdateLayer>
   ) : (
     <StartupScreen
@@ -1058,7 +1043,6 @@ export function AppProvider({ children }: AppProviderProps) {
         <WorkspaceRelayEffect />
         <DeepLinkHandler />
         <TauriWrapper>{children}</TauriWrapper>
-        <SttDownloadPrompt />
         <Toaster
           position="top-right"
           visibleToasts={2}

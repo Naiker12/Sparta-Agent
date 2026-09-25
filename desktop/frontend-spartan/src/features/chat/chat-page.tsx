@@ -10,19 +10,12 @@ import {
   useRepoDownload,
 } from "@/features/hub/download-manager";
 import {
-  INVENTORY_FRESHNESS_WINDOW_MS,
-  useDeviceInventorySources,
-} from "@/features/hub/inventory";
-import {
   type DeletedModelRef,
   type ExternalConnectionRef,
   type ExternalModelOption,
   type LoraModelOption,
   type ModelOption,
-  ModelSelector,
   type ModelSelectorChangeMeta,
-  type PerModelConfig,
-  SidebarModelConfig,
   currentRuntimePerModelConfig,
   missingExternalModel,
   resolveInitialConfig,
@@ -38,13 +31,13 @@ import {
   useNativePathLeasesSupported,
 } from "@/features/native-intents";
 import { GuidedTour, useGuidedTourController } from "@/features/tour";
+import { useSettingsDialogStore } from "@/features/settings";
 import { useT } from "@/i18n";
 import { isTauri } from "@/lib/api-base";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import {
   BubbleChatTemporaryIcon,
-  LayoutAlignRightIcon,
   PencilEdit02Icon,
   Telescope02Icon,
 } from "@hugeicons/core-free-icons";
@@ -66,7 +59,6 @@ import {
   useChatArtifactsStore,
   useSelectedChatArtifact,
 } from "./artifacts/store";
-import { ChatSettingsPanel } from "./chat-settings-sheet";
 import { ChatModelNotice } from "./components/chat-model-notice";
 import { chatModelSwitchMeta } from "./components/chat-model-notice-switch";
 import {
@@ -82,6 +74,7 @@ import {
   modelMatchesDeleted,
 } from "./components/compare-content";
 import { ContextUsageBar } from "./components/context-usage-bar";
+import { ApiProviderModelSelector } from "./components/api-provider-model-selector";
 import { ModelLoadInlineStatus } from "./components/model-load-status";
 import { ProjectLanding } from "./components/project-landing";
 import { ProjectSwitcher } from "./components/project-switcher";
@@ -99,7 +92,6 @@ import { useChatProjects } from "./hooks/use-chat-projects";
 import { useChatSidebarItems } from "./hooks/use-chat-sidebar-items";
 import { chatModelLoaded } from "./lib/chat-model-loaded";
 import { hasKnownContextWindow } from "./lib/context-window-known";
-import { chatLocalModelOptions } from "./local-model-options";
 import {
   clampReasoningEffortToLevels,
   getExternalReasoningCapabilities,
@@ -145,8 +137,6 @@ export function ChatPage({
   const navigate = useNavigate();
   const t = useT();
 
-  const settingsOpen = useChatRuntimeStore((s) => s.settingsPanelOpen);
-  const setSettingsOpen = useChatRuntimeStore((s) => s.setSettingsPanelOpen);
   const incognito = useChatRuntimeStore((s) => s.incognito);
   const setIncognito = useChatRuntimeStore((s) => s.setIncognito);
   const incognitoLabel = incognito
@@ -185,7 +175,6 @@ export function ChatPage({
   );
   const online = useOnlineStatus();
   const remoteModelsAvailable = connectionsEnabled && online;
-  const setExternalProviders = useExternalProvidersStore((s) => s.setProviders);
   // Effects below normalize provider capabilities into the runtime store.
   // A fresh [] while offline would retrigger those effects on every store
   // update, indefinitely, when a hosted model is still selected.
@@ -244,8 +233,6 @@ export function ChatPage({
     };
   }, [active, navigate, search.thread]);
 
-  const [modelSelectorOpen, setModelSelectorOpen] = useState(false);
-  const [modelSelectorLocked, setModelSelectorLocked] = useState(false);
   const viewBeforeCompareRef = useRef<ChatSearch | null>(null);
   // Latest non-compare view, so exiting compare can restore it even when
   // compare was opened from a path that doesn't set viewBeforeCompareRef.
@@ -456,51 +443,6 @@ export function ChatPage({
   const supportsReasoningOff = useChatRuntimeStore(
     (s) => s.supportsReasoningOff,
   );
-  const activeExternalProvider = useMemo(() => {
-    const selection = parseExternalModelId(inferenceParams.checkpoint);
-    if (!selection) {
-      return null;
-    }
-    return (
-      externalProvidersForChat.find((p) => p.id === selection.providerId) ??
-      null
-    );
-  }, [externalProvidersForChat, inferenceParams.checkpoint]);
-  const activeExternalProviderType =
-    activeExternalProvider?.providerType ?? null;
-  const activeProviderCapabilities = useMemo(() => {
-    const selection = parseExternalModelId(inferenceParams.checkpoint);
-    if (!selection) {
-      return null;
-    }
-    const provider = externalProvidersForChat.find(
-      (p) => p.id === selection.providerId,
-    );
-    const baseCapabilities = getProviderCapabilities(provider?.providerType);
-    if (!baseCapabilities) {
-      return baseCapabilities;
-    }
-    const anthropicThinkingEnabled =
-      provider?.providerType === "anthropic" &&
-      reasoningStyle === "reasoning_effort" &&
-      (supportsReasoningOff ? reasoningEnabled : true) &&
-      reasoningEffort !== "none";
-    if (!anthropicThinkingEnabled) {
-      return baseCapabilities;
-    }
-    return {
-      ...baseCapabilities,
-      temperature: false,
-      topK: false,
-    };
-  }, [
-    externalProvidersForChat,
-    inferenceParams.checkpoint,
-    reasoningEnabled,
-    reasoningStyle,
-    reasoningEffort,
-    supportsReasoningOff,
-  ]);
   useEffect(() => {
     const selection = parseExternalModelId(inferenceParams.checkpoint);
     if (!selection) {
@@ -1292,52 +1234,6 @@ export function ChatPage({
       view,
     ],
   );
-  const handleReloadActiveModel = useCallback(
-    (config: PerModelConfig) => {
-      const checkpoint = inferenceParams.checkpoint;
-      if (!checkpoint) {
-        return;
-      }
-      const runtime = useChatRuntimeStore.getState();
-      const activeLoadId = runtime.activeLoadId;
-      const nativeToken = runtime.activeNativePathToken;
-      const nativeExpiry = runtime.activeNativePathExpiresAtMs;
-      // A file-picked GGUF is reachable only via its native path token, which
-      // the desktop host prunes after a TTL. Reusing an expired token makes the
-      // reload fail with an opaque error, so prompt the user to re-select the
-      // file instead.
-      if (nativeToken && nativeExpiry != null && Date.now() >= nativeExpiry) {
-        toast.error("This local model file's access has expired.", {
-          description: "Re-select the model file to reload it.",
-        });
-        return;
-      }
-      handleCheckpointChange(checkpoint, {
-        source: "local",
-        isLora: activeModelIsLora,
-        // The checkpoint is the id, so a pinned model reloads from that same snapshot.
-        loadId: activeLoadId,
-        ggufVariant: activeGgufVariant ?? undefined,
-        // Without the native token the reload validates the display label as a
-        // repo and fails.
-        nativePathToken: nativeToken ?? undefined,
-        nativePathExpiresAtMs: nativeExpiry,
-        isGguf: activeModelIsGguf,
-        isDiffusion: activeModelIsDiffusion,
-        isDownloaded: true,
-        config,
-        forceReload: true,
-      });
-    },
-    [
-      inferenceParams.checkpoint,
-      activeGgufVariant,
-      activeModelIsLora,
-      activeModelIsGguf,
-      activeModelIsDiffusion,
-      handleCheckpointChange,
-    ],
-  );
   const handleEject = useCallback(() => {
     void (async () => {
       if (await ejectModel()) {
@@ -1346,33 +1242,9 @@ export function ChatPage({
     })();
   }, [ejectModel, resetArtifacts]);
 
-  const openModelSelector = useCallback(() => {
-    setModelSelectorLocked(true);
-    setModelSelectorOpen(true);
+  const openProviderConnections = useCallback(() => {
+    useSettingsDialogStore.getState().openDialog("connections");
   }, []);
-
-  const closeModelSelector = useCallback(() => {
-    setModelSelectorLocked(false);
-    setModelSelectorOpen(false);
-  }, []);
-
-  const handleModelSelectorOpenChange = useCallback(
-    (open: boolean) => {
-      if (!open && modelSelectorLocked) {
-        return;
-      }
-      setModelSelectorOpen(open);
-    },
-    [modelSelectorLocked],
-  );
-  const openSettings = useCallback(
-    () => setSettingsOpen(true),
-    [setSettingsOpen],
-  );
-  const closeSettings = useCallback(
-    () => setSettingsOpen(false),
-    [setSettingsOpen],
-  );
   const { isMobile, pinned } = useSidebar();
 
   const enterCompare = useCallback(() => {
@@ -1528,17 +1400,9 @@ export function ChatPage({
     [remoteModelsAvailable, externalProviders],
   );
 
-  const localModelInventory = useDeviceInventorySources(["localModels"], {
-    enabled: active,
-  });
-  const localModels = useMemo<LoraModelOption[]>(
-    () => chatLocalModelOptions(localModelInventory.localModels.rows),
-    [localModelInventory.localModels.rows],
-  );
-
-  const refreshLocalModels = useCallback(() => {
-    void localModelInventory.refresh();
-  }, [localModelInventory.refresh]);
+  // API-only builds never scan the disk or third-party runtimes for models.
+  const localModels: LoraModelOption[] = [];
+  const refreshLocalModels = useCallback(() => {}, []);
 
   const refreshModelLists = useCallback(
     (deletedModel?: DeletedModelRef) => {
@@ -1600,8 +1464,7 @@ export function ChatPage({
   const refreshDeferredModelInventories = useCallback(() => {
     inventoryRefreshStartedRef.current = true;
     void refresh({ includeLoras: true });
-    void localModelInventory.refreshIfOlderThan(INVENTORY_FRESHNESS_WINDOW_MS);
-  }, [refresh, localModelInventory.refreshIfOlderThan]);
+  }, [refresh]);
 
   useEffect(() => {
     void refresh({ includeLoras: false });
@@ -1613,34 +1476,19 @@ export function ChatPage({
     return () => window.clearTimeout(timeoutId);
   }, [refresh, refreshDeferredModelInventories]);
 
-  useEffect(() => {
-    if (!(active && modelSelectorOpen)) {
-      return;
-    }
-    refreshDeferredModelInventories();
-  }, [active, modelSelectorOpen, refreshDeferredModelInventories]);
-
   const tourSteps = useMemo(
     () =>
       buildChatTourSteps({
         t,
         canCompare,
-        openModelSelector,
-        closeModelSelector,
-        openSettings,
-        closeSettings,
         enterCompare,
         exitCompare,
       }),
     [
       t,
       canCompare,
-      closeModelSelector,
-      closeSettings,
       enterCompare,
       exitCompare,
-      openModelSelector,
-      openSettings,
     ],
   );
 
@@ -1648,20 +1496,6 @@ export function ChatPage({
     id: "chat",
     steps: tourSteps,
   });
-
-  useEffect(() => {
-    if (tour.open) {
-      return;
-    }
-    if (!modelSelectorLocked) {
-      return;
-    }
-    const timeoutId = window.setTimeout(() => {
-      setModelSelectorLocked(false);
-      setModelSelectorOpen(false);
-    }, 0);
-    return () => window.clearTimeout(timeoutId);
-  }, [modelSelectorLocked, tour.open]);
 
   const showArtifactOverlay = Boolean(
     selectedArtifact &&
@@ -1866,7 +1700,6 @@ export function ChatPage({
                           closeResearchPanel();
                           return;
                         }
-                        setSettingsOpen(false);
                         closeArtifactSurface();
                         openResearchPanel(latestResearchRunId);
                       }}
@@ -1895,34 +1728,6 @@ export function ChatPage({
                   </TooltipContent>
                 </Tooltip>
               ) : null}
-              {!settingsOpen && (
-                <Tooltip>
-                  <TooltipPrimitive.Trigger asChild={true}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        useResearchRunStore.getState().closePanel();
-                        setSettingsOpen(true);
-                      }}
-                      className="flex size-[30px] cursor-pointer items-center justify-center rounded-[10px] text-nav-fg transition-colors hover:bg-nav-surface-hover hover:text-black dark:hover:text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                      aria-label={t("chat.toolbar.openRunSettings")}
-                    >
-                      <HugeiconsIcon
-                        icon={LayoutAlignRightIcon}
-                        strokeWidth={1.75}
-                        className="size-icon"
-                      />
-                    </button>
-                  </TooltipPrimitive.Trigger>
-                  <TooltipContent
-                    side="bottom"
-                    sideOffset={6}
-                    className="tooltip-compact"
-                  >
-                    {t("chat.toolbar.openRunSettings")}
-                  </TooltipContent>
-                </Tooltip>
-              )}
             </div>
           </div>
 
@@ -1966,43 +1771,13 @@ export function ChatPage({
             // a half-saved one.
             <ChatComposerModelSelectorProvider
               selector={
-                <ModelSelector
-                  models={models}
-                  loraModels={loraModels}
-                  externalModels={externalModels}
-                  externalConnections={externalConnections}
+                <ApiProviderModelSelector
+                  models={externalModels}
                   value={inferenceParams.checkpoint}
-                  loaded={chatModelLoaded({
-                    checkpoint: inferenceParams.checkpoint,
-                    isExternalModel: isExternalModelId(
-                      inferenceParams.checkpoint,
-                    ),
-                    isExternalMissing: Boolean(
-                      missingExternalModel(
-                        inferenceParams.checkpoint,
-                        externalModels,
-                        externalConnections,
-                      ),
-                    ),
-                    residentCheckpoint,
-                  })}
-                  activeGgufVariant={activeGgufVariant}
-                  activeModelConfig={activeModelConfig}
-                  activeGgufContextLength={ggufContextLength}
                   onValueChange={handleCheckpointChange}
-                  onEject={handleEject}
-                  onFoldersChange={refreshLocalModels}
-                  onModelsChange={refreshModelLists}
-                  deleteDisabled={modelOperationInProgress}
-                  variant="muted"
-                  size="sm"
-                  side="top"
-                  open={active && modelSelectorOpen}
-                  onOpenChange={handleModelSelectorOpenChange}
+                  onConfigureProviders={openProviderConnections}
                   triggerDataTour="chat-model-selector"
-                  contentDataTour="chat-model-selector-popover"
-                  showCloudIndicator={isExternalModel}
-                  className="max-w-[200px] sm:max-w-[260px] md:max-w-[320px] !pr-2"
+                  className="max-w-[200px] sm:max-w-[260px] md:max-w-[320px]"
                 />
               }
             >
@@ -2043,39 +1818,6 @@ export function ChatPage({
           ) : null}
         </div>
 
-        <ChatSettingsPanel
-          open={active && settingsOpen}
-          onOpenChange={(open) => {
-            setSettingsOpen(open);
-          }}
-          params={inferenceParams}
-          onParamsChange={setInferenceParams}
-          modelConfig={
-            view.mode !== "compare" && activeModelConfig && !modelLoading ? (
-              <SidebarModelConfig
-                modelId={inferenceParams.checkpoint}
-                ggufVariant={activeGgufVariant ?? null}
-                isGguf={activeModelIsGguf}
-                isDiffusion={activeModelIsDiffusion}
-                nativeContextLength={ggufNativeContextLength}
-                loadedContextLength={ggufContextLength}
-                loadedConfig={activeModelConfig}
-                onReload={handleReloadActiveModel}
-              />
-            ) : null
-          }
-          isExternalModel={isExternalModel}
-          providerCapabilities={activeProviderCapabilities}
-          activeExternalProvider={activeExternalProvider}
-          onExternalProviderChange={(updatedProvider) => {
-            setExternalProviders(
-              externalProviders.map((provider) =>
-                provider.id === updatedProvider.id ? updatedProvider : provider,
-              ),
-            );
-          }}
-          externalProviderType={activeExternalProviderType}
-        />
       </div>
     </ChatActiveContext.Provider>
   );

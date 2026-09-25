@@ -32,7 +32,7 @@ import { decodeJwtSubject } from "../utils/jwt-subject";
 import { resizeImageFileToDataUrl } from "../utils/resize-image-file";
 import { UserAvatar } from "./user-avatar";
 
-const PROFILE_STORAGE_KEY = "unsloth_user_profile";
+const PROFILE_STORAGE_KEY = "sparta_user_profile";
 
 function readPersistedProfile(): {
   displayName: string;

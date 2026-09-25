@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.3.0] - 2026-09-25
+
+### Changed
+
+- Sparta Agent pasa a un flujo centrado en proveedores de IA por API, sin gestionar descargas ni ejecución de pesos de modelos dentro de la aplicación.
+- Se renovaron la landing, la documentación de conexión y la galería con el flujo actual de configuración de proveedores.
+- El selector muestra iconos de marca para los proveedores compatibles y sus conexiones externas.
+- El explorador lateral resuelve el proyecto activo al abrir un chat nuevo, por lo que una carpeta conectada aparece inmediatamente en la vista de archivos.
+
+### Fixed
+
+- El panel de ajustes de ejecución usa una anchura legible y se muestra como hoja superpuesta amplia en ventanas compactas.
+- Los recursos de iconos de proveedores se incluyen en el directorio estático del empaquetado de escritorio.
+
 ## [0.2.20] - 2026-09-07
 
 ### Añadido y mejorado

@@ -14,6 +14,10 @@ import time
 from typing import Any
 from urllib.parse import quote, urlsplit
 
+# Local runtimes are intentionally disabled.  Sparta only sends credentials to
+# a remote API provider explicitly configured by the user.
+DISABLED_LOCAL_PROVIDER_TYPES = frozenset({"ollama", "lmstudio", "llama_cpp", "vllm"})
+
 PROVIDER_REGISTRY: dict[str, dict[str, Any]] = {
     "openai_codex": {
         "display_name": "ChatGPT / Codex subscription",
@@ -257,6 +261,62 @@ PROVIDER_REGISTRY: dict[str, dict[str, Any]] = {
         "auth_prefix": "Bearer ",
         "notes": "DashScope API key. China mainland: override base URL to https://dashscope.aliyuncs.com/compatible-mode/v1",
     },
+    "together": {
+        "display_name": "Together AI",
+        "base_url": "https://api.together.xyz/v1",
+        "default_models": ["meta-llama/Llama-3.3-70B-Instruct-Turbo", "Qwen/Qwen3-235B-A22B-fp8-tput"],
+        "supports_streaming": True, "supports_vision": True, "supports_tool_calling": True, "studio_tools": True,
+        "auth_header": "Authorization", "auth_prefix": "Bearer ",
+        "notes": "Together AI OpenAI-compatible API.", "model_list_mode": "remote",
+    },
+    "fireworks": {
+        "display_name": "Fireworks AI",
+        "base_url": "https://api.fireworks.ai/inference/v1",
+        "default_models": ["accounts/fireworks/models/llama-v3p3-70b-instruct", "accounts/fireworks/models/qwen3-235b-a22b"],
+        "supports_streaming": True, "supports_vision": True, "supports_tool_calling": True, "studio_tools": True,
+        "auth_header": "Authorization", "auth_prefix": "Bearer ",
+        "notes": "Fireworks OpenAI-compatible inference API.", "model_list_mode": "remote",
+    },
+    "perplexity": {
+        "display_name": "Perplexity",
+        "base_url": "https://api.perplexity.ai",
+        "default_models": ["sonar-pro", "sonar", "sonar-reasoning-pro"],
+        "supports_streaming": True, "supports_vision": False, "supports_tool_calling": False, "studio_tools": False,
+        "auth_header": "Authorization", "auth_prefix": "Bearer ",
+        "notes": "Perplexity hosted search and answer API.", "model_list_mode": "remote",
+    },
+    "xai": {
+        "display_name": "xAI",
+        "base_url": "https://api.x.ai/v1",
+        "default_models": ["grok-4", "grok-4-fast-reasoning", "grok-3-mini"],
+        "supports_streaming": True, "supports_vision": True, "supports_tool_calling": True, "studio_tools": True,
+        "auth_header": "Authorization", "auth_prefix": "Bearer ",
+        "notes": "xAI OpenAI-compatible API.", "model_list_mode": "remote",
+    },
+    "nvidia": {
+        "display_name": "NVIDIA NIM",
+        "base_url": "https://integrate.api.nvidia.com/v1",
+        "default_models": ["meta/llama-3.3-70b-instruct", "deepseek-ai/deepseek-r1"],
+        "supports_streaming": True, "supports_vision": True, "supports_tool_calling": True, "studio_tools": True,
+        "auth_header": "Authorization", "auth_prefix": "Bearer ",
+        "notes": "NVIDIA NIM OpenAI-compatible API.", "model_list_mode": "remote",
+    },
+    "cerebras": {
+        "display_name": "Cerebras",
+        "base_url": "https://api.cerebras.ai/v1",
+        "default_models": ["llama3.1-8b", "llama-3.3-70b"],
+        "supports_streaming": True, "supports_vision": False, "supports_tool_calling": True, "studio_tools": True,
+        "auth_header": "Authorization", "auth_prefix": "Bearer ",
+        "notes": "Cerebras OpenAI-compatible API.", "model_list_mode": "remote",
+    },
+    "sambanova": {
+        "display_name": "SambaNova",
+        "base_url": "https://api.sambanova.ai/v1",
+        "default_models": ["Meta-Llama-3.3-70B-Instruct", "DeepSeek-R1-Distill-Llama-70B"],
+        "supports_streaming": True, "supports_vision": False, "supports_tool_calling": True, "studio_tools": True,
+        "auth_header": "Authorization", "auth_prefix": "Bearer ",
+        "notes": "SambaNova OpenAI-compatible API.", "model_list_mode": "remote",
+    },
     "huggingface": {
         "display_name": "Hugging Face",
         "base_url": "https://router.huggingface.co/v1",
@@ -441,12 +501,14 @@ PROVIDER_REGISTRY: dict[str, dict[str, Any]] = {
 
 def get_provider_info(provider_type: str) -> dict[str, Any] | None:
     """Return the registry entry for a provider type, or None if unknown."""
+    if provider_type in DISABLED_LOCAL_PROVIDER_TYPES:
+        return None
     return PROVIDER_REGISTRY.get(provider_type)
 
 
 def get_base_url(provider_type: str) -> str | None:
     """Return the default base URL for a provider type."""
-    info = PROVIDER_REGISTRY.get(provider_type)
+    info = get_provider_info(provider_type)
     return info["base_url"] if info else None
 
 
@@ -946,6 +1008,8 @@ def list_available_providers(include_hidden: bool = False) -> list[dict[str, Any
     """
     result = []
     for provider_type, info in PROVIDER_REGISTRY.items():
+        if provider_type in DISABLED_LOCAL_PROVIDER_TYPES:
+            continue
         if info.get("hidden") and not include_hidden:
             continue
         result.append(

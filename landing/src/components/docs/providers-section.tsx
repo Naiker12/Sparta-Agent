@@ -27,10 +27,7 @@ const providers: Provider[] = [
   { id: 'perplexity', label: 'Perplexity', kind: 'cloud', connection: 'PERPLEXITY_API_KEY' },
   { id: 'xai', label: 'xAI', kind: 'cloud', connection: 'XAI_API_KEY', icon: 'xai_light.svg' },
   { id: 'nvidia', label: 'NVIDIA', kind: 'cloud', connection: 'NVIDIA_API_KEY', icon: 'nvidia.svg' },
-  { id: 'ollama', label: 'Ollama', kind: 'local', connection: 'http://localhost:11434', icon: 'ollama_light.svg' },
-  { id: 'lmstudio', label: 'LM Studio', kind: 'local', connection: 'http://localhost:1234/v1', icon: 'lmstudio_light.svg' },
-  { id: 'llamacpp', label: 'llama.cpp', kind: 'local', connection: 'http://localhost:8080/v1' },
-  { id: 'custom', label: 'Servidor personalizado', kind: 'local', connection: 'URL compatible configurada por el usuario' },
+  { id: 'custom', label: 'Servidor API compatible', kind: 'local', connection: 'URL local o remota configurada por el usuario' },
 ];
 
 function ProviderCard({ provider }: { provider: Provider }) {
@@ -53,7 +50,7 @@ function ProviderCard({ provider }: { provider: Provider }) {
         </div>
         <div className="min-w-0">
           <h3 className="truncate text-sm font-medium text-white">{provider.label}</h3>
-          <p className="text-xs text-zinc-400">{provider.kind === 'cloud' ? 'Proveedor cloud' : 'Proveedor local'}</p>
+          <p className="text-xs text-zinc-400">{provider.kind === 'cloud' ? 'Proveedor cloud' : 'Servidor externo compatible'}</p>
         </div>
       </div>
       <div className="mt-4 flex items-center gap-2 rounded-md bg-zinc-950 px-2.5 py-2 font-mono text-[11px] text-zinc-400">
@@ -72,8 +69,8 @@ export function ProvidersSection() {
     <section id="proveedores" className="max-w-4xl">
       <SectionHeader
         eyebrow="Proveedores"
-        title="Modelos cloud, locales y configurables"
-        description="Sparta Agent guarda la configuración de cada proveedor de forma independiente. Los servicios cloud requieren la clave indicada; los locales se conectan a la URL de su servidor. La disponibilidad de modelos se consulta dinámicamente desde el proveedor configurado."
+        title="Proveedores cloud y servidores API compatibles"
+        description="Sparta Agent guarda cada conexión de forma independiente. Los servicios cloud requieren su clave; un servidor externo usa su URL compatible. La disponibilidad de modelos se consulta desde la conexión configurada."
       />
 
       <div className="mt-8">
@@ -89,7 +86,7 @@ export function ProvidersSection() {
 
       <div className="mt-10">
         <div className="mb-3 flex items-center gap-2 text-sm font-medium text-white">
-          <Server className="size-4 text-emerald-400" /> Local y personalizado · {local.length} opciones
+          <Server className="size-4 text-emerald-400" /> Servidor externo compatible · {local.length} opción
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           {local.map((provider) => (

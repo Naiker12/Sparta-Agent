@@ -1,13 +1,12 @@
-import { createRoute } from "@tanstack/react-router";
+import { createRoute, redirect } from "@tanstack/react-router";
 import { requireAuth } from "../auth-guards";
 import { Route as rootRoute } from "./__root";
 
-// RootLayout renders AudioPage persistently (so an in-flight generation is not cancelled when leaving the tab); this route only owns the URL + auth gate.
 export const Route = createRoute({
   getParentRoute: () => rootRoute,
   path: "/audio",
-  staticData: { title: "Audio" },
-  // An audio pick made from the chat picker arrives here as ?model= (+ ?quant=, ?ggufQuant=, and task), which the page loads and then clears.
+  // Kept temporarily so old deep links and stale picker code remain type-safe;
+  // beforeLoad redirects every request to the API-only chat surface.
   validateSearch: (
     search: Record<string, unknown>,
   ): { model?: string; quant?: string; ggufQuant?: string; task?: string } => ({
@@ -16,11 +15,11 @@ export const Route = createRoute({
     ...(typeof search.ggufQuant === "string"
       ? { ggufQuant: search.ggufQuant }
       : {}),
-    ...(search.task === "automatic-speech-recognition" ||
-    search.task === "text-to-speech"
-      ? { task: search.task }
-      : {}),
+    ...(typeof search.task === "string" ? { task: search.task } : {}),
   }),
-  beforeLoad: () => requireAuth(),
+  beforeLoad: () => {
+    requireAuth();
+    throw redirect({ to: "/chat" });
+  },
   component: () => null,
 });

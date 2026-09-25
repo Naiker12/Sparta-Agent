@@ -54,6 +54,22 @@ module.exports = {
         '!**/.pytest_cache/**',
         '!**/tests/**',
         '!**/.git/**',
+        // API-only distribution: local model engines, offline RAG and model
+        // export are intentionally not shipped. The Python runtime itself is
+        // retained because projects, file tools and terminal workflows use it.
+        '!vendor/unsloth-installers/**',
+        '!install_llama_prebuilt.py',
+        '!install_whisper_prebuilt.py',
+        '!routes/whisper.py',
+        '!routes/rag.py',
+        '!routes/rag_pkg/**',
+        '!routes/export.py',
+        '!core/rag/**',
+        '!core/export/**',
+        '!core/training/**',
+        '!requirements/base.txt',
+        '!requirements/overrides.txt',
+        '!requirements/single-env/**',
       ],
     },
   ],

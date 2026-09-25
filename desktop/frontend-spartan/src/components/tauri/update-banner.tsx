@@ -171,7 +171,7 @@ export function UpdateBanner({
               />
               <div className="min-w-0">
                 <p className="font-heading text-base font-medium text-foreground">
-                  {showFailure ? "App update failed" : "New Unsloth version"}
+                  {showFailure ? "App update failed" : "Nueva versión de Sparta"}
                 </p>
                 {showFailure ? null : (
                   <p className="mt-0.5 text-xs text-muted-foreground">
@@ -187,7 +187,7 @@ export function UpdateBanner({
                     : isManualLinuxPackage
                       ? "Open the GitHub release page to install the Linux package"
                       : isExternalServer
-                        ? "Run `unsloth studio update` from your terminal"
+                        ? "Actualiza Sparta desde la aplicación o instala la versión más reciente"
                         : "A new app update is available"}
                 </p>
               </div>

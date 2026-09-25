@@ -69,7 +69,7 @@ function SvgPython() {
         <path fill="#3776AB" d="M63.8 0c-16.8 0-31.5 1.5-31.5 15.3v11.5h31.5v3.8H18.7C8 30.6 0 38.6 0 53.5s7.4 22.9 18.7 22.9h10.9V64.8c0-12.7 11.2-22.9 22.9-22.9h31.5c10.8 0 19.1-8.5 19.1-19.1V15.3C103.1 1.5 80.6 0 63.8 0zm-8.8 9.3c3.2 0 5.7 2.6 5.7 5.7s-2.6 5.7-5.7 5.7-5.7-2.6-5.7-5.7 2.6-5.7 5.7-5.7z" />
         <path fill="#FFD43B" d="M64.2 128c16.8 0 31.5-1.5 31.5-15.3v-11.5H64.2v-3.8h45.1c10.7 0 18.7-8 18.7-22.9s-7.4-22.9-18.7-22.9H98.4v11.6c0 12.7-11.2 22.9-22.9 22.9H44c-10.8 0-19.1 8.5-19.1 19.1v11.6c0 13.8 22.5 15.3 39.3 15.3zm8.8-9.3c-3.2 0-5.7-2.6-5.7-5.7s2.6-5.7 5.7-5.7 5.7 2.6 5.7 5.7-2.6 5.7-5.7 5.7z" />
       </svg>
-      <span className="font-mono text-[11px] font-medium tracking-wider">LANGGRAPH // PYTHON</span>
+      <span className="font-mono text-[11px] font-medium tracking-wider">API PROVIDERS // PYTHON TOOLS</span>
     </div>
   )
 }
@@ -202,7 +202,7 @@ function Navbar({ onOpenDocs }: { onOpenDocs: () => void }) {
           <span className="font-medium text-sm tracking-tight text-white flex items-center gap-2">
             Sparta Agent
             <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded-[6px] bg-[#1b1c1e] text-[#9c9c9d] border border-[#363739]">
-              v0.2.20
+              v0.3.0
             </span>
           </span>
         </a>
@@ -342,15 +342,15 @@ function HeroSection() {
         {/* Bold Signature Headline */}
         <FadeInUp delay={100}>
           <h1 className="text-center text-4xl sm:text-5xl md:text-[60px] font-semibold sm:font-bold leading-[1.1] tracking-tight text-white max-w-4xl">
-            Inteligencia agéntica para decisiones claras.
+            Tu espacio de trabajo con IA, conectado por API.
           </h1>
         </FadeInUp>
 
         {/* Subheadline in Ash */}
         <FadeInUp delay={160}>
           <p className="mt-5 max-w-xl text-base font-normal leading-relaxed text-[#9c9c9d]">
-            Un entorno de trabajo con Electron, Python y soporte para Model
-            Context Protocol. Elige modelos locales o proveedores remotos según tu tarea.
+            Conversa, crea y trabaja desde una sola aplicación. Conecta tu proveedor de IA por
+            API —en la nube o en tu red local— y conserva el control de tus herramientas y datos.
           </p>
         </FadeInUp>
 
@@ -370,10 +370,10 @@ function HeroSection() {
                   <span className="size-2.5 rounded-full bg-[#59d499]" />
                 </div>
                 <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#6a6b6c]">
-                  Sparta Agent · Command Cockpit
+                  Sparta Agent · Workspace
                 </span>
                 <span className="rounded bg-[#1b1c1e] px-2 py-0.5 font-mono text-[10px] text-[#59d499]">
-                  LOCAL IPC ONLINE
+                  API READY
                 </span>
               </div>
 
@@ -535,7 +535,7 @@ function DownloadSection() {
             </div>
 
             <BurstLink
-              href="https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Windows-0.2.20-Setup.exe"
+              href="https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Windows-0.3.0-Setup.exe"
               target="_blank"
               rel="noopener noreferrer"
               className="w-full text-center bg-[#e6e6e6] hover:bg-white text-[#111214] text-xs font-medium py-2.5 rounded-lg transition-all flex items-center justify-center gap-2 shadow-button-neutral active:scale-[0.98]"
@@ -570,7 +570,7 @@ function DownloadSection() {
             </div>
 
             <BurstLink
-              href="https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Mac-0.2.20-Installer.dmg"
+              href="https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Mac-0.3.0-Installer.dmg"
               target="_blank"
               rel="noopener noreferrer"
               className="w-full text-center bg-[#e6e6e6] hover:bg-white text-[#111214] text-xs font-medium py-2.5 rounded-lg transition-all flex items-center justify-center gap-2 shadow-button-neutral active:scale-[0.98]"
@@ -605,7 +605,7 @@ function DownloadSection() {
             </div>
 
             <BurstLink
-              href="https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Linux-0.2.20.AppImage"
+              href="https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Linux-0.3.0.AppImage"
               target="_blank"
               rel="noopener noreferrer"
               className="w-full text-center bg-[#e6e6e6] hover:bg-white text-[#111214] text-xs font-medium py-2.5 rounded-lg transition-all flex items-center justify-center gap-2 shadow-button-neutral active:scale-[0.98]"
@@ -627,11 +627,11 @@ function FaqSection() {
   const faqs = [
     {
       q: '¿Cómo garantiza Sparta Agent la privacidad de mi código fuente?',
-      a: 'Sparta Agent opera bajo una arquitectura Local-First. La indexación de tus archivos, el motor de ejecución LangGraph y la terminal corren directamente en tu máquina. Si usas modelos locales con Ollama o vLLM, tu código jamás sale a internet. Si usas proveedores cloud, las credenciales se custodian localmente en tu vault cifrado.',
+      a: 'La aplicación, tus proyectos, el historial y las herramientas de archivos/terminal se ejecutan en tu equipo. Cuando envías un mensaje a un proveedor de IA, el texto, adjuntos o resultados de herramientas que formen parte de esa solicitud se transmiten al proveedor que elegiste. Sparta Agent no descarga pesos de modelos ni inicia un servidor de inferencia local. Revisa siempre las políticas de datos, retención y región de tu proveedor antes de enviar información sensible.',
     },
     {
       q: '¿Qué modelos de IA son compatibles con Sparta Agent?',
-      a: 'Sparta Agent incluye una pasarela agéntica multi-proveedor con soporte inmediato para modelos locales (Ollama, LM Studio, vLLM) y proveedores en la nube (Anthropic Claude 3.7 / 3.5 Sonnet, OpenAI GPT-4o, DeepSeek R1 / V3, Google Gemini 2.5 Flash, OpenRouter y Groq).',
+      a: 'Sparta Agent trabaja exclusivamente con modelos ofrecidos por proveedores remotos mediante API. Añade una credencial y selecciona un modelo disponible de tu proveedor —por ejemplo OpenAI, Anthropic, Google, Mistral, DeepSeek, Groq, OpenRouter u otro proveedor compatible configurado por la aplicación—. Las capacidades reales, como visión, herramientas, contexto o razonamiento, dependen del modelo y del plan contratado; verifica la ficha del proveedor antes de usarlo en producción.',
     },
     {
       q: '¿Qué es el protocolo MCP y qué servidores incluye?',
@@ -639,7 +639,11 @@ function FaqSection() {
     },
     {
       q: '¿Cómo funciona el diálogo modal de permisos en Modo Agente?',
-      a: 'Cada acción que involucre escribir o borrar archivos, ejecutar comandos de terminal o invocar conectores MCP externos activa una tarjeta modal de confirmación previa para que mantengas el control absoluto de cada cambio en tu repositorio.',
+      a: 'Cada acción que pueda escribir o borrar archivos, ejecutar comandos o invocar conectores MCP se muestra con su alcance antes de ejecutarse. Puedes aprobar, rechazar o revisar el detalle según el modo de permisos activo. La aprobación de una acción no equivale a aprobar acciones futuras: revisa rutas, comandos y datos enviados a servicios externos antes de confirmar.',
+    },
+    {
+      q: '¿Necesito una GPU, instalar Python o descargar un modelo para usar el chat?',
+      a: 'No. El chat no instala Torch, Transformers, Hugging Face, GGUF, Whisper ni motores de modelos locales. La aplicación conserva un runtime Python administrado porque algunas herramientas de proyecto, automatización y terminal lo necesitan; ese runtime no descarga ni ejecuta pesos de IA. Solo necesitas conexión a internet y una API configurada para conversar con un modelo.',
     },
     {
       q: '¿Sparta Agent es de código abierto?',
@@ -803,12 +807,12 @@ function FooterSection({ onOpenDocs }: { onOpenDocs?: () => void }) {
                   />
                   <span className="font-medium text-sm tracking-tight text-white">Sparta Agent</span>
                   <span className="font-mono text-[10px] text-[#9c9c9d] px-1.5 py-0.5 rounded-[6px] bg-[#111214] border border-[#363739]">
-                    v0.2.20
+                    v0.3.0
                   </span>
                 </div>
 
                 <p className="text-xs text-[#9c9c9d] leading-relaxed">
-                  Escritorio con Electron, Python y soporte MCP para trabajar con modelos locales o remotos.
+                  Escritorio con Electron, Python y soporte MCP para trabajar con proveedores de IA por API.
                 </p>
               </div>
 
@@ -904,7 +908,7 @@ function FooterSection({ onOpenDocs }: { onOpenDocs?: () => void }) {
               <span>© 2026 Sparta Agent. Licencia de Código Abierto</span>
 
               <div className="flex items-center gap-3">
-                <span>Electron + Python + LangGraph</span>
+                <span>Electron + Python + APIs remotas</span>
                 <span>•</span>
                 <span>Model Context Protocol</span>
               </div>

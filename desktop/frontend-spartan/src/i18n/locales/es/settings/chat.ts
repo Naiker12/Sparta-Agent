@@ -4,6 +4,20 @@ export const chat = {
     "Agrupa los chats de proyecto bajo un encabezado Proyectos. Desactívalo para listarlos en Recientes.",
   title: "Chat",
   description: "Personaliza cómo funciona el chat en este dispositivo.",
+  response: {
+    title: "Respuesta del modelo",
+    description:
+      "Ajustes enviados a los proveedores API cuando el modelo los admite. No descargan ni ejecutan modelos en Sparta.",
+    systemPrompt: "Instrucción del sistema",
+    systemPromptDescription: "Indicación base aplicada a los chats nuevos.",
+    systemPromptPlaceholder: "Ejemplo: responde de forma clara y en español.",
+    temperature: "Temperatura",
+    temperatureDescription: "Baja para respuestas más consistentes; súbela para más variedad.",
+    topP: "Top P",
+    maxTokens: "Máximo de tokens de respuesta",
+    reset: "Restablecer ajustes de respuesta",
+    resetAction: "Usar valores predeterminados",
+  },
   modelSelection: {
     title: "Configuración de selección del modelo",
     expandQuantizations: "Expandir las cuantizaciones",

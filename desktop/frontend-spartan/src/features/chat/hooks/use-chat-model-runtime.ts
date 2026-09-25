@@ -390,6 +390,12 @@ function getTransformersUpgradeRequiredMessage(modelName: string): string {
 // claiming a model that 400s on send until the load finally settled.
 let syncGeneration = 0;
 
+/** Kept as a function so TypeScript continues checking the retired branch while
+ * the API-only migration removes it incrementally. */
+function isApiOnlyChatRuntime(): boolean {
+  return true;
+}
+
 async function syncInferenceStatusToStore(options?: {
   signal?: AbortSignal;
   includeLoras?: boolean;
@@ -402,6 +408,16 @@ async function syncInferenceStatusToStore(options?: {
   const { setModels, setLoras, setCheckpoint, setModelsError } =
     useChatRuntimeStore.getState();
   setModelsError(null);
+  if (isApiOnlyChatRuntime()) {
+    // API-only builds obtain selectable models from saved provider connections.
+    // Never poll the retired `/api/models/*` or inference-status endpoints: they
+    // describe local engines and otherwise produce repeated 404 toasts on boot.
+    setModels([]);
+    setLoras([]);
+    return;
+  }
+
+  /* c8 ignore start -- retained legacy local-runtime synchronization */
   try {
     const [listRes, statusRes, lorasRes] = await Promise.all([
       listModels(),
@@ -505,6 +521,7 @@ async function syncInferenceStatusToStore(options?: {
       description: message,
     });
   }
+  /* c8 ignore stop */
 }
 
 /**

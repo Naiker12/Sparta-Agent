@@ -62,7 +62,7 @@ export function VaultSection() {
           <SlidersHorizontal className="mb-4 size-5 text-blue-400" strokeWidth={1.6} />
           <h3 className="font-medium text-white">Multi-Proveedor</h3>
           <p className="mt-2 text-sm leading-6 text-zinc-400">
-            Administración unificada para OpenAI, Anthropic, Google Gemini, Groq, Ollama y tokens OAuth.
+            Administración unificada para OpenAI, Anthropic, Google Gemini, Groq, servidores compatibles y tokens OAuth.
           </p>
         </div>
       </div>

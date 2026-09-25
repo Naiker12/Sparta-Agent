@@ -12,8 +12,6 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   NotionIcon,
   OneDriveIcon,
-  GoogleDriveIcon,
-  SupabaseIcon,
 } from '../icons/mcp-brand-icons';
 
 export function Architecture() {
@@ -74,24 +72,24 @@ export function Architecture() {
       id: 'layer3',
       tabName: 'Motor',
       layer: 'Capa 3',
-      title: 'Núcleo Agéntico Nativo (TypeScript)',
-      desc: 'Motor que ejecuta ciclos deterministas de planificación y auto-reflexión.',
+      title: 'Orquestación de proveedores por API',
+      desc: 'El backend prepara solicitudes, aplica permisos y enruta el chat al proveedor remoto elegido.',
       color: '#10b981',
       inputCard: {
         badge: 'Motor · Planificador',
-        title: 'LangGraph State Machine',
-        desc: 'Gestiona la memoria y el bucle de auto-corrección.',
+        title: 'Contexto y políticas de solicitud',
+        desc: 'Combina el historial, el contexto autorizado y las capacidades del proveedor.',
         pills: [
-          { name: 'ChromaDB Vector Store', icon: SupabaseIcon },
-          { name: 'Google Drive RAG', icon: GoogleDriveIcon },
+          { name: 'Historial local', icon: Terminal },
+          { name: 'Permisos de herramientas', icon: ShieldCheck },
         ],
         time: '1.4s',
       },
       actionCard: {
         badge: 'Acción · Ejecución',
-        title: 'Invocación LLM JSON-RPC',
-        desc: 'Genera parches de código y resúmenes transparentes.',
-        model: 'z-ai/glm-5.2',
+        title: 'Proveedor de IA remoto',
+        desc: 'La respuesta llega desde la API configurada; no se cargan modelos locales.',
+        model: 'HTTPS API',
         time: '2.8s',
       },
     },

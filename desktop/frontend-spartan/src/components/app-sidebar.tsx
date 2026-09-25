@@ -71,7 +71,6 @@ import {
   usePromptQueueUI,
   useSidebarOrganizationStore,
 } from "@/features/chat";
-import { useExportRuntimeStore } from "@/features/export";
 import { useEffectiveProfile } from "@/features/profile";
 import {
   useAppearanceCustomStore,
@@ -87,12 +86,10 @@ import { cn } from "@/lib/utils";
 import {
   ArrowDown01Icon,
   ArrowUp01Icon,
-  AudioWave01Icon,
   BookOpen01Icon,
   BubbleChatIcon,
   ChefHatIcon,
   Delete02Icon,
-  DownloadSquare01Icon,
   Edit03Icon,
   Folder01Icon,
   Globe02Icon,
@@ -901,13 +898,11 @@ export function AppSidebar() {
     previousRunningByThreadIdRef.current = runningByThreadId;
   }, [activeVisibleThreadIdKey, runningByThreadId]);
 
-  // Export runs in the background; reflect it on the Export nav item from any tab.
-  const exportInProgress = useExportRuntimeStore((s) => s.isExporting);
   // On any non-chat tab, offer a way back to the live chat instead of starting a new one
-  // whenever a chat is running or its thread is active, or an export is in progress.
+  // whenever a chat is running or its thread is active.
   const showReturnToChat =
     !isChatRoute &&
-    (exportInProgress || anyChatRunning || storeThreadId != null);
+    (anyChatRunning || storeThreadId != null);
 
   // Recompute bottom-fade on mount and whenever list height can change: onScroll never fires
   // for short, non-scrolling lists. Guarded setState below can't loop.
@@ -968,7 +963,7 @@ export function AppSidebar() {
   const scrollRowPadding = usesDesktopTitlebar ? "px-[5px]" : "px-1.5";
 
   // One definition per row, so pinned rows and the flyout can't drift apart.
-  const navRows: Record<SidebarNavItemId, NavRowDef> = {
+  const navRows: Partial<Record<SidebarNavItemId, NavRowDef>> = {
     projects: {
       icon: Folder01Icon,
       label: t("shell.navigation.projects"),
@@ -1004,18 +999,6 @@ export function AppSidebar() {
         </button>
       ),
     },
-    audio: {
-      icon: AudioWave01Icon,
-      label: t("shell.navigation.audio"),
-      active: pathname === "/audio" || pathname.startsWith("/audio/"),
-      onClick: () => {
-        navigate({ to: "/audio" });
-        closeMobileIfOpen();
-      },
-      onIntent: () => {
-        preloadSilently(router.preloadRoute({ to: "/audio" }));
-      },
-    },
     recipes: {
       icon: ChefHatIcon,
       label: t("shell.navigation.recipes"),
@@ -1026,24 +1009,6 @@ export function AppSidebar() {
       },
       onIntent: () => {
         preloadSilently(router.preloadRoute({ to: "/data-recipes" }));
-      },
-    },
-    export: {
-      icon: DownloadSquare01Icon,
-      label: t("shell.navigation.export"),
-      active: pathname === "/export" || pathname.startsWith("/export/"),
-      spinner: exportInProgress,
-      onClick: () => {
-        navigate({ to: "/export" });
-        closeMobileIfOpen();
-      },
-      onIntent: () => {
-        preloadSilently(router.preloadRoute({ to: "/export" }));
-        preloadSilently(
-          import("@/features/export/export-navigation-cache").then((module) =>
-            module.preloadExportData(),
-          ),
-        );
       },
     },
     // The monitor page, not the API keys dialog the profile menu opens.
@@ -1088,12 +1053,12 @@ export function AppSidebar() {
     },
   };
   const unpinnedNavIds = sidebarNav
-    .filter((item) => item.id !== "recipes" && !item.pinned)
+    .filter((item) => item.id !== "recipes" && item.id !== "export" && item.id !== "audio" && !item.pinned)
     .map((item) => item.id);
   // More needs two or more rows to be worth a click; with exactly one unpinned, the menu and that row are both dropped.
   const overflowNavIds = unpinnedNavIds.length > 1 ? unpinnedNavIds : [];
   const inlineNavIds = sidebarNav
-    .filter((item) => item.id !== "recipes" && item.pinned)
+    .filter((item) => item.id !== "recipes" && item.id !== "export" && item.id !== "audio" && item.pinned)
     .map((item) => item.id);
 
   const showSidebarBrand = true;
@@ -1659,6 +1624,7 @@ export function AppSidebar() {
                   Sidebar navigation. */}
                 {inlineNavIds.map((id) => {
                   const row = navRows[id];
+                  if (!row) return null;
                   // A row whose capability is still unmeasured spins instead of blacking out.
                   const rowState = resolveNavRowState(row);
                   return (
@@ -1762,6 +1728,7 @@ export function AppSidebar() {
                       >
                         {overflowNavIds.map((id) => {
                           const row = navRows[id];
+                          if (!row) return null;
                           // Same pending handling as the inline rows above.
                           const rowState = resolveNavRowState(row);
                           return (
@@ -1810,7 +1777,8 @@ export function AppSidebar() {
           </SidebarGroup>
 
           {/* Pinned chats */}
-          {!(isStudioRoute || showTrainingRecents) &&
+          {sidebarState !== "collapsed" &&
+            !(isStudioRoute || showTrainingRecents) &&
             pinnedChatItems.length > 0 && (
               <Collapsible
                 open={pinnedOpen}
@@ -1863,7 +1831,8 @@ export function AppSidebar() {
             )}
 
           {/* Projects: one folder per project, its chats nested underneath */}
-          {!(isStudioRoute || showTrainingRecents) &&
+          {sidebarState !== "collapsed" &&
+            !(isStudioRoute || showTrainingRecents) &&
             organizeBy === "project" &&
             sidebarProjectRecords.length > 0 && (
               <Collapsible
@@ -2216,7 +2185,8 @@ export function AppSidebar() {
               </Collapsible>
             )}
 
-          {!(isStudioRoute || showTrainingRecents) && (
+          {sidebarState !== "collapsed" &&
+            !(isStudioRoute || showTrainingRecents) && (
             <Collapsible
               open={chatOpen}
               onOpenChange={setChatOpen}

@@ -1,10 +1,10 @@
 <div align="center">
   <img src="public/sparta-escritorio.png" alt="Sparta Agent" width="112" />
   <h1>Sparta Agent</h1>
-  <p><strong>Un espacio de trabajo para construir software con agentes, modelos locales y control humano.</strong></p>
+  <p><strong>Un espacio de trabajo para construir software con agentes, proveedores de IA por API y control humano.</strong></p>
 
   <p>
-    <a href="https://github.com/Naiker12/Sparta-Agent/releases"><img src="https://img.shields.io/badge/version-v0.2.20-111827?style=flat-square&logo=github&logoColor=white" alt="Versión del proyecto" /></a>
+    <a href="https://github.com/Naiker12/Sparta-Agent/releases"><img src="https://img.shields.io/badge/version-v0.3.0-111827?style=flat-square&logo=github&logoColor=white" alt="Versión del proyecto" /></a>
     <img src="https://img.shields.io/badge/desktop-Electron-47848F?style=flat-square&logo=electron&logoColor=white" alt="Electron" />
     <img src="https://img.shields.io/badge/interface-React%2019-111827?style=flat-square&logo=react&logoColor=white" alt="React 19" />
     <img src="https://img.shields.io/badge/license-MIT-111827?style=flat-square" alt="Licencia MIT" />
@@ -19,14 +19,14 @@
 
 ---
 
-> **Local cuando lo necesitas; conectado cuando lo eliges.** Sparta Agent combina chat, herramientas y contexto de proyecto en una aplicación de escritorio. Las acciones que afectan archivos o comandos pasan por un control explícito.
+> **Conectado por API, con control local.** Sparta Agent combina chat, herramientas y contexto de proyecto en una aplicación de escritorio. Las acciones que afectan archivos o comandos pasan por un control explícito.
 
 ## En un vistazo
 
 | Para | Sparta Agent aporta |
 | --- | --- |
 | Trabajar con tu código | Chat orientado a tareas, contexto de proyecto, diffs y una terminal integrada. |
-| Usar modelos locales | Compatibilidad con Ollama, LM Studio, llama.cpp y servidores compatibles con OpenAI. |
+| Usar IA | Conexiones con proveedores remotos mediante sus APIs y credenciales propias. |
 | Conectar servicios | Integraciones mediante Model Context Protocol (MCP), con conectores locales, HTTP y stdio. |
 | Mantener el control | Aprobaciones antes de acciones sensibles y almacenamiento local protegido de credenciales. |
 
@@ -82,11 +82,44 @@ La interfaz no recibe acceso directo al sistema operativo: las operaciones de es
 
 ---
 
+## Qué ocurre cuando envías un mensaje
+
+1. Escribes una consulta, eliges un proveedor y un modelo remoto.
+2. Sparta Agent prepara la conversación, las instrucciones y, solo cuando corresponde, el resultado de herramientas que autorizaste.
+3. La solicitud viaja por HTTPS al proveedor configurado usando su API.
+4. La respuesta vuelve a la aplicación, se muestra en el chat y se guarda en el historial local según tus preferencias.
+5. Si el modelo propone una acción sobre archivos, terminal o MCP, la aplicación muestra el alcance para que puedas aprobarla o rechazarla.
+
+El código y los archivos no se envían "por defecto" a todos los proveedores. Sin embargo, cualquier contenido incluido en una petición —texto, adjuntos, fragmentos de archivos o resultados de herramientas— sí se comparte con el proveedor seleccionado. Usa credenciales de trabajo con permisos mínimos, revisa los límites de gasto y consulta la política de datos del proveedor antes de usar información sensible.
+
+## Lo que esta edición no incluye
+
+Sparta Agent es **API-only** para la inferencia de IA. No instala ni ejecuta modelos locales y no incluye:
+
+- motores de entrenamiento, Torch o Transformers.
+- Ollama, LM Studio, llama.cpp, GGUF, vLLM ni servidores de modelos locales.
+- Whisper local, transcripción basada en modelos descargados ni exportación de pesos.
+- RAG local, embeddings, índices vectoriales o bases de conocimiento locales.
+
+El runtime Python administrado continúa presente porque las herramientas de proyecto, automatización y terminal pueden necesitarlo. No es un motor de IA y no descarga pesos de modelos. Esta separación reduce el tamaño del paquete, el uso de disco y los problemas de compatibilidad de GPU.
+
+---
+
 ## MCP e IA
 
 Sparta Agent usa el estándar Model Context Protocol para conectar Git, sistemas de archivos, bases de datos, herramientas de navegador y servicios configurables. Los conectores pueden operar por procesos locales, HTTP o stdio.
 
-En cuanto a modelos, puedes trabajar completamente en local con Ollama, LM Studio, llama.cpp o servidores compatibles con OpenAI. Las opciones cloud se habilitan solo cuando existe conexión y se han configurado sus credenciales.
+Los modelos se consumen exclusivamente desde proveedores remotos por API. Configura las credenciales de tu proveedor en la aplicación; Sparta no descarga ni carga pesos de modelos locales.
+
+## Límites y decisiones operativas
+
+| Situación | Qué esperar | Recomendación |
+| --- | --- | --- |
+| Sin conexión a internet | El chat con modelos no estará disponible. | Trabaja en archivos locales y vuelve a conectar antes de solicitar una respuesta. |
+| Credencial inválida o cuota agotada | El proveedor devolverá un error de autenticación, permisos o límite. | Renueva la clave, revisa el plan y prueba con un modelo habilitado. |
+| Archivo sensible | Puede terminar incluido en la solicitud si lo adjuntas o permites que una herramienta lo lea. | Aplica revisiones, minimiza el contexto y usa un proveedor aprobado por tu organización. |
+| Cambio sobre el workspace | La acción se detiene para pedir permiso cuando aplica. | Lee la ruta, el diff o el comando antes de aprobar. |
+| Modelo sin soporte de herramientas | El chat sigue disponible, pero algunas acciones no. | Usa un modelo y proveedor con soporte explícito de herramientas si necesitas modo agente. |
 
 ---
 

@@ -4,7 +4,6 @@ import {
   extractCreatedFiles,
 } from "@/components/assistant-ui/sandbox-files";
 import { getAuthToken } from "@/features/auth";
-import { projectHasSources } from "@/features/rag/api/rag-api";
 import { apiUrl } from "@/lib/api-base";
 import { parseParamCountB } from "@/lib/model-size";
 import { toast } from "@/lib/toast";
@@ -511,38 +510,14 @@ export function createOpenAIStreamAdapter(
           resolvedThreadId,
           readThreadRecord,
         );
-        const projectRagEnabled = researchProjectId
-          ? await projectHasSources(researchProjectId)
-          : false;
+        const projectRagEnabled = false;
         const researchInstructions = await resolveChatInstructions(
           resolvedThreadId,
           params.systemPrompt,
           params.systemVariables,
           readThreadRecord,
         );
-        const ragScope =
-          runtime.ragEnabled || projectRagEnabled
-            ? runtime.ragEnabled && runtime.ragSource.type === "kb"
-              ? {
-                  kb_id: runtime.ragSource.kbId,
-                  default_top_k: runtime.ragTopK,
-                  mode: runtime.ragMode,
-                  autoinject: runtime.ragAutoInject,
-                  autoinject_min_score: runtime.ragAutoInjectMinScore,
-                }
-              : {
-                  ...(runtime.ragEnabled
-                    ? { thread_id: resolvedThreadId }
-                    : {}),
-                  ...(projectRagEnabled && researchProjectId
-                    ? { project_id: researchProjectId }
-                    : {}),
-                  default_top_k: runtime.ragTopK,
-                  mode: runtime.ragMode,
-                  autoinject: runtime.ragAutoInject,
-                  autoinject_min_score: runtime.ragAutoInjectMinScore,
-                }
-            : undefined;
+        const ragScope = undefined;
 
         const threadKey = resolvedThreadId;
         // The run is durable on the server, but Stop, archive and delete reach a background
@@ -834,7 +809,7 @@ export function createOpenAIStreamAdapter(
         bypassPermissions,
         permissionMode,
         webFetchToolsEnabled,
-        ragEnabled,
+        ragEnabled: _storedRagEnabled,
         ragSource,
         ragMode,
         ragTopK,
@@ -848,9 +823,8 @@ export function createOpenAIStreamAdapter(
         resolvedThreadId,
         readThreadRecord,
       );
-      const projectRagEnabled = ragProjectId
-        ? await projectHasSources(ragProjectId)
-        : false;
+      const projectRagEnabled = false;
+      const ragEnabled = false;
       const workspaceEnabled = Boolean(threadWorkspace);
       const externalSelection = parseExternalModelId(params.checkpoint);
       const isExternalRequest = externalSelection !== null;

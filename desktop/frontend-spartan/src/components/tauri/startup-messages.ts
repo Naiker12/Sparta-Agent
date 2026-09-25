@@ -1,5 +1,5 @@
 export const INITIAL_STARTUP_MESSAGE = "Starting Spartan Agent...";
-export const MODELS_STARTUP_MESSAGE = "Loading models...";
+export const MODELS_STARTUP_MESSAGE = "Preparing API connections...";
 export const SERVER_STARTUP_MESSAGE = "Nearly done...";
 export const STATUS_MESSAGE_ROTATION_MS = 5_000;
 
@@ -19,7 +19,7 @@ const INSTALL_PHASE_MESSAGES: readonly InstallProgressMessage[] = [
   },
   {
     title: "Installing Spartan Agent...",
-    subtitle: "Setting up local AI tools...",
+    subtitle: "Setting up project tools and API connections.",
   },
   {
     title: "Finishing setup...",
@@ -99,7 +99,7 @@ export function startupMessageFromLog(
   }
   if (
     current === INITIAL_STARTUP_MESSAGE &&
-    normalized === "- loading PyTorch, Unsloth and Transformers..."
+    normalized === "- preparing provider connections..."
   ) {
     return MODELS_STARTUP_MESSAGE;
   }

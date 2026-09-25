@@ -23,6 +23,13 @@ const PROVIDER_LOGO_EXT: Record<string, "svg" | "png" | "jpg"> = {
   llama_cpp: "svg",
   lmstudio: "svg",
   groq: "svg",
+  together: "svg",
+  fireworks: "svg",
+  perplexity: "svg",
+  xai: "svg",
+  nvidia: "svg",
+  cerebras: "svg",
+  sambanova: "png",
 };
 
 export function apiProviderLogoSrc(
@@ -51,6 +58,8 @@ const DARK_INVERT_LOGOS = new Set([
   "openai_codex",
   "ollama",
   "openrouter",
+  "xai",
+  "cerebras",
 ]);
 
 /** Provider logo from `public/provider-logos/`; monochrome ones invert in dark mode. */

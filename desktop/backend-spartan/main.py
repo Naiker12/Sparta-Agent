@@ -288,20 +288,16 @@ from datetime import datetime
 from routes import (
     auth_router,
     chat_history_router,
-    export_router,
     inference_router,
     inference_studio_router,
     mcp_servers_router,
-    models_router,
     providers_router,
     openai_codex_auth_router,
-    rag_router,
     research_runs_router,
     skills_router,
     youtube_router,
 )
 from routes.project_files import router as project_files_router
-from routes.whisper import router as whisper_router
 from routes.preview import router as preview_router
 from picker.routes import templates_router as picker_templates_router
 from routes.settings import router as settings_router
@@ -1236,7 +1232,6 @@ app.add_middleware(RemoteAccessStopResponseMiddleware)
 # ============ Register API Routes ============
 
 app.include_router(auth_router, prefix = "/api/auth", tags = ["auth"])
-app.include_router(models_router, prefix = "/api/models", tags = ["models"])
 app.include_router(chat_history_router, prefix = "/api/chat", tags = ["chat"])
 app.include_router(project_files_router, prefix = "/api/chat", tags = ["project-files"])
 app.include_router(research_runs_router, prefix = "/api/chat/research-runs", tags = ["research-runs"])
@@ -1258,9 +1253,6 @@ app.include_router(prompts_router, prefix = "/api/prompts", tags = ["prompts"])
 app.include_router(memory_router, prefix = "/api/memory", tags = ["memory"])
 app.include_router(tasks_router, prefix = "/api/tasks", tags = ["tasks"])
 app.include_router(profile_stats_router, prefix = "/api/profile", tags = ["profile"])
-app.include_router(whisper_router, prefix = "/api/whisper", tags = ["whisper"])
-app.include_router(export_router, prefix = "/api/export", tags = ["export"])
-app.include_router(rag_router, prefix = "/api/rag", tags = ["rag"])
 app.include_router(picker_templates_router, prefix = "/api/picker", tags = ["picker"])
 app.include_router(youtube_router, prefix = "/api/youtube", tags = ["youtube"])
 

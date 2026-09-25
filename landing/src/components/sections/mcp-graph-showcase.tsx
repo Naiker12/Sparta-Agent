@@ -54,7 +54,7 @@ const ALL_MCP_TOOLS: MCPToolItem[] = [
 ];
 
 export function McpGraphShowcase() {
-  const [activeModel, setActiveModel] = useState('Claude 3.7 Sonnet / Ollama');
+  const [activeModel] = useState('Proveedor API configurado');
   const [activeStep, setActiveStep] = useState(0);
   const shouldReduceMotion = useReducedMotion();
   const reveal = shouldReduceMotion
@@ -205,12 +205,12 @@ export function McpGraphShowcase() {
                 <Bot className="size-6 text-[#63a1ff]" />
               </div>
               <div className="inline-block px-2.5 py-0.5 rounded-full bg-[#63a1ff]/10 border border-[#63a1ff]/30 text-[#63a1ff] text-[10px] font-mono mb-3">
-                Local + Cloud Hybrid
+                API-First
               </div>
               <h3 className="text-lg font-medium text-white mb-2">Pasarela Multi-Proveedor</h3>
               <p className="text-xs text-[#9c9c9d] leading-relaxed">
-                Alterna entre Ollama y vLLM local para máxima privacidad o conecta Claude 3.7, GPT-4o y Gemini
-                para razonamiento intensivo.
+                Conecta OpenAI, Anthropic, Gemini y otros proveedores por API. También puedes apuntar a un
+                servidor compatible que ya exista en tu red, sin que Sparta instale ni administre modelos.
               </p>
             </div>
 

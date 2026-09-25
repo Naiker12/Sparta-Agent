@@ -1,19 +1,19 @@
 ---
 title: "Documentación de Sparta"
-description: "De tu primera conversación a una tarea verificada. Aprende a configurar modelos, trabajar con archivos y conectar herramientas."
+description: "De tu primera conversación a una tarea verificada. Aprende a configurar proveedores por API, trabajar con archivos y conectar herramientas."
 ---
 
 import { Card, Cards } from 'fumadocs-ui/components/card';
 import { Callout } from 'fumadocs-ui/components/callout';
 
-Sparta Agent reúne conversaciones, modelos y herramientas en una aplicación de escritorio. Puedes trabajar con un modelo local o conectar un proveedor remoto, incorporar documentos al contexto y ejecutar tareas con herramientas habilitadas.
+Sparta Agent reúne conversaciones, proveedores de IA por API y herramientas en una aplicación de escritorio. Configura una credencial, elige un modelo remoto, incorpora solo el contexto necesario y ejecuta tareas con herramientas habilitadas y aprobaciones explícitas.
 
 ## Empieza con una tarea pequeña
 
 La mejor forma de conocer Sparta es completar un cambio que puedas revisar: conectar un modelo, elegir una carpeta y pedir una explicación antes de solicitar una edición.
 
 <Cards>
-<Card title="Inicio rápido" href="/docs/quickstart">Instala la aplicación, prepara el motor y conecta tu primer modelo.</Card>
+<Card title="Inicio rápido" href="/docs/quickstart">Instala la aplicación, prepara las herramientas y conecta tu primer proveedor.</Card>
 <Card title="Tu primera tarea" href="/docs/guides/first-task">Recorre el flujo de contexto, aprobación, ejecución y verificación.</Card>
 </Cards>
 
@@ -21,7 +21,7 @@ La mejor forma de conocer Sparta es completar un cambio que puedas revisar: cone
 
 <Cards>
 <Card title="Trabajar con archivos" href="/docs/features/attachments-and-files">Adjunta documentos y delimita la carpeta de tu proyecto.</Card>
-<Card title="Conectar un modelo" href="/docs/core-concepts/models-and-providers">Configura un proveedor cloud o un servidor local compatible.</Card>
+<Card title="Conectar un proveedor" href="/docs/core-concepts/models-and-providers">Configura una API remota y verifica las capacidades del modelo.</Card>
 <Card title="Investigar con fuentes" href="/docs/features/deep-research">Organiza una investigación y revisa sus resultados.</Card>
 <Card title="Añadir herramientas MCP" href="/docs/mcp/introduction">Conecta servicios externos y controla sus permisos.</Card>
 </Cards>
@@ -33,7 +33,7 @@ La mejor forma de conocer Sparta es completar un cambio que puedas revisar: cone
 3. **Resultados:** Sparta muestra estados y salidas de las herramientas.
 4. **Verificación:** revisas los archivos y ejecutas las comprobaciones adecuadas.
 
-<Callout title="Local y remoto" type="info">El escritorio y su motor se ejecutan en tu equipo. Al usar un proveedor cloud o un conector externo, parte del contenido puede enviarse a ese servicio. Elige el modelo y las herramientas según los datos de tu tarea.</Callout>
+<Callout title="Datos locales y solicitudes remotas" type="info">El escritorio, los proyectos y las herramientas se ejecutan en tu equipo. Al usar un proveedor de IA o un conector externo, el contenido incluido en la solicitud puede enviarse a ese servicio. Sparta Agent no descarga ni ejecuta modelos locales.</Callout>
 
 ## Cuando algo no funciona
 

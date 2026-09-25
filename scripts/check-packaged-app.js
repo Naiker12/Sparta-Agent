@@ -29,9 +29,14 @@ if (archives.length === 0) {
 }
 
 for (const archive of archives) {
-  for (const required of ['install_llama_prebuilt.py', 'install_whisper_prebuilt.py', 'vendor/unsloth-installers/install_llama_prebuilt.py', 'vendor/unsloth-installers/install_whisper_prebuilt.py', 'vendor/unsloth-installers/prebuilt_core.py', 'vendor/unsloth-installers/LICENSE.AGPL-3.0']) {
+  for (const removed of ['install_llama_prebuilt.py', 'install_whisper_prebuilt.py', 'vendor/unsloth-installers', 'routes/whisper.py', 'routes/rag.py', 'routes/export.py']) {
+    if (existsSync(join(dirname(archive), 'backend', removed))) {
+      throw new Error(`Unexpected local-model resource in API-only package: ${removed}`)
+    }
+  }
+  for (const required of ['run.py', 'requirements/studio.txt']) {
     if (!existsSync(join(dirname(archive), 'backend', required))) {
-      throw new Error(`Missing packaged backend installer resource: ${required}`)
+      throw new Error(`Missing packaged API backend resource: ${required}`)
     }
   }
   const entries = listPackage(archive).map((entry) => entry.replaceAll('\\', '/'))

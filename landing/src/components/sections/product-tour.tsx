@@ -20,8 +20,12 @@ type Capability = {
   description: string
   details: string[]
   image?: { src: string; alt: string }
-  video?: { src: string; label: string }
   imageLabel: string
+}
+
+const appWorkspaceImage = {
+  src: getPublicUrl('proyecto/SPARTAN-PRINCIPAL.png'),
+  alt: 'Chat de Sparta Agent listo para configurar un proveedor de IA por API',
 }
 
 const capabilities: Capability[] = [
@@ -29,15 +33,12 @@ const capabilities: Capability[] = [
     id: 'flujo-agentico',
     icon: Bot,
     eyebrow: '01 · ORQUESTACIÓN',
-    title: 'Conversaciones que se convierten en planes de trabajo',
+    title: 'Empieza una conversación y conecta el proveedor que prefieras',
     description:
-      'Explica el objetivo en lenguaje natural y revisa un plan por etapas antes de que el agente ejecute cualquier cambio en el repositorio.',
-    details: ['Plan visible por etapas', 'Seguimiento de sesión', 'Contexto del workspace'],
-    video: {
-      src: getPublicUrl('proyecto/Conversaciones que se convierten.mp4'),
-      label: 'Demostración del flujo de planificación',
-    },
-    imageLabel: 'Demostración del flujo de planificación',
+      'El chat está listo para trabajar desde el primer momento. Configura un proveedor por API y elige el modelo disponible en esa conexión.',
+    details: ['Proveedor por API', 'Modelos de tu cuenta', 'Historial de sesiones'],
+    image: appWorkspaceImage,
+    imageLabel: 'Chat y configuración de proveedor API',
   },
   {
     id: 'archivos',
@@ -57,15 +58,12 @@ const capabilities: Capability[] = [
     id: 'arquitectura',
     icon: Code2,
     eyebrow: '03 · INGENIERÍA',
-    title: 'Edición y revisión pensadas para el código',
+    title: 'Una interfaz clara para trabajar con tus proyectos',
     description:
-      'Entorno de desarrollo agéntico basado en Electron, React y Monaco Editor para mantener la inspección y el diff visual cerca de la conversación.',
-    details: ['Editor Monaco', 'Diff de cambios en vivo', 'Inspección de AST'],
-    video: {
-      src: getPublicUrl('proyecto/Edición y revisión pensadas para el código.mp4'),
-      label: 'Edición y revisión de código en Sparta Agent',
-    },
-    imageLabel: 'Edición y revisión de código en Sparta Agent',
+      'Mantén conversaciones, proyectos, archivos y acciones de desarrollo en el mismo espacio de trabajo, sin descargar ni administrar modelos dentro de Sparta.',
+    details: ['Proyectos', 'Archivos adjuntos', 'Acciones asistidas'],
+    image: appWorkspaceImage,
+    imageLabel: 'Espacio de trabajo de Sparta Agent',
   },
   {
     id: 'terminal',
@@ -84,12 +82,9 @@ const capabilities: Capability[] = [
     title: 'Herramientas y servicios conectados mediante MCP',
     description:
       'Amplía el agente con servidores Model Context Protocol para conectar bases de datos, APIs, Notion, Slack, Google Drive y sistemas de archivos.',
-    details: ['Protocolo MCP abierto', 'Canal IPC seguro', 'Catálogo de conectores'],
-    video: {
-      src: getPublicUrl('proyecto/Herramientas y servicios conectados mediante MCP.mp4'),
-      label: 'Conexiones MCP en Sparta Agent',
-    },
-    imageLabel: 'Conexiones MCP en Sparta Agent',
+    details: ['Protocolo MCP abierto', 'Conectores por API', 'Catálogo de conexiones'],
+    image: appWorkspaceImage,
+    imageLabel: 'Conexiones de Sparta Agent',
   },
   {
     id: 'seguridad',
@@ -134,7 +129,7 @@ const TERMINAL_SCRIPTS: TerminalScript[] = [
   {
     command: 'sparta build --target=sidecar-rust --release',
     lines: [
-      { text: '[00:01] ⚡ Compilando sparta-core v0.2.20 (Tokio runtime + C-ABI)...', color: 'text-[#6a6b6c]' },
+      { text: '[00:01] ⚡ Compilando sparta-core v0.3.0 (Tokio runtime + C-ABI)...', color: 'text-[#6a6b6c]' },
       { text: '[00:02] ✓ Target release [optimizado] finalizado en 1.24s', color: 'text-[#59d499]' },
       { text: '[00:03] 📦 Binario nativo generado: /dist/sparta-sidecar.exe', color: 'text-[#ff6363]' },
     ],
@@ -250,7 +245,7 @@ function AnimatedTerminalMockup() {
       <div className="flex items-center justify-between border-t border-[#363739] pt-3 mt-4 text-[10px] font-mono text-[#6a6b6c]">
         <div className="flex items-center gap-2">
           <Terminal className="size-3.5 text-[#9c9c9d]" />
-          <span>Local Engine · Latency: 0.4ms</span>
+          <span>Terminal integrada · sesión activa</span>
         </div>
         <span className="text-[#9c9c9d]">UTF-8 · Interactive Multi-Shell</span>
       </div>
@@ -259,23 +254,6 @@ function AnimatedTerminalMockup() {
 }
 
 function ImageSlot({ capability }: { capability: Capability }) {
-  if (capability.video) {
-    return (
-      <div className="relative overflow-hidden rounded-[16px] border border-[#363739] bg-[#07080a] shadow-key">
-        <video
-          className="block w-full object-contain"
-          autoPlay
-          loop
-          muted
-          playsInline
-          preload="metadata"
-        >
-          <source src={capability.video.src} type="video/mp4" />
-        </video>
-      </div>
-    )
-  }
-
   if (capability.image) {
     return (
       <div className="relative overflow-hidden rounded-[16px] border border-[#363739] bg-[#07080a] shadow-key">

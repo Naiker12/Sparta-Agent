@@ -2254,6 +2254,15 @@ from core.inference.anthropic_compat import (
 from auth import storage as auth_storage
 from auth.authentication import API_KEY_PREFIX, get_current_subject
 from state import active_generations
+from routes.api_runtime_state import (
+    CANCEL_LOCK as _CANCEL_LOCK,
+    CANCEL_REGISTRY as _CANCEL_REGISTRY,
+    PENDING_CANCELS as _PENDING_CANCELS,
+    TrackedCancel as _TrackedCancel,
+    cancel_by_cancel_id_or_stash as _cancel_by_cancel_id_or_stash,
+    cancel_by_keys as _cancel_by_keys,
+    prune_pending as _prune_pending,
+)
 
 
 def _request_api_key_token(request: Any) -> Optional[str]:
@@ -2796,124 +2805,6 @@ def _confirm_gate_needs_stream(payload) -> bool:
     # gate can only prompt while streaming. Without this a non-streaming auto request is
     # admitted, then blocks in wait_tool_decision on an approval the client never reads.
     return not all(is_always_safe_tool(t) and t != "web_search" for t in enabled)
-
-
-# Cancel registry. Proxies (e.g. Colab) can swallow client fetch aborts so
-# is_disconnected() never fires. POST /inference/cancel looks up in-flight
-# cancel_events here by cancel_id (per-run) or session_id / completion_id
-# (fallbacks).
-_CANCEL_REGISTRY: dict[str, set[threading.Event]] = {}
-_CANCEL_LOCK = threading.Lock()
-
-# Cancel POSTs arriving before registration are stashed; the next matching
-# __enter__ replays set() within the TTL.
-_PENDING_CANCELS: dict[str, float] = {}
-_PENDING_CANCEL_TTL_S = 30.0
-
-
-def _prune_pending(now: float) -> None:
-    for k in [k for k, ts in _PENDING_CANCELS.items() if now - ts > _PENDING_CANCEL_TTL_S]:
-        _PENDING_CANCELS.pop(k, None)
-
-
-class _TrackedCancel:
-    """Register cancel_event in _CANCEL_REGISTRY for the block's duration.
-
-    Also records the run in state.active_generations so /load and /unload can
-    see which chats a reload would interrupt. Both registries share this event,
-    so either one cancels down the same per-request path.
-    """
-
-    def __init__(
-        self,
-        event: threading.Event,
-        *keys,
-        thread_id = None,
-        model = None,
-        kind = "chat",
-    ):
-        self.event = event
-        self.keys = tuple(k for k in keys if k)
-        # kind reaches the swap prompt: embeddings and raw completions have no conversation, so
-        # naming them chats would offer to stop something the user never started from a thread.
-        self._active = active_generations.ActiveGeneration(
-            event, thread_id = thread_id, model = model, kind = kind
-        )
-
-    @classmethod
-    def for_payload(cls, event: threading.Event, payload, *keys):
-        """Track the run against the conversation its request names."""
-        return cls(
-            event,
-            *keys,
-            thread_id = getattr(payload, "thread_id", None),
-            model = getattr(payload, "model", None),
-        )
-
-    def __enter__(self):
-        # Register + consume-pending in one critical section to close the
-        # TOCTOU race against a concurrent cancel POST.
-        should_cancel = False
-        with _CANCEL_LOCK:
-            for k in self.keys:
-                _CANCEL_REGISTRY.setdefault(k, set()).add(self.event)
-            now = time.monotonic()
-            _prune_pending(now)
-            for k in self.keys:
-                if k and _PENDING_CANCELS.pop(k, None) is not None:
-                    should_cancel = True
-        self._active.__enter__()
-        if should_cancel:
-            self.event.set()
-        return self.event
-
-    def __exit__(self, *exc):
-        with _CANCEL_LOCK:
-            for k in self.keys:
-                bucket = _CANCEL_REGISTRY.get(k)
-                if bucket is None:
-                    continue
-                bucket.discard(self.event)
-                if not bucket:
-                    _CANCEL_REGISTRY.pop(k, None)
-        self._active.__exit__(*exc)
-        return False
-
-
-def _cancel_by_keys(keys) -> int:
-    """Set cancel_event for matching registry entries; no stash.
-    session_id/completion_id are shared across runs on the same thread, so
-    stashing them would ghost-cancel the user's next request. Only cancel_id
-    is per-run unique (see _cancel_by_cancel_id_or_stash)."""
-    if not keys:
-        return 0
-    events: set[threading.Event] = set()
-    with _CANCEL_LOCK:
-        _prune_pending(time.monotonic())
-        for k in keys:
-            bucket = _CANCEL_REGISTRY.get(k)
-            if bucket:
-                events.update(bucket)
-    for ev in events:
-        ev.set()
-    return len(events)
-
-
-def _cancel_by_cancel_id_or_stash(cancel_id: str) -> int:
-    """Atomic lookup-or-stash; pairs with _TrackedCancel.__enter__ to
-    close the TOCTOU race."""
-    now = time.monotonic()
-    events: set[threading.Event] = set()
-    with _CANCEL_LOCK:
-        _prune_pending(now)
-        bucket = _CANCEL_REGISTRY.get(cancel_id)
-        if bucket:
-            events.update(bucket)
-        else:
-            _PENDING_CANCELS[cancel_id] = now
-    for ev in events:
-        ev.set()
-    return len(events)
 
 
 async def _await_cancel_then_close(cancel_event, resp) -> None:
@@ -10309,9 +10200,9 @@ async def openai_chat_completions(
     ``stream`` defaults to ``false`` per OpenAI's spec; clients opt into SSE by
     sending ``stream: true``.
 
-    Routes to the correct backend automatically:
-    - GGUF models → llama-server via LlamaCppBackend
-    - Other models → Unsloth/transformers via InferenceBackend
+    Routes exclusively to a configured remote provider.  Local GGUF,
+    llama.cpp and Transformers/Unsloth execution were retired from Sparta's
+    API-only edition.
     """
     # OpenAI's newer "developer" role is equivalent to "system". Normalize it
     # before provider routing so external providers (which may not accept the
@@ -10348,6 +10239,15 @@ async def openai_chat_completions(
                 detail = "Video input is only supported on a local GGUF model with video support.",
             )
         return await _proxy_to_external_provider(payload, request, current_subject)
+
+    # Do this before any model validation, auto-load, GPU probe or tool setup:
+    # those paths are all part of the retired on-device runtime.  A provider
+    # connection is now mandatory, so an old persisted local model selection
+    # fails clearly instead of triggering a download or allocating VRAM.
+    raise HTTPException(
+        status_code = 400,
+        detail = "Local model execution has been removed. Select a remote API provider.",
+    )
 
     # Reject a malformed function tool here: it would otherwise reach
     # llama-server and surface as an opaque 500 "Failed to parse tools".

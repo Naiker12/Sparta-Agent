@@ -151,7 +151,6 @@ export const SingleContent = memo(function SingleContent({
       return;
     }
     onCloseArtifact();
-    useChatRuntimeStore.getState().setSettingsPanelOpen(false);
   }, [researchMatchesThread, onCloseArtifact]);
 
   const threadPane = (

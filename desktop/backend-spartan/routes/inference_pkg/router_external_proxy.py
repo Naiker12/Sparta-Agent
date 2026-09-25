@@ -34,6 +34,13 @@ from core.inference.studio_tool_loop import (
 )
 from models.inference import ChatCompletionRequest
 from routes.provider_credentials import resolve_provider_api_key_or_400
+from routes.api_runtime_state import (
+    CANCEL_LOCK,
+    CANCEL_REGISTRY,
+    PENDING_CANCELS,
+    TrackedCancel as _TrackedCancel,
+    prune_pending as _prune_pending,
+)
 from storage import providers_db
 from utils.api_errors import openai_error_body
 
@@ -49,24 +56,6 @@ def _get_inf_attr(name: str, fallback=None):
         return getattr(mod, name)
     return fallback
 
-
-
-class _TrackedCancelProxy:
-    def __call__(self, *args, **kwargs):
-        cls = _get_inf_attr("_TrackedCancel")
-        if cls:
-            return cls(*args, **kwargs)
-        from contextlib import nullcontext
-        return nullcontext()
-
-    def for_payload(self, *args, **kwargs):
-        cls = _get_inf_attr("_TrackedCancel")
-        if cls and hasattr(cls, "for_payload"):
-            return cls.for_payload(*args, **kwargs)
-        from contextlib import nullcontext
-        return nullcontext()
-
-_TrackedCancel = _TrackedCancelProxy()
 
 
 def _request_has_api_key(request: Any) -> bool:
@@ -254,12 +243,6 @@ def _refresh_codex_access(*args, **kwargs):
     return fn(*args, **kwargs) if fn else None
 
 
-def _prune_pending(*args, **kwargs):
-    fn = _get_inf_attr("_prune_pending")
-    if fn:
-        fn(*args, **kwargs)
-
-
 _SERVER_BUILTIN_TOOL_NAMES = frozenset(
     {"web_search", "web_fetch", "code_execution", "image_generation"}
 )
@@ -267,15 +250,15 @@ _SERVER_BUILTIN_TOOL_NAMES = frozenset(
 
 # Accessors for cancel registry
 def _get_cancel_lock():
-    return _get_inf_attr("_CANCEL_LOCK", threading.Lock())
+    return CANCEL_LOCK
 
 
 def _get_cancel_registry():
-    return _get_inf_attr("_CANCEL_REGISTRY", {})
+    return CANCEL_REGISTRY
 
 
 def _get_pending_cancels():
-    return _get_inf_attr("_PENDING_CANCELS", {})
+    return PENDING_CANCELS
 
 _INPUT_DOCUMENT_PROVIDERS = frozenset({"anthropic", "openai"})
 

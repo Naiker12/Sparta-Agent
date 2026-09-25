@@ -22,11 +22,6 @@ const API_BASE: Record<string, string> = {
   nvidia: 'https://integrate.api.nvidia.com',
 }
 
-function normalizeOpenAIBase(baseUrl: string): string {
-  const clean = baseUrl.replace(/\/+$/, '')
-  return clean.endsWith('/v1') ? clean : `${clean}/v1`
-}
-
 function chatModelsOnly(models: string[]): string[] {
   const chatModels = models.filter((model) => {
     const id = model.toLowerCase()
@@ -38,29 +33,8 @@ function chatModelsOnly(models: string[]): string[] {
 export function registerModelsIPC(): void {
   ipcMain.handle('models:list', async (_event, req: ListModelsRequest) => {
     const vendor = req.vendor
-    const localOpenAI = vendor === 'lmstudio' || vendor === 'llamacpp' || vendor === 'custom'
 
     try {
-      if (vendor === 'ollama') {
-        const base = (req.serverUrl || 'http://localhost:11434').replace(/\/+$/, '')
-        const res = await fetch(`${base}/api/tags`)
-        if (!res.ok) return { models: [], error: `HTTP ${res.status}: ${res.statusText}` }
-        const data = await res.json()
-        const models = (data.models || []).map((m: { name: string }) => m.name)
-        return { models }
-      }
-
-      if (localOpenAI) {
-        const base = normalizeOpenAIBase(req.serverUrl || 'http://localhost:1234')
-        const headers: Record<string, string> = {}
-        if (req.apiKey) headers.Authorization = `Bearer ${req.apiKey}`
-        const res = await fetch(`${base}/models`, { headers })
-        if (!res.ok) return { models: [], error: `HTTP ${res.status}: ${res.statusText}` }
-        const data = await res.json()
-        const models = chatModelsOnly((data.data || []).map((m: { id: string }) => m.id))
-        return { models }
-      }
-
       // Cloud providers: fetch from the main process to bypass browser CORS restrictions
       // (e.g. NVIDIA does not allow browser-side requests to integrate.api.nvidia.com).
       return await fetchCloudModels(vendor, req.apiKey, req.serverUrl)

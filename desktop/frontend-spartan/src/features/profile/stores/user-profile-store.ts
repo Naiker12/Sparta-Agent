@@ -31,6 +31,10 @@ export const useUserProfileStore = create<UserProfileState>()(
       setAvatarShape: (avatarShape) => set({ avatarShape }),
       setShowGreetingSloth: (showGreetingSloth) => set({ showGreetingSloth }),
     }),
-    { name: "unsloth_user_profile" },
+    {
+      // Do not import the legacy Unsloth profile: old installations may have
+      // the product name saved as the person's visible name.
+      name: "sparta_user_profile",
+    },
   ),
 );

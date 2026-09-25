@@ -55,8 +55,6 @@ import {
 } from "@/features/chat/adapters/studio-model-dictation-adapter";
 import { useStagedDownload } from "@/features/hub/download-manager";
 import { getHfToken, hfApiToken } from "@/features/hub/stores/hf-token-store";
-import { ModelSelector } from "@/features/model-picker/components/model-selector";
-import { AUDIO_CATALOG } from "@/features/model-picker/components/model-selector/model-catalog";
 import { PillTabs } from "@/features/model-picker/components/model-selector/pill-tabs";
 import type {
   ModelOption,
@@ -2076,32 +2074,9 @@ export function AudioPage({ active = true }: { active?: boolean }) {
         <div className="pointer-events-none flex h-full min-w-0 items-start overflow-hidden pl-[var(--studio-media-header-left-inset,1.5rem)] @[50rem]:border-r @[50rem]:border-border/60">
           {/* A long resident model name must yield to the mode pill instead of painting over it. */}
           <div className="pointer-events-auto flex min-w-0 max-w-full items-center gap-2 overflow-hidden pt-[var(--studio-chat-header-padding-top,11px)]">
-            <ModelSelector
-              models={selectorModels}
-              additionalOnDeviceModels={
-                mode === "transcribe" ? sttOnDeviceModels : trainedTtsModels
-              }
-              loadedModelIdOverride={
-                mode === "transcribe" && sttReady
-                  ? (selectedSttRepo ?? undefined)
-                  : undefined
-              }
-              loaded={mode === "transcribe" ? sttReady : undefined}
-              value={selectorValue}
-              onValueChange={handleModelSelect}
-              onEject={busy === null && selectorValue ? handleEject : undefined}
-              variant="ghost"
-              className="!h-[34px] max-w-full gap-1 overflow-hidden pl-3 pr-1 @[68rem]:gap-2 @[68rem]:pl-4 @[68rem]:pr-2"
-              triggerLabelClassName="text-ui-14 @[68rem]:text-ui-16"
-              task={HUB_TASKS_BY_MODE[mode]}
-              catalog={AUDIO_CATALOG}
-              // TTS/ASR come from the checkpoint's own tokenizer, not a curated
-              // recipe, so any publisher's audio repo loads here.
-              communityModelPolicy="search-only"
-              placeholder={t("audioPage.selectModel")}
-              open={active && selectorOpen}
-              onOpenChange={(o) => setSelectorOpen(active && o)}
-            />
+            <span className="truncate px-3 text-ui-14 text-muted-foreground @[68rem]:px-4 @[68rem]:text-ui-16">
+              Audio mediante proveedor API
+            </span>
           </div>
         </div>
       </div>

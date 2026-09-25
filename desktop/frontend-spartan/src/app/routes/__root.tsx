@@ -16,9 +16,6 @@ import {
   useChatRuntimeStore,
 } from "@/features/chat";
 import { bootstrapPersistedCredentials } from "@/features/credentials/bootstrap";
-import { useExportRuntimeLifecycle } from "@/features/export";
-import { HfTokenWarningDialog } from "@/features/hf-auth";
-import { backfillModelOverrides } from "@/features/model-picker/api/migrate-model-overrides";
 import { usePersonalizationSync } from "@/features/profile";
 import { RemoteCodeConsentDialog } from "@/features/security";
 import {
@@ -26,7 +23,6 @@ import {
   useSettingsDialogStore,
   useShortcut,
 } from "@/features/settings";
-import { TransformersUpgradeDialog } from "@/features/transformers-upgrade";
 import { useSidebarPin } from "@/hooks/use-sidebar-pin";
 import { type TranslationKey, useT } from "@/i18n";
 import { isTauri } from "@/lib/api-base";
@@ -100,11 +96,6 @@ function waitForCredentialBootstrap(): Promise<void> {
   });
 }
 
-// AudioPage gets the same persistent mount so an in-flight generation keeps its UI state; still lazy on first /audio visit.
-const AudioPage = lazy(() =>
-  import("@/features/audio").then((m) => ({ default: m.AudioPage })),
-);
-
 function PersonalizationSyncMount() {
   usePersonalizationSync(hasAuthToken());
   return null;
@@ -163,13 +154,9 @@ const CHAT_ONLY_ALLOWED = new Set([
   "/",
   "/chat",
   "/projects",
-  "/hub",
   "/login",
   "/signup",
   "/change-password",
-  // Export stays reachable on chat-only hosts so the page can show its own grayed-out reason
-  // instead of a silent redirect; it self-gates via export capability, so nothing runs.
-  "/export",
   // Chat-only hosts serve the API like any other, so the monitor must be reachable there
   // or the overlay's "Expand" and the Settings API card redirect to /chat.
   "/api-monitor",
@@ -199,10 +186,6 @@ function isChatOnlyAllowed(pathname: string): boolean {
   }
   // Images runs on CPU/MPS via the native sd.cpp engine, the very no-GPU setup it was added for. The chat-only flag is about training/export, so it must not redirect /images.
   if (pathname === "/images" || pathname.startsWith("/images/")) {
-    return true;
-  }
-  // Audio inference is CPU-capable too: GGUF TTS through llama.cpp and STT through the whisper.cpp / mtmd sidecars.
-  if (pathname === "/audio" || pathname.startsWith("/audio/")) {
     return true;
   }
   return false;
@@ -283,18 +266,7 @@ function RootLayout() {
   const chatSearch = isChatRoute ? liveChatSearch : frozenChatSearch;
   const shouldMountChat = isChatRoute || chatMounted;
 
-  // Same persistent mount for /audio so generation UI state survives leaving the tab.
-  const isAudioRoute = pathname === "/audio";
-  const [audioMounted, setAudioMounted] = useState(isAudioRoute);
-  if (isAudioRoute && !audioMounted) {
-    setAudioMounted(true);
-  }
-  const shouldMountAudio = isAudioRoute || audioMounted;
-  const isChatLike = isChatRoute || isAudioRoute;
-
-  // Global export driver: streams worker logs and tracks status from any route
-  // so an export keeps running and stays visible while chatting.
-  useExportRuntimeLifecycle();
+  const isChatLike = isChatRoute;
 
   const matchedTitle = useMatches({
     select: (matches) => {
@@ -320,17 +292,6 @@ function RootLayout() {
       ? `${documentTitle} - ${DEFAULT_DOCUMENT_TITLE}`
       : DEFAULT_DOCUMENT_TITLE;
   }, [documentTitle]);
-
-  // Settings predating the server override map live only here, so an API load would use
-  // app defaults. Backfill once, after auth.
-  useEffect(() => {
-    if (isAuthFlowRoute) {
-      return;
-    }
-    backfillModelOverrides().catch(() => {
-      // Non-critical: model override backfill retried on next mount.
-    });
-  }, [isAuthFlowRoute]);
 
   useEffect(() => {
     if (isAuthFlowRoute) {
@@ -389,10 +350,7 @@ function RootLayout() {
       {!isAuthFlowRoute && <SettingsDialog />}
       {/* Opens itself when API traffic arrives; hides on the full monitor page. */}
       {!isAuthFlowRoute && <ApiMonitorOverlay />}
-      <HfTokenWarningDialog />
       <RemoteCodeConsentDialog />
-      <TransformersUpgradeDialog />
-      {/* At the root, not under /chat: a swap can start from the Hub too. */}
       <StopRunningChatsDialog />
       {hideNavbar ? (
         // Keep the context available on minimal/auth routes too. Lazy route
@@ -442,27 +400,12 @@ function RootLayout() {
                   <ChatPage search={chatSearch} active={isChatRoute} />
                 </div>
               )}
-              {/* Same keep-alive treatment for Audio so generation and training UI state survive off-tab; `active` force-closes its body-portaled overlays so none bleed over another tab while hidden. */}
-              {shouldMountAudio && (
-                <div
-                  className={
-                    isAudioRoute
-                      ? "flex min-h-0 min-w-0 flex-1 basis-0 flex-col overflow-hidden"
-                      : "hidden"
-                  }
-                  inert={!isAudioRoute || undefined}
-                >
-                  <Suspense fallback={<RouteFallback />}>
-                    <AudioPage active={isAudioRoute} />
-                  </Suspense>
-                </div>
-              )}
               {/* Use mode="popLayout" instead of "wait" to prevent UI freezes when
                   switching from heavy pages (like Export with many checkpoints).
                   "popLayout" allows the new route to mount immediately while the
                   old one animates out, avoiding blocking on expensive exit renders.
                   See issue #5850. */}
-              {!(isChatRoute || isAudioRoute) && (
+              {!isChatRoute && (
                 <AnimatePresence initial={false} mode="popLayout">
                   <motion.div
                     key={pathname}

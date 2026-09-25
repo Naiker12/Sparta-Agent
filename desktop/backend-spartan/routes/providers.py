@@ -183,7 +183,13 @@ async def get_pricing_snapshot(current_subject: str = Depends(get_current_subjec
 async def list_provider_configs(_current_subject: str = Depends(get_current_subject)):
     """List all saved provider configurations."""
     rows = providers_db.list_providers()
-    return [_provider_response(row) for row in rows]
+    # Old installs can contain Ollama/LM Studio/vLLM rows.  Do not surface or
+    # reuse them after moving to API-only providers.
+    return [
+        _provider_response(row)
+        for row in rows
+        if get_provider_info(row["provider_type"]) is not None
+    ]
 
 
 @router.post("/", response_model = ProviderResponse, status_code = 201)
@@ -266,7 +272,9 @@ async def update_provider_config(
     if not existing:
         raise HTTPException(status_code = 404, detail = "Provider not found")
 
-    existing_info = get_provider_info(existing["provider_type"]) or {}
+    existing_info = get_provider_info(existing["provider_type"])
+    if existing_info is None:
+        raise HTTPException(status_code = 400, detail = "Local model providers are disabled in API-only mode.")
     max_output_tokens_requested = "max_output_tokens" in payload.model_fields_set
     _validate_max_output_tokens_contract(
         existing["provider_type"],

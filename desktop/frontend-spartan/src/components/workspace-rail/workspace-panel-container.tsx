@@ -1,4 +1,5 @@
 import { useChatProjects } from "@/features/chat/hooks/use-chat-projects";
+import { useChatRuntimeStore } from "@/features/chat/stores/chat-runtime-store";
 import { useWorkspaceStore } from "@/features/chat/stores/use-workspace-store";
 import { cn } from "@/lib/utils";
 import {
@@ -167,9 +168,14 @@ export function WorkspacePanelContainer({
   const isOpen = useWorkspaceStore((state) => state.isOpen);
   const activeTab = useWorkspaceStore((state) => state.activeTab);
   const setOpen = useWorkspaceStore((state) => state.setOpen);
+  const activeProjectId = useChatRuntimeStore((state) => state.activeProjectId);
   const { projects } = useChatProjects();
+  // A new chat does not yet have a project id in its URL, but its composer can
+  // already be connected to the active project workspace. Use that project for
+  // the Files rail so attaching a folder immediately exposes its contents.
+  const resolvedProjectId = projectId ?? activeProjectId;
   const project =
-    projects.find((candidate) => candidate.id === projectId) ?? null;
+    projects.find((candidate) => candidate.id === resolvedProjectId) ?? null;
 
   const renderActiveTabContent = () => {
     switch (activeTab) {

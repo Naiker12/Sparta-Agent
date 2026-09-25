@@ -4,11 +4,12 @@ import { beforeEach, afterEach, expect, test, vi } from 'vitest'
 import { BackendManager } from '../desktop/ia-sparta-app-shell/src/backend-manager'
 import { isDesktopAuthOrigin } from '../desktop/ia-sparta-app-shell/src/desktop-auth-origin'
 
-const mocks = vi.hoisted(() => ({ spawn: vi.fn(), readFileSync: vi.fn(), writeFileSync: vi.fn() }))
+const mocks = vi.hoisted(() => ({ spawn: vi.fn(), readFileSync: vi.fn(), readdirSync: vi.fn(), writeFileSync: vi.fn() }))
 vi.mock('node:child_process', () => ({ spawn: mocks.spawn, execSync: vi.fn() }))
 vi.mock('node:fs', () => ({
   existsSync: () => true,
   readFileSync: mocks.readFileSync,
+  readdirSync: mocks.readdirSync,
   mkdirSync: vi.fn(),
   renameSync: vi.fn(),
   writeFileSync: mocks.writeFileSync,
@@ -20,7 +21,9 @@ let child: EventEmitter & { stdout: PassThrough; stderr: PassThrough; kill: Retu
 beforeEach(() => {
   mocks.spawn.mockClear()
   mocks.readFileSync.mockClear()
+  mocks.readdirSync.mockReset()
   mocks.writeFileSync.mockClear()
+  mocks.readdirSync.mockReturnValue([])
   child = Object.assign(new EventEmitter(), { stdout: new PassThrough(), stderr: new PassThrough(), kill: vi.fn() })
   mocks.spawn.mockReturnValue(child)
   mocks.readFileSync.mockImplementation((path: string) => path.endsWith('sparta-runtime.json')

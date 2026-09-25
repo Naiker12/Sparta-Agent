@@ -2559,7 +2559,6 @@ type ChatRuntimeStore = {
    * backend settings, so a refresh always exits incognito.
    */
   incognito: boolean;
-  settingsPanelOpen: boolean;
   editingMessageId: string | null;
   pendingAudioBase64: string | null;
   pendingAudioName: string | null;
@@ -2658,7 +2657,6 @@ type ChatRuntimeStore = {
   ) => void;
   setActiveProjectId: (projectId: string | null) => void;
   setIncognito: (incognito: boolean) => void;
-  setSettingsPanelOpen: (open: boolean) => void;
   setEditingMessageId: (id: string | null) => void;
   clearCheckpoint: () => void;
   setReasoningEnabled: (
@@ -3620,7 +3618,6 @@ export const useChatRuntimeStore = create<ChatRuntimeStore>((set, get) => ({
   queuedSettingsEpoch: 0,
   activeProjectId: null,
   incognito: false,
-  settingsPanelOpen: false,
   editingMessageId: null,
   pendingAudioBase64: null,
   pendingAudioName: null,
@@ -4145,7 +4142,6 @@ export const useChatRuntimeStore = create<ChatRuntimeStore>((set, get) => ({
     }
     set(incognito ? { incognito, deepResearchEnabled: false } : { incognito });
   },
-  setSettingsPanelOpen: (settingsPanelOpen) => set({ settingsPanelOpen }),
   setEditingMessageId: (id) => set({ editingMessageId: id }),
   clearCheckpoint: () => {
     // Mirror setCheckpoint's persistence: dropping the checkpoint must also

@@ -9,15 +9,12 @@ import {
 } from "@/components/ui/dialog";
 import { type TranslationKey, useT } from "@/i18n";
 import { isTauri } from "@/lib/api-base";
-import { MicIcon } from "@/lib/mic-icon";
 import { scheduleIdleTask } from "@/lib/schedule-idle-task";
 import { cn } from "@/lib/utils";
 import {
-  BotIcon,
   Cancel01Icon,
   CloudIcon,
   ComputerTerminal01Icon,
-  CpuIcon,
   DatabaseSettingIcon,
   Globe02Icon,
   HelpCircleIcon,
@@ -60,11 +57,9 @@ const TAB_LOADERS = {
     import("./tabs/profile-tab").then((m) => ({ default: m.ProfileTab })),
   appearance: () =>
     import("./tabs/appearance-tab").then((m) => ({ default: m.AppearanceTab })),
-  resources: () =>
-    import("./tabs/resources-tab").then((m) => ({ default: m.ResourcesTab })),
+  resources: () => Promise.resolve({ default: ApiOnlyUnavailableTab }),
   chat: () => import("./tabs/chat-tab").then((m) => ({ default: m.ChatTab })),
-  voice: () =>
-    import("./tabs/voice-tab").then((m) => ({ default: m.VoiceTab })),
+  voice: () => Promise.resolve({ default: ApiOnlyUnavailableTab }),
   connections: () =>
     import("./tabs/connections-tab").then((m) => ({
       default: m.ConnectionsTab,
@@ -76,13 +71,16 @@ const TAB_LOADERS = {
     })),
   "api-keys": () =>
     import("./tabs/api-keys-tab").then((m) => ({ default: m.ApiKeysTab })),
-  agents: () =>
-    import("./tabs/agents-tab").then((m) => ({ default: m.AgentsTab })),
+  agents: () => Promise.resolve({ default: ApiOnlyUnavailableTab }),
   debugging: () =>
     import("./tabs/debugging-tab").then((m) => ({ default: m.DebuggingTab })),
   about: () =>
     import("./tabs/about-tab").then((m) => ({ default: m.AboutTab })),
 } satisfies Record<SettingsTab, () => Promise<{ default: FC }>>;
+
+function ApiOnlyUnavailableTab() {
+  return null;
+}
 
 function lazyTabs<T extends Record<string, () => Promise<{ default: FC }>>>(
   loaders: T,
@@ -178,11 +176,6 @@ const TABS: TabDef[] = [
     icon: PaintBrush02Icon,
   },
   {
-    id: "resources",
-    labelKey: "settings.tabs.resources",
-    icon: CpuIcon,
-  },
-  {
     id: "chat",
     labelKey: "settings.tabs.chat",
     icon: Message01Icon,
@@ -196,16 +189,6 @@ const TABS: TabDef[] = [
     id: "connections",
     labelKey: "settings.tabs.connections",
     icon: CloudIcon,
-  },
-  {
-    id: "agents",
-    labelKey: "settings.tabs.agents",
-    icon: BotIcon,
-  },
-  {
-    id: "voice",
-    labelKey: "settings.tabs.voice",
-    iconComponent: MicIcon,
   },
   {
     id: "data",
@@ -251,7 +234,12 @@ export function SettingsDialog() {
   // Mounting a heavy tab panel (System, Connections) in the same commit as
   // the nav highlight makes the highlight lag the click. Render the panel
   // from a deferred value so the nav updates first.
-  const panelTab = useDeferredValue(activeTab);
+  // Old saved preferences can name a removed local-engine tab. Fall back to
+  // General instead of importing its bundle or calling its retired endpoints.
+  const visibleActiveTab = TABS.some((tab) => tab.id === activeTab)
+    ? activeTab
+    : "general";
+  const panelTab = useDeferredValue(visibleActiveTab);
   const [query, setQuery] = useState("");
 
   // Once opened, pull the other panels in on idle so a tab click never waits on the
@@ -261,7 +249,8 @@ export function SettingsDialog() {
       return;
     }
     return scheduleIdleTask(() => {
-      for (const load of Object.values(TAB_LOADERS)) {
+      for (const tab of TABS) {
+        const load = TAB_LOADERS[tab.id];
         // Warming a panel nobody asked for must not surface as an unhandled rejection;
         // the boundary above speaks for the panel the user does open.
         void load().catch(() => undefined);
@@ -388,10 +377,10 @@ export function SettingsDialog() {
       return;
     }
     const frame = window.requestAnimationFrame(() => {
-      tabButtonRefs.current[activeTab]?.focus({ preventScroll: true });
+      tabButtonRefs.current[visibleActiveTab]?.focus({ preventScroll: true });
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [open, activeTab]);
+  }, [open, visibleActiveTab]);
 
   return (
     <>
@@ -518,7 +507,7 @@ export function SettingsDialog() {
                 )}
               >
                 {TABS.map((tab) => {
-                  const active = activeTab === tab.id;
+                  const active = visibleActiveTab === tab.id;
                   return (
                     <button
                       key={tab.id}

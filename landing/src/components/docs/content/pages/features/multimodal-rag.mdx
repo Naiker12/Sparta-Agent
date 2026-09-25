@@ -1,27 +1,27 @@
 ---
-title: "Conocimiento y RAG"
-description: "Recupera fragmentos de documentos para fundamentar una respuesta."
+title: "Archivos y contexto de proyecto"
+description: "Trabaja con archivos del proyecto sin crear un índice vectorial local."
 ---
 
-## Qué hace la recuperación
+## Alcance actual
 
-El sistema procesa fuentes y recupera fragmentos relevantes para una consulta. Reutiliza la infraestructura de documentos e índices del backend para complementar el contexto del modelo.
+La edición API-only de Sparta Agent no incluye RAG local, indexación vectorial, embeddings ni bases de conocimiento internas. Tampoco procesa documentos para crear un índice persistente. Esta decisión evita dependencias pesadas y deja claro qué contenido se entrega a un proveedor remoto.
 
-## Prepara las fuentes
+## Cómo dar contexto al agente
 
-Selecciona documentos relacionados con la tarea y espera a que termine su procesamiento. Comprueba el estado de indexación antes de evaluar la calidad de una respuesta.
+Conecta un proyecto y usa las herramientas de archivos para leer rutas concretas, buscar texto en el workspace o adjuntar los documentos necesarios a una conversación. El modelo recibe solo el contenido que la solicitud y las herramientas aprobadas proporcionan; no se hace una búsqueda semántica automática sobre tu disco.
 
 ## Formula una consulta verificable
 
 ```text
-Busca en los documentos del proyecto cómo se configura la autenticación.
-Indica los archivos y fragmentos que sustentan la respuesta.
+Revisa `src/auth` y `README.md` para explicar cómo se configura la autenticación.
+Indica los archivos leídos y no modifiques nada.
 ```
 
-## Revisa la evidencia
+## Revisa el alcance y la evidencia
 
-Recuperar fragmentos no equivale a leer todo el repositorio. Contrasta rutas y contenido, especialmente si los archivos cambiaron después de indexarse.
+Leer un archivo concreto no equivale a comprender todo el repositorio. Pide al agente que cite rutas, revisa los cambios antes de aplicarlos y limita las herramientas al proyecto correcto. Si el contenido se envía a un modelo remoto, también aplica las políticas de privacidad del proveedor seleccionado.
 
 ## Si falta información
 
-Comprueba que la fuente pertenece al proyecto correcto, que el procesamiento terminó y que la consulta describe el concepto que buscas. Si necesitas el estado exacto de un archivo editado, utiliza una lectura directa.
+Indica rutas, nombres de símbolos o términos que el agente pueda buscar. Para el estado exacto de un archivo editado, usa lectura directa o la terminal con aprobación. No esperes que una base de conocimiento local complete automáticamente documentos que no hayas compartido en la tarea.

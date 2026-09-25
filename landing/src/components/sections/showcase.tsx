@@ -13,9 +13,9 @@ export function Showcase() {
     {
       id: 'post',
       title: 'Pantalla Principal de Sparta Agent',
-      desc: 'Panel de control con logo Spartan, barra de búsqueda de tareas, sugerencias rápidas y selector de modelos (Ollama, Claude 3.5, Gemini).',
-      src: getPublicUrl('post.png'),
-      badge: 'Main Interface',
+      desc: 'Chat principal listo para conectar un proveedor de IA por API y empezar a trabajar.',
+      src: getPublicUrl('proyecto/SPARTAN-PRINCIPAL.png'),
+      badge: 'Chat y proveedores API',
     },
     {
       id: 'sparta-escritorio',

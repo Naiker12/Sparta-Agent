@@ -29,7 +29,7 @@ export const navigation: NavGroup[] = [
     title: 'Capacidades Clave',
     items: [
       { label: 'Deep Research', slug: 'deep-research' },
-      { label: 'RAG Multimodal', slug: 'rag-multimodal' },
+      { label: 'Archivos y contexto', slug: 'rag-multimodal' },
       { label: 'Gestión de Adjuntos', slug: 'adjuntos' },
       { label: 'Herramientas en vivo', slug: 'herramientas' },
       { label: 'Terminal y Python', slug: 'terminal' },

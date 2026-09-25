@@ -17,9 +17,9 @@ description: "Mide dónde se consume el tiempo y reduce trabajo innecesario."
 
 Prueba un mensaje corto y una sola herramienta. Añade archivos relevantes, evita adjuntos repetidos y mantén cerradas las vistas que no necesitas.
 
-## Modelos locales
+## Proveedores remotos
 
-Reduce el tamaño del modelo o del contexto cuando falte memoria. Comprueba el dispositivo utilizado: un fallback a CPU puede explicar una generación mucho más lenta. Cambiar el presupuesto de VRAM puede requerir recargar el modelo.
+No hay carga de modelos, VRAM ni fallback a CPU en el chat API-only. Mide la latencia de red, el tiempo hasta el primer token, el tamaño del contexto y los límites de cuota del proveedor. Reduce adjuntos repetidos y divide solicitudes extensas para controlar tiempo y coste.
 
 ## Conexiones remotas
 

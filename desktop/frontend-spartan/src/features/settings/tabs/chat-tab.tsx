@@ -5,7 +5,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import {
   type PlusMenuItemId,
   useChatPreferencesStore,
@@ -13,6 +15,7 @@ import {
   usePlusMenuPrefsStore,
   useSidebarOrganizationStore,
 } from "@/features/chat";
+import { DEFAULT_INFERENCE_PARAMS } from "@/features/chat/types/runtime";
 import { PASTED_TEXT_THRESHOLD_CHOICES } from "@/features/chat/utils/pasted-text";
 import { useUserProfileStore } from "@/features/profile";
 import { type TranslationKey, useT } from "@/i18n";
@@ -155,18 +158,8 @@ export function ChatTab() {
   const hydratePersistedSettings = useChatRuntimeStore(
     (state) => state.hydratePersistedSettings,
   );
-  const expandQuantizations = useChatRuntimeStore(
-    (state) => state.expandQuantizations,
-  );
-  const setExpandQuantizations = useChatRuntimeStore(
-    (state) => state.setExpandQuantizations,
-  );
-  const showAllQuantizations = useChatRuntimeStore(
-    (state) => state.showAllQuantizations,
-  );
-  const setShowAllQuantizations = useChatRuntimeStore(
-    (state) => state.setShowAllQuantizations,
-  );
+  const params = useChatRuntimeStore((state) => state.params);
+  const setParams = useChatRuntimeStore((state) => state.setParams);
   const organizeBy = useSidebarOrganizationStore((s) => s.organizeBy);
   const setOrganizeBy = useSidebarOrganizationStore((s) => s.setOrganizeBy);
   const showModelDisclaimer = useChatPreferencesStore(
@@ -209,28 +202,87 @@ export function ChatTab() {
         </p>
       </header>
 
-      <SettingsSection title={t("settings.chat.modelSelection.title")}>
+      <SettingsSection
+        title={t("settings.chat.response.title")}
+        description={t("settings.chat.response.description")}
+      >
         <SettingsRow
-          label={t("settings.chat.modelSelection.expandQuantizations")}
-          description={t(
-            "settings.chat.modelSelection.expandQuantizationsDescription",
-          )}
+          label={t("settings.chat.response.systemPrompt")}
+          description={t("settings.chat.response.systemPromptDescription")}
         >
-          <Switch
-            checked={expandQuantizations}
-            onCheckedChange={setExpandQuantizations}
+          <Textarea
+            value={params.systemPrompt}
+            onChange={(event) =>
+              setParams({ ...params, systemPrompt: event.target.value })
+            }
+            placeholder={t("settings.chat.response.systemPromptPlaceholder")}
+            className="min-h-24 w-full max-w-md resize-y"
           />
         </SettingsRow>
         <SettingsRow
-          label={t("settings.chat.modelSelection.showAllQuantizations")}
-          description={t(
-            "settings.chat.modelSelection.showAllQuantizationsDescription",
-          )}
+          label={t("settings.chat.response.temperature")}
+          description={t("settings.chat.response.temperatureDescription")}
         >
-          <Switch
-            checked={showAllQuantizations}
-            onCheckedChange={setShowAllQuantizations}
+          <Input
+            type="number"
+            min="0"
+            max="2"
+            step="0.1"
+            value={params.temperature}
+            onChange={(event) => {
+              const temperature = Number(event.target.value);
+              if (Number.isFinite(temperature)) {
+                setParams({ ...params, temperature });
+              }
+            }}
+            className="w-24"
           />
+        </SettingsRow>
+        <SettingsRow label={t("settings.chat.response.topP")}>
+          <Input
+            type="number"
+            min="0"
+            max="1"
+            step="0.05"
+            value={params.topP}
+            onChange={(event) => {
+              const topP = Number(event.target.value);
+              if (Number.isFinite(topP)) setParams({ ...params, topP });
+            }}
+            className="w-24"
+          />
+        </SettingsRow>
+        <SettingsRow label={t("settings.chat.response.maxTokens")}>
+          <Input
+            type="number"
+            min="1"
+            step="1"
+            value={params.maxTokens}
+            onChange={(event) => {
+              const maxTokens = Number(event.target.value);
+              if (Number.isFinite(maxTokens) && maxTokens > 0) {
+                setParams({ ...params, maxTokens });
+              }
+            }}
+            className="w-28"
+          />
+        </SettingsRow>
+        <SettingsRow label={t("settings.chat.response.reset")}>
+          <button
+            type="button"
+            onClick={() =>
+              setParams({
+                ...params,
+                temperature: DEFAULT_INFERENCE_PARAMS.temperature,
+                topP: DEFAULT_INFERENCE_PARAMS.topP,
+                maxTokens: DEFAULT_INFERENCE_PARAMS.maxTokens,
+                systemPrompt: DEFAULT_INFERENCE_PARAMS.systemPrompt,
+              })
+            }
+            className="text-sm font-medium text-primary hover:underline"
+          >
+            {t("settings.chat.response.resetAction")}
+          </button>
         </SettingsRow>
       </SettingsSection>
 

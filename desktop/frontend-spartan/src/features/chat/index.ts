@@ -40,13 +40,9 @@ export {
   applyActiveModelStatusToStore,
   resolveInferenceCheckpointId,
 } from "./lib/apply-inference-status-to-store";
-export {
-  ChatSettingsPanel,
-  ParamSlider,
-  defaultInferenceParams,
-  type InferenceParams,
-  type Preset,
-} from "./chat-settings-sheet";
+export { ParamSlider } from "./components/param-slider";
+export { defaultInferenceParams, type Preset } from "./presets/preset-policy";
+export type { InferenceParams } from "./types/runtime";
 export { useChatRuntimeStore } from "./stores/chat-runtime-store";
 export {
   CHAT_RAG_CAPTION_KEY,

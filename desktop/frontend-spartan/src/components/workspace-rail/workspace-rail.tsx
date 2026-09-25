@@ -87,10 +87,10 @@ export function WorkspaceRail() {
 
   return (
     <aside
-      className="flex w-12 shrink-0 flex-col items-center border-l border-border/40 bg-muted/15 px-1.5 py-3 select-none"
+      className="flex w-10 shrink-0 flex-col items-center border-l border-border/40 bg-muted/15 px-[5px] py-2 select-none"
       aria-label="Workspace navigation"
     >
-      <div className="flex w-full flex-col items-center gap-1 rounded-xl border border-border/35 bg-background/55 p-1 shadow-[0_1px_2px_rgb(15_23_42/0.04)]">
+      <div className="flex w-full flex-col items-center gap-1">
         {tabs.map((tab) => {
           if (!tab.enabled) {
             return null;
@@ -105,9 +105,9 @@ export function WorkspaceRail() {
               onClick={() => handleTabClick(tab.id)}
               title={tab.label}
               className={cn(
-                "relative flex size-8 items-center justify-center rounded-lg transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                "relative flex size-[30px] items-center justify-center rounded-md transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 isActive
-                  ? "bg-blue-500/12 text-blue-600 shadow-sm dark:bg-blue-400/15 dark:text-blue-300"
+                  ? "bg-blue-500/12 text-blue-600 dark:bg-blue-400/15 dark:text-blue-300"
                   : "text-muted-foreground/75 hover:bg-muted hover:text-foreground",
               )}
             >

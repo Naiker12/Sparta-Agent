@@ -12,9 +12,7 @@
   "cohere":     { "label": "Cohere",             "kind": "cloud", "env": "COHERE_API_KEY",     "base_url": "https://api.cohere.ai/v1",                   "docs": "https://docs.cohere.com" },
   "perplexity": { "label": "Perplexity",         "kind": "cloud", "env": "PERPLEXITY_API_KEY", "base_url": "https://api.perplexity.ai/v1",               "docs": "https://docs.perplexity.ai" },
   "xai":        { "label": "xAI",                "kind": "cloud", "env": "XAI_API_KEY",        "base_url": "https://api.x.ai/v1",                        "docs": "https://docs.x.ai" },
-  "nvidia":     { "label": "NVIDIA",             "kind": "cloud", "env": "NVIDIA_API_KEY",     "base_url": "https://integrate.api.nvidia.com/v1",         "docs": "https://build.nvidia.com" },
-  "ollama":     { "label": "Ollama",             "kind": "local", "env": null,                 "base_url": "http://localhost:11434",                      "docs": "https://ollama.ai" },
-  "lmstudio":   { "label": "LM Studio",          "kind": "local", "env": null,                 "base_url": "http://localhost:1234/v1",                    "docs": "https://lmstudio.ai" },
-  "llamacpp":   { "label": "llama.cpp",          "kind": "local", "env": null,                 "base_url": "http://localhost:8080/v1",                    "docs": "https://github.com/ggerganov/llama.cpp" },
-  "custom":     { "label": "Servidor personalizado", "kind": "local", "env": null,             "base_url": null,                                         "docs": null }
+  "nvidia":     { "label": "NVIDIA",             "kind": "cloud", "env": "NVIDIA_API_KEY",     "base_url": "https://integrate.api.nvidia.com/v1",         "docs": "https://build.nvidia.com" }
+  ,"cerebras":  { "label": "Cerebras",           "kind": "cloud", "env": "CEREBRAS_API_KEY",   "base_url": "https://api.cerebras.ai/v1",                  "docs": "https://inference-docs.cerebras.ai" }
+  ,"sambanova": { "label": "SambaNova",          "kind": "cloud", "env": "SAMBANOVA_API_KEY",  "base_url": "https://api.sambanova.ai/v1",                 "docs": "https://docs.sambanova.ai" }
 }

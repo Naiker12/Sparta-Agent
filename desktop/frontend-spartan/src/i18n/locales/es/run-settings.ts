@@ -69,5 +69,5 @@ export const runSettings = {
   extraArgumentsHint:
     "Argumentos adicionales de línea de comandos pasados a llama-server.",
   autoFitNote:
-    "Unsloth adapta automáticamente el contexto a tu dispositivo, usando el contexto completo cuando la memoria lo permite.",
+    "Sparta adapta automáticamente el contexto a tu dispositivo, usando el contexto completo cuando la memoria lo permite.",
 } as const;

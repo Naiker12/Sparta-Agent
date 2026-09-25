@@ -1,4 +1,3 @@
-import { projectHasSources } from "@/features/rag/api/rag-api";
 import { clampReasoningEffortToLevels } from "../../provider-capabilities";
 import { useChatRuntimeStore } from "../../stores/chat-runtime-store";
 import type { ThreadRecord } from "../../types";
@@ -100,7 +99,6 @@ export async function buildLocalTokenCountExtras(
     codeToolsEnabled,
     artifactsEnabled,
     mcpEnabledForChat,
-    ragEnabled,
     ragSource,
     ragMode,
     ragTopK,
@@ -112,9 +110,8 @@ export async function buildLocalTokenCountExtras(
   }
 
   const ragProjectId = await resolveProjectId(threadId);
-  const projectRagEnabled = ragProjectId
-    ? await projectHasSources(ragProjectId)
-    : false;
+  const projectRagEnabled = false;
+  const ragEnabled = false;
   const workspaceEnabled = threadId
     ? Boolean(await getThreadWorkspace(threadId).catch(() => null))
     : false;

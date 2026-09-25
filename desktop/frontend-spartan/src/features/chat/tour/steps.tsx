@@ -4,19 +4,11 @@ import type { useT } from "@/i18n";
 export function buildChatTourSteps({
   t,
   canCompare,
-  openModelSelector,
-  closeModelSelector,
-  openSettings,
-  closeSettings,
   enterCompare,
   exitCompare,
 }: {
   t?: ReturnType<typeof useT>;
   canCompare: boolean;
-  openModelSelector: () => void;
-  closeModelSelector: () => void;
-  openSettings: () => void;
-  closeSettings: () => void;
   enterCompare: () => void;
   exitCompare: () => void;
 }): TourStep[] {
@@ -27,33 +19,11 @@ export function buildChatTourSteps({
     {
       id: "model",
       target: "chat-model-selector",
-      title: tr("tour.chat.modelTitle", "Pick a model"),
+      title: tr("tour.chat.modelTitle", "Choose an API model"),
       body: tr(
         "tour.chat.modelBody",
-        "Selects what’s loaded for inference. Recommended is Sparta’s curated base models; On Device is your downloads and fine-tuned outputs (LoRA adapters and full finetunes).",
+        "Choose a model enabled on one of your configured API providers. Models run on the provider; Sparta does not download or load them on this device.",
       ),
-    },
-    {
-      id: "model-tabs",
-      target: "chat-model-selector-popover",
-      title: tr("tour.chat.modelTabsTitle", "Find a model"),
-      body: tr(
-        "tour.chat.modelTabsBody",
-        "Search Sparta’s models, or hit Search Hub for all of Hugging Face. Switch Recommended and On Device, filter by format, and sort by trending or recent. An OOM tag means it won’t fit in your VRAM.",
-      ),
-      onEnter: openModelSelector,
-      onExit: closeModelSelector,
-    },
-    {
-      id: "settings",
-      target: "chat-settings",
-      title: tr("tour.chat.settingsTitle", "Settings sidebar"),
-      body: tr(
-        "tour.chat.settingsBody",
-        "Sampling (temperature/top-p/top-k) + system prompt live here. If you want more deterministic outputs, lower temperature first.",
-      ),
-      onEnter: openSettings,
-      onExit: closeSettings,
     },
     {
       id: "plus-menu",
