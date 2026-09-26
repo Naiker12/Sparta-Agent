@@ -61,6 +61,20 @@ describe("API-only product contract", () => {
     }
   });
 
+  test("packaged-app validation derives the release version from package metadata", () => {
+    const manifest = JSON.parse(source("package.json")) as {
+      scripts?: { build?: string };
+    };
+    const build = manifest.scripts?.build ?? "";
+
+    // npm no longer exposes npm_package_version to lifecycle scripts on all
+    // supported npm versions. The validator already imports package.json, so
+    // passing that environment expansion makes Windows release builds look in
+    // a literal ${npm_package_version} directory.
+    expect(build).toContain("node scripts/check-packaged-app.js");
+    expect(build).not.toContain("npm_package_version");
+  });
+
   test("startup language describes API connections, not model loading", () => {
     const messages = source("desktop/frontend-spartan/src/components/tauri/startup-messages.ts");
     const toasts = source("desktop/frontend-spartan/src/lib/toast.ts");
