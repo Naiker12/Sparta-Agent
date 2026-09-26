@@ -1,0 +1,509 @@
+{
+  "_callout-DBGpSPBL.js": {
+    "file": "assets/callout-DBGpSPBL.js",
+    "name": "callout",
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_createLucideIcon-CaDWr84R.js"
+    ]
+  },
+  "_card-C9-Twad-.js": {
+    "file": "assets/card-C9-Twad-.js",
+    "name": "card",
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_createLucideIcon-CaDWr84R.js",
+      "_framework-gQCUDvUz.js"
+    ]
+  },
+  "_chunk-Cyuzqnbw.js": {
+    "file": "assets/chunk-Cyuzqnbw.js",
+    "name": "chunk"
+  },
+  "_createLucideIcon-CaDWr84R.js": {
+    "file": "assets/createLucideIcon-CaDWr84R.js",
+    "name": "createLucideIcon",
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "_es2015-DttuT4CH.js": {
+    "file": "assets/es2015-DttuT4CH.js",
+    "name": "es2015",
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_file-text-DqEGRGmu.js",
+      "_createLucideIcon-CaDWr84R.js"
+    ]
+  },
+  "_file-text-DqEGRGmu.js": {
+    "file": "assets/file-text-DqEGRGmu.js",
+    "name": "file-text",
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "_framework-gQCUDvUz.js": {
+    "file": "assets/framework-gQCUDvUz.js",
+    "name": "framework",
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "_i18n-N-0-Km5S.js": {
+    "file": "assets/i18n-N-0-Km5S.js",
+    "name": "i18n",
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_es2015-DttuT4CH.js",
+      "_framework-gQCUDvUz.js"
+    ]
+  },
+  "_navigation-D2_5gevI.js": {
+    "file": "assets/navigation-D2_5gevI.js",
+    "name": "navigation"
+  },
+  "_remove-undefined-CzMSKybq-CUTPf38U.js": {
+    "file": "assets/remove-undefined-CzMSKybq-CUTPf38U.js",
+    "name": "remove-undefined-CzMSKybq"
+  },
+  "_search-BT8g2GeJ.js": {
+    "file": "assets/search-BT8g2GeJ.js",
+    "name": "search",
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_es2015-DttuT4CH.js",
+      "_createLucideIcon-CaDWr84R.js",
+      "_framework-gQCUDvUz.js"
+    ]
+  },
+  "_search-F8Qkz6ph.js": {
+    "file": "assets/search-F8Qkz6ph.js",
+    "name": "search",
+    "imports": [
+      "_search-BT8g2GeJ.js"
+    ]
+  },
+  "_url-BVHvi3_K-CJAms2v1.js": {
+    "file": "assets/url-BVHvi3_K-CJAms2v1.js",
+    "name": "url-BVHvi3_K"
+  },
+  "index.html": {
+    "file": "assets/index-BLHkAxSX.js",
+    "name": "index",
+    "src": "index.html",
+    "isEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js"
+    ],
+    "dynamicImports": [
+      "src/landing-page.tsx",
+      "src/components/docs/docs-page.tsx"
+    ],
+    "css": [
+      "assets/index-C869o2rd.css"
+    ]
+  },
+  "node_modules/fumadocs-core/dist/search/client/algolia.js": {
+    "file": "assets/algolia-ZQwKmZt4.js",
+    "name": "algolia",
+    "src": "node_modules/fumadocs-core/dist/search/client/algolia.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_search-F8Qkz6ph.js"
+    ]
+  },
+  "node_modules/fumadocs-core/dist/search/client/fetch.js": {
+    "file": "assets/fetch-CVgNLfJ5.js",
+    "name": "fetch",
+    "src": "node_modules/fumadocs-core/dist/search/client/fetch.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "node_modules/fumadocs-ui/dist/components/dialog/search-default.js"
+    ]
+  },
+  "node_modules/fumadocs-core/dist/search/client/mixedbread.js": {
+    "file": "assets/mixedbread-C_-R3hiW.js",
+    "name": "mixedbread",
+    "src": "node_modules/fumadocs-core/dist/search/client/mixedbread.js",
+    "isDynamicEntry": true
+  },
+  "node_modules/fumadocs-core/dist/search/client/orama-cloud-legacy.js": {
+    "file": "assets/orama-cloud-legacy-DWdZvTQ0.js",
+    "name": "orama-cloud-legacy",
+    "src": "node_modules/fumadocs-core/dist/search/client/orama-cloud-legacy.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_remove-undefined-CzMSKybq-CUTPf38U.js",
+      "_search-F8Qkz6ph.js"
+    ]
+  },
+  "node_modules/fumadocs-core/dist/search/client/orama-cloud.js": {
+    "file": "assets/orama-cloud-DUzPZNTE.js",
+    "name": "orama-cloud",
+    "src": "node_modules/fumadocs-core/dist/search/client/orama-cloud.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_remove-undefined-CzMSKybq-CUTPf38U.js",
+      "_search-F8Qkz6ph.js"
+    ]
+  },
+  "node_modules/fumadocs-core/dist/search/client/orama-static.js": {
+    "file": "assets/orama-static-CHBUtuRO.js",
+    "name": "orama-static",
+    "src": "node_modules/fumadocs-core/dist/search/client/orama-static.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_remove-undefined-CzMSKybq-CUTPf38U.js",
+      "_search-F8Qkz6ph.js",
+      "_url-BVHvi3_K-CJAms2v1.js"
+    ]
+  },
+  "node_modules/fumadocs-ui/dist/components/dialog/search-default.js": {
+    "file": "assets/search-default-BEkA0TPw.js",
+    "name": "search-default",
+    "src": "node_modules/fumadocs-ui/dist/components/dialog/search-default.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_es2015-DttuT4CH.js",
+      "_search-BT8g2GeJ.js",
+      "_url-BVHvi3_K-CJAms2v1.js",
+      "_i18n-N-0-Km5S.js"
+    ],
+    "dynamicImports": [
+      "node_modules/fumadocs-ui/dist/components/dialog/search-default.js",
+      "node_modules/fumadocs-core/dist/search/client/algolia.js",
+      "node_modules/fumadocs-core/dist/search/client/orama-cloud.js",
+      "node_modules/fumadocs-core/dist/search/client/orama-cloud-legacy.js",
+      "node_modules/fumadocs-core/dist/search/client/mixedbread.js",
+      "node_modules/fumadocs-core/dist/search/client/orama-static.js"
+    ]
+  },
+  "src/components/docs/content/pages/architecture/backend-architecture.mdx": {
+    "file": "assets/backend-architecture-DBpWUOmV.js",
+    "name": "backend-architecture",
+    "src": "src/components/docs/content/pages/architecture/backend-architecture.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/architecture/frontend-ui.mdx": {
+    "file": "assets/frontend-ui-B-Y1RF_2.js",
+    "name": "frontend-ui",
+    "src": "src/components/docs/content/pages/architecture/frontend-ui.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/architecture/ipc-bridge.mdx": {
+    "file": "assets/ipc-bridge-BYVYYJjn.js",
+    "name": "ipc-bridge",
+    "src": "src/components/docs/content/pages/architecture/ipc-bridge.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/core-concepts/chat-vs-agent-mode.mdx": {
+    "file": "assets/chat-vs-agent-mode-DMFs2vn5.js",
+    "name": "chat-vs-agent-mode",
+    "src": "src/components/docs/content/pages/core-concepts/chat-vs-agent-mode.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/core-concepts/models-and-providers.mdx": {
+    "file": "assets/models-and-providers-DVyAk_Zo.js",
+    "name": "models-and-providers",
+    "src": "src/components/docs/content/pages/core-concepts/models-and-providers.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/core-concepts/security-and-sandbox.mdx": {
+    "file": "assets/security-and-sandbox-DNXHgQ6l.js",
+    "name": "security-and-sandbox",
+    "src": "src/components/docs/content/pages/core-concepts/security-and-sandbox.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_callout-DBGpSPBL.js"
+    ]
+  },
+  "src/components/docs/content/pages/features/api-monitor.mdx": {
+    "file": "assets/api-monitor-Cm5Q0L_w.js",
+    "name": "api-monitor",
+    "src": "src/components/docs/content/pages/features/api-monitor.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/features/attachments-and-files.mdx": {
+    "file": "assets/attachments-and-files--vlgXXMM.js",
+    "name": "attachments-and-files",
+    "src": "src/components/docs/content/pages/features/attachments-and-files.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/features/code-execution.mdx": {
+    "file": "assets/code-execution-Gqc7v4Wz.js",
+    "name": "code-execution",
+    "src": "src/components/docs/content/pages/features/code-execution.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/features/deep-research.mdx": {
+    "file": "assets/deep-research-BaadnBMq.js",
+    "name": "deep-research",
+    "src": "src/components/docs/content/pages/features/deep-research.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/features/live-tools.mdx": {
+    "file": "assets/live-tools-BB_X-Un2.js",
+    "name": "live-tools",
+    "src": "src/components/docs/content/pages/features/live-tools.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/features/multimodal-rag.mdx": {
+    "file": "assets/multimodal-rag-CdOmSSsa.js",
+    "name": "multimodal-rag",
+    "src": "src/components/docs/content/pages/features/multimodal-rag.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/features/recipe-studio.mdx": {
+    "file": "assets/recipe-studio-Bm6cxOFg.js",
+    "name": "recipe-studio",
+    "src": "src/components/docs/content/pages/features/recipe-studio.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/features/remote-access.mdx": {
+    "file": "assets/remote-access-BZL3yy5z.js",
+    "name": "remote-access",
+    "src": "src/components/docs/content/pages/features/remote-access.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/features/voice-audio.mdx": {
+    "file": "assets/voice-audio-C1EPftGh.js",
+    "name": "voice-audio",
+    "src": "src/components/docs/content/pages/features/voice-audio.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/guides/first-task.mdx": {
+    "file": "assets/first-task--AwcWKvg.js",
+    "name": "first-task",
+    "src": "src/components/docs/content/pages/guides/first-task.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/guides/performance.mdx": {
+    "file": "assets/performance-uIbEHC1G.js",
+    "name": "performance",
+    "src": "src/components/docs/content/pages/guides/performance.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/guides/troubleshooting.mdx": {
+    "file": "assets/troubleshooting-Beua-LOT.js",
+    "name": "troubleshooting",
+    "src": "src/components/docs/content/pages/guides/troubleshooting.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/index.mdx": {
+    "file": "assets/pages-eaw0FDt6.js",
+    "name": "pages",
+    "src": "src/components/docs/content/pages/index.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_card-C9-Twad-.js",
+      "_callout-DBGpSPBL.js"
+    ]
+  },
+  "src/components/docs/content/pages/mcp/configuration.mdx": {
+    "file": "assets/configuration-Bz6rVGRj.js",
+    "name": "configuration",
+    "src": "src/components/docs/content/pages/mcp/configuration.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/mcp/introduction.mdx": {
+    "file": "assets/introduction-BBplCbS_.js",
+    "name": "introduction",
+    "src": "src/components/docs/content/pages/mcp/introduction.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/mcp/supported-servers.mdx": {
+    "file": "assets/supported-servers-D-lLnpGi.js",
+    "name": "supported-servers",
+    "src": "src/components/docs/content/pages/mcp/supported-servers.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/quickstart.mdx": {
+    "file": "assets/quickstart-_T6lG7ka.js",
+    "name": "quickstart",
+    "src": "src/components/docs/content/pages/quickstart.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_callout-DBGpSPBL.js"
+    ]
+  },
+  "src/components/docs/content/pages/skills/overview.mdx": {
+    "file": "assets/overview-Bz0P8TR8.js",
+    "name": "overview",
+    "src": "src/components/docs/content/pages/skills/overview.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/docs-page.tsx": {
+    "file": "assets/docs-page-4C_1APA7.js",
+    "name": "docs-page",
+    "src": "src/components/docs/docs-page.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_es2015-DttuT4CH.js",
+      "_file-text-DqEGRGmu.js",
+      "_createLucideIcon-CaDWr84R.js",
+      "_framework-gQCUDvUz.js",
+      "_card-C9-Twad-.js",
+      "_url-BVHvi3_K-CJAms2v1.js",
+      "_callout-DBGpSPBL.js",
+      "_i18n-N-0-Km5S.js",
+      "_navigation-D2_5gevI.js"
+    ],
+    "dynamicImports": [
+      "node_modules/fumadocs-ui/dist/components/dialog/search-default.js",
+      "src/components/docs/docs-search.tsx",
+      "src/components/docs/content/pages/architecture/backend-architecture.mdx",
+      "src/components/docs/content/pages/architecture/frontend-ui.mdx",
+      "src/components/docs/content/pages/architecture/ipc-bridge.mdx",
+      "src/components/docs/content/pages/core-concepts/chat-vs-agent-mode.mdx",
+      "src/components/docs/content/pages/core-concepts/models-and-providers.mdx",
+      "src/components/docs/content/pages/core-concepts/security-and-sandbox.mdx",
+      "src/components/docs/content/pages/features/api-monitor.mdx",
+      "src/components/docs/content/pages/features/attachments-and-files.mdx",
+      "src/components/docs/content/pages/features/code-execution.mdx",
+      "src/components/docs/content/pages/features/deep-research.mdx",
+      "src/components/docs/content/pages/features/live-tools.mdx",
+      "src/components/docs/content/pages/features/multimodal-rag.mdx",
+      "src/components/docs/content/pages/features/recipe-studio.mdx",
+      "src/components/docs/content/pages/features/remote-access.mdx",
+      "src/components/docs/content/pages/features/voice-audio.mdx",
+      "src/components/docs/content/pages/guides/first-task.mdx",
+      "src/components/docs/content/pages/guides/performance.mdx",
+      "src/components/docs/content/pages/guides/troubleshooting.mdx",
+      "src/components/docs/content/pages/index.mdx",
+      "src/components/docs/content/pages/mcp/configuration.mdx",
+      "src/components/docs/content/pages/mcp/introduction.mdx",
+      "src/components/docs/content/pages/mcp/supported-servers.mdx",
+      "src/components/docs/content/pages/quickstart.mdx",
+      "src/components/docs/content/pages/skills/overview.mdx"
+    ],
+    "css": [
+      "assets/docs-page-ClVQ66C-.css"
+    ]
+  },
+  "src/components/docs/docs-search.tsx": {
+    "file": "assets/docs-search-BwPTkNh-.js",
+    "name": "docs-search",
+    "src": "src/components/docs/docs-search.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_search-BT8g2GeJ.js",
+      "_navigation-D2_5gevI.js"
+    ]
+  },
+  "src/landing-page.tsx": {
+    "file": "assets/landing-page-DzNFMQ1e.js",
+    "name": "landing-page",
+    "src": "src/landing-page.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_file-text-DqEGRGmu.js"
+    ]
+  }
+}
