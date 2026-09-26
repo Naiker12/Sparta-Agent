@@ -535,7 +535,7 @@ function DownloadSection() {
             </div>
 
             <BurstLink
-              href="https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Windows-0.3.0-Setup.exe"
+              href="https://github.com/Naiker12/Sparta-Agent/releases/download/v0.3.1/Sparta-Agent-Windows-0.3.1-Setup.exe"
               target="_blank"
               rel="noopener noreferrer"
               className="w-full text-center bg-[#e6e6e6] hover:bg-white text-[#111214] text-xs font-medium py-2.5 rounded-lg transition-all flex items-center justify-center gap-2 shadow-button-neutral active:scale-[0.98]"
@@ -570,7 +570,7 @@ function DownloadSection() {
             </div>
 
             <BurstLink
-              href="https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Mac-0.3.0-Installer.dmg"
+              href="https://github.com/Naiker12/Sparta-Agent/releases/download/v0.3.1/Sparta-Agent-Mac-0.3.1-Installer.dmg"
               target="_blank"
               rel="noopener noreferrer"
               className="w-full text-center bg-[#e6e6e6] hover:bg-white text-[#111214] text-xs font-medium py-2.5 rounded-lg transition-all flex items-center justify-center gap-2 shadow-button-neutral active:scale-[0.98]"
@@ -605,7 +605,7 @@ function DownloadSection() {
             </div>
 
             <BurstLink
-              href="https://github.com/Naiker12/Sparta-Agent/releases/latest/download/Sparta-Agent-Linux-0.3.0.AppImage"
+              href="https://github.com/Naiker12/Sparta-Agent/releases/download/v0.3.1/Sparta-Agent-Linux-0.3.1.AppImage"
               target="_blank"
               rel="noopener noreferrer"
               className="w-full text-center bg-[#e6e6e6] hover:bg-white text-[#111214] text-xs font-medium py-2.5 rounded-lg transition-all flex items-center justify-center gap-2 shadow-button-neutral active:scale-[0.98]"
