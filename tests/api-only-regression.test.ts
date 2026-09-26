@@ -61,6 +61,20 @@ describe("API-only product contract", () => {
     }
   });
 
+  test("API-only startup does not import an excluded RAG module eagerly", () => {
+    const settings = source(
+      "desktop/backend-spartan/routes/settings_pkg/router_providers_switch.py",
+    );
+
+    const response = settings.indexOf("def _embedding_model_response()");
+    const guardedImport = settings.indexOf(
+      "from core.rag.config import default_gguf_repo, effective_gguf_repo",
+    );
+
+    expect(response).toBeGreaterThan(-1);
+    expect(guardedImport).toBeGreaterThan(response);
+  });
+
   test("packaged-app validation derives the release version from package metadata", () => {
     const manifest = JSON.parse(source("package.json")) as {
       scripts?: { build?: string };

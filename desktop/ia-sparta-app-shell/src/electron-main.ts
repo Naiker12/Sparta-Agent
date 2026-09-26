@@ -145,7 +145,7 @@ app.whenReady().then(async () => {
     const emitProgress = (message: string) => win?.webContents.send('backend:install-progress', message)
     try {
       await backend.bootstrap(backendDirectory(), backendRuntimeDirectory(), emitProgress)
-      emitProgress('Iniciando motor local...')
+      emitProgress('Iniciando backend de Sparta...')
       const port = await backend.start(backendDirectory(), backendRuntimeDirectory())
       backendStartupError = undefined
       win?.webContents.send('backend:ready', port)

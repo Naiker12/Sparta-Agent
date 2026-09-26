@@ -43,7 +43,7 @@ export class BackendManager {
     const python = runtimeDir ? this.findRuntimePython(runtimeDir) : this.findPython(backendDir);
     if (!python) {
       if (runtimeDir) {
-        throw new Error("El motor local de Sparta aún no está preparado. Instálalo para crear su entorno aislado.");
+        throw new Error("El entorno del backend de Sparta aún no está preparado. Instálalo para crear su entorno aislado.");
       }
       console.warn("[backend-manager] Python no encontrado en el sistema. Operando en modo Electron agéntico puro.");
       throw new Error("No se encontró Python. Sparta Agent puede operar directamente con modelos cloud y herramientas locales.");
@@ -140,7 +140,7 @@ export class BackendManager {
   ): Promise<void> {
     const systemPython = this.findPython(backendDir);
     if (!systemPython) {
-      throw new Error("No se encontró Python para instalar el motor local. Instala Python 3.10 o superior y vuelve a intentarlo.");
+      throw new Error("No se encontró Python para instalar el backend. Instala Python 3.10 o superior y vuelve a intentarlo.");
     }
 
     const venvDir = path.join(runtimeDir, ".venv");
@@ -150,7 +150,7 @@ export class BackendManager {
       process.platform === "win32" ? "python.exe" : "python",
     );
     const requirements = path.join(backendDir, "requirements.txt");
-    if (!existsSync(requirements)) throw new Error("No se encontró requirements.txt en el motor local.");
+    if (!existsSync(requirements)) throw new Error("No se encontró requirements.txt en el backend.");
 
     if (existsSync(venvPython)) {
       onProgress(`Entorno local existente detectado: ${venvDir}`);
@@ -162,7 +162,7 @@ export class BackendManager {
     onProgress("Actualizando instalador de paquetes...");
     await this.run(venvPython, ["-m", "pip", "install", "--upgrade", "pip"], backendDir, onProgress);
 
-    onProgress("Instalando dependencias del motor local...");
+    onProgress("Instalando dependencias del backend...");
     await this.run(venvPython, ["-m", "pip", "install", "-r", requirements], backendDir, onProgress);
 
     onProgress("Verificando dependencias críticas del motor...");
@@ -291,10 +291,10 @@ export class BackendManager {
         // changes will be checked against the newly written fingerprint.
         return true;
       }
-      throw new Error("No se pudo leer la versión del motor local. Actualízalo para reconstruir su entorno aislado.");
+      throw new Error("No se pudo leer la versión del backend. Actualízalo para reconstruir su entorno aislado.");
     }
     if (!stored || stored.backendFingerprint !== expected) {
-      throw new Error("El motor local pertenece a otra versión de Sparta. Actualízalo para reconstruir su entorno aislado.");
+      throw new Error("El backend pertenece a otra versión de Sparta. Actualízalo para reconstruir su entorno aislado.");
     }
     return false;
   }
@@ -316,7 +316,7 @@ export class BackendManager {
     const requirementFiles = this.collectRequirementFiles(path.join(backendDir, "requirements"), backendDir);
     for (const filename of [...RUNTIME_FINGERPRINT_FILES, ...requirementFiles]) {
       const file = path.join(backendDir, filename);
-      if (!existsSync(file)) throw new Error(`No se pudo verificar el motor local: falta ${filename}.`);
+      if (!existsSync(file)) throw new Error(`No se pudo verificar el backend: falta ${filename}.`);
       hash.update(filename);
       hash.update("\0");
       hash.update(readFileSync(file));

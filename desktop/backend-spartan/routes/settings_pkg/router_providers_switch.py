@@ -41,7 +41,6 @@ from utils.embedding_model_settings import (
     set_rag_embedding_model,
     validate_embedding_model,
 )
-from core.rag.config import default_gguf_repo, effective_gguf_repo
 from utils.utils import log_and_http_error
 from routes.settings_pkg.schemas import (
     CodingAgentsResponse,
@@ -464,6 +463,11 @@ def update_openai_auto_switch_override(
     return ModelOverridesResponse(overrides = get_model_overrides())
 
 def _embedding_model_response() -> EmbeddingModelResponse:
+    # `core.rag` is intentionally absent from the API-only desktop package.
+    # Keep this optional, local-model-only configuration lazy so importing the
+    # settings router never prevents the API backend from booting.
+    from core.rag.config import default_gguf_repo, effective_gguf_repo
+
     return EmbeddingModelResponse(
         embedding_model = get_rag_embedding_model(),
         embedding_gguf_repo = effective_gguf_repo(),

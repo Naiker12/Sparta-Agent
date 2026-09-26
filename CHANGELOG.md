@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.2] - 2026-09-26
+
+### Fixed
+
+- El backend API-only vuelve a iniciar en escritorio sin requerir el módulo RAG que no forma parte del paquete distribuido.
+- La pantalla de preparación identifica el backend de Sparta correctamente y no lo presenta como un motor local de modelos.
+
 ## [0.3.1] - 2026-09-26
 
 ### Fixed

@@ -10,7 +10,7 @@ import { useEffect, useMemo, useState } from "react";
 
 type StartupState = "checking" | "needs_setup" | "installing" | "ready";
 
-/** Keeps the product closed until its required local runtime is ready. */
+/** Keeps the product closed until its required local backend is ready. */
 export function StartupGate({ children }: { children: ReactNode }) {
   const [hasEntered, setHasEntered] = useState(false);
   const [isEntering, setIsEntering] = useState(false);
@@ -50,7 +50,7 @@ export function StartupGate({ children }: { children: ReactNode }) {
       } else {
         setError(
           getTauriAuthFailure() ??
-            "No se pudo autenticar el motor local. Reinicia Sparta.",
+            "No se pudo autenticar el backend local. Reinicia Sparta.",
         );
         setState("needs_setup");
       }
@@ -147,7 +147,7 @@ export function StartupGate({ children }: { children: ReactNode }) {
           <p className="mt-5 text-xs leading-5 text-muted-foreground">
             {isEntering
               ? "Preparando la interfaz y verificando los servicios locales…"
-              : "En el primer inicio prepararemos el motor local necesario para usar la aplicación."}
+              : "En el primer inicio prepararemos el backend local necesario para usar la aplicación."}
           </p>
         </section>
       </main>
@@ -161,15 +161,15 @@ export function StartupGate({ children }: { children: ReactNode }) {
   const installing = state === "installing";
   const checking = state === "checking";
   const friendlyMessage = error?.includes("ModuleNotFoundError")
-    ? "Faltan componentes del motor local. Sparta puede instalarlos y verificarlos automáticamente."
+    ? "Faltan componentes del backend. Sparta puede instalarlos y verificarlos automáticamente."
     : error?.includes("aún no está preparado")
-      ? "El motor local aún no está instalado en este equipo."
-      : "Instala el motor local una vez para poder usar todas las funciones de Sparta.";
+      ? "El backend local aún no está instalado en este equipo."
+      : "Instala el backend una vez para poder usar todas las funciones de Sparta.";
   const install = async () => {
     if (!window.electronAPI?.bootstrapBackend) {
       return;
     }
-    setLogs(["[Sparta] Preparando motor local..."]);
+    setLogs(["[Sparta] Preparando backend local..."]);
     setError(null);
     setShowDetails(false);
     setInstallStartedAt(Date.now());
@@ -177,7 +177,7 @@ export function StartupGate({ children }: { children: ReactNode }) {
     setState("installing");
     const result = await window.electronAPI.bootstrapBackend();
     if (!result.ok) {
-      setError(result.error ?? "No se pudo preparar el motor local.");
+      setError(result.error ?? "No se pudo preparar el backend.");
       setState("needs_setup");
     }
   };
@@ -205,10 +205,10 @@ export function StartupGate({ children }: { children: ReactNode }) {
         <div className="mt-8 rounded-2xl border bg-muted/50 p-5">
           <p className="font-medium">
             {checking
-              ? "Comprobando el motor local…"
+              ? "Comprobando el backend…"
               : installing
-                ? "Instalando el motor local…"
-                : "Motor local pendiente"}
+                ? "Instalando el backend…"
+                : "Backend pendiente"}
           </p>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
             {checking
@@ -259,7 +259,7 @@ export function StartupGate({ children }: { children: ReactNode }) {
             onClick={() => void install()}
             type="button"
           >
-            {installing ? "Instalando…" : "Instalar motor local"}
+            {installing ? "Instalando…" : "Instalar backend"}
           </button>
         </div>
         {!installing && (
