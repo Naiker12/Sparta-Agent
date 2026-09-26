@@ -202,7 +202,7 @@ function Navbar({ onOpenDocs }: { onOpenDocs: () => void }) {
           <span className="font-medium text-sm tracking-tight text-white flex items-center gap-2">
             Sparta Agent
             <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded-[6px] bg-[#1b1c1e] text-[#9c9c9d] border border-[#363739]">
-              v0.3.0
+              v0.3.1
             </span>
           </span>
         </a>
@@ -807,7 +807,7 @@ function FooterSection({ onOpenDocs }: { onOpenDocs?: () => void }) {
                   />
                   <span className="font-medium text-sm tracking-tight text-white">Sparta Agent</span>
                   <span className="font-mono text-[10px] text-[#9c9c9d] px-1.5 py-0.5 rounded-[6px] bg-[#111214] border border-[#363739]">
-                    v0.3.0
+                    v0.3.1
                   </span>
                 </div>
 

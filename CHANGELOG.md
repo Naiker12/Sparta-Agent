@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1] - 2026-09-26
+
+### Fixed
+
+- La validación posterior al empaquetado ya obtiene la versión desde el manifiesto y no depende de `npm_package_version`, evitando el fallo de publicación de Windows.
+- Los enlaces de descarga y las superficies visibles de la landing se sincronizan con la versión publicada.
+
 ## [0.3.0] - 2026-09-25
 
 ### Changed
