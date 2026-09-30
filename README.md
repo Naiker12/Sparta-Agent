@@ -14,7 +14,7 @@
 ---
 
 <div align="center">
-  <img src="docs/assets/sparta-principal.png" alt="Entorno de Trabajo Sparta Agent" width="100%" style="border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);" />
+  <img src="landing/public/proyecto/SPARTAN-PRINCIPAL.png" alt="Entorno de Trabajo Sparta Agent" width="100%" style="border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);" />
 </div>
 
 ---
