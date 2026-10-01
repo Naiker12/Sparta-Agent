@@ -92,8 +92,8 @@ const capabilities: Capability[] = [
     eyebrow: '06 · CONTROL',
     title: 'Permisos explícitos antes de acciones sensibles',
     description:
-      'El Permission Broker intercepta escrituras en disco, borrado de archivos y llamadas a APIs para que el usuario mantenga el control total.',
-    details: ['Modal de confirmación', 'Políticas por herramienta', 'Zero cloud leaks'],
+      'Elige el modo de aprobación y el acceso a la carpeta conectada. Las acciones disponibles dependen de esos permisos y de las herramientas configuradas.',
+    details: ['Aprobaciones configurables', 'Acceso por carpeta', 'Control de herramientas'],
     image: {
       src: getPublicUrl('proyecto/Permisos antes de las acciones sensibles.png'),
       alt: 'Permisos y controles de Sparta Agent',
@@ -108,32 +108,18 @@ interface TerminalScript {
 }
 
 const TERMINAL_SCRIPTS: TerminalScript[] = [
-  {
-    command: 'sparta test --suite=integration --workers=4',
-    lines: [
-      { text: '[00:01] 🔍 Indexando grafo AST de 48 archivos locales...', color: 'text-[#6a6b6c]' },
-      { text: '[00:02] ✓ 18 tests de integración completados (38ms)', color: 'text-[#59d499]' },
-      { text: '[00:02] ✓ LangGraph State Machine benchmark: 0 memory leaks', color: 'text-[#59d499]' },
-      { text: '[00:03] 🛡️ Sandbox Broker: Canal IPC seguro · Cero telemetría externa', color: 'text-[#63a1ff]' },
-    ],
-  },
-  {
-    command: 'sparta mcp:call --server=filesystem --action=read_dir',
-    lines: [
-      { text: '[00:01] 🔒 PermissionBroker: Autorización verificada para ~/workspace', color: 'text-[#fbbf24]' },
-      { text: '[00:01] ✓ Conectado a socket IPC local (fd=12)', color: 'text-[#59d499]' },
-      { text: '[00:02] 📁 14 archivos indexados en SQLite en memoria', color: 'text-[#63a1ff]' },
-      { text: '[00:02] → Vault de secretos AES-256 activo y custodiado', color: 'text-[#6a6b6c]' },
-    ],
-  },
-  {
-    command: 'sparta build --target=sidecar-rust --release',
-    lines: [
-      { text: '[00:01] ⚡ Compilando sparta-core v0.3.1 (Tokio runtime + C-ABI)...', color: 'text-[#6a6b6c]' },
-      { text: '[00:02] ✓ Target release [optimizado] finalizado en 1.24s', color: 'text-[#59d499]' },
-      { text: '[00:03] 📦 Binario nativo generado: /dist/sparta-sidecar.exe', color: 'text-[#ff6363]' },
-    ],
-  },
+  { command: 'npm test', lines: [
+    {text: 'Ejemplo ilustrativo · Ejecuta las pruebas de tu proyecto', color:'text-[#9c9c9d]'},
+    {text: 'Revisa la salida antes de continuar con los cambios.', color:'text-[#59d499]'},
+  ]},
+  { command: 'git diff', lines: [
+    {text: 'Ejemplo ilustrativo · Revisa los archivos modificados', color:'text-[#9c9c9d]'},
+    {text: 'Comprueba el alcance de la tarea en tu carpeta de trabajo.', color:'text-[#63a1ff]'},
+  ]},
+  { command: 'npm run build', lines: [
+    {text: 'Ejemplo ilustrativo · Valida el resultado del proyecto', color:'text-[#9c9c9d]'},
+    {text: 'La salida real depende de los scripts de tu proyecto.', color:'text-[#59d499]'},
+  ]},
 ]
 
 // ── Interactive Animated Terminal Simulator ──────────────────────────────────

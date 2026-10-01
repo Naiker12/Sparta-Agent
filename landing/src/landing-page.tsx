@@ -1,3 +1,5 @@
+import { DesktopNews } from './components/sections/desktop-news';
+import { currentRelease } from './lib/desktop-news';
 import React, { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -159,10 +161,9 @@ function Navbar({ onOpenDocs }: { onOpenDocs: () => void }) {
   }, [])
 
   const navLinks = [
+    { name: 'Novedades', href: '#novedades' },
     { name: 'Capacidades', href: '#producto' },
-    { name: 'Flujo Agéntico', href: '#flujo-agentico' },
-    { name: 'Conectores MCP', href: '#mcp' },
-    { name: 'Seguridad', href: '#seguridad' },
+    { name: 'MCP', href: '#mcp' },
     { name: 'Skills', href: '#skills' },
     { name: 'FAQ', href: '#faq' },
   ]
@@ -202,7 +203,7 @@ function Navbar({ onOpenDocs }: { onOpenDocs: () => void }) {
           <span className="font-medium text-sm tracking-tight text-white flex items-center gap-2">
             Sparta Agent
             <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded-[6px] bg-[#1b1c1e] text-[#9c9c9d] border border-[#363739]">
-              v0.3.1
+              v{currentRelease.version}
             </span>
           </span>
         </a>
@@ -505,7 +506,7 @@ function DownloadSection() {
             Disponible para Windows, macOS y Linux.
           </h2>
           <p className="text-base text-[#9c9c9d]">
-            Instala la aplicación nativa y comienza a programar con agentes autónomos en segundos.
+            Descarga v0.3.2, conecta tu proveedor de IA y elige una carpeta para comenzar. Las novedades en preparación llegarán en una próxima versión.
           </p>
         </FadeInUp>
       </div>
@@ -535,7 +536,7 @@ function DownloadSection() {
             </div>
 
             <BurstLink
-              href="https://github.com/Naiker12/Sparta-Agent/releases/download/v0.3.1/Sparta-Agent-Windows-0.3.1-Setup.exe"
+              href={currentRelease.windows}
               target="_blank"
               rel="noopener noreferrer"
               className="w-full text-center bg-[#e6e6e6] hover:bg-white text-[#111214] text-xs font-medium py-2.5 rounded-lg transition-all flex items-center justify-center gap-2 shadow-button-neutral active:scale-[0.98]"
@@ -564,13 +565,13 @@ function DownloadSection() {
                   <CheckCircle2 className="size-3.5" /> Paquete Universal .dmg
                 </div>
                 <div className="flex items-center gap-2 text-[#59d499]">
-                  <CheckCircle2 className="size-3.5" /> Aceleración Metal / GPU
+                  <CheckCircle2 className="size-3.5" /> Chat por API, sin GPU necesaria
                 </div>
               </div>
             </div>
 
             <BurstLink
-              href="https://github.com/Naiker12/Sparta-Agent/releases/download/v0.3.1/Sparta-Agent-Mac-0.3.1-Installer.dmg"
+              href={currentRelease.mac}
               target="_blank"
               rel="noopener noreferrer"
               className="w-full text-center bg-[#e6e6e6] hover:bg-white text-[#111214] text-xs font-medium py-2.5 rounded-lg transition-all flex items-center justify-center gap-2 shadow-button-neutral active:scale-[0.98]"
@@ -596,7 +597,7 @@ function DownloadSection() {
               <p className="text-xs text-[#9c9c9d]">Ubuntu, Debian, Fedora, Arch</p>
               <div className="pt-2 text-xs text-[#9c9c9d] space-y-1.5 font-mono">
                 <div className="flex items-center gap-2 text-[#59d499]">
-                  <CheckCircle2 className="size-3.5" /> .AppImage portable &amp; .deb
+                  <CheckCircle2 className="size-3.5" /> .AppImage portable
                 </div>
                 <div className="flex items-center gap-2 text-[#59d499]">
                   <CheckCircle2 className="size-3.5" /> Integración Bash / Zsh
@@ -605,7 +606,7 @@ function DownloadSection() {
             </div>
 
             <BurstLink
-              href="https://github.com/Naiker12/Sparta-Agent/releases/download/v0.3.1/Sparta-Agent-Linux-0.3.1.AppImage"
+              href={currentRelease.linux}
               target="_blank"
               rel="noopener noreferrer"
               className="w-full text-center bg-[#e6e6e6] hover:bg-white text-[#111214] text-xs font-medium py-2.5 rounded-lg transition-all flex items-center justify-center gap-2 shadow-button-neutral active:scale-[0.98]"
@@ -635,7 +636,7 @@ function FaqSection() {
     },
     {
       q: '¿Qué es el protocolo MCP y qué servidores incluye?',
-      a: 'Model Context Protocol (MCP) es el estándar abierto para conectar modelos con herramientas externas. Sparta Agent incluye soporte integrado para servidores MCP de Filesystem, PostgreSQL, Git, GitHub, Notion, Slack, Google Drive y Gmail con ejecución segura vía IPC.',
+      a: 'Model Context Protocol (MCP) es el estándar abierto para conectar modelos con herramientas externas. Puedes configurar servidores compatibles para ampliar las herramientas disponibles. Cada integración requiere su propio servidor, credenciales y permisos.',
     },
     {
       q: '¿Cómo funciona el diálogo modal de permisos en Modo Agente?',
@@ -651,7 +652,7 @@ function FaqSection() {
     },
     {
       q: '¿Puedo personalizar reglas de proyecto y skills de desarrollo?',
-      a: 'Sí. Sparta Agent cuenta con soporte nativo para archivos de reglas de proyecto (.agents/AGENTS.md) y catálogo de skills modulares que aprenden de tus preferencias de arquitectura y convenciones de equipo.',
+      a: 'Sí. Sparta Agent cuenta con soporte nativo para archivos de reglas de proyecto (.agents/AGENTS.md) y un catálogo de skills con instrucciones reutilizables para tus tareas y convenciones de equipo.',
     },
   ]
 
@@ -807,7 +808,7 @@ function FooterSection({ onOpenDocs }: { onOpenDocs?: () => void }) {
                   />
                   <span className="font-medium text-sm tracking-tight text-white">Sparta Agent</span>
                   <span className="font-mono text-[10px] text-[#9c9c9d] px-1.5 py-0.5 rounded-[6px] bg-[#111214] border border-[#363739]">
-                    v0.3.1
+                    v{currentRelease.version}
                   </span>
                 </div>
 
@@ -936,6 +937,7 @@ export default function LandingPage({ onOpenDocs }: { onOpenDocs: () => void }) 
       <Navbar onOpenDocs={openDocs} />
       <main className="relative z-10">
         <HeroSection />
+        <DesktopNews />
         <ProductTour />
         <McpGraphShowcase />
         <SkillsShowcase />
